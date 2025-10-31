@@ -5,16 +5,175 @@ Feature: Monitoring and Metrics
   System monitoring, logging, and performance metrics collection
 """
 import pytest
+import logging
+import tempfile
+from pathlib import Path
 from unittest.mock import Mock, MagicMock, patch
 from pytest_bdd import scenario, given, when, then, parsers
 
 
-# Fixtures
+# Fixtures for Given steps
 
 @pytest.fixture
 def context():
     """Shared context for test steps."""
     return {}
+
+
+@pytest.fixture
+def prometheus_export_is_enabled():
+    """
+    Given Prometheus export is enabled
+    """
+    return {'prometheus_enabled': True, 'prometheus_port': 8000}
+
+
+@pytest.fixture
+def a_counter_metric_is_defined():
+    """
+    Given a counter metric is defined
+    """
+    return {'metric_type': 'counter', 'name': 'requests_total', 'value': 0}
+
+
+@pytest.fixture
+def a_gauge_metric_is_defined():
+    """
+    Given a gauge metric is defined
+    """
+    return {'metric_type': 'gauge', 'name': 'memory_usage', 'value': 100}
+
+
+@pytest.fixture
+def a_logger_configuration_with_console_enabled():
+    """
+    Given a logger configuration with console enabled
+    """
+    return {
+        'console_enabled': True,
+        'log_level': 'INFO',
+        'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    }
+
+
+@pytest.fixture
+def a_logger_configuration_with_custom_log_level():
+    """
+    Given a logger configuration with custom log level
+    """
+    return {
+        'log_level': 'DEBUG',
+        'console_enabled': True
+    }
+
+
+@pytest.fixture
+def a_logger_configuration_with_default_settings():
+    """
+    Given a logger configuration with default settings
+    """
+    return {
+        'log_level': 'INFO',
+        'console_enabled': False,
+        'file_enabled': False
+    }
+
+
+@pytest.fixture
+def a_logger_configuration_with_file_path_specified(tmp_path):
+    """
+    Given a logger configuration with file path specified
+    """
+    log_file = tmp_path / "test.log"
+    return {
+        'file_enabled': True,
+        'file_path': str(log_file),
+        'log_level': 'INFO'
+    }
+
+
+@pytest.fixture
+def a_logger_configuration_with_rotation_enabled(tmp_path):
+    """
+    Given a logger configuration with rotation enabled
+    """
+    log_file = tmp_path / "rotating.log"
+    return {
+        'file_enabled': True,
+        'file_path': str(log_file),
+        'rotation_enabled': True,
+        'max_bytes': 1024,
+        'backup_count': 3
+    }
+
+
+@pytest.fixture
+def a_timed_operation():
+    """
+    Given a timed operation
+    """
+    import time
+    return {
+        'operation': lambda: time.sleep(0.01),
+        'name': 'test_operation'
+    }
+
+
+@pytest.fixture
+def metrics_collection_is_enabled():
+    """
+    Given metrics collection is enabled
+    """
+    return {
+        'enabled': True,
+        'metrics': []
+    }
+
+
+@pytest.fixture
+def process_information_is_enabled():
+    """
+    Given process information is enabled
+    """
+    return {
+        'process_monitoring': True,
+        'collect_cpu': True,
+        'collect_memory': True
+    }
+
+
+@pytest.fixture
+def resource_monitoring_is_enabled():
+    """
+    Given resource monitoring is enabled
+    """
+    return {
+        'resource_monitoring': True,
+        'monitor_cpu': True,
+        'monitor_memory': True,
+        'monitor_disk': True
+    }
+
+
+@pytest.fixture
+def specific_modules_are_silenced():
+    """
+    Given specific modules are silenced
+    """
+    return {
+        'silenced_modules': ['urllib3', 'requests', 'matplotlib']
+    }
+
+
+@pytest.fixture
+def warning_capture_is_enabled():
+    """
+    Given warning capture is enabled
+    """
+    return {
+        'capture_warnings': True,
+        'warnings_as_logs': True
+    }
 
 
 # Test scenarios
@@ -27,6 +186,7 @@ def test_initialize_logger_with_default_configuration():
       When the logger is initialized
       Then the logger is ready to record events
     """
+    # TODO: Implement test
     pass
 
 
@@ -38,6 +198,7 @@ def test_configure_custom_log_level():
       When the logger is initialized
       Then the logger uses the specified log level
     """
+    # TODO: Implement test
     pass
 
 
@@ -49,6 +210,7 @@ def test_enable_file_logging():
       When the logger is initialized
       Then log entries are written to the file
     """
+    # TODO: Implement test
     pass
 
 
@@ -60,6 +222,7 @@ def test_enable_console_logging():
       When the logger is initialized
       Then log entries are written to console
     """
+    # TODO: Implement test
     pass
 
 
@@ -72,6 +235,7 @@ def test_enable_log_rotation():
       Then the log file is rotated
       And old logs are backed up
     """
+    # TODO: Implement test
     pass
 
 
@@ -83,6 +247,7 @@ def test_collect_performance_metrics():
       When an operation completes
       Then metrics are recorded
     """
+    # TODO: Implement test
     pass
 
 
@@ -94,6 +259,7 @@ def test_export_metrics_to_prometheus():
       When metrics are collected
       Then metrics are available on the Prometheus endpoint
     """
+    # TODO: Implement test
     pass
 
 
@@ -105,6 +271,7 @@ def test_track_operation_timing():
       When the operation executes
       Then the execution time is recorded
     """
+    # TODO: Implement test
     pass
 
 
@@ -116,6 +283,7 @@ def test_monitor_resource_usage():
       When metrics are collected
       Then CPU and memory usage are recorded
     """
+    # TODO: Implement test
     pass
 
 
@@ -127,6 +295,7 @@ def test_record_counter_metrics():
       When an event occurs
       Then the counter is incremented
     """
+    # TODO: Implement test
     pass
 
 
@@ -138,6 +307,7 @@ def test_record_gauge_metrics():
       When a value changes
       Then the gauge is updated
     """
+    # TODO: Implement test
     pass
 
 
@@ -149,6 +319,7 @@ def test_capture_python_warnings():
       When a warning is raised
       Then the warning is logged
     """
+    # TODO: Implement test
     pass
 
 
@@ -160,6 +331,7 @@ def test_silence_specific_modules():
       When those modules log messages
       Then the messages are suppressed
     """
+    # TODO: Implement test
     pass
 
 
@@ -171,6 +343,7 @@ def test_include_process_information_in_logs():
       When a log entry is created
       Then the log includes process details
     """
+    # TODO: Implement test
     pass
 
 
@@ -178,183 +351,273 @@ def test_include_process_information_in_logs():
 
 # Given steps
 @given("Prometheus export is enabled")
-def step_given_prometheus_export_is_enabled(context):
+def prometheus_export_is_enabled():
     """Step: Given Prometheus export is enabled"""
-    context["step_prometheus_export_is_enabled"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a counter metric is defined")
-def step_given_a_counter_metric_is_defined(context):
+def a_counter_metric_is_defined():
     """Step: Given a counter metric is defined"""
-    context["step_a_counter_metric_is_defined"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a gauge metric is defined")
-def step_given_a_gauge_metric_is_defined(context):
+def a_gauge_metric_is_defined():
     """Step: Given a gauge metric is defined"""
-    context["step_a_gauge_metric_is_defined"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a logger configuration with console enabled")
-def step_given_a_logger_configuration_with_console_enabled(context):
+def a_logger_configuration_with_console_enabled():
     """Step: Given a logger configuration with console enabled"""
-    context["step_a_logger_configuration_with_console_enabled"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a logger configuration with custom log level")
-def step_given_a_logger_configuration_with_custom_log_level(context):
+def a_logger_configuration_with_custom_log_level():
     """Step: Given a logger configuration with custom log level"""
-    context["step_a_logger_configuration_with_custom_log_level"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a logger configuration with default settings")
-def step_given_a_logger_configuration_with_default_settings(context):
+def a_logger_configuration_with_default_settings():
     """Step: Given a logger configuration with default settings"""
-    context["step_a_logger_configuration_with_default_settings"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a logger configuration with file path specified")
-def step_given_a_logger_configuration_with_file_path_specified(context):
+def a_logger_configuration_with_file_path_specified():
     """Step: Given a logger configuration with file path specified"""
-    context["step_a_logger_configuration_with_file_path_specified"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a logger configuration with rotation enabled")
-def step_given_a_logger_configuration_with_rotation_enabled(context):
+def a_logger_configuration_with_rotation_enabled():
     """Step: Given a logger configuration with rotation enabled"""
-    context["step_a_logger_configuration_with_rotation_enabled"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a timed operation")
-def step_given_a_timed_operation(context):
+def a_timed_operation():
     """Step: Given a timed operation"""
-    context["step_a_timed_operation"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("metrics collection is enabled")
-def step_given_metrics_collection_is_enabled(context):
+def metrics_collection_is_enabled():
     """Step: Given metrics collection is enabled"""
-    context["step_metrics_collection_is_enabled"] = True
+    # TODO: Implement step
+    pass
+
+
+@given("process information is enabled")
+def process_information_is_enabled():
+    """Step: Given process information is enabled"""
+    # TODO: Implement step
+    pass
+
+
+@given("resource monitoring is enabled")
+def resource_monitoring_is_enabled():
+    """Step: Given resource monitoring is enabled"""
+    # TODO: Implement step
+    pass
+
+
+@given("specific modules are silenced")
+def specific_modules_are_silenced():
+    """Step: Given specific modules are silenced"""
+    # TODO: Implement step
+    pass
+
+
+@given("warning capture is enabled")
+def warning_capture_is_enabled():
+    """Step: Given warning capture is enabled"""
+    # TODO: Implement step
+    pass
 
 
 # When steps
 @when("a log entry is created")
-def step_when_a_log_entry_is_created(context):
+def a_log_entry_is_created():
     """Step: When a log entry is created"""
-    context["result_a_log_entry_is_created"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("a value changes")
-def step_when_a_value_changes(context):
+def a_value_changes():
     """Step: When a value changes"""
-    context["result_a_value_changes"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("a warning is raised")
-def step_when_a_warning_is_raised(context):
+def a_warning_is_raised():
     """Step: When a warning is raised"""
-    context["result_a_warning_is_raised"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("an event occurs")
-def step_when_an_event_occurs(context):
+def an_event_occurs():
     """Step: When an event occurs"""
-    context["result_an_event_occurs"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("an operation completes")
-def step_when_an_operation_completes(context):
+def an_operation_completes():
     """Step: When an operation completes"""
-    context["result_an_operation_completes"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("metrics are collected")
-def step_when_metrics_are_collected(context):
+def metrics_are_collected():
     """Step: When metrics are collected"""
-    context["result_metrics_are_collected"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the log file exceeds max size")
-def step_when_the_log_file_exceeds_max_size(context):
+def the_log_file_exceeds_max_size():
     """Step: When the log file exceeds max size"""
-    context["result_the_log_file_exceeds_max_size"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the logger is initialized")
-def step_when_the_logger_is_initialized(context):
+def the_logger_is_initialized():
     """Step: When the logger is initialized"""
-    context["result_the_logger_is_initialized"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the operation executes")
-def step_when_the_operation_executes(context):
+def the_operation_executes():
     """Step: When the operation executes"""
-    context["result_the_operation_executes"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("those modules log messages")
-def step_when_those_modules_log_messages(context):
+def those_modules_log_messages():
     """Step: When those modules log messages"""
-    context["result_those_modules_log_messages"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 # Then steps
 @then("CPU and memory usage are recorded")
-def step_then_cpu_and_memory_usage_are_recorded(context):
+def cpu_and_memory_usage_are_recorded():
     """Step: Then CPU and memory usage are recorded"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("log entries are written to console")
-def step_then_log_entries_are_written_to_console(context):
+def log_entries_are_written_to_console():
     """Step: Then log entries are written to console"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("log entries are written to the file")
-def step_then_log_entries_are_written_to_the_file(context):
+def log_entries_are_written_to_the_file():
     """Step: Then log entries are written to the file"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("metrics are available on the Prometheus endpoint")
-def step_then_metrics_are_available_on_the_prometheus_endpoint(context):
+def metrics_are_available_on_the_prometheus_endpoint():
     """Step: Then metrics are available on the Prometheus endpoint"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("metrics are recorded")
-def step_then_metrics_are_recorded(context):
+def metrics_are_recorded():
     """Step: Then metrics are recorded"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the counter is incremented")
-def step_then_the_counter_is_incremented(context):
+def the_counter_is_incremented():
     """Step: Then the counter is incremented"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the execution time is recorded")
-def step_then_the_execution_time_is_recorded(context):
+def the_execution_time_is_recorded():
     """Step: Then the execution time is recorded"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the gauge is updated")
-def step_then_the_gauge_is_updated(context):
+def the_gauge_is_updated():
     """Step: Then the gauge is updated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the log file is rotated")
-def step_then_the_log_file_is_rotated(context):
+def the_log_file_is_rotated():
     """Step: Then the log file is rotated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the log includes process details")
-def step_then_the_log_includes_process_details(context):
+def the_log_includes_process_details():
     """Step: Then the log includes process details"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
+
+@then("the logger is ready to record events")
+def the_logger_is_ready_to_record_events():
+    """Step: Then the logger is ready to record events"""
+    # TODO: Implement step
+    pass
+
+
+@then("the logger uses the specified log level")
+def the_logger_uses_the_specified_log_level():
+    """Step: Then the logger uses the specified log level"""
+    # TODO: Implement step
+    pass
+
+
+@then("the messages are suppressed")
+def the_messages_are_suppressed():
+    """Step: Then the messages are suppressed"""
+    # TODO: Implement step
+    pass
+
+
+@then("the warning is logged")
+def the_warning_is_logged():
+    """Step: Then the warning is logged"""
+    # TODO: Implement step
+    pass
+
+
+# And steps (can be used as given/when/then depending on context)
+# And old logs are backed up
+# TODO: Implement as appropriate given/when/then step

@@ -5,16 +5,40 @@ Feature: Dataset Management
   Dataset loading, saving, and lifecycle management
 """
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pytest_bdd import scenario, given, when, then, parsers
 
 
-# Fixtures
+# Fixtures for Given steps
 
 @pytest.fixture
-def context():
-    """Shared context for test steps."""
-    return {}
+def a_dataset_is_already_stored_in_the_manager():
+    """
+    Given a dataset is already stored in the manager
+    """
+    return Mock()
+
+
+@pytest.fixture
+def a_dataset_manager_is_initialized():
+    """
+    Given a dataset manager is initialized
+    """
+    from unittest.mock import Mock
+    manager = Mock()
+    manager.datasets = {}
+    return manager
+
+
+@pytest.fixture
+def a_managed_dataset_exists():
+    """
+    Given a managed dataset exists
+    """
+    from unittest.mock import Mock
+    dataset = Mock()
+    dataset.id = 'dataset_001'
+    dataset.data = [{'id': 1, 'text': 'sample'}]
+    return dataset
 
 
 # Test scenarios
@@ -27,6 +51,7 @@ def test_get_dataset_by_id():
       When a dataset is requested by ID
       Then the dataset is retrieved
     """
+    # TODO: Implement test
     pass
 
 
@@ -39,6 +64,7 @@ def test_load_dataset_from_huggingface_hub():
       When the dataset is requested
       Then the dataset is loaded from HuggingFace Hub
     """
+    # TODO: Implement test
     pass
 
 
@@ -51,6 +77,7 @@ def test_create_mock_dataset_when_loading_fails():
       When the dataset is requested
       Then a mock dataset is created
     """
+    # TODO: Implement test
     pass
 
 
@@ -63,6 +90,7 @@ def test_save_dataset_to_manager():
       When the dataset is saved with an ID
       Then the dataset is stored in the manager
     """
+    # TODO: Implement test
     pass
 
 
@@ -75,6 +103,7 @@ def test_save_dataset_asynchronously_to_destination():
       Then the save operation completes
       And save metadata is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -87,6 +116,7 @@ def test_save_dataset_synchronously_to_destination():
       Then the save operation completes
       And save metadata is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -98,6 +128,7 @@ def test_save_dataset_with_custom_format():
       When the dataset is saved with a specified format
       Then the dataset is saved in the specified format
     """
+    # TODO: Implement test
     pass
 
 
@@ -109,6 +140,7 @@ def test_retrieve_existing_dataset():
       When the dataset is requested by its ID
       Then the stored dataset is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -116,129 +148,135 @@ def test_retrieve_existing_dataset():
 
 # Given steps
 @given("a dataset is already stored in the manager")
-def step_given_a_dataset_is_already_stored_in_the_manager(context):
+def a_dataset_is_already_stored_in_the_manager():
     """Step: Given a dataset is already stored in the manager"""
-    context["step_a_dataset_is_already_stored_in_the_manager"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a dataset manager is initialized")
-def step_given_a_dataset_manager_is_initialized(context):
+def a_dataset_manager_is_initialized():
     """Step: Given a dataset manager is initialized"""
-    context["step_a_dataset_manager_is_initialized"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a managed dataset exists")
-def step_given_a_managed_dataset_exists(context):
+def a_managed_dataset_exists():
     """Step: Given a managed dataset exists"""
-    context["step_a_managed_dataset_exists"] = True
-
-
-@given("a valid HuggingFace dataset ID is provided")
-def step_given_a_valid_huggingface_dataset_id_is_provided(context):
-    """Step: Given a valid HuggingFace dataset ID is provided"""
-    context["step_a_valid_huggingface_dataset_id_is_provided"] = True
-
-
-@given("a valid dataset object")
-def step_given_a_valid_dataset_object(context):
-    """Step: Given a valid dataset object"""
-    context["step_a_valid_dataset_object"] = True
-
-
-@given("an invalid dataset ID is provided")
-def step_given_an_invalid_dataset_id_is_provided(context):
-    """Step: Given an invalid dataset ID is provided"""
-    context["step_an_invalid_dataset_id_is_provided"] = True
-
-
-@given("save metadata is returned")
-def step_given_save_metadata_is_returned(context):
-    """Step: Given save metadata is returned"""
-    context["step_save_metadata_is_returned"] = True
+    # TODO: Implement step
+    pass
 
 
 # When steps
 @when("a dataset is requested by ID")
-def step_when_a_dataset_is_requested_by_id(context):
+def a_dataset_is_requested_by_id():
     """Step: When a dataset is requested by ID"""
-    context["result_a_dataset_is_requested_by_id"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is requested")
-def step_when_the_dataset_is_requested(context):
+def the_dataset_is_requested():
     """Step: When the dataset is requested"""
-    context["result_the_dataset_is_requested"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is requested by its ID")
-def step_when_the_dataset_is_requested_by_its_id(context):
+def the_dataset_is_requested_by_its_id():
     """Step: When the dataset is requested by its ID"""
-    context["result_the_dataset_is_requested_by_its_id"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is saved asynchronously to a destination")
-def step_when_the_dataset_is_saved_asynchronously_to_a_destination(context):
+def the_dataset_is_saved_asynchronously_to_a_destination():
     """Step: When the dataset is saved asynchronously to a destination"""
-    context["result_the_dataset_is_saved_asynchronously_to_a_destination"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is saved synchronously to a destination")
-def step_when_the_dataset_is_saved_synchronously_to_a_destination(context):
+def the_dataset_is_saved_synchronously_to_a_destination():
     """Step: When the dataset is saved synchronously to a destination"""
-    context["result_the_dataset_is_saved_synchronously_to_a_destination"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is saved with a specified format")
-def step_when_the_dataset_is_saved_with_a_specified_format(context):
+def the_dataset_is_saved_with_a_specified_format():
     """Step: When the dataset is saved with a specified format"""
-    context["result_the_dataset_is_saved_with_a_specified_format"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the dataset is saved with an ID")
-def step_when_the_dataset_is_saved_with_an_id(context):
+def the_dataset_is_saved_with_an_id():
     """Step: When the dataset is saved with an ID"""
-    context["result_the_dataset_is_saved_with_an_id"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 # Then steps
 @then("a mock dataset is created")
-def step_then_a_mock_dataset_is_created(context):
+def a_mock_dataset_is_created():
     """Step: Then a mock dataset is created"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the dataset is loaded from HuggingFace Hub")
-def step_then_the_dataset_is_loaded_from_huggingface_hub(context):
+def the_dataset_is_loaded_from_huggingface_hub():
     """Step: Then the dataset is loaded from HuggingFace Hub"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the dataset is retrieved")
-def step_then_the_dataset_is_retrieved(context):
+def the_dataset_is_retrieved():
     """Step: Then the dataset is retrieved"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the dataset is saved in the specified format")
-def step_then_the_dataset_is_saved_in_the_specified_format(context):
+def the_dataset_is_saved_in_the_specified_format():
     """Step: Then the dataset is saved in the specified format"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the dataset is stored in the manager")
-def step_then_the_dataset_is_stored_in_the_manager(context):
+def the_dataset_is_stored_in_the_manager():
     """Step: Then the dataset is stored in the manager"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the save operation completes")
-def step_then_the_save_operation_completes(context):
+def the_save_operation_completes():
     """Step: Then the save operation completes"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the stored dataset is returned")
-def step_then_the_stored_dataset_is_returned(context):
+def the_stored_dataset_is_returned():
     """Step: Then the stored dataset is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
+
+# And steps (can be used as given/when/then depending on context)
+# And a valid HuggingFace dataset ID is provided
+# TODO: Implement as appropriate given/when/then step
+
+# And a valid dataset object
+# TODO: Implement as appropriate given/when/then step
+
+# And an invalid dataset ID is provided
+# TODO: Implement as appropriate given/when/then step
+
+# And save metadata is returned
+# TODO: Implement as appropriate given/when/then step

@@ -5,16 +5,50 @@ Feature: CAR File Conversion
   Data format conversion to and from Content Addressed aRchive files
 """
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pytest_bdd import scenario, given, when, then, parsers
+from unittest.mock import Mock, MagicMock
 
 
-# Fixtures
+# Fixtures for Given steps
 
 @pytest.fixture
-def context():
-    """Shared context for test steps."""
-    return {}
+def arrow_is_not_installed():
+    """
+    Given Arrow is not installed
+    """
+    return Mock()
+
+
+@pytest.fixture
+def ipld_car_library_is_not_installed():
+    """
+    Given IPLD CAR library is not installed
+    """
+    return Mock()
+
+
+@pytest.fixture
+def a_valid_arrow_table():
+    """
+    Given a valid Arrow table
+    """
+    return Mock()
+
+
+@pytest.fixture
+def a_valid_car_file_exists():
+    """
+    Given a valid CAR file exists
+    """
+    return Mock()
+
+
+@pytest.fixture
+def multiple_ipld_cids_exist():
+    """
+    Given multiple IPLD CIDs exist
+    """
+    return Mock()
 
 
 # Test scenarios
@@ -28,6 +62,7 @@ def test_export_arrow_table_to_car_file():
       Then a CAR file is created at the specified path
       And the root CID is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -40,6 +75,7 @@ def test_export_table_with_hash_columns():
       When the table is exported to a CAR file
       Then the table is content-addressed using the specified columns
     """
+    # TODO: Implement test
     pass
 
 
@@ -51,6 +87,7 @@ def test_import_arrow_table_from_car_file():
       When the CAR file is imported
       Then an Arrow table is reconstructed
     """
+    # TODO: Implement test
     pass
 
 
@@ -62,6 +99,7 @@ def test_handle_missing_arrow_dependency():
       When a table export is attempted
       Then a mock CAR file is created
     """
+    # TODO: Implement test
     pass
 
 
@@ -73,6 +111,7 @@ def test_handle_missing_ipld_car_dependency():
       When a CAR export is attempted
       Then a mock CAR file is created
     """
+    # TODO: Implement test
     pass
 
 
@@ -85,6 +124,7 @@ def test_serialize_table_to_ipld_format():
       Then IPLD blocks are created
       And a root CID is generated
     """
+    # TODO: Implement test
     pass
 
 
@@ -96,6 +136,7 @@ def test_export_multiple_cids_to_car_archive():
       When the CIDs are exported to a CAR file
       Then a single CAR archive contains all blocks
     """
+    # TODO: Implement test
     pass
 
 
@@ -103,123 +144,132 @@ def test_export_multiple_cids_to_car_archive():
 
 # Given steps
 @given("Arrow is not installed")
-def step_given_arrow_is_not_installed(context):
+def arrow_is_not_installed():
     """Step: Given Arrow is not installed"""
-    context["step_arrow_is_not_installed"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("IPLD CAR library is not installed")
-def step_given_ipld_car_library_is_not_installed(context):
+def ipld_car_library_is_not_installed():
     """Step: Given IPLD CAR library is not installed"""
-    context["step_ipld_car_library_is_not_installed"] = True
-
-
-@given("a root CID is generated")
-def step_given_a_root_cid_is_generated(context):
-    """Step: Given a root CID is generated"""
-    context["step_a_root_cid_is_generated"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a valid Arrow table")
-def step_given_a_valid_arrow_table(context):
+def a_valid_arrow_table():
     """Step: Given a valid Arrow table"""
-    context["step_a_valid_arrow_table"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a valid CAR file exists")
-def step_given_a_valid_car_file_exists(context):
+def a_valid_car_file_exists():
     """Step: Given a valid CAR file exists"""
-    context["step_a_valid_car_file_exists"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("multiple IPLD CIDs exist")
-def step_given_multiple_ipld_cids_exist(context):
+def multiple_ipld_cids_exist():
     """Step: Given multiple IPLD CIDs exist"""
-    context["step_multiple_ipld_cids_exist"] = True
-
-
-@given("specific columns are designated for hashing")
-def step_given_specific_columns_are_designated_for_hashing(context):
-    """Step: Given specific columns are designated for hashing"""
-    context["step_specific_columns_are_designated_for_hashing"] = True
-
-
-@given("the root CID is returned")
-def step_given_the_root_cid_is_returned(context):
-    """Step: Given the root CID is returned"""
-    context["step_the_root_cid_is_returned"] = True
+    # TODO: Implement step
+    pass
 
 
 # When steps
 @when("a CAR export is attempted")
-def step_when_a_car_export_is_attempted(context):
+def a_car_export_is_attempted():
     """Step: When a CAR export is attempted"""
-    context["result_a_car_export_is_attempted"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("a table export is attempted")
-def step_when_a_table_export_is_attempted(context):
+def a_table_export_is_attempted():
     """Step: When a table export is attempted"""
-    context["result_a_table_export_is_attempted"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the CAR file is imported")
-def step_when_the_car_file_is_imported(context):
+def the_car_file_is_imported():
     """Step: When the CAR file is imported"""
-    context["result_the_car_file_is_imported"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the CIDs are exported to a CAR file")
-def step_when_the_cids_are_exported_to_a_car_file(context):
+def the_cids_are_exported_to_a_car_file():
     """Step: When the CIDs are exported to a CAR file"""
-    context["result_the_cids_are_exported_to_a_car_file"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the table is exported to a CAR file")
-def step_when_the_table_is_exported_to_a_car_file(context):
+def the_table_is_exported_to_a_car_file():
     """Step: When the table is exported to a CAR file"""
-    context["result_the_table_is_exported_to_a_car_file"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the table is serialized")
-def step_when_the_table_is_serialized(context):
+def the_table_is_serialized():
     """Step: When the table is serialized"""
-    context["result_the_table_is_serialized"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 # Then steps
 @then("IPLD blocks are created")
-def step_then_ipld_blocks_are_created(context):
+def ipld_blocks_are_created():
     """Step: Then IPLD blocks are created"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("a CAR file is created at the specified path")
-def step_then_a_car_file_is_created_at_the_specified_path(context):
+def a_car_file_is_created_at_the_specified_path():
     """Step: Then a CAR file is created at the specified path"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("a mock CAR file is created")
-def step_then_a_mock_car_file_is_created(context):
+def a_mock_car_file_is_created():
     """Step: Then a mock CAR file is created"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("a single CAR archive contains all blocks")
-def step_then_a_single_car_archive_contains_all_blocks(context):
+def a_single_car_archive_contains_all_blocks():
     """Step: Then a single CAR archive contains all blocks"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("an Arrow table is reconstructed")
-def step_then_an_arrow_table_is_reconstructed(context):
+def an_arrow_table_is_reconstructed():
     """Step: Then an Arrow table is reconstructed"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the table is content-addressed using the specified columns")
-def step_then_the_table_is_content_addressed_using_the_specified_columns(context):
+def the_table_is_contentaddressed_using_the_specified_columns():
     """Step: Then the table is content-addressed using the specified columns"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
+
+# And steps (can be used as given/when/then depending on context)
+# And a root CID is generated
+# TODO: Implement as appropriate given/when/then step
+
+# And specific columns are designated for hashing
+# TODO: Implement as appropriate given/when/then step
+
+# And the root CID is returned
+# TODO: Implement as appropriate given/when/then step

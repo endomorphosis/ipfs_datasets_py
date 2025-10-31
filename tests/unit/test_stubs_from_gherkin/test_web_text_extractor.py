@@ -5,16 +5,74 @@ Feature: Web Text Extraction
   Extract text content from web pages
 """
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pytest_bdd import scenario, given, when, then, parsers
+from unittest.mock import Mock, MagicMock
 
 
-# Fixtures
+# Fixtures for Given steps
 
 @pytest.fixture
-def context():
-    """Shared context for test steps."""
-    return {}
+def html_content_with_tags():
+    """
+    Given HTML content with tags
+    """
+    return Mock()
+
+
+@pytest.fixture
+def html_with_paragraphs():
+    """
+    Given HTML with paragraphs
+    """
+    return Mock()
+
+
+@pytest.fixture
+def a_page_with_javascriptrendered_content():
+    """
+    Given a page with JavaScript-rendered content
+    """
+    return Mock()
+
+
+@pytest.fixture
+def a_web_page_with_navigation_and_ads():
+    """
+    Given a web page with navigation and ads
+    """
+    return Mock()
+
+
+@pytest.fixture
+def an_html_page_with_links():
+    """
+    Given an HTML page with links
+    """
+    return Mock()
+
+
+@pytest.fixture
+def an_html_page_with_metadata():
+    """
+    Given an HTML page with metadata
+    """
+    return Mock()
+
+
+@pytest.fixture
+def an_html_web_page():
+    """
+    Given an HTML web page
+    """
+    return Mock()
+
+
+@pytest.fixture
+def extracted_text_with_extra_whitespace():
+    """
+    Given extracted text with extra whitespace
+    """
+    return Mock()
 
 
 # Test scenarios
@@ -27,6 +85,7 @@ def test_extract_text_from_html_page():
       When text extraction is performed
       Then clean text content is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -38,6 +97,7 @@ def test_remove_html_tags():
       When tag removal is applied
       Then only text content remains
     """
+    # TODO: Implement test
     pass
 
 
@@ -49,6 +109,7 @@ def test_extract_main_content():
       When main content extraction is performed
       Then only article content is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -60,6 +121,7 @@ def test_preserve_paragraph_structure():
       When text extraction is performed
       Then paragraph structure is preserved
     """
+    # TODO: Implement test
     pass
 
 
@@ -71,17 +133,19 @@ def test_extract_metadata():
       When metadata extraction is performed
       Then title, author, and date are extracted
     """
+    # TODO: Implement test
     pass
 
 
 @scenario('../gherkin_features/web_text_extractor.feature', 'Handle JavaScript-rendered content')
-def test_handle_javascript_rendered_content():
+def test_handle_javascriptrendered_content():
     """
     Scenario: Handle JavaScript-rendered content
       Given a page with JavaScript-rendered content
       When extraction is performed
       Then rendered content is extracted
     """
+    # TODO: Implement test
     pass
 
 
@@ -93,6 +157,7 @@ def test_clean_extracted_text():
       When text cleaning is applied
       Then normalized text is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -104,6 +169,7 @@ def test_extract_links_from_page():
       When link extraction is performed
       Then all hyperlinks are returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -111,141 +177,164 @@ def test_extract_links_from_page():
 
 # Given steps
 @given("HTML content with tags")
-def step_given_html_content_with_tags(context):
+def html_content_with_tags():
     """Step: Given HTML content with tags"""
-    context["step_html_content_with_tags"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("HTML with paragraphs")
-def step_given_html_with_paragraphs(context):
+def html_with_paragraphs():
     """Step: Given HTML with paragraphs"""
-    context["step_html_with_paragraphs"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a page with JavaScript-rendered content")
-def step_given_a_page_with_javascript_rendered_content(context):
+def a_page_with_javascriptrendered_content():
     """Step: Given a page with JavaScript-rendered content"""
-    context["step_a_page_with_javascript_rendered_content"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a web page with navigation and ads")
-def step_given_a_web_page_with_navigation_and_ads(context):
+def a_web_page_with_navigation_and_ads():
     """Step: Given a web page with navigation and ads"""
-    context["step_a_web_page_with_navigation_and_ads"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("an HTML page with links")
-def step_given_an_html_page_with_links(context):
+def an_html_page_with_links():
     """Step: Given an HTML page with links"""
-    context["step_an_html_page_with_links"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("an HTML page with metadata")
-def step_given_an_html_page_with_metadata(context):
+def an_html_page_with_metadata():
     """Step: Given an HTML page with metadata"""
-    context["step_an_html_page_with_metadata"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("an HTML web page")
-def step_given_an_html_web_page(context):
+def an_html_web_page():
     """Step: Given an HTML web page"""
-    context["step_an_html_web_page"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("extracted text with extra whitespace")
-def step_given_extracted_text_with_extra_whitespace(context):
+def extracted_text_with_extra_whitespace():
     """Step: Given extracted text with extra whitespace"""
-    context["step_extracted_text_with_extra_whitespace"] = True
+    # TODO: Implement step
+    pass
 
 
 # When steps
 @when("extraction is performed")
-def step_when_extraction_is_performed(context):
+def extraction_is_performed():
     """Step: When extraction is performed"""
-    context["result_extraction_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("link extraction is performed")
-def step_when_link_extraction_is_performed(context):
+def link_extraction_is_performed():
     """Step: When link extraction is performed"""
-    context["result_link_extraction_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("main content extraction is performed")
-def step_when_main_content_extraction_is_performed(context):
+def main_content_extraction_is_performed():
     """Step: When main content extraction is performed"""
-    context["result_main_content_extraction_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("metadata extraction is performed")
-def step_when_metadata_extraction_is_performed(context):
+def metadata_extraction_is_performed():
     """Step: When metadata extraction is performed"""
-    context["result_metadata_extraction_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("tag removal is applied")
-def step_when_tag_removal_is_applied(context):
+def tag_removal_is_applied():
     """Step: When tag removal is applied"""
-    context["result_tag_removal_is_applied"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("text cleaning is applied")
-def step_when_text_cleaning_is_applied(context):
+def text_cleaning_is_applied():
     """Step: When text cleaning is applied"""
-    context["result_text_cleaning_is_applied"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("text extraction is performed")
-def step_when_text_extraction_is_performed(context):
+def text_extraction_is_performed():
     """Step: When text extraction is performed"""
-    context["result_text_extraction_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 # Then steps
 @then("all hyperlinks are returned")
-def step_then_all_hyperlinks_are_returned(context):
+def all_hyperlinks_are_returned():
     """Step: Then all hyperlinks are returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("clean text content is returned")
-def step_then_clean_text_content_is_returned(context):
+def clean_text_content_is_returned():
     """Step: Then clean text content is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("normalized text is returned")
-def step_then_normalized_text_is_returned(context):
+def normalized_text_is_returned():
     """Step: Then normalized text is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("only article content is returned")
-def step_then_only_article_content_is_returned(context):
+def only_article_content_is_returned():
     """Step: Then only article content is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("only text content remains")
-def step_then_only_text_content_remains(context):
+def only_text_content_remains():
     """Step: Then only text content remains"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("paragraph structure is preserved")
-def step_then_paragraph_structure_is_preserved(context):
+def paragraph_structure_is_preserved():
     """Step: Then paragraph structure is preserved"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("rendered content is extracted")
-def step_then_rendered_content_is_extracted(context):
+def rendered_content_is_extracted():
     """Step: Then rendered content is extracted"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("title, author, and date are extracted")
-def step_then_title_author_and_date_are_extracted(context):
+def title_author_and_date_are_extracted():
     """Step: Then title, author, and date are extracted"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 

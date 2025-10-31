@@ -5,16 +5,97 @@ Feature: Security and Access Control
   Authentication, authorization, and security features
 """
 import pytest
-from unittest.mock import Mock, MagicMock, patch
 from pytest_bdd import scenario, given, when, then, parsers
 
 
-# Fixtures
+# Fixtures for Given steps
 
 @pytest.fixture
-def context():
-    """Shared context for test steps."""
-    return {}
+def a_password_and_its_hash():
+    """
+    Given a password and its hash
+    """
+    return {'password': 'secret123', 'hash': '$2b$12$abcdefghijklmnopqrstuv'}
+
+
+@pytest.fixture
+def a_plaintext_password():
+    """
+    Given a plaintext password
+    """
+    return 'my_secure_password_123'
+
+
+@pytest.fixture
+def a_user_and_a_resource():
+    """
+    Given a user and a resource
+    """
+    return {'user': {'id': 'user123', 'role': 'editor'}, 'resource': {'id': 'doc456', 'type': 'document'}}
+
+
+@pytest.fixture
+def an_access_token_exists():
+    """
+    Given an access token exists
+    """
+    return {'token': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test', 'expires': '2025-12-31'}
+
+
+@pytest.fixture
+def an_active_access_token():
+    """
+    Given an active access token
+    """
+    return {'token': 'active_token_abc123', 'active': True, 'user_id': 'user789'}
+
+
+@pytest.fixture
+def data_to_sign_and_a_private_key():
+    """
+    Given data to sign and a private key
+    """
+    return {'data': b'important message', 'private_key': '-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----'}
+
+
+@pytest.fixture
+def encrypted_data_and_decryption_key():
+    """
+    Given encrypted data and decryption key
+    """
+    return {'encrypted': b'\x01\x02\x03\x04encrypted_data', 'key': b'decryption_key_12345678901234567890'}
+
+
+@pytest.fixture
+def plaintext_data():
+    """
+    Given plaintext data
+    """
+    return b'This is sensitive plaintext data that needs encryption'
+
+
+@pytest.fixture
+def signed_data_and_a_public_key():
+    """
+    Given signed data and a public key
+    """
+    return {'data': b'message', 'signature': b'signature_bytes', 'public_key': '-----BEGIN PUBLIC KEY-----\ntest\n-----END PUBLIC KEY-----'}
+
+
+@pytest.fixture
+def user_credentials_are_provided():
+    """
+    Given user credentials are provided
+    """
+    return {'username': 'testuser', 'password': 'testpass123'}
+
+
+@pytest.fixture
+def valid_user_credentials():
+    """
+    Given valid user credentials
+    """
+    return {'username': 'validuser', 'password': 'validpass456', 'valid': True}
 
 
 # Test scenarios
@@ -27,6 +108,7 @@ def test_validate_user_credentials():
       When authentication is attempted
       Then the credentials are validated
     """
+    # TODO: Implement test
     pass
 
 
@@ -38,6 +120,7 @@ def test_generate_access_token():
       When an access token is requested
       Then a token is generated
     """
+    # TODO: Implement test
     pass
 
 
@@ -49,6 +132,7 @@ def test_verify_access_token():
       When the token is verified
       Then the token validity is confirmed
     """
+    # TODO: Implement test
     pass
 
 
@@ -60,6 +144,7 @@ def test_revoke_access_token():
       When token revocation is requested
       Then the token is invalidated
     """
+    # TODO: Implement test
     pass
 
 
@@ -71,6 +156,7 @@ def test_check_user_permissions():
       When permission check is performed
       Then the permission status is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -82,6 +168,7 @@ def test_encrypt_sensitive_data():
       When encryption is applied
       Then encrypted data is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -93,6 +180,7 @@ def test_decrypt_encrypted_data():
       When decryption is applied
       Then original plaintext is recovered
     """
+    # TODO: Implement test
     pass
 
 
@@ -104,6 +192,7 @@ def test_hash_password():
       When password hashing is applied
       Then a secure password hash is generated
     """
+    # TODO: Implement test
     pass
 
 
@@ -115,6 +204,7 @@ def test_verify_password_hash():
       When password verification is performed
       Then the match status is returned
     """
+    # TODO: Implement test
     pass
 
 
@@ -126,6 +216,7 @@ def test_generate_cryptographic_signature():
       When signature generation is requested
       Then a cryptographic signature is created
     """
+    # TODO: Implement test
     pass
 
 
@@ -137,6 +228,7 @@ def test_verify_cryptographic_signature():
       When signature verification is performed
       Then the signature validity is confirmed
     """
+    # TODO: Implement test
     pass
 
 
@@ -144,183 +236,234 @@ def test_verify_cryptographic_signature():
 
 # Given steps
 @given("a password and its hash")
-def step_given_a_password_and_its_hash(context):
+def a_password_and_its_hash():
     """Step: Given a password and its hash"""
-    context["step_a_password_and_its_hash"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a plaintext password")
-def step_given_a_plaintext_password(context):
+def a_plaintext_password():
     """Step: Given a plaintext password"""
-    context["step_a_plaintext_password"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("a user and a resource")
-def step_given_a_user_and_a_resource(context):
+def a_user_and_a_resource():
     """Step: Given a user and a resource"""
-    context["step_a_user_and_a_resource"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("an access token exists")
-def step_given_an_access_token_exists(context):
+def an_access_token_exists():
     """Step: Given an access token exists"""
-    context["step_an_access_token_exists"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("an active access token")
-def step_given_an_active_access_token(context):
+def an_active_access_token():
     """Step: Given an active access token"""
-    context["step_an_active_access_token"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("data to sign and a private key")
-def step_given_data_to_sign_and_a_private_key(context):
+def data_to_sign_and_a_private_key():
     """Step: Given data to sign and a private key"""
-    context["step_data_to_sign_and_a_private_key"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("encrypted data and decryption key")
-def step_given_encrypted_data_and_decryption_key(context):
+def encrypted_data_and_decryption_key():
     """Step: Given encrypted data and decryption key"""
-    context["step_encrypted_data_and_decryption_key"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("plaintext data")
-def step_given_plaintext_data(context):
+def plaintext_data():
     """Step: Given plaintext data"""
-    context["step_plaintext_data"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("signed data and a public key")
-def step_given_signed_data_and_a_public_key(context):
+def signed_data_and_a_public_key():
     """Step: Given signed data and a public key"""
-    context["step_signed_data_and_a_public_key"] = True
+    # TODO: Implement step
+    pass
 
 
 @given("user credentials are provided")
-def step_given_user_credentials_are_provided(context):
+def user_credentials_are_provided():
     """Step: Given user credentials are provided"""
-    context["step_user_credentials_are_provided"] = True
+    # TODO: Implement step
+    pass
+
+
+@given("valid user credentials")
+def valid_user_credentials():
+    """Step: Given valid user credentials"""
+    # TODO: Implement step
+    pass
 
 
 # When steps
 @when("an access token is requested")
-def step_when_an_access_token_is_requested(context):
+def an_access_token_is_requested():
     """Step: When an access token is requested"""
-    context["result_an_access_token_is_requested"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("authentication is attempted")
-def step_when_authentication_is_attempted(context):
+def authentication_is_attempted():
     """Step: When authentication is attempted"""
-    context["result_authentication_is_attempted"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("decryption is applied")
-def step_when_decryption_is_applied(context):
+def decryption_is_applied():
     """Step: When decryption is applied"""
-    context["result_decryption_is_applied"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("encryption is applied")
-def step_when_encryption_is_applied(context):
+def encryption_is_applied():
     """Step: When encryption is applied"""
-    context["result_encryption_is_applied"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("password hashing is applied")
-def step_when_password_hashing_is_applied(context):
+def password_hashing_is_applied():
     """Step: When password hashing is applied"""
-    context["result_password_hashing_is_applied"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("password verification is performed")
-def step_when_password_verification_is_performed(context):
+def password_verification_is_performed():
     """Step: When password verification is performed"""
-    context["result_password_verification_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("permission check is performed")
-def step_when_permission_check_is_performed(context):
+def permission_check_is_performed():
     """Step: When permission check is performed"""
-    context["result_permission_check_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("signature generation is requested")
-def step_when_signature_generation_is_requested(context):
+def signature_generation_is_requested():
     """Step: When signature generation is requested"""
-    context["result_signature_generation_is_requested"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("signature verification is performed")
-def step_when_signature_verification_is_performed(context):
+def signature_verification_is_performed():
     """Step: When signature verification is performed"""
-    context["result_signature_verification_is_performed"] = Mock()
+    # TODO: Implement step
+    pass
 
 
 @when("the token is verified")
-def step_when_the_token_is_verified(context):
+def the_token_is_verified():
     """Step: When the token is verified"""
-    context["result_the_token_is_verified"] = Mock()
+    # TODO: Implement step
+    pass
+
+
+@when("token revocation is requested")
+def token_revocation_is_requested():
+    """Step: When token revocation is requested"""
+    # TODO: Implement step
+    pass
 
 
 # Then steps
 @then("a cryptographic signature is created")
-def step_then_a_cryptographic_signature_is_created(context):
+def a_cryptographic_signature_is_created():
     """Step: Then a cryptographic signature is created"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("a secure password hash is generated")
-def step_then_a_secure_password_hash_is_generated(context):
+def a_secure_password_hash_is_generated():
     """Step: Then a secure password hash is generated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("a token is generated")
-def step_then_a_token_is_generated(context):
+def a_token_is_generated():
     """Step: Then a token is generated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("encrypted data is returned")
-def step_then_encrypted_data_is_returned(context):
+def encrypted_data_is_returned():
     """Step: Then encrypted data is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("original plaintext is recovered")
-def step_then_original_plaintext_is_recovered(context):
+def original_plaintext_is_recovered():
     """Step: Then original plaintext is recovered"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the credentials are validated")
-def step_then_the_credentials_are_validated(context):
+def the_credentials_are_validated():
     """Step: Then the credentials are validated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the match status is returned")
-def step_then_the_match_status_is_returned(context):
+def the_match_status_is_returned():
     """Step: Then the match status is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the permission status is returned")
-def step_then_the_permission_status_is_returned(context):
+def the_permission_status_is_returned():
     """Step: Then the permission status is returned"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the signature validity is confirmed")
-def step_then_the_signature_validity_is_confirmed(context):
+def the_signature_validity_is_confirmed():
     """Step: Then the signature validity is confirmed"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
 
 
 @then("the token is invalidated")
-def step_then_the_token_is_invalidated(context):
+def the_token_is_invalidated():
     """Step: Then the token is invalidated"""
-    assert context is not None, "Context should exist"
+    # TODO: Implement step
+    pass
+
+
+@then("the token validity is confirmed")
+def the_token_validity_is_confirmed():
+    """Step: Then the token validity is confirmed"""
+    # TODO: Implement step
+    pass
 
