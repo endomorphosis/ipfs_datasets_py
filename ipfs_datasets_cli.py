@@ -57,6 +57,13 @@ Commands:
       auth       Manage GitHub authentication
       execute    Execute GitHub CLI command
       
+    copilot      GitHub Copilot CLI management
+      status     Show Copilot CLI installation status
+      install    Install or update Copilot CLI extension
+      explain    Get AI explanation for code
+      suggest    Get command suggestions from natural language
+      git        Get Git command suggestions
+      
     gemini       Google Gemini CLI management
       status     Show Gemini CLI installation status
       install    Install Gemini CLI
@@ -1160,6 +1167,214 @@ def execute_heavy_command(args):
                 return
             except Exception as e:
                 print(f"Error executing github command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "copilot":
+            # GitHub Copilot CLI management commands
+            subcommand = args[1] if len(args) > 1 else None
+            
+            try:
+                from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+                
+                if subcommand == "status":
+                    # Show Copilot CLI status
+                    extra = args[2:]
+                    github_cli_path = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--github-cli-path", "-g") and i + 1 < len(extra):
+                            github_cli_path = extra[i + 1]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    copilot = CopilotCLI(github_cli_path=github_cli_path)
+                    status = copilot.get_status()
+                    
+                    if json_output:
+                        print(json.dumps(status, indent=2))
+                    else:
+                        print("GitHub Copilot CLI Status:")
+                        print(f"  Installed: {status['installed']}")
+                        print(f"  GitHub CLI Available: {status['github_cli_available']}")
+                        print(f"  GitHub CLI Path: {status['github_cli_path'] or 'Not found'}")
+                        if status.get('version_info'):
+                            print(f"  Version: {status['version_info']}")
+                    return
+                
+                elif subcommand == "install":
+                    # Install Copilot CLI
+                    extra = args[2:]
+                    github_cli_path = None
+                    force = False
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--github-cli-path", "-g") and i + 1 < len(extra):
+                            github_cli_path = extra[i + 1]
+                            i += 2
+                        elif token in ("--force", "-f"):
+                            force = True
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    copilot = CopilotCLI(github_cli_path=github_cli_path)
+                    print("Installing GitHub Copilot CLI extension...")
+                    result = copilot.install(force=force)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['message'])
+                            if result.get('stdout'):
+                                print(result['stdout'])
+                        else:
+                            print(f"Installation failed: {result.get('error')}")
+                            if result.get('stderr'):
+                                print(result['stderr'], file=sys.stderr)
+                    return
+                
+                elif subcommand == "explain":
+                    # Explain code using Copilot
+                    extra = args[2:]
+                    github_cli_path = None
+                    code = None
+                    language = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--github-cli-path", "-g") and i + 1 < len(extra):
+                            github_cli_path = extra[i + 1]
+                            i += 2
+                        elif token in ("--code", "-c") and i + 1 < len(extra):
+                            code = extra[i + 1]
+                            i += 2
+                        elif token in ("--language", "-l") and i + 1 < len(extra):
+                            language = extra[i + 1]
+                            i += 2
+                        else:
+                            # Treat remaining args as code if not specified
+                            if code is None:
+                                code = ' '.join(extra[i:])
+                                break
+                            i += 1
+                    
+                    if not code:
+                        print("Usage: ipfs-datasets copilot explain <code> [--language LANG] [--github-cli-path PATH]")
+                        print("   or: ipfs-datasets copilot explain --code '<code>' [options]")
+                        return
+                    
+                    copilot = CopilotCLI(github_cli_path=github_cli_path)
+                    if not copilot.installed:
+                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        return
+                    
+                    result = copilot.explain_code(code, language=language)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['explanation'])
+                        else:
+                            print(f"Failed to explain code: {result.get('error')}")
+                    return
+                
+                elif subcommand == "suggest":
+                    # Get command suggestions from Copilot
+                    extra = args[2:]
+                    github_cli_path = None
+                    description = None
+                    shell = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--github-cli-path", "-g") and i + 1 < len(extra):
+                            github_cli_path = extra[i + 1]
+                            i += 2
+                        elif token in ("--shell", "-s") and i + 1 < len(extra):
+                            shell = extra[i + 1]
+                            i += 2
+                        else:
+                            # Treat remaining args as description
+                            if description is None:
+                                description = ' '.join(extra[i:])
+                                break
+                            i += 1
+                    
+                    if not description:
+                        print("Usage: ipfs-datasets copilot suggest <description> [--shell SHELL] [--github-cli-path PATH]")
+                        return
+                    
+                    copilot = CopilotCLI(github_cli_path=github_cli_path)
+                    if not copilot.installed:
+                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        return
+                    
+                    result = copilot.suggest_command(description, shell=shell)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['suggestions'])
+                        else:
+                            print(f"Failed to get suggestions: {result.get('error')}")
+                    return
+                
+                elif subcommand == "git":
+                    # Get Git command suggestions from Copilot
+                    extra = args[2:]
+                    github_cli_path = None
+                    description = None
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--github-cli-path", "-g") and i + 1 < len(extra):
+                            github_cli_path = extra[i + 1]
+                            i += 2
+                        else:
+                            # Treat remaining args as description
+                            if description is None:
+                                description = ' '.join(extra[i:])
+                                break
+                            i += 1
+                    
+                    if not description:
+                        print("Usage: ipfs-datasets copilot git <description> [--github-cli-path PATH]")
+                        return
+                    
+                    copilot = CopilotCLI(github_cli_path=github_cli_path)
+                    if not copilot.installed:
+                        print("GitHub Copilot CLI is not installed. Run 'ipfs-datasets copilot install' first.")
+                        return
+                    
+                    result = copilot.suggest_git_command(description)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(result['suggestions'])
+                        else:
+                            print(f"Failed to get Git suggestions: {result.get('error')}")
+                    return
+                
+                else:
+                    print(f"Unknown copilot subcommand: {subcommand}")
+                    print("Available subcommands: status, install, explain, suggest, git")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: Copilot CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing copilot command: {e}")
                 import traceback
                 traceback.print_exc()
                 return
