@@ -16,27 +16,19 @@ jobs:
   build:
     name: Build distribution 📦
     runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.12-slim
-      options: --user root
 
     steps:
-      - name: Install system dependencies
-        run: |
-          apt-get update
-          apt-get install -y git
-      
       - uses: actions/checkout@v4
         with:
           submodules: false
       
       - name: Set up Python environment
         run: |
-          python --version
-          python -m pip install --upgrade pip setuptools wheel
+          python3 --version
+          python3 -m pip install --user --upgrade pip setuptools wheel
       
       - name: Build the package
-        run: python setup.py sdist bdist_wheel
+        run: python3 setup.py sdist bdist_wheel
       
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -49,9 +41,6 @@ jobs:
     if: github.ref == 'refs/heads/main'  # only publish to PyPI on pushes to main branch
     needs: build
     runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.12-slim
-      options: --user root
     environment:
       name: pypi
       url: https://pypi.org/p/ipfs-datasets # Replace <package-name> with your PyPI project name
