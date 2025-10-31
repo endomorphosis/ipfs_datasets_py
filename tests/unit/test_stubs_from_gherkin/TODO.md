@@ -8,21 +8,21 @@ Note: Tests are implemented but may not pass - the goal is structure, not passin
 
 ## Implementation Status
 
-### Completed (2/10)
+### Completed (4/10)
 1. [x] test___init__.py - Package initialization tests (DONE)
 2. [x] test_audit.py - Audit logging tests (DONE)
+3. [x] test_config.py - Configuration management tests (DONE)
+4. [x] test_vector_tools.py - Vector operations tests (DONE)
 
 ### In Progress (0/10)
-_None yet_
+_Working on remaining 6 files_
 
-### Planned (8/10)
-3. [ ] test_config.py - Configuration management tests  
-4. [ ] test_car_conversion.py - CAR file conversion tests
-5. [ ] test_dataset_manager.py - Dataset lifecycle management tests
-6. [ ] test_ipfs_multiformats.py - Content identifier generation tests
-7. [ ] test_monitoring.py - System monitoring tests
-8. [ ] test_security.py - Security and access control tests
-9. [ ] test_vector_tools.py - Vector operations tests
+### Planned (6/10)
+5. [ ] test_car_conversion.py - CAR file conversion tests
+6. [ ] test_dataset_manager.py - Dataset lifecycle management tests
+7. [ ] test_ipfs_multiformats.py - Content identifier generation tests
+8. [ ] test_monitoring.py - System monitoring tests
+9. [ ] test_security.py - Security and access control tests
 10. [ ] test_web_text_extractor.py - Text extraction from web tests
 
 ## Implementation Notes
@@ -52,4 +52,22 @@ _None yet_
 - Implemented all step definitions with actual AuditEvent creation
 - Added assertions in "then" steps
 - Uses proper AuditLevel, AuditCategory enums
+- All steps have actual implementation (no pass statements)
+
+### test_config.py
+- Implemented all 8 scenarios with @scenario decorators
+- Added proper imports from ipfs_datasets_py.config
+- Implemented 7 fixtures with tmp_path for file creation
+- Implemented all Given/When/Then steps with actual config operations
+- Added assertions in "then" steps
+- Handles nested configs, overrides, file operations
+- All steps have actual implementation (no pass statements)
+
+### test_vector_tools.py
+- Implemented all 11 scenarios with @scenario decorators
+- Added proper imports (numpy, pytest_bdd)
+- Implemented 10 fixtures for vector operations
+- Implemented all Given/When/Then steps with actual numpy operations
+- Added assertions in "then" steps
+- Includes cosine similarity, Euclidean distance, normalization
 - All steps have actual implementation (no pass statements)

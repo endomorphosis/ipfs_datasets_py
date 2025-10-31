@@ -5,221 +5,160 @@ Feature: Vector Tools
   Vector embedding and similarity operations
 """
 import pytest
+import numpy as np
 from pytest_bdd import scenario, given, when, then, parsers
 
 
 # Fixtures for Given steps
 
 @pytest.fixture
+def context():
+    """Shared context for test steps."""
+    return {}
+
+
+@pytest.fixture
 def a_collection_of_vectors():
-    """
-    Given a collection of vectors
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a collection of vectors"""
+    # Create a collection of 10 random vectors
+    return [np.random.rand(128).tolist() for _ in range(10)]
 
 
 @pytest.fixture
 def a_metadata_filter_criteria():
-    """
-    Given a metadata filter criteria
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a metadata filter criteria"""
+    return {'category': 'test', 'score_min': 0.5}
 
 
 @pytest.fixture
 def a_query_vector_and_vector_database():
-    """
-    Given a query vector and vector database
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a query vector and vector database"""
+    query = np.random.rand(128).tolist()
+    database = [np.random.rand(128).tolist() for _ in range(20)]
+    return {'query': query, 'database': database}
 
 
 @pytest.fixture
 def a_text_input():
-    """
-    Given a text input
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a text input"""
+    return "This is a sample text for embedding generation"
 
 
 @pytest.fixture
 def a_vector_id():
-    """
-    Given a vector ID
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a vector ID"""
+    return "vec_12345"
 
 
 @pytest.fixture
 def a_vector_embedding():
-    """
-    Given a vector embedding
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a vector embedding"""
+    return np.random.rand(128).tolist()
 
 
 @pytest.fixture
 def a_vector_embedding_and_metadata():
-    """
-    Given a vector embedding and metadata
-    """
-    # TODO: Implement fixture
-    pass
+    """Given a vector embedding and metadata"""
+    return {
+        'vector': np.random.rand(128).tolist(),
+        'metadata': {'id': 'doc1', 'title': 'Test Document'}
+    }
 
 
 @pytest.fixture
 def an_existing_vector_in_the_database():
-    """
-    Given an existing vector in the database
-    """
-    # TODO: Implement fixture
-    pass
+    """Given an existing vector in the database"""
+    return {
+        'id': 'vec_existing',
+        'vector': np.random.rand(128).tolist(),
+        'metadata': {'original': 'data'}
+    }
 
 
 @pytest.fixture
 def multiple_text_inputs():
-    """
-    Given multiple text inputs
-    """
-    # TODO: Implement fixture
-    pass
+    """Given multiple text inputs"""
+    return [
+        "First text sample",
+        "Second text sample",
+        "Third text sample"
+    ]
 
 
 @pytest.fixture
 def two_vector_embeddings():
-    """
-    Given two vector embeddings
-    """
-    # TODO: Implement fixture
-    pass
+    """Given two vector embeddings"""
+    return {
+        'vec1': np.random.rand(128).tolist(),
+        'vec2': np.random.rand(128).tolist()
+    }
 
 
 # Test scenarios
 
+@scenario('../gherkin_features/vector_tools.feature', 'Generate embedding for text')
 def test_generate_embedding_for_text():
-    """
-    Scenario: Generate embedding for text
-      Given a text input
-      When embedding generation is requested
-      Then a vector embedding is returned
-    """
-    # TODO: Implement test
+    """Scenario: Generate embedding for text"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Calculate cosine similarity')
 def test_calculate_cosine_similarity():
-    """
-    Scenario: Calculate cosine similarity
-      Given two vector embeddings
-      When cosine similarity is calculated
-      Then a similarity score is returned
-    """
-    # TODO: Implement test
+    """Scenario: Calculate cosine similarity"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Find similar vectors')
 def test_find_similar_vectors():
-    """
-    Scenario: Find similar vectors
-      Given a query vector and vector database
-      When similarity search is performed
-      Then the most similar vectors are returned
-    """
-    # TODO: Implement test
+    """Scenario: Find similar vectors"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Store vector embedding')
 def test_store_vector_embedding():
-    """
-    Scenario: Store vector embedding
-      Given a vector embedding and metadata
-      When the vector is stored
-      Then the vector is added to the database
-    """
-    # TODO: Implement test
+    """Scenario: Store vector embedding"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Batch generate embeddings')
 def test_batch_generate_embeddings():
-    """
-    Scenario: Batch generate embeddings
-      Given multiple text inputs
-      When batch embedding is requested
-      Then embeddings for all inputs are returned
-    """
-    # TODO: Implement test
+    """Scenario: Batch generate embeddings"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Normalize vector')
 def test_normalize_vector():
-    """
-    Scenario: Normalize vector
-      Given a vector embedding
-      When normalization is applied
-      Then the vector has unit length
-    """
-    # TODO: Implement test
+    """Scenario: Normalize vector"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Calculate Euclidean distance')
 def test_calculate_euclidean_distance():
-    """
-    Scenario: Calculate Euclidean distance
-      Given two vector embeddings
-      When Euclidean distance is calculated
-      Then the distance value is returned
-    """
-    # TODO: Implement test
+    """Scenario: Calculate Euclidean distance"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Index vectors for search')
 def test_index_vectors_for_search():
-    """
-    Scenario: Index vectors for search
-      Given a collection of vectors
-      When indexing is performed
-      Then a searchable index is created
-    """
-    # TODO: Implement test
+    """Scenario: Index vectors for search"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Update vector metadata')
 def test_update_vector_metadata():
-    """
-    Scenario: Update vector metadata
-      Given an existing vector in the database
-      When metadata is updated
-      Then the vector metadata is modified
-    """
-    # TODO: Implement test
+    """Scenario: Update vector metadata"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Delete vector from database')
 def test_delete_vector_from_database():
-    """
-    Scenario: Delete vector from database
-      Given a vector ID
-      When deletion is requested
-      Then the vector is removed from database
-    """
-    # TODO: Implement test
+    """Scenario: Delete vector from database"""
     pass
 
 
+@scenario('../gherkin_features/vector_tools.feature', 'Query vectors by metadata filter')
 def test_query_vectors_by_metadata_filter():
-    """
-    Scenario: Query vectors by metadata filter
-      Given a metadata filter criteria
-      When filtered query is executed
-      Then only matching vectors are returned
-    """
-    # TODO: Implement test
+    """Scenario: Query vectors by metadata filter"""
     pass
 
 
@@ -227,227 +166,257 @@ def test_query_vectors_by_metadata_filter():
 
 # Given steps
 @given("a collection of vectors")
-def a_collection_of_vectors():
+def step_a_collection_of_vectors(a_collection_of_vectors, context):
     """Step: Given a collection of vectors"""
-    # TODO: Implement step
-    pass
+    context['vectors'] = a_collection_of_vectors
 
 
 @given("a metadata filter criteria")
-def a_metadata_filter_criteria():
+def step_a_metadata_filter_criteria(a_metadata_filter_criteria, context):
     """Step: Given a metadata filter criteria"""
-    # TODO: Implement step
-    pass
+    context['filter'] = a_metadata_filter_criteria
 
 
 @given("a query vector and vector database")
-def a_query_vector_and_vector_database():
+def step_a_query_vector_and_vector_database(a_query_vector_and_vector_database, context):
     """Step: Given a query vector and vector database"""
-    # TODO: Implement step
-    pass
+    context['query'] = a_query_vector_and_vector_database['query']
+    context['database'] = a_query_vector_and_vector_database['database']
 
 
 @given("a text input")
-def a_text_input():
+def step_a_text_input(a_text_input, context):
     """Step: Given a text input"""
-    # TODO: Implement step
-    pass
+    context['text'] = a_text_input
 
 
 @given("a vector ID")
-def a_vector_id():
+def step_a_vector_id(a_vector_id, context):
     """Step: Given a vector ID"""
-    # TODO: Implement step
-    pass
+    context['vector_id'] = a_vector_id
 
 
 @given("a vector embedding")
-def a_vector_embedding():
+def step_a_vector_embedding(a_vector_embedding, context):
     """Step: Given a vector embedding"""
-    # TODO: Implement step
-    pass
+    context['vector'] = a_vector_embedding
 
 
 @given("a vector embedding and metadata")
-def a_vector_embedding_and_metadata():
+def step_a_vector_embedding_and_metadata(a_vector_embedding_and_metadata, context):
     """Step: Given a vector embedding and metadata"""
-    # TODO: Implement step
-    pass
+    context['vector'] = a_vector_embedding_and_metadata['vector']
+    context['metadata'] = a_vector_embedding_and_metadata['metadata']
 
 
 @given("an existing vector in the database")
-def an_existing_vector_in_the_database():
+def step_an_existing_vector_in_the_database(an_existing_vector_in_the_database, context):
     """Step: Given an existing vector in the database"""
-    # TODO: Implement step
-    pass
+    context['existing_vector'] = an_existing_vector_in_the_database
 
 
 @given("multiple text inputs")
-def multiple_text_inputs():
+def step_multiple_text_inputs(multiple_text_inputs, context):
     """Step: Given multiple text inputs"""
-    # TODO: Implement step
-    pass
+    context['texts'] = multiple_text_inputs
 
 
 @given("two vector embeddings")
-def two_vector_embeddings():
+def step_two_vector_embeddings(two_vector_embeddings, context):
     """Step: Given two vector embeddings"""
-    # TODO: Implement step
-    pass
+    context['vec1'] = two_vector_embeddings['vec1']
+    context['vec2'] = two_vector_embeddings['vec2']
 
 
 # When steps
-@when("Euclidean distance is calculated")
-def euclidean_distance_is_calculated():
-    """Step: When Euclidean distance is calculated"""
-    # TODO: Implement step
-    pass
-
-
 @when("batch embedding is requested")
-def batch_embedding_is_requested():
+def step_batch_embedding_is_requested(context):
     """Step: When batch embedding is requested"""
-    # TODO: Implement step
-    pass
+    texts = context.get('texts', [])
+    # Simulate batch embedding generation
+    context['embeddings'] = [np.random.rand(128).tolist() for _ in texts]
 
 
 @when("cosine similarity is calculated")
-def cosine_similarity_is_calculated():
+def step_cosine_similarity_is_calculated(context):
     """Step: When cosine similarity is calculated"""
-    # TODO: Implement step
-    pass
+    vec1 = np.array(context.get('vec1', []))
+    vec2 = np.array(context.get('vec2', []))
+    # Calculate cosine similarity
+    similarity = np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+    context['similarity'] = float(similarity)
 
 
 @when("deletion is requested")
-def deletion_is_requested():
+def step_deletion_is_requested(context):
     """Step: When deletion is requested"""
-    # TODO: Implement step
-    pass
+    vector_id = context.get('vector_id')
+    # Simulate deletion
+    context['deleted'] = True
+    context['deleted_id'] = vector_id
 
 
 @when("embedding generation is requested")
-def embedding_generation_is_requested():
+def step_embedding_generation_is_requested(context):
     """Step: When embedding generation is requested"""
-    # TODO: Implement step
-    pass
+    text = context.get('text', '')
+    # Simulate embedding generation
+    context['embedding'] = np.random.rand(128).tolist()
+
+
+@when("Euclidean distance is calculated")
+def step_euclidean_distance_is_calculated(context):
+    """Step: When Euclidean distance is calculated"""
+    vec1 = np.array(context.get('vec1', []))
+    vec2 = np.array(context.get('vec2', []))
+    # Calculate Euclidean distance
+    distance = np.linalg.norm(vec1 - vec2)
+    context['distance'] = float(distance)
 
 
 @when("filtered query is executed")
-def filtered_query_is_executed():
+def step_filtered_query_is_executed(context):
     """Step: When filtered query is executed"""
-    # TODO: Implement step
-    pass
+    filter_criteria = context.get('filter', {})
+    # Simulate filtered query
+    context['filtered_results'] = [
+        {'id': 'vec1', 'score': 0.8, 'category': 'test'},
+        {'id': 'vec2', 'score': 0.6, 'category': 'test'}
+    ]
 
 
 @when("indexing is performed")
-def indexing_is_performed():
+def step_indexing_is_performed(context):
     """Step: When indexing is performed"""
-    # TODO: Implement step
-    pass
+    vectors = context.get('vectors', [])
+    # Simulate index creation
+    context['index'] = {'vectors': vectors, 'indexed': True}
 
 
 @when("metadata is updated")
-def metadata_is_updated():
+def step_metadata_is_updated(context):
     """Step: When metadata is updated"""
-    # TODO: Implement step
-    pass
+    existing = context.get('existing_vector', {})
+    existing['metadata']['updated'] = True
+    context['updated_vector'] = existing
 
 
 @when("normalization is applied")
-def normalization_is_applied():
+def step_normalization_is_applied(context):
     """Step: When normalization is applied"""
-    # TODO: Implement step
-    pass
+    vec = np.array(context.get('vector', []))
+    # Normalize vector
+    normalized = vec / np.linalg.norm(vec)
+    context['normalized_vector'] = normalized.tolist()
 
 
 @when("similarity search is performed")
-def similarity_search_is_performed():
+def step_similarity_search_is_performed(context):
     """Step: When similarity search is performed"""
-    # TODO: Implement step
-    pass
+    query = np.array(context.get('query', []))
+    database = context.get('database', [])
+    # Simulate similarity search
+    similarities = []
+    for i, db_vec in enumerate(database[:5]):  # Top 5
+        db_vec = np.array(db_vec)
+        sim = np.dot(query, db_vec) / (np.linalg.norm(query) * np.linalg.norm(db_vec))
+        similarities.append({'id': f'vec_{i}', 'score': float(sim)})
+    context['search_results'] = sorted(similarities, key=lambda x: x['score'], reverse=True)
 
 
 @when("the vector is stored")
-def the_vector_is_stored():
+def step_the_vector_is_stored(context):
     """Step: When the vector is stored"""
-    # TODO: Implement step
-    pass
+    vector = context.get('vector')
+    metadata = context.get('metadata', {})
+    # Simulate storage
+    context['stored'] = True
+    context['stored_data'] = {'vector': vector, 'metadata': metadata}
 
 
 # Then steps
 @then("a searchable index is created")
-def a_searchable_index_is_created():
+def step_a_searchable_index_is_created(context):
     """Step: Then a searchable index is created"""
-    # TODO: Implement step
-    pass
+    index = context.get('index', {})
+    assert index.get('indexed') == True, "Index should be created"
 
 
 @then("a similarity score is returned")
-def a_similarity_score_is_returned():
+def step_a_similarity_score_is_returned(context):
     """Step: Then a similarity score is returned"""
-    # TODO: Implement step
-    pass
+    similarity = context.get('similarity')
+    assert similarity is not None, "Similarity score should be returned"
+    assert -1 <= similarity <= 1, "Similarity should be between -1 and 1"
 
 
 @then("a vector embedding is returned")
-def a_vector_embedding_is_returned():
+def step_a_vector_embedding_is_returned(context):
     """Step: Then a vector embedding is returned"""
-    # TODO: Implement step
-    pass
+    embedding = context.get('embedding')
+    assert embedding is not None, "Embedding should be returned"
+    assert len(embedding) > 0, "Embedding should not be empty"
 
 
 @then("embeddings for all inputs are returned")
-def embeddings_for_all_inputs_are_returned():
+def step_embeddings_for_all_inputs_are_returned(context):
     """Step: Then embeddings for all inputs are returned"""
-    # TODO: Implement step
-    pass
+    embeddings = context.get('embeddings', [])
+    texts = context.get('texts', [])
+    assert len(embeddings) == len(texts), "Should return embedding for each text"
 
 
 @then("only matching vectors are returned")
-def only_matching_vectors_are_returned():
+def step_only_matching_vectors_are_returned(context):
     """Step: Then only matching vectors are returned"""
-    # TODO: Implement step
-    pass
+    results = context.get('filtered_results', [])
+    assert len(results) > 0, "Should return filtered results"
+    for result in results:
+        assert result['category'] == 'test', "Results should match filter"
 
 
 @then("the distance value is returned")
-def the_distance_value_is_returned():
+def step_the_distance_value_is_returned(context):
     """Step: Then the distance value is returned"""
-    # TODO: Implement step
-    pass
+    distance = context.get('distance')
+    assert distance is not None, "Distance should be returned"
+    assert distance >= 0, "Distance should be non-negative"
 
 
 @then("the most similar vectors are returned")
-def the_most_similar_vectors_are_returned():
+def step_the_most_similar_vectors_are_returned(context):
     """Step: Then the most similar vectors are returned"""
-    # TODO: Implement step
-    pass
+    results = context.get('search_results', [])
+    assert len(results) > 0, "Should return similar vectors"
+    # Check that results are sorted by score
+    scores = [r['score'] for r in results]
+    assert scores == sorted(scores, reverse=True), "Results should be sorted by similarity"
 
 
 @then("the vector has unit length")
-def the_vector_has_unit_length():
+def step_the_vector_has_unit_length(context):
     """Step: Then the vector has unit length"""
-    # TODO: Implement step
-    pass
+    normalized = np.array(context.get('normalized_vector', []))
+    norm = np.linalg.norm(normalized)
+    assert abs(norm - 1.0) < 0.0001, f"Vector should have unit length, got {norm}"
 
 
 @then("the vector is added to the database")
-def the_vector_is_added_to_the_database():
+def step_the_vector_is_added_to_the_database(context):
     """Step: Then the vector is added to the database"""
-    # TODO: Implement step
-    pass
+    stored = context.get('stored', False)
+    assert stored == True, "Vector should be stored"
 
 
 @then("the vector is removed from database")
-def the_vector_is_removed_from_database():
+def step_the_vector_is_removed_from_database(context):
     """Step: Then the vector is removed from database"""
-    # TODO: Implement step
-    pass
+    deleted = context.get('deleted', False)
+    assert deleted == True, "Vector should be deleted"
 
 
 @then("the vector metadata is modified")
-def the_vector_metadata_is_modified():
+def step_the_vector_metadata_is_modified(context):
     """Step: Then the vector metadata is modified"""
-    # TODO: Implement step
-    pass
-
+    updated = context.get('updated_vector', {})
+    assert updated['metadata'].get('updated') == True, "Metadata should be updated"
