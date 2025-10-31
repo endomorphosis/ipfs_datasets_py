@@ -94,11 +94,11 @@ Human Reviews & Merges
 
 **Workflow YAML**: 280+ lines with comprehensive logic
 
-## Batch Processing Script
+## Batch Processing Scripts
 
 ### `scripts/batch_assign_copilot_to_prs.py`
 
-**Purpose**: Process all existing open PRs and assign Copilot
+**Purpose**: Process all existing open PRs and assign Copilot with simple task comments
 
 **Features**:
 - Analyzes all open PRs
@@ -114,7 +114,65 @@ Human Reviews & Merges
 python scripts/batch_assign_copilot_to_prs.py
 ```
 
-**Recent Run**: All 24 open draft PRs already have Copilot assigned ✅
+**Recent Run**: All 26 open draft PRs already have Copilot assigned ✅
+
+### `scripts/invoke_copilot_coding_agent_on_prs.py` ⭐ **NEW**
+
+**Purpose**: Invoke GitHub Copilot Coding Agent with intelligent task-specific instructions
+
+**Features**:
+- **Intelligent Task Analysis**: Determines appropriate task type (implement_fix, fix_workflow, fix_permissions, debug_error, implement_draft)
+- **Context-Aware Instructions**: Provides detailed, task-specific instructions to Copilot
+- **Priority Assignment**: Assigns priority levels based on issue severity
+- **Duplicate Prevention**: Checks for existing Copilot invocations
+- **Dry-Run Mode**: Test what would be done without making changes
+- **Single or Batch Processing**: Process one PR or all open PRs
+
+**Based on GitHub Copilot Coding Agent**:
+- Uses new GitHub Copilot Agents feature
+- Follows official documentation patterns
+- See: [GitHub Copilot Coding Agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)
+
+**Usage**:
+```bash
+# Process all open PRs
+python scripts/invoke_copilot_coding_agent_on_prs.py
+
+# Process specific PR
+python scripts/invoke_copilot_coding_agent_on_prs.py --pr 149
+
+# Dry-run mode (see what would be done)
+python scripts/invoke_copilot_coding_agent_on_prs.py --dry-run
+
+# Process with limit
+python scripts/invoke_copilot_coding_agent_on_prs.py --limit 10
+```
+
+**Task Types**:
+- `implement_fix` - Auto-generated workflow fixes (HIGH priority)
+- `fix_workflow` - GitHub Actions workflow issues (HIGH priority)
+- `fix_permissions` - Permission error fixes (HIGH priority)
+- `debug_error` - Unknown/unspecified errors (HIGH priority)
+- `implement_draft` - General draft PR implementation (NORMAL priority)
+
+**Example Task Comment**:
+```markdown
+@copilot Please implement the auto-fix described in this PR.
+
+**Context**: This PR was automatically created by the auto-healing workflow...
+
+**Task**: 
+1. Analyze the failure described in the PR description
+2. Review the proposed fix
+3. Implement the fix with minimal changes
+4. Ensure the fix follows repository patterns and best practices
+5. Run any relevant tests
+
+**Priority**: HIGH
+**Reason**: Auto-generated fix PR
+
+Please proceed with implementing this fix.
+```
 
 ## Current Status
 
@@ -248,14 +306,31 @@ gh pr list --state open --draft --limit 20
 
 ### GitHub CLI Integration
 - Uses `gh` commands for PR/issue operations
+- GitHub Copilot CLI extension installed (`gh extension install github/gh-copilot`)
 - Integrated with repository's existing GitHub CLI tools
 - See: `ipfs_datasets_py/utils/github_cli.py`
 
 ### Copilot CLI Integration
 - Leverages existing CopilotCLI class
 - Uses MCP tools for Copilot operations
+- **New**: Direct GitHub Copilot Coding Agent invocation via PR comments
 - See: `ipfs_datasets_py/utils/copilot_cli.py`
 - See: `ipfs_datasets_py/mcp_tools/tools/copilot_cli_tools.py`
+- See: `scripts/invoke_copilot_coding_agent_on_prs.py`
+
+### GitHub Copilot Coding Agent
+- **Official GitHub Feature**: Uses new GitHub Copilot Agents
+- **Invocation Method**: @copilot mentions in PR comments
+- **Capabilities**: 
+  - Code implementation
+  - Bug fixing
+  - Workflow debugging
+  - Permission troubleshooting
+  - Draft PR completion
+- **Documentation**:
+  - [GitHub Copilot Agents Announcement](https://github.blog/news-insights/company-news/welcome-home-agents/)
+  - [Coding Agent Documentation](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)
+  - [Code Review Agent](https://docs.github.com/en/copilot/concepts/agents/code-review)
 
 ### Self-Hosted Runners
 - Runs on self-hosted GitHub Actions runner: `workstation-1761892995`
