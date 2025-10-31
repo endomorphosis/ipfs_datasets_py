@@ -1,8 +1,18 @@
-# GitHub Actions Workflows - Auto-Healing System
+# GitHub Actions Workflows - Automated Development System
 
-This directory contains all GitHub Actions workflows for the repository, including the **Auto-Healing System** that automatically fixes failed workflows using GitHub Copilot Agent.
+This directory contains all GitHub Actions workflows for the repository, including the **Auto-Healing System** and **Issue-to-Draft-PR System** that automatically resolve issues using GitHub Copilot Agent.
 
-## 🤖 Auto-Healing System
+## 🎯 Automation Overview
+
+This repository features **two complementary automation systems**:
+
+### 1. 🔧 Auto-Healing System (Reactive)
+Automatically fixes workflow failures
+
+### 2. 📝 Issue-to-Draft-PR System (Proactive)
+Automatically converts **every GitHub issue** into a draft PR with Copilot assigned
+
+## 🤖 Auto-Healing System (Workflow Failures)
 
 ### What is it?
 
@@ -16,7 +26,21 @@ The Auto-Healing System is an advanced workflow maintenance solution that:
 
 **Key Innovation**: Fully automated from detection to fix implementation! Human intervention only needed for review and merge.
 
-### How It Works
+## 📝 Issue-to-Draft-PR System (All Issues)
+
+### What is it?
+
+The Issue-to-Draft-PR System automatically converts **every GitHub issue** into actionable code:
+1. **Detects** when any issue is created or reopened
+2. **Analyzes** the issue content and categorizes it
+3. **Creates a branch** with sanitized naming
+4. **Creates a draft PR** linked to the issue
+5. **Assigns GitHub Copilot** to implement the solution
+6. **Links everything** back to the original issue
+
+**Key Innovation**: Turn every issue into a PR automatically! Zero manual setup required.
+
+### How Auto-Healing Works
 
 ```
 Workflow Fails → Issue Created → Draft PR Created → @copilot Implements Fix → Human Reviews & Merges
@@ -24,14 +48,41 @@ Workflow Fails → Issue Created → Draft PR Created → @copilot Implements Fi
 
 **100% Automated** until the review step!
 
-### Quick Start
+### How Issue-to-Draft-PR Works
 
-The system is already configured and active. When a workflow fails:
+```
+Issue Created/Reopened → Analysis → Branch Created → Draft PR Created → @copilot Implements → Ready for Review
+```
+
+**100% Automated** until the review step!
+
+### Combined Power
+
+When used together:
+- **Workflow failures** → Auto-healing creates issue → Issue-to-PR creates draft PR → Copilot fixes
+- **User issues** → Issue-to-PR creates draft PR → Copilot implements → Ready for review
+- **Result**: Near-zero manual issue management!
+
+### Quick Start (Auto-Healing)
+
+The auto-healing system is already configured and active. When a workflow fails:
 1. ✅ **Auto-healing automatically detects it** (within seconds)
 2. ✅ **Issue is created** with logs and analysis
 3. ✅ **Draft PR is created** with fix instructions
 4. ✅ **GitHub Copilot Agent implements the fix** (mentioned via @copilot)
 5. ✅ **Tests validate the fix** automatically
+6. 👤 **You review and merge** the PR
+
+**No manual intervention required until step 6!**
+
+### Quick Start (Issue-to-Draft-PR)
+
+The issue-to-PR system activates automatically. When any issue is created:
+1. ✅ **System detects the issue** (within seconds)
+2. ✅ **Branch is created** with clean naming
+3. ✅ **Draft PR is created** and linked to issue
+4. ✅ **GitHub Copilot is assigned** via @mention
+5. ✅ **Copilot implements the solution**
 6. 👤 **You review and merge** the PR
 
 **No manual intervention required until step 6!**
@@ -55,18 +106,25 @@ The auto-healing system monitors **every workflow** in this repository:
 
 ### Documentation
 
+#### Auto-Healing System
 - **[Complete Auto-Healing Guide](AUTO_HEALING_GUIDE.md)** - Full documentation ⭐
 - **[Quickstart Guide](QUICKSTART-copilot-autohealing.md)** - Get started in 5 minutes
 - **[Copilot Integration Docs](README-copilot-autohealing.md)** - How Copilot Agent works
 - **[Configuration](workflow-auto-fix-config.yml)** - Customize behavior
 
+#### Issue-to-Draft-PR System
+- **[Complete Issue-to-PR Guide](README-issue-to-draft-pr.md)** - Full documentation ⭐
+- **[Quickstart Guide](QUICKSTART-issue-to-draft-pr.md)** - Get started in 5 minutes
+- **[Workflow File](issue-to-draft-pr.yml)** - The workflow definition
+
 ## Workflows Overview
 
-### Auto-Healing Workflows
+### Auto-Healing & Automation Workflows
 
 | Workflow | Purpose | Status | Trigger |
 |----------|---------|--------|---------|
-| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Main auto-healing with Copilot Agent** | ✅ Active | On any workflow failure |
+| [issue-to-draft-pr.yml](issue-to-draft-pr.yml) | **Convert ALL issues to draft PRs with Copilot** | ✅ Active | On issue created/reopened |
+| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Auto-healing with Copilot Agent** | ✅ Active | On any workflow failure |
 | [update-autohealing-list.yml](update-autohealing-list.yml) | **Auto-update monitored workflows** | ✅ Active | On workflow file changes |
 | [enhanced-autohealing.yml](enhanced-autohealing.yml) | Enhanced auto-healing | ⛔ Disabled | Used unsupported wildcard |
 | [workflow-auto-fix.yml](workflow-auto-fix.yml) | Legacy auto-fix system | ⛔ Disabled | Superseded by copilot-agent |
