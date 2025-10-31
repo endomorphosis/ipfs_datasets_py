@@ -345,52 +345,79 @@ def step_a_searchable_index_is_created(context):
 @then("a similarity score is returned")
 def step_a_similarity_score_is_returned(context):
     """Step: Then a similarity score is returned"""
+    # Arrange
     similarity = context.get('similarity')
-    assert similarity is not None, "Similarity score should be returned"
-    assert -1 <= similarity <= 1, "Similarity should be between -1 and 1"
+    
+    # Act
+    is_valid_similarity = similarity is not None and -1 <= similarity <= 1
+    
+    # Assert
+    assert is_valid_similarity, f"Similarity should be returned and be between -1 and 1, got {similarity}"
 
 
 @then("a vector embedding is returned")
 def step_a_vector_embedding_is_returned(context):
     """Step: Then a vector embedding is returned"""
+    # Arrange
     embedding = context.get('embedding')
-    assert embedding is not None, "Embedding should be returned"
-    assert len(embedding) > 0, "Embedding should not be empty"
+    
+    # Act
+    is_valid_embedding = embedding is not None and len(embedding) > 0
+    
+    # Assert
+    assert is_valid_embedding, "Embedding should be returned and non-empty"
 
 
 @then("embeddings for all inputs are returned")
 def step_embeddings_for_all_inputs_are_returned(context):
     """Step: Then embeddings for all inputs are returned"""
+    # Arrange
     embeddings = context.get('embeddings', [])
     texts = context.get('texts', [])
-    assert len(embeddings) == len(texts), "Should return embedding for each text"
+    
+    # Assert
+    assert len(embeddings) == len(texts), f"Should return embedding for each text: {len(embeddings)} vs {len(texts)}"
 
 
 @then("only matching vectors are returned")
 def step_only_matching_vectors_are_returned(context):
     """Step: Then only matching vectors are returned"""
+    # Arrange
     results = context.get('filtered_results', [])
-    assert len(results) > 0, "Should return filtered results"
-    for result in results:
-        assert result['category'] == 'test', "Results should match filter"
+    expected_category = 'test'
+    
+    # Act
+    all_match_filter = all(r.get('category') == expected_category for r in results) if results else False
+    
+    # Assert
+    assert all_match_filter and len(results) > 0, f"All results should match filter category '{expected_category}'"
 
 
 @then("the distance value is returned")
 def step_the_distance_value_is_returned(context):
     """Step: Then the distance value is returned"""
+    # Arrange
     distance = context.get('distance')
-    assert distance is not None, "Distance should be returned"
-    assert distance >= 0, "Distance should be non-negative"
+    
+    # Act
+    is_valid_distance = distance is not None and distance >= 0
+    
+    # Assert
+    assert is_valid_distance, f"Distance should be returned and non-negative, got {distance}"
 
 
 @then("the most similar vectors are returned")
 def step_the_most_similar_vectors_are_returned(context):
     """Step: Then the most similar vectors are returned"""
+    # Arrange
     results = context.get('search_results', [])
-    assert len(results) > 0, "Should return similar vectors"
-    # Check that results are sorted by score
+    
+    # Act
     scores = [r['score'] for r in results]
-    assert scores == sorted(scores, reverse=True), "Results should be sorted by similarity"
+    is_sorted_descending = scores == sorted(scores, reverse=True) and len(results) > 0
+    
+    # Assert
+    assert is_sorted_descending, "Results should be non-empty and sorted by similarity (descending)"
 
 
 @then("the vector has unit length")

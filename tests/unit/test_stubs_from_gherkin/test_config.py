@@ -395,52 +395,88 @@ def step_the_override_is_applied(context):
 @then("only specified nested values are updated")
 def step_only_specified_nested_values_are_updated(context):
     """Step: Then only specified nested values are updated"""
+    # Arrange
     cfg = context.get('config')
-    assert cfg is not None, "Config should be loaded"
-    assert 'database' in cfg.baseConfig, "Database section should exist"
-    # Check that only password was updated, not other values
-    assert cfg.baseConfig['database']['credentials']['password'] == 'new_password'
-    assert cfg.baseConfig['database']['credentials']['username'] == 'user', "Username should not be changed"
+    expected_password = 'new_password'
+    expected_username = 'user'  # Should remain unchanged
+    
+    # Act
+    actual_password = cfg.baseConfig.get('database', {}).get('credentials', {}).get('password') if cfg else None
+    actual_username = cfg.baseConfig.get('database', {}).get('credentials', {}).get('username') if cfg else None
+    
+    # Assert
+    assert (actual_password == expected_password and actual_username == expected_username), \
+        f"Only password should be updated to '{expected_password}', username should remain '{expected_username}'"
 
 
 @then("the base configuration is updated with override values")
 def step_the_base_configuration_is_updated_with_override_values(context):
     """Step: Then the base configuration is updated with override values"""
+    # Arrange
     cfg = context.get('config')
-    assert cfg is not None, "Config should be loaded"
-    assert cfg.baseConfig['section1']['key1'] == 'overridden_value1', "Key1 should be overridden"
+    expected_value = 'overridden_value1'
+    
+    # Act
+    actual_value = cfg.baseConfig.get('section1', {}).get('key1') if cfg else None
+    
+    # Assert
+    assert actual_value == expected_value, f"Key1 should be overridden to '{expected_value}'"
 
 
 @then("the base configuration is updated with values from the override file")
 def step_the_base_configuration_is_updated_with_values_from_the_override_file(context):
     """Step: Then the base configuration is updated with values from the override file"""
+    # Arrange
     cfg = context.get('config')
-    assert cfg is not None, "Config should be loaded"
-    assert cfg.baseConfig['section1']['key1'] == 'overridden_value1', "Should be updated from file"
+    expected_value = 'overridden_value1'
+    
+    # Act
+    actual_value = cfg.baseConfig.get('section1', {}).get('key1') if cfg else None
+    
+    # Assert
+    assert actual_value == expected_value, f"Should be updated from file to '{expected_value}'"
 
 
 @then("the configuration contains expected sections")
 def step_the_configuration_contains_expected_sections(context):
     """Step: Then the configuration contains expected sections"""
+    # Arrange
     cfg = context.get('loaded_config')
-    assert cfg is not None, "Config should be loaded"
-    assert 'ipfs' in cfg.baseConfig or 'storage' in cfg.baseConfig, "Expected sections should be present"
+    expected_sections = {'ipfs', 'storage'}
+    
+    # Act
+    actual_sections = set(cfg.baseConfig.keys()) if cfg and cfg.baseConfig else set()
+    has_expected_section = bool(expected_sections & actual_sections)
+    
+    # Assert
+    assert has_expected_section, f"Config should contain at least one of {expected_sections}"
 
 
 @then("the configuration is loaded")
 def step_then_the_configuration_is_loaded(context):
     """Step: Then the configuration is loaded"""
+    # Arrange
     cfg = context.get('loaded_config')
-    assert cfg is not None, "Config should be loaded"
-    assert cfg.baseConfig is not None, "Base config should be loaded"
+    
+    # Act
+    is_loaded = cfg is not None and cfg.baseConfig is not None
+    
+    # Assert
+    assert is_loaded, "Configuration should be loaded with baseConfig"
 
 
 @then("the configuration is loaded from the custom path")
 def step_the_configuration_is_loaded_from_the_custom_path(context):
     """Step: Then the configuration is loaded from the custom path"""
+    # Arrange
     cfg = context.get('loaded_config')
-    assert cfg is not None, "Config should be loaded"
-    assert 'custom' in cfg.baseConfig, "Custom section should be present"
+    expected_section = 'custom'
+    
+    # Act
+    has_custom_section = cfg and expected_section in cfg.baseConfig
+    
+    # Assert
+    assert has_custom_section, f"Config should contain '{expected_section}' section from custom path"
 
 
 @then("the first valid configuration file is found")

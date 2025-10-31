@@ -250,64 +250,105 @@ def step_multiple_events_are_logged(context):
 @then("each event has a unique event ID")
 def step_each_event_has_a_unique_event_id(context):
     """Step: Then each event has a unique event ID"""
+    # Arrange
     events = context.get('multiple_events', [])
+    
+    # Act
     event_ids = [e.event_id for e in events]
-    # Check that all event IDs are unique
-    assert len(event_ids) == len(set(event_ids)), "Event IDs should be unique"
+    unique_count = len(set(event_ids))
+    total_count = len(event_ids)
+    
+    # Assert
+    assert unique_count == total_count, f"All event IDs should be unique: {unique_count} unique out of {total_count}"
 
 
 @then("the event includes all custom details")
 def step_the_event_includes_all_custom_details(context):
     """Step: Then the event includes all custom details"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert 'query' in event.details, "Custom detail 'query' should be present"
-    assert 'rows_affected' in event.details, "Custom detail 'rows_affected' should be present"
+    required_details = {'query', 'rows_affected', 'execution_time_ms'}
+    
+    # Act
+    actual_details = set(event.details.keys()) if event else set()
+    
+    # Assert
+    assert required_details.issubset(actual_details), f"Event should include all custom details: {required_details}"
 
 
 @then("the event includes all specified tags")
 def step_the_event_includes_all_specified_tags(context):
     """Step: Then the event includes all specified tags"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert len(event.tags) == 3, "Event should have 3 tags"
-    assert "performance" in event.tags, "Tag 'performance' should be present"
+    expected_tags = {"performance", "optimization", "cache"}
+    
+    # Act
+    actual_tags = set(event.tags) if event and hasattr(event, 'tags') else set()
+    
+    # Assert
+    assert expected_tags == actual_tags, f"Event should include all specified tags: {expected_tags}"
 
 
 @then("the event includes user context")
 def step_the_event_includes_user_context(context):
     """Step: Then the event includes user context"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert event.user is not None, "User should be present"
-    assert event.client_ip is not None, "Client IP should be present"
+    
+    # Act
+    has_user_context = event and event.user is not None and event.client_ip is not None
+    
+    # Assert
+    assert has_user_context, "Event should include user context (user and client_ip)"
 
 
 @then("the event is recorded with default values for optional fields")
 def step_the_event_is_recorded_with_default_values_for_optional_fields(context):
     """Step: Then the event is recorded with default values for optional fields"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert event.status == "success", "Status should have default value"
-    assert event.details == {}, "Details should be empty dict by default"
+    expected_defaults = {'status': 'success', 'details': {}}
+    
+    # Act
+    actual_values = {'status': event.status, 'details': event.details} if event else {}
+    
+    # Assert
+    assert actual_values == expected_defaults, f"Event should have default values: {expected_defaults}"
 
 
 @then("the event is recorded with the specified severity")
 def step_the_event_is_recorded_with_the_specified_severity(context):
     """Step: Then the event is recorded with the specified severity"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert event.level == AuditLevel.WARNING, "Event should have WARNING severity"
+    expected_level = AuditLevel.WARNING
+    
+    # Act
+    actual_level = event.level if event else None
+    
+    # Assert
+    assert actual_level == expected_level, f"Event should have severity level {expected_level.name}"
 
 
 @then("the event is recorded with timestamp and event ID")
 def step_the_event_is_recorded_with_timestamp_and_event_id(context):
     """Step: Then the event is recorded with timestamp and event ID"""
+    # Arrange
     event = context.get('last_event')
-    assert event is not None, "Event should be logged"
-    assert event.event_id is not None, "Event ID should be present"
-    assert event.timestamp is not None, "Timestamp should be present"
-    assert event.action == "read_dataset", "Action should be 'read_dataset'"
-    assert event.resource_id == "dataset_123", "Resource ID should be 'dataset_123'"
+    expected_action = "read_dataset"
+    expected_resource = "dataset_123"
+    
+    # Act
+    has_required_fields = (
+        event and 
+        event.event_id is not None and 
+        event.timestamp is not None and
+        event.action == expected_action and
+        event.resource_id == expected_resource
+    )
+    
+    # Assert
+    assert has_required_fields, "Event should be recorded with timestamp, event ID, and correct action/resource"
 
 

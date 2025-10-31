@@ -306,47 +306,67 @@ def step_appropriate_error_is_raised(context):
 @then("configuration is applied")
 def step_configuration_is_applied(context):
     """Step: Then configuration is applied"""
+    # Arrange
     config = context.get('config')
     package = context.get('package')
-    assert config is not None, "Configuration should be available"
-    assert package is not None, "Package should be imported"
+    
+    # Act
+    config_and_package_available = config is not None and package is not None
+    
+    # Assert
+    assert config_and_package_available, "Configuration and package should both be available"
 
 
 @then("heavy dependencies are loaded on demand")
 def step_heavy_dependencies_are_loaded_on_demand(context):
     """Step: Then heavy dependencies are loaded on demand"""
-    # Check that heavy dependencies are not loaded immediately
+    # Arrange
     heavy_deps = context.get('heavy_dependencies', {})
+    
+    # Assert
     assert isinstance(heavy_deps, dict), "Heavy dependencies should be a dictionary"
 
 
 @then("package information is available")
 def step_package_information_is_available(context):
     """Step: Then package information is available"""
+    # Arrange
     metadata = context.get('metadata', {})
+    
+    # Assert
     assert 'name' in metadata, "Package name should be available"
 
 
 @then("package resources are ready")
 def step_package_resources_are_ready(context):
     """Step: Then package resources are ready"""
-    initialized = context.get('initialized', False)
+    # Arrange
     package = context.get('package')
+    
+    # Assert
     assert package is not None, "Package should be loaded"
 
 
 @then("the package loads successfully")
 def step_the_package_loads_successfully(context):
     """Step: Then the package loads successfully"""
+    # Arrange
     package = context.get('package')
+    
+    # Assert
     assert package is not None, "Package should be loaded successfully"
 
 
 @then("the version is returned")
 def step_the_version_is_returned(context):
     """Step: Then the version is returned"""
+    # Arrange
     version = context.get('version')
-    assert version is not None, "Version should be returned"
-    assert isinstance(version, str), f"Version should be a string, got {type(version)}"
+    
+    # Act
+    is_valid_version = version is not None and isinstance(version, str)
+    
+    # Assert
+    assert is_valid_version, f"Version should be a non-null string, got {type(version)}"
 
 
