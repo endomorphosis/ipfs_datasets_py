@@ -29,15 +29,16 @@ jobs:
       image: python:3.12-slim
       options: --user root
     steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y git curl
+    
     - uses: actions/checkout@v4
     
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install flake8 black isort mypy
         pip install -r requirements.txt

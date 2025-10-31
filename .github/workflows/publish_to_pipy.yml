@@ -17,22 +17,27 @@ jobs:
     name: Build distribution 📦
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
 
     steps:
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git
+      
       - uses: actions/checkout@v4
         with:
           submodules: false
       
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.x"
-      - name: Install dependencies
-        run: python -m pip install --upgrade pip setuptools wheel
+      - name: Set up Python environment
+        run: |
+          python --version
+          python -m pip install --upgrade pip setuptools wheel
+      
       - name: Build the package
         run: python setup.py sdist bdist_wheel
+      
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
@@ -45,7 +50,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     environment:
       name: pypi
