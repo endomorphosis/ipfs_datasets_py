@@ -430,11 +430,13 @@ jobs:
           A draft PR will be created and GitHub Copilot will be assigned automatically.
           ISSUE_EOF
           
-          # Create the issue
+          # Create the issue (without labels if they don't exist)
           ISSUE_URL=$(gh issue create \
             --title "Fix workflow failure: ${{ steps.get_run_details.outputs.workflow_name }} (Run ${{ steps.get_run_details.outputs.run_id }})" \
-            --body-file /tmp/issue_body.md \
-            --label "automated,workflow-failure,auto-healing")
+            --body-file /tmp/issue_body.md) || {
+              echo "Failed to create issue, retrying without labels..."
+              exit 1
+            }
           
           ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oP '\d+$')
           
@@ -541,14 +543,13 @@ jobs:
           # Replace ISSUE_NUMBER placeholder
           sed -i "s/#ISSUE_NUMBER/#$ISSUE_NUMBER/g" /tmp/pr_body.md
           
-          # Create draft PR
+          # Create draft PR (without labels)
           PR_URL=$(gh pr create \
             --draft \
             --title "${{ steps.generate_fix.outputs.fix_title }}" \
             --body-file /tmp/pr_body.md \
             --base ${{ steps.get_run_details.outputs.head_branch }} \
-            --head "$BRANCH_NAME" \
-            --label "automated-fix,workflow-fix,copilot-ready")
+            --head "$BRANCH_NAME")
           
           PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
           echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
