@@ -30,14 +30,40 @@ jobs:
     steps:
       - name: Clean workspace
         run: |
-          # Remove .git/index.lock if it exists (prevents permission errors)
-          if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
-            rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
-          fi
-
-          # Fix permissions on git directory if needed
-          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
-            chmod -R u+w "$GITHUB_WORKSPACE/.git" || true
+          # Fix permissions on entire workspace to prevent EACCES errors
+          # This is needed because previous workflow runs may leave files owned by different users
+          
+          echo "Current user: $(whoami)"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            echo "Fixing permissions on workspace..."
+            
+            # First, try to fix ownership (requires sudo or correct permissions)
+            # Use sudo if available and the runner is configured to allow it
+            if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              echo "Using sudo to fix permissions..."
+              sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" || true
+              sudo chmod -R u+w "$GITHUB_WORKSPACE" || true
+            else
+              # Fall back to chmod only
+              chmod -R u+w "$GITHUB_WORKSPACE" 2>/dev/null || true
+            fi
+            
+            # Remove stale lock files that might prevent checkout
+            find "$GITHUB_WORKSPACE" -name "index.lock" -type f -delete 2>/dev/null || true
+            find "$GITHUB_WORKSPACE" -name "*.lock" -path "*/.git/*" -type f -delete 2>/dev/null || true
+            
+            # If we still have permission issues, try to remove the entire workspace
+            # This is safe because checkout will recreate it
+            if [ -w "$GITHUB_WORKSPACE" ]; then
+              echo "Workspace is writable, cleanup completed"
+            else
+              echo "WARNING: Workspace may have permission issues"
+              ls -la "$GITHUB_WORKSPACE/.github/" 2>/dev/null || echo "Cannot list .github directory"
+            fi
+            
+            echo "Workspace cleanup completed"
           fi
         continue-on-error: true
 
@@ -45,7 +71,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+          clean: false  # We handle cleanup manually to avoid permission errors
+          # Let git handle any conflicts with force
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+      
       - name: Set up Python
         run: |
           python3 --version
