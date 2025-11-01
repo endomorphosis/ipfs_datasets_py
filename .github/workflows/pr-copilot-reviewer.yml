@@ -84,6 +84,7 @@ jobs:
         continue-on-error: true
 
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -91,7 +92,7 @@ jobs:
         continue-on-error: true  # Allow checkout to fail, will retry
       
       - name: Force reclone if checkout failed
-        if: failure()
+        if: steps.checkout.outcome == 'failure'
         run: |
           echo "⚠️ Checkout failed, forcing full reclone..."
           cd "$(dirname "$GITHUB_WORKSPACE")"
@@ -111,12 +112,29 @@ jobs:
           echo "✅ Created fresh workspace directory"
       
       - name: Retry checkout in fresh workspace
-        if: failure()
+        if: steps.checkout.outcome == 'failure'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           clean: false
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
+      
+      - name: Configure git and verify repository
+        run: |
+          # Set up minimal git config to avoid permission errors
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          
+          # Configure git user for any potential git operations
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" || true
+          git config --global user.name "github-actions[bot]" || true
+          
+          # Verify we're in a git repository
+          if git rev-parse --git-dir > /dev/null 2>&1; then
+            echo "✅ Git repository verified"
+            git --no-pager log --oneline -1
+          else
+            echo "⚠️ Not in a git repository, but continuing with gh CLI operations"
+          fi
       
       - name: Set up Python
         run: |
@@ -192,6 +210,8 @@ jobs:
         id: get_pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null  # Prevent git from accessing system config
+          GIT_CONFIG_SYSTEM: /dev/null  # Prevent git from accessing system config
         run: |
           # Get PR number
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -230,6 +250,8 @@ jobs:
         id: check_copilot
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
@@ -359,6 +381,8 @@ jobs:
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
