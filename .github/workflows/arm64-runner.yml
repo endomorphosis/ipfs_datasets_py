@@ -23,6 +23,10 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   PYTHON_VERSION: '3.12'
 

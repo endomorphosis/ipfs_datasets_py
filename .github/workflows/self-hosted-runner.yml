@@ -7,6 +7,10 @@ on:
     paths:
       - '.github/workflows/self-hosted-runner.yml'
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   test-self-hosted-x86:
     runs-on: [self-hosted, x86_64]
