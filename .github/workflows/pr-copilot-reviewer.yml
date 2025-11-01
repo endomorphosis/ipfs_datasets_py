@@ -28,51 +28,65 @@ jobs:
     runs-on: [self-hosted, linux, x64]
 
     steps:
-      - name: Clean workspace
+      - name: Clean workspace (nuclear option)
         run: |
-          # Fix permissions on entire workspace to prevent EACCES errors
-          # This is needed because previous workflow runs may leave files owned by different users
+          # NUCLEAR OPTION: Remove entire workspace to prevent permission errors
+          # This is needed because files from previous runs may be owned by different users
+          # and we can't chmod/chown them without sudo
           
           echo "Current user: $(whoami)"
           echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Working directory: $(pwd)"
           
+          # Save the workspace parent directory
+          WORKSPACE_PARENT=$(dirname "$GITHUB_WORKSPACE")
+          WORKSPACE_NAME=$(basename "$GITHUB_WORKSPACE")
+          
+          echo "Workspace parent: $WORKSPACE_PARENT"
+          echo "Workspace name: $WORKSPACE_NAME"
+          
+          # Move to parent directory to avoid "cannot remove current directory" error
+          cd "$WORKSPACE_PARENT" || exit 1
+          
+          # Try multiple removal strategies
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            echo "Fixing permissions on workspace..."
+            echo "Attempting to remove workspace..."
             
-            # First, try to fix ownership (requires sudo or correct permissions)
-            # Use sudo if available and the runner is configured to allow it
+            # Strategy 1: Try sudo if available (passwordless)
             if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
-              echo "Using sudo to fix permissions..."
-              sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" || true
-              sudo chmod -R u+w "$GITHUB_WORKSPACE" || true
-            else
-              # Fall back to chmod only
-              chmod -R u+w "$GITHUB_WORKSPACE" 2>/dev/null || true
+              echo "Using sudo to remove workspace..."
+              sudo rm -rf "$WORKSPACE_NAME" && echo "✅ Removed with sudo" || echo "⚠️ Sudo removal failed"
             fi
             
-            # Remove stale lock files that might prevent checkout
-            find "$GITHUB_WORKSPACE" -name "index.lock" -type f -delete 2>/dev/null || true
-            find "$GITHUB_WORKSPACE" -name "*.lock" -path "*/.git/*" -type f -delete 2>/dev/null || true
-            
-            # If we still have permission issues, try to remove the entire workspace
-            # This is safe because checkout will recreate it
-            if [ -w "$GITHUB_WORKSPACE" ]; then
-              echo "Workspace is writable, cleanup completed"
-            else
-              echo "WARNING: Workspace may have permission issues"
-              ls -la "$GITHUB_WORKSPACE/.github/" 2>/dev/null || echo "Cannot list .github directory"
+            # Strategy 2: Try regular rm (works if we own the files)
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              echo "Trying regular rm..."
+              rm -rf "$WORKSPACE_NAME" 2>/dev/null && echo "✅ Removed with rm" || echo "⚠️ Regular rm failed"
             fi
             
-            echo "Workspace cleanup completed"
+            # Strategy 3: Use find to delete files we can delete
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              echo "Trying find-based removal..."
+              find "$WORKSPACE_NAME" -type f -delete 2>/dev/null || true
+              find "$WORKSPACE_NAME" -depth -type d -delete 2>/dev/null || true
+              if [ ! -d "$GITHUB_WORKSPACE" ]; then
+                echo "✅ Removed with find"
+              else
+                echo "⚠️ Find-based removal incomplete"
+              fi
+            fi
           fi
+          
+          # Recreate empty workspace directory
+          mkdir -p "$GITHUB_WORKSPACE"
+          echo "✅ Workspace cleanup completed"
+          ls -la "$WORKSPACE_PARENT" | grep "$WORKSPACE_NAME" || true
         continue-on-error: true
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          clean: false  # We handle cleanup manually to avoid permission errors
-          # Let git handle any conflicts with force
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
       
       - name: Set up Python
