@@ -28,6 +28,19 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     
     steps:
+      - name: Clean workspace
+        run: |
+          # Remove .git/index.lock if it exists (prevents permission errors)
+          if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
+            rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
+          fi
+          
+          # Fix permissions on git directory if needed
+          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+            chmod -R u+w "$GITHUB_WORKSPACE/.git" || true
+          fi
+        continue-on-error: true
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
