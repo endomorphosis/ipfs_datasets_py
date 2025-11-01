@@ -145,6 +145,10 @@ jobs:
       packages: write
     
     steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -191,6 +195,10 @@ jobs:
     environment: staging
     
     steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -219,6 +227,10 @@ jobs:
     environment: production
     
     steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
     - name: Checkout repository
       uses: actions/checkout@v4
       with:

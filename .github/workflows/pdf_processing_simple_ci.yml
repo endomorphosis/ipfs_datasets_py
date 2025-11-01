@@ -35,6 +35,10 @@ jobs:
       options: --user root
     
     steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
     - name: Checkout code
       uses: actions/checkout@v4
     
@@ -129,6 +133,10 @@ jobs:
       options: --user root
     
     steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
     - name: Checkout code
       uses: actions/checkout@v4
     
