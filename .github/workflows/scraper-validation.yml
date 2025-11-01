@@ -33,14 +33,14 @@ on:
         options:
           - quick
           - comprehensive
-
-permissions:
-  contents: read
-  actions: read
           - stress
   schedule:
     # Run scraper validation daily at 3 AM UTC
     - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+  actions: read
 
 env:
   PYTHON_VERSION: '3.12'
