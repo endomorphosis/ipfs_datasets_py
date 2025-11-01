@@ -235,7 +235,7 @@ jobs:
           FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
 
           # Get PR comments
-          COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body')
+          COMMENTS=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json comments --jq '.comments[].body')
 
           # Check if @copilot has been mentioned
           if echo "$COMMENTS" | grep -q "@copilot"; then
@@ -415,7 +415,7 @@ jobs:
           esac
 
           # Post comment to assign Copilot
-          gh pr comment "$PR_NUMBER" --body "$COPILOT_COMMENT"
+          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$COPILOT_COMMENT"
 
           echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
           echo "assigned=true" >> $GITHUB_OUTPUT
