@@ -154,22 +154,36 @@ jobs:
           else
             echo "Installing GitHub CLI..."
             
-            # Try different installation methods
-            if [ -f /etc/debian_version ]; then
-              # Debian/Ubuntu
-              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            # Try different installation methods based on sudo availability
+            if [ -f /etc/debian_version ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              # Debian/Ubuntu with passwordless sudo
+              echo "Installing via apt with sudo..."
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
               echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
               sudo apt update && sudo apt install gh -y
               echo "✅ Installed gh CLI via apt"
             else
-              # Generic Linux - use binary
-              wget https://github.com/cli/cli/releases/download/v2.74.0/gh_2.74.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+              # No sudo or sudo requires password - install to user directory
+              echo "Installing to ~/.local/bin (no sudo required)..."
+              mkdir -p ~/.local/bin
+              
+              wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
               tar -xzf /tmp/gh.tar.gz -C /tmp
-              sudo mv /tmp/gh_*/bin/gh /usr/local/bin/
-              chmod +x /usr/local/bin/gh
-              echo "✅ Installed gh CLI binary"
+              cp /tmp/gh_*/bin/gh ~/.local/bin/
+              chmod +x ~/.local/bin/gh
+              
+              # Add to PATH if not already there
+              if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+                export PATH="$HOME/.local/bin:$PATH"
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+              fi
+              
+              echo "✅ Installed gh CLI to ~/.local/bin"
             fi
           fi
+          
+          # Ensure gh is in PATH
+          export PATH="$HOME/.local/bin:$PATH"
           
           # Verify gh works
           gh --version
