@@ -1,6 +1,6 @@
 name: Convert Issues to Draft PRs with Copilot
 
-on:
+'on':
   issues:
     types: [opened, reopened]
   workflow_dispatch:
