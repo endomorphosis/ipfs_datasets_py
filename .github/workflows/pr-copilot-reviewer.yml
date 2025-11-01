@@ -202,8 +202,8 @@ jobs:
 
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
 
-          # Get PR details
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,number,author,isDraft,labels,state)
+          # Get PR details (use --repo flag to avoid "not a git repository" error)
+          PR_DATA=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json title,body,number,author,isDraft,labels,state)
 
           PR_TITLE=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['title'])")
           PR_AUTHOR=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
