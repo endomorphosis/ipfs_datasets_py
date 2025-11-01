@@ -1,6 +1,6 @@
 name: Automated PR Review and Copilot Assignment
 
-on:
+'on':
   pull_request:
     types: [opened, reopened, ready_for_review]
   workflow_dispatch:
@@ -26,7 +26,7 @@ env:
 jobs:
   analyze-and-assign-copilot:
     runs-on: [self-hosted, linux, x64]
-    
+
     steps:
       - name: Clean workspace
         run: |
@@ -34,24 +34,24 @@ jobs:
           if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
             rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
           fi
-          
+
           # Fix permissions on git directory if needed
           if [ -d "$GITHUB_WORKSPACE/.git" ]; then
             chmod -R u+w "$GITHUB_WORKSPACE/.git" || true
           fi
         continue-on-error: true
-      
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Set up Python
         run: |
           python3 --version
           python3 -m pip install --user --upgrade pip
           pip install --user PyYAML requests
-      
+
       - name: Get PR details
         id: get_pr
         env:
@@ -63,25 +63,25 @@ jobs:
           else
             PR_NUMBER="${{ github.event.pull_request.number }}"
           fi
-          
+
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          
+
           # Get PR details
           PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,number,author,isDraft,labels,state)
-          
+
           PR_TITLE=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['title'])")
           PR_AUTHOR=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
           IS_DRAFT=$(echo "$PR_DATA" | python3 -c "import sys, json; print(str(json.load(sys.stdin)['isDraft']).lower())")
           PR_STATE=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['state'])")
-          
+
           echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
           echo "pr_author=$PR_AUTHOR" >> $GITHUB_OUTPUT
           echo "is_draft=$IS_DRAFT" >> $GITHUB_OUTPUT
           echo "pr_state=$PR_STATE" >> $GITHUB_OUTPUT
-          
+
           # Save PR body for analysis
           echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin).get('body', ''))" > /tmp/pr_body.txt
-          
+
           echo "📊 **PR Analysis**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **PR #**: $PR_NUMBER" >> $GITHUB_STEP_SUMMARY
@@ -89,7 +89,7 @@ jobs:
           echo "- **Author**: @$PR_AUTHOR" >> $GITHUB_STEP_SUMMARY
           echo "- **Is Draft**: $IS_DRAFT" >> $GITHUB_STEP_SUMMARY
           echo "- **State**: $PR_STATE" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Check if Copilot already assigned
         id: check_copilot
         env:
@@ -97,15 +97,15 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
-          
+
           # Get PR comments
           COMMENTS=$(gh pr view "$PR_NUMBER" --json comments --jq '.comments[].body')
-          
+
           # Check if @copilot has been mentioned
           if echo "$COMMENTS" | grep -q "@copilot"; then
             echo "✅ Copilot has already been assigned to this PR"
             echo "already_assigned=true" >> $GITHUB_OUTPUT
-            
+
             if [ "$FORCE_ASSIGN" = "true" ]; then
               echo "⚠️ Force assign enabled - will reassign anyway"
               echo "should_assign=true" >> $GITHUB_OUTPUT
@@ -117,7 +117,7 @@ jobs:
             echo "already_assigned=false" >> $GITHUB_OUTPUT
             echo "should_assign=true" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Analyze PR content and determine action
         id: analyze_pr
         if: steps.check_copilot.outputs.should_assign == 'true'
@@ -125,26 +125,26 @@ jobs:
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
           IS_DRAFT="${{ steps.get_pr.outputs.is_draft }}"
-          
+
           python3 << 'PYTHON_EOF'
           import json
           import re
-          
+
           # Read PR body
           try:
               with open('/tmp/pr_body.txt', 'r') as f:
                   pr_body = f.read()
           except:
               pr_body = ""
-          
+
           pr_title = "${{ steps.get_pr.outputs.pr_title }}"
           is_draft = "${{ steps.get_pr.outputs.is_draft }}" == "true"
-          
+
           # Determine if this PR should be assigned to Copilot
           should_assign = False
           assignment_reason = []
           copilot_task = "review"  # Default task
-          
+
           # Analyze PR characteristics
           analysis = {
               'is_draft': is_draft,
@@ -154,39 +154,39 @@ jobs:
               'needs_implementation': False,
               'complexity': 'medium'
           }
-          
+
           # Check if auto-generated
           if 'auto-generated' in pr_body.lower() or 'automated' in pr_title.lower():
               analysis['is_auto_generated'] = True
               should_assign = True
               assignment_reason.append("auto-generated PR")
-          
+
           # Check if workflow fix
           if 'workflow' in pr_title.lower() or 'auto-fix' in pr_title.lower():
               analysis['is_workflow_fix'] = True
               should_assign = True
               assignment_reason.append("workflow fix PR")
               copilot_task = "fix"
-          
+
           # Check if issue resolution
           issue_pattern = r'#\d+|fixes|closes|resolves'
           if re.search(issue_pattern, pr_body.lower()):
               analysis['is_issue_resolution'] = True
               should_assign = True
               assignment_reason.append("resolves an issue")
-          
+
           # Check if draft PR needing implementation
           if is_draft and len(pr_body) > 100:
               analysis['needs_implementation'] = True
               should_assign = True
               assignment_reason.append("draft PR needing implementation")
               copilot_task = "implement"
-          
+
           # If no clear reason but it's a draft, assign for review
           if is_draft and not should_assign:
               should_assign = True
               assignment_reason.append("draft PR for review")
-          
+
           # Save analysis
           result = {
               'should_assign': should_assign,
@@ -194,30 +194,30 @@ jobs:
               'copilot_task': copilot_task,
               'analysis': analysis
           }
-          
+
           with open('/tmp/pr_analysis.json', 'w') as f:
               json.dump(result, f, indent=2)
-          
+
           print(f"Should assign: {should_assign}")
           print(f"Task: {copilot_task}")
           print(f"Reason: {result['assignment_reason']}")
           PYTHON_EOF
-          
+
           # Read results
           SHOULD_ASSIGN=$(python3 -c "import json; print(str(json.load(open('/tmp/pr_analysis.json'))['should_assign']).lower())")
           COPILOT_TASK=$(python3 -c "import json; print(json.load(open('/tmp/pr_analysis.json'))['copilot_task'])")
           REASON=$(python3 -c "import json; print(json.load(open('/tmp/pr_analysis.json'))['assignment_reason'])")
-          
+
           echo "should_assign_copilot=$SHOULD_ASSIGN" >> $GITHUB_OUTPUT
           echo "copilot_task=$COPILOT_TASK" >> $GITHUB_OUTPUT
           echo "assignment_reason=$REASON" >> $GITHUB_OUTPUT
-          
+
           echo "## Analysis Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Should Assign**: $SHOULD_ASSIGN" >> $GITHUB_STEP_SUMMARY
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Assign Copilot to PR
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
@@ -228,7 +228,7 @@ jobs:
           PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
           ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
-          
+
           # Create appropriate comment based on task type
           case "$COPILOT_TASK" in
             "fix")
@@ -245,7 +245,7 @@ jobs:
 
           **PR**: #$PR_NUMBER - $PR_TITLE"
               ;;
-            
+
             "implement")
               COPILOT_COMMENT="@copilot Please implement the solution described in this PR.
 
@@ -260,7 +260,7 @@ jobs:
 
           **PR**: #$PR_NUMBER - $PR_TITLE"
               ;;
-            
+
             "review"|*)
               COPILOT_COMMENT="@copilot /review
 
@@ -277,13 +277,13 @@ jobs:
           **PR**: #$PR_NUMBER - $PR_TITLE"
               ;;
           esac
-          
+
           # Post comment to assign Copilot
           gh pr comment "$PR_NUMBER" --body "$COPILOT_COMMENT"
-          
+
           echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
           echo "assigned=true" >> $GITHUB_OUTPUT
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ✅ Copilot Assigned" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -292,7 +292,7 @@ jobs:
           echo "- **Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Copilot has been notified and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
-      
+
       - name: Summary
         if: always()
         run: |
@@ -301,7 +301,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🤖 **Automated PR Review and Assignment Complete**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ steps.assign_copilot.outputs.assigned }}" = "true" ]; then
             echo "✅ Copilot has been assigned to work on this PR" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.check_copilot.outputs.already_assigned }}" = "true" ]; then

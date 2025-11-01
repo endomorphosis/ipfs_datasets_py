@@ -87,10 +87,45 @@ The issue-to-PR system activates automatically. When any issue is created:
 
 **No manual intervention required until step 6!**
 
-### All Workflows Monitored (16 Total)
+## 🔍 PR Copilot Reviewer System (Automatic PR Assignment)
+
+### What is it?
+
+The PR Copilot Reviewer System automatically assigns GitHub Copilot to review and implement changes for pull requests:
+1. **Detects** when a PR is opened, reopened, or marked ready for review
+2. **Analyzes** the PR content, title, and description
+3. **Determines** the appropriate task type (fix, implement, or review)
+4. **Assigns** GitHub Copilot with targeted instructions via @mention
+5. **Integrates** with the auto-healing system for workflow fix PRs
+
+**Key Innovation**: Every PR gets automatic Copilot assignment with context-aware instructions!
+
+### How It Works
+
+```
+PR Created/Updated → Content Analysis → Task Classification → @copilot Mentioned → Implementation/Review
+```
+
+### Task Types
+
+The system intelligently assigns Copilot with different instructions based on PR characteristics:
+
+- **Fix Task** (`@copilot /fix`): For auto-generated workflow fixes or bug fix PRs
+- **Implement Task** (`@copilot`): For draft PRs needing implementation
+- **Review Task** (`@copilot /review`): For completed PRs needing code review
+
+### Integration with Auto-Healing
+
+The PR Copilot Reviewer is **monitored by the auto-healing system** (#2 in the monitored list), ensuring:
+- If the reviewer workflow fails, auto-healing creates a fix PR
+- The fix PR gets Copilot assigned automatically
+- Creates a self-healing loop for the automation system
+
+### All Workflows Monitored (17 Total)
 
 The auto-healing system monitors **every workflow** in this repository:
 - ARM64 Self-Hosted Runner
+- **Automated PR Review and Copilot Assignment** ⭐ NEW
 - Comprehensive Scraper Validation
 - Docker Build and Test (2 variants)
 - Documentation Maintenance
@@ -117,6 +152,10 @@ The auto-healing system monitors **every workflow** in this repository:
 - **[Quickstart Guide](QUICKSTART-issue-to-draft-pr.md)** - Get started in 5 minutes
 - **[Workflow File](issue-to-draft-pr.yml)** - The workflow definition
 
+#### PR Copilot Reviewer System
+- **[Workflow File](pr-copilot-reviewer.yml)** - The workflow definition
+- **[Copilot Integration](COPILOT-INTEGRATION.md)** - Integration documentation
+
 ## Workflows Overview
 
 ### Auto-Healing & Automation Workflows
@@ -124,7 +163,8 @@ The auto-healing system monitors **every workflow** in this repository:
 | Workflow | Purpose | Status | Trigger |
 |----------|---------|--------|---------|
 | [issue-to-draft-pr.yml](issue-to-draft-pr.yml) | **Convert ALL issues to draft PRs with Copilot** | ✅ Active | On issue created/reopened |
-| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Auto-healing with Copilot Agent** | ✅ Active | On any workflow failure |
+| [pr-copilot-reviewer.yml](pr-copilot-reviewer.yml) | **Auto-assign Copilot to PRs for review/implementation** | ✅ Active | On PR opened/reopened/ready_for_review |
+| [copilot-agent-autofix.yml](copilot-agent-autofix.yml) | **Auto-healing with Copilot Agent** | ✅ Active | On any workflow failure (17 monitored) |
 | [update-autohealing-list.yml](update-autohealing-list.yml) | **Auto-update monitored workflows** | ✅ Active | On workflow file changes |
 | [enhanced-autohealing.yml](enhanced-autohealing.yml) | Enhanced auto-healing | ⛔ Disabled | Used unsupported wildcard |
 | [workflow-auto-fix.yml](workflow-auto-fix.yml) | Legacy auto-fix system | ⛔ Disabled | Superseded by copilot-agent |
