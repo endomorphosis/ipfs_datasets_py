@@ -4,14 +4,14 @@ This branch was created automatically to fix a workflow failure.
 
 ## Issue
 
-#364
+#366
 
 ## Workflow Details
 
-- **Workflow**: GPU-Enabled Tests
-- **Run ID**: 18982989296
-- **Error Type**: Unknown
-- **Fix Type**: manual
+- **Workflow**: Publish Python Package
+- **Run ID**: 19001791573
+- **Error Type**: Permission Error
+- **Fix Type**: fix_permissions
 
 ## Next Steps
 
