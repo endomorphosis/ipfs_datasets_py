@@ -14,6 +14,11 @@ name: Automated PR Review and Copilot Assignment
         required: false
         default: false
         type: boolean
+      monitor_agent:
+        description: 'Monitor Copilot agent progress after assignment'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -376,7 +381,7 @@ jobs:
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
 
-      - name: Assign Copilot to PR
+      - name: Assign Copilot to PR using GitHub CLI
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
@@ -438,20 +443,70 @@ jobs:
               ;;
           esac
 
-          # Post comment to assign Copilot
+          # Use GitHub CLI to post comment and invoke Copilot agent
+          echo "📝 Invoking Copilot agent via GitHub CLI..."
           gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$COPILOT_COMMENT"
 
-          echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
+          # Verify Copilot agent task was created/assigned
+          echo "🔍 Verifying Copilot agent task assignment..."
+          sleep 5  # Give GitHub a moment to process the comment
+          
+          # Check if agent task exists for this PR
+          if gh agent-task view "$PR_NUMBER" --repo ${{ github.repository }} >/dev/null 2>&1; then
+            echo "✅ Copilot agent task verified for PR #$PR_NUMBER"
+            echo "agent_task_verified=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Could not verify agent task (may still be initializing)"
+            echo "agent_task_verified=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "✅ Successfully invoked Copilot agent for PR #$PR_NUMBER via GitHub CLI"
           echo "assigned=true" >> $GITHUB_OUTPUT
 
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ✅ Copilot Assigned" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Copilot Agent Invoked via GitHub CLI" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
-          echo "- **Task**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
-          echo "- **Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+          echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+          echo "- **Method**: GitHub CLI (\`gh pr comment\`)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Copilot has been notified and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
+          echo "🤖 Copilot agent has been invoked using the GitHub CLI and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To monitor agent progress, run:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "gh agent-task view $PR_NUMBER --repo ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+      - name: Monitor Copilot Agent Progress (Optional)
+        id: monitor_agent
+        if: |
+          steps.assign_copilot.outputs.assigned == 'true' && 
+          steps.assign_copilot.outputs.agent_task_verified == 'true' &&
+          (github.event.inputs.monitor_agent == 'true' || github.event_name == 'pull_request')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          
+          echo "📊 Checking Copilot agent status for PR #$PR_NUMBER..."
+          
+          # Try to get agent task details
+          if AGENT_INFO=$(gh agent-task view "$PR_NUMBER" --repo ${{ github.repository }} 2>&1); then
+            echo "Agent task information:"
+            echo "$AGENT_INFO"
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📊 Copilot Agent Status" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Agent task is active for PR #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "View full details: \`gh agent-task view $PR_NUMBER --repo ${{ github.repository }}\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Unable to retrieve agent task details (may still be initializing)"
+            echo "This is normal if the agent task was just created."
+          fi
+        continue-on-error: true  # Don't fail the workflow if monitoring fails
 
       - name: Summary
         if: always()
