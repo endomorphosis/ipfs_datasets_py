@@ -25,6 +25,11 @@ on:
     # Run comprehensive integration tests daily at 3 AM UTC
     - cron: '0 3 * * *'
 
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
 env:
   PYTHON_VERSION: '3.12'
   MCP_DASHBOARD_PORT: 8899

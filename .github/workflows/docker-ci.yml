@@ -24,6 +24,11 @@ on:
           - minimal
           - full
 
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}

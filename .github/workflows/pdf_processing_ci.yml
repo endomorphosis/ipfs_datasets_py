@@ -17,6 +17,10 @@ on:
       - 'tests/**'
       - 'requirements.txt'
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   PYTHON_VERSION: '3.12'
   PYTEST_TIMEOUT: '300'  # 5 minutes

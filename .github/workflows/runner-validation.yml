@@ -26,6 +26,10 @@ on:
       - '.github/workflows/**'
       - 'comprehensive_runner_validation.py'
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   validate-runner:
     name: Validate Self-Hosted Runner

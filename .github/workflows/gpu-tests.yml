@@ -21,6 +21,10 @@ on:
           - cpu
           - all
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   PYTHON_VERSION: '3.10'
 

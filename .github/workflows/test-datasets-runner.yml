@@ -6,6 +6,10 @@ on:
     branches: [ main ]
     paths: [ '.github/workflows/test-datasets-runner.yml' ]
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
   test-datasets-runner:
     runs-on: [self-hosted, ARM64, datasets]

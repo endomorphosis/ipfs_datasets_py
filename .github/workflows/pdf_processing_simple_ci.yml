@@ -19,6 +19,10 @@ on:
       - 'test_basic_functionality.py'
       - 'test_simple_integration.py'
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   PYTHON_VERSION: '3.12'
 
