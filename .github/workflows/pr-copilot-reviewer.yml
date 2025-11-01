@@ -121,8 +121,30 @@ jobs:
       - name: Set up Python
         run: |
           python3 --version
-          python3 -m pip install --user --upgrade pip
-          pip install --user PyYAML requests
+          
+          # Handle PEP 668 externally-managed-environment
+          # Try system packages first, then pip with --break-system-packages if needed
+          
+          # Check if packages are already available
+          if python3 -c "import yaml, requests" 2>/dev/null; then
+            echo "✅ Required packages already installed"
+          else
+            echo "Installing required packages..."
+            
+            # Try system packages first (preferred on Debian/Ubuntu)
+            if command -v apt >/dev/null 2>&1 && sudo -n apt install -y python3-yaml python3-requests 2>/dev/null; then
+              echo "✅ Installed via apt"
+            else
+              # Fall back to pip with --break-system-packages (safe for CI)
+              echo "Using pip with --break-system-packages..."
+              python3 -m pip install --user --upgrade pip --break-system-packages || true
+              pip install --user PyYAML requests --break-system-packages
+              echo "✅ Installed via pip"
+            fi
+          fi
+          
+          # Verify installation
+          python3 -c "import yaml, requests; print('✅ All required packages available')"
 
       - name: Get PR details
         id: get_pr
