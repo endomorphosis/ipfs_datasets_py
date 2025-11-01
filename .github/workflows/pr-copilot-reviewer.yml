@@ -87,6 +87,35 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          clean: false  # Disable automatic cleanup - we handle it manually
+        continue-on-error: true  # Allow checkout to fail, will retry
+      
+      - name: Force reclone if checkout failed
+        if: failure()
+        run: |
+          echo "⚠️ Checkout failed, forcing full reclone..."
+          cd "$(dirname "$GITHUB_WORKSPACE")"
+          
+          # Nuclear option: rename the old directory (avoids deletion issues)
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            OLD_DIR="${GITHUB_WORKSPACE}.broken.$(date +%s)"
+            mv "$GITHUB_WORKSPACE" "$OLD_DIR" 2>/dev/null || true
+            echo "Moved broken workspace to: $OLD_DIR"
+            
+            # Try to clean it up in background (may fail but won't block)
+            (sudo rm -rf "$OLD_DIR" 2>/dev/null || rm -rf "$OLD_DIR" 2>/dev/null || true) &
+          fi
+          
+          # Create fresh directory
+          mkdir -p "$GITHUB_WORKSPACE"
+          echo "✅ Created fresh workspace directory"
+      
+      - name: Retry checkout in fresh workspace
+        if: failure()
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
       
       - name: Set up Python
