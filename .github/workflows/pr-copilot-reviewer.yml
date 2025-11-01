@@ -146,6 +146,34 @@ jobs:
           # Verify installation
           python3 -c "import yaml, requests; print('✅ All required packages available')"
 
+      - name: Setup GitHub CLI
+        run: |
+          # Check if gh is available
+          if command -v gh >/dev/null 2>&1; then
+            echo "✅ gh CLI already installed: $(gh --version | head -1)"
+          else
+            echo "Installing GitHub CLI..."
+            
+            # Try different installation methods
+            if [ -f /etc/debian_version ]; then
+              # Debian/Ubuntu
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update && sudo apt install gh -y
+              echo "✅ Installed gh CLI via apt"
+            else
+              # Generic Linux - use binary
+              wget https://github.com/cli/cli/releases/download/v2.74.0/gh_2.74.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+              tar -xzf /tmp/gh.tar.gz -C /tmp
+              sudo mv /tmp/gh_*/bin/gh /usr/local/bin/
+              chmod +x /usr/local/bin/gh
+              echo "✅ Installed gh CLI binary"
+            fi
+          fi
+          
+          # Verify gh works
+          gh --version
+
       - name: Get PR details
         id: get_pr
         env:
