@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-"""
 GitHub Copilot CLI PR Worker
 
 Uses the NEW GitHub Copilot CLI (installed via npm) to work on pull requests.
