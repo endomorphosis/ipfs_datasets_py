@@ -138,14 +138,7 @@ jobs:
     - name: Run unit tests - Utils
       if: matrix.test-group == 'utils'
       run: |
-        pytest tests/unit/ \
-          --ignore=tests/unit/test_pdf_processor_unit.py \
-          --ignore=tests/unit/test_ocr_engine_unit.py \
-          --ignore=tests/unit/test_graphrag_integrator_unit.py \
-          --ignore=tests/unit/test_query_engine_unit.py \
-          --ignore=tests/unit/test_mcp_pdf_tools.py \
-          --ignore=tests/unit/test_stubs_from_gherkin \
-          --ignore=tests/unit/gherkin_features \
+        pytest tests/test_jsonnet_utils.py tests/test_import_utils.py \
           --cov=ipfs_datasets_py.utils \
           --cov-report=xml \
           --cov-report=term-missing \
@@ -182,17 +175,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Install system dependencies
       run: |
@@ -234,17 +216,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -277,17 +248,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Install dependencies
       run: |
@@ -323,17 +283,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Install security scanning tools
       run: |
@@ -399,17 +348,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Test package installation
       run: |
