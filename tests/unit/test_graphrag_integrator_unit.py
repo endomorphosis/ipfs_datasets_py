@@ -442,6 +442,241 @@ class TestIntegratorQueries:
             pytest.skip("GraphRAG dependencies not available")
 
 
+class TestGetEntityNeighborhoodEdgeCases:
+    """
+    Comprehensive edge case tests for get_entity_neighborhood method.
+    
+    Based on debugging session 2025-07-13 that identified critical edge cases
+    needing proper test coverage. These test stubs provide structure for
+    validating depth validation, entity ID validation, graph structure handling,
+    subgraph completeness, performance, and error handling.
+    """
+    
+    # ========================================================================
+    # Depth Validation Edge Cases
+    # ========================================================================
+    
+    def test_given_depth_zero_when_getting_neighborhood_then_returns_only_center_entity(self):
+        """
+        GIVEN a valid entity_id and depth=0
+        WHEN calling get_entity_neighborhood
+        THEN should return only the center entity without any neighbors
+        """
+        raise NotImplementedError("Test stub for depth=0 validation")
+    
+    def test_given_negative_depth_when_getting_neighborhood_then_raises_value_error(self):
+        """
+        GIVEN a valid entity_id and negative depth value (e.g., -1, -5)
+        WHEN calling get_entity_neighborhood
+        THEN should raise ValueError with appropriate error message
+        """
+        raise NotImplementedError("Test stub for negative depth validation")
+    
+    def test_given_non_integer_depth_when_getting_neighborhood_then_raises_type_error(self):
+        """
+        GIVEN a valid entity_id and non-integer depth (e.g., float, string, list)
+        WHEN calling get_entity_neighborhood
+        THEN should raise TypeError with appropriate error message
+        """
+        raise NotImplementedError("Test stub for non-integer depth validation")
+    
+    def test_given_extremely_large_depth_when_getting_neighborhood_then_handles_performance_boundaries(self):
+        """
+        GIVEN a valid entity_id and extremely large depth value (e.g., 1000000)
+        WHEN calling get_entity_neighborhood
+        THEN should either handle gracefully or raise appropriate limit error
+        """
+        raise NotImplementedError("Test stub for extremely large depth values")
+    
+    # ========================================================================
+    # Entity ID Validation Edge Cases
+    # ========================================================================
+    
+    def test_given_none_entity_id_when_getting_neighborhood_then_raises_type_error(self):
+        """
+        GIVEN entity_id=None and valid depth
+        WHEN calling get_entity_neighborhood
+        THEN should raise TypeError with specific message about None entity_id
+        """
+        raise NotImplementedError("Test stub for None entity_id parameter")
+    
+    def test_given_empty_string_entity_id_when_getting_neighborhood_then_raises_value_error(self):
+        """
+        GIVEN entity_id="" (empty string) and valid depth
+        WHEN calling get_entity_neighborhood
+        THEN should raise ValueError with appropriate error message
+        """
+        raise NotImplementedError("Test stub for empty string entity_id parameter")
+    
+    def test_given_non_string_entity_id_when_getting_neighborhood_then_raises_type_error(self):
+        """
+        GIVEN entity_id of non-string type (int, list, dict) and valid depth
+        WHEN calling get_entity_neighborhood
+        THEN should raise TypeError for each non-string type
+        """
+        raise NotImplementedError("Test stub for non-string entity_id types")
+    
+    def test_given_entity_id_with_special_characters_when_getting_neighborhood_then_handles_correctly(self):
+        """
+        GIVEN entity_id with special characters and Unicode (e.g., "entity@#$", "entité_ñ")
+        WHEN calling get_entity_neighborhood
+        THEN should handle special characters correctly without errors
+        """
+        raise NotImplementedError("Test stub for entity_id with special characters and Unicode")
+    
+    # ========================================================================
+    # Graph Structure Edge Cases
+    # ========================================================================
+    
+    def test_given_isolated_entity_when_getting_neighborhood_then_returns_only_entity(self):
+        """
+        GIVEN an entity with no connections (isolated node) and depth > 0
+        WHEN calling get_entity_neighborhood
+        THEN should return only the entity itself with empty relationships
+        """
+        raise NotImplementedError("Test stub for isolated entities (no connections)")
+    
+    def test_given_self_referencing_entity_when_getting_neighborhood_then_handles_loops(self):
+        """
+        GIVEN an entity with self-referencing edge (entity -> entity loop)
+        WHEN calling get_entity_neighborhood
+        THEN should handle self-loops correctly without infinite recursion
+        """
+        raise NotImplementedError("Test stub for self-referencing edges")
+    
+    def test_given_cyclic_graph_when_getting_neighborhood_then_prevents_infinite_traversal(self):
+        """
+        GIVEN entities in a cyclic graph structure (A->B->C->A)
+        WHEN calling get_entity_neighborhood with any depth
+        THEN should prevent infinite traversal and return finite neighborhood
+        """
+        raise NotImplementedError("Test stub for cyclic graphs")
+    
+    def test_given_disconnected_graph_components_when_getting_neighborhood_then_returns_only_connected(self):
+        """
+        GIVEN a graph with multiple disconnected components
+        WHEN calling get_entity_neighborhood for entity in one component
+        THEN should return only entities from the connected component
+        """
+        raise NotImplementedError("Test stub for disconnected graph components")
+    
+    def test_given_empty_global_graph_when_getting_neighborhood_then_handles_gracefully(self):
+        """
+        GIVEN an empty global graph (no entities or relationships)
+        WHEN calling get_entity_neighborhood
+        THEN should handle gracefully and return appropriate empty result
+        """
+        raise NotImplementedError("Test stub for empty global graph scenarios")
+    
+    # ========================================================================
+    # Subgraph Completeness Edge Cases
+    # ========================================================================
+    
+    def test_given_neighborhood_subgraph_when_counting_edges_then_includes_all_subgraph_edges(self):
+        """
+        GIVEN a neighborhood subgraph with multiple entities
+        WHEN counting edges in the result
+        THEN should include both direct and indirect edges within subgraph
+        """
+        raise NotImplementedError("Test stub for edge count accuracy within subgraph neighborhoods")
+    
+    def test_given_neighborhood_with_neighbor_connections_when_getting_subgraph_then_includes_indirect_edges(self):
+        """
+        GIVEN entities in neighborhood that are connected to each other
+        WHEN getting entity neighborhood subgraph
+        THEN should include edges between neighbors (indirect edges)
+        """
+        raise NotImplementedError("Test stub for indirect edge inclusion")
+    
+    def test_given_neighborhood_traversal_when_verifying_algorithm_then_uses_breadth_first(self):
+        """
+        GIVEN a graph requiring neighborhood traversal
+        WHEN getting entity neighborhood at specific depth
+        THEN should use breadth-first traversal and include all entities at each depth level
+        """
+        raise NotImplementedError("Test stub for breadth-first traversal correctness")
+    
+    def test_given_directed_graph_when_getting_neighborhood_then_handles_predecessor_and_successor_edges(self):
+        """
+        GIVEN a directed graph with incoming and outgoing edges
+        WHEN getting entity neighborhood
+        THEN should correctly handle both predecessor and successor edges
+        """
+        raise NotImplementedError("Test stub for predecessor and successor edge handling")
+    
+    # ========================================================================
+    # Performance and Scalability Edge Cases
+    # ========================================================================
+    
+    def test_given_large_neighborhood_when_processing_then_handles_thousands_of_nodes(self):
+        """
+        GIVEN an entity with neighborhood containing >1000 nodes
+        WHEN calling get_entity_neighborhood
+        THEN should process efficiently without memory or performance issues
+        """
+        raise NotImplementedError("Test stub for large neighborhood processing (>1000 nodes)")
+    
+    def test_given_concurrent_access_when_getting_neighborhoods_then_handles_parallel_requests(self):
+        """
+        GIVEN multiple concurrent calls to get_entity_neighborhood
+        WHEN processing neighborhoods in parallel
+        THEN should handle concurrent access correctly without race conditions
+        """
+        raise NotImplementedError("Test stub for concurrent access scenarios")
+    
+    def test_given_deep_neighborhood_when_traversing_then_manages_memory_usage(self):
+        """
+        GIVEN a deep neighborhood requiring extensive traversal
+        WHEN calling get_entity_neighborhood with large depth
+        THEN should manage memory usage appropriately without memory leaks
+        """
+        raise NotImplementedError("Test stub for memory usage patterns with deep neighborhoods")
+    
+    def test_given_neighborhood_result_when_serializing_then_json_compatible(self):
+        """
+        GIVEN a neighborhood result from get_entity_neighborhood
+        WHEN attempting JSON serialization
+        THEN should be fully JSON-serializable without custom types
+        """
+        raise NotImplementedError("Test stub for JSON serialization compatibility of results")
+    
+    # ========================================================================
+    # Error Handling Edge Cases
+    # ========================================================================
+    
+    def test_given_nonexistent_entity_id_when_getting_neighborhood_then_handles_lookup_failure(self):
+        """
+        GIVEN an entity_id that does not exist in the graph
+        WHEN calling get_entity_neighborhood
+        THEN should handle gracefully (return empty or raise appropriate error)
+        """
+        raise NotImplementedError("Test stub for nonexistent entity lookup scenarios")
+    
+    def test_given_corrupted_graph_data_when_getting_neighborhood_then_handles_corruption(self):
+        """
+        GIVEN a graph with corrupted or inconsistent data structures
+        WHEN calling get_entity_neighborhood
+        THEN should detect corruption and handle appropriately
+        """
+        raise NotImplementedError("Test stub for corrupted graph data structures")
+    
+    def test_given_missing_entity_attributes_when_getting_neighborhood_then_handles_missing_data(self):
+        """
+        GIVEN graph nodes with missing required entity attributes
+        WHEN calling get_entity_neighborhood
+        THEN should handle missing attributes gracefully
+        """
+        raise NotImplementedError("Test stub for missing entity attributes in nodes")
+    
+    def test_given_malformed_edge_data_when_getting_neighborhood_then_validates_edges(self):
+        """
+        GIVEN graph with malformed or invalid edge data
+        WHEN calling get_entity_neighborhood
+        THEN should validate edge data and handle malformed edges appropriately
+        """
+        raise NotImplementedError("Test stub for malformed edge data validation")
+
+
 if __name__ == "__main__":
     # Run tests directly if called as script
     pytest.main([__file__, "-v"])
