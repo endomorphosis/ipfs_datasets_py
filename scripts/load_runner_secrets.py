@@ -262,9 +262,8 @@ class SecretsManager:
         else:
             print(f"✅ Loaded {len(self.secrets)} secret(s):")
             for key in self.secrets.keys():
-                # Show key but mask value
-                masked_value = self.secrets[key][:8] + "..." if len(self.secrets[key]) > 8 else "***"
-                print(f"   - {key}: {masked_value}")
+                # Never print secrets or their partial values.
+                print(f"   - {key}: [MASKED]")
         
         print("="*80 + "\n")
 
