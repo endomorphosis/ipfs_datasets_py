@@ -165,17 +165,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install system dependencies
       run: |
         sudo apt-get update
@@ -216,17 +205,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -259,17 +237,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Install dependencies
       run: |
@@ -305,17 +272,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Install security scanning tools
       run: |
@@ -381,17 +337,6 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
     
     - name: Test package installation
       run: |
