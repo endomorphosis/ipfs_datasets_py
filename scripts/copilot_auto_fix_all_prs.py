@@ -108,7 +108,10 @@ class CopilotAutoFixAllPRs:
                 logger.error("❌ GitHub CLI (gh) not found. Please install it first.")
                 logger.error("   Visit: https://cli.github.com/")
                 sys.exit(1)
-            logger.info(f"✅ GitHub CLI: {result.stdout.strip().split()[2]}")
+            # Extract version safely
+            version_parts = result.stdout.strip().split()
+            version = version_parts[2] if len(version_parts) > 2 else "unknown"
+            logger.info(f"✅ GitHub CLI: {version}")
         except FileNotFoundError:
             logger.error("❌ GitHub CLI (gh) not found. Please install it first.")
             sys.exit(1)
@@ -229,11 +232,12 @@ class CopilotAutoFixAllPRs:
         """
         logger.info(f"🔍 Fetching open pull requests (limit: {limit})...")
         
+        # Fetch PRs without comments for efficiency - we'll get comments later if needed
         result = self.run_command([
             'gh', 'pr', 'list',
             '--state', 'open',
             '--limit', str(limit),
-            '--json', 'number,title,body,isDraft,state,author,labels,comments,files,url,headRefName'
+            '--json', 'number,title,body,isDraft,state,author,labels,files,url,headRefName'
         ])
         
         if not result['success']:
@@ -379,6 +383,22 @@ class CopilotAutoFixAllPRs:
         
         return analysis
     
+    def _format_instruction_footer(self, priority: str, reasons: str) -> str:
+        """
+        Format common instruction footer.
+        
+        Args:
+            priority: Priority level
+            reasons: Comma-separated reasons
+        
+        Returns:
+            Formatted footer string
+        """
+        return f"""
+**Priority**: {priority.upper()}
+**Reason**: {reasons}
+"""
+    
     def create_copilot_instructions(self, pr_details: Dict[str, Any], analysis: Dict[str, Any]) -> str:
         """
         Create appropriate Copilot instructions based on PR analysis.
@@ -412,10 +432,7 @@ class CopilotAutoFixAllPRs:
 4. Follow the repository's coding patterns and best practices
 5. Ensure all tests pass after the fix
 6. Commit the changes with a clear message
-
-**Priority**: {priority.upper()}
-**Reason**: {reasons}
-
+{self._format_instruction_footer(priority, reasons)}
 Please proceed with implementing this auto-fix."""
         
         elif fix_type == 'workflow':
