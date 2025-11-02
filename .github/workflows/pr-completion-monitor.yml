@@ -48,6 +48,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests openai anthropic
       
+      - name: Load runner secrets
+        run: |
+          # Load secrets from runner machine (secure, not exposed in GitHub)
+          # Secrets are stored in /etc/github-runner-secrets/secrets.json
+          # See .github/workflows/SECRETS-MANAGEMENT.md for setup instructions
+          python3 scripts/load_runner_secrets.py --export || true
+          
+          # If runner secrets not available, workflow will fall back to:
+          # 1. Repository secrets (if configured)
+          # 2. Heuristic checking (without LLM)
+      
       - name: Install GitHub CLI
         run: |
           if ! command -v gh &> /dev/null; then
@@ -86,8 +97,12 @@ jobs:
       - name: Check PR completion and invoke Copilot if needed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # API keys are loaded from runner secrets via load_runner_secrets.py
+          # They are automatically available via ${{ env.OPENAI_API_KEY }} etc.
+          # Fallback to repository secrets if runner secrets not configured:
+          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+          OPENROUTER_API_KEY: ${{ env.OPENROUTER_API_KEY || secrets.OPENROUTER_API_KEY }}
         run: |
           python3 << 'EOF'
           import os
