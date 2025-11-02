@@ -139,7 +139,7 @@ jobs:
       if: matrix.test-group == 'utils'
       run: |
         pytest tests/test_jsonnet_utils.py tests/test_import_utils.py \
-          --cov=ipfs_datasets_py.utils \
+          --cov=ipfs_datasets_py.jsonnet_utils \
           --cov-report=xml \
           --cov-report=term-missing \
           --timeout=${{ env.PYTEST_TIMEOUT }} \
