@@ -178,11 +178,12 @@ jobs:
     
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+        apt-get update
+        apt-get install -y tesseract-ocr tesseract-ocr-eng
     
     - name: Install Python dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-timeout
@@ -218,6 +219,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-timeout
@@ -251,6 +253,7 @@ jobs:
     
     - name: Install dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-benchmark memory_profiler
@@ -286,6 +289,7 @@ jobs:
     
     - name: Install security scanning tools
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install bandit safety
     
@@ -351,6 +355,7 @@ jobs:
     
     - name: Test package installation
       run: |
+        python --version
         python -m pip install --upgrade pip
         # First test base package installation
         pip install -e .
