@@ -26,6 +26,18 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+          sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
+          # Clean the entire workspace to avoid conflicts
+          cd /
+          sudo rm -rf "$GITHUB_WORKSPACE" || true
+        fi
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
@@ -103,6 +115,18 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+          sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
+          # Clean the entire workspace to avoid conflicts
+          cd /
+          sudo rm -rf "$GITHUB_WORKSPACE" || true
+        fi
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
@@ -145,6 +169,14 @@ jobs:
       packages: write
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'
@@ -195,6 +227,14 @@ jobs:
     environment: staging
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'
@@ -227,6 +267,14 @@ jobs:
     environment: production
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'
