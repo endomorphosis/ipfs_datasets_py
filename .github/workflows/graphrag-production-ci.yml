@@ -115,6 +115,7 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     steps:
+
     - name: Clean workspace
       run: |
         # Remove any stale lock files and reset permissions
