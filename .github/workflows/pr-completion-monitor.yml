@@ -46,18 +46,17 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests openai anthropic
+          pip install requests
       
-      - name: Load runner secrets
+      - name: Load runner secrets (optional)
         run: |
-          # Load secrets from runner machine (secure, not exposed in GitHub)
+          # Optional: Load secrets from runner machine for future use
           # Secrets are stored in /etc/github-runner-secrets/secrets.json
           # See .github/workflows/SECRETS-MANAGEMENT.md for setup instructions
           python3 scripts/load_runner_secrets.py --export || true
           
-          # If runner secrets not available, workflow will fall back to:
-          # 1. Repository secrets (if configured)
-          # 2. Heuristic checking (without LLM)
+          # Note: This workflow now uses Copilot CLI instead of external LLM APIs
+          # No API keys required - uses GitHub Copilot CLI integration
       
       - name: Install GitHub CLI
         run: |
@@ -97,12 +96,8 @@ jobs:
       - name: Check PR completion and invoke Copilot if needed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # API keys are loaded from runner secrets via load_runner_secrets.py
-          # They are automatically available via ${{ env.OPENAI_API_KEY }} etc.
-          # Fallback to repository secrets if runner secrets not configured:
-          OPENAI_API_KEY: ${{ env.OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ env.ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
-          OPENROUTER_API_KEY: ${{ env.OPENROUTER_API_KEY || secrets.OPENROUTER_API_KEY }}
+          # This workflow uses GitHub Copilot CLI (integrated in ipfs_datasets_py)
+          # No external API keys required - Copilot CLI uses GitHub authentication
         run: |
           python3 << 'EOF'
           import os
@@ -152,9 +147,9 @@ jobs:
                       return None
               return None
           
-          def check_pr_completion_with_llm(pr_details: Dict[str, Any]) -> Dict[str, Any]:
+          def check_pr_completion_with_copilot(pr_details: Dict[str, Any]) -> Dict[str, Any]:
               """
-              Use LLM to check if PR objective is complete.
+              Use GitHub Copilot CLI to check if PR objective is complete.
               
               Returns dict with 'is_complete', 'confidence', 'reason'
               """
@@ -162,93 +157,83 @@ jobs:
               title = pr_details['title']
               body = pr_details.get('body', '')
               
-              # Construct prompt for LLM
-              prompt = f"""Analyze this GitHub Pull Request and determine if the task objective has been completed.
-
-          PR #{pr_number}: {title}
-
-          Description:
-          {body[:2000]}  # Limit body to 2000 chars
-
-          Based on the PR title and description, determine:
-          1. Is the task objective clearly completed? (yes/no/unclear)
-          2. Confidence level (0-100%)
-          3. Brief reason for your assessment
-
-          Consider a PR incomplete if:
-          - The description says "in progress", "WIP", "draft", or similar
-          - The description lists uncompleted tasks or TODOs
-          - The PR is explicitly marked as draft
-          - The description indicates work is ongoing
-
-          Consider a PR complete if:
-          - All described objectives are met
-          - No outstanding TODOs or incomplete items
-          - The description indicates the work is done
-          - Tests are passing (if mentioned)
-
-          Respond in JSON format:
-          {{
-            "is_complete": true/false,
-            "confidence": 0-100,
-            "reason": "brief explanation"
-          }}
-          """
+              # Add project root to Python path
+              sys.path.insert(0, os.path.abspath('.'))
               
-              # Try different LLM APIs
               try:
-                  # Try OpenAI first
-                  if os.environ.get('OPENAI_API_KEY'):
-                      import openai
-                      client = openai.OpenAI(api_key=os.environ['OPENAI_API_KEY'])
-                      
-                      response = client.chat.completions.create(
-                          model="gpt-4o-mini",
-                          messages=[
-                              {"role": "system", "content": "You are a code review assistant that analyzes PR completion status."},
-                              {"role": "user", "content": prompt}
-                          ],
-                          response_format={"type": "json_object"},
-                          temperature=0.3
-                      )
-                      
-                      result = json.loads(response.choices[0].message.content)
-                      print(f"✅ OpenAI analysis for PR #{pr_number}: {result}")
-                      return result
+                  # Import Copilot CLI class
+                  from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
                   
-                  # Try Anthropic if OpenAI not available
-                  elif os.environ.get('ANTHROPIC_API_KEY'):
-                      import anthropic
-                      client = anthropic.Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
-                      
-                      response = client.messages.create(
-                          model="claude-3-5-sonnet-20241022",
-                          max_tokens=1000,
-                          messages=[
-                              {"role": "user", "content": prompt}
-                          ],
-                          temperature=0.3
-                      )
-                      
-                      # Parse JSON from response
-                      content = response.content[0].text
-                      # Try to extract JSON from markdown code blocks
-                      if '```json' in content:
-                          content = content.split('```json')[1].split('```')[0].strip()
-                      elif '```' in content:
-                          content = content.split('```')[1].split('```')[0].strip()
-                      
-                      result = json.loads(content)
-                      print(f"✅ Anthropic analysis for PR #{pr_number}: {result}")
-                      return result
+                  # Initialize Copilot CLI
+                  copilot = CopilotCLI()
                   
+                  # Check if installed
+                  if not copilot.installed:
+                      print("⚠️  Copilot CLI not installed, attempting to install...")
+                      install_result = copilot.install()
+                      if not install_result.get('success'):
+                          print(f"⚠️  Failed to install Copilot CLI: {install_result.get('error')}")
+                          return heuristic_completion_check(pr_details)
+                  
+                  # Create analysis prompt as code comment for Copilot to explain
+                  analysis_request = "# PR Completion Analysis Request\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Analyze this Pull Request and determine if task objectives are complete:\\n"
+                  analysis_request += f"# PR #{pr_number}: {title}\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Description:\\n"
+                  analysis_request += f"# {body[:1500]}\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Question: Is this PR complete? Consider:\\n"
+                  analysis_request += "# - Incomplete if: in progress, WIP, draft, uncompleted TODOs, ongoing work\\n"
+                  analysis_request += "# - Complete if: all objectives met, no TODOs, work is done, tests passing\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += '# Respond with JSON: {"is_complete": true/false, "confidence": 0-100, "reason": "explanation"}\\n'
+                  
+                  # Use Copilot's explain_code to analyze the PR
+                  result = copilot.explain_code(analysis_request)
+                  
+                  if result.get('success'):
+                      explanation = result.get('explanation', '')
+                      
+                      # Try to extract JSON from Copilot's response
+                      try:
+                          # Look for JSON in the response
+                          import re
+                          json_pattern = r'\\{[^}]*"is_complete"[^}]*\\}'
+                          json_match = re.search(json_pattern, explanation, re.DOTALL)
+                          if json_match:
+                              analysis = json.loads(json_match.group(0))
+                              print(f"✅ Copilot CLI analysis for PR #{pr_number}: {analysis}")
+                              return analysis
+                          else:
+                              # Parse Copilot's natural language response
+                              is_complete = not any(word in explanation.lower() for word in 
+                                                   ['incomplete', 'not complete', 'in progress', 'wip', 'todo'])
+                              confidence = 70 if is_complete else 75
+                              return {
+                                  'is_complete': is_complete,
+                                  'confidence': confidence,
+                                  'reason': explanation[:200]
+                              }
+                      except (json.JSONDecodeError, AttributeError) as e:
+                          print(f"⚠️  Could not parse Copilot response as JSON: {e}")
+                          # Fallback: analyze the text response
+                          is_complete = 'complete' in explanation.lower() and 'not complete' not in explanation.lower()
+                          return {
+                              'is_complete': is_complete,
+                              'confidence': 65,
+                              'reason': explanation[:200]
+                          }
                   else:
-                      print("⚠️  No LLM API key available, using heuristic check")
-                      # Fallback to simple heuristic
+                      print(f"⚠️  Copilot CLI failed: {result.get('error')}")
                       return heuristic_completion_check(pr_details)
               
+              except ImportError as e:
+                  print(f"⚠️  Could not import Copilot CLI: {e}")
+                  return heuristic_completion_check(pr_details)
               except Exception as e:
-                  print(f"⚠️  LLM check failed: {e}, using heuristic")
+                  print(f"⚠️  Copilot CLI check failed: {e}, using heuristic")
                   return heuristic_completion_check(pr_details)
           
           def heuristic_completion_check(pr_details: Dict[str, Any]) -> Dict[str, Any]:
@@ -358,8 +343,8 @@ jobs:
                       stats['skipped'] += 1
                       continue
                   
-                  # Check completion with LLM
-                  completion_status = check_pr_completion_with_llm(pr_details)
+                  # Check completion with Copilot CLI
+                  completion_status = check_pr_completion_with_copilot(pr_details)
                   
                   is_complete = completion_status.get('is_complete', True)
                   confidence = completion_status.get('confidence', 0)
@@ -422,9 +407,11 @@ jobs:
           echo "- **PRs Checked**: ${{ steps.get_prs.outputs.pr_numbers }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What This Workflow Does" >> $GITHUB_STEP_SUMMARY
-          echo "1. 🔍 Analyzes PR title and description using an LLM" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🔍 Analyzes PR title and description using GitHub Copilot CLI" >> $GITHUB_STEP_SUMMARY
           echo "2. 📊 Determines if the task objective has been completed" >> $GITHUB_STEP_SUMMARY
           echo "3. 🤖 Invokes Copilot CLI tool on incomplete PRs" >> $GITHUB_STEP_SUMMARY
           echo "4. ♻️  Continues until PRs appear complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Uses:** GitHub Copilot CLI (integrated in ipfs_datasets_py package)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check the workflow logs for detailed results." >> $GITHUB_STEP_SUMMARY
