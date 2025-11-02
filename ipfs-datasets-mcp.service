@@ -1,0 +1,37 @@
+[Unit]
+Description=IPFS Datasets MCP Server
+Documentation=https://github.com/endomorphosis/ipfs_datasets_py
+After=network.target
+Wants=network.target
+
+[Service]
+Type=exec
+User=barberb
+Group=barberb
+WorkingDirectory=/home/barberb/ipfs_datasets_py
+Environment=PATH=/home/barberb/ipfs_datasets_py/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PYTHONPATH=/home/barberb/ipfs_datasets_py
+Environment=MCP_DASHBOARD_HOST=127.0.0.1
+Environment=MCP_DASHBOARD_PORT=8899
+Environment=MCP_DASHBOARD_BLOCKING=1
+ExecStart=/home/barberb/ipfs_datasets_py/.venv/bin/python -m ipfs_datasets_py.mcp_dashboard
+ExecStop=/home/barberb/ipfs_datasets_py/ipfs-datasets mcp stop
+Restart=always
+RestartSec=15
+StartLimitIntervalSec=300
+StartLimitBurst=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ipfs-datasets-mcp
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/barberb/ipfs_datasets_py /home/barberb/.ipfs_datasets /tmp
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
