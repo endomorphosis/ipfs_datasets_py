@@ -19,8 +19,19 @@ jobs:
   build:
     name: Build distribution 📦
     runs-on: [self-hosted, linux, x64]
-
+    permissions:
+      contents: write  # Needed to clean up working directory
+    
     steps:
+      - name: Clean up working directory
+        run: |
+          # Remove any stale git lock files
+          rm -f .git/index.lock .git/HEAD.lock .git/refs/heads/*.lock 2>/dev/null || true
+          # Clean up any uncommitted changes
+          git reset --hard HEAD 2>/dev/null || true
+          git clean -ffdx 2>/dev/null || true
+        continue-on-error: true
+      
       - uses: actions/checkout@v4
         with:
           submodules: false
