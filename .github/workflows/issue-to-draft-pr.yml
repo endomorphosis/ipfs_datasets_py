@@ -84,6 +84,8 @@ jobs:
         id: get_issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Get the issue number
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -95,7 +97,7 @@ jobs:
           echo "Processing issue #$ISSUE_NUMBER"
           
           # Get issue details
-          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --json title,body,number,author,labels)
+          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json title,body,number,author,labels)
           
           ISSUE_TITLE=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['title'])")
           ISSUE_AUTHOR=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
@@ -117,12 +119,14 @@ jobs:
         id: check_existing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
           
           # Check if there's already a PR for this issue
           echo "Searching for existing PRs for issue #$ISSUE_NUMBER"
-          EXISTING_PRS=$(gh pr list --search "Fixes #$ISSUE_NUMBER in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Fixes #$ISSUE_NUMBER in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
           
           echo "Found $EXISTING_PRS existing PRs"
           
@@ -302,6 +306,8 @@ jobs:
         if: steps.create_branch.outputs.branch_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
           ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
@@ -398,7 +404,7 @@ jobs:
             echo "✅ Successfully created PR #$PR_NUMBER"
             
             # Add comment to trigger Copilot with specific instructions
-            gh pr comment "$PR_NUMBER" --body "@copilot /fix
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "@copilot /fix
 
           Please implement a solution for this issue. Here's what to focus on:
           
@@ -415,7 +421,7 @@ jobs:
           See the full issue details at: https://github.com/${{ github.repository }}/issues/$ISSUE_NUMBER"
             
             # Link PR back to issue
-            gh issue comment "$ISSUE_NUMBER" --body "🤖 **Automatic Draft PR Created**
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "🤖 **Automatic Draft PR Created**
           
           A draft PR has been created to address this issue: #$PR_NUMBER
           
@@ -441,7 +447,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
             
             # Update issue with manual PR creation instructions
-            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Automatic PR creation failed**
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "⚠️ **Automatic PR creation failed**
           
           The branch has been created: \`$BRANCH_NAME\`
           

@@ -4,14 +4,14 @@ This branch was created automatically to fix a workflow failure.
 
 ## Issue
 
-#355
+#366
 
 ## Workflow Details
 
-- **Workflow**: PDF Processing Pipeline CI/CD
-- **Run ID**: 18993862045
-- **Error Type**: Unknown
-- **Fix Type**: manual
+- **Workflow**: Publish Python Package
+- **Run ID**: 19001791573
+- **Error Type**: Permission Error
+- **Fix Type**: fix_permissions
 
 ## Next Steps
 
