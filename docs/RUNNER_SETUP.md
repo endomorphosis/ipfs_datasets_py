@@ -168,16 +168,53 @@ sudo journalctl -u actions.runner.* -f
 
 ### Docker Permission Denied
 
+Docker permission issues are common with self-hosted runners. Use our automated fix:
+
 ```bash
-# Add user to docker group
+# Quick fix - add user to docker group
 sudo usermod -aG docker $(whoami)
 
-# Logout and login, or:
-newgrp docker
+# For runner services, identify the runner user first:
+ps aux | grep Runner.Listener
+# Then add that user to docker group:
+sudo usermod -aG docker runner-user
 
-# Test
+# Restart runner service
+sudo systemctl restart actions.runner.*
+
+# Test access
 docker ps
 ```
+
+**Automated Solution:**
+```bash
+# Use our comprehensive fix script
+sudo ./scripts/setup-runner-docker-permissions.sh
+
+# Or run diagnostics first
+sudo ./scripts/setup-runner-docker-permissions.sh --diagnostics
+```
+
+**Manual Service Fix:**
+```bash
+# Create systemd override for proper group inheritance
+sudo mkdir -p /etc/systemd/system/actions.runner.*.service.d/
+sudo tee /etc/systemd/system/actions.runner.*.service.d/docker.conf << EOF
+[Service]
+SupplementaryGroups=docker
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl restart actions.runner.*
+```
+
+**Emergency Fix (less secure):**
+```bash
+# Temporary socket permission fix
+sudo chmod 666 /var/run/docker.sock
+```
+
+For detailed solutions, see: `docs/DOCKER_PERMISSION_INFRASTRUCTURE_SOLUTIONS.md`
 
 ### Runner Offline
 
