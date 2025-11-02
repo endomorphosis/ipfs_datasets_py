@@ -337,6 +337,8 @@ jobs:
         if: steps.generate_fix.outputs.fix_available == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
           RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
@@ -562,7 +564,7 @@ jobs:
             echo "✅ Successfully created PR #$PR_NUMBER"
             
             # Add comment to trigger Copilot
-            gh pr comment "$PR_NUMBER" --body "@copilot /fix
+            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "@copilot /fix
 
           Please implement the fixes for the workflow failure. Focus on:
           
@@ -591,7 +593,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
             
             # Update issue with manual PR creation instructions
-            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Automatic PR creation failed due to repository permissions.**
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "⚠️ **Automatic PR creation failed due to repository permissions.**
           
           The fix branch has been created: \`$BRANCH_NAME\`
           

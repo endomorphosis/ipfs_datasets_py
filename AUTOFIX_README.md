@@ -4,12 +4,12 @@ This branch was created automatically to fix a workflow failure.
 
 ## Issue
 
-#347
+#353
 
 ## Workflow Details
 
-- **Workflow**: GraphRAG Production CI/CD
-- **Run ID**: 18993605265
+- **Workflow**: PDF Processing Pipeline CI/CD
+- **Run ID**: 18993644572
 - **Error Type**: Unknown
 - **Fix Type**: manual
 
