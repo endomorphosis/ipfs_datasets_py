@@ -289,120 +289,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ All eligible PRs have been assigned Copilot" >> $GITHUB_STEP_SUMMARY
 
-  invoke-copilot-agents:
-    name: Invoke Copilot Coding Agents on PRs
-    needs: [check-pr-completion, assign-copilot-intelligent]
-    if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-      issues: write
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Invoke Coding Agents on Incomplete PRs
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "🤖 Invoking GitHub Copilot Coding Agents on incomplete PRs..."
-          
-          # Get incomplete PRs (draft PRs) - fetch without commits to avoid GraphQL limit
-          prs=$(gh pr list --draft --json number,title,updatedAt,headRefName --limit 100)
-          
-          total_invoked=0
-          total_failed=0
-          total_skipped=0
-          
-          echo "$prs" | jq -c '.[]' | while read -r pr; do
-            pr_number=$(echo "$pr" | jq -r '.number')
-            title=$(echo "$pr" | jq -r '.title')
-            updated_at=$(echo "$pr" | jq -r '.updatedAt')
-            branch=$(echo "$pr" | jq -r '.headRefName')
-            
-            # Get commit count separately using REST API (avoids GraphQL explosion)
-            commit_count=$(gh api repos/${{ github.repository }}/pulls/$pr_number/commits --paginate | jq -s 'length')
-            
-            # Calculate hours since last update
-            current_time=$(date -u +%s)
-            updated_time=$(date -u -d "$updated_at" +%s 2>/dev/null || echo "0")
-            hours_old=$(( ($current_time - $updated_time) / 3600 ))
-            
-            # Check if PR needs work (<=1 commit OR >2 hours old)
-            if [ "$commit_count" -le 1 ] || [ "$hours_old" -gt 2 ]; then
-              echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-              echo "📋 PR #$pr_number: $title"
-              echo "   Commits: $commit_count | Updated: $hours_old hours ago | Branch: $branch"
-              
-              # Check if agent task already exists for this branch
-              existing_tasks=$(gh agent-task list 2>/dev/null | grep -c "$branch" 2>/dev/null || echo "0")
-              
-              if [ "$existing_tasks" -gt 0 ]; then
-                echo "⏭️  Agent task already exists for branch $branch"
-                total_skipped=$((total_skipped + 1))
-                continue
-              fi
-              
-              # Create agent task with PR context, using existing branch as base
-              echo "🚀 Creating coding agent task on branch $branch..."
-              
-              # Use gh agent-task create with branch as base
-              if gh agent-task create \
-                "Fix the issues in PR #$pr_number: $title. This PR was created by the auto-healing workflow. Please: 1) Review the PR description and linked workflow failure 2) Analyze the root cause 3) Implement the fix with minimal changes 4) Follow repository coding patterns 5) Ensure tests pass. The fix should be committed to the existing branch $branch." \
-                --base "$branch" 2>&1; then
-                echo "✅ Successfully invoked coding agent on PR #$pr_number"
-                total_invoked=$((total_invoked + 1))
-              else
-                echo "❌ Failed to invoke coding agent on PR #$pr_number"
-                total_failed=$((total_failed + 1))
-              fi
-              
-              # Rate limit: wait 2 seconds between invocations
-              sleep 2
-            else
-              echo "⏭️  PR #$pr_number has $commit_count commits and is $hours_old hours old - skipping"
-              total_skipped=$((total_skipped + 1))
-            fi
-          done
-          
-          echo ""
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "📊 Summary:"
-          echo "   Agents invoked: $total_invoked"
-          echo "   Failed: $total_failed"
-          echo "   Skipped: $total_skipped"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          
-          # Store for summary
-          echo "total_invoked=$total_invoked" >> $GITHUB_ENV
-          echo "total_failed=$total_failed" >> $GITHUB_ENV
-          echo "total_skipped=$total_skipped" >> $GITHUB_ENV
-      - name: Generate Agent Invocation Summary
-        run: |
-          echo "## 🤖 Copilot Coding Agent Invocation" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Results:" >> $GITHUB_STEP_SUMMARY
-          echo "- **Agents successfully invoked**: ${total_invoked:-0}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Failed invocations**: ${total_failed:-0}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Skipped (already active)**: ${total_skipped:-0}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### What Happens Next:" >> $GITHUB_STEP_SUMMARY
-          echo "1. GitHub Copilot Coding Agents begin working on assigned PRs" >> $GITHUB_STEP_SUMMARY
-          echo "2. Agents analyze the code and implement fixes" >> $GITHUB_STEP_SUMMARY
-          echo "3. Agents commit changes directly to PR branches" >> $GITHUB_STEP_SUMMARY
-          echo "4. Agent session logs available via \`gh agent-task view <PR_NUMBER>\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Monitoring:" >> $GITHUB_STEP_SUMMARY
-          echo "- Check PR activity for new commits from agents" >> $GITHUB_STEP_SUMMARY
-          echo "- View agent progress: \`gh agent-task list\`" >> $GITHUB_STEP_SUMMARY
-          echo "- This workflow runs every 5 minutes to invoke agents on new PRs" >> $GITHUB_STEP_SUMMARY
+  # NOTE: gh agent-task and gh copilot commands require OAuth authentication
+  # which is not available in CI/CD environments. Therefore we rely on:
+  # 1. Job #2 (assign-copilot-intelligent) to post @copilot mentions
+  # 2. Job #3 (monitor-copilot-activity) to verify agents respond
+  #
+  # The @copilot mentions DO invoke agents - we just need to verify they work.
+  # See: https://github.blog/news-insights/product-news/github-copilot-in-github-support/
 
   monitor-copilot-activity:
     name: Monitor Copilot Activity on PRs
@@ -512,7 +405,7 @@ jobs:
 
   report-results:
     name: Generate Final Report
-    needs: [check-pr-completion, assign-copilot-intelligent, invoke-copilot-agents, monitor-copilot-activity]
+    needs: [check-pr-completion, assign-copilot-intelligent, monitor-copilot-activity]
     if: always()
     runs-on: ubuntu-latest
     
@@ -534,8 +427,13 @@ jobs:
           echo "## Job Status" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ PR Analysis: ${{ needs.check-pr-completion.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Copilot Assignment: ${{ needs.assign-copilot-intelligent.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Agent Invocation: ${{ needs.invoke-copilot-agents.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Activity Monitor: ${{ needs.monitor-copilot-activity.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Note on Agent Invocation" >> $GITHUB_STEP_SUMMARY
+          echo "GitHub Copilot agents are invoked via @copilot mentions in PR comments (Job #2)." >> $GITHUB_STEP_SUMMARY
+          echo "The 'gh agent-task' and 'gh copilot' CLI commands require OAuth authentication" >> $GITHUB_STEP_SUMMARY
+          echo "which is not available in CI/CD environments, so direct invocation is not possible." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.check-pr-completion.outputs.needs_copilot }}" -eq 0 ]; then
