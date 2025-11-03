@@ -446,7 +446,7 @@ class TestGetEntityNeighborhoodEdgeCases:
     """
     Comprehensive edge case tests for get_entity_neighborhood method.
     
-    Based on debugging session 2025-07-13 that identified critical edge cases
+    Based on debugging session 2024-07-13 that identified critical edge cases
     needing proper test coverage. These test stubs provide structure for
     validating depth validation, entity ID validation, graph structure handling,
     subgraph completeness, performance, and error handling.
