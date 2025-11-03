@@ -212,7 +212,7 @@
 ## Edge Case Test Requirements
 
 ### PDF Processing - GraphRAG Integrator
-**Priority**: High - Based on recent debugging session 2025-07-13
+**Priority**: High - Based on recent debugging session 2024-07-13
 **Status**: ✅ COMPLETED (2025-11-02) - All test stubs created in tests/unit/test_graphrag_integrator_unit.py
 
 - [x] **Make test stubs for** `get_entity_neighborhood` method edge cases:
