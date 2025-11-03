@@ -293,11 +293,64 @@ jobs:
   # This is the OFFICIAL method - when mentioned, copilot-swe-agent creates child PRs
   # that merge into the parent PR with the requested changes.
   #
-  # Alternative methods (gh agent-task, gh copilot) require OAuth authentication
-  # which is NOT available in GitHub Actions workflows.
+  # Alternative methods (gh agent-task, gh copilot) require OAuth authentication.
+  # The default GITHUB_TOKEN cannot be used - you need a Personal Access Token (PAT).
+  #
+  # TO ENABLE gh agent-task (OPTIONAL):
+  # 1. Create a PAT (Classic) at https://github.com/settings/tokens with scopes:
+  #    - repo, read:org, workflow, (copilot if available)
+  # 2. Add it as a repository secret named: GH_COPILOT_PAT
+  # 3. Uncomment the 'invoke-agents-with-cli' job below
   #
   # Verified working example: PR #344 -> @copilot mention -> Agent created PR #379
   # See: https://github.blog/news-insights/product-news/github-copilot-in-github-support/
+
+  # OPTIONAL: Uncomment this job to use gh agent-task with a PAT
+  # invoke-agents-with-cli:
+  #   name: Invoke Agents with gh agent-task (Requires PAT)
+  #   needs: [check-pr-completion, assign-copilot-intelligent]
+  #   if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #     pull-requests: write
+  #   
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+  #     
+  #     - name: Authenticate with PAT
+  #       env:
+  #         GH_COPILOT_PAT: ${{ secrets.GH_COPILOT_PAT }}
+  #       run: |
+  #         if [ -z "$GH_COPILOT_PAT" ]; then
+  #           echo "❌ GH_COPILOT_PAT secret not set. Skipping gh agent-task."
+  #           echo "See workflow comments for setup instructions."
+  #           exit 0
+  #         fi
+  #         echo "$GH_COPILOT_PAT" | gh auth login --with-token
+  #         gh auth status
+  #     
+  #     - name: Create agent tasks for incomplete PRs
+  #       run: |
+  #         # Get incomplete PRs
+  #         prs=$(gh pr list --draft --json number,title,headRefName --limit 50)
+  #         
+  #         echo "$prs" | jq -c '.[]' | while read -r pr; do
+  #           pr_number=$(echo "$pr" | jq -r '.number')
+  #           title=$(echo "$pr" | jq -r '.title')
+  #           branch=$(echo "$pr" | jq -r '.headRefName')
+  #           
+  #           echo "🤖 Creating agent task for PR #$pr_number on branch $branch"
+  #           
+  #           # Create agent task with base branch
+  #           gh agent-task create \
+  #             "Fix issues in PR #$pr_number: $title. Review PR description, analyze root cause, implement minimal fix, ensure tests pass." \
+  #             --base "$branch" \
+  #             2>&1 || echo "⚠️  Failed for PR #$pr_number"
+  #           
+  #           sleep 2
+  #         done
 
   monitor-copilot-activity:
     name: Monitor Copilot Activity on PRs
