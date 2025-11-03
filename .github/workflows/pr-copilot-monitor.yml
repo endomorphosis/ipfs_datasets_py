@@ -314,8 +314,8 @@ jobs:
         run: |
           echo "🤖 Invoking GitHub Copilot Coding Agents on incomplete PRs..."
           
-          # Get incomplete PRs (draft PRs with <=1 commit or old updates)
-          prs=$(gh pr list --draft --json number,title,commits,updatedAt --limit 100)
+          # Get incomplete PRs (draft PRs) - fetch without commits to avoid GraphQL limit
+          prs=$(gh pr list --draft --json number,title,updatedAt --limit 100)
           
           total_invoked=0
           total_failed=0
@@ -324,8 +324,10 @@ jobs:
           echo "$prs" | jq -c '.[]' | while read -r pr; do
             pr_number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
-            commit_count=$(echo "$pr" | jq -r '.commits | length')
             updated_at=$(echo "$pr" | jq -r '.updatedAt')
+            
+            # Get commit count separately using REST API (avoids GraphQL explosion)
+            commit_count=$(gh api repos/${{ github.repository }}/pulls/$pr_number/commits --paginate | jq -s 'length')
             
             # Calculate hours since last update
             current_time=$(date -u +%s)
