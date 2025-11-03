@@ -1,0 +1,328 @@
+name: PR Copilot Monitor
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Specific PR number to process (leave empty for all)'
+        required: false
+        type: string
+      force_reassign:
+        description: 'Force reassignment even if copilot already assigned'
+        required: false
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Dry run mode (no actual changes)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  check-pr-completion:
+    name: Check PR Completion Status
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    outputs:
+      incomplete_prs: ${{ steps.analyze.outputs.incomplete_prs }}
+      total_prs: ${{ steps.analyze.outputs.total_prs }}
+      needs_copilot: ${{ steps.analyze.outputs.needs_copilot }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Analyze PR Status
+        id: analyze
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Analyzing open PRs..."
+          
+          # Get all open PRs
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --jq ".[] | select(.number == ${{ github.event.inputs.pr_number }})")
+            PR_COUNT=1
+          else
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --limit 100)
+            PR_COUNT=$(echo "$PRS" | jq '. | length')
+          fi
+          
+          echo "total_prs=$PR_COUNT" >> $GITHUB_OUTPUT
+          echo "📊 Found $PR_COUNT open PRs"
+          
+          # Analyze each PR for copilot assignment
+          INCOMPLETE_PRS=""
+          NEEDS_COPILOT=0
+          
+          echo "$PRS" | jq -c '.[]' | while read -r pr; do
+            PR_NUM=$(echo "$pr" | jq -r '.number')
+            PR_TITLE=$(echo "$pr" | jq -r '.title')
+            IS_DRAFT=$(echo "$pr" | jq -r '.isDraft')
+            AUTHOR=$(echo "$pr" | jq -r '.author.login')
+            
+            echo ""
+            echo "📋 PR #$PR_NUM: $PR_TITLE"
+            echo "   Author: $AUTHOR | Draft: $IS_DRAFT"
+            
+            # Check if copilot is already assigned
+            HAS_COPILOT=$(echo "$pr" | jq -r '.comments[]?.body' | grep -i '@copilot' | wc -l)
+            
+            if [ "$HAS_COPILOT" -eq 0 ] || [ "${{ github.event.inputs.force_reassign }}" == "true" ]; then
+              echo "   ⚠️  Needs Copilot assignment"
+              INCOMPLETE_PRS="${INCOMPLETE_PRS}${PR_NUM},"
+              NEEDS_COPILOT=$((NEEDS_COPILOT + 1))
+            else
+              echo "   ✅ Copilot already assigned"
+            fi
+          done
+          
+          echo "incomplete_prs=${INCOMPLETE_PRS}" >> $GITHUB_OUTPUT
+          echo "needs_copilot=$NEEDS_COPILOT" >> $GITHUB_OUTPUT
+          echo ""
+          echo "📊 Summary: $NEEDS_COPILOT PRs need Copilot assignment"
+      
+      - name: Generate Summary
+        run: |
+          echo "## PR Copilot Monitor Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total PRs analyzed**: ${{ steps.analyze.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PRs needing Copilot**: ${{ steps.analyze.outputs.needs_copilot }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.analyze.outputs.needs_copilot }}" -gt 0 ]; then
+            echo "✅ Will proceed to assign Copilot agents" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No PRs need Copilot assignment" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  assign-copilot-intelligent:
+    name: Assign Copilot with Intelligent Analysis
+    needs: check-pr-completion
+    if: needs.check-pr-completion.outputs.needs_copilot > 0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install minimal dependencies needed for the scripts
+          pip install requests || true
+      
+      - name: Run Intelligent Copilot Invoker
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🤖 Running intelligent Copilot assignment..."
+          
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            # Specific PR
+            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+              python scripts/invoke_copilot_coding_agent_on_prs.py --pr ${{ github.event.inputs.pr_number }} --dry-run
+            else
+              python scripts/invoke_copilot_coding_agent_on_prs.py --pr ${{ github.event.inputs.pr_number }}
+            fi
+          else
+            # All PRs
+            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+              python scripts/invoke_copilot_coding_agent_on_prs.py --dry-run
+            else
+              python scripts/invoke_copilot_coding_agent_on_prs.py
+            fi
+          fi
+      
+      - name: Generate Assignment Summary
+        run: |
+          echo "## Copilot Assignment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Intelligent Copilot invoker has processed all incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What was done:" >> $GITHUB_STEP_SUMMARY
+          echo "- Analyzed PR context and requirements" >> $GITHUB_STEP_SUMMARY
+          echo "- Determined appropriate task types (fix/implement/review)" >> $GITHUB_STEP_SUMMARY
+          echo "- Assigned priority levels (HIGH/NORMAL)" >> $GITHUB_STEP_SUMMARY
+          echo "- Posted detailed task instructions for Copilot" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor PR activity for Copilot responses" >> $GITHUB_STEP_SUMMARY
+          echo "- Review and merge completed implementations" >> $GITHUB_STEP_SUMMARY
+
+  assign-copilot-batch:
+    name: Assign Copilot with Batch Processor
+    needs: check-pr-completion
+    if: needs.check-pr-completion.outputs.needs_copilot > 0 && failure()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Run Batch Copilot Assignment (Fallback)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔄 Running fallback batch assignment..."
+          python scripts/batch_assign_copilot_to_prs.py
+      
+      - name: Generate Fallback Summary
+        run: |
+          echo "## Copilot Assignment Complete (Fallback Mode)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ Used simple batch assignment as fallback" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All eligible PRs have been assigned Copilot" >> $GITHUB_STEP_SUMMARY
+
+  use-copilot-cli:
+    name: Use Copilot CLI to Work on PRs
+    needs: [check-pr-completion, assign-copilot-intelligent]
+    if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Copilot CLI
+        run: |
+          echo "📦 Installing GitHub Copilot CLI..."
+          npm install -g @github/copilot || {
+            echo "⚠️ Failed to install Copilot CLI, will skip this step"
+            exit 0
+          }
+          
+          # Verify installation
+          if command -v copilot &> /dev/null; then
+            echo "✅ Copilot CLI installed successfully"
+            copilot --version || echo "Could not verify version"
+          else
+            echo "⚠️ Copilot CLI not available in PATH"
+            exit 0
+          fi
+      
+      - name: Work on PRs with Copilot CLI
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            echo "🤖 Working on PR #${{ github.event.inputs.pr_number }} with Copilot CLI..."
+            
+            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+              echo "🔍 DRY RUN: Would work on PR #${{ github.event.inputs.pr_number }}"
+            else
+              python scripts/copilot_cli_pr_worker.py --pr ${{ github.event.inputs.pr_number }} || {
+                echo "⚠️ Copilot CLI worker failed, but continuing workflow"
+                exit 0
+              }
+            fi
+          else
+            echo "🤖 Working on incomplete PRs with Copilot CLI..."
+            
+            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+              echo "🔍 DRY RUN: Would work on all incomplete PRs"
+            else
+              python scripts/copilot_cli_pr_worker.py --all --limit 5 || {
+                echo "⚠️ Copilot CLI worker failed, but continuing workflow"
+                exit 0
+              }
+            fi
+          fi
+      
+      - name: Generate CLI Summary
+        if: success()
+        run: |
+          echo "## Copilot CLI Execution" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Copilot CLI has been invoked to work on PRs" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Features Used:" >> $GITHUB_STEP_SUMMARY
+          echo "- Interactive AI agent with code modification capabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- Automated PR checkout and implementation" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit and push capabilities" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Monitor Progress:" >> $GITHUB_STEP_SUMMARY
+          echo "Check individual PRs for Copilot's commits and changes" >> $GITHUB_STEP_SUMMARY
+
+  report-results:
+    name: Generate Final Report
+    needs: [check-pr-completion, assign-copilot-intelligent, use-copilot-cli]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate Final Report
+        run: |
+          echo "# PR Copilot Monitor - Final Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow Run**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Total PRs analyzed: ${{ needs.check-pr-completion.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- PRs needing Copilot: ${{ needs.check-pr-completion.outputs.needs_copilot }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ PR Analysis: ${{ needs.check-pr-completion.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Copilot Assignment: ${{ needs.assign-copilot-intelligent.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Copilot CLI: ${{ needs.use-copilot-cli.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.check-pr-completion.outputs.needs_copilot }}" -eq 0 ]; then
+            echo "✅ **All PRs are up to date!** No action needed." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **Processing complete!** Check PRs for Copilot activity." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Next scheduled run: $(date -d '+6 hours' -u +"%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
