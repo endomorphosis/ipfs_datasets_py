@@ -37,6 +37,20 @@
 
 ## Outstanding Tasks (Worker 131) 🔄
 
+### ✅ Edge Case Test Stubs Created (2024-11-02)
+- **Status**: COMPLETED
+- **Priority**: HIGH
+- **File**: tests/unit/test_graphrag_integrator_unit.py
+- **Class**: TestGetEntityNeighborhoodEdgeCases
+- **Test Stubs Created**: 25 comprehensive edge case test stubs
+  - 4 depth validation edge cases
+  - 4 entity ID validation edge cases
+  - 5 graph structure edge cases
+  - 4 subgraph completeness edge cases
+  - 4 performance and scalability edge cases
+  - 4 error handling edge cases
+- **Next Step**: Implement actual test logic (NotImplementedError placeholders need implementation)
+
 ### 🔄 Test Implementation (Current Phase)
 - **Status**: ASSIGNED TO WORKER 131
 - **Priority**: HIGH
@@ -53,6 +67,7 @@
 #### Files needing implementation:
 - All 10 test files with imports need actual test logic
 - Generic test files (test_comprehensive_integration.py, test_embedding_search_storage_tools.py, etc.)
+- **NEW**: 25 edge case test stubs in test_graphrag_integrator_unit.py
 
 ### 🔄 Test Infrastructure Improvements
 - **Status**: NOT STARTED
