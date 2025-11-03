@@ -289,12 +289,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ All eligible PRs have been assigned Copilot" >> $GITHUB_STEP_SUMMARY
 
-  # NOTE: gh agent-task and gh copilot commands require OAuth authentication
-  # which is not available in CI/CD environments. Therefore we rely on:
-  # 1. Job #2 (assign-copilot-intelligent) to post @copilot mentions
-  # 2. Job #3 (monitor-copilot-activity) to verify agents respond
+  # GitHub Copilot Coding Agents are invoked via @copilot mentions in PR comments.
+  # This is the OFFICIAL method - when mentioned, copilot-swe-agent creates child PRs
+  # that merge into the parent PR with the requested changes.
   #
-  # The @copilot mentions DO invoke agents - we just need to verify they work.
+  # Alternative methods (gh agent-task, gh copilot) require OAuth authentication
+  # which is NOT available in GitHub Actions workflows.
+  #
+  # Verified working example: PR #344 -> @copilot mention -> Agent created PR #379
   # See: https://github.blog/news-insights/product-news/github-copilot-in-github-support/
 
   monitor-copilot-activity:
@@ -430,10 +432,15 @@ jobs:
           echo "- ✅ Activity Monitor: ${{ needs.monitor-copilot-activity.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          echo "## Note on Agent Invocation" >> $GITHUB_STEP_SUMMARY
-          echo "GitHub Copilot agents are invoked via @copilot mentions in PR comments (Job #2)." >> $GITHUB_STEP_SUMMARY
-          echo "The 'gh agent-task' and 'gh copilot' CLI commands require OAuth authentication" >> $GITHUB_STEP_SUMMARY
-          echo "which is not available in CI/CD environments, so direct invocation is not possible." >> $GITHUB_STEP_SUMMARY
+          echo "## How Copilot Coding Agents Work" >> $GITHUB_STEP_SUMMARY
+          echo "1. Job #2 posts @copilot mentions in PR comments with detailed task instructions" >> $GITHUB_STEP_SUMMARY
+          echo "2. The copilot-swe-agent bot detects these mentions" >> $GITHUB_STEP_SUMMARY
+          echo "3. Agent creates a CHILD PR that merges into the parent PR" >> $GITHUB_STEP_SUMMARY
+          echo "4. Agent implements the requested changes in the child PR" >> $GITHUB_STEP_SUMMARY
+          echo "5. Once complete, agent requests review from the PR author" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** This is the official method - OAuth-requiring CLI commands (gh agent-task, gh copilot)" >> $GITHUB_STEP_SUMMARY
+          echo "cannot be used in GitHub Actions workflows. The @copilot mention approach is the proper solution." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.check-pr-completion.outputs.needs_copilot }}" -eq 0 ]; then
