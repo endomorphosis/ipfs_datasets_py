@@ -318,22 +318,25 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       
-      - name: Authenticate GitHub CLI
+      - name: Verify GitHub CLI Authentication
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔐 Authenticating GitHub CLI..."
+          echo "🔐 Verifying GitHub CLI authentication..."
           
-          # Set up gh auth using GITHUB_TOKEN
-          echo "$GH_TOKEN" | gh auth login --with-token
-          
-          # Verify authentication
+          # gh CLI automatically uses GH_TOKEN env var - just verify it works
           gh auth status || {
-            echo "⚠️ GitHub CLI authentication failed"
+            echo "⚠️ GitHub CLI authentication check failed"
+            echo "This is non-fatal, continuing with environment token..."
+          }
+          
+          # Test a simple gh command
+          gh repo view --json nameWithOwner || {
+            echo "⚠️ Could not access repository via gh CLI"
             exit 1
           }
           
-          echo "✅ GitHub CLI authenticated successfully"
+          echo "✅ GitHub CLI authenticated successfully via GH_TOKEN"
       
       - name: Install Copilot CLI
         run: |
