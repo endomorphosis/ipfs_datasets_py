@@ -50,63 +50,105 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔍 Analyzing open PRs..."
+          echo "🔍 Analyzing open PRs for completion status..."
           
-          # Get all open PRs
+          # Get all open PRs with detailed information
           if [ -n "${{ github.event.inputs.pr_number }}" ]; then
-            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --jq ".[] | select(.number == ${{ github.event.inputs.pr_number }})")
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments,commits --jq ".[] | select(.number == ${{ github.event.inputs.pr_number }})")
             PR_COUNT=1
           else
-            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --limit 100)
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments,commits --limit 100)
             PR_COUNT=$(echo "$PRS" | jq '. | length')
           fi
           
           echo "total_prs=$PR_COUNT" >> $GITHUB_OUTPUT
           echo "📊 Found $PR_COUNT open PRs"
           
-          # Analyze each PR for copilot assignment
+          # Analyze each PR for completion status
           INCOMPLETE_PRS=""
-          NEEDS_COPILOT=0
+          NEEDS_WORK=0
+          
+          # Save to temp file to preserve variables across subshell
+          TEMP_FILE=$(mktemp)
           
           echo "$PRS" | jq -c '.[]' | while read -r pr; do
             PR_NUM=$(echo "$pr" | jq -r '.number')
             PR_TITLE=$(echo "$pr" | jq -r '.title')
             IS_DRAFT=$(echo "$pr" | jq -r '.isDraft')
             AUTHOR=$(echo "$pr" | jq -r '.author.login')
+            COMMIT_COUNT=$(echo "$pr" | jq -r '.commits | length')
             
             echo ""
             echo "📋 PR #$PR_NUM: $PR_TITLE"
-            echo "   Author: $AUTHOR | Draft: $IS_DRAFT"
+            echo "   Author: $AUTHOR | Draft: $IS_DRAFT | Commits: $COMMIT_COUNT"
             
-            # Check if copilot is already assigned
-            HAS_COPILOT=$(echo "$pr" | jq -r '.comments[]?.body' | grep -i '@copilot' | wc -l)
+            # Check if PR is incomplete (draft with few/no commits or auto-fix PR)
+            IS_INCOMPLETE=false
             
-            if [ "$HAS_COPILOT" -eq 0 ] || [ "${{ github.event.inputs.force_reassign }}" == "true" ]; then
-              echo "   ⚠️  Needs Copilot assignment"
-              INCOMPLETE_PRS="${INCOMPLETE_PRS}${PR_NUM},"
-              NEEDS_COPILOT=$((NEEDS_COPILOT + 1))
-            else
-              echo "   ✅ Copilot already assigned"
+            # Check 1: Is it a draft PR?
+            if [ "$IS_DRAFT" == "true" ]; then
+              # Check 2: Does it have implementation commits? (more than 1 commit = has work)
+              if [ "$COMMIT_COUNT" -le 1 ]; then
+                IS_INCOMPLETE=true
+                echo "   ⚠️  INCOMPLETE: Draft PR with no implementation commits"
+              else
+                # Check 3: Check for Copilot commits in last 24 hours
+                RECENT_COMMITS=$(gh pr view "$PR_NUM" --json commits --jq '.commits[-3:] | .[].commit.author.date' | head -1)
+                if [ -n "$RECENT_COMMITS" ]; then
+                  HOURS_AGO=$(( ($(date +%s) - $(date -d "$RECENT_COMMITS" +%s)) / 3600 ))
+                  if [ "$HOURS_AGO" -gt 24 ]; then
+                    IS_INCOMPLETE=true
+                    echo "   ⚠️  INCOMPLETE: No recent commits (last commit $HOURS_AGO hours ago)"
+                  else
+                    echo "   ✅ Has recent commits ($HOURS_AGO hours ago)"
+                  fi
+                fi
+              fi
+            fi
+            
+            # Check 4: Force reassignment flag
+            if [ "${{ github.event.inputs.force_reassign }}" == "true" ]; then
+              IS_INCOMPLETE=true
+              echo "   🔄 Force reassignment requested"
+            fi
+            
+            # Track incomplete PRs
+            if [ "$IS_INCOMPLETE" == "true" ]; then
+              echo "$PR_NUM" >> "$TEMP_FILE"
             fi
           done
           
+          # Read incomplete PRs from temp file
+          if [ -f "$TEMP_FILE" ]; then
+            INCOMPLETE_PRS=$(cat "$TEMP_FILE" | tr '\n' ',' | sed 's/,$//')
+            NEEDS_WORK=$(cat "$TEMP_FILE" | wc -l)
+          else
+            INCOMPLETE_PRS=""
+            NEEDS_WORK=0
+          fi
+          
+          rm -f "$TEMP_FILE"
+          
           echo "incomplete_prs=${INCOMPLETE_PRS}" >> $GITHUB_OUTPUT
-          echo "needs_copilot=$NEEDS_COPILOT" >> $GITHUB_OUTPUT
+          echo "needs_copilot=$NEEDS_WORK" >> $GITHUB_OUTPUT
           echo ""
-          echo "📊 Summary: $NEEDS_COPILOT PRs need Copilot assignment"
+          echo "📊 Summary: $NEEDS_WORK PRs need Copilot work"
       
       - name: Generate Summary
         run: |
           echo "## PR Copilot Monitor Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Total PRs analyzed**: ${{ steps.analyze.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
-          echo "**PRs needing Copilot**: ${{ steps.analyze.outputs.needs_copilot }}" >> $GITHUB_STEP_SUMMARY
+          echo "**PRs needing work**: ${{ steps.analyze.outputs.needs_copilot }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.analyze.outputs.needs_copilot }}" -gt 0 ]; then
-            echo "✅ Will proceed to assign Copilot agents" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Will use Copilot CLI to work on incomplete PRs" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Incomplete PRs:" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.analyze.outputs.incomplete_prs }}" >> $GITHUB_STEP_SUMMARY
           else
-            echo "ℹ️ No PRs need Copilot assignment" >> $GITHUB_STEP_SUMMARY
+            echo "ℹ️ All PRs are up to date or have recent activity" >> $GITHUB_STEP_SUMMARY
           fi
 
   assign-copilot-intelligent:
