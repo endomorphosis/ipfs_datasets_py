@@ -315,7 +315,7 @@ jobs:
           echo "🤖 Invoking GitHub Copilot Coding Agents on incomplete PRs..."
           
           # Get incomplete PRs (draft PRs) - fetch without commits to avoid GraphQL limit
-          prs=$(gh pr list --draft --json number,title,updatedAt --limit 100)
+          prs=$(gh pr list --draft --json number,title,updatedAt,headRefName --limit 100)
           
           total_invoked=0
           total_failed=0
@@ -325,6 +325,7 @@ jobs:
             pr_number=$(echo "$pr" | jq -r '.number')
             title=$(echo "$pr" | jq -r '.title')
             updated_at=$(echo "$pr" | jq -r '.updatedAt')
+            branch=$(echo "$pr" | jq -r '.headRefName')
             
             # Get commit count separately using REST API (avoids GraphQL explosion)
             commit_count=$(gh api repos/${{ github.repository }}/pulls/$pr_number/commits --paginate | jq -s 'length')
@@ -338,24 +339,24 @@ jobs:
             if [ "$commit_count" -le 1 ] || [ "$hours_old" -gt 2 ]; then
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo "📋 PR #$pr_number: $title"
-              echo "   Commits: $commit_count | Updated: $hours_old hours ago"
+              echo "   Commits: $commit_count | Updated: $hours_old hours ago | Branch: $branch"
               
-              # Check if agent task already exists
-              existing_tasks=$(gh agent-task list 2>/dev/null | grep -c "pull/$pr_number" || echo "0")
+              # Check if agent task already exists for this branch
+              existing_tasks=$(gh agent-task list 2>/dev/null | grep -c "$branch" 2>/dev/null || echo "0")
               
               if [ "$existing_tasks" -gt 0 ]; then
-                echo "⏭️  Agent task already exists for PR #$pr_number"
+                echo "⏭️  Agent task already exists for branch $branch"
                 total_skipped=$((total_skipped + 1))
                 continue
               fi
               
-              # Create agent task with context from PR title  
-              echo "🚀 Creating coding agent task..."
+              # Create agent task with PR context, using existing branch as base
+              echo "🚀 Creating coding agent task on branch $branch..."
               
-              # Use gh agent-task create with description
+              # Use gh agent-task create with branch as base
               if gh agent-task create \
-                "Please implement the fix described in PR #$pr_number: $title. Context: This PR was created by the auto-healing workflow to fix a failed CI/CD workflow. Tasks: 1) Review the PR description and linked workflow failure 2) Analyze the root cause of the issue 3) Implement the fix with minimal changes 4) Follow repository coding patterns and best practices 5) Ensure tests pass after the fix. Please proceed with implementing this fix." \
-                --pull-request "$pr_number" 2>&1; then
+                "Fix the issues in PR #$pr_number: $title. This PR was created by the auto-healing workflow. Please: 1) Review the PR description and linked workflow failure 2) Analyze the root cause 3) Implement the fix with minimal changes 4) Follow repository coding patterns 5) Ensure tests pass. The fix should be committed to the existing branch $branch." \
+                --base "$branch" 2>&1; then
                 echo "✅ Successfully invoked coding agent on PR #$pr_number"
                 total_invoked=$((total_invoked + 1))
               else
@@ -383,7 +384,6 @@ jobs:
           echo "total_invoked=$total_invoked" >> $GITHUB_ENV
           echo "total_failed=$total_failed" >> $GITHUB_ENV
           echo "total_skipped=$total_skipped" >> $GITHUB_ENV
-      
       - name: Generate Agent Invocation Summary
         run: |
           echo "## 🤖 Copilot Coding Agent Invocation" >> $GITHUB_STEP_SUMMARY
