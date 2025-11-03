@@ -52,12 +52,12 @@ jobs:
         run: |
           echo "🔍 Analyzing open PRs for completion status..."
           
-          # Get all open PRs with detailed information
+          # Get all open PRs with basic information (avoiding commits field)
           if [ -n "${{ github.event.inputs.pr_number }}" ]; then
-            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments,commits --jq ".[] | select(.number == ${{ github.event.inputs.pr_number }})")
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --jq ".[] | select(.number == ${{ github.event.inputs.pr_number }})")
             PR_COUNT=1
           else
-            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments,commits --limit 100)
+            PRS=$(gh pr list --state open --json number,title,isDraft,author,updatedAt,comments --limit 100)
             PR_COUNT=$(echo "$PRS" | jq '. | length')
           fi
           
@@ -76,34 +76,36 @@ jobs:
             PR_TITLE=$(echo "$pr" | jq -r '.title')
             IS_DRAFT=$(echo "$pr" | jq -r '.isDraft')
             AUTHOR=$(echo "$pr" | jq -r '.author.login')
-            COMMIT_COUNT=$(echo "$pr" | jq -r '.commits | length')
+            UPDATED_AT=$(echo "$pr" | jq -r '.updatedAt')
             
             echo ""
             echo "📋 PR #$PR_NUM: $PR_TITLE"
-            echo "   Author: $AUTHOR | Draft: $IS_DRAFT | Commits: $COMMIT_COUNT"
+            echo "   Author: $AUTHOR | Draft: $IS_DRAFT"
             
-            # Check if PR is incomplete (draft with few/no commits or auto-fix PR)
+            # Check if PR is incomplete (draft that hasn't been worked on)
             IS_INCOMPLETE=false
             
             # Check 1: Is it a draft PR?
             if [ "$IS_DRAFT" == "true" ]; then
-              # Check 2: Does it have implementation commits? (more than 1 commit = has work)
+              # Check 2: Get commits count using a separate API call (limited)
+              COMMIT_COUNT=$(gh api "/repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits')
+              echo "   Commits: $COMMIT_COUNT"
+              
               if [ "$COMMIT_COUNT" -le 1 ]; then
                 IS_INCOMPLETE=true
                 echo "   ⚠️  INCOMPLETE: Draft PR with no implementation commits"
               else
-                # Check 3: Check for Copilot commits in last 24 hours
-                RECENT_COMMITS=$(gh pr view "$PR_NUM" --json commits --jq '.commits[-3:] | .[].commit.author.date' | head -1)
-                if [ -n "$RECENT_COMMITS" ]; then
-                  HOURS_AGO=$(( ($(date +%s) - $(date -d "$RECENT_COMMITS" +%s)) / 3600 ))
-                  if [ "$HOURS_AGO" -gt 24 ]; then
-                    IS_INCOMPLETE=true
-                    echo "   ⚠️  INCOMPLETE: No recent commits (last commit $HOURS_AGO hours ago)"
-                  else
-                    echo "   ✅ Has recent commits ($HOURS_AGO hours ago)"
-                  fi
+                # Check 3: Check last update time
+                HOURS_AGO=$(( ($(date +%s) - $(date -d "$UPDATED_AT" +%s)) / 3600 ))
+                if [ "$HOURS_AGO" -gt 48 ]; then
+                  IS_INCOMPLETE=true
+                  echo "   ⚠️  INCOMPLETE: No activity for $HOURS_AGO hours"
+                else
+                  echo "   ✅ Has recent activity ($HOURS_AGO hours ago)"
                 fi
               fi
+            else
+              echo "   ✅ Not a draft PR"
             fi
             
             # Check 4: Force reassignment flag
@@ -119,7 +121,7 @@ jobs:
           done
           
           # Read incomplete PRs from temp file
-          if [ -f "$TEMP_FILE" ]; then
+          if [ -f "$TEMP_FILE" ] && [ -s "$TEMP_FILE" ]; then
             INCOMPLETE_PRS=$(cat "$TEMP_FILE" | tr '\n' ',' | sed 's/,$//')
             NEEDS_WORK=$(cat "$TEMP_FILE" | wc -l)
           else
