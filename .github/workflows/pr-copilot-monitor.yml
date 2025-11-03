@@ -2,8 +2,8 @@ name: PR Copilot Monitor
 
 on:
   schedule:
-    # Run every 6 hours
-    - cron: '0 */6 * * *'
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
   
   workflow_dispatch:
     inputs:
@@ -82,12 +82,51 @@ jobs:
             echo "📋 PR #$PR_NUM: $PR_TITLE"
             echo "   Author: $AUTHOR | Draft: $IS_DRAFT"
             
+            # Check if Copilot agent is already running on this PR
+            AGENT_RUNNING=false
+            
+            # Check 1: Look for recent Copilot comments (within last 30 minutes)
+            RECENT_COPILOT_COMMENTS=$(echo "$pr" | jq -r '.comments[] | select(.author.login == "github-copilot" or .author.login == "copilot") | select(.createdAt != null) | .createdAt' | head -1)
+            if [ -n "$RECENT_COPILOT_COMMENTS" ]; then
+              MINUTES_AGO=$(( ($(date +%s) - $(date -d "$RECENT_COPILOT_COMMENTS" +%s)) / 60 ))
+              if [ "$MINUTES_AGO" -lt 30 ]; then
+                AGENT_RUNNING=true
+                echo "   🤖 Copilot agent active ($MINUTES_AGO minutes ago)"
+              fi
+            fi
+            
+            # Check 2: Look for recent commits from Copilot (within last 30 minutes)
+            RECENT_COPILOT_COMMITS=$(gh pr view "$PR_NUM" --json commits --jq '.commits[-1].commit | select(.author.name | contains("copilot") or contains("github-actions")) | .author.date' 2>/dev/null || echo "")
+            if [ -n "$RECENT_COPILOT_COMMITS" ]; then
+              MINUTES_AGO=$(( ($(date +%s) - $(date -d "$RECENT_COPILOT_COMMITS" +%s)) / 60 ))
+              if [ "$MINUTES_AGO" -lt 30 ]; then
+                AGENT_RUNNING=true
+                echo "   🤖 Copilot agent active (commit $MINUTES_AGO minutes ago)"
+              fi
+            fi
+            
+            # Check 3: Look for "working on" or "implementing" comments
+            WORKING_COMMENTS=$(echo "$pr" | jq -r '.comments[] | select(.body | test("working on|implementing|in progress"; "i")) | select(.createdAt != null) | .createdAt' | head -1)
+            if [ -n "$WORKING_COMMENTS" ]; then
+              MINUTES_AGO=$(( ($(date +%s) - $(date -d "$WORKING_COMMENTS" +%s)) / 60 ))
+              if [ "$MINUTES_AGO" -lt 30 ]; then
+                AGENT_RUNNING=true
+                echo "   🤖 Agent working (status update $MINUTES_AGO minutes ago)"
+              fi
+            fi
+            
+            # Skip if agent is already running
+            if [ "$AGENT_RUNNING" == "true" ]; then
+              echo "   ⏭️  Skipping: Agent already working on this PR"
+              continue
+            fi
+            
             # Check if PR is incomplete (draft that hasn't been worked on)
             IS_INCOMPLETE=false
             
-            # Check 1: Is it a draft PR?
+            # Check 4: Is it a draft PR?
             if [ "$IS_DRAFT" == "true" ]; then
-              # Check 2: Get commits count using a separate API call (limited)
+              # Check 5: Get commits count using a separate API call (limited)
               COMMIT_COUNT=$(gh api "/repos/{owner}/{repo}/pulls/$PR_NUM" --jq '.commits')
               echo "   Commits: $COMMIT_COUNT"
               
@@ -95,7 +134,7 @@ jobs:
                 IS_INCOMPLETE=true
                 echo "   ⚠️  INCOMPLETE: Draft PR with no implementation commits"
               else
-                # Check 3: Check last update time
+                # Check 6: Check last update time
                 HOURS_AGO=$(( ($(date +%s) - $(date -d "$UPDATED_AT" +%s)) / 3600 ))
                 if [ "$HOURS_AGO" -gt 48 ]; then
                   IS_INCOMPLETE=true
@@ -108,7 +147,7 @@ jobs:
               echo "   ✅ Not a draft PR"
             fi
             
-            # Check 4: Force reassignment flag
+            # Check 7: Force reassignment flag
             if [ "${{ github.event.inputs.force_reassign }}" == "true" ]; then
               IS_INCOMPLETE=true
               echo "   🔄 Force reassignment requested"
@@ -369,4 +408,5 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Next scheduled run: $(date -d '+6 hours' -u +"%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
+          echo "*Next scheduled run: $(date -d '+5 minutes' -u +"%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
+          echo "*Monitoring frequency: Every 5 minutes*" >> $GITHUB_STEP_SUMMARY
