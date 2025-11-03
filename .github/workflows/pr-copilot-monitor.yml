@@ -289,123 +289,115 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ All eligible PRs have been assigned Copilot" >> $GITHUB_STEP_SUMMARY
 
-  use-copilot-cli:
-    name: Use Copilot CLI to Work on PRs
+  monitor-copilot-activity:
+    name: Monitor Copilot Activity on PRs
     needs: [check-pr-completion, assign-copilot-intelligent]
     if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
-      issues: write
+      contents: read
+      pull-requests: read
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
-      - name: Configure Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-      
-      - name: Verify GitHub CLI Authentication
+      - name: Check Copilot Response Activity
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔐 Verifying GitHub CLI authentication..."
+          echo "� Checking Copilot activity on assigned PRs..."
           
-          # gh CLI automatically uses GH_TOKEN env var - just verify it works
-          gh auth status || {
-            echo "⚠️ GitHub CLI authentication check failed"
-            echo "This is non-fatal, continuing with environment token..."
-          }
+          # Get all draft PRs
+          prs=$(gh pr list --draft --json number,comments,updatedAt --limit 100)
           
-          # Test a simple gh command
-          gh repo view --json nameWithOwner || {
-            echo "⚠️ Could not access repository via gh CLI"
-            exit 1
-          }
+          total_prs=0
+          copilot_assigned=0
+          copilot_responded=0
+          needs_attention=0
           
-          echo "✅ GitHub CLI authenticated successfully via GH_TOKEN"
+          echo "$prs" | jq -c '.[]' | while read -r pr; do
+            pr_number=$(echo "$pr" | jq -r '.number')
+            updated_at=$(echo "$pr" | jq -r '.updatedAt')
+            
+            # Check if @copilot mentioned in comments
+            has_copilot_mention=$(echo "$pr" | jq -r '.comments[] | select(.body | contains("@copilot")) | .body' | head -1)
+            
+            # Check if Copilot (or copilot-agent) has responded
+            copilot_response=$(echo "$pr" | jq -r '.comments[] | select(.author.login | test("copilot|github-actions")) | .body' | tail -1)
+            
+            total_prs=$((total_prs + 1))
+            
+            if [ -n "$has_copilot_mention" ]; then
+              copilot_assigned=$((copilot_assigned + 1))
+              
+              if [ -n "$copilot_response" ]; then
+                copilot_responded=$((copilot_responded + 1))
+                echo "✅ PR #$pr_number - Copilot active"
+              else
+                needs_attention=$((needs_attention + 1))
+                echo "⏳ PR #$pr_number - Waiting for Copilot response (updated: $updated_at)"
+              fi
+            fi
+          done
+          
+          echo ""
+          echo "📈 Activity Summary:"
+          echo "  Total draft PRs: $total_prs"
+          echo "  PRs with @copilot: $copilot_assigned"
+          echo "  PRs with responses: $copilot_responded"
+          echo "  PRs needing attention: $needs_attention"
+          
+          # Store metrics for summary
+          echo "total_prs=$total_prs" >> $GITHUB_ENV
+          echo "copilot_assigned=$copilot_assigned" >> $GITHUB_ENV
+          echo "copilot_responded=$copilot_responded" >> $GITHUB_ENV
+          echo "needs_attention=$needs_attention" >> $GITHUB_ENV
       
-      - name: Install Copilot CLI
-        run: |
-          echo "📦 Installing GitHub Copilot CLI..."
-          npm install -g @github/copilot || {
-            echo "⚠️ Failed to install Copilot CLI, will skip this step"
-            exit 0
-          }
-          
-          # Verify installation
-          if command -v copilot &> /dev/null; then
-            echo "✅ Copilot CLI installed successfully"
-            copilot --version || echo "Could not verify version"
-          else
-            echo "⚠️ Copilot CLI not available in PATH"
-            exit 0
-          fi
-      
-      - name: Work on PRs with Copilot CLI
-        if: success()
+      - name: Check for Stale Assignments
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Ensure gh is authenticated for subprocesses
-          gh auth status || echo "⚠️ Warning: gh not authenticated"
+          echo "⏰ Checking for stale @copilot assignments (>24 hours)..."
           
-          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
-            echo "🤖 Working on PR #${{ github.event.inputs.pr_number }} with Copilot CLI..."
-            
-            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-              echo "🔍 DRY RUN: Would work on PR #${{ github.event.inputs.pr_number }}"
-            else
-              python scripts/copilot_cli_pr_worker.py --pr ${{ github.event.inputs.pr_number }} || {
-                echo "⚠️ Copilot CLI worker failed, but continuing workflow"
-                exit 0
-              }
-            fi
-          else
-            echo "🤖 Working on incomplete PRs with Copilot CLI..."
-            
-            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-              echo "🔍 DRY RUN: Would work on all incomplete PRs"
-            else
-              python scripts/copilot_cli_pr_worker.py --all --limit 5 || {
-                echo "⚠️ Copilot CLI worker failed, but continuing workflow"
-                exit 0
-              }
-            fi
-          fi
+          cutoff_date=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+          
+          gh pr list --draft --json number,updatedAt,comments --limit 100 | \
+          jq -r --arg cutoff "$cutoff_date" \
+            '.[] | select(.updatedAt < $cutoff) | 
+             select(.comments[] | .body | contains("@copilot")) | 
+             "PR #\(.number) - Last update: \(.updatedAt)"' | \
+          while read -r line; do
+            echo "🔔 $line"
+          done || echo "✅ No stale assignments found"
       
-      - name: Generate CLI Summary
-        if: success()
+      - name: Generate Activity Summary
         run: |
-          echo "## Copilot CLI Execution" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Copilot Activity Monitor" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Copilot CLI has been invoked to work on PRs" >> $GITHUB_STEP_SUMMARY
+          echo "### Current Status:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total draft PRs**: ${total_prs:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PRs with @copilot assigned**: ${copilot_assigned:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PRs with Copilot responses**: ${copilot_responded:-0}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PRs awaiting response**: ${needs_attention:-0}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Features Used:" >> $GITHUB_STEP_SUMMARY
-          echo "- Interactive AI agent with code modification capabilities" >> $GITHUB_STEP_SUMMARY
-          echo "- Automated PR checkout and implementation" >> $GITHUB_STEP_SUMMARY
-          echo "- Commit and push capabilities" >> $GITHUB_STEP_SUMMARY
+          echo "### How GitHub Copilot Works:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Workflow assigns @copilot mentions to incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "2. GitHub Copilot monitors PRs for @copilot mentions" >> $GITHUB_STEP_SUMMARY
+          echo "3. Copilot analyzes the PR context and implements fixes" >> $GITHUB_STEP_SUMMARY
+          echo "4. Copilot commits changes directly to the PR branch" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Monitor Progress:" >> $GITHUB_STEP_SUMMARY
-          echo "Check individual PRs for Copilot's commits and changes" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Check:" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow runs every 5 minutes to monitor progress" >> $GITHUB_STEP_SUMMARY
 
   report-results:
     name: Generate Final Report
-    needs: [check-pr-completion, assign-copilot-intelligent, use-copilot-cli]
+    needs: [check-pr-completion, assign-copilot-intelligent, monitor-copilot-activity]
     if: always()
     runs-on: ubuntu-latest
     
@@ -427,7 +419,7 @@ jobs:
           echo "## Job Status" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ PR Analysis: ${{ needs.check-pr-completion.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Copilot Assignment: ${{ needs.assign-copilot-intelligent.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Copilot CLI: ${{ needs.use-copilot-cli.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Activity Monitor: ${{ needs.monitor-copilot-activity.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.check-pr-completion.outputs.needs_copilot }}" -eq 0 ]; then
