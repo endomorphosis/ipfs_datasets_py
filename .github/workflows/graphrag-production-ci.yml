@@ -26,6 +26,16 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
     
     steps:
+    - name: Clean up submodules before checkout
+      run: |
+        cd $GITHUB_WORKSPACE || exit 0
+        if [ -d ".git" ]; then
+          echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+          git submodule deinit --all -f || true
+          rm -rf .git/modules || true
+        fi
+      continue-on-error: true
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
@@ -103,6 +113,16 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     steps:
+    - name: Clean up submodules before checkout
+      run: |
+        cd $GITHUB_WORKSPACE || exit 0
+        if [ -d ".git" ]; then
+          echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+          git submodule deinit --all -f || true
+          rm -rf .git/modules || true
+        fi
+      continue-on-error: true
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
