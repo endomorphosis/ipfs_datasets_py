@@ -313,6 +313,28 @@ jobs:
         with:
           python-version: '3.11'
       
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔐 Authenticating GitHub CLI..."
+          
+          # Set up gh auth using GITHUB_TOKEN
+          echo "$GH_TOKEN" | gh auth login --with-token
+          
+          # Verify authentication
+          gh auth status || {
+            echo "⚠️ GitHub CLI authentication failed"
+            exit 1
+          }
+          
+          echo "✅ GitHub CLI authenticated successfully"
+      
       - name: Install Copilot CLI
         run: |
           echo "📦 Installing GitHub Copilot CLI..."
@@ -334,7 +356,11 @@ jobs:
         if: success()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # Ensure gh is authenticated for subprocesses
+          gh auth status || echo "⚠️ Warning: gh not authenticated"
+          
           if [ -n "${{ github.event.inputs.pr_number }}" ]; then
             echo "🤖 Working on PR #${{ github.event.inputs.pr_number }} with Copilot CLI..."
             
