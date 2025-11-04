@@ -563,25 +563,14 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Generate custom instruction from failure analysis
-            COPILOT_INSTRUCTION=$(python -c "
-          import json
-          with open('/tmp/failure_analysis.json') as f:
-              data = json.load(f)
-              recommendations = '\n'.join([f'- {rec}' for rec in data.get('recommendations', [])])
-              print(f'''Please implement the fixes for the workflow failure. Focus on:
-
-          {recommendations}
-
-          See the full analysis in issue #$ISSUE_NUMBER and the workflow run artifacts.''')
-          ")
-            
-            # Invoke Copilot using the CLI tool instead of @mentions
-            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using CLI tool..."
-            python3 scripts/invoke_copilot_on_pr.py \
+            # Invoke Copilot using the new queue-managed CLI tool
+            # This uses the failure analysis JSON to generate comprehensive instructions
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using queue-managed Copilot CLI..."
+            python3 scripts/invoke_copilot_with_queue.py \
               --pr "$PR_NUMBER" \
-              --repo "${{ github.repository }}" \
-              --instruction "$COPILOT_INSTRUCTION"
+              --context-file /tmp/failure_analysis.json \
+              --context-type failure \
+              --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
           
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## 📝 Issue and Draft PR Created" >> $GITHUB_STEP_SUMMARY
@@ -591,7 +580,7 @@ jobs:
             echo "🔢 **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 **Status**: GitHub Copilot has been notified and will implement fixes" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: GitHub Copilot invoked via queue-managed CLI with failure analysis context" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Could not create PR automatically (permission denied)"
             echo "pr_url=" >> $GITHUB_OUTPUT
@@ -637,18 +626,18 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The auto-healing system has successfully:" >> $GITHUB_STEP_SUMMARY
           echo "1. 📝 Created issue #${ISSUE_NUMBER} with failure details" >> $GITHUB_STEP_SUMMARY
-          echo "2. 🌿 Created branch \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🌿 Created branch \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
           
           if [ -n "$PR_NUMBER" ]; then
             echo "3. 📋 Created draft PR #${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
           else
             echo "3. ⚠️ PR creation skipped (see issue for manual steps)" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "4. 🤖 Invoked GitHub Copilot using CLI tool" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🤖 Invoked GitHub Copilot using queue-managed CLI with comprehensive failure analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What happens next:" >> $GITHUB_STEP_SUMMARY
-          echo "1. 🤖 GitHub Copilot analyzes the issue and workflow failure" >> $GITHUB_STEP_SUMMARY
-          echo "2. 🔧 Copilot implements fixes automatically in the draft PR" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🤖 GitHub Copilot analyzes the failure context and recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🔧 Copilot implements fixes based on the structured analysis" >> $GITHUB_STEP_SUMMARY
           echo "3. ✅ Automated tests verify the fixes" >> $GITHUB_STEP_SUMMARY
           echo "4. 👀 You review and approve the PR when ready" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
