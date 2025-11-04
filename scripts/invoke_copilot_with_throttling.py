@@ -29,6 +29,7 @@ import argparse
 import time
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+from pathlib import Path
 import logging
 
 # Setup logging
@@ -41,7 +42,6 @@ logger = logging.getLogger(__name__)
 # Try to import the copilot CLI utility
 try:
     # Add parent directory to path to allow imports when run as script
-    from pathlib import Path
     script_dir = Path(__file__).parent.parent
     if str(script_dir) not in sys.path:
         sys.path.insert(0, str(script_dir))
@@ -51,6 +51,7 @@ try:
 except ImportError as e:
     logger.warning(f"Could not import CopilotCLI: {e}")
     COPILOT_CLI_AVAILABLE = False
+
 
 
 class ThrottledCopilotInvoker:
