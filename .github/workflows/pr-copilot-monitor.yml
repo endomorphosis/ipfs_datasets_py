@@ -266,8 +266,8 @@ jobs:
 
   assign-copilot-batch:
     name: Assign Copilot with Batch Processor
-    needs: check-pr-completion
-    if: needs.check-pr-completion.outputs.needs_copilot > 0 && failure()
+    needs: [check-pr-completion, assign-copilot-intelligent]
+    if: needs.check-pr-completion.outputs.needs_copilot > 0 && needs.assign-copilot-intelligent.result == 'failure'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -363,8 +363,11 @@ jobs:
 
   monitor-copilot-activity:
     name: Monitor Copilot Activity on PRs
-    needs: [check-pr-completion, assign-copilot-intelligent]
-    if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
+    needs: [check-pr-completion, assign-copilot-intelligent, assign-copilot-batch]
+    if: |
+      always() &&
+      needs.check-pr-completion.outputs.needs_copilot > 0 &&
+      (needs.assign-copilot-intelligent.result == 'success' || needs.assign-copilot-batch.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -469,7 +472,7 @@ jobs:
 
   report-results:
     name: Generate Final Report
-    needs: [check-pr-completion, assign-copilot-intelligent, monitor-copilot-activity]
+    needs: [check-pr-completion, assign-copilot-intelligent, assign-copilot-batch, monitor-copilot-activity]
     if: always()
     runs-on: ubuntu-latest
     
@@ -490,7 +493,8 @@ jobs:
           
           echo "## Job Status" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ PR Analysis: ${{ needs.check-pr-completion.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Copilot Assignment: ${{ needs.assign-copilot-intelligent.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Copilot Assignment (Intelligent): ${{ needs.assign-copilot-intelligent.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Copilot Assignment (Fallback): ${{ needs.assign-copilot-batch.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ Activity Monitor: ${{ needs.monitor-copilot-activity.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
