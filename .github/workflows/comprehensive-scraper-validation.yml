@@ -294,7 +294,7 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to fix the validation failures.
           
-          @copilot Please review the validation failures in issue #ISSUE_NUMBER and implement fixes for:
+          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement fixes for:
           
           1. Schema validation issues for scrapers
           2. Missing required fields (title, text) in scraper output
@@ -329,16 +329,17 @@ jobs:
           PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           
-          # Add a comment to mention Copilot and provide context
-          gh pr comment "$PR_NUMBER" --body "@copilot /fix
+          # Invoke Copilot using the CLI tool instead of @mentions
+          echo "Invoking GitHub Copilot on PR #$PR_NUMBER using CLI tool..."
+          python3 scripts/invoke_copilot_on_pr.py \
+            --pr "$PR_NUMBER" \
+            --instruction "Please analyze the scraper validation failures and implement fixes. Focus on:
 
-          Please analyze the scraper validation failures and implement fixes. Focus on:
-          
-          1. Ensure all scrapers produce data with required fields: \`title\` and \`text\`
+          1. Ensure all scrapers produce data with required fields: 'title' and 'text'
           2. Fix schema validation issues
           3. Ensure HuggingFace dataset compatibility
           4. Improve data quality scores
-          
+
           See the full validation report in the workflow artifacts."
           
           echo "✅ Created issue #$ISSUE_NUMBER and draft PR #$PR_NUMBER"
@@ -348,7 +349,7 @@ jobs:
           echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Draft PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: GitHub Copilot has been notified and will implement fixes" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: GitHub Copilot has been invoked using CLI tool and will implement fixes" >> $GITHUB_STEP_SUMMARY
       
       - name: Final Summary
         if: always()

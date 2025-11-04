@@ -528,7 +528,7 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to fix the workflow failure.
           
-          @copilot Please review the workflow failure and implement the necessary fixes based on the analysis above.
+          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary fixes.
           
           ### Next Steps
           
@@ -563,20 +563,25 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Add comment to trigger Copilot
-            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "@copilot /fix
-
-          Please implement the fixes for the workflow failure. Focus on:
-          
-          $(python -c "
+            # Generate custom instruction from failure analysis
+            COPILOT_INSTRUCTION=$(python -c "
           import json
           with open('/tmp/failure_analysis.json') as f:
               data = json.load(f)
-              for rec in data.get('recommendations', []):
-                  print(f'- {rec}')
+              recommendations = '\n'.join([f'- {rec}' for rec in data.get('recommendations', [])])
+              print(f'''Please implement the fixes for the workflow failure. Focus on:
+
+          {recommendations}
+
+          See the full analysis in issue #$ISSUE_NUMBER and the workflow run artifacts.''')
           ")
-          
-          See the full analysis in issue #$ISSUE_NUMBER and the workflow run artifacts."
+            
+            # Invoke Copilot using the CLI tool instead of @mentions
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using CLI tool..."
+            python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --instruction "$COPILOT_INSTRUCTION"
           
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## 📝 Issue and Draft PR Created" >> $GITHUB_STEP_SUMMARY
@@ -600,7 +605,10 @@ jobs:
           **To create the PR manually:**
           1. Go to: https://github.com/${{ github.repository }}/compare/${{ steps.get_run_details.outputs.head_branch }}...$BRANCH_NAME
           2. Click 'Create pull request'
-          3. Tag @copilot in a comment to implement fixes
+          3. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+             \`\`\`bash
+             python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+             \`\`\`
           
           **Or enable automatic PR creation:**
           1. Go to Settings → Actions → General → Workflow permissions
@@ -636,7 +644,7 @@ jobs:
           else
             echo "3. ⚠️ PR creation skipped (see issue for manual steps)" >> $GITHUB_STEP_SUMMARY
           fi
-          echo "4. 🤖 Notified GitHub Copilot via @mention" >> $GITHUB_STEP_SUMMARY
+          echo "4. 🤖 Invoked GitHub Copilot using CLI tool" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What happens next:" >> $GITHUB_STEP_SUMMARY
           echo "1. 🤖 GitHub Copilot analyzes the issue and workflow failure" >> $GITHUB_STEP_SUMMARY
@@ -684,7 +692,7 @@ jobs:
             echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
             echo "- 📝 Issue Created: ${{ steps.create_issue_pr.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
             echo "- 📋 Draft PR Created: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 🤖 Copilot Notified: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🤖 Copilot Invoked: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
             
             if [ "${{ steps.create_issue_pr.outputs.pr_number }}" != "" ]; then
               echo "" >> $GITHUB_STEP_SUMMARY
@@ -692,7 +700,7 @@ jobs:
               echo "- Issue: #${{ steps.create_issue_pr.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
               echo "- Draft PR: #${{ steps.create_issue_pr.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
               echo "- Branch: \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
-              echo "- Status: GitHub Copilot has been notified via @mention in the PR" >> $GITHUB_STEP_SUMMARY
+              echo "- Status: GitHub Copilot has been invoked via CLI tool" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "**Monitor**: Check PR #${{ steps.create_issue_pr.outputs.pr_number }} for Copilot's progress" >> $GITHUB_STEP_SUMMARY
             fi
