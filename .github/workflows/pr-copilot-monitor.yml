@@ -217,39 +217,48 @@ jobs:
           # Install minimal dependencies needed for the scripts
           pip install requests || true
       
-      - name: Run Intelligent Copilot Invoker
+      - name: Run Throttled Copilot Invoker
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🤖 Running intelligent Copilot assignment..."
+          echo "🤖 Running throttled Copilot CLI invocation..."
+          echo "⚙️  Configuration: max 3 concurrent agents, batch size 3"
           
-          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
-            # Specific PR
-            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-              python scripts/invoke_copilot_coding_agent_on_prs.py --pr ${{ github.event.inputs.pr_number }} --dry-run
-            else
-              python scripts/invoke_copilot_coding_agent_on_prs.py --pr ${{ github.event.inputs.pr_number }}
-            fi
-          else
-            # All PRs
-            if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-              python scripts/invoke_copilot_coding_agent_on_prs.py --dry-run
-            else
-              python scripts/invoke_copilot_coding_agent_on_prs.py
-            fi
+          # Build command with throttling parameters
+          CMD="python scripts/invoke_copilot_with_throttling.py --batch-size 3 --max-concurrent 3 --check-interval 30"
+          
+          # Add dry-run flag if specified
+          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
+            CMD="$CMD --dry-run"
           fi
+          
+          # Add specific PR if specified
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            CMD="$CMD --pr ${{ github.event.inputs.pr_number }}"
+          fi
+          
+          # Execute the command
+          echo "Executing: $CMD"
+          $CMD
       
       - name: Generate Assignment Summary
         run: |
           echo "## Copilot Assignment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Intelligent Copilot invoker has processed all incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Throttled Copilot CLI invoker has processed incomplete PRs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What was done:" >> $GITHUB_STEP_SUMMARY
+          echo "- Used actual Copilot CLI tool (not just @copilot mentions)" >> $GITHUB_STEP_SUMMARY
+          echo "- Processed PRs in controlled batches of 3" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitored active copilot agents to prevent API overload" >> $GITHUB_STEP_SUMMARY
+          echo "- Ensured maximum 3 concurrent agents at any time" >> $GITHUB_STEP_SUMMARY
           echo "- Analyzed PR context and requirements" >> $GITHUB_STEP_SUMMARY
-          echo "- Determined appropriate task types (fix/implement/review)" >> $GITHUB_STEP_SUMMARY
-          echo "- Assigned priority levels (HIGH/NORMAL)" >> $GITHUB_STEP_SUMMARY
-          echo "- Posted detailed task instructions for Copilot" >> $GITHUB_STEP_SUMMARY
+          echo "- Posted detailed task instructions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Throttling Configuration:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Batch size**: 3 PRs at a time" >> $GITHUB_STEP_SUMMARY
+          echo "- **Max concurrent agents**: 3" >> $GITHUB_STEP_SUMMARY
+          echo "- **Check interval**: 30 seconds" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
           echo "- Monitor PR activity for Copilot responses" >> $GITHUB_STEP_SUMMARY
@@ -485,15 +494,17 @@ jobs:
           echo "- ✅ Activity Monitor: ${{ needs.monitor-copilot-activity.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          echo "## How Copilot Coding Agents Work" >> $GITHUB_STEP_SUMMARY
-          echo "1. Job #2 posts @copilot mentions in PR comments with detailed task instructions" >> $GITHUB_STEP_SUMMARY
-          echo "2. The copilot-swe-agent bot detects these mentions" >> $GITHUB_STEP_SUMMARY
-          echo "3. Agent creates a CHILD PR that merges into the parent PR" >> $GITHUB_STEP_SUMMARY
-          echo "4. Agent implements the requested changes in the child PR" >> $GITHUB_STEP_SUMMARY
-          echo "5. Once complete, agent requests review from the PR author" >> $GITHUB_STEP_SUMMARY
+          echo "## How Copilot Works" >> $GITHUB_STEP_SUMMARY
+          echo "1. Job #2 uses the Copilot CLI tool to properly invoke copilot agents" >> $GITHUB_STEP_SUMMARY
+          echo "2. Processes PRs in batches of 3 to prevent API rate limiting" >> $GITHUB_STEP_SUMMARY
+          echo "3. Monitors active copilot agents and waits if max concurrent (3) is reached" >> $GITHUB_STEP_SUMMARY
+          echo "4. Posts detailed task instructions with PR context" >> $GITHUB_STEP_SUMMARY
+          echo "5. The copilot-swe-agent bot detects these instructions" >> $GITHUB_STEP_SUMMARY
+          echo "6. Agent creates a CHILD PR or commits directly to implement changes" >> $GITHUB_STEP_SUMMARY
+          echo "7. Once complete, agent requests review from the PR author" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** This is the official method - OAuth-requiring CLI commands (gh agent-task, gh copilot)" >> $GITHUB_STEP_SUMMARY
-          echo "cannot be used in GitHub Actions workflows. The @copilot mention approach is the proper solution." >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** This workflow now uses the actual copilot CLI from ipfs_datasets_py" >> $GITHUB_STEP_SUMMARY
+          echo "and implements intelligent throttling to prevent GitHub API rate limiting." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.check-pr-completion.outputs.needs_copilot }}" -eq 0 ]; then
