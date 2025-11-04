@@ -407,7 +407,8 @@ jobs:
             # This uses the issue analysis JSON to generate comprehensive instructions
             echo "Invoking GitHub Copilot on PR #$PR_NUMBER using queue-managed Copilot CLI..."
             
-            # Check if issue analysis exists and use it as context
+            # Always use the JSON context file which safely contains issue details
+            # The issue analysis JSON is created earlier and contains sanitized data
             if [ -f "/tmp/issue_analysis.json" ]; then
               python3 scripts/invoke_copilot_with_queue.py \
                 --pr "$PR_NUMBER" \
@@ -415,10 +416,10 @@ jobs:
                 --context-type issue \
                 --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
             else
-              # Fallback to basic instruction if analysis not available
+              # Fallback to basic instruction without user-controlled content
               python3 scripts/invoke_copilot_with_queue.py \
                 --pr "$PR_NUMBER" \
-                --instruction "Please implement a solution for issue #$ISSUE_NUMBER: ${{ steps.get_issue.outputs.issue_title }}. Review the full issue description in the PR and implement minimal, surgical changes." \
+                --instruction "Please implement a solution for this issue. Review the full issue description in the PR and implement minimal, surgical changes." \
                 --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
             fi
             
