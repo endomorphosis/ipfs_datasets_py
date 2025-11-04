@@ -35,6 +35,7 @@ import logging
 import os
 import sys
 import hashlib
+import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
@@ -90,13 +91,14 @@ class CopilotInvokerWithQueue:
             raise
         
         # Simple file-based cache for requests
-        self.cache_dir = Path('/tmp/copilot_cache')
+        # Use cross-platform temporary directory
+        self.cache_dir = Path(tempfile.gettempdir()) / 'copilot_cache'
         if enable_cache:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             logger.info(f"✅ Cache enabled at {self.cache_dir}")
     
     def _get_cache_key(self, pr_number: int, instruction_hash: str) -> str:
-        """Generate cache key for a request."""
+        """Generate cache key for a request using SHA-256."""
         return f"pr_{pr_number}_{instruction_hash}"
     
     def _check_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
@@ -303,8 +305,8 @@ Focus on making clean, maintainable changes that directly address the issue."""
         """
         logger.info(f"{'[DRY RUN] ' if self.dry_run else ''}Invoking Copilot for PR #{pr_number}...")
         
-        # Generate cache key
-        instruction_hash = hashlib.md5(instruction.encode()).hexdigest()[:12]
+        # Generate cache key using SHA-256 for better collision resistance
+        instruction_hash = hashlib.sha256(instruction.encode()).hexdigest()[:16]
         cache_key = self._get_cache_key(pr_number, instruction_hash)
         
         # Check cache first (unless forced)
@@ -340,9 +342,13 @@ Focus on making clean, maintainable changes that directly address the issue."""
             }
         
         # Use Copilot CLI to generate suggestions
+        # NOTE: Current implementation uses suggest_command as a proof of concept.
+        # In production, this should be enhanced to directly interact with PRs
+        # through GitHub's API or a more direct Copilot integration method.
+        # This is sufficient for generating structured recommendations that can
+        # be manually reviewed and applied to PRs.
         try:
             # For now, we use suggest_command to get Copilot's help
-            # In a real implementation, this would interact with the PR
             result = self.copilot.suggest_command(
                 description=f"Fix issues in PR #{pr_number}: {instruction}",
                 use_cache=self.enable_cache
