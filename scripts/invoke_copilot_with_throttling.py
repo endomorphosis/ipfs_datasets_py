@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 # Try to import the copilot CLI utility
 try:
     # Add parent directory to path to allow imports when run as script
-    import sys
     from pathlib import Path
     script_dir = Path(__file__).parent.parent
     if str(script_dir) not in sys.path:
@@ -61,6 +60,10 @@ class ThrottledCopilotInvoker:
     Ensures no more than max_concurrent agents are running at any time,
     and processes PRs in controlled batches to prevent API rate limiting.
     """
+    
+    # Constants for copilot agent detection
+    COPILOT_AGENT_USERNAMES = ['github-copilot', 'copilot', 'github-actions']
+    DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
     
     def __init__(self, dry_run: bool = False, batch_size: int = 3, 
                  max_concurrent: int = 3, check_interval: int = 30):
@@ -191,9 +194,9 @@ class ThrottledCopilotInvoker:
                         author = comment.get('author', {}).get('login', '')
                         created_at = comment.get('createdAt', '')
                         
-                        if author in ['github-copilot', 'copilot', 'github-actions']:
+                        if author in self.COPILOT_AGENT_USERNAMES:
                             try:
-                                comment_time = datetime.strptime(created_at, '%Y-%m-%dT%H:%M:%SZ')
+                                comment_time = datetime.strptime(created_at, self.DATETIME_FORMAT)
                                 if comment_time > cutoff_time:
                                     active_count += 1
                                     logger.debug(f"Active agent on PR #{pr_number} (recent comment)")
@@ -358,7 +361,7 @@ Please proceed with the implementation."""
                 updated_at_str = pr.get('updatedAt', '')
                 
                 try:
-                    updated_at = datetime.strptime(updated_at_str, '%Y-%m-%dT%H:%M:%SZ')
+                    updated_at = datetime.strptime(updated_at_str, self.DATETIME_FORMAT)
                     if updated_at > cutoff_time:
                         logger.info(f"⏭️  PR #{pr_number} has recent activity, skipping")
                         stats['skipped'] += 1
