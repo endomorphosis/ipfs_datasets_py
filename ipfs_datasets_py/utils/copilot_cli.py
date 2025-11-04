@@ -28,6 +28,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Optional cache import - gracefully handle if not available
+try:
+    from ipfs_datasets_py.utils.query_cache import QueryCache
+    CACHE_AVAILABLE = True
+except ImportError:
+    CACHE_AVAILABLE = False
+    logger.warning("QueryCache not available, caching disabled")
+
 
 class CopilotCLI:
     """
@@ -50,12 +58,16 @@ class CopilotCLI:
         >>> print(result)
     """
     
-    def __init__(self, github_cli_path: Optional[str] = None):
+    def __init__(self, github_cli_path: Optional[str] = None, 
+                 enable_cache: bool = True, cache_maxsize: int = 100, cache_ttl: int = 600):
         """
         Initialize GitHub Copilot CLI manager.
         
         Args:
             github_cli_path: Path to GitHub CLI executable (defaults to 'gh' in PATH)
+            enable_cache: Enable query result caching (default: True)
+            cache_maxsize: Maximum number of cached entries (default: 100)
+            cache_ttl: Cache time-to-live in seconds (default: 600)
         """
         if github_cli_path is None:
             # Try to find gh in PATH
@@ -64,6 +76,15 @@ class CopilotCLI:
             self.github_cli_path = Path(github_cli_path)
         
         self.installed = self._check_installed()
+        
+        # Initialize cache if available and enabled
+        self.cache = None
+        if enable_cache and CACHE_AVAILABLE:
+            try:
+                self.cache = QueryCache(maxsize=cache_maxsize, ttl=cache_ttl)
+                logger.info(f"Copilot query cache enabled (maxsize={cache_maxsize}, ttl={cache_ttl}s)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Copilot cache: {e}")
     
     def _find_gh_cli(self) -> Optional[Path]:
         """
@@ -213,7 +234,7 @@ class CopilotCLI:
                 "error": str(e)
             }
     
-    def explain_code(self, code: str, language: Optional[str] = None) -> Dict[str, Any]:
+    def explain_code(self, code: str, language: Optional[str] = None, use_cache: bool = True) -> Dict[str, Any]:
         """
         Get AI explanation for code snippet.
         
@@ -222,6 +243,7 @@ class CopilotCLI:
         Args:
             code: Code snippet to explain
             language: Programming language (optional, auto-detected if not provided)
+            use_cache: Whether to use cache for this query (default: True)
         
         Returns:
             Dictionary with explanation
@@ -233,6 +255,19 @@ class CopilotCLI:
                     "error": "GitHub Copilot CLI not installed. Run install() first."
                 }
             
+            # Check cache
+            cache_key = None
+            if use_cache and self.cache:
+                cache_key = {
+                    "command": "copilot_explain",
+                    "code": code,
+                    "language": language
+                }
+                cached_result = self.cache.get(cache_key)
+                if cached_result is not None:
+                    logger.debug("Returning cached explanation")
+                    return cached_result
+            
             cmd = [str(self.github_cli_path), 'copilot', 'explain', code]
             
             result = subprocess.run(
@@ -242,18 +277,18 @@ class CopilotCLI:
                 timeout=30
             )
             
-            if result.returncode == 0:
-                return {
-                    "success": True,
-                    "explanation": result.stdout,
-                    "code": code
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.stderr,
-                    "code": code
-                }
+            response = {
+                "success": result.returncode == 0,
+                "explanation": result.stdout if result.returncode == 0 else None,
+                "error": result.stderr if result.returncode != 0 else None,
+                "code": code
+            }
+            
+            # Cache successful results
+            if cache_key and response["success"]:
+                self.cache.set(cache_key, response)
+            
+            return response
         
         except Exception as e:
             logger.error(f"Failed to explain code: {e}")
@@ -263,7 +298,7 @@ class CopilotCLI:
                 "code": code
             }
     
-    def suggest_command(self, description: str, shell: Optional[str] = None) -> Dict[str, Any]:
+    def suggest_command(self, description: str, shell: Optional[str] = None, use_cache: bool = True) -> Dict[str, Any]:
         """
         Get shell command suggestions from natural language description.
         
@@ -272,6 +307,7 @@ class CopilotCLI:
         Args:
             description: Natural language description of what you want to do
             shell: Shell type (bash, powershell, etc.). Auto-detected if not provided.
+            use_cache: Whether to use cache for this query (default: True)
         
         Returns:
             Dictionary with command suggestions
@@ -282,6 +318,19 @@ class CopilotCLI:
                     "success": False,
                     "error": "GitHub Copilot CLI not installed. Run install() first."
                 }
+            
+            # Check cache
+            cache_key = None
+            if use_cache and self.cache:
+                cache_key = {
+                    "command": "copilot_suggest",
+                    "description": description,
+                    "shell": shell
+                }
+                cached_result = self.cache.get(cache_key)
+                if cached_result is not None:
+                    logger.debug("Returning cached suggestion")
+                    return cached_result
             
             cmd = [str(self.github_cli_path), 'copilot', 'suggest']
             
@@ -297,18 +346,18 @@ class CopilotCLI:
                 timeout=30
             )
             
-            if result.returncode == 0:
-                return {
-                    "success": True,
-                    "suggestions": result.stdout,
-                    "description": description
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.stderr,
-                    "description": description
-                }
+            response = {
+                "success": result.returncode == 0,
+                "suggestions": result.stdout if result.returncode == 0 else None,
+                "error": result.stderr if result.returncode != 0 else None,
+                "description": description
+            }
+            
+            # Cache successful results
+            if cache_key and response["success"]:
+                self.cache.set(cache_key, response)
+            
+            return response
         
         except Exception as e:
             logger.error(f"Failed to suggest command: {e}")
@@ -318,7 +367,7 @@ class CopilotCLI:
                 "description": description
             }
     
-    def suggest_git_command(self, description: str) -> Dict[str, Any]:
+    def suggest_git_command(self, description: str, use_cache: bool = True) -> Dict[str, Any]:
         """
         Get Git command suggestions from natural language description.
         
@@ -326,6 +375,7 @@ class CopilotCLI:
         
         Args:
             description: What you want to do with Git
+            use_cache: Whether to use cache for this query (default: True)
         
         Returns:
             Dictionary with Git command suggestions
@@ -337,6 +387,18 @@ class CopilotCLI:
                     "error": "GitHub Copilot CLI not installed. Run install() first."
                 }
             
+            # Check cache
+            cache_key = None
+            if use_cache and self.cache:
+                cache_key = {
+                    "command": "copilot_suggest_git",
+                    "description": description
+                }
+                cached_result = self.cache.get(cache_key)
+                if cached_result is not None:
+                    logger.debug("Returning cached Git suggestion")
+                    return cached_result
+            
             cmd = [str(self.github_cli_path), 'copilot', 'suggest', '--shell', 'git', description]
             
             result = subprocess.run(
@@ -346,19 +408,19 @@ class CopilotCLI:
                 timeout=30
             )
             
-            if result.returncode == 0:
-                return {
-                    "success": True,
-                    "suggestions": result.stdout,
-                    "description": description,
-                    "type": "git"
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.stderr,
-                    "description": description
-                }
+            response = {
+                "success": result.returncode == 0,
+                "suggestions": result.stdout if result.returncode == 0 else None,
+                "error": result.stderr if result.returncode != 0 else None,
+                "description": description,
+                "type": "git"
+            }
+            
+            # Cache successful results
+            if cache_key and response["success"]:
+                self.cache.set(cache_key, response)
+            
+            return response
         
         except Exception as e:
             logger.error(f"Failed to suggest Git command: {e}")
@@ -445,6 +507,23 @@ class CopilotCLI:
                 logger.warning(f"Failed to get Copilot CLI version: {e}")
         
         return status
+    
+    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dictionary with cache statistics or None if cache is disabled
+        """
+        if self.cache:
+            return self.cache.get_stats()
+        return None
+    
+    def clear_cache(self) -> None:
+        """Clear the query cache."""
+        if self.cache:
+            self.cache.clear()
+            logger.info("Copilot cache cleared")
     
     def configure(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """
