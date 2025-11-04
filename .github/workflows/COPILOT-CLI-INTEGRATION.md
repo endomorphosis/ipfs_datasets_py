@@ -4,6 +4,24 @@
 
 This document describes how GitHub Actions workflows in this repository invoke GitHub Copilot to automatically implement fixes for workflow failures.
 
+## Recent Updates (November 2024)
+
+### Fixed Workflow #909 - Copilot CLI Integration Issue
+
+**Problem**: The `copilot-agent-autofix.yml` workflow was failing because it attempted to use the `invoke_copilot_with_queue.py` script which depends on the GitHub Copilot CLI extension. This extension requires installation and authentication that isn't available in GitHub Actions containers.
+
+**Solution**: 
+1. Updated the workflow to use `invoke_copilot_on_pr.py` which uses GitHub CLI (`gh`) comments to trigger Copilot
+2. Added fallback mechanism to `invoke_copilot_with_queue.py` for graceful degradation
+3. Generated structured instructions from failure analysis JSON for better context
+
+**Benefits**:
+- ✅ Works reliably in GitHub Actions workflows
+- ✅ No additional CLI extension installation required
+- ✅ Proper authentication handling via GH_TOKEN
+- ✅ Structured failure context for better fixes
+- ✅ Backward compatible with fallback support
+
 ## Background
 
 Previously, workflows used `@copilot` mentions in PR comments, which relied on manual GitHub UI interaction. This has been updated to use a programmatic approach via the `invoke_copilot_on_pr.py` script that uses GitHub CLI to properly trigger the Copilot coding agent.
@@ -72,33 +90,64 @@ This Python script provides a programmatic interface to invoke GitHub Copilot on
 
 ## Workflows Using Copilot CLI
 
-### 1. `copilot-agent-autofix.yml`
+### 1. `copilot-agent-autofix.yml` (Updated November 2024)
 
 **Purpose**: Automatically creates issues and PRs for workflow failures, then invokes Copilot to implement fixes.
 
-**How it invokes Copilot**:
+**How it invokes Copilot (NEW APPROACH)**:
 ```yaml
-# Generate custom instruction from failure analysis
-COPILOT_INSTRUCTION=$(python -c "
+# Generate comprehensive instruction from failure analysis JSON
+echo "Generating Copilot instruction from failure analysis..."
+COPILOT_INSTRUCTION=$(python3 -c "
 import json
-with open('/tmp/failure_analysis.json') as f:
-    data = json.load(f)
-    recommendations = '\n'.join([f'- {rec}' for rec in data.get('recommendations', [])])
-    print(f'''Please implement the fixes for the workflow failure. Focus on:
+import sys
+try:
+    with open('/tmp/failure_analysis.json') as f:
+        data = json.load(f)
+    
+    error_type = data.get('error_type', 'Unknown')
+    root_cause = data.get('root_cause', 'Not identified')
+    fix_confidence = data.get('fix_confidence', 0)
+    recommendations = data.get('recommendations', [])
+    
+    # Format recommendations
+    rec_text = '\n'.join([f'  {i+1}. {rec}' for i, rec in enumerate(recommendations)])
+    
+    instruction = f'''Please analyze and fix the workflow failure detected.
 
-{recommendations}''')
-")
+**Error Analysis:**
+- Error Type: {error_type}
+- Root Cause: {root_cause}
+- Fix Confidence: {fix_confidence}%
 
-# Invoke Copilot using the CLI tool
+**Recommended Actions:**
+{rec_text if rec_text else '  No specific recommendations'}
+
+**Instructions:**
+1. Review the error analysis and recommendations above
+2. Implement minimal, surgical fixes to address the root cause
+3. Ensure all tests pass after your changes
+4. Follow existing code patterns and conventions
+5. Document any significant changes
+
+Focus on making clean, maintainable changes that directly address the issue.'''
+    
+    print(instruction)
+except Exception as e:
+    print('Please analyze and fix the workflow failure based on the PR description and logs.')
+" 2>/dev/null || echo "Please analyze and fix the workflow failure based on the PR description and logs.")
+
+echo "Invoking GitHub Copilot on PR #$PR_NUMBER..."
 python3 scripts/invoke_copilot_on_pr.py \
   --pr "$PR_NUMBER" \
-  --repo "${{ github.repository }}" \
-  --instruction "$COPILOT_INSTRUCTION"
+  --instruction "$COPILOT_INSTRUCTION" || echo "⚠️  Copilot invocation failed, check logs"
 ```
 
 **What Copilot receives**:
-- PR with workflow failure analysis
-- Specific recommendations for fixing the issue
+- PR with comprehensive workflow failure analysis
+- Structured error information (type, root cause, confidence)
+- Specific, actionable recommendations
+- Clear instructions for implementation approach
 - Links to full logs and artifacts
 
 ### 2. `comprehensive-scraper-validation.yml`
