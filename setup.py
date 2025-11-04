@@ -23,6 +23,9 @@ setup(
         "fsspec",
         "datasets>=2.10.0",
 
+        # Caching for CLI tools
+        "cachetools>=5.3.0",
+
         # IPFS integration
         # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
         "ipfshttpclient>=0.7.0",

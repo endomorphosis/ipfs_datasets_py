@@ -26,6 +26,14 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# Optional cache import - gracefully handle if not available
+try:
+    from ipfs_datasets_py.utils.query_cache import QueryCache
+    CACHE_AVAILABLE = True
+except ImportError:
+    CACHE_AVAILABLE = False
+    logger.warning("QueryCache not available, caching disabled")
+
 
 class GitHubCLI:
     """
@@ -67,13 +75,17 @@ class GitHubCLI:
         }
     }
     
-    def __init__(self, install_dir: Optional[str] = None, version: Optional[str] = None):
+    def __init__(self, install_dir: Optional[str] = None, version: Optional[str] = None,
+                 enable_cache: bool = True, cache_maxsize: int = 100, cache_ttl: int = 300):
         """
         Initialize GitHub CLI manager.
         
         Args:
             install_dir: Directory to install GitHub CLI (defaults to ~/.github-cli)
             version: GitHub CLI version to download (defaults to latest stable version)
+            enable_cache: Enable query result caching (default: True)
+            cache_maxsize: Maximum number of cached entries (default: 100)
+            cache_ttl: Cache time-to-live in seconds (default: 300)
         """
         if install_dir is None:
             install_dir = os.path.expanduser('~/.github-cli')
@@ -88,6 +100,15 @@ class GitHubCLI:
             self.cli_executable = self.install_dir / 'bin' / 'gh.exe'
         else:
             self.cli_executable = self.install_dir / 'bin' / 'gh'
+        
+        # Initialize cache if available and enabled
+        self.cache = None
+        if enable_cache and CACHE_AVAILABLE:
+            try:
+                self.cache = QueryCache(maxsize=cache_maxsize, ttl=cache_ttl)
+                logger.info(f"Query cache enabled (maxsize={cache_maxsize}, ttl={cache_ttl}s)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize cache: {e}")
         
         # Ensure install directory exists
         self.install_dir.mkdir(parents=True, exist_ok=True)
@@ -250,7 +271,7 @@ class GitHubCLI:
         return f"{platform_map[self.platform_name]}_{arch_map[self.arch]}"
     
     def execute(self, args: List[str], capture_output: bool = True, 
-                timeout: Optional[int] = None) -> subprocess.CompletedProcess:
+                timeout: Optional[int] = None, use_cache: bool = True) -> subprocess.CompletedProcess:
         """
         Execute a GitHub CLI command with sanitized inputs.
         
@@ -258,6 +279,7 @@ class GitHubCLI:
             args: Command arguments to pass to GitHub CLI
             capture_output: Whether to capture stdout/stderr
             timeout: Command timeout in seconds
+            use_cache: Whether to use cache for this query (default: True)
         
         Returns:
             CompletedProcess object with command results
@@ -290,6 +312,19 @@ class GitHubCLI:
                     raise ValueError(f"Argument contains potentially unsafe characters: {arg}")
             sanitized_args.append(arg)
         
+        # Check cache for read-only queries (list, status, etc.)
+        cache_key = None
+        if use_cache and self.cache and self._is_cacheable_command(sanitized_args):
+            cache_key = {
+                "command": "gh",
+                "args": sanitized_args,
+                "timeout": timeout
+            }
+            cached_result = self.cache.get(cache_key)
+            if cached_result is not None:
+                logger.debug(f"Returning cached result for: {' '.join(sanitized_args[:3])}")
+                return cached_result
+        
         cmd = [str(self.cli_executable)] + sanitized_args
         logger.debug(f"Executing GitHub CLI command: {' '.join(cmd)}")
         
@@ -301,6 +336,11 @@ class GitHubCLI:
                 timeout=timeout,
                 check=False
             )
+            
+            # Cache successful read-only queries
+            if cache_key and result.returncode == 0:
+                self.cache.set(cache_key, result)
+            
             return result
         except subprocess.TimeoutExpired as e:
             logger.error(f"GitHub CLI command timed out after {timeout} seconds")
@@ -308,6 +348,45 @@ class GitHubCLI:
         except Exception as e:
             logger.error(f"Failed to execute GitHub CLI command: {e}")
             raise
+    
+    def _is_cacheable_command(self, args: List[str]) -> bool:
+        """
+        Determine if a command is cacheable (read-only).
+        
+        Args:
+            args: Command arguments
+        
+        Returns:
+            True if command is cacheable, False otherwise
+        """
+        if not args:
+            return False
+        
+        # Cacheable commands are read-only queries
+        cacheable_subcommands = {
+            'repo': ['list', 'view'],
+            'auth': ['status'],
+            'api': [],  # API reads can be cached
+            'gist': ['list', 'view'],
+            'issue': ['list', 'view'],
+            'pr': ['list', 'view'],
+            'release': ['list', 'view'],
+            'run': ['list', 'view'],
+            'workflow': ['list', 'view'],
+        }
+        
+        # Check if first arg is a cacheable command
+        if args[0] in cacheable_subcommands:
+            if len(args) == 1:
+                return True
+            # Check if subcommand is cacheable
+            return args[1] in cacheable_subcommands.get(args[0], [])
+        
+        # Version and help are always cacheable
+        if args[0] in ['--version', '--help', 'version', 'help']:
+            return True
+        
+        return False
     
     def get_version(self) -> Optional[str]:
         """
@@ -396,6 +475,23 @@ class GitHubCLI:
         except Exception as e:
             logger.error(f"Failed to list repositories: {e}")
             return []
+    
+    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dictionary with cache statistics or None if cache is disabled
+        """
+        if self.cache:
+            return self.cache.get_stats()
+        return None
+    
+    def clear_cache(self) -> None:
+        """Clear the query cache."""
+        if self.cache:
+            self.cache.clear()
+            logger.info("Cache cleared")
     
     def configure_auth(self, hostname: str = 'github.com', web: bool = True) -> Dict[str, Any]:
         """
