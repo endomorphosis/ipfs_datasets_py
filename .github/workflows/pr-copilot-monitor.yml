@@ -383,7 +383,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "� Checking Copilot activity on assigned PRs..."
+          echo "🔍 Checking Copilot activity on assigned PRs..."
           
           # Get all draft PRs
           prs=$(gh pr list --draft --json number,comments,updatedAt --limit 100)
