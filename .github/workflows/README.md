@@ -225,7 +225,7 @@ Fix Proposal
       ↓
 PR Creation
       ↓
-@copilot Mention
+Copilot CLI Invocation (NEW!)
       ↓
 Copilot Implements Fix
       ↓
@@ -233,6 +233,8 @@ Tests Validate
       ↓
 Ready for Review
 ```
+
+**Note**: The system now uses the `invoke_copilot_on_pr.py` CLI tool to programmatically trigger GitHub Copilot, replacing manual @mentions. See [COPILOT-CLI-INTEGRATION.md](./COPILOT-CLI-INTEGRATION.md) for details.
 
 ## Usage
 
