@@ -56,7 +56,8 @@ logger = logging.getLogger(__name__)
 class CopilotInvokerWithQueue:
     """Invoke GitHub Copilot with queue management and caching."""
     
-    def __init__(self, max_agents: int = 3, enable_cache: bool = True, dry_run: bool = False):
+    def __init__(self, max_agents: int = 3, enable_cache: bool = True, dry_run: bool = False, 
+                 use_fallback: bool = True):
         """
         Initialize the invoker.
         
@@ -64,23 +65,40 @@ class CopilotInvokerWithQueue:
             max_agents: Maximum concurrent Copilot agents (default: 3)
             enable_cache: Enable request caching (default: True)
             dry_run: If True, show what would be done without making changes
+            use_fallback: Use GitHub CLI comment fallback if Copilot CLI is unavailable (default: True)
         """
         self.dry_run = dry_run
         self.max_agents = max_agents
         self.enable_cache = enable_cache
+        self.use_fallback = use_fallback
+        self.copilot = None
+        self.fallback_mode = False
         
-        # Initialize Copilot CLI with caching
+        # Initialize Copilot CLI with caching - but don't fail if unavailable
         try:
             self.copilot = CopilotCLI(enable_cache=enable_cache)
             if not self.copilot.installed:
                 logger.warning("GitHub Copilot CLI not installed, attempting installation...")
                 install_result = self.copilot.install()
                 if not install_result['success']:
-                    raise RuntimeError(f"Failed to install Copilot CLI: {install_result.get('error')}")
-            logger.info("✅ GitHub Copilot CLI ready")
+                    if use_fallback:
+                        logger.warning(f"⚠️  Copilot CLI installation failed, falling back to GitHub CLI comments")
+                        self.fallback_mode = True
+                        self.copilot = None
+                    else:
+                        raise RuntimeError(f"Failed to install Copilot CLI: {install_result.get('error')}")
+                else:
+                    logger.info("✅ GitHub Copilot CLI ready")
+            else:
+                logger.info("✅ GitHub Copilot CLI ready")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Copilot CLI: {e}")
-            raise
+            if use_fallback:
+                logger.warning(f"⚠️  Failed to initialize Copilot CLI, falling back to GitHub CLI comments: {e}")
+                self.fallback_mode = True
+                self.copilot = None
+            else:
+                logger.error(f"❌ Failed to initialize Copilot CLI: {e}")
+                raise
         
         # Initialize queue manager
         try:
@@ -341,6 +359,11 @@ Focus on making clean, maintainable changes that directly address the issue."""
                 'cache_key': cache_key
             }
         
+        # Use fallback GitHub CLI comments if Copilot CLI is unavailable
+        if self.fallback_mode:
+            logger.info("🔄 Using fallback mode (GitHub CLI comments)")
+            return self._invoke_via_github_cli(pr_number, instruction, cache_key)
+        
         # Use Copilot CLI to generate suggestions
         # NOTE: Current implementation uses suggest_command as a proof of concept.
         # In production, this should be enhanced to directly interact with PRs
@@ -371,6 +394,10 @@ Focus on making clean, maintainable changes that directly address the issue."""
                 return response
             else:
                 logger.error(f"❌ Copilot invocation failed: {result.get('error')}")
+                # Try fallback if enabled
+                if self.use_fallback:
+                    logger.info("🔄 Attempting fallback to GitHub CLI comments")
+                    return self._invoke_via_github_cli(pr_number, instruction, cache_key)
                 return {
                     'success': False,
                     'error': result.get('error'),
@@ -379,17 +406,85 @@ Focus on making clean, maintainable changes that directly address the issue."""
         
         except Exception as e:
             logger.error(f"❌ Exception during Copilot invocation: {e}")
+            # Try fallback if enabled
+            if self.use_fallback:
+                logger.info("🔄 Attempting fallback to GitHub CLI comments after exception")
+                return self._invoke_via_github_cli(pr_number, instruction, cache_key)
             return {
                 'success': False,
                 'error': str(e),
                 'pr_number': pr_number
             }
     
+    def _invoke_via_github_cli(self, pr_number: int, instruction: str, cache_key: str) -> Dict[str, Any]:
+        """
+        Fallback method: Invoke Copilot via GitHub CLI comments.
+        
+        This posts a comment to the PR that triggers GitHub Copilot.
+        
+        Args:
+            pr_number: Pull request number
+            instruction: Instruction for Copilot
+            cache_key: Cache key for storing result
+        
+        Returns:
+            Dictionary with invocation result
+        """
+        try:
+            import subprocess
+            
+            # Format comment with Copilot mention and slash command
+            comment_body = f"@github-copilot /fix\n\n{instruction}"
+            
+            # Post comment using gh CLI
+            result = subprocess.run(
+                ['gh', 'pr', 'comment', str(pr_number), '--body', comment_body],
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                response = {
+                    'success': True,
+                    'pr_number': pr_number,
+                    'instruction': instruction,
+                    'method': 'github_cli_comment',
+                    'comment_url': result.stdout.strip(),
+                    'cache_key': cache_key,
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+                # Cache the result
+                self._save_cache(cache_key, response)
+                
+                logger.info(f"✅ Successfully invoked Copilot via GitHub CLI comment for PR #{pr_number}")
+                return response
+            else:
+                logger.error(f"❌ Failed to post GitHub CLI comment: {result.stderr}")
+                return {
+                    'success': False,
+                    'error': f"GitHub CLI comment failed: {result.stderr}",
+                    'pr_number': pr_number
+                }
+        
+        except Exception as e:
+            logger.error(f"❌ Fallback invocation failed: {e}")
+            return {
+                'success': False,
+                'error': f"Fallback method failed: {str(e)}",
+                'pr_number': pr_number
+            }
+    
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive status including Copilot, queue, and cache."""
-        copilot_status = self.copilot.get_status()
+        copilot_status = self.copilot.get_status() if self.copilot else {
+            'installed': False,
+            'github_cli_available': False,
+            'fallback_mode': True
+        }
         queue_report = self.queue_manager.generate_summary_report()
-        cache_stats = self.copilot.get_cache_stats() if self.enable_cache else None
+        cache_stats = self.copilot.get_cache_stats() if self.copilot and self.enable_cache else None
         
         # Count cached files
         cached_items = 0
@@ -398,6 +493,7 @@ Focus on making clean, maintainable changes that directly address the issue."""
         
         return {
             'copilot_cli': copilot_status,
+            'fallback_mode': self.fallback_mode,
             'queue': queue_report,
             'cache': {
                 'enabled': self.enable_cache,
@@ -419,8 +515,10 @@ Focus on making clean, maintainable changes that directly address the issue."""
         
         print(f"\n📊 Copilot CLI:")
         copilot = status['copilot_cli']
-        print(f"  Installed: {'✅' if copilot['installed'] else '❌'}")
-        print(f"  GitHub CLI: {'✅' if copilot['github_cli_available'] else '❌'}")
+        print(f"  Installed: {'✅' if copilot.get('installed') else '❌'}")
+        print(f"  GitHub CLI: {'✅' if copilot.get('github_cli_available') else '❌'}")
+        if status.get('fallback_mode'):
+            print(f"  Mode: 🔄 Fallback (using GitHub CLI comments)")
         if copilot.get('version_info'):
             print(f"  Version: {copilot['version_info']}")
         
