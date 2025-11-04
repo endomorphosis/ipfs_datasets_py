@@ -1,0 +1,595 @@
+name: Continuous PR and Issue Queue Management
+
+on:
+  schedule:
+    # Run every hour at the top of the hour
+    - cron: '0 * * * *'
+  
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/workflows/enhanced-pr-completion-monitor.yml'
+  
+  workflow_dispatch:
+    inputs:
+      max_agents:
+        description: 'Maximum number of simultaneous agents (default: 3)'
+        required: false
+        default: '3'
+        type: string
+      force_process_all:
+        description: 'Force process all PRs/issues regardless of recent activity'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Dry run mode (show what would be done)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  MAX_CONCURRENT_AGENTS: ${{ github.event.inputs.max_agents || '3' }}
+
+jobs:
+  analyze-queue-status:
+    name: Analyze Queue Status and Plan Work
+    runs-on: [self-hosted, linux, x64]
+    
+    outputs:
+      total_prs: ${{ steps.analyze.outputs.total_prs }}
+      incomplete_prs: ${{ steps.analyze.outputs.incomplete_prs }}
+      total_issues: ${{ steps.analyze.outputs.total_issues }}
+      actionable_issues: ${{ steps.analyze.outputs.actionable_issues }}
+      active_agents: ${{ steps.analyze.outputs.active_agents }}
+      available_slots: ${{ steps.analyze.outputs.available_slots }}
+      pr_batch: ${{ steps.analyze.outputs.pr_batch }}
+      issue_batch: ${{ steps.analyze.outputs.issue_batch }}
+      strategy: ${{ steps.analyze.outputs.strategy }}
+    
+    steps:
+      - name: Clean workspace
+        run: |
+          echo "Preparing workspace..."
+          if [[ "$GITHUB_WORKSPACE" == *"/actions-runner/_work/"* ]]; then
+            cd "$(dirname "$GITHUB_WORKSPACE")" || exit 1
+            WORKSPACE_NAME=$(basename "$GITHUB_WORKSPACE")
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              rm -rf "$WORKSPACE_NAME" 2>/dev/null || sudo rm -rf "$WORKSPACE_NAME" 2>/dev/null || true
+            fi
+            mkdir -p "$GITHUB_WORKSPACE"
+          fi
+        continue-on-error: true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup environment
+        run: |
+          # Configure git
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" || true
+          git config --global user.name "github-actions[bot]" || true
+          
+          # Install dependencies
+          python3 --version
+          if ! python3 -c "import requests, json, subprocess" 2>/dev/null; then
+            python3 -m pip install --user --upgrade pip --break-system-packages || true
+            pip install --user requests --break-system-packages || pip install --user requests
+          fi
+          
+          # Setup GitHub CLI
+          if ! command -v gh >/dev/null 2>&1; then
+            if [ -f /etc/debian_version ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update && sudo apt install gh -y
+            else
+              mkdir -p ~/.local/bin
+              wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+              tar -xzf /tmp/gh.tar.gz -C /tmp
+              cp /tmp/gh_*/bin/gh ~/.local/bin/
+              chmod +x ~/.local/bin/gh
+              export PATH="$HOME/.local/bin:$PATH"
+            fi
+          fi
+          
+          gh --version
+
+      - name: Analyze Current Queue Status
+        id: analyze
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_AGENTS: ${{ env.MAX_CONCURRENT_AGENTS }}
+          FORCE_PROCESS: ${{ github.event.inputs.force_process_all || 'false' }}
+        run: |
+          python3 << 'EOF'
+          import subprocess
+          import json
+          import os
+          import sys
+          from datetime import datetime, timedelta
+          from typing import Dict, List, Any
+          
+          def run_gh_command(cmd):
+              """Run GitHub CLI command and return result."""
+              try:
+                  result = subprocess.run(
+                      ['gh'] + cmd,
+                      capture_output=True,
+                      text=True,
+                      timeout=30
+                  )
+                  if result.returncode == 0:
+                      return {'success': True, 'data': result.stdout}
+                  else:
+                      return {'success': False, 'error': result.stderr}
+              except Exception as e:
+                  return {'success': False, 'error': str(e)}
+          
+          # Configuration
+          MAX_AGENTS = int(os.environ.get('MAX_AGENTS', 3))
+          FORCE_PROCESS = os.environ.get('FORCE_PROCESS', 'false').lower() == 'true'
+          
+          print(f"🔍 Analyzing queue status with max {MAX_AGENTS} concurrent agents")
+          print(f"Force process all: {FORCE_PROCESS}")
+          
+          # Get all open PRs
+          pr_result = run_gh_command([
+              'pr', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,isDraft,author,comments,updatedAt,labels'
+          ])
+          
+          if not pr_result['success']:
+              print(f"❌ Failed to get PRs: {pr_result['error']}")
+              sys.exit(1)
+          
+          prs = json.loads(pr_result['data'])
+          
+          # Get all open issues (excluding PRs)
+          issue_result = run_gh_command([
+              'issue', 'list', '--state', 'open', '--limit', '100',
+              '--json', 'number,title,author,comments,updatedAt,labels'
+          ])
+          
+          if not issue_result['success']:
+              print(f"❌ Failed to get issues: {issue_result['error']}")
+              sys.exit(1)
+          
+          issues = json.loads(issue_result['data'])
+          
+          # Analyze PR status
+          incomplete_prs = []
+          active_copilot_prs = []
+          
+          for pr in prs:
+              pr_number = pr['number']
+              is_draft = pr['isDraft']
+              updated_at = pr['updatedAt']
+              comments = pr.get('comments', [])
+              
+              # Check if Copilot is mentioned
+              has_copilot = any('@copilot' in comment.get('body', '').lower() for comment in comments)
+              
+              # Check if recently active (within 6 hours)
+              try:
+                  updated_time = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                  is_recent = datetime.now().astimezone() - updated_time < timedelta(hours=6)
+              except:
+                  is_recent = False
+              
+              # Determine if incomplete
+              is_incomplete = is_draft or any(
+                  keyword in pr['title'].lower() for keyword in 
+                  ['auto-fix', 'wip', 'draft', 'todo', 'fix:', 'unknown']
+              )
+              
+              if is_incomplete:
+                  if has_copilot and is_recent and not FORCE_PROCESS:
+                      active_copilot_prs.append(pr_number)
+                  else:
+                      incomplete_prs.append(pr_number)
+          
+          # Analyze issue status
+          actionable_issues = []
+          active_copilot_issues = []
+          
+          for issue in issues:
+              issue_number = issue['number']
+              comments = issue.get('comments', [])
+              updated_at = issue['updatedAt']
+              
+              # Check if Copilot is mentioned
+              has_copilot = any('@copilot' in comment.get('body', '').lower() for comment in comments)
+              
+              # Check if recently active (within 6 hours)
+              try:
+                  updated_time = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                  is_recent = datetime.now().astimezone() - updated_time < timedelta(hours=6)
+              except:
+                  is_recent = False
+              
+              # Check if actionable (not just discussion)
+              is_actionable = any(
+                  label['name'].lower() in ['bug', 'enhancement', 'feature', 'task', 'auto-healing']
+                  for label in issue.get('labels', [])
+              ) or any(
+                  keyword in issue['title'].lower() for keyword in
+                  ['fix', 'add', 'implement', 'create', 'update', 'error', 'failure']
+              )
+              
+              if is_actionable:
+                  if has_copilot and is_recent and not FORCE_PROCESS:
+                      active_copilot_issues.append(issue_number)
+                  else:
+                      actionable_issues.append(issue_number)
+          
+          # Calculate agent capacity
+          active_agents = len(active_copilot_prs) + len(active_copilot_issues)
+          available_slots = max(0, MAX_AGENTS - active_agents)
+          
+          # Determine work strategy
+          strategy = "maintain"  # Default strategy
+          
+          if available_slots == 0:
+              strategy = "monitor"  # All agents busy, just monitor
+          elif len(incomplete_prs) > 0 or len(actionable_issues) > 0:
+              strategy = "assign"  # Have work and capacity
+          
+          # Create work batches (prioritize PRs over issues)
+          pr_batch = incomplete_prs[:available_slots] if available_slots > 0 else []
+          remaining_slots = available_slots - len(pr_batch)
+          issue_batch = actionable_issues[:remaining_slots] if remaining_slots > 0 else []
+          
+          # Output results
+          print(f"\n📊 Queue Analysis Results:")
+          print(f"  Total PRs: {len(prs)}")
+          print(f"  Incomplete PRs: {len(incomplete_prs)}")
+          print(f"  PRs with active Copilot: {len(active_copilot_prs)}")
+          print(f"  Total Issues: {len(issues)}")
+          print(f"  Actionable Issues: {len(actionable_issues)}")
+          print(f"  Issues with active Copilot: {len(active_copilot_issues)}")
+          print(f"  Active Agents: {active_agents}/{MAX_AGENTS}")
+          print(f"  Available Slots: {available_slots}")
+          print(f"  Strategy: {strategy}")
+          print(f"  PR Batch: {pr_batch}")
+          print(f"  Issue Batch: {issue_batch}")
+          
+          # Set GitHub outputs
+          outputs = {
+              'total_prs': len(prs),
+              'incomplete_prs': len(incomplete_prs),
+              'total_issues': len(issues),
+              'actionable_issues': len(actionable_issues),
+              'active_agents': active_agents,
+              'available_slots': available_slots,
+              'pr_batch': ','.join(map(str, pr_batch)),
+              'issue_batch': ','.join(map(str, issue_batch)),
+              'strategy': strategy
+          }
+          
+          for key, value in outputs.items():
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f"{key}={value}\n")
+          
+          print(f"\n✅ Analysis complete")
+          EOF
+
+      - name: Generate Queue Status Summary
+        run: |
+          echo "## 📊 Queue Status Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Max Concurrent Agents:** ${{ env.MAX_CONCURRENT_AGENTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Current Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs:** ${{ steps.analyze.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Incomplete PRs:** ${{ steps.analyze.outputs.incomplete_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Issues:** ${{ steps.analyze.outputs.total_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actionable Issues:** ${{ steps.analyze.outputs.actionable_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Active Agents:** ${{ steps.analyze.outputs.active_agents }}/${{ env.MAX_CONCURRENT_AGENTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Available Slots:** ${{ steps.analyze.outputs.available_slots }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Strategy:** ${{ steps.analyze.outputs.strategy }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+  process-pr-queue:
+    name: Process PR Queue
+    needs: analyze-queue-status
+    if: |
+      needs.analyze-queue-status.outputs.strategy == 'assign' && 
+      needs.analyze-queue-status.outputs.pr_batch != ''
+    runs-on: [self-hosted, linux, x64]
+    
+    strategy:
+      matrix:
+        pr_number: ${{ fromJson(format('[{0}]', needs.analyze-queue-status.outputs.pr_batch)) }}
+      max-parallel: ${{ fromJson(needs.analyze-queue-status.outputs.available_slots) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup environment
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          python3 -c "import requests, json, subprocess" 2>/dev/null || pip install --user requests --break-system-packages
+          export PATH="$HOME/.local/bin:$PATH"
+          gh --version
+
+      - name: Process PR with Enhanced Monitor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          echo "🤖 Processing PR #${{ matrix.pr_number }} with enhanced monitor"
+          
+          CMD_ARGS="--notification-user ${{ github.repository_owner }} --pr-number ${{ matrix.pr_number }}"
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            CMD_ARGS="$CMD_ARGS --dry-run"
+          fi
+          
+          if python3 scripts/enhanced_pr_monitor.py $CMD_ARGS; then
+            echo "✅ Successfully processed PR #${{ matrix.pr_number }}"
+          else
+            echo "❌ Failed to process PR #${{ matrix.pr_number }}"
+            exit 1
+          fi
+
+  process-issue-queue:
+    name: Process Issue Queue
+    needs: analyze-queue-status
+    if: |
+      needs.analyze-queue-status.outputs.strategy == 'assign' && 
+      needs.analyze-queue-status.outputs.issue_batch != ''
+    runs-on: [self-hosted, linux, x64]
+    
+    strategy:
+      matrix:
+        issue_number: ${{ fromJson(format('[{0}]', needs.analyze-queue-status.outputs.issue_batch)) }}
+      max-parallel: ${{ fromJson(needs.analyze-queue-status.outputs.available_slots) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup environment
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          python3 -c "import requests, json, subprocess" 2>/dev/null || pip install --user requests --break-system-packages
+          export PATH="$HOME/.local/bin:$PATH"
+          gh --version
+
+      - name: Process Issue with Copilot Assignment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          echo "🎫 Processing Issue #${{ matrix.issue_number }}"
+          
+          # Get issue details
+          ISSUE_DATA=$(gh issue view ${{ matrix.issue_number }} --json title,body,labels,author)
+          ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
+          ISSUE_BODY=$(echo "$ISSUE_DATA" | jq -r '.body // ""')
+          
+          # Determine task type based on issue content
+          TASK_TYPE="implement"
+          if echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "bug\|error\|fix\|broken"; then
+            TASK_TYPE="fix"
+          elif echo "$ISSUE_TITLE $ISSUE_BODY" | grep -qi "review\|analyze\|investigate"; then
+            TASK_TYPE="review"
+          fi
+          
+          # Create appropriate Copilot assignment comment file
+          cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
+          @copilot /fix
+          
+          Please help resolve this issue.
+          
+          **Issue:** ISSUE_TITLE_PLACEHOLDER
+          
+          **Task Type:** Bug Fix / Error Resolution
+          
+          **Instructions:**
+          1. Analyze the issue description and any error logs
+          2. Identify the root cause
+          3. Implement a robust fix
+          4. Ensure the fix doesn't break existing functionality
+          5. Add tests if appropriate
+          
+          Please create a PR to resolve this issue.
+          COMMENT_EOF
+          
+          # Customize comment based on task type
+          if [ "$TASK_TYPE" = "review" ]; then
+            cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
+          @copilot /review
+          
+          Please help analyze and investigate this issue.
+          
+          **Issue:** ISSUE_TITLE_PLACEHOLDER
+          
+          **Task Type:** Analysis / Investigation
+          
+          **Instructions:**
+          1. Review the issue description thoroughly
+          2. Analyze the current codebase related to this issue
+          3. Provide insights and recommendations
+          4. Suggest implementation approach if applicable
+          5. Create a PR if code changes are needed
+          
+          Please provide analysis and next steps.
+          COMMENT_EOF
+          elif [ "$TASK_TYPE" = "implement" ]; then
+            cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
+          @copilot Please help implement the feature described in this issue.
+          
+          **Issue:** ISSUE_TITLE_PLACEHOLDER
+          
+          **Task Type:** Feature Implementation
+          
+          **Instructions:**
+          1. Review the issue requirements carefully
+          2. Design an appropriate solution
+          3. Implement the feature following repository patterns
+          4. Add comprehensive tests
+          5. Update documentation as needed
+          
+          Please create a PR to implement this feature.
+          COMMENT_EOF
+          fi
+          
+          # Replace placeholder with actual issue title
+          sed -i "s/ISSUE_TITLE_PLACEHOLDER/$ISSUE_TITLE/" /tmp/copilot_comment.txt
+          
+          echo "Task type: $TASK_TYPE"
+          echo "Comment preview:"
+          head -5 /tmp/copilot_comment.txt
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "🔍 DRY RUN: Would post Copilot assignment comment"
+          else
+            if gh issue comment ${{ matrix.issue_number }} --body-file /tmp/copilot_comment.txt; then
+              echo "✅ Successfully assigned Copilot to Issue #${{ matrix.issue_number }}"
+            else
+              echo "❌ Failed to assign Copilot to Issue #${{ matrix.issue_number }}"
+              exit 1
+            fi
+          fi
+
+  monitor-agent-progress:
+    name: Monitor Agent Progress
+    needs: [analyze-queue-status, process-pr-queue, process-issue-queue]
+    if: always() && needs.analyze-queue-status.outputs.active_agents > 0
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Monitor Active Agents
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Monitoring active Copilot agents..."
+          
+          # Check for recent Copilot activity
+          RECENT_ACTIVITY=$(gh search issues \
+            --repo ${{ github.repository }} \
+            --limit 50 \
+            "is:open @copilot" \
+            --json number,title,updatedAt,author \
+            --jq '[.[] | select(.updatedAt >= (now - 21600) | strftime("%Y-%m-%dT%H:%M:%SZ"))]')
+          
+          ACTIVE_COUNT=$(echo "$RECENT_ACTIVITY" | jq 'length')
+          
+          echo "📊 Agent Activity Summary:"
+          echo "  Active agents (last 6 hours): $ACTIVE_COUNT"
+          echo "  Expected active agents: ${{ needs.analyze-queue-status.outputs.active_agents }}"
+          
+          # List recent activity
+          echo "$RECENT_ACTIVITY" | jq -r '.[] | "  - \(.author.login): \(.title) (#\(.number))"' | head -10
+          
+          if [ "$ACTIVE_COUNT" -gt 0 ]; then
+            echo "✅ Copilot agents are active"
+          else
+            echo "⚠️ No recent Copilot activity detected"
+          fi
+
+  generate-final-report:
+    name: Generate Final Report
+    needs: [analyze-queue-status, process-pr-queue, process-issue-queue, monitor-agent-progress]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate Comprehensive Report
+        run: |
+          echo "# 🤖 Continuous Queue Management Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow:** Continuous PR and Issue Queue Management" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📊 Queue Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs:** ${{ needs.analyze-queue-status.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Incomplete PRs:** ${{ needs.analyze-queue-status.outputs.incomplete_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Issues:** ${{ needs.analyze-queue-status.outputs.total_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actionable Issues:** ${{ needs.analyze-queue-status.outputs.actionable_issues }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Active Agents:** ${{ needs.analyze-queue-status.outputs.active_agents }}/${{ env.MAX_CONCURRENT_AGENTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Strategy Used:** ${{ needs.analyze-queue-status.outputs.strategy }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🚀 Actions Taken" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.process-pr-queue.result }}" = "success" ]; then
+            PR_COUNT=$(echo "${{ needs.analyze-queue-status.outputs.pr_batch }}" | tr ',' '\n' | wc -l)
+            if [ -n "${{ needs.analyze-queue-status.outputs.pr_batch }}" ]; then
+              echo "- ✅ **PR Queue:** Successfully processed $PR_COUNT PRs" >> $GITHUB_STEP_SUMMARY
+              echo "  - PRs: ${{ needs.analyze-queue-status.outputs.pr_batch }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ℹ️ **PR Queue:** No PRs needed processing" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.process-pr-queue.result }}" = "failure" ]; then
+            echo "- ❌ **PR Queue:** Failed to process PRs" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **PR Queue:** Skipped (no work or no capacity)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.process-issue-queue.result }}" = "success" ]; then
+            ISSUE_COUNT=$(echo "${{ needs.analyze-queue-status.outputs.issue_batch }}" | tr ',' '\n' | wc -l)
+            if [ -n "${{ needs.analyze-queue-status.outputs.issue_batch }}" ]; then
+              echo "- ✅ **Issue Queue:** Successfully processed $ISSUE_COUNT issues" >> $GITHUB_STEP_SUMMARY
+              echo "  - Issues: ${{ needs.analyze-queue-status.outputs.issue_batch }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ℹ️ **Issue Queue:** No issues needed processing" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.process-issue-queue.result }}" = "failure" ]; then
+            echo "- ❌ **Issue Queue:** Failed to process issues" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **Issue Queue:** Skipped (no work or no capacity)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎯 System Performance" >> $GITHUB_STEP_SUMMARY
+          echo "- **Agent Utilization:** ${{ needs.analyze-queue-status.outputs.active_agents }}/${{ env.MAX_CONCURRENT_AGENTS }} ($(( ${{ needs.analyze-queue-status.outputs.active_agents }} * 100 / ${{ env.MAX_CONCURRENT_AGENTS }} ))%)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Queue Efficiency:** Keeping agent slots filled while respecting limits" >> $GITHUB_STEP_SUMMARY
+          echo "- **Concurrent Processing:** Up to ${{ env.MAX_CONCURRENT_AGENTS }} agents working simultaneously" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🔄 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next scheduled run:** $(date -d '+1 hour' -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Monitoring:** Agents will continue working on assigned tasks" >> $GITHUB_STEP_SUMMARY
+          echo "- **Queue management:** System will maintain optimal agent utilization" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.analyze-queue-status.outputs.strategy }}" = "monitor" ]; then
+            echo "🟡 **Status:** All agent slots occupied - monitoring progress" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.analyze-queue-status.outputs.strategy }}" = "assign" ]; then
+            echo "🟢 **Status:** Assigned work to available agents" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "🔵 **Status:** Maintaining current assignments" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Automated by Continuous Queue Management System*" >> $GITHUB_STEP_SUMMARY
