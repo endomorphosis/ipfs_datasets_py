@@ -1,0 +1,55 @@
+{
+  "processed_prs": {
+    "344": {
+      "last_processed": "2025-11-03T23:49:31.926121",
+      "completion_score": 45,
+      "action_taken": "assigned_copilot"
+    },
+    "342": {
+      "last_processed": "2025-11-03T23:49:45.586686",
+      "completion_score": -5,
+      "action_taken": "assigned_copilot"
+    },
+    "340": {
+      "last_processed": "2025-11-03T23:52:55.871709",
+      "completion_score": -5,
+      "action_taken": "assigned_copilot"
+    },
+    "338": {
+      "last_processed": "2025-11-03T23:53:48.229240",
+      "completion_score": -5,
+      "action_taken": "assigned_copilot"
+    }
+  },
+  "assignments": {
+    "344": [
+      {
+        "timestamp": "2025-11-03T23:49:31.926115",
+        "type": "fix",
+        "level": 1
+      }
+    ],
+    "342": [
+      {
+        "timestamp": "2025-11-03T23:49:45.586679",
+        "type": "fix",
+        "level": 1
+      }
+    ],
+    "340": [
+      {
+        "timestamp": "2025-11-03T23:52:55.871703",
+        "type": "fix",
+        "level": 1
+      }
+    ],
+    "338": [
+      {
+        "timestamp": "2025-11-03T23:53:48.229232",
+        "type": "fix",
+        "level": 1
+      }
+    ]
+  },
+  "last_run": "2025-11-03T23:53:48.229244"
+}

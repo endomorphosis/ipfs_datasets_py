@@ -1,0 +1,414 @@
+name: Enhanced PR Completion Monitor with Progressive Copilot Assignment
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  schedule:
+    # Run every 10 minutes for responsive monitoring
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Specific PR number to check (leave empty for all)'
+        required: false
+        type: string
+      force_reassign:
+        description: 'Force reassignment even if Copilot already working'
+        required: false
+        default: false
+        type: boolean
+      dry_run:
+        description: 'Dry run mode (show what would be done)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  enhanced-pr-monitor:
+    runs-on: [self-hosted, linux, x64]
+    
+    outputs:
+      total_prs: ${{ steps.monitor.outputs.total_prs }}
+      processed_prs: ${{ steps.monitor.outputs.processed_prs }}
+      assigned_copilot: ${{ steps.monitor.outputs.assigned_copilot }}
+      notified_human: ${{ steps.monitor.outputs.notified_human }}
+      errors: ${{ steps.monitor.outputs.errors }}
+    
+    steps:
+      - name: Clean workspace safely
+        run: |
+          echo "Current user: $(whoami)"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          
+          # Only clean if we're in a GitHub Actions workspace
+          if [[ "$GITHUB_WORKSPACE" == *"/actions-runner/_work/"* ]]; then
+            cd "$(dirname "$GITHUB_WORKSPACE")" || exit 1
+            WORKSPACE_NAME=$(basename "$GITHUB_WORKSPACE")
+            
+            # Try to remove workspace if it exists
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              echo "Removing existing workspace..."
+              rm -rf "$WORKSPACE_NAME" 2>/dev/null || sudo rm -rf "$WORKSPACE_NAME" 2>/dev/null || true
+            fi
+            
+            # Recreate workspace directory
+            mkdir -p "$GITHUB_WORKSPACE"
+            echo "✅ Workspace prepared"
+          else
+            echo "✅ Not in GitHub Actions workspace, skipping cleanup"
+          fi
+        continue-on-error: true
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          clean: false
+
+      - name: Configure Git safely
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" || true
+          git config --global user.name "github-actions[bot]" || true
+          
+          # Verify repository
+          if git rev-parse --git-dir > /dev/null 2>&1; then
+            echo "✅ Git repository verified"
+          else
+            echo "⚠️ Not in git repository but continuing"
+          fi
+
+      - name: Set up Python and dependencies
+        run: |
+          python3 --version
+          
+          # Install required packages with fallback methods
+          if python3 -c "import requests, json, subprocess" 2>/dev/null; then
+            echo "✅ Required packages already available"
+          else
+            echo "Installing required packages..."
+            
+            # Try system packages first
+            if command -v apt >/dev/null 2>&1 && sudo -n apt install -y python3-requests 2>/dev/null; then
+              echo "✅ Installed via apt"
+            else
+              # Fall back to pip
+              python3 -m pip install --user --upgrade pip --break-system-packages || true
+              pip install --user requests --break-system-packages || pip install --user requests
+              echo "✅ Installed via pip"
+            fi
+          fi
+          
+          # Verify installation
+          python3 -c "import requests, json, subprocess; print('✅ All required packages available')"
+
+      - name: Setup GitHub CLI
+        run: |
+          # Check if gh is available
+          if command -v gh >/dev/null 2>&1; then
+            echo "✅ gh CLI already installed: $(gh --version | head -1)"
+          else
+            echo "Installing GitHub CLI..."
+            
+            if [ -f /etc/debian_version ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              # Debian/Ubuntu with passwordless sudo
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update && sudo apt install gh -y
+            else
+              # Install to user directory
+              mkdir -p ~/.local/bin
+              wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+              tar -xzf /tmp/gh.tar.gz -C /tmp
+              cp /tmp/gh_*/bin/gh ~/.local/bin/
+              chmod +x ~/.local/bin/gh
+              export PATH="$HOME/.local/bin:$PATH"
+              echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+            fi
+          fi
+          
+          # Ensure gh is in PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Verify gh works
+          gh --version
+
+      - name: Run Enhanced PR Monitor
+        id: monitor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
+        run: |
+          # Set script parameters
+          PR_NUMBER="${{ github.event.inputs.pr_number || '' }}"
+          FORCE_REASSIGN="${{ github.event.inputs.force_reassign || 'false' }}"
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          NOTIFICATION_USER="${{ github.repository_owner }}"
+          
+          # If triggered by PR event, process that specific PR
+          if [ "${{ github.event_name }}" = "pull_request" ] && [ -z "$PR_NUMBER" ]; then
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
+          
+          echo "🔍 Enhanced PR Monitor Configuration:"
+          echo "  PR Number: ${PR_NUMBER:-'All open PRs'}"
+          echo "  Force Reassign: $FORCE_REASSIGN"
+          echo "  Dry Run: $DRY_RUN"
+          echo "  Notification User: $NOTIFICATION_USER"
+          echo ""
+          
+          # Build command
+          CMD="python3 scripts/enhanced_pr_monitor.py --notification-user $NOTIFICATION_USER"
+          
+          if [ -n "$PR_NUMBER" ]; then
+            CMD="$CMD --pr-number $PR_NUMBER"
+          fi
+          
+          if [ "$FORCE_REASSIGN" = "true" ]; then
+            CMD="$CMD --force-reassign"
+          fi
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          
+          echo "Running: $CMD"
+          echo ""
+          
+          # Run the monitor and capture output
+          if eval "$CMD" 2>&1 | tee monitor_output.log; then
+            echo "✅ Enhanced PR Monitor completed successfully"
+            MONITOR_SUCCESS=true
+          else
+            echo "❌ Enhanced PR Monitor failed"
+            MONITOR_SUCCESS=false
+          fi
+          
+          # Extract metrics from output (basic parsing)
+          TOTAL_PRS=$(grep "Total PRs:" monitor_output.log | sed -n 's/.*Total PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          PROCESSED_PRS=$(grep "Processed:" monitor_output.log | sed -n 's/.*Processed:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          ASSIGNED_COPILOT=$(grep "Copilot Assigned:" monitor_output.log | sed -n 's/.*Copilot Assigned:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          NOTIFIED_HUMAN=$(grep "Human Notified:" monitor_output.log | sed -n 's/.*Human Notified:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          ERRORS=$(grep "Errors:" monitor_output.log | sed -n 's/.*Errors:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          
+          # Set outputs
+          echo "total_prs=$TOTAL_PRS" >> $GITHUB_OUTPUT
+          echo "processed_prs=$PROCESSED_PRS" >> $GITHUB_OUTPUT
+          echo "assigned_copilot=$ASSIGNED_COPILOT" >> $GITHUB_OUTPUT
+          echo "notified_human=$NOTIFIED_HUMAN" >> $GITHUB_OUTPUT
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "success=$MONITOR_SUCCESS" >> $GITHUB_OUTPUT
+          
+          # Exit with error if monitor failed
+          if [ "$MONITOR_SUCCESS" != "true" ]; then
+            echo "Enhanced PR Monitor failed - check logs above"
+            exit 1
+          fi
+
+      - name: Validate Copilot Assignments
+        id: validate
+        if: steps.monitor.outputs.assigned_copilot > 0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🔍 Validating Copilot assignments..."
+          
+          # Get recent PR comments with @copilot mentions
+          RECENT_ASSIGNMENTS=$(gh search issues \
+            --repo ${{ github.repository }} \
+            --limit 20 \
+            "is:pr is:open @copilot" \
+            --json number,title,updatedAt \
+            --jq '.[] | select(.updatedAt >= (now - 3600) | strftime("%Y-%m-%dT%H:%M:%SZ")) | .number' | wc -l)
+          
+          echo "Recent Copilot assignments: $RECENT_ASSIGNMENTS"
+          echo "Assignments from this run: ${{ steps.monitor.outputs.assigned_copilot }}"
+          
+          if [ "$RECENT_ASSIGNMENTS" -ge "${{ steps.monitor.outputs.assigned_copilot }}" ]; then
+            echo "✅ Copilot assignments validated"
+            echo "validation_success=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Some assignments may not have been successful"
+            echo "validation_success=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for Stale Assignments
+        id: stale_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🕐 Checking for stale Copilot assignments..."
+          
+          # Find PRs with @copilot mentions older than 24 hours
+          CUTOFF_DATE=$(date -u -d '24 hours ago' '+%Y-%m-%dT%H:%M:%SZ')
+          
+          STALE_PRS=$(gh search issues \
+            --repo ${{ github.repository }} \
+            --limit 50 \
+            "is:pr is:open @copilot updated:<$CUTOFF_DATE" \
+            --json number,title,updatedAt \
+            --jq '.[].number' | wc -l)
+          
+          echo "Stale assignments found: $STALE_PRS"
+          echo "stale_assignments=$STALE_PRS" >> $GITHUB_OUTPUT
+          
+          if [ "$STALE_PRS" -gt 0 ]; then
+            echo "⚠️ Found $STALE_PRS PRs with stale Copilot assignments"
+            echo "Consider manual review or escalation"
+          else
+            echo "✅ No stale assignments found"
+          fi
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "## 🤖 Enhanced PR Monitor Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow Run**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📊 Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs**: ${{ steps.monitor.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Processed**: ${{ steps.monitor.outputs.processed_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Copilot Assigned**: ${{ steps.monitor.outputs.assigned_copilot }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Human Notified**: ${{ steps.monitor.outputs.notified_human }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors**: ${{ steps.monitor.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "${{ steps.stale_check.outputs.stale_assignments }}" ]; then
+            echo "- **Stale Assignments**: ${{ steps.stale_check.outputs.stale_assignments }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🎯 What This Does" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Comprehensive Analysis**: Checks PR completion using multiple criteria" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Progressive Assignment**: Escalates Copilot instructions based on attempt history" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Smart Detection**: Identifies drafts, failed checks, TODO items, stale PRs" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Human Notification**: Tags owner when PRs need manual intervention" >> $GITHUB_STEP_SUMMARY
+          echo "5. **State Management**: Tracks assignment history to avoid spam" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.monitor.outputs.errors }}" = "0" ]; then
+            echo "✅ **Monitor completed successfully**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Monitor completed with ${{ steps.monitor.outputs.errors }} error(s)**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Schedule" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frequency**: Every 10 minutes" >> $GITHUB_STEP_SUMMARY
+          echo "- **Next run**: $(date -d '+10 minutes' -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Manual trigger**: Use workflow_dispatch for immediate execution" >> $GITHUB_STEP_SUMMARY
+
+      - name: Archive Monitor Output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: enhanced-pr-monitor-output-${{ github.run_number }}
+          path: |
+            monitor_output.log
+            .github/pr_monitor_state.json
+          retention-days: 7
+
+  monitor-copilot-activity:
+    name: Monitor Active Copilot Work
+    needs: enhanced-pr-monitor
+    if: needs.enhanced-pr-monitor.outputs.assigned_copilot > 0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    
+    steps:
+      - name: Check Copilot Activity
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🤖 Monitoring Copilot activity on assigned PRs..."
+          
+          # Get PRs with recent @copilot mentions
+          ACTIVE_PRS=$(gh search issues \
+            --repo ${{ github.repository }} \
+            --limit 50 \
+            "is:pr is:open @copilot" \
+            --json number,title,comments,updatedAt)
+          
+          echo "$ACTIVE_PRS" | jq -r '.[] | "PR #\(.number): \(.title) (updated: \(.updatedAt))"' | head -10
+          
+          # Count PRs with recent Copilot activity
+          ACTIVE_COUNT=$(echo "$ACTIVE_PRS" | jq '[.[] | select(.updatedAt >= (now - 3600) | strftime("%Y-%m-%dT%H:%M:%SZ"))] | length')
+          
+          echo ""
+          echo "📈 Activity Summary:"
+          echo "  PRs with @copilot mentions: $(echo "$ACTIVE_PRS" | jq 'length')"
+          echo "  PRs with recent activity: $ACTIVE_COUNT"
+          echo "  New assignments this run: ${{ needs.enhanced-pr-monitor.outputs.assigned_copilot }}"
+
+  report-results:
+    name: Generate Final Report
+    needs: [enhanced-pr-monitor, monitor-copilot-activity]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate Final Report
+        run: |
+          echo "# Enhanced PR Monitor - Final Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID**: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📊 Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs**: ${{ needs.enhanced-pr-monitor.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Processed**: ${{ needs.enhanced-pr-monitor.outputs.processed_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Copilot Assigned**: ${{ needs.enhanced-pr-monitor.outputs.assigned_copilot }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Human Notified**: ${{ needs.enhanced-pr-monitor.outputs.notified_human }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors**: ${{ needs.enhanced-pr-monitor.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🎯 System Capabilities" >> $GITHUB_STEP_SUMMARY
+          echo "This enhanced monitoring system provides:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Multi-criteria completion detection** (draft status, TODO items, failed checks, staleness)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Progressive Copilot assignment** (escalating instructions over time)" >> $GITHUB_STEP_SUMMARY
+          echo "- **State management** (prevents duplicate assignments)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Human notification** (tags owner when manual intervention needed)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Continuous monitoring** (runs every 10 minutes)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.enhanced-pr-monitor.result }}" = "success" ]; then
+            echo "✅ **Enhanced monitoring completed successfully**" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ needs.enhanced-pr-monitor.outputs.assigned_copilot }}" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🤖 **Copilot has been assigned to ${{ needs.enhanced-pr-monitor.outputs.assigned_copilot }} PR(s)**" >> $GITHUB_STEP_SUMMARY
+              echo "Monitor these PRs for Copilot activity and implementation progress." >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ "${{ needs.enhanced-pr-monitor.outputs.notified_human }}" -gt 0 ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "👤 **Human intervention requested for ${{ needs.enhanced-pr-monitor.outputs.notified_human }} PR(s)**" >> $GITHUB_STEP_SUMMARY
+              echo "@${{ github.repository_owner }} please review the flagged PRs." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ **Enhanced monitoring completed with issues**" >> $GITHUB_STEP_SUMMARY
+            echo "Check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Next automatic run: $(date -d '+10 minutes' -u '+%Y-%m-%d %H:%M:%S UTC')*" >> $GITHUB_STEP_SUMMARY

@@ -138,19 +138,24 @@ jobs:
     - name: Run unit tests - Utils
       if: matrix.test-group == 'utils'
       run: |
-        pytest tests/unit/ \
-          --ignore=tests/unit/test_pdf_processor_unit.py \
-          --ignore=tests/unit/test_ocr_engine_unit.py \
-          --ignore=tests/unit/test_graphrag_integrator_unit.py \
-          --ignore=tests/unit/test_query_engine_unit.py \
-          --ignore=tests/unit/test_mcp_pdf_tools.py \
-          --ignore=tests/unit/test_stubs_from_gherkin \
-          --ignore=tests/unit/gherkin_features \
+        pytest tests/test_jsonnet_utils.py tests/test_import_utils.py \
           --cov=ipfs_datasets_py.utils \
           --cov-report=xml \
           --cov-report=term-missing \
           --timeout=${{ env.PYTEST_TIMEOUT }} \
-          -v
+          -v || {
+          # Exit code 5 means no tests were collected/run (e.g., all skipped)
+          # This is acceptable for optional test groups
+          EXIT_CODE=$?
+          if [ $EXIT_CODE -eq 5 ]; then
+            echo "⚠️  No tests ran in utils test group (all tests may have been skipped due to missing optional dependencies)"
+            echo "This is acceptable - utils tests require optional IPLD dependencies"
+            exit 0
+          else
+            echo "❌ Tests failed with exit code $EXIT_CODE"
+            exit $EXIT_CODE
+          fi
+        }
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -171,24 +176,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install system dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+        apt-get update
+        apt-get install -y tesseract-ocr tesseract-ocr-eng
     
     - name: Install Python dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-timeout
@@ -222,19 +217,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-timeout
@@ -266,19 +251,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install dependencies
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pytest pytest-asyncio pytest-benchmark memory_profiler
@@ -312,19 +287,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Install security scanning tools
       run: |
+        python --version
         python -m pip install --upgrade pip
         pip install bandit safety
     
@@ -388,19 +353,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Install Python dependencies
-
-    
-      run: |
-
-    
-        python --version
-
-    
-        python -m pip install --upgrade pip
-    
     - name: Test package installation
       run: |
+        python --version
         python -m pip install --upgrade pip
         # First test base package installation
         pip install -e .

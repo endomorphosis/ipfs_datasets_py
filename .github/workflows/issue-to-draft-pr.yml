@@ -84,6 +84,8 @@ jobs:
         id: get_issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Get the issue number
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -95,7 +97,7 @@ jobs:
           echo "Processing issue #$ISSUE_NUMBER"
           
           # Get issue details
-          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --json title,body,number,author,labels)
+          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json title,body,number,author,labels)
           
           ISSUE_TITLE=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['title'])")
           ISSUE_AUTHOR=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
@@ -117,12 +119,14 @@ jobs:
         id: check_existing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
           
           # Check if there's already a PR for this issue
           echo "Searching for existing PRs for issue #$ISSUE_NUMBER"
-          EXISTING_PRS=$(gh pr list --search "Fixes #$ISSUE_NUMBER in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Fixes #$ISSUE_NUMBER in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
           
           echo "Found $EXISTING_PRS existing PRs"
           
@@ -302,6 +306,8 @@ jobs:
         if: steps.create_branch.outputs.branch_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GIT_CONFIG_GLOBAL: /dev/null
+          GIT_CONFIG_SYSTEM: /dev/null
           ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
@@ -356,7 +362,7 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.
           
-          @copilot Please review the issue description above and implement the necessary changes to address this issue. 
+          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary changes.
           
           Focus on:
           - Understanding the problem described in the issue
@@ -397,25 +403,28 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Add comment to trigger Copilot with specific instructions
-            gh pr comment "$PR_NUMBER" --body "@copilot /fix
-
-          Please implement a solution for this issue. Here's what to focus on:
-          
-          **Issue**: #$ISSUE_NUMBER - ${{ steps.get_issue.outputs.issue_title }}
-          
-          **Instructions**:
-          1. Review the full issue description in the PR body above
-          2. Understand the requirements and desired outcome
-          3. Implement minimal, surgical changes to address the issue
-          4. Follow existing code patterns and style in the repository
-          5. Add or update tests as appropriate
-          6. Update documentation if directly related to your changes
-          
-          See the full issue details at: https://github.com/${{ github.repository }}/issues/$ISSUE_NUMBER"
+            # Invoke Copilot using the new queue-managed CLI tool with issue context
+            # This uses the issue analysis JSON to generate comprehensive instructions
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using queue-managed Copilot CLI..."
+            
+            # Always use the JSON context file which safely contains issue details
+            # The issue analysis JSON is created earlier and contains sanitized data
+            if [ -f "/tmp/issue_analysis.json" ]; then
+              python3 scripts/invoke_copilot_with_queue.py \
+                --pr "$PR_NUMBER" \
+                --context-file /tmp/issue_analysis.json \
+                --context-type issue \
+                --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
+            else
+              # Fallback to basic instruction without user-controlled content
+              python3 scripts/invoke_copilot_with_queue.py \
+                --pr "$PR_NUMBER" \
+                --instruction "Please implement a solution for this issue. Review the full issue description in the PR and implement minimal, surgical changes." \
+                --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
+            fi
             
             # Link PR back to issue
-            gh issue comment "$ISSUE_NUMBER" --body "🤖 **Automatic Draft PR Created**
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "🤖 **Automatic Draft PR Created**
           
           A draft PR has been created to address this issue: #$PR_NUMBER
           
@@ -433,7 +442,7 @@ jobs:
             echo "🔗 **PR**: $PR_URL" >> $GITHUB_STEP_SUMMARY
             echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 **Status**: GitHub Copilot has been notified and will implement the fix" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: GitHub Copilot invoked via queue-managed CLI with issue analysis context" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Could not create PR automatically (permission denied or other error)"
             echo "Error: $PR_URL"
@@ -441,7 +450,7 @@ jobs:
             echo "pr_number=" >> $GITHUB_OUTPUT
             
             # Update issue with manual PR creation instructions
-            gh issue comment "$ISSUE_NUMBER" --body "⚠️ **Automatic PR creation failed**
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "⚠️ **Automatic PR creation failed**
           
           The branch has been created: \`$BRANCH_NAME\`
           
@@ -449,7 +458,10 @@ jobs:
           1. Go to: https://github.com/${{ github.repository }}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME
           2. Click 'Create pull request'
           3. Mark it as a draft
-          4. Tag @copilot in a comment to implement the fix
+          4. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+             \`\`\`bash
+             python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+             \`\`\`
           
           **Or enable automatic PR creation**:
           1. Go to Settings → Actions → General → Workflow permissions
