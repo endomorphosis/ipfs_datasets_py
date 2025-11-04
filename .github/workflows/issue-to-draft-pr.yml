@@ -274,9 +274,7 @@ jobs:
           
           ## Next Steps
           
-          GitHub Copilot will automatically analyze this issue and implement the necessary changes.
-          
-          @copilot will be mentioned in the PR to trigger the automated implementation.
+          A Copilot agent task will be created to automatically analyze this issue and implement the necessary changes.
           
           ---
           
@@ -354,16 +352,9 @@ jobs:
           
           ### What This PR Does
           
-          This is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.
+          This is a draft PR that will be automatically updated by a Copilot agent to resolve the issue.
           
-          @copilot Please review the issue description above and implement the necessary changes to address this issue. 
-          
-          Focus on:
-          - Understanding the problem described in the issue
-          - Implementing a minimal, surgical fix
-          - Adding or updating tests as appropriate
-          - Following the existing code style and patterns
-          - Documenting any significant changes
+          A Copilot agent task will be created with detailed instructions to implement the solution.
           
           ### Task Checklist
           
@@ -397,34 +388,73 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Add comment to trigger Copilot with specific instructions
-            gh pr comment "$PR_NUMBER" --body "@copilot /fix
+            # Create agent task using gh CLI
+            echo "Creating Copilot agent task to implement the solution..."
+            
+            # Prepare task description
+            cat > /tmp/agent_task.md << 'AGENT_TASK_EOF'
+          Please implement a solution for the issue described in this PR.
 
-          Please implement a solution for this issue. Here's what to focus on:
+          ## Issue Reference
+          Issue: #$ISSUE_NUMBER - ${{ steps.get_issue.outputs.issue_title }}
           
-          **Issue**: #$ISSUE_NUMBER - ${{ steps.get_issue.outputs.issue_title }}
+          ## Issue Details
           
-          **Instructions**:
-          1. Review the full issue description in the PR body above
+          AGENT_TASK_EOF
+          
+            # Add issue body
+            cat /tmp/issue_body.txt >> /tmp/agent_task.md
+            
+            cat >> /tmp/agent_task.md << 'AGENT_TASK_EOF'
+          
+          ## Analysis
+          AGENT_TASK_EOF
+          
+            # Add analysis
+            python3 -c "
+          import json
+          with open('/tmp/issue_analysis.json') as f:
+              data = json.load(f)
+              print('- **Categories**: ' + ', '.join(data['categories']))
+              print('- **Complexity**: ' + data['complexity'])
+              print('- **Keywords**: ' + ', '.join(data.get('keywords', [])[:5]))
+          " >> /tmp/agent_task.md
+          
+            cat >> /tmp/agent_task.md << 'AGENT_TASK_EOF'
+          
+          ## Instructions
+          
+          1. Review the full issue description above
           2. Understand the requirements and desired outcome
           3. Implement minimal, surgical changes to address the issue
           4. Follow existing code patterns and style in the repository
           5. Add or update tests as appropriate
           6. Update documentation if directly related to your changes
+          7. Report progress as you work
           
-          See the full issue details at: https://github.com/${{ github.repository }}/issues/$ISSUE_NUMBER"
+          See the full issue details at: https://github.com/${{ github.repository }}/issues/$ISSUE_NUMBER
+          AGENT_TASK_EOF
+          
+            # Replace placeholders
+            sed -i "s/\$ISSUE_NUMBER/$ISSUE_NUMBER/g" /tmp/agent_task.md
+            
+            # Create agent task
+            gh agent-task create -F /tmp/agent_task.md --repo ${{ github.repository }} || {
+              echo "⚠️  Failed to create agent task, falling back to PR comment"
+              gh pr comment "$PR_NUMBER" --body "See issue #$ISSUE_NUMBER for details and implementation instructions."
+            }
             
             # Link PR back to issue
             gh issue comment "$ISSUE_NUMBER" --body "🤖 **Automatic Draft PR Created**
           
           A draft PR has been created to address this issue: #$PR_NUMBER
           
-          GitHub Copilot has been assigned and will implement the solution automatically.
+          A Copilot agent task has been created and will implement the solution automatically.
           
           **PR**: $PR_URL
           **Branch**: \`$BRANCH_NAME\`
           
-          You can monitor the progress in the draft PR. The PR will be ready for review once Copilot completes the implementation."
+          You can monitor the progress in the draft PR. The PR will be ready for review once the agent completes the implementation."
             
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ Draft PR Created Successfully" >> $GITHUB_STEP_SUMMARY
@@ -433,7 +463,7 @@ jobs:
             echo "🔗 **PR**: $PR_URL" >> $GITHUB_STEP_SUMMARY
             echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 **Status**: GitHub Copilot has been notified and will implement the fix" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: Copilot agent task created to implement the fix" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Could not create PR automatically (permission denied or other error)"
             echo "Error: $PR_URL"
@@ -449,7 +479,7 @@ jobs:
           1. Go to: https://github.com/${{ github.repository }}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME
           2. Click 'Create pull request'
           3. Mark it as a draft
-          4. Tag @copilot in a comment to implement the fix
+          4. Use \`gh agent-task create\` to create a Copilot agent task to implement the fix
           
           **Or enable automatic PR creation**:
           1. Go to Settings → Actions → General → Workflow permissions
@@ -496,9 +526,9 @@ jobs:
               echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
               echo "- **Draft PR**: #$PR_CREATED" >> $GITHUB_STEP_SUMMARY
               echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-              echo "- **Status**: GitHub Copilot assigned via @mention" >> $GITHUB_STEP_SUMMARY
+              echo "- **Status**: Copilot agent task created" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Next**: Monitor PR #$PR_CREATED for Copilot's implementation" >> $GITHUB_STEP_SUMMARY
+              echo "**Next**: Monitor PR #$PR_CREATED for agent implementation" >> $GITHUB_STEP_SUMMARY
             fi
           fi
       
