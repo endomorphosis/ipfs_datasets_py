@@ -362,7 +362,7 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.
           
-          @copilot Please review the issue description above and implement the necessary changes to address this issue. 
+          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary changes.
           
           Focus on:
           - Understanding the problem described in the issue
@@ -403,13 +403,15 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Add comment to trigger Copilot with specific instructions
-            gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "@copilot /fix
+            # Invoke Copilot using the CLI tool instead of @mentions
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using CLI tool..."
+            python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --repo "${{ github.repository }}" \
+              --instruction "Please implement a solution for this issue. Here's what to focus on:
 
-          Please implement a solution for this issue. Here's what to focus on:
-          
           **Issue**: #$ISSUE_NUMBER - ${{ steps.get_issue.outputs.issue_title }}
-          
+
           **Instructions**:
           1. Review the full issue description in the PR body above
           2. Understand the requirements and desired outcome
@@ -417,7 +419,7 @@ jobs:
           4. Follow existing code patterns and style in the repository
           5. Add or update tests as appropriate
           6. Update documentation if directly related to your changes
-          
+          "
           See the full issue details at: https://github.com/${{ github.repository }}/issues/$ISSUE_NUMBER"
             
             # Link PR back to issue
@@ -455,7 +457,10 @@ jobs:
           1. Go to: https://github.com/${{ github.repository }}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME
           2. Click 'Create pull request'
           3. Mark it as a draft
-          4. Tag @copilot in a comment to implement the fix
+          4. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+             \`\`\`bash
+             python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+             \`\`\`
           
           **Or enable automatic PR creation**:
           1. Go to Settings → Actions → General → Workflow permissions
