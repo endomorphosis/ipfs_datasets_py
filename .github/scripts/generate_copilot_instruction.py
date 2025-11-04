@@ -11,6 +11,10 @@ import sys
 import argparse
 
 
+# Default fallback instruction when analysis file is unavailable
+DEFAULT_INSTRUCTION = "Please analyze and fix the workflow failure based on the PR description and logs."
+
+
 def generate_instruction(analysis_file):
     """Generate Copilot instruction from failure analysis."""
     try:
@@ -52,12 +56,12 @@ Focus on making clean, maintainable changes that directly address the issue."""
         return 0
         
     except FileNotFoundError:
-        print('Please analyze and fix the workflow failure based on the PR description and logs.', file=sys.stderr)
-        print('Please analyze and fix the workflow failure based on the PR description and logs.')
+        print(DEFAULT_INSTRUCTION, file=sys.stderr)
+        print(DEFAULT_INSTRUCTION)
         return 1
     except Exception as e:
         print(f'Error generating instruction: {e}', file=sys.stderr)
-        print('Please analyze and fix the workflow failure based on the PR description and logs.')
+        print(DEFAULT_INSTRUCTION)
         return 1
 
 

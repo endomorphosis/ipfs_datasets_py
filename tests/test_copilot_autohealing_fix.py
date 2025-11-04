@@ -19,6 +19,9 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Use the same Python interpreter that's running this test
+PYTHON = sys.executable
+
 
 def test_generate_copilot_instruction_script_exists():
     """Test that the generate_copilot_instruction.py script exists and is executable."""
@@ -31,7 +34,7 @@ def test_generate_copilot_instruction_script_exists():
 def test_generate_copilot_instruction_help():
     """Test that --help works for generate_copilot_instruction.py."""
     result = subprocess.run(
-        ["python3", ".github/scripts/generate_copilot_instruction.py", "--help"],
+        [PYTHON, ".github/scripts/generate_copilot_instruction.py", "--help"],
         capture_output=True,
         text=True,
         cwd=project_root
@@ -63,7 +66,7 @@ def test_generate_copilot_instruction_with_analysis():
     
     try:
         result = subprocess.run(
-            ["python3", ".github/scripts/generate_copilot_instruction.py", temp_file],
+            [PYTHON, ".github/scripts/generate_copilot_instruction.py", temp_file],
             capture_output=True,
             text=True,
             cwd=project_root
@@ -91,7 +94,7 @@ def test_generate_copilot_instruction_with_analysis():
 def test_generate_copilot_instruction_missing_file():
     """Test that script handles missing files gracefully."""
     result = subprocess.run(
-        ["python3", ".github/scripts/generate_copilot_instruction.py", "/tmp/nonexistent.json"],
+        [PYTHON, ".github/scripts/generate_copilot_instruction.py", "/tmp/nonexistent.json"],
         capture_output=True,
         text=True,
         cwd=project_root
@@ -106,7 +109,7 @@ def test_generate_copilot_instruction_missing_file():
 def test_invoke_copilot_with_queue_fallback():
     """Test that invoke_copilot_with_queue.py handles fallback mode."""
     result = subprocess.run(
-        ["python3", "scripts/invoke_copilot_with_queue.py", "--status"],
+        [PYTHON, "scripts/invoke_copilot_with_queue.py", "--status"],
         capture_output=True,
         text=True,
         cwd=project_root

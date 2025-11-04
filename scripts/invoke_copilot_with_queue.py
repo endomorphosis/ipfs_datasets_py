@@ -56,16 +56,16 @@ logger = logging.getLogger(__name__)
 class CopilotInvokerWithQueue:
     """Invoke GitHub Copilot with queue management and caching."""
     
-    def __init__(self, max_agents: int = 3, enable_cache: bool = True, dry_run: bool = False, 
+    def __init__(self, max_agents: int = 3, *, enable_cache: bool = True, dry_run: bool = False, 
                  use_fallback: bool = True):
         """
         Initialize the invoker.
         
         Args:
             max_agents: Maximum concurrent Copilot agents (default: 3)
-            enable_cache: Enable request caching (default: True)
-            dry_run: If True, show what would be done without making changes
-            use_fallback: Use GitHub CLI comment fallback if Copilot CLI is unavailable (default: True)
+            enable_cache: Enable request caching (default: True) [keyword-only]
+            dry_run: If True, show what would be done without making changes [keyword-only]
+            use_fallback: Use GitHub CLI comment fallback if Copilot CLI is unavailable [keyword-only]
         """
         self.dry_run = dry_run
         self.max_agents = max_agents
