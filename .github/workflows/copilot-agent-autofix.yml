@@ -636,7 +636,7 @@ jobs:
           **To create the PR manually:**
           1. Go to: https://github.com/${{ github.repository }}/compare/${{ steps.get_run_details.outputs.head_branch }}...$BRANCH_NAME
           2. Click 'Create pull request'
-          3. Tag @copilot in a comment to implement fixes
+          3. Use \`gh agent-task create\` to create a Copilot agent task to implement fixes
           
           **Or enable automatic PR creation:**
           1. Go to Settings → Actions → General → Workflow permissions
