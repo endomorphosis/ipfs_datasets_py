@@ -101,7 +101,7 @@ def test_copilot_invoker_instantiation():
         # Note: Will still check gh CLI during __init__, which is expected
         try:
             invoker = CopilotPRInvoker(dry_run=True)
-            assert invoker.dry_run == True, "Dry run mode not set"
+            assert invoker.dry_run is True, "Dry run mode not set"
             print("✅ CopilotPRInvoker instantiates correctly (gh CLI available)")
         except SystemExit:
             # Expected if gh CLI is not authenticated

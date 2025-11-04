@@ -335,7 +335,7 @@ jobs:
             --pr "$PR_NUMBER" \
             --instruction "Please analyze the scraper validation failures and implement fixes. Focus on:
 
-          1. Ensure all scrapers produce data with required fields: \`title\` and \`text\`
+          1. Ensure all scrapers produce data with required fields: 'title' and 'text'
           2. Fix schema validation issues
           3. Ensure HuggingFace dataset compatibility
           4. Improve data quality scores
