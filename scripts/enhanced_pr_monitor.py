@@ -372,27 +372,41 @@ If this PR cannot be completed, please provide a detailed explanation of blocker
         return comment
     
     def assign_copilot_to_pr(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> bool:
-        """Assign Copilot to a PR with appropriate instructions."""
+        """Assign Copilot to a PR using proven @copilot comment method."""
         pr_number = pr['number']
-        
-        comment = self.create_copilot_assignment(pr, analysis, assignment_info)
         
         if self.dry_run:
             self.logger.info(f"DRY RUN: Would assign Copilot to PR #{pr_number}")
+            comment = self.create_copilot_assignment(pr, analysis, assignment_info)
             self.logger.info(f"Comment: {comment[:200]}...")
             return True
         
-        result = self.run_command([
-            'gh', 'pr', 'comment', str(pr_number),
-            '--body', comment
-        ])
+        # Use the proven @copilot comment method
+        # This has been verified to work and creates child PRs (e.g., PR #340 → child PR #382)
+        success = self._invoke_copilot_via_comment(pr, analysis, assignment_info)
         
-        if result['success']:
-            self.logger.info(f"✅ Assigned Copilot to PR #{pr_number}")
+        if success:
+            self.logger.info(f"✅ Successfully assigned Copilot to PR #{pr_number} via @copilot comment")
             return True
         else:
-            self.logger.error(f"❌ Failed to assign Copilot to PR #{pr_number}: {result.get('error', result.get('stderr'))}")
+            self.logger.error(f"❌ Failed to assign Copilot to PR #{pr_number}")
             return False
+    
+    def _invoke_copilot_via_comment(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> bool:
+        """Invoke Copilot using the proven @copilot comment method."""
+        pr_number = pr['number']
+        
+        # Create optimized Copilot assignment comment
+        comment = self.create_copilot_assignment(pr, analysis, assignment_info)
+        
+        # Post comment to PR using GitHub CLI
+        cmd = [
+            'gh', 'pr', 'comment', str(pr_number),
+            '--body', comment
+        ]
+        
+        result = self.run_command(cmd)
+        return result['success']
     
     def notify_human_intervention(self, pr: Dict[str, Any], analysis: Dict[str, Any]) -> bool:
         """Notify human that a PR needs manual intervention."""
