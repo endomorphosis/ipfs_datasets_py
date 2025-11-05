@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-11-05T02:31:21+00:00",
+  "timestamp": "2025-11-05T04:00:44+00:00",
   "github_cli": {
     "available": true,
     "path": "/usr/bin/gh",
@@ -255,8 +255,7 @@
       "uses_copilot": false,
       "has_autofix": false,
       "issues": [
-        "Uses self-hosted runners without container isolation",
-        "Uses gh CLI but may be missing GH_TOKEN environment variable"
+        "Uses self-hosted runners without container isolation"
       ]
     },
     {
