@@ -331,110 +331,57 @@ jobs:
             echo "fix_available=false" >> $GITHUB_OUTPUT
           fi
       
-      - name: Create issue and draft PR with Copilot assignment
-        id: create_issue_pr
+      - name: Create issue for Copilot to fix
+        id: create_issue
         if: steps.generate_fix.outputs.fix_available == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
           RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
-          BRANCH_NAME="${{ steps.generate_fix.outputs.fix_branch }}"
           
-          # Read analysis for issue body
-          ANALYSIS=$(cat /tmp/failure_analysis.json | python -c "import sys, json; data=json.load(sys.stdin); print('**Error Type:** ' + data.get('error_type', 'Unknown') + '\n**Root Cause:** ' + data.get('root_cause', 'Not identified') + '\n**Fix Confidence:** ' + str(data.get('fix_confidence', 0)) + '%')")
+          # Read analysis for context
+          ERROR_TYPE=$(python -c "import json; print(json.load(open('/tmp/failure_analysis.json')).get('error_type', 'Unknown'))")
+          ROOT_CAUSE=$(python -c "import json; print(json.load(open('/tmp/failure_analysis.json')).get('root_cause', 'Not identified'))")
           
-          # Create comprehensive issue with logs
+          # Create SIMPLE issue for Copilot - no excessive formatting
           cat > /tmp/issue_body.md << 'ISSUE_EOF'
-          # Workflow Failure: ${{ steps.get_run_details.outputs.workflow_name }}
+          # Fix Workflow Failure: ${{ steps.get_run_details.outputs.workflow_name }}
           
-          ## Failure Information
-          
+          ## Workflow Information
           - **Workflow**: ${{ steps.get_run_details.outputs.workflow_name }}
           - **Run ID**: [${{ steps.get_run_details.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.get_run_details.outputs.run_id }})
           - **Branch**: ${{ steps.get_run_details.outputs.head_branch }}
           - **SHA**: ${{ steps.get_run_details.outputs.head_sha }}
           
-          ## Analysis
+          ## Error Details
+          - **Type**: ERROR_TYPE_PLACEHOLDER
+          - **Root Cause**: ROOT_CAUSE_PLACEHOLDER
           
+          ## Task
+          Please analyze and fix the workflow failure:
+          
+          1. Review the workflow logs at the run link above
+          2. Identify the root cause of the failure
+          3. Implement the necessary fixes
+          4. Test that the workflow passes
+          5. Create a PR with the fix
+          
+          ## Context
+          This is an automated workflow failure detected by the auto-healing system.
+          
+          Auto-generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
           ISSUE_EOF
           
-          echo "$ANALYSIS" >> /tmp/issue_body.md
+          # Replace placeholders
+          sed -i "s|ERROR_TYPE_PLACEHOLDER|$ERROR_TYPE|g" /tmp/issue_body.md
+          sed -i "s|ROOT_CAUSE_PLACEHOLDER|$ROOT_CAUSE|g" /tmp/issue_body.md
           
-          cat >> /tmp/issue_body.md << 'ISSUE_EOF'
-          
-          ## Failure Logs Summary
-          
-          ISSUE_EOF
-          
-          # Add log summary
-          if [ -f /tmp/workflow_logs/summary.txt ]; then
-            cat /tmp/workflow_logs/summary.txt >> /tmp/issue_body.md
-          fi
-          
-          cat >> /tmp/issue_body.md << 'ISSUE_EOF'
-          
-          ## Detailed Logs
-          
-          ISSUE_EOF
-          
-          # Add first 50 lines of first failed job log for context
-          FIRST_LOG=$(ls /tmp/workflow_logs/job_*.log 2>/dev/null | head -1)
-          if [ -n "$FIRST_LOG" ] && [ -f "$FIRST_LOG" ]; then
-            echo "\`\`\`" >> /tmp/issue_body.md
-            head -50 "$FIRST_LOG" >> /tmp/issue_body.md
-            echo "\`\`\`" >> /tmp/issue_body.md
-            echo "" >> /tmp/issue_body.md
-            echo "*Full logs available in [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ steps.get_run_details.outputs.run_id }})*" >> /tmp/issue_body.md
-          fi
-          
-          cat >> /tmp/issue_body.md << 'ISSUE_EOF'
-          
-          ## Recommendations
-          
-          ISSUE_EOF
-          
-          # Add recommendations from analysis
-          python -c "
-          import json
-          with open('/tmp/failure_analysis.json') as f:
-              data = json.load(f)
-              for rec in data.get('recommendations', []):
-                  print('- ' + rec)
-          " >> /tmp/issue_body.md
-          
-          cat >> /tmp/issue_body.md << 'ISSUE_EOF'
-          
-          ## Proposed Fix
-          
-          ISSUE_EOF
-          
-          # Add fix details from proposal
-          python3 -c '
-          import json
-          with open("/tmp/fix_proposal.json") as f:
-              data = json.load(f)
-              for fix in data.get("fixes", []):
-                  print(f"### {fix.get(\"description\", \"Fix\")}\n")
-                  print(f"**File:** `{fix.get(\"file\", \"N/A\")}`\n")
-                  print(f"**Action:** {fix.get(\"action\", \"N/A\")}\n")
-                  if fix.get("changes"):
-                      print(f"\n```yaml\n{fix[\"changes\"]}\n```\n")
-          ' >> /tmp/issue_body.md
-          
-          cat >> /tmp/issue_body.md << 'ISSUE_EOF'
-          
-          ---
-          
-          🤖 This issue was created by the Auto-Healing System.
-          A draft PR will be created and GitHub Copilot will be assigned automatically.
-          ISSUE_EOF
-          
-          # Create the issue (without labels if they don't exist)
+          # Create the issue WITHOUT labels to avoid rate limits
           ISSUE_URL=$(gh issue create \
-            --title "Fix workflow failure: ${{ steps.get_run_details.outputs.workflow_name }} (Run ${{ steps.get_run_details.outputs.run_id }})" \
+            --title "Fix: ${{ steps.get_run_details.outputs.workflow_name }} workflow failure (Run ${{ steps.get_run_details.outputs.run_id }})" \
             --body-file /tmp/issue_body.md) || {
-              echo "Failed to create issue, retrying without labels..."
+              echo "❌ Failed to create issue"
               exit 1
             }
           
@@ -443,11 +390,14 @@ jobs:
           echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
           echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
           
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
-          # Create and checkout fix branch
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Issue Created for Copilot" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Issue**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+          echo "🔢 **Issue #**: $ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 **Next**: Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **How it works**: Issue created → Copilot creates PR automatically" >> $GITHUB_STEP_SUMMARY
           git checkout -b "$BRANCH_NAME"
           
           # Create a placeholder file to enable PR creation
@@ -615,34 +565,26 @@ jobs:
           fi
       
       - name: Summary of auto-healing actions
-        if: steps.create_issue_pr.outputs.issue_number != ''
+        if: steps.create_issue.outputs.issue_number != ''
         run: |
-          PR_NUMBER="${{ steps.create_issue_pr.outputs.pr_number }}"
-          ISSUE_NUMBER="${{ steps.create_issue_pr.outputs.issue_number }}"
+          ISSUE_NUMBER="${{ steps.create_issue.outputs.issue_number }}"
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## ✅ Auto-Healing Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "The auto-healing system has successfully:" >> $GITHUB_STEP_SUMMARY
           echo "1. 📝 Created issue #${ISSUE_NUMBER} with failure details" >> $GITHUB_STEP_SUMMARY
-          echo "3. 🌿 Created branch \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
-          
-          if [ -n "$PR_NUMBER" ]; then
-            echo "3. 📋 Created draft PR #${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "3. ⚠️ PR creation skipped (see issue for manual steps)" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "4. 🤖 Invoked GitHub Copilot using GitHub CLI with comprehensive failure analysis" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🤖 Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What happens next:" >> $GITHUB_STEP_SUMMARY
-          echo "1. 🤖 GitHub Copilot analyzes the failure context and recommendations" >> $GITHUB_STEP_SUMMARY
-          echo "2. 🔧 Copilot implements fixes based on the structured analysis" >> $GITHUB_STEP_SUMMARY
-          echo "3. ✅ Automated tests verify the fixes" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🤖 GitHub Copilot analyzes the issue and failure context" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🔧 Copilot automatically creates a PR with fixes" >> $GITHUB_STEP_SUMMARY
+          echo "3. ✅ Automated tests verify the fixes in the PR" >> $GITHUB_STEP_SUMMARY
           echo "4. 👀 You review and approve the PR when ready" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Monitor Progress**:" >> $GITHUB_STEP_SUMMARY
-          echo "- Issue: #${ISSUE_NUMBER}" >> $GITHUB_STEP_SUMMARY
-          echo "- Draft PR: #${PR_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "- Issue: https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "- Check for Copilot-created PR: https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Aopen+author%3Aapp%2Fcopilot-swe-agent" >> $GITHUB_STEP_SUMMARY
       
       - name: Upload artifacts
         if: always()
@@ -678,18 +620,14 @@ jobs:
             echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
             echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
             echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 📝 Issue Created: ${{ steps.create_issue_pr.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 📋 Draft PR Created: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- 🤖 Copilot Invoked: ${{ steps.create_issue_pr.outputs.pr_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 Issue Created: ${{ steps.create_issue.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
             
-            if [ "${{ steps.create_issue_pr.outputs.pr_number }}" != "" ]; then
+            if [ "${{ steps.create_issue.outputs.issue_number }}" != "" ]; then
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "#### ✅ Success!" >> $GITHUB_STEP_SUMMARY
-              echo "- Issue: #${{ steps.create_issue_pr.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
-              echo "- Draft PR: #${{ steps.create_issue_pr.outputs.pr_number }}" >> $GITHUB_STEP_SUMMARY
-              echo "- Branch: \`${{ steps.generate_fix.outputs.fix_branch }}\`" >> $GITHUB_STEP_SUMMARY
-              echo "- Status: GitHub Copilot has been invoked via CLI tool" >> $GITHUB_STEP_SUMMARY
+              echo "- Issue: #${{ steps.create_issue.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Status: Issue created - Copilot will automatically create a PR" >> $GITHUB_STEP_SUMMARY
               echo "" >> $GITHUB_STEP_SUMMARY
-              echo "**Monitor**: Check PR #${{ steps.create_issue_pr.outputs.pr_number }} for Copilot's progress" >> $GITHUB_STEP_SUMMARY
+              echo "**Monitor**: Check issue #${{ steps.create_issue.outputs.issue_number }} for Copilot's PR" >> $GITHUB_STEP_SUMMARY
             fi
           fi

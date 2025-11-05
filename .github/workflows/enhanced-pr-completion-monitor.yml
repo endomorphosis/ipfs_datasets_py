@@ -50,18 +50,22 @@ jobs:
           echo "Workspace: $GITHUB_WORKSPACE"
           
           # Only clean if we're in a GitHub Actions workspace
-          if [[ "$GITHUB_WORKSPACE" == *"/actions-runner/_work/"* ]]; then
-            cd "$(dirname "$GITHUB_WORKSPACE")" || exit 1
-            WORKSPACE_NAME=$(basename "$GITHUB_WORKSPACE")
-            
-            # Try to remove workspace if it exists
-            if [ -d "$GITHUB_WORKSPACE" ]; then
-              echo "Removing existing workspace..."
-              rm -rf "$WORKSPACE_NAME" 2>/dev/null || sudo rm -rf "$WORKSPACE_NAME" 2>/dev/null || true
+          if [[ "$GITHUB_WORKSPACE" == *"/actions-runner"*"/_work/"* ]]; then
+            # Fix Git lock files if they exist
+            if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
+              echo "Removing stale Git lock file..."
+              rm -f "$GITHUB_WORKSPACE/.git/index.lock" || sudo rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
             fi
             
-            # Recreate workspace directory
-            mkdir -p "$GITHUB_WORKSPACE"
+            # Reset Git state if repository exists
+            if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+              echo "Resetting Git repository state..."
+              cd "$GITHUB_WORKSPACE" || exit 1
+              git reset --hard HEAD 2>/dev/null || true
+              git clean -ffdx 2>/dev/null || true
+              cd - || exit 1
+            fi
+            
             echo "✅ Workspace prepared"
           else
             echo "✅ Not in GitHub Actions workspace, skipping cleanup"
@@ -73,7 +77,7 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          clean: false
+          clean: true
 
       - name: Configure Git safely
         run: |
@@ -152,32 +156,17 @@ jobs:
         run: |
           # Set script parameters
           PR_NUMBER="${{ github.event.inputs.pr_number || '' }}"
-          FORCE_REASSIGN="${{ github.event.inputs.force_reassign || 'false' }}"
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
           NOTIFICATION_USER="${{ github.repository_owner }}"
           
-          # If triggered by PR event, process that specific PR
-          if [ "${{ github.event_name }}" = "pull_request" ] && [ -z "$PR_NUMBER" ]; then
-            PR_NUMBER="${{ github.event.pull_request.number }}"
-          fi
-          
-          echo "🔍 Enhanced PR Monitor Configuration:"
-          echo "  PR Number: ${PR_NUMBER:-'All open PRs'}"
-          echo "  Force Reassign: $FORCE_REASSIGN"
-          echo "  Dry Run: $DRY_RUN"
+          echo "🔍 Issue-Based PR Monitor Configuration:"
           echo "  Notification User: $NOTIFICATION_USER"
+          echo "  Dry Run: $DRY_RUN"
+          echo "  Max Issues: 5"
           echo ""
           
-          # Build command
-          CMD="python3 scripts/enhanced_pr_monitor.py --notification-user $NOTIFICATION_USER"
-          
-          if [ -n "$PR_NUMBER" ]; then
-            CMD="$CMD --pr-number $PR_NUMBER"
-          fi
-          
-          if [ "$FORCE_REASSIGN" = "true" ]; then
-            CMD="$CMD --force-reassign"
-          fi
+          # Build command using the NEW issue-based monitor
+          CMD="python3 scripts/issue_based_pr_monitor.py --notification-user $NOTIFICATION_USER --max-issues 5"
           
           if [ "$DRY_RUN" = "true" ]; then
             CMD="$CMD --dry-run"
@@ -188,31 +177,33 @@ jobs:
           
           # Run the monitor and capture output
           if eval "$CMD" 2>&1 | tee monitor_output.log; then
-            echo "✅ Enhanced PR Monitor completed successfully"
+            echo "✅ Issue-Based PR Monitor completed successfully"
             MONITOR_SUCCESS=true
           else
-            echo "❌ Enhanced PR Monitor failed"
+            echo "❌ Issue-Based PR Monitor failed"
             MONITOR_SUCCESS=false
           fi
           
-          # Extract metrics from output (basic parsing)
-          TOTAL_PRS=$(grep "Total PRs:" monitor_output.log | sed -n 's/.*Total PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
-          PROCESSED_PRS=$(grep "Processed:" monitor_output.log | sed -n 's/.*Processed:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
-          ASSIGNED_COPILOT=$(grep "Copilot Assigned:" monitor_output.log | sed -n 's/.*Copilot Assigned:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
-          NOTIFIED_HUMAN=$(grep "Human Notified:" monitor_output.log | sed -n 's/.*Human Notified:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          # Extract metrics from output
+          TOTAL_PRS=$(grep "Total draft PRs:" monitor_output.log | sed -n 's/.*Total draft PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          PROCESSED_PRS=$(grep "PRs needing work:" monitor_output.log | sed -n 's/.*PRs needing work:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          ASSIGNED_COPILOT=$(grep "Issues created:" monitor_output.log | sed -n 's/.*Issues created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           ERRORS=$(grep "Errors:" monitor_output.log | sed -n 's/.*Errors:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           
           # Set outputs
           echo "total_prs=$TOTAL_PRS" >> $GITHUB_OUTPUT
           echo "processed_prs=$PROCESSED_PRS" >> $GITHUB_OUTPUT
           echo "assigned_copilot=$ASSIGNED_COPILOT" >> $GITHUB_OUTPUT
-          echo "notified_human=$NOTIFIED_HUMAN" >> $GITHUB_OUTPUT
+          echo "notified_human=0" >> $GITHUB_OUTPUT
           echo "errors=$ERRORS" >> $GITHUB_OUTPUT
           echo "success=$MONITOR_SUCCESS" >> $GITHUB_OUTPUT
           
+          echo ""
+          echo "📊 Summary: $TOTAL_PRS total, $PROCESSED_PRS need work, $ASSIGNED_COPILOT issues created"
+          
           # Exit with error if monitor failed
           if [ "$MONITOR_SUCCESS" != "true" ]; then
-            echo "Enhanced PR Monitor failed - check logs above"
+            echo "Issue-Based PR Monitor failed - check logs above"
             exit 1
           fi
 
@@ -293,11 +284,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "### 🎯 What This Does" >> $GITHUB_STEP_SUMMARY
-          echo "1. **Comprehensive Analysis**: Checks PR completion using multiple criteria" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Progressive Assignment**: Escalates Copilot instructions based on attempt history" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Smart Detection**: Identifies drafts, failed checks, TODO items, stale PRs" >> $GITHUB_STEP_SUMMARY
-          echo "4. **Human Notification**: Tags owner when PRs need manual intervention" >> $GITHUB_STEP_SUMMARY
-          echo "5. **State Management**: Tracks assignment history to avoid spam" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Monitors Draft PRs**: Checks all open draft pull requests" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Creates Issues**: Creates GitHub issues for incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Triggers Copilot**: Copilot **automatically** creates PRs to fix issues" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Avoids @copilot Comments**: Does NOT use @copilot comments (proven not to work)" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Issue-Based Invocation**: Uses the **correct** method based on evidence" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **How Copilot Works**: Create Issue → Copilot Creates PR (NOT: Comment on PR)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.monitor.outputs.errors }}" = "0" ]; then
