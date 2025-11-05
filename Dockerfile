@@ -1,7 +1,7 @@
 # IPFS Datasets Python
 # A unified interface for data processing and distribution across decentralized networks
 
-FROM python:3.10-slim
+FROM python:3.12-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \

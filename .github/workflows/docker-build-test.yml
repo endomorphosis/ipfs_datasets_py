@@ -38,7 +38,7 @@ jobs:
   test-github-x86:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     
     steps:
@@ -205,7 +205,7 @@ jobs:
   build-multi-arch:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
@@ -269,7 +269,7 @@ jobs:
   test-summary:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: [test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
     if: always()

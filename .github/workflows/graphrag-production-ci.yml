@@ -23,7 +23,7 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.12']
     
     steps:
     - name: Clean workspace
@@ -59,11 +59,11 @@ jobs:
         docker run -d --name postgres-test-${{ matrix.python-version }} \
           -e POSTGRES_PASSWORD=test_password \
           -e POSTGRES_DB=test_db \
-          -p 543${{ matrix.python-version == '3.10' && '2' || matrix.python-version == '3.11' && '3' || '4' }}:5432 \
+          -p 5434:5432 \
           postgres:15
         
         docker run -d --name redis-test-${{ matrix.python-version }} \
-          -p 637${{ matrix.python-version == '3.10' && '9' || matrix.python-version == '3.11' && '8' || '7' }}:6379 \
+          -p 6377:6379 \
           redis:7
         
         # Wait for services to be ready
@@ -83,9 +83,8 @@ jobs:
         mkdir -p test-results
         # Run tests directly with python3 if Docker image doesn't exist
         if docker image inspect ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} >/dev/null 2>&1; then
-          PORT_OFFSET=${{ matrix.python-version == '3.10' && '0' || matrix.python-version == '3.11' && '1' || '2' }}
-          POSTGRES_PORT=$((5432 + PORT_OFFSET))
-          REDIS_PORT=$((6379 - PORT_OFFSET))
+          POSTGRES_PORT=5434
+          REDIS_PORT=6377
           docker run --rm \
             -v $(pwd)/test-results:/app/test-results \
             -e POSTGRES_URL=postgresql://postgres:test_password@localhost:${POSTGRES_PORT}/test_db \
@@ -171,7 +170,7 @@ jobs:
     needs: [test, security]
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     permissions:
       contents: read
@@ -230,7 +229,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     if: github.ref == 'refs/heads/develop'
     environment: staging
@@ -270,7 +269,7 @@ jobs:
     needs: build
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     if: startsWith(github.ref, 'refs/tags/v')
     environment: production

@@ -87,7 +87,7 @@ setup(
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
     },
-    python_requires='>=3.10',
+    python_requires='>=3.12',
     description="IPFS Datasets - A unified interface for data processing and distribution across decentralized networks",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
