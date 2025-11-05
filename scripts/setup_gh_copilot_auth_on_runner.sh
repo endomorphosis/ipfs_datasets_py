@@ -79,12 +79,26 @@ install_gh_cli() {
         echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
             tee /etc/apt/sources.list.d/github-cli.list > /dev/null
         
-        apt-get update && apt-get install -y gh
+        # Update package lists with error checking
+        if ! apt-get update; then
+            echo -e "${RED}❌ Failed to update package lists${NC}"
+            exit 1
+        fi
+        
+        # Install with error checking
+        if ! apt-get install -y gh; then
+            echo -e "${RED}❌ Failed to install GitHub CLI${NC}"
+            exit 1
+        fi
     elif [ -f /etc/redhat-release ]; then
         # RedHat/CentOS
         dnf install -y 'dnf-command(config-manager)'
         dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-        dnf install -y gh
+        
+        if ! dnf install -y gh; then
+            echo -e "${RED}❌ Failed to install GitHub CLI${NC}"
+            exit 1
+        fi
     else
         echo -e "${RED}❌ Unsupported OS. Please install GitHub CLI manually.${NC}"
         exit 1
@@ -120,7 +134,14 @@ prompt_for_token() {
         exit 1
     fi
     
-    echo -e "${GREEN}✅ Token received${NC}"
+    # Validate token format (GitHub tokens start with specific prefixes)
+    if [[ ! "$GITHUB_TOKEN" =~ ^(ghp_|gho_|ghu_|ghs_|ghr_) ]]; then
+        echo -e "${RED}❌ Invalid token format${NC}"
+        echo -e "${YELLOW}GitHub tokens should start with: ghp_, gho_, ghu_, ghs_, or ghr_${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Token received and validated${NC}"
 }
 
 # Function to configure GitHub CLI authentication for a user
@@ -210,14 +231,27 @@ setup_git_credential_helper() {
 create_runner_env_file() {
     echo -e "${BLUE}⚙️  Creating environment file for runner service...${NC}"
     
+    # Try to find the runner directory
     local runner_dir="/home/actions-runner"
-    local env_file="${runner_dir}/.env"
+    if [ ! -d "$runner_dir" ]; then
+        # Try alternative locations
+        for alt_dir in "/opt/actions-runner" "${RUNNER_HOME}/actions-runner" "/var/lib/actions-runner"; do
+            if [ -d "$alt_dir" ]; then
+                runner_dir="$alt_dir"
+                break
+            fi
+        done
+    fi
     
     if [ ! -d "$runner_dir" ]; then
-        echo -e "${YELLOW}⚠️  Runner directory not found at ${runner_dir}${NC}"
+        echo -e "${YELLOW}⚠️  Runner directory not found${NC}"
+        echo -e "${YELLOW}   Tried: /home/actions-runner, /opt/actions-runner, /var/lib/actions-runner${NC}"
         echo -e "${YELLOW}   Skipping runner environment file creation${NC}"
         return 0
     fi
+    
+    local env_file="${runner_dir}/.env"
+    echo -e "${BLUE}   Using runner directory: ${runner_dir}${NC}"
     
     # Create .env file
     cat > "$env_file" << EOF
@@ -231,7 +265,7 @@ GIT_CONFIG_SYSTEM=/dev/null
 EOF
     
     # Set permissions
-    chown ${RUNNER_USER}:${RUNNER_USER} "$env_file"
+    chown ${RUNNER_USER}:${RUNNER_USER} "$env_file" 2>/dev/null || true
     chmod 600 "$env_file"
     
     echo -e "${GREEN}✅ Runner environment file created: ${env_file}${NC}"

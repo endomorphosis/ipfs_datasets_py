@@ -61,8 +61,9 @@ def test_generate_copilot_instruction():
         text=True
     )
     
-    if result.returncode != 0 and ('please analyze' in result.stdout.lower() or 'default' in result.stdout.lower()):
-        print("   ✅ Missing file test passed (returns default)")
+    # Now returns 0 (success) with fallback instruction
+    if result.returncode == 0 and ('please analyze' in result.stdout.lower() or 'default' in result.stdout.lower()):
+        print("   ✅ Missing file test passed (returns default with success)")
     else:
         print(f"   ❌ Missing file test failed")
         print(f"   Return code: {result.returncode}")
@@ -82,8 +83,9 @@ def test_generate_copilot_instruction():
             text=True
         )
         
-        if result.returncode != 0 and ('please analyze' in result.stdout.lower() or 'default' in result.stdout.lower()):
-            print("   ✅ Invalid JSON test passed (returns default)")
+        # Now returns 0 (success) with fallback instruction
+        if result.returncode == 0 and ('please analyze' in result.stdout.lower() or 'default' in result.stdout.lower()):
+            print("   ✅ Invalid JSON test passed (returns default with success)")
         else:
             print(f"   ❌ Invalid JSON test failed")
             print(f"   Return code: {result.returncode}")

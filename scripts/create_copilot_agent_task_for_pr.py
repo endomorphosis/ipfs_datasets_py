@@ -71,12 +71,17 @@ def create_task_description(pr_details: Dict[str, Any], task_type: str, reason: 
     pr_title = pr_details['title']
     pr_body = pr_details.get('body', '')
     
+    # Truncate PR body if too long to avoid comment length limits
+    max_body_length = 1000
+    if len(pr_body) > max_body_length:
+        pr_body = pr_body[:max_body_length] + "\n\n...(truncated)"
+    
     base_desc = f"""Work on PR #{pr_number}: {pr_title}
 
 Assignment Reason: {reason}
 
 PR Body:
-{pr_body[:500] if pr_body else 'No description provided'}
+{pr_body if pr_body else 'No description provided'}
 """
     
     if task_type == "fix":
