@@ -143,8 +143,8 @@ jobs:
             
             ### Resources
             
-            - [Workflow Troubleshooting Guide](.github/workflows/COPILOT_WORKFLOW_TROUBLESHOOTING.md)
-            - [Workflow Validator Script](.github/scripts/validate_workflows.py)
+            - [Workflow Troubleshooting Guide](https://github.com/${{ github.repository }}/blob/main/.github/workflows/COPILOT_WORKFLOW_TROUBLESHOOTING.md)
+            - [Workflow Validator Script](https://github.com/${{ github.repository }}/blob/main/.github/scripts/validate_workflows.py)
             
             ---
             

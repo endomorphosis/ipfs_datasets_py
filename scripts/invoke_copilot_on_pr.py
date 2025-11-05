@@ -31,6 +31,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 from typing import Dict, List, Optional, Any
 
 logging.basicConfig(
@@ -187,7 +188,6 @@ Focus on making minimal, surgical changes that directly address the problem."""
             except subprocess.TimeoutExpired:
                 logger.warning(f"⚠️  Attempt {attempt}/{max_retries}: Command timed out")
                 if attempt < max_retries:
-                    import time
                     wait_time = 2 ** attempt  # Exponential backoff: 2, 4, 8 seconds
                     logger.info(f"  Retrying in {wait_time} seconds...")
                     time.sleep(wait_time)
@@ -203,7 +203,6 @@ Focus on making minimal, surgical changes that directly address the problem."""
                 is_retryable = any(err in error_msg.lower() for err in retryable_errors)
                 
                 if attempt < max_retries and is_retryable:
-                    import time
                     wait_time = 2 ** attempt
                     logger.info(f"  Retrying in {wait_time} seconds...")
                     time.sleep(wait_time)
@@ -214,7 +213,6 @@ Focus on making minimal, surgical changes that directly address the problem."""
                 logger.error(f"❌ Unexpected error on attempt {attempt}/{max_retries}: {e}")
                 if attempt >= max_retries:
                     return False
-                import time
                 time.sleep(2 ** attempt)
         
         return False

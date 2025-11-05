@@ -75,7 +75,8 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
-      options: --user root
+      options: --user root  # Note: Required for apt-get and system operations
+      # For production: Consider using non-root user with sudo
 ```
 
 #### Retry Logic in Scripts

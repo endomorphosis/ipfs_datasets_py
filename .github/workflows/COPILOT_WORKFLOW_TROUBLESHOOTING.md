@@ -43,12 +43,9 @@ gh: unknown command "agent-task" for "gh"
    ```bash
    # Ubuntu/Debian
    sudo apt update && sudo apt install gh
-   
-   # Or download latest release
-   gh extension install github/gh-copilot
    ```
 
-**Note**: As of 2024, `gh agent-task` is in preview and may not be available in all environments. The recommended approach is to use PR comments with `@github-copilot` mentions.
+**Note**: `gh agent-task` is built into gh CLI v2.40.0+ as a preview feature. The `gh-copilot` extension is separate and provides different functionality (code suggestions, explain commands).
 
 ### 3. Copilot Not Responding to PR Comments
 
