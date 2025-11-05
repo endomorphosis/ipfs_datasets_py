@@ -7,6 +7,7 @@ instruction for GitHub Copilot to implement fixes.
 """
 
 import json
+import os
 import sys
 import argparse
 
@@ -18,9 +19,16 @@ DEFAULT_INSTRUCTION = "Please analyze and fix the workflow failure based on the 
 def generate_instruction(analysis_file):
     """Generate Copilot instruction from failure analysis."""
     try:
+        # Validate file exists and is readable
+        if not analysis_file or not os.path.exists(analysis_file):
+            print(f'Warning: Analysis file not found: {analysis_file}', file=sys.stderr)
+            print(DEFAULT_INSTRUCTION)
+            return 1
+            
         with open(analysis_file) as f:
             data = json.load(f)
         
+        # Safely extract data with fallbacks
         error_type = data.get('error_type', 'Unknown')
         root_cause = data.get('root_cause', 'Not identified')
         fix_confidence = data.get('fix_confidence', 0)
@@ -56,7 +64,11 @@ Focus on making clean, maintainable changes that directly address the issue."""
         return 0
         
     except FileNotFoundError:
-        print(DEFAULT_INSTRUCTION, file=sys.stderr)
+        print(f'Warning: Analysis file not found: {analysis_file}', file=sys.stderr)
+        print(DEFAULT_INSTRUCTION)
+        return 1
+    except json.JSONDecodeError as e:
+        print(f'Error: Invalid JSON in analysis file: {e}', file=sys.stderr)
         print(DEFAULT_INSTRUCTION)
         return 1
     except Exception as e:
