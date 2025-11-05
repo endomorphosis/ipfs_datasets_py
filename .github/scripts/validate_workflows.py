@@ -119,7 +119,16 @@ class WorkflowValidator:
         if 'run' in step:
             run_cmd = step['run']
             
-            if 'gh ' in run_cmd or run_cmd.strip().startswith('gh'):
+            # Check for gh CLI usage (but not in heredocs/inline scripts where token is inherited)
+            uses_gh_directly = False
+            
+            # Direct gh usage (not in heredoc)
+            if run_cmd.strip().startswith('gh ') or '\ngh ' in run_cmd:
+                # Skip if it's inside a heredoc (python, bash, etc.)
+                if '<<' not in run_cmd or run_cmd.find('gh ') < run_cmd.find('<<'):
+                    uses_gh_directly = True
+            
+            if uses_gh_directly:
                 # Check if GH_TOKEN is set
                 has_token = False
                 
