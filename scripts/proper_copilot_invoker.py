@@ -3,17 +3,33 @@
 Proper Copilot Agent Invocation Script
 
 This script properly invokes GitHub Copilot agents on draft PRs by using
-the repository's existing workflows and the copilot-agent-autofix system.
+the GitHub CLI's agent-task command (gh agent-task create) which is the
+official method for invoking GitHub Copilot Coding Agent.
 
-Based on analysis of the working system.
+Based on GitHub's official documentation:
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
 """
 
 import subprocess
 import json
 import sys
 import argparse
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
+from pathlib import Path
+
+# Try to import the copilot CLI utility
+try:
+    script_dir = Path(__file__).parent.parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
+    
+    from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+    COPILOT_CLI_AVAILABLE = True
+except ImportError:
+    COPILOT_CLI_AVAILABLE = False
+    print("⚠️  CopilotCLI utility not available, using direct gh commands")
 
 
 class ProperCopilotInvoker:
@@ -63,52 +79,136 @@ class ProperCopilotInvoker:
             print(f"❌ Failed to parse PR data")
             return []
     
-    def check_if_copilot_already_mentioned(self, pr: Dict[str, Any]) -> bool:
-        """Check if @copilot has already been mentioned in the PR."""
-        comments = pr.get('comments', [])
+    def check_if_copilot_already_assigned(self, pr_number: int) -> bool:
+        """
+        Check if Copilot agent task already exists for this PR.
         
-        for comment in comments:
-            body = comment.get('body', '')
-            if '@copilot' in body.lower():
+        Uses gh agent-task list to check for existing tasks.
+        """
+        # Check for agent tasks related to this PR
+        result = self.run_command([
+            'gh', 'agent-task', 'list',
+            '--limit', '50'
+        ])
+        
+        if result['success']:
+            # Check if there's a task mentioning this PR number
+            stdout = result['stdout']
+            if f"#{pr_number}" in stdout or f"PR #{pr_number}" in stdout or f"pull/{pr_number}" in stdout:
                 return True
         
         return False
     
-    def trigger_copilot_via_autofix_workflow(self, pr_number: int) -> bool:
-        """
-        Trigger Copilot by manually running the copilot-agent-autofix workflow.
-        
-        This is the proper way - use the existing workflow infrastructure.
-        """
-        print(f"🚀 Triggering copilot-agent-autofix workflow for PR #{pr_number}...")
-        
-        if self.dry_run:
-            print(f"   DRY RUN: Would trigger workflow for PR #{pr_number}")
-            return True
-        
-        # The workflow monitors PRs, so we just need to make sure it sees this PR
-        # We can do this by adding a comment that will trigger the system
-        
-        comment = f"""@copilot
-
-This PR needs implementation work. Please analyze the requirements and implement the necessary changes.
-
-**Triggered by:** Automated queue management system
-**Timestamp:** {datetime.now().isoformat()}
-**PR:** #{pr_number}
-
-Please proceed with the implementation."""
-        
+    def get_pr_details(self, pr_number: int) -> Optional[Dict[str, Any]]:
+        """Get detailed information about a PR."""
         result = self.run_command([
-            'gh', 'pr', 'comment', str(pr_number),
-            '--body', comment
+            'gh', 'pr', 'view', str(pr_number),
+            '--json', 'number,title,body,headRefName,baseRefName,author'
         ])
         
+        if not result['success']:
+            print(f"   ❌ Failed to get PR details: {result.get('stderr')}")
+            return None
+        
+        try:
+            return json.loads(result['stdout'])
+        except json.JSONDecodeError:
+            print(f"   ❌ Failed to parse PR details")
+            return None
+    
+    def invoke_copilot_agent(self, pr_number: int, pr_title: str, pr_body: str, 
+                            head_branch: str, base_branch: str = "main") -> bool:
+        """
+        Invoke GitHub Copilot Coding Agent using gh agent-task create.
+        
+        This is the OFFICIAL and CORRECT method per GitHub documentation:
+        https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+        
+        Args:
+            pr_number: PR number to work on
+            pr_title: PR title
+            pr_body: PR body/description
+            head_branch: Head branch name
+            base_branch: Base branch name
+        
+        Returns:
+            True if agent task created successfully
+        """
+        print(f"🚀 Creating GitHub Copilot agent task for PR #{pr_number}...")
+        
+        if self.dry_run:
+            print(f"   DRY RUN: Would create agent task for PR #{pr_number}")
+            return True
+        
+        # Create comprehensive task description for the agent
+        task_description = f"""Complete the work in PR #{pr_number}: {pr_title}
+
+**PR Details**:
+- Number: #{pr_number}
+- Branch: {head_branch} → {base_branch}
+- Status: Draft PR needing implementation
+
+**Description**:
+{pr_body[:500] if pr_body else 'No description provided'}
+
+**Instructions**:
+1. Review the PR description and understand the requirements
+2. Analyze the current state of the branch
+3. Implement the necessary changes with minimal, surgical modifications
+4. Ensure all tests pass
+5. Follow existing code patterns and repository conventions
+6. Update documentation only if directly related to changes
+7. Push commits to the branch when complete
+
+**Invoked by**: Automated PR monitor system
+**Timestamp**: {datetime.now().isoformat()}
+"""
+        
+        # Method 1: Try using CopilotCLI utility (preferred)
+        if COPILOT_CLI_AVAILABLE:
+            try:
+                copilot = CopilotCLI()
+                result = copilot.create_agent_task(
+                    task_description=task_description,
+                    base_branch=head_branch,
+                    follow=False
+                )
+                
+                if result.get('success'):
+                    print(f"   ✅ Created agent task using CopilotCLI utility")
+                    print(f"   📝 Task: {task_description[:100]}...")
+                    if result.get('stdout'):
+                        print(f"   📋 Output: {result['stdout'].strip()[:200]}")
+                    return True
+                else:
+                    print(f"   ⚠️  CopilotCLI failed: {result.get('error', 'Unknown error')}")
+                    # Fall through to direct gh command
+            except Exception as e:
+                print(f"   ⚠️  CopilotCLI exception: {e}")
+                # Fall through to direct gh command
+        
+        # Method 2: Direct gh agent-task create command
+        result = self.run_command([
+            'gh', 'agent-task', 'create',
+            task_description,
+            '--base', head_branch
+        ], timeout=60)
+        
         if result['success']:
-            print(f"✅ Posted @copilot comment to PR #{pr_number}")
+            print(f"   ✅ Created agent task using gh agent-task command")
+            print(f"   📝 Task: {task_description[:100]}...")
+            if result.get('stdout'):
+                print(f"   📋 Output: {result['stdout'].strip()[:200]}")
             return True
         else:
-            print(f"❌ Failed to post comment: {result.get('stderr')}")
+            error_msg = result.get('stderr', result.get('error', 'Unknown error'))
+            print(f"   ❌ Failed to create agent task: {error_msg}")
+            
+            # Check if gh agent-task is not available
+            if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
+                print(f"   ⚠️  gh agent-task command not available on this system")
+                print(f"   💡 Please ensure GitHub CLI is updated: gh extension upgrade gh-copilot")
+            
             return False
     
     def invoke_copilot_on_draft_prs(self, max_assignments: int = 3) -> Dict[str, int]:
@@ -155,10 +255,17 @@ Please proceed with the implementation."""
                 stats['skipped'] += 1
                 continue
             
-            # Check if already has @copilot mention
-            if self.check_if_copilot_already_mentioned(pr):
-                print(f"   ✅ Already has @copilot mention")
+            # Check if agent task already exists
+            if self.check_if_copilot_already_assigned(pr_number):
+                print(f"   ✅ Agent task already exists for this PR")
                 stats['already_assigned'] += 1
+                continue
+            
+            # Get detailed PR information
+            pr_details = self.get_pr_details(pr_number)
+            if not pr_details:
+                print(f"   ❌ Failed to get PR details")
+                stats['failed'] += 1
                 continue
             
             # Check if we've reached max assignments
@@ -166,8 +273,14 @@ Please proceed with the implementation."""
                 print(f"   ⏸️  Reached max assignments ({max_assignments})")
                 break
             
-            # Invoke Copilot
-            success = self.trigger_copilot_via_autofix_workflow(pr_number)
+            # Invoke Copilot using proper method (gh agent-task create)
+            success = self.invoke_copilot_agent(
+                pr_number=pr_number,
+                pr_title=pr_details['title'],
+                pr_body=pr_details.get('body', ''),
+                head_branch=pr_details.get('headRefName', 'main'),
+                base_branch=pr_details.get('baseRefName', 'main')
+            )
             
             if success:
                 stats['newly_assigned'] += 1
@@ -193,9 +306,10 @@ Please proceed with the implementation."""
         
         if stats['newly_assigned'] > 0:
             print(f"\n✅ Successfully assigned Copilot to {stats['newly_assigned']} PR(s)")
-            print(f"💡 Copilot agents will now work on these PRs")
+            print(f"💡 GitHub Copilot Coding Agent will now work on these PRs")
+            print(f"📋 Agent tasks created using: gh agent-task create")
         elif stats['already_assigned'] > 0:
-            print(f"\n✅ All draft PRs already have Copilot assigned")
+            print(f"\n✅ All draft PRs already have Copilot agent tasks")
         else:
             print(f"\n⚠️  No new assignments made")
 
@@ -203,13 +317,13 @@ Please proceed with the implementation."""
 def main():
     """Main execution."""
     parser = argparse.ArgumentParser(
-        description='Properly invoke GitHub Copilot agents on draft PRs'
+        description='Invoke GitHub Copilot agents on draft PRs using gh agent-task create (official method)'
     )
     parser.add_argument(
         '--max-agents',
         type=int,
         default=3,
-        help='Maximum number of new Copilot assignments (default: 3)'
+        help='Maximum number of new Copilot agent tasks to create (default: 3)'
     )
     parser.add_argument(
         '--dry-run',
@@ -223,6 +337,14 @@ def main():
     
     if args.dry_run:
         print("🔍 DRY RUN MODE - No actual changes will be made\n")
+    
+    print("💡 OFFICIAL GITHUB COPILOT INVOCATION METHOD:")
+    print("   ✅ Uses: gh agent-task create (GitHub CLI)")
+    print("   ✅ Creates proper agent tasks for Copilot Coding Agent")
+    print("   ✅ Per GitHub documentation: https://docs.github.com/en/copilot/concepts/agents/coding-agent/")
+    print("   ❌ NOT: @copilot mentions in comments (unsupported)")
+    print("   ❌ NOT: Draft PR creation method")
+    print()
     
     try:
         stats = invoker.invoke_copilot_on_draft_prs(max_assignments=args.max_agents)
