@@ -23,11 +23,15 @@ fatal: bad config line 1 in file /dev/null
 - `.github/workflows/copilot-agent-autofix.yml` (2 occurrences removed)
 - `.github/workflows/issue-to-draft-pr.yml` (3 occurrences removed)
 - `.github/workflows/pr-copilot-reviewer.yml` (3 occurrences removed)
+- `.github/workflows/enhanced-pr-completion-monitor.yml` (1 occurrence removed)
+
+**Total**: 9 git config issues fixed across 4 workflows
 
 **Impact**: This was the primary cause of failures in:
 - Auto-healing workflow (copilot-agent-autofix.yml)
 - Issue-to-Draft-PR workflow (issue-to-draft-pr.yml)
 - PR Copilot Reviewer workflow (pr-copilot-reviewer.yml)
+- Enhanced PR Completion Monitor workflow (enhanced-pr-completion-monitor.yml)
 
 ### 2. Bash Conditional Syntax Error
 
