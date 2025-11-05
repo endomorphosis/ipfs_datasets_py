@@ -2,6 +2,27 @@
 
 This directory contains all GitHub Actions workflows for the repository, including the **Auto-Healing System** and **Issue-to-Draft-PR System** that automatically resolve issues using GitHub Copilot Agent.
 
+## 🚨 IMPORTANT: Self-Hosted Runner Authentication
+
+**If workflows are failing with authentication errors**, you need to configure persistent GitHub CLI authentication on your self-hosted runners.
+
+### Quick Fix
+
+```bash
+# On your self-hosted runner machine:
+sudo ./scripts/setup_gh_copilot_auth_on_runner.sh
+```
+
+📚 **See:** [RUNNER_AUTH_QUICKSTART.md](../../RUNNER_AUTH_QUICKSTART.md) for details
+
+This configures:
+- ✅ Persistent GitHub CLI authentication
+- ✅ Copilot CLI extension (`gh agent-task` support)
+- ✅ Git credential helper
+- ✅ Works across reboots and workflow runs
+
+---
+
 ## 🎯 Automation Overview
 
 This repository features **two complementary automation systems**:

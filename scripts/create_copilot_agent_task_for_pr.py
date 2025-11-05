@@ -71,12 +71,17 @@ def create_task_description(pr_details: Dict[str, Any], task_type: str, reason: 
     pr_title = pr_details['title']
     pr_body = pr_details.get('body', '')
     
+    # Truncate PR body if too long to avoid comment length limits
+    max_body_length = 1000
+    if len(pr_body) > max_body_length:
+        pr_body = pr_body[:max_body_length] + "\n\n...(truncated)"
+    
     base_desc = f"""Work on PR #{pr_number}: {pr_title}
 
 Assignment Reason: {reason}
 
 PR Body:
-{pr_body[:500] if pr_body else 'No description provided'}
+{pr_body if pr_body else 'No description provided'}
 """
     
     if task_type == "fix":
@@ -175,9 +180,39 @@ def create_agent_task(pr_number: str, pr_details: Dict[str, Any], task_type: str
         # Check if command not available
         if 'unknown command' in result['stderr'].lower() or 'not found' in result['stderr'].lower():
             print("\n⚠️  gh agent-task command not available")
-            print("Fallback: You can manually create a comment on the PR with the task description")
-            return False
+            print("🔄 Attempting fallback: Creating PR comment with @copilot mention...")
+            # Use fallback and return its result
+            return create_copilot_comment_fallback(pr_number, task_description, repo)
         
+        # For other errors, return False
+        return False
+
+
+def create_copilot_comment_fallback(pr_number: str, task_description: str, 
+                                    repo: Optional[str] = None) -> bool:
+    """Fallback method: Create a comment on the PR mentioning @copilot."""
+    
+    # Create a comment with @copilot mention and the task description
+    comment_body = f"""@copilot please work on this PR.
+
+{task_description}
+
+---
+*Note: This task was created using the fallback method because `gh agent-task` is not available.*
+"""
+    
+    cmd = ['gh', 'pr', 'comment', pr_number, '--body', comment_body]
+    if repo:
+        cmd.extend(['--repo', repo])
+    
+    result = run_gh_command(cmd)
+    
+    if result['success']:
+        print(f"✅ Successfully created PR comment with @copilot mention for PR #{pr_number}")
+        print("Note: Using comment-based invocation instead of agent-task API")
+        return True
+    else:
+        print(f"❌ Fallback also failed: {result['stderr']}")
         return False
 
 

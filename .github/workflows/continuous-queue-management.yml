@@ -457,14 +457,18 @@ jobs:
     name: Monitor Agent Progress
     needs: [analyze-queue-status, process-pr-queue, process-issue-queue]
     if: always() && needs.analyze-queue-status.outputs.active_agents > 0
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
-      - name: Monitor Active Copilot Coding Agents
+      - name: Monitor Active Copilot Coding Agents (Rate Limited)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "🔍 Monitoring active Copilot Coding Agents..."
+          
+          # Rate limiting: Add delay before gh CLI calls
+          echo "⏱️  Rate limiting: Waiting 2 seconds before API calls..."
+          sleep 2
           
           # Use gh agent-task list to check active agent tasks
           if gh agent-task list --limit 20 --json id,description,state,createdAt 2>/dev/null; then
@@ -491,6 +495,9 @@ jobs:
             echo "⚠️  gh agent-task list not available or requires authentication"
             echo "Falling back to PR/issue activity monitoring..."
             
+            # Rate limiting: Add delay before fallback API call
+            sleep 2
+            
             # Fallback: Check for recent PR activity from copilot
             RECENT_PRS=$(gh pr list \
               --repo ${{ github.repository }} \
@@ -512,7 +519,7 @@ jobs:
     name: Generate Final Report
     needs: [analyze-queue-status, process-pr-queue, process-issue-queue, monitor-agent-progress]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
       - name: Generate Comprehensive Report

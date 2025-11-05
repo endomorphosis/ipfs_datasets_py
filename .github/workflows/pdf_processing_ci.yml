@@ -282,7 +282,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
     - uses: actions/checkout@v4
@@ -317,7 +317,7 @@ jobs:
 
   docker-tests:
     name: Docker Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     needs: integration-tests
     
     steps:
@@ -346,7 +346,7 @@ jobs:
 
   deployment-tests:
     name: Deployment Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     needs: [integration-tests, mcp-server-tests]
     if: github.ref == 'refs/heads/main'
     
@@ -406,7 +406,7 @@ jobs:
 
   notify-status:
     name: Notify Status
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     needs: [lint-and-format, unit-tests, integration-tests, mcp-server-tests]
     if: always()
     

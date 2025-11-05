@@ -328,7 +328,7 @@ jobs:
     name: Monitor Active Copilot Work
     needs: enhanced-pr-monitor
     if: needs.enhanced-pr-monitor.outputs.assigned_copilot > 0
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: read
@@ -362,7 +362,7 @@ jobs:
     name: Generate Final Report
     needs: [enhanced-pr-monitor, monitor-copilot-activity]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
       - name: Generate Final Report

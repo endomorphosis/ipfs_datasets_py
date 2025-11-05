@@ -238,7 +238,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
   summary:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     needs: [diagnose-docker-permissions, fix-docker-permissions, test-docker-after-fix]
     if: always()
     
