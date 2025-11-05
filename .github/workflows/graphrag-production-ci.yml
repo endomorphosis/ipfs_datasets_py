@@ -23,9 +23,21 @@ jobs:
     runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.12']
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+          sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
+          # Clean the entire workspace to avoid conflicts
+          cd /
+          sudo rm -rf "$GITHUB_WORKSPACE" || true
+        fi
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
@@ -33,6 +45,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: false
+        clean: true
     
     - name: Set up Python
       run: |
@@ -46,11 +59,11 @@ jobs:
         docker run -d --name postgres-test-${{ matrix.python-version }} \
           -e POSTGRES_PASSWORD=test_password \
           -e POSTGRES_DB=test_db \
-          -p 543${{ matrix.python-version == '3.10' && '2' || matrix.python-version == '3.11' && '3' || '4' }}:5432 \
+          -p 5434:5432 \
           postgres:15
         
         docker run -d --name redis-test-${{ matrix.python-version }} \
-          -p 637${{ matrix.python-version == '3.10' && '9' || matrix.python-version == '3.11' && '8' || '7' }}:6379 \
+          -p 6377:6379 \
           redis:7
         
         # Wait for services to be ready
@@ -70,9 +83,8 @@ jobs:
         mkdir -p test-results
         # Run tests directly with python3 if Docker image doesn't exist
         if docker image inspect ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} >/dev/null 2>&1; then
-          PORT_OFFSET=${{ matrix.python-version == '3.10' && '0' || matrix.python-version == '3.11' && '1' || '2' }}
-          POSTGRES_PORT=$((5432 + PORT_OFFSET))
-          REDIS_PORT=$((6379 - PORT_OFFSET))
+          POSTGRES_PORT=5434
+          REDIS_PORT=6377
           docker run --rm \
             -v $(pwd)/test-results:/app/test-results \
             -e POSTGRES_URL=postgresql://postgres:test_password@localhost:${POSTGRES_PORT}/test_db \
@@ -103,6 +115,25 @@ jobs:
   security:
     runs-on: [self-hosted, linux, x64]
     steps:
+    - name: Clean workspace (fix permissions)
+      run: |
+        # Fix permission issues from previous runs
+        # This is needed on self-hosted runners where files persist between runs
+        if [ -d "${{ github.workspace }}" ]; then
+          echo "Cleaning workspace: ${{ github.workspace }}"
+          # Try to fix ownership if we have sudo without password
+          if sudo -n true 2>/dev/null; then
+            sudo chown -R $(whoami):$(whoami) "${{ github.workspace }}" || true
+            sudo chmod -R u+rwX "${{ github.workspace }}" || true
+          fi
+          # Clean git state
+          cd "${{ github.workspace }}" && git clean -ffdx || true
+          cd "${{ github.workspace }}" && git reset --hard || true
+          # Remove problematic cache directories
+          rm -rf "${{ github.workspace }}/.mypy_cache" || true
+          rm -rf "${{ github.workspace }}/.pytest_cache" || true
+        fi
+    
     - name: Configure git
       run: |
         git config --global --add safe.directory '*'
@@ -110,6 +141,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: false
+        clean: true
     
     - name: Set up Python
       run: |
@@ -138,13 +170,21 @@ jobs:
     needs: [test, security]
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     permissions:
       contents: read
       packages: write
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'
@@ -189,12 +229,20 @@ jobs:
     needs: build
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     if: github.ref == 'refs/heads/develop'
     environment: staging
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'
@@ -221,12 +269,20 @@ jobs:
     needs: build
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     if: startsWith(github.ref, 'refs/tags/v')
     environment: production
     
     steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
     - name: Configure git for container
       run: |
         git config --global --add safe.directory '*'

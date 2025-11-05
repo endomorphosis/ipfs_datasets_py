@@ -14,6 +14,11 @@ name: Automated PR Review and Copilot Assignment
         required: false
         default: false
         type: boolean
+      monitor_agent:
+        description: 'Monitor Copilot agent progress after assignment'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -84,6 +89,7 @@ jobs:
         continue-on-error: true
 
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -91,7 +97,7 @@ jobs:
         continue-on-error: true  # Allow checkout to fail, will retry
       
       - name: Force reclone if checkout failed
-        if: failure()
+        if: steps.checkout.outcome == 'failure'
         run: |
           echo "⚠️ Checkout failed, forcing full reclone..."
           cd "$(dirname "$GITHUB_WORKSPACE")"
@@ -111,12 +117,31 @@ jobs:
           echo "✅ Created fresh workspace directory"
       
       - name: Retry checkout in fresh workspace
-        if: failure()
+        if: steps.checkout.outcome == 'failure'
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           clean: false
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
+      
+      - name: Configure git and verify repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Set up minimal git config to avoid permission errors
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          
+          # Configure git user for any potential git operations
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" || true
+          git config --global user.name "github-actions[bot]" || true
+          
+          # Verify we're in a git repository
+          if git rev-parse --git-dir > /dev/null 2>&1; then
+            echo "✅ Git repository verified"
+            git --no-pager log --oneline -1
+          else
+            echo "⚠️ Not in a git repository, but continuing with gh CLI operations"
+          fi
       
       - name: Set up Python
         run: |
@@ -147,6 +172,8 @@ jobs:
           python3 -c "import yaml, requests; print('✅ All required packages available')"
 
       - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if gh is available
           if command -v gh >/dev/null 2>&1; then
@@ -354,80 +381,83 @@ jobs:
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
 
-      - name: Assign Copilot to PR
+      - name: Assign Copilot to PR via comment
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
-          PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
           ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
 
-          # Create appropriate comment based on task type
-          case "$COPILOT_TASK" in
-            "fix")
-              COPILOT_COMMENT="@copilot /fix
+          echo "🤖 Assigning Copilot to existing PR #$PR_NUMBER via comment..."
+          echo "   Task Type: $COPILOT_TASK"
+          echo "   Reason: $ASSIGNMENT_REASON"
+          
+          # Build instruction based on task type - properly escape for shell
+          if [ "$COPILOT_TASK" = "fix" ]; then
+            INSTRUCTION="Please analyze this PR and implement the necessary fixes based on the PR description, linked issues, and any workflow failure logs. Focus on making minimal, surgical changes that directly address the problem."
+          elif [ "$COPILOT_TASK" = "implement" ]; then
+            INSTRUCTION="Please implement the solution described in this draft PR. Review the requirements, follow repository patterns, add or update tests as appropriate, and make surgical changes focused on the requirements."
+          elif [ "$COPILOT_TASK" = "review" ]; then
+            INSTRUCTION="Please review this pull request and provide feedback or implement improvements. Analyze code quality, test coverage, documentation, and suggest or implement necessary changes."
+          else
+            INSTRUCTION="Please work on this PR according to the requirements described."
+          fi
+          
+          # Use the correct script for existing PRs with properly escaped instruction
+          # Pass instruction via file to avoid shell escaping issues
+          echo "$INSTRUCTION" > /tmp/copilot_instruction.txt
+          if python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --instruction "$(cat /tmp/copilot_instruction.txt)" \
+              --repo ${{ github.repository }}; then
+            echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
+            echo "assigned=true" >> $GITHUB_OUTPUT
+            echo "agent_task_verified=false" >> $GITHUB_OUTPUT
+            echo "method=pr-comment" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Failed to assign Copilot"
+            echo "assigned=false" >> $GITHUB_OUTPUT
+            echo "agent_task_verified=false" >> $GITHUB_OUTPUT
+            echo "method=failed" >> $GITHUB_OUTPUT
+          fi
+          rm -f /tmp/copilot_instruction.txt
 
-          Please review this PR and implement the necessary fixes. This PR was identified as: $ASSIGNMENT_REASON
+          # Add summary only if assignment succeeded
+          if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Copilot Assigned to PR" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+            echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+            echo "- **Method**: PR comment with \`@github-copilot\` mention" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 Copilot has been mentioned in a PR comment and should start working shortly." >> $GITHUB_STEP_SUMMARY
+          fi
 
-          **Focus areas**:
-          - Analyze the problem described
-          - Implement minimal, surgical fixes
-          - Ensure tests pass
-          - Follow existing code patterns
-          - Update documentation if needed
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-
-            "implement")
-              COPILOT_COMMENT="@copilot Please implement the solution described in this PR.
-
-          This draft PR needs implementation. Reason: $ASSIGNMENT_REASON
-
-          **Instructions**:
-          1. Review the PR description and any linked issues
-          2. Understand the requirements
-          3. Implement the solution following repository patterns
-          4. Add or update tests as appropriate
-          5. Update documentation if directly related
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-
-            "review"|*)
-              COPILOT_COMMENT="@copilot /review
-
-          Please review this pull request and provide feedback.
-
-          This PR was flagged for review because: $ASSIGNMENT_REASON
-
-          Please analyze:
-          - Code quality and best practices
-          - Test coverage
-          - Documentation completeness
-          - Potential issues or improvements
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-          esac
-
-          # Post comment to assign Copilot
-          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$COPILOT_COMMENT"
-
-          echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
-          echo "assigned=true" >> $GITHUB_OUTPUT
-
+      - name: Verify Copilot assignment
+        id: verify_assignment
+        if: steps.assign_copilot.outputs.assigned == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          
+          echo "✅ Copilot has been assigned to PR #$PR_NUMBER"
+          echo "📊 You can monitor Copilot's activity by checking the PR comments and commits"
+          
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ✅ Copilot Assigned" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
-          echo "- **Task**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
-          echo "- **Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+          echo "1. Copilot will analyze the PR and respond in comments" >> $GITHUB_STEP_SUMMARY
+          echo "2. Copilot may push commits with the implementation" >> $GITHUB_STEP_SUMMARY
+          echo "3. Review Copilot's changes before merging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Copilot has been notified and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
+          echo "View PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
 
       - name: Summary
         if: always()
