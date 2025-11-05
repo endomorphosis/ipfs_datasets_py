@@ -7,7 +7,7 @@ for a given pull request, based on the task type.
 
 Usage:
     python scripts/create_copilot_agent_task_for_pr.py --pr 123 --task fix --reason "workflow failure"
-    python scripts/create_copilot_agent_task_for_pr.py --pr 123 --task implement --title "Add new feature"
+    python scripts/create_copilot_agent_task_for_pr.py --pr 123 --task implement --reason "draft PR needs implementation"
 """
 
 import subprocess

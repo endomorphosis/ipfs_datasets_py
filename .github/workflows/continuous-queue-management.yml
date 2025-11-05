@@ -439,10 +439,10 @@ jobs:
           
           if [ "$DRY_RUN" = "true" ]; then
             echo "🔍 DRY RUN: Would create Copilot Coding Agent task"
-            echo "Command: gh agent-task create -F /tmp/agent_task_description.txt"
+            echo "Command: gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}"
           else
             echo "🤖 Creating Copilot Coding Agent task using gh agent-task create..."
-            if gh agent-task create -F /tmp/agent_task_description.txt; then
+            if gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}; then
               echo "✅ Successfully created agent task for Issue #${{ matrix.issue_number }}"
               echo "The Copilot Coding Agent will analyze the issue and create a PR with the implementation"
             else
