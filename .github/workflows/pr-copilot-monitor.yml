@@ -25,7 +25,7 @@ on:
 jobs:
   check-pr-completion:
     name: Check PR Completion Status
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: write
@@ -196,7 +196,7 @@ jobs:
     name: Assign Copilot with Intelligent Analysis
     needs: check-pr-completion
     if: needs.check-pr-completion.outputs.needs_copilot > 0
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: write
@@ -276,7 +276,7 @@ jobs:
     name: Assign Copilot with Batch Processor
     needs: [check-pr-completion, assign-copilot-intelligent]
     if: needs.check-pr-completion.outputs.needs_copilot > 0 && needs.assign-copilot-intelligent.result == 'failure'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: write
@@ -337,7 +337,7 @@ jobs:
       always() &&
       needs.check-pr-completion.outputs.needs_copilot > 0 &&
       (needs.assign-copilot-intelligent.result == 'success' || needs.assign-copilot-batch.result == 'success')
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     permissions:
       contents: read
       pull-requests: read
@@ -443,7 +443,7 @@ jobs:
     name: Generate Final Report
     needs: [check-pr-completion, assign-copilot-intelligent, assign-copilot-batch, monitor-copilot-activity]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     
     steps:
       - name: Generate Final Report

@@ -48,7 +48,7 @@ env:
 jobs:
   # Determine which domains to test
   setup:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64]
     outputs:
       domains: ${{ steps.set-domains.outputs.domains }}
       test_mode: ${{ steps.set-mode.outputs.mode }}
