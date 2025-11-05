@@ -386,12 +386,12 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           gh --version
 
-      - name: Process Issue with Copilot Assignment
+      - name: Process Issue with Copilot Coding Agent
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
         run: |
-          echo "🎫 Processing Issue #${{ matrix.issue_number }}"
+          echo "🎫 Processing Issue #${{ matrix.issue_number }} with Copilot Coding Agent"
           
           # Get issue details
           ISSUE_DATA=$(gh issue view ${{ matrix.issue_number }} --json title,body,labels,author)
@@ -406,80 +406,50 @@ jobs:
             TASK_TYPE="review"
           fi
           
-          # Create appropriate Copilot assignment comment file
-          cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
-          @copilot /fix
+          # Create comprehensive task description for gh agent-task
+          cat > /tmp/agent_task_description.txt << TASK_EOF
+          Work on Issue #${{ matrix.issue_number }}: ${ISSUE_TITLE}
           
-          Please help resolve this issue.
+          **Issue URL**: https://github.com/${{ github.repository }}/issues/${{ matrix.issue_number }}
           
-          **Issue:** ISSUE_TITLE_PLACEHOLDER
+          **Task Type**: ${TASK_TYPE}
           
-          **Task Type:** Bug Fix / Error Resolution
+          **Issue Description**:
+          ${ISSUE_BODY}
           
-          **Instructions:**
-          1. Analyze the issue description and any error logs
-          2. Identify the root cause
-          3. Implement a robust fix
-          4. Ensure the fix doesn't break existing functionality
-          5. Add tests if appropriate
+          **Instructions**:
+          1. Review the issue description and any linked resources thoroughly
+          2. Understand the requirements and acceptance criteria
+          3. Implement the solution following repository coding standards
+          4. Ensure all tests pass and add new tests if needed
+          5. Update documentation if directly related to the changes
+          6. Make minimal, surgical changes that directly address the issue
           
-          Please create a PR to resolve this issue.
-          COMMENT_EOF
-          
-          # Customize comment based on task type
-          if [ "$TASK_TYPE" = "review" ]; then
-            cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
-          @copilot /review
-          
-          Please help analyze and investigate this issue.
-          
-          **Issue:** ISSUE_TITLE_PLACEHOLDER
-          
-          **Task Type:** Analysis / Investigation
-          
-          **Instructions:**
-          1. Review the issue description thoroughly
-          2. Analyze the current codebase related to this issue
-          3. Provide insights and recommendations
-          4. Suggest implementation approach if applicable
-          5. Create a PR if code changes are needed
-          
-          Please provide analysis and next steps.
-          COMMENT_EOF
-          elif [ "$TASK_TYPE" = "implement" ]; then
-            cat > /tmp/copilot_comment.txt << 'COMMENT_EOF'
-          @copilot Please help implement the feature described in this issue.
-          
-          **Issue:** ISSUE_TITLE_PLACEHOLDER
-          
-          **Task Type:** Feature Implementation
-          
-          **Instructions:**
-          1. Review the issue requirements carefully
-          2. Design an appropriate solution
-          3. Implement the feature following repository patterns
-          4. Add comprehensive tests
-          5. Update documentation as needed
-          
-          Please create a PR to implement this feature.
-          COMMENT_EOF
-          fi
-          
-          # Replace placeholder with actual issue title
-          sed -i "s/ISSUE_TITLE_PLACEHOLDER/$ISSUE_TITLE/" /tmp/copilot_comment.txt
+          **Important Guidelines**:
+          - Follow the existing code style in the repository
+          - Make the smallest possible changes to achieve the goal
+          - Do not remove or modify working code unless absolutely necessary
+          - Focus on solving the specific issue described
+          - Validate that changes don't break existing functionality
+          TASK_EOF
           
           echo "Task type: $TASK_TYPE"
-          echo "Comment preview:"
-          head -5 /tmp/copilot_comment.txt
+          echo "Task description (first 10 lines):"
+          head -10 /tmp/agent_task_description.txt
           
           if [ "$DRY_RUN" = "true" ]; then
-            echo "🔍 DRY RUN: Would post Copilot assignment comment"
+            echo "🔍 DRY RUN: Would create Copilot Coding Agent task"
+            echo "Command: gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}"
           else
-            if gh issue comment ${{ matrix.issue_number }} --body-file /tmp/copilot_comment.txt; then
-              echo "✅ Successfully assigned Copilot to Issue #${{ matrix.issue_number }}"
+            echo "🤖 Creating Copilot Coding Agent task using gh agent-task create..."
+            if gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}; then
+              echo "✅ Successfully created agent task for Issue #${{ matrix.issue_number }}"
+              echo "The Copilot Coding Agent will analyze the issue and create a PR with the implementation"
             else
-              echo "❌ Failed to assign Copilot to Issue #${{ matrix.issue_number }}"
-              exit 1
+              echo "⚠️  gh agent-task create failed, falling back to issue comment"
+              # Fallback: Post a comment on the issue as notification
+              echo "Attempted to create Copilot Coding Agent task but the command failed." | \
+                gh issue comment ${{ matrix.issue_number }} --body-file - || true
             fi
           fi
 
@@ -490,33 +460,52 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Monitor Active Agents
+      - name: Monitor Active Copilot Coding Agents
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🔍 Monitoring active Copilot agents..."
+          echo "🔍 Monitoring active Copilot Coding Agents..."
           
-          # Check for recent Copilot activity
-          RECENT_ACTIVITY=$(gh search issues \
-            --repo ${{ github.repository }} \
-            --limit 50 \
-            "is:open @copilot" \
-            --json number,title,updatedAt,author \
-            --jq '[.[] | select(.updatedAt >= (now - 21600) | strftime("%Y-%m-%dT%H:%M:%SZ"))]')
-          
-          ACTIVE_COUNT=$(echo "$RECENT_ACTIVITY" | jq 'length')
-          
-          echo "📊 Agent Activity Summary:"
-          echo "  Active agents (last 6 hours): $ACTIVE_COUNT"
-          echo "  Expected active agents: ${{ needs.analyze-queue-status.outputs.active_agents }}"
-          
-          # List recent activity
-          echo "$RECENT_ACTIVITY" | jq -r '.[] | "  - \(.author.login): \(.title) (#\(.number))"' | head -10
-          
-          if [ "$ACTIVE_COUNT" -gt 0 ]; then
-            echo "✅ Copilot agents are active"
+          # Use gh agent-task list to check active agent tasks
+          if gh agent-task list --limit 20 --json id,description,state,createdAt 2>/dev/null; then
+            echo "✅ Successfully queried agent tasks"
+            
+            # Count active/running tasks
+            ACTIVE_TASKS=$(gh agent-task list --limit 50 --json state --jq '[.[] | select(.state == "running" or .state == "in_progress")] | length' 2>/dev/null || echo "0")
+            
+            echo "📊 Agent Task Summary:"
+            echo "  Active agent tasks: $ACTIVE_TASKS"
+            echo "  Expected active agents: ${{ needs.analyze-queue-status.outputs.active_agents }}"
+            
+            # List recent tasks
+            echo ""
+            echo "Recent agent tasks:"
+            gh agent-task list --limit 10 2>/dev/null || echo "  Unable to list tasks"
+            
+            if [ "$ACTIVE_TASKS" -gt 0 ]; then
+              echo "✅ Copilot Coding Agents are active"
+            else
+              echo "ℹ️  No active agent tasks detected (tasks may have completed)"
+            fi
           else
-            echo "⚠️ No recent Copilot activity detected"
+            echo "⚠️  gh agent-task list not available or requires authentication"
+            echo "Falling back to PR/issue activity monitoring..."
+            
+            # Fallback: Check for recent PR activity from copilot
+            RECENT_PRS=$(gh pr list \
+              --repo ${{ github.repository }} \
+              --limit 20 \
+              --search "author:app/github-copilot" \
+              --json number,title,createdAt 2>/dev/null || echo "[]")
+            
+            RECENT_PR_COUNT=$(echo "$RECENT_PRS" | jq 'length' 2>/dev/null || echo "0")
+            
+            echo "📊 Recent PR activity:"
+            echo "  PRs from Copilot (last check): $RECENT_PR_COUNT"
+            
+            if [ "$RECENT_PR_COUNT" -gt 0 ]; then
+              echo "$RECENT_PRS" | jq -r '.[] | "  - PR #\(.number): \(.title)"' | head -5
+            fi
           fi
 
   generate-final-report:

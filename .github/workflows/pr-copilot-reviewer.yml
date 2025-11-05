@@ -385,7 +385,7 @@ jobs:
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
 
-      - name: Assign Copilot to PR using GitHub CLI
+      - name: Create Copilot Coding Agent Task using gh agent-task
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
@@ -394,90 +394,44 @@ jobs:
           GIT_CONFIG_SYSTEM: /dev/null
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
-          PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
           ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
 
-          # Create appropriate comment based on task type
-          case "$COPILOT_TASK" in
-            "fix")
-              COPILOT_COMMENT="@copilot /fix
-
-          Please review this PR and implement the necessary fixes. This PR was identified as: $ASSIGNMENT_REASON
-
-          **Focus areas**:
-          - Analyze the problem described
-          - Implement minimal, surgical fixes
-          - Ensure tests pass
-          - Follow existing code patterns
-          - Update documentation if needed
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-
-            "implement")
-              COPILOT_COMMENT="@copilot Please implement the solution described in this PR.
-
-          This draft PR needs implementation. Reason: $ASSIGNMENT_REASON
-
-          **Instructions**:
-          1. Review the PR description and any linked issues
-          2. Understand the requirements
-          3. Implement the solution following repository patterns
-          4. Add or update tests as appropriate
-          5. Update documentation if directly related
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-
-            "review"|*)
-              COPILOT_COMMENT="@copilot /review
-
-          Please review this pull request and provide feedback.
-
-          This PR was flagged for review because: $ASSIGNMENT_REASON
-
-          Please analyze:
-          - Code quality and best practices
-          - Test coverage
-          - Documentation completeness
-          - Potential issues or improvements
-
-          **PR**: #$PR_NUMBER - $PR_TITLE"
-              ;;
-          esac
-
-          # Use GitHub CLI to post comment and invoke Copilot agent
-          echo "📝 Invoking Copilot agent via GitHub CLI..."
-          gh pr comment "$PR_NUMBER" --repo ${{ github.repository }} --body "$COPILOT_COMMENT"
-
-          # Verify Copilot agent task was created/assigned
-          echo "🔍 Verifying Copilot agent task assignment..."
-          sleep 5  # Give GitHub a moment to process the comment
+          echo "🤖 Creating Copilot Coding Agent task using gh agent-task create..."
+          echo "   PR: #$PR_NUMBER"
+          echo "   Task Type: $COPILOT_TASK"
+          echo "   Reason: $ASSIGNMENT_REASON"
           
-          # Check if agent task exists for this PR
-          if gh agent-task view "$PR_NUMBER" --repo ${{ github.repository }} >/dev/null 2>&1; then
-            echo "✅ Copilot agent task verified for PR #$PR_NUMBER"
+          # Use the Python script to create the agent task
+          if python3 scripts/create_copilot_agent_task_for_pr.py \
+              --pr "$PR_NUMBER" \
+              --task "$COPILOT_TASK" \
+              --reason "$ASSIGNMENT_REASON" \
+              --repo ${{ github.repository }}; then
+            echo "✅ Successfully created Copilot agent task for PR #$PR_NUMBER"
+            echo "assigned=true" >> $GITHUB_OUTPUT
             echo "agent_task_verified=true" >> $GITHUB_OUTPUT
+            echo "method=agent-task-script" >> $GITHUB_OUTPUT
           else
-            echo "⚠️ Could not verify agent task (may still be initializing)"
+            echo "⚠️  Failed to create agent task, will use fallback"
+            echo "assigned=false" >> $GITHUB_OUTPUT
             echo "agent_task_verified=false" >> $GITHUB_OUTPUT
+            echo "method=failed" >> $GITHUB_OUTPUT
           fi
 
-          echo "✅ Successfully invoked Copilot agent for PR #$PR_NUMBER via GitHub CLI"
-          echo "assigned=true" >> $GITHUB_OUTPUT
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ✅ Copilot Agent Invoked via GitHub CLI" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
-          echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
-          echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
-          echo "- **Method**: GitHub CLI (\`gh pr comment\`)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🤖 Copilot agent has been invoked using the GitHub CLI and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "To monitor agent progress, run:" >> $GITHUB_STEP_SUMMARY
+          # Add summary only if assignment succeeded
+          if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Copilot Coding Agent Task Created" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+            echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+            echo "- **Method**: \`gh agent-task create\` (Copilot Coding Agent API)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 Copilot Coding Agent has been invoked and should start working on this PR shortly." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To monitor agent progress, run:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "gh agent-task view $PR_NUMBER --repo ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
