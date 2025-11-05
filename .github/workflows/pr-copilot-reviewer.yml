@@ -125,6 +125,8 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
       
       - name: Configure git and verify repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Set up minimal git config to avoid permission errors
           git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
@@ -170,6 +172,8 @@ jobs:
           python3 -c "import yaml, requests; print('✅ All required packages available')"
 
       - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if gh is available
           if command -v gh >/dev/null 2>&1; then

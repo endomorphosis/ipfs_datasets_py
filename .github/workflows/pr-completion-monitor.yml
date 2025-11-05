@@ -59,6 +59,8 @@ jobs:
           # No API keys required - uses GitHub Copilot CLI integration
       
       - name: Install GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! command -v gh &> /dev/null; then
             echo "Installing GitHub CLI..."

@@ -2,6 +2,115 @@
 
 This directory contains Python scripts used by the Workflow Auto-Fix System to automatically detect, analyze, and fix failed GitHub Actions workflows.
 
+## 🆕 GitHub CLI and Copilot CLI Integration (2025-11-05)
+
+New tools for examining and fixing broken GitHub Actions workers:
+
+### Quick Start
+
+```bash
+# Quick health check and fixes
+.github/scripts/workflow_fix_helper.sh health-check
+.github/scripts/workflow_fix_helper.sh fix-workflows
+
+# Check Copilot CLI status
+.github/scripts/workflow_fix_helper.sh copilot-status
+
+# Install Copilot CLI (requires GH_TOKEN)
+.github/scripts/workflow_fix_helper.sh copilot-install
+```
+
+### New Tools
+
+#### 1. `workflow_fix_helper.sh` - Quick Reference Script
+**Purpose**: Convenient wrapper for all workflow fix tools
+
+**Commands**:
+- `health-check` - Run comprehensive workflow health check
+- `fix-workflows` - Fix missing GH_TOKEN in workflows
+- `copilot-status` - Check Copilot CLI installation status
+- `copilot-install` - Install gh-copilot extension
+- `analyze <file>` - Analyze specific workflow with Copilot
+
+#### 2. `enhance_workflow_copilot_integration.py` - Health Check Tool
+**Purpose**: Comprehensive analysis of all workflows
+
+**Usage**:
+```bash
+python .github/scripts/enhance_workflow_copilot_integration.py
+```
+
+**Output**:
+- Console report with health status
+- JSON report: `.github/workflow_health_report.json`
+
+**Checks**:
+- GitHub CLI installation and version
+- Copilot CLI extension status
+- All workflow files (active and disabled)
+- Self-hosted runner usage
+- Missing GH_TOKEN configurations
+
+#### 3. `minimal_workflow_fixer.py` - Surgical Workflow Fixer
+**Purpose**: Minimally fix workflows without reformatting
+
+**Usage**:
+```bash
+# Dry run (preview)
+python .github/scripts/minimal_workflow_fixer.py --dry-run
+
+# Apply fixes
+python .github/scripts/minimal_workflow_fixer.py
+
+# Fix specific workflow
+python .github/scripts/minimal_workflow_fixer.py --workflow copilot-agent-autofix.yml
+```
+
+**Features**:
+- Adds missing GH_TOKEN to steps using gh CLI
+- Preserves original YAML formatting
+- Makes surgical changes (no reformatting)
+
+#### 4. `copilot_workflow_helper.py` - AI-Powered Workflow Analysis
+**Purpose**: Use GitHub Copilot CLI for workflow analysis and suggestions
+
+**Usage**:
+```bash
+# Install Copilot extension
+python .github/scripts/copilot_workflow_helper.py install
+
+# Analyze workflow with AI
+python .github/scripts/copilot_workflow_helper.py analyze copilot-agent-autofix.yml
+
+# Get fix suggestions
+python .github/scripts/copilot_workflow_helper.py suggest-fix copilot-agent-autofix.yml
+
+# Explain code
+python .github/scripts/copilot_workflow_helper.py explain "gh run list"
+
+# Suggest commands
+python .github/scripts/copilot_workflow_helper.py suggest "list failed workflow runs"
+python .github/scripts/copilot_workflow_helper.py suggest --type git "show recent commits"
+```
+
+**Requirements**:
+- GitHub CLI (gh) installed
+- GH_TOKEN environment variable set
+- gh-copilot extension installed
+
+#### 5. `fix_workflow_issues.py` - Comprehensive Workflow Fixer
+**Purpose**: Full YAML parsing and fixing (may reformat files)
+
+**Note**: Use `minimal_workflow_fixer.py` for surgical changes without reformatting.
+
+## 📚 Documentation
+
+See [GITHUB_ACTIONS_FIX_GUIDE.md](../GITHUB_ACTIONS_FIX_GUIDE.md) for:
+- Complete usage guide
+- Issues found and fixed
+- Best practices
+- Troubleshooting
+
 ## 🚀 How Auto-Healing Works (Updated 2025-10-30)
 
 The auto-healing workflow now properly integrates with **GitHub Copilot Coding Agent**:
