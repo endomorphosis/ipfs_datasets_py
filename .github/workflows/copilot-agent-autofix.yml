@@ -572,7 +572,8 @@ jobs:
             echo "Invoking GitHub Copilot on PR #$PR_NUMBER..."
             python3 scripts/invoke_copilot_on_pr.py \
               --pr "$PR_NUMBER" \
-              --instruction "$COPILOT_INSTRUCTION" || echo "⚠️  Copilot invocation failed, check logs"
+              --instruction "$COPILOT_INSTRUCTION" \
+              --repo ${{ github.repository }} || echo "⚠️  Copilot invocation failed, check logs"
           
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## 📝 Issue and Draft PR Created" >> $GITHUB_STEP_SUMMARY
