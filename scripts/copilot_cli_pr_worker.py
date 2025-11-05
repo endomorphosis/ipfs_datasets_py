@@ -1,3 +1,4 @@
+"""
 GitHub Copilot CLI PR Worker
 
 Uses the NEW GitHub Copilot CLI (installed via npm) to work on pull requests.
@@ -126,7 +127,7 @@ class CopilotCLIPRWorker:
         """Get PR information using Copilot CLI."""
         prompt = f"""Get detailed information about PR #{pr_number} in the current repository including:
         - Title and description
-        - Whether it's a draft
+        - Whether it is a draft
         - What files are changed
         - If there are any @copilot mentions in comments
         - What the PR is trying to fix
@@ -152,7 +153,7 @@ class CopilotCLIPRWorker:
         
         This will:
         1. Checkout the PR branch
-        2. Analyze the PR and the issue it's fixing
+        2. Analyze the PR and the issue it is fixing
         3. Implement the necessary changes
         4. Commit and push the changes
         
@@ -181,7 +182,7 @@ Please:
 1. Checkout the PR branch
 2. Read the PR description and linked issue to understand what needs to be fixed
 3. Analyze the workflow failure logs if mentioned
-4. Implement the necessary fixes following the project's patterns
+4. Implement the necessary fixes following the project patterns
 5. Test that the changes are correct
 6. Commit the changes with a clear commit message
 7. Push the changes to the PR branch
@@ -217,10 +218,10 @@ Make minimal, surgical changes that directly address the problem."""
         For each PR, show:
         - PR number
         - Title
-        - What issue it's trying to fix
+        - What issue it is trying to fix
         - Whether work has been done on it yet
         
-        Focus on PRs that haven't been implemented yet."""
+        Focus on PRs that have not been implemented yet."""
         
         result = self.run_copilot_command(prompt)
         
@@ -251,16 +252,16 @@ Make minimal, surgical changes that directly address the problem."""
         
         # For now, we'll ask Copilot to work on the first few PRs
         # In a real scenario, we'd parse the PR numbers from the output
-        prompt = f"""Work on the first {limit} open draft PRs in endomorphosis/ipfs_datasets_py that have @copilot mentions.
-
-For each PR:
-1. Checkout the PR branch
-2. Understand what needs to be fixed from the PR description and linked issue
-3. Implement the fix
-4. Commit and push
-
-Work through them one by one, making surgical fixes for each issue (permission errors, syntax errors, etc.).
-Don't work on PRs that already have commits beyond the initial auto-creation."""
+        prompt = (
+            f"Work on the first {limit} open draft PRs in endomorphosis/ipfs_datasets_py that have @copilot mentions.\n\n"
+            "For each PR:\n"
+            "1. Checkout the PR branch\n"
+            "2. Understand what needs to be fixed from the PR description and linked issue\n"
+            "3. Implement the fix\n"
+            "4. Commit and push\n\n"
+            "Work through them one by one, making surgical fixes for each issue (permission errors, syntax errors, etc.).\n"
+            "Do not work on PRs that already have commits beyond the initial auto-creation."
+        )
         
         result = self.run_copilot_command(prompt, allow_all=True)
         

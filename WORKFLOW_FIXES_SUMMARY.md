@@ -1,9 +1,104 @@
 # GitHub Actions Workflow Fixes Summary
 
-## Date: October 29, 2025
+## Latest Updates: November 5, 2025 - GitHub CLI and Copilot CLI Integration
 
-## Overview
-This document summarizes the fixes applied to GitHub Actions workflows to resolve CI/CD test failures caused by YAML syntax errors.
+### Overview
+This document tracks all fixes applied to GitHub Actions workflows. The latest updates add comprehensive GitHub CLI and Copilot CLI integration tools to examine and fix broken workers.
+
+---
+
+## November 5, 2025: GitHub CLI & Copilot CLI Integration
+
+### What Was Fixed
+
+**Issues Identified**:
+- **27 active workflows** analyzed (+ 3 disabled)
+- **26 workflows** use self-hosted runners  
+- **12 workflow steps** were missing GH_TOKEN for gh CLI commands
+- **12 workflows** lack container isolation (by design for some)
+
+**Fixes Applied**:
+✅ **Added GH_TOKEN to 12 workflow steps** across 8 workflow files:
+- `continuous-queue-management.yml` (3 steps)
+- `copilot-agent-autofix.yml` (1 step)
+- `enhanced-pr-completion-monitor.yml` (1 step)
+- `issue-to-draft-pr.yml` (1 step)
+- `pr-completion-monitor.yml` (1 step)
+- `pr-copilot-monitor.yml` (2 steps)
+- `pr-copilot-reviewer.yml` (2 steps)
+- `runner-validation.yml` (1 step)
+
+**Changes**: Minimal and surgical - only 22 lines added across 8 files
+
+### Tools Created
+
+1. **Workflow Health Checker** (`.github/scripts/enhance_workflow_copilot_integration.py`)
+   - Comprehensive analysis of all workflows
+   - GitHub CLI and Copilot CLI status detection
+   - Generates detailed health reports
+
+2. **Minimal Workflow Fixer** (`.github/scripts/minimal_workflow_fixer.py`)
+   - Surgically adds GH_TOKEN without reformatting
+   - Preserves original file structure
+   - Supports dry-run mode
+
+3. **Copilot Workflow Helper** (`.github/scripts/copilot_workflow_helper.py`)
+   - AI-powered workflow analysis using Copilot CLI
+   - Code explanations and suggestions
+   - Automated fix recommendations
+
+4. **Quick Reference Script** (`.github/scripts/workflow_fix_helper.sh`)
+   - Convenient wrapper for all tools
+   - Simple command-line interface
+
+### Documentation Created
+
+- **Complete Guide**: `.github/GITHUB_ACTIONS_FIX_GUIDE.md`
+- **Scripts README**: Updated `.github/scripts/README.md`
+- Health reports: `.github/workflow_health_report.json`
+- Fix logs: `.github/workflow_fixes_applied.json`
+
+### Quick Start
+
+```bash
+# Check workflow health
+.github/scripts/workflow_fix_helper.sh health-check
+
+# Check Copilot CLI status
+.github/scripts/workflow_fix_helper.sh copilot-status
+
+# Install Copilot CLI (requires GH_TOKEN)
+gh extension install github/gh-copilot
+```
+
+### Example Fix
+
+**Before**:
+```yaml
+- name: Install GitHub CLI
+  run: |
+    gh run list
+```
+
+**After**:
+```yaml
+- name: Install GitHub CLI
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    gh run list
+```
+
+### Resources
+
+- [GitHub CLI Manual](https://cli.github.com/manual/gh)
+- [GitHub Copilot CLI](https://docs.github.com/en/copilot/github-copilot-in-the-cli)
+- [Copilot CLI Usage](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli)
+- [Copilot Coding Agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent)
+
+---
+
+## October 29, 2025: YAML Syntax Fixes
 
 ## Files Fixed
 

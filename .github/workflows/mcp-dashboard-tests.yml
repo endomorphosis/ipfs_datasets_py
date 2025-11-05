@@ -41,11 +41,11 @@ jobs:
   dashboard-smoke-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     strategy:
       matrix:
-        python-version: ['3.10', '3.11', '3.12']
+        python-version: ['3.12']
       fail-fast: false
     
     steps:
@@ -105,7 +105,7 @@ jobs:
   dashboard-comprehensive-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: dashboard-smoke-tests
     if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
@@ -164,7 +164,7 @@ jobs:
   dashboard-endpoint-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: dashboard-smoke-tests
     if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
@@ -320,7 +320,7 @@ jobs:
   dashboard-test-summary:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: [dashboard-smoke-tests, dashboard-comprehensive-tests, dashboard-self-hosted-tests]
     if: always()

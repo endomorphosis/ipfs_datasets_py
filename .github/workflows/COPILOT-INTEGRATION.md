@@ -2,7 +2,55 @@
 
 ## Overview
 
-The Workflow Auto-Fix System is designed to work seamlessly with GitHub Copilot, creating an automated feedback loop for workflow maintenance.
+The Workflow Auto-Fix System is designed to work seamlessly with GitHub Copilot, creating an automated feedback loop for workflow maintenance. The system uses the **GitHub CLI (`gh`)** to properly invoke Copilot agents programmatically.
+
+## GitHub CLI Integration
+
+### Using `gh` Commands for Copilot
+
+The automation system uses GitHub CLI commands to interact with Copilot agents:
+
+#### For Existing Pull Requests
+
+```bash
+# Invoke Copilot on an existing PR
+gh pr comment <PR_NUMBER> --repo OWNER/REPO --body "@copilot /fix
+
+Please implement the fixes for this workflow failure.
+Focus on:
+- Analyzing the error logs
+- Implementing minimal changes
+- Ensuring tests pass"
+
+# Verify agent task was created
+gh agent-task view <PR_NUMBER> --repo OWNER/REPO
+
+# Monitor agent progress
+gh agent-task view <PR_NUMBER> --log --follow
+```
+
+#### For New Tasks (Creating New PRs)
+
+```bash
+# Create a new PR with Copilot working on a task
+gh agent-task create "Fix the Docker build workflow by updating dependencies"
+
+# Create from a file
+gh agent-task create -F task-description.md
+
+# Create and follow progress
+gh agent-task create "Fix tests" --follow
+```
+
+### Why Use GitHub CLI?
+
+The workflow automation uses `gh` CLI instead of just web UI mentions because:
+
+1. **Programmatic Control**: Can be automated in CI/CD pipelines
+2. **Verification**: Can verify agent task creation
+3. **Monitoring**: Can track progress programmatically  
+4. **Error Handling**: Better error detection and reporting
+5. **Consistency**: Reliable invocation across different scenarios
 
 ## How It Works
 
@@ -14,11 +62,13 @@ Auto-Fix System
       ├─ Generates fix
       └─ Creates PR
       ↓
-GitHub Copilot
+GitHub Copilot (via CLI)
+      ├─ Invoked via gh pr comment
+      ├─ Agent task verified
       ├─ Reviews PR automatically
       ├─ Validates changes
       ├─ Suggests improvements
-      └─ Approves if correct
+      └─ Implements fixes
       ↓
 Human Review
       ├─ Final verification

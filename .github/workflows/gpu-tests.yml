@@ -26,7 +26,7 @@ permissions:
   actions: read
 
 env:
-  PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: '3.12'
 
 jobs:
   # GPU tests on self-hosted runner
@@ -165,12 +165,9 @@ jobs:
           nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
-  # CPU-only tests on GitHub-hosted runner (containerized)
+  # CPU-only tests on self-hosted runner
   cpu-tests:
     runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.10-slim
-      options: --user root
     
     steps:
       - name: Checkout repository
@@ -217,7 +214,7 @@ jobs:
           docker build -t ipfs-datasets-py:gpu-test \
             -f Dockerfile.gpu \
             --build-arg CUDA_VERSION=12.0.0 \
-            --build-arg PYTHON_VERSION=3.10 \
+            --build-arg PYTHON_VERSION=3.12 \
             .
       
       - name: Test GPU in Docker
@@ -249,9 +246,6 @@ jobs:
   # Test summary
   test-summary:
     runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.10-slim
-      options: --user root
     needs: [gpu-tests, cpu-tests, gpu-docker-tests]
     if: always()
     

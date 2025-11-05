@@ -2,7 +2,14 @@
 
 ## Overview
 
-The PR Copilot Reviewer is a critical component of the automated fixing and healing software. It automatically assigns GitHub Copilot to pull requests with context-aware instructions.
+The PR Copilot Reviewer is a critical component of the automated fixing and healing software. It automatically assigns GitHub Copilot to pull requests with context-aware instructions using the GitHub CLI tooling.
+
+## Key Features
+
+- **GitHub CLI Integration**: Uses `gh pr comment` and `gh agent-task` commands to properly invoke Copilot agent
+- **Agent Task Verification**: Verifies that Copilot agent task was created successfully
+- **Progress Monitoring**: Optionally monitors Copilot agent progress after assignment
+- **Context-Aware Assignment**: Analyzes PR content and assigns appropriate task type (fix, implement, review)
 
 ## System Architecture
 
@@ -33,12 +40,14 @@ The PR Copilot Reviewer is a critical component of the automated fixing and heal
         │  - Detects new PR                       │
         │  - Analyzes PR content                  │
         │  - Determines task type                 │
-        │  - @mentions Copilot with instructions  │
+        │  - Invokes Copilot via GitHub CLI       │
+        │  - Verifies agent task creation         │
+        │  - Monitors agent progress (optional)   │
         └────────────┬────────────────────────────┘
                      │
                      ▼
         ┌─────────────────────────────────────────┐
-        │  GitHub Copilot                         │
+        │  GitHub Copilot Agent                   │
         │  - Reviews PR                           │
         │  - Implements fixes                     │
         │  - Runs tests                           │
@@ -165,6 +174,45 @@ Copilot: Reviews code, suggests improvements
 Result: Review comments posted
 ```
 
+## GitHub CLI Integration
+
+### How Copilot is Invoked
+
+The workflow uses the **GitHub CLI (`gh`)** to properly invoke the Copilot agent:
+
+1. **Comment Posting**: Uses `gh pr comment` to post @copilot mentions
+   ```bash
+   gh pr comment "$PR_NUMBER" --repo OWNER/REPO --body "@copilot /fix ..."
+   ```
+
+2. **Agent Task Verification**: Verifies agent task was created
+   ```bash
+   gh agent-task view "$PR_NUMBER" --repo OWNER/REPO
+   ```
+
+3. **Progress Monitoring**: Optionally monitors agent progress
+   ```bash
+   gh agent-task view "$PR_NUMBER" --log
+   ```
+
+### Why GitHub CLI?
+
+The workflow uses the GitHub CLI instead of just mentioning @copilot because:
+
+- **Programmatic Control**: Allows automation to invoke Copilot from CI/CD
+- **Verification**: Can verify that agent task was created successfully
+- **Monitoring**: Can track agent progress programmatically
+- **Error Handling**: Better error detection and handling
+- **Consistency**: Ensures reliable invocation across different scenarios
+
+### CLI vs Web UI
+
+| Method | Use Case | Advantages |
+|--------|----------|------------|
+| `gh pr comment` with @copilot | Existing PRs (automation) | Works in CI/CD, programmatic control |
+| `gh agent-task create` | New PRs (from scratch) | Creates PR and assigns task in one step |
+| Web UI @copilot mention | Existing PRs (manual) | Simple for humans, but not automatable |
+
 ## Configuration
 
 ### Workflow Inputs (Manual Trigger)
@@ -179,6 +227,12 @@ force_assign:
   description: 'Force Copilot assignment even if already assigned'
   required: false
   default: false
+  type: boolean
+
+monitor_agent:
+  description: 'Monitor Copilot agent progress after assignment'
+  required: false
+  default: true
   type: boolean
 ```
 
@@ -201,11 +255,15 @@ The workflow includes duplicate detection:
 1. **Clean workspace**: Removes git lock files
 2. **Checkout repository**: Gets latest code
 3. **Set up Python**: Installs dependencies
-4. **Get PR details**: Fetches PR metadata
-5. **Check existing assignment**: Prevents duplicates
-6. **Analyze PR**: Determines task type
-7. **Assign Copilot**: Posts @mention with instructions
-8. **Summary**: Reports completion status
+4. **Setup GitHub CLI**: Ensures `gh` CLI is available
+5. **Get PR details**: Fetches PR metadata using `gh pr view`
+6. **Check existing assignment**: Prevents duplicates
+7. **Analyze PR**: Determines task type (fix, implement, review)
+8. **Invoke Copilot via GitHub CLI**: 
+   - Posts comment with `gh pr comment`
+   - Verifies agent task with `gh agent-task view`
+9. **Monitor agent progress** (optional): Tracks Copilot's work
+10. **Summary**: Reports completion status
 
 ## Testing
 
@@ -220,6 +278,23 @@ gh workflow run pr-copilot-reviewer.yml \
 gh workflow run pr-copilot-reviewer.yml \
   -f pr_number=123 \
   -f force_assign=true
+
+# Disable agent monitoring
+gh workflow run pr-copilot-reviewer.yml \
+  -f pr_number=123 \
+  -f monitor_agent=false
+```
+
+### Verify Agent Task
+
+After the workflow runs, verify the agent task was created:
+
+```bash
+# View agent task for a PR
+gh agent-task view 123 --repo OWNER/REPO
+
+# Follow agent task logs
+gh agent-task view 123 --repo OWNER/REPO --log --follow
 ```
 
 ### Automated Test

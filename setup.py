@@ -23,6 +23,9 @@ setup(
         "fsspec",
         "datasets>=2.10.0",
 
+        # Caching for CLI tools
+        "cachetools>=5.3.0",
+
         # IPFS integration
         # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
         "ipfshttpclient>=0.7.0",
@@ -84,7 +87,7 @@ setup(
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
     },
-    python_requires='>=3.10',
+    python_requires='>=3.12',
     description="IPFS Datasets - A unified interface for data processing and distribution across decentralized networks",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",

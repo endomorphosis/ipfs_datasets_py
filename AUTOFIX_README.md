@@ -4,12 +4,12 @@ This branch was created automatically to fix a workflow failure.
 
 ## Issue
 
-#339
+#353
 
 ## Workflow Details
 
-- **Workflow**: Self-Hosted Runner Validation
-- **Run ID**: 18993862050
+- **Workflow**: PDF Processing Pipeline CI/CD
+- **Run ID**: 18993644572
 - **Error Type**: Unknown
 - **Fix Type**: manual
 
