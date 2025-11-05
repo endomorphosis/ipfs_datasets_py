@@ -31,6 +31,7 @@ import logging
 import os
 import subprocess
 import sys
+import time
 from typing import Dict, List, Optional, Any
 
 logging.basicConfig(
@@ -111,7 +112,8 @@ class CopilotPRInvoker:
         pr_number: int,
         instruction: Optional[str] = None,
         repo: Optional[str] = None,
-        use_slash_command: bool = True
+        use_slash_command: bool = True,
+        max_retries: int = 3
     ) -> bool:
         """
         Invoke GitHub Copilot on a PR using gh CLI.
@@ -121,6 +123,7 @@ class CopilotPRInvoker:
             instruction: Custom instruction for Copilot (optional)
             repo: Repository in format owner/repo (optional)
             use_slash_command: Use /fix slash command format (recommended)
+            max_retries: Maximum number of retry attempts (default: 3)
         
         Returns:
             True if successful, False otherwise
@@ -130,6 +133,7 @@ class CopilotPRInvoker:
         # Get PR info first
         pr_info = self.get_pr_info(pr_number, repo)
         if not pr_info:
+            logger.error(f"❌ Could not retrieve PR #{pr_number} information")
             return False
         
         logger.info(f"  PR Title: {pr_info['title']}")
@@ -163,19 +167,55 @@ Focus on making minimal, surgical changes that directly address the problem."""
             logger.info(f"\n[DRY RUN] Would post comment:\n{'-'*80}\n{comment_body}\n{'-'*80}\n")
             return True
         
-        # Post the comment using gh CLI
+        # Post the comment using gh CLI with retry logic
         cmd = ['gh', 'pr', 'comment', str(pr_number), '--body', comment_body]
         if repo:
             cmd.extend(['--repo', repo])
         
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            logger.info(f"✅ Successfully invoked Copilot on PR #{pr_number}")
-            logger.info(f"  Comment URL: {result.stdout.strip()}")
-            return True
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Failed to post comment: {e.stderr}")
-            return False
+        # Retry logic with exponential backoff
+        for attempt in range(1, max_retries + 1):
+            try:
+                result = subprocess.run(
+                    cmd, 
+                    capture_output=True, 
+                    text=True, 
+                    check=True,
+                    timeout=60
+                )
+                logger.info(f"✅ Successfully invoked Copilot on PR #{pr_number}")
+                logger.info(f"  Comment URL: {result.stdout.strip()}")
+                return True
+            except subprocess.TimeoutExpired:
+                logger.warning(f"⚠️  Attempt {attempt}/{max_retries}: Command timed out")
+                if attempt < max_retries:
+                    wait_time = 2 ** attempt  # Exponential backoff: 2, 4, 8 seconds
+                    logger.info(f"  Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"❌ Failed after {max_retries} attempts: Command timed out")
+                    return False
+            except subprocess.CalledProcessError as e:
+                error_msg = e.stderr.strip() if e.stderr else str(e)
+                logger.warning(f"⚠️  Attempt {attempt}/{max_retries}: {error_msg}")
+                
+                # Check if error is retryable
+                retryable_errors = ['timeout', 'network', 'connection', 'temporary']
+                is_retryable = any(err in error_msg.lower() for err in retryable_errors)
+                
+                if attempt < max_retries and is_retryable:
+                    wait_time = 2 ** attempt
+                    logger.info(f"  Retrying in {wait_time} seconds...")
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"❌ Failed to post comment: {error_msg}")
+                    return False
+            except Exception as e:
+                logger.error(f"❌ Unexpected error on attempt {attempt}/{max_retries}: {e}")
+                if attempt >= max_retries:
+                    return False
+                time.sleep(2 ** attempt)
+        
+        return False
     
     def invoke_copilot_batch(
         self,
