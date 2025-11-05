@@ -3,7 +3,19 @@
 Batch process all open PRs and assign Copilot where appropriate.
 
 This script analyzes all open pull requests and automatically assigns
-GitHub Copilot Coding Agent to work on them using gh agent-task create.
+GitHub Copilot Coding Agent to work on them using the OFFICIAL method:
+gh agent-task create
+
+Per GitHub's official documentation:
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+
+This script uses:
+✅ gh agent-task create - Official GitHub CLI command for Copilot Coding Agent
+✅ CopilotCLI utility wrapper - Python wrapper for gh commands
+
+This script does NOT use:
+❌ @copilot mentions in PR comments - NOT supported by GitHub
 """
 
 import subprocess
@@ -153,7 +165,12 @@ def analyze_pr(pr: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def assign_copilot(pr_number: int, task: str, reason: str, pr_title: str, pr_body: str = "", branch_name: str = "") -> bool:
-    """Assign Copilot Coding Agent to a PR using gh agent-task create."""
+    """
+    Assign Copilot Coding Agent to a PR using gh agent-task create.
+    
+    This is the OFFICIAL method per GitHub documentation:
+    https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+    """
     
     # Get branch name if not provided
     if not branch_name:
@@ -224,7 +241,7 @@ def assign_copilot(pr_number: int, task: str, reason: str, pr_title: str, pr_bod
 
 Please provide feedback and suggestions for improvement."""
     
-    # Method 1: Try using CopilotCLI utility
+    # Method 1: Try using CopilotCLI utility (preferred)
     if COPILOT_CLI_AVAILABLE:
         try:
             copilot = CopilotCLI()
@@ -254,74 +271,33 @@ Please provide feedback and suggestions for improvement."""
     else:
         error_msg = result.get('error', result.get('stderr', ''))
         
-        # Method 3: Fallback to @copilot mention if gh agent-task not available
+        # Check if gh agent-task is not available
         if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
-            print(f"   ⚠️  gh agent-task not available, using @copilot mention fallback")
-            return assign_copilot_via_mention(pr_number, task, reason, pr_title)
+            print(f"   ❌ gh agent-task command not available on this system")
+            print(f"   💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
+            print(f"   📚 See: https://docs.github.com/en/copilot/concepts/agents/coding-agent/")
+        else:
+            print(f"   ❌ Failed to create agent task: {error_msg}")
         
-        print(f"   ❌ Failed to create agent task: {error_msg}")
         return False
-
-
-def assign_copilot_via_mention(pr_number: int, task: str, reason: str, pr_title: str) -> bool:
-    """Fallback method using @copilot mention. NOT RECOMMENDED."""
-    # Create task-specific comment
-    if task == 'fix':
-        comment = f"""@copilot /fix
-
-Please review this PR and implement the necessary fixes.
-
-**Reason**: {reason}
-
-**Focus areas**:
-- Analyze the problem described
-- Implement minimal, surgical fixes
-- Ensure tests pass
-- Follow existing code patterns
-- Update documentation if needed
-
-**PR**: #{pr_number} - {pr_title}"""
-    
-    elif task == 'implement':
-        comment = f"""@copilot Please implement the solution described in this PR.
-
-**Reason**: {reason}
-
-**Instructions**:
-1. Review the PR description and any linked issues
-2. Understand the requirements
-3. Implement the solution following repository patterns
-4. Add or update tests as appropriate
-5. Update documentation if directly related
-
-**PR**: #{pr_number} - {pr_title}"""
-    
-    else:  # review
-        comment = f"""@copilot /review
-
-Please review this pull request and provide feedback.
-
-**Reason**: {reason}
-
-Please analyze:
-- Code quality and best practices
-- Test coverage
-- Documentation completeness
-- Potential issues or improvements
-
-**PR**: #{pr_number} - {pr_title}"""
-    
-    # Post comment
-    result = run_gh_command([
-        'pr', 'comment', str(pr_number),
-        '--body', comment
-    ])
-    
-    return result['success']
 
 
 def main():
     """Main execution function."""
+    print("=" * 80)
+    print("🤖 GitHub Copilot Batch Assignment Tool")
+    print("=" * 80)
+    print()
+    print("💡 Using OFFICIAL GitHub Copilot invocation method:")
+    print("   ✅ gh agent-task create (GitHub CLI)")
+    print("   ✅ CopilotCLI utility wrapper")
+    print("   📚 https://docs.github.com/en/copilot/concepts/agents/coding-agent/")
+    print()
+    print("❌ NOT using:")
+    print("   ❌ @copilot mentions in PR comments (unsupported)")
+    print("=" * 80)
+    print()
+    
     print("🔍 Scanning open pull requests...")
     print("=" * 80)
     
