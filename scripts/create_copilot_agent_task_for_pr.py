@@ -181,8 +181,10 @@ def create_agent_task(pr_number: str, pr_details: Dict[str, Any], task_type: str
         if 'unknown command' in result['stderr'].lower() or 'not found' in result['stderr'].lower():
             print("\n⚠️  gh agent-task command not available")
             print("🔄 Attempting fallback: Creating PR comment with @copilot mention...")
+            # Use fallback and return its result
             return create_copilot_comment_fallback(pr_number, task_description, repo)
         
+        # For other errors, return False
         return False
 
 

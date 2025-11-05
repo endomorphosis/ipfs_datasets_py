@@ -294,8 +294,28 @@ update_runner_service() {
     # Backup service file
     cp "$service_file" "${service_file}.backup-$(date +%s)"
     
+    # Determine the actual runner directory used
+    local actual_runner_dir=$(dirname "$(dirname "$service_file" | xargs dirname)" 2>/dev/null)
+    if [ -z "$actual_runner_dir" ] || [ ! -d "$actual_runner_dir" ]; then
+        # Fallback to checking where .env was created
+        for check_dir in "/home/actions-runner" "/opt/actions-runner" "/var/lib/actions-runner"; do
+            if [ -f "${check_dir}/.env" ]; then
+                actual_runner_dir="$check_dir"
+                break
+            fi
+        done
+    fi
+    
+    if [ -z "$actual_runner_dir" ]; then
+        echo -e "${YELLOW}⚠️  Could not determine runner directory for service file${NC}"
+        actual_runner_dir="/home/actions-runner"  # Safe fallback
+    fi
+    
+    local env_file_path="${actual_runner_dir}/.env"
+    echo -e "${BLUE}   Using environment file path: ${env_file_path}${NC}"
+    
     # Add EnvironmentFile directive
-    sed -i '/\[Service\]/a EnvironmentFile=-/home/actions-runner/.env' "$service_file"
+    sed -i "/\\[Service\\]/a EnvironmentFile=-${env_file_path}" "$service_file"
     
     # Reload systemd
     systemctl daemon-reload
