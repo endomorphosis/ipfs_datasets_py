@@ -100,18 +100,8 @@ def check_copilot_assigned(pr_number: int) -> bool:
         if f"#{pr_number}" in result['stdout'] or f"pull/{pr_number}" in result['stdout']:
             return True
     
-    # Also check for @copilot mentions as fallback
-    result = run_gh_command([
-        'pr', 'view', str(pr_number),
-        '--json', 'comments',
-        '--jq', '.comments[].body'
-    ])
-    
-    if not result['success']:
-        return False
-    
-    comments = result['stdout']
-    return '@copilot' in comments
+    # No need for @copilot mention fallback - agent-task is the official method
+    return False
 
 
 def analyze_pr(pr: Dict[str, Any]) -> Dict[str, Any]:

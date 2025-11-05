@@ -261,22 +261,29 @@ jobs:
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
 
-          # Get PR comments
-          COMMENTS=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json comments --jq '.comments[].body')
-
-          # Check if @copilot has been mentioned
-          if echo "$COMMENTS" | grep -q "@copilot"; then
-            echo "✅ Copilot has already been assigned to this PR"
-            echo "already_assigned=true" >> $GITHUB_OUTPUT
-
-            if [ "$FORCE_ASSIGN" = "true" ]; then
-              echo "⚠️ Force assign enabled - will reassign anyway"
-              echo "should_assign=true" >> $GITHUB_OUTPUT
+          # Check if agent task already exists using gh agent-task list (official method)
+          echo "🔍 Checking for existing agent tasks..."
+          
+          if TASKS=$(gh agent-task list --repo ${{ github.repository }} --limit 50 2>&1); then
+            if echo "$TASKS" | grep -q "#$PR_NUMBER\|pull/$PR_NUMBER"; then
+              echo "✅ Agent task already exists for PR #$PR_NUMBER"
+              echo "already_assigned=true" >> $GITHUB_OUTPUT
+              
+              if [ "$FORCE_ASSIGN" = "true" ]; then
+                echo "⚠️ Force assign enabled - will create another task anyway"
+                echo "should_assign=true" >> $GITHUB_OUTPUT
+              else
+                echo "should_assign=false" >> $GITHUB_OUTPUT
+              fi
             else
-              echo "should_assign=false" >> $GITHUB_OUTPUT
+              echo "🆕 No agent task found for PR #$PR_NUMBER"
+              echo "already_assigned=false" >> $GITHUB_OUTPUT
+              echo "should_assign=true" >> $GITHUB_OUTPUT
             fi
           else
-            echo "🆕 Copilot has not been assigned yet"
+            # gh agent-task might not be available, proceed with assignment
+            echo "⚠️  Could not check agent tasks (gh agent-task may not be available)"
+            echo "💡 Proceeding with assignment attempt"
             echo "already_assigned=false" >> $GITHUB_OUTPUT
             echo "should_assign=true" >> $GITHUB_OUTPUT
           fi
@@ -432,7 +439,7 @@ jobs:
           # Add summary only if assignment succeeded
           if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## ✅ Copilot Assigned to PR" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Copilot Agent Task Created" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "- **Original PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
@@ -442,6 +449,8 @@ jobs:
             echo "🤖 Copilot will automatically detect the draft PR and start working." >> $GITHUB_STEP_SUMMARY
             echo "📚 Based on GitHub Copilot documentation and PR #401 evidence." >> $GITHUB_STEP_SUMMARY
           fi
+          
+          rm -f /tmp/agent_task_description.txt
 
       - name: Verify Copilot assignment
         id: verify_assignment
