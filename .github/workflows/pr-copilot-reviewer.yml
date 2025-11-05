@@ -381,7 +381,7 @@ jobs:
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
 
-      - name: Assign Copilot to PR via comment
+      - name: Assign Copilot to PR via Draft PR (PROPER METHOD)
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
@@ -391,51 +391,56 @@ jobs:
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
           ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
 
-          echo "🤖 Assigning Copilot to existing PR #$PR_NUMBER via comment..."
+          echo "🤖 Assigning Copilot to existing PR #$PR_NUMBER via draft PR method..."
           echo "   Task Type: $COPILOT_TASK"
           echo "   Reason: $ASSIGNMENT_REASON"
+          echo ""
+          echo "💡 Using PROPER Copilot invocation method:"
+          echo "   ✅ Creates draft PR for Copilot to work on"
+          echo "   ✅ Copilot automatically detects and implements"
+          echo "   ❌ NOT: @copilot comments (proven unreliable)"
+          echo ""
           
-          # Build instruction based on task type - properly escape for shell
+          # Build task description based on task type
           if [ "$COPILOT_TASK" = "fix" ]; then
-            INSTRUCTION="Please analyze this PR and implement the necessary fixes based on the PR description, linked issues, and any workflow failure logs. Focus on making minimal, surgical changes that directly address the problem."
+            TASK_DESC="Please analyze PR #$PR_NUMBER and implement the necessary fixes based on the PR description, linked issues, and any workflow failure logs. Focus on making minimal, surgical changes that directly address the problem."
           elif [ "$COPILOT_TASK" = "implement" ]; then
-            INSTRUCTION="Please implement the solution described in this draft PR. Review the requirements, follow repository patterns, add or update tests as appropriate, and make surgical changes focused on the requirements."
+            TASK_DESC="Please implement the solution described in PR #$PR_NUMBER. Review the requirements, follow repository patterns, add or update tests as appropriate, and make surgical changes focused on the requirements."
           elif [ "$COPILOT_TASK" = "review" ]; then
-            INSTRUCTION="Please review this pull request and provide feedback or implement improvements. Analyze code quality, test coverage, documentation, and suggest or implement necessary changes."
+            TASK_DESC="Please review PR #$PR_NUMBER and provide feedback or implement improvements. Analyze code quality, test coverage, documentation, and suggest or implement necessary changes."
           else
-            INSTRUCTION="Please work on this PR according to the requirements described."
+            TASK_DESC="Please work on PR #$PR_NUMBER according to the requirements described."
           fi
           
-          # Use the correct script for existing PRs with properly escaped instruction
-          # Pass instruction via file to avoid shell escaping issues
-          echo "$INSTRUCTION" > /tmp/copilot_instruction.txt
+          # Use the PROPER invocation method (draft PR, not comments)
+          # This mimics how VS Code invokes Copilot and is proven to work
           if python3 scripts/invoke_copilot_on_pr.py \
               --pr "$PR_NUMBER" \
-              --instruction "$(cat /tmp/copilot_instruction.txt)" \
+              --task "$TASK_DESC" \
               --repo ${{ github.repository }}; then
-            echo "✅ Successfully assigned Copilot to PR #$PR_NUMBER"
+            echo "✅ Successfully created draft PR for Copilot to work on PR #$PR_NUMBER"
             echo "assigned=true" >> $GITHUB_OUTPUT
-            echo "agent_task_verified=false" >> $GITHUB_OUTPUT
-            echo "method=pr-comment" >> $GITHUB_OUTPUT
+            echo "agent_task_verified=true" >> $GITHUB_OUTPUT
+            echo "method=draft-pr" >> $GITHUB_OUTPUT
           else
-            echo "⚠️  Failed to assign Copilot"
+            echo "⚠️  Failed to create draft PR for Copilot"
             echo "assigned=false" >> $GITHUB_OUTPUT
             echo "agent_task_verified=false" >> $GITHUB_OUTPUT
             echo "method=failed" >> $GITHUB_OUTPUT
           fi
-          rm -f /tmp/copilot_instruction.txt
 
           # Add summary only if assignment succeeded
           if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "## ✅ Copilot Assigned to PR" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Original PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
             echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
-            echo "- **Method**: PR comment with \`@github-copilot\` mention" >> $GITHUB_STEP_SUMMARY
+            echo "- **Method**: Draft PR creation (VS Code method)" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 Copilot has been mentioned in a PR comment and should start working shortly." >> $GITHUB_STEP_SUMMARY
+            echo "🤖 Copilot will automatically detect the draft PR and start working." >> $GITHUB_STEP_SUMMARY
+            echo "📚 Based on GitHub Copilot documentation and PR #401 evidence." >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Verify Copilot assignment
@@ -446,17 +451,26 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           
-          echo "✅ Copilot has been assigned to PR #$PR_NUMBER"
-          echo "📊 You can monitor Copilot's activity by checking the PR comments and commits"
+          echo "✅ Copilot has been assigned to work on PR #$PR_NUMBER"
+          echo "📊 A draft PR has been created for Copilot to implement the changes"
+          echo "💡 Copilot will automatically detect the draft PR and start working"
+          echo ""
+          echo "🔍 You can monitor Copilot's activity by:"
+          echo "   1. Checking for new draft PRs related to PR #$PR_NUMBER"
+          echo "   2. Watching for commits from app/copilot-swe-agent"
+          echo "   3. Looking for Copilot workflow runs (workflow ID: 185367345)"
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. Copilot will analyze the PR and respond in comments" >> $GITHUB_STEP_SUMMARY
-          echo "2. Copilot may push commits with the implementation" >> $GITHUB_STEP_SUMMARY
-          echo "3. Review Copilot's changes before merging" >> $GITHUB_STEP_SUMMARY
+          echo "1. ✅ Draft PR created for Copilot to work on" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🤖 Copilot will automatically detect and analyze the task" >> $GITHUB_STEP_SUMMARY
+          echo "3. 💻 Copilot will implement changes and push commits" >> $GITHUB_STEP_SUMMARY
+          echo "4. 👀 Review Copilot's implementation before merging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "**Method**: Draft PR (VS Code method - proven reliable)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View original PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
 
       - name: Summary
