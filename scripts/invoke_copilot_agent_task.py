@@ -229,7 +229,7 @@ class CopilotAgentTaskInvoker:
         is_draft = pr_info.get('isDraft', False)
         
         logger.info(f"  PR Title: {pr_title}")
-        logger.info(f"  Branch: {pr_branch} <- {base_branch}")
+        logger.info(f"  Branch: {pr_branch} -> {base_branch}")
         logger.info(f"  Draft: {is_draft}")
         logger.info(f"  URL: {pr_url}")
         
@@ -245,8 +245,7 @@ class CopilotAgentTaskInvoker:
             task_description = f"""Complete work on PR #{pr_number}: {pr_title}
 
 **PR URL**: {pr_url}
-**Branch**: {pr_branch}
-**Base**: {base_branch}
+**Branch**: {pr_branch} -> {base_branch}
 
 **PR Description**:
 {pr_body[:500] if pr_body else 'No description provided'}
@@ -282,7 +281,7 @@ class CopilotAgentTaskInvoker:
                 copilot = CopilotCLI()
                 result = copilot.create_agent_task(
                     task_description=task_description,
-                    base_branch=pr_branch,  # Use PR branch as the working branch
+                    base_branch=base_branch,  # Use base branch (target), not PR branch
                     follow=follow,
                     repo=self.repo
                 )
@@ -301,7 +300,7 @@ class CopilotAgentTaskInvoker:
         
         # Method 2: Direct gh agent-task create command
         logger.info("  🔧 Using gh agent-task create directly...")
-        cmd = ['gh', 'agent-task', 'create', task_description, '--base', pr_branch]
+        cmd = ['gh', 'agent-task', 'create', task_description, '--base', base_branch]
         
         if follow:
             cmd.append('--follow')
