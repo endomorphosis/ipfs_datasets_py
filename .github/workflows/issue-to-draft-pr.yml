@@ -68,8 +68,6 @@ jobs:
       - name: Configure GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Verify gh is authenticated
           gh auth status || echo "GH_TOKEN is set but gh auth status failed"
@@ -85,8 +83,6 @@ jobs:
         id: get_issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Get the issue number
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -120,8 +116,6 @@ jobs:
         id: check_existing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
           
@@ -307,8 +301,6 @@ jobs:
         if: steps.create_branch.outputs.branch_created == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
           ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
         run: |
           ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"

@@ -219,8 +219,6 @@ jobs:
         id: get_pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null  # Prevent git from accessing system config
-          GIT_CONFIG_SYSTEM: /dev/null  # Prevent git from accessing system config
         run: |
           # Get PR number
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -259,8 +257,6 @@ jobs:
         id: check_copilot
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
@@ -390,8 +386,6 @@ jobs:
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
