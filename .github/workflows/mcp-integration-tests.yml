@@ -39,7 +39,7 @@ jobs:
   basic-integration-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     
     steps:
@@ -94,7 +94,7 @@ jobs:
   comprehensive-integration-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
@@ -154,7 +154,7 @@ jobs:
   tools-integration-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
@@ -211,7 +211,7 @@ jobs:
   performance-integration-tests:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: basic-integration-tests
     if: ${{ !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
@@ -468,7 +468,7 @@ jobs:
   integration-test-summary:
     runs-on: [self-hosted, linux, x64]
     container:
-      image: python:3.10-slim
+      image: python:3.12-slim
       options: --user root
     needs: [basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
     if: always()
