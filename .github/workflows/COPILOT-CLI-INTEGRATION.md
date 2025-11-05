@@ -1,50 +1,99 @@
 # GitHub Copilot CLI Integration in Workflows
 
+## ⚠️ CRITICAL UPDATE (November 2024)
+
+**There was a misunderstanding in the previous version of this document. Here's the correct guidance:**
+
+### See the Complete Guide
+
+📖 **[COPILOT_INVOCATION_GUIDE.md](COPILOT_INVOCATION_GUIDE.md)** - Read this for complete, accurate guidance
+
+### Quick Reference
+
+#### For EXISTING Pull Requests (Most Common)
+✅ **Use PR Comments with @github-copilot**
+
+```bash
+# Correct way to assign Copilot to an existing PR
+gh pr comment 123 --body "@github-copilot /fix
+
+Please implement the fixes described in this PR."
+```
+
+**Use in workflows:** `scripts/invoke_copilot_on_pr.py`
+
+#### For NEW Tasks (Creating New PRs)
+✅ **Use gh agent-task create**
+
+```bash
+# Creates a NEW agent task that will open a NEW PR
+gh agent-task create "Build a new feature" --base main
+```
+
+**Important**: `gh agent-task create` creates a **NEW** PR, it does NOT work on existing PRs!
+
+---
+
 ## Overview
 
 This document describes how GitHub Actions workflows in this repository invoke GitHub Copilot to automatically implement fixes for workflow failures.
 
 ## ⚠️ IMPORTANT: Correct Way to Invoke Copilot Coding Agent
 
-**As of November 2024**, the recommended and officially supported way to invoke the GitHub Copilot Coding Agent is:
+**Updated November 2024**: The method depends on whether you're working with an **existing PR** or creating a **new task**.
 
-### ✅ CORRECT: Use `gh agent-task create`
+### For EXISTING PRs: Use PR Comments
+
+**This is what our workflows do most of the time:**
 
 ```bash
-# Create an agent task that will analyze and implement changes
+# Correct for existing PRs - uses gh pr comment
+gh pr comment 123 --body "@github-copilot /fix
+
+Detailed instructions here..."
+```
+
+**Benefits**:
+- Works on the existing PR directly
+- Copilot pushes commits to the same branch
+- No confusion about which PR is being worked on
+- Standard approach used by `invoke_copilot_on_pr.py`
+
+### For NEW Tasks: Use gh agent-task create
+
+**Only use this when starting completely new work:**
+
+```bash
+# Create an agent task that will analyze and implement changes in a NEW PR
 gh agent-task create "Fix the failing tests in test_utils.py" --base main
 
 # Or with a file containing detailed instructions
 gh agent-task create -F task-description.txt
 ```
 
-**This is the proper GitHub Copilot Coding Agent invocation that**:
+**This is the proper GitHub Copilot Coding Agent invocation for new work that**:
 - Creates an official agent task session
-- Allows the agent to create new PRs with implementations
+- Creates a NEW pull request with implementations
 - Provides proper tracking and monitoring via `gh agent-task list`
 - Is the documented approach per https://cli.github.com/manual/gh_agent-task
 
-### ❌ DEPRECATED: `@copilot` Mentions in Comments
+### ⚠️ Common Mistake: Using agent-task for Existing PRs
 
 ```bash
-# OLD WAY - Not recommended for automation
-gh pr comment 123 --body "@copilot please fix this"
+# ❌ WRONG: This will create a NEW PR, not work on existing PR #123!
+gh agent-task create "Fix issues in PR #123" --base main
 ```
 
-**Why this is deprecated for automation**:
-- `@copilot` mentions are meant for interactive UI use, not programmatic workflows
-- No official API contract or guarantees for automation
-- Cannot track agent status programmatically
-- May not work reliably in all contexts
+**Problem**: This creates a completely new agent task and a new PR. It does NOT work on the existing PR #123.
 
 ### Migration Status
 
-We are actively migrating all workflows from `@copilot` mentions to `gh agent-task create`:
+Our workflows have been updated to use the correct approach:
 
-- ✅ `invoke_copilot_with_throttling.py` - Uses `gh agent-task create` with fallback
-- ✅ `copilot_cli.py` utility - Has `create_agent_task()` method
-- ✅ `continuous-queue-management.yml` - Updated to use `gh agent-task create`
-- ⚠️ Some detection code still looks for `@copilot` mentions (for backward compatibility)
+- ✅ `pr-copilot-reviewer.yml` - Uses PR comments via `invoke_copilot_on_pr.py`
+- ✅ `issue-to-draft-pr.yml` - Uses PR comments via `invoke_copilot_with_queue.py`
+- ✅ `copilot-agent-autofix.yml` - Uses PR comments via `invoke_copilot_on_pr.py`
+- ⚠️ `create_copilot_agent_task_for_pr.py` - Has fallback to PR comments when needed
 
 ## Documentation Resources
 

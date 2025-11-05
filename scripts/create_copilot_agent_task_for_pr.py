@@ -2,12 +2,25 @@
 """
 Create Copilot Coding Agent Task for a PR
 
-This script creates a proper Copilot Coding Agent task using gh agent-task create
-for a given pull request, based on the task type.
+⚠️ DEPRECATION WARNING ⚠️
+This script uses `gh agent-task create` which creates a NEW PR.
+For EXISTING PRs, use invoke_copilot_on_pr.py instead!
+
+See: .github/workflows/COPILOT_INVOCATION_GUIDE.md
+
+Why this matters:
+- `gh agent-task create` creates a NEW agent task that opens a NEW PR
+- This script tries to work around that but it's not the right approach
+- For existing PRs, use PR comments instead (invoke_copilot_on_pr.py)
+
+This script now includes a fallback to PR comments when agent-task creation fails.
 
 Usage:
+    # For existing PRs, prefer invoke_copilot_on_pr.py:
+    python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+    
+    # This script (with fallback):
     python scripts/create_copilot_agent_task_for_pr.py --pr 123 --task fix --reason "workflow failure"
-    python scripts/create_copilot_agent_task_for_pr.py --pr 123 --task implement --reason "draft PR needs implementation"
 """
 
 import subprocess
@@ -15,6 +28,11 @@ import argparse
 import sys
 import json
 from typing import Dict, Any, Optional
+
+print("⚠️  WARNING: This script uses gh agent-task create which may create a NEW PR.")
+print("    For existing PRs, consider using invoke_copilot_on_pr.py instead.")
+print("    See: .github/workflows/COPILOT_INVOCATION_GUIDE.md")
+print()
 
 
 def run_gh_command(cmd: list, input_text: Optional[str] = None) -> Dict[str, Any]:
