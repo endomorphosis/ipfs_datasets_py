@@ -214,7 +214,7 @@ jobs:
           docker build -t ipfs-datasets-py:gpu-test \
             -f Dockerfile.gpu \
             --build-arg CUDA_VERSION=12.0.0 \
-            --build-arg PYTHON_VERSION=3.10 \
+            --build-arg PYTHON_VERSION=3.12 \
             .
       
       - name: Test GPU in Docker
