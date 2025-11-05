@@ -113,6 +113,8 @@ jobs:
           python3 -c "import requests, json, subprocess; print('✅ All required packages available')"
 
       - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Check if gh is available
           if command -v gh >/dev/null 2>&1; then

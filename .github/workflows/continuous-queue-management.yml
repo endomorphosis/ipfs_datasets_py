@@ -78,6 +78,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup environment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Configure git
           git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
@@ -327,6 +329,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup environment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
           python3 -c "import requests, json, subprocess" 2>/dev/null || pip install --user requests --break-system-packages
@@ -374,6 +378,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup environment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
           python3 -c "import requests, json, subprocess" 2>/dev/null || pip install --user requests --break-system-packages

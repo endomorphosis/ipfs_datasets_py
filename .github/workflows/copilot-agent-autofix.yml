@@ -87,6 +87,7 @@ jobs:
       
       - name: Install GitHub CLI and configure git
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEBIAN_FRONTEND: noninteractive
         run: |
           apt-get update

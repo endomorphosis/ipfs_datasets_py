@@ -243,6 +243,8 @@ jobs:
           $CMD
       
       - name: Generate Assignment Summary
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "## Copilot Assignment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -445,6 +447,8 @@ jobs:
     
     steps:
       - name: Generate Final Report
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "# PR Copilot Monitor - Final Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY

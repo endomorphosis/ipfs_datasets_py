@@ -1,0 +1,317 @@
+{
+  "timestamp": "2025-11-05T02:31:21+00:00",
+  "github_cli": {
+    "available": true,
+    "path": "/usr/bin/gh",
+    "version": "2.82.1"
+  },
+  "copilot_extension": {
+    "installed": false
+  },
+  "workflows": {
+    "total": 30,
+    "active": 27,
+    "disabled": 3,
+    "using_self_hosted": 26,
+    "using_gh_cli": 10,
+    "using_copilot": 9,
+    "with_issues": 12
+  },
+  "workflow_details": [
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/arm64-runner.yml",
+      "name": "arm64-runner.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/comprehensive-scraper-validation.yml",
+      "name": "comprehensive-scraper-validation.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": true,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/continuous-queue-management.yml",
+      "name": "continuous-queue-management.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": true,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/copilot-agent-autofix.yml",
+      "name": "copilot-agent-autofix.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": true,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/docker-build-test.yml",
+      "name": "docker-build-test.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/docker-ci.yml",
+      "name": "docker-ci.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/documentation-maintenance.yml",
+      "name": "documentation-maintenance.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/enhanced-pr-completion-monitor.yml",
+      "name": "enhanced-pr-completion-monitor.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/fix-docker-permissions.yml",
+      "name": "fix-docker-permissions.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/gpu-tests.yml",
+      "name": "gpu-tests.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/graphrag-production-ci.yml",
+      "name": "graphrag-production-ci.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/issue-to-draft-pr.yml",
+      "name": "issue-to-draft-pr.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-dashboard-tests.yml",
+      "name": "mcp-dashboard-tests.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/mcp-integration-tests.yml",
+      "name": "mcp-integration-tests.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pdf_processing_ci.yml",
+      "name": "pdf_processing_ci.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pdf_processing_simple_ci.yml",
+      "name": "pdf_processing_simple_ci.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-completion-monitor.yml",
+      "name": "pr-completion-monitor.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-copilot-monitor.yml",
+      "name": "pr-copilot-monitor.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/pr-copilot-reviewer.yml",
+      "name": "pr-copilot-reviewer.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": true,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/publish_to_pipy.yml",
+      "name": "publish_to_pipy.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/runner-validation-clean.yml",
+      "name": "runner-validation-clean.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/runner-validation.yml",
+      "name": "runner-validation.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation",
+        "Uses gh CLI but may be missing GH_TOKEN environment variable"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/scraper-validation.yml",
+      "name": "scraper-validation.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/self-hosted-runner.yml",
+      "name": "self-hosted-runner.yml",
+      "uses_self_hosted": true,
+      "uses_container": true,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": []
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/test-datasets-runner.yml",
+      "name": "test-datasets-runner.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/test-github-hosted.yml",
+      "name": "test-github-hosted.yml",
+      "uses_self_hosted": true,
+      "uses_container": false,
+      "uses_gh_cli": true,
+      "uses_copilot": false,
+      "has_autofix": false,
+      "issues": [
+        "Uses self-hosted runners without container isolation"
+      ]
+    },
+    {
+      "file": "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/.github/workflows/update-autohealing-list.yml",
+      "name": "update-autohealing-list.yml",
+      "uses_self_hosted": false,
+      "uses_container": false,
+      "uses_gh_cli": false,
+      "uses_copilot": true,
+      "has_autofix": true,
+      "issues": []
+    }
+  ]
+}
