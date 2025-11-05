@@ -411,16 +411,16 @@ jobs:
           
           # Add fix details from proposal
           python3 -c '
-import json
-with open("/tmp/fix_proposal.json") as f:
-    data = json.load(f)
-    for fix in data.get("fixes", []):
-        print(f"### {fix.get(\"description\", \"Fix\")}\n")
-        print(f"**File:** `{fix.get(\"file\", \"N/A\")}`\n")
-        print(f"**Action:** {fix.get(\"action\", \"N/A\")}\n")
-        if fix.get("changes"):
-            print(f"\n```yaml\n{fix[\"changes\"]}\n```\n")
-' >> /tmp/issue_body.md
+          import json
+          with open("/tmp/fix_proposal.json") as f:
+              data = json.load(f)
+              for fix in data.get("fixes", []):
+                  print(f"### {fix.get(\"description\", \"Fix\")}\n")
+                  print(f"**File:** `{fix.get(\"file\", \"N/A\")}`\n")
+                  print(f"**Action:** {fix.get(\"action\", \"N/A\")}\n")
+                  if fix.get("changes"):
+                      print(f"\n```yaml\n{fix[\"changes\"]}\n```\n")
+          ' >> /tmp/issue_body.md
           
           cat >> /tmp/issue_body.md << 'ISSUE_EOF'
           
