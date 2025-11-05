@@ -406,52 +406,56 @@ jobs:
           echo "   Documentation: https://docs.github.com/en/copilot/concepts/agents/coding-agent/"
           echo ""
           
-          # Build task description based on task type
+          # Build task description based on task type and save to file
+          # Reason for assignment is captured in the task title
           if [ "$COPILOT_TASK" = "fix" ]; then
-            TASK_DESC="Fix issues in PR #$PR_NUMBER
-
-**Reason**: $ASSIGNMENT_REASON
-
-**Instructions**:
-1. Analyze the PR description and any linked issues
-2. Review workflow failure logs if mentioned
-3. Implement minimal, surgical fixes that directly address the problem
-4. Ensure all tests pass
-5. Follow existing code patterns and style"
+            {
+              echo "Fix issues in PR #${PR_NUMBER}"
+              echo ""
+              echo "Task: $ASSIGNMENT_REASON"
+              echo ""
+              echo "Instructions:"
+              echo "- Analyze the PR description and any linked issues"
+              echo "- Review workflow failure logs if mentioned"
+              echo "- Implement minimal surgical fixes that directly address the problem"
+              echo "- Ensure all tests pass"
+              echo "- Follow existing code patterns and style"
+            } > /tmp/agent_task_description.txt
           elif [ "$COPILOT_TASK" = "implement" ]; then
-            TASK_DESC="Implement solution for PR #$PR_NUMBER
-
-**Reason**: $ASSIGNMENT_REASON
-
-**Instructions**:
-1. Review the PR description and requirements
-2. Implement the solution following repository patterns
-3. Add or update tests as appropriate
-4. Make surgical changes focused on the requirements
-5. Update documentation only if directly related to changes"
+            {
+              echo "Implement solution for PR #${PR_NUMBER}"
+              echo ""
+              echo "Task: $ASSIGNMENT_REASON"
+              echo ""
+              echo "Instructions:"
+              echo "- Review the PR description and requirements"
+              echo "- Implement the solution following repository patterns"
+              echo "- Add or update tests as appropriate"
+              echo "- Make surgical changes focused on the requirements"
+              echo "- Update documentation only if directly related to changes"
+            } > /tmp/agent_task_description.txt
           elif [ "$COPILOT_TASK" = "review" ]; then
-            TASK_DESC="Review and improve PR #$PR_NUMBER
-
-**Reason**: $ASSIGNMENT_REASON
-
-**Instructions**:
-1. Review code quality and best practices
-2. Check test coverage and correctness
-3. Analyze documentation completeness
-4. Identify potential issues or improvements
-5. Implement necessary changes"
+            {
+              echo "Review and improve PR #${PR_NUMBER}"
+              echo ""
+              echo "Task: $ASSIGNMENT_REASON"
+              echo ""
+              echo "Instructions:"
+              echo "- Review code quality and best practices"
+              echo "- Check test coverage and correctness"
+              echo "- Analyze documentation completeness"
+              echo "- Identify potential issues or improvements"
+              echo "- Implement necessary changes"
+            } > /tmp/agent_task_description.txt
           else
-            TASK_DESC="Work on PR #$PR_NUMBER according to requirements
-
-**Reason**: $ASSIGNMENT_REASON
-
-**Instructions**:
-Please review the PR description and implement the necessary changes."
+            {
+              echo "Work on PR #${PR_NUMBER}"
+              echo ""
+              echo "Task: $ASSIGNMENT_REASON"
+              echo ""
+              echo "Please review the PR description and implement the necessary changes."
+            } > /tmp/agent_task_description.txt
           fi
-          
-          # Use the proper agent-task invocation script (official method)
-          # Save task description to file to avoid shell escaping issues
-          echo "$TASK_DESC" > /tmp/agent_task_description.txt
           
           if python3 scripts/invoke_copilot_agent_task.py \
               --pr "$PR_NUMBER" \
