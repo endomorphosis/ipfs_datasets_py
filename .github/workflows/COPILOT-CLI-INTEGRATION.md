@@ -4,6 +4,54 @@
 
 This document describes how GitHub Actions workflows in this repository invoke GitHub Copilot to automatically implement fixes for workflow failures.
 
+## ⚠️ IMPORTANT: Correct Way to Invoke Copilot Coding Agent
+
+**As of November 2024**, the recommended and officially supported way to invoke the GitHub Copilot Coding Agent is:
+
+### ✅ CORRECT: Use `gh agent-task create`
+
+```bash
+# Create an agent task that will analyze and implement changes
+gh agent-task create "Fix the failing tests in test_utils.py" --base main
+
+# Or with a file containing detailed instructions
+gh agent-task create -F task-description.txt
+```
+
+**This is the proper GitHub Copilot Coding Agent invocation that**:
+- Creates an official agent task session
+- Allows the agent to create new PRs with implementations
+- Provides proper tracking and monitoring via `gh agent-task list`
+- Is the documented approach per https://cli.github.com/manual/gh_agent-task
+
+### ❌ DEPRECATED: `@copilot` Mentions in Comments
+
+```bash
+# OLD WAY - Not recommended for automation
+gh pr comment 123 --body "@copilot please fix this"
+```
+
+**Why this is deprecated for automation**:
+- `@copilot` mentions are meant for interactive UI use, not programmatic workflows
+- No official API contract or guarantees for automation
+- Cannot track agent status programmatically
+- May not work reliably in all contexts
+
+### Migration Status
+
+We are actively migrating all workflows from `@copilot` mentions to `gh agent-task create`:
+
+- ✅ `invoke_copilot_with_throttling.py` - Uses `gh agent-task create` with fallback
+- ✅ `copilot_cli.py` utility - Has `create_agent_task()` method
+- ✅ `continuous-queue-management.yml` - Updated to use `gh agent-task create`
+- ⚠️ Some detection code still looks for `@copilot` mentions (for backward compatibility)
+
+## Documentation Resources
+
+- GitHub CLI Manual: https://cli.github.com/manual/gh
+- Copilot CLI Agent: https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli
+- Agent Management: https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+
 ## Recent Updates (November 2024)
 
 ### Fixed Workflow #909 - Copilot CLI Integration Issue

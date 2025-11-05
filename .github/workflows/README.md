@@ -506,6 +506,68 @@ python .github/scripts/analyze_autohealing_metrics.py --days 7
 
 ---
 
+## Best Practices for Workflow Automation
+
+### Invoking GitHub Copilot Coding Agent
+
+**✅ Recommended Approach**: Use `gh agent-task create`
+
+```yaml
+- name: Create Copilot Coding Agent Task
+  env:
+    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    # Create agent task with comprehensive description
+    gh agent-task create "Fix the failing Docker build by updating Dockerfile permissions" --base main
+    
+    # Or use a file for complex instructions
+    cat > task.txt << 'EOF'
+    Fix the test failures in tests/test_utils.py:
+    1. Analyze the failing test assertions
+    2. Identify the root cause
+    3. Implement minimal fixes
+    4. Ensure all tests pass
+    EOF
+    gh agent-task create -F task.txt
+```
+
+**❌ Deprecated**: `@copilot` mentions in comments
+
+- `@copilot` mentions are for interactive UI use, not automation
+- Use `gh agent-task create` for programmatic workflows
+- See [COPILOT-CLI-INTEGRATION.md](./COPILOT-CLI-INTEGRATION.md) for migration guide
+
+### Monitoring Agent Tasks
+
+```bash
+# List active agent tasks
+gh agent-task list --limit 20
+
+# View specific task
+gh agent-task view <session-id>
+
+# Follow agent logs
+gh agent-task create "task description" --follow
+```
+
+### Workflow Configuration
+
+```yaml
+# Always set GH_TOKEN for gh CLI commands
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+# Use container isolation for self-hosted runners (recommended)
+jobs:
+  my-job:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+```
+
+---
+
 ## Quick Links
 
 - 📖 [Full Documentation](README-copilot-autohealing.md)
@@ -513,6 +575,7 @@ python .github/scripts/analyze_autohealing_metrics.py --days 7
 - ⚙️ [Configuration](workflow-auto-fix-config.yml)
 - 📊 [View Metrics](../scripts/analyze_autohealing_metrics.py)
 - 🔍 [View Auto-Healing PRs](../../pulls?q=is%3Apr+label%3Aauto-healing)
+- 🤖 [Copilot CLI Integration](./COPILOT-CLI-INTEGRATION.md)
 
 ---
 
