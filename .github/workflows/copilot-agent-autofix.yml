@@ -109,8 +109,6 @@ jobs:
       - name: Configure GitHub CLI
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Verify gh is authenticated
           gh auth status || echo "GH_TOKEN is set but gh auth status failed"
@@ -338,8 +336,6 @@ jobs:
         if: steps.generate_fix.outputs.fix_available == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
           RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
@@ -383,8 +379,8 @@ jobs:
           ISSUE_EOF
           
           # Add first 50 lines of first failed job log for context
-          if [ -f /tmp/workflow_logs/job_*.log ]; then
-            FIRST_LOG=$(ls /tmp/workflow_logs/job_*.log | head -1)
+          FIRST_LOG=$(ls /tmp/workflow_logs/job_*.log 2>/dev/null | head -1)
+          if [ -n "$FIRST_LOG" ] && [ -f "$FIRST_LOG" ]; then
             echo "\`\`\`" >> /tmp/issue_body.md
             head -50 "$FIRST_LOG" >> /tmp/issue_body.md
             echo "\`\`\`" >> /tmp/issue_body.md
@@ -414,17 +410,17 @@ jobs:
           ISSUE_EOF
           
           # Add fix details from proposal
-          python3 -c "
+          python3 -c '
           import json
-          with open('/tmp/fix_proposal.json') as f:
+          with open("/tmp/fix_proposal.json") as f:
               data = json.load(f)
-              for fix in data.get('fixes', []):
-                  print(f\"### {fix.get('description', 'Fix')}\\n\")
-                  print(f\"**File:** \\\`{fix.get('file', 'N/A')}\\\`\\n\")
-                  print(f\"**Action:** {fix.get('action', 'N/A')}\\n\")
-                  if fix.get('changes'):
-                      print(f\"\\n\\\`\\\`\\\`yaml\\n{fix['changes']}\\n\\\`\\\`\\\`\\n\")
-          " >> /tmp/issue_body.md
+              for fix in data.get("fixes", []):
+                  print(f"### {fix.get(\"description\", \"Fix\")}\n")
+                  print(f"**File:** `{fix.get(\"file\", \"N/A\")}`\n")
+                  print(f"**Action:** {fix.get(\"action\", \"N/A\")}\n")
+                  if fix.get("changes"):
+                      print(f"\n```yaml\n{fix[\"changes\"]}\n```\n")
+          ' >> /tmp/issue_body.md
           
           cat >> /tmp/issue_body.md << 'ISSUE_EOF'
           

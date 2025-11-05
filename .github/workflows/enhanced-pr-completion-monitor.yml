@@ -149,8 +149,6 @@ jobs:
         id: monitor
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_CONFIG_GLOBAL: /dev/null
-          GIT_CONFIG_SYSTEM: /dev/null
         run: |
           # Set script parameters
           PR_NUMBER="${{ github.event.inputs.pr_number || '' }}"
