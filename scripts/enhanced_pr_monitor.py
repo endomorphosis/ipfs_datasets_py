@@ -7,10 +7,18 @@ and progressive escalation to ensure PRs are completed properly.
 
 Features:
 - Comprehensive PR completion detection
-- Progressive Copilot assignment strategy
+- Progressive Copilot assignment strategy using gh agent-task create (official method)
 - State management to avoid duplicate work
 - Human notification for stale PRs
 - Integration with auto-healing system
+
+Uses OFFICIAL GitHub Copilot invocation method:
+✅ gh agent-task create - Official GitHub CLI command for Copilot Coding Agent
+❌ NOT: @copilot mentions in PR comments (unsupported)
+
+Per GitHub documentation:
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
+- https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
 """
 
 import subprocess
@@ -23,6 +31,18 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 from pathlib import Path
 import logging
+
+# Try to import the copilot CLI utility
+try:
+    script_dir = Path(__file__).parent.parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
+    
+    from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+    COPILOT_CLI_AVAILABLE = True
+except ImportError:
+    COPILOT_CLI_AVAILABLE = False
+    logging.warning("⚠️  CopilotCLI utility not available, using direct gh commands")
 
 
 class EnhancedPRMonitor:
@@ -276,13 +296,18 @@ class EnhancedPRMonitor:
         
         return assignment_info
     
-    def create_copilot_assignment(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> str:
-        """Create an appropriate Copilot assignment comment."""
+    def create_agent_task_description(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> str:
+        """
+        Create a task description for GitHub Copilot agent-task create.
+        
+        This replaces the old @copilot comment method with proper agent task descriptions.
+        """
         pr_number = pr['number']
         title = pr['title']
         task_type = analysis['task_type']
         priority = analysis['priority']
         reasons = analysis['incomplete_reasons']
+        pr_body = pr.get('body', 'No description provided')
         
         # Determine assignment level based on history
         assignment_level = len(assignment_info['assignment_history']) + 1
@@ -290,70 +315,120 @@ class EnhancedPRMonitor:
         if assignment_level == 1:
             # Initial assignment - general help
             if task_type == 'fix':
-                comment = f"""@copilot /fix
+                description = f"""Fix issues in PR #{pr_number}: {title}
 
-Please help fix the issues in this PR.
+**Priority:** {priority.upper()}
 
 **Issues identified:**
 {chr(10).join(f'- {reason}' for reason in reasons)}
 
-**Priority:** {priority.upper()}
+**PR Description:**
+{pr_body[:400]}
 
-Please analyze the problems and implement the necessary fixes."""
+**Instructions:**
+1. Analyze the problems described above
+2. Implement minimal, surgical fixes
+3. Ensure all tests pass
+4. Follow existing code patterns and repository conventions
+5. Update documentation only if directly related to changes
+
+**Invoked by:** Enhanced PR monitoring system (Level {assignment_level})
+**Timestamp:** {datetime.now().isoformat()}"""
             
             elif task_type == 'implement':
-                comment = f"""@copilot Please help implement the changes described in this PR.
+                description = f"""Implement solution for PR #{pr_number}: {title}
 
-**Status:** This PR appears to need implementation work.
+**Priority:** {priority.upper()}
+**Status:** This PR needs implementation work
 
 **Issues identified:**
 {chr(10).join(f'- {reason}' for reason in reasons)}
 
-**Priority:** {priority.upper()}
+**PR Description:**
+{pr_body[:400]}
 
-Please review the requirements and implement the solution."""
+**Instructions:**
+1. Review the PR description and requirements
+2. Understand the acceptance criteria
+3. Implement the solution following repository patterns
+4. Add or update tests as appropriate
+5. Use minimal, focused changes
+6. Update documentation if directly related
+
+**Invoked by:** Enhanced PR monitoring system (Level {assignment_level})
+**Timestamp:** {datetime.now().isoformat()}"""
             
             else:  # review
-                comment = f"""@copilot /review
+                description = f"""Review and complete PR #{pr_number}: {title}
 
-Please review this PR and help with any needed improvements.
+**Priority:** {priority.upper()}
 
 **Issues identified:**
 {chr(10).join(f'- {reason}' for reason in reasons)}
 
-**Priority:** {priority.upper()}
+**PR Description:**
+{pr_body[:400]}
 
-Please provide feedback and suggestions for completion."""
+**Review focus:**
+- Code quality and best practices
+- Test coverage and correctness
+- Documentation completeness
+- Potential issues or improvements
+- Security considerations
+
+**Instructions:**
+Provide feedback and implement any needed improvements to complete this PR.
+
+**Invoked by:** Enhanced PR monitoring system (Level {assignment_level})
+**Timestamp:** {datetime.now().isoformat()}"""
         
         elif assignment_level == 2:
             # Escalated assignment - more specific instructions
-            comment = f"""@copilot This PR still needs attention after the initial assignment.
+            previous_assignment = assignment_info['assignment_history'][-1] if assignment_info['assignment_history'] else {}
+            description = f"""ESCALATED: Complete work on PR #{pr_number}: {title}
 
-**Previous assignment:** {assignment_info['assignment_history'][-1].get('type', 'unknown')} at {assignment_info['assignment_history'][-1].get('timestamp', 'unknown')}
+**Priority:** HIGH (Escalation Level {assignment_level})
+
+**Previous assignment:** {previous_assignment.get('type', 'unknown')} at {previous_assignment.get('timestamp', 'unknown')}
 
 **Remaining issues:**
 {chr(10).join(f'- {reason}' for reason in reasons)}
 
+**PR Description:**
+{pr_body[:400]}
+
 **Escalated Instructions:**
 1. Review all previous comments and suggestions
-2. Identify any blocking issues
+2. Identify any blocking issues preventing completion
 3. Implement specific, actionable fixes
 4. Ensure all status checks pass
 5. Address any reviewer feedback
+6. Complete any remaining work items
 
-**Priority:** HIGH
+**Note:** This is an escalated assignment. The PR still needs attention after the initial attempt.
 
-Please provide a comprehensive solution to complete this PR."""
+**Invoked by:** Enhanced PR monitoring system (Level {assignment_level})
+**Timestamp:** {datetime.now().isoformat()}"""
         
         else:
             # Final escalation - detailed requirements
-            comment = f"""@copilot **FINAL ESCALATION** - This PR requires immediate attention.
+            previous_assignments = '\n'.join([
+                f"- {a.get('type', 'unknown')} at {a.get('timestamp', 'unknown')}"
+                for a in assignment_info['assignment_history'][-3:]
+            ])
+            
+            description = f"""FINAL ESCALATION: Complete PR #{pr_number}: {title}
+
+**Priority:** CRITICAL (Escalation Level {assignment_level})
 
 **Assignment History:** {assignment_level - 1} previous assignments
-**Last Assignment:** {assignment_info['assignment_history'][-1].get('timestamp', 'unknown')}
+{previous_assignments}
 
 **Critical Issues:**
 {chr(10).join(f'- {reason}' for reason in reasons)}
+
+**PR Description:**
+{pr_body[:400]}
 
 **Detailed Requirements:**
 1. **Complete Code Review:** Analyze all changed files thoroughly
@@ -365,48 +440,109 @@ Please provide a comprehensive solution to complete this PR."""
 
 **PRIORITY:** CRITICAL
 
-If this PR cannot be completed, please provide a detailed explanation of blockers and recommend next steps.
+**Important:** This PR has been escalated {assignment_level} times. If this PR cannot be completed, 
+provide a detailed explanation of blockers and recommend next steps. Human intervention may be required.
 
-@{self.notification_user} - This PR has been escalated multiple times and may need human intervention."""
+**Invoked by:** Enhanced PR monitoring system (Final Escalation - Level {assignment_level})
+**Timestamp:** {datetime.now().isoformat()}
+**Human notification:** @{self.notification_user} - This PR may need manual intervention."""
         
-        return comment
+        return description
     
     def assign_copilot_to_pr(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> bool:
-        """Assign Copilot to a PR using proven @copilot comment method."""
+        """
+        Assign Copilot to a PR using gh agent-task create (official method).
+        
+        Per GitHub documentation:
+        https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+        """
         pr_number = pr['number']
         
         if self.dry_run:
-            self.logger.info(f"DRY RUN: Would assign Copilot to PR #{pr_number}")
-            comment = self.create_copilot_assignment(pr, analysis, assignment_info)
-            self.logger.info(f"Comment: {comment[:200]}...")
+            self.logger.info(f"DRY RUN: Would create agent task for PR #{pr_number}")
+            task_description = self.create_agent_task_description(pr, analysis, assignment_info)
+            self.logger.info(f"Task description: {task_description[:200]}...")
             return True
         
-        # Use the proven @copilot comment method
-        # This has been verified to work and creates child PRs (e.g., PR #340 → child PR #382)
-        success = self._invoke_copilot_via_comment(pr, analysis, assignment_info)
+        # Use the OFFICIAL method: gh agent-task create
+        success = self._invoke_copilot_via_agent_task(pr, analysis, assignment_info)
         
         if success:
-            self.logger.info(f"✅ Successfully assigned Copilot to PR #{pr_number} via @copilot comment")
+            self.logger.info(f"✅ Successfully created agent task for PR #{pr_number}")
             return True
         else:
-            self.logger.error(f"❌ Failed to assign Copilot to PR #{pr_number}")
+            self.logger.error(f"❌ Failed to create agent task for PR #{pr_number}")
             return False
     
-    def _invoke_copilot_via_comment(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> bool:
-        """Invoke Copilot using the proven @copilot comment method."""
+    def _invoke_copilot_via_agent_task(self, pr: Dict[str, Any], analysis: Dict[str, Any], assignment_info: Dict[str, Any]) -> bool:
+        """
+        Invoke Copilot using gh agent-task create (official method).
+        
+        This is the correct method per GitHub's official documentation.
+        """
         pr_number = pr['number']
         
-        # Create optimized Copilot assignment comment
-        comment = self.create_copilot_assignment(pr, analysis, assignment_info)
+        # Get PR details
+        pr_details_result = self.run_command([
+            'gh', 'pr', 'view', str(pr_number),
+            '--json', 'headRefName,baseRefName,body'
+        ])
         
-        # Post comment to PR using GitHub CLI
+        if not pr_details_result['success']:
+            self.logger.error(f"Failed to get PR details: {pr_details_result.get('stderr')}")
+            return False
+        
+        try:
+            pr_details = json.loads(pr_details_result['stdout'])
+            head_branch = pr_details.get('headRefName', 'main')
+            base_branch = pr_details.get('baseRefName', 'main')
+        except json.JSONDecodeError:
+            self.logger.error("Failed to parse PR details")
+            return False
+        
+        # Create comprehensive task description
+        task_description = self.create_agent_task_description(pr, analysis, assignment_info)
+        
+        # Method 1: Try using CopilotCLI utility (preferred)
+        if COPILOT_CLI_AVAILABLE:
+            try:
+                copilot = CopilotCLI()
+                result = copilot.create_agent_task(
+                    task_description=task_description,
+                    base_branch=head_branch,
+                    follow=False
+                )
+                
+                if result.get('success'):
+                    self.logger.info(f"✅ Created agent task using CopilotCLI")
+                    return True
+                else:
+                    self.logger.warning(f"⚠️  CopilotCLI failed: {result.get('error', 'Unknown error')}")
+            except Exception as e:
+                self.logger.warning(f"⚠️  CopilotCLI exception: {e}")
+        
+        # Method 2: Direct gh agent-task create command
         cmd = [
-            'gh', 'pr', 'comment', str(pr_number),
-            '--body', comment
+            'gh', 'agent-task', 'create',
+            task_description,
+            '--base', head_branch
         ]
         
         result = self.run_command(cmd)
-        return result['success']
+        
+        if result['success']:
+            self.logger.info(f"✅ Created agent task using gh agent-task")
+            return True
+        else:
+            error_msg = result.get('stderr', result.get('error', 'Unknown error'))
+            self.logger.error(f"❌ Failed to create agent task: {error_msg}")
+            
+            # Check if gh agent-task is not available
+            if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
+                self.logger.error("gh agent-task command not available on this system")
+                self.logger.error("💡 Please update GitHub CLI: gh extension upgrade gh-copilot")
+            
+            return False
     
     def notify_human_intervention(self, pr: Dict[str, Any], analysis: Dict[str, Any]) -> bool:
         """Notify human that a PR needs manual intervention."""
