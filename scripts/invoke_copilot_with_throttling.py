@@ -228,54 +228,119 @@ class ThrottledCopilotInvoker:
     
     def invoke_copilot_on_pr(self, pr: Dict[str, Any]) -> bool:
         """
-        Invoke copilot CLI on a specific PR.
+        Invoke copilot agent on a specific PR using gh agent-task.
         
-        This uses the actual copilot CLI tool, not just @copilot mentions.
+        This uses the proper GitHub Copilot Coding Agent via gh agent-task create,
+        not just @copilot mentions.
         """
         pr_number = pr['number']
         pr_title = pr['title']
         branch_name = pr.get('headRefName', '')
         
         logger.info(f"\n{'='*80}")
-        logger.info(f"🤖 Invoking Copilot CLI on PR #{pr_number}: {pr_title}")
+        logger.info(f"🤖 Creating Copilot Agent Task for PR #{pr_number}: {pr_title}")
         logger.info(f"{'='*80}")
         
         if self.dry_run:
-            logger.info("🔍 DRY RUN - Would invoke copilot CLI")
+            logger.info("🔍 DRY RUN - Would create copilot agent task")
+            logger.info(f"   Branch: {branch_name}")
+            logger.info(f"   Title: {pr_title}")
             return True
         
-        # Method 1: Try using the CopilotCLI utility if available
-        if self.copilot_cli and self.copilot_cli.installed:
-            logger.info("Using CopilotCLI utility...")
-            
-            # Create a task description for copilot
-            task_description = f"""Please work on PR #{pr_number} ({pr_title}).
-            
-Steps:
-1. Checkout the branch: {branch_name}
-2. Review the PR description and understand what needs to be fixed
-3. Implement the necessary changes
-4. Test the changes
-5. Commit and push to the PR branch
+        # Get PR description for context
+        pr_body = ""
+        pr_info_result = self.run_gh_command([
+            'gh', 'pr', 'view', str(pr_number),
+            '--json', 'body,url'
+        ])
+        
+        if pr_info_result['success']:
+            try:
+                pr_info = json.loads(pr_info_result['stdout'])
+                pr_body = pr_info.get('body', '')
+                pr_url = pr_info.get('url', '')
+            except json.JSONDecodeError:
+                logger.warning("Failed to parse PR info")
+        
+        # Create a comprehensive task description for the agent
+        task_description = f"""Work on PR #{pr_number}: {pr_title}
 
-Focus on making minimal, surgical changes that directly address the issue."""
-            
-            result = self.copilot_cli.suggest_command(task_description)
+**PR Branch**: {branch_name}
+
+**Objective**: Review and implement the changes described in this pull request.
+
+**Context**: 
+{pr_body[:500] if pr_body else 'This PR was identified by the auto-monitoring system as needing implementation.'}
+
+**Instructions**:
+1. Review the PR description and any linked issues
+2. Understand the requirements and acceptance criteria
+3. Implement the solution following repository coding standards and patterns
+4. Ensure all tests pass and add new tests if needed
+5. Update documentation if directly related to the changes
+6. Use minimal, surgical changes that directly address the issue
+
+**Important**:
+- Follow the existing code style in the repository
+- Make the smallest possible changes to achieve the goal
+- Do not remove or modify working code unless absolutely necessary
+- Focus on solving the specific issue described in the PR"""
+        
+        # Method 1: Try using gh agent-task create (proper Copilot Coding Agent invocation)
+        logger.info("Creating agent task using gh agent-task create...")
+        
+        if self.copilot_cli:
+            # Use the CopilotCLI utility's create_agent_task method
+            result = self.copilot_cli.create_agent_task(
+                task_description=task_description,
+                base_branch=branch_name,
+                follow=False
+            )
             
             if result.get('success'):
-                logger.info(f"✅ Copilot CLI provided suggestions for PR #{pr_number}")
-                logger.info(f"Suggestions: {result.get('suggestions', '')[:200]}...")
+                logger.info(f"✅ Successfully created agent task for PR #{pr_number}")
+                if result.get('stdout'):
+                    logger.info(f"   Output: {result.get('stdout')[:200]}...")
                 return True
             else:
-                logger.warning(f"⚠️  Copilot CLI failed: {result.get('error')}")
+                logger.warning(f"⚠️  Failed to create agent task: {result.get('error')}")
                 # Fall through to Method 2
         
-        # Method 2: Post a detailed @copilot mention comment
-        # This is the fallback method that still works even if gh copilot extension isn't installed
-        logger.info("Posting @copilot mention comment...")
+        # Method 2: Direct gh command if CopilotCLI utility not available
+        logger.info("Trying direct gh agent-task create command...")
+        
+        result = self.run_gh_command([
+            'gh', 'agent-task', 'create', 
+            task_description,
+            '--base', branch_name
+        ])
+        
+        if result['success']:
+            logger.info(f"✅ Successfully created agent task for PR #{pr_number}")
+            if result.get('stdout'):
+                logger.info(f"   Output: {result.get('stdout')[:200]}...")
+            return True
+        else:
+            error_msg = result.get('error', result.get('stderr', ''))
+            logger.error(f"❌ Failed to create agent task: {error_msg}")
+            
+            # Method 3: Fallback to @copilot mention only if gh agent-task is not available
+            if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
+                logger.warning("⚠️  gh agent-task not available, falling back to @copilot mention")
+                return self._fallback_copilot_mention(pr_number, pr_title, branch_name)
+            
+            return False
+    
+    def _fallback_copilot_mention(self, pr_number: int, pr_title: str, branch_name: str) -> bool:
+        """
+        Fallback method using @copilot mention if gh agent-task is not available.
+        This is NOT the preferred method.
+        """
+        logger.info("Using fallback @copilot mention method (NOT RECOMMENDED)...")
         
         comment = f"""@copilot Please work on implementing the changes described in this PR.
 
+**Branch**: {branch_name}
 **Task**: Review the PR description, understand the requirements, and implement the necessary fixes.
 
 **Context**: This PR was identified by the auto-monitoring system as needing implementation.

@@ -3,7 +3,7 @@
 Batch process all open PRs and assign Copilot where appropriate.
 
 This script analyzes all open pull requests and automatically assigns
-GitHub Copilot to work on them based on specific criteria.
+GitHub Copilot Coding Agent to work on them using gh agent-task create.
 """
 
 import subprocess
@@ -11,6 +11,19 @@ import json
 import sys
 import re
 from typing import Dict, List, Any, Optional
+from pathlib import Path
+
+# Try to import the copilot CLI utility
+try:
+    script_dir = Path(__file__).parent.parent
+    if str(script_dir) not in sys.path:
+        sys.path.insert(0, str(script_dir))
+    
+    from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+    COPILOT_CLI_AVAILABLE = True
+except ImportError:
+    COPILOT_CLI_AVAILABLE = False
+    print("⚠️  CopilotCLI utility not available, using direct gh commands")
 
 
 def run_gh_command(cmd: List[str]) -> Dict[str, Any]:
@@ -65,6 +78,17 @@ def get_all_prs(state: str = 'open', limit: int = 100) -> List[Dict[str, Any]]:
 
 def check_copilot_assigned(pr_number: int) -> bool:
     """Check if Copilot has already been assigned to a PR."""
+    # Check for recent agent tasks
+    result = run_gh_command([
+        'agent-task', 'list', '--limit', '50'
+    ])
+    
+    if result['success']:
+        # Check if there's an active task for this PR
+        if f"#{pr_number}" in result['stdout'] or f"pull/{pr_number}" in result['stdout']:
+            return True
+    
+    # Also check for @copilot mentions as fallback
     result = run_gh_command([
         'pr', 'view', str(pr_number),
         '--json', 'comments',
@@ -128,8 +152,119 @@ def analyze_pr(pr: Dict[str, Any]) -> Dict[str, Any]:
     return analysis
 
 
-def assign_copilot(pr_number: int, task: str, reason: str, pr_title: str) -> bool:
-    """Assign Copilot to a PR with appropriate task."""
+def assign_copilot(pr_number: int, task: str, reason: str, pr_title: str, pr_body: str = "", branch_name: str = "") -> bool:
+    """Assign Copilot Coding Agent to a PR using gh agent-task create."""
+    
+    # Get branch name if not provided
+    if not branch_name:
+        result = run_gh_command([
+            'pr', 'view', str(pr_number),
+            '--json', 'headRefName',
+            '--jq', '.headRefName'
+        ])
+        if result['success']:
+            branch_name = result['stdout'].strip()
+    
+    # Create comprehensive task description
+    if task == 'fix':
+        task_description = f"""Fix issues in PR #{pr_number}: {pr_title}
+
+**Reason**: {reason}
+**Branch**: {branch_name}
+
+**Context**:
+{pr_body[:400] if pr_body else 'No additional context provided'}
+
+**Focus areas**:
+- Analyze the problem described in the PR
+- Implement minimal, surgical fixes
+- Ensure all tests pass
+- Follow existing code patterns and style
+- Update documentation only if directly related
+
+**Instructions**:
+1. Review the PR description and any linked issues
+2. Understand the root cause of the issue
+3. Implement the fix with minimal changes
+4. Run tests to validate the fix
+5. Ensure no regressions are introduced"""
+    
+    elif task == 'implement':
+        task_description = f"""Implement solution for PR #{pr_number}: {pr_title}
+
+**Reason**: {reason}
+**Branch**: {branch_name}
+
+**Context**:
+{pr_body[:400] if pr_body else 'No additional context provided'}
+
+**Instructions**:
+1. Review the PR description and any linked issues
+2. Understand the requirements and acceptance criteria
+3. Implement the solution following repository patterns
+4. Add or update tests as appropriate
+5. Update documentation if directly related to changes
+6. Use minimal, focused changes"""
+    
+    else:  # review
+        task_description = f"""Review PR #{pr_number}: {pr_title}
+
+**Reason**: {reason}
+**Branch**: {branch_name}
+
+**Context**:
+{pr_body[:400] if pr_body else 'No additional context provided'}
+
+**Review focus**:
+- Code quality and best practices
+- Test coverage and correctness
+- Documentation completeness
+- Potential issues or improvements
+- Security considerations
+
+Please provide feedback and suggestions for improvement."""
+    
+    # Method 1: Try using CopilotCLI utility
+    if COPILOT_CLI_AVAILABLE:
+        try:
+            copilot = CopilotCLI()
+            result = copilot.create_agent_task(
+                task_description=task_description,
+                base_branch=branch_name
+            )
+            
+            if result.get('success'):
+                print(f"   ✅ Created agent task using CopilotCLI")
+                return True
+            else:
+                print(f"   ⚠️  CopilotCLI failed: {result.get('error', 'Unknown error')}")
+        except Exception as e:
+            print(f"   ⚠️  CopilotCLI exception: {e}")
+    
+    # Method 2: Direct gh agent-task create command
+    result = run_gh_command([
+        'agent-task', 'create',
+        task_description,
+        '--base', branch_name
+    ])
+    
+    if result['success']:
+        print(f"   ✅ Created agent task using gh agent-task")
+        return True
+    else:
+        error_msg = result.get('error', result.get('stderr', ''))
+        
+        # Method 3: Fallback to @copilot mention if gh agent-task not available
+        if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
+            print(f"   ⚠️  gh agent-task not available, using @copilot mention fallback")
+            return assign_copilot_via_mention(pr_number, task, reason, pr_title)
+        
+        print(f"   ❌ Failed to create agent task: {error_msg}")
+        return False
+
+
+def assign_copilot_via_mention(pr_number: int, task: str, reason: str, pr_title: str) -> bool:
+    """Fallback method using @copilot mention. NOT RECOMMENDED."""
     # Create task-specific comment
     if task == 'fix':
         comment = f"""@copilot /fix
@@ -214,6 +349,7 @@ def main():
         pr_number = pr['number']
         pr_title = pr['title']
         is_draft = pr['isDraft']
+        pr_body = pr.get('body', '')
         
         print(f"\n📄 PR #{pr_number}: {pr_title}")
         print(f"   Draft: {is_draft}")
@@ -241,9 +377,17 @@ def main():
         print(f"   🎯 Should assign: {task} (confidence: {confidence}%)")
         print(f"   📝 Reason: {reason}")
         
-        # Assign Copilot
-        if assign_copilot(pr_number, task, reason, pr_title):
-            print(f"   ✅ Successfully assigned Copilot")
+        # Get branch name for the PR
+        branch_result = run_gh_command([
+            'pr', 'view', str(pr_number),
+            '--json', 'headRefName',
+            '--jq', '.headRefName'
+        ])
+        branch_name = branch_result['stdout'].strip() if branch_result['success'] else ""
+        
+        # Assign Copilot using gh agent-task create
+        if assign_copilot(pr_number, task, reason, pr_title, pr_body, branch_name):
+            print(f"   ✅ Successfully assigned Copilot Coding Agent")
             stats['newly_assigned'] += 1
         else:
             print(f"   ❌ Failed to assign Copilot")

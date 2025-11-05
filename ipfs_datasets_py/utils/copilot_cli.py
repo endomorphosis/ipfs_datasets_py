@@ -542,6 +542,186 @@ class CopilotCLI:
             "message": "Configuration applied",
             "config": config
         }
+    
+    def create_agent_task(self, task_description: str, base_branch: Optional[str] = None, 
+                         follow: bool = False, repo: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Create a GitHub Copilot agent task (Coding Agent).
+        
+        This creates an agent task that will be executed by the GitHub Copilot
+        Coding Agent. The agent will analyze the task, create a plan, and 
+        implement changes in a new PR.
+        
+        Args:
+            task_description: Description of the task for the agent
+            base_branch: Base branch for the pull request (uses default branch if not provided)
+            follow: Follow agent session logs
+            repo: Repository in [HOST/]OWNER/REPO format (uses current repo if not provided)
+        
+        Returns:
+            Dictionary with task creation result
+        
+        Example:
+            >>> copilot = CopilotCLI()
+            >>> result = copilot.create_agent_task(
+            ...     "Fix the failing tests in test_utils.py",
+            ...     base_branch="main"
+            ... )
+        """
+        try:
+            if not self.github_cli_path or not self.github_cli_path.exists():
+                return {
+                    "success": False,
+                    "error": "GitHub CLI not found. Please install gh first."
+                }
+            
+            logger.info(f"Creating agent task: {task_description[:100]}...")
+            
+            cmd = [str(self.github_cli_path), 'agent-task', 'create', task_description]
+            
+            if base_branch:
+                cmd.extend(['--base', base_branch])
+            
+            if follow:
+                cmd.append('--follow')
+            
+            if repo:
+                cmd.extend(['--repo', repo])
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=120
+            )
+            
+            if result.returncode == 0:
+                logger.info("Successfully created agent task")
+                return {
+                    "success": True,
+                    "message": "Agent task created successfully",
+                    "stdout": result.stdout,
+                    "stderr": result.stderr
+                }
+            else:
+                logger.error(f"Failed to create agent task: {result.stderr}")
+                return {
+                    "success": False,
+                    "error": result.stderr,
+                    "stdout": result.stdout
+                }
+        
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Agent task creation timed out after 120 seconds"
+            }
+        except Exception as e:
+            logger.error(f"Failed to create agent task: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    def list_agent_tasks(self, limit: int = 30, repo: Optional[str] = None) -> Dict[str, Any]:
+        """
+        List GitHub Copilot agent tasks.
+        
+        Args:
+            limit: Maximum number of tasks to list
+            repo: Repository in [HOST/]OWNER/REPO format (uses current repo if not provided)
+        
+        Returns:
+            Dictionary with list of agent tasks
+        """
+        try:
+            if not self.github_cli_path or not self.github_cli_path.exists():
+                return {
+                    "success": False,
+                    "error": "GitHub CLI not found. Please install gh first."
+                }
+            
+            cmd = [str(self.github_cli_path), 'agent-task', 'list', '--limit', str(limit)]
+            
+            if repo:
+                cmd.extend(['--repo', repo])
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                return {
+                    "success": True,
+                    "tasks": result.stdout,
+                    "stderr": result.stderr
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.stderr,
+                    "stdout": result.stdout
+                }
+        
+        except Exception as e:
+            logger.error(f"Failed to list agent tasks: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
+    
+    def view_agent_task(self, task_identifier: str, repo: Optional[str] = None) -> Dict[str, Any]:
+        """
+        View details of a GitHub Copilot agent task.
+        
+        Args:
+            task_identifier: Task identifier (PR number, session ID, or URL)
+            repo: Repository in [HOST/]OWNER/REPO format (uses current repo if not provided)
+        
+        Returns:
+            Dictionary with task details
+        """
+        try:
+            if not self.github_cli_path or not self.github_cli_path.exists():
+                return {
+                    "success": False,
+                    "error": "GitHub CLI not found. Please install gh first."
+                }
+            
+            cmd = [str(self.github_cli_path), 'agent-task', 'view', task_identifier]
+            
+            if repo:
+                cmd.extend(['--repo', repo])
+            
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=30
+            )
+            
+            if result.returncode == 0:
+                return {
+                    "success": True,
+                    "task": result.stdout,
+                    "stderr": result.stderr
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.stderr,
+                    "stdout": result.stdout
+                }
+        
+        except Exception as e:
+            logger.error(f"Failed to view agent task: {e}")
+            return {
+                "success": False,
+                "error": str(e)
+            }
 
 
 def install_copilot_cli(github_cli_path: Optional[str] = None, force: bool = False) -> Dict[str, Any]:

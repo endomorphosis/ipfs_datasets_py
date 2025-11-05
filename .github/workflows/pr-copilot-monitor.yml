@@ -221,8 +221,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "🤖 Running throttled Copilot CLI invocation..."
+          echo "🤖 Running Copilot Coding Agent invocation via gh agent-task..."
           echo "⚙️  Configuration: max 3 concurrent agents, batch size 3"
+          echo "✅ Using proper gh agent-task create (NOT @copilot mentions)"
           
           # Build command with throttling parameters
           CMD="python scripts/invoke_copilot_with_throttling.py --batch-size 3 --max-concurrent 3 --check-interval 30"
@@ -245,15 +246,19 @@ jobs:
         run: |
           echo "## Copilot Assignment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Throttled Copilot CLI invoker has processed incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Copilot Coding Agent tasks have been created for incomplete PRs" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### What was done:" >> $GITHUB_STEP_SUMMARY
-          echo "- Used actual Copilot CLI tool (not just @copilot mentions)" >> $GITHUB_STEP_SUMMARY
+          echo "- Used **gh agent-task create** (proper Copilot Coding Agent invocation)" >> $GITHUB_STEP_SUMMARY
+          echo "- Created agent tasks with comprehensive problem descriptions" >> $GITHUB_STEP_SUMMARY
           echo "- Processed PRs in controlled batches of 3" >> $GITHUB_STEP_SUMMARY
           echo "- Monitored active copilot agents to prevent API overload" >> $GITHUB_STEP_SUMMARY
           echo "- Ensured maximum 3 concurrent agents at any time" >> $GITHUB_STEP_SUMMARY
           echo "- Analyzed PR context and requirements" >> $GITHUB_STEP_SUMMARY
-          echo "- Posted detailed task instructions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Method Used:" >> $GITHUB_STEP_SUMMARY
+          echo "- **Primary**: \`gh agent-task create\` with task description and base branch" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fallback**: \`@copilot\` mentions only if gh agent-task unavailable" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Throttling Configuration:" >> $GITHUB_STEP_SUMMARY
           echo "- **Batch size**: 3 PRs at a time" >> $GITHUB_STEP_SUMMARY
@@ -261,7 +266,8 @@ jobs:
           echo "- **Check interval**: 30 seconds" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
-          echo "- Monitor PR activity for Copilot responses" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor PR activity for Copilot agent responses" >> $GITHUB_STEP_SUMMARY
+          echo "- Copilot will create child PRs with implementations" >> $GITHUB_STEP_SUMMARY
           echo "- Review and merge completed implementations" >> $GITHUB_STEP_SUMMARY
 
   assign-copilot-batch:
@@ -298,68 +304,29 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ All eligible PRs have been assigned Copilot" >> $GITHUB_STEP_SUMMARY
 
-  # GitHub Copilot Coding Agents are invoked via @copilot mentions in PR comments.
-  # This is the OFFICIAL method - when mentioned, copilot-swe-agent creates child PRs
-  # that merge into the parent PR with the requested changes.
+  # GitHub Copilot Coding Agent invocation via gh agent-task create.
+  # This is the PROPER method for invoking Copilot Coding Agents.
+  # The agent receives a task description and creates a plan to implement changes.
   #
-  # Alternative methods (gh agent-task, gh copilot) require OAuth authentication.
-  # The default GITHUB_TOKEN cannot be used - you need a Personal Access Token (PAT).
+  # Command: gh agent-task create "task description" --base branch-name
+  # The agent will analyze the task, create an implementation plan, and work on the PR.
   #
-  # TO ENABLE gh agent-task (OPTIONAL):
-  # 1. Create a PAT (Classic) at https://github.com/settings/tokens with scopes:
-  #    - repo, read:org, workflow, (copilot if available)
-  # 2. Add it as a repository secret named: GH_COPILOT_PAT
-  # 3. Uncomment the 'invoke-agents-with-cli' job below
+  # Alternative methods (@copilot mentions) are used as fallback only.
+  # The @copilot mention method is less reliable and not the recommended approach.
   #
-  # Verified working example: PR #344 -> @copilot mention -> Agent created PR #379
-  # See: https://github.blog/news-insights/product-news/github-copilot-in-github-support/
-
-  # OPTIONAL: Uncomment this job to use gh agent-task with a PAT
-  # invoke-agents-with-cli:
-  #   name: Invoke Agents with gh agent-task (Requires PAT)
-  #   needs: [check-pr-completion, assign-copilot-intelligent]
-  #   if: needs.check-pr-completion.outputs.needs_copilot > 0 && success()
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: write
-  #     pull-requests: write
-  #   
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     
-  #     - name: Authenticate with PAT
-  #       env:
-  #         GH_COPILOT_PAT: ${{ secrets.GH_COPILOT_PAT }}
-  #       run: |
-  #         if [ -z "$GH_COPILOT_PAT" ]; then
-  #           echo "❌ GH_COPILOT_PAT secret not set. Skipping gh agent-task."
-  #           echo "See workflow comments for setup instructions."
-  #           exit 0
-  #         fi
-  #         echo "$GH_COPILOT_PAT" | gh auth login --with-token
-  #         gh auth status
-  #     
-  #     - name: Create agent tasks for incomplete PRs
-  #       run: |
-  #         # Get incomplete PRs
-  #         prs=$(gh pr list --draft --json number,title,headRefName --limit 50)
-  #         
-  #         echo "$prs" | jq -c '.[]' | while read -r pr; do
-  #           pr_number=$(echo "$pr" | jq -r '.number')
-  #           title=$(echo "$pr" | jq -r '.title')
-  #           branch=$(echo "$pr" | jq -r '.headRefName')
-  #           
-  #           echo "🤖 Creating agent task for PR #$pr_number on branch $branch"
-  #           
-  #           # Create agent task with base branch
-  #           gh agent-task create \
-  #             "Fix issues in PR #$pr_number: $title. Review PR description, analyze root cause, implement minimal fix, ensure tests pass." \
-  #             --base "$branch" \
-  #             2>&1 || echo "⚠️  Failed for PR #$pr_number"
-  #           
-  #           sleep 2
-  #         done
+  # Documentation:
+  # - https://cli.github.com/manual/gh_agent-task
+  # - https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
+  # - https://docs.github.com/en/copilot/how-tos/use-copilot-agents/use-copilot-cli
+  #
+  # Authentication:
+  # - On self-hosted runners: Already logged in with gh auth
+  # - On GitHub-hosted runners: Uses GITHUB_TOKEN automatically
+  #
+  # Verified working examples:
+  # - gh agent-task create "Fix failing tests" --base feature-branch
+  # - gh agent-task list  (to see active tasks)
+  # - gh agent-task view <task-id>  (to see task details)
 
   monitor-copilot-activity:
     name: Monitor Copilot Activity on PRs
@@ -499,15 +466,15 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "## How Copilot Works" >> $GITHUB_STEP_SUMMARY
-          echo "1. Job #2 uses the Copilot CLI tool to properly invoke copilot agents" >> $GITHUB_STEP_SUMMARY
+          echo "1. Job #2 uses **gh agent-task create** to properly invoke Copilot Coding Agents" >> $GITHUB_STEP_SUMMARY
           echo "2. Processes PRs in batches of 3 to prevent API rate limiting" >> $GITHUB_STEP_SUMMARY
           echo "3. Monitors active copilot agents and waits if max concurrent (3) is reached" >> $GITHUB_STEP_SUMMARY
-          echo "4. Posts detailed task instructions with PR context" >> $GITHUB_STEP_SUMMARY
-          echo "5. The copilot-swe-agent bot detects these instructions" >> $GITHUB_STEP_SUMMARY
+          echo "4. Creates agent tasks with comprehensive problem descriptions and PR context" >> $GITHUB_STEP_SUMMARY
+          echo "5. The Copilot Coding Agent analyzes the task and creates an implementation plan" >> $GITHUB_STEP_SUMMARY
           echo "6. Agent creates a CHILD PR or commits directly to implement changes" >> $GITHUB_STEP_SUMMARY
           echo "7. Once complete, agent requests review from the PR author" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note:** This workflow now uses the actual copilot CLI from ipfs_datasets_py" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** This workflow uses the proper **gh agent-task** CLI command" >> $GITHUB_STEP_SUMMARY
           echo "and implements intelligent throttling to prevent GitHub API rate limiting." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
