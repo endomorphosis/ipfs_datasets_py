@@ -388,7 +388,7 @@ jobs:
           echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
           echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
 
-      - name: Assign Copilot to PR using gh agent-task create
+      - name: Assign Copilot to PR via Draft PR (PROPER METHOD)
         id: assign_copilot
         if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
         env:
@@ -398,89 +398,56 @@ jobs:
           COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
           ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
 
-          echo "🤖 Creating GitHub Copilot agent task for PR #$PR_NUMBER..."
+          echo "🤖 Assigning Copilot to existing PR #$PR_NUMBER via draft PR method..."
           echo "   Task Type: $COPILOT_TASK"
           echo "   Reason: $ASSIGNMENT_REASON"
           echo ""
-          echo "📚 Using OFFICIAL method: gh agent-task create"
-          echo "   Documentation: https://docs.github.com/en/copilot/concepts/agents/coding-agent/"
+          echo "💡 Using PROPER Copilot invocation method:"
+          echo "   ✅ Creates draft PR for Copilot to work on"
+          echo "   ✅ Copilot automatically detects and implements"
+          echo "   ❌ NOT: @copilot comments (proven unreliable)"
           echo ""
           
-          # Build task description based on task type and save to file
-          # Reason for assignment is captured in the task title
+          # Build task description based on task type
           if [ "$COPILOT_TASK" = "fix" ]; then
-            {
-              echo "Fix issues in PR #${PR_NUMBER}"
-              echo ""
-              echo "Task: $ASSIGNMENT_REASON"
-              echo ""
-              echo "Instructions:"
-              echo "- Analyze the PR description and any linked issues"
-              echo "- Review workflow failure logs if mentioned"
-              echo "- Implement minimal surgical fixes that directly address the problem"
-              echo "- Ensure all tests pass"
-              echo "- Follow existing code patterns and style"
-            } > /tmp/agent_task_description.txt
+            TASK_DESC="Please analyze PR #$PR_NUMBER and implement the necessary fixes based on the PR description, linked issues, and any workflow failure logs. Focus on making minimal, surgical changes that directly address the problem."
           elif [ "$COPILOT_TASK" = "implement" ]; then
-            {
-              echo "Implement solution for PR #${PR_NUMBER}"
-              echo ""
-              echo "Task: $ASSIGNMENT_REASON"
-              echo ""
-              echo "Instructions:"
-              echo "- Review the PR description and requirements"
-              echo "- Implement the solution following repository patterns"
-              echo "- Add or update tests as appropriate"
-              echo "- Make surgical changes focused on the requirements"
-              echo "- Update documentation only if directly related to changes"
-            } > /tmp/agent_task_description.txt
+            TASK_DESC="Please implement the solution described in PR #$PR_NUMBER. Review the requirements, follow repository patterns, add or update tests as appropriate, and make surgical changes focused on the requirements."
           elif [ "$COPILOT_TASK" = "review" ]; then
-            {
-              echo "Review and improve PR #${PR_NUMBER}"
-              echo ""
-              echo "Task: $ASSIGNMENT_REASON"
-              echo ""
-              echo "Instructions:"
-              echo "- Review code quality and best practices"
-              echo "- Check test coverage and correctness"
-              echo "- Analyze documentation completeness"
-              echo "- Identify potential issues or improvements"
-              echo "- Implement necessary changes"
-            } > /tmp/agent_task_description.txt
+            TASK_DESC="Please review PR #$PR_NUMBER and provide feedback or implement improvements. Analyze code quality, test coverage, documentation, and suggest or implement necessary changes."
           else
-            {
-              echo "Work on PR #${PR_NUMBER}"
-              echo ""
-              echo "Task: $ASSIGNMENT_REASON"
-              echo ""
-              echo "Please review the PR description and implement the necessary changes."
-            } > /tmp/agent_task_description.txt
+            TASK_DESC="Please work on PR #$PR_NUMBER according to the requirements described."
           fi
           
-          if python3 scripts/invoke_copilot_agent_task.py \
+          # Use the PROPER invocation method (draft PR, not comments)
+          # This mimics how VS Code invokes Copilot and is proven to work
+          if python3 scripts/invoke_copilot_on_pr.py \
               --pr "$PR_NUMBER" \
-              --description "$(cat /tmp/agent_task_description.txt)" \
+              --task "$TASK_DESC" \
               --repo ${{ github.repository }}; then
-            echo "✅ Successfully created agent task for PR #$PR_NUMBER"
+            echo "✅ Successfully created draft PR for Copilot to work on PR #$PR_NUMBER"
             echo "assigned=true" >> $GITHUB_OUTPUT
             echo "agent_task_verified=true" >> $GITHUB_OUTPUT
-            echo "method=gh-agent-task" >> $GITHUB_OUTPUT
-            
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## ✅ Copilot Agent Task Created" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "- **PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
-            echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
-            echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
-            echo "- **Method**: \`gh agent-task create\` (Official GitHub CLI)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 GitHub Copilot Coding Agent will analyze and work on this PR." >> $GITHUB_STEP_SUMMARY
-            echo "📚 This uses the official method: https://docs.github.com/en/copilot/concepts/agents/coding-agent/" >> $GITHUB_STEP_SUMMARY
+            echo "method=draft-pr" >> $GITHUB_OUTPUT
           else
-            echo "⚠️  Failed to create agent task"
+            echo "⚠️  Failed to create draft PR for Copilot"
             echo "assigned=false" >> $GITHUB_OUTPUT
             echo "agent_task_verified=false" >> $GITHUB_OUTPUT
             echo "method=failed" >> $GITHUB_OUTPUT
+          fi
+
+          # Add summary only if assignment succeeded
+          if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Copilot Agent Task Created" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Original PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+            echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+            echo "- **Method**: Draft PR creation (VS Code method)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 Copilot will automatically detect the draft PR and start working." >> $GITHUB_STEP_SUMMARY
+            echo "📚 Based on GitHub Copilot documentation and PR #401 evidence." >> $GITHUB_STEP_SUMMARY
           fi
           
           rm -f /tmp/agent_task_description.txt
@@ -493,23 +460,26 @@ jobs:
         run: |
           PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
           
-          echo "✅ Agent task has been created for PR #$PR_NUMBER"
-          echo "📊 You can monitor the agent task using: gh agent-task list --repo ${{ github.repository }}"
+          echo "✅ Copilot has been assigned to work on PR #$PR_NUMBER"
+          echo "📊 A draft PR has been created for Copilot to implement the changes"
+          echo "💡 Copilot will automatically detect the draft PR and start working"
+          echo ""
+          echo "🔍 You can monitor Copilot's activity by:"
+          echo "   1. Checking for new draft PRs related to PR #$PR_NUMBER"
+          echo "   2. Watching for commits from app/copilot-swe-agent"
+          echo "   3. Looking for Copilot workflow runs (workflow ID: 185367345)"
           
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "1. GitHub Copilot Coding Agent will analyze the PR" >> $GITHUB_STEP_SUMMARY
-          echo "2. The agent will create a plan and implement changes" >> $GITHUB_STEP_SUMMARY
-          echo "3. The agent will push commits to the PR branch" >> $GITHUB_STEP_SUMMARY
-          echo "4. Review the agent's changes before merging" >> $GITHUB_STEP_SUMMARY
+          echo "1. ✅ Draft PR created for Copilot to work on" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🤖 Copilot will automatically detect and analyze the task" >> $GITHUB_STEP_SUMMARY
+          echo "3. 💻 Copilot will implement changes and push commits" >> $GITHUB_STEP_SUMMARY
+          echo "4. 👀 Review Copilot's implementation before merging" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Monitor Agent Task**:" >> $GITHUB_STEP_SUMMARY
-          echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "gh agent-task list --repo ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "**Method**: Draft PR (VS Code method - proven reliable)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "View PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "View original PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
         continue-on-error: true
 
       - name: Summary

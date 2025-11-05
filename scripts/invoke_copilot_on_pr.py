@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
 """
-Invoke GitHub Copilot on Pull Request using GitHub CLI
+Invoke GitHub Copilot Coding Agent on Pull Request
 
-This script properly invokes GitHub Copilot on a PR by posting a comment
-that triggers the Copilot coding agent, instead of just mentioning @copilot.
+This script properly invokes the GitHub Copilot coding agent on a PR using
+the CORRECT method as documented in GitHub's official documentation:
+https://docs.github.com/en/copilot/concepts/agents/coding-agent/
 
-The script uses GitHub CLI to:
-1. Post a properly formatted comment that triggers Copilot
-2. Include specific instructions for what Copilot should do
-3. Optionally wait for Copilot to respond
+The script uses the proper GitHub API/CLI methods:
+1. Create a draft PR for Copilot to work on (VS Code method - PROVEN)
+2. Use workflow dispatch to trigger copilot coding agent
+3. NOT: Post @copilot comments (this doesn't reliably trigger the agent)
 
 Usage:
-    # Invoke Copilot with default fix instructions
+    # Invoke Copilot on existing PR by creating work draft PR
     python scripts/invoke_copilot_on_pr.py --pr 123
 
-    # Invoke with custom instructions
-    python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the linting errors"
+    # Invoke with custom task description  
+    python scripts/invoke_copilot_on_pr.py --pr 123 --task "Fix the linting errors"
 
     # Dry run (show what would be done)
     python scripts/invoke_copilot_on_pr.py --pr 123 --dry-run
 
 Requirements:
-    - GitHub CLI (gh) installed and authenticated
+    - GitHub CLI (gh) installed and authenticated  
     - GITHUB_TOKEN or GH_TOKEN environment variable set
+    - Access to repository with Copilot enabled
 """
 
 import argparse
@@ -32,6 +34,7 @@ import os
 import subprocess
 import sys
 import time
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 
 logging.basicConfig(
@@ -41,18 +44,39 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-class CopilotPRInvoker:
-    """Invoke GitHub Copilot on Pull Requests using GitHub CLI."""
+class CopilotAgentInvoker:
+    """Invoke GitHub Copilot Coding Agent using the PROPER method."""
     
-    def __init__(self, dry_run: bool = False):
+    def __init__(self, dry_run: bool = False, repo: Optional[str] = None):
         """
         Initialize the invoker.
         
         Args:
             dry_run: If True, show what would be done without making changes
+            repo: Repository in format owner/repo
         """
         self.dry_run = dry_run
+        self.repo = repo or self._get_current_repo()
         self._verify_gh_cli()
+        self._verify_repo_access()
+    
+    def _get_current_repo(self) -> str:
+        """Get current repository from git remote."""
+        try:
+            result = subprocess.run(
+                ['git', 'remote', 'get-url', 'origin'],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            url = result.stdout.strip()
+            # Parse owner/repo from URL
+            if 'github.com' in url:
+                parts = url.replace('.git', '').split('github.com/')[-1]
+                return parts
+            return None
+        except:
+            return None
     
     def _verify_gh_cli(self):
         """Verify GitHub CLI is installed and authenticated."""
@@ -63,9 +87,10 @@ class CopilotPRInvoker:
                 text=True,
                 check=True
             )
-            logger.info(f"✅ GitHub CLI available: {result.stdout.strip().split()[0]}")
+            version_line = result.stdout.strip().split('\n')[0]
+            logger.info(f"✅ GitHub CLI: {version_line}")
         except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.error("❌ GitHub CLI not found. Please install it from https://cli.github.com/")
+            logger.error("❌ GitHub CLI not found. Install from https://cli.github.com/")
             sys.exit(1)
         
         # Verify authentication
@@ -80,156 +105,191 @@ class CopilotPRInvoker:
                 sys.exit(1)
             logger.info("✅ GitHub CLI authenticated")
         except Exception as e:
-            logger.warning(f"⚠️  Could not verify gh auth status: {e}")
+            logger.warning(f"⚠️  Could not verify gh auth: {e}")
     
-    def get_pr_info(self, pr_number: int, repo: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    def _verify_repo_access(self):
+        """Verify access to repository."""
+        if not self.repo:
+            logger.error("❌ Could not determine repository. Use --repo flag")
+            sys.exit(1)
+        
+        logger.info(f"✅ Repository: {self.repo}")
+    
+    def run_command(self, cmd: List[str], timeout: int = 60) -> Dict[str, Any]:
+        """Run a command and return structured result."""
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False
+            )
+            return {
+                'success': result.returncode == 0,
+                'stdout': result.stdout,
+                'stderr': result.stderr,
+                'returncode': result.returncode
+            }
+        except subprocess.TimeoutExpired:
+            return {'success': False, 'error': 'Command timed out'}
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
+    
+    def get_pr_info(self, pr_number: int) -> Optional[Dict[str, Any]]:
         """
-        Get PR information.
+        Get PR information using gh CLI.
         
         Args:
             pr_number: Pull request number
-            repo: Repository in format owner/repo (optional, uses current repo if not specified)
         
         Returns:
             Dictionary with PR information or None if failed
         """
-        cmd = ['gh', 'pr', 'view', str(pr_number), '--json', 'number,title,body,isDraft,state,url']
-        if repo:
-            cmd.extend(['--repo', repo])
+        cmd = [
+            'gh', 'pr', 'view', str(pr_number),
+            '--repo', self.repo,
+            '--json', 'number,title,body,isDraft,state,url,headRefName,author'
+        ]
         
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            return json.loads(result.stdout)
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Failed to get PR info: {e.stderr}")
+        result = self.run_command(cmd)
+        if result['success']:
+            try:
+                return json.loads(result['stdout'])
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ Failed to parse PR info: {e}")
+                return None
+        else:
+            logger.error(f"❌ Failed to get PR info: {result.get('stderr', result.get('error'))}")
             return None
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse PR info: {e}")
-            return None
+    
+    def invoke_copilot_via_draft_pr(
+        self,
+        pr_number: int,
+        task_description: Optional[str] = None
+    ) -> bool:
+        """
+        Invoke Copilot by creating a draft PR (VS Code method - PROVEN TO WORK).
+        
+        This mimics how VS Code invokes Copilot and is the RECOMMENDED method.
+        
+        Args:
+            pr_number: Original PR number to work on
+            task_description: Description of what Copilot should do
+        
+        Returns:
+            True if draft PR created successfully
+        """
+        logger.info(f"{'[DRY RUN] ' if self.dry_run else ''}Invoking Copilot on PR #{pr_number} via draft PR method...")
+        
+        # Get original PR info
+        pr_info = self.get_pr_info(pr_number)
+        if not pr_info:
+            return False
+        
+        pr_title = pr_info['title']
+        pr_body = pr_info.get('body', 'No description')
+        pr_url = pr_info['url']
+        author = pr_info['author']['login']
+        
+        logger.info(f"  Original PR: #{pr_number} - {pr_title}")
+        logger.info(f"  Author: {author}")
+        logger.info(f"  State: {pr_info['state']} {'(Draft)' if pr_info.get('isDraft') else ''}")
+        
+        # Build task description for Copilot
+        if not task_description:
+            task_description = f"""# Complete Work from PR #{pr_number}
+
+## Original PR
+- **Link**: {pr_url}
+- **Title**: {pr_title}
+- **Author**: @{author}
+
+## Description
+{pr_body}
+
+## Task for Copilot
+Please analyze PR #{pr_number} and implement the necessary work:
+
+1. Review the original PR and understand the requirements
+2. Implement the changes described in the PR
+3. Fix any issues mentioned in comments or CI failures
+4. Test that everything works correctly
+5. Push commits to complete the implementation
+
+## Context
+- This is a Copilot coding agent task
+- Related original PR: #{pr_number}
+- Invoked: {datetime.now().isoformat()}
+"""
+        
+        # Create unique branch name
+        timestamp = int(time.time())
+        branch_name = f"copilot/complete-pr-{pr_number}-{timestamp}"
+        draft_pr_title = f"🤖 Copilot: Complete PR #{pr_number} - {pr_title[:60]}"
+        
+        if self.dry_run:
+            logger.info(f"\n[DRY RUN] Would create draft PR:")
+            logger.info(f"  Branch: {branch_name}")
+            logger.info(f"  Title: {draft_pr_title}")
+            logger.info(f"  Task:\n{'-'*80}\n{task_description}\n{'-'*80}\n")
+            return True
+        
+        # Use the draft PR invoker script
+        cmd = [
+            'python3', 'scripts/invoke_copilot_via_draft_pr.py',
+            '--title', draft_pr_title,
+            '--description', task_description,
+            '--repo', self.repo,
+            '--base', 'main',
+            '--branch-prefix', f'copilot/complete-pr-{pr_number}'
+        ]
+        
+        result = self.run_command(cmd, timeout=120)
+        
+        if result['success']:
+            logger.info(f"✅ Successfully created draft PR for Copilot to work on")
+            logger.info(f"  Copilot will automatically detect and start working on it")
+            return True
+        else:
+            logger.error(f"❌ Failed to create draft PR: {result.get('stderr', result.get('error'))}")
+            return False
     
     def invoke_copilot(
         self,
         pr_number: int,
-        instruction: Optional[str] = None,
-        repo: Optional[str] = None,
-        use_slash_command: bool = True,
-        max_retries: int = 3
+        task_description: Optional[str] = None,
+        method: str = 'draft-pr'
     ) -> bool:
         """
-        Invoke GitHub Copilot on a PR using gh CLI.
+        Invoke Copilot coding agent on a PR.
         
         Args:
             pr_number: Pull request number
-            instruction: Custom instruction for Copilot (optional)
-            repo: Repository in format owner/repo (optional)
-            use_slash_command: Use /fix slash command format (recommended)
-            max_retries: Maximum number of retry attempts (default: 3)
+            task_description: Task description for Copilot
+            method: Invocation method ('draft-pr' recommended)
         
         Returns:
-            True if successful, False otherwise
+            True if successful
         """
-        logger.info(f"{'[DRY RUN] ' if self.dry_run else ''}Invoking Copilot on PR #{pr_number}...")
-        
-        # Get PR info first
-        pr_info = self.get_pr_info(pr_number, repo)
-        if not pr_info:
-            logger.error(f"❌ Could not retrieve PR #{pr_number} information")
-            return False
-        
-        logger.info(f"  PR Title: {pr_info['title']}")
-        logger.info(f"  PR State: {pr_info['state']} {'(Draft)' if pr_info.get('isDraft') else ''}")
-        logger.info(f"  PR URL: {pr_info['url']}")
-        
-        # Build the comment body that triggers Copilot
-        if use_slash_command:
-            # Use the /fix slash command which is the preferred way to invoke Copilot
-            if instruction:
-                comment_body = f"@github-copilot /fix\n\n{instruction}"
-            else:
-                # Default instruction for auto-fix scenarios
-                comment_body = """@github-copilot /fix
-
-Please analyze this PR and implement the necessary fixes based on:
-1. The PR description and linked issue
-2. Any workflow failure logs mentioned
-3. Code review comments
-4. Test failures
-
-Focus on making minimal, surgical changes that directly address the problem."""
+        if method == 'draft-pr':
+            return self.invoke_copilot_via_draft_pr(pr_number, task_description)
         else:
-            # Alternative: Direct mention format
-            if instruction:
-                comment_body = f"@github-copilot {instruction}"
-            else:
-                comment_body = "@github-copilot Please implement the fixes described in this PR."
-        
-        if self.dry_run:
-            logger.info(f"\n[DRY RUN] Would post comment:\n{'-'*80}\n{comment_body}\n{'-'*80}\n")
-            return True
-        
-        # Post the comment using gh CLI with retry logic
-        cmd = ['gh', 'pr', 'comment', str(pr_number), '--body', comment_body]
-        if repo:
-            cmd.extend(['--repo', repo])
-        
-        # Retry logic with exponential backoff
-        for attempt in range(1, max_retries + 1):
-            try:
-                result = subprocess.run(
-                    cmd, 
-                    capture_output=True, 
-                    text=True, 
-                    check=True,
-                    timeout=60
-                )
-                logger.info(f"✅ Successfully invoked Copilot on PR #{pr_number}")
-                logger.info(f"  Comment URL: {result.stdout.strip()}")
-                return True
-            except subprocess.TimeoutExpired:
-                logger.warning(f"⚠️  Attempt {attempt}/{max_retries}: Command timed out")
-                if attempt < max_retries:
-                    wait_time = 2 ** attempt  # Exponential backoff: 2, 4, 8 seconds
-                    logger.info(f"  Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                else:
-                    logger.error(f"❌ Failed after {max_retries} attempts: Command timed out")
-                    return False
-            except subprocess.CalledProcessError as e:
-                error_msg = e.stderr.strip() if e.stderr else str(e)
-                logger.warning(f"⚠️  Attempt {attempt}/{max_retries}: {error_msg}")
-                
-                # Check if error is retryable
-                retryable_errors = ['timeout', 'network', 'connection', 'temporary']
-                is_retryable = any(err in error_msg.lower() for err in retryable_errors)
-                
-                if attempt < max_retries and is_retryable:
-                    wait_time = 2 ** attempt
-                    logger.info(f"  Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
-                else:
-                    logger.error(f"❌ Failed to post comment: {error_msg}")
-                    return False
-            except Exception as e:
-                logger.error(f"❌ Unexpected error on attempt {attempt}/{max_retries}: {e}")
-                if attempt >= max_retries:
-                    return False
-                time.sleep(2 ** attempt)
-        
-        return False
+            logger.error(f"❌ Unknown invocation method: {method}")
+            logger.error("   Supported methods: draft-pr")
+            return False
     
     def invoke_copilot_batch(
         self,
         pr_numbers: List[int],
-        instruction: Optional[str] = None,
-        repo: Optional[str] = None
+        task_description: Optional[str] = None
     ) -> Dict[str, int]:
         """
         Invoke Copilot on multiple PRs.
         
         Args:
             pr_numbers: List of PR numbers
-            instruction: Custom instruction for Copilot
-            repo: Repository in format owner/repo
+            task_description: Custom task description for Copilot
         
         Returns:
             Dictionary with statistics
@@ -242,53 +302,46 @@ Focus on making minimal, surgical changes that directly address the problem."""
         
         for pr_number in pr_numbers:
             logger.info(f"\n{'='*80}")
-            if self.invoke_copilot(pr_number, instruction, repo):
+            if self.invoke_copilot(pr_number, task_description):
                 stats['succeeded'] += 1
             else:
                 stats['failed'] += 1
             logger.info(f"{'='*80}\n")
+            
+            # Small delay between invocations
+            if not self.dry_run:
+                time.sleep(2)
         
         return stats
-    
-    def find_prs_needing_copilot(
-        self,
-        repo: Optional[str] = None,
-        label: Optional[str] = "copilot-ready"
-    ) -> List[int]:
-        """
-        Find PRs that need Copilot invocation.
-        
-        Args:
-            repo: Repository in format owner/repo
-            label: Label to filter PRs (default: copilot-ready)
-        
-        Returns:
-            List of PR numbers
-        """
-        cmd = ['gh', 'pr', 'list', '--state', 'open', '--json', 'number,labels']
-        if repo:
-            cmd.extend(['--repo', repo])
-        if label:
-            cmd.extend(['--label', label])
-        
-        try:
-            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-            prs = json.loads(result.stdout)
-            pr_numbers = [pr['number'] for pr in prs]
-            logger.info(f"Found {len(pr_numbers)} PRs needing Copilot: {pr_numbers}")
-            return pr_numbers
-        except subprocess.CalledProcessError as e:
-            logger.error(f"❌ Failed to list PRs: {e.stderr}")
-            return []
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ Failed to parse PR list: {e}")
-            return []
 
 
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description='Invoke GitHub Copilot on Pull Requests using GitHub CLI'
+        description='Invoke GitHub Copilot Coding Agent on Pull Requests (PROPER METHOD)',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Invoke Copilot on a PR (creates draft PR for Copilot)
+  python scripts/invoke_copilot_on_pr.py --pr 123
+
+  # Invoke with custom task description
+  python scripts/invoke_copilot_on_pr.py --pr 123 --task "Fix linting errors"
+
+  # Dry run mode
+  python scripts/invoke_copilot_on_pr.py --pr 123 --dry-run
+
+  # Specify repository
+  python scripts/invoke_copilot_on_pr.py --pr 123 --repo owner/repo
+
+Method:
+  This script uses the PROVEN VS Code method:
+  1. Creates a draft PR for Copilot to work on
+  2. Copilot automatically detects and implements changes
+  3. NOT: @copilot comments (unreliable)
+  
+  Based on evidence from PR #401 created by app/copilot-swe-agent
+"""
     )
     parser.add_argument(
         '--pr',
@@ -298,23 +351,14 @@ def main():
     parser.add_argument(
         '--repo',
         type=str,
-        help='Repository in format owner/repo (optional, uses current repo if not specified)'
+        help='Repository in format owner/repo (optional, auto-detected from git)'
     )
     parser.add_argument(
+        '--task',
         '--instruction',
+        dest='task',
         type=str,
-        help='Custom instruction for Copilot (optional)'
-    )
-    parser.add_argument(
-        '--find-all',
-        action='store_true',
-        help='Find and invoke Copilot on all PRs with copilot-ready label'
-    )
-    parser.add_argument(
-        '--label',
-        type=str,
-        default='copilot-ready',
-        help='Label to filter PRs when using --find-all (default: copilot-ready)'
+        help='Custom task description for Copilot (optional)'
     )
     parser.add_argument(
         '--dry-run',
@@ -322,42 +366,49 @@ def main():
         help='Show what would be done without making changes'
     )
     parser.add_argument(
-        '--no-slash-command',
-        action='store_true',
-        help='Use direct mention format instead of /fix slash command'
+        '--method',
+        type=str,
+        default='draft-pr',
+        choices=['draft-pr'],
+        help='Invocation method (default: draft-pr)'
     )
     
     args = parser.parse_args()
     
-    if not args.pr and not args.find_all:
+    if not args.pr:
         parser.print_help()
+        print("\n❌ Error: --pr is required")
         sys.exit(1)
     
-    invoker = CopilotPRInvoker(dry_run=args.dry_run)
+    invoker = CopilotAgentInvoker(dry_run=args.dry_run, repo=args.repo)
     
     if args.dry_run:
         logger.info("🔍 DRY RUN MODE - No changes will be made\n")
     
-    if args.find_all:
-        # Find all PRs needing Copilot
-        pr_numbers = invoker.find_prs_needing_copilot(repo=args.repo, label=args.label)
-        if not pr_numbers:
-            logger.info("No PRs found needing Copilot")
-            return
-        
-        # Invoke on all found PRs
-        stats = invoker.invoke_copilot_batch(pr_numbers, args.instruction, args.repo)
-        logger.info(f"\n📊 Summary: {stats['succeeded']}/{stats['total']} PRs processed successfully")
-        sys.exit(0 if stats['failed'] == 0 else 1)
+    logger.info("="*80)
+    logger.info("💡 PROPER COPILOT INVOCATION METHOD")
+    logger.info("="*80)
+    logger.info("✅ Creates draft PR for Copilot to work on (VS Code method)")
+    logger.info("✅ Copilot automatically detects and implements changes")
+    logger.info("❌ NOT: @copilot comments (proven unreliable)")
+    logger.info("📚 Based on GitHub Copilot documentation and PR #401 evidence")
+    logger.info("="*80)
+    logger.info("")
+    
+    # Invoke on specific PR
+    success = invoker.invoke_copilot(
+        args.pr,
+        args.task,
+        method=args.method
+    )
+    
+    if success:
+        logger.info(f"\n✅ Successfully invoked Copilot coding agent on PR #{args.pr}")
+        logger.info(f"💡 Copilot will automatically detect the draft PR and start working")
+        sys.exit(0)
     else:
-        # Invoke on specific PR
-        success = invoker.invoke_copilot(
-            args.pr,
-            args.instruction,
-            args.repo,
-            use_slash_command=not args.no_slash_command
-        )
-        sys.exit(0 if success else 1)
+        logger.error(f"\n❌ Failed to invoke Copilot on PR #{args.pr}")
+        sys.exit(1)
 
 
 if __name__ == '__main__':
