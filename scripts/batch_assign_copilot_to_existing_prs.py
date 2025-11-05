@@ -23,6 +23,32 @@ Usage:
     python scripts/batch_assign_copilot_to_existing_prs.py --prs 123 --instruction "Fix the failing tests"
 """
 
+# Instruction templates for different PR types
+INSTRUCTION_TEMPLATES = {
+    'draft': """@github-copilot /fix
+
+This draft PR needs implementation. Please:
+
+1. Review the PR description and any linked issues
+2. Understand the requirements and acceptance criteria
+3. Implement the solution following repository patterns and coding standards
+4. Add or update tests as appropriate
+5. Ensure all tests pass
+6. Make minimal, surgical changes focused on the requirements
+
+Follow the existing code style and avoid modifying unrelated code.""",
+    
+    'incomplete': """@github-copilot /fix
+
+Please analyze this PR and implement any necessary improvements based on:
+1. The PR description and objectives
+2. Code review feedback (if any)
+3. Test failures (if any)
+4. Best practices and code quality
+
+Focus on making minimal, surgical changes that directly address the issues."""
+}
+
 import argparse
 import json
 import logging
@@ -146,30 +172,11 @@ class BatchCopilotAssigner:
         if instruction:
             comment_body = f"@github-copilot /fix\n\n{instruction}"
         else:
-            # Default instruction for incomplete PRs
+            # Use appropriate template based on PR status
             if pr_info.get('isDraft'):
-                comment_body = """@github-copilot /fix
-
-This draft PR needs implementation. Please:
-
-1. Review the PR description and any linked issues
-2. Understand the requirements and acceptance criteria
-3. Implement the solution following repository patterns and coding standards
-4. Add or update tests as appropriate
-5. Ensure all tests pass
-6. Make minimal, surgical changes focused on the requirements
-
-Follow the existing code style and avoid modifying unrelated code."""
+                comment_body = INSTRUCTION_TEMPLATES['draft']
             else:
-                comment_body = """@github-copilot /fix
-
-Please analyze this PR and implement any necessary improvements based on:
-1. The PR description and objectives
-2. Code review feedback (if any)
-3. Test failures (if any)
-4. Best practices and code quality
-
-Focus on making minimal, surgical changes that directly address the issues."""
+                comment_body = INSTRUCTION_TEMPLATES['incomplete']
         
         if self.dry_run:
             logger.info(f"\n[DRY RUN] Would post comment on PR #{pr_number}:")
@@ -279,11 +286,21 @@ def main():
     
     args = parser.parse_args()
     
-    # Parse PR numbers
+    # Parse PR numbers with better error messages
     try:
-        pr_numbers = [int(pr.strip()) for pr in args.prs.split(',') if pr.strip()]
-    except ValueError as e:
-        logger.error(f"❌ Invalid PR numbers format: {e}")
+        pr_list = [pr.strip() for pr in args.prs.split(',') if pr.strip()]
+        pr_numbers = []
+        for pr_str in pr_list:
+            try:
+                pr_num = int(pr_str)
+                if pr_num <= 0:
+                    raise ValueError(f"PR number must be positive, got: {pr_num}")
+                pr_numbers.append(pr_num)
+            except ValueError as e:
+                logger.error(f"❌ Invalid PR number '{pr_str}': {e}")
+                sys.exit(1)
+    except Exception as e:
+        logger.error(f"❌ Failed to parse PR numbers: {e}")
         sys.exit(1)
     
     if not pr_numbers:

@@ -225,20 +225,20 @@ jobs:
           echo "📋 PRs to process: ${{ needs.check-pr-completion.outputs.incomplete_prs }}"
           echo "⚙️  Method: PR comments with @github-copilot (correct for existing PRs)"
           
-          # Use the batch assignment script for existing PRs
-          CMD="python scripts/batch_assign_copilot_to_existing_prs.py --prs \"${{ needs.check-pr-completion.outputs.incomplete_prs }}\" --batch-delay 5"
-          
-          # Add dry-run flag if specified
-          if [ "${{ github.event.inputs.dry_run }}" == "true" ]; then
-            CMD="$CMD --dry-run"
+          # Validate and sanitize PR numbers (must be comma-separated integers)
+          PR_NUMBERS="${{ needs.check-pr-completion.outputs.incomplete_prs }}"
+          if ! echo "$PR_NUMBERS" | grep -qE '^[0-9]+(,[0-9]+)*$'; then
+            echo "❌ Invalid PR numbers format: $PR_NUMBERS"
+            echo "Expected comma-separated integers"
+            exit 1
           fi
           
-          # Add repo specification
-          CMD="$CMD --repo ${{ github.repository }}"
-          
-          # Execute the command
-          echo "Executing: $CMD"
-          $CMD
+          # Use the batch assignment script for existing PRs with validated input
+          python3 scripts/batch_assign_copilot_to_existing_prs.py \
+            --prs "$PR_NUMBERS" \
+            --batch-delay 5 \
+            --repo ${{ github.repository }} \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }}
       
       - name: Generate Assignment Summary
         env:
