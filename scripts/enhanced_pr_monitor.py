@@ -33,6 +33,8 @@ from pathlib import Path
 import logging
 
 # Try to import the copilot CLI utility
+# Note: This import pattern is preserved for backwards compatibility with existing deployment,
+# but ideally the package should be properly installed rather than using sys.path manipulation
 try:
     script_dir = Path(__file__).parent.parent
     if str(script_dir) not in sys.path:
@@ -42,7 +44,7 @@ try:
     COPILOT_CLI_AVAILABLE = True
 except ImportError:
     COPILOT_CLI_AVAILABLE = False
-    logging.warning("⚠️  CopilotCLI utility not available, using direct gh commands")
+    # Note: logging is configured later in the class, so we can't log here
 
 
 class EnhancedPRMonitor:
@@ -507,9 +509,10 @@ provide a detailed explanation of blockers and recommend next steps. Human inter
         if COPILOT_CLI_AVAILABLE:
             try:
                 copilot = CopilotCLI()
+                # Note: base_branch should be the target branch (base), not the PR's source branch (head)
                 result = copilot.create_agent_task(
                     task_description=task_description,
-                    base_branch=head_branch,
+                    base_branch=base_branch,  # Use the PR's base branch (target)
                     follow=False
                 )
                 
@@ -522,10 +525,11 @@ provide a detailed explanation of blockers and recommend next steps. Human inter
                 self.logger.warning(f"⚠️  CopilotCLI exception: {e}")
         
         # Method 2: Direct gh agent-task create command
+        # Note: Use base_branch (target branch) not head_branch (source branch)
         cmd = [
             'gh', 'agent-task', 'create',
             task_description,
-            '--base', head_branch
+            '--base', base_branch  # Use the PR's base branch (target)
         ]
         
         result = self.run_command(cmd)
@@ -540,7 +544,7 @@ provide a detailed explanation of blockers and recommend next steps. Human inter
             # Check if gh agent-task is not available
             if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
                 self.logger.error("gh agent-task command not available on this system")
-                self.logger.error("💡 Please update GitHub CLI: gh extension upgrade gh-copilot")
+                self.logger.error("💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
             
             return False
     

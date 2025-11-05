@@ -274,7 +274,7 @@ Please provide feedback and suggestions for improvement."""
         # Check if gh agent-task is not available
         if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
             print(f"   ❌ gh agent-task command not available on this system")
-            print(f"   💡 Please update GitHub CLI: gh extension upgrade gh-copilot")
+            print(f"   💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
             print(f"   📚 See: https://docs.github.com/en/copilot/concepts/agents/coding-agent/")
         else:
             print(f"   ❌ Failed to create agent task: {error_msg}")

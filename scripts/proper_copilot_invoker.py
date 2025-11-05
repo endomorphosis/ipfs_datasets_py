@@ -29,7 +29,8 @@ try:
     COPILOT_CLI_AVAILABLE = True
 except ImportError:
     COPILOT_CLI_AVAILABLE = False
-    print("⚠️  CopilotCLI utility not available, using direct gh commands")
+    import logging
+    logging.warning("⚠️  CopilotCLI utility not available, using direct gh commands")
 
 
 class ProperCopilotInvoker:
@@ -168,9 +169,10 @@ class ProperCopilotInvoker:
         if COPILOT_CLI_AVAILABLE:
             try:
                 copilot = CopilotCLI()
+                # Note: base_branch should be the target branch (usually main), not the PR's head branch
                 result = copilot.create_agent_task(
                     task_description=task_description,
-                    base_branch=head_branch,
+                    base_branch=base_branch,  # Use the PR's base branch (target)
                     follow=False
                 )
                 
@@ -188,10 +190,11 @@ class ProperCopilotInvoker:
                 # Fall through to direct gh command
         
         # Method 2: Direct gh agent-task create command
+        # Note: Use base_branch (target branch) not head_branch (source branch)
         result = self.run_command([
             'gh', 'agent-task', 'create',
             task_description,
-            '--base', head_branch
+            '--base', base_branch
         ], timeout=60)
         
         if result['success']:
@@ -207,7 +210,7 @@ class ProperCopilotInvoker:
             # Check if gh agent-task is not available
             if 'unknown command' in error_msg.lower() or 'not found' in error_msg.lower():
                 print(f"   ⚠️  gh agent-task command not available on this system")
-                print(f"   💡 Please ensure GitHub CLI is updated: gh extension upgrade gh-copilot")
+                print(f"   💡 Install/update GitHub CLI extension: gh extension install github/gh-copilot")
             
             return False
     
