@@ -149,7 +149,7 @@ jobs:
           # Verify gh works
           gh --version
 
-      - name: Run Enhanced PR Monitor
+      - name: Run Draft PR Copilot Invoker
         id: monitor
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -159,14 +159,14 @@ jobs:
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
           NOTIFICATION_USER="${{ github.repository_owner }}"
           
-          echo "🔍 Issue-Based PR Monitor Configuration:"
+          echo "🔍 Draft PR Copilot Invoker Configuration:"
           echo "  Notification User: $NOTIFICATION_USER"
           echo "  Dry Run: $DRY_RUN"
-          echo "  Max Issues: 5"
+          echo "  Max Draft PRs: 5"
           echo ""
           
-          # Build command using the NEW issue-based monitor
-          CMD="python3 scripts/issue_based_pr_monitor.py --notification-user $NOTIFICATION_USER --max-issues 5"
+          # Build command using the NEW draft PR invoker (VS Code method)
+          CMD="python3 scripts/draft_pr_copilot_invoker.py --notification-user $NOTIFICATION_USER --max-drafts 5"
           
           if [ "$DRY_RUN" = "true" ]; then
             CMD="$CMD --dry-run"
@@ -177,17 +177,17 @@ jobs:
           
           # Run the monitor and capture output
           if eval "$CMD" 2>&1 | tee monitor_output.log; then
-            echo "✅ Issue-Based PR Monitor completed successfully"
+            echo "✅ Draft PR Copilot Invoker completed successfully"
             MONITOR_SUCCESS=true
           else
-            echo "❌ Issue-Based PR Monitor failed"
+            echo "❌ Draft PR Copilot Invoker failed"
             MONITOR_SUCCESS=false
           fi
           
           # Extract metrics from output
           TOTAL_PRS=$(grep "Total draft PRs:" monitor_output.log | sed -n 's/.*Total draft PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           PROCESSED_PRS=$(grep "PRs needing work:" monitor_output.log | sed -n 's/.*PRs needing work:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
-          ASSIGNED_COPILOT=$(grep "Issues created:" monitor_output.log | sed -n 's/.*Issues created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          ASSIGNED_COPILOT=$(grep "Draft PRs created:" monitor_output.log | sed -n 's/.*Draft PRs created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           ERRORS=$(grep "Errors:" monitor_output.log | sed -n 's/.*Errors:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           
           # Set outputs
@@ -199,11 +199,11 @@ jobs:
           echo "success=$MONITOR_SUCCESS" >> $GITHUB_OUTPUT
           
           echo ""
-          echo "📊 Summary: $TOTAL_PRS total, $PROCESSED_PRS need work, $ASSIGNED_COPILOT issues created"
+          echo "📊 Summary: $TOTAL_PRS total, $PROCESSED_PRS need work, $ASSIGNED_COPILOT draft PRs created"
           
           # Exit with error if monitor failed
           if [ "$MONITOR_SUCCESS" != "true" ]; then
-            echo "Issue-Based PR Monitor failed - check logs above"
+            echo "Draft PR Copilot Invoker failed - check logs above"
             exit 1
           fi
 
@@ -285,12 +285,12 @@ jobs:
           
           echo "### 🎯 What This Does" >> $GITHUB_STEP_SUMMARY
           echo "1. **Monitors Draft PRs**: Checks all open draft pull requests" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Creates Issues**: Creates GitHub issues for incomplete PRs" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Triggers Copilot**: Copilot **automatically** creates PRs to fix issues" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Creates Draft PRs**: Creates draft PRs for Copilot to work on (VS Code method)" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Triggers Copilot**: Copilot **automatically** detects and works on draft PRs" >> $GITHUB_STEP_SUMMARY
           echo "4. **Avoids @copilot Comments**: Does NOT use @copilot comments (proven not to work)" >> $GITHUB_STEP_SUMMARY
-          echo "5. **Issue-Based Invocation**: Uses the **correct** method based on evidence" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Draft PR Invocation**: Uses VS Code method based on PR #401" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **How Copilot Works**: Create Issue → Copilot Creates PR (NOT: Comment on PR)" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **How Copilot Works**: Create Draft PR → Copilot Detects → Copilot Implements (NOT: Comment on PR)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.monitor.outputs.errors }}" = "0" ]; then

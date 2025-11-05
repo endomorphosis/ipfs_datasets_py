@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
-Issue-Based PR Monitor - Proper Copilot Invocation
+Draft PR Monitor - Proper Copilot Invocation (VS Code Method)
 
-This script monitors incomplete PRs and creates ISSUES (not PR comments) to
-trigger GitHub Copilot coding agents. This is the CORRECT method based on evidence:
+This script monitors incomplete PRs and creates DRAFT PRs (not issues) to
+trigger GitHub Copilot coding agents. This is the method VS Code uses.
 
-✅ WORKING: Issue #339 → Copilot created PR #382  
-❌ NOT WORKING: @copilot comments on PRs → No response
+How it works:
+1. Monitors open draft PRs that need completion
+2. For each incomplete PR, creates a NEW draft PR with task description
+3. Copilot detects the draft PR and starts working on it
+4. Copilot pushes commits to complete the work
 
-The script:
-1. Monitors open draft PRs
-2. Analyzes PR completion status
-3. Creates issues describing the work needed
-4. Copilot automatically creates PRs to fix issues
+This mimics the VS Code Copilot invocation method.
 """
 
 import subprocess
@@ -24,7 +23,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 
-class IssueBasedPRMonitor:
+class DraftPRCopilotInvoker:
     """Monitor PRs and create issues for Copilot to work on."""
     
     def __init__(self, dry_run: bool = False, notification_user: str = None):
@@ -140,34 +139,39 @@ class IssueBasedPRMonitor:
             return " | ".join(reasons)
         return None
     
-    def create_issue_for_pr(self, pr: Dict[str, Any], reason: str) -> bool:
+    def create_draft_pr_for_work(self, pr: Dict[str, Any], reason: str) -> bool:
         """
-        Create an issue that Copilot will automatically create a PR for.
+        Create a DRAFT PR for Copilot to work on (VS Code method).
+        
+        This mimics how VS Code invokes Copilot:
+        1. Create a new branch
+        2. Make initial commit
+        3. Push branch
+        4. Create draft PR
+        5. Copilot detects draft PR and starts working
         
         Args:
-            pr: PR data dictionary
+            pr: Original PR data dictionary
             reason: Why this PR needs work
         
         Returns:
-            True if issue created successfully
+            True if draft PR created successfully
         """
         pr_number = pr['number']
         pr_title = pr['title']
         pr_body = pr.get('body', 'No description provided')
         pr_url = pr['url']
-        branch = pr['headRefName']
         author = pr['author']['login']
         
-        # Create issue title
-        issue_title = f"Complete draft PR #{pr_number}: {pr_title}"
+        # Create task title
+        task_title = f"Complete draft PR #{pr_number}: {pr_title}"
         
-        # Create issue body - SIMPLE and CLEAR for Copilot
-        issue_body = f"""# Complete Draft PR #{pr_number}
+        # Create task description - SIMPLE and CLEAR for Copilot
+        task_description = f"""# Complete Draft PR #{pr_number}
 
 ## Original PR
 - **Link**: {pr_url}
 - **Title**: {pr_title}
-- **Branch**: `{branch}`
 - **Author**: @{author}
 - **Why needs work**: {reason}
 
@@ -175,49 +179,51 @@ class IssueBasedPRMonitor:
 {pr_body}
 
 ## Task
-Please review draft PR #{pr_number} and complete the necessary work:
+Please complete the work from draft PR #{pr_number}:
 
-1. Analyze the current changes in the PR
+1. Review the original PR and its current state
 2. Identify what work remains to be done
 3. Implement the required changes
 4. Test that everything works correctly
-5. Update the PR or create a new PR with the implementation
+5. Push commits to this branch
 
 ## Context
-- This is an incomplete draft PR that needs to be finished
+- This is to complete an unfinished draft PR
 - Related PR: #{pr_number}
-- Auto-generated: {datetime.now().isoformat()}
+- Invoked: {datetime.now().isoformat()}
 """
         
         if self.dry_run:
             self.logger.info(f"\n{'─'*80}")
-            self.logger.info(f"DRY RUN: Would create issue for PR #{pr_number}")
-            self.logger.info(f"Title: {issue_title}")
+            self.logger.info(f"DRY RUN: Would create draft PR for original PR #{pr_number}")
+            self.logger.info(f"Title: {task_title}")
             self.logger.info(f"Reason: {reason}")
             self.logger.info(f"{'─'*80}\n")
             return True
         
-        # Create the issue (without labels to avoid rate limits)
+        # Use the draft PR invoker script
         result = self.run_command([
-            'gh', 'issue', 'create',
-            '--title', issue_title,
-            '--body', issue_body
-        ])
+            'python3', 'scripts/invoke_copilot_via_draft_pr.py',
+            '--title', task_title,
+            '--description', task_description,
+            '--repo', 'endomorphosis/ipfs_datasets_py',
+            '--base', 'main',
+            '--branch-prefix', f'copilot/complete-pr-{pr_number}'
+        ], timeout=60)
         
         if result['success']:
-            output = result['stdout'].strip()
-            self.logger.info(f"✅ Created issue for PR #{pr_number}: {output}")
+            self.logger.info(f"✅ Created draft PR for original PR #{pr_number}")
             return True
         else:
-            self.logger.error(f"❌ Failed to create issue for PR #{pr_number}: {result.get('stderr')}")
+            self.logger.error(f"❌ Failed to create draft PR for PR #{pr_number}: {result.get('stderr')}")
             return False
     
-    def monitor_prs(self, max_issues: int = 5) -> Dict[str, int]:
+    def monitor_prs(self, max_drafts: int = 5) -> Dict[str, int]:
         """
-        Monitor PRs and create issues for incomplete ones.
+        Monitor PRs and create draft PRs for Copilot to work on (VS Code method).
         
         Args:
-            max_issues: Maximum number of issues to create per run
+            max_drafts: Maximum number of draft PRs to create per run
         
         Returns:
             Statistics dictionary
@@ -225,8 +231,8 @@ Please review draft PR #{pr_number} and complete the necessary work:
         stats = {
             'total_prs': 0,
             'needs_work': 0,
-            'issues_created': 0,
-            'already_has_issue': 0,
+            'draft_prs_created': 0,
+            'already_has_draft': 0,
             'skipped_copilot_prs': 0,
             'errors': 0
         }
@@ -241,7 +247,7 @@ Please review draft PR #{pr_number} and complete the necessary work:
             self.logger.info("✅ No draft PRs found")
             return stats
         
-        issues_created = 0
+        draft_prs_created = 0
         
         for pr in draft_prs:
             pr_number = pr['number']
@@ -265,23 +271,23 @@ Please review draft PR #{pr_number} and complete the necessary work:
             stats['needs_work'] += 1
             self.logger.info(f"   ⚠️  Needs work: {reason}")
             
-            # Check if we've already created an issue
+            # Check if we've already created a draft PR for this
             if self.check_if_issue_exists(pr_number):
-                self.logger.info(f"   ⏭️  Issue already exists")
-                stats['already_has_issue'] += 1
+                self.logger.info(f"   ⏭️  Draft PR already created")
+                stats['already_has_draft'] += 1
                 continue
             
-            # Check if we've reached max issues for this run
-            if issues_created >= max_issues:
-                self.logger.info(f"   ⏸️  Reached max issues ({max_issues})")
+            # Check if we've reached max drafts for this run
+            if draft_prs_created >= max_drafts:
+                self.logger.info(f"   ⏸️  Reached max drafts ({max_drafts})")
                 break
             
-            # Create issue
-            success = self.create_issue_for_pr(pr, reason)
+            # Create draft PR for Copilot
+            success = self.create_draft_pr_for_work(pr, reason)
             
             if success:
-                stats['issues_created'] += 1
-                issues_created += 1
+                stats['draft_prs_created'] += 1
+                draft_prs_created += 1
             else:
                 stats['errors'] += 1
         
@@ -290,35 +296,35 @@ Please review draft PR #{pr_number} and complete the necessary work:
     def print_summary(self, stats: Dict[str, int]):
         """Print summary statistics."""
         self.logger.info(f"\n{'='*80}")
-        self.logger.info(f"📊 Issue-Based PR Monitor Summary")
+        self.logger.info(f"📊 Draft PR Copilot Invoker Summary")
         self.logger.info(f"{'='*80}")
         self.logger.info(f"Total draft PRs:          {stats['total_prs']}")
         self.logger.info(f"PRs needing work:         {stats['needs_work']}")
-        self.logger.info(f"Issues created:           {stats['issues_created']}")
-        self.logger.info(f"Already have issues:      {stats['already_has_issue']}")
+        self.logger.info(f"Draft PRs created:        {stats['draft_prs_created']}")
+        self.logger.info(f"Already have drafts:      {stats['already_has_draft']}")
         self.logger.info(f"Skipped (Copilot PRs):    {stats['skipped_copilot_prs']}")
         self.logger.info(f"Errors:                   {stats['errors']}")
         self.logger.info(f"{'='*80}")
         
-        if stats['issues_created'] > 0:
-            self.logger.info(f"\n✅ Created {stats['issues_created']} issue(s)")
-            self.logger.info(f"💡 GitHub Copilot will automatically create PRs to fix these issues")
+        if stats['draft_prs_created'] > 0:
+            self.logger.info(f"\n✅ Created {stats['draft_prs_created']} draft PR(s) for Copilot")
+            self.logger.info(f"💡 GitHub Copilot will automatically detect and work on these PRs")
         elif stats['needs_work'] == 0:
             self.logger.info(f"\n✅ All draft PRs appear complete")
-        elif stats['already_has_issue'] > 0:
-            self.logger.info(f"\n⏳ {stats['already_has_issue']} PR(s) already have issues - waiting for Copilot")
+        elif stats['already_has_draft'] > 0:
+            self.logger.info(f"\n⏳ {stats['already_has_draft']} PR(s) already have draft PRs - waiting for Copilot")
 
 
 def main():
     """Main execution."""
     parser = argparse.ArgumentParser(
-        description='Monitor PRs and create issues for Copilot (correct invocation method)'
+        description='Monitor PRs and create draft PRs for Copilot (VS Code method)'
     )
     parser.add_argument(
-        '--max-issues',
+        '--max-drafts',
         type=int,
         default=5,
-        help='Maximum number of issues to create per run (default: 5)'
+        help='Maximum number of draft PRs to create per run (default: 5)'
     )
     parser.add_argument(
         '--dry-run',
@@ -333,7 +339,7 @@ def main():
     
     args = parser.parse_args()
     
-    monitor = IssueBasedPRMonitor(
+    monitor = DraftPRCopilotInvoker(
         dry_run=args.dry_run,
         notification_user=args.notification_user
     )
@@ -341,13 +347,14 @@ def main():
     if args.dry_run:
         print("🔍 DRY RUN MODE - No actual changes will be made\n")
     
-    print("💡 PROPER COPILOT INVOCATION METHOD:")
-    print("   ✅ Create issues describing work needed")
-    print("   ✅ Copilot automatically creates PRs to fix issues")
-    print("   ❌ NOT: Commenting @copilot on existing PRs\n")
+    print("💡 VS CODE COPILOT INVOCATION METHOD:")
+    print("   ✅ Create draft PRs for Copilot to work on")
+    print("   ✅ Copilot automatically detects and implements changes")
+    print("   ❌ NOT: Commenting @copilot on existing PRs")
+    print("   ❌ NOT: Creating issues (old method)\n")
     
     try:
-        stats = monitor.monitor_prs(max_issues=args.max_issues)
+        stats = monitor.monitor_prs(max_drafts=args.max_drafts)
         monitor.print_summary(stats)
         
         sys.exit(0 if stats['errors'] == 0 else 1)

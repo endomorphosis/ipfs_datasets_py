@@ -1,14 +1,14 @@
-name: PR Copilot Monitor
+name: Draft PR Copilot Monitor
 
 on:
   schedule:
-    # Run every 10 minutes (reduced from 5 to avoid creating too many issues)
+    # Run every 10 minutes (reduced from 5 to avoid creating too many draft PRs)
     - cron: '*/10 * * * *'
   
   workflow_dispatch:
     inputs:
-      max_issues:
-        description: 'Maximum issues to create (default: 3)'
+      max_drafts:
+        description: 'Maximum draft PRs to create (default: 3)'
         required: false
         type: number
         default: 3
@@ -19,8 +19,8 @@ on:
         default: false
 
 jobs:
-  issue-based-pr-monitor:
-    name: Monitor PRs and Create Issues for Copilot
+  draft-pr-copilot-monitor:
+    name: Monitor PRs and Create Draft PRs for Copilot
     runs-on: [self-hosted, linux, x64]
     permissions:
       contents: write
@@ -70,21 +70,21 @@ jobs:
           fi
           gh --version
       
-      - name: Run Issue-Based PR Monitor
+      - name: Run Draft PR Copilot Invoker
         id: monitor
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MAX_ISSUES="${{ github.event.inputs.max_issues || 3 }}"
+          MAX_DRAFTS="${{ github.event.inputs.max_drafts || 3 }}"
           DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
           
-          echo "🔍 Issue-Based PR Monitor Configuration:"
-          echo "  Max Issues: $MAX_ISSUES"
+          echo "🔍 Draft PR Copilot Invoker Configuration:"
+          echo "  Max Draft PRs: $MAX_DRAFTS"
           echo "  Dry Run: $DRY_RUN"
           echo ""
           
-          # Build command
-          CMD="python3 scripts/issue_based_pr_monitor.py --max-issues $MAX_ISSUES"
+          # Build command using the NEW draft PR invoker
+          CMD="python3 scripts/draft_pr_copilot_invoker.py --max-drafts $MAX_DRAFTS"
           
           if [ "$DRY_RUN" = "true" ]; then
             CMD="$CMD --dry-run"
@@ -105,18 +105,18 @@ jobs:
           # Extract metrics
           TOTAL_PRS=$(grep "Total draft PRs:" monitor_output.log | sed -n 's/.*Total draft PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           NEEDS_WORK=$(grep "PRs needing work:" monitor_output.log | sed -n 's/.*PRs needing work:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
-          ISSUES_CREATED=$(grep "Issues created:" monitor_output.log | sed -n 's/.*Issues created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          DRAFTS_CREATED=$(grep "Draft PRs created:" monitor_output.log | sed -n 's/.*Draft PRs created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           ERRORS=$(grep "Errors:" monitor_output.log | sed -n 's/.*Errors:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
           
           # Set outputs
           echo "total_prs=$TOTAL_PRS" >> $GITHUB_OUTPUT
           echo "needs_work=$NEEDS_WORK" >> $GITHUB_OUTPUT
-          echo "issues_created=$ISSUES_CREATED" >> $GITHUB_OUTPUT
+          echo "drafts_created=$DRAFTS_CREATED" >> $GITHUB_OUTPUT
           echo "errors=$ERRORS" >> $GITHUB_OUTPUT
           echo "success=$MONITOR_SUCCESS" >> $GITHUB_OUTPUT
           
           echo ""
-          echo "📊 Summary: $TOTAL_PRS total, $NEEDS_WORK need work, $ISSUES_CREATED issues created"
+          echo "📊 Summary: $TOTAL_PRS total, $NEEDS_WORK need work, $DRAFTS_CREATED draft PRs created"
           
           if [ "$MONITOR_SUCCESS" != "true" ]; then
             exit 1
@@ -134,20 +134,20 @@ jobs:
           echo "### 📊 Statistics" >> $GITHUB_STEP_SUMMARY
           echo "- **Total draft PRs**: ${{ steps.monitor.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
           echo "- **PRs needing work**: ${{ steps.monitor.outputs.needs_work }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Issues created**: ${{ steps.monitor.outputs.issues_created }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Draft PRs created**: ${{ steps.monitor.outputs.drafts_created }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Errors**: ${{ steps.monitor.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "### 💡 How It Works" >> $GITHUB_STEP_SUMMARY
           echo "1. **Monitor Draft PRs**: Analyzes all open draft PRs" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Create Issues**: Creates GitHub issues for incomplete work" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Copilot Responds**: Copilot **automatically** creates PRs to fix issues" >> $GITHUB_STEP_SUMMARY
-          echo "4. **Proven Method**: Uses issue-based invocation (NOT @copilot comments)" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Create Draft PRs**: Creates draft PRs for Copilot to work on (VS Code method)" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Copilot Responds**: Copilot **automatically** detects and implements changes" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Proven Method**: Uses draft PR invocation from VS Code (PR #401)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          if [ "${{ steps.monitor.outputs.issues_created }}" -gt 0 ]; then
-            echo "✅ **Created ${{ steps.monitor.outputs.issues_created }} issue(s)**" >> $GITHUB_STEP_SUMMARY
-            echo "Copilot will automatically create PRs to fix these issues." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.monitor.outputs.drafts_created }}" -gt 0 ]; then
+            echo "✅ **Created ${{ steps.monitor.outputs.drafts_created }} draft PR(s)**" >> $GITHUB_STEP_SUMMARY
+            echo "Copilot will automatically detect and work on these PRs." >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.monitor.outputs.needs_work }}" -eq 0 ]; then
             echo "✅ **All draft PRs are up to date**" >> $GITHUB_STEP_SUMMARY
           else
