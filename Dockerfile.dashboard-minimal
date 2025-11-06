@@ -1,0 +1,91 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+ENV PYTHONFAULTHANDLER=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir \
+    Flask>=3.1.1 \
+    requests>=2.25.0 \
+    pyyaml>=6.0.0
+
+# Health check for dashboard
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8899/api/mcp/status || exit 1
+
+# Expose dashboard port
+EXPOSE 8899
+
+# Create a simple dashboard server
+RUN echo '#!/usr/bin/env python3\n\
+import sys\n\
+import os\n\
+import requests\n\
+from flask import Flask, jsonify, render_template_string\n\
+\n\
+app = Flask(__name__)\n\
+\n\
+DASHBOARD_HTML = """\n\
+<!DOCTYPE html>\n\
+<html>\n\
+<head>\n\
+    <title>MCP Dashboard</title>\n\
+    <style>\n\
+        body { font-family: Arial, sans-serif; margin: 40px; }\n\
+        .status { padding: 20px; border-radius: 5px; margin: 10px 0; }\n\
+        .healthy { background-color: #d4edda; border: 1px solid #c3e6cb; }\n\
+        .unhealthy { background-color: #f8d7da; border: 1px solid #f5c6cb; }\n\
+    </style>\n\
+</head>\n\
+<body>\n\
+    <h1>MCP Dashboard</h1>\n\
+    <div id="status" class="status">Loading...</div>\n\
+    <script>\n\
+        function updateStatus() {\n\
+            fetch("/api/mcp/status")\n\
+                .then(response => response.json())\n\
+                .then(data => {\n\
+                    const statusDiv = document.getElementById("status");\n\
+                    statusDiv.className = "status " + (data.status === "running" ? "healthy" : "unhealthy");\n\
+                    statusDiv.innerHTML = `<h3>MCP Server Status: ${data.status}</h3>\n\
+                                         <p>Tools Available: ${data.tools_available}</p>\n\
+                                         <p>Version: ${data.version}</p>`;\n\
+                })\n\
+                .catch(error => {\n\
+                    const statusDiv = document.getElementById("status");\n\
+                    statusDiv.className = "status unhealthy";\n\
+                    statusDiv.innerHTML = "<h3>Error connecting to MCP Server</h3>";\n\
+                });\n\
+        }\n\
+        setInterval(updateStatus, 5000);\n\
+        updateStatus();\n\
+    </script>\n\
+</body>\n\
+</html>\n\
+"""\n\
+\n\
+@app.route("/")\n\
+def dashboard():\n\
+    return render_template_string(DASHBOARD_HTML)\n\
+\n\
+@app.route("/api/mcp/status")\n\
+def mcp_status():\n\
+    try:\n\
+        mcp_host = os.environ.get("MCP_SERVER_HOST", "mcp-server")\n\
+        mcp_port = os.environ.get("MCP_SERVER_PORT", "8000")\n\
+        response = requests.get(f"http://{mcp_host}:{mcp_port}/api/mcp/status", timeout=5)\n\
+        return response.json()\n\
+    except:\n\
+        return jsonify({"status": "disconnected", "tools_available": 0, "version": "unknown"})\n\
+\n\
+if __name__ == "__main__":\n\
+    app.run(host="0.0.0.0", port=8899, debug=False)\n\
+' > /app/simple_dashboard.py && chmod +x /app/simple_dashboard.py
+
+CMD ["python", "/app/simple_dashboard.py"]

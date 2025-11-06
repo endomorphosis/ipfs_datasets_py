@@ -19,6 +19,10 @@ class LibP2PNotAvailableError(Exception):
     """Raised when libp2p dependencies are not available."""
     pass
 
+class P2PError(Exception):
+    """Raised when P2P operations fail."""
+    pass
+
 class DistributedDatasetManager:
     """Stub implementation of DistributedDatasetManager."""
 

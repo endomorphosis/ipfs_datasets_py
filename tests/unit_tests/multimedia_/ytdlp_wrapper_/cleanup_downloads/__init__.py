@@ -1,0 +1,1 @@
+# Tests for YtDlpWrapper.cleanup_downloads method

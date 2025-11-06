@@ -10,7 +10,7 @@ This workflow demonstrates how to set up a basic monitoring environment for deve
 
 ```python
 import os
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 from ipfs_datasets_py.monitoring import MetricsCollector
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizer_alert_system import setup_learning_alerts
@@ -163,7 +163,7 @@ This workflow demonstrates setting up monitoring in a production environment wit
 ```python
 import os
 import logging
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 from ipfs_datasets_py.monitoring import ProductionMetricsCollector
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizer_alert_system import setup_learning_alerts

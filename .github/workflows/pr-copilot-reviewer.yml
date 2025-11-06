@@ -1,0 +1,491 @@
+name: Automated PR Review and Copilot Assignment
+
+'on':
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to analyze and assign to Copilot'
+        required: true
+        type: string
+      force_assign:
+        description: 'Force Copilot assignment even if already assigned'
+        required: false
+        default: false
+        type: boolean
+      monitor_agent:
+        description: 'Monitor Copilot agent progress after assignment'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  analyze-and-assign-copilot:
+    runs-on: [self-hosted, linux, x64]
+
+    steps:
+      - name: Clean workspace (nuclear option)
+        run: |
+          # NUCLEAR OPTION: Remove entire workspace to prevent permission errors
+          # This is needed because files from previous runs may be owned by different users
+          # and we can't chmod/chown them without sudo
+          
+          echo "Current user: $(whoami)"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          echo "Working directory: $(pwd)"
+          
+          # Save the workspace parent directory
+          WORKSPACE_PARENT=$(dirname "$GITHUB_WORKSPACE")
+          WORKSPACE_NAME=$(basename "$GITHUB_WORKSPACE")
+          
+          echo "Workspace parent: $WORKSPACE_PARENT"
+          echo "Workspace name: $WORKSPACE_NAME"
+          
+          # Move to parent directory to avoid "cannot remove current directory" error
+          cd "$WORKSPACE_PARENT" || exit 1
+          
+          # Try multiple removal strategies
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            echo "Attempting to remove workspace..."
+            
+            # Strategy 1: Try sudo if available (passwordless)
+            if command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              echo "Using sudo to remove workspace..."
+              sudo rm -rf "$WORKSPACE_NAME" && echo "✅ Removed with sudo" || echo "⚠️ Sudo removal failed"
+            fi
+            
+            # Strategy 2: Try regular rm (works if we own the files)
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              echo "Trying regular rm..."
+              rm -rf "$WORKSPACE_NAME" 2>/dev/null && echo "✅ Removed with rm" || echo "⚠️ Regular rm failed"
+            fi
+            
+            # Strategy 3: Use find to delete files we can delete
+            if [ -d "$GITHUB_WORKSPACE" ]; then
+              echo "Trying find-based removal..."
+              find "$WORKSPACE_NAME" -type f -delete 2>/dev/null || true
+              find "$WORKSPACE_NAME" -depth -type d -delete 2>/dev/null || true
+              if [ ! -d "$GITHUB_WORKSPACE" ]; then
+                echo "✅ Removed with find"
+              else
+                echo "⚠️ Find-based removal incomplete"
+              fi
+            fi
+          fi
+          
+          # Recreate empty workspace directory
+          mkdir -p "$GITHUB_WORKSPACE"
+          echo "✅ Workspace cleanup completed"
+          ls -la "$WORKSPACE_PARENT" | grep "$WORKSPACE_NAME" || true
+        continue-on-error: true
+
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false  # Disable automatic cleanup - we handle it manually
+        continue-on-error: true  # Allow checkout to fail, will retry
+      
+      - name: Force reclone if checkout failed
+        if: steps.checkout.outcome == 'failure'
+        run: |
+          echo "⚠️ Checkout failed, forcing full reclone..."
+          cd "$(dirname "$GITHUB_WORKSPACE")"
+          
+          # Nuclear option: rename the old directory (avoids deletion issues)
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            OLD_DIR="${GITHUB_WORKSPACE}.broken.$(date +%s)"
+            mv "$GITHUB_WORKSPACE" "$OLD_DIR" 2>/dev/null || true
+            echo "Moved broken workspace to: $OLD_DIR"
+            
+            # Try to clean it up in background (may fail but won't block)
+            (sudo rm -rf "$OLD_DIR" 2>/dev/null || rm -rf "$OLD_DIR" 2>/dev/null || true) &
+          fi
+          
+          # Create fresh directory
+          mkdir -p "$GITHUB_WORKSPACE"
+          echo "✅ Created fresh workspace directory"
+      
+      - name: Retry checkout in fresh workspace
+        if: steps.checkout.outcome == 'failure'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: false
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+      
+      - name: Configure git and verify repository
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Set up minimal git config to avoid permission errors
+          git config --global --add safe.directory "$GITHUB_WORKSPACE" || true
+          
+          # Configure git user for any potential git operations
+          git config --global user.email "github-actions[bot]@users.noreply.github.com" || true
+          git config --global user.name "github-actions[bot]" || true
+          
+          # Verify we're in a git repository
+          if git rev-parse --git-dir > /dev/null 2>&1; then
+            echo "✅ Git repository verified"
+            git --no-pager log --oneline -1
+          else
+            echo "⚠️ Not in a git repository, but continuing with gh CLI operations"
+          fi
+      
+      - name: Set up Python
+        run: |
+          python3 --version
+          
+          # Handle PEP 668 externally-managed-environment
+          # Try system packages first, then pip with --break-system-packages if needed
+          
+          # Check if packages are already available
+          if python3 -c "import yaml, requests" 2>/dev/null; then
+            echo "✅ Required packages already installed"
+          else
+            echo "Installing required packages..."
+            
+            # Try system packages first (preferred on Debian/Ubuntu)
+            if command -v apt >/dev/null 2>&1 && sudo -n apt install -y python3-yaml python3-requests 2>/dev/null; then
+              echo "✅ Installed via apt"
+            else
+              # Fall back to pip with --break-system-packages (safe for CI)
+              echo "Using pip with --break-system-packages..."
+              python3 -m pip install --user --upgrade pip --break-system-packages || true
+              pip install --user PyYAML requests --break-system-packages
+              echo "✅ Installed via pip"
+            fi
+          fi
+          
+          # Verify installation
+          python3 -c "import yaml, requests; print('✅ All required packages available')"
+
+      - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if gh is available
+          if command -v gh >/dev/null 2>&1; then
+            echo "✅ gh CLI already installed: $(gh --version | head -1)"
+          else
+            echo "Installing GitHub CLI..."
+            
+            # Try different installation methods based on sudo availability
+            if [ -f /etc/debian_version ] && command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+              # Debian/Ubuntu with passwordless sudo
+              echo "Installing via apt with sudo..."
+              curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+              echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+              sudo apt update && sudo apt install gh -y
+              echo "✅ Installed gh CLI via apt"
+            else
+              # No sudo or sudo requires password - install to user directory
+              echo "Installing to ~/.local/bin (no sudo required)..."
+              mkdir -p ~/.local/bin
+              
+              wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+              tar -xzf /tmp/gh.tar.gz -C /tmp
+              cp /tmp/gh_*/bin/gh ~/.local/bin/
+              chmod +x ~/.local/bin/gh
+              
+              # Add to PATH if not already there
+              if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+                export PATH="$HOME/.local/bin:$PATH"
+                echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+              fi
+              
+              echo "✅ Installed gh CLI to ~/.local/bin"
+            fi
+          fi
+          
+          # Ensure gh is in PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Verify gh works
+          gh --version
+
+      - name: Get PR details
+        id: get_pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get PR number
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PR_NUMBER="${{ github.event.inputs.pr_number }}"
+          else
+            PR_NUMBER="${{ github.event.pull_request.number }}"
+          fi
+
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+
+          # Get PR details (use --repo flag to avoid "not a git repository" error)
+          PR_DATA=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json title,body,number,author,isDraft,labels,state)
+
+          PR_TITLE=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['title'])")
+          PR_AUTHOR=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
+          IS_DRAFT=$(echo "$PR_DATA" | python3 -c "import sys, json; print(str(json.load(sys.stdin)['isDraft']).lower())")
+          PR_STATE=$(echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin)['state'])")
+
+          echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
+          echo "pr_author=$PR_AUTHOR" >> $GITHUB_OUTPUT
+          echo "is_draft=$IS_DRAFT" >> $GITHUB_OUTPUT
+          echo "pr_state=$PR_STATE" >> $GITHUB_OUTPUT
+
+          # Save PR body for analysis
+          echo "$PR_DATA" | python3 -c "import sys, json; print(json.load(sys.stdin).get('body', ''))" > /tmp/pr_body.txt
+
+          echo "📊 **PR Analysis**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR #**: $PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- **Title**: $PR_TITLE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: @$PR_AUTHOR" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is Draft**: $IS_DRAFT" >> $GITHUB_STEP_SUMMARY
+          echo "- **State**: $PR_STATE" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check if Copilot already assigned
+        id: check_copilot
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          FORCE_ASSIGN="${{ github.event.inputs.force_assign || 'false' }}"
+
+          # Get PR comments
+          COMMENTS=$(gh pr view "$PR_NUMBER" --repo ${{ github.repository }} --json comments --jq '.comments[].body')
+
+          # Check if @copilot has been mentioned
+          if echo "$COMMENTS" | grep -q "@copilot"; then
+            echo "✅ Copilot has already been assigned to this PR"
+            echo "already_assigned=true" >> $GITHUB_OUTPUT
+
+            if [ "$FORCE_ASSIGN" = "true" ]; then
+              echo "⚠️ Force assign enabled - will reassign anyway"
+              echo "should_assign=true" >> $GITHUB_OUTPUT
+            else
+              echo "should_assign=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "🆕 Copilot has not been assigned yet"
+            echo "already_assigned=false" >> $GITHUB_OUTPUT
+            echo "should_assign=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Analyze PR content and determine action
+        id: analyze_pr
+        if: steps.check_copilot.outputs.should_assign == 'true'
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          PR_TITLE="${{ steps.get_pr.outputs.pr_title }}"
+          IS_DRAFT="${{ steps.get_pr.outputs.is_draft }}"
+
+          python3 << 'PYTHON_EOF'
+          import json
+          import re
+
+          # Read PR body
+          try:
+              with open('/tmp/pr_body.txt', 'r') as f:
+                  pr_body = f.read()
+          except:
+              pr_body = ""
+
+          pr_title = "${{ steps.get_pr.outputs.pr_title }}"
+          is_draft = "${{ steps.get_pr.outputs.is_draft }}" == "true"
+
+          # Determine if this PR should be assigned to Copilot
+          should_assign = False
+          assignment_reason = []
+          copilot_task = "review"  # Default task
+
+          # Analyze PR characteristics
+          analysis = {
+              'is_draft': is_draft,
+              'is_auto_generated': False,
+              'is_workflow_fix': False,
+              'is_issue_resolution': False,
+              'needs_implementation': False,
+              'complexity': 'medium'
+          }
+
+          # Check if auto-generated
+          if 'auto-generated' in pr_body.lower() or 'automated' in pr_title.lower():
+              analysis['is_auto_generated'] = True
+              should_assign = True
+              assignment_reason.append("auto-generated PR")
+
+          # Check if workflow fix
+          if 'workflow' in pr_title.lower() or 'auto-fix' in pr_title.lower():
+              analysis['is_workflow_fix'] = True
+              should_assign = True
+              assignment_reason.append("workflow fix PR")
+              copilot_task = "fix"
+
+          # Check if issue resolution
+          issue_pattern = r'#\d+|fixes|closes|resolves'
+          if re.search(issue_pattern, pr_body.lower()):
+              analysis['is_issue_resolution'] = True
+              should_assign = True
+              assignment_reason.append("resolves an issue")
+
+          # Check if draft PR needing implementation
+          if is_draft and len(pr_body) > 100:
+              analysis['needs_implementation'] = True
+              should_assign = True
+              assignment_reason.append("draft PR needing implementation")
+              copilot_task = "implement"
+
+          # If no clear reason but it's a draft, assign for review
+          if is_draft and not should_assign:
+              should_assign = True
+              assignment_reason.append("draft PR for review")
+
+          # Save analysis
+          result = {
+              'should_assign': should_assign,
+              'assignment_reason': ', '.join(assignment_reason) if assignment_reason else 'general review',
+              'copilot_task': copilot_task,
+              'analysis': analysis
+          }
+
+          with open('/tmp/pr_analysis.json', 'w') as f:
+              json.dump(result, f, indent=2)
+
+          print(f"Should assign: {should_assign}")
+          print(f"Task: {copilot_task}")
+          print(f"Reason: {result['assignment_reason']}")
+          PYTHON_EOF
+
+          # Read results
+          SHOULD_ASSIGN=$(python3 -c "import json; print(str(json.load(open('/tmp/pr_analysis.json'))['should_assign']).lower())")
+          COPILOT_TASK=$(python3 -c "import json; print(json.load(open('/tmp/pr_analysis.json'))['copilot_task'])")
+          REASON=$(python3 -c "import json; print(json.load(open('/tmp/pr_analysis.json'))['assignment_reason'])")
+
+          echo "should_assign_copilot=$SHOULD_ASSIGN" >> $GITHUB_OUTPUT
+          echo "copilot_task=$COPILOT_TASK" >> $GITHUB_OUTPUT
+          echo "assignment_reason=$REASON" >> $GITHUB_OUTPUT
+
+          echo "## Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Should Assign**: $SHOULD_ASSIGN" >> $GITHUB_STEP_SUMMARY
+          echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+          echo "- **Reason**: $REASON" >> $GITHUB_STEP_SUMMARY
+
+      - name: Assign Copilot to PR via Draft PR (PROPER METHOD)
+        id: assign_copilot
+        if: steps.analyze_pr.outputs.should_assign_copilot == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          COPILOT_TASK="${{ steps.analyze_pr.outputs.copilot_task }}"
+          ASSIGNMENT_REASON="${{ steps.analyze_pr.outputs.assignment_reason }}"
+
+          echo "🤖 Assigning Copilot to existing PR #$PR_NUMBER via draft PR method..."
+          echo "   Task Type: $COPILOT_TASK"
+          echo "   Reason: $ASSIGNMENT_REASON"
+          echo ""
+          echo "💡 Using PROPER Copilot invocation method:"
+          echo "   ✅ Creates draft PR for Copilot to work on"
+          echo "   ✅ Copilot automatically detects and implements"
+          echo "   ❌ NOT: @copilot comments (proven unreliable)"
+          echo ""
+          
+          # Build task description based on task type
+          if [ "$COPILOT_TASK" = "fix" ]; then
+            TASK_DESC="Please analyze PR #$PR_NUMBER and implement the necessary fixes based on the PR description, linked issues, and any workflow failure logs. Focus on making minimal, surgical changes that directly address the problem."
+          elif [ "$COPILOT_TASK" = "implement" ]; then
+            TASK_DESC="Please implement the solution described in PR #$PR_NUMBER. Review the requirements, follow repository patterns, add or update tests as appropriate, and make surgical changes focused on the requirements."
+          elif [ "$COPILOT_TASK" = "review" ]; then
+            TASK_DESC="Please review PR #$PR_NUMBER and provide feedback or implement improvements. Analyze code quality, test coverage, documentation, and suggest or implement necessary changes."
+          else
+            TASK_DESC="Please work on PR #$PR_NUMBER according to the requirements described."
+          fi
+          
+          # Use the PROPER invocation method (draft PR, not comments)
+          # This mimics how VS Code invokes Copilot and is proven to work
+          if python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --task "$TASK_DESC" \
+              --repo ${{ github.repository }}; then
+            echo "✅ Successfully created draft PR for Copilot to work on PR #$PR_NUMBER"
+            echo "assigned=true" >> $GITHUB_OUTPUT
+            echo "agent_task_verified=true" >> $GITHUB_OUTPUT
+            echo "method=draft-pr" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Failed to create draft PR for Copilot"
+            echo "assigned=false" >> $GITHUB_OUTPUT
+            echo "agent_task_verified=false" >> $GITHUB_OUTPUT
+            echo "method=failed" >> $GITHUB_OUTPUT
+          fi
+
+          # Add summary only if assignment succeeded
+          if [ "$(cat $GITHUB_OUTPUT | grep '^assigned=' | tail -1 | cut -d= -f2)" = "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Copilot Assigned to PR" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "- **Original PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Task Type**: $COPILOT_TASK" >> $GITHUB_STEP_SUMMARY
+            echo "- **Assignment Reason**: $ASSIGNMENT_REASON" >> $GITHUB_STEP_SUMMARY
+            echo "- **Method**: Draft PR creation (VS Code method)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 Copilot will automatically detect the draft PR and start working." >> $GITHUB_STEP_SUMMARY
+            echo "📚 Based on GitHub Copilot documentation and PR #401 evidence." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Verify Copilot assignment
+        id: verify_assignment
+        if: steps.assign_copilot.outputs.assigned == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ steps.get_pr.outputs.pr_number }}"
+          
+          echo "✅ Copilot has been assigned to work on PR #$PR_NUMBER"
+          echo "📊 A draft PR has been created for Copilot to implement the changes"
+          echo "💡 Copilot will automatically detect the draft PR and start working"
+          echo ""
+          echo "🔍 You can monitor Copilot's activity by:"
+          echo "   1. Checking for new draft PRs related to PR #$PR_NUMBER"
+          echo "   2. Watching for commits from app/copilot-swe-agent"
+          echo "   3. Looking for Copilot workflow runs (workflow ID: 185367345)"
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. ✅ Draft PR created for Copilot to work on" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🤖 Copilot will automatically detect and analyze the task" >> $GITHUB_STEP_SUMMARY
+          echo "3. 💻 Copilot will implement changes and push commits" >> $GITHUB_STEP_SUMMARY
+          echo "4. 👀 Review Copilot's implementation before merging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Method**: Draft PR (VS Code method - proven reliable)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View original PR: https://github.com/${{ github.repository }}/pull/$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 **Automated PR Review and Assignment Complete**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.assign_copilot.outputs.assigned }}" = "true" ]; then
+            echo "✅ Copilot has been assigned to work on this PR" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.check_copilot.outputs.already_assigned }}" = "true" ]; then
+            echo "ℹ️ Copilot was already assigned to this PR" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ No Copilot assignment needed for this PR" >> $GITHUB_STEP_SUMMARY
+          fi

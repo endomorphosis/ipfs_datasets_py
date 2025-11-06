@@ -1,0 +1,135 @@
+name: Test Datasets ARM64 Runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/test-datasets-runner.yml' ]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  test-datasets-runner:
+    runs-on: [self-hosted, ARM64, datasets]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: System information
+      run: |
+        echo "🔍 System Information for Datasets Runner:"
+        echo "Architecture: $(uname -m)"
+        echo "OS: $(cat /etc/os-release | grep PRETTY_NAME)"
+        echo "CPU cores: $(nproc)"
+        echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
+        echo "Disk space: $(df -h / | tail -1 | awk '{print $4}')"
+        echo "Python version: $(python3 --version)"
+        echo "Git version: $(git --version)"
+        
+    - name: Test Python environment for datasets
+      run: |
+        echo "🐍 Testing Python environment for datasets processing:"
+        python3 -c "
+        import sys
+        import platform
+        print(f'Python {sys.version}')
+        print(f'Platform: {platform.platform()}')
+        print(f'Machine: {platform.machine()}')
+        print(f'Architecture: {platform.architecture()}')
+        
+        # Test common data science imports
+        try:
+            import json
+            print('✅ JSON support available')
+        except ImportError:
+            print('❌ JSON not available')
+            
+        try:
+            import csv
+            print('✅ CSV support available')
+        except ImportError:
+            print('❌ CSV not available')
+        "
+        
+    - name: Test dataset-related tools
+      run: |
+        echo "📊 Testing dataset processing capabilities:"
+        
+        # Test basic file operations
+        echo "Testing file operations..."
+        echo '{"test": "data", "numbers": [1,2,3]}' > test_dataset.json
+        python3 -c "
+        import json
+        with open('test_dataset.json', 'r') as f:
+            data = json.load(f)
+        print(f'✅ JSON processing: {data}')
+        "
+        rm -f test_dataset.json
+        
+        # Test basic data structures
+        python3 -c "
+        import sys
+        data = {'datasets': ['train', 'test', 'validation'], 'size': 1000}
+        print(f'✅ Basic data structures working: {data}')
+        
+        # Test list comprehensions and data processing
+        numbers = [i**2 for i in range(10)]
+        print(f'✅ Data processing: {numbers}')
+        "
+        
+    - name: Test repository structure
+      run: |
+        echo "📁 Repository structure check:"
+        ls -la
+        
+        echo "🔍 Looking for common dataset files..."
+        find . -name "*.json" -o -name "*.csv" -o -name "*.txt" -o -name "*.md" | head -10 || echo "No common dataset files found"
+        
+    - name: Test Git operations
+      run: |
+        echo "🔄 Testing Git operations:"
+        git status --porcelain || echo "No git changes"
+        git log --oneline -5 || echo "Git log not available"
+        
+    - name: Performance benchmark for datasets
+      run: |
+        echo "⚡ Performance benchmark for dataset operations:"
+        python3 -c "
+        import time
+        import json
+        
+        # Test JSON processing performance
+        print('Testing JSON processing performance...')
+        start = time.time()
+        
+        # Create a mock dataset
+        mock_data = []
+        for i in range(1000):
+            mock_data.append({
+                'id': i,
+                'name': f'item_{i}',
+                'value': i * 2.5,
+                'category': 'test_data'
+            })
+        
+        # Serialize to JSON
+        json_str = json.dumps(mock_data)
+        
+        # Parse back from JSON
+        parsed_data = json.loads(json_str)
+        
+        end = time.time()
+        print(f'✅ JSON processing (1000 items): {end-start:.3f}s')
+        print(f'📊 ARM64 dataset processing baseline established')
+        print(f'💾 Memory usage: {len(json_str)} bytes JSON')
+        print(f'🎯 Items processed: {len(parsed_data)}')
+        "
+        
+    - name: Success message
+      run: |
+        echo "✅ ARM64 Datasets GitHub Actions runner is working correctly!"
+        echo "🚀 Ready for dataset processing workflows on ARM64 architecture"
+        echo "📊 Datasets runner successfully validated"

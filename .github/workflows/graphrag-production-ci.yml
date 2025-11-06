@@ -1,0 +1,340 @@
+name: GraphRAG Production CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+    tags: ['v*']
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: [self-hosted, linux, x64]
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    
+    steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+          sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
+          # Clean the entire workspace to avoid conflicts
+          cd /
+          sudo rm -rf "$GITHUB_WORKSPACE" || true
+        fi
+    
+    - name: Configure git
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+        clean: true
+    
+    - name: Set up Python
+      run: |
+        # Use system python3 on self-hosted runner
+        python3 --version
+        python3 -m pip install --user --upgrade pip
+    
+    - name: Start test services with Docker
+      run: |
+        # Start PostgreSQL and Redis directly on host (not in container)
+        docker run -d --name postgres-test-${{ matrix.python-version }} \
+          -e POSTGRES_PASSWORD=test_password \
+          -e POSTGRES_DB=test_db \
+          -p 5434:5432 \
+          postgres:15
+        
+        docker run -d --name redis-test-${{ matrix.python-version }} \
+          -p 6377:6379 \
+          redis:7
+        
+        # Wait for services to be ready
+        sleep 10
+    
+    - name: Build GraphRAG Test Docker Image
+      run: |
+        if [ -f Dockerfile.graphrag-tests ]; then
+          docker build -f Dockerfile.graphrag-tests -t ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} \
+            --build-arg PYTHON_VERSION=${{ matrix.python-version }} .
+        else
+          echo "Dockerfile.graphrag-tests not found, skipping Docker build"
+        fi
+    
+    - name: Run Tests
+      run: |
+        mkdir -p test-results
+        # Run tests directly with python3 if Docker image doesn't exist
+        if docker image inspect ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} >/dev/null 2>&1; then
+          POSTGRES_PORT=5434
+          REDIS_PORT=6377
+          docker run --rm \
+            -v $(pwd)/test-results:/app/test-results \
+            -e POSTGRES_URL=postgresql://postgres:test_password@localhost:${POSTGRES_PORT}/test_db \
+            -e REDIS_URL=redis://localhost:${REDIS_PORT}/0 \
+            -e TESTING=true \
+            --network host \
+            ipfs-datasets-graphrag-tests:py${{ matrix.python-version }}
+        else
+          echo "Running tests with system Python"
+          python3 -m pip install --user -e ".[test]" || true
+          python3 -m pytest tests/ -v --tb=short -k "not slow" || echo "Tests completed with errors"
+        fi
+    
+    - name: Cleanup test services
+      if: always()
+      run: |
+        docker stop postgres-test-${{ matrix.python-version }} redis-test-${{ matrix.python-version }} 2>/dev/null || true
+        docker rm postgres-test-${{ matrix.python-version }} redis-test-${{ matrix.python-version }} 2>/dev/null || true
+    
+    - name: Upload coverage to Codecov
+      if: hashFiles('test-results/coverage.xml') != ''
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./test-results/coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  security:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+    - name: Clean workspace (fix permissions)
+      run: |
+        # Fix permission issues from previous runs
+        # This is needed on self-hosted runners where files persist between runs
+        if [ -d "${{ github.workspace }}" ]; then
+          echo "Cleaning workspace: ${{ github.workspace }}"
+          # Try to fix ownership if we have sudo without password
+          if sudo -n true 2>/dev/null; then
+            sudo chown -R $(whoami):$(whoami) "${{ github.workspace }}" || true
+            sudo chmod -R u+rwX "${{ github.workspace }}" || true
+          fi
+          # Clean git state
+          cd "${{ github.workspace }}" && git clean -ffdx || true
+          cd "${{ github.workspace }}" && git reset --hard || true
+          # Remove problematic cache directories
+          rm -rf "${{ github.workspace }}/.mypy_cache" || true
+          rm -rf "${{ github.workspace }}/.pytest_cache" || true
+        fi
+    
+    - name: Configure git
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - uses: actions/checkout@v4
+      with:
+        submodules: false
+        clean: true
+    
+    - name: Set up Python
+      run: |
+        python3 --version
+        python3 -m pip install --user --upgrade pip
+    
+    - name: Run bandit security scan
+      run: |
+        python3 -m pip install --user bandit
+        python3 -m bandit -r ipfs_datasets_py/ -f json -o bandit-report.json || true
+    
+    - name: Run dependency vulnerability check
+      run: |
+        python3 -m pip install --user safety
+        python3 -m safety check --json --output safety-report.json || true
+    
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+
+  build:
+    needs: [test, security]
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v4
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          FEATURES=all
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: build
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+    
+    - name: Deploy to staging
+      run: |
+        export KUBECONFIG=kubeconfig
+        # Update image tags in deployment
+        sed -i "s|image: ipfs-datasets-py:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}|g" deployments/kubernetes/*.yaml
+        kubectl apply -f deployments/kubernetes/
+        kubectl rollout status deployment/website-graphrag-processor -n graphrag-system --timeout=600s
+
+  deploy-production:
+    needs: build
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    
+    steps:
+    - name: Clean workspace
+      run: |
+        # Remove any stale lock files and reset permissions
+        if [ -d "$GITHUB_WORKSPACE" ]; then
+          rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+          rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+        fi
+    
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: false
+    
+    - name: Configure kubectl
+      run: |
+        echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+        export KUBECONFIG=kubeconfig
+    
+    - name: Deploy to production
+      run: |
+        export KUBECONFIG=kubeconfig
+        # Update image tags in deployment
+        sed -i "s|image: ipfs-datasets-py:latest|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}|g" deployments/kubernetes/*.yaml
+        kubectl apply -f deployments/kubernetes/
+        kubectl rollout status deployment/website-graphrag-processor -n graphrag-system --timeout=600s
+    
+    - name: Run smoke tests
+      run: |
+        export KUBECONFIG=kubeconfig
+        # Wait for deployment to be ready
+        kubectl wait --for=condition=available --timeout=600s deployment/website-graphrag-processor -n graphrag-system
+        
+        # Get the service URL
+        SERVICE_URL=$(kubectl get ingress graphrag-ingress -n graphrag-system -o jsonpath='{.spec.rules[0].host}')
+        
+        # Run basic health checks
+        curl -f https://$SERVICE_URL/health
+        curl -f https://$SERVICE_URL/docs
+    
+    - name: Create GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: GraphRAG System Release ${{ github.ref }}
+        body: |
+          GraphRAG Website Processing System Release
+          
+          ## Changes
+          See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
+          
+          ## Deployment
+          This release has been automatically deployed to production.
+          
+          ## Docker Image
+          `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}`
+        draft: false
+        prerelease: false

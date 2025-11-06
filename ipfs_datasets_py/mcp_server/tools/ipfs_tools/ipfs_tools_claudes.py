@@ -19,6 +19,18 @@ class ClaudesIPFSTool:
         """
         return f"Placeholder IPFS hash for file '{file_path}'"
 
+# Main MCP function
+async def ipfs_tools_claudes():
+    """
+    A tool for interacting with IPFS migrated from claudes_toolbox-1.
+    """
+    return {
+        "status": "success",
+        "message": "ClaudesIPFSTool initialized successfully",
+        "tool_type": "IPFS integration tool",
+        "available_methods": ["add_file"]
+    }
+
 # Example usage (will not be executed by the MCP server directly)
 if __name__ == "__main__":
     tool = ClaudesIPFSTool()

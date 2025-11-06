@@ -8,7 +8,7 @@ from typing import Dict, Optional, Any
 
 from ....web_archive import WebArchiveProcessor
 
-def create_warc(
+async def create_warc(
     url: str,
     output_path: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None
@@ -31,10 +31,13 @@ def create_warc(
     processor = WebArchiveProcessor()
 
     try:
-        warc_path = processor.create_warc(url, output_path, options)
+        # Convert single URL to list if needed
+        urls = [url] if isinstance(url, str) else url
+        warc_data = processor.create_warc(urls, output_path or f"/tmp/archive_{url.replace('://', '_').replace('/', '_')}.warc", options)
         return {
             "status": "success",
-            "warc_path": warc_path
+            "warc_path": warc_data.get("output_file", output_path),
+            "details": warc_data
         }
     except Exception as e:
         return {

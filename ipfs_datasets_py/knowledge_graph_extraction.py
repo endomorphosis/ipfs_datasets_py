@@ -26,50 +26,44 @@ import re
 import uuid
 import json
 import requests
+from dataclasses import dataclass, field
 from typing import Dict, List, Any, Set, Optional, Tuple, Union
 from collections import defaultdict
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
+
+@dataclass
 class Entity:
-    """
-    Represents an entity in a knowledge graph.
+    """Represents an entity in a knowledge graph.
 
     Entities are nodes in the knowledge graph with a type, name,
     and optional properties.
+
+    Attributes:
+        entity_id (str, optional): Unique identifier for the entity
+        entity_type (str): Type of the entity (e.g., "person", "organization")
+        name (str): Name or label of the entity
+        properties (Dict, optional): Additional properties of the entity
+        confidence (float): Confidence score (0.0 to 1.0)
+        source_text (str, optional): Source text from which the entity was extracted
+
+    Methods:
+        to_dict() -> Dict[str, Any]:
+            Convert the entity to a dictionary representation.
+        from_dict(data: Dict[str, Any]) -> 'Entity':
+            Create an entity from a dictionary representation.
     """
-
-    def __init__(
-        self,
-        entity_id: str = None,
-        entity_type: str = "entity",
-        name: str = "",
-        properties: Optional[Dict[str, Any]] = None,
-        confidence: float = 1.0,
-        source_text: str = None
-    ):
-        """
-        Initialize a new entity.
-
-        Args:
-            entity_id (str, optional): Unique identifier for the entity
-            entity_type (str): Type of the entity (e.g., "person", "organization")
-            name (str): Name or label of the entity
-            properties (Dict, optional): Additional properties of the entity
-            confidence (float): Confidence score (0.0 to 1.0)
-            source_text (str, optional): Source text from which the entity was extracted
-        """
-        self.entity_id = entity_id or str(uuid.uuid4())
-        self.entity_type = entity_type
-        self.name = name
-        self.properties = properties or {}
-        self.confidence = confidence
-        self.source_text = source_text
+    entity_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    entity_type: str = "entity"
+    name: str = ""
+    properties: Optional[Dict[str, Any]] = field(default_factory=dict)
+    confidence: float = 1.0
+    source_text: str = None
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert the entity to a dictionary representation.
+        """Convert the entity to a dictionary representation.
 
         Returns:
             Dict: Dictionary representation of the entity
@@ -89,8 +83,7 @@ class Entity:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Entity':
-        """
-        Create an entity from a dictionary representation.
+        """Create an entity from a dictionary representation.
 
         Args:
             data (Dict): Dictionary representation of the entity
@@ -108,46 +101,62 @@ class Entity:
         )
 
 
+@dataclass
 class Relationship:
-    """
-    Represents a relationship between entities in a knowledge graph.
+    """Represents a relationship between entities in a knowledge graph.
 
     Relationships are directed edges in the knowledge graph with a type,
     source and target entities, and optional properties.
+
+    Attributes:
+        relationship_id (str): Unique identifier for the relationship
+        relationship_type (str): Type of the relationship
+        source_entity (Entity): Source entity (head)
+        target_entity (Entity): Target entity (tail)
+        properties (Dict, optional): Additional properties of the relationship
+        confidence (float): Confidence score (0.0 to 1.0)
+        source_text (str, optional): Source text from which the relationship was extracted
+        bidirectional (bool): Whether the relationship is bidirectional
+
+    Methods:
+        to_dict(include_entities: bool = True) -> Dict[str, Any]:
+            Convert the relationship to a dictionary representation.
+        from_dict(data: Dict[str, Any], entity_map: Dict[str, Entity] = None) -> 'Relationship':
+            Create a relationship from a dictionary representation.
     """
+    relationship_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    relationship_type: str = "related_to"
+    source_entity: Optional[Entity] = None
+    target_entity: Optional[Entity] = None
+    properties: Optional[Dict[str, Any]] = field(default_factory=dict)
+    confidence: float = 1.0
+    source_text: Optional[str] = None
+    bidirectional: bool = False
 
-    def __init__(
-        self,
-        relationship_id: str = None,
-        relationship_type: str = "related_to",
-        source: Entity = None,
-        target: Entity = None,
-        properties: Optional[Dict[str, Any]] = None,
-        confidence: float = 1.0,
-        source_text: str = None,
-        bidirectional: bool = False
-    ):
-        """
-        Initialize a new relationship.
+    def __post_init__(self):
+        """Handle flexible constructor patterns"""
+        # If relationship_id is actually an Entity (wrong calling pattern), fix it
+        if isinstance(self.relationship_id, Entity):
+            # This means the call was Relationship(source, target, type)
+            source_entity = self.relationship_id
+            target_entity = self.relationship_type
+            relationship_type = self.source_entity
+            
+            # Fix the fields
+            self.relationship_id = str(uuid.uuid4())
+            self.source_entity = source_entity
+            self.target_entity = target_entity
+            self.relationship_type = relationship_type
 
-        Args:
-            relationship_id (str, optional): Unique identifier for the relationship
-            relationship_type (str): Type of the relationship
-            source (Entity): Source entity (head)
-            target (Entity): Target entity (tail)
-            properties (Dict, optional): Additional properties of the relationship
-            confidence (float): Confidence score (0.0 to 1.0)
-            source_text (str, optional): Source text from which the relationship was extracted
-            bidirectional (bool): Whether the relationship is bidirectional
-        """
-        self.relationship_id = relationship_id or str(uuid.uuid4())
-        self.relationship_type = relationship_type
-        self.source_entity = source
-        self.target_entity = target
-        self.properties = properties or {}
-        self.confidence = confidence
-        self.source_text = source_text
-        self.bidirectional = bidirectional
+    @classmethod
+    def create(cls, source: Entity, target: Entity, relationship_type: str, **kwargs) -> 'Relationship':
+        """Create relationship with intuitive parameter order"""
+        return cls(
+            source_entity=source,
+            target_entity=target,
+            relationship_type=relationship_type,
+            **kwargs
+        )
 
     @property
     def source_id(self) -> Optional[str]:
@@ -160,8 +169,7 @@ class Relationship:
         return self.target_entity.entity_id if self.target_entity else None
 
     def to_dict(self, include_entities: bool = True) -> Dict[str, Any]:
-        """
-        Convert the relationship to a dictionary representation.
+        """Convert the relationship to a dictionary representation.
 
         Args:
             include_entities (bool): Whether to include full entity details
@@ -191,8 +199,7 @@ class Relationship:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any], entity_map: Dict[str, Entity] = None) -> 'Relationship':
-        """
-        Create a relationship from a dictionary representation.
+        """Create a relationship from a dictionary representation.
 
         Args:
             data (Dict): Dictionary representation of the relationship
@@ -220,8 +227,8 @@ class Relationship:
         return cls(
             relationship_id=data.get("relationship_id"),
             relationship_type=data.get("relationship_type", "related_to"),
-            source=source,
-            target=target,
+            source_entity=source,
+            target_entity=target,
             properties=data.get("properties", {}),
             confidence=data.get("confidence", 1.0),
             source_text=data.get("source_text"),
@@ -238,11 +245,19 @@ class KnowledgeGraph:
     """
 
     def __init__(self, name: str = None):
-        """
-        Initialize a new knowledge graph.
+        """Initialize a new knowledge graph.
 
         Args:
             name (str, optional): Name of the knowledge graph
+
+        Attributes initialized:
+            name (str): Name of the knowledge graph
+            entities (Dict[str, Entity]): Dictionary of entities by ID
+            relationships (Dict[str, Relationship]): Dictionary of relationships by ID
+            entity_types (Dict[str, Set[str]]): Index of entities by type
+            entity_names (Dict[str, Set[str]]): Index of entities by name
+            relationship_types (Dict[str, Set[str]]): Index of relationships by type
+            entity_relationships (Dict[str, Set[str]]): Index of relationships by entity ID
         """
         self.name = name or f"kg_{str(uuid.uuid4())[:8]}"
         self.entities: Dict[str, Entity] = {}
@@ -256,19 +271,18 @@ class KnowledgeGraph:
 
     def add_entity(
         self,
-        entity_type: str,
-        name: str,
+        entity_type_or_entity: Union[str, Entity],
+        name: Optional[str] = None,
         properties: Optional[Dict[str, Any]] = None,
         entity_id: str = None,
         confidence: float = 1.0,
         source_text: str = None
     ) -> Entity:
-        """
-        Add an entity to the knowledge graph.
+        """Add an entity to the knowledge graph.
 
         Args:
-            entity_type (str): Type of the entity
-            name (str): Name of the entity
+            entity_type_or_entity: Either entity type string OR Entity object
+            name (str): Name of the entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             entity_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -277,43 +291,50 @@ class KnowledgeGraph:
         Returns:
             Entity: The added entity
         """
-        # Create entity
-        entity = Entity(
-            entity_id=entity_id,
-            entity_type=entity_type,
-            name=name,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text
-        )
+        # Handle both calling patterns
+        if isinstance(entity_type_or_entity, Entity):
+            # Called with Entity object: add_entity(entity)
+            entity = entity_type_or_entity
+        else:
+            # Called with parameters: add_entity(entity_type, name, ...)
+            if name is None:
+                raise ValueError("name parameter is required when first argument is entity_type string")
+            
+            entity = Entity(
+                entity_id=entity_id,
+                entity_type=entity_type_or_entity,
+                name=name,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text
+            )
 
         # Add to graph
         self.entities[entity.entity_id] = entity
 
         # Update indexes
-        self.entity_types[entity_type].add(entity.entity_id)
-        self.entity_names[name].add(entity.entity_id)
+        self.entity_types[entity.entity_type].add(entity.entity_id)
+        self.entity_names[entity.name].add(entity.entity_id)
 
         return entity
 
     def add_relationship(
         self,
-        relationship_type: str,
-        source: Entity,
-        target: Entity,
+        relationship_type_or_relationship: Union[str, 'Relationship'],
+        source: Optional[Entity] = None,
+        target: Optional[Entity] = None,
         properties: Optional[Dict[str, Any]] = None,
         relationship_id: str = None,
         confidence: float = 1.0,
         source_text: str = None,
         bidirectional: bool = False
-    ) -> Relationship:
-        """
-        Add a relationship to the knowledge graph.
+    ) -> 'Relationship':
+        """Add a relationship to the knowledge graph.
 
         Args:
-            relationship_type (str): Type of the relationship
-            source (Entity): Source entity
-            target (Entity): Target entity
+            relationship_type_or_relationship: Either relationship type string OR Relationship object
+            source (Entity): Source entity (required if first arg is string)
+            target (Entity): Target entity (required if first arg is string)
             properties (Dict, optional): Additional properties
             relationship_id (str, optional): Unique identifier (generated if None)
             confidence (float): Confidence score
@@ -323,31 +344,55 @@ class KnowledgeGraph:
         Returns:
             Relationship: The added relationship
         """
-        # Create relationship
-        relationship = Relationship(
-            relationship_id=relationship_id,
-            relationship_type=relationship_type,
-            source=source,
-            target=target,
-            properties=properties,
-            confidence=confidence,
-            source_text=source_text,
-            bidirectional=bidirectional
-        )
+        # Handle both calling patterns
+        if isinstance(relationship_type_or_relationship, Relationship):
+            # Called with Relationship object: add_relationship(relationship)
+            relationship = relationship_type_or_relationship
+        else:
+            # Called with parameters: add_relationship(relationship_type, source, target, ...)
+            if source is None or target is None:
+                raise ValueError("source and target parameters are required when first argument is relationship_type string")
+            
+            relationship = Relationship(
+                relationship_id=relationship_id,
+                relationship_type=relationship_type_or_relationship,
+                source_entity=source,
+                target_entity=target,
+                properties=properties,
+                confidence=confidence,
+                source_text=source_text,
+                bidirectional=bidirectional
+            )
 
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
 
-        # Update indexes
-        self.relationship_types[relationship_type].add(relationship.relationship_id)
-        self.entity_relationships[source.entity_id].add(relationship.relationship_id)
-        self.entity_relationships[target.entity_id].add(relationship.relationship_id)
+        # Update indexes - handle both Entity objects and string IDs
+        self.relationship_types[relationship.relationship_type].add(relationship.relationship_id)
+        
+        # Handle source entity
+        if hasattr(relationship.source_entity, 'entity_id'):
+            source_id = relationship.source_entity.entity_id
+        elif isinstance(relationship.source_entity, str):
+            source_id = relationship.source_entity
+        else:
+            source_id = str(relationship.source_entity)
+        
+        # Handle target entity
+        if hasattr(relationship.target_entity, 'entity_id'):
+            target_id = relationship.target_entity.entity_id
+        elif isinstance(relationship.target_entity, str):
+            target_id = relationship.target_entity
+        else:
+            target_id = str(relationship.target_entity)
+        
+        self.entity_relationships[source_id].add(relationship.relationship_id)
+        self.entity_relationships[target_id].add(relationship.relationship_id)
 
         return relationship
 
     def get_entity_by_id(self, entity_id: str) -> Optional[Entity]:
-        """
-        Get an entity by its ID.
+        """Get an entity by its ID.
 
         Args:
             entity_id (str): Entity ID
@@ -358,8 +403,7 @@ class KnowledgeGraph:
         return self.entities.get(entity_id)
 
     def get_relationship_by_id(self, relationship_id: str) -> Optional[Relationship]:
-        """
-        Get a relationship by its ID.
+        """Get a relationship by its ID.
 
         Args:
             relationship_id (str): Relationship ID
@@ -370,8 +414,7 @@ class KnowledgeGraph:
         return self.relationships.get(relationship_id)
 
     def get_entities_by_type(self, entity_type: str) -> List[Entity]:
-        """
-        Get all entities of a specific type.
+        """Get all entities of a specific type.
 
         Args:
             entity_type (str): Entity type
@@ -383,8 +426,7 @@ class KnowledgeGraph:
         return [self.entities[entity_id] for entity_id in entity_ids]
 
     def get_entities_by_name(self, name: str) -> List[Entity]:
-        """
-        Get all entities with a specific name.
+        """Get all entities with a specific name.
 
         Args:
             name (str): Entity name
@@ -396,8 +438,7 @@ class KnowledgeGraph:
         return [self.entities[entity_id] for entity_id in entity_ids]
 
     def get_relationships_by_type(self, relationship_type: str) -> List[Relationship]:
-        """
-        Get all relationships of a specific type.
+        """Get all relationships of a specific type.
 
         Args:
             relationship_type (str): Relationship type
@@ -409,8 +450,7 @@ class KnowledgeGraph:
         return [self.relationships[rel_id] for rel_id in relationship_ids]
 
     def get_relationships_by_entity(self, entity: Entity) -> List[Relationship]:
-        """
-        Get all relationships involving a specific entity.
+        """Get all relationships involving a specific entity.
 
         Args:
             entity (Entity): The entity
@@ -549,8 +589,7 @@ class KnowledgeGraph:
         return entities
 
     def merge(self, other: 'KnowledgeGraph') -> 'KnowledgeGraph':
-        """
-        Merge another knowledge graph into this one.
+        """Merge another knowledge graph into this one.
 
         Args:
             other (KnowledgeGraph): The knowledge graph to merge
@@ -588,7 +627,7 @@ class KnowledgeGraph:
                 entity_id_map[entity_id] = new_entity.entity_id
 
         # Add relationships from the other graph
-        for rel_id, rel in other.relationships.items():
+        for rel in other.relationships.values():
             if rel.source_id in entity_id_map and rel.target_id in entity_id_map:
                 source_entity = self.entities[entity_id_map[rel.source_id]]
                 target_entity = self.entities[entity_id_map[rel.target_id]]
@@ -608,12 +647,10 @@ class KnowledgeGraph:
                         source_text=rel.source_text,
                         bidirectional=rel.bidirectional
                     )
-
         return self
 
     def to_dict(self) -> Dict[str, Any]:
-        """
-        Convert the knowledge graph to a dictionary representation.
+        """Convert the knowledge graph to a dictionary representation.
 
         Returns:
             Dict: Dictionary representation of the knowledge graph
@@ -626,8 +663,7 @@ class KnowledgeGraph:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'KnowledgeGraph':
-        """
-        Create a knowledge graph from a dictionary representation.
+        """Create a knowledge graph from a dictionary representation.
 
         Args:
             data (Dict): Dictionary representation of the knowledge graph
@@ -657,8 +693,7 @@ class KnowledgeGraph:
         return kg
 
     def to_json(self, indent: int = 2) -> str:
-        """
-        Convert the knowledge graph to a JSON string.
+        """Convert the knowledge graph to a JSON string.
 
         Args:
             indent (int): Indentation level for JSON formatting
@@ -670,8 +705,7 @@ class KnowledgeGraph:
 
     @classmethod
     def from_json(cls, json_str: str) -> 'KnowledgeGraph':
-        """
-        Create a knowledge graph from a JSON string.
+        """Create a knowledge graph from a JSON string.
 
         Args:
             json_str (str): JSON representation of the knowledge graph
@@ -683,8 +717,7 @@ class KnowledgeGraph:
         return cls.from_dict(data)
 
     def export_to_rdf(self, format: str = "turtle") -> str:
-        """
-        Export the knowledge graph to RDF format.
+        """Export the knowledge graph to RDF format.
 
         Args:
             format (str): RDF format ("turtle", "xml", "json-ld", "n3")
@@ -724,16 +757,17 @@ class KnowledgeGraph:
 
             # Add entity properties
             for key, value in entity.properties.items():
-                if isinstance(value, str):
-                    g.add((entity_uri, KG[key], Literal(value)))
-                elif isinstance(value, int):
-                    g.add((entity_uri, KG[key], Literal(value, datatype=XSD.integer)))
-                elif isinstance(value, float):
-                    g.add((entity_uri, KG[key], Literal(value, datatype=XSD.float)))
-                elif isinstance(value, bool):
-                    g.add((entity_uri, KG[key], Literal(value, datatype=XSD.boolean)))
-                else:
-                    g.add((entity_uri, KG[key], Literal(str(value))))
+                match value:
+                    case str():
+                        g.add((entity_uri, KG[key], Literal(value)))
+                    case int():
+                        g.add((entity_uri, KG[key], Literal(value, datatype=XSD.integer)))
+                    case float():
+                        g.add((entity_uri, KG[key], Literal(value, datatype=XSD.float)))
+                    case bool():
+                        g.add((entity_uri, KG[key], Literal(value, datatype=XSD.boolean)))
+                    case _:
+                        g.add((entity_uri, KG[key], Literal(str(value))))
 
         # Add relationships
         for rel in self.relationships.values():
@@ -822,7 +856,7 @@ class KnowledgeGraphExtractor:
 
         if use_spacy:
             try:
-                import spacy
+                import spacy # TODO Add in spacy as a dependency
                 try:
                     self.nlp = spacy.load("en_core_web_sm")
                 except:
@@ -847,257 +881,8 @@ class KnowledgeGraphExtractor:
                 self.use_transformers = False
 
         # Initialize relation patterns
-        self.relation_patterns = relation_patterns or self._default_relation_patterns()
+        self.relation_patterns = relation_patterns or _default_relation_patterns()
 
-    def _default_relation_patterns(self) -> List[Dict[str, Any]]:
-        """
-        Create default relation extraction patterns.
-
-        Returns:
-            List[Dict]: List of relation patterns
-        """
-        return [
-            {
-                "name": "founded_by",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "person",
-                "confidence": 0.8
-            },
-            {
-                "name": "works_for",
-                "pattern": r"(\b\w+(?:\s+\w+){0,3}?)\s+works\s+(?:for|at)\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "organization",
-                "confidence": 0.8
-            },
-            {
-                "name": "part_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:a\s+)?part\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "entity",
-                "target_type": "entity",
-                "confidence": 0.7
-            },
-            {
-                "name": "located_in",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:is|are)\s+(?:located|based)\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "entity",
-                "target_type": "location",
-                "confidence": 0.8
-            },
-            {
-                "name": "created",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+created\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "entity",
-                "confidence": 0.8
-            },
-            {
-                "name": "developed",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+developed\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "entity",
-                "confidence": 0.8
-            },
-            {
-                "name": "acquired",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+acquired\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "organization",
-                "confidence": 0.9
-            },
-            {
-                "name": "parent_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?parent\s+(?:company\s+)?of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "organization",
-                "confidence": 0.9
-            },
-            {
-                "name": "subsidiary_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:a\s+)?subsidiary\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "organization",
-                "confidence": 0.9
-            },
-            {
-                "name": "headquartered_in",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+headquartered\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "location",
-                "confidence": 0.9
-            },
-            {
-                "name": "founded_in",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "location",
-                "confidence": 0.8
-            },
-            {
-                "name": "CEO_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?(?:CEO|Chief\s+Executive\s+Officer)\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "organization",
-                "confidence": 0.9
-            },
-            {
-                "name": "has_CEO",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)(?:'s)?\s+(?:CEO|Chief\s+Executive\s+Officer)\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "person",
-                "confidence": 0.9
-            },
-            {
-                "name": "author_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:is\s+the\s+author\s+of|wrote|authored)\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "work",
-                "confidence": 0.9
-            },
-            {
-                "name": "invented",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+invented\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "entity",
-                "confidence": 0.9
-            },
-            {
-                "name": "discovered",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+discovered\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "entity",
-                "confidence": 0.9
-            },
-            {
-                "name": "used_for",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+used\s+for\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "entity",
-                "target_type": "entity",
-                "confidence": 0.8
-            },
-            {
-                "name": "predecessor_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?predecessor\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "entity",
-                "target_type": "entity",
-                "confidence": 0.8
-            },
-            {
-                "name": "successor_to",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?successor\s+to\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "entity",
-                "target_type": "entity",
-                "confidence": 0.8
-            },
-            {
-                "name": "parent_company",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)'s\s+parent\s+company\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "organization",
-                "confidence": 0.8
-            },
-            {
-                "name": "born_in",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+was\s+born\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "location",
-                "confidence": 0.9
-            },
-            {
-                "name": "died_in",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+died\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "location",
-                "confidence": 0.9
-            },
-            {
-                "name": "married_to",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+married\s+to\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "person",
-                "confidence": 0.9,
-                "bidirectional": True
-            },
-            {
-                "name": "capital_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+the\s+capital\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "location",
-                "target_type": "location",
-                "confidence": 0.9
-            },
-            {
-                "name": "has_capital",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)(?:'s)?\s+capital\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "location",
-                "target_type": "location",
-                "confidence": 0.9
-            },
-            {
-                "name": "employs",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+employs\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "organization",
-                "target_type": "person",
-                "confidence": 0.8
-            },
-            # Domain-specific patterns for AI/ML
-            {
-                "name": "developed_by",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+developed\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "model",
-                "target_type": "organization",
-                "confidence": 0.8
-            },
-            {
-                "name": "created_by",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+created\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "model",
-                "target_type": "organization",
-                "confidence": 0.8
-            },
-            {
-                "name": "trained_on",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+trained\s+on\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "model",
-                "target_type": "dataset",
-                "confidence": 0.8
-            },
-            {
-                "name": "based_on",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+based\s+on\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "model",
-                "target_type": "model",
-                "confidence": 0.8
-            },
-            {
-                "name": "subfield_of",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+a\s+subfield\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "field",
-                "target_type": "field",
-                "confidence": 0.9
-            },
-            {
-                "name": "pioneered",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+pioneered\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "field",
-                "confidence": 0.9
-            },
-            {
-                "name": "leads",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+leads\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "organization",
-                "confidence": 0.8
-            },
-            {
-                "name": "works_at",
-                "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+works\s+at\s+(\b\w+(?:\s+\w+){0,5}?)\b",
-                "source_type": "person",
-                "target_type": "organization",
-                "confidence": 0.8
-            }
-        ]
 
     def extract_entities(self, text: str) -> List[Entity]:
         """
@@ -1118,7 +903,7 @@ class KnowledgeGraphExtractor:
 
             for ent in doc.ents:
                 # Map spaCy entity types to our entity types
-                entity_type = self._map_spacy_entity_type(ent.label_)
+                entity_type = _map_spacy_entity_type(ent.label_)
 
                 # Skip entities with low confidence
                 if ent._.get("confidence", 1.0) < self.min_confidence:
@@ -1147,7 +932,7 @@ class KnowledgeGraphExtractor:
                         continue
 
                     entity_text = result["word"]
-                    entity_type = self._map_transformers_entity_type(result["entity"])
+                    entity_type = _map_transformers_entity_type(result["entity"])
 
                     # Use entity text as key to group entities
                     if entity_text not in entity_groups:
@@ -1176,198 +961,20 @@ class KnowledgeGraphExtractor:
             except Exception as e:
                 print(f"Warning: Error in transformers NER: {e}")
                 # Fall back to rule-based extraction
-                entities.extend(self._rule_based_entity_extraction(text))
-
+                entities.extend(_rule_based_entity_extraction(text))
         else:
             # Use rule-based entity extraction
-            entities.extend(self._rule_based_entity_extraction(text))
+            entities.extend(_rule_based_entity_extraction(text))
 
         return entities
 
-    def _rule_based_entity_extraction(self, text: str) -> List[Entity]:
-        """
-        Extract entities using rule-based patterns.
 
-        Args:
-            text (str): Text to extract entities from
 
-        Returns:
-            List[Entity]: List of extracted entities
-        """
-        entities = []
 
-        # Simple rules for common entity types
-        # Person: capitalize
-        person_pattern = r"(?:Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+(\w+(?:\s+\w+){0,2})"
-        for match in re.finditer(person_pattern, text):
-            name = match.group(1)
-            entity = Entity(
-                entity_type="person",
-                name=name,
-                confidence=0.8,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
 
-        # Organization: Capitalized words followed by Inc, Corp, Ltd, etc.
-        org_pattern = r"(\w+(?:\s+\w+){0,5}?)\s+(?:Inc\.?|Corp\.?|Corporation|Ltd\.?|Limited|LLC|LLP|Group|Foundation)"
-        for match in re.finditer(org_pattern, text):
-            name = match.group(1)
-            entity = Entity(
-                entity_type="organization",
-                name=name,
-                confidence=0.8,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        # Location: Look for prepositions + capitalized words
-        loc_pattern = r"(?:in|at|from|to)\s+([A-Z]\w+(?:\s+[A-Z]\w+){0,2})"
-        for match in re.finditer(loc_pattern, text):
-            name = match.group(1)
-            entity = Entity(
-                entity_type="location",
-                name=name,
-                confidence=0.7,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        # Date: Simple date patterns
-        date_pattern = r"(\d{1,2}(?:st|nd|rd|th)?\s+(?:January|February|March|April|May|June|July|August|September|October|November|December),?\s+\d{4})"
-        for match in re.finditer(date_pattern, text):
-            entity = Entity(
-                entity_type="date",
-                name=match.group(1),
-                confidence=0.9,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        # Technology: Common technology terms
-        tech_pattern = r"(\w+(?:\s+\w+){0,3}?)\s+(?:algorithm|framework|library|language|platform|system|technology|tool)"
-        for match in re.finditer(tech_pattern, text):
-            entity = Entity(
-                entity_type="technology",
-                name=match.group(1),
-                confidence=0.7,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        # AI/ML specific patterns
-        ai_pattern = r"((?:Deep|Machine|Reinforcement)\s+Learning|Neural\s+Networks?|(?:Large\s+Language|Generative|Transformer)\s+Models?)"
-        for match in re.finditer(ai_pattern, text, re.IGNORECASE):
-            entity = Entity(
-                entity_type="field",
-                name=match.group(1),
-                confidence=0.9,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        # AI model names
-        model_pattern = r"((?:GPT|BERT|T5|LLaMA|Stable\s+Diffusion|DALL-E|PaLM|Gemini|Claude)(?:-\d+)?(?:\s+\w+)?)"
-        for match in re.finditer(model_pattern, text):
-            entity = Entity(
-                entity_type="model",
-                name=match.group(1),
-                confidence=0.9,
-                source_text=text[max(0, match.start() - 10):min(len(text), match.end() + 10)]
-            )
-            entities.append(entity)
-
-        return entities
-
-    def _map_spacy_entity_type(self, spacy_type: str) -> str:
-        """
-        Map spaCy entity types to our entity types.
-
-        Args:
-            spacy_type (str): spaCy entity type
-
-        Returns:
-            str: Mapped entity type
-        """
-        mapping = {
-            "PERSON": "person",
-            "PER": "person",
-            "ORG": "organization",
-            "GPE": "location",
-            "LOC": "location",
-            "DATE": "date",
-            "TIME": "time",
-            "PRODUCT": "product",
-            "EVENT": "event",
-            "WORK_OF_ART": "work",
-            "LAW": "law",
-            "LANGUAGE": "language",
-            "PERCENT": "number",
-            "MONEY": "number",
-            "QUANTITY": "number",
-            "ORDINAL": "number",
-            "CARDINAL": "number",
-            "NORP": "group",
-            "FAC": "location",
-        }
-
-        return mapping.get(spacy_type, "entity")
-
-    def _map_transformers_entity_type(self, transformers_type: str) -> str:
-        """
-        Map Transformers entity types to our entity types.
-
-        Args:
-            transformers_type (str): Transformers entity type
-
-        Returns:
-            str: Mapped entity type
-        """
-        mapping = {
-            "PER": "person",
-            "PERSON": "person",
-            "I-PER": "person",
-            "B-PER": "person",
-            "ORG": "organization",
-            "I-ORG": "organization",
-            "B-ORG": "organization",
-            "LOC": "location",
-            "I-LOC": "location",
-            "B-LOC": "location",
-            "GPE": "location",
-            "I-GPE": "location",
-            "B-GPE": "location",
-            "DATE": "date",
-            "I-DATE": "date",
-            "B-DATE": "date",
-            "TIME": "time",
-            "I-TIME": "time",
-            "B-TIME": "time",
-            "PRODUCT": "product",
-            "I-PRODUCT": "product",
-            "B-PRODUCT": "product",
-            "EVENT": "event",
-            "I-EVENT": "event",
-            "B-EVENT": "event",
-            "WORK_OF_ART": "work",
-            "I-WORK_OF_ART": "work",
-            "B-WORK_OF_ART": "work",
-            "LAW": "law",
-            "I-LAW": "law",
-            "B-LAW": "law",
-            "LANGUAGE": "language",
-            "I-LANGUAGE": "language",
-            "B-LANGUAGE": "language",
-            "MISC": "entity",
-            "I-MISC": "entity",
-            "B-MISC": "entity",
-        }
-
-        return mapping.get(transformers_type, "entity")
 
     def extract_relationships(self, text: str, entities: List[Entity]) -> List[Relationship]:
-        """
-        Extract relationships between entities from text.
+        """Extract relationships between entities from text.
 
         Args:
             text (str): Text to extract relationships from
@@ -1385,6 +992,7 @@ class KnowledgeGraphExtractor:
 
         # Use different methods based on available tools
         if self.use_transformers and self.re_model:
+            # TODO extract_relationships needs a more specific RE model from Transformers.
             # Not implemented yet - would require a more specific RE model
             pass
 
@@ -1394,8 +1002,7 @@ class KnowledgeGraphExtractor:
         return relationships
 
     def _rule_based_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
-        """
-        Extract relationships using rule-based patterns.
+        """Extract relationships using rule-based patterns.
 
         Args:
             text (str): Text to extract relationships from
@@ -1410,32 +1017,41 @@ class KnowledgeGraphExtractor:
         for pattern_info in self.relation_patterns:
             pattern = pattern_info["pattern"]
             relation_type = pattern_info["name"]
-            source_type = pattern_info["source_type"]
-            target_type = pattern_info["target_type"]
+            source_type = pattern_info["source_type"] # TODO source_type is not used in this implementation. Figure out if needed
+            target_type = pattern_info["target_type"] # TODO target_type is not used in this implementation. Figure out if needed
             confidence = pattern_info.get("confidence", 0.7)
             bidirectional = pattern_info.get("bidirectional", False)
 
             # Find matches
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                source_text = match.group(1).strip()
-                target_text = match.group(2).strip()
+            try:
+                for match in re.finditer(pattern, text, re.IGNORECASE):
+                    # Check if the pattern has exactly 2 groups
+                    if len(match.groups()) < 2:
+                        continue
+                        
+                    source_text = match.group(1).strip()
+                    target_text = match.group(2).strip()
 
-                # Look for entities that match or contain the matched text
-                source_entity = self._find_best_entity_match(source_text, entity_map)
-                target_entity = self._find_best_entity_match(target_text, entity_map)
+                    # Look for entities that match or contain the matched text
+                    source_entity = self._find_best_entity_match(source_text, entity_map)
+                    target_entity = self._find_best_entity_match(target_text, entity_map)
 
-                if source_entity and target_entity:
-                    # Create relationship
-                    rel = Relationship(
-                        relationship_type=relation_type,
-                        source=source_entity,
-                        target=target_entity,
-                        confidence=confidence,
-                        source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
-                        bidirectional=bidirectional
-                    )
+                    if source_entity and target_entity and source_entity != target_entity:
+                        # Create relationship
+                        rel = Relationship(
+                            relationship_type=relation_type,
+                            source_entity=source_entity,
+                            target_entity=target_entity,
+                            confidence=confidence,
+                            source_text=text[max(0, match.start() - 20):min(len(text), match.end() + 20)],
+                            bidirectional=bidirectional
+                        )
 
-                    relationships.append(rel)
+                        relationships.append(rel)
+            
+            except Exception as e:
+                # Skip problematic patterns and continue
+                continue
 
         return relationships
 
@@ -1503,6 +1119,7 @@ class KnowledgeGraphExtractor:
             entities = [e for e in entities if e.confidence > 0.8]
         elif extraction_temperature > 0.8:
             # For high temperature, try to extract additional entities
+            # TODO Implement more aggressive entity extraction
             # (In a real implementation, this could use more aggressive extraction techniques)
             pass
 
@@ -1524,6 +1141,7 @@ class KnowledgeGraphExtractor:
         elif structure_temperature > 0.8:
             # For high structure temperature, include all relationship types and try to infer
             # additional hierarchical relationships
+            # TODO Implement more complex relationship inference
             # (In a real implementation, this would add more complex relationship inference)
             pass
 
@@ -1569,17 +1187,17 @@ class KnowledgeGraphExtractor:
             overlap = 200
             chunks = []
 
-            for i in range(0, len(text), chunk_size - overlap):
-                chunk = text[i:i + chunk_size]
+            for idx in range(0, len(text), chunk_size - overlap):
+                chunk = text[idx:idx + chunk_size]
                 chunks.append(chunk)
 
             # Process each chunk and merge the results
-            for i, chunk in enumerate(chunks):
+            for idx, chunk in enumerate(chunks):
                 # Extract knowledge graph from chunk using temperature parameters
                 chunk_kg = self.extract_knowledge_graph(chunk, extraction_temperature, structure_temperature)
 
                 # For the first chunk, use it as the base
-                if i == 0:
+                if idx == 0:
                     kg = chunk_kg
                 else:
                     # Merge subsequent chunks
@@ -1615,9 +1233,9 @@ class KnowledgeGraphExtractor:
         master_kg = KnowledgeGraph()
 
         # Process each document
-        for i, doc in enumerate(documents):
+        for idx, doc in enumerate(documents):
             if text_key not in doc:
-                print(f"Warning: Document {i} does not contain key '{text_key}'")
+                print(f"Warning: Document {idx} does not contain key '{text_key}'")
                 continue
 
             # Extract KG from document with temperature parameters
@@ -1629,10 +1247,10 @@ class KnowledgeGraphExtractor:
             )
 
             # Add document metadata to entities
-            for entity_id, entity in doc_kg.entities.items():
+            for entity in doc_kg.entities.values():
                 if not entity.properties:
                     entity.properties = {}
-                entity.properties["document_id"] = doc.get("id", str(i))
+                entity.properties["document_id"] = doc.get("id", str(idx))
                 if "title" in doc:
                     entity.properties["document_title"] = doc["title"]
 
@@ -1641,9 +1259,9 @@ class KnowledgeGraphExtractor:
 
         return master_kg
 
-    def enrich_with_types(self, kg: KnowledgeGraph) -> KnowledgeGraph:
-        """
-        Enrich a knowledge graph with inferred entity types.
+    @staticmethod
+    def enrich_with_types(kg: KnowledgeGraph) -> KnowledgeGraph:
+        """Enrich a knowledge graph with inferred entity types.
 
         Args:
             kg (KnowledgeGraph): Knowledge graph to enrich
@@ -1671,9 +1289,8 @@ class KnowledgeGraphExtractor:
             "subfield_of": {"source": "field", "target": "field"},
             "pioneered": {"source": "person", "target": "field"},
         }
-
         # Apply type inference rules
-        for rel_id, rel in kg.relationships.items():
+        for rel in kg.relationships.values():
             if rel.relationship_type in type_rules:
                 rule = type_rules[rel.relationship_type]
 
@@ -1684,27 +1301,73 @@ class KnowledgeGraphExtractor:
                 # Update target type if generic
                 if rel.target_entity.entity_type == "entity":
                     rel.target_entity.entity_type = rule["target"]
-
         return kg
 
-    def extract_from_wikipedia(self, page_title: str, extraction_temperature: float = 0.7,
-                           structure_temperature: float = 0.5) -> KnowledgeGraph:
-        """
-        Extract a knowledge graph from a Wikipedia page with tunable parameters.
+    def extract_from_wikipedia(self, 
+                            page_title: str, 
+                            extraction_temperature: float = 0.7,
+                           structure_temperature: float = 0.5
+                           ) -> KnowledgeGraph:
+        """Extract a knowledge graph from a Wikipedia page with tunable parameters.
+
+        This method fetches content from a Wikipedia page via the Wikipedia API and processes it into
+        a structured knowledge graph. The extraction process is highly configurable through temperature
+        parameters that control both the level of detail and structural complexity of the resulting graph.
 
         Args:
-            page_title (str): Title of the Wikipedia page
-            extraction_temperature (float): Controls level of detail (0.0-1.0)
-                - Lower values (0.1-0.3): Extract only major concepts and strongest relationships
-                - Medium values (0.4-0.7): Extract balanced set of entities and relationships
-                - Higher values (0.8-1.0): Extract detailed concepts, properties, and nuanced relationships
-            structure_temperature (float): Controls structural complexity (0.0-1.0)
-                - Lower values (0.1-0.3): Flatter structure with fewer relationship types
-                - Medium values (0.4-0.7): Balanced hierarchical structure
-                - Higher values (0.8-1.0): Rich, multi-level concept hierarchies with diverse relationship types
+            page_title (str): The exact title of the Wikipedia page to extract from. Must match
+                the Wikipedia page title format (case-sensitive, with proper spacing).
+            extraction_temperature (float, optional): Controls the granularity and depth of entity
+                and relationship extraction. Defaults to 0.7.
+                - Low values (0.1-0.3): Extract only primary concepts, major entities, and the 
+                    strongest, most obvious relationships. Results in a minimal, core knowledge graph.
+                - Medium values (0.4-0.7): Balanced extraction including secondary concepts, 
+                    moderate entity detail, and well-supported relationships. Provides good coverage
+                    without excessive noise.
+                - High values (0.8-1.0): Comprehensive extraction including detailed concepts,
+                    entity properties, attributes, nuanced relationships, and contextual information.
+                    May include more speculative or weak relationships.
+            structure_temperature (float, optional): Controls the hierarchical complexity and
+                relationship diversity of the knowledge graph structure. Defaults to 0.5.
+                - Low values (0.1-0.3): Creates flatter graph structures with fewer relationship
+                    types, focusing on direct connections and simple hierarchies.
+                - Medium values (0.4-0.7): Generates balanced hierarchical structures with
+                    moderate relationship type diversity and multi-level organization.
+                - High values (0.8-1.0): Produces rich, multi-layered concept hierarchies with
+                    diverse relationship types, complex interconnections, and deep structural nesting.
 
         Returns:
-            KnowledgeGraph: Extracted knowledge graph
+            KnowledgeGraph: A comprehensive knowledge graph object containing:
+                - Extracted entities with their properties and confidence scores
+                - Relationships between entities with type classification and confidence
+                - A special Wikipedia page entity representing the source
+                - "sourced_from" relationships linking all entities to their Wikipedia origin
+                - Metadata including entity and relationship type classifications
+                - Graph name formatted as "wikipedia_{page_title}"
+
+        Raises:
+            ValueError: If the specified Wikipedia page title is not found or does not exist.
+                The error message will indicate the specific page title that was not found.
+            RuntimeError: If any error occurs during the Wikipedia API request, content processing,
+                or knowledge graph construction. The original exception details are preserved
+                in the error message for debugging purposes.
+
+        Note:
+            - The method requires an active internet connection to access the Wikipedia API
+            - Wikipedia page titles are case-sensitive and must match exactly
+            - The extraction process may take significant time for large Wikipedia pages
+            - If tracing is enabled, detailed extraction metadata is recorded for analysis
+            - The resulting knowledge graph includes bidirectional relationship tracking
+            - All extracted entities maintain provenance through "sourced_from" relationships
+
+        Example:
+            >>> extractor = KnowledgeGraphExtractor()
+            >>> kg = extractor.extract_from_wikipedia(
+            ...     page_title="Artificial Intelligence",
+            ...     extraction_temperature=0.6,
+            ...     structure_temperature=0.4
+            ... )
+            >>> print(f"Extracted {len(kg.entities)} entities and {len(kg.relationships)} relationships")
         """
         # Create trace if tracer is enabled
         trace_id = None
@@ -1760,7 +1423,7 @@ class KnowledgeGraphExtractor:
             # Add metadata about the source
             kg.name = f"wikipedia_{page_title}"
 
-            # Add the Wikipedia page as a source entity
+            # Add the Wikiepdia page as a source entity
             page_entity = Entity(
                 entity_type="wikipedia_page",
                 name=page_title,
@@ -1773,7 +1436,7 @@ class KnowledgeGraphExtractor:
             kg.entity_names[page_title].add(page_entity.entity_id)
 
             # Create "source_from" relationships
-            for entity_id, entity in list(kg.entities.items()):
+            for entity in list(kg.entities.values()):
                 if entity.entity_id != page_entity.entity_id:
                     rel = Relationship(
                         relationship_type="sourced_from",
@@ -1922,13 +1585,13 @@ class KnowledgeGraphExtractor:
 
                 for kg_stmt in kg_statements:
                     # Compare property names (inexact)
-                    prop_match = self._string_similarity(
+                    prop_match = _string_similarity(
                         wk_stmt["property"].lower(),
                         kg_stmt["property"].lower()
                     )
 
                     # Compare values (inexact)
-                    value_match = self._string_similarity(
+                    value_match = _string_similarity(
                         wk_stmt["value"].lower(),
                         kg_stmt["value"].lower()
                     )
@@ -2112,28 +1775,7 @@ class KnowledgeGraphExtractor:
             print(f"Error querying Wikidata: {e}")
             return []
 
-    def _string_similarity(self, str1: str, str2: str) -> float:
-        """
-        Calculate similarity between two strings.
 
-        Args:
-            str1 (str): First string
-            str2 (str): Second string
-
-        Returns:
-            float: Similarity score (0-1)
-        """
-        # Simple Jaccard similarity on words
-        words1 = set(str1.lower().split())
-        words2 = set(str2.lower().split())
-
-        if not words1 or not words2:
-            return 0.0
-
-        intersection = words1.intersection(words2)
-        union = words1.union(words2)
-
-        return len(intersection) / len(union)
 
     def extract_and_validate_wikipedia_graph(self, page_title: str, extraction_temperature: float = 0.7,
                                         structure_temperature: float = 0.5) -> Dict[str, Any]:
@@ -2295,7 +1937,7 @@ class KnowledgeGraphExtractorWithValidation:
 
         # Initialize validator
         try:
-            from ipfs_datasets_py.llm_semantic_validation import SPARQLValidator
+            from ipfs_datasets_py.llm.llm_semantic_validation import SPARQLValidator
             self.validator = SPARQLValidator(
                 endpoint_url=sparql_endpoint_url,
                 tracer=self.tracer,
@@ -2755,11 +2397,12 @@ class KnowledgeGraphExtractorWithValidation:
         # Parse entity corrections
         if "entities" in corrections:
             for entity_id, entity_correction in corrections["entities"].items():
+                # TODO entity_name is not referenced anywhere. See if we need it.
                 entity_name = entity_correction.get("entity_name", "")
                 suggestions = entity_correction.get("suggestions", "")
 
                 # Process suggestions to extract corrections
-                # This is simplified - in a real implementation, more sophisticated
+                # # TODO This is simplified - in a real implementation, more sophisticated . SO WE'RE GUNNA MAKE IT MORE SOPHISTICATED DAMNIT!
                 # parsing of the suggestion text would be needed
                 if isinstance(suggestions, dict):
                     # Structured suggestions
@@ -2798,6 +2441,7 @@ class KnowledgeGraphExtractorWithValidation:
                         entity_properties[prop] = correction
 
             # Add the corrected entity
+            # TODO corrected_entity is not reference anywhere. See if we need it.
             corrected_entity = corrected_kg.add_entity(
                 entity_type=entity.entity_type if hasattr(entity, "entity_type") else "entity",
                 name=entity.name if hasattr(entity, "name") else "Unknown",
@@ -2832,3 +2476,479 @@ class KnowledgeGraphExtractorWithValidation:
                 )
 
         return corrected_kg
+
+
+############# HELPER FUNCTIONS #############
+
+def _default_relation_patterns() -> List[Dict[str, Any]]:
+    """Create default relation extraction patterns.
+
+    Returns:
+        List[Dict]: List of relation patterns
+    """
+    return [
+        # Enhanced patterns for AI research content
+        {
+            "name": "expert_in",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+is\s+(?:a\s+)?(?:leading\s+)?expert\s+in\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.9
+        },
+        {
+            "name": "focuses_on",
+            "pattern": r"(Project\s+[A-Z][a-z]+)\s+focus(?:es)?\s+on\s+([a-z][a-z\s]+)",
+            "source_type": "project",
+            "target_type": "field",
+            "confidence": 0.8
+        },
+        {
+            "name": "contributed_to",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+contributed\s+to\s+([a-z][a-z\s]+)",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.85
+        },
+        {
+            "name": "works_at_org",
+            "pattern": r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:works?\s+at|is\s+at|joined)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        # Original comprehensive patterns
+        {
+            "name": "founded_by",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "person",
+            "confidence": 0.8
+        },
+        {
+            "name": "works_for",
+            "pattern": r"(\b\w+(?:\s+\w+){0,3}?)\s+works\s+(?:for|at)\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.8
+        },
+        {
+            "name": "part_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:a\s+)?part\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "entity",
+            "target_type": "entity",
+            "confidence": 0.7
+        },
+        {
+            "name": "located_in",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:is|are)\s+(?:located|based)\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "entity",
+            "target_type": "location",
+            "confidence": 0.8
+        },
+        {
+            "name": "created",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+created\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "entity",
+            "confidence": 0.8
+        },
+        {
+            "name": "developed",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+developed\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "entity",
+            "confidence": 0.8
+        },
+        {
+            "name": "acquired",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+acquired\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        {
+            "name": "parent_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?parent\s+(?:company\s+)?of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        {
+            "name": "subsidiary_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:a\s+)?subsidiary\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        {
+            "name": "headquartered_in",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+headquartered\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "location",
+            "confidence": 0.9
+        },
+        {
+            "name": "founded_in",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+founded\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "location",
+            "confidence": 0.8
+        },
+        {
+            "name": "CEO_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?(?:CEO|Chief\s+Executive\s+Officer)\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.9
+        },
+        {
+            "name": "has_CEO",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)(?:'s)?\s+(?:CEO|Chief\s+Executive\s+Officer)\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "person",
+            "confidence": 0.9
+        },
+        {
+            "name": "author_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:is\s+the\s+author\s+of|wrote|authored)\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "work",
+            "confidence": 0.9
+        },
+        {
+            "name": "invented",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+invented\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "entity",
+            "confidence": 0.9
+        },
+        {
+            "name": "discovered",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+discovered\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "entity",
+            "confidence": 0.9
+        },
+        {
+            "name": "used_for",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+used\s+for\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "entity",
+            "target_type": "entity",
+            "confidence": 0.8
+        },
+        {
+            "name": "predecessor_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?predecessor\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "entity",
+            "target_type": "entity",
+            "confidence": 0.8
+        },
+        {
+            "name": "successor_to",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+(?:the\s+)?successor\s+to\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "entity",
+            "target_type": "entity",
+            "confidence": 0.8
+        },
+        {
+            "name": "parent_company",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)'s\s+parent\s+company\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "organization",
+            "confidence": 0.8
+        },
+        {
+            "name": "born_in",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+was\s+born\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "location",
+            "confidence": 0.9
+        },
+        {
+            "name": "died_in",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+died\s+in\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "location",
+            "confidence": 0.9
+        },
+        {
+            "name": "married_to",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+married\s+to\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "person",
+            "confidence": 0.9,
+            "bidirectional": True
+        },
+        {
+            "name": "capital_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+the\s+capital\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "location",
+            "target_type": "location",
+            "confidence": 0.9
+        },
+        {
+            "name": "has_capital",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)(?:'s)?\s+capital\s+is\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "location",
+            "target_type": "location",
+            "confidence": 0.9
+        },
+        {
+            "name": "employs",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+employs\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "organization",
+            "target_type": "person",
+            "confidence": 0.8
+        },
+        # Domain-specific patterns for AI/ML
+        {
+            "name": "developed_by",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+developed\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "model",
+            "target_type": "organization",
+            "confidence": 0.8
+        },
+        {
+            "name": "created_by",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+created\s+by\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "model",
+            "target_type": "organization",
+            "confidence": 0.8
+        },
+        {
+            "name": "trained_on",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+(?:was|were)\s+trained\s+on\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "model",
+            "target_type": "dataset",
+            "confidence": 0.8
+        },
+        {
+            "name": "based_on",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+based\s+on\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "model",
+            "target_type": "model",
+            "confidence": 0.8
+        },
+        {
+            "name": "subfield_of",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+is\s+a\s+subfield\s+of\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "field",
+            "target_type": "field",
+            "confidence": 0.9
+        },
+        {
+            "name": "pioneered",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+pioneered\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "field",
+            "confidence": 0.9
+        },
+        {
+            "name": "leads",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+leads\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.8
+        },
+        {
+            "name": "works_at",
+            "pattern": r"(\b\w+(?:\s+\w+){0,5}?)\s+works\s+at\s+(\b\w+(?:\s+\w+){0,5}?)\b",
+            "source_type": "person",
+            "target_type": "organization",
+            "confidence": 0.8
+        }
+    ]
+
+def _map_spacy_entity_type(spacy_type: str) -> str:
+    """Map spaCy entity types to our entity types.
+
+    Args:
+        spacy_type (str): spaCy entity type
+
+    Returns:
+        str: Mapped entity type
+    """
+    mapping = {
+        "PERSON": "person",
+        "PER": "person",
+        "ORG": "organization",
+        "GPE": "location",
+        "LOC": "location",
+        "DATE": "date",
+        "TIME": "time",
+        "PRODUCT": "product",
+        "EVENT": "event",
+        "WORK_OF_ART": "work",
+        "LAW": "law",
+        "LANGUAGE": "language",
+        "PERCENT": "number",
+        "MONEY": "number",
+        "QUANTITY": "number",
+        "ORDINAL": "number",
+        "CARDINAL": "number",
+        "NORP": "group",
+        "FAC": "location",
+    }
+    return mapping.get(spacy_type, "entity")
+
+def _map_transformers_entity_type(transformers_type: str) -> str:
+    """Map Transformers entity types to our entity types.
+
+    Args:
+        transformers_type (str): Transformers entity type
+
+    Returns:
+        str: Mapped entity type
+    """
+    mapping = {
+        "PER": "person",
+        "PERSON": "person",
+        "I-PER": "person",
+        "B-PER": "person",
+        "ORG": "organization",
+        "I-ORG": "organization",
+        "B-ORG": "organization",
+        "LOC": "location",
+        "I-LOC": "location",
+        "B-LOC": "location",
+        "GPE": "location",
+        "I-GPE": "location",
+        "B-GPE": "location",
+        "DATE": "date",
+        "I-DATE": "date",
+        "B-DATE": "date",
+        "TIME": "time",
+        "I-TIME": "time",
+        "B-TIME": "time",
+        "PRODUCT": "product",
+        "I-PRODUCT": "product",
+        "B-PRODUCT": "product",
+        "EVENT": "event",
+        "I-EVENT": "event",
+        "B-EVENT": "event",
+        "WORK_OF_ART": "work",
+        "I-WORK_OF_ART": "work",
+        "B-WORK_OF_ART": "work",
+        "LAW": "law",
+        "I-LAW": "law",
+        "B-LAW": "law",
+        "LANGUAGE": "language",
+        "I-LANGUAGE": "language",
+        "B-LANGUAGE": "language",
+        "MISC": "entity",
+        "I-MISC": "entity",
+        "B-MISC": "entity",
+    }
+
+    return mapping.get(transformers_type, "entity")
+
+def _rule_based_entity_extraction(text: str) -> List[Entity]:
+    """
+    Extract entities using rule-based patterns.
+
+    Args:
+        text (str): Text to extract entities from
+
+    Returns:
+        List[Entity]: List of extracted entities
+    """
+    entities = []
+    entity_names_seen = set()  # Track unique entities
+
+    # Enhanced patterns for better AI research content extraction
+    patterns = [
+        # Person names: Dr./Prof. + proper names (improved)
+        (r"(?:Dr\.|Prof\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=\s|$|[.,;:])", "person", 0.9),
+        
+        # Person names: common academic patterns
+        (r"Principal\s+Investigator:\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})", "person", 0.95),
+        
+        # Organizations: specific patterns for AI companies/institutes
+        (r"(Google\s+DeepMind|OpenAI|Anthropic|Microsoft\s+Research|Meta\s+AI|IBM\s+Research)", "organization", 0.95),
+        (r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Institute|Research|Lab|Laboratory|Center|University)", "organization", 0.85),
+        
+        # AI/ML fields and techniques (enhanced)
+        (r"\b((?:artificial\s+intelligence|machine\s+learning|deep\s+learning|neural\s+networks?|computer\s+vision|natural\s+language\s+processing|reinforcement\s+learning))\b", "field", 0.95),
+        (r"\b((?:transformer\s+architectures?|attention\s+mechanisms?|self-supervised\s+learning|few-shot\s+learning|cross-modal\s+reasoning))\b", "field", 0.9),
+        (r"\b((?:physics-informed\s+neural\s+networks?|graph\s+neural\s+networks?|generative\s+models?))\b", "field", 0.9),
+        
+        # Technology and tools
+        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:framework|platform|system|technology|tool|algorithm)s?\b", "technology", 0.8),
+        
+        # Projects and research areas
+        (r"Project\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?):?\s+", "project", 0.9),
+        
+        # Medical/Healthcare terms
+        (r"\b((?:medical\s+)?(?:image\s+analysis|radiology|pathology|healthcare|diagnosis|medical\s+AI))\b", "field", 0.9),
+        
+        # Conferences and venues (common in AI)
+        (r"\b(NeurIPS|ICML|ICLR|AAAI|IJCAI|NIPS)\b", "conference", 0.95),
+        
+        # Years and timeframes
+        (r"\b(20[0-9]{2}(?:-20[0-9]{2})?)\b", "date", 0.8),
+        
+        # Locations (improved)
+        (r"\b(?:in|at|from|to|headquartered\s+in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*[A-Z][A-Z])?)\b", "location", 0.8),
+    ]
+    
+    for pattern, entity_type, confidence in patterns:
+        flags = re.IGNORECASE if entity_type in ["field", "technology"] else 0
+        
+        for match in re.finditer(pattern, text, flags):
+            name = match.group(1).strip()
+            
+            # Clean up the extracted name
+            name = re.sub(r'\s+', ' ', name)  # Normalize whitespace
+            name = name.strip('.,;:')  # Remove trailing punctuation
+            
+            # Skip if empty or too short
+            if not name or len(name) < 2:
+                continue
+                
+            # Skip if already seen (for deduplication)
+            name_key = (name.lower(), entity_type)
+            if name_key in entity_names_seen:
+                continue
+            entity_names_seen.add(name_key)
+            
+            # Skip common false positives
+            if name.lower() in ['timeline', 'the', 'and', 'our', 'this', 'that', 'with', 'from']:
+                continue
+                
+            # Create entity with better source text extraction
+            start_pos = max(0, match.start() - 20)
+            end_pos = min(len(text), match.end() + 20)
+            source_snippet = text[start_pos:end_pos].replace('\n', ' ').strip()
+            
+            entity = Entity(
+                entity_type=entity_type,
+                name=name,
+                confidence=confidence,
+                source_text=source_snippet
+            )
+            entities.append(entity)
+    
+    return entities
+
+
+def _string_similarity(str1: str, str2: str) -> float:
+    """Calculate similarity between two strings.
+
+    Args:
+        str1 (str): First string
+        str2 (str): Second string
+
+    Returns:
+        float: Similarity score (0-1)
+    """
+    # Simple Jaccard similarity on words
+    words1 = set(str1.lower().split())
+    words2 = set(str2.lower().split())
+
+    if not words1 or not words2:
+        return 0.0
+
+    intersection = words1.intersection(words2)
+    union = words1.union(words2)
+
+    return len(intersection) / len(union)

@@ -53,7 +53,7 @@ from ipfs_datasets_py.audit.audit_visualization import (
     AuditVisualizer, 
     setup_audit_visualization
 )
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
 # Get the audit logger
 audit_logger = AuditLogger.get_instance()
@@ -136,7 +136,7 @@ if timeline_fig:
 For continuous monitoring, you can launch a real-time dashboard that updates automatically:
 
 ```python
-from ipfs_datasets_py.rag_query_visualization import RAGQueryDashboard
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryDashboard
 
 # Create dashboard with both audit and query metrics
 dashboard = RAGQueryDashboard(
@@ -302,7 +302,7 @@ from ipfs_datasets_py.audit.audit_visualization import (
     generate_integrated_dashboard,
     create_query_audit_timeline
 )
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 import time
 import random
 import datetime

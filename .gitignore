@@ -17,3 +17,31 @@ dist/
 *.env
 *.env.*
 *.DS_Store
+venv/
+deprecated/
+configs.yaml
+sql_configs.yaml
+*.log
+*.db
+batch_results_batch_*
+# Test files and directories
+tests/__pycache__/
+test_*.pyc
+*.pytest_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+pdf_processing_metrics.json
+.mypy_cache/
+_log_probs_test.py
+# Scraper test results
+test_results/
+*.pyc
+__pycache__/

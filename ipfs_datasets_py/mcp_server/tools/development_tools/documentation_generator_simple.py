@@ -60,3 +60,44 @@ def documentation_generator(input_path: str,
                 "input_path": input_path
             }
         }
+
+
+# Main MCP function  
+async def documentation_generator_simple(
+    input_path: str = ".",
+    output_path: str = "docs",
+    docstring_style: str = "google",
+    ignore_patterns: Optional[List[str]] = None,
+    include_inheritance: bool = True,
+    include_examples: bool = True,
+    include_source_links: bool = True,
+    format_type: str = "markdown"
+):
+    """
+    Generate comprehensive documentation from Python source code.
+    Simplified async wrapper for MCP registration.
+    """
+    try:
+        result = documentation_generator(
+            input_path=input_path,
+            output_path=output_path,
+            docstring_style=docstring_style,
+            ignore_patterns=ignore_patterns,
+            include_inheritance=include_inheritance,
+            include_examples=include_examples,
+            include_source_links=include_source_links,
+            format_type=format_type
+        )
+        
+        return {
+            "status": "success" if result.get("success") else "error",
+            "message": result.get("result", {}).get("message", "Documentation generation completed"),
+            "result": result.get("result", {}),
+            "tool_type": "documentation_generator"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Documentation generation failed: {str(e)}",
+            "tool_type": "documentation_generator"
+        }

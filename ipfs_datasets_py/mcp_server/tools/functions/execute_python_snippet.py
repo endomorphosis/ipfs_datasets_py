@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 
 from ipfs_datasets_py.mcp_server.logger import logger
 
-def execute_python_snippet( # Changed to def
+async def execute_python_snippet( # Changed to async def
     code: str,
     timeout_seconds: int = 30,
     context: Optional[Dict[str, Any]] = None

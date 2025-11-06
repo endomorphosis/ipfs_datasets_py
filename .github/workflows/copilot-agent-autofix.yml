@@ -1,0 +1,634 @@
+name: Copilot Agent Auto-Healing
+
+'on':
+  workflow_run:
+    # NOTE: GitHub Actions does NOT support wildcards like ["*"] in workflow_run triggers.
+    # This list must be explicitly maintained. To update this list automatically, run:
+    # python3 .github/scripts/generate_workflow_list.py yaml
+    workflows:
+      - "ARM64 Self-Hosted Runner"
+      - "Automated PR Review and Copilot Assignment"
+      - "Comprehensive Scraper Validation with HuggingFace Schema Check"
+      - "Docker Build and Test"
+      - "Docker Build and Test (Multi-Platform)"
+      - "Documentation Maintenance"
+      - "GPU-Enabled Tests"
+      - "GraphRAG Production CI/CD"
+      - "MCP Dashboard Automated Tests"
+      - "MCP Endpoints Integration Tests"
+      - "PDF Processing Pipeline CI/CD"
+      - "PDF Processing and MCP Tools CI"
+      - "Publish Python Package"
+      - "Scraper Validation and Testing"
+      - "Self-Hosted Runner Test"
+      - "Self-Hosted Runner Validation"
+      - "Test Datasets ARM64 Runner"
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      workflow_name:
+        description: 'Name of the failed workflow to analyze'
+        required: false
+        type: string
+      run_id:
+        description: 'Specific workflow run ID to analyze'
+        required: false
+        type: string
+      force_create_pr:
+        description: 'Force create PR even if confidence is low'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  autofix-with-copilot-agent:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    # Only run if the triggering workflow failed and it's not another auto-fix workflow
+    if: >
+      github.event_name == 'workflow_dispatch' || 
+      (github.event.workflow_run.conclusion == 'failure' && 
+       !contains(github.event.workflow_run.name, 'Auto-Healing') &&
+       !contains(github.event.workflow_run.name, 'Auto-Fix'))
+    
+    steps:
+      - name: Debug workflow trigger information
+        run: |
+          echo "## 🔍 Workflow Trigger Debug Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Event Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event Name**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Conclusion**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Event**: ${{ github.event.workflow_run.event }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Name**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run ID**: ${{ github.event.workflow_run.id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Condition Checks" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is workflow_dispatch**: ${{ github.event_name == 'workflow_dispatch' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Conclusion is failure**: ${{ github.event.workflow_run.conclusion == 'failure' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Healing**: ${{ !contains(github.event.workflow_run.name, 'Auto-Healing') }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Fix**: ${{ !contains(github.event.workflow_run.name, 'Auto-Fix') }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Install GitHub CLI and configure git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y git gh curl
+          # Configure git for container
+          git config --global --add safe.directory '*'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Fix git config file permissions
+          chmod -R a+r /etc 2>/dev/null || true
+          mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Verify gh is authenticated
+          gh auth status || echo "GH_TOKEN is set but gh auth status failed"
+          gh auth setup-git
+      
+      - name: Set up Python environment
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
+      
+      - name: Check for duplicate processing
+        id: check_duplicate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -x  # Enable debug mode
+          
+          # Get the run ID we're checking
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.run_id }}" ]; then
+              RUN_ID="${{ github.event.inputs.run_id }}"
+            else
+              WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
+              RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' 2>&1 || echo "")
+            fi
+          else
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          fi
+          
+          echo "Checking RUN_ID: $RUN_ID"
+          
+          if [ -z "$RUN_ID" ] || [ "$RUN_ID" = "null" ]; then
+            echo "❌ No workflow run ID found - skipping"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=no_run_id" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check if we've already processed this run
+          # Look for existing PRs or issues that reference this run ID
+          echo "Searching for existing PRs referencing Run ID: $RUN_ID"
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Run ID: $RUN_ID in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          
+          echo "Found $EXISTING_PRS existing PRs"
+          
+          if [ "$EXISTING_PRS" -gt 0 ]; then
+            echo "⚠️  Run $RUN_ID already has $EXISTING_PRS fix PR(s) - skipping duplicate processing"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=already_processed" >> $GITHUB_OUTPUT
+            
+            echo "## ⏭️ Skipping Duplicate Processing" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This workflow run has already been analyzed and has existing fix PR(s)." >> $GITHUB_STEP_SUMMARY
+            echo "- **Run ID**: $RUN_ID" >> $GITHUB_STEP_SUMMARY
+            echo "- **Existing PRs**: $EXISTING_PRS" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "should_skip=false" >> $GITHUB_OUTPUT
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+      
+      - name: Get workflow run details
+        id: get_run_details
+        if: steps.check_duplicate.outputs.should_skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ steps.check_duplicate.outputs.run_id }}"
+          
+          # Get workflow details
+          WORKFLOW_NAME=$(gh run view $RUN_ID --json workflowName --jq '.workflowName')
+          HEAD_BRANCH=$(gh run view $RUN_ID --json headBranch --jq '.headBranch')
+          HEAD_SHA=$(gh run view $RUN_ID --json headSha --jq '.headSha')
+          
+          echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
+          echo "workflow_name=$WORKFLOW_NAME" >> $GITHUB_OUTPUT
+          echo "head_branch=$HEAD_BRANCH" >> $GITHUB_OUTPUT
+          echo "head_sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+          
+          echo "## Workflow Failure Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: $WORKFLOW_NAME" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run ID**: $RUN_ID" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: $HEAD_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "- **SHA**: $HEAD_SHA" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check workflow eligibility
+        id: check_eligibility
+        if: steps.check_duplicate.outputs.should_skip != 'true'
+        run: |
+          WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
+          
+          # Load configuration
+          CONFIG_FILE=".github/workflows/workflow-auto-fix-config.yml"
+          
+          # Check if workflow is in excluded list
+          if [ -f "$CONFIG_FILE" ]; then
+            # Extract excluded workflows (if any)
+            EXCLUDED=$(python -c "
+          import yaml
+          import sys
+          try:
+              with open('$CONFIG_FILE') as f:
+                  config = yaml.safe_load(f)
+                  excluded = config.get('excluded_workflows', [])
+                  if '$WORKFLOW_NAME' in excluded:
+                      print('excluded')
+                      sys.exit(0)
+                  print('eligible')
+          except Exception as e:
+              print('eligible')  # If config can't be read, allow processing
+          " 2>/dev/null)
+            
+            if [ "$EXCLUDED" = "excluded" ]; then
+              echo "⚠️  Workflow '$WORKFLOW_NAME' is in excluded list - skipping"
+              echo "should_process=false" >> $GITHUB_OUTPUT
+              
+              echo "## ⏭️ Workflow Excluded" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "The workflow '$WORKFLOW_NAME' is in the excluded workflows list." >> $GITHUB_STEP_SUMMARY
+              echo "To enable auto-fix for this workflow, remove it from \`excluded_workflows\` in $CONFIG_FILE" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+          fi
+          
+          echo "should_process=true" >> $GITHUB_OUTPUT
+          echo "✅ Workflow '$WORKFLOW_NAME' is eligible for auto-fix" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Download workflow logs
+        id: download_logs
+        if: steps.check_duplicate.outputs.should_skip != 'true' && steps.check_eligibility.outputs.should_process == 'true' && steps.get_run_details.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
+          
+          echo "📥 Downloading logs for run $RUN_ID..."
+          mkdir -p /tmp/workflow_logs
+          
+          # Get failed jobs
+          gh run view $RUN_ID --json jobs --jq '.jobs[] | select(.conclusion == "failure") | .databaseId' > /tmp/failed_jobs.txt
+          
+          if [ ! -s /tmp/failed_jobs.txt ]; then
+            echo "No failed jobs found"
+            echo "has_failures=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "has_failures=true" >> $GITHUB_OUTPUT
+          
+          # Download logs for each failed job
+          while IFS= read -r job_id; do
+            if [ -n "$job_id" ]; then
+              echo "Downloading logs for job $job_id..."
+              gh run view $RUN_ID --log --job $job_id > "/tmp/workflow_logs/job_${job_id}.log" 2>&1 || true
+            fi
+          done < /tmp/failed_jobs.txt
+          
+          # Create a summary of failures
+          echo "## Failed Jobs Summary" > /tmp/workflow_logs/summary.txt
+          gh run view $RUN_ID --json jobs --jq '.jobs[] | select(.conclusion == "failure") | "### \(.name)\n- Status: \(.conclusion)\n- Steps: \(.steps[] | select(.conclusion == "failure") | .name)\n"' >> /tmp/workflow_logs/summary.txt
+          
+          cat /tmp/workflow_logs/summary.txt
+      
+      - name: Analyze workflow failure
+        id: analyze_failure
+        if: steps.download_logs.outputs.has_failures == 'true'
+        run: |
+          python .github/scripts/analyze_workflow_failure.py \
+            --run-id "${{ steps.get_run_details.outputs.run_id }}" \
+            --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
+            --logs-dir /tmp/workflow_logs \
+            --output /tmp/failure_analysis.json
+          
+          if [ -f /tmp/failure_analysis.json ]; then
+            echo "analysis_available=true" >> $GITHUB_OUTPUT
+            
+            # Extract key findings for summary
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Failure Analysis" >> $GITHUB_STEP_SUMMARY
+            python -c "
+          import json
+          with open('/tmp/failure_analysis.json') as f:
+              data = json.load(f)
+              print('- **Error Type**: ' + data.get('error_type', 'Unknown'))
+              print('- **Root Cause**: ' + data.get('root_cause', 'Not identified'))
+              print('- **Fix Confidence**: ' + str(data.get('fix_confidence', 0)) + '%')
+          " >> $GITHUB_STEP_SUMMARY
+          else
+            echo "analysis_available=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate fix proposal
+        id: generate_fix
+        if: steps.analyze_failure.outputs.analysis_available == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python .github/scripts/generate_workflow_fix.py \
+            --analysis /tmp/failure_analysis.json \
+            --workflow-name "${{ steps.get_run_details.outputs.workflow_name }}" \
+            --output /tmp/fix_proposal.json
+          
+          if [ -f /tmp/fix_proposal.json ]; then
+            echo "fix_available=true" >> $GITHUB_OUTPUT
+            
+            # Extract fix details
+            FIX_BRANCH=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['branch_name'])")
+            FIX_TITLE=$(python -c "import json; print(json.load(open('/tmp/fix_proposal.json'))['pr_title'])")
+            
+            echo "fix_branch=$FIX_BRANCH" >> $GITHUB_OUTPUT
+            echo "fix_title=$FIX_TITLE" >> $GITHUB_OUTPUT
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Fix Proposal" >> $GITHUB_STEP_SUMMARY
+            echo "- **Branch**: \`$FIX_BRANCH\`" >> $GITHUB_STEP_SUMMARY
+            echo "- **Title**: $FIX_TITLE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "fix_available=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create issue for Copilot to fix
+        id: create_issue
+        if: steps.generate_fix.outputs.fix_available == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
+          RUN_ID="${{ steps.get_run_details.outputs.run_id }}"
+          
+          # Read analysis for context
+          ERROR_TYPE=$(python -c "import json; print(json.load(open('/tmp/failure_analysis.json')).get('error_type', 'Unknown'))")
+          ROOT_CAUSE=$(python -c "import json; print(json.load(open('/tmp/failure_analysis.json')).get('root_cause', 'Not identified'))")
+          
+          # Create SIMPLE issue for Copilot - no excessive formatting
+          cat > /tmp/issue_body.md << 'ISSUE_EOF'
+          # Fix Workflow Failure: ${{ steps.get_run_details.outputs.workflow_name }}
+          
+          ## Workflow Information
+          - **Workflow**: ${{ steps.get_run_details.outputs.workflow_name }}
+          - **Run ID**: [${{ steps.get_run_details.outputs.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ steps.get_run_details.outputs.run_id }})
+          - **Branch**: ${{ steps.get_run_details.outputs.head_branch }}
+          - **SHA**: ${{ steps.get_run_details.outputs.head_sha }}
+          
+          ## Error Details
+          - **Type**: ERROR_TYPE_PLACEHOLDER
+          - **Root Cause**: ROOT_CAUSE_PLACEHOLDER
+          
+          ## Task
+          Please analyze and fix the workflow failure:
+          
+          1. Review the workflow logs at the run link above
+          2. Identify the root cause of the failure
+          3. Implement the necessary fixes
+          4. Test that the workflow passes
+          5. Create a PR with the fix
+          
+          ## Context
+          This is an automated workflow failure detected by the auto-healing system.
+          
+          Auto-generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          ISSUE_EOF
+          
+          # Replace placeholders
+          sed -i "s|ERROR_TYPE_PLACEHOLDER|$ERROR_TYPE|g" /tmp/issue_body.md
+          sed -i "s|ROOT_CAUSE_PLACEHOLDER|$ROOT_CAUSE|g" /tmp/issue_body.md
+          
+          # Create the issue WITHOUT labels to avoid rate limits
+          ISSUE_URL=$(gh issue create \
+            --title "Fix: ${{ steps.get_run_details.outputs.workflow_name }} workflow failure (Run ${{ steps.get_run_details.outputs.run_id }})" \
+            --body-file /tmp/issue_body.md) || {
+              echo "❌ Failed to create issue"
+              exit 1
+            }
+          
+          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oP '\d+$')
+          
+          echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Issue Created for Copilot" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Issue**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+          echo "🔢 **Issue #**: $ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 **Next**: Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **How it works**: Issue created → Copilot creates PR automatically" >> $GITHUB_STEP_SUMMARY
+          git checkout -b "$BRANCH_NAME"
+          
+          # Create a placeholder file to enable PR creation
+          cat > AUTOFIX_README.md << 'README_EOF'
+          # Automated Workflow Fix
+          
+          This branch was created automatically to fix a workflow failure.
+          
+          ## Issue
+          
+          ISSUE_REF
+          
+          ## Workflow Details
+          
+          - **Workflow**: ${{ steps.get_run_details.outputs.workflow_name }}
+          - **Run ID**: ${{ steps.get_run_details.outputs.run_id }}
+          - **Error Type**: ERROR_TYPE
+          - **Fix Type**: FIX_TYPE
+          
+          ## Next Steps
+          
+          GitHub Copilot will automatically implement the necessary fixes.
+          README_EOF
+          
+          # Replace placeholders
+          sed -i "s|ISSUE_REF|#$ISSUE_NUMBER|g" AUTOFIX_README.md
+          sed -i "s|ERROR_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('error_type', 'Unknown'))")|g" AUTOFIX_README.md
+          sed -i "s|FIX_TYPE|$(cat /tmp/failure_analysis.json | python -c "import sys, json; print(json.load(sys.stdin).get('fix_type', 'manual'))")|g" AUTOFIX_README.md
+          
+          git add AUTOFIX_README.md
+          git commit -m "autofix: Initialize branch for workflow fix
+
+          This commit creates a branch for automated fixes to address workflow
+          failures in: ${{ steps.get_run_details.outputs.workflow_name }}
+          
+          Related Issue: #$ISSUE_NUMBER
+          Workflow Run: ${{ steps.get_run_details.outputs.run_id }}"
+          
+          git push origin "$BRANCH_NAME"
+          
+          # Create draft PR
+          cat > /tmp/pr_body.md << 'PR_EOF'
+          ## 🤖 Automated Workflow Fix
+          
+          This PR addresses the workflow failure identified in issue #ISSUE_NUMBER.
+          
+          ### Related Issue
+          
+          Fixes #ISSUE_NUMBER
+          
+          ### Failure Analysis
+          
+          PR_EOF
+          
+          echo "$ANALYSIS" >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### Proposed Fixes
+          
+          PR_EOF
+          
+          # Add fix details
+          python -c "
+          import json
+          with open('/tmp/fix_proposal.json') as f:
+              data = json.load(f)
+              for fix in data.get('fixes', []):
+                  print(f\"- **{fix.get('description', 'Fix')}** in \\\`{fix.get('file', 'N/A')}\\\`\")
+          " >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### What This PR Does
+          
+          This is a draft PR that will be automatically updated by GitHub Copilot to fix the workflow failure.
+          
+          GitHub Copilot will be invoked using the VERIFIED working method (draft PR + @copilot trigger).
+          See COPILOT_INVOCATION_GUIDE.md for details on the invocation method.
+          
+          ### Next Steps
+          
+          - [ ] GitHub Copilot analyzes the failure
+          - [ ] Copilot implements the fixes
+          - [ ] Automated tests verify the fixes
+          - [ ] Manual review and approval
+          
+          ---
+          
+          🤖 **Auto-generated by**: Workflow Auto-Healing System
+          **Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          PR_EOF
+          
+          # Replace ISSUE_NUMBER placeholder
+          sed -i "s/#ISSUE_NUMBER/#$ISSUE_NUMBER/g" /tmp/pr_body.md
+          
+          # Try to create draft PR (may fail if repository doesn't allow it)
+          set +e  # Don't exit on error
+          PR_URL=$(gh pr create \
+            --draft \
+            --title "${{ steps.generate_fix.outputs.fix_title }}" \
+            --body-file /tmp/pr_body.md \
+            --base ${{ steps.get_run_details.outputs.head_branch }} \
+            --head "$BRANCH_NAME" 2>&1)
+          PR_CREATE_EXIT=$?
+          set -e  # Re-enable exit on error
+          
+          if [ $PR_CREATE_EXIT -eq 0 ]; then
+            PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+            echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "✅ Successfully created PR #$PR_NUMBER"
+            
+            # Invoke Copilot using GitHub CLI comments approach
+            # Generate custom instruction from failure analysis
+            echo "Generating Copilot instruction from failure analysis..."
+            COPILOT_INSTRUCTION=$(python3 .github/scripts/generate_copilot_instruction.py /tmp/failure_analysis.json)
+            
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER..."
+            python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --instruction "$COPILOT_INSTRUCTION" \
+              --repo ${{ github.repository }} || echo "⚠️  Copilot invocation failed, check logs"
+          
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📝 Issue and Draft PR Created" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Issue URL**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **PR URL**: $PR_URL" >> $GITHUB_STEP_SUMMARY
+            echo "🔢 **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: GitHub Copilot invoked via CLI with structured failure analysis" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Could not create PR automatically (permission denied)"
+            echo "pr_url=" >> $GITHUB_OUTPUT
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            
+            # Update issue with manual PR creation instructions
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "⚠️ **Automatic PR creation failed due to repository permissions.**
+          
+          The fix branch has been created: \`$BRANCH_NAME\`
+          
+          **To create the PR manually:**
+          1. Go to: https://github.com/${{ github.repository }}/compare/${{ steps.get_run_details.outputs.head_branch }}...$BRANCH_NAME
+          2. Click 'Create pull request'
+          3. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+             \`\`\`bash
+             python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+             \`\`\`
+          
+          **Or enable automatic PR creation:**
+          1. Go to Settings → Actions → General → Workflow permissions
+          2. Select 'Read and write permissions'
+          3. Check 'Allow GitHub Actions to create and approve pull requests'
+          
+          The failure analysis and recommendations are in the issue description above."
+          
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 📝 Issue Created (PR Creation Failed)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Issue URL**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+            echo "🔢 **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Note**: PR creation failed due to permissions. See issue for manual steps." >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Summary of auto-healing actions
+        if: steps.create_issue.outputs.issue_number != ''
+        run: |
+          ISSUE_NUMBER="${{ steps.create_issue.outputs.issue_number }}"
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Auto-Healing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The auto-healing system has successfully:" >> $GITHUB_STEP_SUMMARY
+          echo "1. 📝 Created issue #${ISSUE_NUMBER} with failure details" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🤖 Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What happens next:" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🤖 GitHub Copilot analyzes the issue and failure context" >> $GITHUB_STEP_SUMMARY
+          echo "2. 🔧 Copilot automatically creates a PR with fixes" >> $GITHUB_STEP_SUMMARY
+          echo "3. ✅ Automated tests verify the fixes in the PR" >> $GITHUB_STEP_SUMMARY
+          echo "4. 👀 You review and approve the PR when ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Monitor Progress**:" >> $GITHUB_STEP_SUMMARY
+          echo "- Issue: https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER}" >> $GITHUB_STEP_SUMMARY
+          echo "- Check for Copilot-created PR: https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Aopen+author%3Aapp%2Fcopilot-swe-agent" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copilot-autofix-${{ steps.get_run_details.outputs.run_id }}
+          path: |
+            /tmp/workflow_logs/
+            /tmp/failure_analysis.json
+            /tmp/fix_proposal.json
+            /tmp/issue_body.md
+            /tmp/pr_body.md
+          retention-days: 30
+      
+      - name: Report status
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_duplicate.outputs.should_skip }}" = "true" ]; then
+            echo "### ⏭️ Workflow Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔍 Reason: ${{ steps.check_duplicate.outputs.skip_reason }}" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.check_duplicate.outputs.skip_reason }}" = "no_run_id" ]; then
+              echo "- ℹ️  No workflow run ID was found to analyze" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ steps.check_duplicate.outputs.skip_reason }}" = "already_processed" ]; then
+              echo "- ℹ️  This failure has already been analyzed and has fix PR(s)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "### 🤖 Auto-Healing Status" >> $GITHUB_STEP_SUMMARY
+            echo "- ⚙️ Run ID: ${{ steps.get_run_details.outputs.run_id }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📊 Analysis: ${{ steps.analyze_failure.outputs.analysis_available }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔧 Fix Generated: ${{ steps.generate_fix.outputs.fix_available }}" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 Issue Created: ${{ steps.create_issue.outputs.issue_number != '' }}" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.create_issue.outputs.issue_number }}" != "" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "#### ✅ Success!" >> $GITHUB_STEP_SUMMARY
+              echo "- Issue: #${{ steps.create_issue.outputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Status: Issue created - Copilot will automatically create a PR" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Monitor**: Check issue #${{ steps.create_issue.outputs.issue_number }} for Copilot's PR" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi

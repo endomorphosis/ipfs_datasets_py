@@ -55,7 +55,7 @@ except ImportError:
 # Import related modules
 from ipfs_datasets_py.data_provenance import ProvenanceManager
 from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
-from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
 
 
 class ProvenanceDashboard:
@@ -370,16 +370,17 @@ class ProvenanceDashboard:
                 edge_colors = []
                 for source, target, data in lineage_graph.edges(data=True):
                     relationship_type = data.get('type', 'unknown')
-                    if relationship_type == 'derives_from':
-                        color = 'blue'
-                    elif relationship_type == 'cites':
-                        color = 'green'
-                    elif relationship_type == 'includes':
-                        color = 'orange'
-                    elif relationship_type == 'references':
-                        color = 'red'
-                    else:
-                        color = 'gray'
+                    match relationship_type:
+                        case 'derives_from':
+                            color = 'blue'
+                        case 'cites':
+                            color = 'green'
+                        case 'includes':
+                            color = 'orange'
+                        case 'references':
+                            color = 'red'
+                        case _:
+                            color = 'gray'
                     edge_colors.append(color)
 
                 # Draw the graph
@@ -1308,7 +1309,7 @@ def setup_provenance_dashboard(
     query_visualizer = None
     if query_metrics:
         try:
-            from ipfs_datasets_py.rag_query_visualization import RAGQueryVisualizer
+            from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
             query_visualizer = RAGQueryVisualizer(query_metrics)
         except ImportError:
             logging.warning("RAGQueryVisualizer not available")

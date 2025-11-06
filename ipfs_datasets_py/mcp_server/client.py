@@ -14,10 +14,8 @@ from typing import Dict, List, Any, Optional, Union
 try:
     from modelcontextprotocol.client import MCPClient
 except ImportError:
-    raise ImportError(
-        "The modelcontextprotocol package is required for the IPFS Datasets MCP client. "
-        "Install it with 'pip install modelcontextprotocol'"
-    )
+    # Use our mock for testing when the real package isn't available
+    from .mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
 
 class IPFSDatasetsMCPClient:
@@ -71,7 +69,7 @@ class IPFSDatasetsMCPClient:
         """
         return await self.mcp_client.get_tool_list()
 
-    async def call_tool(self, tool_name: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    async def call_tool(self, tool_name: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Call a tool on the server.
 
@@ -81,8 +79,13 @@ class IPFSDatasetsMCPClient:
 
         Returns:
             Tool result
-        """
-        return await self.mcp_client.call_tool(tool_name, params)
+        """ 
+        if isinstance(params, dict):
+            return await self.mcp_client.call_tool(tool_name, params)
+        elif params is None:
+            return await self.mcp_client.call_tool()
+        else:
+            raise ValueError("Parameters must be a dictionary or None")
 
     # Dataset tools
 

@@ -1,0 +1,53 @@
+{
+  "state_code": "IN",
+  "state_name": "Indiana",
+  "timestamp": "2025-10-16T22:19:58.329189",
+  "success": false,
+  "diagnostics": {
+    "url_accessibility": {
+      "accessible": true,
+      "status_code": 200,
+      "content_length": 691,
+      "content_type": "text/html",
+      "final_url": "https://iga.in.gov/legislative/laws/2024/ic/titles/",
+      "redirected": true
+    },
+    "html_analysis": {
+      "html_content": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"/><link rel=\"icon\" href=\"/favicon.ico\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><meta name=\"theme-color\" content=\"#094067\"/><meta name=\"description\" content=\"Website for Indiana's General Assembly\"/><meta name=\"version\" content=\"\"/><link rel=\"apple-touch-icon\" href=\"/logo192.png\"/><link rel=\"manifest\" href=\"/manifest.json\"/><title>Indiana General Assembly</title><script defer=\"defer\" src=\"/static/js/main.576f1fe2.js\"></script><link href=\"/static/css/main.c3763622.css\" rel=\"stylesheet\"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id=\"root\"></div></body></html>",
+      "total_links": 0,
+      "has_tables": false,
+      "has_lists": false,
+      "has_divs": true,
+      "title": "Indiana General Assembly",
+      "encoding": "ISO-8859-1",
+      "uses_javascript": true
+    },
+    "link_analysis": {
+      "total_links": 0,
+      "links_with_keywords": 0,
+      "links_with_numbers": 0,
+      "accepted_count": 0,
+      "rejected_count": 0,
+      "all_links": [],
+      "accepted_links": [],
+      "rejected_links": []
+    }
+  },
+  "recommendations": [
+    "\u26a0\ufe0f  Page uses JavaScript - May need Playwright for rendering",
+    "\ud83d\udca1 Install Playwright: pip install playwright && playwright install chromium",
+    "\u26a0\ufe0f  No links found on page",
+    "\ud83d\udca1 Page may use JavaScript to load content",
+    "\ud83d\udca1 Check HTML sample to verify structure"
+  ],
+  "html_sample": "diagnostic_results/IN_sample.html",
+  "links_found": [],
+  "links_accepted": [],
+  "links_rejected": [],
+  "errors": [
+    "Scraper returned 0 statutes"
+  ],
+  "base_url": "http://iga.in.gov",
+  "codes_available": 1,
+  "statutes_scraped": 0
+}

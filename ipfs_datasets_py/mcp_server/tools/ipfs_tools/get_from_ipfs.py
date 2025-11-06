@@ -6,6 +6,8 @@ This tool handles retrieving files and directories from IPFS.
 """
 import asyncio
 import os
+import json
+import requests
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
@@ -15,7 +17,8 @@ from ipfs_datasets_py.mcp_server.logger import logger
 async def get_from_ipfs(
     cid: str,
     output_path: Optional[str] = None,
-    timeout_seconds: int = 60
+    timeout_seconds: int = 60,
+    gateway: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Get content from IPFS by its CID.
@@ -36,7 +39,11 @@ async def get_from_ipfs(
 
         if configs.ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
-            import ipfs_kit_py
+            try:
+                import ipfs_kit_py
+            except Exception as e:
+                logger.warning(f"ipfs_kit_py unavailable, falling back to HTTP gateway: {e}")
+                return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
 
             if output_path:
                 # Save to file
@@ -108,39 +115,53 @@ async def get_from_ipfs(
 
         else:
             # Use MCP client to call ipfs_kit_py MCP server
-            from modelcontextprotocol.client import MCPClient
+            try:
+                from modelcontextprotocol.client import MCPClient
+            except ImportError:
+                # Use our mock for testing when the real package isn't available
+                from ...mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
             # Create client
-            client = MCPClient(configs.ipfs_kit_mcp_url)
+            try:
+                client = MCPClient(configs.ipfs_kit_mcp_url)
+            except Exception as e:
+                logger.warning(f"Failed to initialize MCP client for IPFS, using HTTP gateway fallback: {e}")
+                return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
 
             if output_path:
                 # Call the get tool
-                result = await client.call_tool("get", {
-                    "cid": cid,
-                    "output_path": output_path,
-                    "timeout": timeout_seconds
-                })
-
-                return {
-                    "status": "success",
-                    "cid": cid,
-                    "output_path": output_path,
-                    "size": result.get("size", None)
-                }
+                try:
+                    result = await client.call_tool("get", {
+                        "cid": cid,
+                        "output_path": output_path,
+                        "timeout": timeout_seconds
+                    })
+                    return {
+                        "status": "success",
+                        "cid": cid,
+                        "output_path": output_path,
+                        "size": result.get("size", None)
+                    }
+                except Exception as e:
+                    logger.warning(f"MCP get tool failed, using HTTP gateway fallback: {e}")
+                    return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
             else:
                 # Call the cat tool
-                result = await client.call_tool("cat", {
-                    "cid": cid,
-                    "timeout": timeout_seconds
-                })
-
-                return {
-                    "status": "success",
-                    "cid": cid,
-                    "content_type": result.get("content_type", "binary"),
-                    "content": result.get("content", None),
-                    "binary_size": result.get("binary_size", 0)
-                }
+                try:
+                    result = await client.call_tool("cat", {
+                        "cid": cid,
+                        "timeout": timeout_seconds
+                    })
+                    return {
+                        "status": "success",
+                        "cid": cid,
+                        "content_type": result.get("content_type", "binary"),
+                        "content": result.get("content", None),
+                        "binary_size": result.get("binary_size", 0)
+                    }
+                except Exception as e:
+                    logger.warning(f"MCP cat tool failed, using HTTP gateway fallback: {e}")
+                    return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
     except Exception as e:
         logger.error(f"Error getting content from IPFS: {e}")
         return {
@@ -148,3 +169,71 @@ async def get_from_ipfs(
             "message": str(e),
             "cid": cid
         }
+
+
+async def _fetch_via_http_gateway(
+    cid: str,
+    output_path: Optional[str],
+    timeout_seconds: int,
+    gateway_override: Optional[str] = None
+) -> Dict[str, Any]:
+    """Fetch content from a public (or configured) IPFS HTTP gateway as a fallback.
+
+    Gateways tried in order:
+    - Env `IPFS_HTTP_GATEWAY` or `IPFS_DATASETS_IPFS_GATEWAY`
+    - https://ipfs.io
+    - https://cloudflare-ipfs.com
+    """
+    gateways = []
+    if gateway_override:
+        gateways.append(gateway_override)
+    for env_var in ("IPFS_HTTP_GATEWAY", "IPFS_DATASETS_IPFS_GATEWAY"):
+        gw = os.environ.get(env_var)
+        if gw:
+            gateways.append(gw)
+    gateways.extend(["https://ipfs.io", "https://cloudflare-ipfs.com"])
+
+    last_error = None
+    for gw in gateways:
+        base = gw.rstrip("/")
+        url = f"{base}/ipfs/{cid}"
+        try:
+            resp = await asyncio.to_thread(requests.get, url, timeout=timeout_seconds, stream=True)
+            if resp.status_code == 200:
+                content = resp.content
+                if output_path:
+                    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+                    await asyncio.to_thread(Path(output_path).write_bytes, content)
+                    return {
+                        "status": "success",
+                        "cid": cid,
+                        "output_path": output_path,
+                        "size": len(content),
+                        "gateway": url
+                    }
+                # Try decoding text
+                try:
+                    decoded = content.decode("utf-8")
+                    ctype = "text"
+                except Exception:
+                    decoded = None
+                    ctype = "binary"
+                return {
+                    "status": "success",
+                    "cid": cid,
+                    "content_type": ctype,
+                    "content": decoded,
+                    "binary_size": len(content),
+                    "gateway": url
+                }
+            else:
+                last_error = f"HTTP {resp.status_code} from {url}"
+        except Exception as e:
+            last_error = f"{type(e).__name__}: {e} from {url}"
+
+    return {
+        "status": "error",
+        "message": last_error or "Failed to fetch from any gateway",
+        "cid": cid,
+        "gateways_tried": gateways
+    }

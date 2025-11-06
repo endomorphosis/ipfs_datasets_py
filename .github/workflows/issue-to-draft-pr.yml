@@ -1,0 +1,522 @@
+name: Convert Issues to Draft PRs with Copilot
+
+'on':
+  issues:
+    types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to convert to draft PR'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  create-draft-pr-with-copilot:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      # Note: Running as root is required to install packages via apt-get
+      # The container is isolated and discarded after execution
+      options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    
+    steps:
+      - name: Debug issue information
+        run: |
+          echo "## 🔍 Issue to Draft PR Conversion" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Event Information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event Name**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue Number**: ${{ github.event.issue.number || github.event.inputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue Title**: ${{ github.event.issue.title }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue Author**: ${{ github.event.issue.user.login }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Install GitHub CLI and configure git
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y git gh curl
+          # Configure git for container environment
+          # Note: Using '*' for safe.directory is required in containerized GitHub Actions
+          # because the workspace path can vary. This is standard practice in GHA containers.
+          git config --global --add safe.directory '*'
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Fix permissions for gh CLI config (container-specific requirement)
+          # Note: This is needed for gh to read system CA certificates in the container
+          chmod -R a+r /etc 2>/dev/null || true
+          mkdir -p ~/.config/gh && chmod 700 ~/.config/gh
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Configure GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Verify gh is authenticated
+          gh auth status || echo "GH_TOKEN is set but gh auth status failed"
+          gh auth setup-git
+      
+      - name: Set up Python environment
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install PyYAML requests
+      
+      - name: Get issue details
+        id: get_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the issue number
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ISSUE_NUMBER="${{ github.event.inputs.issue_number }}"
+          else
+            ISSUE_NUMBER="${{ github.event.issue.number }}"
+          fi
+          
+          echo "Processing issue #$ISSUE_NUMBER"
+          
+          # Get issue details
+          ISSUE_DATA=$(gh issue view "$ISSUE_NUMBER" --repo ${{ github.repository }} --json title,body,number,author,labels)
+          
+          ISSUE_TITLE=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['title'])")
+          ISSUE_AUTHOR=$(echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['author']['login'])")
+          
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+          echo "issue_title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
+          echo "issue_author=$ISSUE_AUTHOR" >> $GITHUB_OUTPUT
+          
+          # Save issue body to file for later use
+          echo "$ISSUE_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['body'])" > /tmp/issue_body.txt
+          
+          echo "## Issue Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issue Number**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "- **Title**: $ISSUE_TITLE" >> $GITHUB_STEP_SUMMARY
+          echo "- **Author**: @$ISSUE_AUTHOR" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Check for existing draft PR
+        id: check_existing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          
+          # Check if there's already a PR for this issue
+          echo "Searching for existing PRs for issue #$ISSUE_NUMBER"
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Fixes #$ISSUE_NUMBER in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          
+          echo "Found $EXISTING_PRS existing PRs"
+          
+          if [ "$EXISTING_PRS" -gt 0 ]; then
+            echo "⚠️  Issue #$ISSUE_NUMBER already has $EXISTING_PRS PR(s) - skipping duplicate"
+            echo "should_skip=true" >> $GITHUB_OUTPUT
+            echo "skip_reason=pr_exists" >> $GITHUB_OUTPUT
+            
+            echo "## ⏭️ Skipping Duplicate PR Creation" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "This issue already has existing PR(s)." >> $GITHUB_STEP_SUMMARY
+            echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- **Existing PRs**: $EXISTING_PRS" >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+          
+          echo "should_skip=false" >> $GITHUB_OUTPUT
+      
+      - name: Generate branch name and PR details
+        id: generate_details
+        if: steps.check_existing.outputs.should_skip != 'true'
+        env:
+          ISSUE_NUMBER: ${{ steps.get_issue.outputs.issue_number }}
+          ISSUE_TITLE: ${{ steps.get_issue.outputs.issue_title }}
+        run: |
+          # Create a clean branch name from issue title
+          BRANCH_NAME=$(echo "issue-${ISSUE_NUMBER}/$(echo "$ISSUE_TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | cut -c1-50 | sed 's/-$//')")
+          
+          # Generate PR title
+          PR_TITLE="Fix: $ISSUE_TITLE"
+          
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
+          
+          echo "## Generated Details" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **PR Title**: $PR_TITLE" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Analyze issue and create task file
+        id: analyze_issue
+        if: steps.check_existing.outputs.should_skip != 'true'
+        run: |
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          ISSUE_TITLE="${{ steps.get_issue.outputs.issue_title }}"
+          
+          # Create analysis of the issue
+          python3 << 'PYTHON_EOF'
+          import json
+          import re
+          
+          # Read issue body
+          with open('/tmp/issue_body.txt', 'r') as f:
+              issue_body = f.read()
+          
+          # Extract key information
+          analysis = {
+              'issue_number': '${{ steps.get_issue.outputs.issue_number }}',
+              'issue_title': '${{ steps.get_issue.outputs.issue_title }}',
+              'categories': [],
+              'keywords': [],
+              'complexity': 'medium',
+              'estimated_effort': 'moderate'
+          }
+          
+          # Categorize based on keywords
+          keywords_map = {
+              'bug': ['bug', 'error', 'broken', 'fail', 'crash', 'exception'],
+              'feature': ['feature', 'add', 'implement', 'support', 'new'],
+              'documentation': ['doc', 'readme', 'guide', 'tutorial', 'documentation'],
+              'test': ['test', 'testing', 'coverage', 'spec'],
+              'ci/cd': ['workflow', 'ci', 'cd', 'pipeline', 'action'],
+              'dependency': ['dependency', 'package', 'version', 'upgrade'],
+              'performance': ['performance', 'slow', 'optimization', 'speed']
+          }
+          
+          issue_text = (issue_body + ' ' + '${{ steps.get_issue.outputs.issue_title }}').lower()
+          
+          for category, keywords in keywords_map.items():
+              if any(kw in issue_text for kw in keywords):
+                  analysis['categories'].append(category)
+                  analysis['keywords'].extend([kw for kw in keywords if kw in issue_text])
+          
+          # Default category if none detected
+          if not analysis['categories']:
+              analysis['categories'] = ['general']
+          
+          # Save analysis
+          with open('/tmp/issue_analysis.json', 'w') as f:
+              json.dump(analysis, f, indent=2)
+          
+          print(f"Analysis complete: {analysis['categories']}")
+          PYTHON_EOF
+          
+          echo "analysis_complete=true" >> $GITHUB_OUTPUT
+          
+          # Show analysis
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Issue Analysis" >> $GITHUB_STEP_SUMMARY
+          python3 -c "
+          import json
+          with open('/tmp/issue_analysis.json') as f:
+              data = json.load(f)
+              print('- **Categories**: ' + ', '.join(data['categories']))
+              print('- **Complexity**: ' + data['complexity'])
+              print('- **Estimated Effort**: ' + data['estimated_effort'])
+          " >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create draft PR branch and commit
+        id: create_branch
+        if: steps.check_existing.outputs.should_skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          BRANCH_NAME="${{ steps.generate_details.outputs.branch_name }}"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Get default branch
+          DEFAULT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "Default branch: $DEFAULT_BRANCH"
+          
+          # Create and checkout new branch
+          git checkout -b "$BRANCH_NAME"
+          
+          # Create README for the PR
+          cat > ISSUE_${ISSUE_NUMBER}_README.md << 'README_EOF'
+          # Automated Issue Resolution
+          
+          This branch was created automatically to address issue #${{ steps.get_issue.outputs.issue_number }}.
+          
+          ## Issue Details
+          
+          **Title**: ${{ steps.get_issue.outputs.issue_title }}
+          **Author**: @${{ steps.get_issue.outputs.issue_author }}
+          **Link**: https://github.com/${{ github.repository }}/issues/${{ steps.get_issue.outputs.issue_number }}
+          
+          ## Description
+          
+          README_EOF
+          
+          # Add issue body
+          cat /tmp/issue_body.txt >> ISSUE_${ISSUE_NUMBER}_README.md
+          
+          cat >> ISSUE_${ISSUE_NUMBER}_README.md << 'README_EOF'
+          
+          ## Next Steps
+          
+          GitHub Copilot will automatically analyze this issue and implement the necessary changes.
+          
+          @copilot will be mentioned in the PR to trigger the automated implementation.
+          
+          ---
+          
+          🤖 *This file was auto-generated by the Issue-to-Draft-PR workflow*
+          README_EOF
+          
+          git add ISSUE_${ISSUE_NUMBER}_README.md
+          git commit -m "chore: Initialize branch for issue #$ISSUE_NUMBER
+
+          This commit creates a branch for automated resolution of:
+          ${{ steps.get_issue.outputs.issue_title }}
+          
+          Related Issue: #$ISSUE_NUMBER
+          Author: @${{ steps.get_issue.outputs.issue_author }}"
+          
+          git push origin "$BRANCH_NAME"
+          
+          echo "branch_created=true" >> $GITHUB_OUTPUT
+          echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
+      
+      - name: Create draft PR with Copilot mention
+        id: create_pr
+        if: steps.create_branch.outputs.branch_created == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
+        run: |
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          BRANCH_NAME="${{ steps.generate_details.outputs.branch_name }}"
+          PR_TITLE="${{ steps.generate_details.outputs.pr_title }}"
+          DEFAULT_BRANCH="${{ steps.create_branch.outputs.default_branch }}"
+          
+          # Create PR body
+          # Export outputs to environment variables
+          ISSUE_NUMBER="${{ steps.get_issue.outputs.issue_number }}"
+          ISSUE_TITLE="${{ steps.get_issue.outputs.issue_title }}"
+          # ISSUE_AUTHOR is available as $ISSUE_AUTHOR via env (see above)
+          cat > /tmp/pr_body.md <<'PR_EOF'
+          ## 🤖 Automated Issue Resolution
+          
+          This PR addresses issue #$ISSUE_NUMBER.
+          
+          ### Related Issue
+          
+          Fixes #$ISSUE_NUMBER
+          ### Issue Summary
+          
+          **Title**: $ISSUE_TITLE
+          **Author**: @$ISSUE_AUTHOR
+          
+          ### Original Issue Description
+          
+          PR_EOF
+          
+          # Add issue body
+          cat /tmp/issue_body.txt >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### Analysis
+          
+          PR_EOF
+          
+          # Add analysis
+          python3 -c "
+          import json
+          with open('/tmp/issue_analysis.json') as f:
+              data = json.load(f)
+              print('- **Categories**: ' + ', '.join(data['categories']))
+              print('- **Complexity**: ' + data['complexity'])
+              print('- **Keywords**: ' + ', '.join(data.get('keywords', [])[:5]))
+          " >> /tmp/pr_body.md
+          
+          cat >> /tmp/pr_body.md << 'PR_EOF'
+          
+          ### What This PR Does
+          
+          This is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.
+          
+          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary changes.
+          
+          Focus on:
+          - Understanding the problem described in the issue
+          - Implementing a minimal, surgical fix
+          - Adding or updating tests as appropriate
+          - Following the existing code style and patterns
+          - Documenting any significant changes
+          
+          ### Task Checklist
+          
+          - [ ] Analyze the issue requirements
+          - [ ] Implement the solution
+          - [ ] Add/update tests
+          - [ ] Update documentation if needed
+          - [ ] Verify the fix works as expected
+          
+          ---
+          
+          🤖 **Auto-generated by**: Issue-to-Draft-PR Workflow
+          **Issue**: #${{ steps.get_issue.outputs.issue_number }}
+          **Workflow Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          PR_EOF
+          
+          # Create draft PR
+          set +e  # Don't exit on error
+          PR_URL=$(gh pr create \
+            --draft \
+            --title "$PR_TITLE" \
+            --body-file /tmp/pr_body.md \
+            --base "$DEFAULT_BRANCH" \
+            --head "$BRANCH_NAME" 2>&1)
+          PR_CREATE_EXIT=$?
+          set -e  # Re-enable exit on error
+          
+          if [ $PR_CREATE_EXIT -eq 0 ]; then
+            PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+            echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+            echo "✅ Successfully created PR #$PR_NUMBER"
+            
+            # Invoke Copilot using the verified dual method (draft PR + @copilot trigger)
+            # This is the ONLY method with 100% success rate
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using verified dual method..."
+            
+            # Always use the JSON context file which safely contains issue details
+            # The issue analysis JSON is created earlier and contains sanitized data
+            if [ -f "/tmp/issue_analysis.json" ]; then
+              # Read issue details from JSON
+              ISSUE_TITLE=$(jq -r '.title // "Implement solution"' /tmp/issue_analysis.json)
+              ISSUE_BODY=$(jq -r '.body // "See issue for details"' /tmp/issue_analysis.json | head -c 500)
+              
+              python3 scripts/invoke_copilot_on_pr.py \
+                --pr "$PR_NUMBER" \
+                --instruction "Please implement a solution for issue #$ISSUE_NUMBER: $ISSUE_TITLE. Details: $ISSUE_BODY. Review the full issue description in the PR and implement minimal, surgical changes." \
+                || echo "⚠️  Copilot invocation failed, check logs"
+            else
+              # Fallback to basic instruction without user-controlled content
+              python3 scripts/invoke_copilot_on_pr.py \
+                --pr "$PR_NUMBER" \
+                --instruction "Please implement a solution for this issue. Review the full issue description in the PR and implement minimal, surgical changes." \
+                || echo "⚠️  Copilot invocation failed, check logs"
+            fi
+            
+            # Link PR back to issue
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "🤖 **Automatic Draft PR Created**
+          
+          A draft PR has been created to address this issue: #$PR_NUMBER
+          
+          GitHub Copilot has been assigned and will implement the solution automatically.
+          
+          **PR**: $PR_URL
+          **Branch**: \`$BRANCH_NAME\`
+          
+          You can monitor the progress in the draft PR. The PR will be ready for review once Copilot completes the implementation."
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ✅ Draft PR Created Successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **PR**: $PR_URL" >> $GITHUB_STEP_SUMMARY
+            echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: GitHub Copilot invoked via verified dual method (draft PR + @copilot trigger)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Could not create PR automatically (permission denied or other error)"
+            echo "Error: $PR_URL"
+            echo "pr_url=" >> $GITHUB_OUTPUT
+            echo "pr_number=" >> $GITHUB_OUTPUT
+            
+            # Update issue with manual PR creation instructions
+            gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "⚠️ **Automatic PR creation failed**
+          
+          The branch has been created: \`$BRANCH_NAME\`
+          
+          **To create the PR manually**:
+          1. Go to: https://github.com/${{ github.repository }}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME
+          2. Click 'Create pull request'
+          3. Mark it as a draft
+          4. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+             \`\`\`bash
+             python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+             \`\`\`
+          
+          **Or enable automatic PR creation**:
+          1. Go to Settings → Actions → General → Workflow permissions
+          2. Select 'Read and write permissions'
+          3. Check 'Allow GitHub Actions to create and approve pull requests'"
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## ⚠️ PR Creation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🔗 **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Note**: See issue for manual PR creation steps" >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Summary
+        if: always()
+        env:
+          SKIP_REASON: ${{ steps.check_existing.outputs.skip_reason }}
+          ISSUE_NUMBER: ${{ steps.get_issue.outputs.issue_number }}
+          BRANCH_CREATED: ${{ steps.create_branch.outputs.branch_created }}
+          PR_CREATED: ${{ steps.create_pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ steps.generate_details.outputs.branch_name }}
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_existing.outputs.should_skip }}" = "true" ]; then
+            echo "### ⏭️ Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "- 🔍 Reason: $SKIP_REASON" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### 🤖 Issue-to-PR Conversion Status" >> $GITHUB_STEP_SUMMARY
+            echo "- 📝 Issue: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+            echo "- 🌿 Branch Created: $BRANCH_CREATED" >> $GITHUB_STEP_SUMMARY
+            if [ -n "$PR_CREATED" ]; then
+              echo "- 📋 PR Created: true" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- 📋 PR Created: false" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            if [ -n "$PR_CREATED" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "#### ✅ Success!" >> $GITHUB_STEP_SUMMARY
+              echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+              echo "- **Draft PR**: #$PR_CREATED" >> $GITHUB_STEP_SUMMARY
+              echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+              echo "- **Status**: GitHub Copilot assigned via @mention" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Next**: Monitor PR #$PR_CREATED for Copilot's implementation" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+      
+      - name: Upload artifacts
+        if: always() && steps.analyze_issue.outputs.analysis_complete == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-to-pr-${{ steps.get_issue.outputs.issue_number }}
+          path: |
+            /tmp/issue_body.txt
+            /tmp/issue_analysis.json
+            /tmp/pr_body.md
+          retention-days: 30

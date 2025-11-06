@@ -1,0 +1,57 @@
+[
+    {
+        "name": "__init__",
+        "signature": "(self, collection = None, meta = None)",
+        "docstring": null,
+        "is_async": false,
+        "is_method": true,
+        "decorators": [],
+        "class_name": "config"
+    },
+    {
+        "name": "config",
+        "signature": "",
+        "docstring": null,
+        "is_async": false,
+        "is_method": false,
+        "is_class": true,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "findConfig",
+        "signature": "(self) -> Path | None",
+        "docstring": null,
+        "is_async": false,
+        "is_method": true,
+        "decorators": [],
+        "class_name": "config"
+    },
+    {
+        "name": "loadConfig",
+        "signature": "(self, configPath: Path, overrides = None) -> dict",
+        "docstring": null,
+        "is_async": false,
+        "is_method": true,
+        "decorators": [],
+        "class_name": "config"
+    },
+    {
+        "name": "overrideToml",
+        "signature": "(self, base, overrides: dict | str | Path = None) -> dict",
+        "docstring": null,
+        "is_async": false,
+        "is_method": true,
+        "decorators": [],
+        "class_name": "config"
+    },
+    {
+        "name": "requireConfig",
+        "signature": "(self, opts: dict | str = None) -> dict",
+        "docstring": null,
+        "is_async": false,
+        "is_method": true,
+        "decorators": [],
+        "class_name": "config"
+    }
+]

@@ -1,0 +1,172 @@
+{
+  "timestamp": "2025-09-05 18:59:30",
+  "summary": {
+    "total_tests": 21,
+    "passed": 9,
+    "failed": 12,
+    "warnings": 0
+  },
+  "categories": {
+    "basic_cli": [
+      {
+        "test": "Original CLI help",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py --help",
+        "error": null
+      },
+      {
+        "test": "Original CLI status",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py info status",
+        "error": null
+      },
+      {
+        "test": "Original CLI list tools",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py info list-tools",
+        "error": null
+      },
+      {
+        "test": "Original CLI JSON output",
+        "success": true,
+        "cmd": "python ipfs_datasets_cli.py --format json info status",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI help",
+        "success": true,
+        "cmd": "python enhanced_cli.py --help",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI list categories",
+        "success": true,
+        "cmd": "python enhanced_cli.py --list-categories",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI list dataset tools",
+        "success": true,
+        "cmd": "python enhanced_cli.py --list-tools dataset_tools",
+        "error": null
+      },
+      {
+        "test": "Enhanced CLI JSON categories",
+        "success": true,
+        "cmd": "python enhanced_cli.py --format json --list-categories",
+        "error": null
+      }
+    ],
+    "tool_categories": [
+      {
+        "category": "dataset_tools",
+        "tool": "load_dataset",
+        "description": "Load test dataset",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "ipfs_tools",
+        "tool": "get_from_ipfs",
+        "description": "IPFS get",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "ipfs_tools",
+        "tool": "pin_to_ipfs",
+        "description": "IPFS pin",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "vector_tools",
+        "tool": "create_vector_index",
+        "description": "Create vector index",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "bespoke_tools",
+        "tool": "system_status",
+        "description": "System status",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "bespoke_tools",
+        "tool": "system_health",
+        "description": "System health",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "analysis_tools",
+        "tool": "analysis_tools",
+        "description": "Analysis tools",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "media_tools",
+        "tool": "ffmpeg_info",
+        "description": "FFmpeg info",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "pdf_tools",
+        "tool": "pdf_analyze_relationships",
+        "description": "PDF analyze",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      },
+      {
+        "category": "web_archive_tools",
+        "tool": "common_crawl_search",
+        "description": "Common crawl search",
+        "success": false,
+        "returncode": -1,
+        "error": "Command timed out",
+        "stdout_length": 0
+      }
+    ],
+    "wrapper_scripts": [
+      {
+        "script": "ipfs-datasets",
+        "success": true,
+        "error": null
+      }
+    ],
+    "data_processing": [
+      {
+        "test": "Load JSON dataset",
+        "success": false,
+        "error": "Command timed out"
+      },
+      {
+        "test": "Convert dataset",
+        "success": false,
+        "error": "Command timed out"
+      }
+    ]
+  }
+}

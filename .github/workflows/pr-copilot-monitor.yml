@@ -1,0 +1,168 @@
+name: Draft PR Copilot Monitor
+
+on:
+  schedule:
+    # Run every 10 minutes (reduced from 5 to avoid creating too many draft PRs)
+    - cron: '*/10 * * * *'
+  
+  workflow_dispatch:
+    inputs:
+      max_drafts:
+        description: 'Maximum draft PRs to create (default: 3)'
+        required: false
+        type: number
+        default: 3
+      dry_run:
+        description: 'Dry run mode (no actual changes)'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  draft-pr-copilot-monitor:
+    name: Monitor PRs and Create Draft PRs for Copilot
+    runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Clean workspace safely
+        run: |
+          # Fix Git lock files if they exist
+          if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
+            rm -f "$GITHUB_WORKSPACE/.git/index.lock" || sudo rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
+          fi
+          
+          # Reset Git state if repository exists
+          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+            cd "$GITHUB_WORKSPACE" || exit 1
+            git reset --hard HEAD 2>/dev/null || true
+            git clean -ffdx 2>/dev/null || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          clean: true
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Setup GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            echo "Installing GitHub CLI..."
+            mkdir -p ~/.local/bin
+            wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
+            tar -xzf /tmp/gh.tar.gz -C /tmp
+            cp /tmp/gh_*/bin/gh ~/.local/bin/
+            chmod +x ~/.local/bin/gh
+            export PATH="$HOME/.local/bin:$PATH"
+          fi
+          gh --version
+      
+      - name: Run Draft PR Copilot Invoker
+        id: monitor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MAX_DRAFTS="${{ github.event.inputs.max_drafts || 3 }}"
+          DRY_RUN="${{ github.event.inputs.dry_run || 'false' }}"
+          
+          echo "🔍 Draft PR Copilot Invoker Configuration:"
+          echo "  Max Draft PRs: $MAX_DRAFTS"
+          echo "  Dry Run: $DRY_RUN"
+          echo ""
+          
+          # Build command using the NEW draft PR invoker
+          CMD="python3 scripts/draft_pr_copilot_invoker.py --max-drafts $MAX_DRAFTS"
+          
+          if [ "$DRY_RUN" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          
+          echo "Running: $CMD"
+          echo ""
+          
+          # Run the monitor
+          if eval "$CMD" 2>&1 | tee monitor_output.log; then
+            echo "✅ Monitor completed successfully"
+            MONITOR_SUCCESS=true
+          else
+            echo "❌ Monitor failed"
+            MONITOR_SUCCESS=false
+          fi
+          
+          # Extract metrics
+          TOTAL_PRS=$(grep "Total draft PRs:" monitor_output.log | sed -n 's/.*Total draft PRs:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          NEEDS_WORK=$(grep "PRs needing work:" monitor_output.log | sed -n 's/.*PRs needing work:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          DRAFTS_CREATED=$(grep "Draft PRs created:" monitor_output.log | sed -n 's/.*Draft PRs created:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          ERRORS=$(grep "Errors:" monitor_output.log | sed -n 's/.*Errors:[[:space:]]*\([0-9]*\).*/\1/p' | tail -1 || echo "0")
+          
+          # Set outputs
+          echo "total_prs=$TOTAL_PRS" >> $GITHUB_OUTPUT
+          echo "needs_work=$NEEDS_WORK" >> $GITHUB_OUTPUT
+          echo "drafts_created=$DRAFTS_CREATED" >> $GITHUB_OUTPUT
+          echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+          echo "success=$MONITOR_SUCCESS" >> $GITHUB_OUTPUT
+          
+          echo ""
+          echo "📊 Summary: $TOTAL_PRS total, $NEEDS_WORK need work, $DRAFTS_CREATED draft PRs created"
+          
+          if [ "$MONITOR_SUCCESS" != "true" ]; then
+            exit 1
+          fi
+      
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "## 🤖 PR Copilot Monitor Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run**: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📊 Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total draft PRs**: ${{ steps.monitor.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PRs needing work**: ${{ steps.monitor.outputs.needs_work }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Draft PRs created**: ${{ steps.monitor.outputs.drafts_created }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Errors**: ${{ steps.monitor.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 💡 How It Works" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Monitor Draft PRs**: Analyzes all open draft PRs" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Create Draft PRs**: Creates draft PRs for Copilot to work on (VS Code method)" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Copilot Responds**: Copilot **automatically** detects and implements changes" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Proven Method**: Uses draft PR invocation from VS Code (PR #401)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.monitor.outputs.drafts_created }}" -gt 0 ]; then
+            echo "✅ **Created ${{ steps.monitor.outputs.drafts_created }} draft PR(s)**" >> $GITHUB_STEP_SUMMARY
+            echo "Copilot will automatically detect and work on these PRs." >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ steps.monitor.outputs.needs_work }}" -eq 0 ]; then
+            echo "✅ **All draft PRs are up to date**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏳ **Waiting for Copilot**" >> $GITHUB_STEP_SUMMARY
+            echo "Issues already exist for incomplete PRs." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Next run: $(date -d '+10 minutes' -u +"%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Archive Monitor Output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-copilot-monitor-output-${{ github.run_number }}
+          path: monitor_output.log
+          retention-days: 7

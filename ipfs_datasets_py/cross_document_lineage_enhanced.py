@@ -10,17 +10,14 @@ detailed lineage tracking across documents and systems with comprehensive
 analysis capabilities.
 """
 
-import os
-import uuid
 import time
 import json
 import logging
 import datetime
-from typing import Dict, List, Optional, Union, Any, Set, Tuple
 import networkx as nx
-import matplotlib
 import matplotlib.pyplot as plt
 from collections import defaultdict
+from typing import Dict, List, Any, Optional, Tuple, Union, Set
 
 # Try to import optional visualization libraries
 try:
@@ -46,7 +43,7 @@ class CrossDocumentLineageEnhancer:
     - Cross-document impact analysis
     """
 
-    def __init__(self, storage):
+    def __init__(self, storage: Any) -> None:
         """
         Initialize the enhancer.
 
@@ -196,7 +193,7 @@ class CrossDocumentLineageEnhancer:
 
         return enhanced_graph
 
-    def _enhance_lineage_graph(self, graph):
+    def _enhance_lineage_graph(self, graph: nx.DiGraph) -> Dict[str, Any]:
         """
         Enhance a lineage graph with additional semantic information.
 
@@ -220,7 +217,7 @@ class CrossDocumentLineageEnhancer:
 
         return graph
 
-    def _enhance_document_boundaries(self, graph):
+    def _enhance_document_boundaries(self, graph: nx.DiGraph) -> Dict[str, Any]:
         """
         Enhance document boundary detection and labeling.
 
@@ -263,7 +260,7 @@ class CrossDocumentLineageEnhancer:
         graph.graph['boundary_types'] = dict(boundary_types)
         graph.graph['cross_boundary_flow_count'] = len(boundaries)
 
-    def _detect_semantic_relationships(self, graph):
+    def _detect_semantic_relationships(self, graph: nx.DiGraph) -> Dict[str, Any]:
         """
         Detect and categorize semantic relationships in the graph.
 
@@ -318,7 +315,7 @@ class CrossDocumentLineageEnhancer:
             for cat in set(r['semantic_category'] for r in semantic_relationships)
         }
 
-    def _perform_document_clustering(self, graph):
+    def _perform_document_clustering(self, graph: nx.DiGraph) -> Dict[str, Any]:
         """
         Perform document clustering to identify related document groups.
 
@@ -380,7 +377,7 @@ class CrossDocumentLineageEnhancer:
         graph.graph['cluster_count'] = len(document_clusters)
         graph.graph['documents'] = document_metadata  # Update with cluster information
 
-    def _calculate_enhanced_metrics(self, graph):
+    def _calculate_enhanced_metrics(self, graph: nx.DiGraph) -> Dict[str, Any]:
         """
         Calculate enhanced metrics for the lineage graph.
 
@@ -1182,7 +1179,7 @@ class CrossDocumentLineageEnhancer:
         else:
             raise ValueError(f"Unsupported export format: {format}")
 
-    def _export_to_json(self, graph, file_path, include_records):
+    def _export_to_json(self, graph: nx.DiGraph, file_path: str, include_records: bool) -> None:
         """Export graph to JSON format."""
         # Convert graph to JSON-compatible format
         data = {
@@ -1274,7 +1271,7 @@ class CrossDocumentLineageEnhancer:
         else:
             return data
 
-    def _export_to_cytoscape(self, graph, file_path):
+    def _export_to_cytoscape(self, graph: nx.DiGraph, file_path: str) -> None:
         """Export graph to Cytoscape.js format."""
         data = {
             "elements": {
@@ -1371,7 +1368,7 @@ class CrossDocumentLineageEnhancer:
         else:
             return data
 
-    def _export_to_graphml(self, graph, file_path):
+    def _export_to_graphml(self, graph: nx.DiGraph, file_path: str) -> None:
         """Export graph to GraphML format."""
         # Some preparations may be needed for proper GraphML export
         for node in graph.nodes():
@@ -1397,7 +1394,7 @@ class CrossDocumentLineageEnhancer:
             nx.write_graphml(graph, buffer)
             return buffer.getvalue()
 
-    def _export_to_gexf(self, graph, file_path):
+    def _export_to_gexf(self, graph: nx.DiGraph, file_path: str) -> None:
         """Export graph to GEXF format."""
         # Some preparations may be needed for proper GEXF export
         for node in graph.nodes():

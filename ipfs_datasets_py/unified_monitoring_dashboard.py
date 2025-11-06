@@ -17,8 +17,8 @@ from typing import Dict, List, Any, Optional, Union, Callable
 
 # Import visualization and monitoring components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
-from ipfs_datasets_py.rag_query_visualization import create_learning_metrics_visualizations
-from ipfs_datasets_py.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
+from ipfs_datasets_py.rag.rag_query_visualization import create_learning_metrics_visualizations
+from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
 from ipfs_datasets_py.monitoring import MetricsCollector
 
 # Setup logging
@@ -27,13 +27,60 @@ logger = logging.getLogger(__name__)
 
 class UnifiedDashboard:
     """
-    Unified dashboard that integrates multiple monitoring components.
+    Unified Monitoring Dashboard for RAG Optimizer Systems
 
-    This class provides a comprehensive monitoring solution that combines:
-    - Learning metrics visualizations
-    - Alert notifications
-    - Performance statistics
-    - System health indicators
+    The UnifiedDashboard class provides a comprehensive web-based monitoring interface
+    that integrates multiple system monitoring components into a single, cohesive dashboard.
+    It offers real-time visualization of learning metrics, alert management, performance
+    statistics, and system health indicators for RAG (Retrieval-Augmented Generation)
+    optimizer systems.
+
+    This class serves as the central hub for monitoring system performance, tracking
+    learning progress, managing alerts, and providing actionable insights through
+    interactive visualizations and automated reporting capabilities.
+
+    Key Features:
+    - Multi-component monitoring integration (learning metrics, alerts, performance)
+    - Real-time dashboard updates with configurable refresh intervals
+    - Interactive web interface with tabbed navigation
+    - Alert severity filtering and management
+    - Automatic visualization generation and display
+    - JSON-based data persistence for metrics and configuration
+    - Background thread management for automated updates
+    - Bootstrap-based responsive UI design
+
+    Attributes:
+        dashboard_dir (str): Root directory for dashboard files and outputs
+        dashboard_title (str): Display title for the dashboard interface
+        refresh_interval (int): Automatic refresh interval in seconds
+        auto_refresh (bool): Enable/disable automatic dashboard updates
+        max_alerts (int): Maximum number of alerts to retain and display
+        template_dir (Optional[str]): Custom template directory path
+        visualizations_dir (str): Directory for generated visualization files
+        alerts_dir (str): Directory for alert data and JSON files
+        metrics_dir (str): Directory for metrics data storage
+        assets_dir (str): Directory for dashboard static assets
+        last_update_time (Optional[datetime]): Timestamp of last dashboard update
+        dashboard_path (str): File path to the main dashboard HTML file
+        learning_visualizer (Optional[OptimizerLearningMetricsVisualizer]): Learning metrics component
+        alert_system (Optional[LearningAlertSystem]): Alert management component
+        metrics_collector (Optional[MetricsCollector]): Metrics collection component
+        recent_alerts (List[LearningAnomaly]): Collection of recent system alerts
+
+    Usage Example:
+        dashboard = UnifiedDashboard(
+            dashboard_dir="./monitoring_dashboard",
+            dashboard_title="Production RAG Monitor",
+            refresh_interval=300,
+            auto_refresh=True
+        )
+        
+        # Register monitoring components
+        dashboard.register_learning_visualizer(visualizer)
+        dashboard.register_alert_system(alert_system)
+        dashboard.register_metrics_collector(metrics_collector)
+        
+        # Dashboard will automatically update and generate HTML interface
     """
 
     def __init__(
@@ -44,17 +91,36 @@ class UnifiedDashboard:
         auto_refresh: bool = True,
         max_alerts: int = 100,
         template_dir: Optional[str] = None
-    ):
+    ) -> None:
         """
-        Initialize the unified dashboard.
+        Initialize the unified monitoring dashboard.
+
+        Creates a new dashboard instance with the specified configuration, sets up
+        the required directory structure, and optionally starts automatic refresh
+        functionality. The dashboard provides a web-based interface for monitoring
+        RAG optimizer systems with integrated alerts, metrics, and visualizations.
 
         Args:
-            dashboard_dir: Directory to store dashboard files
-            dashboard_title: Title for the dashboard
-            refresh_interval: Interval in seconds for automatic dashboard updates
-            auto_refresh: Whether to enable automatic updates
-            max_alerts: Maximum number of alerts to display
-            template_dir: Directory containing custom templates (optional)
+            dashboard_dir (str): Root directory path for storing dashboard files,
+                outputs, and generated content. Will be created if it doesn't exist.
+            dashboard_title (str, optional): Display title shown in the dashboard
+                header and browser tab. Defaults to "RAG Optimizer Monitoring Dashboard".
+            refresh_interval (int, optional): Time interval in seconds between
+                automatic dashboard updates. Defaults to 300 (5 minutes).
+            auto_refresh (bool, optional): Enable automatic dashboard refresh
+                functionality. When True, dashboard updates automatically at the
+                specified interval. Defaults to True.
+            max_alerts (int, optional): Maximum number of alerts to retain in
+                memory and display in the dashboard. Older alerts are automatically
+                pruned. Defaults to 100.
+            template_dir (Optional[str], optional): Path to directory containing
+                custom HTML templates for dashboard customization. If None, uses
+                built-in templates. Defaults to None.
+
+        Raises:
+            OSError: If dashboard directory cannot be created or accessed
+            PermissionError: If insufficient permissions to create directories or files
+            ValueError: If refresh_interval is negative or max_alerts is not positive
         """
         self.dashboard_dir = dashboard_dir
         self.dashboard_title = dashboard_title
@@ -105,7 +171,16 @@ class UnifiedDashboard:
             self.start_auto_refresh()
 
     def _save_config(self):
-        """Save dashboard configuration to JSON file."""
+        """Save current dashboard configuration to persistent storage.
+        
+        Persists the dashboard settings including title, refresh interval,
+        auto-refresh status, and last update timestamp to a JSON configuration
+        file for state preservation across sessions.
+        
+        Raises:
+            IOError: If configuration file cannot be written
+            JSONEncodeError: If configuration data cannot be serialized
+        """
         config = {
             "dashboard_title": self.dashboard_title,
             "refresh_interval": self.refresh_interval,
@@ -120,20 +195,42 @@ class UnifiedDashboard:
 
     def register_learning_visualizer(self, visualizer: OptimizerLearningMetricsVisualizer):
         """
-        Register a learning metrics visualizer component.
+        Register a learning metrics visualization component.
+
+        Integrates a learning metrics visualizer into the dashboard to enable
+        automatic generation and display of learning-related charts, graphs,
+        and performance visualizations within the dashboard interface.
 
         Args:
-            visualizer: The metrics visualizer to register
+            visualizer (OptimizerLearningMetricsVisualizer): The metrics visualization
+                component responsible for generating learning performance charts,
+                parameter adaptation graphs, and strategy effectiveness visualizations.
+
+        Note:
+            Only one learning visualizer can be registered at a time. Registering
+            a new visualizer will replace any previously registered component.
         """
         self.learning_visualizer = visualizer
         logger.info("Registered learning metrics visualizer")
 
     def register_alert_system(self, alert_system: LearningAlertSystem):
         """
-        Register an alert system component.
+        Register an alert management system component.
+
+        Integrates an alert system into the dashboard to enable real-time alert
+        notifications, severity-based filtering, and automated alert handling
+        within the dashboard interface. The alert system will automatically
+        forward detected anomalies to the dashboard for display and management.
 
         Args:
-            alert_system: The alert system to register
+            alert_system (LearningAlertSystem): The alert management component
+                responsible for detecting anomalies, generating alerts, and
+                managing alert severity levels and notifications.
+
+        Note:
+            The dashboard automatically registers itself as an alert handler
+            to receive notifications from the alert system. Only one alert
+            system can be registered at a time.
         """
         self.alert_system = alert_system
 
@@ -146,20 +243,40 @@ class UnifiedDashboard:
 
     def register_metrics_collector(self, metrics_collector: MetricsCollector):
         """
-        Register a metrics collector component.
+        Register a metrics collection component.
+
+        Integrates a metrics collector into the dashboard to enable automatic
+        collection and display of system performance metrics, resource usage
+        statistics, and operational data within the dashboard interface.
 
         Args:
-            metrics_collector: The metrics collector to register
+            metrics_collector (MetricsCollector): The metrics collection component
+                responsible for gathering system performance data, query statistics,
+                resource usage metrics, and operational indicators.
+
+        Note:
+            Only one metrics collector can be registered at a time. Registering
+            a new collector will replace any previously registered component.
         """
         self.metrics_collector = metrics_collector
         logger.info("Registered metrics collector")
 
     def _alert_handler(self, anomaly: LearningAnomaly):
         """
-        Handle alerts from the alert system.
+        Process incoming alerts from the registered alert system.
+
+        Handles anomaly notifications by adding them to the dashboard's alert
+        collection, managing alert retention limits, persisting alert data,
+        and triggering dashboard updates to reflect the new alert information.
 
         Args:
-            anomaly: The detected anomaly
+            anomaly (LearningAnomaly): The detected anomaly containing severity
+                level, description, affected parameters, and timestamp information.
+
+        Note:
+            This method is automatically called by the registered alert system
+            when anomalies are detected. It maintains the configured maximum
+            number of alerts and ensures dashboard state consistency.
         """
         # Add to recent alerts
         self.recent_alerts.append(anomaly)
@@ -177,7 +294,16 @@ class UnifiedDashboard:
         logger.info(f"Handled alert: {anomaly.anomaly_type} - {anomaly.description}")
 
     def _save_alerts(self):
-        """Save recent alerts to JSON file."""
+        """Persist current alert collection to JSON storage.
+        
+        Serializes the recent alerts collection to a JSON file for persistence
+        across dashboard sessions and enables external access to alert data.
+        Handles serialization errors gracefully to maintain dashboard stability.
+        
+        Raises:
+            IOError: If alert file cannot be written
+            JSONEncodeError: If alert data cannot be serialized
+        """
         alerts_data = []
 
         for anomaly in self.recent_alerts:
@@ -191,7 +317,25 @@ class UnifiedDashboard:
             json.dump(alerts_data, f, indent=2)
 
     def update_dashboard(self):
-        """Update the unified dashboard with current data from all components."""
+        """
+        Refresh dashboard content with latest data from all registered components.
+
+        Orchestrates a complete dashboard update by collecting current data from
+        all registered monitoring components (visualizations, metrics, alerts),
+        generating updated HTML content, and persisting the refreshed dashboard
+        state. This method serves as the central coordination point for maintaining
+        dashboard currency and accuracy.
+
+        The update process includes:
+        - Generating new visualizations from learning metrics
+        - Collecting current performance and system metrics
+        - Updating HTML dashboard with latest data
+        - Persisting configuration and state changes
+
+        Raises:
+            Exception: Various exceptions may be raised by component interactions,
+                all of which are logged but do not prevent partial dashboard updates
+        """
         self.last_update_time = datetime.now()
 
         # Update visualizations if available
@@ -241,11 +385,31 @@ class UnifiedDashboard:
 
     def _generate_dashboard_html(self, viz_outputs: Dict[str, str], metrics_data: Dict[str, Any]):
         """
-        Generate the main dashboard HTML.
+        Generate the main dashboard HTML interface.
+
+        Creates a comprehensive HTML dashboard featuring tabbed navigation,
+        responsive design, interactive components, and real-time data display.
+        The generated interface includes system status overview, alert management,
+        learning metrics visualization, and performance monitoring sections.
 
         Args:
-            viz_outputs: Paths to visualization outputs
-            metrics_data: Current metrics data
+            viz_outputs (Dict[str, str]): Mapping of visualization types to their
+                corresponding file paths for embedding in the dashboard interface.
+            metrics_data (Dict[str, Any]): Current system metrics including
+                performance statistics, resource usage, and operational data.
+
+        Features:
+        - Bootstrap-based responsive design
+        - Tabbed navigation (Overview, Learning, Alerts, Performance)
+        - Interactive alert filtering by severity
+        - Automatic refresh capability
+        - Real-time status indicators
+        - Embedded visualization images
+        - Sortable data tables
+
+        Raises:
+            IOError: If HTML file cannot be written
+            TemplateError: If HTML generation encounters formatting issues
         """
         # Create dashboard HTML
         with open(self.dashboard_path, 'w') as f:
@@ -864,7 +1028,22 @@ class UnifiedDashboard:
             """)
 
     def start_auto_refresh(self):
-        """Start automatic dashboard refreshing."""
+        """
+        Enable automatic dashboard refresh functionality.
+
+        Starts a background thread that periodically updates the dashboard
+        at the configured refresh interval. The auto-refresh mechanism ensures
+        that the dashboard displays current data without manual intervention,
+        making it suitable for real-time monitoring scenarios.
+
+        The refresh thread operates independently and can be safely stopped
+        using the stop_auto_refresh method. Only one refresh thread can be
+        active at a time to prevent resource conflicts.
+
+        Raises:
+            RuntimeError: If auto-refresh thread is already running
+            ThreadingError: If background thread cannot be started
+        """
         if self._refresh_thread is not None and self._refresh_thread.is_alive():
             logger.warning("Auto-refresh thread is already running")
             return
@@ -878,7 +1057,20 @@ class UnifiedDashboard:
         logger.info(f"Started auto-refresh with interval {self.refresh_interval} seconds")
 
     def stop_auto_refresh(self):
-        """Stop automatic dashboard refreshing."""
+        """
+        Disable automatic dashboard refresh functionality.
+
+        Gracefully stops the background refresh thread and ensures proper
+        cleanup of threading resources. This method blocks until the refresh
+        thread has completely terminated or until a timeout is reached.
+
+        The dashboard can still be manually updated using the update_dashboard
+        method after auto-refresh is stopped. Auto-refresh can be restarted
+        by calling start_auto_refresh again.
+
+        Raises:
+            TimeoutError: If refresh thread does not stop within timeout period
+        """
         if self._refresh_thread is None or not self._refresh_thread.is_alive():
             logger.warning("Auto-refresh thread is not running")
             return
@@ -888,7 +1080,20 @@ class UnifiedDashboard:
         logger.info("Stopped auto-refresh")
 
     def _auto_refresh_loop(self):
-        """Background thread for automatic dashboard refreshing."""
+        """
+        Background thread execution loop for automatic dashboard updates.
+
+        Continuously monitors for the configured refresh interval and triggers
+        dashboard updates when appropriate. The loop can be interrupted by
+        setting the stop event, allowing for clean shutdown of the refresh
+        functionality. Error handling ensures that individual update failures
+        do not terminate the refresh thread.
+
+        Note:
+            This method runs in a separate daemon thread and should not be
+            called directly. Use start_auto_refresh and stop_auto_refresh
+            to control the refresh functionality.
+        """
         while not self._stop_refresh.is_set():
             # Wait for refresh interval
             for _ in range(min(self.refresh_interval, 60)):  # Check at most every second
@@ -914,18 +1119,43 @@ def create_unified_dashboard(
     template_dir: Optional[str] = None
 ) -> UnifiedDashboard:
     """
-    Create and set up a unified monitoring dashboard.
+    Create and configure a unified monitoring dashboard instance.
+
+    This convenience function provides a streamlined way to create a fully
+    configured dashboard with sensible defaults. It handles dashboard
+    initialization, performs an initial update to generate the HTML interface,
+    and returns a ready-to-use dashboard instance.
 
     Args:
-        dashboard_dir: Directory to store dashboard files
-        dashboard_title: Title for the dashboard
-        refresh_interval: Interval in seconds for automatic dashboard updates
-        auto_refresh: Whether to enable automatic updates
-        max_alerts: Maximum number of alerts to display
-        template_dir: Directory containing custom templates (optional)
+        dashboard_dir (str): Root directory path for dashboard files and outputs.
+            Will be created if it doesn't exist.
+        dashboard_title (str, optional): Display title for the dashboard interface.
+            Defaults to "RAG Optimizer Monitoring Dashboard".
+        refresh_interval (int, optional): Automatic refresh interval in seconds.
+            Defaults to 300 (5 minutes).
+        auto_refresh (bool, optional): Enable automatic dashboard refresh.
+            Defaults to True.
+        max_alerts (int, optional): Maximum alerts to retain and display.
+            Defaults to 100.
+        template_dir (Optional[str], optional): Custom template directory path.
+            Defaults to None (use built-in templates).
 
     Returns:
-        UnifiedDashboard: Configured dashboard instance
+        UnifiedDashboard: Fully configured and initialized dashboard instance
+            ready for component registration and monitoring operations.
+
+    Example:
+        dashboard = create_unified_dashboard(
+            dashboard_dir="./monitoring",
+            dashboard_title="Production Monitor",
+            refresh_interval=60
+        )
+        dashboard.register_alert_system(alert_system)
+        dashboard.register_metrics_collector(metrics_collector)
+
+    Raises:
+        OSError: If dashboard directory cannot be created
+        PermissionError: If insufficient permissions for file operations
     """
     dashboard = UnifiedDashboard(
         dashboard_dir=dashboard_dir,

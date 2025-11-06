@@ -9,7 +9,7 @@ comprehensive tracking and correlation of audit events with data provenance.
 import json
 import datetime
 import logging
-from typing import Dict, List, Any, Optional, Union, Set
+from typing import Dict, List, Any, Optional, Union, Set, Callable
 from dataclasses import asdict
 
 from ipfs_datasets_py.audit.audit_logger import (

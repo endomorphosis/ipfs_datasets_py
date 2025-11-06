@@ -37,7 +37,7 @@
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.${input:toolCategory}.${input:toolName} import ${input:toolName}; result = asyncio.run(${input:toolName}('test')); print('Result:', result.get('status', 'unknown'))"
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.${input:toolCategory}.${input:toolName} import ${input:toolName}; result = asyncio.run(${input:toolName}(\"test\")); print(\"Result:\", result.get(\"status\", \"unknown\"))"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -68,7 +68,7 @@
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset; result = asyncio.run(load_dataset('test_dataset')); print('Load Dataset Result:', result.get('status'))"
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset; result = asyncio.run(load_dataset(\"test_dataset\")); print(\"Load Dataset Result:\", result.get(\"status\"))"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -83,7 +83,7 @@
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs; result = asyncio.run(get_from_ipfs('QmTest123')); print('IPFS Get Result:', result.get('status'))"
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs; result = asyncio.run(get_from_ipfs(\"QmTest123\")); print(\"IPFS Get Result:\", result.get(\"status\"))"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -93,12 +93,12 @@
 			}
 		},
 		{
-			"label": "Test Vector Tools", 
+			"label": "Test Vector Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; result = asyncio.run(create_vector_index('test_index', [{'text': 'test', 'metadata': {}}])); print('Vector Index Result:', result.get('status'))"
+				"import asyncio, numpy as np; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; vectors=[[0.1,0.2,0.3],[0.4,0.5,0.6]]; result = asyncio.run(create_vector_index(vectors, dimension=3, metric=\"cosine\", index_id=\"test_index\", index_name=\"Test Index\")); print(\"Vector Index Result:\", result.get(\"status\"))"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -113,7 +113,7 @@
 			"command": "${workspaceFolder}/.venv/bin/python",
 			"args": [
 				"-c",
-				"import asyncio; from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report; result = asyncio.run(generate_audit_report('comprehensive')); print('Audit Report Result:', result.get('status'))"
+				"import asyncio; from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report; result = asyncio.run(generate_audit_report(\"comprehensive\")); print(\"Audit Report Result:\", result.get(\"status\"))"
 			],
 			"group": "test",
 			"isBackground": false,
@@ -121,6 +121,469 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
+		},
+		{
+			"label": "Start FastAPI Service",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"start_fastapi.py",
+				"--env",
+				"development",
+				"--debug",
+				"--reload"
+			],
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test FastAPI Service",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"test_fastapi_service.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Validate FastAPI",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"validate_fastapi.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Simple Integration Test",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"simple_test.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Start MCP Dashboard",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Start MCP Dashboard (8899)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"MCP_DASHBOARD_HOST": "127.0.0.1",
+					"MCP_DASHBOARD_PORT": "8899",
+					"MCP_DASHBOARD_BLOCKING": "1"
+				}
+			},
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Test MCP Dashboard Status",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-s",
+				"http://127.0.0.1:8899/api/mcp/status"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test MCP Dashboard Status (raw)",
+			"type": "shell",
+			"command": "curl",
+			"args": [
+				"-sS",
+				"http://127.0.0.1:8899/api/mcp/status"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Smoke",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"smoke",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Comprehensive",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"comprehensive",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Performance",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"performance",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Run MCP Dashboard Tests - Docker",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
+				"--mode",
+				"comprehensive",
+				"--docker",
+				"--verbose"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Start Docker MCP Services",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"-f",
+				"docker-compose.mcp.yml",
+				"up",
+				"-d"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Stop Docker MCP Services",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"compose",
+				"-f",
+				"docker-compose.mcp.yml",
+				"down"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Install Playwright Browsers",
+			"type": "shell",
+			"command": "playwright",
+			"args": [
+				"install",
+				"chromium"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Test IPFS Datasets CLI",
+			"type": "shell",
+			"command": "./ipfs-datasets",
+			"args": [
+				"info",
+				"status"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "List IPFS Datasets CLI Tools",
+			"type": "shell",
+			"command": "./ipfs-datasets",
+			"args": [
+				"info",
+				"list-tools"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "IPFS Datasets CLI Help",
+			"type": "shell",
+			"command": "./ipfs-datasets",
+			"args": [
+				"--help"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Test IPFS Datasets CLI Suite",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"test_cli.py"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"focus": false,
+				"panel": "shared"
+			}
+		}
+		,
+		{
+			"label": "Start MCP Dashboard (8899)",
+			"type": "shell",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"args": [
+				"-m",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}",
+				"env": {
+					"MCP_DASHBOARD_HOST": "127.0.0.1",
+					"MCP_DASHBOARD_PORT": "8899",
+					"MCP_DASHBOARD_BLOCKING": "1"
+				}
+			},
+			"group": "build"
+		},
+		{
+			"label": "Test MCP Dashboard Status (raw)",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"curl -sS -o /dev/null -w \"HTTP %{http_code}\\n\" http://127.0.0.1:8899/api/mcp/status && curl -sS http://127.0.0.1:8899/api/mcp/status | head -c 300"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Test MCP Dashboard Status",
+			"type": "shell",
+			"command": "/bin/bash",
+			"args": [
+				"-lc",
+				"curl -sS http://127.0.0.1:8899/api/mcp/status | python - <<'PY'\nimport sys, json\ntry:\n    d = json.load(sys.stdin)\n    print(json.dumps({'status': d.get('status'), 'tools_available': d.get('tools_available')}))\nexcept Exception as e:\n    print(json.dumps({'error': str(e)}))\nPY"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Stop MCP Dashboard",
+			"type": "shell",
+			"command": "pkill",
+			"args": [
+				"-f",
+				"ipfs_datasets_py.mcp_dashboard"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Run MCP CLI Tool",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_cli.py",
+				"${input:mcp_category}",
+				"${input:mcp_tool}",
+				"${input:mcp_args}"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "List MCP CLI Categories",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_cli.py",
+				"--list-categories"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Run MCP Dashboard Playwright Tests",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"mcp_dashboard_tests.py",
+				"--headless",
+				"--output",
+				"test_results.json"
+			],
+			"group": "test",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Start Docker MCP Server",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"run",
+				"-d",
+				"--name",
+				"mcp-server",
+				"-p",
+				"8000:8000",
+				"-v",
+				"${workspaceFolder}:/app",
+				"ipfs-datasets-mcp"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
+		},
+		{
+			"label": "Stop Docker MCP Server",
+			"type": "shell",
+			"command": "docker",
+			"args": [
+				"stop",
+				"mcp-server",
+				"&&",
+				"docker",
+				"rm",
+				"mcp-server"
+			],
+			"group": "build",
+			"isBackground": false,
+			"problemMatcher": [],
+			"options": { "cwd": "${workspaceFolder}" }
 		}
 	],
 	"inputs": [
@@ -143,6 +606,35 @@
 			"id": "toolName",
 			"description": "Tool name",
 			"default": "load_dataset",
+			"type": "promptString"
+		},
+		{
+			"id": "mcp_category",
+			"description": "MCP Tool Category",
+			"default": "dataset_tools",
+			"type": "pickString",
+			"options": [
+				"dataset_tools",
+				"ipfs_tools",
+				"vector_tools",
+				"graph_tools",
+				"audit_tools",
+				"analysis_tools",
+				"embedding_tools",
+				"media_tools",
+				"admin_tools"
+			]
+		},
+		{
+			"id": "mcp_tool",
+			"description": "MCP Tool Name",
+			"default": "load_dataset",
+			"type": "promptString"
+		},
+		{
+			"id": "mcp_args",
+			"description": "MCP Tool Arguments (--key value format)",
+			"default": "--source test --format json",
 			"type": "promptString"
 		}
 	]

@@ -25,7 +25,7 @@ from ipfs_datasets_py.provenance_dashboard import ProvenanceDashboard, setup_pro
 
 # Optional imports for integrated dashboard
 try:
-    from ipfs_datasets_py.rag_query_visualization import QueryMetricsCollector, RAGQueryVisualizer
+    from ipfs_datasets_py.rag.rag_query_visualization import QueryMetricsCollector, RAGQueryVisualizer
     QUERY_VIS_AVAILABLE = True
 except ImportError:
     QUERY_VIS_AVAILABLE = False

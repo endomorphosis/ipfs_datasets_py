@@ -2,26 +2,45 @@
     "python.defaultInterpreterPath": "./.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
-    "mcp.servers": {
-        "ipfs-datasets": {
-            "command": "python",
-            "args": ["-m", "ipfs_datasets_py.mcp_server", "--host", "127.0.0.1", "--port", "8000"],
-            "cwd": "/home/barberb/ipfs_datasets_py",
-            "env": {
-                "PYTHONPATH": "/home/barberb/ipfs_datasets_py",
-                "IPFS_DATASETS_CONFIG": "/home/barberb/ipfs_datasets_py/config/mcp_config.yaml"
-            }
-        }
-    },
-    "copilot-mcp.servers": {
-        "ipfs-datasets": {
-            "command": "python",
-            "args": ["-m", "ipfs_datasets_py.mcp_server", "--host", "127.0.0.1", "--port", "8000"],
-            "cwd": "/home/barberb/ipfs_datasets_py",
-            "env": {
-                "PYTHONPATH": "/home/barberb/ipfs_datasets_py",
-                "IPFS_DATASETS_CONFIG": "/home/barberb/ipfs_datasets_py/config/mcp_config.yaml"
-            }
-        }
-    }
+    "python.testing.pytestEnabled": true,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": [
+        "./tests/unit_tests",
+        "-n",
+        "6",
+        "--session-timeout=300"
+    ],
+    "cSpell.words": [
+        "aiohttp",
+        "faiss",
+        "ipfs",
+        "Jaccard",
+        "kylerose",
+        "LAION",
+        "multiformats",
+        "ndarray",
+        "ndarrays",
+        "psutil",
+        "pydantic",
+        "pytest",
+        "sparql",
+        "tesseract",
+        "uvicorn",
+        "ytdlp"
+    ],
+    "cSpell.ignoreWords": [
+        "Chunker",
+        "IPLD",
+        "cids",
+        "dataclass",
+        "graphrag",
+        "huggingface",
+        "linalg",
+        "lizardperson",
+        "lizardpersons",
+        "numpy",
+        "pbar"
+    ],
+    "mypy.runUsingActiveInterpreter": true,
+    "mypy.dmypyExecutable": "/home/barberb/ipfs_datasets_py/.venv/bin/dmypy"
 }

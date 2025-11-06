@@ -239,7 +239,7 @@ result = execute_query(optimized_query)
 Optimize graph-based queries:
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryOptimizer
 
 # Create a GraphRAG query optimizer
 optimizer = GraphRAGQueryOptimizer()

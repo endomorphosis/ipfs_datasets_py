@@ -105,7 +105,7 @@ print(f"Successfully updated {file_path} with fixes to prevent None returns.")
 print("\nRunning test to verify fix...\n")
 
 try:
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, GraphRAGQueryOptimizer, GraphRAGQueryStats
     from collections import defaultdict
     import numpy as np
 

@@ -12,7 +12,14 @@ import time
 import datetime
 import logging
 import numpy as np
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Dict, List, Any, Optional, Tuple, Union, TYPE_CHECKING
+
+# Type checking imports
+if TYPE_CHECKING:
+    try:
+        from matplotlib.figure import Figure
+    except ImportError:
+        Figure = Any
 from collections import defaultdict
 
 # Import visualization libraries if available
@@ -39,8 +46,8 @@ except ImportError:
     INTERACTIVE_LIBS_AVAILABLE = False
 
 # Import existing visualization components
-from ipfs_datasets_py.rag_query_visualization import EnhancedQueryVisualizer
-from ipfs_datasets_py.rag_query_optimizer import QueryMetricsCollector
+from ipfs_datasets_py.rag.rag_query_visualization import EnhancedQueryVisualizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryMetricsCollector
 
 class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
     """
@@ -59,7 +66,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         output_file: Optional[str] = None,
         interactive: bool = False,
         figsize: Tuple[int, int] = (14, 8)
-    ) -> Optional[Union[Figure, Dict[str, Any]]]:
+    ) -> Optional[Union["Figure", Dict[str, Any]]]:
         """
         Visualize the relationship between RAG query performance and audit/security events.
 
@@ -466,7 +473,7 @@ class EnhancedQueryAuditVisualizer(EnhancedQueryVisualizer):
         output_file: Optional[str] = None,
         interactive: bool = False,
         figsize: Tuple[int, int] = (14, 10)
-    ) -> Optional[Union[Figure, Dict[str, Any], Dict[str, float]]]:
+    ) -> Optional[Union["Figure", Dict[str, Any], Dict[str, float]]]:
         """
         Analyze correlation between RAG query performance and audit events.
 

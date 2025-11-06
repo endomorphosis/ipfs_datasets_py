@@ -49,7 +49,7 @@ from pathlib import Path
 
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py import ipfs_datasets
 
 # Set up working directory
@@ -115,6 +115,61 @@ for doc in documents:
 
 print(f"Created {len(all_chunks)} total chunks")
 ```
+
+## Processing PDF Documents for GraphRAG
+
+For PDF documents, IPFS Datasets Python provides specialized processing that optimizes content for both LLM consumption and GraphRAG integration:
+
+```python
+from ipfs_datasets_py.pdf_processing import PDFGraphRAGIntegrator
+
+# Initialize PDF GraphRAG integrator
+pdf_integrator = PDFGraphRAGIntegrator()
+
+# Process PDFs with complete pipeline
+pdf_files = ["research_paper1.pdf", "research_paper2.pdf", "technical_spec.pdf"]
+processed_pdfs = []
+
+for pdf_path in pdf_files:
+    print(f"Processing PDF: {pdf_path}")
+    
+    # Complete PDF processing pipeline:
+    # PDF Input → Decomposition → IPLD Structuring → OCR Processing → 
+    # LLM Optimization → Entity Extraction → Vector Embedding → 
+    # IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
+    result = pdf_integrator.ingest_pdf_into_graphrag(
+        pdf_path=pdf_path,
+        metadata={
+            "source": pdf_path,
+            "document_type": "research_paper",
+            "processing_date": "2025-06-26"
+        }
+    )
+    
+    processed_pdfs.append(result)
+    print(f"✓ Processed {pdf_path}: {result['entities_added']} entities, {result['relationships_added']} relationships")
+
+# The PDF processing automatically:
+# 1. Extracts text using multi-engine OCR (Surya, Tesseract, EasyOCR fallback)
+# 2. Creates LLM-optimized chunks with proper context windows
+# 3. Extracts entities and relationships
+# 4. Generates embeddings for multimodal content
+# 5. Integrates with IPLD GraphRAG system
+# 6. Enables cross-document relationship discovery
+
+print(f"Successfully processed {len(processed_pdfs)} PDF documents")
+```
+
+### PDF-Specific Benefits
+
+PDF processing provides several advantages for GraphRAG:
+
+1. **Multimodal Content**: Processes text, images, and tables together
+2. **Document Structure**: Preserves hierarchical relationships (sections, subsections)
+3. **Cross-References**: Maintains citation and reference relationships
+4. **Quality Optimization**: Multiple OCR engines ensure high text quality
+5. **LLM-Ready**: Content optimized for different LLM architectures
+6. **IPLD Integration**: Native content-addressed storage
 
 ## Building the Vector Index
 
@@ -324,7 +379,7 @@ def expanded_query(query_text, top_k=5):
 # 3. IPLD-specific optimizations for content-addressed data
 def ipld_optimized_query(query_text, top_k=5, max_hops=2):
     """Execute a query with IPLD-specific optimizations for content-addressed data."""
-    from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
+    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer, QueryRewriter
     
     # Create specialized components for optimizing IPLD queries
     query_rewriter = QueryRewriter()
@@ -442,7 +497,7 @@ from typing import List, Dict, Any
 
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
-from ipfs_datasets_py.llm_graphrag import GraphRAGQueryEngine
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGQueryEngine
 from ipfs_datasets_py import ipfs_datasets
 
 # Setup

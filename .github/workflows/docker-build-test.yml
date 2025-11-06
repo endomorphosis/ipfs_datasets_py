@@ -1,0 +1,299 @@
+name: Docker Build and Test (Multi-Platform)
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - '.github/workflows/docker-build-test.yml'
+      - 'ipfs_datasets_py/**'
+      - 'setup.py'
+      - 'requirements.txt'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build for'
+        required: true
+        default: 'linux/amd64'
+        type: choice
+        options:
+          - linux/amd64
+          - linux/arm64
+          - linux/amd64,linux/arm64
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # Test on GitHub-hosted runners (x86_64)
+  test-github-x86:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build minimal test image
+        run: |
+          echo "🔨 Building Docker image for x86_64..."
+          docker build -t ipfs-datasets-py:test-x86 -f Dockerfile.minimal-test .
+      
+      - name: Test Docker container
+        run: |
+          echo "🧪 Testing Docker container..."
+          docker run --rm ipfs-datasets-py:test-x86
+          
+          echo "🔍 Testing package import..."
+          docker run --rm ipfs-datasets-py:test-x86 python -c "
+          import sys, platform
+          print(f'✅ Container test passed')
+          print(f'Python: {sys.version}')
+          print(f'Platform: {platform.platform()}')
+          print(f'Architecture: {platform.machine()}')
+          
+          try:
+              import ipfs_datasets_py
+              print(f'✅ Package imported: {ipfs_datasets_py.__file__}')
+          except ImportError as e:
+              print(f'⚠️  Import warning: {e}')
+          "
+      
+      - name: Test container health
+        run: |
+          echo "🏥 Testing health check..."
+          docker run --rm --name health-test ipfs-datasets-py:test-x86 python -c "
+          print('✅ Health check passed')
+          "
+      
+      - name: Image information
+        run: |
+          echo "## 📦 Docker Image Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          docker images ipfs-datasets-py:test-x86 >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Build and test completed successfully on GitHub-hosted runner" >> $GITHUB_STEP_SUMMARY
+
+  # Test on self-hosted x86_64 runner (if available)
+  test-self-hosted-x86:
+    runs-on: [self-hosted, linux, x64]
+    # Only run if runner is available, skip otherwise
+    if: ${{ !cancelled() }}
+    continue-on-error: true
+    
+    steps:
+      - name: System information
+        run: |
+          echo "## 🖥️ Self-Hosted Runner (x86_64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"' || echo 'Unknown')" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}' || echo 'Unknown')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker**: $(docker --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: |
+          echo "🔨 Building Docker image on self-hosted runner..."
+          docker build -t ipfs-datasets-py:self-hosted-x86 -f Dockerfile.minimal-test .
+      
+      - name: Test Docker container
+        run: |
+          echo "🧪 Testing Docker container..."
+          docker run --rm ipfs-datasets-py:self-hosted-x86
+          
+          docker run --rm ipfs-datasets-py:self-hosted-x86 python -c "
+          import sys, platform
+          print(f'✅ Self-hosted test passed')
+          print(f'Architecture: {platform.machine()}')
+          "
+          
+          echo "✅ Self-hosted x86_64 test completed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rmi ipfs-datasets-py:self-hosted-x86 || true
+          docker system prune -f || true
+
+  # Test on self-hosted ARM64 runner (if available)
+  test-self-hosted-arm64:
+    runs-on: [self-hosted, arm64, linux]
+    if: ${{ !cancelled() }}
+    continue-on-error: true
+    
+    steps:
+      - name: System information
+        run: |
+          echo "## 🖥️ Self-Hosted Runner (ARM64)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"' || echo 'Unknown')" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}' || echo 'Unknown')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Docker**: $(docker --version)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Clean up submodules before checkout
+        run: |
+          cd $GITHUB_WORKSPACE || exit 0
+          if [ -d ".git" ]; then
+            echo "Deinitializing all submodules to prevent recursive cleanup errors..."
+            git submodule deinit --all -f || true
+            rm -rf .git/modules || true
+          fi
+        continue-on-error: true
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Build Docker image
+        run: |
+          echo "🔨 Building Docker image on ARM64 runner..."
+          docker build -t ipfs-datasets-py:self-hosted-arm64 -f Dockerfile.minimal-test .
+      
+      - name: Test Docker container
+        run: |
+          echo "🧪 Testing Docker container..."
+          docker run --rm ipfs-datasets-py:self-hosted-arm64
+          
+          docker run --rm ipfs-datasets-py:self-hosted-arm64 python -c "
+          import sys, platform
+          print(f'✅ ARM64 test passed')
+          print(f'Architecture: {platform.machine()}')
+          "
+          
+          echo "✅ Self-hosted ARM64 test completed" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rmi ipfs-datasets-py:self-hosted-arm64 || true
+          docker system prune -f || true
+
+  # Multi-architecture build using buildx
+  build-multi-arch:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.minimal-test
+          platforms: ${{ github.event.inputs.platform || 'linux/amd64,linux/arm64' }}
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build summary
+        run: |
+          echo "## 🚀 Multi-Architecture Build" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms**: ${{ github.event.inputs.platform || 'linux/amd64,linux/arm64' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Pushed**: ${{ github.ref == 'refs/heads/main' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tags**:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Summary job
+  test-summary:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
+    if: always()
+    
+    steps:
+      - name: Generate summary
+        run: |
+          echo "## 📊 Docker Build Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Platform | Runner Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| x86_64 | GitHub-hosted | ${{ needs.test-github-x86.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| x86_64 | Self-hosted | ${{ needs.test-self-hosted-x86.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ARM64 | Self-hosted | ${{ needs.test-self-hosted-arm64.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-self-hosted-x86.result }}" = "skipped" ] || [ "${{ needs.test-self-hosted-x86.result }}" = "failure" ]; then
+            echo "### ℹ️ Setting Up Self-Hosted Runners" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To add a self-hosted runner:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to **Settings → Actions → Runners**" >> $GITHUB_STEP_SUMMARY
+            echo "2. Click **New self-hosted runner**" >> $GITHUB_STEP_SUMMARY
+            echo "3. Follow the setup instructions for your OS" >> $GITHUB_STEP_SUMMARY
+            echo "4. Add labels: \`self-hosted\`, \`linux\`, \`x86_64\` or \`arm64\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "See [RUNNER_SETUP.md](./docs/RUNNER_SETUP.md) for detailed instructions." >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,0 +1,147 @@
+name: Update Auto-Healing Workflow List
+
+# DISABLED: GitHub Actions doesn't allow workflows to modify workflow files
+# The workflow list in copilot-agent-autofix.yml should be updated manually
+# when new workflows are added or renamed
+on: []
+
+# Original triggers (disabled):
+#  push:
+#    paths:
+#      - '.github/workflows/*.yml'
+#    branches:
+#      - main
+#  pull_request:
+#    paths:
+#      - '.github/workflows/*.yml'
+#  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-workflow-list:
+    runs-on: [self-hosted, linux, x64]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PyYAML
+      
+      - name: Update auto-healing workflow list
+        run: |
+          echo "📋 Current workflow count in copilot-agent-autofix.yml:"
+          grep -A 30 "workflows:" .github/workflows/copilot-agent-autofix.yml | grep '      - "' | wc -l
+          
+          echo ""
+          echo "🔄 Running update script..."
+          python3 .github/scripts/update_autofix_workflow_list.py
+          
+          echo ""
+          echo "📋 Updated workflow count:"
+          grep -A 30 "workflows:" .github/workflows/copilot-agent-autofix.yml | grep '      - "' | wc -l
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet .github/workflows/copilot-agent-autofix.yml; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No updates needed - workflow list is already up to date"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected in workflow list"
+            git diff .github/workflows/copilot-agent-autofix.yml
+          fi
+      
+      - name: Commit changes (main branch only)
+        if: steps.check_changes.outputs.has_changes == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          git add .github/workflows/copilot-agent-autofix.yml
+          git commit -m "chore: Auto-update workflow list in copilot-agent-autofix.yml
+          
+          Automatically updated by update-autohealing-list workflow"
+          
+          git push
+      
+      - name: Create PR comment (PR only)
+        if: steps.check_changes.outputs.has_changes == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the current workflow list
+            const workflow_file = fs.readFileSync('.github/workflows/copilot-agent-autofix.yml', 'utf8');
+            const workflow_matches = workflow_file.match(/      - "([^"]+)"/g) || [];
+            const workflow_count = workflow_matches.length;
+            
+            const comment = `## 🔄 Auto-Healing Workflow List Update
+            
+            The auto-healing workflow list needs to be updated to include new or renamed workflows.
+            
+            **Current workflow count**: ${workflow_count} workflows
+            
+            ### Changes Needed
+            
+            The \`copilot-agent-autofix.yml\` workflow list will be automatically updated when this PR is merged.
+            
+            <details>
+            <summary>View updated workflow list</summary>
+            
+            \`\`\`yaml
+            ${workflow_matches.join('\n')}
+            \`\`\`
+            
+            </details>
+            
+            ℹ️ This update ensures all workflows are monitored by the auto-healing system.
+            `;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto-Healing Workflow List Update" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_changes.outputs.has_changes }}" = "true" ]; then
+            echo "📝 **Status**: Changes detected and processed" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              echo "✅ **Action**: Committed and pushed to main branch" >> $GITHUB_STEP_SUMMARY
+            elif [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "💬 **Action**: Comment added to PR" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "ℹ️  **Action**: No action taken (not main branch)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "✅ **Status**: No changes needed - list is up to date" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Monitored Workflows" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          python3 .github/scripts/generate_workflow_list.py | while read -r line; do
+            echo "- $line" >> $GITHUB_STEP_SUMMARY
+          done

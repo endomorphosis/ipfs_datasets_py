@@ -1,0 +1,718 @@
+{
+  "timestamp": "2025-06-26T03:59:02.150598",
+  "summary": {
+    "total": 30,
+    "passed": 8,
+    "failed": 22,
+    "pass_rate": 26.666666666666668
+  },
+  "tools": [
+    {
+      "tool": "load_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "dataset_id": "mock_test_dataset",
+        "metadata": {
+          "description": "Mock dataset for test_dataset",
+          "features": [
+            "text",
+            "label"
+          ],
+          "citation": "Mock citation"
+        },
+        "summary": {
+          "num_records": 100,
+          "schema": "{'text': 'string', 'label': 'int'}",
+          "source": "test_dataset",
+          "format": "mock"
+        }
+      }
+    },
+    {
+      "tool": "save_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "dataset_id": "mock_dataset_-6557012370455402825",
+        "destination": "/tmp/test.json",
+        "format": "json",
+        "location": "/tmp/test.json",
+        "size": 16,
+        "record_count": 0
+      }
+    },
+    {
+      "tool": "process_dataset",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "original_dataset_id": "{'test': 'data'}",
+        "dataset_id": "processed_-6557012370455402825",
+        "num_operations": 1,
+        "num_records": 1,
+        "operations_summary": [
+          "test"
+        ],
+        "transformation_ratio": 1.0
+      }
+    },
+    {
+      "tool": "convert_dataset_format",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "original_dataset_id": "test",
+        "dataset_id": "converted_test_json",
+        "original_format": "json",
+        "target_format": "json",
+        "num_records": 100,
+        "conversion_method": "mock",
+        "message": "Mock conversion from json to json format"
+      }
+    },
+    {
+      "tool": "get_from_ipfs",
+      "status": "FAIL",
+      "message": "unexpected indent (install_ipfs.py, line 460)",
+      "result": {
+        "status": "error",
+        "message": "unexpected indent (install_ipfs.py, line 460)",
+        "cid": "QmTest123"
+      }
+    },
+    {
+      "tool": "pin_to_ipfs",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "cid": "Qm544597175",
+        "content_type": "data",
+        "size": 16,
+        "hash_algo": "sha2-256",
+        "recursive": true,
+        "wrap_with_directory": false
+      }
+    },
+    {
+      "tool": "create_vector_index",
+      "status": "FAIL",
+      "message": "'coroutine' object has no attribute 'create_index'",
+      "result": {
+        "status": "error",
+        "message": "'coroutine' object has no attribute 'create_index'"
+      }
+    },
+    {
+      "tool": "search_vector_index",
+      "status": "FAIL",
+      "message": "'coroutine' object has no attribute 'create_index'",
+      "result": {
+        "status": "error",
+        "message": "'coroutine' object has no attribute 'create_index'",
+        "index_id": "test_index"
+      }
+    },
+    {
+      "tool": "query_knowledge_graph",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.knowledge_graph_tools'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.knowledge_graph_tools'\n"
+    },
+    {
+      "tool": "record_audit_event",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "event_id": "05aead10-4554-4218-8f61-993afbabae69",
+        "action": "test_action",
+        "severity": "info",
+        "resource_id": null,
+        "resource_type": null
+      }
+    },
+    {
+      "tool": "generate_audit_report",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "report_type": "comprehensive",
+        "output_format": "json",
+        "report": {
+          "report_type": "comprehensive",
+          "timestamp": "2025-06-26T03:59:02.055788",
+          "report_id": "5d78e478-a044-4133-9740-d413dd93e3ae",
+          "executive_summary": {
+            "total_events": 0,
+            "overall_risk_score": 0.0,
+            "overall_compliance_percentage": 0.0,
+            "error_percentage": 0,
+            "critical_findings": [
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with General Data Protection Regulation requirement",
+                "details": "All data access must be logged",
+                "severity": "high"
+              },
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with Health Insurance Portability and Accountability Act requirement",
+                "details": "Implement technical policies and procedures for electronic PHI access",
+                "severity": "high"
+              },
+              {
+                "type": "compliance",
+                "finding": "Non-compliance with Health Insurance Portability and Accountability Act requirement",
+                "details": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                "severity": "high"
+              }
+            ],
+            "key_metrics": {
+              "total_events": 0,
+              "event_distribution": {
+                "by_category": {},
+                "by_level": {}
+              },
+              "error_percentage": 0,
+              "security_metrics": {
+                "authentication_failures": 0,
+                "security_events": 0,
+                "critical_events": 0
+              },
+              "compliance_status": {
+                "overall_percentage": 0.0
+              }
+            }
+          },
+          "security": {
+            "report_type": "security",
+            "timestamp": "2025-06-26T03:59:02.054582",
+            "report_id": "3f26ef71-96a3-4672-997c-d18eb5b8647e",
+            "summary": {
+              "total_events": 0,
+              "security_events": 0,
+              "authentication_events": 0,
+              "authentication_failures": 0,
+              "critical_events": 0,
+              "overall_risk_score": 0.0,
+              "risk_scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "anomalies_detected": 0
+            },
+            "risk_assessment": {
+              "scores": {
+                "authentication": 0.0,
+                "access_control": 0.0,
+                "system_integrity": 0.0,
+                "compliance": 0.0,
+                "overall": 0.0
+              },
+              "factors": [],
+              "trends": {
+                "trend_available": false,
+                "message": "Risk trends require historical data across multiple reports"
+              }
+            },
+            "anomalies": [],
+            "top_security_events": [],
+            "recommendations": [
+              "Maintain current security controls and monitoring"
+            ]
+          },
+          "compliance": {
+            "report_type": "compliance",
+            "timestamp": "2025-06-26T03:59:02.054951",
+            "report_id": "cdf79043-132c-4c4d-881c-b51da669ca40",
+            "summary": {
+              "overall_compliance_percentage": 0.0,
+              "frameworks_analyzed": 3,
+              "compliant_requirements": 0,
+              "non_compliant_requirements": 15
+            },
+            "frameworks": {
+              "gdpr": {
+                "name": "General Data Protection Regulation",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "data_access_logging": {
+                    "description": "All data access must be logged",
+                    "compliant": false,
+                    "details": {
+                      "access_events_count": 0,
+                      "modification_events_count": 0,
+                      "user_information_present": false,
+                      "resource_information_present": false,
+                      "missing_controls": [
+                        "No data access events logged"
+                      ],
+                      "recommendation": "Implement comprehensive data access logging"
+                    }
+                  },
+                  "breach_notification": {
+                    "description": "Security breaches must be detected and reported",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with breach_notification"
+                    }
+                  },
+                  "consent_tracking": {
+                    "description": "User consent for data processing must be tracked",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with consent_tracking"
+                    }
+                  },
+                  "data_minimization": {
+                    "description": "Only necessary data should be processed",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with data_minimization"
+                    }
+                  },
+                  "accountability": {
+                    "description": "Evidence of compliance must be maintained",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "Unable to automatically verify this requirement"
+                      ],
+                      "recommendation": "Manually verify compliance with accountability"
+                    }
+                  }
+                }
+              },
+              "hipaa": {
+                "name": "Health Insurance Portability and Accountability Act",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "access_controls": {
+                    "description": "Implement technical policies and procedures for electronic PHI access",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement access_controls controls and ensure they are logged"
+                    }
+                  },
+                  "audit_controls": {
+                    "description": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                    "compliant": false,
+                    "details": {
+                      "authentication_logging": false,
+                      "access_logging": false,
+                      "modification_logging": false,
+                      "security_logging": false,
+                      "missing_controls": [
+                        "No authentication events logged",
+                        "No data access events logged",
+                        "No data modification events logged",
+                        "No security-related events logged"
+                      ],
+                      "recommendation": "Implement comprehensive audit logging across all required categories"
+                    }
+                  },
+                  "integrity_controls": {
+                    "description": "Implement policies and procedures to protect electronic PHI from improper alteration or destruction",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No data_modification events logged"
+                      ],
+                      "recommendation": "Implement integrity_controls controls and ensure they are logged"
+                    }
+                  },
+                  "authentication": {
+                    "description": "Implement procedures to verify that a person seeking access is the claimed identity",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement authentication controls and ensure they are logged"
+                    }
+                  },
+                  "transmission_security": {
+                    "description": "Implement technical security measures to guard against unauthorized access during transmission",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement transmission_security controls and ensure they are logged"
+                    }
+                  }
+                }
+              },
+              "soc2": {
+                "name": "Service Organization Control 2",
+                "compliance_percentage": 0.0,
+                "compliant_count": 0,
+                "total_requirements": 5,
+                "requirements": {
+                  "access_control": {
+                    "description": "Access to data and systems should be restricted and monitored",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No authentication events logged"
+                      ],
+                      "recommendation": "Implement access_control controls and ensure they are logged"
+                    }
+                  },
+                  "change_management": {
+                    "description": "Changes to systems should be authorized and logged",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No configuration events logged"
+                      ],
+                      "recommendation": "Implement change_management controls and ensure they are logged"
+                    }
+                  },
+                  "incident_response": {
+                    "description": "Security incidents should be detected, reported, and addressed",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement incident_response controls and ensure they are logged"
+                    }
+                  },
+                  "risk_management": {
+                    "description": "Risks should be identified and mitigated",
+                    "compliant": false,
+                    "details": {
+                      "relevant_events": 0,
+                      "violations": 0,
+                      "missing_controls": [
+                        "No security events logged"
+                      ],
+                      "recommendation": "Implement risk_management controls and ensure they are logged"
+                    }
+                  },
+                  "monitoring": {
+                    "description": "Systems should be monitored for security and availability",
+                    "compliant": false,
+                    "details": {
+                      "system_events_count": 0,
+                      "security_events_count": 0,
+                      "operational_events_count": 0,
+                      "error_monitoring": false,
+                      "critical_event_monitoring": false,
+                      "missing_controls": [
+                        "No system monitoring events logged",
+                        "No security monitoring events logged",
+                        "No evidence of error or critical event monitoring"
+                      ],
+                      "recommendation": "Enhance system monitoring to cover all required areas"
+                    }
+                  }
+                }
+              }
+            },
+            "top_issues": [
+              {
+                "framework": "General Data Protection Regulation",
+                "requirement": "All data access must be logged",
+                "details": {
+                  "access_events_count": 0,
+                  "modification_events_count": 0,
+                  "user_information_present": false,
+                  "resource_information_present": false,
+                  "missing_controls": [
+                    "No data access events logged"
+                  ],
+                  "recommendation": "Implement comprehensive data access logging"
+                },
+                "recommendation": "Implement comprehensive data access logging"
+              },
+              {
+                "framework": "Health Insurance Portability and Accountability Act",
+                "requirement": "Implement technical policies and procedures for electronic PHI access",
+                "details": {
+                  "relevant_events": 0,
+                  "violations": 0,
+                  "missing_controls": [
+                    "No authentication events logged"
+                  ],
+                  "recommendation": "Implement access_controls controls and ensure they are logged"
+                },
+                "recommendation": "Implement access_controls controls and ensure they are logged"
+              },
+              {
+                "framework": "Health Insurance Portability and Accountability Act",
+                "requirement": "Implement hardware, software, and procedural mechanisms to record and examine activity",
+                "details": {
+                  "authentication_logging": false,
+                  "access_logging": false,
+                  "modification_logging": false,
+                  "security_logging": false,
+                  "missing_controls": [
+                    "No authentication events logged",
+                    "No data access events logged",
+                    "No data modification events logged",
+                    "No security-related events logged"
+                  ],
+                  "recommendation": "Implement comprehensive audit logging across all required categories"
+                },
+                "recommendation": "Implement comprehensive audit logging across all required categories"
+              }
+            ],
+            "recommendations": [
+              "Implement comprehensive data access logging",
+              "Implement access_controls controls and ensure they are logged",
+              "Implement comprehensive audit logging across all required categories",
+              "Develop a comprehensive compliance program addressing major gaps"
+            ]
+          },
+          "operations": {
+            "report_type": "operational",
+            "timestamp": "2025-06-26T03:59:02.055069",
+            "report_id": "dc3035ad-5c72-43e6-b7e1-28ed9ea530b0",
+            "summary": {
+              "total_events": 0,
+              "event_distribution": {
+                "by_category": {},
+                "by_level": {},
+                "by_status": {}
+              },
+              "error_percentage": 0
+            },
+            "performance_metrics": {
+              "operation_durations": {},
+              "slowest_operations": [],
+              "error_rates": {}
+            },
+            "resource_usage": {
+              "data_available": false,
+              "message": "Resource usage metrics require system monitoring integration"
+            },
+            "top_users": [],
+            "top_resources": [],
+            "recommendations": [
+              "Current operational metrics indicate good performance"
+            ]
+          },
+          "top_recommendations": [
+            {
+              "category": "security",
+              "recommendation": "Maintain current security controls and monitoring"
+            },
+            {
+              "category": "compliance",
+              "recommendation": "Implement comprehensive data access logging"
+            },
+            {
+              "category": "compliance",
+              "recommendation": "Implement access_controls controls and ensure they are logged"
+            },
+            {
+              "category": "operational",
+              "recommendation": "Current operational metrics indicate good performance"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "tool": "check_access_permission",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.permission_tools'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.permission_tools'\n"
+    },
+    {
+      "tool": "record_provenance",
+      "status": "PASS",
+      "message": "Tool executed successfully",
+      "result": {
+        "status": "success",
+        "provenance_id": "3468b2fd-a745-4251-9578-0cc7ed9a8008",
+        "dataset_id": "test_dataset",
+        "operation": "test_operation",
+        "timestamp": 1750935542.0890102,
+        "record": {
+          "id": "3468b2fd-a745-4251-9578-0cc7ed9a8008",
+          "record_type": "transformation",
+          "timestamp": 1750935542.0890102,
+          "agent_id": "8c6e34fd-f976-4595-af6a-2dfcfc57bb5d",
+          "description": "Operation: test_operation",
+          "metadata": {
+            "tags": [],
+            "timestamp": null
+          },
+          "input_ids": [],
+          "output_ids": [],
+          "parameters": {},
+          "cid": null,
+          "transformation_type": "test_operation",
+          "tool": "mcp-tool",
+          "version": "",
+          "execution_time": null,
+          "success": true,
+          "error_message": null
+        }
+      }
+    },
+    {
+      "tool": "archive_webpage",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_webpage'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_webpage'\n"
+    },
+    {
+      "tool": "fetch_archived_page",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.fetch_archived_page'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.fetch_archived_page'\n"
+    },
+    {
+      "tool": "search_archive",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.search_archive'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.search_archive'\n"
+    },
+    {
+      "tool": "get_archive_metadata",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.get_archive_metadata'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.get_archive_metadata'\n"
+    },
+    {
+      "tool": "export_archive_snapshot",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.export_archive_snapshot'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.web_archive_tools.export_archive_snapshot'\n"
+    },
+    {
+      "tool": "test_generator",
+      "status": "FAIL",
+      "message": "validation_error",
+      "result": {
+        "success": false,
+        "error": "validation_error",
+        "message": "Test specification is required",
+        "details": {},
+        "metadata": {
+          "tool": "test_generator",
+          "category": "testing",
+          "timestamp": "2025-06-26T10:59:02.142901Z"
+        }
+      }
+    },
+    {
+      "tool": "code_analyzer",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.code_analyzer'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.code_analyzer'\n"
+    },
+    {
+      "tool": "lint_python_codebase",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.lint_python_codebase'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.lint_python_codebase'\n"
+    },
+    {
+      "tool": "dependency_scanner",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.dependency_scanner'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.dependency_scanner'\n"
+    },
+    {
+      "tool": "performance_profiler",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.performance_profiler'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.performance_profiler'\n"
+    },
+    {
+      "tool": "security_scanner",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.security_scanner'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.security_scanner'\n"
+    },
+    {
+      "tool": "documentation_generator",
+      "status": "FAIL",
+      "message": "documentation_generator() got an unexpected keyword argument 'name'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 205, in test_tool\n    result = func(**args)\n             ^^^^^^^^^^^^\nTypeError: documentation_generator() got an unexpected keyword argument 'name'\n"
+    },
+    {
+      "tool": "build_system_manager",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.build_system_manager'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.build_system_manager'\n"
+    },
+    {
+      "tool": "version_controller",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.version_controller'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.version_controller'\n"
+    },
+    {
+      "tool": "deployment_manager",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.deployment_manager'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.development_tools.deployment_manager'\n"
+    },
+    {
+      "tool": "use_function_as_tool",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_function_as_tool'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_function_as_tool'\n"
+    },
+    {
+      "tool": "use_cli_program_as_tool",
+      "status": "FAIL",
+      "message": "No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_cli_program_as_tool'",
+      "traceback": "Traceback (most recent call last):\n  File \"/home/barberb/ipfs_datasets_py/final_complete_mcp_test.py\", line 198, in test_tool\n    module = __import__(module_name, fromlist=[function_name])\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'ipfs_datasets_py.mcp_server.tools.lizardpersons_function_tools.use_cli_program_as_tool'\n"
+    }
+  ]
+}

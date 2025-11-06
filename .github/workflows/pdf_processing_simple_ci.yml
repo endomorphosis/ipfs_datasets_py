@@ -1,0 +1,163 @@
+name: PDF Processing and MCP Tools CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/pdf_processing/**'
+      - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'
+      - 'test_*corrected.py'
+      - 'test_basic_functionality.py' 
+      - 'test_simple_integration.py'
+      - 'run_comprehensive_tests.py'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'ipfs_datasets_py/pdf_processing/**'
+      - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'
+      - 'test_*corrected.py'
+      - 'test_basic_functionality.py'
+      - 'test_simple_integration.py'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  test:
+    name: Test PDF Processing Pipeline
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y tesseract-ocr tesseract-ocr-eng
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio
+    
+    - name: Run basic functionality tests
+      run: |
+        python test_basic_functionality.py
+    
+    - name: Run PDF processing unit tests
+      run: |
+        python -m pytest test_pdf_processing_corrected.py -v
+    
+    - name: Run MCP tools unit tests
+      run: |
+        python -m pytest test_mcp_tools_corrected.py -v
+    
+    - name: Run integration tests
+      run: |
+        python test_simple_integration.py
+    
+    - name: Run comprehensive test suite
+      run: |
+        python run_comprehensive_tests.py
+
+  lint:
+    name: Code Quality
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install linting tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort
+    
+    - name: Run black formatting check
+      run: |
+        black --check --diff ipfs_datasets_py/pdf_processing/
+        black --check --diff ipfs_datasets_py/mcp_server/tools/pdf_tools/
+      continue-on-error: true
+    
+    - name: Run isort import sorting check
+      run: |
+        isort --check-only --diff ipfs_datasets_py/pdf_processing/
+        isort --check-only --diff ipfs_datasets_py/mcp_server/tools/pdf_tools/
+      continue-on-error: true
+    
+    - name: Run flake8 linting
+      run: |
+        flake8 ipfs_datasets_py/pdf_processing/ --max-line-length=100 --extend-ignore=E203,W503
+        flake8 ipfs_datasets_py/mcp_server/tools/pdf_tools/ --max-line-length=100 --extend-ignore=E203,W503
+      continue-on-error: true
+
+  security:
+    name: Security Scan
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+    - name: Configure git for container
+      run: |
+        git config --global --add safe.directory '*'
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install security tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+    
+    - name: Run bandit security linter
+      run: |
+        bandit -r ipfs_datasets_py/pdf_processing/
+        bandit -r ipfs_datasets_py/mcp_server/tools/pdf_tools/
+      continue-on-error: true
+    
+    - name: Run safety dependency checker
+      run: |
+        pip install -r requirements.txt
+        safety check
+      continue-on-error: true

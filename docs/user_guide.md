@@ -296,7 +296,7 @@ kg.merge(extracted_kg)
 ### GraphRAG Setup
 
 ```python
-from ipfs_datasets_py.llm_graphrag import GraphRAGLLMProcessor
+from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor
 from ipfs_datasets_py.knowledge_graph import IPLDKnowledgeGraph
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
 
@@ -337,7 +337,7 @@ for doc in reasoning_result["documents"]:
 ### Query Optimization
 
 ```python
-from ipfs_datasets_py.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 # Create optimizer
 optimizer = UnifiedGraphRAGQueryOptimizer(auto_detect_graph_type=True)
@@ -359,44 +359,251 @@ results = processor.execute_optimized_query(query_text, optimized_plan)
 
 ## Web Archive Integration
 
-### Archiving Websites
+IPFS Datasets Python provides comprehensive web scraping and archiving capabilities through multiple integrated services and tools.
+
+### InterPlanetary Wayback Machine (IPWB)
+
+Archive websites directly to IPFS with decentralized access:
 
 ```python
-from ipfs_datasets_py.web_archive_utils import archive_website, index_warc
+from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
 
-# Archive a website
-warc_file = archive_website(
+processor = WebArchiveProcessor()
+
+# Archive a website locally
+warc_file = processor.create_warc(
     url="https://example.com",
-    output_dir="archives",
-    agent="wget"
+    output_path="archives/example.warc.gz",
+    options={
+        "agent": "wget",  # or "squidwarc" for dynamic sites
+        "depth": 2,
+        "compress": True
+    }
 )
 
-# Index WARC to IPFS
-cdxj_path = index_warc(warc_file)
+# Index WARC to IPFS using IPWB
+index_result = processor.index_warc(
+    warc_path=warc_file,
+    output_path="indexes/example.cdxj"
+)
 
-# Extract structured data
-dataset = extract_dataset_from_cdxj(cdxj_path)
+print(f"IPFS hash: {index_result['ipfs_hash']}")
+print(f"Record count: {index_result['record_count']}")
+
+# Extract structured data from archive
+text_data = processor.extract_text_from_warc(warc_file)
+link_data = processor.extract_links_from_warc(warc_file)
+metadata = processor.extract_metadata_from_warc(warc_file)
 ```
 
-### Searching Web Archives
+### Multiple Archive Services
+
+Archive content to multiple web archive services simultaneously:
 
 ```python
-from ipfs_datasets_py.web_archive_utils import query_wayback_machine, download_wayback_captures
+from archivenow import archivenow
 
-# Query Wayback Machine
-captures = query_wayback_machine(
-    url="example.com",
-    from_date="20150101",
-    to_date="20220101",
-    match_type="domain",
-    limit=500
+# Archive to Internet Archive
+ia_url = archivenow.push("https://example.com", "ia")
+print(f"Internet Archive: {ia_url}")
+
+# Archive to Archive.is (archive.today)
+is_url = archivenow.push("https://example.com", "is")
+print(f"Archive.is: {is_url}")
+
+# Archive to Perma.cc
+cc_url = archivenow.push("https://example.com", "cc") 
+print(f"Perma.cc: {cc_url}")
+
+# Create local WARC file
+warc_url = archivenow.push("https://example.com", "warc", {"warc": "example"})
+print(f"Local WARC: {warc_url}")
+```
+
+### Internet Archive Wayback Machine
+
+Query and download historical web content:
+
+```python
+import requests
+
+def query_wayback_machine(url, from_date="20200101", to_date="20240101"):
+    """Query Wayback Machine for historical captures."""
+    cdx_url = "http://web.archive.org/cdx/search/cdx"
+    params = {
+        'url': url,
+        'from': from_date,
+        'to': to_date,
+        'output': 'json',
+        'limit': 100
+    }
+    
+    response = requests.get(cdx_url, params=params)
+    captures = response.json()[1:]  # Skip header row
+    
+    return captures
+
+# Query historical captures
+captures = query_wayback_machine("example.com")
+print(f"Found {len(captures)} historical captures")
+
+# Access specific historical version
+if captures:
+    timestamp, original_url = captures[0][0], captures[0][1]
+    wayback_url = f"http://web.archive.org/web/{timestamp}/{original_url}"
+    print(f"Access historical version: {wayback_url}")
+```
+
+### Common Crawl Integration
+
+Access large-scale web crawl data:
+
+```python
+def query_common_crawl(domain, crawl_id="CC-MAIN-2024-10"):
+    """Query Common Crawl for domain content."""
+    cc_url = f"https://index.commoncrawl.org/{crawl_id}-index"
+    params = {
+        'url': f"*.{domain}/*",
+        'output': 'json',
+        'limit': 100
+    }
+    
+    response = requests.get(cc_url, params=params)
+    results = []
+    for line in response.text.strip().split('\n'):
+        if line:
+            results.append(json.loads(line))
+    
+    return results
+
+# Query Common Crawl data
+cc_results = query_common_crawl("example.com")
+print(f"Found {len(cc_results)} Common Crawl records")
+
+# Download specific WARC records from Common Crawl
+for result in cc_results[:3]:  # First 3 results
+    warc_url = result['url']
+    offset = result['offset']
+    length = result['length']
+    print(f"WARC record: {warc_url} (offset: {offset}, length: {length})")
+```
+
+### Archive.is Integration
+
+```python
+import requests
+import time
+
+def archive_to_archive_is(url):
+    """Archive URL to archive.is service."""
+    response = requests.post(
+        'https://archive.is/submit/',
+        data={'url': url},
+        headers={'User-Agent': 'IPFS Datasets Archive Bot 1.0'},
+        timeout=30
+    )
+    
+    if response.status_code == 200:
+        return response.url  # Archive URL
+    else:
+        raise Exception(f"Archive failed with status: {response.status_code}")
+
+# Archive to archive.is
+try:
+    archive_url = archive_to_archive_is("https://example.com")
+    print(f"Archived to archive.is: {archive_url}")
+except Exception as e:
+    print(f"Archive.is error: {e}")
+```
+
+## Media Scraping Integration  
+
+### Video and Audio Downloads
+
+Download content from 1000+ platforms using YT-DLP:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.media_tools import (
+    ytdlp_download_video, ytdlp_download_playlist, ytdlp_extract_info
 )
 
-# Download captures
-warc_data = download_wayback_captures(captures)
+# Download single video with metadata
+video_result = await ytdlp_download_video(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    output_dir="downloads",
+    quality="best[height<=720]",
+    download_info_json=True,
+    download_thumbnails=True,
+    subtitle_langs=["en", "auto"]
+)
 
-# Process into dataset
-dataset = wayback_to_dataset(warc_data)
+# Download playlist
+playlist_result = await ytdlp_download_playlist(
+    url="https://www.youtube.com/playlist?list=PLrAXtmRdnEQy5JBZM-0P3KKiMxz5e3fXr",
+    output_dir="downloads/playlists",
+    quality="best[height<=480]",
+    max_downloads=10
+)
+
+# Extract video information without downloading
+info_result = await ytdlp_extract_info(
+    url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    extract_flat=False
+)
+
+print(f"Video title: {info_result['title']}")
+print(f"Duration: {info_result['duration']} seconds")
+print(f"View count: {info_result['view_count']}")
+```
+
+### Media Processing with FFmpeg
+
+Process downloaded media with professional tools:
+
+```python
+from ipfs_datasets_py.mcp_server.tools.media_tools import (
+    ffmpeg_convert, ffmpeg_probe, ffmpeg_apply_filters, ffmpeg_batch_process
+)
+
+# Convert video to standard format
+conversion_result = await ffmpeg_convert(
+    input_file="downloads/video.webm",
+    output_file="processed/video.mp4",
+    video_codec="libx264",
+    audio_codec="aac",
+    resolution="1280x720",
+    quality="medium"
+)
+
+# Extract audio from video
+audio_result = await ffmpeg_convert(
+    input_file="downloads/video.mp4",
+    output_file="processed/audio.mp3",
+    video_codec=None,  # Remove video stream
+    audio_codec="mp3",
+    audio_bitrate="320k"
+)
+
+# Apply filters and effects
+filtered_result = await ffmpeg_apply_filters(
+    input_file="processed/video.mp4",
+    output_file="processed/enhanced.mp4",
+    video_filters=["scale=1920:1080", "brightness=0.1"],
+    audio_filters=["volume=1.2", "highpass=f=100"]
+)
+
+# Batch process multiple files
+batch_result = await ffmpeg_batch_process(
+    input_files=["file1.mp4", "file2.webm", "file3.avi"],
+    output_directory="processed/batch/",
+    operation="convert",
+    operation_params={
+        "video_codec": "libx264",
+        "audio_codec": "aac",
+        "quality": "medium"
+    },
+    max_parallel=3
+)
 ```
 
 ## DuckDB Integration

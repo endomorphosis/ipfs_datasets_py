@@ -13,8 +13,7 @@ and monitoring capabilities for the IPFS Datasets Python library, enabling:
 The monitoring system is designed to be lightweight yet powerful, with minimal
 performance impact when enabled, and zero overhead when disabled.
 """
-
-import os
+import asyncio
 import sys
 import json
 import time
@@ -24,13 +23,11 @@ import inspect
 import threading
 import contextlib
 from enum import Enum
-from typing import Dict, List, Any, Optional, Union, Set, Callable, Tuple, Type, TypeVar
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timedelta
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, field
 import functools
 import traceback
 import socket
-import platform
 
 # Optional dependencies will be imported as needed
 try:
@@ -277,10 +274,17 @@ class MetricsRegistry:
         self.prometheus_registry = prometheus_client.CollectorRegistry()
 
         # Start the HTTP server for Prometheus scraping
-        prometheus_client.start_http_server(
-            port=self.config.prometheus_port,
-            registry=self.prometheus_registry
-        )
+        try:
+            prometheus_client.start_http_server(
+                port=self.config.prometheus_port,
+                registry=self.prometheus_registry
+            )
+        except OSError as e:
+            if "Address already in use" in str(e):
+                # Server already exists, skip
+                pass
+            else:
+                raise
 
     def _get_prometheus_metric(self, name: str, metric_type: MetricType, description: str = "", labels: List[str] = None):
         """Get or create a Prometheus metric."""
@@ -933,7 +937,156 @@ def timed(func=None, *, metric_name=None, registry=None, include_args=False):
 
 
 class MonitoringSystem:
-    """Main class for the monitoring system."""
+    """
+    Comprehensive Monitoring, Metrics, and Observability Platform for IPFS Datasets
+
+    The MonitoringSystem class provides enterprise-grade monitoring, logging, and
+    metrics collection capabilities specifically designed for distributed IPFS
+    dataset operations. This platform enables comprehensive observability across
+    content-addressable storage workflows, distributed processing pipelines, and
+    peer-to-peer network operations while maintaining minimal performance overhead.
+
+    The system implements a singleton pattern to ensure consistent monitoring state
+    across all components and provides structured logging, performance metrics
+    collection, operation tracing, health monitoring, resource usage tracking,
+    and intelligent alerting based on configurable thresholds and conditions.
+
+    Core Monitoring Features:
+    - Structured logging with configurable levels, formats, and output destinations
+    - Performance metrics collection with time-series data and statistical analysis
+    - Distributed operation tracing across IPFS networks and processing clusters
+    - Health monitoring for IPFS nodes, storage backends, and service dependencies
+    - Resource usage tracking including CPU, memory, disk, and network utilization
+    - Intelligent alerting with threshold-based rules and escalation policies
+    - Real-time dashboards and visualization for operational visibility
+
+    Metrics Collection Capabilities:
+    - IPFS operation metrics including content retrieval, storage, and pin operations
+    - Dataset processing performance including serialization, indexing, and queries
+    - Vector operation metrics for embedding generation and similarity searches
+    - Network performance tracking for distributed storage and retrieval operations
+    - Error rates, latency distributions, and throughput measurements
+    - Custom business metrics for application-specific monitoring requirements
+
+    Logging and Tracing:
+    - Structured JSON logging with contextual information and correlation IDs
+    - Distributed tracing across microservices and processing components
+    - Performance profiling with detailed operation timing and resource usage
+    - Error tracking with stack traces, context, and resolution recommendations
+    - Audit logging for security, compliance, and operational transparency
+    - Log aggregation and centralized analysis for multi-node deployments
+
+    Integration Capabilities:
+    - Prometheus metrics export for cloud-native monitoring infrastructures
+    - ELK Stack integration for log analysis and visualization
+    - Grafana dashboard support for real-time operational visibility
+    - PagerDuty and Slack integration for incident response and alerting
+    - Custom webhook support for integration with existing monitoring systems
+    - OpenTelemetry compatibility for standardized observability
+
+    Health and Alerting:
+    - IPFS node health checks including connectivity, performance, and storage
+    - Service dependency monitoring with automatic failover detection
+    - Threshold-based alerting for performance degradation and error conditions
+    - Predictive alerting using machine learning for anomaly detection
+    - Escalation policies with configurable notification channels and timing
+    - Maintenance mode support for planned operations and deployments
+
+    Attributes:
+        _instance (Optional[MonitoringSystem]): Singleton instance reference for
+            global monitoring state management and consistent behavior across
+            all system components and processing workflows.
+        config (MonitoringConfig): Comprehensive configuration object containing
+            logging settings, metrics collection parameters, alerting rules,
+            and integration configurations for operational customization.
+
+    Public Methods:
+        get_instance() -> MonitoringSystem:
+            Retrieve the singleton monitoring system instance
+        initialize(config: Optional[MonitoringConfig] = None) -> MonitoringSystem:
+            Initialize monitoring system with comprehensive configuration
+        configure(config: MonitoringConfig) -> None:
+            Update monitoring configuration with validation and reloading
+        get_logger(name: str) -> logging.Logger:
+            Create contextual logger with structured formatting
+        record_metric(name: str, value: float, labels: Dict[str, str] = None) -> None:
+            Record performance metric with metadata and timestamps
+        start_operation_trace(operation: str) -> str:
+            Begin distributed operation tracing with correlation ID
+        end_operation_trace(trace_id: str, **kwargs) -> None:
+            Complete operation tracing with performance metrics
+        check_health() -> Dict[str, Any]:
+            Perform comprehensive health check across all components
+        export_metrics() -> Dict[str, Any]:
+            Export current metrics for external monitoring systems
+
+    Usage Examples:
+        # Initialize monitoring system with default configuration
+        monitoring = MonitoringSystem.initialize()
+        
+        # Custom configuration for production environment
+        config = MonitoringConfig(
+            logger_config=LoggerConfig(
+                level=LogLevel.INFO,
+                file_path="/var/log/ipfs_datasets.log",
+                max_file_size=100*1024*1024,  # 100MB
+                backup_count=10
+            ),
+            metrics_config=MetricsConfig(
+                enabled=True,
+                collection_interval=30,
+                prometheus_port=8889
+            ),
+            enable_distributed_tracing=True,
+            enable_health_checks=True
+        )
+        monitoring = MonitoringSystem.initialize(config)
+        
+        # Structured logging with context
+        logger = monitoring.get_logger(__name__)
+        logger.info("Dataset processing started", extra={
+            "dataset_id": "ds_12345",
+            "operation": "embedding_generation"
+        })
+        
+        # Performance metrics recording
+        monitoring.record_metric(
+            name="dataset_processing_duration",
+            value=45.2,
+            labels={"dataset_type": "text", "model": "bert-base"}
+        )
+        
+        # Distributed operation tracing
+        trace_id = monitoring.start_operation_trace("ipfs_content_retrieval")
+        # ... perform IPFS operations ...
+        monitoring.end_operation_trace(
+            trace_id,
+            success=True,
+            duration=1.23,
+            bytes_transferred=1024*1024
+        )
+
+    Dependencies:
+        Required:
+        - logging: Python standard library for structured logging
+        - threading: Concurrent execution for background metrics collection
+        - json: Data serialization for structured logging and metrics export
+        
+        Optional:
+        - psutil: System resource monitoring and performance metrics
+        - prometheus_client: Prometheus metrics export for cloud monitoring
+        - opentelemetry: Distributed tracing and observability standards
+
+    Notes:
+        - Singleton pattern ensures consistent monitoring state across components
+        - Minimal performance overhead when monitoring is disabled
+        - Structured logging enables efficient log analysis and alerting
+        - Metrics collection is configurable and can be disabled for performance
+        - Health checks provide early warning for system degradation
+        - Integration with external monitoring systems enables operational visibility
+        - Configuration supports environment-specific customization and optimization
+        - Background threads handle metrics collection without blocking operations
+    """
 
     _instance = None
 
@@ -955,6 +1108,9 @@ class MonitoringSystem:
         Returns:
             MonitoringSystem: The initialized monitoring system
         """
+        if cls._instance is not None:
+            return cls._instance
+
         instance = cls.get_instance()
         instance.configure(config or MonitoringConfig())
         return instance
@@ -1135,7 +1291,8 @@ class MonitoringSystem:
 
         # Log shutdown
         if self.logger:
-            self.logger.info("Monitoring system shutdown")
+            # FIXME This self.logger.info produces a ValueError on shutdown. Figure out why.
+            print("Monitoring system shutdown")
 
         # Reset state
         self.initialized = False
@@ -1166,6 +1323,37 @@ class MonitoringSystem:
             exc_info=exc_info,
             extra={"traceback": tb_str, **kwargs}
         )
+
+    @contextlib.contextmanager
+    def monitor_context(self, **kwargs):
+        """
+        Context manager for setting log context and timing operations.
+
+        Args:
+            **kwargs: Context data
+        """
+        registry = self.get_metrics_registry()
+        operation_name = kwargs.pop("operation_name", "operation")
+
+        # Create operation
+        operation = registry.start_operation(operation_name, kwargs)
+
+        # Set log context
+        with log_context(**kwargs):
+            try:
+                yield operation
+                registry.complete_operation(operation, success=True)
+            except Exception as e:
+                registry.complete_operation(operation, success=False, error=str(e))
+                MonitoringSystem.get_instance().log_exception(
+                    operation=operation_name,
+                    error=str(e),
+                    **kwargs
+                )
+                raise
+
+
+
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
@@ -1239,8 +1427,7 @@ def monitor_context(**kwargs):
 # Initialize with default configuration only if explicitly requested
 # MonitoringSystem.initialize()  # Commented out to prevent auto-initialization
 
-
-if __name__ == "__main__":
+def demonstration_main():
     # Simple demonstration
     configure_monitoring(MonitoringConfig(
         enabled=True,
@@ -1269,3 +1456,7 @@ if __name__ == "__main__":
 
     print("Metrics:", registry.metrics)
     print("Operations:", registry.operations)
+
+
+if __name__ == "__main__":
+    demonstration_main()

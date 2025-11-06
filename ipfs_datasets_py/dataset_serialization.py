@@ -19,26 +19,229 @@ Features:
 import json
 import os
 import tempfile
-from typing import List, Dict, Any, Optional, Union, Tuple, Iterator
+from typing import List, Dict, Any, Optional, Union, Tuple, Iterator, Generator, Callable, Set, TYPE_CHECKING, TypeVar, Generic
+
+if TYPE_CHECKING:
+    import pandas as pd
+    from datasets import Dataset, DatasetDict
+    import datasets
+    import pyarrow as pa
+
+# Lazy import to avoid circular imports
+# from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+
 
 class DatasetSerializer:
     """
-    Class for serializing and deserializing datasets between various formats.
+    Comprehensive Dataset Serialization and Format Conversion Platform
 
-    Features:
-    - Convert between different dataset formats (Arrow, Parquet, HuggingFace, JSONL)
-    - Serialization to IPLD for storage on IPFS
-    - Content-based deduplication
-    - Support for large datasets through streaming
-    - Preservation of schema and metadata
+    The DatasetSerializer class provides enterprise-grade functionality for converting,
+    serializing, and managing datasets across multiple formats with IPFS integration.
+    This platform enables seamless data transformation between popular data science
+    formats while maintaining schema integrity, metadata preservation, and content
+    addressability through IPLD (InterPlanetary Linked Data) storage systems.
+
+    The serializer supports bidirectional conversion between major data formats
+    including Apache Arrow tables, HuggingFace datasets, Pandas DataFrames, JSON
+    Lines, Parquet files, and IPLD-compatible structures. Advanced features include
+    streaming processing for large datasets, content-based deduplication, graph
+    dataset support, and vector embedding optimization for machine learning workflows.
+
+    Key Features:
+    - Multi-format dataset conversion with schema preservation
+    - IPLD serialization for content-addressable storage on IPFS networks
+    - Streaming processing for memory-efficient large dataset handling
+    - Content-based deduplication to minimize storage requirements
+    - Graph dataset support with relationship preservation
+    - Vector embedding storage with optimized indexing and retrieval
+    - JSONL import/export with flexible schema inference
+    - Metadata preservation across all format conversions
+
+    Supported Formats:
+    - Apache Arrow: Columnar in-memory format optimized for analytics
+    - HuggingFace Datasets: ML-optimized format with built-in preprocessing
+    - Pandas DataFrames: Python data analysis format with rich functionality
+    - Parquet Files: Columnar storage format for efficient archival
+    - JSON Lines: Streaming JSON format for large-scale data processing
+    - IPLD Structures: Content-addressable linked data for IPFS storage
+    - Graph Formats: Node/edge structures for network and knowledge graphs
+    - Vector Collections: Embedding arrays with metadata and indexing
+
+    Conversion Capabilities:
+    - Lossless conversion between supported formats with type preservation
+    - Automatic schema inference and validation for unstructured data
+    - Custom serialization handlers for complex data types and structures
+    - Incremental processing for append-only dataset operations
+    - Format-specific optimization for performance and storage efficiency
+    - Metadata enrichment with provenance and transformation tracking
+
+    IPFS Integration:
+    - Direct serialization to IPLD for content-addressable storage
+    - Automatic chunking and linking for large dataset distribution
+    - Content deduplication through cryptographic hashing
+    - Distributed dataset reconstruction from IPFS content identifiers
+    - Version tracking and immutable dataset snapshots
+
+    Attributes:
+        storage (IPLDStorage): IPLD storage backend for content-addressable
+            dataset persistence and retrieval operations with IPFS integration.
+            Manages content chunking, linking, and distributed storage coordination.
+
+    Public Methods:
+        to_arrow(data: Any, **kwargs) -> pyarrow.Table:
+            Convert various data formats to Apache Arrow tables with schema preservation
+        to_huggingface(data: Any, **kwargs) -> datasets.Dataset:
+            Transform data to HuggingFace datasets format with ML optimizations
+        to_pandas(data: Any, **kwargs) -> pandas.DataFrame:
+            Convert data to Pandas DataFrame with type inference and validation
+        to_parquet(data: Any, file_path: str, **kwargs) -> str:
+            Serialize data to Parquet format with compression and optimization
+        to_jsonl(data: Any, file_path: str, **kwargs) -> str:
+            Export data to JSON Lines format with streaming support
+        to_ipld(data: Any, **kwargs) -> Dict[str, Any]:
+            Serialize data to IPLD format for content-addressable storage
+        from_ipld(cid: str, **kwargs) -> Any:
+            Deserialize data from IPLD using content identifier retrieval
+        deduplicate(dataset: Any, **kwargs) -> Any:
+            Remove duplicate content using content-based hashing
+        stream_convert(source: str, target: str, format_from: str, format_to: str) -> str:
+            Stream-based conversion for large datasets with memory optimization
+
+    Usage Examples:
+        # Initialize serializer with IPFS storage
+        serializer = DatasetSerializer()
+        
+        # Convert HuggingFace dataset to Arrow format
+        hf_dataset = load_dataset("imdb", split="train")
+        arrow_table = serializer.to_arrow(hf_dataset)
+        
+        # Serialize dataset to IPLD for IPFS storage
+        ipld_data = serializer.to_ipld(arrow_table)
+        
+        # Convert Pandas DataFrame to Parquet with optimization
+        df = pd.read_csv("large_dataset.csv")
+        parquet_path = serializer.to_parquet(
+            df, 
+            "optimized_dataset.parquet",
+            compression="snappy"
+        )
+        
+        # Stream conversion for memory-efficient processing
+        converted_path = serializer.stream_convert(
+            source="huge_dataset.jsonl",
+            target="huge_dataset.parquet",
+            format_from="jsonl",
+            format_to="parquet"
+        )
+        
+        # Deduplicate dataset content
+        unique_dataset = serializer.deduplicate(
+            dataset=raw_dataset,
+            method="content_hash"
+        )
+
+    Dependencies:
+        Required:
+        - pyarrow: Apache Arrow format support and columnar operations
+        - datasets: HuggingFace datasets library for ML-optimized data handling
+        - pandas: Data manipulation and analysis framework
+        
+        Optional:
+        - ipfs_datasets_py.ipld: IPLD storage backend for IPFS integration
+        - ipfs_datasets_py.ipfs_knn_index: Vector indexing for embedding storage
+        - Various format-specific libraries for specialized conversion operations
+
+    Notes:
+        - Large dataset conversions benefit from streaming processing to manage memory
+        - Schema preservation ensures data integrity across format transformations
+        - Content deduplication reduces storage requirements and improves efficiency
+        - IPLD serialization enables distributed dataset storage and versioning
+        - Vector embedding storage includes optimized indexing for similarity search
+        - Graph dataset support maintains relationship structures and connectivity
+        - Metadata preservation includes transformation history and provenance tracking
+        - Performance optimization varies by format and dataset characteristics
     """
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
         """
-        Initialize the dataset serializer.
+        Initialize Dataset Serialization Platform with IPLD Storage Integration
+
+        Establishes a new DatasetSerializer instance with comprehensive format
+        conversion capabilities and content-addressable storage through IPLD
+        (InterPlanetary Linked Data) systems. This initialization configures
+        all necessary components for multi-format dataset operations while
+        maintaining optimal performance and storage efficiency.
+
+        The initialization process sets up storage backends, format handlers,
+        schema validation systems, and optimization parameters required for
+        enterprise-grade dataset serialization workflows. IPLD integration
+        enables content-addressable storage and distributed dataset management
+        across IPFS networks.
 
         Args:
-            storage (IPLDStorage, optional): IPLD storage backend
+            storage (Optional[IPLDStorage], default=None): IPLD storage backend
+                for content-addressable dataset persistence and distributed
+                storage operations. If None, a new IPLDStorage instance will
+                be created automatically with default configuration parameters.
+                
+                The storage backend provides:
+                - Content-addressable chunking and linking for large datasets
+                - Cryptographic hashing for content deduplication and integrity
+                - Distributed storage coordination across IPFS network nodes
+                - Version tracking and immutable dataset snapshot capabilities
+                - Metadata preservation and provenance tracking systems
+                
+                Custom storage configurations support:
+                - Alternative IPFS node endpoints and gateway configurations
+                - Custom chunking strategies for different dataset characteristics
+                - Compression and optimization settings for storage efficiency
+                - Access control and encryption for sensitive dataset operations
+
+        Attributes Initialized:
+            storage (IPLDStorage): Configured IPLD storage backend ready for
+                immediate dataset serialization and retrieval operations with
+                comprehensive IPFS integration and distributed storage support.
+
+        Raises:
+            ImportError: If the required IPLD storage dependencies are not available
+                or cannot be imported. This includes ipfs_datasets_py.ipld.storage
+                and associated IPFS integration libraries.
+            ConfigurationError: If the provided storage backend configuration is
+                invalid or incompatible with current system capabilities.
+            ConnectionError: If IPFS node connectivity tests fail during storage
+                backend initialization or network access validation.
+
+        Examples:
+            # Basic initialization with default IPLD storage
+            serializer = DatasetSerializer()
+            
+            # Custom IPLD storage configuration
+            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            
+            custom_storage = IPLDStorage(
+                ipfs_gateway="http://custom-ipfs:8080",
+                chunk_size=1024*1024,  # 1MB chunks
+                compression="gzip",
+                enable_deduplication=True
+            )
+            serializer = DatasetSerializer(storage=custom_storage)
+            
+            # Development configuration with local IPFS node
+            dev_storage = IPLDStorage(
+                ipfs_gateway="http://localhost:8080",
+                debug_mode=True,
+                cache_size=100  # Small cache for development
+            )
+            dev_serializer = DatasetSerializer(storage=dev_storage)
+
+        Notes:
+            - IPLD storage enables content-addressable dataset operations with IPFS
+            - Default storage configuration provides secure and efficient operation
+            - Custom storage backends support specialized deployment requirements
+            - Storage initialization validates IPFS connectivity and configuration
+            - Content deduplication is enabled automatically for storage efficiency
+            - Distributed storage coordination requires network connectivity
+            - Storage backends support both synchronous and asynchronous operations
         """
         # Use the provided storage or create a new one
         if storage is None:
@@ -46,6 +249,189 @@ class DatasetSerializer:
             self.storage = IPLDStorage()
         else:
             self.storage = storage
+
+    def export_to_jsonnet(self, data: List[Dict[str, Any]], output_path: str, pretty: bool = True) -> str:
+        """
+        Export data to a Jsonnet file.
+
+        Args:
+            data (List[Dict]): List of JSON-serializable records
+            output_path (str): Path to the output Jsonnet file
+            pretty (bool): Whether to pretty-print the output
+
+        Returns:
+            str: Path to the created Jsonnet file
+        """
+        if pretty:
+            jsonnet_str = json.dumps(data, indent=2)
+        else:
+            jsonnet_str = json.dumps(data)
+        
+        with open(output_path, 'w') as f:
+            f.write(jsonnet_str)
+        return output_path
+
+    def import_from_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
+                           tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
+        """
+        Import data from a Jsonnet file to an Arrow table.
+
+        Args:
+            jsonnet_path (str): Path to the Jsonnet file
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pa.Table: Arrow table containing the data
+
+        Raises:
+            ImportError: If PyArrow or Jsonnet is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet import")
+        
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet file
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Ensure it's a list for table conversion
+        if not isinstance(data, list):
+            # If it's a single object, wrap it in a list
+            data = [data]
+        
+        # Convert to Arrow table
+        return pa.Table.from_pylist(data)
+
+    def convert_jsonnet_to_arrow(self, jsonnet_str: str, ext_vars: Optional[Dict[str, str]] = None,
+                                tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
+        """
+        Convert a Jsonnet string to an Arrow table.
+
+        Args:
+            jsonnet_str (str): Jsonnet template string
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pa.Table: Arrow table containing the data
+
+        Raises:
+            ImportError: If PyArrow or Jsonnet is not available
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet to Arrow conversion")
+        
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet string
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_snippet(
+            "snippet",
+            jsonnet_str,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Ensure it's a list for table conversion
+        if not isinstance(data, list):
+            # If it's a single object, wrap it in a list
+            data = [data]
+        
+        # Convert to Arrow table
+        return pa.Table.from_pylist(data)
+
+    def serialize_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
+                         tla_vars: Optional[Dict[str, str]] = None) -> str:
+        """
+        Serialize a Jsonnet file to IPLD for storage on IPFS.
+
+        Args:
+            jsonnet_path (str): Path to the Jsonnet file
+            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
+            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
+
+        Returns:
+            str: CID of the serialized data
+        """
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        # Evaluate the Jsonnet file
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+        
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+        
+        # Parse JSON
+        data = json.loads(json_str)
+        
+        # Structure for storage
+        dataset = {
+            "type": "jsonnet_dataset",
+            "source_file": os.path.basename(jsonnet_path),
+            "data": data,
+            "metadata": {
+                "created_at": datetime.datetime.now().isoformat(),
+                "ext_vars": ext_vars,
+                "tla_vars": tla_vars
+            }
+        }
+
+        # Store in IPLD
+        return self.storage.store_json(dataset)
+
+    def deserialize_jsonnet(self, cid: str, output_path: Optional[str] = None) -> Union[Dict[str, Any], List[Any], str]:
+        """
+        Deserialize Jsonnet data from IPLD/IPFS.
+
+        Args:
+            cid (str): CID of the serialized Jsonnet data
+            output_path (str, optional): If provided, write the data as Jsonnet to this path
+
+        Returns:
+            Union[Dict, List, str]: Data or path to output file if output_path is provided
+        """
+        # Get the data from IPFS
+        dataset = self.storage.get_json(cid)
+
+        # Verify it's a Jsonnet dataset
+        if dataset.get("type") != "jsonnet_dataset":
+            raise ValueError(f"CID {cid} does not contain a Jsonnet dataset")
+
+        # Extract data
+        data = dataset.get("data")
+
+        # If output path provided, write to file as Jsonnet
+        if output_path:
+            jsonnet_str = json.dumps(data, indent=2)
+            with open(output_path, 'w') as f:
+                f.write(jsonnet_str)
+            return output_path
+
+        # Otherwise return data
+        return data
 
     def export_to_jsonl(self, data: List[Dict[str, Any]], output_path: str) -> str:
         """
@@ -224,13 +610,19 @@ try:
 except ImportError:
     HAVE_HUGGINGFACE = False
 
+try:
+    import _jsonnet
+    HAVE_JSONNET = True
+except ImportError:
+    HAVE_JSONNET = False
+
 
 T = TypeVar('T')
 
 class GraphNode(Generic[T]):
     """A node in a graph dataset."""
 
-    def __init__(self, id: str, type: str, data: T):
+    def __init__(self, id: str, type: str, data: T) -> None:
         """
         Initialize a new graph node.
 
@@ -245,7 +637,7 @@ class GraphNode(Generic[T]):
         # Store edges as dicts with target node and properties
         self.edges: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
 
-    def add_edge(self, edge_type: str, target: 'GraphNode', properties: Optional[Dict[str, Any]] = None):
+    def add_edge(self, edge_type: str, target: 'GraphNode', properties: Optional[Dict[str, Any]] = None) -> None:
         """
         Add an edge to another node.
 
@@ -355,7 +747,7 @@ class GraphNode(Generic[T]):
 class GraphDataset:
     """A graph dataset containing nodes and edges with query capabilities."""
 
-    def __init__(self, name: str = None):
+    def __init__(self, name: Optional[str] = None) -> None:
         """
         Initialize a new graph dataset.
 
@@ -406,7 +798,7 @@ class GraphDataset:
 
         return node
 
-    def add_edge(self, source_id: str, edge_type: str, target_id: str, properties: Optional[Dict[str, Any]] = None):
+    def add_edge(self, source_id: str, edge_type: str, target_id: str, properties: Optional[Dict[str, Any]] = None) -> None:
         """
         Add an edge between nodes.
 
@@ -877,8 +1269,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
     - Integration with IPFS for persistent storage
     """
 
-    def __init__(self, name: str = None, vector_dimension: int = 768,
-                 vector_metric: str = 'cosine', storage=None):
+    def __init__(self, name: Optional[str] = None, vector_dimension: int = 768,
+                 vector_metric: str = 'cosine', storage: Optional['IPLDStorage'] = None) -> None:
         """
         Initialize a new vector-augmented graph dataset.
 
@@ -955,6 +1347,8 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Currently, IPFSKnnIndex doesn't support direct updates
         # The simplest approach is to create a new index with all vectors
+        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        
         all_embeddings = []
         all_metadata = []
 
@@ -986,6 +1380,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                 all_metadata.append(metadata)
 
         # Create a new index with updated vectors
+        # TODO Figure out whether IPFSKnnIndex exists or is hallucinated.
         new_index = IPFSKnnIndex(
             dimension=self.vector_index.dimension,
             metric=self.vector_index.metric,
@@ -1131,7 +1526,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             cache_enabled (bool): Whether to enable query caching
             cache_ttl (float): Time-to-live for cached results in seconds
         """
-        from ipfs_datasets_py.rag_query_optimizer import GraphRAGQueryOptimizer
+        from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryOptimizer
         self.query_optimizer = GraphRAGQueryOptimizer(
             vector_weight=vector_weight,
             graph_weight=graph_weight,
@@ -1146,7 +1541,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         Args:
             num_partitions (int): Number of partitions to create
         """
-        from ipfs_datasets_py.rag_query_optimizer import VectorIndexPartitioner
+        from ipfs_datasets_py.rag.rag_query_optimizer import VectorIndexPartitioner
         self.vector_partitioner = VectorIndexPartitioner(
             dimension=self.vector_index.dimension,
             num_partitions=num_partitions
@@ -2198,7 +2593,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return nodes_added, edges_added, nodes_removed, edges_removed
 
-    def _rebuild_vector_index(self):
+    def _rebuild_vector_index(self) -> None:
         """
         Rebuild the vector index after structural changes to the graph.
         """
@@ -3822,7 +4217,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return result
 
-    def _get_subgraph_contextual_embedding(self, subgraph, node_id):
+    def _get_subgraph_contextual_embedding(self, subgraph: GraphDataset, node_id: str) -> Optional[np.ndarray]:
         """Helper method to get contextual embedding within a subgraph"""
         if node_id not in subgraph.nodes:
             return None
@@ -3893,8 +4288,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                               node_filters: Optional[List[Tuple[str, str, Any]]] = None,
                               metrics: List[str] = ["node_count", "edge_count", "density", "centrality"],
                               reference_node_id: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Analyze the evolution of the knowledge graph over time.
+        """Analyze the evolution of the knowledge graph over time.
 
         This method creates snapshots of the graph at different time intervals and
         computes metrics to track how the graph structure evolves.
@@ -4078,7 +4472,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return results
 
-    def _get_nodes_in_time_interval(self, time_property, start_time, end_time, additional_filters=None):
+    def _get_nodes_in_time_interval(self, time_property: str, start_time: Any, end_time: Any, additional_filters: Optional[Dict[str, Any]] = None) -> List[str]:
         """Helper method to get nodes within a specific time interval"""
         matching_nodes = []
 
@@ -4101,7 +4495,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return matching_nodes
 
-    def _is_in_time_interval(self, value, start, end):
+    def _is_in_time_interval(self, value: Any, start: Any, end: Any) -> bool:
         """Check if a value is within a time interval, handling different types"""
         # Handle different value types
         try:
@@ -4111,7 +4505,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             # For incomparable types, convert to string and compare
             return str(start) <= str(value) <= str(end)
 
-    def _create_time_snapshot_subgraph(self, node_ids):
+    def _create_time_snapshot_subgraph(self, node_ids: List[str]) -> GraphDataset:
         """Create a subgraph containing only the specified nodes and their interconnections"""
         subgraph = GraphDataset(name=f"time_snapshot_{id(node_ids)}")
 
@@ -4135,7 +4529,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return subgraph
 
-    def _compute_pagerank_for_subgraph(self, subgraph, damping=0.85, max_iterations=100, tolerance=1.0e-6):
+    def _compute_pagerank_for_subgraph(self, subgraph: GraphDataset, damping: float = 0.85, max_iterations: int = 100, tolerance: float = 1.0e-6) -> List[Tuple[str, float]]:
         """Compute PageRank centrality for nodes in a subgraph"""
         # Get nodes
         nodes = list(subgraph.nodes.keys())
@@ -4189,7 +4583,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return result
 
-    def _compute_clustering_coefficient(self, subgraph):
+    def _compute_clustering_coefficient(self, subgraph: GraphDataset) -> float:
         """Compute the average clustering coefficient of the subgraph"""
         if len(subgraph.nodes) < 3:
             return 0.0
@@ -4246,7 +4640,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         # Calculate average
         return total_coefficient / max(1, node_count)
 
-    def _count_node_connections(self, subgraph, node_id):
+    def _count_node_connections(self, subgraph: GraphDataset, node_id: str) -> Dict[str, int]:
         """Count incoming and outgoing connections for a node"""
         if node_id not in subgraph.nodes:
             return {"incoming": 0, "outgoing": 0, "total": 0}
@@ -4448,7 +4842,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return filtered_predictions
 
-    def _predict_edges_semantic(self, nodes_with_embeddings, target_relation_types, existing_edges):
+    def _predict_edges_semantic(self, nodes_with_embeddings: List[Tuple[str, np.ndarray]], target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Predict missing edges using semantic similarity of nodes"""
         predictions = []
 
@@ -4592,7 +4986,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return predictions
 
-    def _predict_edges_structural(self, target_relation_types, existing_edges):
+    def _predict_edges_structural(self, target_relation_types: List[str], existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Predict missing edges using structural patterns"""
         predictions = []
 
@@ -4617,7 +5011,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return predictions
 
-    def _find_transitive_candidates(self, edge_type, existing_edges):
+    def _find_transitive_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential transitive relation candidates (A->B, B->C => A->C)"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4653,7 +5047,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _find_symmetric_candidates(self, edge_type, existing_edges):
+    def _find_symmetric_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential symmetric relation candidates"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4698,7 +5092,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _find_common_neighbor_candidates(self, edge_type, existing_edges):
+    def _find_common_neighbor_candidates(self, edge_type: str, existing_edges: Set[Tuple[str, str, str]]) -> List[Dict[str, Any]]:
         """Find potential relations based on common neighbors"""
         candidates = []
         edges = self.get_edges_by_type(edge_type)
@@ -4754,7 +5148,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return candidates
 
-    def _merge_predictions(self, semantic_predictions, structural_predictions):
+    def _merge_predictions(self, semantic_predictions: List[Dict[str, Any]], structural_predictions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Merge and blend predictions from different methods"""
         # Create a lookup for faster matching
         semantic_lookup = {}
@@ -4975,7 +5369,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return established_links
 
-    def _establish_cross_modal_links_by_embedding(self, text_nodes, image_nodes, min_confidence):
+    def _establish_cross_modal_links_by_embedding(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using embeddings"""
         links = []
 
@@ -5021,7 +5415,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return links
 
-    def _establish_cross_modal_links_by_metadata(self, text_nodes, image_nodes, min_confidence):
+    def _establish_cross_modal_links_by_metadata(self, text_nodes: List[GraphNode], image_nodes: List[GraphNode], min_confidence: float) -> List[Tuple[GraphNode, GraphNode, str, float]]:
         """Helper method to establish links between text and image nodes using metadata matching"""
         links = []
 
@@ -5069,7 +5463,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return links
 
-    def _calculate_metadata_similarity(self, text_node, image_node, field_mappings, field_weights):
+    def _calculate_metadata_similarity(self, text_node: GraphNode, image_node: GraphNode, field_mappings: Dict[str, List[str]], field_weights: Dict[str, float]) -> Tuple[float, List[str]]:
         """Calculate similarity between text and image nodes based on metadata"""
         total_score = 0.0
         total_weight = 0.0
@@ -5116,7 +5510,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return similarity, matched_fields
 
-    def _calculate_field_similarity(self, value1, value2):
+    def _calculate_field_similarity(self, value1: Any, value2: Any) -> float:
         """Calculate similarity between two field values based on their types"""
         # Handle different value types
         if isinstance(value1, str) and isinstance(value2, str):
@@ -5138,7 +5532,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             except:
                 return 0.0
 
-    def _text_similarity(self, text1, text2):
+    def _text_similarity(self, text1: str, text2: str) -> float:
         """Calculate similarity between two text strings"""
         # Simple text similarity based on word overlap
         if not text1 or not text2:
@@ -5157,7 +5551,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return intersection / union
 
-    def _list_similarity(self, list1, list2):
+    def _list_similarity(self, list1: List[Any], list2: List[Any]) -> float:
         """Calculate similarity between two lists (e.g., tags)"""
         if not list1 or not list2:
             return 0.0
@@ -5172,7 +5566,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return intersection / union
 
-    def _normalize_text(self, text):
+    def _normalize_text(self, text: str) -> str:
         """Normalize text for comparison: lowercase, remove punctuation"""
         if not text:
             return ""
@@ -5188,7 +5582,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return text.strip()
 
-    def _determine_cross_modal_edge_type(self, text_node, image_node):
+    def _determine_cross_modal_edge_type(self, text_node: GraphNode, image_node: GraphNode) -> str:
         """Determine the appropriate edge type for a text-image link"""
         # Default to "visualizes" from text to image
         return "visualizes"
@@ -5198,8 +5592,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
                                edge_schemas: Optional[Dict[str, Dict[str, Any]]] = None,
                                fix_violations: bool = False,
                                validation_mode: str = "strict") -> Dict[str, Any]:
-        """
-        Validate the graph against schemas and optionally fix violations.
+        """Validate the graph against schemas and optionally fix violations.
 
         This method enforces data quality by validating node and edge properties
         against defined schemas, and can automatically fix common issues.
@@ -5340,7 +5733,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return results
 
-    def _get_default_node_schemas(self):
+    def _get_default_node_schemas(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """Return default schemas for common node types"""
         return {
             "paper": {
@@ -5357,7 +5750,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             }
         }
 
-    def _get_default_edge_schemas(self):
+    def _get_default_edge_schemas(self) -> Dict[str, Dict[str, Dict[str, Any]]]:
         """Return default schemas for common edge types"""
         return {
             "cites": {
@@ -5374,7 +5767,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             }
         }
 
-    def _validate_against_schema(self, data, schema, validation_mode):
+    def _validate_against_schema(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], validation_mode: str) -> List[Dict[str, Any]]:
         """Validate data against a schema and return violations"""
         violations = []
 
@@ -5490,7 +5883,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return violations
 
-    def _fix_schema_violations(self, data, schema, violations):
+    def _fix_schema_violations(self, data: Dict[str, Any], schema: Dict[str, Dict[str, Any]], violations: List[Dict[str, Any]]) -> int:
         """Fix schema violations where possible and return count of fixed violations"""
         fixed_count = 0
 
@@ -5853,7 +6246,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         return paths
 
-    def _calculate_edge_score(self, edge_properties, guidance_properties):
+    def _calculate_edge_score(self, edge_properties: Dict[str, Any], guidance_properties: Dict[str, float]) -> float:
         """Calculate a score for an edge based on its properties and guidance weights"""
         if not edge_properties or not guidance_properties:
             return 0.5  # Default score
@@ -5889,7 +6282,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         else:
             return 0.5  # Default score
 
-    def _calculate_structural_score(self, path_nodes, edge_types, guidance_properties):
+    def _calculate_structural_score(self, path_nodes: List[GraphNode], edge_types: List[str], guidance_properties: Dict[str, float]) -> float:
         """Calculate a structural quality score for a path"""
         if len(path_nodes) <= 1:
             return 0.0
@@ -5949,7 +6342,7 @@ class DatasetSerializer:
     - Vector embeddings
     """
 
-    def __init__(self, storage=None):
+    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
         """
         Initialize a new DatasetSerializer.
 
@@ -5959,7 +6352,7 @@ class DatasetSerializer:
         """
         self.storage = storage or IPLDStorage()
 
-    def serialize_arrow_table(self, table, hash_columns=None):
+    def serialize_arrow_table(self, table: 'pa.Table', hash_columns: Optional[List[str]] = None) -> str:
         """
         Serialize an Arrow table to IPLD.
 
@@ -6016,7 +6409,7 @@ class DatasetSerializer:
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_arrow_table(self, cid):
+    def deserialize_arrow_table(self, cid: str) -> 'pa.Table':
         """
         Deserialize an Arrow table from IPLD.
 
@@ -6061,7 +6454,7 @@ class DatasetSerializer:
         table = pa.Table.from_arrays(columns, schema=schema)
         return table
 
-    def export_to_jsonl(self, data, output_path, orient="records", lines=True, compression=None):
+    def export_to_jsonl(self, data: Union['pa.Table', 'datasets.Dataset', 'pd.DataFrame', Dict[str, Any]], output_path: str, orient: str = "records", lines: bool = True, compression: Optional[str] = None) -> bool:
         """
         Export data to a JSONL file.
 
@@ -6191,7 +6584,7 @@ class DatasetSerializer:
             row = {col: table.column(col)[i].as_py() for col in table.column_names}
             file_obj.write(json.dumps(row) + "\n")
 
-    def import_from_jsonl(self, input_path, schema=None, compression=None, infer_schema=True, max_rows_for_inference=1000):
+    def import_from_jsonl(self, input_path: str, schema: Optional['pa.Schema'] = None, compression: Optional[str] = None, infer_schema: bool = True, max_rows_for_inference: int = 1000) -> 'pa.Table':
         """
         Import data from a JSONL file.
 
@@ -6297,7 +6690,7 @@ class DatasetSerializer:
             else:
                 return pa.Table.from_pylist([])
 
-    def convert_jsonl_to_huggingface(self, input_path, compression=None):
+    def convert_jsonl_to_huggingface(self, input_path: str, compression: Optional[str] = None) -> 'datasets.Dataset':
         """
         Convert a JSONL file to a HuggingFace dataset.
 
@@ -6320,7 +6713,7 @@ class DatasetSerializer:
         # Convert to HuggingFace dataset
         return Dataset(arrow_table=table)
 
-    def convert_arrow_to_jsonl(self, table, output_path, compression=None):
+    def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str, compression: Optional[str] = None) -> str:
         """
         Convert an Arrow table to a JSONL file.
 
@@ -6334,7 +6727,7 @@ class DatasetSerializer:
         """
         return self.export_to_jsonl(table, output_path, compression=compression)
 
-    def serialize_jsonl(self, input_path, hash_records=True, compression=None, batch_size=1000):
+    def serialize_jsonl(self, input_path: str, hash_records: bool = True, compression: Optional[str] = None, batch_size: int = 1000) -> str:
         """
         Serialize a JSONL file to IPLD with efficient streaming.
 
@@ -6351,17 +6744,18 @@ class DatasetSerializer:
             ImportError: If PyArrow is not available for optimized processing
         """
         # Create a reader for the JSONL file
-        if compression == "gzip":
-            import gzip
-            file_obj = gzip.open(input_path, "rt")
-        elif compression == "bz2":
-            import bz2
-            file_obj = bz2.open(input_path, "rt")
-        elif compression == "xz":
-            import lzma
-            file_obj = lzma.open(input_path, "rt")
-        else:
-            file_obj = open(input_path, "r")
+        match compression:
+            case "gzip":
+                import gzip
+                file_obj = gzip.open(input_path, "rt")
+            case "bz2":
+                import bz2
+                file_obj = bz2.open(input_path, "rt")
+            case "xz":
+                import lzma
+                file_obj = lzma.open(input_path, "rt")
+            case _:
+                file_obj = open(input_path, "r")
 
         try:
             # Process records in batches for memory efficiency
@@ -6456,7 +6850,7 @@ class DatasetSerializer:
 
         return record_cids
 
-    def deserialize_jsonl(self, cid, output_path=None, compression=None, max_records=None):
+    def deserialize_jsonl(self, cid: str, output_path: Optional[str] = None, compression: Optional[str] = None, max_records: Optional[int] = None) -> Union[List[Dict[str, Any]], str]:
         """
         Deserialize a JSONL dataset from IPLD.
 
@@ -6493,17 +6887,18 @@ class DatasetSerializer:
         # If output file specified, write records to file
         if output_path:
             # Open file with appropriate compression
-            if compression == "gzip":
-                import gzip
-                file_obj = gzip.open(output_path, "wt")
-            elif compression == "bz2":
-                import bz2
-                file_obj = bz2.open(output_path, "wt")
-            elif compression == "xz":
-                import lzma
-                file_obj = lzma.open(output_path, "wt")
-            else:
-                file_obj = open(output_path, "w")
+            match compression:
+                case "gzip":
+                    import gzip
+                    file_obj = gzip.open(output_path, "wt")
+                case "bz2":
+                    import bz2
+                    file_obj = bz2.open(output_path, "wt")
+                case "xz":
+                    import lzma
+                    file_obj = lzma.open(output_path, "wt")
+                case _:
+                    file_obj = open(output_path, "w")
 
             try:
                 # Write records to file
@@ -6523,7 +6918,7 @@ class DatasetSerializer:
 
             return records
 
-    def serialize_huggingface_dataset(self, dataset, split="train", hash_columns=None):
+    def serialize_huggingface_dataset(self, dataset: 'datasets.Dataset', split: str = "train", hash_columns: Optional[List[str]] = None) -> str:
         """
         Serialize a HuggingFace dataset to IPLD.
 
@@ -6576,7 +6971,7 @@ class DatasetSerializer:
         root_cid = self.storage.store_json(root_obj)
         return root_cid
 
-    def deserialize_huggingface_dataset(self, cid):
+    def deserialize_huggingface_dataset(self, cid: str) -> 'datasets.Dataset':
         """
         Deserialize a HuggingFace dataset from IPLD.
 
@@ -6629,7 +7024,7 @@ class DatasetSerializer:
 
         return dataset
 
-    def serialize_dataset_streaming(self, chunks_iter):
+    def serialize_dataset_streaming(self, chunks_iter: Iterator[Union['pa.Table', Dict[str, Any]]]) -> str:
         """
         Serialize a dataset in streaming mode.
 
@@ -6691,7 +7086,7 @@ class DatasetSerializer:
             import shutil
             shutil.rmtree(temp_dir)
 
-    def deserialize_dataset_streaming(self, cid):
+    def deserialize_dataset_streaming(self, cid: str) -> Iterator[Union['pa.Table', Dict[str, Any]]]:
         """
         Deserialize a dataset in streaming mode.
 

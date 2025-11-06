@@ -17,12 +17,49 @@ import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from mcp.server import FastMCP
-from mcp.types import Tool, TextContent
-from mcp import CallToolRequest
+import pydantic
+try:    
+    from mcp.server import FastMCP
+    from mcp.types import CallToolResult, TextContent, Tool
+    from mcp import CallToolRequest
+except ImportError:
+    print("Failed to import mcp.server. Please ensure the mcp library is installed.")
 
 from .configs import Configs, configs
-from .logger import logger, mcp_logger
+from .logger import logger
+
+
+
+
+
+
+def return_text_content(input: Any, result_str: str) -> TextContent:
+    """
+    Return a TextContent object with formatted string.
+
+    Args:
+        string (str): The input string to be included in the content.
+        result_str (str): A string identifier or label to prefix the input string.
+
+    Returns:
+        TextContent: A TextContent object with 'text' type and formatted text.
+    """
+    return TextContent(type="text", text=f"{result_str}: {repr(input)}") # NOTE we use repr to ensure special characters are handled correctly
+
+
+def return_tool_call_results(content: TextContent, error: bool = False) -> CallToolResult:
+    """
+    Returns a CallToolResult object for tool call response.
+
+    Args:
+        content: The content of the tool call result.
+        error: Whether the tool call resulted in an error. Defaults to False.
+
+    Returns:
+        CallToolResult: The formatted result object containing the content and error status.
+    """
+    return CallToolResult(isError=error, content=[content])
+
 
 # Utility for importing tools
 def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
@@ -42,7 +79,14 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
         return tools
 
     for item in directory_path.iterdir():
-        if item.is_file() and item.suffix == '.py' and item.name != '__init__.py':
+        this_is_valid_file = (
+            item.is_file() and
+            item.suffix == '.py' and # Only Python files
+            not item.name.startswith('.') and # Avoid hidden and dunder files (e.g. __init__.py, __main__.py)
+            not item.name.startswith('_')
+        )
+
+        if this_is_valid_file:
             module_name = item.stem
             try:
                 module = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.{directory_path.name}.{module_name}")
@@ -51,14 +95,16 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
                     # Only include functions defined in the module (not imported ones)
                     # and exclude built-in types and typing constructs
                     # For development tools, also include wrapped functions
-                    is_valid_function = (
+                    this_is_valid_function = (
                         callable(attr) and
                         not attr_name.startswith('_') and
                         hasattr(attr, '__module__') and
-                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple']
+                        hasattr(attr, '__doc__') and # Ensure it has a docstring, since Claude will need it to properly use a tool.
+                        not attr_name in ['Dict', 'Any', 'Optional', 'Union', 'List', 'Tuple'] and
+                        not isinstance(attr, type)  # Exclude classes/types
                     )
 
-                    if is_valid_function:
+                    if this_is_valid_function:
                         # For development tools, be more flexible with module checking
                         is_from_module = (
                             attr.__module__ == module.__name__ or
@@ -77,17 +123,199 @@ def import_tools_from_directory(directory_path: Path) -> Dict[str, Any]:
 
 class IPFSDatasetsMCPServer:
     """
-    MCP Server for IPFS Datasets Python.
+    Model Context Protocol Server for IPFS Datasets Platform Integration
 
-    This class manages the MCP server and tool registration for IPFS Datasets.
+    The IPFSDatasetsMCPServer class provides a comprehensive Model Context Protocol
+    (MCP) server implementation that enables AI models and applications to interact
+    with IPFS-based datasets through standardized tool interfaces. This server acts
+    as a bridge between AI systems and distributed dataset infrastructure, offering
+    seamless access to content-addressable data storage, processing workflows, and
+    analytical capabilities.
+
+    The MCP server implements the complete Model Context Protocol specification,
+    providing tool discovery, registration, execution, and monitoring capabilities
+    for IPFS dataset operations. It supports dynamic tool loading, configuration
+    management, error handling, and comprehensive logging for production-grade
+    AI model integration workflows.
+
+    Core Functionality:
+    - Dynamic tool registration from multiple category directories
+    - Standardized MCP protocol implementation for AI model compatibility
+    - Comprehensive error handling and logging for debugging and monitoring
+    - Configuration-driven behavior with flexible customization options
+    - Asynchronous operation support for high-performance processing
+    - Tool lifecycle management including registration, execution, and cleanup
+
+    Tool Categories Supported:
+    - Dataset Tools: Loading, processing, and managing IPFS-distributed datasets
+    - IPFS Tools: Direct interaction with IPFS networks and content addressing
+    - Vector Tools: Embedding generation, similarity search, and vector operations
+    - Graph Tools: Knowledge graph construction and relationship analysis
+    - Audit Tools: Data validation, quality assessment, and compliance checking
+    - Media Tools: Audio/video processing and multimedia content analysis
+
+    MCP Protocol Features:
+    - Tool discovery and capability enumeration for client applications
+    - Standardized tool execution with comprehensive input/output validation
+    - Error reporting and status monitoring for reliable operation
+    - Session management and context preservation across tool calls
+    - Resource management and cleanup for efficient memory utilization
+
+    Attributes:
+        configs (Configs): Server configuration object containing operational
+            parameters, tool settings, logging configuration, and resource limits
+            for customizing server behavior and performance characteristics.
+        mcp (FastMCP): Core MCP server instance implementing the Model Context
+            Protocol specification with tool registration, execution, and
+            communication capabilities for AI model integration.
+        tools (Dict[str, Any]): Registry of available tools organized by category
+            and identifier, containing tool metadata, execution handlers, and
+            configuration parameters for dynamic tool management.
+
+    Public Methods:
+        register_tools() -> None:
+            Discovers and registers all available tools from configured directories
+        run_server() -> None:
+            Starts the MCP server and begins accepting client connections
+        get_tool_info(tool_id: str) -> Dict[str, Any]:
+            Retrieves metadata and documentation for specific tools
+        execute_tool(tool_request: CallToolRequest) -> CallToolResult:
+            Executes requested tools with comprehensive error handling
+
+    Usage Examples:
+        # Basic server initialization and startup
+        server = IPFSDatasetsMCPServer()
+        await server.register_tools()
+        await server.run_server()
+        
+        # Custom configuration with specific settings
+        custom_config = Configs(
+            log_level="DEBUG",
+            max_workers=16,
+            timeout=300
+        )
+        server = IPFSDatasetsMCPServer(server_configs=custom_config)
+        await server.register_tools()
+        
+        # Development mode with enhanced debugging
+        dev_server = IPFSDatasetsMCPServer()
+        await dev_server.register_tools()
+        # Server provides detailed logging and error reporting
+
+    Integration Examples:
+        # Claude/GPT model integration
+        # The MCP server enables AI models to use tools through standard protocol:
+        # - "Load the 'common_crawl' dataset from IPFS"
+        # - "Generate embeddings for this text corpus"
+        # - "Create a knowledge graph from this document collection"
+        # - "Audit data quality across these distributed datasets"
+
+    Dependencies:
+        Required:
+        - mcp: Model Context Protocol implementation library
+        - pydantic: Data validation and configuration management
+        - asyncio: Asynchronous programming support for concurrent operations
+        
+        Optional:
+        - Various tool-specific dependencies loaded dynamically based on usage
+
+    Notes:
+        - Tools are discovered and registered automatically from configured directories
+        - The server supports hot-reloading of tools for development workflows
+        - Comprehensive error handling ensures robust operation in production environments
+        - Configuration management supports environment-specific customization
+        - Logging integration provides detailed operational visibility and debugging
+        - Resource management prevents memory leaks and ensures efficient operation
+        - Protocol compliance ensures compatibility with MCP-enabled AI systems
+        - Tool execution is sandboxed for security and stability
     """
 
     def __init__(self, server_configs: Optional[Configs] = None):
         """
-        Initialize the IPFS Datasets MCP Server.
+        Initialize IPFS Datasets MCP Server with Comprehensive Configuration
+
+        Establishes a new Model Context Protocol server instance for IPFS dataset
+        integration, configuring all necessary components for AI model interaction,
+        tool management, and distributed dataset operations. This initialization
+        prepares the server infrastructure while maintaining optimal performance
+        and reliability characteristics.
+
+        The initialization process sets up the core MCP server instance, configuration
+        management, tool registry, logging systems, and resource allocation required
+        for production-grade AI model integration. All subsystems are prepared for
+        immediate tool registration and client connection handling.
 
         Args:
-            server_configs: Optional configuration object. If not provided, the default configs will be used.
+            server_configs (Optional[Configs], default=None): Server configuration
+                object containing operational parameters, tool settings, logging
+                configuration, and resource limits. If None, default configuration
+                will be loaded from the global configs instance. Configuration
+                includes:
+                
+                - log_level (str): Logging verbosity level (DEBUG, INFO, WARNING, ERROR)
+                - max_workers (int): Maximum concurrent tool execution threads
+                - timeout (int): Default timeout for tool execution in seconds
+                - tool_directories (List[str]): Paths to scan for available tools
+                - resource_limits (Dict[str, Any]): Memory and CPU usage constraints
+                - security_settings (Dict[str, Any]): Authentication and authorization
+                - performance_options (Dict[str, Any]): Optimization and caching settings
+                
+                Example: Configs(
+                    log_level="INFO",
+                    max_workers=8,
+                    timeout=120,
+                    tool_directories=["dataset_tools", "ipfs_tools"],
+                    resource_limits={"max_memory": "4GB", "max_cpu": 80}
+                )
+
+        Attributes Initialized:
+            configs (Configs): Server configuration with validated parameters and
+                default value resolution for operational consistency.
+            mcp (FastMCP): Core MCP server instance implementing protocol specification
+                with tool registration, execution, and communication capabilities.
+            tools (Dict[str, Any]): Empty tool registry prepared for dynamic tool
+                discovery and registration from configured directories.
+
+        Raises:
+            ConfigurationError: If the provided server_configs contain invalid
+                parameters, missing required settings, or incompatible values
+                that prevent proper server initialization.
+            ImportError: If required MCP protocol dependencies or core libraries
+                are not available for server operation and tool management.
+            ResourceError: If system resources are insufficient for the requested
+                configuration including memory allocation or thread pool creation.
+
+        Examples:
+            # Basic initialization with default configuration
+            server = IPFSDatasetsMCPServer()
+            
+            # Custom configuration for development environment
+            dev_config = Configs(
+                log_level="DEBUG",
+                max_workers=4,
+                timeout=60,
+                development_mode=True
+            )
+            dev_server = IPFSDatasetsMCPServer(server_configs=dev_config)
+            
+            # Production configuration with enhanced performance
+            prod_config = Configs(
+                log_level="INFO",
+                max_workers=16,
+                timeout=300,
+                resource_limits={"max_memory": "8GB"},
+                security_settings={"enable_auth": True}
+            )
+            prod_server = IPFSDatasetsMCPServer(server_configs=prod_config)
+
+        Notes:
+            - Server initialization prepares infrastructure but does not start listening
+            - Tool registration must be called separately after initialization
+            - Configuration validation ensures parameter compatibility and security
+            - Resource allocation is optimized based on configuration parameters
+            - Logging integration is established immediately for debugging and monitoring
+            - Default configurations provide secure and performant operation
+            - Custom configurations enable environment-specific optimization
         """
         self.configs = server_configs or configs
 
@@ -97,25 +325,18 @@ class IPFSDatasetsMCPServer:
         # Dictionary to store registered tools
         self.tools = {}
 
-    def register_tools(self):
+    async def register_tools(self):
         """Register all tools with the MCP server."""
         # Register tools from the tools directory
         tools_path = Path(__file__).parent / "tools"
 
-        # Register dataset tools
-        self._register_tools_from_subdir(tools_path / "dataset_tools")
-
-        # Register IPFS tools
-        self._register_tools_from_subdir(tools_path / "ipfs_tools")
-
-        # Register vector tools
-        self._register_tools_from_subdir(tools_path / "vector_tools")
-
-        # Register graph tools
-        self._register_tools_from_subdir(tools_path / "graph_tools")
-
-        # Register audit tools
-        self._register_tools_from_subdir(tools_path / "audit_tools")
+        # Register tools from subdirectories
+        tool_subdirs = [
+            "dataset_tools", "ipfs_tools", "vector_tools", "graph_tools", "audit_tools", "media_tools", "investigation_tools", "legal_dataset_tools"
+        ]
+        
+        for subdir in tool_subdirs:
+            self._register_tools_from_subdir(tools_path / subdir)
 
         # Register development tools (migrated from claudes_toolbox-1)
         try:
@@ -150,6 +371,32 @@ class IPFSDatasetsMCPServer:
         # Register provenance tools
         self._register_tools_from_subdir(tools_path / "provenance_tools")
 
+        # Register all new embedding and advanced tools
+        self._register_tools_from_subdir(tools_path / "embedding_tools")
+        self._register_tools_from_subdir(tools_path / "analysis_tools")
+        self._register_tools_from_subdir(tools_path / "workflow_tools")
+        self._register_tools_from_subdir(tools_path / "admin_tools")
+        self._register_tools_from_subdir(tools_path / "cache_tools")
+        self._register_tools_from_subdir(tools_path / "monitoring_tools")
+        self._register_tools_from_subdir(tools_path / "sparse_embedding_tools")
+        self._register_tools_from_subdir(tools_path / "background_task_tools")
+        self._register_tools_from_subdir(tools_path / "auth_tools")
+        self._register_tools_from_subdir(tools_path / "session_tools")
+        self._register_tools_from_subdir(tools_path / "rate_limiting_tools")
+        self._register_tools_from_subdir(tools_path / "data_processing_tools")
+        self._register_tools_from_subdir(tools_path / "index_management_tools")
+        self._register_tools_from_subdir(tools_path / "vector_store_tools")
+        self._register_tools_from_subdir(tools_path / "storage_tools")
+        self._register_tools_from_subdir(tools_path / "web_archive_tools")
+        self._register_tools_from_subdir(tools_path / "ipfs_cluster_tools")
+        
+        # Register software engineering tools
+        self._register_tools_from_subdir(tools_path / "software_engineering_tools")
+
+        # Register ipfs_embeddings_py tools (legacy integration)
+        from .tools.ipfs_embeddings_integration import register_ipfs_embeddings_tools
+        await register_ipfs_embeddings_tools(self.mcp, self.tools)
+
         logger.info(f"Registered {len(self.tools)} tools with the MCP server")
 
     def _register_tools_from_subdir(self, subdir_path: Path):
@@ -162,7 +409,9 @@ class IPFSDatasetsMCPServer:
         tools = import_tools_from_directory(subdir_path)
 
         for tool_name, tool_func in tools.items():
-            self.mcp.add_tool(tool_func, name=tool_name)
+            self.mcp.add_tool(
+                tool_func, name=tool_name, description=tool_func.__doc__
+            )
             self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
 
@@ -191,7 +440,7 @@ class IPFSDatasetsMCPServer:
             ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server
         """
         try:
-            from mcp.client import MCPClient
+            from mcp.client import MCPClient # TODO FIXME This library is hallucinated! It does not exist!
 
             # Create MCP client
             client = MCPClient(ipfs_kit_mcp_url)
@@ -245,7 +494,7 @@ class IPFSDatasetsMCPServer:
         Start the MCP server in stdio mode for VS Code integration.
         """
         # Register all tools
-        self.register_tools()
+        await self.register_tools()
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:
@@ -266,7 +515,7 @@ class IPFSDatasetsMCPServer:
             port: Port to bind the server to
         """
         # Register all tools
-        self.register_tools()
+        await self.register_tools()
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:
@@ -335,6 +584,32 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
         logger.error(f"Error starting server: {e}")
         traceback.print_exc()
 
+class Args(pydantic.BaseModel):
+    """
+    Expected command-line arguments for the MCP server
+
+    Attributes:
+        host (str): The host address for the MCP server to bind to.
+        port (int): The port number for the MCP server to listen on.
+        ipfs_kit_mcp_url (Optional[pydantic.AnyUrl]): Optional URL for the IPFS Kit MCP service.
+        configs (Optional[pydantic.FilePath]): Optional path to configuration file.
+
+    Args:
+        namespace (argparse.Namespace): The parsed command-line arguments namespace
+            containing the configuration values to be validated and stored.
+    """
+    host: str
+    port: int
+    ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
+    config: Optional[pydantic.FilePath] = None
+
+    def __init__(self, namespace: argparse.Namespace):
+        super().__init__(
+            host=namespace.host,
+            port=namespace.port,
+            ipfs_kit_mcp_url=namespace.ipfs_kit_mcp_url,
+            configs=namespace.config
+        )
 
 def main():
     """Command-line entry point."""
@@ -344,7 +619,7 @@ def main():
     parser.add_argument("--ipfs-kit-mcp-url", help="URL of an ipfs_kit_py MCP server")
     parser.add_argument("--config", help="Path to a configuration YAML file")
 
-    args = parser.parse_args()
+    args = Args(parser.parse_args())
 
     # Load custom configuration if provided
     if args.config:

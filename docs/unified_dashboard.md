@@ -207,7 +207,7 @@ from ipfs_datasets_py.unified_monitoring_dashboard import create_unified_dashboa
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizer_alert_system import setup_learning_alerts
 from ipfs_datasets_py.monitoring import setup_metrics_collection
-from ipfs_datasets_py.rag_query_optimizer import QueryOptimizer
+from ipfs_datasets_py.rag.rag_query_optimizer import QueryOptimizer
 
 # Create optimizer
 optimizer = QueryOptimizer()

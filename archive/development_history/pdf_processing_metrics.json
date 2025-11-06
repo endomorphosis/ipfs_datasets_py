@@ -1,0 +1,538 @@
+{
+  "metrics": {
+    "system_cpu_percent": [
+      {
+        "name": "system_cpu_percent",
+        "type": "gauge",
+        "value": 22.7,
+        "timestamp": 1751049873.9022672,
+        "labels": {},
+        "description": "CPU usage percentage"
+      }
+    ],
+    "system_cpu_0_percent": [
+      {
+        "name": "system_cpu_0_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.0040052,
+        "labels": {},
+        "description": "CPU 0 usage percentage"
+      }
+    ],
+    "system_cpu_1_percent": [
+      {
+        "name": "system_cpu_1_percent",
+        "type": "gauge",
+        "value": 30.0,
+        "timestamp": 1751049874.004069,
+        "labels": {},
+        "description": "CPU 1 usage percentage"
+      }
+    ],
+    "system_cpu_2_percent": [
+      {
+        "name": "system_cpu_2_percent",
+        "type": "gauge",
+        "value": 11.1,
+        "timestamp": 1751049874.0040903,
+        "labels": {},
+        "description": "CPU 2 usage percentage"
+      }
+    ],
+    "system_cpu_3_percent": [
+      {
+        "name": "system_cpu_3_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.0041037,
+        "labels": {},
+        "description": "CPU 3 usage percentage"
+      }
+    ],
+    "system_cpu_4_percent": [
+      {
+        "name": "system_cpu_4_percent",
+        "type": "gauge",
+        "value": 20.0,
+        "timestamp": 1751049874.004116,
+        "labels": {},
+        "description": "CPU 4 usage percentage"
+      }
+    ],
+    "system_cpu_5_percent": [
+      {
+        "name": "system_cpu_5_percent",
+        "type": "gauge",
+        "value": 20.0,
+        "timestamp": 1751049874.0041282,
+        "labels": {},
+        "description": "CPU 5 usage percentage"
+      }
+    ],
+    "system_cpu_6_percent": [
+      {
+        "name": "system_cpu_6_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.0041394,
+        "labels": {},
+        "description": "CPU 6 usage percentage"
+      }
+    ],
+    "system_cpu_7_percent": [
+      {
+        "name": "system_cpu_7_percent",
+        "type": "gauge",
+        "value": 50.0,
+        "timestamp": 1751049874.0041535,
+        "labels": {},
+        "description": "CPU 7 usage percentage"
+      }
+    ],
+    "system_cpu_8_percent": [
+      {
+        "name": "system_cpu_8_percent",
+        "type": "gauge",
+        "value": 50.0,
+        "timestamp": 1751049874.0041647,
+        "labels": {},
+        "description": "CPU 8 usage percentage"
+      }
+    ],
+    "system_cpu_9_percent": [
+      {
+        "name": "system_cpu_9_percent",
+        "type": "gauge",
+        "value": 40.0,
+        "timestamp": 1751049874.0041742,
+        "labels": {},
+        "description": "CPU 9 usage percentage"
+      }
+    ],
+    "system_cpu_10_percent": [
+      {
+        "name": "system_cpu_10_percent",
+        "type": "gauge",
+        "value": 60.0,
+        "timestamp": 1751049874.004188,
+        "labels": {},
+        "description": "CPU 10 usage percentage"
+      }
+    ],
+    "system_cpu_11_percent": [
+      {
+        "name": "system_cpu_11_percent",
+        "type": "gauge",
+        "value": 0.0,
+        "timestamp": 1751049874.0042,
+        "labels": {},
+        "description": "CPU 11 usage percentage"
+      }
+    ],
+    "system_cpu_12_percent": [
+      {
+        "name": "system_cpu_12_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.0042105,
+        "labels": {},
+        "description": "CPU 12 usage percentage"
+      }
+    ],
+    "system_cpu_13_percent": [
+      {
+        "name": "system_cpu_13_percent",
+        "type": "gauge",
+        "value": 0.0,
+        "timestamp": 1751049874.0042224,
+        "labels": {},
+        "description": "CPU 13 usage percentage"
+      }
+    ],
+    "system_cpu_14_percent": [
+      {
+        "name": "system_cpu_14_percent",
+        "type": "gauge",
+        "value": 33.3,
+        "timestamp": 1751049874.0042334,
+        "labels": {},
+        "description": "CPU 14 usage percentage"
+      }
+    ],
+    "system_cpu_15_percent": [
+      {
+        "name": "system_cpu_15_percent",
+        "type": "gauge",
+        "value": 0.0,
+        "timestamp": 1751049874.0042439,
+        "labels": {},
+        "description": "CPU 15 usage percentage"
+      }
+    ],
+    "system_cpu_16_percent": [
+      {
+        "name": "system_cpu_16_percent",
+        "type": "gauge",
+        "value": 20.0,
+        "timestamp": 1751049874.004256,
+        "labels": {},
+        "description": "CPU 16 usage percentage"
+      }
+    ],
+    "system_cpu_17_percent": [
+      {
+        "name": "system_cpu_17_percent",
+        "type": "gauge",
+        "value": 25.0,
+        "timestamp": 1751049874.004265,
+        "labels": {},
+        "description": "CPU 17 usage percentage"
+      }
+    ],
+    "system_cpu_18_percent": [
+      {
+        "name": "system_cpu_18_percent",
+        "type": "gauge",
+        "value": 18.2,
+        "timestamp": 1751049874.004275,
+        "labels": {},
+        "description": "CPU 18 usage percentage"
+      }
+    ],
+    "system_cpu_19_percent": [
+      {
+        "name": "system_cpu_19_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.004285,
+        "labels": {},
+        "description": "CPU 19 usage percentage"
+      }
+    ],
+    "system_cpu_20_percent": [
+      {
+        "name": "system_cpu_20_percent",
+        "type": "gauge",
+        "value": 20.0,
+        "timestamp": 1751049874.0042958,
+        "labels": {},
+        "description": "CPU 20 usage percentage"
+      }
+    ],
+    "system_cpu_21_percent": [
+      {
+        "name": "system_cpu_21_percent",
+        "type": "gauge",
+        "value": 11.1,
+        "timestamp": 1751049874.0043092,
+        "labels": {},
+        "description": "CPU 21 usage percentage"
+      }
+    ],
+    "system_cpu_22_percent": [
+      {
+        "name": "system_cpu_22_percent",
+        "type": "gauge",
+        "value": 10.0,
+        "timestamp": 1751049874.004321,
+        "labels": {},
+        "description": "CPU 22 usage percentage"
+      }
+    ],
+    "system_cpu_23_percent": [
+      {
+        "name": "system_cpu_23_percent",
+        "type": "gauge",
+        "value": 20.0,
+        "timestamp": 1751049874.004331,
+        "labels": {},
+        "description": "CPU 23 usage percentage"
+      }
+    ],
+    "system_load_1min": [
+      {
+        "name": "system_load_1min",
+        "type": "gauge",
+        "value": 4.9443359375,
+        "timestamp": 1751049874.0043693,
+        "labels": {},
+        "description": "System load average (1 min)"
+      }
+    ],
+    "system_load_5min": [
+      {
+        "name": "system_load_5min",
+        "type": "gauge",
+        "value": 6.1259765625,
+        "timestamp": 1751049874.0043821,
+        "labels": {},
+        "description": "System load average (5 min)"
+      }
+    ],
+    "system_load_15min": [
+      {
+        "name": "system_load_15min",
+        "type": "gauge",
+        "value": 6.22509765625,
+        "timestamp": 1751049874.0043912,
+        "labels": {},
+        "description": "System load average (15 min)"
+      }
+    ],
+    "system_uptime_seconds": [
+      {
+        "name": "system_uptime_seconds",
+        "type": "gauge",
+        "value": 176572.00459098816,
+        "timestamp": 1751049874.0045965,
+        "labels": {},
+        "description": "System uptime in seconds"
+      }
+    ],
+    "process_memory_rss": [
+      {
+        "name": "process_memory_rss",
+        "type": "gauge",
+        "value": 717737984,
+        "timestamp": 1751049874.004897,
+        "labels": {},
+        "description": "Process RSS memory usage"
+      }
+    ],
+    "process_memory_vms": [
+      {
+        "name": "process_memory_vms",
+        "type": "gauge",
+        "value": 6668427264,
+        "timestamp": 1751049874.0049112,
+        "labels": {},
+        "description": "Process VMS memory usage"
+      }
+    ],
+    "system_memory_total": [
+      {
+        "name": "system_memory_total",
+        "type": "gauge",
+        "value": 134649995264,
+        "timestamp": 1751049874.0051053,
+        "labels": {},
+        "description": "Total system memory"
+      }
+    ],
+    "system_memory_available": [
+      {
+        "name": "system_memory_available",
+        "type": "gauge",
+        "value": 15031566336,
+        "timestamp": 1751049874.0051177,
+        "labels": {},
+        "description": "Available system memory"
+      }
+    ],
+    "system_memory_used": [
+      {
+        "name": "system_memory_used",
+        "type": "gauge",
+        "value": 107230224384,
+        "timestamp": 1751049874.0051272,
+        "labels": {},
+        "description": "Used system memory"
+      }
+    ],
+    "system_memory_percent": [
+      {
+        "name": "system_memory_percent",
+        "type": "gauge",
+        "value": 88.8,
+        "timestamp": 1751049874.005137,
+        "labels": {},
+        "description": "System memory usage percentage"
+      }
+    ],
+    "network_bytes_sent": [
+      {
+        "name": "network_bytes_sent",
+        "type": "gauge",
+        "value": 4804039664,
+        "timestamp": 1751049874.0054817,
+        "labels": {},
+        "description": "Network bytes sent"
+      }
+    ],
+    "network_bytes_recv": [
+      {
+        "name": "network_bytes_recv",
+        "type": "gauge",
+        "value": 25629688987,
+        "timestamp": 1751049874.0055006,
+        "labels": {},
+        "description": "Network bytes received"
+      }
+    ],
+    "network_packets_sent": [
+      {
+        "name": "network_packets_sent",
+        "type": "gauge",
+        "value": 15723906,
+        "timestamp": 1751049874.0055099,
+        "labels": {},
+        "description": "Network packets sent"
+      }
+    ],
+    "network_packets_recv": [
+      {
+        "name": "network_packets_recv",
+        "type": "gauge",
+        "value": 31437412,
+        "timestamp": 1751049874.0055187,
+        "labels": {},
+        "description": "Network packets received"
+      }
+    ],
+    "disk_total": [
+      {
+        "name": "disk_total",
+        "type": "gauge",
+        "value": 293726715904,
+        "timestamp": 1751049874.005581,
+        "labels": {},
+        "description": "Total disk space"
+      }
+    ],
+    "disk_used": [
+      {
+        "name": "disk_used",
+        "type": "gauge",
+        "value": 39493304320,
+        "timestamp": 1751049874.0055933,
+        "labels": {},
+        "description": "Used disk space"
+      }
+    ],
+    "disk_free": [
+      {
+        "name": "disk_free",
+        "type": "gauge",
+        "value": 254233411584,
+        "timestamp": 1751049874.0056045,
+        "labels": {},
+        "description": "Free disk space"
+      }
+    ],
+    "disk_percent": [
+      {
+        "name": "disk_percent",
+        "type": "gauge",
+        "value": 13.4,
+        "timestamp": 1751049874.0056155,
+        "labels": {},
+        "description": "Disk usage percentage"
+      }
+    ],
+    "process_cpu_percent": [
+      {
+        "name": "process_cpu_percent",
+        "type": "gauge",
+        "value": 0.0,
+        "timestamp": 1751049874.1062407,
+        "labels": {},
+        "description": "Process CPU usage percentage"
+      }
+    ],
+    "process_threads": [
+      {
+        "name": "process_threads",
+        "type": "gauge",
+        "value": 49,
+        "timestamp": 1751049874.1063886,
+        "labels": {},
+        "description": "Number of process threads"
+      }
+    ],
+    "process_open_files": [
+      {
+        "name": "process_open_files",
+        "type": "gauge",
+        "value": 2,
+        "timestamp": 1751049874.1069427,
+        "labels": {},
+        "description": "Number of open files"
+      }
+    ],
+    "process_connections": [
+      {
+        "name": "process_connections",
+        "type": "gauge",
+        "value": 0,
+        "timestamp": 1751049874.1274533,
+        "labels": {},
+        "description": "Number of network connections"
+      }
+    ],
+    "gc_count_gen0": [
+      {
+        "name": "gc_count_gen0",
+        "type": "gauge",
+        "value": 135,
+        "timestamp": 1751049874.1275232,
+        "labels": {},
+        "description": "GC collection count for generation 0"
+      }
+    ],
+    "gc_count_gen1": [
+      {
+        "name": "gc_count_gen1",
+        "type": "gauge",
+        "value": 3,
+        "timestamp": 1751049874.1275434,
+        "labels": {},
+        "description": "GC collection count for generation 1"
+      }
+    ],
+    "gc_count_gen2": [
+      {
+        "name": "gc_count_gen2",
+        "type": "gauge",
+        "value": 4,
+        "timestamp": 1751049874.1275573,
+        "labels": {},
+        "description": "GC collection count for generation 2"
+      }
+    ],
+    "gc_objects": [
+      {
+        "name": "gc_objects",
+        "type": "gauge",
+        "value": 526755,
+        "timestamp": 1751049874.18549,
+        "labels": {},
+        "description": "Number of objects tracked by GC"
+      }
+    ],
+    "thread_count": [
+      {
+        "name": "thread_count",
+        "type": "gauge",
+        "value": 2,
+        "timestamp": 1751049874.1855695,
+        "labels": {},
+        "description": "Number of active threads"
+      }
+    ],
+    "python_version": [
+      {
+        "name": "python_version",
+        "type": "gauge",
+        "value": 3.12,
+        "timestamp": 1751049874.1856048,
+        "labels": {},
+        "description": "Python version"
+      }
+    ]
+  },
+  "operations": [],
+  "timestamp": 1751049874.8021886,
+  "hostname": "barberb-HP-ZBook-Fury-16-G9-Mobile-Workstation-PC",
+  "uptime": 1.002924919128418
+}

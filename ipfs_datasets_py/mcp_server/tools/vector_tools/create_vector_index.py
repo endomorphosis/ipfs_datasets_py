@@ -16,7 +16,7 @@ from ....vector_tools import VectorStore, create_vector_store
 
 
 # Global manager instance to maintain state between calls
-from .shared_state import get_global_manager
+from .shared_state import _get_global_manager
 
 
 async def create_vector_index(
@@ -43,9 +43,8 @@ async def create_vector_index(
     """
     try:
         logger.info(f"Creating vector index with {len(vectors)} vectors")
-
-        # Get the global manager
-        manager = get_global_manager()
+        # Get the global manager (synchronous internal helper)
+        manager = _get_global_manager()
 
         # Infer dimension if not provided
         if dimension is None and vectors:
@@ -62,6 +61,21 @@ async def create_vector_index(
 
         # Convert vectors to numpy arrays and add to index
         np_vectors = np.array(vectors)
+        
+        # Handle metadata: if provided but doesn't match vector count, adjust it
+        if metadata is not None:
+            if isinstance(metadata, dict):
+                # If single dict provided, replicate for all vectors
+                metadata = [metadata.copy() for _ in range(len(vectors))]
+            elif isinstance(metadata, list) and len(metadata) != len(vectors):
+                if len(metadata) == 1:
+                    # If single item in list, replicate for all vectors
+                    metadata = metadata * len(vectors)
+                else:
+                    # If mismatch, create default metadata for all vectors
+                    logger.warning(f"Metadata count ({len(metadata)}) doesn't match vector count ({len(vectors)}). Using default metadata.")
+                    metadata = [{"vector_index": i} for i in range(len(vectors))]
+        
         vector_ids = index.add_vectors(np_vectors, metadata=metadata)
 
         # Return information about the index

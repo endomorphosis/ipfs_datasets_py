@@ -1,0 +1,74 @@
+[
+    {
+        "name": "_convert_timestamp_to_datetime",
+        "signature": "(timestamp: str | int | float) -> datetime",
+        "docstring": null,
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_determine_if_current_time_is_within_working_hours",
+        "signature": "() -> str",
+        "docstring": "Determine if the current time is within working hours (9 AM to 5 PM).\n\nReturns:\n    str: 'True' if current time is within working hours, 'False' otherwise.",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_duration_since",
+        "signature": "(timestamp: str | int | float) -> str",
+        "docstring": "Calculate the duration between a given timestamp and the current time.\n\nArgs:\n    timestamp: Past timestamp as ISO string, Unix timestamp, or datetime object\n    \nReturns:\n    str: Human-readable duration since timestamp (e.g., \"2 days, 3 hours ago\")",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_get_days_hours_minutes_seconds",
+        "signature": "(diff: timedelta) -> tuple[int, int, int, int]",
+        "docstring": null,
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_get_duration",
+        "signature": "(days: int, hours: int, minutes: int, seconds: int) -> str",
+        "docstring": "Format duration into a human-readable string.",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_get_time_till_deadline",
+        "signature": "(deadline: str | int | float) -> str",
+        "docstring": "Calculate time remaining until a deadline.\n\nArgs:\n    deadline: Deadline as ISO string, timestamp, or Unix timestamp\n    \nReturns:\n    str: Human-readable time remaining (e.g., \"2 days, 3 hours\")",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "_time_between",
+        "signature": "(start: str | int | float, end: str | int | float) -> str",
+        "docstring": "Get the time difference between two timestamps.\n\nArgs:\n    start: Start timestamp as ISO string, Unix timestamp, or datetime object\n    end: End timestamp as ISO string, Unix timestamp, or datetime object\n    \nReturns:\n    str: Human-readable duration between timestamps (e.g., \"2 days, 3 hours\")",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    },
+    {
+        "name": "get_current_time",
+        "signature": "(format_type: str = \"iso\", time_between: Optional[tuple[str | int | float, ...]] = None, deadline_date: Optional[str | int | float] = None, check_if_within_working_hours: bool = False) -> str",
+        "docstring": "Returns the current time in the specified format. Has multiple format options and special modes.\nNOTE These modes are mutually exclusive. If more than one is provided, the first one will be used.\n\nArgs:\n    format_type (str): Format type - 'iso', 'human', 'timestamp', or custom strftime format\n    time_between (Optional[tuple[str | int | float, str | int | float]]):\n        Optional tuple of two timestamps to calculate the time difference between them.\n        If provided, the function will return the duration between the two timestamps.\n        If a tuple of length 1 is provided, it will calculate the duration between that timestamp and the current time.\n    deadline_date (Optional[str | int | float]): \n        Optional deadline date to calculate time remaining.\n        If provided, the function will return the time remaining until the deadline instead of the current time.\n    check_if_within_working_hours (bool): \n        If True, checks if the local time is within working hours (9 AM to 5 PM). \n        Defaults to False.\n\nReturns:\n    str: Current time in the specified format.",
+        "is_async": false,
+        "is_method": false,
+        "decorators": [],
+        "class_name": null
+    }
+]

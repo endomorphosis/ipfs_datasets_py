@@ -12,17 +12,17 @@ This example shows how to:
 import numpy as np
 from typing import Dict, List, Any, Optional
 
-from ipfs_datasets_py.rag_query_optimizer import (
+from ipfs_datasets_py.rag.rag_query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
     WikipediaKnowledgeGraphOptimizer,
     IPLDGraphRAGQueryOptimizer
 )
-from ipfs_datasets_py.llm_graphrag import (
+from ipfs_datasets_py.llm.llm_graphrag import (
     GraphRAGLLMProcessor,
     ReasoningEnhancer
 )
-from ipfs_datasets_py.llm_interface import LLMInterfaceFactory
-from ipfs_datasets_py.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.llm.llm_interface import LLMInterfaceFactory
+from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 
 def create_mock_documents() -> List[Dict[str, Any]]:

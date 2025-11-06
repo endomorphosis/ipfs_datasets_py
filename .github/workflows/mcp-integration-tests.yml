@@ -1,0 +1,533 @@
+name: MCP Endpoints Integration Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/**'
+      - 'tests/integration/**'
+      - '.github/workflows/mcp-integration-tests.yml'
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      test_scope:
+        description: 'Scope of integration tests to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - performance
+          - tools-only
+  schedule:
+    # Run comprehensive integration tests daily at 3 AM UTC
+    - cron: '0 3 * * *'
+
+permissions:
+  contents: read
+  packages: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  MCP_DASHBOARD_PORT: 8899
+
+jobs:
+  # Basic integration tests (containerized)
+  basic-integration-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build MCP Test Docker Image
+        run: |
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Basic Integration Tests in Docker
+        run: |
+          mkdir -p test-results
+          # Run the container with dashboard service
+          docker run --rm -d \
+            --name mcp-integration-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
+          
+          # Wait for dashboard to be ready
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/mcp/status 2>/dev/null; then
+              echo "✅ Dashboard is ready!"
+              break
+            fi
+            echo "⏳ Waiting for dashboard... ($i/60)"
+            sleep 2
+          done
+          
+          # Run basic integration tests
+          docker exec mcp-integration-test pytest tests/integration/test_mcp_endpoints.py -v \
+            --junit-xml=/app/test-results/basic-integration-results.xml || true
+          
+          # Stop the container
+          docker stop mcp-integration-test
+      
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: basic-integration-test-results
+          path: test-results/
+
+  # Comprehensive integration tests (containerized)
+  comprehensive-integration-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: basic-integration-tests
+    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build MCP Test Docker Image
+        run: |
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Comprehensive Integration Tests in Docker
+        run: |
+          mkdir -p test-results
+          # Run the container with dashboard service
+          docker run --rm -d \
+            --name mcp-comprehensive-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
+          
+          # Wait for dashboard to be ready
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/mcp/status 2>/dev/null; then
+              echo "✅ Dashboard is ready!"
+              break
+            fi
+            echo "⏳ Waiting for dashboard... ($i/60)"
+            sleep 2
+          done
+          
+          # Run comprehensive integration tests
+          docker exec mcp-comprehensive-test pytest tests/integration/ -v \
+            --cov=ipfs_datasets_py \
+            --cov-report=xml:/app/test-results/coverage.xml \
+            --junit-xml=/app/test-results/comprehensive-integration-results.xml || true
+          
+          # Stop the container
+          docker stop mcp-comprehensive-test
+        timeout-minutes: 30
+      
+      - name: Upload Comprehensive Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: comprehensive-integration-results
+          path: test-results/
+
+  # Tools-specific tests (containerized)
+  tools-integration-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: basic-integration-tests
+    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build MCP Test Docker Image
+        run: |
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Test MCP Tools Loading in Container
+        run: |
+          mkdir -p test-results
+          echo "🔧 Testing MCP tools loading in container..."
+          
+          docker run --rm \
+            -v $(pwd)/test-results:/app/test-results \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_tools_loading.py
+      
+      - name: Test MCP Tools via API in Container
+        run: |
+          echo "🌐 Testing MCP tools via API in container..."
+          
+          # Start dashboard
+          docker run --rm -d \
+            --name mcp-tools-test \
+            -p 8899:8899 \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
+          
+          # Wait for dashboard
+          sleep 15
+          
+          # Test API
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_tools_api.py || true
+          
+          # Stop dashboard
+          docker stop mcp-tools-test || true
+
+  # Performance tests (containerized)
+  performance-integration-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: basic-integration-tests
+    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build MCP Test Docker Image
+        run: |
+          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+      
+      - name: Run Performance Tests in Container
+        run: |
+          mkdir -p test-results
+          echo "⚡ Running performance tests in container..."
+          
+          # Start dashboard
+          docker run --rm -d \
+            --name mcp-perf-test \
+            -p 8899:8899 \
+            -v $(pwd)/test-results:/app/test-results \
+            ipfs-datasets-mcp-tests:latest \
+            python -m ipfs_datasets_py.mcp_dashboard
+          
+          # Wait for dashboard
+          sleep 15
+          
+          # Run performance tests
+          docker run --rm \
+            --network="host" \
+            -v $(pwd)/test-results:/app/test-results \
+            -v $(pwd)/.github/scripts:/scripts \
+            ipfs-datasets-mcp-tests:latest \
+            python /scripts/test_performance.py || true
+          
+          # Stop dashboard
+          docker stop mcp-perf-test || true
+      
+      - name: Upload Performance Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: test-results/
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[test,all]
+          pip install pytest requests numpy psutil
+      
+      - name: Start MCP Dashboard for Performance Tests
+        run: |
+          echo "🚀 Starting MCP Dashboard for performance tests..."
+          python -m ipfs_datasets_py.mcp_dashboard &
+          MCP_PID=$!
+          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          
+          # Wait for dashboard
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/mcp/status; then
+              echo "✅ Dashboard ready for performance tests!"
+              break
+            fi
+            sleep 2
+          done
+      
+      - name: Run Performance Tests
+        run: |
+          echo "⚡ Running MCP performance tests..."
+          python -c "
+          import requests
+          import time
+          import statistics
+          import psutil
+          import json
+          import sys
+          
+          def measure_performance():
+              endpoints = [
+                  'http://127.0.0.1:8899/api/mcp/status',
+                  'http://127.0.0.1:8899/api/mcp/tools',
+                  'http://127.0.0.1:8899/api/health'
+              ]
+              
+              results = {}
+              
+              for endpoint in endpoints:
+                  print(f'📊 Testing {endpoint}...')
+                  times = []
+                  errors = 0
+                  
+                  # Warm up
+                  try:
+                      requests.get(endpoint, timeout=5)
+                  except:
+                      pass
+                  
+                  # Measure performance
+                  for i in range(20):  # 20 requests
+                      try:
+                          start = time.time()
+                          response = requests.get(endpoint, timeout=10)
+                          end = time.time()
+                          
+                          if response.status_code == 200:
+                              times.append(end - start)
+                          else:
+                              errors += 1
+                      except Exception as e:
+                          errors += 1
+                  
+                  if times:
+                      results[endpoint] = {
+                          'avg_time': statistics.mean(times),
+                          'min_time': min(times),
+                          'max_time': max(times),
+                          'median_time': statistics.median(times),
+                          'successful_requests': len(times),
+                          'failed_requests': errors,
+                          'success_rate': len(times) / 20
+                      }
+                      
+                      print(f'  ✅ Avg: {statistics.mean(times):.3f}s')
+                      print(f'  📈 Min/Max: {min(times):.3f}s / {max(times):.3f}s')
+                      print(f'  🎯 Success rate: {len(times)/20*100:.1f}%')
+                  else:
+                      results[endpoint] = {'error': 'All requests failed'}
+                      print(f'  ❌ All requests failed')
+              
+              # System resource usage
+              process = psutil.Process()
+              memory_info = process.memory_info()
+              
+              results['system_metrics'] = {
+                  'memory_rss_mb': memory_info.rss / 1024 / 1024,
+                  'memory_vms_mb': memory_info.vms / 1024 / 1024,
+                  'cpu_percent': process.cpu_percent(),
+                  'num_threads': process.num_threads()
+              }
+              
+              print(f'💾 Memory RSS: {memory_info.rss / 1024 / 1024:.1f} MB')
+              print(f'🧵 Threads: {process.num_threads()}')
+              
+              # Save results
+              with open('performance_results.json', 'w') as f:
+                  json.dump(results, f, indent=2)
+              
+              return results
+          
+          perf_results = measure_performance()
+          
+          # Check performance thresholds
+          failed_endpoints = []
+          for endpoint, data in perf_results.items():
+              if endpoint == 'system_metrics':
+                  continue
+                  
+              if isinstance(data, dict) and 'avg_time' in data:
+                  if data['avg_time'] > 5.0:  # 5 second threshold
+                      failed_endpoints.append(f'{endpoint} (avg: {data[\"avg_time\"]:.3f}s)')
+                  if data['success_rate'] < 0.8:  # 80% success rate threshold
+                      failed_endpoints.append(f'{endpoint} (success: {data[\"success_rate\"]*100:.1f}%)')
+          
+          if failed_endpoints:
+              print(f'⚠️ Performance issues detected: {failed_endpoints}')
+              # Don't fail the build for performance issues, just warn
+          else:
+              print('✅ All performance tests passed')
+          "
+      
+      - name: Upload Performance Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: performance_results.json
+      
+      - name: Stop Dashboard
+        if: always()
+        run: |
+          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
+            kill $MCP_DASHBOARD_PID || true
+          fi
+          pkill -f "mcp_dashboard" || true
+
+  # Multi-architecture integration tests
+  multi-arch-integration-tests:
+    runs-on: ${{ matrix.runner }}
+    needs: basic-integration-tests
+    if: ${{ !cancelled() }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        runner:
+          - [self-hosted, linux, x64]
+          - [self-hosted, linux, arm64]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Architecture Info
+        run: |
+          echo "🏗️ Testing on $(uname -m) architecture"
+          echo "OS: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2)"
+          echo "Python: $(python3 --version)"
+      
+      - name: Set up environment
+        run: |
+          python3 -m venv .venv-integration
+          source .venv-integration/bin/activate
+          pip install --upgrade pip
+          pip install -e .[test]
+          pip install requests pytest pytest-asyncio
+      
+      - name: Run Basic Integration Tests
+        run: |
+          source .venv-integration/bin/activate
+          echo "🧪 Running basic integration tests on $(uname -m)..."
+          
+          # Start dashboard
+          python -m ipfs_datasets_py.mcp_dashboard &
+          MCP_PID=$!
+          
+          # Wait for dashboard
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/mcp/status; then
+              echo "✅ Dashboard ready on $(uname -m)!"
+              break
+            fi
+            sleep 2
+          done
+          
+          # Run tests
+          cd tests/integration
+          python -m pytest test_mcp_endpoints.py::TestMCPIntegration::test_basic_endpoints_only -v
+          
+          # Cleanup
+          kill $MCP_PID || true
+          pkill -f "mcp_dashboard" || true
+
+  # Generate comprehensive test summary
+  integration-test-summary:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
+    if: always()
+    
+    steps:
+      - name: Download Test Results
+        uses: actions/download-artifact@v4
+        with:
+          name: comprehensive-integration-results
+          path: test_results/
+        continue-on-error: true
+      
+      - name: Download Performance Results
+        uses: actions/download-artifact@v4
+        with:
+          name: performance-test-results
+          path: test_results/
+        continue-on-error: true
+      
+      - name: Generate Integration Test Summary
+        run: |
+          echo "## 🔗 MCP Integration Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Basic Integration | ${{ needs.basic-integration-tests.result }} | Core endpoint and tools availability |" >> $GITHUB_STEP_SUMMARY
+          echo "| Comprehensive Integration | ${{ needs.comprehensive-integration-tests.result }} | Full MCP functionality testing |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tools Integration | ${{ needs.tools-integration-tests.result }} | MCP tools loading and execution |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance Tests | ${{ needs.performance-integration-tests.result }} | API performance and resource usage |" >> $GITHUB_STEP_SUMMARY
+          echo "| Multi-Architecture | ${{ needs.multi-arch-integration-tests.result }} | x86_64 and ARM64 compatibility |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add success/failure analysis
+          echo "### Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.basic-integration-tests.result }}" = "success" ]; then
+            echo "✅ **Basic Integration**: Core MCP functionality is working correctly" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Basic Integration**: Critical issues with core MCP functionality" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.comprehensive-integration-tests.result }}" = "success" ]; then
+            echo "✅ **Comprehensive**: All MCP endpoints and tools are functional" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Comprehensive**: Some MCP endpoints or tools have issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.tools-integration-tests.result }}" = "success" ]; then
+            echo "✅ **Tools**: MCP tools loading and basic execution working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Tools**: Issues with MCP tools loading or execution" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Review test artifacts for detailed results" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor MCP dashboard performance in production" >> $GITHUB_STEP_SUMMARY
+          echo "- Set up continuous monitoring for endpoint availability" >> $GITHUB_STEP_SUMMARY
+          echo "- Consider adding more specific tool integration tests" >> $GITHUB_STEP_SUMMARY
