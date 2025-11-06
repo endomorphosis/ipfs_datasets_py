@@ -7,6 +7,27 @@ from pathlib import Path
 from typing import Optional
 
 
+def _parse_int_env(var_name: str, default: int) -> int:
+    """
+    Parse integer from environment variable with error handling.
+    
+    Args:
+        var_name: Environment variable name
+        default: Default value if not set or invalid
+        
+    Returns:
+        Parsed integer value or default
+    """
+    try:
+        value = os.getenv(var_name)
+        if value is None:
+            return default
+        return int(value)
+    except (ValueError, TypeError):
+        # Invalid value, return default
+        return default
+
+
 @dataclass
 class ErrorReportingConfig:
     """Configuration for automatic error reporting to GitHub issues."""
@@ -19,17 +40,17 @@ class ErrorReportingConfig:
     github_repo: str = field(default_factory=lambda: os.getenv('GITHUB_REPOSITORY', 'endomorphosis/ipfs_datasets_py'))
     
     # Rate limiting configuration
-    max_issues_per_hour: int = field(default_factory=lambda: int(os.getenv('ERROR_REPORTING_MAX_PER_HOUR', '10')))
-    max_issues_per_day: int = field(default_factory=lambda: int(os.getenv('ERROR_REPORTING_MAX_PER_DAY', '50')))
+    max_issues_per_hour: int = field(default_factory=lambda: _parse_int_env('ERROR_REPORTING_MAX_PER_HOUR', 10))
+    max_issues_per_day: int = field(default_factory=lambda: _parse_int_env('ERROR_REPORTING_MAX_PER_DAY', 50))
     
     # Deduplication configuration
-    dedup_window_hours: int = field(default_factory=lambda: int(os.getenv('ERROR_REPORTING_DEDUP_HOURS', '24')))
+    dedup_window_hours: int = field(default_factory=lambda: _parse_int_env('ERROR_REPORTING_DEDUP_HOURS', 24))
     
     # Error context configuration
     include_stack_trace: bool = field(default_factory=lambda: os.getenv('ERROR_REPORTING_INCLUDE_STACK', 'true').lower() == 'true')
     include_environment: bool = field(default_factory=lambda: os.getenv('ERROR_REPORTING_INCLUDE_ENV', 'true').lower() == 'true')
     include_logs: bool = field(default_factory=lambda: os.getenv('ERROR_REPORTING_INCLUDE_LOGS', 'true').lower() == 'true')
-    max_log_lines: int = field(default_factory=lambda: int(os.getenv('ERROR_REPORTING_MAX_LOG_LINES', '100')))
+    max_log_lines: int = field(default_factory=lambda: _parse_int_env('ERROR_REPORTING_MAX_LOG_LINES', 100))
     
     # Issue labels
     default_labels: list = field(default_factory=lambda: ['bug', 'auto-generated', 'runtime-error'])

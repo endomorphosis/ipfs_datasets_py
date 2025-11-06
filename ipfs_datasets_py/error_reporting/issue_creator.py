@@ -66,13 +66,25 @@ class GitHubIssueCreator:
         now = datetime.now()
         
         # Check hourly reset
-        last_hour_reset = datetime.fromisoformat(self.state['last_hour_reset'])
+        try:
+            last_hour_reset = datetime.fromisoformat(self.state['last_hour_reset'])
+        except (ValueError, KeyError):
+            # Invalid or missing timestamp, reset to now
+            last_hour_reset = now
+            self.state['last_hour_reset'] = now.isoformat()
+        
         if (now - last_hour_reset) > timedelta(hours=1):
             self.state['hourly_count'] = 0
             self.state['last_hour_reset'] = now.isoformat()
         
         # Check daily reset
-        last_day_reset = datetime.fromisoformat(self.state['last_day_reset'])
+        try:
+            last_day_reset = datetime.fromisoformat(self.state['last_day_reset'])
+        except (ValueError, KeyError):
+            # Invalid or missing timestamp, reset to now
+            last_day_reset = now
+            self.state['last_day_reset'] = now.isoformat()
+        
         if (now - last_day_reset) > timedelta(days=1):
             self.state['daily_count'] = 0
             self.state['last_day_reset'] = now.isoformat()
@@ -134,7 +146,12 @@ class GitHubIssueCreator:
         if signature not in self.state['reported_errors']:
             return False
         
-        last_reported = datetime.fromisoformat(self.state['reported_errors'][signature])
+        try:
+            last_reported = datetime.fromisoformat(self.state['reported_errors'][signature])
+        except (ValueError, TypeError):
+            # Invalid timestamp, treat as not a duplicate
+            return False
+        
         now = datetime.now()
         
         # Check if within deduplication window
