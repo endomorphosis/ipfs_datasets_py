@@ -1,5 +1,55 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Interactive manager, not for CI/CD automation
+
+This is a manual interactive tool, not suitable for automated workflows.
+For automation, use the verified dual method scripts.
+
+The correct method for automation is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py for automation
+
+Examples:
+  # Automated PR processing
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+  
+  # List PRs needing work (use gh CLI directly)
+  gh pr list --state open --draft --json number,title
+  
+  # Check Copilot progress (check for Copilot's PR)
+  gh pr list --author copilot
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This is an interactive manager, not for CI/CD automation.")
+print()
+print("✅ For automation, use: scripts/invoke_copilot_on_pr.py")
+print("✅ For manual PR management, use: gh pr list / gh pr view")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 GitHub Copilot Coding Agent - Interactive PR Manager
 
 This script provides an interactive interface to manage GitHub Copilot

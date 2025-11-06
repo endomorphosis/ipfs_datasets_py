@@ -1,5 +1,51 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Uses @copilot comments without draft PR (0% success rate)
+
+The correct method is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # Single PR
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+  
+  # Multiple PRs (loop)
+  for pr in 123 124 125; do
+    python scripts/invoke_copilot_on_pr.py --pr $pr
+  done
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses @copilot comments without draft PR.")
+print("This method has 0% success rate.")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Batch Assign Copilot to Existing PRs
 
 This script assigns GitHub Copilot to multiple existing PRs using PR comments.

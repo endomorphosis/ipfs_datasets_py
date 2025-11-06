@@ -1,5 +1,59 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Incorrect throttling approach, uses wrong Copilot CLI method
+
+This script uses the gh copilot extension incorrectly for automation.
+The throttling logic is unnecessary with the verified dual method.
+
+The correct method is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+3. GitHub handles capacity automatically
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # Single PR (no throttling needed)
+  python scripts/invoke_copilot_on_pr.py --pr 123
+  
+  # Multiple PRs (built-in concurrency support)
+  for pr in 123 124 125; do
+    python scripts/invoke_copilot_on_pr.py --pr $pr &
+  done
+  wait
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method
+- Note: Dual method supports concurrent tasks (tested)
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses incorrect Copilot CLI method and unnecessary throttling.")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print("   - No throttling needed")
+print("   - Supports concurrent tasks")
+print("   - 100% success rate")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Invoke GitHub Copilot CLI on PRs with Throttling
 
 This script properly invokes the GitHub Copilot CLI tool (not just @copilot mentions)

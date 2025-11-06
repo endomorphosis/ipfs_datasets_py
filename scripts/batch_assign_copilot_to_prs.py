@@ -1,5 +1,54 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Uses `gh agent-task create` which DOES NOT EXIST
+
+This script claims to use "Official GitHub CLI command" but gh agent-task
+has NEVER existed. All workflows using this had 0% success rate.
+
+The correct method is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # Single PR
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+  
+  # Batch processing (loop)
+  gh pr list --state open --json number --jq '.[].number' | while read pr; do
+    python scripts/invoke_copilot_on_pr.py --pr $pr
+  done
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+print("This command has NEVER been part of GitHub CLI.")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Batch process all open PRs and assign Copilot where appropriate.
 
 This script analyzes all open pull requests and automatically assigns

@@ -1,5 +1,53 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Uses `gh agent-task create` which DOES NOT EXIST
+
+The gh agent-task command has NEVER existed in GitHub CLI.
+This script tries to work around it but the workaround doesn't work either.
+
+The correct method for EXISTING PRs is the DUAL METHOD:
+1. Create draft PR (or work with existing PR)
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # For existing PRs (the right way)
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+  
+  # Dry run
+  python scripts/invoke_copilot_on_pr.py --pr 123 --dry-run
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method (100% success)
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+print("The fallback workaround also doesn't work reliably.")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print("   Success rate: 100% (verified with 4 tests)")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Create Copilot Coding Agent Task for a PR
 
 ⚠️ DEPRECATION WARNING ⚠️

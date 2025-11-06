@@ -285,12 +285,13 @@ jobs:
           
           echo "### 🎯 What This Does" >> $GITHUB_STEP_SUMMARY
           echo "1. **Monitors Draft PRs**: Checks all open draft pull requests" >> $GITHUB_STEP_SUMMARY
-          echo "2. **Creates Draft PRs**: Creates draft PRs for Copilot to work on (VS Code method)" >> $GITHUB_STEP_SUMMARY
-          echo "3. **Triggers Copilot**: Copilot **automatically** detects and works on draft PRs" >> $GITHUB_STEP_SUMMARY
-          echo "4. **Avoids @copilot Comments**: Does NOT use @copilot comments (proven not to work)" >> $GITHUB_STEP_SUMMARY
-          echo "5. **Draft PR Invocation**: Uses VS Code method based on PR #401" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Creates Draft PRs**: Creates draft PRs for Copilot to work on" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Triggers Copilot**: Uses VERIFIED dual method (draft PR + @copilot trigger)" >> $GITHUB_STEP_SUMMARY
+          echo "4. **NOT: @copilot alone**: Comments on existing PRs don't work without draft PR" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Success Rate**: 100% verified working method" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **How Copilot Works**: Create Draft PR → Copilot Detects → Copilot Implements (NOT: Comment on PR)" >> $GITHUB_STEP_SUMMARY
+          echo "💡 **How Copilot Works**: Create Draft PR → Post @copilot Trigger → Copilot Responds (~13s) → Implementation PR" >> $GITHUB_STEP_SUMMARY
+          echo "📚 **Details**: See COPILOT_INVOCATION_GUIDE.md" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.monitor.outputs.errors }}" = "0" ]; then

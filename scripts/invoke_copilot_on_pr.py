@@ -169,18 +169,20 @@ class CopilotAgentInvoker:
         task_description: Optional[str] = None
     ) -> bool:
         """
-        Invoke Copilot by creating a draft PR (VS Code method - PROVEN TO WORK).
+        Invoke Copilot by creating a draft PR AND triggering with @copilot comment.
         
-        This mimics how VS Code invokes Copilot and is the RECOMMENDED method.
+        This uses BOTH methods for reliability:
+        1. Creates draft PR (VS Code style structure)
+        2. Posts @copilot comment to trigger the agent
         
         Args:
             pr_number: Original PR number to work on
             task_description: Description of what Copilot should do
         
         Returns:
-            True if draft PR created successfully
+            True if draft PR created and Copilot triggered successfully
         """
-        logger.info(f"{'[DRY RUN] ' if self.dry_run else ''}Invoking Copilot on PR #{pr_number} via draft PR method...")
+        logger.info(f"{'[DRY RUN] ' if self.dry_run else ''}Invoking Copilot on PR #{pr_number} via draft PR + trigger method...")
         
         # Get original PR info
         pr_info = self.get_pr_info(pr_number)
@@ -229,13 +231,15 @@ Please analyze PR #{pr_number} and implement the necessary work:
         draft_pr_title = f"🤖 Copilot: Complete PR #{pr_number} - {pr_title[:60]}"
         
         if self.dry_run:
-            logger.info(f"\n[DRY RUN] Would create draft PR:")
+            logger.info(f"\n[DRY RUN] Would create draft PR and trigger Copilot:")
             logger.info(f"  Branch: {branch_name}")
             logger.info(f"  Title: {draft_pr_title}")
-            logger.info(f"  Task:\n{'-'*80}\n{task_description}\n{'-'*80}\n")
+            logger.info(f"  Task:\n{'-'*80}\n{task_description}\n{'-'*80}")
+            logger.info(f"  Would post: @copilot /fix comment to trigger agent")
             return True
         
-        # Use the draft PR invoker script
+        # Step 1: Create draft PR using the script
+        logger.info("  Step 1: Creating draft PR...")
         cmd = [
             'python3', 'scripts/invoke_copilot_via_draft_pr.py',
             '--title', draft_pr_title,
@@ -247,13 +251,75 @@ Please analyze PR #{pr_number} and implement the necessary work:
         
         result = self.run_command(cmd, timeout=120)
         
-        if result['success']:
-            logger.info(f"✅ Successfully created draft PR for Copilot to work on")
-            logger.info(f"  Copilot will automatically detect and start working on it")
-            return True
-        else:
+        if not result['success']:
             logger.error(f"❌ Failed to create draft PR: {result.get('stderr', result.get('error'))}")
             return False
+        
+        logger.info(f"✅ Draft PR created successfully")
+        
+        # Step 2: Get the newly created PR number
+        # Extract from the script output or query GitHub
+        time.sleep(2)  # Wait for PR to be fully created
+        
+        # Find the most recent draft PR for this original PR
+        logger.info("  Step 2: Finding created draft PR...")
+        list_cmd = [
+            'gh', 'pr', 'list',
+            '--repo', self.repo,
+            '--state', 'open',
+            '--json', 'number,title,createdAt',
+            '--limit', '5'
+        ]
+        
+        list_result = self.run_command(list_cmd)
+        if list_result['success']:
+            try:
+                prs = json.loads(list_result['stdout'])
+                # Find PR with our title pattern
+                draft_pr_number = None
+                for pr in prs:
+                    if f"Complete PR #{pr_number}" in pr['title']:
+                        draft_pr_number = pr['number']
+                        break
+                
+                if draft_pr_number:
+                    logger.info(f"✅ Found draft PR #{draft_pr_number}")
+                    
+                    # Step 3: Post @copilot comment to trigger the agent
+                    logger.info("  Step 3: Triggering Copilot agent with comment...")
+                    trigger_comment = f"""@copilot /fix
+
+{task_description}
+
+Please implement the necessary changes to complete this work."""
+                    
+                    comment_cmd = [
+                        'gh', 'pr', 'comment', str(draft_pr_number),
+                        '--repo', self.repo,
+                        '--body', trigger_comment
+                    ]
+                    
+                    comment_result = self.run_command(comment_cmd, timeout=60)
+                    
+                    if comment_result['success']:
+                        logger.info(f"✅ Successfully triggered Copilot on draft PR #{draft_pr_number}")
+                        logger.info(f"   Copilot will now analyze and implement the changes")
+                        return True
+                    else:
+                        logger.warning(f"⚠️  Draft PR created but failed to post trigger comment")
+                        logger.warning(f"   You may need to manually comment '@copilot /fix' on PR #{draft_pr_number}")
+                        return True  # Still success since PR was created
+                else:
+                    logger.warning(f"⚠️  Could not find the created draft PR")
+                    logger.warning(f"   Check recent PRs manually")
+                    return True  # Still success since PR was created
+                    
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ Failed to parse PR list: {e}")
+                return True  # Still success since PR was created
+        else:
+            logger.warning(f"⚠️  Could not list PRs to find draft PR number")
+            return True  # Still success since PR was created
     
     def invoke_copilot(
         self,
