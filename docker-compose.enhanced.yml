@@ -1,0 +1,52 @@
+# Docker Compose override for enhanced dependency management
+# Use: docker-compose -f docker-compose.mcp.yml -f docker-compose.enhanced.yml up
+
+version: '3.8'
+
+services:
+  # Enhanced MCP Server with full dependency management
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-minimal
+    environment:
+      - PYTHONFAULTHANDLER=1
+      - PYTHONUNBUFFERED=1
+      - MCP_SERVER_HOST=0.0.0.0
+      - MCP_SERVER_PORT=8000
+      - IPFS_DATASETS_CONFIG=/app/config/mcp_config.yaml
+      # Force dependency check on startup
+      - RUN_DEPENDENCY_CHECK=true
+    command: ["sh", "-c", "python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
+
+  # Enhanced MCP Dashboard with full dependency management
+  mcp-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard-minimal
+    environment:
+      - PYTHONFAULTHANDLER=1
+      - PYTHONUNBUFFERED=1
+      - MCP_DASHBOARD_HOST=0.0.0.0
+      - MCP_DASHBOARD_PORT=8899
+      - MCP_DASHBOARD_BLOCKING=1
+      - MCP_SERVER_HOST=mcp-server
+      - MCP_SERVER_PORT=8000
+      # Force dependency check on startup
+      - RUN_DEPENDENCY_CHECK=true
+    command: ["sh", "-c", "python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_dashboard"]
+
+  # Dependency Validation Service (optional)
+  dependency-validator:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp-minimal
+    environment:
+      - PYTHONFAULTHANDLER=1
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./dependency_reports:/app/reports
+    profiles:
+      - validation
+    command: ["sh", "-c", "python tools/dependency_checker.py --install-optional --verbose > /app/reports/dependency_report.txt 2>&1 && echo 'Dependency validation complete'"]
+    restart: "no"

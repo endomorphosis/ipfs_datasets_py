@@ -27,8 +27,14 @@ RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pyth
 # Copy the entire project
 COPY . .
 
+# Copy dependency checker
+COPY tools/dependency_checker.py tools/dependency_checker.py
+
 # Install the package in development mode
 RUN pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
+
+# Run dependency checker to install comprehensive dependencies
+RUN python tools/dependency_checker.py --install-optional || echo "Some optional dependencies may be missing"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \

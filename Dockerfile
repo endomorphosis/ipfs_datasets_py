@@ -28,8 +28,14 @@ RUN cd /tmp \
 # Copy project files
 COPY . /app/
 
+# Copy dependency checker for comprehensive dependency management
+COPY tools/dependency_checker.py /app/tools/dependency_checker.py
+
 # Install the package and its dependencies
 RUN pip install --no-cache-dir -e .
+
+# Run dependency checker to ensure all dependencies are installed
+RUN python /app/tools/dependency_checker.py --install-optional && echo "✅ All dependencies installed"
 
 # Install optional dependencies based on the specified features
 ARG FEATURES=all

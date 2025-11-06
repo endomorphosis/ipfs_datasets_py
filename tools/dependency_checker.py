@@ -110,8 +110,10 @@ class DependencyChecker:
             'xgboost': 'xgboost',
             'lightgbm': 'lightgbm',
             'catboost': 'catboost',
-            
-            # GPU support (optional)
+        }
+        
+        # GPU-specific packages (require CUDA support)
+        self.gpu_packages = {
             'cupy': 'cupy',
             'faiss_gpu': 'faiss-gpu',
         }
@@ -145,6 +147,29 @@ class DependencyChecker:
             elif package_name == 'qdrant_client':
                 # qdrant-client imports as qdrant_client
                 importlib.import_module('qdrant_client')
+            elif package_name == 'ipywidgets':
+                # ipywidgets import check
+                importlib.import_module('ipywidgets')
+            elif package_name == 'xgboost':
+                # xgboost import check
+                importlib.import_module('xgboost')
+            elif package_name == 'lightgbm':
+                # lightgbm import check
+                importlib.import_module('lightgbm')
+            elif package_name == 'catboost':
+                # catboost import check
+                importlib.import_module('catboost')
+            elif package_name == 'cupy':
+                # cupy import check (GPU support)
+                importlib.import_module('cupy')
+            elif package_name == 'faiss_gpu':
+                # faiss-gpu imports as faiss but with GPU support
+                import faiss
+                # Check if GPU support is available
+                if hasattr(faiss, 'StandardGpuResources'):
+                    return True
+                else:
+                    return False
             else:
                 importlib.import_module(package_name)
             return True
@@ -173,10 +198,11 @@ class DependencyChecker:
         
         return missing_system
     
-    def check_all_dependencies(self) -> Tuple[List[str], List[str], List[str]]:
-        """Check all dependencies and return missing core, optional, and system deps."""
+    def check_all_dependencies(self) -> Tuple[List[str], List[str], List[str], List[str]]:
+        """Check all dependencies and return missing core, optional, GPU, and system deps."""
         missing_core = []
         missing_optional = []
+        missing_gpu = []
         
         print("Checking core dependencies...")
         for module_name, package_name in self.dependency_map.items():
@@ -194,14 +220,22 @@ class DependencyChecker:
             else:
                 print(f"  ✅ Found: {module_name}")
         
+        print("\nChecking GPU dependencies...")
+        for module_name, package_name in self.gpu_packages.items():
+            if not self.check_package(module_name):
+                missing_gpu.append(package_name)
+                print(f"  ⚠️  GPU missing: {module_name} ({package_name})")
+            else:
+                print(f"  ✅ Found: {module_name}")
+        
         print("\nChecking system dependencies...")
         missing_system = self.check_system_dependencies()
         for dep in missing_system:
             print(f"  ❌ System missing: {dep}")
         
-        return missing_core, missing_optional, missing_system
+        return missing_core, missing_optional, missing_gpu, missing_system
     
-    def install_packages(self, packages: List[str], optional: bool = False) -> bool:
+    def install_packages(self, packages: List[str], optional: bool = False, allow_failure: bool = False) -> bool:
         """Install missing packages."""
         if not packages:
             return True
@@ -232,9 +266,14 @@ class DependencyChecker:
                     print(f"✅ All {package_type} packages verified successfully")
                     return True
             else:
-                print(f"❌ Failed to install {package_type} packages:")
-                print(result.stderr)
-                return False
+                if allow_failure:
+                    print(f"⚠️  Failed to install {package_type} packages (failure allowed):")
+                    print(result.stderr[:200] + "..." if len(result.stderr) > 200 else result.stderr)
+                    return False  # Still return False but don't crash
+                else:
+                    print(f"❌ Failed to install {package_type} packages:")
+                    print(result.stderr)
+                    return False
         except subprocess.TimeoutExpired:
             print(f"❌ Timeout installing {package_type} packages")
             return False
@@ -262,6 +301,13 @@ class DependencyChecker:
             'qdrant-client': 'qdrant_client',
             'dash-cytoscape': 'dash_cytoscape',
             'dash-bootstrap-components': 'dash_bootstrap_components',
+            # Optional package mappings
+            'ipywidgets': 'ipywidgets',
+            'jupyterlab': 'jupyterlab',
+            'xgboost': 'xgboost',
+            'lightgbm': 'lightgbm',
+            'catboost': 'catboost',
+            'cupy': 'cupy',
         }
         
         # Remove version specifiers and extras
@@ -293,7 +339,7 @@ class DependencyChecker:
         print("🔍 IPFS Datasets Python - Dependency Check")
         print("=" * 50)
         
-        missing_core, missing_optional, missing_system = self.check_all_dependencies()
+        missing_core, missing_optional, missing_gpu, missing_system = self.check_all_dependencies()
         
         # Report summary
         print("\n📊 SUMMARY")
@@ -332,13 +378,46 @@ class DependencyChecker:
         
         if install_optional and missing_optional:
             success &= self.install_packages(missing_optional, optional=True)
+            
+            # Re-check optional dependencies after installation
+            if success:
+                print("\nRe-checking optional dependencies after installation...")
+                still_missing_optional = []
+                for module_name, package_name in self.optional_packages.items():
+                    if not self.check_package(module_name):
+                        still_missing_optional.append(module_name)
+                missing_optional = still_missing_optional  # Update the list
+        
+        # Handle GPU packages separately (may fail on non-GPU systems)
+        if install_optional and missing_gpu:
+            print("\n🖥️  Attempting to install GPU packages (may fail on non-GPU systems)...")
+            gpu_success = self.install_packages(missing_gpu, optional=True, allow_failure=True)
+            if gpu_success:
+                print("\nRe-checking GPU dependencies after installation...")
+                still_missing_gpu = []
+                for module_name, package_name in self.gpu_packages.items():
+                    if not self.check_package(module_name):
+                        still_missing_gpu.append(module_name)
+                missing_gpu = still_missing_gpu
+            else:
+                print("⚠️  GPU package installation failed (expected on non-GPU systems)")
         
         # Setup additional data
         self.setup_nltk_data()
         
         print("\n🎉 Dependency check complete!")
         if success and not missing_core:
-            print("✅ All core dependencies are satisfied")
+            if missing_optional and not install_optional:
+                print("✅ All core dependencies are satisfied")
+                print(f"💡 {len(missing_optional)} optional packages available. Run with --install-optional to install them.")
+            elif missing_optional and install_optional:
+                print("✅ All core dependencies are satisfied")
+                print(f"⚠️  {len(missing_optional)} optional packages still missing after installation")
+            elif missing_gpu and install_optional:
+                print("✅ All dependencies (core and optional) are satisfied")
+                print(f"ℹ️  {len(missing_gpu)} GPU packages unavailable (expected on non-GPU systems)")
+            else:
+                print("✅ All dependencies (core and optional) are satisfied")
             return True
         elif missing_core:
             print("❌ Some core dependencies are still missing")
@@ -353,11 +432,14 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description='IPFS Datasets Python Dependency Checker')
-    parser.add_argument('--check-only', action='store_true', help='Only check, do not install')
-    parser.add_argument('--install-optional', action='store_true', help='Install optional packages')
+    parser.add_argument('--check-only', action='store_true', help='Only check, do not install missing packages')
+    parser.add_argument('--install-optional', action='store_true', help='Install optional packages (Jupyter, advanced ML libraries)')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     
     args = parser.parse_args()
+    
+    if not args.check_only and not args.install_optional:
+        print("💡 Tip: Use --install-optional to also install Jupyter, XGBoost, LightGBM, CatBoost, etc.")
     
     checker = DependencyChecker()
     

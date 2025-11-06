@@ -61,7 +61,7 @@ export MCP_DASHBOARD_PORT="${PORT}"
 export MCP_DASHBOARD_BLOCKING="${BLOCKING}"
 
 echo "✅ Quick setup complete. Starting dashboard on ${HOST}:${PORT}"
-echo "💡 Run 'python tools/dependency_checker.py' for full dependency installation"
+echo "💡 Run 'python tools/dependency_checker.py' for comprehensive dependency installation (includes FAISS, vector databases, etc.)"
 
 # Start the dashboard
 exec python -m ipfs_datasets_py.mcp_dashboard
