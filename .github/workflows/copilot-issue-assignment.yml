@@ -1,0 +1,167 @@
+name: Copilot Issue Assignment
+
+on:
+  issues:
+    types: [opened, labeled]
+  schedule:
+    # Run every 10 minutes to process queued issues
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to assign to Copilot'
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  assign-to-copilot:
+    runs-on: [self-hosted, linux, x64]
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      (github.event.action == 'opened' && startsWith(github.event.issue.title, 'Fix:')) ||
+      (github.event.action == 'labeled' && github.event.label.name == 'copilot-fix')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Find queued issues
+        id: find_queued
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Find issues labeled 'copilot-queued' and check if we can process them
+          QUEUED_ISSUES=$(gh issue list --repo "${{ github.repository }}" --label "copilot-queued" --state open --json number --jq '.[].number' | head -1)
+          if [ -n "$QUEUED_ISSUES" ]; then
+            echo "number=$QUEUED_ISSUES" >> $GITHUB_OUTPUT
+            echo "Found queued issue #${QUEUED_ISSUES}" | tee -a $GITHUB_STEP_SUMMARY
+          else
+            echo "No queued issues found" | tee -a $GITHUB_STEP_SUMMARY
+            echo "number=" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Determine issue number
+        id: issue
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "number=${{ inputs.issue_number }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            echo "number=${{ steps.find_queued.outputs.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "number=${{ github.event.issue.number }}" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Check Copilot agent concurrency
+        id: check_concurrency
+        if: steps.issue.outputs.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ACTIVE_COUNT=$(gh pr list --author "app/copilot-swe-agent" --state open --repo "${{ github.repository }}" --json number | jq 'length')
+          echo "Currently active Copilot agents: ${ACTIVE_COUNT}" | tee -a $GITHUB_STEP_SUMMARY
+          MAX_CONCURRENT=3
+          if [ "${ACTIVE_COUNT}" -ge "${MAX_CONCURRENT}" ]; then
+            echo "⚠️ Concurrency limit reached (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
+            echo "should_wait=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Concurrency available (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
+            echo "should_wait=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Queue issue if limit reached
+        if: steps.check_concurrency.outputs.should_wait == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          gh issue edit "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --add-label "copilot-queued"
+          gh issue comment "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --body "🤖 **Copilot Agent Queue Status**
+
+          This issue has been queued for Copilot assignment due to concurrency limits.
+          
+          - **Active agents**: $(gh pr list --author 'app/copilot-swe-agent' --state open --repo '${{ github.repository }}' --json number | jq 'length')
+          - **Max concurrent**: 3
+          
+          You can manually trigger assignment later using:
+          \`\`\`bash
+          gh workflow run copilot-issue-assignment.yml --field issue_number=${ISSUE_NUMBER}
+          \`\`\`"
+          echo "Issue #${ISSUE_NUMBER} queued" | tee -a $GITHUB_STEP_SUMMARY
+      
+      - name: Invoke Copilot coding agent
+        if: steps.check_concurrency.outputs.should_wait == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          echo "## 🤖 Invoking Copilot Coding Agent" | tee -a $GITHUB_STEP_SUMMARY
+          echo "Assigning issue #${ISSUE_NUMBER} to GitHub Copilot..." | tee -a $GITHUB_STEP_SUMMARY
+          
+          ISSUE_TITLE=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json title --jq '.title')
+          ISSUE_BODY=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json body --jq '.body')
+          ISSUE_URL="https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER}"
+          
+          cat > /tmp/copilot_task_${ISSUE_NUMBER}.txt << TASK_EOF
+          Fix ${ISSUE_TITLE}
+          
+          ${ISSUE_BODY}
+          
+          References:
+          - Issue: ${ISSUE_URL}
+          
+          Please analyze this issue, identify the root cause, and implement a solution that:
+          - Fixes the immediate problem
+          - Prevents similar issues in the future
+          - Includes proper error handling
+          - Adds tests if applicable
+          
+          Ensure all tests pass and security scans are clean before finalizing.
+          TASK_EOF
+          
+          if AGENT_URL=$(gh agent-task create --repo "${{ github.repository }}" --base main -F /tmp/copilot_task_${ISSUE_NUMBER}.txt 2>&1); then
+            echo "✅ Successfully created Copilot agent task" | tee -a $GITHUB_STEP_SUMMARY
+            echo "Agent session: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+            
+            # Remove queued label and add assigned label
+            gh issue edit "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --remove-label "copilot-queued" --add-label "copilot-assigned"
+            gh issue comment "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --body "🤖 **Copilot Agent Task Created**
+
+            A Copilot coding agent has been assigned to this issue.
+            
+            **Session URL**: ${AGENT_URL}
+            
+            The agent will:
+            - Analyze the issue and related code
+            - Create a new branch and pull request
+            - Implement fixes autonomously
+            - Run tests and security scans
+            - Update the PR based on review feedback
+            
+            Track progress in the agent session logs and the PR that will be created."
+          else
+            echo "❌ Failed to create Copilot agent task" | tee -a $GITHUB_STEP_SUMMARY
+            echo "Error: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          rm -f /tmp/copilot_task_${ISSUE_NUMBER}.txt
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "---" | tee -a $GITHUB_STEP_SUMMARY
+          echo "" | tee -a $GITHUB_STEP_SUMMARY
+          echo "**Method**: \`gh agent-task create\` (Official GitHub CLI command)" | tee -a $GITHUB_STEP_SUMMARY
+          echo "**Requires**: GitHub CLI v2.80.0 or later" | tee -a $GITHUB_STEP_SUMMARY
+          echo "**Concurrency Limit**: 3 active agents maximum" | tee -a $GITHUB_STEP_SUMMARY
+          echo "**Cron Schedule**: Runs every 10 minutes to process queued issues" | tee -a $GITHUB_STEP_SUMMARY

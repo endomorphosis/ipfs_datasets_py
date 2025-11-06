@@ -331,9 +331,35 @@ jobs:
             echo "fix_available=false" >> $GITHUB_OUTPUT
           fi
       
+      - name: Check for existing open issues
+        id: check_duplicates
+        if: steps.generate_fix.outputs.fix_available == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
+          
+          # Check for open issues with the same workflow name
+          EXISTING_ISSUE=$(gh issue list \
+            --repo "${{ github.repository }}" \
+            --state open \
+            --search "Fix: ${WORKFLOW_NAME} workflow failure in:title" \
+            --json number,title \
+            --jq '.[0].number // ""')
+          
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "⚠️ Found existing open issue #$EXISTING_ISSUE for this workflow" >> $GITHUB_STEP_SUMMARY
+            echo "Skipping duplicate issue creation" >> $GITHUB_STEP_SUMMARY
+            echo "existing_issue=$EXISTING_ISSUE" >> $GITHUB_OUTPUT
+            echo "skip_creation=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing open issue found for this workflow" >> $GITHUB_STEP_SUMMARY
+            echo "skip_creation=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Create issue for Copilot to fix
         id: create_issue
-        if: steps.generate_fix.outputs.fix_available == 'true'
+        if: steps.generate_fix.outputs.fix_available == 'true' && steps.check_duplicates.outputs.skip_creation != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
