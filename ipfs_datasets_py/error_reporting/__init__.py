@@ -1,17 +1,20 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Error reporting module for automatic GitHub issue creation.
+Runtime Error Reporting System
 
 This module provides automatic error reporting functionality that converts
-runtime errors into GitHub issues with proper context and deduplication.
+runtime errors into GitHub issues for automated tracking and resolution.
 """
-from .error_handler import ErrorHandler, error_reporter, get_recent_logs
-from .issue_creator import GitHubIssueCreator
-from .config import ErrorReportingConfig
+
+from .error_reporter import ErrorReporter, get_global_error_reporter
+from .github_issue_client import GitHubIssueClient
+from .error_handler import install_error_handlers, uninstall_error_handlers
 
 __all__ = [
-    'ErrorHandler',
-    'error_reporter',
-    'get_recent_logs',
-    'GitHubIssueCreator',
-    'ErrorReportingConfig',
+    'ErrorReporter',
+    'get_global_error_reporter',
+    'GitHubIssueClient',
+    'install_error_handlers',
+    'uninstall_error_handlers',
 ]
