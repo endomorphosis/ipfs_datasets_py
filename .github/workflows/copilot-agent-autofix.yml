@@ -339,23 +339,42 @@ jobs:
         run: |
           WORKFLOW_NAME="${{ steps.get_run_details.outputs.workflow_name }}"
           
-          # Check for open issues with the same workflow name
-          EXISTING_ISSUE=$(gh issue list \
-            --repo "${{ github.repository }}" \
-            --state open \
-            --search "Fix: ${WORKFLOW_NAME} workflow failure in:title" \
-            --json number,title \
-            --jq '.[0].number // ""')
+          # Check for open issues with the same workflow name - with retry
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          BACKOFF=2
           
-          if [ -n "$EXISTING_ISSUE" ]; then
-            echo "⚠️ Found existing open issue #$EXISTING_ISSUE for this workflow" >> $GITHUB_STEP_SUMMARY
-            echo "Skipping duplicate issue creation" >> $GITHUB_STEP_SUMMARY
-            echo "existing_issue=$EXISTING_ISSUE" >> $GITHUB_OUTPUT
-            echo "skip_creation=true" >> $GITHUB_OUTPUT
-          else
-            echo "No existing open issue found for this workflow" >> $GITHUB_STEP_SUMMARY
-            echo "skip_creation=false" >> $GITHUB_OUTPUT
-          fi
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if EXISTING_ISSUE=$(gh issue list \
+              --repo "${{ github.repository }}" \
+              --state open \
+              --search "Fix: ${WORKFLOW_NAME} workflow failure in:title" \
+              --json number,title \
+              --jq '.[0].number // ""' 2>/dev/null); then
+              
+              if [ -n "$EXISTING_ISSUE" ]; then
+                echo "⚠️ Found existing open issue #$EXISTING_ISSUE for this workflow" >> $GITHUB_STEP_SUMMARY
+                echo "Skipping duplicate issue creation" >> $GITHUB_STEP_SUMMARY
+                echo "existing_issue=$EXISTING_ISSUE" >> $GITHUB_OUTPUT
+                echo "skip_creation=true" >> $GITHUB_OUTPUT
+              else
+                echo "No existing open issue found for this workflow" >> $GITHUB_STEP_SUMMARY
+                echo "skip_creation=false" >> $GITHUB_OUTPUT
+              fi
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                echo "⚠️ Failed to check for duplicates, retrying in ${WAIT_TIME}s (attempt $((RETRY_COUNT + 1))/${MAX_RETRIES})..." >> $GITHUB_STEP_SUMMARY
+                sleep $WAIT_TIME
+              else
+                echo "❌ Failed to check for duplicates after ${MAX_RETRIES} attempts" >> $GITHUB_STEP_SUMMARY
+                echo "Proceeding with caution (may create duplicate)" >> $GITHUB_STEP_SUMMARY
+                echo "skip_creation=false" >> $GITHUB_OUTPUT
+              fi
+            fi
+          done
       
       - name: Create issue for Copilot to fix
         id: create_issue
@@ -403,27 +422,52 @@ jobs:
           sed -i "s|ERROR_TYPE_PLACEHOLDER|$ERROR_TYPE|g" /tmp/issue_body.md
           sed -i "s|ROOT_CAUSE_PLACEHOLDER|$ROOT_CAUSE|g" /tmp/issue_body.md
           
-          # Create the issue WITHOUT labels to avoid rate limits
-          ISSUE_URL=$(gh issue create \
-            --title "Fix: ${{ steps.get_run_details.outputs.workflow_name }} workflow failure (Run ${{ steps.get_run_details.outputs.run_id }})" \
-            --body-file /tmp/issue_body.md) || {
-              echo "❌ Failed to create issue"
-              exit 1
-            }
+          # Create the issue with retry and exponential backoff
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          BACKOFF=2
+          ISSUE_CREATED=false
           
-          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oP '\d+$')
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if ISSUE_URL=$(gh issue create \
+              --title "Fix: ${{ steps.get_run_details.outputs.workflow_name }} workflow failure (Run ${{ steps.get_run_details.outputs.run_id }})" \
+              --body-file /tmp/issue_body.md 2>&1); then
+              
+              ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oP '\d+$')
+              
+              echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
+              echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
+              
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "## ✅ Issue Created for Copilot" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🔗 **Issue**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
+              echo "🔢 **Issue #**: $ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+              echo "🤖 **Next**: Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "💡 **How it works**: Issue created → Copilot creates PR automatically" >> $GITHUB_STEP_SUMMARY
+              
+              ISSUE_CREATED=true
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                echo "⚠️ Failed to create issue, retrying in ${WAIT_TIME}s (attempt $((RETRY_COUNT + 1))/${MAX_RETRIES})..." >> $GITHUB_STEP_SUMMARY
+                echo "Error: ${ISSUE_URL}" >> $GITHUB_STEP_SUMMARY
+                sleep $WAIT_TIME
+              else
+                echo "❌ Failed to create issue after ${MAX_RETRIES} attempts" >> $GITHUB_STEP_SUMMARY
+                echo "Error: ${ISSUE_URL}" >> $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            fi
+          done
           
-          echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
-          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## ✅ Issue Created for Copilot" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 **Issue**: $ISSUE_URL" >> $GITHUB_STEP_SUMMARY
-          echo "🔢 **Issue #**: $ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
-          echo "🤖 **Next**: Copilot will automatically create a PR to fix this issue" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 **How it works**: Issue created → Copilot creates PR automatically" >> $GITHUB_STEP_SUMMARY
+          if [ "$ISSUE_CREATED" != true ]; then
+            echo "❌ Failed to create issue"
+            exit 1
+          fi
           git checkout -b "$BRANCH_NAME"
           
           # Create a placeholder file to enable PR creation

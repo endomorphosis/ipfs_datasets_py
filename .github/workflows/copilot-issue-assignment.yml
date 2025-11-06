@@ -67,16 +67,35 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ACTIVE_COUNT=$(gh pr list --author "app/copilot-swe-agent" --state open --repo "${{ github.repository }}" --json number | jq 'length')
-          echo "Currently active Copilot agents: ${ACTIVE_COUNT}" | tee -a $GITHUB_STEP_SUMMARY
-          MAX_CONCURRENT=3
-          if [ "${ACTIVE_COUNT}" -ge "${MAX_CONCURRENT}" ]; then
-            echo "⚠️ Concurrency limit reached (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
-            echo "should_wait=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Concurrency available (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
-            echo "should_wait=false" >> $GITHUB_OUTPUT
-          fi
+          # Retry logic with exponential backoff
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          BACKOFF=2
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if ACTIVE_COUNT=$(gh pr list --author "app/copilot-swe-agent" --state open --repo "${{ github.repository }}" --json number 2>/dev/null | jq 'length'); then
+              echo "Currently active Copilot agents: ${ACTIVE_COUNT}" | tee -a $GITHUB_STEP_SUMMARY
+              MAX_CONCURRENT=3
+              if [ "${ACTIVE_COUNT}" -ge "${MAX_CONCURRENT}" ]; then
+                echo "⚠️ Concurrency limit reached (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
+                echo "should_wait=true" >> $GITHUB_OUTPUT
+              else
+                echo "✅ Concurrency available (${ACTIVE_COUNT}/${MAX_CONCURRENT})" | tee -a $GITHUB_STEP_SUMMARY
+                echo "should_wait=false" >> $GITHUB_OUTPUT
+              fi
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                echo "⚠️ API call failed, retrying in ${WAIT_TIME}s (attempt $((RETRY_COUNT + 1))/${MAX_RETRIES})..." | tee -a $GITHUB_STEP_SUMMARY
+                sleep $WAIT_TIME
+              else
+                echo "❌ Failed to check concurrency after ${MAX_RETRIES} attempts" | tee -a $GITHUB_STEP_SUMMARY
+                echo "should_wait=true" >> $GITHUB_OUTPUT  # Fail safe: queue the issue
+              fi
+            fi
+          done
       
       - name: Queue issue if limit reached
         if: steps.check_concurrency.outputs.should_wait == 'true'
@@ -107,8 +126,28 @@ jobs:
           echo "## 🤖 Invoking Copilot Coding Agent" | tee -a $GITHUB_STEP_SUMMARY
           echo "Assigning issue #${ISSUE_NUMBER} to GitHub Copilot..." | tee -a $GITHUB_STEP_SUMMARY
           
-          ISSUE_TITLE=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json title --jq '.title')
-          ISSUE_BODY=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json body --jq '.body')
+          # Get issue details with retry
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          BACKOFF=2
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if ISSUE_TITLE=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json title --jq '.title' 2>/dev/null) && \
+               ISSUE_BODY=$(gh issue view "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --json body --jq '.body' 2>/dev/null); then
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                echo "⚠️ Failed to fetch issue details, retrying in ${WAIT_TIME}s (attempt $((RETRY_COUNT + 1))/${MAX_RETRIES})..." | tee -a $GITHUB_STEP_SUMMARY
+                sleep $WAIT_TIME
+              else
+                echo "❌ Failed to fetch issue details after ${MAX_RETRIES} attempts" | tee -a $GITHUB_STEP_SUMMARY
+                exit 1
+              fi
+            fi
+          done
+          
           ISSUE_URL="https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER}"
           
           cat > /tmp/copilot_task_${ISSUE_NUMBER}.txt << TASK_EOF
@@ -128,13 +167,52 @@ jobs:
           Ensure all tests pass and security scans are clean before finalizing.
           TASK_EOF
           
-          if AGENT_URL=$(gh agent-task create --repo "${{ github.repository }}" --base main -F /tmp/copilot_task_${ISSUE_NUMBER}.txt 2>&1); then
-            echo "✅ Successfully created Copilot agent task" | tee -a $GITHUB_STEP_SUMMARY
-            echo "Agent session: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+          # Create agent task with retry
+          RETRY_COUNT=0
+          AGENT_CREATED=false
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if AGENT_URL=$(gh agent-task create --repo "${{ github.repository }}" --base main -F /tmp/copilot_task_${ISSUE_NUMBER}.txt 2>&1); then
+              echo "✅ Successfully created Copilot agent task" | tee -a $GITHUB_STEP_SUMMARY
+              echo "Agent session: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+              AGENT_CREATED=true
+              break
+            else
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                echo "⚠️ Failed to create agent task, retrying in ${WAIT_TIME}s (attempt $((RETRY_COUNT + 1))/${MAX_RETRIES})..." | tee -a $GITHUB_STEP_SUMMARY
+                echo "Error: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+                sleep $WAIT_TIME
+              else
+                echo "❌ Failed to create Copilot agent task after ${MAX_RETRIES} attempts" | tee -a $GITHUB_STEP_SUMMARY
+                echo "Error: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
+                rm -f /tmp/copilot_task_${ISSUE_NUMBER}.txt
+                exit 1
+              fi
+            fi
+          done
+          
+          if [ "$AGENT_CREATED" = true ]; then
+            # Update issue labels with retry
+            RETRY_COUNT=0
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if gh issue edit "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --remove-label "copilot-queued" --add-label "copilot-assigned" 2>/dev/null; then
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                  echo "⚠️ Failed to update labels, retrying in ${WAIT_TIME}s..." | tee -a $GITHUB_STEP_SUMMARY
+                  sleep $WAIT_TIME
+                fi
+              fi
+            done
             
-            # Remove queued label and add assigned label
-            gh issue edit "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --remove-label "copilot-queued" --add-label "copilot-assigned"
-            gh issue comment "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --body "🤖 **Copilot Agent Task Created**
+            # Post comment with retry
+            RETRY_COUNT=0
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              if gh issue comment "${ISSUE_NUMBER}" --repo "${{ github.repository }}" --body "🤖 **Copilot Agent Task Created**
 
             A Copilot coding agent has been assigned to this issue.
             
@@ -147,12 +225,19 @@ jobs:
             - Run tests and security scans
             - Update the PR based on review feedback
             
-            Track progress in the agent session logs and the PR that will be created."
-          else
-            echo "❌ Failed to create Copilot agent task" | tee -a $GITHUB_STEP_SUMMARY
-            echo "Error: ${AGENT_URL}" | tee -a $GITHUB_STEP_SUMMARY
-            exit 1
+            Track progress in the agent session logs and the PR that will be created." 2>/dev/null; then
+                break
+              else
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  WAIT_TIME=$((BACKOFF ** RETRY_COUNT))
+                  echo "⚠️ Failed to post comment, retrying in ${WAIT_TIME}s..." | tee -a $GITHUB_STEP_SUMMARY
+                  sleep $WAIT_TIME
+                fi
+              fi
+            done
           fi
+          
           rm -f /tmp/copilot_task_${ISSUE_NUMBER}.txt
       
       - name: Summary
@@ -165,3 +250,4 @@ jobs:
           echo "**Requires**: GitHub CLI v2.80.0 or later" | tee -a $GITHUB_STEP_SUMMARY
           echo "**Concurrency Limit**: 3 active agents maximum" | tee -a $GITHUB_STEP_SUMMARY
           echo "**Cron Schedule**: Runs every 10 minutes to process queued issues" | tee -a $GITHUB_STEP_SUMMARY
+          echo "**Retry Policy**: 3 attempts with exponential backoff (2^n seconds)" | tee -a $GITHUB_STEP_SUMMARY
