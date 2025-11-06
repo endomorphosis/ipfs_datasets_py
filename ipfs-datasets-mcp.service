@@ -9,12 +9,10 @@ Type=exec
 User=barberb
 Group=barberb
 WorkingDirectory=/home/barberb/ipfs_datasets_py
-Environment=PATH=/home/barberb/ipfs_datasets_py/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-Environment=PYTHONPATH=/home/barberb/ipfs_datasets_py
 Environment=MCP_DASHBOARD_HOST=127.0.0.1
 Environment=MCP_DASHBOARD_PORT=8899
 Environment=MCP_DASHBOARD_BLOCKING=0
-ExecStart=/usr/bin/python3 -m ipfs_datasets_py.mcp_dashboard
+ExecStart=/bin/bash -lc '/home/barberb/ipfs_datasets_py/tools/run_mcp_dashboard.sh'
 ExecStop=/home/barberb/ipfs_datasets_py/ipfs-datasets mcp stop
 Restart=always
 RestartSec=15

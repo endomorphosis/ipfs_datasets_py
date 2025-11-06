@@ -2291,7 +2291,7 @@ class MCPDashboard(AdminDashboard):
                 return jsonify({"success": False, "error": str(e)}), 500
         
         @self.app.route('/api/mcp/software/query_theorems', methods=['POST'])
-        def api_query_theorems():
+        def api_query_software_theorems():
             """Query software engineering theorems."""
             try:
                 data = request.json or {}
