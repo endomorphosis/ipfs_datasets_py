@@ -20,7 +20,7 @@ jobs:
     name: Build distribution 📦
     runs-on: [self-hosted, linux, x64]
     permissions:
-      contents: write  # Needed to clean up working directory
+      contents: write  # Needed to clean up working directory and checkout code
     
     steps:
       - name: Clean up working directory
@@ -59,6 +59,7 @@ jobs:
       name: pypi
       url: https://pypi.org/p/ipfs-datasets # Replace <package-name> with your PyPI project name
     permissions:
+      contents: read  # Needed to download artifacts
       id-token: write  # IMPORTANT: mandatory for trusted publishing
     steps:
       - name: Download all the dists
