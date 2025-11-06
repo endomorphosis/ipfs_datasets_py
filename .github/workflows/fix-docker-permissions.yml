@@ -13,12 +13,16 @@ on:
           - fix_permissions
           - test_docker
 
+permissions:
+  contents: read
+  actions: read
+
 env:
   DOCKER_BUILDKIT: 1
 
 jobs:
   diagnose-docker-permissions:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     if: github.event.inputs.fix_type == 'diagnose' || github.event.inputs.fix_type == 'fix_permissions'
     
     steps:
@@ -112,7 +116,7 @@ jobs:
           fi
 
   fix-docker-permissions:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     if: github.event.inputs.fix_type == 'fix_permissions'
     needs: diagnose-docker-permissions
     
@@ -149,7 +153,7 @@ jobs:
           echo "⚠️ **Note**: Runner service may need to be restarted manually for changes to take effect." >> $GITHUB_STEP_SUMMARY
 
   test-docker-after-fix:
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, linux, x64]
     if: github.event.inputs.fix_type == 'test_docker'
     
     steps:

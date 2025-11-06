@@ -148,7 +148,7 @@ jobs:
 
   # Test on self-hosted ARM64 runner (if available)
   test-self-hosted-arm64:
-    runs-on: [self-hosted, arm64, linux]
+    runs-on: [self-hosted, linux, arm64]
     if: ${{ !cancelled() }}
     continue-on-error: true
     
