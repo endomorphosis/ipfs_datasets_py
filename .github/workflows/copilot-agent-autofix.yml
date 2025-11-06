@@ -475,7 +475,8 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to fix the workflow failure.
           
-          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary fixes.
+          GitHub Copilot will be invoked using the VERIFIED working method (draft PR + @copilot trigger).
+          See COPILOT_INVOCATION_GUIDE.md for details on the invocation method.
           
           ### Next Steps
           

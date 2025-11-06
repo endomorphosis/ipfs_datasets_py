@@ -1,5 +1,53 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Uses `gh agent-task create` which DOES NOT EXIST
+
+IRONY ALERT: Despite being named "proper_copilot_invoker", this script
+uses an IMPROPER method that has NEVER worked!
+
+The gh agent-task command has NEVER existed in GitHub CLI.
+All workflows using this had 0% success rate.
+
+The correct method is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py (the ACTUAL proper method!)
+
+Examples:
+  # The REAL proper way
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - The ACTUAL proper method (100% verified)
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("IRONY ALERT: Despite the name 'proper_copilot_invoker', this script")
+print("uses an IMPROPER method (gh agent-task) that has NEVER existed!")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print("   (The ACTUAL proper method - 100% verified)")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Proper Copilot Agent Invocation Script
 
 This script properly invokes GitHub Copilot agents on draft PRs by using

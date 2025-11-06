@@ -294,7 +294,10 @@ jobs:
           
           This is a draft PR that will be automatically updated by GitHub Copilot to fix the validation failures.
           
-          GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement fixes for:
+          GitHub Copilot will be invoked using the VERIFIED working method (draft PR + @copilot trigger).
+          See COPILOT_INVOCATION_GUIDE.md for details on the invocation method.
+          
+          Copilot will implement fixes for:
           
           1. Schema validation issues for scrapers
           2. Missing required fields (title, text) in scraper output
@@ -329,24 +332,25 @@ jobs:
           PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           
-          # Invoke Copilot using the new queue-managed CLI tool with validation context
-          # This uses the validation report JSON to generate comprehensive instructions
-          echo "Invoking GitHub Copilot on PR #$PR_NUMBER using queue-managed Copilot CLI..."
+          # Invoke Copilot using the VERIFIED working method (draft PR + @copilot trigger)
+          # See COPILOT_INVOCATION_GUIDE.md for details
+          echo "Invoking GitHub Copilot on PR #$PR_NUMBER using verified dual method..."
           
-          # Check if validation report exists and use it as context
+          # Build task description with validation context
+          TASK_DESC="Please analyze the scraper validation failures and implement fixes. Focus on: (1) Schema validation issues, (2) Missing required fields (title, text), (3) HuggingFace compatibility, (4) Data quality improvements."
+          
+          # Check if validation report exists and include summary
           if [ -f "validation_results/comprehensive_validation_report.json" ]; then
-            python3 scripts/invoke_copilot_with_queue.py \
-              --pr "$PR_NUMBER" \
-              --context-file validation_results/comprehensive_validation_report.json \
-              --context-type validation \
-              --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
-          else
-            # Fallback to basic instruction if report not available
-            python3 scripts/invoke_copilot_with_queue.py \
-              --pr "$PR_NUMBER" \
-              --instruction "Please analyze the scraper validation failures and implement fixes. Focus on schema validation, HuggingFace compatibility, and data quality." \
-              --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
+            echo "Including validation report context..."
+            REPORT_SUMMARY=$(python3 -c "import json; r=json.load(open('validation_results/comprehensive_validation_report.json')); print(f'Validation: {r.get(\"total_scrapers\",\"?\")}} scrapers, {r.get(\"failed_scrapers\",\"?\")} failed')" 2>/dev/null || echo "")
+            TASK_DESC="$TASK_DESC $REPORT_SUMMARY"
           fi
+          
+          # Invoke using invoke_copilot_on_pr.py (uses draft PR + @copilot trigger method)
+          python3 scripts/invoke_copilot_on_pr.py \
+            --pr "$PR_NUMBER" \
+            --task "$TASK_DESC" \
+            --repo ${{ github.repository }} || echo "⚠️  Copilot invocation failed, check logs"
           
           echo "✅ Created issue #$ISSUE_NUMBER and draft PR #$PR_NUMBER"
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -355,7 +359,8 @@ jobs:
           echo "- **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Draft PR**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Status**: GitHub Copilot invoked via queue-managed CLI with validation report context" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: GitHub Copilot invoked using verified dual method (draft PR + @copilot trigger)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Method**: See COPILOT_INVOCATION_GUIDE.md for details" >> $GITHUB_STEP_SUMMARY
       
       - name: Final Summary
         if: always()

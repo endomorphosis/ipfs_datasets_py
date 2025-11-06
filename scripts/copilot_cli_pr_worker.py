@@ -1,3 +1,53 @@
+#!/usr/bin/env python3
+"""
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Uses npm copilot CLI (wrong tool for automation)
+
+The npm @github/copilot CLI is for INTERACTIVE use only, not CI/CD automation.
+This script has 0% success rate for automated workflows.
+
+The correct method for automation is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # Work on specific PR
+  python scripts/invoke_copilot_on_pr.py --pr 246 --instruction "Fix the issues"
+  
+  # Work on all draft PRs
+  gh pr list --state open --draft --json number --jq '.[].number' | while read pr; do
+    python scripts/invoke_copilot_on_pr.py --pr $pr
+  done
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses npm copilot CLI which is for INTERACTIVE use only.")
+print("It is NOT suitable for CI/CD automation (0% success rate).")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
 """
 GitHub Copilot CLI PR Worker
 
