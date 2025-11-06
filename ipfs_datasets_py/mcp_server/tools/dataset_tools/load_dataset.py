@@ -54,19 +54,11 @@ async def load_dataset(
     try:
         logger.info(f"Loading dataset from {source} with format {format if format else 'auto'}")
 
-<<<<<<< HEAD
         # Input validation - reject Python files and dangerous sources
         if not source or not isinstance(source, str) or len(source.strip()) == 0:
             raise ValueError("Source must be a non-empty string")
             
         # Reject Python files for security
-=======
-        # Input validation
-        if not source or not isinstance(source, str):
-            raise ValueError("Source must be a non-empty string")
-        
-        # Check if source is a Python file (not allowed)
->>>>>>> da7c0dbd8fb61934738d1739d764840626108075
         if source.lower().endswith('.py'):
             raise ValueError(
                 "Python files (.py) are not valid dataset sources. "
@@ -74,20 +66,10 @@ async def load_dataset(
                 "a directory path, or a data file (JSON, CSV, Parquet, etc.)"
             )
         
-<<<<<<< HEAD
         # Reject other executable files
         executable_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
         if any(source.lower().endswith(ext) for ext in executable_extensions):
             raise ValueError(f"Executable files are not valid dataset sources: {source}")
-=======
-        # Check for other invalid file extensions
-        invalid_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib']
-        if any(source.lower().endswith(ext) for ext in invalid_extensions):
-            raise ValueError(
-                f"File type not supported for datasets. "
-                f"Please provide a dataset identifier or data file (JSON, CSV, Parquet, etc.)"
-            )
->>>>>>> da7c0dbd8fb61934738d1739d764840626108075
 
         # Default options
         if options is None:

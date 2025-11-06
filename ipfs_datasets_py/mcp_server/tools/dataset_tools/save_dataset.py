@@ -55,7 +55,6 @@ async def save_dataset(
     try:
         logger.info(f"Saving dataset {dataset_data} to {destination} with format {format if format else 'default'}")
 
-<<<<<<< HEAD
         # Input validation - prevent saving as executable files
         if not destination or not isinstance(destination, str) or len(destination.strip()) == 0:
             raise ValueError("Destination must be a non-empty string")
@@ -67,18 +66,6 @@ async def save_dataset(
                 f"Cannot save dataset as executable file: {destination}. "
                 "Please use a data format like .json, .csv, .parquet, etc."
             )
-=======
-        # Input validation
-        if not destination or not isinstance(destination, str):
-            raise ValueError("Destination must be a non-empty string")
-        
-        # Check if destination is trying to save as executable
-        executable_extensions = ['.py', '.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
-        if any(destination.lower().endswith(ext) for ext in executable_extensions):
-            raise ValueError(
-                f"Cannot save dataset as executable file. "
-                f"Please use data formats like .json, .csv, .parquet, or directories."
-            )
         
         # Validate dataset_data
         if dataset_data is None:
@@ -86,7 +73,6 @@ async def save_dataset(
         
         if isinstance(dataset_data, str) and not dataset_data.strip():
             raise ValueError("Dataset ID cannot be empty")
->>>>>>> da7c0dbd8fb61934738d1739d764840626108075
 
         # Default options
         if options is None:

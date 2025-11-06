@@ -1,0 +1,14 @@
+[Unit]
+Description=Cleanup GitHub Actions runner _temp directories for ipfs_datasets_py
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=barberb
+Group=barberb
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/home/barberb/ipfs_datasets_py/scripts/cleanup_runner_temp.sh --path /home/barberb/actions-runner-ipfs_datasets_py/_work/_temp --hours 24 --max-delete 200
+
+[Install]
+WantedBy=multi-user.target

@@ -13,8 +13,8 @@ Environment=PATH=/home/barberb/ipfs_datasets_py/.venv/bin:/usr/local/sbin:/usr/l
 Environment=PYTHONPATH=/home/barberb/ipfs_datasets_py
 Environment=MCP_DASHBOARD_HOST=127.0.0.1
 Environment=MCP_DASHBOARD_PORT=8899
-Environment=MCP_DASHBOARD_BLOCKING=1
-ExecStart=/home/barberb/ipfs_datasets_py/.venv/bin/python -m ipfs_datasets_py.mcp_dashboard
+Environment=MCP_DASHBOARD_BLOCKING=0
+ExecStart=/usr/bin/python3 -m ipfs_datasets_py.mcp_dashboard
 ExecStop=/home/barberb/ipfs_datasets_py/ipfs-datasets mcp stop
 Restart=always
 RestartSec=15
