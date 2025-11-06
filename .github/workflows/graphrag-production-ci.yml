@@ -34,7 +34,7 @@ jobs:
           sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
           sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
           # Clean workspace contents but keep the directory itself
-          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec sudo rm -rf {} + 2>/dev/null || true
+          sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* 2>/dev/null || true
         fi
     
     - name: Configure git
@@ -50,7 +50,7 @@ jobs:
       run: |
         # Use system python3 on self-hosted runner
         python3 --version
-        # Python 3.12+ requires --break-system-packages for system-wide installation
+        # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
         python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
     
     - name: Start test services with Docker
@@ -94,7 +94,12 @@ jobs:
             ipfs-datasets-graphrag-tests:py${{ matrix.python-version }}
         else
           echo "Running tests with system Python"
-          python3 -m pip install --break-system-packages -e ".[test]" || python3 -m pip install --user -e ".[test]" || true
+          # Try to install test dependencies with PEP 668 override, fallback to user install
+          if ! python3 -m pip install --break-system-packages -e ".[test]" 2>/dev/null; then
+            if ! python3 -m pip install --user -e ".[test]" 2>/dev/null; then
+              echo "Warning: Failed to install test dependencies, proceeding anyway"
+            fi
+          fi
           python3 -m pytest tests/ -v --tb=short -k "not slow" || echo "Tests completed with errors"
         fi
     
@@ -146,7 +151,7 @@ jobs:
     - name: Set up Python
       run: |
         python3 --version
-        # Python 3.12+ requires --break-system-packages for system-wide installation
+        # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
         python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
     
     - name: Run bandit security scan
