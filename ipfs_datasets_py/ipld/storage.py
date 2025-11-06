@@ -146,6 +146,9 @@ class IPLDStorage:
             base_dir (str, optional): Directory for temporary files. If None, a
                 temporary directory will be created.
             ipfs_api (str, optional): IPFS API endpoint. Defaults to the local node.
+        
+        Raises:
+            PermissionError: If the base directory cannot be created or accessed due to insufficient permissions.
         """
         self.base_dir = base_dir or tempfile.mkdtemp()
         self.ipfs_api = ipfs_api
@@ -160,8 +163,22 @@ class IPLDStorage:
                 print(f"Warning: Could not connect to IPFS at {self.ipfs_api}: {e}")
                 print("Operating in local-only mode. Use connect() to retry connection.")
 
-        # Create the base directory if it doesn't exist
-        os.makedirs(self.base_dir, exist_ok=True)
+        # Create the base directory if it doesn't exist with proper permission handling
+        try:
+            os.makedirs(self.base_dir, mode=0o755, exist_ok=True)
+            
+            # Verify directory is writable
+            if not os.access(self.base_dir, os.W_OK):
+                raise PermissionError(f"Insufficient permissions to write to directory: {self.base_dir}")
+            
+            # Verify directory is readable
+            if not os.access(self.base_dir, os.R_OK):
+                raise PermissionError(f"Insufficient permissions to read from directory: {self.base_dir}")
+                
+        except OSError as e:
+            if e.errno == 13:  # Permission denied
+                raise PermissionError(f"Insufficient permissions to create directory: {self.base_dir}") from e
+            raise
 
         # Block cache to avoid fetching the same block multiple times
         self._block_cache: Dict[str, bytes] = {}
@@ -344,7 +361,26 @@ class IPLDStorage:
         Raises:
             ImportError: If ipld_car module is not available
             ValueError: If blocks cannot be found
+            PermissionError: If insufficient permissions to write to output_path
         """
+        # Check if output directory exists and is writable
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            if not os.path.exists(output_dir):
+                try:
+                    os.makedirs(output_dir, mode=0o755, exist_ok=True)
+                except OSError as e:
+                    if e.errno == 13:  # Permission denied
+                        raise PermissionError(f"Insufficient permissions to create directory: {output_dir}") from e
+                    raise
+            
+            if not os.access(output_dir, os.W_OK):
+                raise PermissionError(f"Insufficient permissions to write to directory: {output_dir}")
+        
+        # Check if file already exists and is writable
+        if os.path.exists(output_path) and not os.access(output_path, os.W_OK):
+            raise PermissionError(f"Insufficient permissions to overwrite file: {output_path}")
+        
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             with open(output_path, 'wb') as f:
@@ -388,7 +424,17 @@ class IPLDStorage:
         Raises:
             ImportError: If ipld_car module is not available
             ValueError: If the CAR file cannot be read
+            FileNotFoundError: If the CAR file does not exist
+            PermissionError: If insufficient permissions to read the CAR file
         """
+        # Check if file exists
+        if not os.path.exists(car_path):
+            raise FileNotFoundError(f"CAR file not found: {car_path}")
+        
+        # Check if file is readable
+        if not os.access(car_path, os.R_OK):
+            raise PermissionError(f"Insufficient permissions to read CAR file: {car_path}")
+        
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             if "test_export.car" in car_path:
@@ -647,7 +693,20 @@ class IPLDStorage:
         Raises:
             ImportError: If ipld_car module is not available
             ValueError: If blocks cannot be found
+            PermissionError: If output_file is not writable
         """
+        # Verify the file is writable
+        if not hasattr(output_file, 'write'):
+            raise ValueError("output_file must be a file object with write method")
+        
+        # Try to write to verify permissions
+        try:
+            output_file.write(b'')
+        except (OSError, IOError) as e:
+            if e.errno == 13:  # Permission denied
+                raise PermissionError(f"Insufficient permissions to write to output file") from e
+            raise
+        
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             output_file.write(b"mock CAR data")
@@ -707,7 +766,12 @@ class IPLDStorage:
         Raises:
             ImportError: If ipld_car module is not available
             ValueError: If the CAR file cannot be read
+            PermissionError: If car_file is not readable
         """
+        # Verify the file is readable
+        if not hasattr(car_file, 'read'):
+            raise ValueError("car_file must be a file object with read method")
+        
         if not HAVE_IPLD_CAR:
             # Mock implementation for testing
             test_roots = ["bafybeidetatestcid"]
@@ -728,8 +792,12 @@ class IPLDStorage:
                 if not chunk:
                     break
                 car_data.extend(chunk)
+        except (OSError, IOError) as e:
+            if e.errno == 13:  # Permission denied
+                raise PermissionError(f"Insufficient permissions to read from input file") from e
+            raise ValueError(f"Error reading CAR file: {e}") from e
         except Exception as e:
-            raise ValueError(f"Error reading CAR file: {e}")
+            raise ValueError(f"Error reading CAR file: {e}") from e
 
         # Create a batch processor
         processor = BatchProcessor(batch_size=100)
