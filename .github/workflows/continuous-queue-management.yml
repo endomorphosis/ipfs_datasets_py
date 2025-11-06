@@ -406,8 +406,8 @@ jobs:
             TASK_TYPE="review"
           fi
           
-          # Create comprehensive task description for gh agent-task
-          cat > /tmp/agent_task_description.txt << TASK_EOF
+          # Create comprehensive task description for Copilot
+          TASK_DESC=$(cat << TASK_EOF
           Work on Issue #${{ matrix.issue_number }}: ${ISSUE_TITLE}
           
           **Issue URL**: https://github.com/${{ github.repository }}/issues/${{ matrix.issue_number }}
@@ -432,23 +432,29 @@ jobs:
           - Focus on solving the specific issue described
           - Validate that changes don't break existing functionality
           TASK_EOF
+          )
           
           echo "Task type: $TASK_TYPE"
-          echo "Task description (first 10 lines):"
-          head -10 /tmp/agent_task_description.txt
+          echo "Task description (first 200 chars): ${TASK_DESC:0:200}..."
           
           if [ "$DRY_RUN" = "true" ]; then
-            echo "🔍 DRY RUN: Would create Copilot Coding Agent task"
-            echo "Command: gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}"
+            echo "🔍 DRY RUN: Would invoke Copilot Coding Agent"
+            echo "Command: python3 scripts/invoke_copilot_on_issue.py --issue ${{ matrix.issue_number }}"
           else
-            echo "🤖 Creating Copilot Coding Agent task using gh agent-task create..."
-            if gh agent-task create -F /tmp/agent_task_description.txt --repo ${{ github.repository }}; then
-              echo "✅ Successfully created agent task for Issue #${{ matrix.issue_number }}"
-              echo "The Copilot Coding Agent will analyze the issue and create a PR with the implementation"
+            echo "🤖 Invoking Copilot Coding Agent using PROPER method (draft PR + @copilot trigger)..."
+            # NOTE: This creates a draft PR for the issue and posts @copilot comment to trigger
+            # See COPILOT_INVOCATION_GUIDE.md for details on why this is the correct method
+            if python3 scripts/invoke_copilot_on_issue.py \
+                --issue ${{ matrix.issue_number }} \
+                --task "$TASK_DESC" \
+                --repo ${{ github.repository }}; then
+              echo "✅ Successfully invoked Copilot for Issue #${{ matrix.issue_number }}"
+              echo "📊 Copilot will create a draft PR and start working on the implementation"
+              echo "💡 Monitor: gh pr list --author app/copilot-swe-agent"
             else
-              echo "⚠️  gh agent-task create failed, falling back to issue comment"
+              echo "⚠️  Copilot invocation failed, posting notification comment"
               # Fallback: Post a comment on the issue as notification
-              echo "Attempted to create Copilot Coding Agent task but the command failed." | \
+              echo "Attempted to invoke Copilot Coding Agent but invocation failed. Please check the workflow logs for details." | \
                 gh issue comment ${{ matrix.issue_number }} --body-file - || true
             fi
           fi
@@ -470,29 +476,37 @@ jobs:
           echo "⏱️  Rate limiting: Waiting 2 seconds before API calls..."
           sleep 2
           
-          # Use gh agent-task list to check active agent tasks
-          if gh agent-task list --limit 20 --json id,description,state,createdAt 2>/dev/null; then
-            echo "✅ Successfully queried agent tasks"
+          # Monitor by checking for active Copilot workflow runs
+          # NOTE: gh agent-task does NOT exist - using workflow monitoring instead
+          # See COPILOT_INVOCATION_GUIDE.md for details
+          echo "📊 Checking Copilot workflow runs..."
+          if gh run list --workflow "Copilot coding agent" --limit 20 --json status,displayTitle,createdAt 2>/dev/null; then
+            echo "✅ Successfully queried workflow runs"
             
             # Count active/running tasks
-            ACTIVE_TASKS=$(gh agent-task list --limit 50 --json state --jq '[.[] | select(.state == "running" or .state == "in_progress")] | length' 2>/dev/null || echo "0")
+            ACTIVE_TASKS=$(gh run list --workflow "Copilot coding agent" --limit 50 --json status --jq '[.[] | select(.status == "in_progress" or .status == "queued")] | length' 2>/dev/null || echo "0")
             
-            echo "📊 Agent Task Summary:"
-            echo "  Active agent tasks: $ACTIVE_TASKS"
+            echo "📊 Copilot Task Summary:"
+            echo "  Active workflow runs: $ACTIVE_TASKS"
             echo "  Expected active agents: ${{ needs.analyze-queue-status.outputs.active_agents }}"
             
-            # List recent tasks
+            # List recent workflow runs
             echo ""
-            echo "Recent agent tasks:"
-            gh agent-task list --limit 10 2>/dev/null || echo "  Unable to list tasks"
+            echo "Recent Copilot workflow runs:"
+            gh run list --workflow "Copilot coding agent" --limit 10 2>/dev/null || echo "  Unable to list runs"
+            
+            # Also check for Copilot-created PRs
+            echo ""
+            echo "Recent Copilot-created PRs:"
+            gh pr list --author app/copilot-swe-agent --state open --limit 5 --json number,title,createdAt 2>/dev/null || echo "  Unable to list PRs"
             
             if [ "$ACTIVE_TASKS" -gt 0 ]; then
               echo "✅ Copilot Coding Agents are active"
             else
-              echo "ℹ️  No active agent tasks detected (tasks may have completed)"
+              echo "ℹ️  No active Copilot tasks detected (tasks may have completed)"
             fi
           else
-            echo "⚠️  gh agent-task list not available or requires authentication"
+            echo "⚠️  Unable to check Copilot workflow runs"
             echo "Falling back to PR/issue activity monitoring..."
             
             # Rate limiting: Add delay before fallback API call
