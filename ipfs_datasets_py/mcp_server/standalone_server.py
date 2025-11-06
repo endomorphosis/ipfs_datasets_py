@@ -113,6 +113,73 @@ class MinimalMCPServer:
                     "error": str(e),
                     "success": False
                 }), 500
+        
+        @self.app.route('/api/report-error', methods=['POST'])
+        def report_error():
+            """Receive error reports from client-side JavaScript."""
+            try:
+                # Import error reporting module
+                from ipfs_datasets_py.error_reporting import error_reporter
+                
+                data = request.get_json()
+                errors = data.get('errors', [])
+                
+                reported_issues = []
+                for error_data in errors:
+                    try:
+                        # Create a synthetic exception from the error data
+                        error_type = error_data.get('type', 'JavaScriptError')
+                        error_message = error_data.get('message', 'Unknown error')
+                        
+                        # Create exception-like object
+                        class JavaScriptError(Exception):
+                            pass
+                        
+                        error = JavaScriptError(f"{error_type}: {error_message}")
+                        
+                        # Prepare context
+                        context = {
+                            'source': error_data.get('source', 'Dashboard JavaScript'),
+                            'additional_info': f"""
+URL: {error_data.get('url', 'Unknown')}
+User Agent: {error_data.get('userAgent', 'Unknown')}
+Filename: {error_data.get('filename', 'Unknown')}
+Line: {error_data.get('lineno', 'Unknown')}
+Column: {error_data.get('colno', 'Unknown')}
+
+Context: {error_data.get('context', {})}
+                            """.strip(),
+                            'stack_trace': error_data.get('stack', 'No stack trace available'),
+                        }
+                        
+                        # Report error
+                        issue_url = error_reporter.report_error(
+                            error,
+                            source=context['source'],
+                            additional_info=context['additional_info'],
+                        )
+                        
+                        if issue_url:
+                            reported_issues.append({
+                                'error': error_message,
+                                'issue_url': issue_url,
+                            })
+                    
+                    except Exception as e:
+                        logger.error(f"Failed to report error: {e}")
+                
+                return jsonify({
+                    'success': True,
+                    'reported': len(reported_issues),
+                    'issues': reported_issues,
+                })
+                
+            except Exception as e:
+                logger.error(f"Error reporting endpoint failed: {e}")
+                return jsonify({
+                    'success': False,
+                    'error': str(e),
+                }), 500
                 
     def run(self):
         """Run the MCP server."""

@@ -28,6 +28,14 @@ except ImportError:
 from .configs import Configs, configs
 from .logger import logger
 
+# Import error reporting
+try:
+    from ..error_reporting import error_reporter, get_recent_logs
+    ERROR_REPORTING_AVAILABLE = True
+except ImportError:
+    ERROR_REPORTING_AVAILABLE = False
+    logger.warning("Error reporting module not available")
+
 
 
 
@@ -319,6 +327,14 @@ class IPFSDatasetsMCPServer:
         """
         self.configs = server_configs or configs
 
+        # Initialize error reporting
+        if ERROR_REPORTING_AVAILABLE:
+            try:
+                error_reporter.install_global_handler()
+                logger.info("Error reporting enabled - runtime errors will be reported to GitHub")
+            except Exception as e:
+                logger.warning(f"Failed to install error reporter: {e}")
+
         # Initialize MCP server
         self.mcp = FastMCP("ipfs_datasets")
 
@@ -409,11 +425,80 @@ class IPFSDatasetsMCPServer:
         tools = import_tools_from_directory(subdir_path)
 
         for tool_name, tool_func in tools.items():
-            self.mcp.add_tool(
-                tool_func, name=tool_name, description=tool_func.__doc__
-            )
-            self.tools[tool_name] = tool_func
+            # Wrap tool with error reporting if available
+            if ERROR_REPORTING_AVAILABLE:
+                wrapped_func = self._wrap_tool_with_error_reporting(tool_name, tool_func)
+                self.mcp.add_tool(
+                    wrapped_func, name=tool_name, description=tool_func.__doc__
+                )
+                self.tools[tool_name] = wrapped_func
+            else:
+                self.mcp.add_tool(
+                    tool_func, name=tool_name, description=tool_func.__doc__
+                )
+                self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
+    
+    def _wrap_tool_with_error_reporting(self, tool_name: str, tool_func: Callable) -> Callable:
+        """
+        Wrap a tool function with error reporting.
+        
+        Args:
+            tool_name: Name of the tool
+            tool_func: Tool function to wrap
+            
+        Returns:
+            Wrapped function with error reporting
+        """
+        import functools
+        
+        @functools.wraps(tool_func)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                # If the function is async, await it
+                if asyncio.iscoroutinefunction(tool_func):
+                    return await tool_func(*args, **kwargs)
+                else:
+                    return tool_func(*args, **kwargs)
+            except Exception as e:
+                # Report error to GitHub
+                try:
+                    logs = get_recent_logs()
+                    error_reporter.report_error(
+                        e,
+                        source=f"MCP Tool: {tool_name}",
+                        additional_info=f"Tool arguments: {kwargs}",
+                        logs=logs,
+                    )
+                except Exception as report_err:
+                    logger.error(f"Failed to report error: {report_err}")
+                # Re-raise the original exception
+                raise
+        
+        @functools.wraps(tool_func)
+        def sync_wrapper(*args, **kwargs):
+            try:
+                return tool_func(*args, **kwargs)
+            except Exception as e:
+                # Report error to GitHub
+                try:
+                    logs = get_recent_logs()
+                    error_reporter.report_error(
+                        e,
+                        source=f"MCP Tool: {tool_name}",
+                        additional_info=f"Tool arguments: {kwargs}",
+                        logs=logs,
+                    )
+                except Exception as report_err:
+                    logger.error(f"Failed to report error: {report_err}")
+                # Re-raise the original exception
+                raise
+        
+        # Return appropriate wrapper based on whether function is async
+        if asyncio.iscoroutinefunction(tool_func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     def register_ipfs_kit_tools(self, ipfs_kit_mcp_url: Optional[str] = None):
         """
