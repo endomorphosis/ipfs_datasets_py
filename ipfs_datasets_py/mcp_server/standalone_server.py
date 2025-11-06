@@ -24,6 +24,18 @@ except ImportError as e:
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Import error reporting if available
+try:
+    from ipfs_datasets_py.error_reporting import (
+        install_error_handlers,
+        get_global_error_reporter
+    )
+    from ipfs_datasets_py.error_reporting.api import setup_error_reporting_routes
+    ERROR_REPORTING_AVAILABLE = True
+except ImportError:
+    ERROR_REPORTING_AVAILABLE = False
+    logger.info("Error reporting module not available")
+
 class MinimalMCPServer:
     """Minimal MCP server for Docker deployment."""
     
@@ -31,6 +43,12 @@ class MinimalMCPServer:
         self.host = host
         self.port = port
         self.app = Flask(__name__)
+        
+        # Install error handlers if available
+        if ERROR_REPORTING_AVAILABLE:
+            install_error_handlers()
+            logger.info("Error reporting handlers installed")
+        
         self.setup_routes()
         
     def setup_routes(self):
@@ -109,10 +127,25 @@ class MinimalMCPServer:
                     }), 400
                     
             except Exception as e:
+                # Report exception if error reporting is enabled
+                if ERROR_REPORTING_AVAILABLE:
+                    reporter = get_global_error_reporter()
+                    if reporter.enabled:
+                        reporter.report_exception(e, source="python", context={
+                            'endpoint': '/execute',
+                            'tool_name': tool_name,
+                            'parameters': parameters
+                        })
+                
                 return jsonify({
                     "error": str(e),
                     "success": False
                 }), 500
+        
+        # Add error reporting routes if available
+        if ERROR_REPORTING_AVAILABLE:
+            setup_error_reporting_routes(self.app)
+            logger.info("Error reporting API routes registered")
                 
     def run(self):
         """Run the MCP server."""
@@ -126,7 +159,12 @@ class MinimalMCPDashboard:
         self.host = host
         self.port = port
         self.mcp_server_url = mcp_server_url
-        self.app = Flask(__name__)
+        self.app = Flask(__name__, static_folder='../static', static_url_path='/static')
+        
+        # Install error handlers if available
+        if ERROR_REPORTING_AVAILABLE:
+            install_error_handlers()
+        
         self.setup_routes()
         
     def setup_routes(self):
@@ -143,19 +181,27 @@ class MinimalMCPDashboard:
             
         @self.app.route('/')
         def index():
-            return '''
+            # Read error reporting configuration
+            error_reporting_enabled = 'true' if ERROR_REPORTING_AVAILABLE else 'false'
+            
+            return f'''
             <!DOCTYPE html>
             <html>
             <head>
                 <title>IPFS Datasets MCP Dashboard</title>
+                <script>
+                    // Set error reporting configuration
+                    window.ERROR_REPORTING_ENABLED = {error_reporting_enabled};
+                </script>
+                <script src="/static/js/error-reporter.js"></script>
                 <style>
-                    body { font-family: Arial, sans-serif; margin: 40px; }
-                    .container { max-width: 800px; margin: 0 auto; }
-                    .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
-                    .healthy { background-color: #d4edda; color: #155724; }
-                    .error { background-color: #f8d7da; color: #721c24; }
-                    button { padding: 10px 20px; margin: 5px; }
-                    #output { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; }
+                    body {{ font-family: Arial, sans-serif; margin: 40px; }}
+                    .container {{ max-width: 800px; margin: 0 auto; }}
+                    .status {{ padding: 10px; margin: 10px 0; border-radius: 5px; }}
+                    .healthy {{ background-color: #d4edda; color: #155724; }}
+                    .error {{ background-color: #f8d7da; color: #721c24; }}
+                    button {{ padding: 10px 20px; margin: 5px; }}
+                    #output {{ background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; }}
                 </style>
             </head>
             <body>
