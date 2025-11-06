@@ -1,0 +1,295 @@
+name: Close Stale Draft PRs
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      max_age_hours:
+        description: 'Maximum age in hours for draft PRs before closing'
+        required: false
+        default: '48'
+        type: string
+      dry_run:
+        description: 'Dry run mode - show what would be closed without actually closing'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  PYTHON_VERSION: '3.12'
+  # Close draft PRs after 48 hours of inactivity by default
+  MAX_AGE_HOURS: 48
+
+jobs:
+  close-stale-drafts:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    
+    steps:
+      - name: Install GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y git gh curl jq
+          git config --global --add safe.directory '*'
+      
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Set up Python environment
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+      
+      - name: Close stale draft PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAX_AGE_HOURS: ${{ github.event.inputs.max_age_hours || env.MAX_AGE_HOURS }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          import json
+          import subprocess
+          from datetime import datetime, timedelta
+          from typing import Dict, List, Any, Optional
+          
+          # Configuration
+          MAX_AGE_HOURS = int(os.environ.get('MAX_AGE_HOURS', '48'))
+          DRY_RUN = os.environ.get('DRY_RUN', 'false').lower() == 'true'
+          
+          def run_command(cmd: List[str]) -> Dict[str, Any]:
+              """Run a command and return result."""
+              try:
+                  result = subprocess.run(
+                      cmd,
+                      capture_output=True,
+                      text=True,
+                      timeout=60
+                  )
+                  return {
+                      'success': result.returncode == 0,
+                      'stdout': result.stdout,
+                      'stderr': result.stderr
+                  }
+              except Exception as e:
+                  return {
+                      'success': False,
+                      'error': str(e)
+                  }
+          
+          def get_stale_draft_prs() -> List[Dict[str, Any]]:
+              """Get draft PRs that are stale."""
+              print(f"🔍 Finding draft PRs older than {MAX_AGE_HOURS} hours...")
+              
+              # Get all open draft PRs
+              result = run_command([
+                  'gh', 'pr', 'list',
+                  '--state', 'open',
+                  '--draft',
+                  '--limit', '200',
+                  '--json', 'number,title,author,createdAt,updatedAt,url,isDraft'
+              ])
+              
+              if not result['success']:
+                  print(f"❌ Failed to get PRs: {result.get('error', result.get('stderr'))}")
+                  return []
+              
+              try:
+                  all_draft_prs = json.loads(result['stdout'])
+              except json.JSONDecodeError as e:
+                  print(f"❌ Failed to parse PR data: {e}")
+                  return []
+              
+              print(f"📊 Found {len(all_draft_prs)} total draft PRs")
+              
+              # Filter for stale PRs (older than MAX_AGE_HOURS with no updates)
+              cutoff_time = datetime.utcnow() - timedelta(hours=MAX_AGE_HOURS)
+              stale_prs = []
+              
+              for pr in all_draft_prs:
+                  # Parse timestamps
+                  updated_at_str = pr.get('updatedAt', pr.get('createdAt'))
+                  try:
+                      updated_at = datetime.fromisoformat(updated_at_str.replace('Z', '+00:00'))
+                      # Convert to UTC naive datetime for comparison
+                      updated_at = updated_at.replace(tzinfo=None)
+                  except Exception as e:
+                      print(f"⚠️  Could not parse date for PR #{pr['number']}: {e}")
+                      continue
+                  
+                  if updated_at < cutoff_time:
+                      # Only close PRs created by github-actions bot (auto-generated)
+                      author = pr['author']['login']
+                      if author == 'github-actions[bot]':
+                          stale_prs.append(pr)
+              
+              print(f"📋 Found {len(stale_prs)} stale draft PRs (auto-generated, no activity for {MAX_AGE_HOURS}h)")
+              
+              return stale_prs
+          
+          def close_draft_pr(pr: Dict[str, Any], reason: str) -> bool:
+              """Close a draft PR with a comment explaining why."""
+              pr_number = pr['number']
+              pr_title = pr['title']
+              
+              if DRY_RUN:
+                  print(f"  [DRY RUN] Would close PR #{pr_number}: {pr_title[:60]}")
+                  return True
+              
+              # Add closing comment
+              close_comment = f"""🤖 **Automatically Closing Stale Draft PR**
+          
+          This draft PR has been automatically closed due to inactivity.
+          
+          **Reason**: {reason}
+          **Age**: Over {MAX_AGE_HOURS} hours with no updates
+          **Created**: {pr.get('createdAt', 'Unknown')}
+          **Last Updated**: {pr.get('updatedAt', 'Unknown')}
+          
+          ### Why was this closed?
+          
+          This PR was created by the auto-healing system but appears to be stale or abandoned:
+          - No commits or updates in the last {MAX_AGE_HOURS} hours
+          - Auto-generated PR that may have been superseded
+          - Part of cleanup to prevent draft PR spam
+          
+          ### What should you do?
+          
+          - If this PR is still needed, you can **reopen** it
+          - If the work was completed in another PR, this can be ignored
+          - If the issue still exists, the auto-healing system will create a new fix attempt
+          
+          ---
+          
+          🤖 *Automated by stale draft PR cleanup workflow*
+          *Run ID*: {os.environ.get('GITHUB_RUN_ID', 'unknown')}
+          """
+              
+              # Post comment
+              comment_result = run_command([
+                  'gh', 'pr', 'comment', str(pr_number),
+                  '--body', close_comment
+              ])
+              
+              if not comment_result['success']:
+                  print(f"  ⚠️  Failed to post comment: {comment_result.get('stderr', 'Unknown error')}")
+              
+              # Close the PR
+              close_result = run_command([
+                  'gh', 'pr', 'close', str(pr_number),
+                  '--comment', f'Closing stale draft PR (no activity for {MAX_AGE_HOURS}h)'
+              ])
+              
+              if close_result['success']:
+                  print(f"  ✅ Closed PR #{pr_number}")
+                  return True
+              else:
+                  print(f"  ❌ Failed to close PR #{pr_number}: {close_result.get('stderr', 'Unknown error')}")
+                  return False
+          
+          def main():
+              """Main execution function."""
+              print("="*80)
+              print("🧹 Stale Draft PR Cleanup")
+              print("="*80)
+              print(f"Configuration:")
+              print(f"  - Max age: {MAX_AGE_HOURS} hours")
+              print(f"  - Dry run: {DRY_RUN}")
+              print(f"  - Target: Auto-generated draft PRs only")
+              print("="*80)
+              print()
+              
+              if DRY_RUN:
+                  print("🔍 DRY RUN MODE - No PRs will be closed\n")
+              
+              # Get stale PRs
+              stale_prs = get_stale_draft_prs()
+              
+              if not stale_prs:
+                  print("\n✅ No stale draft PRs found - queue is clean!")
+                  return
+              
+              stats = {
+                  'total': len(stale_prs),
+                  'closed': 0,
+                  'failed': 0
+              }
+              
+              print(f"\n📋 Processing {len(stale_prs)} stale draft PRs:\n")
+              
+              for pr in stale_prs:
+                  pr_number = pr['number']
+                  title = pr['title']
+                  author = pr['author']['login']
+                  age = pr.get('updatedAt', pr.get('createdAt'))
+                  
+                  print(f"PR #{pr_number}: {title[:60]}...")
+                  print(f"  Author: {author}")
+                  print(f"  Last updated: {age}")
+                  
+                  reason = f"Stale draft PR with no activity (created by {author})"
+                  
+                  if close_draft_pr(pr, reason):
+                      stats['closed'] += 1
+                  else:
+                      stats['failed'] += 1
+                  
+                  print()
+              
+              # Print summary
+              print("="*80)
+              print("📊 Cleanup Summary")
+              print("="*80)
+              print(f"Total stale PRs found:    {stats['total']}")
+              print(f"Successfully closed:      {stats['closed']}")
+              print(f"Failed to close:          {stats['failed']}")
+              print("="*80)
+              
+              if DRY_RUN:
+                  print("\n💡 This was a DRY RUN - no changes were made")
+                  print("   Run without --dry-run to actually close the PRs")
+              elif stats['closed'] > 0:
+                  print(f"\n✅ Successfully cleaned up {stats['closed']} stale draft PR(s)")
+              
+              # Exit with error if any failures
+              if stats['failed'] > 0:
+                  sys.exit(1)
+          
+          if __name__ == '__main__':
+              main()
+          EOF
+      
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## 🧹 Stale Draft PR Cleanup Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow automatically closes stale draft PRs to prevent spam." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Max Age**: ${{ github.event.inputs.max_age_hours || env.MAX_AGE_HOURS }} hours" >> $GITHUB_STEP_SUMMARY
+          echo "- **Dry Run**: ${{ github.event.inputs.dry_run || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What This Workflow Does" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🔍 Finds draft PRs created by auto-healing system" >> $GITHUB_STEP_SUMMARY
+          echo "2. 📅 Identifies PRs with no activity for ${{ github.event.inputs.max_age_hours || env.MAX_AGE_HOURS }}+ hours" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🧹 Closes stale PRs with explanatory comment" >> $GITHUB_STEP_SUMMARY
+          echo "4. 📊 Reports cleanup statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the workflow logs for detailed results." >> $GITHUB_STEP_SUMMARY
