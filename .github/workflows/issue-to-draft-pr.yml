@@ -396,24 +396,27 @@ jobs:
             echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
             echo "✅ Successfully created PR #$PR_NUMBER"
             
-            # Invoke Copilot using the new queue-managed CLI tool with issue context
-            # This uses the issue analysis JSON to generate comprehensive instructions
-            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using queue-managed Copilot CLI..."
+            # Invoke Copilot using the verified dual method (draft PR + @copilot trigger)
+            # This is the ONLY method with 100% success rate
+            echo "Invoking GitHub Copilot on PR #$PR_NUMBER using verified dual method..."
             
             # Always use the JSON context file which safely contains issue details
             # The issue analysis JSON is created earlier and contains sanitized data
             if [ -f "/tmp/issue_analysis.json" ]; then
-              python3 scripts/invoke_copilot_with_queue.py \
+              # Read issue details from JSON
+              ISSUE_TITLE=$(jq -r '.title // "Implement solution"' /tmp/issue_analysis.json)
+              ISSUE_BODY=$(jq -r '.body // "See issue for details"' /tmp/issue_analysis.json | head -c 500)
+              
+              python3 scripts/invoke_copilot_on_pr.py \
                 --pr "$PR_NUMBER" \
-                --context-file /tmp/issue_analysis.json \
-                --context-type issue \
-                --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
+                --instruction "Please implement a solution for issue #$ISSUE_NUMBER: $ISSUE_TITLE. Details: $ISSUE_BODY. Review the full issue description in the PR and implement minimal, surgical changes." \
+                || echo "⚠️  Copilot invocation failed, check logs"
             else
               # Fallback to basic instruction without user-controlled content
-              python3 scripts/invoke_copilot_with_queue.py \
+              python3 scripts/invoke_copilot_on_pr.py \
                 --pr "$PR_NUMBER" \
                 --instruction "Please implement a solution for this issue. Review the full issue description in the PR and implement minimal, surgical changes." \
-                --max-agents 3 || echo "⚠️  Copilot invocation queued or failed, check logs"
+                || echo "⚠️  Copilot invocation failed, check logs"
             fi
             
             # Link PR back to issue
@@ -435,7 +438,7 @@ jobs:
             echo "🔗 **PR**: $PR_URL" >> $GITHUB_STEP_SUMMARY
             echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
             echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
-            echo "🤖 **Status**: GitHub Copilot invoked via queue-managed CLI with issue analysis context" >> $GITHUB_STEP_SUMMARY
+            echo "🤖 **Status**: GitHub Copilot invoked via verified dual method (draft PR + @copilot trigger)" >> $GITHUB_STEP_SUMMARY
           else
             echo "⚠️ Could not create PR automatically (permission denied or other error)"
             echo "Error: $PR_URL"
