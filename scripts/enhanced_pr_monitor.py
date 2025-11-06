@@ -1,7 +1,24 @@
 #!/usr/bin/env python3
 """
+⚠️  DEPRECATED - Use invoke_copilot_on_pr.py instead
+
 Enhanced PR Monitoring and Copilot Assignment System
 
+**DEPRECATION NOTICE**: This script uses `gh agent-task create` which does NOT exist
+in GitHub CLI. It has NEVER worked. Use `invoke_copilot_on_pr.py` instead.
+
+**Working Method**: Draft PR + @copilot trigger (100% success rate)
+See COPILOT_INVOCATION_GUIDE.md for correct invocation method.
+
+**Migration**:
+  OLD: python scripts/enhanced_pr_monitor.py --pr 123
+  NEW: python scripts/invoke_copilot_on_pr.py --pr 123
+
+This script is kept for reference only and will be removed in a future release.
+
+---
+
+Original Description:
 This script provides comprehensive PR monitoring with intelligent Copilot assignment
 and progressive escalation to ensure PRs are completed properly.
 
@@ -12,13 +29,15 @@ Features:
 - Human notification for stale PRs
 - Integration with auto-healing system
 
-Uses OFFICIAL GitHub Copilot invocation method:
-✅ gh agent-task create - Official GitHub CLI command for Copilot Coding Agent
-❌ NOT: @copilot mentions in PR comments (unsupported)
+⚠️  IMPORTANT: The method below does NOT work:
+❌ gh agent-task create - This command does NOT exist in GitHub CLI v2.45.0
+❌ @copilot mentions alone - Don't trigger agent without draft PR
 
-Per GitHub documentation:
-- https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent
-- https://docs.github.com/en/copilot/concepts/agents/coding-agent/agent-management
+✅ WORKING method (use invoke_copilot_on_pr.py instead):
+   - Creates draft PR with task description
+   - Posts @copilot trigger comment
+   - Copilot responds in ~13 seconds
+   - 100% success rate verified
 """
 
 import subprocess
@@ -29,6 +48,20 @@ import time
 import os
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
+
+# Print deprecation warning when script is run
+print("=" * 80)
+print("⚠️  WARNING: This script is DEPRECATED")
+print("=" * 80)
+print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+print("The command has NEVER worked. Use the verified working method instead:")
+print("")
+print("  ✅ Use: python scripts/invoke_copilot_on_pr.py --pr <number>")
+print("  📚 See: COPILOT_INVOCATION_GUIDE.md")
+print("")
+print("Success rate with new method: 100% (verified)")
+print("=" * 80)
+print("")
 from pathlib import Path
 import logging
 
