@@ -6,14 +6,11 @@ Wants=network.target
 
 [Service]
 Type=exec
-User=barberb
-Group=barberb
 WorkingDirectory=/home/barberb/ipfs_datasets_py
 Environment=MCP_DASHBOARD_HOST=127.0.0.1
 Environment=MCP_DASHBOARD_PORT=8899
 Environment=MCP_DASHBOARD_BLOCKING=0
-ExecStart=/bin/bash -lc '/home/barberb/ipfs_datasets_py/tools/run_mcp_dashboard.sh'
-ExecStop=/home/barberb/ipfs_datasets_py/ipfs-datasets mcp stop
+ExecStart=/bin/bash -lc '/home/barberb/ipfs_datasets_py/tools/run_mcp_dashboard_quick.sh'
 Restart=always
 RestartSec=15
 StartLimitIntervalSec=300
@@ -22,14 +19,5 @@ StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=ipfs-datasets-mcp
 
-# Security settings
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=strict
-ProtectHome=read-only
-ReadWritePaths=/home/barberb/ipfs_datasets_py /home/barberb/.ipfs_datasets /tmp
-CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-AmbientCapabilities=CAP_NET_BIND_SERVICE
-
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
