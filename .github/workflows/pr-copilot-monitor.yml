@@ -1,9 +1,9 @@
 name: Draft PR Copilot Monitor
 
 on:
-  schedule:
-    # Run every 10 minutes (reduced from 5 to avoid creating too many draft PRs)
-    - cron: '*/10 * * * *'
+  # Disabled automatic scheduling - use manual trigger only
+  # schedule:
+  #   - cron: '*/10 * * * *'
   
   workflow_dispatch:
     inputs:

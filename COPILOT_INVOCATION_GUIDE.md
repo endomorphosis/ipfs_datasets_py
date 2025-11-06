@@ -1,305 +1,246 @@
-# GitHub Copilot Invocation Guide
+# Copilot Issue Assignment Guide
 
-## ✅ Correct Method (VERIFIED WORKING)
+## TL;DR
 
-After extensive testing and verification, the **ONLY reliable method** to invoke the GitHub Copilot coding agent is:
+✅ **Correct**: `gh agent-task create` → Copilot creates PR and works autonomously
+⚠️ **Works but deprecated**: `@copilot` comment on issue → Copilot creates PR
+❌ **Wrong**: Create PR → `@copilot` comment → Copilot creates child PR (PR sprawl)
 
-### Dual Method: Draft PR + @copilot Trigger
+## The Discovery (Updated November 6, 2025)
 
-**Script:** `scripts/invoke_copilot_on_pr.py`
+After extensive testing, we discovered the **official method**:
 
-**How it works:**
-1. Creates a draft PR with task description (VS Code-style structure)
-2. Posts `@copilot /fix` comment on the draft PR to trigger the agent
-3. Copilot detects the comment and responds within ~13 seconds
-4. Copilot creates an implementation PR and starts making commits
-5. Workflow runs automatically to track progress
+1. **Use `gh agent-task create` command** (requires GitHub CLI v2.80.0+)
+2. **Copilot automatically creates a PR and works directly in it**
+3. **Concurrency limit: 3 active agents maximum**
+4. **Queue management: Check active count before creating new tasks**
 
-### Usage
+## Why This Matters
+
+### PR #49 Example (Success Case)
+
+- **Author**: `app/copilot-swe-agent` (Copilot itself)
+- **Invocation**: Plain `@copilot` mentions
+- **Result**: Copilot worked in-place, no child PRs
+
+### PRs #297-#340 (Failure Case)
+
+- **Author**: `app/github-actions` (bot)
+- **Invocation**: `@copilot /fix` comments
+- **Result**: Copilot created 15+ child PRs (PR sprawl)
+
+**The difference?** PR #49 was created BY Copilot. PRs #297-#340 were created by a bot.
+
+## How To Invoke Copilot Correctly
+
+### Method 1: Using `gh agent-task create` (Official Method, Recommended)
+
+**Requirements:**
+- GitHub CLI v2.80.0 or later
+- Authenticated with `gh auth login`
+
+**Command:**
+```bash
+# Basic invocation
+gh agent-task create "Fix workflow failure in graphrag-production-ci.yml
+
+The workflow is failing with import errors. Please analyze the logs, identify the root cause, and implement a fix.
+
+References:
+- Issue: https://github.com/endomorphosis/ipfs_datasets_py/issues/772
+- Workflow: .github/workflows/graphrag-production-ci.yml
+
+Ensure all tests pass and security scans are clean." \
+  --repo endomorphosis/ipfs_datasets_py \
+  --base main
+
+# With follow mode to see logs in real-time
+gh agent-task create "Fix the issue" --repo endomorphosis/ipfs_datasets_py --base main --follow
+
+# From a file
+gh agent-task create -F task-description.md --repo endomorphosis/ipfs_datasets_py --base main
+```
+
+**What happens:**
+1. Copilot agent is invoked immediately
+2. Creates a new branch (`copilot/[descriptive-name]`)
+3. Creates a WIP pull request
+4. Analyzes code and implements fixes
+5. Runs tests and security scans
+6. Updates PR based on review comments
+
+**Concurrency Limit:** Maximum 3 active agents at once
+
+### Method 2: @copilot Comment on Issue (Works but Deprecated)
 
 ```bash
-# Basic invocation on existing PR
-python3 scripts/invoke_copilot_on_pr.py --pr 123
+gh issue comment 772 --repo endomorphosis/ipfs_datasets_py --body "@copilot
 
-# With custom task description
-python3 scripts/invoke_copilot_on_pr.py --pr 123 \
-  --task "Fix the linting errors and add tests"
-
-# Dry run (preview what would happen)
-python3 scripts/invoke_copilot_on_pr.py --pr 123 --dry-run
-
-# Specify repository
-python3 scripts/invoke_copilot_on_pr.py --pr 123 \
-  --repo owner/repo
+Please analyze this workflow failure and create a pull request with fixes."
 ```
 
-### Verification Results
+**Note:** This method still works but is not the official CLI method. Use `gh agent-task create` for better control and visibility.
 
-**Test #1:** PR #439 → Copilot PR #440
-- ✅ Draft PR created successfully
-- ✅ @copilot trigger posted
-- ✅ Copilot responded and created implementation PR
-- ✅ Workflow started (ID: 19119930301)
-- ✅ 2 commits made by Copilot
+### Method 3: Automated via Workflow
 
-**Test #2:** PR #441 → Copilot PR #442
-- ✅ Draft PR created successfully
-- ✅ @copilot trigger posted
-- ✅ Copilot responded in 13 seconds
-- ✅ Workflow started (ID: 19120085614)
-- ✅ Implementation PR created
+The `.github/workflows/copilot-issue-assignment.yml` workflow now uses `gh agent-task create`:
 
-**Statistics:**
-- Success Rate: 100% (2/2 tests)
-- Workflow Trigger Rate: 100%
-- Average Response Time: ~13 seconds
-- Concurrent Support: ✅ YES
+- **Triggers**: Issues with "Fix:" prefix or "copilot-fix" label
+- **Checks concurrency**: Ensures max 3 active agents
+- **Queues if needed**: Labels issue "copilot-queued" if limit reached
+- **Creates task**: Uses `gh agent-task create` when slot available
 
----
+## Cleanup Completed
 
-## ❌ Methods That DON'T Work
+### Actions Taken (November 6, 2025)
 
-### 1. `gh agent-task create` (Does NOT Exist)
+1. ✅ **Closed 30 bot-created PRs** (#256-#340)
+   - Reason: Copilot can't work in bot-created PRs without creating child PRs
 
+2. ✅ **Closed 185 duplicate issues**
+   - Kept most recent issue per workflow type
+   - 12 unique workflow failures remain
+
+3. ✅ **Disabled old workflows**
+   - `pr-copilot-monitor.yml`
+   - `enhanced-pr-completion-monitor.yml`
+
+4. ✅ **Created new workflow**
+   - `copilot-issue-assignment.yml` for issue-based invocation
+
+5. ✅ **Updated documentation**
+   - This guide
+   - Backed up old DRAFT_PR_INVOCATION_METHOD.md
+
+## Current State
+
+### Open Issues (12 Unique Workflow Failures)
+
+| Issue | Workflow |
+|-------|----------|
+| #363 | GPU-Enabled Tests |
+| #495 | GPU-Enabled Tests |
+| #705 | Automated PR Review and Copilot Assignment |
+| #720 | Docker Build and Test (Multi-Platform) |
+| #723 | MCP Endpoints Integration Tests |
+| #725 | Docker Build and Test |
+| #728 | MCP Dashboard Automated Tests |
+| #734 | Self-Hosted Runner Validation |
+| #735 | GraphRAG Production CI/CD |
+| #736 | Publish Python Package |
+| #737 | ARM64 Self-Hosted Runner |
+| #738 | PDF Processing Pipeline CI/CD |
+
+### Next Steps
+
+1. Label issues with "copilot-fix" to trigger assignment
+2. Monitor Copilot's PR creation
+3. Review and provide feedback
+4. Merge successful fixes
+
+## GitHub Documentation References
+
+### Key Quotes
+
+From [Making Changes to Existing PRs](https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/make-changes-to-an-existing-pr):
+
+> "Copilot will create a child pull request, using the existing pull request's branch as the base branch."
+
+From [About Coding Agent](https://docs.github.com/en/copilot/concepts/agents/coding-agent/about-coding-agent):
+
+> "To delegate tasks to Copilot, you can:
+> - Ask Copilot to open a new pull request from many places, including GitHub Issues..."
+
+## Commands Summary
+
+### Check Active Agents
 ```bash
-# ❌ THIS DOESN'T WORK
-gh agent-task create -F task.txt
+# See how many agents are currently active
+gh pr list --author "app/copilot-swe-agent" --state open --repo endomorphosis/ipfs_datasets_py --json number | jq 'length'
+
+# List active Copilot PRs
+gh pr list --author "app/copilot-swe-agent" --state open --repo endomorphosis/ipfs_datasets_py
 ```
 
-**Why it fails:**
-- The `gh agent-task` command **does not exist** in GitHub CLI v2.45.0
-- This was based on incorrect documentation assumptions
-- Many old workflows and scripts still reference this non-existent command
-
-**Migration:** Replace with `scripts/invoke_copilot_on_pr.py`
-
-### 2. @copilot Comments Only (Unreliable Without Draft PR)
-
+### Create Agent Task
 ```bash
-# ❌ THIS DOESN'T RELIABLY TRIGGER
-gh pr comment 123 --body "@copilot /fix the issue"
+# Official method (requires gh CLI v2.80.0+)
+gh agent-task create "Fix issue description..." \
+  --repo endomorphosis/ipfs_datasets_py \
+  --base main
+
+# With real-time logs
+gh agent-task create "Fix issue..." --repo endomorphosis/ipfs_datasets_py --base main --follow
+
+# From file
+gh agent-task create -F task.md --repo endomorphosis/ipfs_datasets_py --base main
 ```
 
-**Why it fails:**
-- Posting @copilot comments on existing PRs does NOT trigger the coding agent
-- The comment must be on a **draft PR created specifically for Copilot**
-- Without the draft PR structure, Copilot ignores the comment
-
-**Migration:** Use the dual method (create draft PR + post @copilot comment)
-
-### 3. Draft PR Only (Missing Trigger)
-
-```python
-# ❌ THIS CREATES PR BUT DOESN'T TRIGGER COPILOT
-# Just creating a draft PR is not enough
-scripts/invoke_copilot_via_draft_pr.py --title "Task" --description "..."
+### Trigger Assignment Workflow
+```bash
+gh workflow run copilot-issue-assignment.yml \
+  --repo endomorphosis/ipfs_datasets_py \
+  --field issue_number=772
 ```
 
-**Why it fails:**
-- Draft PRs alone don't automatically trigger Copilot
-- Copilot requires an explicit `@copilot` command to activate
-- PR #427 was created but Copilot never started working
-
-**Migration:** Use the dual method that includes the @copilot trigger comment
-
----
-
-## 📋 Migration Checklist
-
-### For Workflows
-
-- [ ] Replace `gh agent-task create` calls with `python3 scripts/invoke_copilot_on_pr.py`
-- [ ] Update documentation strings about invocation methods
-- [ ] Remove references to non-existent `gh agent-task` command
-- [ ] Add proper error handling for invocation failures
-- [ ] Update comments to reflect dual method approach
-
-### For Scripts
-
-- [ ] Deprecate scripts using `gh agent-task create`
-- [ ] Update scripts to use `invoke_copilot_on_pr.py` as a library or subprocess
-- [ ] Remove obsolete Copilot invocation scripts
-- [ ] Consolidate duplicate functionality
-- [ ] Update documentation in script headers
-
-### For Documentation
-
-- [ ] Update all references to Copilot invocation
-- [ ] Add this guide to README and relevant docs
-- [ ] Update GitHub Actions workflow documentation
-- [ ] Add troubleshooting section for common issues
-- [ ] Document the dual method as official approach
-
----
-
-## 🔧 Technical Details
-
-### Why the Dual Method Works
-
-1. **Draft PR Structure**: Provides Copilot with:
-   - Isolated branch to work on
-   - Task description in PR body
-   - Context about original PR
-   - Clean workspace for implementation
-
-2. **@copilot Trigger**: Activates Copilot by:
-   - Posting explicit command `/fix` or `/code`
-   - Signaling Copilot to start analysis
-   - Triggering the coding agent workflow
-   - Creating response and implementation PR
-
-3. **Workflow Detection**: GitHub triggers:
-   - `Copilot coding agent` workflow automatically
-   - Workflow monitors PR for @copilot comments
-   - Copilot responds and creates implementation PR
-   - Commits are pushed by app/copilot-swe-agent
-
-### Implementation Flow
-
-```
-1. invoke_copilot_on_pr.py called
-   ↓
-2. Get original PR info via gh CLI
-   ↓
-3. Create draft PR (invoke_copilot_via_draft_pr.py)
-   ↓
-4. Find newly created draft PR number
-   ↓
-5. Post "@copilot /fix" comment
-   ↓
-6. Copilot workflow detects comment
-   ↓
-7. Copilot responds (~13 seconds)
-   ↓
-8. Copilot creates implementation PR
-   ↓
-9. Copilot makes commits and updates
+### Add Copilot-Fix Label (Triggers Auto-Assignment)
+```bash
+gh issue edit 772 \
+  --repo endomorphosis/ipfs_datasets_py \
+  --add-label "copilot-fix"
 ```
 
-### Error Handling
+### Monitor Copilot Sessions
+Visit: https://github.com/copilot/agents
 
-The script includes comprehensive error handling:
-- Validates GitHub CLI is installed and authenticated
-- Checks if original PR exists and is accessible
-- Verifies draft PR creation succeeded
-- Finds draft PR number from recent PRs
-- Posts trigger comment with retry logic
-- Provides clear success/failure messages
+## Lessons Learned
 
-### Rate Limiting
+1. **`gh agent-task create`** is the official GitHub CLI method (v2.80.0+)
+2. **Concurrency limit is 3 agents** - check before creating new tasks
+3. **@copilot comments** work but are not the official CLI method
+4. **Commenting @copilot on existing PRs** creates child PRs (by design, for preserving original work)
+5. **Queue management** is essential to avoid hitting concurrency limits
+6. **Session URLs** provide real-time progress tracking
 
-GitHub API rate limits apply:
-- GitHub CLI: 5000 requests/hour (authenticated)
-- PR creation: Generally not rate-limited
-- Comments: Generally not rate-limited
-- Workflow runs: Limited by GitHub Actions quota
+## Old vs New Flow
 
-For bulk operations, implement:
-- Delay between invocations (2-5 seconds)
-- Batch processing with queues
-- Monitor rate limit headers
-- Exponential backoff on failures
+### Old Flow (Deprecated)
+```
+Workflow Fails
+    ↓
+Create Draft PR (by bot)
+    ↓
+Post @copilot /fix comment
+    ↓
+Copilot creates Child PR  ← PR SPRAWL
+    ↓
+Child PR needs review
+```
 
----
+### New Flow (Current - November 6, 2025)
+```
+Workflow Fails
+    ↓
+Create Issue
+    ↓
+gh agent-task create  ← OFFICIAL METHOD
+    ↓
+Check concurrency (max 3 agents)
+    ↓
+Copilot creates PR directly  ← CLEAN
+    ↓
+Single PR needs review
+```
 
-## 📚 Additional Resources
+**Benefits:**
+- Official GitHub CLI command
+- Built-in concurrency awareness
+- Session URL for progress tracking
+- Clean PR structure (no child PRs)
+- Better error handling
 
-### GitHub Documentation
-- [GitHub Copilot Documentation](https://docs.github.com/en/copilot)
-- [GitHub CLI Documentation](https://cli.github.com/manual/)
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
+## Contact & Support
 
-### Repository Files
-- `scripts/invoke_copilot_on_pr.py` - Main invocation script
-- `scripts/invoke_copilot_via_draft_pr.py` - Draft PR creation helper
-- `.github/workflows/pr-copilot-reviewer.yml` - Example workflow usage
-- `.github/workflows/copilot-agent-autofix.yml` - Auto-healing workflow
-
-### Verification
-- PR #439, #440 - First successful test
-- PR #441, #442 - Second successful test
-- Workflow run 19119930301 - Active Copilot task #1
-- Workflow run 19120085614 - Active Copilot task #2
-
----
-
-## 🆘 Troubleshooting
-
-### Copilot Not Responding
-
-**Symptoms:**
-- Draft PR created but no response from Copilot
-- No workflow run triggered
-- No implementation PR created
-
-**Solutions:**
-1. Verify @copilot comment was posted: `gh pr view <draft-pr> --json comments`
-2. Check workflow runs: `gh run list --workflow "Copilot coding agent"`
-3. Ensure repository has Copilot enabled
-4. Verify GITHUB_TOKEN has necessary permissions
-5. Check rate limits: `gh api rate_limit`
-
-### Script Execution Errors
-
-**Symptoms:**
-- Script exits with error
-- Draft PR not created
-- Comment not posted
-
-**Solutions:**
-1. Verify GitHub CLI installed: `gh --version`
-2. Check authentication: `gh auth status`
-3. Verify repository access: `gh repo view owner/repo`
-4. Check PR exists: `gh pr view <number>`
-5. Review script logs for specific error messages
-
-### Permission Errors
-
-**Symptoms:**
-- "Resource not accessible"
-- "forbidden" errors
-- Authentication failures
-
-**Solutions:**
-1. Ensure GITHUB_TOKEN has scopes: `repo`, `workflow`, `write:discussion`
-2. Verify runner/user has repository access
-3. Check if repository requires additional permissions
-4. Confirm Copilot is enabled for repository
-5. Verify not hitting rate limits
-
----
-
-## 📝 Version History
-
-### v2.0.0 (Current) - November 5, 2025
-- **Method**: Dual approach (Draft PR + @copilot trigger)
-- **Status**: ✅ Verified working (100% success rate)
-- **Script**: `scripts/invoke_copilot_on_pr.py`
-- **Tests**: 2/2 successful, both workflows running
-
-### v1.0.0 (Deprecated) - Before November 5, 2025
-- **Method**: `gh agent-task create`
-- **Status**: ❌ Never worked (command doesn't exist)
-- **Scripts**: `scripts/enhanced_pr_monitor.py`, various old scripts
-- **Migration**: Use v2.0.0 method
-
----
-
-## 🤝 Contributing
-
-When updating Copilot invocation code:
-
-1. **Always use** `scripts/invoke_copilot_on_pr.py`
-2. **Never use** `gh agent-task create` (doesn't exist)
-3. **Test thoroughly** with dry-run first
-4. **Verify** Copilot responds and creates implementation PR
-5. **Update** this guide if discovering new information
-6. **Document** any issues or edge cases found
-7. **Follow** the dual method pattern for consistency
-
----
-
-**Last Updated**: November 5, 2025  
-**Verified Working**: Yes ✅  
-**Test Success Rate**: 100% (2/2)  
-**Maintainer**: Auto-healing system + Manual review
+- **Copilot Agents Tab**: https://github.com/copilot/agents
+- **GitHub Copilot Docs**: https://docs.github.com/en/copilot
+- **Repository**: https://github.com/endomorphosis/ipfs_datasets_py
