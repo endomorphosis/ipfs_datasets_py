@@ -1,5 +1,52 @@
 #!/usr/bin/env python3
 """
+⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+
+This script is DEPRECATED and should NOT be used.
+
+Reason: Unclear invocation method, duplicate functionality
+
+This script uses unclear/unverified methods for Copilot invocation.
+It has been superseded by the verified dual method.
+
+The correct method is the DUAL METHOD:
+1. Create draft PR
+2. Post @copilot trigger comment
+
+Migration: Use scripts/invoke_copilot_on_pr.py instead
+
+Examples:
+  # Single PR
+  python scripts/invoke_copilot_on_pr.py --pr 123 --instruction "Fix the issues"
+  
+  # Dry run
+  python scripts/invoke_copilot_on_pr.py --pr 123 --dry-run
+
+See:
+- DEPRECATED_SCRIPTS.md - Full deprecation documentation
+- COPILOT_INVOCATION_GUIDE.md - Verified working method (100% success)
+"""
+
+import sys
+
+print("=" * 80)
+print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+print("=" * 80)
+print()
+print("This script uses unverified Copilot invocation methods.")
+print()
+print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+print("   Success rate: 100% (verified with 4 tests)")
+print()
+print("📖 Documentation:")
+print("   - DEPRECATED_SCRIPTS.md")
+print("   - COPILOT_INVOCATION_GUIDE.md")
+print()
+print("=" * 80)
+sys.exit(1)
+
+# Original code below (disabled)
+"""
 Invoke GitHub Copilot Coding Agent on Pull Requests
 
 This script uses GitHub CLI and the new GitHub Copilot Coding Agent
