@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   test-datasets-runner:
-    runs-on: [self-hosted, ARM64, datasets]
+    runs-on: [self-hosted, linux, arm64, datasets]
     
     steps:
     - name: Checkout code
