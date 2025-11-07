@@ -20,8 +20,16 @@ from typing import Any, Dict, List, Optional
 
 
 import networkx as nx
-import numpy as np
 from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
+
+# Optional dependencies with proper error handling
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    np = None
+    HAVE_NUMPY = False
+
 # openai imported but not used - commented out to avoid hard dependency
 # import openai
 import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
@@ -402,9 +410,9 @@ class Entity:
             appears, enabling traceability back to source documents.
         properties (Dict[str, Any]): Additional metadata and attributes specific
             to the entity type (e.g., dates, relationships, custom fields).
-        embedding (Optional[np.ndarray]): High-dimensional vector representation
-            of the entity for semantic similarity calculations. Defaults to None
-            if not computed.
+        embedding (Optional[Any]): High-dimensional vector representation
+            of the entity for semantic similarity calculations (numpy array when 
+            available). Defaults to None if not computed.
 
     Example:
         >>> entity = Entity(
@@ -424,7 +432,7 @@ class Entity:
     confidence: float
     source_chunks: List[str]  # Chunk IDs where entity appears
     properties: Dict[str, Any]
-    embedding: Optional[np.ndarray] = None
+    embedding: Optional[Any] = None  # np.ndarray when numpy is available
     gateway_url: str = "ipfs_datasets_py.com"
 
     @property
