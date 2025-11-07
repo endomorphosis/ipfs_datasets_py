@@ -1,0 +1,234 @@
+name: GitHub API Usage Monitor
+
+# This workflow monitors GitHub API usage across all workflows
+# and provides alerts when approaching rate limits.
+
+on:
+  # Run every 6 hours
+  schedule:
+    - cron: '0 */6 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      days_to_analyze:
+        description: 'Number of days to analyze'
+        required: false
+        default: '7'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  monitor-api-usage:
+    runs-on: ubuntu-latest
+    
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Download recent workflow artifacts
+        run: |
+          mkdir -p /tmp/api_metrics
+          
+          # Get recent workflow runs using Python for portable date calculation
+          DAYS="${{ github.event.inputs.days_to_analyze || '7' }}"
+          
+          python3 - <<'PYEOF'
+          import subprocess
+          import json
+          from datetime import datetime, timedelta
+          import os
+          
+          days = int(os.getenv('DAYS', '7'))
+          since_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+          
+          print(f"Fetching workflow runs since {since_date}...")
+          
+          # Get list of recent runs
+          result = subprocess.run(
+              ['gh', 'run', 'list', 
+               '--repo', '${{ github.repository }}',
+               '--limit', '100',
+               '--json', 'databaseId,name,conclusion,createdAt'],
+              capture_output=True,
+              text=True,
+              check=True
+          )
+          
+          with open('/tmp/recent_runs.json', 'w') as f:
+              f.write(result.stdout)
+          PYEOF
+          
+          # Download artifacts from runs that have metrics
+          python3 - <<'PYEOF'
+          import json
+          import subprocess
+          import os
+          
+          with open('/tmp/recent_runs.json') as f:
+              runs = json.load(f)
+          
+          downloaded = 0
+          for run in runs[:50]:  # Limit to 50 most recent
+              run_id = run['databaseId']
+              
+              # Try to download metrics artifact
+              try:
+                  result = subprocess.run(
+                      ['gh', 'run', 'download', str(run_id), 
+                       '-n', f'github-api-metrics-{run_id}',
+                       '-D', f'/tmp/api_metrics/run_{run_id}'],
+                      capture_output=True,
+                      timeout=30
+                  )
+                  if result.returncode == 0:
+                      downloaded += 1
+                      print(f"✓ Downloaded metrics for run {run_id}")
+              except:
+                  pass
+          
+          print(f"\nDownloaded metrics from {downloaded} workflow runs")
+          PYEOF
+      
+      - name: Generate comprehensive report
+        run: |
+          # Find all metrics files
+          find /tmp/api_metrics -name "*.json" -type f > /tmp/metrics_files.txt
+          
+          if [ ! -s /tmp/metrics_files.txt ]; then
+            echo "No metrics files found"
+            exit 0
+          fi
+          
+          echo "Found $(wc -l < /tmp/metrics_files.txt) metrics files"
+          
+          # Generate reports
+          python3 .github/scripts/github_api_dashboard.py \
+            --metrics-dir /tmp/api_metrics \
+            --format text \
+            > api_usage_report.txt
+          
+          python3 .github/scripts/github_api_dashboard.py \
+            --metrics-dir /tmp/api_metrics \
+            --format markdown \
+            --output api_usage_report.md
+          
+          python3 .github/scripts/github_api_dashboard.py \
+            --metrics-dir /tmp/api_metrics \
+            --format html \
+            --output api_usage_report.html
+          
+          # Display text report
+          cat api_usage_report.txt
+      
+      - name: Check for rate limit warnings
+        id: check_limits
+        run: |
+          # Check if any workflow is approaching limits
+          python3 - <<'PYEOF'
+          import json
+          import sys
+          from pathlib import Path
+          
+          metrics_dir = Path('/tmp/api_metrics')
+          total_cost = 0
+          high_usage_workflows = []
+          
+          for metrics_file in metrics_dir.rglob('*.json'):
+              try:
+                  with open(metrics_file) as f:
+                      data = json.load(f)
+                      cost = data.get('estimated_cost', 0)
+                      total_cost += cost
+                      
+                      # Flag workflows with > 1000 requests
+                      if cost > 1000:
+                          high_usage_workflows.append({
+                              'name': data.get('workflow_name', 'unknown'),
+                              'run_id': data.get('workflow_run_id', 'unknown'),
+                              'cost': cost
+                          })
+              except:
+                  pass
+          
+          print(f"Total estimated cost across all workflows: {total_cost} requests")
+          
+          # Check if approaching hourly limit (5000/hour)
+          # Assuming workflows spread over time, this is cumulative
+          hourly_limit = 5000
+          
+          if total_cost > hourly_limit * 0.8:
+              print(f"⚠️  WARNING: High cumulative API usage detected!")
+              print(f"Usage: {total_cost} requests (>{hourly_limit * 0.8:.0f} threshold)")
+              
+              with open('/tmp/high_usage.txt', 'w') as f:
+                  f.write("true")
+              
+              if high_usage_workflows:
+                  print("\nHigh usage workflows:")
+                  for wf in sorted(high_usage_workflows, key=lambda x: x['cost'], reverse=True)[:5]:
+                      print(f"  - {wf['name']}: {wf['cost']} requests (run {wf['run_id']})")
+          else:
+              print(f"✅ API usage within safe limits")
+              with open('/tmp/high_usage.txt', 'w') as f:
+                  f.write("false")
+          PYEOF
+          
+          # Set output
+          if [ -f /tmp/high_usage.txt ]; then
+            HIGH_USAGE=$(cat /tmp/high_usage.txt)
+            echo "high_usage=$HIGH_USAGE" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create summary
+        if: always()
+        run: |
+          echo "# 📊 GitHub API Usage Monitoring Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f api_usage_report.md ]; then
+            cat api_usage_report.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No metrics data available for analysis" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Monitoring Period**: Last ${{ github.event.inputs.days_to_analyze || '7' }} days" >> $GITHUB_STEP_SUMMARY
+          echo "**Generated**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Alert on high usage
+        if: steps.check_limits.outputs.high_usage == 'true'
+        run: |
+          echo "::warning title=High API Usage::GitHub API usage is approaching rate limits. Review the report for optimization opportunities."
+      
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-usage-monitoring-report-${{ github.run_id }}
+          path: |
+            api_usage_report.txt
+            api_usage_report.md
+            api_usage_report.html
+          retention-days: 90
+      
+      - name: Upload all metrics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aggregated-api-metrics-${{ github.run_id }}
+          path: /tmp/api_metrics/
+          retention-days: 90
