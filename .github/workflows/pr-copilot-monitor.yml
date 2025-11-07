@@ -29,26 +29,36 @@ jobs:
       issues: write
     
     steps:
-      - name: Clean workspace aggressively
+      - name: Fix Git permissions before checkout
         run: |
+          echo "🔧 Fixing permissions for workspace: $GITHUB_WORKSPACE"
           echo "Current user: $(whoami)"
-          echo "Workspace: $GITHUB_WORKSPACE"
           
-          # Remove the entire workspace and recreate it
-          # This avoids all permission issues from previous runs
+          # Function to force remove with all methods
+          force_remove() {
+            local target="$1"
+            if [ -e "$target" ]; then
+              rm -rf "$target" 2>/dev/null && return 0
+              sudo rm -rf "$target" 2>/dev/null && return 0
+              sudo chown -R $(whoami):$(id -gn) "$target" 2>/dev/null && rm -rf "$target" 2>/dev/null && return 0
+              echo "⚠️  Could not remove $target"
+              return 1
+            fi
+            return 0
+          }
+          
+          # If workspace exists, force remove it completely
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            # Try normal removal first
-            rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
-            # If that fails, try with sudo
-            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
-            # Last resort: change ownership then remove
-            (sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" && rm -rf "$GITHUB_WORKSPACE") || \
-            true
+            echo "📁 Removing existing workspace..."
+            force_remove "$GITHUB_WORKSPACE" || true
           fi
           
-          # Recreate the workspace directory with correct ownership
+          # Recreate with correct permissions
           mkdir -p "$GITHUB_WORKSPACE"
-          sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" 2>/dev/null || true
+          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
+          chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+          
+          echo "✅ Workspace prepared"
         continue-on-error: true
       
       - name: Checkout repository
@@ -57,6 +67,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           clean: true
+      
+      - name: Fix permissions after checkout
+        run: |
+          # Ensure all files are owned by current user
+          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
+          chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+        continue-on-error: true
       
       - name: Set up Python
         uses: actions/setup-python@v5
