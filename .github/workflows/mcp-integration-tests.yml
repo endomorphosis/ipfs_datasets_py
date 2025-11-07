@@ -2,13 +2,13 @@ name: MCP Endpoints Integration Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/mcp_server/**'
       - 'tests/integration/**'
       - '.github/workflows/mcp-integration-tests.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       test_scope:

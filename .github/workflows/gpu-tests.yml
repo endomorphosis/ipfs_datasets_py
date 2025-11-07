@@ -2,13 +2,13 @@ name: GPU-Enabled Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/**'
       - 'tests/**'
       - '.github/workflows/gpu-tests.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       test_suite:

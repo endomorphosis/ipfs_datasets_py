@@ -2,7 +2,7 @@ name: Docker Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Dockerfile*'
       - 'docker-compose*.yml'
@@ -11,7 +11,7 @@ on:
       - 'setup.py'
       - 'requirements.txt'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       build_type:

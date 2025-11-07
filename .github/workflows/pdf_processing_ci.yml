@@ -2,7 +2,7 @@ name: PDF Processing Pipeline CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**' 
@@ -10,7 +10,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/**'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'

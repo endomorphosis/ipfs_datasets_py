@@ -2,7 +2,7 @@ name: PDF Processing and MCP Tools CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'
@@ -11,7 +11,7 @@ on:
       - 'test_simple_integration.py'
       - 'run_comprehensive_tests.py'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'
