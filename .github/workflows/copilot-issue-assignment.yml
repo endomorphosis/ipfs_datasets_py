@@ -40,8 +40,15 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Find issues labeled 'copilot-queued' and check if we can process them
+          # Find issues labeled 'copilot-queued' OR with 'Fix:' prefix
+          # Priority: 1) copilot-queued, 2) Fix: prefix issues
           QUEUED_ISSUES=$(gh issue list --repo "${{ github.repository }}" --label "copilot-queued" --state open --json number --jq '.[].number' | head -1)
+          
+          if [ -z "$QUEUED_ISSUES" ]; then
+            # No queued issues, search for 'Fix:' prefix issues
+            QUEUED_ISSUES=$(gh issue list --repo "${{ github.repository }}" --search "Fix: in:title" --state open --json number --jq '.[].number' | head -1)
+          fi
+          
           if [ -n "$QUEUED_ISSUES" ]; then
             echo "number=$QUEUED_ISSUES" >> $GITHUB_OUTPUT
             echo "Found queued issue #${QUEUED_ISSUES}" | tee -a $GITHUB_STEP_SUMMARY
