@@ -29,10 +29,21 @@ jobs:
       (github.event.action == 'labeled' && github.event.label.name == 'copilot-fix')
     
     steps:
+      - name: Clean workspace
+        run: |
+          # Fix permissions and clean workspace to avoid checkout failures
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" 2>/dev/null || true
+            sudo chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+            rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.* 2>/dev/null || true
+          fi
+        continue-on-error: true
+      
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          clean: true
       
       - name: Find queued issues
         id: find_queued
