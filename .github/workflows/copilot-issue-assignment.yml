@@ -138,20 +138,12 @@ jobs:
       - name: Invoke Copilot coding agent
         if: steps.check_concurrency.outputs.should_wait == 'false'
         env:
-          # NOTE: gh agent-task requires OAuth token with Copilot permissions
-          # GITHUB_TOKEN does not have required scopes - must use PAT
-          # See: .github/COPILOT_PAT_SETUP.md for instructions
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Using PAT with Copilot permissions (see .github/COPILOT_PAT_SETUP.md)
+          GH_TOKEN: ${{ secrets.GH_COPILOT_PAT }}
         run: |
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           echo "## 🤖 Invoking Copilot Coding Agent" | tee -a $GITHUB_STEP_SUMMARY
           echo "Assigning issue #${ISSUE_NUMBER} to GitHub Copilot..." | tee -a $GITHUB_STEP_SUMMARY
-          echo "" | tee -a $GITHUB_STEP_SUMMARY
-          echo "⚠️  **Known Issue**: \`gh agent-task create\` requires OAuth token with Copilot scopes" | tee -a $GITHUB_STEP_SUMMARY
-          echo "This workflow currently uses GITHUB_TOKEN which does not have required permissions." | tee -a $GITHUB_STEP_SUMMARY
-          echo "" | tee -a $GITHUB_STEP_SUMMARY
-          echo "**Setup Required**: See \`.github/COPILOT_PAT_SETUP.md\` for configuration instructions" | tee -a $GITHUB_STEP_SUMMARY
-          echo "" | tee -a $GITHUB_STEP_SUMMARY
           
           # Get issue details with retry
           MAX_RETRIES=3
