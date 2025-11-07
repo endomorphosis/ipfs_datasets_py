@@ -37,6 +37,16 @@ import time
 from datetime import datetime
 from typing import Dict, List, Optional, Any
 
+# Import GitHub API counter for tracking API usage
+try:
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '.github', 'scripts'))
+    from github_api_counter import GitHubAPICounter
+    API_COUNTER_AVAILABLE = True
+except ImportError:
+    API_COUNTER_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("GitHub API counter not available - API calls will not be tracked")
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -59,6 +69,15 @@ class CopilotAgentInvoker:
         self.repo = repo or self._get_current_repo()
         self._verify_gh_cli()
         self._verify_repo_access()
+        
+        # Initialize API counter if available
+        self.api_counter = None
+        if API_COUNTER_AVAILABLE and not dry_run:
+            try:
+                self.api_counter = GitHubAPICounter()
+                logger.info("✅ GitHub API counter enabled - calls will be tracked")
+            except Exception as e:
+                logger.warning(f"Could not initialize API counter: {e}")
     
     def _get_current_repo(self) -> str:
         """Get current repository from git remote."""
@@ -118,6 +137,17 @@ class CopilotAgentInvoker:
     def run_command(self, cmd: List[str], timeout: int = 60) -> Dict[str, Any]:
         """Run a command and return structured result."""
         try:
+            # Use API counter if available
+            if self.api_counter and len(cmd) > 0 and cmd[0] in ['gh', 'gh.exe']:
+                result = self.api_counter.run_gh_command(cmd, timeout=timeout, check=False)
+                return {
+                    'success': result.returncode == 0,
+                    'stdout': result.stdout,
+                    'stderr': result.stderr,
+                    'returncode': result.returncode
+                }
+            
+            # Fallback to regular subprocess
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -407,6 +437,10 @@ Method:
   3. NOT: @copilot comments (unreliable)
   
   Based on evidence from PR #401 created by app/copilot-swe-agent
+  
+Note:
+  GitHub API calls are tracked automatically to monitor usage and stay
+  within rate limits. Metrics are saved to $RUNNER_TEMP/github_api_metrics_*.json
 """
     )
     parser.add_argument(
@@ -467,6 +501,15 @@ Method:
         args.task,
         method=args.method
     )
+    
+    # Save API metrics if counter is available
+    if invoker.api_counter:
+        try:
+            invoker.api_counter.save_metrics()
+            logger.info(f"\n📊 API Usage: {invoker.api_counter.get_total_calls()} calls, "
+                       f"{invoker.api_counter.get_estimated_cost()} requests")
+        except Exception as e:
+            logger.warning(f"Could not save API metrics: {e}")
     
     if success:
         logger.info(f"\n✅ Successfully invoked Copilot coding agent on PR #{args.pr}")
