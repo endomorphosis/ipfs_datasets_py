@@ -1,9 +1,10 @@
 name: Draft PR Copilot Monitor
 
 on:
-  schedule:
-    # Run every 10 minutes
-    - cron: '*/10 * * * *'
+  # DISABLED: This workflow was creating infinite draft PRs
+  # schedule:
+  #   # Run every 10 minutes
+  #   - cron: '*/10 * * * *'
   
   workflow_dispatch:
     inputs:

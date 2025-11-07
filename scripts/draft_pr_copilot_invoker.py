@@ -262,6 +262,18 @@ Please complete the work from draft PR #{pr_number}:
                 stats['skipped_copilot_prs'] += 1
                 continue
             
+            # Skip PRs created by this script (to avoid infinite loops)
+            if title.startswith("Complete draft PR #") or "Complete draft PR" in title:
+                self.logger.info(f"   ⏭️  Skipping - meta PR (created by this script)")
+                stats['skipped_copilot_prs'] += 1
+                continue
+            
+            # Skip PRs created by GitHub Actions
+            if author == 'app/github-actions':
+                self.logger.info(f"   ⏭️  Skipping - created by GitHub Actions")
+                stats['skipped_copilot_prs'] += 1
+                continue
+            
             # Check if PR needs work
             reason = self.check_if_needs_work(pr)
             if not reason:
