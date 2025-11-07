@@ -22,7 +22,8 @@ from typing import Any, Dict, List, Optional
 import networkx as nx
 import numpy as np
 from nltk import word_tokenize, pos_tag, ne_chunk, tree2conlltags, Tree
-import openai
+# openai imported but not used - commented out to avoid hard dependency
+# import openai
 import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
