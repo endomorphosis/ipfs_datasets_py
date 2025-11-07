@@ -14,14 +14,14 @@ on:
           - docker-build
           - integration
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/**'
       - 'tests/**'
       - '.github/workflows/arm64-runner.yml'
       - 'Dockerfile*'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 permissions:
   contents: read

@@ -2,7 +2,7 @@ name: Scraper Validation and Testing
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/**'
       - 'ipfs_datasets_py/mcp_server/tools/finance_data_tools/**'
@@ -11,7 +11,7 @@ on:
       - 'tests/scraper_tests/**'
       - '.github/workflows/scraper-validation.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       domain:

@@ -21,7 +21,7 @@ on:
     # Run daily at 6 AM UTC to validate runner health
     - cron: '0 6 * * *'
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - '.github/workflows/**'
       - 'comprehensive_runner_validation.py'
