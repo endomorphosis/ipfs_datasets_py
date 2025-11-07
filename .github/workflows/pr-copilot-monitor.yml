@@ -28,19 +28,26 @@ jobs:
       issues: write
     
     steps:
-      - name: Clean workspace safely
+      - name: Clean workspace aggressively
         run: |
-          # Fix Git lock files if they exist
-          if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
-            rm -f "$GITHUB_WORKSPACE/.git/index.lock" || sudo rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
+          echo "Current user: $(whoami)"
+          echo "Workspace: $GITHUB_WORKSPACE"
+          
+          # Remove the entire workspace and recreate it
+          # This avoids all permission issues from previous runs
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            # Try normal removal first
+            rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
+            # If that fails, try with sudo
+            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
+            # Last resort: change ownership then remove
+            (sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" && rm -rf "$GITHUB_WORKSPACE") || \
+            true
           fi
           
-          # Reset Git state if repository exists
-          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
-            cd "$GITHUB_WORKSPACE" || exit 1
-            git reset --hard HEAD 2>/dev/null || true
-            git clean -ffdx 2>/dev/null || true
-          fi
+          # Recreate the workspace directory with correct ownership
+          mkdir -p "$GITHUB_WORKSPACE"
+          sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" 2>/dev/null || true
         continue-on-error: true
       
       - name: Checkout repository
