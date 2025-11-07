@@ -127,7 +127,7 @@ jobs:
       - name: Invoke Copilot coding agent
         if: steps.check_concurrency.outputs.should_wait == 'false'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
         run: |
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           echo "## 🤖 Invoking Copilot Coding Agent" | tee -a $GITHUB_STEP_SUMMARY
