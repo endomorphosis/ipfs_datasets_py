@@ -25,6 +25,9 @@ jobs:
   monitor-api-usage:
     runs-on: ubuntu-latest
     
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -35,23 +38,37 @@ jobs:
           python-version: '3.12'
       
       - name: Download recent workflow artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p /tmp/api_metrics
           
-          # Get recent workflow runs
+          # Get recent workflow runs using Python for portable date calculation
           DAYS="${{ github.event.inputs.days_to_analyze || '7' }}"
-          SINCE_DATE=$(date -d "$DAYS days ago" -u +"%Y-%m-%dT%H:%M:%SZ")
           
-          echo "Fetching workflow runs since $SINCE_DATE..."
+          python3 - <<'PYEOF'
+          import subprocess
+          import json
+          from datetime import datetime, timedelta
+          import os
+          
+          days = int(os.getenv('DAYS', '7'))
+          since_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+          
+          print(f"Fetching workflow runs since {since_date}...")
           
           # Get list of recent runs
-          gh run list \
-            --repo ${{ github.repository }} \
-            --limit 100 \
-            --json databaseId,name,conclusion,createdAt \
-            > /tmp/recent_runs.json
+          result = subprocess.run(
+              ['gh', 'run', 'list', 
+               '--repo', '${{ github.repository }}',
+               '--limit', '100',
+               '--json', 'databaseId,name,conclusion,createdAt'],
+              capture_output=True,
+              text=True,
+              check=True
+          )
+          
+          with open('/tmp/recent_runs.json', 'w') as f:
+              f.write(result.stdout)
+          PYEOF
           
           # Download artifacts from runs that have metrics
           python3 - <<'PYEOF'

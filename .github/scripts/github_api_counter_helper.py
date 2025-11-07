@@ -109,7 +109,8 @@ class TrackedSubprocess:
                     raise subprocess.CalledProcessError(
                         result.returncode, args, result.stdout, result.stderr
                     )
-                return result.stdout.encode() if isinstance(result.stdout, str) else result.stdout
+                # When text=True, stdout is always str, no need to encode
+                return result.stdout.encode('utf-8') if not kwargs.get('text', True) else result.stdout.encode('utf-8')
         
         return subprocess.check_output(args, **kwargs)
     

@@ -44,14 +44,16 @@ try:
     API_COUNTER_AVAILABLE = True
 except ImportError:
     API_COUNTER_AVAILABLE = False
-    logger = logging.getLogger(__name__)
-    logger.warning("GitHub API counter not available - API calls will not be tracked")
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Log counter availability after logging is configured
+if not API_COUNTER_AVAILABLE:
+    logger.warning("GitHub API counter not available - API calls will not be tracked")
 
 
 class CopilotAgentInvoker:

@@ -44,7 +44,11 @@ logger = logging.getLogger(__name__)
 class GitHubAPICounter:
     """Tracks GitHub API calls made during workflow execution."""
     
-    # GitHub API endpoints and their typical costs
+    # GitHub API endpoints and their typical costs.
+    # Note: These are estimated costs per call. Actual costs may vary based on
+    # GitHub API endpoint complexity, response size, and whether pagination is used.
+    # Most simple CLI commands use 1 API request, but complex operations or
+    # paginated results may consume more.
     API_COSTS = {
         'gh_pr_list': 1,
         'gh_pr_view': 1,

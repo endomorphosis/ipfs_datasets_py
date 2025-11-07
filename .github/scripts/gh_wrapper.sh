@@ -13,9 +13,8 @@
 # - Count the API call
 # - Run the actual gh command
 # - Save metrics to the workflow temp directory
+# - Gracefully handle counter failures
 #
-
-set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COUNTER_SCRIPT="${SCRIPT_DIR}/github_api_counter.py"
@@ -26,5 +25,8 @@ if [ ! -f "$COUNTER_SCRIPT" ]; then
     exec gh "$@"
 fi
 
-# Run gh command through the counter
-python3 "$COUNTER_SCRIPT" --command gh "$@"
+# Try to run gh command through the counter, but fallback to direct gh if counter fails
+if ! python3 "$COUNTER_SCRIPT" --command gh "$@"; then
+    # Counter failed, run gh directly to ensure the command still executes
+    exec gh "$@"
+fi
