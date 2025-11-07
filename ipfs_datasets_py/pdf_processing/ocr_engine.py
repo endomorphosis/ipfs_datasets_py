@@ -50,6 +50,25 @@ except ImportError:
     logger.warning("surya not available, Surya OCR will be disabled")
 
 
+def _calculate_avg_confidence(confidences):
+    """
+    Calculate average confidence score with fallback for when numpy is unavailable.
+    
+    Args:
+        confidences (list): List of confidence scores (0.0-1.0 or 0-100 depending on context)
+    
+    Returns:
+        float: Average confidence score, or 0.0 if list is empty
+    """
+    if not confidences:
+        return 0.0
+    
+    if HAVE_NUMPY:
+        return float(np.mean(confidences))
+    else:
+        return sum(confidences) / len(confidences)
+
+
 class OCREngine(ABC):
     """
     Abstract base class defining the interface for Optical Character Recognition (OCR) engines.
@@ -557,11 +576,8 @@ class SuryaOCR(OCREngine):
                 })
                 confidences.append(text_line.confidence)
             
-            # Calculate average confidence (use numpy if available, else use Python mean)
-            if HAVE_NUMPY:
-                avg_confidence = np.mean(confidences) if confidences else 0.0
-            else:
-                avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+            # Calculate average confidence
+            avg_confidence = _calculate_avg_confidence(confidences)
             
             return {
                 'text': full_text.strip(),
@@ -801,11 +817,11 @@ class TesseractOCR(OCREngine):
             data = self.pytesseract.image_to_data(image, output_type=self.pytesseract.Output.DICT)
             print(f"pytesseract data:\n{data}")
             
-            # Calculate average confidence (use numpy if available, else use Python mean)
-            if HAVE_NUMPY:
-                avg_confidence = np.mean(confidences) / 100.0 if confidences else 0.0
-            else:
-                avg_confidence = (sum(confidences) / len(confidences)) / 100.0 if confidences else 0.0
+            # Extract confidences from data
+            confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+            
+            # Calculate average confidence (divide by 100 for tesseract which uses 0-100 scale)
+            avg_confidence = _calculate_avg_confidence(confidences) / 100.0 if confidences else 0.0
             
             # Extract word boxes
             word_boxes = []
@@ -1095,11 +1111,8 @@ class EasyOCR(OCREngine):
                 })
                 confidences.append(confidence)
             
-            # Calculate average confidence (use numpy if available, else use Python mean)
-            if HAVE_NUMPY:
-                avg_confidence = np.mean(confidences) if confidences else 0.0
-            else:
-                avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+            # Calculate average confidence
+            avg_confidence = _calculate_avg_confidence(confidences)
             
             return {
                 'text': full_text.strip(),

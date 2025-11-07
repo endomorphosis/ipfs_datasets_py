@@ -30,8 +30,13 @@ except ImportError:
     np = None
     HAVE_NUMPY = False
 
-# openai imported but not used - commented out to avoid hard dependency
-# import openai
+try:
+    import openai
+    HAVE_OPENAI = True
+except ImportError:
+    openai = None
+    HAVE_OPENAI = False
+
 import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
