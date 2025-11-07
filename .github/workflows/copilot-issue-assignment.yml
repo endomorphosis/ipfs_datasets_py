@@ -129,9 +129,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Authenticate gh CLI with the token
-          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
-          
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           echo "## 🤖 Invoking Copilot Coding Agent" | tee -a $GITHUB_STEP_SUMMARY
           echo "Assigning issue #${ISSUE_NUMBER} to GitHub Copilot..." | tee -a $GITHUB_STEP_SUMMARY
