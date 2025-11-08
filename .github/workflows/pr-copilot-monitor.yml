@@ -54,15 +54,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! command -v gh >/dev/null 2>&1; then
-            echo "Installing GitHub CLI..."
-            mkdir -p ~/.local/bin
-            wget https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -O /tmp/gh.tar.gz
-            tar -xzf /tmp/gh.tar.gz -C /tmp
-            cp /tmp/gh_*/bin/gh ~/.local/bin/
-            chmod +x ~/.local/bin/gh
-            export PATH="$HOME/.local/bin:$PATH"
+            echo "GitHub CLI not found, installing..."
+            type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
           fi
           gh --version
+          
+          # Authenticate gh CLI with GITHUB_TOKEN
+          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth status
       
       - name: Run Draft PR Copilot Invoker
         id: monitor
