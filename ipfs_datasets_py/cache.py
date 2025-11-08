@@ -111,7 +111,9 @@ class GitHubAPICache:
         enable_persistence: bool = True,
         enable_p2p: bool = True,
         p2p_listen_port: int = 9000,
-        p2p_bootstrap_peers: Optional[List[str]] = None
+        p2p_bootstrap_peers: Optional[List[str]] = None,
+        github_repo: Optional[str] = None,
+        enable_peer_discovery: bool = True
     ):
         """
         Initialize the GitHub API cache.
@@ -124,6 +126,8 @@ class GitHubAPICache:
             enable_p2p: Whether to enable P2P cache sharing via libp2p
             p2p_listen_port: Port for libp2p to listen on (default: 9000)
             p2p_bootstrap_peers: List of bootstrap peer multiaddrs
+            github_repo: GitHub repository for peer discovery (e.g., 'owner/repo')
+            enable_peer_discovery: Whether to use GitHub cache API for peer discovery
         """
         self.default_ttl = default_ttl
         self.max_cache_size = max_cache_size
@@ -160,6 +164,23 @@ class GitHubAPICache:
         self._p2p_bootstrap_peers = p2p_bootstrap_peers or []
         self._p2p_connected_peers: Dict[str, Any] = {}
         self._event_loop = None
+        
+        # Peer discovery
+        self.github_repo = github_repo or os.environ.get("GITHUB_REPOSITORY")
+        self.enable_peer_discovery = enable_peer_discovery and self.github_repo
+        self._peer_registry = None
+        
+        if self.enable_peer_discovery and self.enable_p2p:
+            try:
+                from .p2p_peer_registry import P2PPeerRegistry
+                self._peer_registry = P2PPeerRegistry(
+                    repo=self.github_repo,
+                    peer_ttl_minutes=15
+                )
+                logger.info(f"✓ P2P peer discovery enabled for {self.github_repo}")
+            except Exception as e:
+                logger.warning(f"⚠ Peer discovery unavailable: {e}")
+                self.enable_peer_discovery = False
         
         # Encryption for P2P messages (using GitHub token as shared secret)
         self._encryption_key = None
@@ -705,8 +726,30 @@ class GitHubAPICache:
             listen_addr = f"/ip4/0.0.0.0/tcp/{self._p2p_listen_port}"
             await self._p2p_host.get_network().listen(listen_addr)
             
+            peer_id = self._p2p_host.get_id().pretty()
             logger.info(f"P2P host started, listening on {listen_addr}")
-            logger.info(f"Peer ID: {self._p2p_host.get_id().pretty()}")
+            logger.info(f"Peer ID: {peer_id}")
+            
+            # Register this peer in the discovery registry
+            if self._peer_registry:
+                try:
+                    # Get public IP for multiaddr
+                    public_ip = self._peer_registry.public_ip or "127.0.0.1"
+                    multiaddr = f"/ip4/{public_ip}/tcp/{self._p2p_listen_port}/p2p/{peer_id}"
+                    
+                    self._peer_registry.register_peer(
+                        peer_id=peer_id,
+                        listen_port=self._p2p_listen_port,
+                        multiaddr=multiaddr
+                    )
+                    
+                    # Discover other peers
+                    discovered_addrs = self._peer_registry.get_bootstrap_addrs(max_peers=5)
+                    if discovered_addrs:
+                        logger.info(f"✓ Discovered {len(discovered_addrs)} peer(s) via registry")
+                        self._p2p_bootstrap_peers.extend(discovered_addrs)
+                except Exception as e:
+                    logger.warning(f"Peer discovery failed: {e}")
             
             # Connect to bootstrap peers
             for peer_addr in self._p2p_bootstrap_peers:
