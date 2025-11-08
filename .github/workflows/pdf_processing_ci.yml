@@ -33,6 +33,14 @@ jobs:
       image: python:3.12-slim
       options: --user root
     steps:
+    - name: Fix permissions before checkout
+      run: |
+        # Fix any permission issues from previous runs
+        if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+          chmod -R u+rwX "$GITHUB_WORKSPACE/.git" 2>/dev/null || true
+          chown -R root:root "$GITHUB_WORKSPACE" 2>/dev/null || true
+        fi
+    
     - name: Install system dependencies
       run: |
         apt-get update
@@ -86,6 +94,14 @@ jobs:
         test-group: ['pdf-processing', 'mcp-tools', 'utils']
     
     steps:
+    - name: Fix permissions before checkout
+      run: |
+        # Fix any permission issues from previous runs
+        if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+          chmod -R u+rwX "$GITHUB_WORKSPACE/.git" 2>/dev/null || true
+          chown -R root:root "$GITHUB_WORKSPACE" 2>/dev/null || true
+        fi
+    
     - name: Install system dependencies
       run: |
         apt-get update
