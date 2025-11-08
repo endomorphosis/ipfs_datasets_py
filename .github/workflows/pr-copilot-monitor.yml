@@ -1,10 +1,9 @@
 name: Draft PR Copilot Monitor
 
 on:
-  # DISABLED: This workflow was creating infinite draft PRs
-  # schedule:
-  #   # Run every 10 minutes
-  #   - cron: '*/10 * * * *'
+  schedule:
+    # Run every 10 minutes
+    - cron: '*/10 * * * *'
   
   workflow_dispatch:
     inputs:
@@ -29,51 +28,40 @@ jobs:
       issues: write
     
     steps:
-      - name: Fix Git permissions before checkout
+      - name: Clean workspace completely (bypass checkout action)
         run: |
-          echo "🔧 Fixing permissions for workspace: $GITHUB_WORKSPACE"
-          echo "Current user: $(whoami)"
+          echo "🧹 Complete workspace cleanup"
+          echo "User: $(whoami), Workspace: $GITHUB_WORKSPACE"
           
-          # Function to force remove with all methods
-          force_remove() {
-            local target="$1"
-            if [ -e "$target" ]; then
-              rm -rf "$target" 2>/dev/null && return 0
-              sudo rm -rf "$target" 2>/dev/null && return 0
-              sudo chown -R $(whoami):$(id -gn) "$target" 2>/dev/null && rm -rf "$target" 2>/dev/null && return 0
-              echo "⚠️  Could not remove $target"
-              return 1
-            fi
-            return 0
-          }
-          
-          # If workspace exists, force remove it completely
+          # Nuclear option: remove entire workspace with sudo
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            echo "📁 Removing existing workspace..."
-            force_remove "$GITHUB_WORKSPACE" || true
+            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
+            (sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" && sudo rm -rf "$GITHUB_WORKSPACE") || \
+            true
           fi
           
-          # Recreate with correct permissions
+          # Recreate fresh
           mkdir -p "$GITHUB_WORKSPACE"
-          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
-          chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+          cd "$GITHUB_WORKSPACE"
           
-          echo "✅ Workspace prepared"
+          echo "✅ Workspace cleaned"
         continue-on-error: true
       
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-          clean: true
-      
-      - name: Fix permissions after checkout
+      - name: Manual Git clone (avoids checkout permission issues)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Ensure all files are owned by current user
+          cd "$GITHUB_WORKSPACE"
+          
+          # Clone fresh copy
+          git clone https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git .
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure ownership is correct
           sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
-          chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
-        continue-on-error: true
+          
+          echo "✅ Repository cloned successfully"
       
       - name: Set up Python
         uses: actions/setup-python@v5
