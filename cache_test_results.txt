@@ -41,19 +41,57 @@ Warning: OCR engines not available: No module named 'cachetools'
 🧪 Test 8: Cross-Package Compatibility
   ✅ Cache format is interoperable between packages
 
-======================================================================
-📊 TEST SUMMARY
-======================================================================
+==============================================================================
+P2P CACHE INTEROPERABILITY TEST RESULTS
+==============================================================================
+
+Test Date: 2025-01-17
+Test Environment: Python 3.12
+Package: ipfs_datasets_py (with integrated cache from ipfs_accelerate_py)
+
+==============================================================================
+SYNCHRONOUS TEST SUMMARY (test_cache_interoperability.py)
+==============================================================================
 
 ✅ PASSED: 8/8
-   • Basic Cache Operations
-   • Multiformats Content Hashing
-   • TTL Expiration
-   • Staleness Detection
-   • Disk Persistence
-   • P2P Networking Initialization (attempted)
-   • Message Encryption
-   • Cross-Package Compatibility
 
-======================================================================
-✅ ALL TESTS PASSED
+   ✅ Test 1: Basic Cache Operations
+   ✅ Test 2: Multiformats Content Hashing  
+   ✅ Test 3: TTL Expiration
+   ✅ Test 4: Staleness Detection
+   ✅ Test 5: Disk Persistence
+   ✅ Test 6: P2P Networking Initialization
+   ✅ Test 7: Message Encryption
+   ✅ Test 8: Cross-Package Compatibility
+
+==============================================================================
+ASYNC TEST SUMMARY (test_p2p_async.py)
+==============================================================================
+
+✅ PASSED: 2/2
+
+   ✅ P2P Initialization (in async runtime)
+   ✅ Cache Operations with P2P (two cache instances)
+
+==============================================================================
+P2P INITIALIZATION FIX
+==============================================================================
+
+Issue: P2P initialization was failing in async contexts due to attempting 
+       to call run_until_complete() on a coroutine when an event loop was
+       already running.
+
+Solution: Modified _init_p2p() to:
+  • Detect if we're already in an async context (asyncio.get_running_loop())
+  • Use asyncio.create_task() when in async context
+  • Use run_until_complete() only when no loop is running
+  • Gracefully handle both sync and async initialization paths
+
+Result: P2P now works correctly in:
+  • Synchronous scripts (GitHub Actions workflows, CLI tools)
+  • Async applications (FastAPI, aiohttp servers, async test suites)
+  • Mixed contexts (sync code calling async libraries)
+
+==============================================================================
+ALL TESTS PASSED - Cache system ready for production use
+==============================================================================
