@@ -1,0 +1,59 @@
+/home/devel/ipfs_datasets_py/ipfs_datasets_py/search/__init__.py:9: UserWarning: search_embeddings using mock implementation due to missing dependencies: cannot import name 'install_ipfs' from partially initialized module 'ipfs_kit_py.ipfs_kit' (most likely due to a circular import) (/usr/local/lib/python3.12/dist-packages/ipfs_kit_py/ipfs_kit.py)
+  warnings.warn(f"search_embeddings using mock implementation due to missing dependencies: {e}")
+[nltk_data] Error loading taggers/averaged_perceptron_tagger: Package
+[nltk_data]     'taggers/averaged_perceptron_tagger' not found in
+[nltk_data]     index
+[nltk_data] Error loading chunkers/maxent_ne_chunker: Package
+[nltk_data]     'chunkers/maxent_ne_chunker' not found in index
+======================================================================
+🧪 P2P CACHE INTEROPERABILITY TEST SUITE
+======================================================================
+
+Testing ipfs_datasets_py P2P cache implementation...
+
+🧪 Test 1: Basic Cache Operations
+⚠ Warning: Could not import ipfs_kit_py: cannot import name 'install_ipfs' from partially initialized module 'ipfs_kit_py.ipfs_kit' (most likely due to a circular import) (/usr/local/lib/python3.12/dist-packages/ipfs_kit_py/ipfs_kit.py)
+Failed to import mcp.server. Please ensure the mcp library is installed.
+Warning: OCR engines not available: No module named 'cachetools'
+  ✅ Basic cache operations work correctly
+
+🧪 Test 2: Multiformats Content Hashing
+  ✅ Content hashing works (hash: bafkreibd4sr722j...)
+
+🧪 Test 3: TTL Expiration
+  ⏳ Waiting 2 seconds for TTL expiration...
+  ✅ TTL expiration works correctly
+
+🧪 Test 4: Staleness Detection
+  ℹ️  Note: Automatic staleness detection based on content hash
+  ✅ Staleness detection works correctly
+
+🧪 Test 5: Disk Persistence
+  ✅ Disk persistence works (1 files)
+
+🧪 Test 6: P2P Networking Initialization
+  ⚠️  P2P initialization attempted but not fully enabled (requires async runtime)
+     This is expected in synchronous test environment
+
+🧪 Test 7: Message Encryption
+  ✅ Message encryption initialized successfully
+
+🧪 Test 8: Cross-Package Compatibility
+  ✅ Cache format is interoperable between packages
+
+======================================================================
+📊 TEST SUMMARY
+======================================================================
+
+✅ PASSED: 8/8
+   • Basic Cache Operations
+   • Multiformats Content Hashing
+   • TTL Expiration
+   • Staleness Detection
+   • Disk Persistence
+   • P2P Networking Initialization (attempted)
+   • Message Encryption
+   • Cross-Package Compatibility
+
+======================================================================
+✅ ALL TESTS PASSED
