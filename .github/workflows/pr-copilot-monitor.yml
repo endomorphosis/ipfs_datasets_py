@@ -33,33 +33,45 @@ jobs:
           echo "🧹 Complete workspace cleanup"
           echo "User: $(whoami), Workspace: $GITHUB_WORKSPACE"
           
-          # Nuclear option: remove entire workspace with sudo
+          # Remove workspace directory completely and recreate
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            sudo rm -rf "$GITHUB_WORKSPACE"/* 2>/dev/null || true
-            sudo rm -rf "$GITHUB_WORKSPACE"/.* 2>/dev/null || true
-            sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
+            cd "$(dirname "$GITHUB_WORKSPACE")"
+            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || true
           fi
           
+          # Recreate fresh workspace
+          sudo mkdir -p "$GITHUB_WORKSPACE"
+          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE"
+          
           # Verify it's empty
+          echo "Workspace contents:"
           ls -la "$GITHUB_WORKSPACE" || true
           
-          echo "✅ Workspace cleaned"
+          echo "✅ Workspace cleaned and recreated"
         continue-on-error: false
       
       - name: Manual Git clone (avoids checkout permission issues)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Clone into workspace (should be empty now)
-          git clone https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git "$GITHUB_WORKSPACE/repo"
+          echo "📦 Cloning repository..."
+          echo "Workspace: $GITHUB_WORKSPACE"
           
-          # Move contents up to workspace root
-          mv "$GITHUB_WORKSPACE/repo"/* "$GITHUB_WORKSPACE/"
-          mv "$GITHUB_WORKSPACE/repo"/.git "$GITHUB_WORKSPACE/"
-          mv "$GITHUB_WORKSPACE/repo"/.github "$GITHUB_WORKSPACE/" 2>/dev/null || true
-          rmdir "$GITHUB_WORKSPACE/repo"
+          # Ensure workspace is empty
+          if [ "$(ls -A "$GITHUB_WORKSPACE" 2>/dev/null)" ]; then
+            echo "⚠️  Workspace not empty, cleaning again..."
+            sudo rm -rf "$GITHUB_WORKSPACE"/*
+            sudo rm -rf "$GITHUB_WORKSPACE"/.*
+          fi
           
+          # Clone directly into workspace using --no-checkout then checkout
           cd "$GITHUB_WORKSPACE"
+          git init
+          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git
+          git fetch origin main
+          git checkout -b main origin/main
+          
+          # Configure git
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
@@ -67,6 +79,7 @@ jobs:
           sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
           
           echo "✅ Repository cloned successfully"
+          git log --oneline -3
       
       - name: Set up Python
         uses: actions/setup-python@v5
