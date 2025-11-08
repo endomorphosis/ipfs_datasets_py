@@ -28,14 +28,25 @@ jobs:
     steps:
     - name: Clean workspace
       run: |
-        # Remove any stale lock files and reset permissions
+        # Aggressive cleanup for permission issues
         if [ -d "$GITHUB_WORKSPACE" ]; then
-          sudo rm -rf "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
-          sudo rm -rf "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+          # Fix permissions on .git directory first
+          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
+            sudo chmod -R u+rwX "$GITHUB_WORKSPACE/.git" 2>/dev/null || true
+            sudo chown -R $USER:$USER "$GITHUB_WORKSPACE/.git" 2>/dev/null || true
+            # Remove specific problematic files
+            sudo rm -f "$GITHUB_WORKSPACE/.git/index.lock" 2>/dev/null || true
+            sudo rm -f "$GITHUB_WORKSPACE/.git/shallow.lock" 2>/dev/null || true
+            sudo rm -f "$GITHUB_WORKSPACE/.git/FETCH_HEAD" 2>/dev/null || true
+            sudo rm -f "$GITHUB_WORKSPACE/.git/HEAD.lock" 2>/dev/null || true
+          fi
+          # Fix permissions on entire workspace
           sudo chown -R $USER:$USER "$GITHUB_WORKSPACE" 2>/dev/null || true
-          # Clean workspace contents but keep the directory itself
-          sudo rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* 2>/dev/null || true
+          sudo chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+          # Clean workspace contents
+          rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.[!.]* 2>/dev/null || true
         fi
+        echo "✓ Workspace cleaned"
     
     - name: Configure git
       run: |
