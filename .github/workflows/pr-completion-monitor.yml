@@ -98,6 +98,8 @@ jobs:
       - name: Check PR completion and invoke Copilot if needed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBERS: ${{ steps.get_prs.outputs.pr_numbers }}
+          FORCE_FIX: ${{ github.event.inputs.force_fix }}
           # This workflow uses GitHub Copilot CLI (integrated in ipfs_datasets_py)
           # No external API keys required - Copilot CLI uses GitHub authentication
         run: |
@@ -393,9 +395,6 @@ jobs:
           if __name__ == '__main__':
               main()
           EOF
-        env:
-          PR_NUMBERS: ${{ steps.get_prs.outputs.pr_numbers }}
-          FORCE_FIX: ${{ github.event.inputs.force_fix }}
       
       - name: Create summary
         if: always()

@@ -2,7 +2,7 @@ name: Docker Build and Test (Multi-Platform)
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'Dockerfile*'
       - 'docker-compose*.yml'
@@ -11,7 +11,7 @@ on:
       - 'setup.py'
       - 'requirements.txt'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       platform:
@@ -148,7 +148,7 @@ jobs:
 
   # Test on self-hosted ARM64 runner (if available)
   test-self-hosted-arm64:
-    runs-on: [self-hosted, arm64, linux]
+    runs-on: [self-hosted, linux, arm64]
     if: ${{ !cancelled() }}
     continue-on-error: true
     

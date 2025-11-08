@@ -2,7 +2,7 @@ name: MCP Dashboard Automated Tests
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/mcp_dashboard/**'
       - 'ipfs_datasets_py/mcp_server/**'
@@ -10,7 +10,7 @@ on:
       - 'mcp_dashboard_tests.py'
       - '.github/workflows/mcp-dashboard-tests.yml'
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       test_mode:

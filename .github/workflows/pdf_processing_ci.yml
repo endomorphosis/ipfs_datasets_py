@@ -2,7 +2,7 @@ name: PDF Processing Pipeline CI/CD
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**' 
@@ -10,7 +10,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/**'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'ipfs_datasets_py/pdf_processing/**'
       - 'ipfs_datasets_py/mcp_server/tools/pdf_tools/**'
@@ -332,7 +332,7 @@ jobs:
         docker run --rm \
           -v ${{ github.workspace }}/tests:/app/tests \
           ipfs-datasets-pdf:test \
-          python -m pytest tests/unit/test_pdf_processing.py::TestPDFProcessor::test_pdf_processor_initialization -v
+          python -m pytest tests/unit/test_pdf_processor_unit.py::TestPDFProcessorInitialization::test_given_no_parameters_when_initializing_pdf_processor_then_creates_with_defaults -v
     
     - name: Test MCP tools in container
       run: |

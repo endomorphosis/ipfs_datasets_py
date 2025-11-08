@@ -13,11 +13,28 @@ from cachetools import cached
 
 
 from PIL import Image
-import cv2
 
+# Optional dependencies with proper error handling
+try:
+    import cv2
+    HAVE_CV2 = True
+except ImportError:
+    cv2 = None
+    HAVE_CV2 = False
+
+try:
+    import numpy as np
+    HAVE_NUMPY = True
+except ImportError:
+    np = None
+    HAVE_NUMPY = False
 
 logger = logging.getLogger(__name__)
 
+if not HAVE_CV2:
+    logger.warning("opencv (cv2) not available, some OCR preprocessing features will be disabled")
+if not HAVE_NUMPY:
+    logger.warning("numpy not available, some OCR features will be disabled")
 
 try:
     import pytesseract
@@ -31,6 +48,25 @@ try:
 except ImportError:
     surya = None
     logger.warning("surya not available, Surya OCR will be disabled")
+
+
+def _calculate_avg_confidence(confidences):
+    """
+    Calculate average confidence score with fallback for when numpy is unavailable.
+    
+    Args:
+        confidences (list): List of confidence scores (0.0-1.0 or 0-100 depending on context)
+    
+    Returns:
+        float: Average confidence score, or 0.0 if list is empty
+    """
+    if not confidences:
+        return 0.0
+    
+    if HAVE_NUMPY:
+        return float(np.mean(confidences))
+    else:
+        return sum(confidences) / len(confidences)
 
 
 class OCREngine(ABC):
@@ -540,7 +576,8 @@ class SuryaOCR(OCREngine):
                 })
                 confidences.append(text_line.confidence)
             
-            avg_confidence = np.mean(confidences) if confidences else 0.0
+            # Calculate average confidence
+            avg_confidence = _calculate_avg_confidence(confidences)
             
             return {
                 'text': full_text.strip(),
@@ -780,9 +817,11 @@ class TesseractOCR(OCREngine):
             data = self.pytesseract.image_to_data(image, output_type=self.pytesseract.Output.DICT)
             print(f"pytesseract data:\n{data}")
             
-            # Calculate average confidence
+            # Extract confidences from data
             confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
-            avg_confidence = np.mean(confidences) / 100.0 if confidences else 0.0
+            
+            # Calculate average confidence (divide by 100 for tesseract which uses 0-100 scale)
+            avg_confidence = _calculate_avg_confidence(confidences) / 100.0 if confidences else 0.0
             
             # Extract word boxes
             word_boxes = []
@@ -847,6 +886,11 @@ class TesseractOCR(OCREngine):
             - Works best on images with clear text-background contrast
             - May not be optimal for images with complex backgrounds or colors
         """
+        # If cv2 or numpy not available, return image unchanged
+        if not HAVE_CV2 or not HAVE_NUMPY:
+            self.logger.debug("OpenCV or NumPy not available, skipping image preprocessing")
+            return image
+        
         # Convert to OpenCV format
         opencv_image = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
         
@@ -1042,6 +1086,11 @@ class EasyOCR(OCREngine):
         try:
             image = super()._get_image_data(image_data)
 
+            # Check if numpy is available for array conversion
+            if not HAVE_NUMPY:
+                self.logger.error("NumPy is required for EasyOCR but is not available")
+                raise ImportError("NumPy is required for EasyOCR")
+
             # Convert image data to numpy array
             image_array = np.array(image)
 
@@ -1062,7 +1111,8 @@ class EasyOCR(OCREngine):
                 })
                 confidences.append(confidence)
             
-            avg_confidence = np.mean(confidences) if confidences else 0.0
+            # Calculate average confidence
+            avg_confidence = _calculate_avg_confidence(confidences)
             
             return {
                 'text': full_text.strip(),
@@ -1628,6 +1678,11 @@ class MultiEngineOCR:
         try:
             # Convert image data to PIL Image for analysis
             image = Image.open(io.BytesIO(image_data))
+            
+            # If numpy or cv2 not available, return default classification
+            if not HAVE_NUMPY or not HAVE_CV2:
+                self.logger.debug("NumPy or OpenCV not available, defaulting to 'printed' classification")
+                return 'printed'
             
             # Convert to numpy array for analysis
             image_array = np.array(image)

@@ -3,9 +3,10 @@ name: Enhanced PR Completion Monitor with Progressive Copilot Assignment
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-  schedule:
-    # Run every 10 minutes for responsive monitoring
-    - cron: '*/10 * * * *'
+  # Disabled automatic scheduling to prevent creating too many PRs  
+  # schedule:
+  #   # Run every 10 minutes for responsive monitoring
+  #   - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       pr_number:

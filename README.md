@@ -19,6 +19,7 @@
 🌐 **[Decentralized Everything](#-decentralized-by-design)** - IPFS-native storage with content addressing  
 🤖 **[AI Development Tools](#-ai-development-acceleration)** - Full MCP server with 200+ integrated tools  
 ⚡ **[GitHub Copilot Automation](#-github-copilot-automation)** - Production-ready AI code fixes (100% verified)  
+🐛 **[Automatic Error Reporting](#-automatic-error-reporting)** - Runtime errors auto-converted to GitHub issues  
 
 ## ⚡ Quick Start
 
@@ -855,6 +856,130 @@ All workflows use the verified dual method with 100% success rate.
 - `invoke_copilot_via_draft_pr.py`
 
 **8 deprecated scripts** now exit immediately with error messages directing you to the correct method. See [DEPRECATED_SCRIPTS.md](DEPRECATED_SCRIPTS.md) for details.
+
+## 🐛 Automatic Error Reporting
+
+**IPFS Datasets Python** includes an **automatic error reporting system** that converts runtime errors into GitHub issues, enabling proactive bug tracking and automated fixes.
+
+### ✨ Key Features
+
+✅ **Automatic Issue Creation** - Runtime errors auto-generate GitHub issues  
+✅ **Error Deduplication** - Prevents duplicate issues (24-hour window)  
+✅ **Rate Limiting** - Configurable hourly (10) and daily (50) limits  
+✅ **Rich Context** - Stack traces, environment info, recent logs  
+✅ **Multi-Source Support** - Python, JavaScript, Docker containers  
+✅ **Fully Tested** - 30 comprehensive unit tests (100% passing)  
+
+### 🎯 Quick Setup
+
+```bash
+# Enable error reporting (enabled by default)
+export ERROR_REPORTING_ENABLED=true
+export GITHUB_TOKEN=your_github_token
+export GITHUB_REPOSITORY=owner/repo
+
+# Configure rate limits (optional)
+export ERROR_REPORTING_MAX_PER_HOUR=10
+export ERROR_REPORTING_MAX_PER_DAY=50
+```
+
+### 💻 Usage Examples
+
+**Python - Automatic Reporting:**
+```python
+# Errors are automatically reported when MCP server starts
+from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+server = IPFSDatasetsMCPServer()  # Error reporting enabled
+```
+
+**Python - Manual Reporting:**
+```python
+from ipfs_datasets_py.error_reporting import error_reporter
+
+try:
+    # Your code
+    raise ValueError("Something went wrong")
+except Exception as e:
+    # Manually report error
+    issue_url = error_reporter.report_error(
+        e,
+        source="My Application",
+        additional_info="Extra context",
+    )
+    print(f"Error reported: {issue_url}")
+```
+
+**Python - Function Decorator:**
+```python
+@error_reporter.wrap_function("Data Processing")
+def process_data(data):
+    # Any errors automatically reported
+    return data.process()
+```
+
+**JavaScript - Automatic Reporting:**
+```html
+<!-- Include in dashboard -->
+<script src="/static/js/error-reporter.js"></script>
+<!-- Errors are automatically captured and reported -->
+```
+
+### 🔄 Integration with Auto-Healing
+
+Error reporting integrates seamlessly with the existing auto-healing system:
+
+1. **Error Occurs** → GitHub Issue Created (via error reporting)
+2. **Issue Created** → Draft PR Generated (via `issue-to-draft-pr.yml`)
+3. **Draft PR Created** → Copilot Invoked (via `copilot-agent-autofix.yml`)
+4. **Copilot Fixes** → PR Ready for Review
+
+This creates a **fully automated error detection and fixing pipeline**.
+
+### 📊 Issue Format
+
+Auto-generated issues include:
+
+```markdown
+Title: [Auto-Report] ValueError in MCP Tool: dataset_load: Invalid dataset name
+
+Body:
+# Automatic Error Report
+
+## Error Details
+**Type:** ValueError
+**Message:** Invalid dataset name
+**Source:** MCP Tool: dataset_load
+**Timestamp:** 2024-01-15T10:30:00
+
+## Stack Trace
+[Full Python/JavaScript stack trace]
+
+## Environment
+**Python Version:** 3.12.0
+**Platform:** Linux
+
+## Recent Logs
+[Last 100 lines from log files]
+```
+
+### 📚 Complete Documentation
+
+See **[ERROR_REPORTING.md](ERROR_REPORTING.md)** for:
+- Complete configuration reference
+- Advanced usage patterns
+- Security considerations
+- Troubleshooting guide
+- API reference
+
+### 🧪 Test Results
+
+```bash
+$ pytest tests/error_reporting/ -v
+tests/error_reporting/test_config.py ............ 6 passed
+tests/error_reporting/test_issue_creator.py ..... 12 passed
+tests/error_reporting/test_error_handler.py ..... 12 passed
+====================================== 30 passed ======================================
+```
 
 ## 📖 Documentation & Learning
 

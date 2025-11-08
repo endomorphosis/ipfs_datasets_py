@@ -17,6 +17,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Import error reporting if available
+try:
+    from ipfs_datasets_py.error_reporting import install_error_handlers
+    ERROR_REPORTING_AVAILABLE = True
+except ImportError:
+    ERROR_REPORTING_AVAILABLE = False
+
 def main():
     """Main entry point for the MCP server."""
     parser = argparse.ArgumentParser(description='IPFS Datasets MCP Server')
@@ -33,6 +40,10 @@ def main():
     if args.debug:
         import logging
         logging.basicConfig(level=logging.DEBUG)
+
+    # Install error handlers if available
+    if ERROR_REPORTING_AVAILABLE:
+        install_error_handlers()
 
     # Determine mode: default to stdio unless --http is specified
     use_stdio = not args.http or args.stdio

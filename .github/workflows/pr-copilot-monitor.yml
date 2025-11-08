@@ -2,7 +2,7 @@ name: Draft PR Copilot Monitor
 
 on:
   schedule:
-    # Run every 10 minutes (reduced from 5 to avoid creating too many draft PRs)
+    # Run every 10 minutes
     - cron: '*/10 * * * *'
   
   workflow_dispatch:
@@ -28,27 +28,40 @@ jobs:
       issues: write
     
     steps:
-      - name: Clean workspace safely
+      - name: Clean workspace completely (bypass checkout action)
         run: |
-          # Fix Git lock files if they exist
-          if [ -f "$GITHUB_WORKSPACE/.git/index.lock" ]; then
-            rm -f "$GITHUB_WORKSPACE/.git/index.lock" || sudo rm -f "$GITHUB_WORKSPACE/.git/index.lock" || true
+          echo "🧹 Complete workspace cleanup"
+          echo "User: $(whoami), Workspace: $GITHUB_WORKSPACE"
+          
+          # Nuclear option: remove entire workspace with sudo
+          if [ -d "$GITHUB_WORKSPACE" ]; then
+            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
+            (sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" && sudo rm -rf "$GITHUB_WORKSPACE") || \
+            true
           fi
           
-          # Reset Git state if repository exists
-          if [ -d "$GITHUB_WORKSPACE/.git" ]; then
-            cd "$GITHUB_WORKSPACE" || exit 1
-            git reset --hard HEAD 2>/dev/null || true
-            git clean -ffdx 2>/dev/null || true
-          fi
+          # Recreate fresh
+          mkdir -p "$GITHUB_WORKSPACE"
+          cd "$GITHUB_WORKSPACE"
+          
+          echo "✅ Workspace cleaned"
         continue-on-error: true
       
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-          clean: true
+      - name: Manual Git clone (avoids checkout permission issues)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd "$GITHUB_WORKSPACE"
+          
+          # Clone fresh copy
+          git clone https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git .
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure ownership is correct
+          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
+          
+          echo "✅ Repository cloned successfully"
       
       - name: Set up Python
         uses: actions/setup-python@v5

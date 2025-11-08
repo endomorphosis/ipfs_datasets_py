@@ -21,7 +21,7 @@ on:
     # Run daily at 6 AM UTC to validate runner health
     - cron: '0 6 * * *'
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - '.github/workflows/**'
       - 'comprehensive_runner_validation.py'
@@ -33,7 +33,7 @@ permissions:
 jobs:
   validate-runner:
     name: Validate Self-Hosted Runner
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: [self-hosted, linux, arm64]
     timeout-minutes: 30
     
     steps:
@@ -388,7 +388,7 @@ jobs:
 
   runner-health-check:
     name: Runner Health Check
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: [self-hosted, linux, arm64]
     if: github.event_name == 'schedule'
     timeout-minutes: 10
     

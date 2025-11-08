@@ -1,0 +1,106 @@
+name: Example - GitHub API Call Tracking
+
+# This is an example workflow showing how to integrate GitHub API call tracking
+# into your workflows to monitor and optimize GitHub API usage.
+
+on:
+  workflow_dispatch:
+  # Can also be triggered by other events
+  
+permissions:
+  contents: read
+  pull-requests: read
+  issues: read
+
+jobs:
+  example-with-tracking:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Example workflow tasks with API tracking
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Example 1: Using the shell wrapper for gh commands
+          echo "Example 1: Using shell wrapper"
+          .github/scripts/gh_wrapper.sh pr list --repo ${{ github.repository }} --limit 5
+          
+          # Example 2: Using Python counter in a simple script
+          echo "Example 2: Using Python counter"
+          python3 - <<'PYEOF'
+          from github_api_counter import GitHubAPICounter
+          
+          with GitHubAPICounter() as counter:
+              # Simulate some API calls
+              counter.count_api_call('gh_pr_list', 1)
+              counter.count_api_call('gh_issue_list', 1)
+              counter.count_api_call('gh_run_view', 2)
+              print(f"Total API calls: {counter.get_total_calls()}")
+              print(f"Estimated cost: {counter.get_estimated_cost()} requests")
+          PYEOF
+      
+      - name: Generate API Usage Report
+        if: always()
+        run: |
+          # Generate a text report
+          python3 .github/scripts/github_api_dashboard.py --format text
+          
+          # Also generate markdown for step summary
+          python3 .github/scripts/github_api_dashboard.py \
+            --format markdown \
+            --output api_usage_report.md
+          
+          # Append to step summary if it exists
+          if [ -f api_usage_report.md ]; then
+            cat api_usage_report.md >> $GITHUB_STEP_SUMMARY
+          fi
+      
+      - name: Check rate limit usage
+        if: always()
+        run: |
+          # Check if we're approaching rate limits
+          python3 - <<'PYEOF'
+          from github_api_counter import GitHubAPICounter
+          import sys
+          
+          counter = GitHubAPICounter()
+          counter._load_existing_metrics()
+          
+          if counter.is_approaching_limit():
+              print("⚠️  WARNING: Approaching GitHub API rate limit!")
+              print(f"Current usage: {counter.get_estimated_cost()} / 5000 requests per hour")
+              sys.exit(1)
+          else:
+              print(f"✅ Rate limit OK: {counter.get_estimated_cost()} / 5000 requests per hour")
+          PYEOF
+      
+      - name: Upload API metrics as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-api-metrics
+          path: |
+            ${{ runner.temp }}/github_api_metrics_*.json
+            api_usage_report.md
+          retention-days: 30
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 API Usage Tracking Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "This workflow demonstrates GitHub API call tracking:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API calls are automatically counted" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Metrics are saved for analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Dashboard shows usage breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Warnings for high usage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See artifacts for detailed metrics." >> $GITHUB_STEP_SUMMARY
