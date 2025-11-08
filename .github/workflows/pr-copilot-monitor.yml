@@ -35,26 +35,31 @@ jobs:
           
           # Nuclear option: remove entire workspace with sudo
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || \
-            (sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" && sudo rm -rf "$GITHUB_WORKSPACE") || \
-            true
+            sudo rm -rf "$GITHUB_WORKSPACE"/* 2>/dev/null || true
+            sudo rm -rf "$GITHUB_WORKSPACE"/.* 2>/dev/null || true
+            sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
           fi
           
-          # Recreate fresh
-          mkdir -p "$GITHUB_WORKSPACE"
-          cd "$GITHUB_WORKSPACE"
+          # Verify it's empty
+          ls -la "$GITHUB_WORKSPACE" || true
           
           echo "✅ Workspace cleaned"
-        continue-on-error: true
+        continue-on-error: false
       
       - name: Manual Git clone (avoids checkout permission issues)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cd "$GITHUB_WORKSPACE"
+          # Clone into workspace (should be empty now)
+          git clone https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git "$GITHUB_WORKSPACE/repo"
           
-          # Clone fresh copy
-          git clone https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git .
+          # Move contents up to workspace root
+          mv "$GITHUB_WORKSPACE/repo"/* "$GITHUB_WORKSPACE/"
+          mv "$GITHUB_WORKSPACE/repo"/.git "$GITHUB_WORKSPACE/"
+          mv "$GITHUB_WORKSPACE/repo"/.github "$GITHUB_WORKSPACE/" 2>/dev/null || true
+          rmdir "$GITHUB_WORKSPACE/repo"
+          
+          cd "$GITHUB_WORKSPACE"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
