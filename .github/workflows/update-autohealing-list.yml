@@ -3,7 +3,11 @@ name: Update Auto-Healing Workflow List
 # DISABLED: GitHub Actions doesn't allow workflows to modify workflow files
 # The workflow list in copilot-agent-autofix.yml should be updated manually
 # when new workflows are added or renamed
-on: []
+# 
+# Keeping workflow_dispatch to avoid "No event triggers defined" error
+# But this workflow is not intended to be run automatically
+on:
+  workflow_dispatch:
 
 # Original triggers (disabled):
 #  push:
@@ -14,7 +18,6 @@ on: []
 #  pull_request:
 #    paths:
 #      - '.github/workflows/*.yml'
-#  workflow_dispatch:
 
 permissions:
   contents: write
