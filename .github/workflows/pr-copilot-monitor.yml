@@ -28,58 +28,21 @@ jobs:
       issues: write
     
     steps:
-      - name: Clean workspace completely (bypass checkout action)
+      - name: Clean workspace
         run: |
-          echo "🧹 Complete workspace cleanup"
-          echo "User: $(whoami), Workspace: $GITHUB_WORKSPACE"
-          
-          # Remove workspace directory completely and recreate
+          # Fix permissions and clean workspace before checkout
           if [ -d "$GITHUB_WORKSPACE" ]; then
-            cd "$(dirname "$GITHUB_WORKSPACE")"
-            sudo rm -rf "$GITHUB_WORKSPACE" 2>/dev/null || true
+            sudo chown -R $(whoami):$(whoami) "$GITHUB_WORKSPACE" 2>/dev/null || true
+            sudo chmod -R u+rwX "$GITHUB_WORKSPACE" 2>/dev/null || true
+            rm -rf "$GITHUB_WORKSPACE"/* "$GITHUB_WORKSPACE"/.* 2>/dev/null || true
           fi
-          
-          # Recreate fresh workspace
-          sudo mkdir -p "$GITHUB_WORKSPACE"
-          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE"
-          
-          # Verify it's empty
-          echo "Workspace contents:"
-          ls -la "$GITHUB_WORKSPACE" || true
-          
-          echo "✅ Workspace cleaned and recreated"
-        continue-on-error: false
+        continue-on-error: true
       
-      - name: Manual Git clone (avoids checkout permission issues)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "📦 Cloning repository..."
-          echo "Workspace: $GITHUB_WORKSPACE"
-          
-          # Ensure workspace is empty
-          if [ "$(ls -A "$GITHUB_WORKSPACE" 2>/dev/null)" ]; then
-            echo "⚠️  Workspace not empty, cleaning again..."
-            sudo rm -rf "$GITHUB_WORKSPACE"/*
-            sudo rm -rf "$GITHUB_WORKSPACE"/.*
-          fi
-          
-          # Clone directly into workspace using --no-checkout then checkout
-          cd "$GITHUB_WORKSPACE"
-          git init
-          git remote add origin https://x-access-token:${GH_TOKEN}@github.com/endomorphosis/ipfs_datasets_py.git
-          git fetch origin main
-          git checkout -b main origin/main
-          
-          # Configure git
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Ensure ownership is correct
-          sudo chown -R $(whoami):$(id -gn) "$GITHUB_WORKSPACE" 2>/dev/null || true
-          
-          echo "✅ Repository cloned successfully"
-          git log --oneline -3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: true
       
       - name: Set up Python
         uses: actions/setup-python@v5
