@@ -150,21 +150,28 @@ jobs:
           
           # Check if we've already processed this run
           # Look for existing PRs or issues that reference this run ID
-          echo "Searching for existing PRs referencing Run ID: $RUN_ID"
-          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "Run ID: $RUN_ID in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          # Search for both "Run ID: $RUN_ID" and "Run $RUN_ID" patterns
+          echo "Searching for existing PRs and issues referencing Run ID: $RUN_ID"
           
-          echo "Found $EXISTING_PRS existing PRs"
+          # Check PRs with multiple search patterns
+          EXISTING_PRS=$(gh pr list --repo ${{ github.repository }} --search "\"Run ID: $RUN_ID\" OR \"Run $RUN_ID\" in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
           
-          if [ "$EXISTING_PRS" -gt 0 ]; then
-            echo "⚠️  Run $RUN_ID already has $EXISTING_PRS fix PR(s) - skipping duplicate processing"
+          # Check issues with multiple search patterns
+          EXISTING_ISSUES=$(gh issue list --repo ${{ github.repository }} --search "\"Run ID: $RUN_ID\" OR \"Run $RUN_ID\" in:body" --state all --json number --jq 'length' 2>&1 || echo "0")
+          
+          echo "Found $EXISTING_PRS existing PRs and $EXISTING_ISSUES existing issues"
+          
+          if [ "$EXISTING_PRS" -gt 0 ] || [ "$EXISTING_ISSUES" -gt 0 ]; then
+            echo "⚠️  Run $RUN_ID already has $EXISTING_PRS fix PR(s) and $EXISTING_ISSUES issue(s) - skipping duplicate processing"
             echo "should_skip=true" >> $GITHUB_OUTPUT
             echo "skip_reason=already_processed" >> $GITHUB_OUTPUT
             
             echo "## ⏭️ Skipping Duplicate Processing" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "This workflow run has already been analyzed and has existing fix PR(s)." >> $GITHUB_STEP_SUMMARY
+            echo "This workflow run has already been analyzed and has existing fix PR(s) or issue(s)." >> $GITHUB_STEP_SUMMARY
             echo "- **Run ID**: $RUN_ID" >> $GITHUB_STEP_SUMMARY
             echo "- **Existing PRs**: $EXISTING_PRS" >> $GITHUB_STEP_SUMMARY
+            echo "- **Existing Issues**: $EXISTING_ISSUES" >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
           
@@ -399,6 +406,8 @@ jobs:
           - **Branch**: ${{ steps.get_run_details.outputs.head_branch }}
           - **SHA**: ${{ steps.get_run_details.outputs.head_sha }}
           
+          **Run ID: ${{ steps.get_run_details.outputs.run_id }}** (for duplicate detection)
+          
           ## Error Details
           - **Type**: ERROR_TYPE_PLACEHOLDER
           - **Root Cause**: ROOT_CAUSE_PLACEHOLDER
@@ -468,6 +477,20 @@ jobs:
             echo "❌ Failed to create issue"
             exit 1
           fi
+          
+          # Generate unique branch name with timestamp and run ID
+          TIMESTAMP=$(date +%s)
+          BRANCH_NAME="autofix/workflow-${RUN_ID}-issue-${ISSUE_NUMBER}-${TIMESTAMP}"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Check if branch already exists
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" > /dev/null 2>&1; then
+            echo "⚠️  Branch $BRANCH_NAME already exists - using alternative name"
+            BRANCH_NAME="autofix/workflow-${RUN_ID}-issue-${ISSUE_NUMBER}-${TIMESTAMP}-alt"
+            echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Creating branch: $BRANCH_NAME"
           git checkout -b "$BRANCH_NAME"
           
           # Create a placeholder file to enable PR creation
@@ -508,11 +531,16 @@ jobs:
           
           git push origin "$BRANCH_NAME"
           
+          # Read failure analysis for PR body
+          ANALYSIS=$(cat /tmp/workflow_logs/summary.txt 2>/dev/null || echo "Analysis not available")
+          
           # Create draft PR
           cat > /tmp/pr_body.md << 'PR_EOF'
           ## 🤖 Automated Workflow Fix
           
           This PR addresses the workflow failure identified in issue #ISSUE_NUMBER.
+          
+          **Run ID:** RUN_ID_PLACEHOLDER
           
           ### Related Issue
           
@@ -561,8 +589,9 @@ jobs:
           **Run**: [${{ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
           PR_EOF
           
-          # Replace ISSUE_NUMBER placeholder
+          # Replace placeholders in PR body
           sed -i "s/#ISSUE_NUMBER/#$ISSUE_NUMBER/g" /tmp/pr_body.md
+          sed -i "s/RUN_ID_PLACEHOLDER/$RUN_ID/g" /tmp/pr_body.md
           
           # Try to create draft PR (may fail if repository doesn't allow it)
           set +e  # Don't exit on error
@@ -589,7 +618,7 @@ jobs:
             echo "Invoking GitHub Copilot on PR #$PR_NUMBER..."
             python3 scripts/invoke_copilot_on_pr.py \
               --pr "$PR_NUMBER" \
-              --instruction "$COPILOT_INSTRUCTION" \
+              --task "$COPILOT_INSTRUCTION" \
               --repo ${{ github.repository }} || echo "⚠️  Copilot invocation failed, check logs"
           
             echo "" >> $GITHUB_STEP_SUMMARY
