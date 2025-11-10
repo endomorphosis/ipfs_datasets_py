@@ -38,15 +38,15 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Verify Python installation
+        run: |
+          python3 --version || python --version
+          echo "✅ Python is available"
       
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install requests
+          python3 -m pip install --user --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --user --upgrade pip || true
+          pip install --user requests --break-system-packages 2>/dev/null || pip install --user requests || true
       
       - name: Load runner secrets (optional)
         run: |
