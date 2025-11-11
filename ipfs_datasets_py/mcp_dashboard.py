@@ -3032,6 +3032,74 @@ class MCPDashboard(AdminDashboard):
             except Exception as e:
                 self.logger.error(f"Failed to get logs: {e}")
                 return jsonify({"error": str(e)}), 500
+        
+        @self.app.route('/api/mcp/github/runners', methods=['GET'])
+        def api_get_github_runners():
+            """Get GitHub self-hosted runners."""
+            try:
+                # Get repo and org from query parameters or environment
+                repo = request.args.get('repo', os.environ.get('GITHUB_REPOSITORY'))
+                org = request.args.get('org', os.environ.get('GITHUB_ORG'))
+                
+                # If no repo or org specified, try to extract from GITHUB_REPOSITORY
+                if not repo and not org and os.environ.get('GITHUB_REPOSITORY'):
+                    # GITHUB_REPOSITORY is in format "owner/repo"
+                    repo = os.environ.get('GITHUB_REPOSITORY')
+                    org = repo.split('/')[0] if '/' in repo else None
+                
+                # Import RunnerManager
+                from ipfs_datasets_py.wrapper import RunnerManager
+                
+                runner_manager = RunnerManager()
+                runners = []
+                errors = []
+                
+                # Try to get runners from repo first, then org
+                if repo:
+                    try:
+                        runners = runner_manager.list_runners(repo=repo)
+                    except Exception as e:
+                        error_msg = str(e)
+                        self.logger.warning(f"Failed to get repo runners: {error_msg}")
+                        errors.append(f"Repo: {error_msg}")
+                
+                # If no runners from repo, try org
+                if not runners and org:
+                    try:
+                        runners = runner_manager.list_runners(org=org)
+                    except Exception as e:
+                        error_msg = str(e)
+                        self.logger.warning(f"Failed to get org runners: {error_msg}")
+                        errors.append(f"Org: {error_msg}")
+                
+                # Build response
+                response = {
+                    "success": True,
+                    "runners": runners,
+                    "count": len(runners),
+                    "repo": repo,
+                    "org": org,
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                # Add error messages if any
+                if errors:
+                    response["warnings"] = errors
+                    if not runners:
+                        response["message"] = "Could not fetch runners. Check GitHub CLI authentication with: gh auth status"
+                
+                return jsonify(response)
+                
+            except Exception as e:
+                self.logger.error(f"Failed to get GitHub runners: {e}")
+                return jsonify({
+                    "success": False,
+                    "error": str(e),
+                    "runners": [],
+                    "count": 0,
+                    "message": "Failed to initialize runner manager. Ensure GitHub CLI is installed and authenticated.",
+                    "timestamp": datetime.now().isoformat()
+                }), 500
             
     # GraphRAG processing methods
     async def _process_website_graphrag(self, session_id: str, url: str, config: 'CompleteProcessingConfiguration') -> None:
