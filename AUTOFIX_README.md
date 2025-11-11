@@ -4,12 +4,12 @@ This branch was created automatically to fix a workflow failure.
 
 ## Issue
 
-#353
+#880
 
 ## Workflow Details
 
-- **Workflow**: PDF Processing Pipeline CI/CD
-- **Run ID**: 18993644572
+- **Workflow**: Documentation Maintenance
+- **Run ID**: 19226275504
 - **Error Type**: Unknown
 - **Fix Type**: manual
 
