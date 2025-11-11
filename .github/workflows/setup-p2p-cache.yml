@@ -1,0 +1,169 @@
+name: Setup P2P Cache (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.12'
+      enable-p2p:
+        description: 'Enable P2P caching'
+        required: false
+        type: boolean
+        default: true
+      cache-size:
+        description: 'Maximum cache size'
+        required: false
+        type: number
+        default: 5000
+    secrets:
+      gh-token:
+        description: 'GitHub token for authentication'
+        required: true
+
+jobs:
+  setup:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - name: Setup GitHub CLI Authentication
+        env:
+          GH_TOKEN: ${{ secrets.gh-token }}
+          GITHUB_TOKEN: ${{ secrets.gh-token }}
+        run: |
+          # Ensure GitHub CLI is installed
+          if ! command -v gh >/dev/null 2>&1; then
+            echo "::notice::Installing GitHub CLI..."
+            type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
+          fi
+          
+          # Authenticate gh CLI
+          echo "$GH_TOKEN" | gh auth login --with-token 2>&1
+          
+          # Verify authentication
+          if gh auth status 2>&1; then
+            echo "::notice::✅ GitHub CLI authenticated successfully"
+          else
+            echo "::error::❌ GitHub CLI authentication failed"
+            exit 1
+          fi
+          
+          # Check API rate limit
+          RATE_LIMIT=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "0")
+          echo "::notice::📊 GitHub API Rate Limit: $RATE_LIMIT requests remaining"
+          
+          if [ "$RATE_LIMIT" -lt 100 ]; then
+            echo "::warning::⚠️ Low API rate limit ($RATE_LIMIT remaining). P2P cache will help reduce API calls."
+          fi
+      
+      - name: Initialize P2P Cache
+        if: inputs.enable-p2p
+        env:
+          GITHUB_TOKEN: ${{ secrets.gh-token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          echo "::group::Initializing P2P Cache"
+          
+          # Set environment variables for P2P cache
+          echo "ENABLE_P2P_CACHE=true" >> $GITHUB_ENV
+          echo "GITHUB_CACHE_SIZE=${{ inputs.cache-size }}" >> $GITHUB_ENV
+          echo "P2P_LISTEN_PORT=9000" >> $GITHUB_ENV
+          echo "ENABLE_PEER_DISCOVERY=true" >> $GITHUB_ENV
+          
+          # Create cache directory
+          CACHE_DIR="${HOME}/.cache/github-api-p2p"
+          mkdir -p "$CACHE_DIR"
+          echo "P2P_CACHE_DIR=$CACHE_DIR" >> $GITHUB_ENV
+          
+          echo "::notice::✅ P2P cache initialized at $CACHE_DIR"
+          echo "::notice::📡 Peer discovery enabled for ${GITHUB_REPOSITORY}"
+          
+          # Test P2P cache functionality
+          python3 << 'PYEOF'
+import os
+import sys
+
+try:
+    # Import P2P cache modules
+    from ipfs_datasets_py.cache import GitHubAPICache
+    from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+    
+    print("✓ P2P cache modules imported successfully")
+    
+    # Initialize cache with P2P and peer discovery
+    cache = GitHubAPICache(
+        cache_dir=os.environ.get('P2P_CACHE_DIR'),
+        enable_p2p=True,
+        enable_peer_discovery=True,
+        github_repo=os.environ.get('GITHUB_REPOSITORY'),
+        max_cache_size=int(os.environ.get('GITHUB_CACHE_SIZE', 5000))
+    )
+    
+    print("✓ P2P cache initialized successfully")
+    
+    # Check if peer registry is active
+    if hasattr(cache, '_peer_registry') and cache._peer_registry:
+        print("✓ Peer discovery is active")
+        
+        # Try to discover peers (non-blocking)
+        try:
+            peers = cache._peer_registry.discover_peers(max_peers=5)
+            print(f"✓ Discovered {len(peers)} peer(s)")
+            
+            if peers:
+                print("📡 Active peers:")
+                for peer in peers[:3]:  # Show max 3 peers
+                    peer_id = peer.get('peer_id', 'unknown')[:12]
+                    print(f"  - {peer_id}...")
+        except Exception as e:
+            print(f"⚠ Peer discovery pending: {e}")
+    else:
+        print("⚠ Peer discovery not enabled")
+    
+    print("\n::notice::✅ P2P cache is ready and will reduce API calls")
+    sys.exit(0)
+    
+except ImportError as e:
+    print(f"::warning::⚠️ P2P cache modules not available: {e}")
+    print("::notice::Will fall back to standard caching")
+    sys.exit(0)
+except Exception as e:
+    print(f"::error::❌ P2P cache initialization failed: {e}")
+    sys.exit(1)
+PYEOF
+          
+          PYRESULT=$?
+          if [ $PYRESULT -eq 0 ]; then
+            echo "::notice::✅ P2P cache test passed"
+          else
+            echo "::warning::⚠️ P2P cache test failed, continuing with standard cache"
+          fi
+          
+          echo "::endgroup::"
+      
+      - name: Export Cache Configuration
+        run: |
+          echo "::group::Cache Configuration"
+          echo "Cache Settings:"
+          echo "  - P2P Enabled: ${{ inputs.enable-p2p }}"
+          echo "  - Cache Size: ${{ inputs.cache-size }}"
+          echo "  - Repository: ${{ github.repository }}"
+          echo "  - Python Version: ${{ inputs.python-version }}"
+          
+          # Save configuration for use in other steps
+          cat > /tmp/p2p-cache-config.env << EOF
+ENABLE_P2P_CACHE=${{ inputs.enable-p2p }}
+GITHUB_CACHE_SIZE=${{ inputs.cache-size }}
+GITHUB_REPOSITORY=${{ github.repository }}
+P2P_LISTEN_PORT=9000
+ENABLE_PEER_DISCOVERY=true
+EOF
+          
+          echo "::notice::✅ Cache configuration saved"
+          echo "::endgroup::"
