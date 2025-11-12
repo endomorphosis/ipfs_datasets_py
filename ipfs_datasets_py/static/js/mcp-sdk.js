@@ -71,8 +71,21 @@ class MCPClient {
                 } catch {
                     errorData = { error: errorText };
                 }
+                
+                // Provide more specific error messages
+                let errorMessage = errorData.error || `HTTP ${response.status}`;
+                
+                // Handle common error cases
+                if (response.status === 404) {
+                    errorMessage = `Tool or endpoint not found: ${path}`;
+                } else if (response.status === 500) {
+                    errorMessage = `Server error: ${errorMessage}`;
+                } else if (response.status === 503) {
+                    errorMessage = 'MCP server unavailable';
+                }
+                
                 throw new MCPError(
-                    errorData.error || `HTTP ${response.status}`,
+                    errorMessage,
                     response.status,
                     errorData
                 );
@@ -84,6 +97,11 @@ class MCPClient {
         } catch (error) {
             if (error.name === 'AbortError') {
                 throw new MCPError('Request timeout', 408);
+            }
+            
+            // Handle network errors
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                throw new MCPError('Network error: Unable to connect to MCP server', null, { originalError: error.message });
             }
             
             // Retry logic for network errors
@@ -165,6 +183,29 @@ class MCPClient {
             return result;
         } catch (error) {
             this._emit('toolExecutionError', { category, toolName, error });
+            throw error;
+        }
+    }
+
+    /**
+     * Safely execute a tool with graceful error handling
+     * Returns null and logs warning instead of throwing on tool not found errors
+     * @param {string} category - Tool category
+     * @param {string} toolName - Tool name
+     * @param {Object} parameters - Tool parameters
+     * @param {Object} options - Execution options
+     * @returns {Promise<Object|null>} Execution result or null if tool unavailable
+     */
+    async safeExecuteTool(category, toolName, parameters = {}, options = {}) {
+        try {
+            return await this.executeTool(category, toolName, parameters, options);
+        } catch (error) {
+            // Log warning for missing/unavailable tools but don't throw
+            if (error.status === 404 || error.status === 501) {
+                console.warn(`[MCP SDK] Tool ${category}/${toolName} not available:`, error.message);
+                return null;
+            }
+            // For other errors, still throw
             throw error;
         }
     }
