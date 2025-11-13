@@ -106,6 +106,29 @@ class UnifiedInvestigationMCPClient {
         }
     }
 
+    /**
+     * Safely call an MCP tool with graceful error handling.
+     * Returns null instead of throwing for missing/unavailable tools.
+     * 
+     * @param {string} toolName - Name of the MCP tool
+     * @param {Object} args - Tool arguments
+     * @param {Object} options - Call options
+     * @returns {Promise<Object|null>} Tool result or null if unavailable
+     */
+    async safeMCPToolCall(toolName, args = {}, options = {}) {
+        try {
+            return await this._callMCPTool(toolName, args, options);
+        } catch (error) {
+            // Log warning for missing/unavailable tools but don't throw
+            if (error.message && (error.message.includes('not found') || error.message.includes('404'))) {
+                console.warn(`[Investigation MCP] Tool ${toolName} not available:`, error.message);
+                return null;
+            }
+            // For other errors, still throw
+            throw error;
+        }
+    }
+
     async _makeJSONRPCRequest(payload, requestId, options) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), options.timeout);
@@ -128,7 +151,18 @@ class UnifiedInvestigationMCPClient {
             this.activeRequests.delete(requestId);
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                // Provide more specific error messages
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                
+                if (response.status === 404) {
+                    errorMessage = `MCP tool not found: ${payload.name}`;
+                } else if (response.status === 500) {
+                    errorMessage = `MCP server error while executing ${payload.name}`;
+                } else if (response.status === 503) {
+                    errorMessage = 'MCP server unavailable';
+                }
+                
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
@@ -140,6 +174,11 @@ class UnifiedInvestigationMCPClient {
 
             if (error.name === 'AbortError') {
                 throw new InvestigationMCPError('Request timeout', { requestId, payload });
+            }
+            
+            // Handle network errors
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                throw new InvestigationMCPError('Network error: Unable to connect to MCP server', { requestId, payload, originalError: error.message });
             }
             
             throw error;
