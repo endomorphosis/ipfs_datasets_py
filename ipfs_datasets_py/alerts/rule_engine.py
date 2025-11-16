@@ -211,12 +211,22 @@ class RuleEngine:
         """Check if item is in collection."""
         return item in collection
     
-    def _op_any(self, items, context: Dict[str, Any]) -> bool:
+    def _op_any(self, *args, context: Dict[str, Any]) -> bool:
         """Check if any item is truthy."""
+        # Flatten if args is a single list
+        if len(args) == 1 and isinstance(args[0], list):
+            items = args[0]
+        else:
+            items = args
         return any(bool(item) for item in items)
     
-    def _op_all(self, items, context: Dict[str, Any]) -> bool:
+    def _op_all(self, *args, context: Dict[str, Any]) -> bool:
         """Check if all items are truthy."""
+        # Flatten if args is a single list
+        if len(args) == 1 and isinstance(args[0], list):
+            items = args[0]
+        else:
+            items = args
         return all(bool(item) for item in items)
     
     # Math operators
