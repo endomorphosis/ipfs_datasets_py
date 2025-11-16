@@ -100,6 +100,8 @@ jobs:
     name: Test with API Cache
     needs: setup-cache
     runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
