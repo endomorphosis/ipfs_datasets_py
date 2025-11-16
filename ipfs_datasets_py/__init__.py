@@ -7,6 +7,16 @@ with automated dependency installation for full functionality.
 
 __version__ = "0.2.0"
 
+# File type detection
+try:
+    from .file_detector import FileTypeDetector, DetectionMethod, DetectionStrategy
+    HAVE_FILE_DETECTOR = True
+except ImportError:
+    HAVE_FILE_DETECTOR = False
+    FileTypeDetector = None
+    DetectionMethod = None
+    DetectionStrategy = None
+
 # Import automated dependency installer
 from .auto_installer import get_installer, ensure_module
 

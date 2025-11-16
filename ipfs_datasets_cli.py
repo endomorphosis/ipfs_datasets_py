@@ -95,6 +95,11 @@ Commands:
       embeddings Multimodal embedding analysis (text + images)
       theorems   List or apply financial theorems
       workflow   Execute end-to-end workflow pipelines
+    
+    detect-type  File type detection for GraphRAG
+      detect     Detect single file type
+      batch      Batch detect multiple files
+      methods    List available detection methods
 
 Options:
     --help, -h   Show this help message
@@ -198,9 +203,10 @@ def execute_heavy_command(args):
         import json
         import importlib
         from typing import Any, Dict, List
+        from pathlib import Path as PathLib
         
         # Setup sys path for imports
-        current_dir = Path(__file__).parent  
+        current_dir = PathLib(__file__).parent  
         if str(current_dir) not in sys.path:
             sys.path.insert(0, str(current_dir))
         
@@ -2100,6 +2106,183 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 traceback.print_exc()
                 return
         
+        if command == "detect-type":
+            # File type detection commands
+            subcommand = args[1] if len(args) > 1 else "detect"
+            
+            try:
+                from ipfs_datasets_py.file_detector import FileTypeDetector
+                
+                detector = FileTypeDetector()
+                
+                if subcommand == "methods":
+                    # List available detection methods
+                    methods = detector.get_available_methods()
+                    strategies = detector.get_supported_strategies()
+                    
+                    if json_output:
+                        print(json.dumps({
+                            "methods": methods,
+                            "strategies": strategies
+                        }, indent=2))
+                    else:
+                        print("Available detection methods:")
+                        for method in methods:
+                            print(f"  - {method}")
+                        print("\nAvailable strategies:")
+                        for strategy in strategies:
+                            print(f"  - {strategy}")
+                    return
+                
+                elif subcommand == "detect":
+                    # Detect single file type
+                    extra = args[2:]
+                    file_path = None
+                    methods = None
+                    strategy = None
+                    
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--method", "-m") and i + 1 < len(extra):
+                            method_str = extra[i + 1]
+                            methods = [m.strip() for m in method_str.split(',')]
+                            i += 2
+                        elif token in ("--strategy", "-s") and i + 1 < len(extra):
+                            strategy = extra[i + 1]
+                            i += 2
+                        elif not file_path:
+                            file_path = token
+                            i += 1
+                        else:
+                            i += 1
+                    
+                    if not file_path:
+                        print("Usage: ipfs-datasets detect-type detect <file> [--method METHOD] [--strategy STRATEGY]")
+                        print("Methods: extension, magic, magika, all")
+                        print("Strategies: fast, accurate, voting, conservative")
+                        return
+                    
+                    result = detector.detect_type(file_path, methods=methods, strategy=strategy)
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        print(f"File: {file_path}")
+                        print(f"MIME Type: {result.get('mime_type', 'Unknown')}")
+                        print(f"Extension: {result.get('extension', 'Unknown')}")
+                        print(f"Confidence: {result.get('confidence', 0):.2f}")
+                        print(f"Method: {result.get('method', 'Unknown')}")
+                        if result.get('error'):
+                            print(f"Error: {result['error']}")
+                        if result.get('all_results'):
+                            print("\nAll results:")
+                            for method_name, method_result in result['all_results'].items():
+                                print(f"  {method_name}: {method_result.get('mime_type', 'N/A')} (confidence: {method_result.get('confidence', 0):.2f})")
+                    return
+                
+                elif subcommand == "batch":
+                    # Batch detect multiple files
+                    extra = args[2:]
+                    file_paths = []
+                    methods = None
+                    strategy = None
+                    directory = None
+                    recursive = False
+                    pattern = "*"
+                    export_path = None
+                    
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--method", "-m") and i + 1 < len(extra):
+                            method_str = extra[i + 1]
+                            methods = [m.strip() for m in method_str.split(',')]
+                            i += 2
+                        elif token in ("--strategy", "-s") and i + 1 < len(extra):
+                            strategy = extra[i + 1]
+                            i += 2
+                        elif token in ("--directory", "-d") and i + 1 < len(extra):
+                            directory = extra[i + 1]
+                            i += 2
+                        elif token in ("--recursive", "-r"):
+                            recursive = True
+                            i += 1
+                        elif token in ("--pattern", "-p") and i + 1 < len(extra):
+                            pattern = extra[i + 1]
+                            i += 2
+                        elif token in ("--export", "-e") and i + 1 < len(extra):
+                            export_path = extra[i + 1]
+                            i += 2
+                        else:
+                            if os.path.exists(token):
+                                file_paths.append(token)
+                            i += 1
+                    
+                    # If directory specified, collect files from it
+                    if directory:
+                        from pathlib import Path
+                        dir_path = Path(directory)
+                        if dir_path.is_dir():
+                            if recursive:
+                                file_paths.extend([str(p) for p in dir_path.rglob(pattern)])
+                            else:
+                                file_paths.extend([str(p) for p in dir_path.glob(pattern)])
+                        else:
+                            print(f"Error: {directory} is not a directory")
+                            return
+                    
+                    if not file_paths:
+                        print("Usage: ipfs-datasets detect-type batch <file1> <file2> ... [OPTIONS]")
+                        print("       ipfs-datasets detect-type batch --directory DIR [--recursive] [OPTIONS]")
+                        print("Options:")
+                        print("  --method, -m METHOD      Detection methods (comma-separated)")
+                        print("  --strategy, -s STRATEGY  Detection strategy")
+                        print("  --directory, -d DIR      Directory to scan")
+                        print("  --recursive, -r          Scan directory recursively")
+                        print("  --pattern, -p PATTERN    File pattern (default: *)")
+                        print("  --export, -e PATH        Export results to JSON file")
+                        return
+                    
+                    results = detector.batch_detect(file_paths, methods=methods, strategy=strategy)
+                    
+                    # Export to file if requested
+                    if export_path:
+                        with open(export_path, 'w') as f:
+                            json.dump(results, f, indent=2)
+                        print(f"Results exported to {export_path}")
+                    
+                    if json_output:
+                        print(json.dumps(results, indent=2))
+                    else:
+                        print(f"Analyzed {len(results)} files:\n")
+                        for file_path, result in results.items():
+                            mime_type = result.get('mime_type', 'Unknown')
+                            confidence = result.get('confidence', 0)
+                            method = result.get('method', 'Unknown')
+                            print(f"{file_path}:")
+                            print(f"  Type: {mime_type}")
+                            print(f"  Confidence: {confidence:.2f}")
+                            print(f"  Method: {method}")
+                            if result.get('error'):
+                                print(f"  Error: {result['error']}")
+                            print()
+                    return
+                
+                else:
+                    print(f"Unknown detect-type subcommand: {subcommand}")
+                    print("Available subcommands: detect, batch, methods")
+                    return
+                    
+            except ImportError as e:
+                print(f"Error: FileTypeDetector module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing detect-type command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -2322,7 +2505,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type']:
         execute_heavy_command(args)
         return
 
