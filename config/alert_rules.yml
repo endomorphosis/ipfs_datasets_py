@@ -1,0 +1,305 @@
+# Alert Rules Configuration
+#
+# This file defines alert rules for financial market monitoring.
+# Rules are evaluated against streaming market data and GraphRAG analysis outputs.
+#
+# Rule format:
+# - rule_id: Unique identifier
+# - name: Human-readable name
+# - description: Rule description
+# - condition: JSON-Logic style predicate for evaluation
+# - severity: "info", "warning", or "critical"
+# - message_template: Message with {variable} substitution
+# - role_names: List of Discord roles to mention
+# - embed_config: Optional rich embed configuration
+# - suppression_window: Seconds before re-triggering (0 = no suppression)
+# - enabled: true/false
+
+rules:
+  # Price spike alert
+  - rule_id: price_spike_alert
+    name: Price Spike Alert
+    description: Triggers when stock price increases rapidly
+    enabled: true
+    severity: warning
+    suppression_window: 300  # 5 minutes
+    
+    # Condition: price > 100 AND percent_change(price, 1) > 5
+    condition:
+      and:
+        - ">": 
+            - var: "price"
+            - 100
+        - ">":
+            - percent_change: ["price", 1]
+            - 5.0
+    
+    message_template: |
+      🚨 Price Spike Detected!
+      Symbol: {symbol}
+      Current Price: ${price}
+      Change: {percent_change}%
+    
+    role_names:
+      - trader
+      - alerts
+    
+    embed_config:
+      title: "Price Spike Alert"
+      description: "Rapid price increase detected"
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Price"
+          value: "${price}"
+          inline: true
+        - name: "% Change"
+          value: "{percent_change}%"
+          inline: true
+        - name: "Volume"
+          value: "{volume}"
+          inline: true
+      footer: "Alert System | {timestamp}"
+  
+  # Volume anomaly
+  - rule_id: volume_anomaly
+    name: Volume Anomaly Alert
+    description: Triggers when trading volume is abnormally high
+    enabled: true
+    severity: info
+    suppression_window: 600  # 10 minutes
+    
+    # Condition: zscore(volume, 20) > 2.5
+    condition:
+      ">":
+        - zscore: ["volume", 20]
+        - 2.5
+    
+    message_template: |
+      📊 Volume Anomaly Detected
+      Symbol: {symbol}
+      Current Volume: {volume}
+      Z-Score: {zscore}
+    
+    role_names:
+      - analyst
+    
+    embed_config:
+      title: "Volume Anomaly"
+      description: "Trading volume significantly above normal"
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Volume"
+          value: "{volume}"
+          inline: true
+        - name: "Avg Volume"
+          value: "{avg_volume}"
+          inline: true
+  
+  # Moving average crossover
+  - rule_id: ma_crossover
+    name: Moving Average Crossover
+    description: Triggers when short MA crosses above long MA (bullish signal)
+    enabled: true
+    severity: info
+    suppression_window: 3600  # 1 hour
+    
+    # Condition: sma(price, 10) > sma(price, 50)
+    condition:
+      ">":
+        - sma: ["price", 10]
+        - sma: ["price", 50]
+    
+    message_template: |
+      📈 MA Crossover Signal
+      Symbol: {symbol}
+      Short MA (10): ${short_ma}
+      Long MA (50): ${long_ma}
+      Signal: BULLISH
+    
+    role_names:
+      - trader
+    
+    embed_config:
+      title: "Moving Average Crossover"
+      description: "Bullish signal detected"
+      color: 0x00ff00  # Green
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Current Price"
+          value: "${price}"
+          inline: true
+        - name: "Signal"
+          value: "🟢 BULLISH"
+          inline: true
+  
+  # Critical price drop
+  - rule_id: critical_price_drop
+    name: Critical Price Drop
+    description: Triggers on significant price decline
+    enabled: true
+    severity: critical
+    suppression_window: 180  # 3 minutes
+    
+    # Condition: percent_change(price, 1) < -10
+    condition:
+      "<":
+        - percent_change: ["price", 1]
+        - -10.0
+    
+    message_template: |
+      🔴 CRITICAL ALERT - Major Price Drop!
+      Symbol: {symbol}
+      Current Price: ${price}
+      Drop: {percent_change}%
+      
+      IMMEDIATE ATTENTION REQUIRED
+    
+    role_names:
+      - trader
+      - admin
+      - alerts
+    
+    embed_config:
+      title: "⚠️ CRITICAL - Price Drop Alert"
+      description: "Severe price decline detected"
+      color: 0xff0000  # Red
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Price"
+          value: "${price}"
+          inline: true
+        - name: "% Change"
+          value: "🔻 {percent_change}%"
+          inline: true
+        - name: "Previous Price"
+          value: "${previous_price}"
+          inline: true
+      footer: "CRITICAL ALERT | {timestamp}"
+  
+  # GraphRAG signal example
+  - rule_id: graphrag_sentiment_shift
+    name: GraphRAG Sentiment Shift
+    description: Triggers when GraphRAG detects significant sentiment change
+    enabled: true
+    severity: warning
+    suppression_window: 1800  # 30 minutes
+    
+    # Condition: sentiment_score < -0.5 AND confidence > 0.7
+    condition:
+      and:
+        - "<":
+            - var: "graphrag.sentiment_score"
+            - -0.5
+        - ">":
+            - var: "graphrag.confidence"
+            - 0.7
+    
+    message_template: |
+      🧠 GraphRAG Sentiment Alert
+      Symbol: {symbol}
+      Sentiment Score: {graphrag.sentiment_score}
+      Confidence: {graphrag.confidence}
+      
+      Key Entities: {graphrag.entities}
+      Summary: {graphrag.summary}
+    
+    role_names:
+      - analyst
+    
+    embed_config:
+      title: "GraphRAG Sentiment Shift"
+      description: "Negative sentiment detected in news analysis"
+      color: 0xf39c12  # Orange
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Sentiment"
+          value: "{graphrag.sentiment_score}"
+          inline: true
+        - name: "Confidence"
+          value: "{graphrag.confidence}"
+          inline: true
+        - name: "Key Entities"
+          value: "{graphrag.entities}"
+          inline: false
+        - name: "Summary"
+          value: "{graphrag.summary}"
+          inline: false
+  
+  # Multi-condition example
+  - rule_id: high_risk_combo
+    name: High Risk Combination Alert
+    description: Multiple risk factors present simultaneously
+    enabled: true
+    severity: critical
+    suppression_window: 300
+    
+    # Complex condition: (price drop > 5% OR volume zscore > 2) AND volatility high
+    condition:
+      and:
+        - or:
+            - "<":
+                - percent_change: ["price", 1]
+                - -5.0
+            - ">":
+                - zscore: ["volume", 20]
+                - 2.0
+        - ">":
+            - var: "volatility"
+            - 0.5
+    
+    message_template: |
+      ⚠️ HIGH RISK COMBINATION
+      Symbol: {symbol}
+      Price: ${price}
+      Change: {percent_change}%
+      Volume Z-Score: {volume_zscore}
+      Volatility: {volatility}
+      
+      Multiple risk factors detected!
+    
+    role_names:
+      - trader
+      - admin
+      - alerts
+    
+    embed_config:
+      title: "🚨 High Risk Alert"
+      description: "Multiple risk indicators active"
+      color: 0xe74c3c  # Red
+      fields:
+        - name: "Symbol"
+          value: "{symbol}"
+          inline: true
+        - name: "Price Change"
+          value: "{percent_change}%"
+          inline: true
+        - name: "Volatility"
+          value: "{volatility}"
+          inline: true
+
+# Usage Examples:
+#
+# Load rules in Python:
+#   from ipfs_datasets_py.alerts import AlertManager, DiscordNotifier
+#   notifier = DiscordNotifier(config_file="config/discord.yml")
+#   manager = AlertManager(notifier, config_file="config/alert_rules.yml")
+#
+# Evaluate an event:
+#   event = {
+#       "symbol": "AAPL",
+#       "price": 175.50,
+#       "volume": 85000000,
+#       "volatility": 0.62,
+#       "timestamp": "2024-01-15T10:30:00Z"
+#   }
+#   results = await manager.evaluate_event(event)

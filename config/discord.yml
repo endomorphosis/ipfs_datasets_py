@@ -1,0 +1,39 @@
+# Discord Configuration for Alert Notifications
+#
+# This configuration supports two modes:
+# 1. bot: Uses discord.py bot client with full features (role mentions, permissions)
+# 2. webhook: Uses simple HTTP webhooks (simpler setup, limited role mention support)
+
+# Mode: "bot" or "webhook"
+mode: webhook
+
+# Bot configuration (required if mode = "bot")
+# Get bot token from: https://discord.com/developers/applications
+bot_token: ${DISCORD_BOT_TOKEN}
+
+# Guild (server) ID - right-click server in Discord with Developer Mode enabled
+guild_id: ${DISCORD_GUILD_ID}
+
+# Default channel ID - right-click channel in Discord with Developer Mode enabled
+channel_id: ${DISCORD_CHANNEL_ID}
+
+# Webhook configuration (required if mode = "webhook")
+# Create webhook in Discord: Server Settings > Integrations > Webhooks
+webhook_url: ${DISCORD_WEBHOOK_URL}
+
+# Role mapping - maps friendly role names to Discord role IDs
+# Get role IDs by right-clicking roles with Developer Mode enabled
+# Format: "friendly_name": "role_id"
+role_map:
+  trader: "123456789012345678"
+  analyst: "234567890123456789"
+  admin: "345678901234567890"
+  alerts: "456789012345678901"
+
+# Example environment variable setup:
+# export DISCORD_MODE=webhook
+# export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+# export DISCORD_BOT_TOKEN="your_bot_token"
+# export DISCORD_GUILD_ID="your_guild_id"
+# export DISCORD_CHANNEL_ID="your_channel_id"
+# export DISCORD_ROLE_MAP='{"trader":"123456789012345678","analyst":"234567890123456789"}'

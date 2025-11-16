@@ -62,9 +62,15 @@ setup(
             'dash>=2.6.0',
             'dash-cytoscape>=0.2.0',
         ],
+        'alerts': [
+            'discord.py>=2.0.0',
+            'aiohttp>=3.8.0',
+            'PyYAML>=6.0',
+        ],
         'test': [
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
+            'pytest-asyncio>=0.21.0',
         ],
         'legal': [
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
@@ -82,8 +88,12 @@ setup(
             'plotly>=5.9.0',
             'dash>=2.6.0',
             'dash-cytoscape>=0.2.0',
+            'discord.py>=2.0.0',
+            'aiohttp>=3.8.0',
+            'PyYAML>=6.0',
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
+            'pytest-asyncio>=0.21.0',
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
     },
