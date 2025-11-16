@@ -47,19 +47,30 @@ discovery:
   # Enable automatic peer discovery
   enabled: true
   
-  # Discovery methods
+  # Discovery methods (based on libp2p universal-connectivity)
   methods:
     # Use GitHub Cache API for peer registry
     github_cache_api: true
     
     # Use mDNS for local network discovery
-    mdns: false
+    # Enabled for better local network peer discovery
+    mdns: true
     
     # Use DHT (Distributed Hash Table) for peer discovery
-    dht: false
+    # Enabled for internet-wide peer routing
+    dht: true
     
     # Manual bootstrap peers
     bootstrap: true
+    
+    # Circuit relay for NAT traversal
+    circuit_relay: true
+    
+    # AutoNAT for reachability detection
+    autonat: true
+    
+    # Hole punching for direct NAT traversal
+    hole_punching: true
   
   # GitHub Cache API discovery settings
   github:
@@ -83,6 +94,36 @@ discovery:
     # Example entries:
     # - /ip4/192.168.1.100/tcp/9000/p2p/QmPeerID...
     # - /ip4/10.0.0.50/tcp/9001/p2p/QmAnotherPeerID...
+  
+  # mDNS configuration
+  mdns:
+    # Discovery interval in seconds
+    interval: 5
+    # TTL for mDNS records in seconds
+    ttl: 120
+  
+  # DHT configuration
+  dht:
+    # Bucket size for DHT
+    bucket_size: 20
+    # Query timeout in seconds
+    query_timeout: 60
+  
+  # Circuit relay configuration
+  relay:
+    # Maximum hops through relays
+    hop_limit: 3
+    # Relay timeout in seconds
+    timeout: 30
+    # Known relay peer addresses
+    relay_addrs: []
+  
+  # AutoNAT configuration
+  autonat:
+    # Enable AutoNAT server (allow helping others detect reachability)
+    enable_server: true
+    # AutoNAT client timeout
+    timeout: 30
 
 # Security
 security:
