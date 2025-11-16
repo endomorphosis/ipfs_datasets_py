@@ -268,7 +268,7 @@ class CodeQLCache:
         self.github_cache.put(
             "codeql",
             scan_result.to_dict(),
-            ttl=ttl or self.default_ttl,
+            ttl or self.default_ttl,
             cache_key
         )
         
