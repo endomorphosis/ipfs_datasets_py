@@ -1,0 +1,149 @@
+name: 'Setup GitHub API Cache'
+description: 'Initialize GitHub API caching with P2P sharing for self-hosted runners'
+branding:
+  icon: 'database'
+  color: 'blue'
+
+inputs:
+  enable-p2p:
+    description: 'Enable P2P cache sharing between runners'
+    required: false
+    default: 'true'
+  cache-size:
+    description: 'Maximum number of cache entries'
+    required: false
+    default: '5000'
+  cache-ttl:
+    description: 'Default cache TTL in seconds'
+    required: false
+    default: '300'
+  p2p-port:
+    description: 'P2P listen port'
+    required: false
+    default: '9000'
+  enable-peer-discovery:
+    description: 'Enable automatic peer discovery via GitHub Cache API'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'GitHub token for authentication'
+    required: true
+
+outputs:
+  cache-status:
+    description: 'Status of cache initialization (success/fallback/disabled)'
+    value: ${{ steps.init-cache.outputs.status }}
+  peer-count:
+    description: 'Number of discovered peers'
+    value: ${{ steps.init-cache.outputs.peer_count }}
+  cache-dir:
+    description: 'Cache directory path'
+    value: ${{ steps.init-cache.outputs.cache_dir }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Initialize GitHub API Cache
+      id: init-cache
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        ENABLE_P2P_CACHE: ${{ inputs.enable-p2p }}
+        GITHUB_CACHE_SIZE: ${{ inputs.cache-size }}
+        CACHE_DEFAULT_TTL: ${{ inputs.cache-ttl }}
+        P2P_LISTEN_PORT: ${{ inputs.p2p-port }}
+        ENABLE_PEER_DISCOVERY: ${{ inputs.enable-peer-discovery }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        echo "::group::🗄️ Initializing GitHub API Cache"
+        
+        # Create cache directory
+        CACHE_DIR="${HOME}/.cache/github-api-p2p"
+        mkdir -p "$CACHE_DIR"
+        echo "cache_dir=$CACHE_DIR" >> $GITHUB_OUTPUT
+        
+        # Export environment variables
+        echo "CACHE_DIR=$CACHE_DIR" >> $GITHUB_ENV
+        echo "ENABLE_P2P_CACHE=${{ inputs.enable-p2p }}" >> $GITHUB_ENV
+        echo "GITHUB_CACHE_SIZE=${{ inputs.cache-size }}" >> $GITHUB_ENV
+        echo "CACHE_DEFAULT_TTL=${{ inputs.cache-ttl }}" >> $GITHUB_ENV
+        echo "P2P_LISTEN_PORT=${{ inputs.p2p-port }}" >> $GITHUB_ENV
+        echo "ENABLE_PEER_DISCOVERY=${{ inputs.enable-peer-discovery }}" >> $GITHUB_ENV
+        
+        echo "✅ Cache directory: $CACHE_DIR"
+        echo "✅ P2P enabled: ${{ inputs.enable-p2p }}"
+        echo "✅ Cache size: ${{ inputs.cache-size }}"
+        echo "✅ Default TTL: ${{ inputs.cache-ttl }}s"
+        
+        # Initialize cache with Python
+        python3 << 'PYEOF'
+import os
+import sys
+
+try:
+    from ipfs_datasets_py.cache import GitHubAPICache
+    
+    cache = GitHubAPICache(
+        cache_dir=os.environ.get('CACHE_DIR'),
+        enable_p2p=os.environ.get('ENABLE_P2P_CACHE', 'true').lower() == 'true',
+        enable_peer_discovery=os.environ.get('ENABLE_PEER_DISCOVERY', 'true').lower() == 'true',
+        github_repo=os.environ.get('GITHUB_REPOSITORY'),
+        max_cache_size=int(os.environ.get('GITHUB_CACHE_SIZE', 5000)),
+        default_ttl=int(os.environ.get('CACHE_DEFAULT_TTL', 300)),
+        p2p_listen_port=int(os.environ.get('P2P_LISTEN_PORT', 9000))
+    )
+    
+    print("✅ GitHub API cache initialized successfully")
+    
+    # Get stats
+    stats = cache.get_stats()
+    print(f"📊 Cache entries: {stats.get('cache_size', 0)}")
+    print(f"📊 P2P enabled: {stats.get('p2p_enabled', False)}")
+    
+    if stats.get('p2p_enabled'):
+        peer_count = stats.get('connected_peers', 0)
+        print(f"📡 Connected peers: {peer_count}")
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f"peer_count={peer_count}\n")
+            f.write("status=success\n")
+    else:
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write("peer_count=0\n")
+            f.write("status=fallback\n")
+    
+    print("::notice::✅ GitHub API cache is ready - API calls will be cached")
+    sys.exit(0)
+    
+except ImportError as e:
+    print(f"::warning::⚠️ Cache modules not available: {e}")
+    print("::notice::Continuing without caching")
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("peer_count=0\n")
+        f.write("status=disabled\n")
+    sys.exit(0)
+    
+except Exception as e:
+    print(f"::error::❌ Cache initialization failed: {e}")
+    import traceback
+    traceback.print_exc()
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+        f.write("peer_count=0\n")
+        f.write("status=fallback\n")
+    sys.exit(1)
+PYEOF
+        
+        echo "::endgroup::"
+    
+    - name: Export Cache Statistics
+      shell: bash
+      run: |
+        echo "::group::📊 Cache Configuration"
+        echo "Cache Settings:"
+        echo "  - Status: ${{ steps.init-cache.outputs.status }}"
+        echo "  - Directory: ${{ steps.init-cache.outputs.cache_dir }}"
+        echo "  - P2P Enabled: ${{ inputs.enable-p2p }}"
+        echo "  - Peer Count: ${{ steps.init-cache.outputs.peer_count }}"
+        echo "  - Cache Size Limit: ${{ inputs.cache-size }}"
+        echo "  - Default TTL: ${{ inputs.cache-ttl }}s"
+        echo "  - Repository: ${{ github.repository }}"
+        echo "::endgroup::"

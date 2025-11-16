@@ -1,0 +1,241 @@
+# P2P Network Configuration
+# Configuration for P2P cache sharing between GitHub Actions runners
+
+# Network Settings
+network:
+  # Protocol version
+  protocol_version: "1.0.0"
+  
+  # Network ID (for network segmentation)
+  # Runners on same network ID can share cache
+  network_id: "ipfs-datasets-py-cache"
+  
+  # Listen configuration
+  listen:
+    # IP addresses to listen on
+    # 0.0.0.0 = all interfaces, 127.0.0.1 = localhost only
+    addresses:
+      - "0.0.0.0"
+    
+    # Port range for P2P
+    # Will try ports in this range until one is available
+    port_range:
+      start: 9000
+      end: 9010
+    
+    # Transport protocols
+    transports:
+      - tcp
+      # - quic  # Experimental
+  
+  # Connection limits
+  connections:
+    # Maximum number of peer connections
+    max_peers: 20
+    
+    # Minimum desired peer connections
+    min_peers: 2
+    
+    # Connection timeout in seconds
+    timeout: 30
+    
+    # Keep-alive interval in seconds
+    keepalive_interval: 60
+
+# Peer Discovery
+discovery:
+  # Enable automatic peer discovery
+  enabled: true
+  
+  # Discovery methods
+  methods:
+    # Use GitHub Cache API for peer registry
+    github_cache_api: true
+    
+    # Use mDNS for local network discovery
+    mdns: false
+    
+    # Use DHT (Distributed Hash Table) for peer discovery
+    dht: false
+    
+    # Manual bootstrap peers
+    bootstrap: true
+  
+  # GitHub Cache API discovery settings
+  github:
+    # Repository for peer registry (uses GITHUB_REPOSITORY env var)
+    repository: null
+    
+    # Cache key prefix for peer entries
+    peer_cache_key: "p2p-peers"
+    
+    # Peer TTL in minutes
+    peer_ttl_minutes: 15
+    
+    # Discovery interval in seconds
+    discovery_interval: 300
+    
+    # Maximum peers to discover per query
+    max_peers_per_query: 10
+  
+  # Bootstrap peers (static list)
+  bootstrap_peers: []
+    # Example entries:
+    # - /ip4/192.168.1.100/tcp/9000/p2p/QmPeerID...
+    # - /ip4/10.0.0.50/tcp/9001/p2p/QmAnotherPeerID...
+
+# Security
+security:
+  # Message encryption
+  encryption:
+    # Enable encryption for P2P messages
+    enabled: true
+    
+    # Encryption algorithm
+    algorithm: "AES-256-GCM"
+    
+    # Key derivation
+    key_derivation:
+      # Use GitHub token as shared secret
+      use_github_token: true
+      
+      # PBKDF2 iterations
+      pbkdf2_iterations: 100000
+      
+      # Key size in bits
+      key_size: 256
+  
+  # Access control
+  access_control:
+    # Only allow peers with same GitHub repository access
+    verify_repository_access: true
+    
+    # Trust bootstrap peers
+    trust_bootstrap: true
+    
+    # Allowlist of peer IDs (empty = allow all authenticated)
+    peer_allowlist: []
+    
+    # Blocklist of peer IDs
+    peer_blocklist: []
+  
+  # Content verification
+  content_verification:
+    # Verify content hashes
+    verify_hashes: true
+    
+    # Reject content with mismatched hashes
+    reject_invalid: true
+    
+    # Maximum content size in bytes (100 MB)
+    max_content_size: 104857600
+
+# Cache Sharing Protocol
+cache_protocol:
+  # Protocol ID
+  protocol_id: "/github-cache/1.0.0"
+  
+  # Message types
+  message_types:
+    - cache_entry    # Broadcast cache entry
+    - cache_request  # Request cache entry
+    - cache_response # Respond with cache entry
+    - peer_info      # Share peer information
+  
+  # Broadcasting
+  broadcast:
+    # Enable automatic broadcast of new cache entries
+    enabled: true
+    
+    # Broadcast to all peers or subset
+    strategy: "all"  # Options: all, random, closest
+    
+    # Number of peers for random/closest strategies
+    peer_count: 5
+    
+    # Broadcast retry count on failure
+    retry_count: 3
+  
+  # Cache synchronization
+  sync:
+    # Enable periodic cache sync with peers
+    enabled: true
+    
+    # Sync interval in seconds
+    interval: 600
+    
+    # Only sync recent entries (age in seconds)
+    max_age: 3600
+
+# Performance Tuning
+performance:
+  # Buffer sizes
+  buffers:
+    # Read buffer size in bytes
+    read_buffer: 65536
+    
+    # Write buffer size in bytes
+    write_buffer: 65536
+  
+  # Compression
+  compression:
+    # Enable message compression
+    enabled: true
+    
+    # Compression algorithm
+    algorithm: "gzip"
+    
+    # Compression level (1-9)
+    level: 6
+  
+  # Throttling
+  throttling:
+    # Maximum messages per second per peer
+    max_messages_per_sec: 100
+    
+    # Maximum bandwidth per peer (bytes/sec)
+    max_bandwidth_per_peer: 10485760  # 10 MB/s
+
+# Integration with ipfs_accelerate_py
+ipfs_accelerate:
+  # Enable cross-repository P2P
+  enabled: true
+  
+  # Accept peers from ipfs_accelerate_py
+  accept_accelerate_peers: true
+  
+  # Use same P2P network ID
+  shared_network_id: "ipfs-github-cache"
+  
+  # Compatible protocol versions
+  compatible_protocols:
+    - "/github-cache/1.0.0"
+    - "/ipfs-accelerate/cache/1.0.0"
+
+# Logging and Monitoring
+logging:
+  # Log level (debug, info, warning, error)
+  level: "info"
+  
+  # Log peer connections
+  log_connections: true
+  
+  # Log cache operations
+  log_cache_ops: true
+  
+  # Log P2P protocol messages
+  log_messages: false  # Verbose
+  
+# Monitoring metrics
+monitoring:
+  # Enable metrics collection
+  enabled: true
+  
+  # Metrics to collect
+  metrics:
+    - peer_count
+    - message_count
+    - bytes_sent
+    - bytes_received
+    - cache_entries_shared
+    - cache_entries_received
