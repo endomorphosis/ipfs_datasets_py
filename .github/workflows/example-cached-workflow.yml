@@ -227,6 +227,8 @@ jobs:
     name: Autoscaler Integration Test
     needs: setup-cache
     runs-on: [self-hosted, linux, x64]
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
