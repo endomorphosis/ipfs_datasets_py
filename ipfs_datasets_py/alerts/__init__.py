@@ -7,6 +7,7 @@ and market events, with Discord integration support.
 
 from ipfs_datasets_py.alerts.discord_notifier import (
     DiscordNotifier,
+    DiscordEmbed,
     BotClient,
     WebhookClient
 )
@@ -21,6 +22,7 @@ from ipfs_datasets_py.alerts.alert_manager import (
 
 __all__ = [
     'DiscordNotifier',
+    'DiscordEmbed',
     'BotClient',
     'WebhookClient',
     'RuleEngine',
