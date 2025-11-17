@@ -2120,16 +2120,21 @@ For detailed help: ipfs-datasets finance <subcommand> --help
             subcommand = args[1] if len(args) > 1 else "status"
             
             try:
-                from ipfs_datasets_py.mcp_server.tools.p2p_workflow_tools import (
-                    initialize_p2p_scheduler,
-                    schedule_p2p_workflow,
-                    get_next_p2p_workflow,
-                    add_p2p_peer,
-                    remove_p2p_peer,
-                    get_p2p_scheduler_status,
-                    get_workflow_tags,
-                    get_assigned_workflows
-                )
+                # Import directly to avoid mcp_server dependencies
+                import importlib.util
+                tools_path = PathLib(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "p2p_workflow_tools" / "p2p_workflow_tools.py"
+                spec = importlib.util.spec_from_file_location("p2p_workflow_tools", tools_path)
+                p2p_tools_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(p2p_tools_module)
+                
+                initialize_p2p_scheduler = p2p_tools_module.initialize_p2p_scheduler
+                schedule_p2p_workflow = p2p_tools_module.schedule_p2p_workflow
+                get_next_p2p_workflow = p2p_tools_module.get_next_p2p_workflow
+                add_p2p_peer = p2p_tools_module.add_p2p_peer
+                remove_p2p_peer = p2p_tools_module.remove_p2p_peer
+                get_p2p_scheduler_status = p2p_tools_module.get_p2p_scheduler_status
+                get_workflow_tags = p2p_tools_module.get_workflow_tags
+                get_assigned_workflows = p2p_tools_module.get_assigned_workflows
                 
                 if subcommand == "init":
                     # Initialize P2P scheduler
