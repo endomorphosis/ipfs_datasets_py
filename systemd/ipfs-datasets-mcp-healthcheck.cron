@@ -4,6 +4,10 @@
 
 */5 * * * * root /bin/bash -lc 'if ! systemctl is-active --quiet ipfs-datasets-mcp; then systemctl restart ipfs-datasets-mcp; fi'
 
+# Daily update: pull latest code and install ALL extras into the deployment venv
+# Runs as the 'ipfsdatasets' user at 04:20 daily
+20 4 * * * ipfsdatasets /bin/bash -lc '/var/lib/ipfsdatasets/scripts/update_and_install.sh >> /var/log/ipfsdatasets/update_and_install.log 2>&1'
+
 # Notes:
 # - Ensure this file is installed with mode 0644 and owned by root when placed in /etc/cron.d/
 # - If you prefer a user-level cron entry, use the equivalent in the user's crontab or
