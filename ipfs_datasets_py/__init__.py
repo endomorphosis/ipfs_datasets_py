@@ -217,6 +217,28 @@ try:
 except ImportError:
     HAVE_AUDIT = False
 
+# P2P Workflow Scheduler
+try:
+    from ipfs_datasets_py.p2p_workflow_scheduler import (
+        P2PWorkflowScheduler,
+        WorkflowDefinition,
+        WorkflowTag,
+        MerkleClock,
+        FibonacciHeap,
+        calculate_hamming_distance,
+        get_scheduler
+    )
+    HAVE_P2P_WORKFLOW_SCHEDULER = True
+except ImportError:
+    HAVE_P2P_WORKFLOW_SCHEDULER = False
+    P2PWorkflowScheduler = None
+    WorkflowDefinition = None
+    WorkflowTag = None
+    MerkleClock = None
+    FibonacciHeap = None
+    calculate_hamming_distance = None
+    get_scheduler = None
+
 # Check for dependencies
 try:
     import ipfshttpclient
@@ -394,6 +416,17 @@ if HAVE_VECTOR_TOOLS:
 
 if HAVE_SEARCH:
     __all__.extend(['search'])
+
+if HAVE_P2P_WORKFLOW_SCHEDULER:
+    __all__.extend([
+        'P2PWorkflowScheduler',
+        'WorkflowDefinition',
+        'WorkflowTag',
+        'MerkleClock',
+        'FibonacciHeap',
+        'calculate_hamming_distance',
+        'get_scheduler'
+    ])
 
 if HAVE_EMBEDDINGS:
     __all__.extend([
