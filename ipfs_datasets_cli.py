@@ -76,6 +76,15 @@ Commands:
       config     Configure API key and settings
       execute    Execute Claude CLI command
       
+    p2p          P2P workflow scheduling (bypass GitHub API)
+      init       Initialize P2P scheduler
+      schedule   Schedule a workflow for P2P execution
+      next       Get next workflow from queue
+      status     Get scheduler status
+      add-peer   Add a peer to the network
+      remove-peer Remove a peer from the network
+      tags       List available workflow tags
+      
     dataset      Dataset operations
       load       Load a dataset
       convert    Convert dataset format
@@ -2106,6 +2115,248 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 traceback.print_exc()
                 return
         
+        if command == "p2p":
+            # P2P workflow scheduling commands
+            subcommand = args[1] if len(args) > 1 else "status"
+            
+            try:
+                # Import directly to avoid mcp_server dependencies
+                import importlib.util
+                tools_path = PathLib(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "p2p_workflow_tools" / "p2p_workflow_tools.py"
+                spec = importlib.util.spec_from_file_location("p2p_workflow_tools", tools_path)
+                p2p_tools_module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(p2p_tools_module)
+                
+                initialize_p2p_scheduler = p2p_tools_module.initialize_p2p_scheduler
+                schedule_p2p_workflow = p2p_tools_module.schedule_p2p_workflow
+                get_next_p2p_workflow = p2p_tools_module.get_next_p2p_workflow
+                add_p2p_peer = p2p_tools_module.add_p2p_peer
+                remove_p2p_peer = p2p_tools_module.remove_p2p_peer
+                get_p2p_scheduler_status = p2p_tools_module.get_p2p_scheduler_status
+                get_workflow_tags = p2p_tools_module.get_workflow_tags
+                get_assigned_workflows = p2p_tools_module.get_assigned_workflows
+                
+                if subcommand == "init":
+                    # Initialize P2P scheduler
+                    extra = args[2:]
+                    peer_id = None
+                    peers = []
+                    
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--peer-id", "-i") and i + 1 < len(extra):
+                            peer_id = extra[i + 1]
+                            i += 2
+                        elif token in ("--peers", "-p") and i + 1 < len(extra):
+                            peers = [p.strip() for p in extra[i + 1].split(',')]
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    result = asyncio.run(initialize_p2p_scheduler(peer_id=peer_id, peers=peers))
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(f"✓ {result['message']}")
+                            status = result.get('status', {})
+                            print(f"Peer ID: {status.get('peer_id', 'N/A')}")
+                            print(f"Known peers: {status.get('num_peers', 0)}")
+                            print(f"Queue size: {status.get('queue_size', 0)}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "schedule":
+                    # Schedule a workflow
+                    extra = args[2:]
+                    workflow_id = None
+                    name = None
+                    tags = []
+                    priority = 1.0
+                    
+                    i = 0
+                    while i < len(extra):
+                        token = extra[i]
+                        if token in ("--id", "-i") and i + 1 < len(extra):
+                            workflow_id = extra[i + 1]
+                            i += 2
+                        elif token in ("--name", "-n") and i + 1 < len(extra):
+                            name = extra[i + 1]
+                            i += 2
+                        elif token in ("--tags", "-t") and i + 1 < len(extra):
+                            tags = [t.strip() for t in extra[i + 1].split(',')]
+                            i += 2
+                        elif token in ("--priority", "-p") and i + 1 < len(extra):
+                            try:
+                                priority = float(extra[i + 1])
+                            except ValueError:
+                                print(f"Warning: Invalid priority value, using default 1.0")
+                            i += 2
+                        else:
+                            i += 1
+                    
+                    if not workflow_id or not name:
+                        print("Usage: ipfs-datasets p2p schedule --id ID --name NAME --tags TAGS [--priority PRIORITY]")
+                        print("Tags: p2p_eligible, p2p_only, code_gen, web_scrape, data_processing")
+                        return
+                    
+                    result = asyncio.run(schedule_p2p_workflow(
+                        workflow_id=workflow_id,
+                        name=name,
+                        tags=tags,
+                        priority=priority
+                    ))
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(f"✓ Workflow {workflow_id} scheduled")
+                            wf_result = result.get('result', {})
+                            print(f"Assigned to: {wf_result.get('assigned_peer', 'N/A')}")
+                            print(f"Is local: {wf_result.get('is_local', False)}")
+                            if wf_result.get('is_local'):
+                                print(f"Queue size: {wf_result.get('queue_size', 0)}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "next":
+                    # Get next workflow from queue
+                    result = asyncio.run(get_next_p2p_workflow())
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            workflow = result.get('workflow')
+                            if workflow:
+                                print(f"✓ Next workflow:")
+                                print(f"ID: {workflow.get('workflow_id', 'N/A')}")
+                                print(f"Name: {workflow.get('name', 'N/A')}")
+                                print(f"Tags: {', '.join(workflow.get('tags', []))}")
+                                print(f"Priority: {workflow.get('priority', 0)}")
+                            else:
+                                print("No workflows in queue")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "status":
+                    # Get scheduler status
+                    result = asyncio.run(get_p2p_scheduler_status())
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            status = result.get('status', {})
+                            print("P2P Scheduler Status:")
+                            print(f"Peer ID: {status.get('peer_id', 'N/A')}")
+                            print(f"Known peers: {status.get('num_peers', 0)}")
+                            print(f"Queue size: {status.get('queue_size', 0)}")
+                            print(f"Assigned workflows: {status.get('assigned_workflows', 0)}")
+                            print(f"Total workflows: {status.get('total_workflows', 0)}")
+                            clock = status.get('clock', {})
+                            print(f"Clock counter: {clock.get('counter', 0)}")
+                            print(f"Clock hash: {clock.get('hash', 'N/A')[:16]}...")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "add-peer":
+                    # Add a peer
+                    extra = args[2:]
+                    peer_id = extra[0] if extra else None
+                    
+                    if not peer_id:
+                        print("Usage: ipfs-datasets p2p add-peer <peer-id>")
+                        return
+                    
+                    result = asyncio.run(add_p2p_peer(peer_id))
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(f"✓ {result['message']}")
+                            print(f"Total peers: {result.get('num_peers', 0)}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "remove-peer":
+                    # Remove a peer
+                    extra = args[2:]
+                    peer_id = extra[0] if extra else None
+                    
+                    if not peer_id:
+                        print("Usage: ipfs-datasets p2p remove-peer <peer-id>")
+                        return
+                    
+                    result = asyncio.run(remove_p2p_peer(peer_id))
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print(f"✓ {result['message']}")
+                            print(f"Total peers: {result.get('num_peers', 0)}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "tags":
+                    # List workflow tags
+                    result = asyncio.run(get_workflow_tags())
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            print("Available workflow tags:")
+                            descriptions = result.get('descriptions', {})
+                            for tag in result.get('tags', []):
+                                desc = descriptions.get(tag, '')
+                                print(f"  {tag:20} - {desc}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                elif subcommand == "assigned":
+                    # Get assigned workflows
+                    result = asyncio.run(get_assigned_workflows())
+                    
+                    if json_output:
+                        print(json.dumps(result, indent=2))
+                    else:
+                        if result['success']:
+                            workflows = result.get('assigned_workflows', [])
+                            print(f"Assigned workflows ({result.get('count', 0)}):")
+                            for wf_id in workflows:
+                                print(f"  - {wf_id}")
+                        else:
+                            print(f"✗ Error: {result.get('error', 'Unknown error')}")
+                    return
+                
+                else:
+                    print(f"Unknown p2p subcommand: {subcommand}")
+                    print("Available subcommands: init, schedule, next, status, add-peer, remove-peer, tags, assigned")
+                    return
+                
+            except ImportError as e:
+                print(f"P2P workflow tools not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing p2p command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         if command == "detect-type":
             # File type detection commands
             subcommand = args[1] if len(args) > 1 else "detect"
@@ -2505,7 +2756,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p']:
         execute_heavy_command(args)
         return
 
