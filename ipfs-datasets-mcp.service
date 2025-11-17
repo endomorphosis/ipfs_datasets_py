@@ -3,21 +3,23 @@ Description=IPFS Datasets MCP Server
 Documentation=https://github.com/endomorphosis/ipfs_datasets_py
 After=network.target
 Wants=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
-Type=exec
-WorkingDirectory=/home/barberb/ipfs_datasets_py
+Type=simple
+User=ipfsdatasets
+Group=ipfsdatasets
+WorkingDirectory=/var/lib/ipfsdatasets/app
 Environment=MCP_DASHBOARD_HOST=127.0.0.1
 Environment=MCP_DASHBOARD_PORT=8899
 Environment=MCP_DASHBOARD_BLOCKING=0
-ExecStart=/bin/bash -lc '/home/barberb/ipfs_datasets_py/tools/run_mcp_dashboard_quick.sh'
+ExecStart=/var/lib/ipfsdatasets/.venv/bin/python -m ipfs_datasets_py.mcp_dashboard
 Restart=always
 RestartSec=15
-StartLimitIntervalSec=300
-StartLimitBurst=5
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=ipfs-datasets-mcp
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

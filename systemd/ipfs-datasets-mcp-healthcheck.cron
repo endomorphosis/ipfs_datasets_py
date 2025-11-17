@@ -1,0 +1,10 @@
+# Cron job to ensure the ipfs-datasets-mcp systemd service stays running.
+# Drop this file into /etc/cron.d/ (or adapt the single-user crontab) on the host.
+# This runs every 5 minutes and restarts the service if it's not active.
+
+*/5 * * * * root /bin/bash -lc 'if ! systemctl is-active --quiet ipfs-datasets-mcp; then systemctl restart ipfs-datasets-mcp; fi'
+
+# Notes:
+# - Ensure this file is installed with mode 0644 and owned by root when placed in /etc/cron.d/
+# - If you prefer a user-level cron entry, use the equivalent in the user's crontab or
+#   use the 'state_laws_cron' scheduling tool provided by the project for dataset-specific tasks.
