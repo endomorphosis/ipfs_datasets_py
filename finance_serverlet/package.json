@@ -1,0 +1,34 @@
+{
+  "name": "finance-data-serverlet",
+  "version": "1.0.0",
+  "description": "Self-contained lightweight Node.js serverlet for financial data with multi-source integrity validation",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test tests/*.test.js",
+    "lint": "echo 'No linter configured'"
+  },
+  "keywords": [
+    "finance",
+    "trading",
+    "stocks",
+    "crypto",
+    "binance",
+    "yahoo-finance",
+    "tradingview",
+    "webull",
+    "sqlite",
+    "rest-api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "express": "^4.21.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
