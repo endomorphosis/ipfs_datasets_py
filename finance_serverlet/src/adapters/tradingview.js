@@ -209,12 +209,14 @@ export class TradingViewAdapter extends BaseAdapter {
         }
 
         // Scanner API returns current snapshot, not historical
+        // Column order from request: name, close, open, high, low, volume, change, change_abs, Recommend.All
+        // d[0]=name, d[1]=close, d[2]=open, d[3]=high, d[4]=low, d[5]=volume
         return rawData.data.map(item => {
             const d = item.d;
             return {
                 timestamp: new Date().toISOString(),
                 symbol,
-                open: d[2],  // Using close as approximation since scanner gives snapshot
+                open: d[2],
                 high: d[3],
                 low: d[4],
                 close: d[1],

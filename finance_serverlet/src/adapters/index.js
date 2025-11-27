@@ -4,11 +4,13 @@
  * Exports all available data source adapters.
  */
 
-export { BaseAdapter } from './base.js';
-export { YahooFinanceAdapter } from './yahoo.js';
-export { BinanceAdapter } from './binance.js';
-export { TradingViewAdapter } from './tradingview.js';
-export { WebullAdapter } from './webull.js';
+import { BaseAdapter } from './base.js';
+import { YahooFinanceAdapter } from './yahoo.js';
+import { BinanceAdapter } from './binance.js';
+import { TradingViewAdapter } from './tradingview.js';
+import { WebullAdapter } from './webull.js';
+
+export { BaseAdapter, YahooFinanceAdapter, BinanceAdapter, TradingViewAdapter, WebullAdapter };
 
 /**
  * Factory to create adapter by name
@@ -21,14 +23,14 @@ export function createAdapter(name, options = {}) {
         case 'yahoo':
         case 'yahoo_finance':
         case 'yahoofinance':
-            return new (await import('./yahoo.js')).YahooFinanceAdapter(options);
+            return new YahooFinanceAdapter(options);
         case 'binance':
-            return new (await import('./binance.js')).BinanceAdapter(options);
+            return new BinanceAdapter(options);
         case 'tradingview':
         case 'trading_view':
-            return new (await import('./tradingview.js')).TradingViewAdapter(options);
+            return new TradingViewAdapter(options);
         case 'webull':
-            return new (await import('./webull.js')).WebullAdapter(options);
+            return new WebullAdapter(options);
         default:
             throw new Error(`Unknown adapter: ${name}`);
     }
@@ -41,9 +43,9 @@ export function createAdapter(name, options = {}) {
  */
 export function getAllAdapters(options = {}) {
     return {
-        yahoo_finance: new (require('./yahoo.js')).YahooFinanceAdapter(options),
-        binance: new (require('./binance.js')).BinanceAdapter(options),
-        tradingview: new (require('./tradingview.js')).TradingViewAdapter(options),
-        webull: new (require('./webull.js')).WebullAdapter(options)
+        yahoo_finance: new YahooFinanceAdapter(options),
+        binance: new BinanceAdapter(options),
+        tradingview: new TradingViewAdapter(options),
+        webull: new WebullAdapter(options)
     };
 }
