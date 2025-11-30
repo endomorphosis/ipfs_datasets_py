@@ -18,11 +18,8 @@ from conftest import FixtureError
 def municipal_laws_scraper_module_loaded() -> Dict[str, Any]:
     """
     Given the municipal laws scraper module is loaded
-    
-    Returns the loaded scraper module or a state dict if not available.
     """
     try:
-        # Try to import the actual scraper module
         try:
             from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import municipal_laws_scraper
             scraper_module = municipal_laws_scraper
@@ -43,8 +40,6 @@ def municipal_laws_scraper_module_loaded() -> Dict[str, Any]:
 def major_cities_list() -> List[Dict[str, str]]:
     """
     Given the list of major cities includes 23 US cities
-    
-    Returns the list of major US cities with their codes and states.
     """
     try:
         major_cities = [
@@ -73,7 +68,6 @@ def major_cities_list() -> List[Dict[str, str]]:
             {"code": "PDX", "name": "Portland", "state": "OR"},
         ]
         
-        # Verify we have exactly 23 cities
         if len(major_cities) != 23:
             raise FixtureError(
                 f"major_cities_list raised an error: Expected 23 cities, got {len(major_cities)}"
@@ -91,47 +85,107 @@ def major_cities_list() -> List[Dict[str, str]]:
 class TestSearchMunicipalCodes:
     """Search Municipal Codes"""
 
-    def test_search_municipal_codes_for_valid_city_by_name(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_search_returns_success_status(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Search municipal codes for a valid city by name
-          Given a city name "New York City"
-          When I search municipal codes for that city
+        Scenario: Search returns success status
+          When I search municipal codes for "New York City"
           Then the search returns status "success"
-          And the search returns one ordinance
-          And the ordinance city is "New York City"
-          And the ordinance state is "NY"
         """
         pass
 
-    def test_search_municipal_codes_for_city_using_partial_name_match(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_search_returns_one_ordinance(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Search municipal codes for a city using partial name match
-          Given a city name "los angeles"
-          When I search municipal codes for that city
-          Then the search returns status "success"
-          And the matching city code is "LAX"
-          And the matching city name is "Los Angeles"
+        Scenario: Search returns one ordinance
+          When I search municipal codes for "New York City"
+          Then the search returns one ordinance
         """
         pass
 
-    def test_search_municipal_codes_for_unknown_city(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_search_ordinance_city_is_correct(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Search municipal codes for an unknown city
-          Given a city name "Unknown City XYZ"
-          When I search municipal codes for that city
+        Scenario: Search ordinance city is correct
+          When I search municipal codes for "New York City"
+          Then the ordinance city is "New York City"
+        """
+        pass
+
+    def test_search_ordinance_state_is_correct(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search ordinance state is correct
+          When I search municipal codes for "New York City"
+          Then the ordinance state is "NY"
+        """
+        pass
+
+    def test_search_partial_name_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search partial name returns success
+          When I search municipal codes for "los angeles"
+          Then the search returns status "success"
+        """
+        pass
+
+    def test_search_partial_name_matches_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search partial name matches code
+          When I search municipal codes for "los angeles"
+          Then the matching city code is "LAX"
+        """
+        pass
+
+    def test_search_partial_name_matches_name(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search partial name matches name
+          When I search municipal codes for "los angeles"
+          Then the matching city name is "Los Angeles"
+        """
+        pass
+
+    def test_search_unknown_city_returns_error(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search unknown city returns error
+          When I search municipal codes for "Unknown City XYZ"
           Then the search returns status "error"
-          And the error message contains "not found in database"
-          And the ordinances list is empty
-          And the count is 0
         """
         pass
 
-    def test_search_municipal_codes_without_specifying_city(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_search_unknown_city_error_message(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Search municipal codes without specifying a city
+        Scenario: Search unknown city error message
+          When I search municipal codes for "Unknown City XYZ"
+          Then the error message contains "not found in database"
+        """
+        pass
+
+    def test_search_unknown_city_empty_list(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search unknown city empty list
+          When I search municipal codes for "Unknown City XYZ"
+          Then the ordinances list is empty
+        """
+        pass
+
+    def test_search_unknown_city_count_zero(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search unknown city count zero
+          When I search municipal codes for "Unknown City XYZ"
+          Then the count is 0
+        """
+        pass
+
+    def test_search_without_city_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search without city returns success
           When I search municipal codes without a city name
           Then the search returns status "success"
-          And the ordinances list is empty
+        """
+        pass
+
+    def test_search_without_city_empty_list(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Search without city empty list
+          When I search municipal codes without a city name
+          Then the ordinances list is empty
         """
         pass
 
@@ -141,107 +195,211 @@ class TestSearchMunicipalCodes:
 class TestScrapeMunicipalLaws:
     """Scrape Municipal Laws"""
 
-    def test_scrape_municipal_laws_for_single_city_by_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_single_city_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws for a single city by code
-          Given a list of cities containing "NYC"
-          And output format is "json"
-          And include_metadata is true
-          When I scrape municipal laws
+        Scenario: Scrape single city returns success
+          When I scrape municipal laws for "NYC"
           Then the scrape returns status "success"
-          And the data contains one city entry
-          And the city code is "NYC"
-          And the city name is "New York City"
-          And the state is "NY"
-          And the metadata includes cities_count of 1
-          And the metadata includes ordinances_count greater than 0
         """
         pass
 
-    def test_scrape_municipal_laws_for_multiple_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_single_city_one_entry(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws for multiple cities
-          Given a list of cities containing "NYC", "LAX", "CHI"
-          When I scrape municipal laws
-          Then the scrape returns status "success"
-          And the data contains 3 city entries
-          And the metadata cities_scraped list has 3 items
+        Scenario: Scrape single city one entry
+          When I scrape municipal laws for "NYC"
+          Then the data contains one city entry
         """
         pass
 
-    def test_scrape_municipal_laws_with_city_name_instead_of_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_single_city_code_correct(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws with city name instead of code
-          Given a list of cities containing "Seattle"
-          When I scrape municipal laws
-          Then the scrape returns status "success"
-          And the data contains the city "Seattle"
+        Scenario: Scrape single city code correct
+          When I scrape municipal laws for "NYC"
+          Then the city code is "NYC"
         """
         pass
 
-    def test_scrape_municipal_laws_for_all_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_single_city_name_correct(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws for all cities
-          Given a list of cities containing "all"
-          When I scrape municipal laws
-          Then the scrape returns status "success"
-          And the data contains all 23 major cities
+        Scenario: Scrape single city name correct
+          When I scrape municipal laws for "NYC"
+          Then the city name is "New York City"
         """
         pass
 
-    def test_scrape_municipal_laws_with_no_valid_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_single_city_state_correct(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws with no valid cities
-          Given a list of cities containing "InvalidCity123"
-          When I scrape municipal laws
+        Scenario: Scrape single city state correct
+          When I scrape municipal laws for "NYC"
+          Then the state is "NY"
+        """
+        pass
+
+    def test_scrape_single_city_metadata_cities_count(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape single city metadata cities count
+          When I scrape municipal laws for "NYC" with include_metadata=true
+          Then the metadata includes cities_count of 1
+        """
+        pass
+
+    def test_scrape_single_city_metadata_ordinances_count(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape single city metadata ordinances count
+          When I scrape municipal laws for "NYC" with include_metadata=true
+          Then the metadata includes ordinances_count greater than 0
+        """
+        pass
+
+    def test_scrape_multiple_cities_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape multiple cities returns success
+          When I scrape municipal laws for "NYC", "LAX", "CHI"
+          Then the scrape returns status "success"
+        """
+        pass
+
+    def test_scrape_multiple_cities_three_entries(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape multiple cities three entries
+          When I scrape municipal laws for "NYC", "LAX", "CHI"
+          Then the data contains 3 city entries
+        """
+        pass
+
+    def test_scrape_multiple_cities_metadata_count(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape multiple cities metadata count
+          When I scrape municipal laws for "NYC", "LAX", "CHI" with include_metadata=true
+          Then the metadata cities_scraped list has 3 items
+        """
+        pass
+
+    def test_scrape_by_name_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape by name returns success
+          When I scrape municipal laws for "Seattle"
+          Then the scrape returns status "success"
+        """
+        pass
+
+    def test_scrape_by_name_contains_city(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape by name contains city
+          When I scrape municipal laws for "Seattle"
+          Then the data contains the city "Seattle"
+        """
+        pass
+
+    def test_scrape_all_cities_returns_success(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape all cities returns success
+          When I scrape municipal laws for "all"
+          Then the scrape returns status "success"
+        """
+        pass
+
+    def test_scrape_all_cities_contains_23(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape all cities contains 23
+          When I scrape municipal laws for "all"
+          Then the data contains all 23 major cities
+        """
+        pass
+
+    def test_scrape_invalid_city_returns_error(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape invalid city returns error
+          When I scrape municipal laws for "InvalidCity123"
           Then the scrape returns status "error"
-          And the error message contains "No valid cities specified"
         """
         pass
 
-    def test_scrape_municipal_laws_respects_rate_limiting(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_invalid_city_error_message(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws respects rate limiting
-          Given a list of cities containing "NYC", "LAX"
-          And rate_limit_delay is 2.0 seconds
-          When I scrape municipal laws
+        Scenario: Scrape invalid city error message
+          When I scrape municipal laws for "InvalidCity123"
+          Then the error message contains "No valid cities specified"
+        """
+        pass
+
+    def test_scrape_respects_rate_limiting(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape respects rate limiting
+          When I scrape municipal laws for "NYC", "LAX" with rate_limit_delay=2.0
           Then the elapsed time is at least 2.0 seconds
         """
         pass
 
-    def test_scrape_municipal_laws_respects_max_ordinances_limit(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_respects_max_ordinances(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws respects max_ordinances limit
-          Given a list of cities containing "all"
-          And max_ordinances is 5
-          When I scrape municipal laws
+        Scenario: Scrape respects max ordinances
+          When I scrape municipal laws for "all" with max_ordinances=5
           Then the total ordinances count is at most 5
         """
         pass
 
-    def test_scrape_municipal_laws_includes_metadata_when_requested(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_includes_enacted_date(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws includes metadata when requested
-          Given a list of cities containing "NYC"
-          And include_metadata is true
-          When I scrape municipal laws
+        Scenario: Scrape includes enacted_date
+          When I scrape municipal laws for "NYC" with include_metadata=true
           Then each ordinance contains enacted_date
-          And each ordinance contains effective_date
-          And each ordinance contains last_amended
-          And each ordinance contains sponsor
         """
         pass
 
-    def test_scrape_municipal_laws_excludes_metadata_when_not_requested(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_scrape_includes_effective_date(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape municipal laws excludes metadata when not requested
-          Given a list of cities containing "NYC"
-          And include_metadata is false
-          When I scrape municipal laws
+        Scenario: Scrape includes effective_date
+          When I scrape municipal laws for "NYC" with include_metadata=true
+          Then each ordinance contains effective_date
+        """
+        pass
+
+    def test_scrape_includes_last_amended(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape includes last_amended
+          When I scrape municipal laws for "NYC" with include_metadata=true
+          Then each ordinance contains last_amended
+        """
+        pass
+
+    def test_scrape_includes_sponsor(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape includes sponsor
+          When I scrape municipal laws for "NYC" with include_metadata=true
+          Then each ordinance contains sponsor
+        """
+        pass
+
+    def test_scrape_excludes_enacted_date(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape excludes enacted_date
+          When I scrape municipal laws for "NYC" with include_metadata=false
           Then ordinance enacted_date is null
-          And ordinance effective_date is null
-          And ordinance last_amended is null
-          And ordinance sponsor is null
+        """
+        pass
+
+    def test_scrape_excludes_effective_date(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape excludes effective_date
+          When I scrape municipal laws for "NYC" with include_metadata=false
+          Then ordinance effective_date is null
+        """
+        pass
+
+    def test_scrape_excludes_last_amended(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape excludes last_amended
+          When I scrape municipal laws for "NYC" with include_metadata=false
+          Then ordinance last_amended is null
+        """
+        pass
+
+    def test_scrape_excludes_sponsor(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Scrape excludes sponsor
+          When I scrape municipal laws for "NYC" with include_metadata=false
+          Then ordinance sponsor is null
         """
         pass
 
@@ -251,32 +409,107 @@ class TestScrapeMunicipalLaws:
 class TestDataStructureValidation:
     """Data Structure Validation"""
 
-    def test_scraped_ordinance_data_has_required_fields(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_city_entry_contains_city_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scraped ordinance data has required fields
-          Given a list of cities containing "NYC"
-          When I scrape municipal laws
+        Scenario: City entry contains city_code
+          When I scrape municipal laws for "NYC"
           Then each city entry contains city_code
-          And each city entry contains city_name
-          And each city entry contains state
-          And each city entry contains title
-          And each city entry contains source
-          And each city entry contains source_url
-          And each city entry contains scraped_at
-          And each city entry contains ordinances list
         """
         pass
 
-    def test_scraped_ordinance_entry_has_required_fields(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_city_entry_contains_city_name(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scraped ordinance entry has required fields
-          Given a list of cities containing "NYC"
-          When I scrape municipal laws
+        Scenario: City entry contains city_name
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains city_name
+        """
+        pass
+
+    def test_city_entry_contains_state(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains state
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains state
+        """
+        pass
+
+    def test_city_entry_contains_title(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains title
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains title
+        """
+        pass
+
+    def test_city_entry_contains_source(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains source
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains source
+        """
+        pass
+
+    def test_city_entry_contains_source_url(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains source_url
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains source_url
+        """
+        pass
+
+    def test_city_entry_contains_scraped_at(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains scraped_at
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains scraped_at
+        """
+        pass
+
+    def test_city_entry_contains_ordinances_list(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: City entry contains ordinances list
+          When I scrape municipal laws for "NYC"
+          Then each city entry contains ordinances list
+        """
+        pass
+
+    def test_ordinance_contains_ordinance_number(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Ordinance contains ordinance_number
+          When I scrape municipal laws for "NYC"
           Then each ordinance contains ordinance_number
-          And each ordinance contains chapter
-          And each ordinance contains title
-          And each ordinance contains text
-          And each ordinance contains type
+        """
+        pass
+
+    def test_ordinance_contains_chapter(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Ordinance contains chapter
+          When I scrape municipal laws for "NYC"
+          Then each ordinance contains chapter
+        """
+        pass
+
+    def test_ordinance_contains_title(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Ordinance contains title
+          When I scrape municipal laws for "NYC"
+          Then each ordinance contains title
+        """
+        pass
+
+    def test_ordinance_contains_text(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Ordinance contains text
+          When I scrape municipal laws for "NYC"
+          Then each ordinance contains text
+        """
+        pass
+
+    def test_ordinance_contains_type(self, municipal_laws_scraper_module_loaded, major_cities_list):
+        """
+        Scenario: Ordinance contains type
+          When I scrape municipal laws for "NYC"
+          Then each ordinance contains type
         """
         pass
 
@@ -286,20 +519,18 @@ class TestDataStructureValidation:
 class TestOutputFormat:
     """Output Format"""
 
-    def test_scrape_returns_json_format_indicator(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_output_format_json(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape returns JSON format indicator
-          Given output format is "json"
-          When I scrape municipal laws for "NYC"
+        Scenario: Output format JSON
+          When I scrape municipal laws for "NYC" with output_format="json"
           Then the output_format field is "json"
         """
         pass
 
-    def test_scrape_returns_parquet_format_indicator(self, municipal_laws_scraper_module_loaded, major_cities_list):
+    def test_output_format_parquet(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
-        Scenario: Scrape returns Parquet format indicator
-          Given output format is "parquet"
-          When I scrape municipal laws for "NYC"
+        Scenario: Output format Parquet
+          When I scrape municipal laws for "NYC" with output_format="parquet"
           Then the output_format field is "parquet"
         """
         pass

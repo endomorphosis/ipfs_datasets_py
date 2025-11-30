@@ -4,9 +4,7 @@ Test stubs for Federal Register Scraper Verification.
 Feature: Federal Register Scraper Verification
   Verifies Federal Register scraper by running 8 tests that check API connectivity,
   document searching, agency filtering, document type filtering, data structure,
-  keyword search, full text inclusion, and rate limiting. The verifier exits with
-  code 0 when failed count equals 0, and exits with code 1 when failed count is
-  greater than 0.
+  keyword search, full text inclusion, and rate limiting.
 """
 import pytest
 import sys
@@ -21,11 +19,8 @@ from conftest import FixtureError
 def federal_register_verifier_initialized() -> Dict[str, Any]:
     """
     Given the FederalRegisterVerifier is initialized with empty results dictionary
-    
-    Returns an initialized verifier state with empty results.
     """
     try:
-        # Try to import the actual verifier module
         try:
             from tests.scraper_tests import verify_federal_register_scraper
             verifier_module = verify_federal_register_scraper
@@ -38,7 +33,6 @@ def federal_register_verifier_initialized() -> Dict[str, Any]:
             "initialized": True
         }
         
-        # Verify the state is properly initialized
         if verifier_state["results"] is None:
             raise FixtureError(
                 "federal_register_verifier_initialized raised an error: results dictionary is None"
@@ -51,52 +45,56 @@ def federal_register_verifier_initialized() -> Dict[str, Any]:
         raise FixtureError(f"federal_register_verifier_initialized raised an error: {e}") from e
 
 
-# Note: summary_counters_zeroed is imported from conftest.py
-
-
 # Test 1: Search Recent Documents
 
 class TestSearchRecentDocuments:
     """Test 1: Search Recent Documents - Searches for documents from last 7 days"""
 
-    def test_search_recent_documents_passes_when_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_search_recent_documents_returns_documents(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Search Recent Documents test passes when documents are returned
+        Scenario: Search Recent Documents returns documents
           When search_federal_register(start_date=7_days_ago, end_date=today, limit=10) is called
-          And the result["status"] equals "success"
-          And len(result["documents"]) is greater than 0
+          Then len(result["documents"]) is greater than 0
+        """
+        pass
+
+    def test_search_recent_documents_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Search Recent Documents logs PASS
+          When search_federal_register() returns success with documents
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_search_recent_documents_warns_when_no_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_search_recent_documents_increments_passed_counter(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Search Recent Documents test warns when no documents are returned
-          When search_federal_register(start_date=7_days_ago, end_date=today, limit=10) is called
-          And the result["status"] equals "success"
-          And len(result["documents"]) equals 0
+        Scenario: Search Recent Documents increments passed counter
+          When search_federal_register() returns success with documents
+          Then summary["passed"] increments by 1
+        """
+        pass
+
+    def test_search_recent_documents_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Search Recent Documents logs WARN when empty
+          When search_federal_register() returns success with no documents
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_search_recent_documents_fails_when_api_returns_error_status(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_search_recent_documents_logs_fail_on_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Search Recent Documents test fails when API returns error status
-          When search_federal_register(start_date=7_days_ago, end_date=today, limit=10) is called
-          And the result["status"] does not equal "success"
+        Scenario: Search Recent Documents logs FAIL on error
+          When search_federal_register() returns error status
           Then log_test is called with status "FAIL"
-          And summary["failed"] increments by 1
         """
         pass
 
-    def test_search_recent_documents_fails_when_exception_raised(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_search_recent_documents_logs_fail_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Search Recent Documents test fails when exception is raised
+        Scenario: Search Recent Documents logs FAIL on exception
           When search_federal_register() raises an exception
           Then log_test is called with status "FAIL" and exception message
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -106,44 +104,43 @@ class TestSearchRecentDocuments:
 class TestScrapeByAgency:
     """Test 2: Scrape by Agency - Scrapes EPA documents from last 30 days"""
 
-    def test_scrape_by_agency_passes_when_epa_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_by_agency_returns_epa_documents(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape by Agency test passes when EPA documents are returned
+        Scenario: Scrape by Agency returns EPA documents
           When scrape_federal_register(agencies=["EPA"], start_date=30_days_ago, max_documents=10) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) is greater than 0
+          Then len(result["data"]) is greater than 0
+        """
+        pass
+
+    def test_scrape_by_agency_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Scrape by Agency logs PASS
+          When scrape_federal_register(agencies=["EPA"]) returns documents
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_scrape_by_agency_warns_when_no_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_by_agency_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape by Agency test warns when no documents are returned
-          When scrape_federal_register(agencies=["EPA"], start_date=30_days_ago, max_documents=10) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) equals 0
+        Scenario: Scrape by Agency logs WARN when empty
+          When scrape_federal_register(agencies=["EPA"]) returns no documents
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_scrape_by_agency_fails_when_status_is_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_by_agency_logs_fail_on_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape by Agency test fails when status is error
-          When scrape_federal_register(agencies=["EPA"], start_date=30_days_ago, max_documents=10) is called
-          And the result["status"] is not in ["success", "partial_success"]
+        Scenario: Scrape by Agency logs FAIL on error
+          When scrape_federal_register(agencies=["EPA"]) returns error status
           Then log_test is called with status "FAIL"
-          And summary["failed"] increments by 1
         """
         pass
 
-    def test_scrape_by_agency_fails_when_exception_raised(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_by_agency_logs_fail_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape by Agency test fails when exception is raised
+        Scenario: Scrape by Agency logs FAIL on exception
           When scrape_federal_register() raises an exception
           Then log_test is called with status "FAIL" and exception message
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -153,35 +150,35 @@ class TestScrapeByAgency:
 class TestScrapeMultipleAgencies:
     """Test 3: Scrape Multiple Agencies - Scrapes EPA and FDA documents"""
 
-    def test_scrape_multiple_agencies_passes_when_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_multiple_agencies_returns_documents(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape Multiple Agencies test passes when documents are returned
+        Scenario: Scrape Multiple Agencies returns documents
           When scrape_federal_register(agencies=["EPA","FDA"], start_date=30_days_ago, max_documents=10) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) is greater than 0
+          Then len(result["data"]) is greater than 0
+        """
+        pass
+
+    def test_scrape_multiple_agencies_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Scrape Multiple Agencies logs PASS
+          When scrape_federal_register(agencies=["EPA","FDA"]) returns documents
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_scrape_multiple_agencies_warns_when_no_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_multiple_agencies_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape Multiple Agencies test warns when no documents are returned
-          When scrape_federal_register(agencies=["EPA","FDA"], start_date=30_days_ago, max_documents=10) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) equals 0
+        Scenario: Scrape Multiple Agencies logs WARN when empty
+          When scrape_federal_register(agencies=["EPA","FDA"]) returns no documents
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_scrape_multiple_agencies_fails_when_status_is_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_scrape_multiple_agencies_logs_fail_on_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Scrape Multiple Agencies test fails when status is error
-          When scrape_federal_register(agencies=["EPA","FDA"]) is called
-          And the result["status"] is not in ["success", "partial_success"]
+        Scenario: Scrape Multiple Agencies logs FAIL on error
+          When scrape_federal_register(agencies=["EPA","FDA"]) returns error status
           Then log_test is called with status "FAIL"
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -191,35 +188,35 @@ class TestScrapeMultipleAgencies:
 class TestFilterByDocumentTypes:
     """Test 4: Filter by Document Types - Filters for RULE type documents"""
 
-    def test_document_types_passes_when_rule_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_document_types_returns_rule_documents(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Document Types test passes when RULE documents are returned
+        Scenario: Document Types returns RULE documents
           When scrape_federal_register(document_types=["RULE"], start_date=60_days_ago, max_documents=5) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) is greater than 0
+          Then len(result["data"]) is greater than 0
+        """
+        pass
+
+    def test_document_types_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Document Types logs PASS
+          When scrape_federal_register(document_types=["RULE"]) returns documents
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_document_types_warns_when_no_rule_documents_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_document_types_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Document Types test warns when no RULE documents are returned
-          When scrape_federal_register(document_types=["RULE"], start_date=60_days_ago, max_documents=5) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) equals 0
+        Scenario: Document Types logs WARN when empty
+          When scrape_federal_register(document_types=["RULE"]) returns no documents
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_document_types_fails_when_status_is_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_document_types_logs_fail_on_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Document Types test fails when status is error
-          When scrape_federal_register(document_types=["RULE"]) is called
-          And the result["status"] is not in ["success", "partial_success"]
+        Scenario: Document Types logs FAIL on error
+          When scrape_federal_register(document_types=["RULE"]) returns error status
           Then log_test is called with status "FAIL"
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -229,48 +226,59 @@ class TestFilterByDocumentTypes:
 class TestValidateDataStructure:
     """Test 5: Validate Data Structure - Checks for required fields in scraped data"""
 
-    def test_data_structure_passes_when_all_required_fields_exist(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_data_structure_contains_document_number(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Data Structure test passes when all required fields exist
-          When scrape_federal_register(start_date=14_days_ago, max_documents=3) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And result["data"][0] contains "document_number"
-          And result["data"][0] contains "title"
-          And result["data"][0] contains "publication_date"
+        Scenario: Data Structure contains document_number
+          When scrape_federal_register(start_date=14_days_ago, max_documents=3) returns success
+          Then result["data"][0] contains "document_number"
+        """
+        pass
+
+    def test_data_structure_contains_title(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Data Structure contains title
+          When scrape_federal_register(start_date=14_days_ago, max_documents=3) returns success
+          Then result["data"][0] contains "title"
+        """
+        pass
+
+    def test_data_structure_contains_publication_date(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Data Structure contains publication_date
+          When scrape_federal_register(start_date=14_days_ago, max_documents=3) returns success
+          Then result["data"][0] contains "publication_date"
+        """
+        pass
+
+    def test_data_structure_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Data Structure logs PASS
+          When scrape_federal_register() returns all required fields
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_data_structure_warns_when_required_fields_missing(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_data_structure_logs_warn_when_fields_missing(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Data Structure test warns when required fields are missing
-          When scrape_federal_register(start_date=14_days_ago, max_documents=3) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And result["data"][0] is missing one or more of ["document_number", "title", "publication_date"]
+        Scenario: Data Structure logs WARN when fields missing
+          When scrape_federal_register() returns data missing required fields
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_data_structure_warns_when_data_array_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_data_structure_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Data Structure test warns when data array is empty
-          When scrape_federal_register(start_date=14_days_ago, max_documents=3) is called
-          And the result["status"] is in ["success", "partial_success"]
-          And len(result["data"]) equals 0
+        Scenario: Data Structure logs WARN when empty
+          When scrape_federal_register() returns empty data array
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_data_structure_fails_when_scrape_returns_error_status(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_data_structure_logs_fail_on_error(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Data Structure test fails when scrape returns error status
-          When scrape_federal_register(start_date=14_days_ago, max_documents=3) is called
-          And the result["status"] is not in ["success", "partial_success"]
+        Scenario: Data Structure logs FAIL on error
+          When scrape_federal_register() returns error status
           Then log_test is called with status "FAIL"
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -280,44 +288,43 @@ class TestValidateDataStructure:
 class TestSearchWithKeywords:
     """Test 6: Search with Keywords - Searches for 'environmental' keyword"""
 
-    def test_keyword_search_passes_when_results_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_keyword_search_returns_results(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Keyword Search test passes when results are returned
+        Scenario: Keyword Search returns results
           When search_federal_register(keywords="environmental", start_date=30_days_ago, limit=5) is called
-          And the result["status"] equals "success"
-          And len(result["documents"]) is greater than 0
+          Then len(result["documents"]) is greater than 0
+        """
+        pass
+
+    def test_keyword_search_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Keyword Search logs PASS
+          When search_federal_register(keywords="environmental") returns results
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_keyword_search_warns_when_no_results_returned(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_keyword_search_logs_warn_when_empty(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Keyword Search test warns when no results are returned
-          When search_federal_register(keywords="environmental", start_date=30_days_ago, limit=5) is called
-          And the result["status"] equals "success"
-          And len(result["documents"]) equals 0
+        Scenario: Keyword Search logs WARN when empty
+          When search_federal_register(keywords="environmental") returns no results
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_keyword_search_warns_when_status_is_not_success(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_keyword_search_logs_warn_when_not_success(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Keyword Search test warns when status is not success
-          When search_federal_register(keywords="environmental", start_date=30_days_ago, limit=5) is called
-          And the result["status"] does not equal "success"
+        Scenario: Keyword Search logs WARN when not success
+          When search_federal_register(keywords="environmental") returns non-success status
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_keyword_search_fails_when_exception_raised(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_keyword_search_logs_fail_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Keyword Search test fails when exception is raised
+        Scenario: Keyword Search logs FAIL on exception
           When search_federal_register() raises an exception
           Then log_test is called with status "FAIL" and exception message
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -327,52 +334,51 @@ class TestSearchWithKeywords:
 class TestFullTextInclusion:
     """Test 7: Full Text Inclusion - Verifies full_text or body field inclusion"""
 
-    def test_full_text_passes_when_full_text_or_body_field_exists(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_full_text_field_exists(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Full Text test passes when full_text or body field exists
+        Scenario: Full Text field exists
           When scrape_federal_register(include_full_text=True, max_documents=2) is called
-          And any document in result["data"] contains "full_text" or "body"
-          Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
+          Then any document in result["data"] contains "full_text" or "body"
         """
         pass
 
-    def test_full_text_passes_when_exclusion_removes_full_text_field(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_full_text_logs_pass_when_included(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Full Text test passes when exclusion removes full_text field
+        Scenario: Full Text logs PASS when included
           When scrape_federal_register(include_full_text=True) returns data with full_text
-          And scrape_federal_register(include_full_text=False) returns data without full_text
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_full_text_warns_when_neither_call_has_full_text_field(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_full_text_logs_pass_when_excluded(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Full Text test warns when neither call has full_text field
-          When scrape_federal_register(include_full_text=True) returns data
-          And no document contains "full_text" or "body"
+        Scenario: Full Text logs PASS when excluded
+          When scrape_federal_register(include_full_text=False) returns data without full_text
+          Then log_test is called with status "PASS"
+        """
+        pass
+
+    def test_full_text_logs_warn_when_missing(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Full Text logs WARN when missing
+          When scrape_federal_register(include_full_text=True) returns no full_text field
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_full_text_warns_when_insufficient_data_to_test(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_full_text_logs_warn_when_insufficient_data(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Full Text test warns when insufficient data to test
+        Scenario: Full Text logs WARN when insufficient data
           When scrape_federal_register(include_full_text=True) returns empty data
-          Or scrape_federal_register(include_full_text=False) returns empty data
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_full_text_fails_when_exception_raised(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_full_text_logs_fail_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Full Text test fails when exception is raised
+        Scenario: Full Text logs FAIL on exception
           When scrape_federal_register() raises an exception
           Then log_test is called with status "FAIL" and exception message
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -382,32 +388,35 @@ class TestFullTextInclusion:
 class TestRateLimiting:
     """Test 8: Rate Limiting - Verifies delay between requests is honored"""
 
-    def test_rate_limiting_passes_when_elapsed_time_meets_threshold(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_rate_limiting_elapsed_time_meets_threshold(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Rate Limiting test passes when elapsed time meets threshold
+        Scenario: Rate Limiting elapsed time meets threshold
           When scrape_federal_register(rate_limit_delay=2.0, max_documents=3) is called
-          And the elapsed time is greater than or equal to 2.0 seconds
+          Then the elapsed time is greater than or equal to 2.0 seconds
+        """
+        pass
+
+    def test_rate_limiting_logs_pass(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Rate Limiting logs PASS
+          When scrape_federal_register() respects rate_limit_delay=2.0
           Then log_test is called with status "PASS"
-          And summary["passed"] increments by 1
         """
         pass
 
-    def test_rate_limiting_warns_when_elapsed_time_below_threshold(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_rate_limiting_logs_warn_when_too_fast(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Rate Limiting test warns when elapsed time is below threshold
-          When scrape_federal_register(rate_limit_delay=2.0, max_documents=3) is called
-          And the elapsed time is less than 2.0 seconds
+        Scenario: Rate Limiting logs WARN when too fast
+          When scrape_federal_register(rate_limit_delay=2.0) completes too quickly
           Then log_test is called with status "WARN"
-          And summary["warnings"] increments by 1
         """
         pass
 
-    def test_rate_limiting_fails_when_exception_raised(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_rate_limiting_logs_fail_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Rate Limiting test fails when exception is raised
+        Scenario: Rate Limiting logs FAIL on exception
           When scrape_federal_register() raises an exception
           Then log_test is called with status "FAIL" and exception message
-          And summary["failed"] increments by 1
         """
         pass
 
@@ -417,39 +426,58 @@ class TestRateLimiting:
 class TestExitCodeDetermination:
     """Exit Code Determination - Verifies correct exit codes based on test results"""
 
-    def test_verifier_exits_with_code_0_when_failed_count_equals_0(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_verifier_returns_0_when_no_failures(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Verifier exits with code 0 when failed count equals 0
-          When all 8 tests complete
-          And summary["failed"] equals 0
+        Scenario: Verifier returns 0 when no failures
+          When all 8 tests complete with summary["failed"] equals 0
           Then run_all_tests() returns 0
-          And sys.exit(0) is called
         """
         pass
 
-    def test_verifier_exits_with_code_1_when_failed_count_greater_than_0(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_verifier_calls_sys_exit_0(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Verifier exits with code 1 when failed count is greater than 0
-          When all 8 tests complete
-          And summary["failed"] is greater than 0
+        Scenario: Verifier calls sys.exit(0)
+          When all 8 tests complete with summary["failed"] equals 0
+          Then sys.exit(0) is called
+        """
+        pass
+
+    def test_verifier_returns_1_when_failures(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Verifier returns 1 when failures
+          When all 8 tests complete with summary["failed"] greater than 0
           Then run_all_tests() returns 1
-          And sys.exit(1) is called
         """
         pass
 
-    def test_verifier_exits_with_code_1_when_keyboard_interrupt_caught(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_verifier_calls_sys_exit_1(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Verifier exits with code 1 when KeyboardInterrupt is caught
+        Scenario: Verifier calls sys.exit(1)
+          When all 8 tests complete with summary["failed"] greater than 0
+          Then sys.exit(1) is called
+        """
+        pass
+
+    def test_verifier_exits_1_on_keyboard_interrupt(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Verifier exits 1 on KeyboardInterrupt
           When asyncio.run(main()) raises KeyboardInterrupt
           Then sys.exit(1) is called
         """
         pass
 
-    def test_verifier_exits_with_code_1_when_unhandled_exception_caught(self, federal_register_verifier_initialized, summary_counters_zeroed):
+    def test_verifier_prints_traceback_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
         """
-        Scenario: Verifier exits with code 1 when unhandled exception is caught
+        Scenario: Verifier prints traceback on exception
           When asyncio.run(main()) raises Exception
           Then traceback is printed
-          And sys.exit(1) is called
+        """
+        pass
+
+    def test_verifier_exits_1_on_exception(self, federal_register_verifier_initialized, summary_counters_zeroed):
+        """
+        Scenario: Verifier exits 1 on exception
+          When asyncio.run(main()) raises Exception
+          Then sys.exit(1) is called
         """
         pass
