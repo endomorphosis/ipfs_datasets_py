@@ -163,7 +163,7 @@ Feature: US Code Scraper Verification
 
   Scenario: Verification results are saved to file
     When I run all verification tests
-    Then the results are saved to ~/.ipfs_datasets/us_code/verification_results.json
+    Then the results are saved to $HOME/.ipfs_datasets/us_code/verification_results.json
     And the file contains timestamp
     And the file contains tests array
     And the file contains summary object

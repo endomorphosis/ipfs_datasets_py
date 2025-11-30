@@ -201,7 +201,7 @@ Feature: Federal Register Scraper Verification
 
   Scenario: Verification results are saved to file
     When I run all verification tests
-    Then the results are saved to ~/.ipfs_datasets/federal_register/verification_results.json
+    Then the results are saved to $HOME/.ipfs_datasets/federal_register/verification_results.json
     And the file contains timestamp
     And the file contains tests array
     And the file contains summary object

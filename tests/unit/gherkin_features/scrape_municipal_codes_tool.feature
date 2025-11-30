@@ -123,12 +123,12 @@ Feature: Scrape Municipal Codes MCP Tool
       | include_metadata | true                                     |
       | include_text     | true                                     |
       | rate_limit_delay | 3.0                                      |
-      | max_sections     | 1000                                     |
-      | scraper_type     | selenium                                 |
-      | enable_fallbacks | true                                     |
-      | fallback_methods | wayback_machine, common_crawl, playwright|
-      | job_id           | full_test_job                            |
-      | resume           | false                                    |
+      | max_sections     | 1000                                      |
+      | scraper_type     | selenium                                  |
+      | enable_fallbacks | true                                      |
+      | fallback_methods | wayback_machine, common_crawl, playwright |
+      | job_id           | full_test_job                             |
+      | resume           | false                                     |
     When I execute the tool
     Then the result status is "success"
     And the job_id is "full_test_job"

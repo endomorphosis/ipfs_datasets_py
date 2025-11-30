@@ -78,10 +78,10 @@ Feature: Municipal Codes Scraper Dashboard Integration Tests
     When I configure:
       | parameter        | value    |
       | Rate limit       | 3.0      |
-      | Max sections     | 1000     |
-      | Scraper type     | selenium |
-      | Include metadata | checked  |
-      | Include text     | unchecked|
+      | Max sections     | 1000      |
+      | Scraper type     | selenium  |
+      | Include metadata | checked   |
+      | Include text     | unchecked |
     And I click "Start Scraping"
     Then the tool is called with these parameters
     And the response reflects the configuration
