@@ -7,16 +7,14 @@ Feature: Municipal Codes Scraper Dashboard Integration Tests
   invocation, results display, and error handling.
 """
 import pytest
+import sys
+from typing import Dict, Any
+import requests
+
+from conftest import FixtureError
 
 
-# Fixtures from Background
-
-@pytest.fixture
-def dashboard_url_configured():
-    """
-    Given the dashboard URL is http://localhost:8899/mcp
-    """
-    pass
+# Note: dashboard_url_configured is imported from conftest.py
 
 
 # Tab Navigation

@@ -9,24 +9,49 @@ Feature: Federal Register Scraper Verification
   greater than 0.
 """
 import pytest
+import sys
+from typing import Dict, Any, Optional
+
+from conftest import FixtureError
 
 
 # Fixtures from Background
 
 @pytest.fixture
-def federal_register_verifier_initialized():
+def federal_register_verifier_initialized() -> Dict[str, Any]:
     """
     Given the FederalRegisterVerifier is initialized with empty results dictionary
+    
+    Returns an initialized verifier state with empty results.
     """
-    pass
+    try:
+        # Try to import the actual verifier module
+        try:
+            from tests.scraper_tests import verify_federal_register_scraper
+            verifier_module = verify_federal_register_scraper
+        except ImportError:
+            verifier_module = None
+        
+        verifier_state = {
+            "results": {},
+            "module": verifier_module,
+            "initialized": True
+        }
+        
+        # Verify the state is properly initialized
+        if verifier_state["results"] is None:
+            raise FixtureError(
+                "federal_register_verifier_initialized raised an error: results dictionary is None"
+            )
+        
+        return verifier_state
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f"federal_register_verifier_initialized raised an error: {e}") from e
 
 
-@pytest.fixture
-def summary_counters_zeroed():
-    """
-    Given the summary counters are set to total=0, passed=0, failed=0, warnings=0
-    """
-    pass
+# Note: summary_counters_zeroed is imported from conftest.py
 
 
 # Test 1: Search Recent Documents

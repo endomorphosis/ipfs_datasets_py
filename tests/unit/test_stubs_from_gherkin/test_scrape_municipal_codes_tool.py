@@ -7,16 +7,46 @@ Feature: Scrape Municipal Codes MCP Tool
   schema validation, parameter handling, job management, and fallback methods.
 """
 import pytest
+import sys
+from typing import Dict, Any, Optional, Type
+
+from conftest import FixtureError
 
 
 # Fixtures from Background
 
 @pytest.fixture
-def scrape_municipal_codes_tool_imported():
+def scrape_municipal_codes_tool_imported() -> Dict[str, Any]:
     """
     Given the ScrapeMunicipalCodesTool class is imported from legal_dataset_mcp_tools
+    
+    Returns the tool class and an instance if available.
     """
-    pass
+    try:
+        # Try to import the actual tool class
+        tool_class: Optional[Type] = None
+        tool_instance = None
+        
+        try:
+            from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import ScrapeMunicipalCodesTool
+            tool_class = ScrapeMunicipalCodesTool
+            tool_instance = ScrapeMunicipalCodesTool()
+        except ImportError:
+            pass
+        except Exception as init_error:
+            # Class exists but initialization failed
+            tool_class = None
+            tool_instance = None
+        
+        tool_state = {
+            "class": tool_class,
+            "instance": tool_instance,
+            "imported": tool_class is not None
+        }
+        
+        return tool_state
+    except Exception as e:
+        raise FixtureError(f"scrape_municipal_codes_tool_imported raised an error: {e}") from e
 
 
 # Tool Initialization

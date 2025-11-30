@@ -7,24 +7,70 @@ Feature: Municipal Scraper Fallback Methods
   until data retrieval succeeds.
 """
 import pytest
+import sys
+from typing import Dict, Any, List, Optional
+
+from conftest import FixtureError
 
 
 # Fixtures from Background
 
 @pytest.fixture
-def municipal_scraper_fallbacks_initialized():
+def municipal_scraper_fallbacks_initialized() -> Dict[str, Any]:
     """
     Given the MunicipalScraperFallbacks class is initialized
+    
+    Returns an initialized fallback scraper state.
     """
-    pass
+    try:
+        # Try to import the actual fallback class
+        try:
+            from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import municipal_scraper_fallbacks
+            fallbacks_class = municipal_scraper_fallbacks.MunicipalScraperFallbacks
+            fallbacks_instance = fallbacks_class()
+        except (ImportError, AttributeError):
+            fallbacks_class = None
+            fallbacks_instance = None
+        
+        fallback_state = {
+            "class": fallbacks_class,
+            "instance": fallbacks_instance,
+            "initialized": fallbacks_instance is not None
+        }
+        
+        return fallback_state
+    except Exception as e:
+        raise FixtureError(f"municipal_scraper_fallbacks_initialized raised an error: {e}") from e
 
 
 @pytest.fixture
-def six_fallback_methods_supported():
+def six_fallback_methods_supported() -> List[str]:
     """
     Given 6 fallback methods are supported
+    
+    Returns the list of 6 supported fallback methods.
     """
-    pass
+    try:
+        supported_methods = [
+            "common_crawl",
+            "wayback_machine",
+            "archive_is",
+            "autoscraper",
+            "ipwb",
+            "playwright"
+        ]
+        
+        # Verify we have exactly 6 methods
+        if len(supported_methods) != 6:
+            raise FixtureError(
+                f"six_fallback_methods_supported raised an error: Expected 6 methods, got {len(supported_methods)}"
+            )
+        
+        return supported_methods
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f"six_fallback_methods_supported raised an error: {e}") from e
 
 
 # Supported Methods

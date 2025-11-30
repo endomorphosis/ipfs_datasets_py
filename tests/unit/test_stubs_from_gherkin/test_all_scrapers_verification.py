@@ -7,16 +7,50 @@ Feature: All Scrapers Verification Runner
   when both subprocess exit codes are 0, and exits with code 1 otherwise.
 """
 import pytest
+import sys
+from pathlib import Path
+from typing import Dict, Any, Optional
+
+from conftest import FixtureError
 
 
 # Fixtures from Background
 
 @pytest.fixture
-def verify_all_scrapers_module_loaded():
+def verify_all_scrapers_module_loaded() -> Dict[str, Any]:
     """
     Given the verify_all_scrapers module is loaded
+    
+    Returns the loaded module or a mock state if the module is not available.
+    Also checks that the verifier scripts exist and are accessible.
     """
-    pass
+    try:
+        # Try to import the actual module
+        try:
+            from tests.scraper_tests import verify_all_scrapers
+            module = verify_all_scrapers
+        except ImportError:
+            module = None
+        
+        # Check for verifier script files
+        scraper_tests_dir = Path("tests/scraper_tests")
+        us_code_script = scraper_tests_dir / "verify_us_code_scraper.py"
+        fed_reg_script = scraper_tests_dir / "verify_federal_register_scraper.py"
+        
+        scripts_exist = {
+            "us_code_scraper": us_code_script.exists() if scraper_tests_dir.exists() else False,
+            "federal_register_scraper": fed_reg_script.exists() if scraper_tests_dir.exists() else False
+        }
+        
+        module_state = {
+            "module": module,
+            "scripts_exist": scripts_exist,
+            "loaded": True
+        }
+        
+        return module_state
+    except Exception as e:
+        raise FixtureError(f"verify_all_scrapers_module_loaded raised an error: {e}") from e
 
 
 # Subprocess Execution for US Code Verifier

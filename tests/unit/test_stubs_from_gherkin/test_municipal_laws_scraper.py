@@ -6,24 +6,84 @@ Feature: Municipal Laws Scraper
   from major US cities for building municipal code datasets.
 """
 import pytest
+import sys
+from typing import Dict, Any, List, Optional
+
+from conftest import FixtureError
 
 
 # Fixtures from Background
 
 @pytest.fixture
-def municipal_laws_scraper_module_loaded():
+def municipal_laws_scraper_module_loaded() -> Dict[str, Any]:
     """
     Given the municipal laws scraper module is loaded
+    
+    Returns the loaded scraper module or a state dict if not available.
     """
-    pass
+    try:
+        # Try to import the actual scraper module
+        try:
+            from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import municipal_laws_scraper
+            scraper_module = municipal_laws_scraper
+        except ImportError:
+            scraper_module = None
+        
+        module_state = {
+            "module": scraper_module,
+            "loaded": scraper_module is not None
+        }
+        
+        return module_state
+    except Exception as e:
+        raise FixtureError(f"municipal_laws_scraper_module_loaded raised an error: {e}") from e
 
 
 @pytest.fixture
-def major_cities_list():
+def major_cities_list() -> List[Dict[str, str]]:
     """
     Given the list of major cities includes 23 US cities
+    
+    Returns the list of major US cities with their codes and states.
     """
-    pass
+    try:
+        major_cities = [
+            {"code": "NYC", "name": "New York City", "state": "NY"},
+            {"code": "LAX", "name": "Los Angeles", "state": "CA"},
+            {"code": "CHI", "name": "Chicago", "state": "IL"},
+            {"code": "HOU", "name": "Houston", "state": "TX"},
+            {"code": "PHX", "name": "Phoenix", "state": "AZ"},
+            {"code": "PHL", "name": "Philadelphia", "state": "PA"},
+            {"code": "SAT", "name": "San Antonio", "state": "TX"},
+            {"code": "SDC", "name": "San Diego", "state": "CA"},
+            {"code": "DAL", "name": "Dallas", "state": "TX"},
+            {"code": "SJC", "name": "San Jose", "state": "CA"},
+            {"code": "AUS", "name": "Austin", "state": "TX"},
+            {"code": "JAX", "name": "Jacksonville", "state": "FL"},
+            {"code": "FTW", "name": "Fort Worth", "state": "TX"},
+            {"code": "COL", "name": "Columbus", "state": "OH"},
+            {"code": "IND", "name": "Indianapolis", "state": "IN"},
+            {"code": "CLT", "name": "Charlotte", "state": "NC"},
+            {"code": "SFO", "name": "San Francisco", "state": "CA"},
+            {"code": "SEA", "name": "Seattle", "state": "WA"},
+            {"code": "DEN", "name": "Denver", "state": "CO"},
+            {"code": "DCA", "name": "Washington", "state": "DC"},
+            {"code": "BOS", "name": "Boston", "state": "MA"},
+            {"code": "DTW", "name": "Detroit", "state": "MI"},
+            {"code": "PDX", "name": "Portland", "state": "OR"},
+        ]
+        
+        # Verify we have exactly 23 cities
+        if len(major_cities) != 23:
+            raise FixtureError(
+                f"major_cities_list raised an error: Expected 23 cities, got {len(major_cities)}"
+            )
+        
+        return major_cities
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f"major_cities_list raised an error: {e}") from e
 
 
 # Search Municipal Codes
