@@ -12,10 +12,9 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def scrape_municipal_codes_tool():
+def scrape_municipal_codes_tool_imported():
     """
-    Background:
-      Given the ScrapeMunicipalCodesTool class is imported from legal_dataset_mcp_tools
+    Given the ScrapeMunicipalCodesTool class is imported from legal_dataset_mcp_tools
     """
     pass
 
@@ -25,7 +24,7 @@ def scrape_municipal_codes_tool():
 class TestToolInitialization:
     """Tool Initialization"""
 
-    def test_tool_instance_is_created_successfully(self, scrape_municipal_codes_tool):
+    def test_tool_instance_is_created_successfully(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool instance is created successfully
           When I instantiate ScrapeMunicipalCodesTool
@@ -33,7 +32,7 @@ class TestToolInitialization:
         """
         pass
 
-    def test_tool_has_correct_name(self, scrape_municipal_codes_tool):
+    def test_tool_has_correct_name(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool has correct name
           Given a ScrapeMunicipalCodesTool instance
@@ -41,7 +40,7 @@ class TestToolInitialization:
         """
         pass
 
-    def test_tool_has_correct_description(self, scrape_municipal_codes_tool):
+    def test_tool_has_correct_description(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool has correct description
           Given a ScrapeMunicipalCodesTool instance
@@ -50,7 +49,7 @@ class TestToolInitialization:
         """
         pass
 
-    def test_tool_has_correct_category(self, scrape_municipal_codes_tool):
+    def test_tool_has_correct_category(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool has correct category
           Given a ScrapeMunicipalCodesTool instance
@@ -58,7 +57,7 @@ class TestToolInitialization:
         """
         pass
 
-    def test_tool_has_correct_tags(self, scrape_municipal_codes_tool):
+    def test_tool_has_correct_tags(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool has correct tags
           Given a ScrapeMunicipalCodesTool instance
@@ -73,7 +72,7 @@ class TestToolInitialization:
 class TestInputSchemaStructure:
     """Input Schema Structure"""
 
-    def test_input_schema_is_object_type(self, scrape_municipal_codes_tool):
+    def test_input_schema_is_object_type(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Input schema is object type
           Given a ScrapeMunicipalCodesTool instance
@@ -81,7 +80,7 @@ class TestInputSchemaStructure:
         """
         pass
 
-    def test_input_schema_has_all_required_properties(self, scrape_municipal_codes_tool):
+    def test_input_schema_has_all_required_properties(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Input schema has all required properties
           Given a ScrapeMunicipalCodesTool instance
@@ -106,7 +105,7 @@ class TestInputSchemaStructure:
 class TestGetSchemaMethod:
     """Get Schema Method"""
 
-    def test_get_schema_returns_complete_tool_metadata(self, scrape_municipal_codes_tool):
+    def test_get_schema_returns_complete_tool_metadata(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Get schema returns complete tool metadata
           Given a ScrapeMunicipalCodesTool instance
@@ -126,7 +125,7 @@ class TestGetSchemaMethod:
 class TestExecuteWithSingleJurisdiction:
     """Execute with Single Jurisdiction"""
 
-    def test_execute_with_single_jurisdiction_string(self, scrape_municipal_codes_tool):
+    def test_execute_with_single_jurisdiction_string(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with single jurisdiction string
           Given a ScrapeMunicipalCodesTool instance
@@ -148,7 +147,7 @@ class TestExecuteWithSingleJurisdiction:
 class TestExecuteWithMultipleJurisdictions:
     """Execute with Multiple Jurisdictions"""
 
-    def test_execute_with_multiple_jurisdictions_array(self, scrape_municipal_codes_tool):
+    def test_execute_with_multiple_jurisdictions_array(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with multiple jurisdictions array
           Given a ScrapeMunicipalCodesTool instance
@@ -171,7 +170,7 @@ class TestExecuteWithMultipleJurisdictions:
 class TestExecuteWithoutJurisdiction:
     """Execute without Jurisdiction"""
 
-    def test_execute_without_specifying_jurisdictions_returns_error(self, scrape_municipal_codes_tool):
+    def test_execute_without_specifying_jurisdictions_returns_error(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute without specifying jurisdictions returns error
           Given a ScrapeMunicipalCodesTool instance
@@ -188,7 +187,7 @@ class TestExecuteWithoutJurisdiction:
 class TestCustomJobID:
     """Custom Job ID"""
 
-    def test_execute_with_custom_job_id_uses_provided_id(self, scrape_municipal_codes_tool):
+    def test_execute_with_custom_job_id_uses_provided_id(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with custom job_id uses provided ID
           Given a ScrapeMunicipalCodesTool instance
@@ -206,7 +205,7 @@ class TestCustomJobID:
 class TestAllParameters:
     """All Parameters"""
 
-    def test_execute_with_all_possible_parameters(self, scrape_municipal_codes_tool):
+    def test_execute_with_all_possible_parameters(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with all possible parameters
           Given a ScrapeMunicipalCodesTool instance
@@ -241,7 +240,7 @@ class TestAllParameters:
 class TestAutoJobIDGeneration:
     """Auto Job ID Generation"""
 
-    def test_execute_without_job_id_generates_auto_job_id(self, scrape_municipal_codes_tool):
+    def test_execute_without_job_id_generates_auto_job_id(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute without job_id generates auto job_id
           Given a ScrapeMunicipalCodesTool instance
@@ -258,7 +257,7 @@ class TestAutoJobIDGeneration:
 class TestResumeCapability:
     """Resume Capability"""
 
-    def test_execute_with_resume_capability(self, scrape_municipal_codes_tool):
+    def test_execute_with_resume_capability(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with resume capability
           Given a ScrapeMunicipalCodesTool instance
@@ -277,7 +276,7 @@ class TestResumeCapability:
 class TestToolRegistrationInMCP:
     """Tool Registration in MCP"""
 
-    def test_tool_is_included_in_legal_dataset_mcp_tools_list(self, scrape_municipal_codes_tool):
+    def test_tool_is_included_in_legal_dataset_mcp_tools_list(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool is included in LEGAL_DATASET_MCP_TOOLS list
           When I import LEGAL_DATASET_MCP_TOOLS
@@ -285,7 +284,7 @@ class TestToolRegistrationInMCP:
         """
         pass
 
-    def test_tool_is_accessible_via_temporaldeonticmcpserver(self, scrape_municipal_codes_tool):
+    def test_tool_is_accessible_via_temporaldeonticmcpserver(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Tool is accessible via TemporalDeonticMCPServer
           When I instantiate TemporalDeonticMCPServer
@@ -300,7 +299,7 @@ class TestToolRegistrationInMCP:
 class TestFallbackMethodsEnabled:
     """Fallback Methods Enabled"""
 
-    def test_execute_with_fallback_methods_enabled(self, scrape_municipal_codes_tool):
+    def test_execute_with_fallback_methods_enabled(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with fallback methods enabled
           Given a ScrapeMunicipalCodesTool instance
@@ -324,7 +323,7 @@ class TestFallbackMethodsEnabled:
 class TestFallbackMethodsDisabled:
     """Fallback Methods Disabled"""
 
-    def test_execute_with_fallbacks_disabled(self, scrape_municipal_codes_tool):
+    def test_execute_with_fallbacks_disabled(self, scrape_municipal_codes_tool_imported):
         """
         Scenario: Execute with fallbacks disabled
           Given a ScrapeMunicipalCodesTool instance

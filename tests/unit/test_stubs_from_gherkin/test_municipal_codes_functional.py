@@ -12,13 +12,33 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def chromium_browser():
+def chromium_browser_headless():
     """
-    Background:
-      Given a Chromium browser is launched in headless mode
-      And the viewport is 1920x1080 pixels
-      And the MCP dashboard is running at http://localhost:8899/mcp
-      And the screenshot directory exists at test_screenshots
+    Given a Chromium browser is launched in headless mode
+    """
+    pass
+
+
+@pytest.fixture
+def viewport_1920x1080():
+    """
+    Given the viewport is 1920x1080 pixels
+    """
+    pass
+
+
+@pytest.fixture
+def mcp_dashboard_running():
+    """
+    Given the MCP dashboard is running at http://localhost:8899/mcp
+    """
+    pass
+
+
+@pytest.fixture
+def screenshot_directory_exists():
+    """
+    Given the screenshot directory exists at test_screenshots
     """
     pass
 
@@ -28,7 +48,7 @@ def chromium_browser():
 class TestDashboardNavigation:
     """Dashboard Navigation"""
 
-    def test_dashboard_loads_successfully(self, chromium_browser):
+    def test_dashboard_loads_successfully(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Dashboard loads successfully
           When I navigate to the dashboard URL
@@ -38,7 +58,7 @@ class TestDashboardNavigation:
         """
         pass
 
-    def test_municipal_codes_scraper_tab_exists(self, chromium_browser):
+    def test_municipal_codes_scraper_tab_exists(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Municipal Codes Scraper tab exists
           When I navigate to the dashboard URL
@@ -47,7 +67,7 @@ class TestDashboardNavigation:
         """
         pass
 
-    def test_municipal_codes_scraper_tab_not_found(self, chromium_browser):
+    def test_municipal_codes_scraper_tab_not_found(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Municipal Codes Scraper tab not found
           When I navigate to the dashboard URL
@@ -56,7 +76,7 @@ class TestDashboardNavigation:
         """
         pass
 
-    def test_click_municipal_codes_scraper_tab(self, chromium_browser):
+    def test_click_municipal_codes_scraper_tab(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Click Municipal Codes Scraper tab
           When I navigate to the dashboard URL
@@ -72,7 +92,7 @@ class TestDashboardNavigation:
 class TestFormElementsVerification:
     """Form Elements Verification"""
 
-    def test_verify_all_form_elements_are_present(self, chromium_browser):
+    def test_verify_all_form_elements_are_present(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Verify all form elements are present
           When I navigate to the Municipal Codes Scraper section
@@ -89,7 +109,7 @@ class TestFormElementsVerification:
         """
         pass
 
-    def test_form_element_missing(self, chromium_browser):
+    def test_form_element_missing(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Form element missing
           When I navigate to the Municipal Codes Scraper section
@@ -104,7 +124,7 @@ class TestFormElementsVerification:
 class TestFormFilling:
     """Form Filling"""
 
-    def test_fill_form_with_test_data(self, chromium_browser):
+    def test_fill_form_with_test_data(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Fill form with test data
           When I navigate to the Municipal Codes Scraper section
@@ -124,7 +144,7 @@ class TestFormFilling:
 class TestFormValidation:
     """Form Validation"""
 
-    def test_submit_form_without_jurisdictions_shows_error(self, chromium_browser):
+    def test_submit_form_without_jurisdictions_shows_error(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Submit form without jurisdictions shows error
           When I navigate to the Municipal Codes Scraper section
@@ -136,7 +156,7 @@ class TestFormValidation:
         """
         pass
 
-    def test_validation_error_not_detected_without_server(self, chromium_browser):
+    def test_validation_error_not_detected_without_server(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Validation error not detected without server
           When I navigate to the Municipal Codes Scraper section
@@ -152,7 +172,7 @@ class TestFormValidation:
 class TestFormSubmission:
     """Form Submission"""
 
-    def test_submit_form_with_multiple_jurisdictions(self, chromium_browser):
+    def test_submit_form_with_multiple_jurisdictions(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Submit form with multiple jurisdictions
           When I navigate to the Municipal Codes Scraper section
@@ -172,7 +192,7 @@ class TestFormSubmission:
 class TestClearForm:
     """Clear Form"""
 
-    def test_clear_form_resets_all_fields(self, chromium_browser):
+    def test_clear_form_resets_all_fields(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Clear form resets all fields
           When I navigate to the Municipal Codes Scraper section
@@ -184,7 +204,7 @@ class TestClearForm:
         """
         pass
 
-    def test_clear_form_not_fully_cleared(self, chromium_browser):
+    def test_clear_form_not_fully_cleared(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Clear form not fully cleared
           When I invoke clearMunicipalForm JavaScript function
@@ -199,7 +219,7 @@ class TestClearForm:
 class TestInformationPanel:
     """Information Panel"""
 
-    def test_information_panel_displays_expected_content(self, chromium_browser):
+    def test_information_panel_displays_expected_content(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Information panel displays expected content
           When I navigate to the Municipal Codes Scraper section
@@ -208,7 +228,7 @@ class TestInformationPanel:
         """
         pass
 
-    def test_information_panel_content_incomplete(self, chromium_browser):
+    def test_information_panel_content_incomplete(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Information panel content incomplete
           When I navigate to the Municipal Codes Scraper section
@@ -217,7 +237,7 @@ class TestInformationPanel:
         """
         pass
 
-    def test_information_panel_not_found(self, chromium_browser):
+    def test_information_panel_not_found(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Information panel not found
           When I navigate to the Municipal Codes Scraper section
@@ -232,7 +252,7 @@ class TestInformationPanel:
 class TestScreenshotDocumentation:
     """Screenshot Documentation"""
 
-    def test_all_screenshots_are_captured_on_successful_test(self, chromium_browser):
+    def test_all_screenshots_are_captured_on_successful_test(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: All screenshots are captured on successful test
           When I run the complete integration test
@@ -253,7 +273,7 @@ class TestScreenshotDocumentation:
 class TestErrorHandling:
     """Error Handling"""
 
-    def test_test_fails_with_exception(self, chromium_browser):
+    def test_test_fails_with_exception(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Test fails with exception
           When I run the integration test
@@ -263,7 +283,7 @@ class TestErrorHandling:
         """
         pass
 
-    def test_browser_is_closed_after_test(self, chromium_browser):
+    def test_browser_is_closed_after_test(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Browser is closed after test
           When I run the integration test
@@ -277,7 +297,7 @@ class TestErrorHandling:
 class TestPrerequisitesCheck:
     """Prerequisites Check"""
 
-    def test_mcp_dashboard_is_accessible(self, chromium_browser):
+    def test_mcp_dashboard_is_accessible(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: MCP dashboard is accessible
           When I check if the dashboard is accessible at http://localhost:8899/mcp
@@ -286,7 +306,7 @@ class TestPrerequisitesCheck:
         """
         pass
 
-    def test_mcp_dashboard_is_not_accessible(self, chromium_browser):
+    def test_mcp_dashboard_is_not_accessible(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: MCP dashboard is not accessible
           When I check if the dashboard is accessible
@@ -303,7 +323,7 @@ class TestPrerequisitesCheck:
 class TestExitStatus:
     """Test Exit Status"""
 
-    def test_integration_test_passes(self, chromium_browser):
+    def test_integration_test_passes(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Integration test passes
           When I run the complete integration test
@@ -313,7 +333,7 @@ class TestExitStatus:
         """
         pass
 
-    def test_integration_test_fails(self, chromium_browser):
+    def test_integration_test_fails(self, chromium_browser_headless, viewport_1920x1080, mcp_dashboard_running, screenshot_directory_exists):
         """
         Scenario: Integration test fails
           When I run the complete integration test

@@ -12,10 +12,9 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def dashboard_url():
+def dashboard_url_configured():
     """
-    Background:
-      Given the dashboard URL is http://localhost:8899/mcp
+    Given the dashboard URL is http://localhost:8899/mcp
     """
     pass
 
@@ -25,7 +24,7 @@ def dashboard_url():
 class TestTabNavigation:
     """Tab Navigation"""
 
-    def test_municipal_codes_tab_exists_in_navigation(self, dashboard_url):
+    def test_municipal_codes_tab_exists_in_navigation(self, dashboard_url_configured):
         """
         Scenario: Municipal Codes tab exists in navigation
           Given the MCP dashboard is loaded
@@ -34,7 +33,7 @@ class TestTabNavigation:
         """
         pass
 
-    def test_navigate_to_municipal_codes_scraper_section(self, dashboard_url):
+    def test_navigate_to_municipal_codes_scraper_section(self, dashboard_url_configured):
         """
         Scenario: Navigate to Municipal Codes Scraper section
           Given the MCP dashboard is loaded
@@ -49,7 +48,7 @@ class TestTabNavigation:
 class TestFormElements:
     """Form Elements"""
 
-    def test_all_required_form_elements_are_present(self, dashboard_url):
+    def test_all_required_form_elements_are_present(self, dashboard_url_configured):
         """
         Scenario: All required form elements are present
           Given the Municipal Codes Scraper section is displayed
@@ -75,7 +74,7 @@ class TestFormElements:
 class TestSingleJurisdictionScraping:
     """Single Jurisdiction Scraping"""
 
-    def test_scrape_single_jurisdiction(self, dashboard_url):
+    def test_scrape_single_jurisdiction(self, dashboard_url_configured):
         """
         Scenario: Scrape single jurisdiction
           Given the Municipal Codes Scraper form
@@ -93,7 +92,7 @@ class TestSingleJurisdictionScraping:
 class TestMultipleJurisdictionsScraping:
     """Multiple Jurisdictions Scraping"""
 
-    def test_scrape_multiple_jurisdictions(self, dashboard_url):
+    def test_scrape_multiple_jurisdictions(self, dashboard_url_configured):
         """
         Scenario: Scrape multiple jurisdictions
           Given the Municipal Codes Scraper form
@@ -110,7 +109,7 @@ class TestMultipleJurisdictionsScraping:
 class TestFormValidation:
     """Form Validation"""
 
-    def test_error_displayed_when_submitting_without_jurisdictions(self, dashboard_url):
+    def test_error_displayed_when_submitting_without_jurisdictions(self, dashboard_url_configured):
         """
         Scenario: Error displayed when submitting without jurisdictions
           Given the Municipal Codes Scraper form
@@ -126,7 +125,7 @@ class TestFormValidation:
 class TestClearForm:
     """Clear Form"""
 
-    def test_clear_form_resets_fields_to_defaults(self, dashboard_url):
+    def test_clear_form_resets_fields_to_defaults(self, dashboard_url_configured):
         """
         Scenario: Clear form resets fields to defaults
           Given the Municipal Codes Scraper form with data entered
@@ -142,7 +141,7 @@ class TestClearForm:
 class TestCustomParameters:
     """Custom Parameters"""
 
-    def test_configure_and_submit_custom_parameters(self, dashboard_url):
+    def test_configure_and_submit_custom_parameters(self, dashboard_url_configured):
         """
         Scenario: Configure and submit custom parameters
           Given the Municipal Codes Scraper form
@@ -165,7 +164,7 @@ class TestCustomParameters:
 class TestProviderOptions:
     """Provider Options"""
 
-    def test_provider_dropdown_contains_all_options(self, dashboard_url):
+    def test_provider_dropdown_contains_all_options(self, dashboard_url_configured):
         """
         Scenario: Provider dropdown contains all options
           Given the Municipal Codes Scraper form
@@ -186,7 +185,7 @@ class TestProviderOptions:
 class TestOutputFormatOptions:
     """Output Format Options"""
 
-    def test_output_format_dropdown_contains_all_options(self, dashboard_url):
+    def test_output_format_dropdown_contains_all_options(self, dashboard_url_configured):
         """
         Scenario: Output format dropdown contains all options
           Given the Municipal Codes Scraper form
@@ -205,7 +204,7 @@ class TestOutputFormatOptions:
 class TestInformationPanel:
     """Information Panel"""
 
-    def test_information_panel_displays_tool_details(self, dashboard_url):
+    def test_information_panel_displays_tool_details(self, dashboard_url_configured):
         """
         Scenario: Information panel displays tool details
           Given the Municipal Codes Scraper section
@@ -224,7 +223,7 @@ class TestInformationPanel:
 class TestMCPToolIntegration:
     """MCP Tool Integration"""
 
-    def test_tool_is_correctly_invoked_via_mcp_protocol(self, dashboard_url):
+    def test_tool_is_correctly_invoked_via_mcp_protocol(self, dashboard_url_configured):
         """
         Scenario: Tool is correctly invoked via MCP protocol
           Given the following test data:

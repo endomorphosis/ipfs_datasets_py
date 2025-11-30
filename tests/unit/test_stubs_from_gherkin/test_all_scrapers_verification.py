@@ -12,10 +12,9 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def verify_all_scrapers_module():
+def verify_all_scrapers_module_loaded():
     """
-    Background:
-      Given the verify_all_scrapers module is loaded
+    Given the verify_all_scrapers module is loaded
     """
     pass
 
@@ -25,7 +24,7 @@ def verify_all_scrapers_module():
 class TestUSCodeSubprocessExecution:
     """Subprocess Execution for US Code Verifier"""
 
-    def test_us_code_subprocess_returns_exit_code_0_when_all_tests_pass(self, verify_all_scrapers_module):
+    def test_us_code_subprocess_returns_exit_code_0_when_all_tests_pass(self, verify_all_scrapers_module_loaded):
         """
         Scenario: US Code subprocess returns exit code 0 when all tests pass
           When subprocess.run(["python", "verify_us_code_scraper.py"]) completes
@@ -35,7 +34,7 @@ class TestUSCodeSubprocessExecution:
         """
         pass
 
-    def test_us_code_subprocess_returns_exit_code_1_when_any_test_fails(self, verify_all_scrapers_module):
+    def test_us_code_subprocess_returns_exit_code_1_when_any_test_fails(self, verify_all_scrapers_module_loaded):
         """
         Scenario: US Code subprocess returns exit code 1 when any test fails
           When subprocess.run(["python", "verify_us_code_scraper.py"]) completes
@@ -45,7 +44,7 @@ class TestUSCodeSubprocessExecution:
         """
         pass
 
-    def test_us_code_subprocess_times_out_after_300_seconds(self, verify_all_scrapers_module):
+    def test_us_code_subprocess_times_out_after_300_seconds(self, verify_all_scrapers_module_loaded):
         """
         Scenario: US Code subprocess times out after 300 seconds
           When subprocess.run() exceeds timeout=300 seconds
@@ -55,7 +54,7 @@ class TestUSCodeSubprocessExecution:
         """
         pass
 
-    def test_us_code_subprocess_fails_to_execute(self, verify_all_scrapers_module):
+    def test_us_code_subprocess_fails_to_execute(self, verify_all_scrapers_module_loaded):
         """
         Scenario: US Code subprocess fails to execute
           When subprocess.run() raises an Exception
@@ -70,7 +69,7 @@ class TestUSCodeSubprocessExecution:
 class TestFederalRegisterSubprocessExecution:
     """Subprocess Execution for Federal Register Verifier"""
 
-    def test_federal_register_subprocess_returns_exit_code_0_when_all_tests_pass(self, verify_all_scrapers_module):
+    def test_federal_register_subprocess_returns_exit_code_0_when_all_tests_pass(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Federal Register subprocess returns exit code 0 when all tests pass
           When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes
@@ -80,7 +79,7 @@ class TestFederalRegisterSubprocessExecution:
         """
         pass
 
-    def test_federal_register_subprocess_returns_exit_code_1_when_any_test_fails(self, verify_all_scrapers_module):
+    def test_federal_register_subprocess_returns_exit_code_1_when_any_test_fails(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Federal Register subprocess returns exit code 1 when any test fails
           When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes
@@ -90,7 +89,7 @@ class TestFederalRegisterSubprocessExecution:
         """
         pass
 
-    def test_federal_register_subprocess_times_out_after_300_seconds(self, verify_all_scrapers_module):
+    def test_federal_register_subprocess_times_out_after_300_seconds(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Federal Register subprocess times out after 300 seconds
           When subprocess.run() exceeds timeout=300 seconds
@@ -100,7 +99,7 @@ class TestFederalRegisterSubprocessExecution:
         """
         pass
 
-    def test_federal_register_subprocess_fails_to_execute(self, verify_all_scrapers_module):
+    def test_federal_register_subprocess_fails_to_execute(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Federal Register subprocess fails to execute
           When subprocess.run() raises an Exception
@@ -115,7 +114,7 @@ class TestFederalRegisterSubprocessExecution:
 class TestOverallExitCodeCalculation:
     """Overall Exit Code Calculation"""
 
-    def test_runner_exits_with_code_0_when_both_subprocesses_return_0(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_0_when_both_subprocesses_return_0(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 0 when both subprocesses return 0
           When us_code_exit equals 0
@@ -126,7 +125,7 @@ class TestOverallExitCodeCalculation:
         """
         pass
 
-    def test_runner_exits_with_code_1_when_us_code_subprocess_returns_1(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_1_when_us_code_subprocess_returns_1(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 1 when US Code subprocess returns 1
           When us_code_exit equals 1
@@ -137,7 +136,7 @@ class TestOverallExitCodeCalculation:
         """
         pass
 
-    def test_runner_exits_with_code_1_when_federal_register_subprocess_returns_1(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_1_when_federal_register_subprocess_returns_1(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 1 when Federal Register subprocess returns 1
           When us_code_exit equals 0
@@ -148,7 +147,7 @@ class TestOverallExitCodeCalculation:
         """
         pass
 
-    def test_runner_exits_with_code_1_when_both_subprocesses_return_1(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_1_when_both_subprocesses_return_1(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 1 when both subprocesses return 1
           When us_code_exit equals 1
@@ -165,7 +164,7 @@ class TestOverallExitCodeCalculation:
 class TestExceptionHandlingInMain:
     """Exception Handling in Main"""
 
-    def test_runner_exits_with_code_1_when_keyboard_interrupt_caught(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_1_when_keyboard_interrupt_caught(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 1 when KeyboardInterrupt is caught
           When main() raises KeyboardInterrupt
@@ -174,7 +173,7 @@ class TestExceptionHandlingInMain:
         """
         pass
 
-    def test_runner_exits_with_code_1_when_unhandled_exception_caught(self, verify_all_scrapers_module):
+    def test_runner_exits_with_code_1_when_unhandled_exception_caught(self, verify_all_scrapers_module_loaded):
         """
         Scenario: Runner exits with code 1 when unhandled exception is caught
           When main() raises Exception

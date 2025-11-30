@@ -11,11 +11,17 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def municipal_laws_scraper_module():
+def municipal_laws_scraper_module_loaded():
     """
-    Background:
-      Given the municipal laws scraper module is loaded
-      And the list of major cities includes 23 US cities
+    Given the municipal laws scraper module is loaded
+    """
+    pass
+
+
+@pytest.fixture
+def major_cities_list():
+    """
+    Given the list of major cities includes 23 US cities
     """
     pass
 
@@ -25,7 +31,7 @@ def municipal_laws_scraper_module():
 class TestSearchMunicipalCodes:
     """Search Municipal Codes"""
 
-    def test_search_municipal_codes_for_valid_city_by_name(self, municipal_laws_scraper_module):
+    def test_search_municipal_codes_for_valid_city_by_name(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Search municipal codes for a valid city by name
           Given a city name "New York City"
@@ -37,7 +43,7 @@ class TestSearchMunicipalCodes:
         """
         pass
 
-    def test_search_municipal_codes_for_city_using_partial_name_match(self, municipal_laws_scraper_module):
+    def test_search_municipal_codes_for_city_using_partial_name_match(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Search municipal codes for a city using partial name match
           Given a city name "los angeles"
@@ -48,7 +54,7 @@ class TestSearchMunicipalCodes:
         """
         pass
 
-    def test_search_municipal_codes_for_unknown_city(self, municipal_laws_scraper_module):
+    def test_search_municipal_codes_for_unknown_city(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Search municipal codes for an unknown city
           Given a city name "Unknown City XYZ"
@@ -60,7 +66,7 @@ class TestSearchMunicipalCodes:
         """
         pass
 
-    def test_search_municipal_codes_without_specifying_city(self, municipal_laws_scraper_module):
+    def test_search_municipal_codes_without_specifying_city(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Search municipal codes without specifying a city
           When I search municipal codes without a city name
@@ -75,7 +81,7 @@ class TestSearchMunicipalCodes:
 class TestScrapeMunicipalLaws:
     """Scrape Municipal Laws"""
 
-    def test_scrape_municipal_laws_for_single_city_by_code(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_for_single_city_by_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws for a single city by code
           Given a list of cities containing "NYC"
@@ -92,7 +98,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_for_multiple_cities(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_for_multiple_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws for multiple cities
           Given a list of cities containing "NYC", "LAX", "CHI"
@@ -103,7 +109,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_with_city_name_instead_of_code(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_with_city_name_instead_of_code(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws with city name instead of code
           Given a list of cities containing "Seattle"
@@ -113,7 +119,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_for_all_cities(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_for_all_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws for all cities
           Given a list of cities containing "all"
@@ -123,7 +129,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_with_no_valid_cities(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_with_no_valid_cities(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws with no valid cities
           Given a list of cities containing "InvalidCity123"
@@ -133,7 +139,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_respects_rate_limiting(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_respects_rate_limiting(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws respects rate limiting
           Given a list of cities containing "NYC", "LAX"
@@ -143,7 +149,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_respects_max_ordinances_limit(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_respects_max_ordinances_limit(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws respects max_ordinances limit
           Given a list of cities containing "all"
@@ -153,7 +159,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_includes_metadata_when_requested(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_includes_metadata_when_requested(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws includes metadata when requested
           Given a list of cities containing "NYC"
@@ -166,7 +172,7 @@ class TestScrapeMunicipalLaws:
         """
         pass
 
-    def test_scrape_municipal_laws_excludes_metadata_when_not_requested(self, municipal_laws_scraper_module):
+    def test_scrape_municipal_laws_excludes_metadata_when_not_requested(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape municipal laws excludes metadata when not requested
           Given a list of cities containing "NYC"
@@ -185,7 +191,7 @@ class TestScrapeMunicipalLaws:
 class TestDataStructureValidation:
     """Data Structure Validation"""
 
-    def test_scraped_ordinance_data_has_required_fields(self, municipal_laws_scraper_module):
+    def test_scraped_ordinance_data_has_required_fields(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scraped ordinance data has required fields
           Given a list of cities containing "NYC"
@@ -201,7 +207,7 @@ class TestDataStructureValidation:
         """
         pass
 
-    def test_scraped_ordinance_entry_has_required_fields(self, municipal_laws_scraper_module):
+    def test_scraped_ordinance_entry_has_required_fields(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scraped ordinance entry has required fields
           Given a list of cities containing "NYC"
@@ -220,7 +226,7 @@ class TestDataStructureValidation:
 class TestOutputFormat:
     """Output Format"""
 
-    def test_scrape_returns_json_format_indicator(self, municipal_laws_scraper_module):
+    def test_scrape_returns_json_format_indicator(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape returns JSON format indicator
           Given output format is "json"
@@ -229,7 +235,7 @@ class TestOutputFormat:
         """
         pass
 
-    def test_scrape_returns_parquet_format_indicator(self, municipal_laws_scraper_module):
+    def test_scrape_returns_parquet_format_indicator(self, municipal_laws_scraper_module_loaded, major_cities_list):
         """
         Scenario: Scrape returns Parquet format indicator
           Given output format is "parquet"

@@ -12,11 +12,17 @@ import pytest
 # Fixtures from Background
 
 @pytest.fixture
-def municipal_scraper_fallbacks():
+def municipal_scraper_fallbacks_initialized():
     """
-    Background:
-      Given the MunicipalScraperFallbacks class is initialized
-      And 6 fallback methods are supported
+    Given the MunicipalScraperFallbacks class is initialized
+    """
+    pass
+
+
+@pytest.fixture
+def six_fallback_methods_supported():
+    """
+    Given 6 fallback methods are supported
     """
     pass
 
@@ -26,7 +32,7 @@ def municipal_scraper_fallbacks():
 class TestSupportedMethods:
     """Supported Methods"""
 
-    def test_list_of_supported_fallback_methods(self, municipal_scraper_fallbacks):
+    def test_list_of_supported_fallback_methods(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: List of supported fallback methods
           When I list supported methods
@@ -39,7 +45,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_common_crawl(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_common_crawl(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for common_crawl
           When I get method info for "common_crawl"
@@ -48,7 +54,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_wayback_machine(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_wayback_machine(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for wayback_machine
           When I get method info for "wayback_machine"
@@ -57,7 +63,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_archive_is(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_archive_is(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for archive_is
           When I get method info for "archive_is"
@@ -66,7 +72,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_autoscraper(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_autoscraper(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for autoscraper
           When I get method info for "autoscraper"
@@ -75,7 +81,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_ipwb(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_ipwb(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for ipwb
           When I get method info for "ipwb"
@@ -84,7 +90,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_playwright(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_playwright(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for playwright
           When I get method info for "playwright"
@@ -93,7 +99,7 @@ class TestSupportedMethods:
         """
         pass
 
-    def test_get_method_info_for_unknown_method(self, municipal_scraper_fallbacks):
+    def test_get_method_info_for_unknown_method(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Get method info for unknown method
           When I get method info for "unknown_method"
@@ -107,7 +113,7 @@ class TestSupportedMethods:
 class TestScrapingWithFallbacks:
     """Scraping with Fallbacks"""
 
-    def test_scrape_with_fallbacks_returns_jurisdiction_and_url(self, municipal_scraper_fallbacks):
+    def test_scrape_with_fallbacks_returns_jurisdiction_and_url(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Scrape with fallbacks returns jurisdiction and URL
           Given a target URL "https://library.municode.com/seattle"
@@ -119,7 +125,7 @@ class TestScrapingWithFallbacks:
         """
         pass
 
-    def test_scrape_with_fallbacks_records_all_attempts(self, municipal_scraper_fallbacks):
+    def test_scrape_with_fallbacks_records_all_attempts(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Scrape with fallbacks records all attempts
           Given a target URL "https://library.municode.com/portland"
@@ -133,7 +139,7 @@ class TestScrapingWithFallbacks:
         """
         pass
 
-    def test_scrape_with_fallbacks_stops_on_first_success(self, municipal_scraper_fallbacks):
+    def test_scrape_with_fallbacks_stops_on_first_success(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Scrape with fallbacks stops on first success
           Given a target URL "https://library.municode.com/austin"
@@ -147,7 +153,7 @@ class TestScrapingWithFallbacks:
         """
         pass
 
-    def test_scrape_with_fallbacks_skips_unknown_methods(self, municipal_scraper_fallbacks):
+    def test_scrape_with_fallbacks_skips_unknown_methods(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Scrape with fallbacks skips unknown methods
           Given a target URL "https://library.municode.com/denver"
@@ -159,7 +165,7 @@ class TestScrapingWithFallbacks:
         """
         pass
 
-    def test_scrape_with_fallbacks_handles_exceptions(self, municipal_scraper_fallbacks):
+    def test_scrape_with_fallbacks_handles_exceptions(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Scrape with fallbacks handles exceptions
           Given a target URL "https://library.municode.com/miami"
@@ -179,7 +185,7 @@ class TestScrapingWithFallbacks:
 class TestIndividualFallbackMethods:
     """Individual Fallback Methods"""
 
-    def test_common_crawl_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_common_crawl_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Common Crawl fallback returns expected structure
           Given a target URL "https://library.municode.com/boston"
@@ -191,7 +197,7 @@ class TestIndividualFallbackMethods:
         """
         pass
 
-    def test_wayback_machine_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_wayback_machine_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Wayback Machine fallback returns expected structure
           Given a target URL "https://library.municode.com/chicago"
@@ -203,7 +209,7 @@ class TestIndividualFallbackMethods:
         """
         pass
 
-    def test_archive_is_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_archive_is_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Archive.is fallback returns expected structure
           Given a target URL "https://library.municode.com/houston"
@@ -215,7 +221,7 @@ class TestIndividualFallbackMethods:
         """
         pass
 
-    def test_autoscraper_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_autoscraper_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: AutoScraper fallback returns expected structure
           Given a target URL "https://library.municode.com/phoenix"
@@ -227,7 +233,7 @@ class TestIndividualFallbackMethods:
         """
         pass
 
-    def test_ipwb_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_ipwb_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: IPWB fallback returns expected structure
           Given a target URL "https://library.municode.com/dallas"
@@ -239,7 +245,7 @@ class TestIndividualFallbackMethods:
         """
         pass
 
-    def test_playwright_fallback_returns_expected_structure(self, municipal_scraper_fallbacks):
+    def test_playwright_fallback_returns_expected_structure(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Playwright fallback returns expected structure
           Given a target URL "https://library.municode.com/san-jose"
@@ -257,7 +263,7 @@ class TestIndividualFallbackMethods:
 class TestDefaultFallbackOrder:
     """Default Fallback Order"""
 
-    def test_default_fallback_order_when_no_methods_specified(self, municipal_scraper_fallbacks):
+    def test_default_fallback_order_when_no_methods_specified(self, municipal_scraper_fallbacks_initialized, six_fallback_methods_supported):
         """
         Scenario: Default fallback order when no methods specified
           Given a target URL "https://library.municode.com/atlanta"
