@@ -13,8 +13,11 @@ from typing import Dict, Any
 import requests
 
 
-# Tell pytest to ignore all Python files in this directory during collection
-collect_ignore = glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))
+# Tell pytest to ignore all Python test files in this directory during collection
+# Note: conftest.py is automatically excluded by pytest from collection
+_all_py_files = glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))
+_conftest_path = os.path.join(os.path.dirname(__file__), "conftest.py")
+collect_ignore = [f for f in _all_py_files if f != _conftest_path]
 
 
 def pytest_collection_modifyitems(config, items):
