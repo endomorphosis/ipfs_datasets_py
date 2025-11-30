@@ -1,179 +1,211 @@
 Feature: US Code Scraper Verification
-  The US Code scraper verification tool tests the US Code scraper functionality.
-  It validates connection to uscode.house.gov, title fetching, section scraping,
-  data structure, and rate limiting.
+  Verifies US Code scraper by running 7 tests that check API connectivity,
+  data retrieval, structure validation, search, metadata, and rate limiting.
+  The verifier exits with code 0 when failed count equals 0, and exits with
+  code 1 when failed count is greater than 0.
 
   Background:
-    Given the USCodeVerifier class is initialized
-    And the scraper can connect to uscode.house.gov
+    Given the USCodeVerifier is initialized with empty results dictionary
+    And the summary counters are set to total=0, passed=0, failed=0, warnings=0
 
-  # Test Result Logging
+  # Test 1: Get US Code Titles - Verifies title list retrieval from uscode.house.gov
 
-  Scenario: Test result logging records passed test
-    Given a test named "Sample Test"
-    When the test passes with message "Test passed"
-    Then the test is logged with status "PASS"
-    And the passed counter increments by 1
-    And the total counter increments by 1
+  Scenario: Get Titles test passes when API returns 50+ titles
+    When get_us_code_titles() is called
+    And the result["status"] equals "success"
+    And len(result["titles"]) is greater than or equal to 50
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
 
-  Scenario: Test result logging records failed test
-    Given a test named "Sample Test"
-    When the test fails with message "Test failed"
-    Then the test is logged with status "FAIL"
-    And the failed counter increments by 1
-    And the total counter increments by 1
+  Scenario: Get Titles test warns when API returns fewer than 50 titles
+    When get_us_code_titles() is called
+    And the result["status"] equals "success"
+    And len(result["titles"]) is less than 50
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  Scenario: Test result logging records warning
-    Given a test named "Sample Test"
-    When the test has warning with message "Test warning"
-    Then the test is logged with status "WARN"
-    And the warnings counter increments by 1
-    And the total counter increments by 1
+  Scenario: Get Titles test fails when API returns error status
+    When get_us_code_titles() is called
+    And the result["status"] does not equal "success"
+    Then log_test is called with status "FAIL"
+    And summary["failed"] increments by 1
 
-  # Get US Code Titles
+  Scenario: Get Titles test fails when exception is raised
+    When get_us_code_titles() raises an exception
+    Then log_test is called with status "FAIL" and exception message
+    And summary["failed"] increments by 1
 
-  Scenario: Get US Code titles returns all titles
-    When I call get_us_code_titles
-    Then the result status is "success"
-    And the titles dictionary contains at least 50 entries
+  # Test 2: Scrape Single Title - Verifies scraping Title 1 with max_sections=10
 
-  Scenario: Get US Code titles returns fewer than expected
-    When I call get_us_code_titles
-    And the titles count is less than 50
-    Then a warning is logged with message containing "Retrieved only"
+  Scenario: Scrape Single Title test passes when data array has entries
+    When scrape_us_code(titles=["1"], max_sections=10) is called
+    And the result["status"] equals "success"
+    And len(result["data"]) is greater than 0
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
 
-  Scenario: Get US Code titles fails
-    When I call get_us_code_titles
-    And the result status is "error"
-    Then the test is logged as failed
-    And the error message is captured
+  Scenario: Scrape Single Title test warns when data array is empty
+    When scrape_us_code(titles=["1"], max_sections=10) is called
+    And the result["status"] equals "success"
+    And len(result["data"]) equals 0
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  # Scrape Single Title
+  Scenario: Scrape Single Title test fails when status is not success
+    When scrape_us_code(titles=["1"], max_sections=10) is called
+    And the result["status"] does not equal "success"
+    Then log_test is called with status "FAIL"
+    And summary["failed"] increments by 1
 
-  Scenario: Scrape single US Code title succeeds
-    Given title "1" (General Provisions)
-    And output_format is "json"
-    And include_metadata is true
-    And rate_limit_delay is 1.0 second
-    And max_sections is 10
-    When I call scrape_us_code
-    Then the result status is "success"
-    And the data array contains at least 1 section
-    And each section contains title_number
-    And each section contains section_number
+  Scenario: Scrape Single Title test fails when exception is raised
+    When scrape_us_code() raises an exception
+    Then log_test is called with status "FAIL" and exception message
+    And summary["failed"] increments by 1
 
-  Scenario: Scrape single US Code title returns no sections
-    Given title "1"
-    When I call scrape_us_code
-    And the data array is empty
-    Then a warning is logged with message "No sections scraped from Title 1"
+  # Test 3: Scrape Multiple Titles - Verifies scraping titles ["1","15","18"] with max_sections=5
 
-  # Scrape Multiple Titles
+  Scenario: Scrape Multiple Titles test passes when 2+ titles are found
+    When scrape_us_code(titles=["1","15","18"], max_sections=5) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And sections contain title_number values from 2 or more different titles
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
 
-  Scenario: Scrape multiple US Code titles
-    Given titles ["1", "15", "18"]
-    And max_sections is 5 per title
-    When I call scrape_us_code
-    Then the result status is "success" or "partial_success"
-    And the data contains sections from at least 2 different titles
+  Scenario: Scrape Multiple Titles test warns when only 1 title is found
+    When scrape_us_code(titles=["1","15","18"], max_sections=5) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And sections contain title_number values from only 1 title
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  Scenario: Scrape multiple titles partial success
-    Given titles ["1", "15", "18"]
-    When I call scrape_us_code
-    And only 1 title is scraped
-    Then a warning is logged with message "Only scraped 1 title"
+  Scenario: Scrape Multiple Titles test warns when no title_number field exists
+    When scrape_us_code(titles=["1","15","18"], max_sections=5) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And no section contains title_number field
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  # Data Structure Validation
+  Scenario: Scrape Multiple Titles test fails when status is error
+    When scrape_us_code(titles=["1","15","18"]) is called
+    And the result["status"] is not in ["success", "partial_success"]
+    Then log_test is called with status "FAIL"
+    And summary["failed"] increments by 1
 
-  Scenario: Scraped US Code data has valid structure
-    Given title "15" (Commerce and Trade)
-    And max_sections is 3
-    When I call scrape_us_code
-    And the result status is "success" or "partial_success"
-    Then each section contains field "title_number"
-    And each section contains field "title_name"
-    And each section contains field "section_number"
+  # Test 4: Validate Data Structure - Checks for required fields in scraped data
 
-  Scenario: Scraped US Code data missing required fields
-    Given title "15"
-    When I call scrape_us_code
-    And the sample section is missing required fields
-    Then a warning is logged with message containing "Missing fields"
+  Scenario: Data Structure test passes when all required fields exist
+    When scrape_us_code(titles=["15"], max_sections=3) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And result["data"][0] contains "title_number"
+    And result["data"][0] contains "title_name"
+    And result["data"][0] contains "section_number"
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
 
-  # Search Functionality
+  Scenario: Data Structure test warns when required fields are missing
+    When scrape_us_code(titles=["15"], max_sections=3) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And result["data"][0] is missing one or more of ["title_number", "title_name", "section_number"]
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  Scenario: Search US Code by keyword
-    Given search query "commerce"
-    And titles ["15"]
-    And limit is 5
-    When I call search_us_code
-    Then the result status is "success"
-    And the results array contains at least 1 match
+  Scenario: Data Structure test warns when data array is empty
+    When scrape_us_code(titles=["15"], max_sections=3) is called
+    And the result["status"] is in ["success", "partial_success"]
+    And len(result["data"]) equals 0
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  Scenario: Search US Code returns no results
-    Given search query "commerce"
-    When I call search_us_code
-    And the results array is empty
-    Then a warning is logged with message "No search results found"
+  Scenario: Data Structure test fails when scrape returns error status
+    When scrape_us_code(titles=["15"], max_sections=3) is called
+    And the result["status"] is not in ["success", "partial_success"]
+    Then log_test is called with status "FAIL"
+    And summary["failed"] increments by 1
 
-  # Metadata Inclusion
+  # Test 5: Search Functionality - Searches for "commerce" in Title 15
 
-  Scenario: Metadata is included when requested
-    Given title "1"
-    And include_metadata is true
-    And max_sections is 2
-    When I call scrape_us_code
-    Then the result contains a metadata object
-    And the test is logged as passed
+  Scenario: Search test passes when results are returned
+    When search_us_code(query="commerce", titles=["15"], limit=5) is called
+    And the result["status"] equals "success"
+    And len(result["results"]) is greater than 0
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
 
-  Scenario: Metadata is excluded when not requested
-    Given title "1"
-    And include_metadata is false
-    And max_sections is 2
-    When I call scrape_us_code
-    Then the result metadata is empty or minimal
+  Scenario: Search test warns when no results are returned
+    When search_us_code(query="commerce", titles=["15"], limit=5) is called
+    And the result["status"] equals "success"
+    And len(result["results"]) equals 0
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  # Rate Limiting
+  Scenario: Search test warns when status is not success
+    When search_us_code(query="commerce", titles=["15"], limit=5) is called
+    And the result["status"] does not equal "success"
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  Scenario: Rate limiting is respected
-    Given title "1"
-    And rate_limit_delay is 2.0 seconds
-    And max_sections is 3
-    When I call scrape_us_code and measure elapsed time
-    Then the elapsed time is at least 2.0 seconds
-    And the test is logged as passed
+  Scenario: Search test fails when exception is raised
+    When search_us_code() raises an exception
+    Then log_test is called with status "FAIL" and exception message
+    And summary["failed"] increments by 1
 
-  Scenario: Rate limiting completed too quickly
-    Given title "1"
-    And rate_limit_delay is 2.0 seconds
-    When I call scrape_us_code and measure elapsed time
+  # Test 6: Metadata Inclusion - Verifies metadata field is present when requested
+
+  Scenario: Metadata test passes when metadata object exists
+    When scrape_us_code(titles=["1"], include_metadata=True, max_sections=2) is called
+    And bool(result["metadata"]) is True
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
+
+  Scenario: Metadata test warns when metadata object is empty or missing
+    When scrape_us_code(titles=["1"], include_metadata=True, max_sections=2) is called
+    And bool(result["metadata"]) is False
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
+
+  Scenario: Metadata test fails when exception is raised
+    When scrape_us_code() raises an exception
+    Then log_test is called with status "FAIL" and exception message
+    And summary["failed"] increments by 1
+
+  # Test 7: Rate Limiting - Verifies delay between requests is honored
+
+  Scenario: Rate Limiting test passes when elapsed time meets threshold
+    When scrape_us_code(titles=["1"], rate_limit_delay=2.0, max_sections=3) is called
+    And the elapsed time is greater than or equal to 2.0 seconds
+    Then log_test is called with status "PASS"
+    And summary["passed"] increments by 1
+
+  Scenario: Rate Limiting test warns when elapsed time is below threshold
+    When scrape_us_code(titles=["1"], rate_limit_delay=2.0, max_sections=3) is called
     And the elapsed time is less than 2.0 seconds
-    Then a warning is logged with message "Completed too quickly"
-    And the message contains "rate limiting may not be working"
+    Then log_test is called with status "WARN"
+    And summary["warnings"] increments by 1
 
-  # Verification Summary
+  Scenario: Rate Limiting test fails when exception is raised
+    When scrape_us_code() raises an exception
+    Then log_test is called with status "FAIL" and exception message
+    And summary["failed"] increments by 1
 
-  Scenario: Verification summary shows all results
-    When I run all verification tests
-    Then the summary shows total test count
-    And the summary shows passed count
-    And the summary shows failed count
-    And the summary shows warnings count
-    And the summary shows success rate percentage
+  # Exit Code Determination
 
-  Scenario: Verification results are saved to file
-    When I run all verification tests
-    Then the results are saved to $HOME/.ipfs_datasets/us_code/verification_results.json
-    And the file contains timestamp
-    And the file contains tests array
-    And the file contains summary object
+  Scenario: Verifier exits with code 0 when failed count equals 0
+    When all 7 tests complete
+    And summary["failed"] equals 0
+    Then run_all_tests() returns 0
+    And sys.exit(0) is called
 
-  Scenario: Verification exits with code 0 on all tests passed
-    When I run all verification tests
-    And all tests pass
-    Then the exit code is 0
+  Scenario: Verifier exits with code 1 when failed count is greater than 0
+    When all 7 tests complete
+    And summary["failed"] is greater than 0
+    Then run_all_tests() returns 1
+    And sys.exit(1) is called
 
-  Scenario: Verification exits with code 1 on any test failed
-    When I run all verification tests
-    And at least one test fails
-    Then the exit code is 1
+  Scenario: Verifier exits with code 1 when KeyboardInterrupt is caught
+    When asyncio.run(main()) raises KeyboardInterrupt
+    Then sys.exit(1) is called
+
+  Scenario: Verifier exits with code 1 when unhandled exception is caught
+    When asyncio.run(main()) raises Exception
+    Then traceback is printed
+    And sys.exit(1) is called

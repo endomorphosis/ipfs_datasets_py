@@ -1,111 +1,100 @@
 Feature: All Scrapers Verification Runner
-  The all scrapers verification runner executes verification tools for
-  US Code and Federal Register scrapers and provides a combined summary.
+  Runs verify_us_code_scraper.py and verify_federal_register_scraper.py as
+  subprocesses and combines their exit codes. The runner exits with code 0
+  when both subprocess exit codes are 0, and exits with code 1 otherwise.
 
   Background:
     Given the verify_all_scrapers module is loaded
 
-  # Running Individual Verifications
+  # Subprocess Execution for US Code Verifier
 
-  Scenario: Run US Code verification script
-    When I run the verification for "verify_us_code_scraper.py"
-    Then a subprocess is started
-    And the process runs with a 5 minute timeout
-    And output is captured from stdout and stderr
+  Scenario: US Code subprocess returns exit code 0 when all tests pass
+    When subprocess.run(["python", "verify_us_code_scraper.py"]) completes
+    And the subprocess returncode equals 0
+    Then us_code_exit is set to 0
+    And us_code_status displays "PASSED"
 
-  Scenario: Run Federal Register verification script
-    When I run the verification for "verify_federal_register_scraper.py"
-    Then a subprocess is started
-    And the process runs with a 5 minute timeout
-    And output is captured from stdout and stderr
+  Scenario: US Code subprocess returns exit code 1 when any test fails
+    When subprocess.run(["python", "verify_us_code_scraper.py"]) completes
+    And the subprocess returncode equals 1
+    Then us_code_exit is set to 1
+    And us_code_status displays "FAILED"
 
-  Scenario: Verification script times out
-    When I run a verification script
-    And the script exceeds 5 minutes
-    Then the exit code is 1
-    And the output contains "ERROR: timed out after 5 minutes"
+  Scenario: US Code subprocess times out after 300 seconds
+    When subprocess.run() exceeds timeout=300 seconds
+    And subprocess.TimeoutExpired is raised
+    Then us_code_exit is set to 1
+    And output contains "ERROR: verify_us_code_scraper.py timed out after 5 minutes"
 
-  Scenario: Verification script fails to start
-    When I run a verification script
-    And an exception occurs during execution
-    Then the exit code is 1
-    And the output contains "ERROR: Failed to run"
+  Scenario: US Code subprocess fails to execute
+    When subprocess.run() raises an Exception
+    Then us_code_exit is set to 1
+    And output contains "ERROR: Failed to run verify_us_code_scraper.py"
 
-  # Combined Verification Suite
+  # Subprocess Execution for Federal Register Verifier
 
-  Scenario: Run all verifications displays header
-    When I run the main verification suite
-    Then the output contains "LEGAL DATASET TOOLS VERIFICATION SUITE"
-    And the output contains the start timestamp
+  Scenario: Federal Register subprocess returns exit code 0 when all tests pass
+    When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes
+    And the subprocess returncode equals 0
+    Then fed_reg_exit is set to 0
+    And fed_reg_status displays "PASSED"
 
-  Scenario: Run all verifications executes US Code verification first
-    When I run the main verification suite
-    Then the output contains "RUNNING: US Code Scraper Verification"
-    And US Code verification output is printed
+  Scenario: Federal Register subprocess returns exit code 1 when any test fails
+    When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes
+    And the subprocess returncode equals 1
+    Then fed_reg_exit is set to 1
+    And fed_reg_status displays "FAILED"
 
-  Scenario: Run all verifications executes Federal Register verification second
-    When I run the main verification suite
-    Then the output contains "RUNNING: Federal Register Scraper Verification"
-    And Federal Register verification output is printed
+  Scenario: Federal Register subprocess times out after 300 seconds
+    When subprocess.run() exceeds timeout=300 seconds
+    And subprocess.TimeoutExpired is raised
+    Then fed_reg_exit is set to 1
+    And output contains "ERROR: verify_federal_register_scraper.py timed out after 5 minutes"
 
-  # Combined Summary
+  Scenario: Federal Register subprocess fails to execute
+    When subprocess.run() raises an Exception
+    Then fed_reg_exit is set to 1
+    And output contains "ERROR: Failed to run verify_federal_register_scraper.py"
 
-  Scenario: Both verifications pass
-    Given US Code verification exit code is 0
-    And Federal Register verification exit code is 0
-    When I run the main verification suite
-    Then the combined summary shows US Code Scraper as "PASSED"
-    And the combined summary shows Federal Register as "PASSED"
-    And the overall status is "ALL TESTS PASSED"
-    And the exit code is 0
+  # Overall Exit Code Calculation
 
-  Scenario: US Code verification fails
-    Given US Code verification exit code is 1
-    And Federal Register verification exit code is 0
-    When I run the main verification suite
-    Then the combined summary shows US Code Scraper as "FAILED"
-    And the combined summary shows Federal Register as "PASSED"
-    And the overall status is "SOME TESTS FAILED"
-    And the exit code is 1
+  Scenario: Runner exits with code 0 when both subprocesses return 0
+    When us_code_exit equals 0
+    And fed_reg_exit equals 0
+    Then overall_exit is calculated as 0
+    And overall_status displays "ALL TESTS PASSED"
+    And sys.exit(0) is called
 
-  Scenario: Federal Register verification fails
-    Given US Code verification exit code is 0
-    And Federal Register verification exit code is 1
-    When I run the main verification suite
-    Then the combined summary shows US Code Scraper as "PASSED"
-    And the combined summary shows Federal Register as "FAILED"
-    And the overall status is "SOME TESTS FAILED"
-    And the exit code is 1
+  Scenario: Runner exits with code 1 when US Code subprocess returns 1
+    When us_code_exit equals 1
+    And fed_reg_exit equals 0
+    Then overall_exit is calculated as 1
+    And overall_status displays "SOME TESTS FAILED"
+    And sys.exit(1) is called
 
-  Scenario: Both verifications fail
-    Given US Code verification exit code is 1
-    And Federal Register verification exit code is 1
-    When I run the main verification suite
-    Then the combined summary shows US Code Scraper as "FAILED"
-    And the combined summary shows Federal Register as "FAILED"
-    And the overall status is "SOME TESTS FAILED"
-    And the exit code is 1
+  Scenario: Runner exits with code 1 when Federal Register subprocess returns 1
+    When us_code_exit equals 0
+    And fed_reg_exit equals 1
+    Then overall_exit is calculated as 1
+    And overall_status displays "SOME TESTS FAILED"
+    And sys.exit(1) is called
 
-  # User Interruption
+  Scenario: Runner exits with code 1 when both subprocesses return 1
+    When us_code_exit equals 1
+    And fed_reg_exit equals 1
+    Then overall_exit is calculated as 1
+    And overall_status displays "SOME TESTS FAILED"
+    And sys.exit(1) is called
 
-  Scenario: User cancels verification with keyboard interrupt
-    When I run the main verification suite
-    And the user presses Ctrl+C
-    Then the output contains "Verification cancelled by user"
-    And the exit code is 1
+  # Exception Handling in Main
 
-  # Unexpected Errors
+  Scenario: Runner exits with code 1 when KeyboardInterrupt is caught
+    When main() raises KeyboardInterrupt
+    Then output contains "Verification cancelled by user"
+    And sys.exit(1) is called
 
-  Scenario: Main verification suite encounters exception
-    When I run the main verification suite
-    And an unexpected exception occurs
-    Then the output contains "Verification suite failed with error"
-    And a traceback is printed
-    And the exit code is 1
-
-  # Completion Information
-
-  Scenario: Verification suite displays completion timestamp
-    When I run the main verification suite
-    Then the combined summary contains "Completed at:"
-    And the timestamp is in format "YYYY-MM-DD HH:MM:SS"
+  Scenario: Runner exits with code 1 when unhandled exception is caught
+    When main() raises Exception
+    Then output contains "Verification suite failed with error"
+    And traceback is printed
+    And sys.exit(1) is called
