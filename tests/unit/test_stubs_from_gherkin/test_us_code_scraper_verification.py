@@ -10,7 +10,6 @@ Feature: US Code Scraper Verification
 import pytest
 import asyncio
 from typing import Dict, Any
-from unittest.mock import Mock, patch, AsyncMock
 
 from conftest import FixtureError
 
@@ -64,30 +63,33 @@ def us_code_verifier_initialized() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def mock_get_us_code_titles():
-    """Fixture providing a mock for get_us_code_titles."""
+def get_us_code_titles_callable():
+    """Fixture providing the actual get_us_code_titles callable."""
     try:
-        return AsyncMock()
-    except Exception as e:
-        raise FixtureError(f"mock_get_us_code_titles raised an error: {e}") from e
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import get_us_code_titles
+        return get_us_code_titles
+    except ImportError as e:
+        raise FixtureError(f"get_us_code_titles_callable raised an error: {e}") from e
 
 
 @pytest.fixture
-def mock_scrape_us_code():
-    """Fixture providing a mock for scrape_us_code."""
+def scrape_us_code_callable():
+    """Fixture providing the actual scrape_us_code callable."""
     try:
-        return AsyncMock()
-    except Exception as e:
-        raise FixtureError(f"mock_scrape_us_code raised an error: {e}") from e
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_us_code
+        return scrape_us_code
+    except ImportError as e:
+        raise FixtureError(f"scrape_us_code_callable raised an error: {e}") from e
 
 
 @pytest.fixture
-def mock_search_us_code():
-    """Fixture providing a mock for search_us_code."""
+def search_us_code_callable():
+    """Fixture providing the actual search_us_code callable."""
     try:
-        return AsyncMock()
-    except Exception as e:
-        raise FixtureError(f"mock_search_us_code raised an error: {e}") from e
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import search_us_code
+        return search_us_code
+    except ImportError as e:
+        raise FixtureError(f"search_us_code_callable raised an error: {e}") from e
 
 
 # Test 1: Get US Code Titles
@@ -95,11 +97,12 @@ def mock_search_us_code():
 class TestGetUSTitles:
     """Test 1: Get US Code Titles - Verifies title list retrieval from uscode.house.gov"""
 
+    @pytest.mark.asyncio
     def test_get_titles_returns_success_status(
         self, 
         us_code_verifier_initialized, 
         summary_counters_zeroed,
-        mock_get_us_code_titles
+        get_us_code_titles_callable
     ):
         """
         Given get_us_code_titles returns a response
@@ -107,18 +110,18 @@ class TestGetUSTitles:
         Then result["status"] equals "success"
         """
         expected_status = STATUS_SUCCESS
-        mock_get_us_code_titles.return_value = {"status": STATUS_SUCCESS, "titles": {}}
         
-        result = asyncio.run(mock_get_us_code_titles())
+        result = asyncio.run(get_us_code_titles_callable())
         actual_status = result.get("status")
         
         assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
+    @pytest.mark.asyncio
     def test_get_titles_returns_50_plus_titles(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_get_us_code_titles
+        get_us_code_titles_callable
     ):
         """
         Given get_us_code_titles returns a response with titles
@@ -126,10 +129,8 @@ class TestGetUSTitles:
         Then len(result["titles"]) is greater than or equal to 50
         """
         expected_min_count = EXPECTED_MIN_TITLES
-        mock_titles = {str(i): f"Title {i}" for i in range(1, 55)}
-        mock_get_us_code_titles.return_value = {"status": STATUS_SUCCESS, "titles": mock_titles}
         
-        result = asyncio.run(mock_get_us_code_titles())
+        result = asyncio.run(get_us_code_titles_callable())
         actual_count = len(result.get("titles", {}))
         
         assert actual_count >= expected_min_count, f"expected at least {expected_min_count} titles, got {actual_count} instead"
@@ -191,11 +192,12 @@ class TestGetUSTitles:
 class TestScrapeSingleTitle:
     """Test 2: Scrape Single Title - Verifies scraping Title 1 with max_sections=10"""
 
+    @pytest.mark.asyncio
     def test_scrape_single_title_returns_data(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with titles=["1"], max_sections=10
@@ -203,21 +205,18 @@ class TestScrapeSingleTitle:
         Then len(result["data"]) is greater than 0
         """
         expected_min_data = 1
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [{"title_number": TITLE_1, "sections": []}]
-        }
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_1], max_sections=MAX_SECTIONS_SINGLE))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_1], max_sections=MAX_SECTIONS_SINGLE))
         actual_data_len = len(result.get("data", []))
         
         assert actual_data_len >= expected_min_data, f"expected data length >= {expected_min_data}, got {actual_data_len} instead"
 
+    @pytest.mark.asyncio
     def test_scrape_single_title_returns_success_status(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with titles=["1"], max_sections=10
@@ -225,9 +224,8 @@ class TestScrapeSingleTitle:
         Then result["status"] equals "success"
         """
         expected_status = STATUS_SUCCESS
-        mock_scrape_us_code.return_value = {"status": STATUS_SUCCESS, "data": []}
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_1], max_sections=MAX_SECTIONS_SINGLE))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_1], max_sections=MAX_SECTIONS_SINGLE))
         actual_status = result.get("status")
         
         assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
@@ -255,11 +253,12 @@ class TestScrapeSingleTitle:
 class TestScrapeMultipleTitles:
     """Test 3: Scrape Multiple Titles - Verifies scraping titles ["1","15","18"] with max_sections=5"""
 
+    @pytest.mark.asyncio
     def test_scrape_multiple_titles_returns_2_plus_titles(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with titles=["1","15","18"], max_sections=5
@@ -267,16 +266,8 @@ class TestScrapeMultipleTitles:
         Then sections contain title_number values from 2 or more different titles
         """
         expected_min_titles = EXPECTED_MIN_MULTIPLE_TITLES
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [
-                {"title_number": TITLE_1, "sections": []},
-                {"title_number": TITLE_15, "sections": []},
-                {"title_number": TITLE_18, "sections": []}
-            ]
-        }
         
-        result = asyncio.run(mock_scrape_us_code(
+        result = asyncio.run(scrape_us_code_callable(
             titles=[TITLE_1, TITLE_15, TITLE_18], 
             max_sections=MAX_SECTIONS_MULTIPLE
         ))
@@ -285,11 +276,12 @@ class TestScrapeMultipleTitles:
         
         assert actual_titles_count >= expected_min_titles, f"expected at least {expected_min_titles} titles, got {actual_titles_count} instead"
 
+    @pytest.mark.asyncio
     def test_scrape_multiple_titles_returns_success_status(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with titles=["1","15","18"], max_sections=5
@@ -297,9 +289,8 @@ class TestScrapeMultipleTitles:
         Then result["status"] equals "success"
         """
         expected_status = STATUS_SUCCESS
-        mock_scrape_us_code.return_value = {"status": STATUS_SUCCESS, "data": []}
         
-        result = asyncio.run(mock_scrape_us_code(
+        result = asyncio.run(scrape_us_code_callable(
             titles=[TITLE_1, TITLE_15, TITLE_18], 
             max_sections=MAX_SECTIONS_MULTIPLE
         ))
@@ -313,11 +304,12 @@ class TestScrapeMultipleTitles:
 class TestValidateDataStructure:
     """Test 4: Validate Data Structure - Checks for required fields in scraped data"""
 
+    @pytest.mark.asyncio
     def test_data_structure_contains_title_number(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code returns success with data
@@ -325,22 +317,19 @@ class TestValidateDataStructure:
         Then result["data"][0] contains "title_number"
         """
         expected_field = REQUIRED_FIELDS[0]
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [{"title_number": TITLE_15, "title_name": "Commerce", "section_number": "15.1"}]
-        }
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
         first_record = result.get("data", [{}])[0]
         field_present = expected_field in first_record
         
         assert field_present, f"expected field '{expected_field}' in data, got keys {list(first_record.keys())} instead"
 
+    @pytest.mark.asyncio
     def test_data_structure_contains_title_name(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code returns success with data
@@ -348,22 +337,19 @@ class TestValidateDataStructure:
         Then result["data"][0] contains "title_name"
         """
         expected_field = REQUIRED_FIELDS[1]
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [{"title_number": TITLE_15, "title_name": "Commerce", "section_number": "15.1"}]
-        }
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
         first_record = result.get("data", [{}])[0]
         field_present = expected_field in first_record
         
         assert field_present, f"expected field '{expected_field}' in data, got keys {list(first_record.keys())} instead"
 
+    @pytest.mark.asyncio
     def test_data_structure_contains_section_number(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code returns success with data
@@ -371,12 +357,8 @@ class TestValidateDataStructure:
         Then result["data"][0] contains "section_number"
         """
         expected_field = REQUIRED_FIELDS[2]
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [{"title_number": TITLE_15, "title_name": "Commerce", "section_number": "15.1"}]
-        }
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_15], max_sections=MAX_SECTIONS_STRUCTURE))
         first_record = result.get("data", [{}])[0]
         field_present = expected_field in first_record
         
@@ -388,11 +370,12 @@ class TestValidateDataStructure:
 class TestSearchFunctionality:
     """Test 5: Search Functionality - Searches for "commerce" in Title 15"""
 
+    @pytest.mark.asyncio
     def test_search_returns_results(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_search_us_code
+        search_us_code_callable
     ):
         """
         Given search_us_code is called with query="commerce", titles=["15"], limit=5
@@ -400,12 +383,8 @@ class TestSearchFunctionality:
         Then len(result["results"]) is greater than 0
         """
         expected_min_results = 1
-        mock_search_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "results": [{"title": "Commerce Act", "snippet": "test"}]
-        }
         
-        result = asyncio.run(mock_search_us_code(
+        result = asyncio.run(search_us_code_callable(
             query=SEARCH_QUERY,
             titles=[TITLE_15],
             limit=SEARCH_LIMIT
@@ -414,11 +393,12 @@ class TestSearchFunctionality:
         
         assert actual_results_len >= expected_min_results, f"expected at least {expected_min_results} results, got {actual_results_len} instead"
 
+    @pytest.mark.asyncio
     def test_search_returns_success_status(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_search_us_code
+        search_us_code_callable
     ):
         """
         Given search_us_code is called with query="commerce", titles=["15"], limit=5
@@ -426,9 +406,8 @@ class TestSearchFunctionality:
         Then result["status"] equals "success"
         """
         expected_status = STATUS_SUCCESS
-        mock_search_us_code.return_value = {"status": STATUS_SUCCESS, "results": []}
         
-        result = asyncio.run(mock_search_us_code(
+        result = asyncio.run(search_us_code_callable(
             query=SEARCH_QUERY,
             titles=[TITLE_15],
             limit=SEARCH_LIMIT
@@ -443,11 +422,12 @@ class TestSearchFunctionality:
 class TestMetadataInclusion:
     """Test 6: Metadata Inclusion - Verifies metadata field is present when requested"""
 
+    @pytest.mark.asyncio
     def test_metadata_exists_when_requested(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with include_metadata=True
@@ -455,13 +435,8 @@ class TestMetadataInclusion:
         Then bool(result["metadata"]) is True
         """
         expected_metadata_present = True
-        mock_scrape_us_code.return_value = {
-            "status": STATUS_SUCCESS,
-            "data": [],
-            "metadata": {"scraped_at": "2024-01-01"}
-        }
         
-        result = asyncio.run(mock_scrape_us_code(titles=[TITLE_1], include_metadata=True))
+        result = asyncio.run(scrape_us_code_callable(titles=[TITLE_1], include_metadata=True))
         actual_metadata_present = bool(result.get("metadata"))
         
         assert actual_metadata_present == expected_metadata_present, f"expected metadata present={expected_metadata_present}, got {actual_metadata_present} instead"
@@ -472,11 +447,12 @@ class TestMetadataInclusion:
 class TestRateLimiting:
     """Test 7: Rate Limiting - Verifies delay between requests is honored"""
 
+    @pytest.mark.asyncio
     def test_rate_limiting_parameter_accepted(
         self,
         us_code_verifier_initialized,
         summary_counters_zeroed,
-        mock_scrape_us_code
+        scrape_us_code_callable
     ):
         """
         Given scrape_us_code is called with rate_limit_delay=2.0
@@ -484,9 +460,8 @@ class TestRateLimiting:
         Then result["status"] equals "success"
         """
         expected_status = STATUS_SUCCESS
-        mock_scrape_us_code.return_value = {"status": STATUS_SUCCESS, "data": []}
         
-        result = asyncio.run(mock_scrape_us_code(
+        result = asyncio.run(scrape_us_code_callable(
             titles=[TITLE_1],
             rate_limit_delay=RATE_LIMIT_DELAY_SECONDS,
             max_sections=MAX_SECTIONS_STRUCTURE
