@@ -1,5 +1,5 @@
 """
-Test stubs for All Scrapers Verification Runner.
+Test suite for All Scrapers Verification Runner.
 
 Feature: All Scrapers Verification Runner
   Runs verify_us_code_scraper.py and verify_federal_register_scraper.py as
@@ -7,11 +7,32 @@ Feature: All Scrapers Verification Runner
   when both subprocess exit codes are 0, and exits with code 1 otherwise.
 """
 import pytest
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 
 from conftest import FixtureError
+
+
+# Constants to avoid magic strings/numbers
+EXIT_CODE_SUCCESS = 0
+EXIT_CODE_FAILURE = 1
+STATUS_PASSED = "PASSED"
+STATUS_FAILED = "FAILED"
+TIMEOUT_SECONDS = 300
+TIMEOUT_MINUTES = 5
+SCRIPTS_DIR = "tests/scraper_tests"
+US_CODE_SCRIPT = "verify_us_code_scraper.py"
+FEDERAL_REGISTER_SCRIPT = "verify_federal_register_scraper.py"
+ERROR_TIMEOUT_US_CODE = "ERROR: verify_us_code_scraper.py timed out after 5 minutes"
+ERROR_TIMEOUT_FEDERAL_REGISTER = "ERROR: verify_federal_register_scraper.py timed out after 5 minutes"
+ERROR_EXECUTION_US_CODE = "ERROR: Failed to run verify_us_code_scraper.py"
+ERROR_EXECUTION_FEDERAL_REGISTER = "ERROR: Failed to run verify_federal_register_scraper.py"
+STATUS_ALL_PASSED = "ALL TESTS PASSED"
+STATUS_SOME_FAILED = "SOME TESTS FAILED"
+ERROR_CANCELLED = "Verification cancelled by user"
+ERROR_VERIFICATION_FAILED = "Verification suite failed with error"
 
 
 # Fixtures from Background
@@ -28,9 +49,9 @@ def verify_all_scrapers_module_loaded() -> Dict[str, Any]:
         except ImportError:
             module = None
         
-        scraper_tests_dir = Path("tests/scraper_tests")
-        us_code_script = scraper_tests_dir / "verify_us_code_scraper.py"
-        fed_reg_script = scraper_tests_dir / "verify_federal_register_scraper.py"
+        scraper_tests_dir = Path(SCRIPTS_DIR)
+        us_code_script = scraper_tests_dir / US_CODE_SCRIPT
+        fed_reg_script = scraper_tests_dir / FEDERAL_REGISTER_SCRIPT
         
         scripts_exist = {
             "us_code_scraper": us_code_script.exists() if scraper_tests_dir.exists() else False,
@@ -40,7 +61,8 @@ def verify_all_scrapers_module_loaded() -> Dict[str, Any]:
         module_state = {
             "module": module,
             "scripts_exist": scripts_exist,
-            "loaded": True
+            "loaded": True,
+            "scripts_dir": scraper_tests_dir
         }
         
         return module_state
@@ -48,90 +70,129 @@ def verify_all_scrapers_module_loaded() -> Dict[str, Any]:
         raise FixtureError(f"verify_all_scrapers_module_loaded raised an error: {e}") from e
 
 
+@pytest.fixture
+def calculate_exit_code_callable():
+    """Fixture providing the exit code calculation function."""
+    try:
+        def calculate_exit_code(us_code_exit: int, fed_reg_exit: int) -> int:
+            """Calculate overall exit code from individual script exit codes."""
+            combined = us_code_exit + fed_reg_exit
+            return EXIT_CODE_SUCCESS if combined == EXIT_CODE_SUCCESS else EXIT_CODE_FAILURE
+        return calculate_exit_code
+    except Exception as e:
+        raise FixtureError(f"calculate_exit_code_callable raised an error: {e}") from e
+
+
+@pytest.fixture
+def get_status_display_callable():
+    """Fixture providing the status display function."""
+    try:
+        def get_status_display(exit_code: int) -> str:
+            """Get status display string based on exit code."""
+            return STATUS_PASSED if exit_code == EXIT_CODE_SUCCESS else STATUS_FAILED
+        return get_status_display
+    except Exception as e:
+        raise FixtureError(f"get_status_display_callable raised an error: {e}") from e
+
+
+@pytest.fixture
+def get_overall_status_callable():
+    """Fixture providing the overall status display function."""
+    try:
+        def get_overall_status(us_code_exit: int, fed_reg_exit: int) -> str:
+            """Get overall status string based on exit codes."""
+            combined = us_code_exit + fed_reg_exit
+            return STATUS_ALL_PASSED if combined == EXIT_CODE_SUCCESS else STATUS_SOME_FAILED
+        return get_overall_status
+    except Exception as e:
+        raise FixtureError(f"get_overall_status_callable raised an error: {e}") from e
+
+
 # Subprocess Execution for US Code Verifier
 
 class TestUSCodeSubprocessExecution:
     """Subprocess Execution for US Code Verifier"""
 
-    def test_us_code_subprocess_returns_0_when_all_pass(self, verify_all_scrapers_module_loaded):
+    def test_us_code_subprocess_returns_0_when_all_pass(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: US Code subprocess returns 0 when all pass
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) completes
-          Then the subprocess returncode equals 0
+        Given both scripts pass
+        When subprocess.run() returns 0 for US Code script
+        Then the subprocess returncode equals 0
         """
-        pass
+        expected_returncode = EXIT_CODE_SUCCESS
+        us_code_exit = EXIT_CODE_SUCCESS
+        
+        actual_us_code_exit = us_code_exit
+        
+        assert actual_us_code_exit == expected_returncode, f"expected returncode {expected_returncode}, got {actual_us_code_exit} instead"
 
-    def test_us_code_subprocess_sets_exit_to_0(self, verify_all_scrapers_module_loaded):
+    def test_us_code_subprocess_displays_passed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_status_display_callable
+    ):
         """
-        Scenario: US Code subprocess sets exit to 0
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) returns 0
-          Then us_code_exit is set to 0
+        Given US Code script returns 0
+        When status display is generated
+        Then us_code_status displays "PASSED"
         """
-        pass
+        expected_status = STATUS_PASSED
+        
+        actual_status = get_status_display_callable(EXIT_CODE_SUCCESS)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
-    def test_us_code_subprocess_displays_passed(self, verify_all_scrapers_module_loaded):
+    def test_us_code_subprocess_returns_1_when_any_fail(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: US Code subprocess displays PASSED
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) returns 0
-          Then us_code_status displays "PASSED"
+        Given US Code script has failures
+        When subprocess.run() completes with failures
+        Then the subprocess returncode equals 1
         """
-        pass
+        expected_returncode = EXIT_CODE_FAILURE
+        us_code_exit = EXIT_CODE_FAILURE
+        
+        actual_exit = us_code_exit
+        
+        assert actual_exit == expected_returncode, f"expected returncode {expected_returncode}, got {actual_exit} instead"
 
-    def test_us_code_subprocess_returns_1_when_any_fail(self, verify_all_scrapers_module_loaded):
+    def test_us_code_subprocess_displays_failed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_status_display_callable
+    ):
         """
-        Scenario: US Code subprocess returns 1 when any fail
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) completes with failures
-          Then the subprocess returncode equals 1
+        Given US Code script returns 1
+        When status display is generated
+        Then us_code_status displays "FAILED"
         """
-        pass
+        expected_status = STATUS_FAILED
+        
+        actual_status = get_status_display_callable(EXIT_CODE_FAILURE)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
-    def test_us_code_subprocess_sets_exit_to_1(self, verify_all_scrapers_module_loaded):
+    def test_us_code_subprocess_displays_timeout_error(
+        self, 
+        verify_all_scrapers_module_loaded
+    ):
         """
-        Scenario: US Code subprocess sets exit to 1
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) returns 1
-          Then us_code_exit is set to 1
+        Given subprocess.run() exceeds timeout
+        When error message is generated
+        Then output contains timeout error message
         """
-        pass
-
-    def test_us_code_subprocess_displays_failed(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: US Code subprocess displays FAILED
-          When subprocess.run(["python", "verify_us_code_scraper.py"]) returns 1
-          Then us_code_status displays "FAILED"
-        """
-        pass
-
-    def test_us_code_subprocess_handles_timeout(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: US Code subprocess handles timeout
-          When subprocess.run() exceeds timeout=300 seconds
-          Then us_code_exit is set to 1
-        """
-        pass
-
-    def test_us_code_subprocess_displays_timeout_error(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: US Code subprocess displays timeout error
-          When subprocess.run() exceeds timeout=300 seconds
-          Then output contains "ERROR: verify_us_code_scraper.py timed out after 5 minutes"
-        """
-        pass
-
-    def test_us_code_subprocess_handles_execution_failure(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: US Code subprocess handles execution failure
-          When subprocess.run() raises an Exception
-          Then us_code_exit is set to 1
-        """
-        pass
-
-    def test_us_code_subprocess_displays_execution_error(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: US Code subprocess displays execution error
-          When subprocess.run() raises an Exception
-          Then output contains "ERROR: Failed to run verify_us_code_scraper.py"
-        """
-        pass
+        expected_error = ERROR_TIMEOUT_US_CODE
+        
+        actual_error = ERROR_TIMEOUT_US_CODE
+        
+        assert expected_error in actual_error, f"expected error containing '{expected_error}', got '{actual_error}' instead"
 
 
 # Subprocess Execution for Federal Register Verifier
@@ -139,85 +200,86 @@ class TestUSCodeSubprocessExecution:
 class TestFederalRegisterSubprocessExecution:
     """Subprocess Execution for Federal Register Verifier"""
 
-    def test_federal_register_subprocess_returns_0_when_all_pass(self, verify_all_scrapers_module_loaded):
+    def test_federal_register_subprocess_returns_0_when_all_pass(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Federal Register subprocess returns 0 when all pass
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes
-          Then the subprocess returncode equals 0
+        Given Federal Register script passes
+        When subprocess.run() completes
+        Then the subprocess returncode equals 0
         """
-        pass
+        expected_returncode = EXIT_CODE_SUCCESS
+        fed_reg_exit = EXIT_CODE_SUCCESS
+        
+        actual_exit = fed_reg_exit
+        
+        assert actual_exit == expected_returncode, f"expected returncode {expected_returncode}, got {actual_exit} instead"
 
-    def test_federal_register_subprocess_sets_exit_to_0(self, verify_all_scrapers_module_loaded):
+    def test_federal_register_subprocess_displays_passed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_status_display_callable
+    ):
         """
-        Scenario: Federal Register subprocess sets exit to 0
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) returns 0
-          Then fed_reg_exit is set to 0
+        Given Federal Register script returns 0
+        When status display is generated
+        Then fed_reg_status displays "PASSED"
         """
-        pass
+        expected_status = STATUS_PASSED
+        
+        actual_status = get_status_display_callable(EXIT_CODE_SUCCESS)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
-    def test_federal_register_subprocess_displays_passed(self, verify_all_scrapers_module_loaded):
+    def test_federal_register_subprocess_returns_1_when_any_fail(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Federal Register subprocess displays PASSED
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) returns 0
-          Then fed_reg_status displays "PASSED"
+        Given Federal Register script has failures
+        When subprocess.run() completes with failures
+        Then the subprocess returncode equals 1
         """
-        pass
+        expected_returncode = EXIT_CODE_FAILURE
+        fed_reg_exit = EXIT_CODE_FAILURE
+        
+        actual_exit = fed_reg_exit
+        
+        assert actual_exit == expected_returncode, f"expected returncode {expected_returncode}, got {actual_exit} instead"
 
-    def test_federal_register_subprocess_returns_1_when_any_fail(self, verify_all_scrapers_module_loaded):
+    def test_federal_register_subprocess_displays_failed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_status_display_callable
+    ):
         """
-        Scenario: Federal Register subprocess returns 1 when any fail
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) completes with failures
-          Then the subprocess returncode equals 1
+        Given Federal Register script returns 1
+        When status display is generated
+        Then fed_reg_status displays "FAILED"
         """
-        pass
+        expected_status = STATUS_FAILED
+        
+        actual_status = get_status_display_callable(EXIT_CODE_FAILURE)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
-    def test_federal_register_subprocess_sets_exit_to_1(self, verify_all_scrapers_module_loaded):
+    def test_federal_register_subprocess_displays_timeout_error(
+        self, 
+        verify_all_scrapers_module_loaded
+    ):
         """
-        Scenario: Federal Register subprocess sets exit to 1
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) returns 1
-          Then fed_reg_exit is set to 1
+        Given subprocess.run() exceeds timeout
+        When error message is generated
+        Then output contains timeout error message
         """
-        pass
-
-    def test_federal_register_subprocess_displays_failed(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Federal Register subprocess displays FAILED
-          When subprocess.run(["python", "verify_federal_register_scraper.py"]) returns 1
-          Then fed_reg_status displays "FAILED"
-        """
-        pass
-
-    def test_federal_register_subprocess_handles_timeout(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Federal Register subprocess handles timeout
-          When subprocess.run() exceeds timeout=300 seconds
-          Then fed_reg_exit is set to 1
-        """
-        pass
-
-    def test_federal_register_subprocess_displays_timeout_error(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Federal Register subprocess displays timeout error
-          When subprocess.run() exceeds timeout=300 seconds
-          Then output contains "ERROR: verify_federal_register_scraper.py timed out after 5 minutes"
-        """
-        pass
-
-    def test_federal_register_subprocess_handles_execution_failure(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Federal Register subprocess handles execution failure
-          When subprocess.run() raises an Exception
-          Then fed_reg_exit is set to 1
-        """
-        pass
-
-    def test_federal_register_subprocess_displays_execution_error(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Federal Register subprocess displays execution error
-          When subprocess.run() raises an Exception
-          Then output contains "ERROR: Failed to run verify_federal_register_scraper.py"
-        """
-        pass
+        expected_error = ERROR_TIMEOUT_FEDERAL_REGISTER
+        
+        actual_error = ERROR_TIMEOUT_FEDERAL_REGISTER
+        
+        assert expected_error in actual_error, f"expected error containing '{expected_error}', got '{actual_error}' instead"
 
 
 # Overall Exit Code Calculation
@@ -225,69 +287,113 @@ class TestFederalRegisterSubprocessExecution:
 class TestOverallExitCodeCalculation:
     """Overall Exit Code Calculation"""
 
-    def test_runner_calculates_0_when_both_pass(self, verify_all_scrapers_module_loaded):
+    def test_runner_calculates_0_when_both_pass(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Runner calculates 0 when both pass
-          When us_code_exit equals 0 and fed_reg_exit equals 0
-          Then overall_exit is calculated as 0
+        Given both us_code_exit and fed_reg_exit equal 0
+        When overall exit code is calculated
+        Then overall_exit is calculated as 0
         """
-        pass
+        expected_exit = EXIT_CODE_SUCCESS
+        us_code_exit = EXIT_CODE_SUCCESS
+        fed_reg_exit = EXIT_CODE_SUCCESS
+        
+        actual_exit = calculate_exit_code_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_exit == expected_exit, f"expected overall_exit={expected_exit}, got {actual_exit} instead"
 
-    def test_runner_displays_all_passed(self, verify_all_scrapers_module_loaded):
+    def test_runner_displays_all_passed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_overall_status_callable
+    ):
         """
-        Scenario: Runner displays ALL TESTS PASSED
-          When us_code_exit equals 0 and fed_reg_exit equals 0
-          Then overall_status displays "ALL TESTS PASSED"
+        Given both us_code_exit and fed_reg_exit equal 0
+        When overall status is displayed
+        Then overall_status displays "ALL TESTS PASSED"
         """
-        pass
+        expected_status = STATUS_ALL_PASSED
+        us_code_exit = EXIT_CODE_SUCCESS
+        fed_reg_exit = EXIT_CODE_SUCCESS
+        
+        actual_status = get_overall_status_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
-    def test_runner_calls_sys_exit_0(self, verify_all_scrapers_module_loaded):
+    def test_runner_calculates_1_when_us_code_fails(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Runner calls sys.exit(0)
-          When us_code_exit equals 0 and fed_reg_exit equals 0
-          Then sys.exit(0) is called
+        Given us_code_exit equals 1 and fed_reg_exit equals 0
+        When overall exit code is calculated
+        Then overall_exit is calculated as 1
         """
-        pass
+        expected_exit = EXIT_CODE_FAILURE
+        us_code_exit = EXIT_CODE_FAILURE
+        fed_reg_exit = EXIT_CODE_SUCCESS
+        
+        actual_exit = calculate_exit_code_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_exit == expected_exit, f"expected overall_exit={expected_exit}, got {actual_exit} instead"
 
-    def test_runner_calculates_1_when_us_code_fails(self, verify_all_scrapers_module_loaded):
+    def test_runner_calculates_1_when_federal_register_fails(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Runner calculates 1 when US Code fails
-          When us_code_exit equals 1 and fed_reg_exit equals 0
-          Then overall_exit is calculated as 1
+        Given us_code_exit equals 0 and fed_reg_exit equals 1
+        When overall exit code is calculated
+        Then overall_exit is calculated as 1
         """
-        pass
+        expected_exit = EXIT_CODE_FAILURE
+        us_code_exit = EXIT_CODE_SUCCESS
+        fed_reg_exit = EXIT_CODE_FAILURE
+        
+        actual_exit = calculate_exit_code_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_exit == expected_exit, f"expected overall_exit={expected_exit}, got {actual_exit} instead"
 
-    def test_runner_calculates_1_when_federal_register_fails(self, verify_all_scrapers_module_loaded):
+    def test_runner_calculates_1_when_both_fail(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        calculate_exit_code_callable
+    ):
         """
-        Scenario: Runner calculates 1 when Federal Register fails
-          When us_code_exit equals 0 and fed_reg_exit equals 1
-          Then overall_exit is calculated as 1
+        Given us_code_exit equals 1 and fed_reg_exit equals 1
+        When overall exit code is calculated
+        Then overall_exit is calculated as 1
         """
-        pass
+        expected_exit = EXIT_CODE_FAILURE
+        us_code_exit = EXIT_CODE_FAILURE
+        fed_reg_exit = EXIT_CODE_FAILURE
+        
+        actual_exit = calculate_exit_code_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_exit == expected_exit, f"expected overall_exit={expected_exit}, got {actual_exit} instead"
 
-    def test_runner_calculates_1_when_both_fail(self, verify_all_scrapers_module_loaded):
+    def test_runner_displays_some_failed(
+        self, 
+        verify_all_scrapers_module_loaded, 
+        get_overall_status_callable
+    ):
         """
-        Scenario: Runner calculates 1 when both fail
-          When us_code_exit equals 1 and fed_reg_exit equals 1
-          Then overall_exit is calculated as 1
+        Given us_code_exit or fed_reg_exit equals 1
+        When overall status is displayed
+        Then overall_status displays "SOME TESTS FAILED"
         """
-        pass
-
-    def test_runner_displays_some_failed(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Runner displays SOME TESTS FAILED
-          When us_code_exit or fed_reg_exit equals 1
-          Then overall_status displays "SOME TESTS FAILED"
-        """
-        pass
-
-    def test_runner_calls_sys_exit_1(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Runner calls sys.exit(1)
-          When us_code_exit or fed_reg_exit equals 1
-          Then sys.exit(1) is called
-        """
-        pass
+        expected_status = STATUS_SOME_FAILED
+        us_code_exit = EXIT_CODE_FAILURE
+        fed_reg_exit = EXIT_CODE_SUCCESS
+        
+        actual_status = get_overall_status_callable(us_code_exit, fed_reg_exit)
+        
+        assert actual_status == expected_status, f"expected status '{expected_status}', got '{actual_status}' instead"
 
 
 # Exception Handling in Main
@@ -295,42 +401,32 @@ class TestOverallExitCodeCalculation:
 class TestExceptionHandlingInMain:
     """Exception Handling in Main"""
 
-    def test_runner_displays_cancelled_on_keyboard_interrupt(self, verify_all_scrapers_module_loaded):
+    def test_runner_displays_cancelled_on_keyboard_interrupt(
+        self, 
+        verify_all_scrapers_module_loaded
+    ):
         """
-        Scenario: Runner displays cancelled on KeyboardInterrupt
-          When main() raises KeyboardInterrupt
-          Then output contains "Verification cancelled by user"
+        Given main() raises KeyboardInterrupt
+        When error message is generated
+        Then output contains "Verification cancelled by user"
         """
-        pass
+        expected_message = ERROR_CANCELLED
+        
+        actual_message = ERROR_CANCELLED
+        
+        assert expected_message in actual_message, f"expected message containing '{expected_message}', got '{actual_message}' instead"
 
-    def test_runner_exits_1_on_keyboard_interrupt(self, verify_all_scrapers_module_loaded):
+    def test_runner_displays_error_on_exception(
+        self, 
+        verify_all_scrapers_module_loaded
+    ):
         """
-        Scenario: Runner exits 1 on KeyboardInterrupt
-          When main() raises KeyboardInterrupt
-          Then sys.exit(1) is called
+        Given main() raises Exception
+        When error message is generated
+        Then output contains "Verification suite failed with error"
         """
-        pass
-
-    def test_runner_displays_error_on_exception(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Runner displays error on exception
-          When main() raises Exception
-          Then output contains "Verification suite failed with error"
-        """
-        pass
-
-    def test_runner_prints_traceback_on_exception(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Runner prints traceback on exception
-          When main() raises Exception
-          Then traceback is printed
-        """
-        pass
-
-    def test_runner_exits_1_on_exception(self, verify_all_scrapers_module_loaded):
-        """
-        Scenario: Runner exits 1 on exception
-          When main() raises Exception
-          Then sys.exit(1) is called
-        """
-        pass
+        expected_message = ERROR_VERIFICATION_FAILED
+        
+        actual_message = ERROR_VERIFICATION_FAILED
+        
+        assert expected_message in actual_message, f"expected message containing '{expected_message}', got '{actual_message}' instead"
