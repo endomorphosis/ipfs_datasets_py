@@ -6,9 +6,10 @@ municipal code providers in the United States serving over 3,500+ jurisdictions.
 Municode Library provides access to municipal codes, ordinances, and local laws
 for cities, counties, and special districts across the US.
 """
+import asyncio
 import logging
-import time
 import re
+import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 from urllib.parse import urljoin, quote
@@ -17,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 # Base URL for Municode Library
 MUNICODE_BASE_URL = "https://library.municode.com"
+
+# User-Agent for HTTP requests
+USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 
 # Common municipal code categories
 CODE_CATEGORIES = [
@@ -33,6 +37,32 @@ CODE_CATEGORIES = [
     "Traffic and Vehicles",
     "Utilities",
 ]
+
+
+def _check_dependencies():
+    """Check if required dependencies are available.
+    
+    Returns:
+        tuple: (requests_available, beautifulsoup_available)
+    """
+    try:
+        import requests
+        import bs4
+        return True, True
+    except ImportError:
+        return False, False
+
+
+def _generate_jurisdiction_url(jurisdiction_name: str) -> str:
+    """Generate a Municode URL for a jurisdiction.
+    
+    Args:
+        jurisdiction_name: Name of jurisdiction (e.g., "Seattle, WA")
+        
+    Returns:
+        Generated URL string
+    """
+    return f"{MUNICODE_BASE_URL}/{quote(jurisdiction_name.lower().replace(' ', '-').replace(',', ''))}"
 
 
 async def search_municode_library(
@@ -60,17 +90,18 @@ async def search_municode_library(
     try:
         logger.info(f"Searching Municode Library: jurisdiction={jurisdiction}, state={state}, keywords={keywords}")
         
-        # Import required libraries
-        try:
-            import requests
-            from bs4 import BeautifulSoup
-        except ImportError as ie:
+        # Check dependencies
+        requests_available, bs4_available = _check_dependencies()
+        if not requests_available or not bs4_available:
             return {
                 "status": "error",
-                "error": f"Required library not available: {ie}. Install with: pip install requests beautifulsoup4",
+                "error": "Required libraries not available. Install with: pip install requests beautifulsoup4",
                 "jurisdictions": [],
                 "count": 0
             }
+        
+        import requests
+        from bs4 import BeautifulSoup
         
         search_params = {
             "jurisdiction": jurisdiction,
@@ -85,9 +116,7 @@ async def search_municode_library(
             # Approach 1: Try to fetch from Municode's jurisdiction list
             search_url = f"{MUNICODE_BASE_URL}/library"
             
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
+            headers = {'User-Agent': USER_AGENT}
             
             response = requests.get(search_url, headers=headers, timeout=30)
             
@@ -144,7 +173,7 @@ async def search_municode_library(
                 placeholder_name = f"{jurisdiction or 'Sample City'}, {state or 'XX'}"
                 jurisdictions.append({
                     "name": placeholder_name,
-                    "url": f"{MUNICODE_BASE_URL}/{quote(placeholder_name.lower().replace(' ', '-').replace(',', ''))}",
+                    "url": _generate_jurisdiction_url(placeholder_name),
                     "provider": "municode",
                     "source": "library.municode.com",
                     "state": state or "XX",
@@ -189,20 +218,19 @@ async def scrape_municode_jurisdiction(
     try:
         logger.info(f"Scraping Municode jurisdiction: {jurisdiction_name}")
         
-        # Import required libraries
-        try:
-            import requests
-            from bs4 import BeautifulSoup
-        except ImportError as ie:
+        # Check dependencies
+        requests_available, bs4_available = _check_dependencies()
+        if not requests_available or not bs4_available:
             return {
                 "status": "error",
-                "error": f"Required library not available: {ie}",
+                "error": "Required libraries not available. Install with: pip install requests beautifulsoup4",
                 "sections": []
             }
         
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        import requests
+        from bs4 import BeautifulSoup
+        
+        headers = {'User-Agent': USER_AGENT}
         
         sections = []
         
@@ -383,17 +411,18 @@ async def scrape_municode(
         logger.info(f"Starting Municode scraping: jurisdictions={jurisdictions}, states={states}")
         start_time = time.time()
         
-        # Import required libraries
-        try:
-            import requests
-            from bs4 import BeautifulSoup
-        except ImportError as ie:
+        # Check dependencies
+        requests_available, bs4_available = _check_dependencies()
+        if not requests_available or not bs4_available:
             return {
                 "status": "error",
-                "error": f"Required library not available: {ie}. Install with: pip install requests beautifulsoup4",
+                "error": "Required libraries not available. Install with: pip install requests beautifulsoup4",
                 "data": [],
                 "metadata": {}
             }
+        
+        import requests
+        from bs4 import BeautifulSoup
         
         # Build list of jurisdictions to scrape
         jurisdictions_to_scrape = []
@@ -403,7 +432,7 @@ async def scrape_municode(
             for jurisdiction in jurisdictions:
                 jurisdictions_to_scrape.append({
                     "name": jurisdiction,
-                    "url": f"{MUNICODE_BASE_URL}/{quote(jurisdiction.lower().replace(' ', '-').replace(',', ''))}"
+                    "url": _generate_jurisdiction_url(jurisdiction)
                 })
         elif states:
             # Search for jurisdictions in specified states
@@ -463,7 +492,7 @@ async def scrape_municode(
             
             # Rate limiting
             if idx < len(jurisdictions_to_scrape) - 1:
-                time.sleep(rate_limit_delay)
+                await asyncio.sleep(rate_limit_delay)
         
         elapsed_time = time.time() - start_time
         
