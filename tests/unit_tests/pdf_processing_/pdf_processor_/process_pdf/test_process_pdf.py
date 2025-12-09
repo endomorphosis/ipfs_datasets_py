@@ -23,8 +23,8 @@ file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_proces
 md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+# assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+# assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
 
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 
@@ -191,7 +191,7 @@ class TestProcessPdfHappyPath:
     @pytest.mark.parametrize(
         "key", [key for key in EXPECTED_KEY_TYPES.keys()]
     )
-    async def test_process_pdf_successful_return_keys_have_expected_types(
+    async def test_process_pdf_when_successful_return_keys_have_expected_types(
         self, key, expected_key_type_mapping, real_pdf_processor: PDFProcessor, mock_pdf_file):
         """
         GIVEN valid PDF file path

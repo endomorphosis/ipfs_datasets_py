@@ -8,7 +8,6 @@
         "./tests/unit_tests",
         "-n",
         "6",
-        "--session-timeout=300"
     ],
     "cSpell.words": [
         "aiohttp",

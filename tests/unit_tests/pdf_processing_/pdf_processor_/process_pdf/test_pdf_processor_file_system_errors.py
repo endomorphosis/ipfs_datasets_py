@@ -39,6 +39,7 @@ def nonexistent_file_path() -> str:
 @pytest.fixture
 def no_permissions_file_path(tmp_path: Path):
     """Create a file with no read permissions for testing."""
+    no_perm_file = None
     try:
         no_perm_file = tmp_path / "no_read.pdf"
         no_perm_file.write_text("test content" * 10)
@@ -46,8 +47,9 @@ def no_permissions_file_path(tmp_path: Path):
         no_perm_file.chmod(stat.S_IWUSR)
         yield str(no_perm_file)
     finally:
-        # Restore permissions to allow cleanup
-        no_perm_file.chmod(stat.S_IWUSR | stat.S_IRUSR)
+        if no_perm_file is not None:
+            # Restore permissions to allow cleanup
+            no_perm_file.chmod(stat.S_IWUSR | stat.S_IRUSR)
 
 
 @pytest.fixture
@@ -177,7 +179,7 @@ class TestProcessPdfFileSystemNonFatalErrors:
         'locked_file',
         'nonexistent_file',
     ])
-    async def test_when_file_encounters_bad_file_on_opening_then_returns_error_status(
+    async def test_when_file_encounters_bad_file_error_on_opening_then_returns_error_status(
         self, 
         scenario, 
         real_pdf_processor_defaults: PDFProcessor, 
