@@ -8,7 +8,12 @@ No imports, no implementation - just callable signatures and docstrings.
 """
 
 
-async def search_jurisdictions(state: str = None, jurisdiction: str = None, keywords: str = None, limit: int = 100) -> dict:
+async def search_jurisdictions(
+    state: "Optional[str]" = None,
+    jurisdiction: "Optional[str]" = None,
+    keywords: "Optional[str]" = None,
+    limit: int = 100
+) -> "Dict[str, Any]":
     """
     Search for jurisdictions in American Legal Publishing.
     
@@ -54,7 +59,10 @@ async def search_jurisdictions(state: str = None, jurisdiction: str = None, keyw
     raise NotImplementedError
 
 
-async def get_american_legal_jurisdictions(state: str = None, limit: int = None) -> list:
+async def get_american_legal_jurisdictions(
+    state: "Optional[str]" = None,
+    limit: "Optional[int]" = None
+) -> "List[str]":
     """
     Retrieve a list of available jurisdictions from American Legal Publishing.
     
@@ -86,7 +94,11 @@ async def get_american_legal_jurisdictions(state: str = None, limit: int = None)
     raise NotImplementedError
 
 
-async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = False, max_sections: int = None) -> dict:
+async def scrape_jurisdiction(
+    jurisdiction_url: str,
+    include_metadata: bool = False,
+    max_sections: "Optional[int]" = None
+) -> "Dict[str, Any]":
     """
     Scrape code sections from a single jurisdiction.
     
@@ -138,9 +150,15 @@ async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = Fa
     raise NotImplementedError
 
 
-async def batch_scrape(jurisdictions: list = None, states: list = None, output_format: str = "json", 
-                      include_metadata: bool = False, rate_limit_delay: float = 2.0,
-                      max_jurisdictions: int = None, max_sections_per_jurisdiction: int = None) -> dict:
+async def batch_scrape(
+    jurisdictions: "Optional[List[str]]" = None,
+    states: "Optional[List[str]]" = None,
+    output_format: str = "json",
+    include_metadata: bool = False,
+    rate_limit_delay: float = 2.0,
+    max_jurisdictions: "Optional[int]" = None,
+    max_sections_per_jurisdiction: "Optional[int]" = None
+) -> "Dict[str, Any]":
     """
     Scrape multiple jurisdictions in batch mode.
     
