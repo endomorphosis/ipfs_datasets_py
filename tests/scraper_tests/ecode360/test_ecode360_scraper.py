@@ -755,9 +755,9 @@ class TestErrorHandling:
         """
         result = mock_ecode360_invalid_html
         
-        expected_type = list
-        actual_is_list = isinstance(result["sections"], expected_type)
-        assert actual_is_list, f"expected sections to be {expected_type} but got {type(result['sections'])}"
+        expected_max_count = 0
+        actual_count = len(result.get("sections", []))
+        assert actual_count <= expected_max_count, f"expected at most {expected_max_count} sections but got {actual_count}"
 
 
 if __name__ == "__main__":
@@ -775,13 +775,7 @@ class TestRateLimiting:
         WHEN I call batch_scrape with jurisdictions ["Seattle, WA", "Portland, OR", "Tacoma, WA"]
         THEN the scraper waits at least 2.0 seconds between each request
         """
-        jurisdictions_list = ["Seattle, WA", "Portland, OR", "Tacoma, WA"]
-        
-        result = await mock_ecode360_batch_scrape(jurisdictions=jurisdictions_list)
-        
-        expected_key = "data"
-        actual_has_key = expected_key in result
-        assert actual_has_key, f"expected key {expected_key} in result but got {result}"
+        raise NotImplementedError("Rate limiting delay testing requires timing measurement not available in mock fixtures")
     
     @pytest.mark.asyncio
     async def test_minimum_rate_limit_enforces_total_elapsed_time(self, mock_ecode360_batch_scrape):
@@ -791,13 +785,7 @@ class TestRateLimiting:
         WHEN I call batch_scrape with jurisdictions ["Seattle, WA", "Portland, OR", "Tacoma, WA"]
         THEN the total elapsed time is at least 4.0 seconds
         """
-        jurisdictions_list = ["Seattle, WA", "Portland, OR", "Tacoma, WA"]
-        
-        result = await mock_ecode360_batch_scrape(jurisdictions=jurisdictions_list)
-        
-        expected_count = 3
-        actual_count = len(result.get("data", []))
-        assert actual_count == expected_count, f"expected {expected_count} jurisdictions but got {actual_count}"
+        raise NotImplementedError("Elapsed time testing requires timing measurement not available in mock fixtures")
     
     @pytest.mark.asyncio
     async def test_custom_rate_limit_enforces_delay_between_requests(self, mock_ecode360_batch_scrape):
@@ -807,14 +795,7 @@ class TestRateLimiting:
         WHEN I call batch_scrape with jurisdictions ["Seattle, WA", "Portland, OR"] and rate_limit_delay 5.0
         THEN the scraper waits at least 5.0 seconds between requests
         """
-        jurisdictions_list = ["Seattle, WA", "Portland, OR"]
-        rate_limit_delay_value = 5.0
-        
-        result = await mock_ecode360_batch_scrape(jurisdictions=jurisdictions_list, rate_limit_delay=rate_limit_delay_value)
-        
-        expected_key = "data"
-        actual_has_key = expected_key in result
-        assert actual_has_key, f"expected key {expected_key} in result but got {result}"
+        raise NotImplementedError("Rate limiting delay testing requires timing measurement not available in mock fixtures")
     
     @pytest.mark.asyncio
     async def test_custom_rate_limit_enforces_total_elapsed_time(self, mock_ecode360_batch_scrape):
@@ -824,11 +805,4 @@ class TestRateLimiting:
         WHEN I call batch_scrape with jurisdictions ["Seattle, WA", "Portland, OR"] and rate_limit_delay 5.0
         THEN the total elapsed time is at least 5.0 seconds
         """
-        jurisdictions_list = ["Seattle, WA", "Portland, OR"]
-        rate_limit_delay_value = 5.0
-        
-        result = await mock_ecode360_batch_scrape(jurisdictions=jurisdictions_list, rate_limit_delay=rate_limit_delay_value)
-        
-        expected_count = 2
-        actual_count = len(result.get("data", []))
-        assert actual_count == expected_count, f"expected {expected_count} jurisdictions but got {actual_count}"
+        raise NotImplementedError("Elapsed time testing requires timing measurement not available in mock fixtures")
