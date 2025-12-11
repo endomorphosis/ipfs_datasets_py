@@ -1,5 +1,5 @@
 """
-Municode Library Webscraper
+Municode Library Web Scraper
 
 This module provides functions for scraping municipal codes from the Municode Library
 (library.municode.com), a major provider of municipal code content for 3,500+ US jurisdictions.

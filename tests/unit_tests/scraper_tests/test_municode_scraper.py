@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Test suite for Municode Library webscraper.
+Test suite for Municode Library web scraper.
 
 Tests are based on the Gherkin scenarios defined in test_municode_scraper.feature.
 Each test corresponds to a specific scenario from the feature file.
