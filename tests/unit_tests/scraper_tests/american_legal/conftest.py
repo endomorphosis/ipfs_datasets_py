@@ -1,8 +1,8 @@
 """
-Pytest configuration and fixtures for Municode scraper tests.
+Pytest configuration and fixtures for American Legal Publishing scraper tests.
 
 Background:
-    Given the Municode Library is available at "https://library.municode.com"
+    Given the American Legal Publishing is available at "https://codelibrary.amlegal.com"
 """
 import pytest
 import sys
@@ -15,9 +15,8 @@ import asyncio
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import directly from the module file
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municode_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers.american_legal_scraper import (
     search_jurisdictions,
-    get_municode_jurisdictions,
     scrape_jurisdiction,
     batch_scrape
 )
@@ -29,9 +28,9 @@ class FixtureError(Exception):
 
 
 @pytest.fixture
-def municode_base_url():
-    """Base URL for Municode Library."""
-    return "https://library.municode.com"
+def american_legal_base_url():
+    """Base URL for American Legal Publishing."""
+    return "https://codelibrary.amlegal.com"
 
 
 @pytest.fixture
@@ -70,7 +69,7 @@ def standard_html_responses():
     """Common HTML response templates."""
     return {
         'valid_section': '<html><body><h1>1.01.020 Section Title</h1><div>Section content</div></body></html>',
-        'search_results': '<html><body><a href="/wa/seattle">Seattle, WA</a></body></html>',
+        'search_results': '<html><body><a href="/codes/seattle">Seattle, WA</a></body></html>',
         'not_found': '<html><body>Not Found</body></html>',
         'too_many_requests': '<html><body>Too Many Requests</body></html>',
         'server_error': '<html><body>Internal Server Error</body></html>',
@@ -79,7 +78,7 @@ def standard_html_responses():
 
 
 @pytest.fixture
-def mock_search_jurisdictions(create_mock_http, standard_html_responses):
+def mock_american_legal_search_jurisdictions(create_mock_http, standard_html_responses):
     """
     Fixture that mocks aiohttp responses for search_jurisdictions.
     Returns the actual function but with mocked HTTP calls.
@@ -93,16 +92,16 @@ def mock_search_jurisdictions(create_mock_http, standard_html_responses):
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction(create_mock_http, standard_html_responses):
+def mock_american_legal_scrape_jurisdiction(create_mock_http, standard_html_responses):
     """
     Fixture that mocks aiohttp responses for scrape_jurisdiction.
     Returns the actual function but with mocked HTTP calls.
     """
     async def _mock_scrape(**kwargs):
-        jurisdiction_url = kwargs.get('jurisdiction_url', '')
+        url = kwargs.get('jurisdiction_url', '')
 
         # Detect invalid URLs and return 404
-        if 'invalid' in jurisdiction_url.lower():
+        if 'invalid' in url.lower():
             mock_context = create_mock_http(404, standard_html_responses['not_found'])
         else:
             mock_context = create_mock_http(200, standard_html_responses['valid_section'])
@@ -114,7 +113,7 @@ def mock_scrape_jurisdiction(create_mock_http, standard_html_responses):
 
 
 @pytest.fixture
-def mock_batch_scrape(create_mock_http, standard_html_responses):
+def mock_american_legal_batch_scrape(create_mock_http, standard_html_responses):
     """
     Fixture that mocks aiohttp responses for batch_scrape.
     Returns the actual function but with mocked HTTP calls.
@@ -128,7 +127,7 @@ def mock_batch_scrape(create_mock_http, standard_html_responses):
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction_network_timeout():
+def mock_american_legal_network_timeout():
     """
     Mock network timeout error by patching aiohttp to raise TimeoutError.
     """
@@ -142,7 +141,7 @@ def mock_scrape_jurisdiction_network_timeout():
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction_dns_failure():
+def mock_american_legal_dns_failure():
     """
     Mock DNS resolution failure by patching aiohttp to raise aiohttp.ClientConnectorError.
     """
@@ -153,7 +152,7 @@ def mock_scrape_jurisdiction_dns_failure():
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction_http_429(create_mock_http, standard_html_responses):
+def mock_american_legal_http_429(create_mock_http, standard_html_responses):
     """
     Mock HTTP 429 Too Many Requests response.
     """
@@ -166,7 +165,7 @@ def mock_scrape_jurisdiction_http_429(create_mock_http, standard_html_responses)
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction_http_500(create_mock_http, standard_html_responses):
+def mock_american_legal_http_500(create_mock_http, standard_html_responses):
     """
     Mock HTTP 500 server error.
     """
@@ -179,7 +178,7 @@ def mock_scrape_jurisdiction_http_500(create_mock_http, standard_html_responses)
 
 
 @pytest.fixture
-def mock_scrape_jurisdiction_invalid_html(create_mock_http, standard_html_responses):
+def mock_american_legal_invalid_html(create_mock_http, standard_html_responses):
     """
     Mock invalid HTML response.
     """
@@ -192,23 +191,23 @@ def mock_scrape_jurisdiction_invalid_html(create_mock_http, standard_html_respon
 
 
 @pytest.fixture
-def sample_jurisdiction_data():
+def sample_american_legal_jurisdiction_data():
     """Sample jurisdiction data for testing."""
     return {
         "name": "Seattle, WA",
         "state": "WA",
-        "url": "https://library.municode.com/wa/seattle",
-        "provider": "municode"
+        "url": "https://codelibrary.amlegal.com/codes/seattle",
+        "provider": "american_legal"
     }
 
 
 @pytest.fixture
-def sample_section_data():
+def sample_american_legal_section_data():
     """Sample code section data for testing."""
     return {
         "section_number": "1.01.020",
         "title": "Definitions",
         "text": "For purposes of this code...",
-        "source_url": "https://library.municode.com/wa/seattle/codes/municipal_code?nodeId=TIT1GEPR",
+        "source_url": "https://codelibrary.amlegal.com/codes/seattle/1_01_020",
         "scraped_at": "2024-12-08T12:00:00Z"
     }

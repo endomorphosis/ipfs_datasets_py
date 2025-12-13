@@ -1,18 +1,22 @@
 """
-American Legal Publishing Webscraper
+eCode360 Webscraper
 
-This module provides functions for scraping municipal codes from American Legal Publishing
-(codelibrary.amlegal.com), a major provider of municipal code content for 2,180+ US jurisdictions.
-
-No imports, no implementation - just callable signatures and docstrings.
+This module provides functions for scraping municipal codes from eCode360
+(ecode360.com), a major provider of municipal code content for US jurisdictions.
 """
+from typing import Any, Dict, Optional
 
 
-async def search_jurisdictions(state: str = None, jurisdiction: str = None, keywords: str = None, limit: int = 100) -> dict:
+async def search_jurisdictions(
+    state: Optional[str] = None,
+    jurisdiction: Optional[str] = None,
+    keywords: Optional[str] = None,
+    limit: int = 100
+) -> Dict[str, Any]:
     """
-    Search for jurisdictions in American Legal Publishing.
+    Search for jurisdictions in eCode360.
     
-    Searches the American Legal Publishing database for jurisdictions matching the specified
+    Searches the eCode360 database for jurisdictions matching the specified
     criteria. Can filter by state code, jurisdiction name, or keywords. Returns a
     list of matching jurisdictions with their metadata.
     
@@ -30,13 +34,13 @@ async def search_jurisdictions(state: str = None, jurisdiction: str = None, keyw
                 - url (str): URL to the jurisdiction's code library
                 - code_url (str): Direct URL to the code content
                 - last_updated (str): ISO 8601 timestamp of last update
-                - provider (str): Always "american_legal"
+                - provider (str): Always "ecode360"
             - total (int): Total number of matching jurisdictions
             - limit (int): Applied limit value
     
     Raises:
         ValueError: If state code is invalid or limit is negative.
-        ConnectionError: If unable to connect to American Legal Publishing.
+        ConnectionError: If unable to connect to eCode360.
         TimeoutError: If the request times out.
     
     Example:
@@ -54,11 +58,15 @@ async def search_jurisdictions(state: str = None, jurisdiction: str = None, keyw
     raise NotImplementedError
 
 
-async def get_american_legal_jurisdictions(state: str = None, limit: int = None) -> list:
+
+async def get_ecode360_jurisdictions(
+    state: Optional[str] = None,
+    limit: Optional[int] = None
+) -> list[str]:
     """
-    Retrieve a list of available jurisdictions from American Legal Publishing.
+    Retrieve a list of available jurisdictions from eCode360.
     
-    Fetches all jurisdictions available in American Legal Publishing, optionally filtered
+    Fetches all jurisdictions available in eCode360, optionally filtered
     by state. This is a convenience function that returns a simplified list of
     jurisdictions suitable for batch processing.
     
@@ -70,13 +78,13 @@ async def get_american_legal_jurisdictions(state: str = None, limit: int = None)
         list: List of jurisdiction strings in format "City, ST" (e.g., "Seattle, WA").
     
     Raises:
-        ConnectionError: If unable to connect to American Legal Publishing.
+        ConnectionError: If unable to connect to eCode360.
         ValueError: If state code is invalid.
     
     Example:
         >>> import asyncio
         >>> async def example():
-        ...     jurisdictions = await get_american_legal_jurisdictions(state="CA", limit=3)
+        ...     jurisdictions = await get_ecode360_jurisdictions(state="CA", limit=3)
         ...     print(f"California jurisdictions: {jurisdictions}")
         ...     return jurisdictions
         >>> asyncio.run(example())
@@ -85,12 +93,15 @@ async def get_american_legal_jurisdictions(state: str = None, limit: int = None)
     """
     raise NotImplementedError
 
-
-async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = False, max_sections: int = None) -> dict:
+async def scrape_jurisdiction(
+    jurisdiction_url: str,
+    include_metadata: bool = False,
+    max_sections: Optional[int] = None
+) -> Dict[str, Any]:
     """
     Scrape code sections from a single jurisdiction.
     
-    Extracts all code sections from a specific jurisdiction in American Legal Publishing.
+    Extracts all code sections from a specific jurisdiction in eCode360.
     Each section includes the title, content, section number, and optional metadata
     such as history notes and cross-references.
     
@@ -114,7 +125,7 @@ async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = Fa
                 - cross_references (list, optional): Related sections if include_metadata=True
             - total_sections (int): Total number of sections scraped
             - timestamp (str): ISO 8601 timestamp when scraped
-            - provider (str): Always "american_legal"
+            - provider (str): Always "ecode360"
     
     Raises:
         ValueError: If jurisdiction_url is invalid or malformed.
@@ -125,7 +136,7 @@ async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = Fa
     Example:
         >>> import asyncio
         >>> async def example():
-        ...     url = "https://codelibrary.amlegal.com/codes/seattle"
+        ...     url = "https://ecode360.com/seattle"
         ...     result = await scrape_jurisdiction(url, include_metadata=True, max_sections=2)
         ...     print(f"Scraped {result['total_sections']} sections from {result['jurisdiction']}")
         ...     print(f"First section: {result['sections'][0]['title']}")
@@ -138,9 +149,15 @@ async def scrape_jurisdiction(jurisdiction_url: str, include_metadata: bool = Fa
     raise NotImplementedError
 
 
-async def batch_scrape(jurisdictions: list = None, states: list = None, output_format: str = "json", 
-                      include_metadata: bool = False, rate_limit_delay: float = 2.0,
-                      max_jurisdictions: int = None, max_sections_per_jurisdiction: int = None) -> dict:
+async def batch_scrape(
+    jurisdictions: Optional[list[str]] = None,
+    states: Optional[list[str]] = None,
+    output_format: str = "json",
+    include_metadata: bool = False,
+    rate_limit_delay: float = 2.0,
+    max_jurisdictions: Optional[int] = None,
+    max_sections_per_jurisdiction: Optional[int] = None
+) -> Dict[str, Any]:
     """
     Scrape multiple jurisdictions in batch mode.
     
@@ -175,14 +192,14 @@ async def batch_scrape(jurisdictions: list = None, states: list = None, output_f
                 - start_time (str): ISO 8601 timestamp when scraping started
                 - end_time (str): ISO 8601 timestamp when scraping completed
                 - duration_seconds (float): Total scraping duration
-                - provider (str): Always "american_legal"
+                - provider (str): Always "ecode360"
             - output_format (str): Format of the results
             - errors (list): List of any errors encountered during scraping
     
     Raises:
         ValueError: If both jurisdictions and states are None, or if output_format
             is invalid.
-        ConnectionError: If unable to connect to American Legal Publishing.
+        ConnectionError: If unable to connect to eCode360.
         TimeoutError: If requests consistently timeout.
     
     Example:

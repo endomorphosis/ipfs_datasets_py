@@ -81,51 +81,52 @@ async def search_jurisdictions(
                     raise ConnectionError(f"Failed to connect to Municode Library: HTTP {status}")
                 
                 html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                # Parse jurisdictions from the page
-                # TODO This is a simplified parser - real implementation would parse actual Municode structure
-                links = soup.find_all('a', href=re.compile(r'/[a-z]{2}/[^/]+'))
-                
-                for link in links:
-                    if not hasattr(link, 'get'):
-                        continue
-                    href = str(link.get('href', '')) if link.get('href') else ''
-                    text = link.get_text(strip=True)
-                    
-                    if not href or not text:
-                        continue
-                    
-                    # Extract state and jurisdiction from URL pattern /state/jurisdiction
-                    match = re.match(r'/([a-z]{2})/([^/]+)', href)
-                    if match:
-                        url_state = match.group(1).upper()
 
-                        # Filter by state if specified
-                        if state and url_state != state.upper():
-                            continue
-                        
-                        # Filter by jurisdiction name if specified
-                        if jurisdiction and jurisdiction.lower() not in text.lower():
-                            continue
-                        
-                        # Filter by keywords if specified
-                        if keywords and keywords.lower() not in text.lower() and keywords.lower() not in href.lower():
-                            continue
-                        
-                        full_url = f"{base_url}{href}" if not href.startswith('http') else href
-                        
-                        jurisdictions_list.append({
-                            "name": text,
-                            "state": url_state,
-                            "url": full_url,
-                            "code_url": full_url,
-                            "provider": "municode",
-                            "last_updated": datetime.now().isoformat() + "Z"
-                        })
-                        
-                        if len(jurisdictions_list) >= limit:
-                            break
+            soup = BeautifulSoup(html, 'html.parser')
+            
+            # Parse jurisdictions from the page
+            # TODO This is a simplified parser - real implementation would parse actual Municode structure
+            links = soup.find_all('a', href=re.compile(r'/[a-z]{2}/[^/]+'))
+            
+            for link in links:
+                if not hasattr(link, 'get'):
+                    continue
+                href = str(link.get('href', '')) if link.get('href') else ''
+                text = link.get_text(strip=True)
+                
+                if not href or not text:
+                    continue
+                
+                # Extract state and jurisdiction from URL pattern /state/jurisdiction
+                match = re.match(r'/([a-z]{2})/([^/]+)', href)
+                if match:
+                    url_state = match.group(1).upper()
+
+                    # Filter by state if specified
+                    if state and url_state != state.upper():
+                        continue
+                    
+                    # Filter by jurisdiction name if specified
+                    if jurisdiction and jurisdiction.lower() not in text.lower():
+                        continue
+                    
+                    # Filter by keywords if specified
+                    if keywords and keywords.lower() not in text.lower() and keywords.lower() not in href.lower():
+                        continue
+                    
+                    full_url = f"{base_url}{href}" if not href.startswith('http') else href
+                    
+                    jurisdictions_list.append({
+                        "name": text,
+                        "state": url_state,
+                        "url": full_url,
+                        "code_url": full_url,
+                        "provider": "municode",
+                        "last_updated": datetime.now().isoformat() + "Z"
+                    })
+                    
+                    if len(jurisdictions_list) >= limit:
+                        break
     
     except asyncio.TimeoutError:
         raise TimeoutError("Request to Municode Library timed out")
