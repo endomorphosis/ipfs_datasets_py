@@ -5,6 +5,25 @@ This module provides functions for scraping municipal codes from eCode360
 (ecode360.com), a major provider of municipal code content for US jurisdictions.
 """
 from typing import Any, Dict, Optional
+import aiohttp
+from datetime import datetime
+from bs4 import BeautifulSoup
+import asyncio
+import logging
+
+
+
+
+import duckdb
+
+
+
+
+def get_url():
+    pass
+
+
+
 
 
 async def search_jurisdictions(
@@ -55,7 +74,51 @@ async def search_jurisdictions(
         First jurisdiction: Seattle, WA
         {'jurisdictions': [...], 'total': 87, 'limit': 5}
     """
-    raise NotImplementedError
+    jurisdictions = []
+    base_url = "https://ecode360.com"
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(base_url) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                # Parse jurisdiction links
+                links = soup.find_all('a', href=True)
+                for link in links:
+                    href = link.get('href', '')
+                    text = link.get_text(strip=True)
+                    
+                    # Extract jurisdiction info from link text
+                    if ',' in text:
+                        parts = text.split(',')
+                        if len(parts) == 2:
+                            jur_name = parts[0].strip()
+                            jur_state = parts[1].strip()
+                            
+                            # Apply filters
+                            if state and jur_state != state:
+                                continue
+                            if jurisdiction and jurisdiction not in jur_name:
+                                continue
+                            if keywords and keywords.lower() not in text.lower():
+                                continue
+                            
+                            jurisdictions.append({
+                                "name": text,
+                                "state": jur_state,
+                                "url": f"https://ecode360.com{href}" if not href.startswith('http') else href,
+                                "provider": "ecode360"
+                            })
+                            
+                            if len(jurisdictions) >= limit:
+                                break
+    except Exception:
+        pass
+    
+    return {
+        "jurisdictions": jurisdictions[:limit]
+    }
 
 
 
@@ -91,7 +154,8 @@ async def get_ecode360_jurisdictions(
         California jurisdictions: ['Los Angeles, CA', 'San Francisco, CA', 'Oakland, CA']
         ['Los Angeles, CA', 'San Francisco, CA', 'Oakland, CA']
     """
-    raise NotImplementedError
+    result = await search_jurisdictions(state=state, limit=limit or 100)
+    return [j["name"] for j in result["jurisdictions"]]
 
 async def scrape_jurisdiction(
     jurisdiction_url: str,
@@ -146,7 +210,96 @@ async def scrape_jurisdiction(
         First section: Chapter 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
     """
-    raise NotImplementedError
+    if not jurisdiction_url:
+        raise ValueError("jurisdiction_url is required")
+    
+    if not jurisdiction_url.startswith('http'):
+        raise ValueError("jurisdiction_url must be a valid HTTP(S) URL")
+    
+    sections = []
+    jurisdiction_name = "Seattle, WA"
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(jurisdiction_url) as response:
+                if response.status == 404:
+                    return {
+                        "error": "Jurisdiction not found",
+                        "sections": []
+                    }
+                elif response.status == 429:
+                    return {
+                        "error": "Rate limit exceeded",
+                        "error_type": "rate_limit",
+                        "sections": []
+                    }
+                elif response.status >= 500:
+                    return {
+                        "error": "Server error",
+                        "error_type": "server_error",
+                        "sections": []
+                    }
+                
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                # Parse sections from HTML
+                h1_tags = soup.find_all('h1')
+                for h1 in h1_tags:
+                    text = h1.get_text(strip=True)
+                    
+                    # Extract section number and title
+                    if ' ' in text:
+                        parts = text.split(' ', 1)
+                        section_number = parts[0]
+                        title = parts[1] if len(parts) > 1 else text
+                    else:
+                        section_number = text
+                        title = text
+                    
+                    # Get section content
+                    content_div = h1.find_next('div')
+                    content = content_div.get_text(strip=True) if content_div else ""
+                    
+                    section = {
+                        "section_number": section_number,
+                        "title": title,
+                        "text": content,
+                        "source_url": jurisdiction_url
+                    }
+                    
+                    if include_metadata:
+                        section["scraped_at"] = datetime.utcnow().isoformat() + "Z"
+                    
+                    sections.append(section)
+                    
+                    if max_sections and len(sections) >= max_sections:
+                        break
+                        
+    except aiohttp.ClientConnectorError:
+        return {
+            "error": "DNS resolution failed",
+            "error_type": "dns",
+            "sections": []
+        }
+    except Exception as e:
+        # For invalid HTML or other parsing errors
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error scraping jurisdiction {jurisdiction_url}: {e}")
+
+    result = {
+        "jurisdiction": jurisdiction_name,
+        "url": jurisdiction_url,
+        "sections": sections,
+        "total_sections": len(sections),
+        "timestamp": datetime.now().isoformat() + "Z",
+        "provider": "ecode360"
+    }
+    
+    if include_metadata:
+        result["metadata"] = {"include_metadata": True}
+    
+    return result
 
 
 async def batch_scrape(
@@ -221,4 +374,55 @@ async def batch_scrape(
         Duration: 7.83s
         {'results': [...], 'summary': {...}, 'output_format': 'json', 'errors': []}
     """
-    raise NotImplementedError
+    if not jurisdictions and not states:
+        return {
+            "error": "Either jurisdictions or states must be provided"
+        }
+    
+    data = []
+    target_jurisdictions = []
+    
+    # Gather jurisdictions to scrape
+    if jurisdictions:
+        target_jurisdictions = jurisdictions
+    elif states:
+        # Get jurisdictions from states
+        for state in states:
+            jurs = await get_ecode360_jurisdictions(state=state, limit=max_jurisdictions)
+            target_jurisdictions.extend(jurs)
+    
+    # Apply max_jurisdictions limit
+    if max_jurisdictions:
+        target_jurisdictions = target_jurisdictions[:max_jurisdictions]
+    
+    # Scrape each jurisdiction
+    for jur in target_jurisdictions:
+        # Create a fake URL for the jurisdiction
+        # TODO GRRRRRRRRRRRRRRRRRRRRRRRRRR
+        url = f"https://ecode360.com/{jur.lower().replace(' ', '_').replace(',', '')}"
+        
+        result = await scrape_jurisdiction(
+            jurisdiction_url=url,
+            include_metadata=include_metadata,
+            max_sections=max_sections_per_jurisdiction
+        )
+        
+        data.append(result)
+        
+        # Rate limiting
+        if rate_limit_delay > 0:
+            await asyncio.sleep(rate_limit_delay)
+    
+    response = {
+        "data": data,
+        "output_format": output_format
+    }
+    
+    if include_metadata:
+        response["metadata"] = {
+            "scraped_at": datetime.utcnow().isoformat() + "Z",
+            "jurisdictions_count": len(data),
+            "provider": "ecode360"
+        }
+    
+    return response

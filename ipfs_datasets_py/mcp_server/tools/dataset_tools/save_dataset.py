@@ -10,8 +10,14 @@ from typing import Dict, Any, Optional, Union
 from ipfs_datasets_py.mcp_server.logger import logger
 
 
+try:
+    from ipfs_datasets_py.dataset_manager import DatasetManager
+except ImportError:
+    raise ImportError("DatasetManager module is required for saving datasets.")
+
+
 async def save_dataset(
-    dataset_data: Union[str, Dict[str, Any]],
+    dataset_data: str | Dict[str, Any],
     destination: str,
     format: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None
@@ -101,7 +107,7 @@ async def save_dataset(
 
         # Import the dataset manager
         try:
-            from ipfs_datasets_py.dataset_manager import DatasetManager
+
 
             # Create a manager instance
             manager = DatasetManager()
@@ -114,14 +120,12 @@ async def save_dataset(
 
         except ImportError as e:
             # For testing, create a mock save response
-            logger.warning(f"Dataset manager not available, creating mock response: {e}")
+            logger.error(f"Dataset manager not available: {e}")
             return {
-                "status": "success",
+                "status": "error",
+                "message": f"Dataset manager not available: {e}",
                 "dataset_id": dataset_id,
-                "destination": destination,
-                "format": format or "json",
-                "location": destination,
-                "size": 1024  # Mock size
+                "destination": destination
             }
 
         # Return information about the saved dataset

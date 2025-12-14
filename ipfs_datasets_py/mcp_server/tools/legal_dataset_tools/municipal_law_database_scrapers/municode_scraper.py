@@ -4,16 +4,14 @@ Municode Library Web Scraper
 This module provides functions for scraping municipal codes from the Municode Library
 (library.municode.com), a major provider of municipal code content for 3,500+ US jurisdictions.
 """
-
 import asyncio
-from typing import Any, Dict, List, Optional
+import re
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+
 import aiohttp
 from bs4 import BeautifulSoup
-import re
-
-
-
 
 
 async def search_jurisdictions(
@@ -63,6 +61,9 @@ async def search_jurisdictions(
         First jurisdiction: Seattle, WA
         {'jurisdictions': [...], 'total': 145, 'limit': 5}
     """
+    if not state and not jurisdiction and not keywords:
+        raise ValueError("At least one of state, jurisdiction, or keyword must be provided")
+
     if limit < 0:
         raise ValueError("Limit cannot be negative")
     
@@ -228,12 +229,19 @@ async def scrape_jurisdiction(
         First section: Title 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
     """
+    if not isinstance(jurisdiction_url, str):
+        raise ValueError(f"jurisdiction_url must be a string, got {type(jurisdiction_url).__name__}")
+
+    jurisdiction_url = jurisdiction_url.strip()
     if not jurisdiction_url:
-        raise ValueError("jurisdiction_url is required")
+        raise ValueError("jurisdiction_url is empty")
     
     if not jurisdiction_url.startswith('http'):
-        raise ValueError("jurisdiction_url must be a valid URL")
+        raise ValueError(f"jurisdiction_url must be start with http or https, got {jurisdiction_url}")
     
+    if max_sections is not None and max_sections <= 0:
+        raise ValueError(f"max_sections must be a positive integer, got {max_sections}")
+
     sections_list = []
     jurisdiction_name = "Unknown"
     
@@ -265,66 +273,7 @@ async def scrape_jurisdiction(
                         }
                     
                     html = await response.text()
-                    soup = BeautifulSoup(html, 'html.parser')
-                    
-                    # Extract jurisdiction name from URL or page
-                    url_parts = jurisdiction_url.rstrip('/').split('/')
-                    if len(url_parts) >= 2:
-                        state_code = url_parts[-2].upper() if len(url_parts[-2]) == 2 else ""
-                        city_slug = url_parts[-1].replace('-', ' ').title()
-                        jurisdiction_name = f"{city_slug}, {state_code}" if state_code else city_slug
-                    
-                    # Try to find title or jurisdiction name in page
-                    title_tag = soup.find('title')
-                    if title_tag and title_tag.get_text():
-                        title_text = title_tag.get_text(strip=True)
-                        if '|' in title_text:
-                            jurisdiction_name = title_text.split('|')[0].strip()
-                    
-                    # Parse code sections
-                    # Look for common section patterns in municipal codes
-                    section_tags = soup.find_all(['div', 'section', 'article'], class_=re.compile(r'(section|code|chapter)', re.I))
-                    
-                    if not section_tags:
-                        # NOTE Fallback: look for any structured content
-                        section_tags = soup.find_all(['h1', 'h2', 'h3', 'h4'])
-                    
-                    for idx, tag in enumerate(section_tags, start=1):
-                        if max_sections and len(sections_list) >= max_sections:
-                            break
-                        
-                        # Extract section number and title
-                        section_text = tag.get_text(strip=True)
-                        
-                        # Try to parse section number from text
-                        section_match = re.match(r'([\d\.\-]+)\s+(.*)', section_text)
-                        if section_match:
-                            section_number = section_match.group(1)
-                            title = section_match.group(2)
-                        else:
-                            section_number = f"section_{idx}"
-                            title = section_text[:100] if section_text else f"Section {idx}"
-                        
-                        # Get content (next sibling or parent content)
-                        content = ""
-                        next_sibling = tag.find_next_sibling()
-                        if next_sibling:
-                            content = next_sibling.get_text(strip=True)
-                        elif tag.parent:
-                            content = tag.parent.get_text(strip=True)
-                        
-                        section_data = {
-                            "section_number": section_number,
-                            "title": title,
-                            "text": content or section_text,
-                            "source_url": jurisdiction_url
-                        }
-                        
-                        if include_metadata:
-                            section_data["scraped_at"] = datetime.now().isoformat() + "Z"
-                        
-                        sections_list.append(section_data)
-            
+
             except asyncio.TimeoutError:
                 return {
                     "error": "Network timeout",
@@ -337,14 +286,74 @@ async def scrape_jurisdiction(
                     "error_type": "dns",
                     "sections": []
                 }
-    
+            else:
+                soup = BeautifulSoup(html, 'html.parser')
+
+                # Extract jurisdiction name from URL or page
+                url_parts = jurisdiction_url.rstrip('/').split('/')
+                if len(url_parts) >= 2:
+                    state_code = url_parts[-2].upper() if len(url_parts[-2]) == 2 else ""
+                    city_slug = url_parts[-1].replace('-', ' ').title()
+                    jurisdiction_name = f"{city_slug}, {state_code}" if state_code else city_slug
+                
+                # Try to find title or jurisdiction name in page
+                title_tag = soup.find('title')
+                if title_tag and title_tag.get_text():
+                    title_text = title_tag.get_text(strip=True)
+                    if '|' in title_text:
+                        jurisdiction_name = title_text.split('|')[0].strip()
+                
+                # Parse code sections
+                # Look for common section patterns in municipal codes
+                section_tags = soup.find_all(['div', 'section', 'article'], class_=re.compile(r'(section|code|chapter)', re.I))
+                
+                if not section_tags:
+                    # NOTE Fallback: look for any structured content
+                    section_tags = soup.find_all(['h1', 'h2', 'h3', 'h4'])
+                
+                for idx, tag in enumerate(section_tags, start=1):
+                    if max_sections and len(sections_list) >= max_sections:
+                        break
+                    
+                    # Extract section number and title
+                    section_text = tag.get_text(strip=True)
+                    
+                    # Try to parse section number from text
+                    section_match = re.match(r'([\d\.\-]+)\s+(.*)', section_text)
+                    if section_match:
+                        section_number = section_match.group(1)
+                        title = section_match.group(2)
+                    else:
+                        section_number = f"section_{idx}"
+                        title = section_text[:100] if section_text else f"Section {idx}"
+                    
+                    # Get content (next sibling or parent content)
+                    content = ""
+                    next_sibling = tag.find_next_sibling()
+                    if next_sibling:
+                        content = next_sibling.get_text(strip=True)
+                    elif tag.parent:
+                        content = tag.parent.get_text(strip=True)
+                    
+                    section_data = {
+                        "section_number": section_number,
+                        "title": title,
+                        "text": content or section_text,
+                        "source_url": jurisdiction_url
+                    }
+                    
+                    if include_metadata:
+                        section_data["scraped_at"] = datetime.now().isoformat() + "Z"
+                    
+                    sections_list.append(section_data)
+
     except Exception as e:
         return {
             "error": str(e),
             "error_type": "unknown",
             "sections": []
         }
-    
+
     result = {
         "jurisdiction": jurisdiction_name,
         "url": jurisdiction_url,

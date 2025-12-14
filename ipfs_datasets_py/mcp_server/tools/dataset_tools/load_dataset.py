@@ -77,21 +77,11 @@ async def load_dataset(
 
         # Check if Hugging Face datasets is available
         if not HF_DATASETS_AVAILABLE:
-            logger.warning("Hugging Face datasets not available, returning mock response")
+            logger.warning("Hugging Face datasets not available, returning error")
             return {
-                "status": "success",
-                "dataset_id": f"mock_{source.replace('/', '_')}",
-                "metadata": {
-                    "description": f"Mock dataset for {source} (HF datasets unavailable)",
-                    "features": ["text", "label"],
-                    "citation": "Mock citation - datasets library not available"
-                },
-                "summary": {
-                    "record_count": 1000,
-                    "schema": {"text": "string", "label": "int64"},
-                    "source": source,
-                    "format": format or "unknown"
-                }
+                "status": "error",
+                "message": "Hugging Face datasets library is not available. Please install it with: pip install datasets",
+                "source": source
             }
 
         # Load the dataset directly using Hugging Face datasets
@@ -105,22 +95,11 @@ async def load_dataset(
             else:
                 dataset_obj = dataset
         except Exception as e:
-            # For testing, create a mock dataset response
-            logger.warning(f"Failed to load actual dataset, creating mock response: {e}")
+            logger.error(f"Failed to load dataset: {e}")
             return {
-                "status": "success",
-                "dataset_id": f"mock_{source}",
-                "metadata": {
-                    "description": f"Mock dataset for {source}",
-                    "features": ["text", "label"],
-                    "citation": "Mock citation"
-                },
-                "summary": {
-                    "num_records": 100,
-                    "schema": "{'text': 'string', 'label': 'int'}",
-                    "source": source,
-                    "format": format if format else "mock"
-                }
+                "status": "error",
+                "message": f"Failed to load dataset from {source}: {str(e)}",
+                "source": source
             }
 
         # Return summary info

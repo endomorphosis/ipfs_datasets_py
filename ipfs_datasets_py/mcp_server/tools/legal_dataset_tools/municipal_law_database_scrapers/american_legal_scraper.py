@@ -222,6 +222,12 @@ async def scrape_jurisdiction(
         First section: Chapter 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
     """
+    if not jurisdiction_url:
+        raise ValueError("jurisdiction_url is required")
+    
+    if not jurisdiction_url.startswith('http'):
+        raise ValueError("jurisdiction_url must be a valid HTTP(S) URL")
+    
     sections_list = []
     jurisdiction_name = "Seattle, WA"  # Default
     scraped_at = datetime.utcnow().isoformat() + "Z"
@@ -308,13 +314,12 @@ async def scrape_jurisdiction(
         }
     except Exception as e:
         # Handle malformed HTML or other parsing errors gracefully
-        return {
-            "jurisdiction": jurisdiction_name,
-            "url": jurisdiction_url,
-            "sections": sections_list  # Return whatever we managed to parse
-        }
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error scraping jurisdiction {jurisdiction_url}: {e}")
+        sections_list = sections_list if 'sections_list' in locals() else []
     
-    return {
+    result = {
         "jurisdiction": jurisdiction_name,
         "url": jurisdiction_url,
         "sections": sections_list,
@@ -322,7 +327,11 @@ async def scrape_jurisdiction(
         "timestamp": scraped_at,
         "provider": "american_legal"
     }
-
+    
+    if include_metadata:
+        result["metadata"] = {"include_metadata": True}
+    
+    return result
 
 async def batch_scrape(
     jurisdictions: Optional[list[str]] = None,

@@ -20,21 +20,14 @@ from ipfs_datasets_py.scraper_testing_framework import (
 )
 
 # Import legal scrapers
-try:
-    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-        scrape_us_code,
-        scrape_federal_register,
-        scrape_state_laws,
-        scrape_municipal_laws,
-        scrape_recap_archive,
-    )
-    SCRAPERS_AVAILABLE = True
-except ImportError as e:
-    SCRAPERS_AVAILABLE = False
-    print(f"Warning: Could not import legal scrapers: {e}")
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
+    scrape_us_code,
+    scrape_federal_register,
+    scrape_state_laws,
+    scrape_municipal_laws,
+    scrape_recap_archive,
+)
 
-
-@pytest.mark.skipif(not SCRAPERS_AVAILABLE, reason="Legal scrapers not available")
 class TestCaselawScrapers:
     """Test suite for caselaw/legal scrapers."""
     
