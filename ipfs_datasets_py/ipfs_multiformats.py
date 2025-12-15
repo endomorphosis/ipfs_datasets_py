@@ -3,7 +3,11 @@ from multiformats import CID, multihash
 import tempfile
 import os
 import sys
-from typing import Any, Union, Dict
+from typing import Any, Union
+
+
+from pathlib import Path
+
 
 class ipfs_multiformats_py:
     """
@@ -60,7 +64,7 @@ class ipfs_multiformats_py:
             Generate SHA-256 hash digest for file content with chunk processing
         get_multihash_sha256(file_content_hash: bytes) -> multihash.Multihash:
             Wrap SHA-256 hash in multihash format for self-describing encoding
-        get_cid(file_data: Union[str, bytes]) -> str:
+        get_cid(file_data: str | bytes) -> str:
             Generate CIDv1 content identifier for files or string content
 
     Usage Examples:
@@ -179,12 +183,12 @@ class ipfs_multiformats_py:
         return mh
 
     # Step 3: Generate CID from Multihash (CIDv1)
-    def get_cid(self, file_data: Union[str, bytes]) -> str:
+    def get_cid(self, file_data: str | bytes) -> str:
         if os.path.isfile(file_data) == True:
             absolute_path = os.path.abspath(file_data)
             file_content_hash = self.get_file_sha256(file_data)
             mh = self.get_multihash_sha256(file_content_hash)
-            cid = CID('base32', 'raw', mh)
+            cid = CID('base32', 1, 'raw', mh)
         else:
             with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
                 filename = f.name
@@ -195,3 +199,54 @@ class ipfs_multiformats_py:
                 cid = CID('base32', 1, 'raw', mh)
                 os.remove(filename)
         return str(cid)
+
+
+# Generate CID for arbitrary string
+def _get_cid_for_string(string: str) -> str:
+    """
+    Generate a Content Identifier (CID) for a given string using SHA-256 hashing and multihash encoding.
+
+    Args:
+        string (str): The input string for which the CID is to be generated.
+
+    Returns:
+        str: The generated CID in base32 format.
+
+    Note:
+        - This function uses the SHA-256 hashing algorithm to hash the input string.
+        - The resulting hash is wrapped using the multihash library with the 'sha2-256' code.
+        - The CID is constructed using the base32 encoding, version 1, and the 'raw' codec.
+    """
+    hash = hashlib.sha256(string.encode()).digest()
+    mh = multihash.wrap(hash, 'sha2-256')
+    cid = CID('base32', 1, 'raw', mh)
+    return str(cid)
+
+
+def get_cid(file_data: str | Path | bytes, for_string: bool = False) -> str:
+    """
+    Generate a Content Identifier (CID) for the given file or string.
+
+    For file paths, it directly calculates the CID. For strings, calculates the CID from a temporary file.
+
+    Args:
+        file_data (str | Path | bytes): The file path or string data to generate a CID for.
+        for_string (bool): Flag to indicate if the input is an arbitrary string 
+            (as opposed to a Path or the string of a path). Defaults to False.
+
+    Returns:
+        str: The generated CID as a string.
+    """
+    if not isinstance(file_data, (str, Path, bytes)):
+        raise TypeError(f"file_data must be of type str, Path, or bytes, got {type(file_data).__name__}")
+    if not isinstance(for_string, bool):
+        raise TypeError(f"for_string must be of type bool, got {type(for_string).__name__}")
+
+    if for_string and isinstance(file_data, str):
+        return _get_cid_for_string(file_data)
+
+    if isinstance(file_data, Path):
+       file_data = str(file_data)
+
+    ipfs_multiformats = ipfs_multiformats_py(None, None)
+    return ipfs_multiformats.get_cid(file_data)
