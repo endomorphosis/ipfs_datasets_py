@@ -152,7 +152,7 @@ class Configs(BaseModel):
     CLEAR_HASHES_CSV: bool = Field(default=True)
     FILE_PATH_ENDING: Ann[
         str, AV(_check_if_this_type_is_supported)
-    ] = Field(default="")
+    ] = Field(default="parquet")
 
     HUGGING_FACE_UPLOAD_CONCURRENCY_LIMIT: int = Field(default=4, ge=1, le=10)
     LOG_LEVEL: Ann[

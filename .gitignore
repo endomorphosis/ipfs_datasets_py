@@ -45,3 +45,5 @@ _log_probs_test.py
 test_results/
 *.pyc
 __pycache__/
+configs.yaml
+sql_configs.yaml

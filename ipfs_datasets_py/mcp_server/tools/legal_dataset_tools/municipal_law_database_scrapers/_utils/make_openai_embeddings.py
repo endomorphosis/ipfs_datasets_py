@@ -690,7 +690,7 @@ class OpenAiApiKey(BaseModel):
         return self._api_key.get_secret_value()
 
 
-async def main() -> int:
+async def main(input_files: Optional[list[Path]] = None) -> int:
     logger = logging.getLogger(__name__)
 
     # Update to include the "american_law" subdirectory
@@ -703,7 +703,7 @@ async def main() -> int:
         return 1
 
     # Make one iteration through the loop to see what files are found
-    html_files = list(input_dir.glob("*_html.parquet"))
+    html_files = list(input_dir.glob("*_html.parquet")) if input_files is None else input_files
 
     # Exit if no files found
     if not html_files:

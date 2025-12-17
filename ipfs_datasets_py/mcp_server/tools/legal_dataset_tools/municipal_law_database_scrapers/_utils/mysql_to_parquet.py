@@ -18,7 +18,9 @@ import pandas as pd
 import tqdm
 
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers._utils.configs import Configs, configs
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers._utils.configs import (
+    Configs, configs
+)
 from ipfs_datasets_py.ipfs_multiformats import get_cid
 from .make_openai_embeddings import OpenAIEmbedding
 
@@ -205,6 +207,43 @@ _DATE_PATTERNS = [ # (match pattern, year extraction pattern,)
 
 
 
+class SqlStatements:
+
+    def __init__(self, *, resources, configs):
+        self.resources = resources
+        self.configs = configs
+
+        self.db_name: str = configs.sql.DATABASE_NAME
+        self.host: str = configs.sql.HOST
+        self.user: str = configs.sql.USER
+        self.password: str = configs.sql.PASSWORD
+        self.compression_type: str = configs.sql.COMPRESSION_TYPE
+        self.data_table_names: list[str] = configs.sql.tables.DATA_TABLE_NAMES
+        self.metadata_table_names: list[str] = configs.sql.tables.METADATA_TABLE_NAMES
+        self.limit: int = configs.sql.LIMIT
+        self.batch_size: int = configs.sql.BATCH_SIZE
+        self.partition_column: str = configs.sql.PARTITION_COLUMN
+
+        self.sql_type: str = resources['sql_type']
+
+        self.connection_string: str = f"{self.sql_type}://{self.user}:{self.password}@{self.host}/{self.db_name}"
+        self.db_typed = f"{self.sql_type}_db"
+        self.data_table: str = f"{self.db_typed}.{self.db_name}.{self.data_table_names[0]}"
+        self.raw_api_output_table: str = f"{self.db_typed}.{self.db_name}.{self.data_table_names[1]}"
+        self.html_metadata_table: str = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[0]}"
+        self.place_metadata_table: str = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[1]}"
+
+        self.install_db: str | None = f'INSTALL {self.sql_type};'
+        self.load_db: str | None = f'LOAD {self.sql_type};'
+        self.attach_db: str | None = f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);"
+
+    def setup_duckdb(self, duckdb_module: ModuleType) -> ModuleType:
+        """Setup DuckDB with SQL extension and establish connection."""
+        duckdb_module.sql(self.install_db)
+        duckdb_module.sql(self.load_db)
+        duckdb_module.sql(self.attach_db)
+        return duckdb_module
+
 
 class MySqlToParquet:
     """
@@ -219,8 +258,9 @@ class MySqlToParquet:
         self.resources = resources
 
         self.logger: logging.Logger = resources['logger']
-        self.duckdb = resources['duckdb']
-        self.date_patterns = resources['date_patterns']
+        self.duckdb: ModuleType = resources['duckdb']
+        self.date_patterns: list[tuple[re.Pattern, re.Pattern]] = resources['date_patterns']
+        self.sql_statements: SqlStatements = resources["sql_statements"]
 
         # Setup database connection details
         self.db_name: str = configs.sql.DATABASE_NAME
@@ -238,10 +278,10 @@ class MySqlToParquet:
 
         self.sql_type: str = "mysql"
         self.name_var: str = "gnis"
-        self.html_metadata_table = None
-        self.place_metadata_table = None
-        self.data_table = None
-        self.connection_string = None
+        self.html_metadata_table: str | None = None
+        self.place_metadata_table: str | None = None
+        self.data_table: str | None = None
+        self.connection_string: str | None = None
         #self.open_ai_embedding = OpenAIEmbedding()
         self._create_sql_statements()
 
@@ -250,8 +290,6 @@ class MySqlToParquet:
         self.metadata_output_path = Path(configs.sql.OUTPUT_FOLDER) / configs.TARGET_DIR_NAME / "metadata"
         self._ensure_output_directories()
 
-        # Initialize database connection
-        self._setup_duckdb()
 
     def _create_sql_statements(self):
         """Create sql statements."""
@@ -266,13 +304,14 @@ class MySqlToParquet:
         self.html_metadata_table = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[0]}"
         self.place_metadata_table = f"{self.db_typed}.{self.db_name}.{self.metadata_table_names[1]}"
 
-    def _setup_duckdb(self) -> None:
+    def setup_duckdb(self) -> None:
         """Setup DuckDB with MySQL extension and establish connection."""
-        duckdb.sql(f'INSTALL {self.sql_type};')
-        duckdb.sql(f'LOAD {self.sql_type};')
+        for _ in range(3):  # Retry up to 3 times
+            self.duckdb.sql(f'INSTALL {self.sql_type};')
+            self.duckdb.sql(f'LOAD {self.sql_type};')
 
-        # Using DuckDB's preferred connection format with MySQL extension
-        duckdb.sql(f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);")
+            # Using DuckDB's preferred connection format with MySQL extension
+            self.duckdb.sql(f"ATTACH '{self.connection_string}' AS {self.db_typed} (TYPE {self.sql_type.upper()}, READ_ONLY);")
 
     def _ensure_output_directories(self) -> None:
         """Create output directories if they don't exist."""
@@ -282,11 +321,12 @@ class MySqlToParquet:
 
     def _get_complete_groups(self) -> list[int]:
         """Get list of GNIS values with complete sets of laws."""
-        group_list = duckdb.sql(f"""
+        query = f"""
             SELECT DISTINCT gnis 
             FROM {self.html_metadata_table} 
             WHERE we_have_all_the_laws = 1
-        """).to_df()['gnis'].to_list()
+        """
+        group_list = self.duckdb.sql(query).to_df()['gnis'].to_list()
 
         print(f"Got {len(group_list)} complete groups. Fetching...")
         return group_list
@@ -323,7 +363,7 @@ class MySqlToParquet:
         ON lm.gnis = hm.gnis
             WHERE lm.gnis = '{gnis}'
         """
-        combined_metadata_df = duckdb.sql(combined_metadata_query).to_df()
+        combined_metadata_df = self.duckdb.sql(combined_metadata_query).to_df()
         self.logger.debug(combined_metadata_df)
         return combined_metadata_df
 
@@ -606,7 +646,7 @@ class MySqlToParquet:
         """
         """
         # Get Municode's raw output from the database
-        api_output_df: pd.DataFrame = duckdb.sql(
+        api_output_df: pd.DataFrame = self.duckdb.sql(
             f"SELECT * FROM {self.raw_api_output_table} WHERE gnis = '{gnis}'"
         ).arrow(batch_size=self.batch_size).to_pandas()
 
@@ -824,7 +864,7 @@ class MySqlToParquet:
                             self.logger.info(f"{parquet_type} parquet file for '{gnis}'...")
                             await func(path, gnis, kwargs)
                             self.logger.info(f"{parquet_type} parquet file for '{gnis}' created successfully")
-                            path_dict[key].append(path)
+                            path_dict[key].append(str(path))
                 except Exception as e:
                     self.logger.exception(f"Error processing GNIS '{gnis}' parquet for '{key}': {e}")
                 finally:
@@ -838,7 +878,7 @@ class MySqlToParquet:
         gnis_query = kwargs["gnis_query"] 
 
         # Get html data from the database
-        arrow_table: pa.Table = duckdb.sql(gnis_query).arrow(batch_size=self.batch_size)
+        arrow_table: pa.Table = self.duckdb.sql(gnis_query).arrow(batch_size=self.batch_size)
 
         # Convert to pandas for easier manipulation
         df: pd.DataFrame = arrow_table.to_pandas()
@@ -850,7 +890,6 @@ class MySqlToParquet:
 
 
     async def _make_citation_parquet(self, citation_parquet_path: Path, gnis: int, kwargs: dict) -> None:
-
         # Get metadata from the server
         metadata_df = self._get_metadata_from_server(gnis)
 
@@ -866,38 +905,105 @@ class MySqlToParquet:
 
 
     async def _make_embedding_parquet(self, embedding_parquet_path: Path, gnis: int, kwargs: dict) -> None:
-        # TODO Find a way to integrate OpenAI embeddings here. Right now, it's an independent program.
-        pass
-        # # Load in the HTML parquet file
-        # html_parquet_path = self.data_output_path / f"{str(gnis)}_html.parquet"
+        raise NotImplementedError
 
-        # embedding = self._make_openai_embeddings(html_parquet_path)
-        # if embedding:
-        #     embedding_df = pd.DataFrame([embedding])
-        # self._save_data_to_parquet(embedding_df, embedding_parquet_path)
 
+
+
+class InitializationError(RuntimeError):
+    """Custom exception for initialization errors in MySqlToParquet."""
+    pass
+
+def make_sql_statements(configs: Configs = configs, resources: dict[str, Any] = {}) -> SqlStatements:
+    """
+    Factory function to create and initialize a SqlStatements instance.
+
+    Args:
+        configs (Configs, optional): Configuration object containing SQL connection details,
+            table names, batch size, and output paths. Defaults to the global configs object.
+    """
+    _resources = {
+        "duckdb": resources.get("duckdb", duckdb),
+    }
+    for key in resources.keys():
+        if key not in _resources:
+            raise KeyError(f"Unsupported resource key: {key}")
+    try:
+        return SqlStatements(resources=_resources,configs=configs)
+    except KeyError as e:
+        raise InitializationError(f"Missing required resource: {e}") from e
+    except AttributeError as e:
+        raise InitializationError(f"Missing configuration attribute: {e}") from e
+    except Exception as e:
+        raise InitializationError(f"Failed to initialize SqlStatements: {e}") from e
+
+
+def make_mysql_to_parquet(configs: Configs = configs, resources: dict[str, Any] = {}) -> MySqlToParquet:
+    """
+    Factory function to create and initialize a MySqlToParquet instance.
+
+    Args:
+        configs (Configs, optional): Configuration object containing SQL connection details,
+            table names, batch size, and output paths. Defaults to the global configs object.
+        resources (dict[str, Any], optional): Dictionary of resources to inject into the instance.
+            Supported keys:
+                - "logger": logging.Logger instance for logging operations
+                - "date_patterns": list of regex patterns for date extraction
+                - "duckdb": duckdb module for database operations
+                - "make_openai_embeddings": function for generating embeddings (optional)
+            Defaults to empty dict, which uses default implementations.
+    
+    Returns:
+        MySqlToParquet: Fully initialized MySqlToParquet instance ready for data extraction.
+    
+    Raises:
+        KeyError: If an unsupported resource key is provided in the resources dictionary, or if a required resource is missing.
+        AttributeError: If a required configuration attribute is missing in the configs object.
+        InitializationError: If MySqlToParquet initialization fails unexpectedly.
+    
+    Example:
+        >>> from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers._utils.configs import configs
+        >>> converter = make_mysql_to_parquet(configs=configs)
+        >>> result = await converter.get_files_from_sql_server_as_parquet()
+    """
+    _resources = {
+        "logger": resources.get("logger", logging.getLogger(__name__)),
+        "date_patterns": resources.get("date_patterns", _DATE_PATTERNS),
+        "duckdb": resources.get("duckdb", duckdb),
+        "make_openai_embeddings": resources.get("make_openai_embeddings", None),
+    }
+    for key in resources.keys():
+        if key not in _resources:
+            raise KeyError(f"Unsupported resource key: {key}")
+    try:
+        return MySqlToParquet(resources=_resources,configs=configs)
+    except KeyError as e:
+        raise InitializationError(f"Missing required resource: {e}") from e
+    except AttributeError as e:
+        raise InitializationError(f"Missing configuration attribute: {e}") from e
+    except Exception as e:
+        raise InitializationError(f"Failed to initialize MySqlToParquet: {e}") from e
 
 
 async def main() -> int:
     """
     Main function to run the MySqlToParquet process.
     """
-    logger = logging.getLogger(__name__)
-    resources = {
-        "logger": logger,
-        "date_patterns": _DATE_PATTERNS,
-        "duckdb": duckdb,
-        "make_openai_embeddings": None,
-    }
     try:
-        converter = MySqlToParquet(resources=resources,configs=configs)
+        sql_statements = make_sql_statements()
+        duckdb_module = sql_statements.setup_duckdb(duckdb)
+        resources = {
+            "duckdb": duckdb_module,
+        }
+        converter = make_mysql_to_parquet(resources=resources)
+        converter.setup_duckdb()
         _ = await converter.get_files_from_sql_server_as_parquet()
         return 0
     except KeyboardInterrupt:
         print("User stopped the program. Hope nothing broke!")
         return 0
     except Exception as e:
-        logger.error(f"An error occurred: {e}")
+        print(f"An error occurred: {e}")
         return 1
 
 if __name__ == "__main__":

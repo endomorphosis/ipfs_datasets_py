@@ -335,6 +335,20 @@ class UploadToHuggingFaceInParallel:
             
         Returns:
             Future: A future containing information about the commit if successful, None otherwise
+            
+        Example:
+            >>> uploader = UploadToHuggingFaceInParallel(resources={...}, configs=config)
+            >>> folder = Path("./data/municipal_laws/city_ordinances")
+            >>> future = uploader.upload_with_retry(
+            ...     dir=folder,
+            ...     path_in_repo="/datasets/municipal_laws",
+            ...     delete_patterns="**/city_ordinances/*.parquet",
+            ...     max_retries=5,
+            ...     retry_delay=10.0
+            ... )
+            >>> if future:
+            ...     commit_info = future.result()
+            ...     print(f"Upload successful: {commit_info.commit_url}")
         """
         for attempt in range(max_retries):
             try:
@@ -401,12 +415,28 @@ class UploadToHuggingFaceInParallel:
         
         Args:
             output_dir (Path): Directory containing the output files
-            target_dir_name (str): Name of the target directory
-            file_path_ending (str): File path ending pattern
-            max_concurrency (Optional[int]): Maximum number of concurrent uploads
+            target_dir_name (str): Name of the target directory in the repository
+            file_path_ending (str): File path ending pattern (default: ".*" for all files)
+            max_concurrency (Optional[int]): Maximum number of concurrent uploads. If None, defaults to 
+                (requests_per_hour / 60) - 1 for safe rate limiting
+            upload_piecemeal (bool): If True, upload individual files instead of folders
             
         Returns:
-            dict[str, int]: Dictionary with upload statistics
+            dict[str, int]: Dictionary with upload statistics containing the following keys:
+                - "uploaded" (int): Number of successfully uploaded folders/files
+                - "failed" (int): Number of folders/files that failed to upload after all retries
+                - "retried" (int): Total number of retry attempts made during the upload process
+                
+        Example:
+            >>> uploader = UploadToHuggingFaceInParallel(resources={...}, configs=config)
+            >>> result = await uploader.upload_to_hugging_face_in_parallel(
+            ...     output_dir=Path("./output"),
+            ...     target_dir_name="municipal_laws",
+            ...     file_path_ending=".parquet",
+            ...     max_concurrency=5
+            ... )
+            >>> print(result)
+            {'uploaded': 150, 'failed': 2, 'retried': 8}
         """
         if not self.api:
             logger.error("API not initialized, can't upload files")
@@ -441,7 +471,7 @@ class UploadToHuggingFaceInParallel:
         time.sleep(10)
 
         if upload_piecemeal:
-            print(folders_to_upload)
+            logger.info(folders_to_upload)
             _folders_to_upload = [
                 file for file in folders_to_upload if file.is_file()
             ]
