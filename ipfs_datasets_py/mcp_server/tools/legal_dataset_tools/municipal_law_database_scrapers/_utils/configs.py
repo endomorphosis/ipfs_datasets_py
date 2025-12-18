@@ -22,9 +22,10 @@ _SUPPORTED_FILE_TYPES = [
     "parquet",
 ]
 
+_TOP_LEVEL_DIR = Path(__file__).parent.parent.parent.parent.parent.parent.parent
 
 class Paths(BaseModel):
-    _ROOT_DIR: DirectoryPath = Path(__file__).parent.parent
+    _ROOT_DIR: DirectoryPath = _TOP_LEVEL_DIR
     _HOME_DIR: DirectoryPath = _ROOT_DIR.parent
     _OUTPUT_TO_HUGGING_FACE_DIR: DirectoryPath = _ROOT_DIR / "output_to_hugging_face"
     _INPUT_FROM_SQL: DirectoryPath = _ROOT_DIR / "input_from_sql"

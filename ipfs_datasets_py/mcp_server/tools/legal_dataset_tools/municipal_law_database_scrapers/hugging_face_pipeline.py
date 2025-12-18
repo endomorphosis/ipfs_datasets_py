@@ -472,9 +472,14 @@ class UploadToHuggingFaceInParallel:
 
         if upload_piecemeal:
             logger.info(folders_to_upload)
-            _folders_to_upload = [
-                file for file in folders_to_upload if file.is_file()
-            ]
+            # Expand folders into individual files for piecemeal upload
+            _folders_to_upload = []
+            for folder in folders_to_upload:
+                if folder.is_dir():
+                    # Get all files in the folder
+                    _folders_to_upload.extend([file for file in folder.glob("**/*.parquet") if file.is_file()])
+                elif folder.is_file():
+                    _folders_to_upload.append(folder)
             folders_to_upload = _folders_to_upload
             desc = "Uploading files"
         else:
