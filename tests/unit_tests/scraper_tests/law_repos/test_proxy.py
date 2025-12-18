@@ -7,20 +7,21 @@ Tests are based on the Gherkin scenarios defined in proxy.feature.
 Each test corresponds to a specific scenario from the feature file.
 """
 import pytest
+from .proxy import proxy
 
 
 # Background fixture - corresponds to "Given the proxy callable is available"
 @pytest.fixture
 def proxy_callable():
     """The proxy callable is available."""
-    pass
+    return proxy
 
 
 # Background fixture - corresponds to "Given a proxy configuration"
 @pytest.fixture
 def proxy_configuration():
     """A proxy configuration."""
-    pass
+    return proxy
 
 
 class TestProxyConfiguration:
@@ -34,7 +35,12 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "http://proxy1.example.com:8080"
         THEN the proxy contains 1 proxy URL
         """
-        pass
+        proxy_url = "http://proxy1.example.com:8080"
+        expected_count = 1
+        
+        result = proxy_configuration(proxy_url=proxy_url)
+        
+        assert result.proxy_count == expected_count, f"expected {expected_count}, got {result.proxy_count}"
     
     def test_create_proxy_with_single_https_proxy_url(self, proxy_configuration):
         """
@@ -44,7 +50,12 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "https://proxy1.example.com:8443"
         THEN the proxy contains 1 proxy URL
         """
-        pass
+        proxy_url = "https://proxy1.example.com:8443"
+        expected_count = 1
+        
+        result = proxy_configuration(proxy_url=proxy_url)
+        
+        assert result.proxy_count == expected_count, f"expected {expected_count}, got {result.proxy_count}"
     
     def test_create_proxy_with_single_socks5_proxy_url(self, proxy_configuration):
         """
@@ -54,7 +65,12 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "socks5://proxy1.example.com:1080"
         THEN the proxy contains 1 proxy URL
         """
-        pass
+        proxy_url = "socks5://proxy1.example.com:1080"
+        expected_count = 1
+        
+        result = proxy_configuration(proxy_url=proxy_url)
+        
+        assert result.proxy_count == expected_count, f"expected {expected_count}, got {result.proxy_count}"
     
     def test_create_proxy_with_list_of_proxy_urls(self, proxy_configuration):
         """
@@ -64,7 +80,12 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080", "http://proxy3.example.com:8080"]
         THEN the proxy contains 3 proxy URLs
         """
-        pass
+        proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080", "http://proxy3.example.com:8080"]
+        expected_count = 3
+        
+        result = proxy_configuration(proxy_urls=proxy_urls)
+        
+        assert result.proxy_count == expected_count, f"expected {expected_count}, got {result.proxy_count}"
     
     def test_create_proxy_with_authentication_credentials(self, proxy_configuration):
         """
@@ -74,7 +95,14 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "http://proxy1.example.com:8080" and username "testuser" and password "testpass"
         THEN the proxy URL includes authentication
         """
-        pass
+        proxy_url = "http://proxy1.example.com:8080"
+        username = "testuser"
+        password = "testpass"
+        expected_url = "http://testuser:testpass@proxy1.example.com:8080"
+        
+        result = proxy_configuration(proxy_url=proxy_url, username=username, password=password)
+        
+        assert result._proxy_urls[0] == expected_url, f"expected {expected_url}, got {result._proxy_urls[0]}"
     
     def test_create_proxy_with_no_proxy_urls(self, proxy_configuration):
         """
@@ -84,7 +112,12 @@ class TestProxyConfiguration:
         WHEN I call proxy with no proxy URLs
         THEN the proxy returns an error
         """
-        pass
+        expected_error = ValueError
+        
+        with pytest.raises(expected_error) as exc_info:
+            proxy_configuration()
+        
+        assert type(exc_info.value) == expected_error, f"expected {expected_error}, got {type(exc_info.value)}"
     
     def test_create_proxy_with_empty_proxy_url_list(self, proxy_configuration):
         """
@@ -94,7 +127,13 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_urls []
         THEN the proxy returns an error
         """
-        pass
+        proxy_urls = []
+        expected_error = ValueError
+        
+        with pytest.raises(expected_error) as exc_info:
+            proxy_configuration(proxy_urls=proxy_urls)
+        
+        assert type(exc_info.value) == expected_error, f"expected {expected_error}, got {type(exc_info.value)}"
     
     def test_create_proxy_with_invalid_proxy_url_format(self, proxy_configuration):
         """
@@ -104,7 +143,13 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "not-a-url"
         THEN the proxy returns an error
         """
-        pass
+        proxy_url = "not-a-url"
+        expected_error = ValueError
+        
+        with pytest.raises(expected_error) as exc_info:
+            proxy_configuration(proxy_url=proxy_url)
+        
+        assert type(exc_info.value) == expected_error, f"expected {expected_error}, got {type(exc_info.value)}"
     
     def test_create_proxy_with_invalid_proxy_protocol(self, proxy_configuration):
         """
@@ -114,7 +159,13 @@ class TestProxyConfiguration:
         WHEN I call proxy with proxy_url "ftp://proxy1.example.com:8080"
         THEN the proxy returns an error
         """
-        pass
+        proxy_url = "ftp://proxy1.example.com:8080"
+        expected_error = ValueError
+        
+        with pytest.raises(expected_error) as exc_info:
+            proxy_configuration(proxy_url=proxy_url)
+        
+        assert type(exc_info.value) == expected_error, f"expected {expected_error}, got {type(exc_info.value)}"
 
 
 class TestProxyRotation:
@@ -128,7 +179,13 @@ class TestProxyRotation:
         WHEN I call get_next_proxy with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         THEN the proxy returns "http://proxy1.example.com:8080"
         """
-        pass
+        proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
+        expected_proxy = "http://proxy1.example.com:8080"
+        
+        proxy_instance = proxy_configuration(proxy_urls=proxy_urls)
+        result = proxy_instance._get_next_proxy()
+        
+        assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
     def test_get_proxy_from_list_rotates_to_second_proxy(self, proxy_configuration):
         """
@@ -138,7 +195,14 @@ class TestProxyRotation:
         WHEN I call get_next_proxy 2 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         THEN the proxy returns "http://proxy2.example.com:8080"
         """
-        pass
+        proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
+        expected_proxy = "http://proxy2.example.com:8080"
+        proxy_instance = proxy_configuration(proxy_urls=proxy_urls)
+        
+        proxy_instance._get_next_proxy()
+        result = proxy_instance._get_next_proxy()
+        
+        assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
     def test_get_proxy_from_list_rotates_back_to_first_proxy(self, proxy_configuration):
         """
@@ -148,7 +212,15 @@ class TestProxyRotation:
         WHEN I call get_next_proxy 3 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         THEN the proxy returns "http://proxy1.example.com:8080"
         """
-        pass
+        proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
+        expected_proxy = "http://proxy1.example.com:8080"
+        proxy_instance = proxy_configuration(proxy_urls=proxy_urls)
+        
+        proxy_instance._get_next_proxy()
+        proxy_instance._get_next_proxy()
+        result = proxy_instance._get_next_proxy()
+        
+        assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
     def test_get_proxy_from_single_url_returns_same_url(self, proxy_configuration):
         """
@@ -158,7 +230,17 @@ class TestProxyRotation:
         WHEN I call get_next_proxy 5 times with proxy_url "http://proxy1.example.com:8080"
         THEN the proxy returns "http://proxy1.example.com:8080"
         """
-        pass
+        proxy_url = "http://proxy1.example.com:8080"
+        expected_proxy = "http://proxy1.example.com:8080"
+        proxy_instance = proxy_configuration(proxy_url=proxy_url)
+        
+        proxy_instance._get_next_proxy()
+        proxy_instance._get_next_proxy()
+        proxy_instance._get_next_proxy()
+        proxy_instance._get_next_proxy()
+        result = proxy_instance._get_next_proxy()
+        
+        assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
 
 
 class TestRequestExecutionWithProxy:

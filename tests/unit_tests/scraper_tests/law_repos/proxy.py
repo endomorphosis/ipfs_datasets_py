@@ -106,7 +106,64 @@ class proxy:
         user_agents: Optional[List[str]] = None
     ) -> None:
         """Initialize proxy manager with configuration."""
-        pass
+        if proxy_url is None and proxy_urls is None:
+            raise ValueError("Either proxy_url or proxy_urls must be provided")
+        
+        if proxy_url is not None and proxy_urls is not None:
+            raise ValueError("Cannot provide both proxy_url and proxy_urls")
+        
+        if proxy_urls is not None and len(proxy_urls) == 0:
+            raise ValueError("proxy_urls cannot be empty")
+        
+        if proxy_url is not None:
+            if not isinstance(proxy_url, str) or len(proxy_url) == 0:
+                raise ValueError("proxy_url must be a non-empty string")
+            
+            if "://" not in proxy_url:
+                raise ValueError("Invalid proxy URL format")
+            
+            protocol = proxy_url.split("://")[0]
+            if protocol not in ["http", "https", "socks5"]:
+                raise ValueError(f"Unsupported protocol: {protocol}")
+            
+            self._proxy_urls = [proxy_url]
+        else:
+            for url in proxy_urls:
+                if "://" not in url:
+                    raise ValueError("Invalid proxy URL format")
+                protocol = url.split("://")[0]
+                if protocol not in ["http", "https", "socks5"]:
+                    raise ValueError(f"Unsupported protocol: {protocol}")
+            self._proxy_urls = proxy_urls
+        
+        if username is not None and password is not None:
+            authenticated_urls = []
+            for url in self._proxy_urls:
+                protocol, rest = url.split("://", 1)
+                authenticated_urls.append(f"{protocol}://{username}:{password}@{rest}")
+            self._proxy_urls = authenticated_urls
+        
+        self.proxy_count = len(self._proxy_urls)
+        self.rotation_enabled = len(self._proxy_urls) > 1
+        self.timeout = timeout
+        self.max_retries = max_retries
+        self.backoff_strategy = backoff_strategy
+        self.backoff_delay = backoff_delay
+        self.pool_size = pool_size
+        self.maintain_session = maintain_session
+        self.rate_limit_delay = rate_limit_delay
+        self.health_check = health_check
+        self.health_check_cooldown = health_check_cooldown
+        self.user_agents = user_agents or []
+        
+        self._current_proxy_index = 0
+        self._current_user_agent_index = 0
+        self._total_requests = 0
+        self._successful_requests = 0
+        self._failed_requests = 0
+        self._per_proxy_stats = {url: {"requests": 0, "successes": 0, "failures": 0} for url in self._proxy_urls}
+        self._request_headers = {}
+        self._last_proxy_used = None
     
     async def get(
         self,
@@ -179,6 +236,20 @@ class proxy:
         """
         pass
     
+    def _get_next_proxy(self) -> str:
+        """Get next proxy URL from rotation (internal method)."""
+        proxy_url = self._proxy_urls[self._current_proxy_index]
+        self._current_proxy_index = (self._current_proxy_index + 1) % len(self._proxy_urls)
+        return proxy_url
+    
+    def _get_next_user_agent(self) -> Optional[str]:
+        """Get next User-Agent from rotation (internal method)."""
+        if not self.user_agents:
+            return None
+        user_agent = self.user_agents[self._current_user_agent_index]
+        self._current_user_agent_index = (self._current_user_agent_index + 1) % len(self.user_agents)
+        return user_agent
+    
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get proxy usage statistics.
@@ -191,7 +262,14 @@ class proxy:
                 - success_rate (float): Success rate as percentage
                 - per_proxy_stats (dict): Per-proxy statistics
         """
-        pass
+        success_rate = (self._successful_requests / self._total_requests * 100.0) if self._total_requests > 0 else 0.0
+        return {
+            "total_requests": self._total_requests,
+            "successful_requests": self._successful_requests,
+            "failed_requests": self._failed_requests,
+            "success_rate": success_rate,
+            "per_proxy_stats": self._per_proxy_stats
+        }
     
     async def __aenter__(self) -> "proxy":
         """Enter async context manager."""
