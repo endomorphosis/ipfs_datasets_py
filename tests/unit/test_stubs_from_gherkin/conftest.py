@@ -59,16 +59,7 @@ def summary_counters_zeroed() -> Dict[str, int]:
     
     Returns a dictionary with zeroed summary counters for test result tracking.
     """
-    try:
-        summary = {
-            "total": 0,
-            "passed": 0,
-            "failed": 0,
-            "warnings": 0
-        }
-        return summary
-    except Exception as e:
-        raise FixtureError(f"summary_counters_zeroed raised an error: {e}") from e
+    raise NotImplementedError
 
 
 @pytest.fixture
@@ -78,26 +69,7 @@ def dashboard_url_configured() -> str:
     
     Returns the configured dashboard URL. Checks if the URL is accessible.
     """
-    try:
-        url = "http://localhost:8899/mcp"
-        # Check if the dashboard is accessible (with short timeout)
-        try:
-            response = requests.get(url, timeout=2)
-            if response.status_code >= 500:
-                raise FixtureError(
-                    f"dashboard_url_configured raised an error: Dashboard returned server error {response.status_code}"
-                )
-        except requests.exceptions.ConnectionError:
-            # Dashboard not running - this is expected in test environments
-            pass
-        except requests.exceptions.Timeout:
-            # Dashboard not responding - this is expected in test environments
-            pass
-        return url
-    except FixtureError:
-        raise
-    except Exception as e:
-        raise FixtureError(f"dashboard_url_configured raised an error: {e}") from e
+    raise NotImplementedError
 
 
 @pytest.fixture
@@ -108,26 +80,4 @@ def screenshot_directory_exists() -> Path:
     Returns the Path to the screenshot directory, creating it if needed.
     Raises FixtureError if the directory cannot be created or accessed.
     """
-    try:
-        screenshot_dir = Path("test_screenshots")
-        screenshot_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Verify the directory exists and is accessible
-        if not screenshot_dir.exists():
-            raise FixtureError(
-                f"screenshot_directory_exists raised an error: Directory {screenshot_dir} does not exist"
-            )
-        if not screenshot_dir.is_dir():
-            raise FixtureError(
-                f"screenshot_directory_exists raised an error: {screenshot_dir} is not a directory"
-            )
-        if not os.access(screenshot_dir, os.W_OK):
-            raise FixtureError(
-                f"screenshot_directory_exists raised an error: Directory {screenshot_dir} is not writable"
-            )
-        
-        return screenshot_dir
-    except FixtureError:
-        raise
-    except Exception as e:
-        raise FixtureError(f"screenshot_directory_exists raised an error: {e}") from e
+    raise NotImplementedError
