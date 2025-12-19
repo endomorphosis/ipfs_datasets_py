@@ -89,6 +89,25 @@ except ImportError:
     HAVE_WEB_ARCHIVE = False
 
 try:
+    from .unified_web_scraper import (
+        UnifiedWebScraper,
+        ScraperConfig,
+        ScraperMethod,
+        ScraperResult,
+        scrape_url,
+        scrape_urls,
+        scrape_url_async,
+        scrape_urls_async
+    )
+    HAVE_UNIFIED_SCRAPER = True
+except ImportError:
+    HAVE_UNIFIED_SCRAPER = False
+    UnifiedWebScraper = None
+    ScraperConfig = None
+    ScraperMethod = None
+    ScraperResult = None
+
+try:
     from .vector_tools import VectorSimilarityCalculator
     HAVE_VECTOR_TOOLS = True
 except ImportError:
