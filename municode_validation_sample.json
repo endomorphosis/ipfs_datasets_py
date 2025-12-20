@@ -1,0 +1,50 @@
+{
+  "summary": {
+    "total": 3,
+    "successful": 0,
+    "failed": 3,
+    "success_rate": 0.0,
+    "methods": {}
+  },
+  "results": [
+    {
+      "url": "https://codelibrary.amlegal.com/codes/los_angeles/latest/overview",
+      "place_name": "City of Los Angeles",
+      "state_code": "CA",
+      "gnis": "2410877",
+      "timestamp": "2025-12-20T07:04:45.008245",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/los_angeles/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/philadelphia/latest/overview",
+      "place_name": "City of Philadelphia",
+      "state_code": "PA",
+      "gnis": "1215531",
+      "timestamp": "2025-12-20T07:04:50.037170",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/philadelphia/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/tx/san_antonio",
+      "place_name": "City of San Antonio",
+      "state_code": "TX",
+      "gnis": "2411774",
+      "timestamp": "2025-12-20T07:04:55.122799",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    }
+  ]
+}

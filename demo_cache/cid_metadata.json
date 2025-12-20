@@ -1,0 +1,23 @@
+{
+  "bafkreidpky2qgxzwvviawt6exn4bno3s55kzjyn4vzcpub2ml2mi7rga7y": {
+    "first_seen": "2025-12-20T03:44:33.589226Z",
+    "urls": [
+      "https://example.com"
+    ],
+    "content_length": 513,
+    "versions": [
+      {
+        "url": "https://example.com",
+        "metadata_cid": "bafkreihnliiz2u7pltlkdgok4f7vzhs6c6rchvyuy6f3tdc2bam3hl5pg4",
+        "scraped_at": "2025-12-20T03:44:33.589226Z",
+        "version": 1
+      },
+      {
+        "url": "https://example.com",
+        "metadata_cid": "bafkreiepszqbbrsoalqysx2v5fsxmcw54zcztvvr6bwoi7fina4bwal6dy",
+        "scraped_at": "2025-12-20T03:44:33.658822Z",
+        "version": 2
+      }
+    ]
+  }
+}

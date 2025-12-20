@@ -1,0 +1,38 @@
+{
+  "https://library.municode.com/tx/san_antonio": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreicg55zikwvrtbp6feneqyvcgnfb3ivaghvr6hxkieaywb7czvmwhi",
+    "last_scraped": "2025-12-20T07:07:24.094968Z",
+    "total_versions": 3
+  },
+  "https://library.municode.com/ca/san_jose": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreigv7w6j4cthavas4btzbqgtuvbjvw4xjggbcagdaxa44d2o2rgpjm",
+    "last_scraped": "2025-12-20T07:07:31.297179Z",
+    "total_versions": 2
+  },
+  "https://library.municode.com/tx/austin": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreiema57lx6xposxbrlcp7agxk6wbqtxuckfbhc4sqeys7aorcgxwee",
+    "last_scraped": "2025-12-20T07:06:10.015207Z",
+    "total_versions": 1
+  },
+  "https://library.municode.com/wa/seattle": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreibjuzobespjnizh27zye4ltrs4x7jw3dyjer6fiuhqdu3k5iqgpka",
+    "last_scraped": "2025-12-20T07:06:17.174606Z",
+    "total_versions": 1
+  },
+  "https://library.municode.com/co/denver": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreifz35gbboeju5n6pjbszjyv3gceolmywcdtyqidupwiahlxgkd2xu",
+    "last_scraped": "2025-12-20T07:06:18.889464Z",
+    "total_versions": 1
+  },
+  "https://library.municode.com/ok/oklahoma_city": {
+    "latest_content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+    "latest_metadata_cid": "bafkreidebm6mn4urqaicg6tqttyzbxl7nts3jdiv3s7jls7f57fviaydje",
+    "last_scraped": "2025-12-20T07:06:20.598878Z",
+    "total_versions": 1
+  }
+}

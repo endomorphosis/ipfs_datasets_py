@@ -250,3 +250,36 @@ def get_cid(file_data: str | Path | bytes, for_string: bool = False) -> str:
 
     ipfs_multiformats = ipfs_multiformats_py(None, None)
     return ipfs_multiformats.get_cid(file_data)
+
+
+def compute_cid(content: bytes) -> CID:
+    """
+    Compute CID for raw bytes content.
+    
+    This is a convenience function for content-addressed scraping.
+    
+    Args:
+        content: Raw bytes content
+        
+    Returns:
+        CID object (use cid_to_string() to get string representation)
+    """
+    hash_digest = hashlib.sha256(content).digest()
+    mh = multihash.wrap(hash_digest, 'sha2-256')
+    cid = CID('base32', 1, 'raw', mh)
+    return cid
+
+
+def cid_to_string(cid: Union[str, CID]) -> str:
+    """
+    Convert CID to string representation.
+    
+    Args:
+        cid: CID object or string
+        
+    Returns:
+        String representation of CID
+    """
+    if isinstance(cid, str):
+        return cid
+    return str(cid)

@@ -1,0 +1,112 @@
+{
+  "summary": {
+    "total": 5,
+    "successful": 2,
+    "failed": 3,
+    "success_rate": 0.4,
+    "methods": {
+      "content_addressed": 2
+    }
+  },
+  "results": [
+    {
+      "url": "https://codelibrary.amlegal.com/codes/los_angeles/latest/overview",
+      "place_name": "City of Los Angeles",
+      "state_code": "CA",
+      "gnis": "2410877",
+      "timestamp": "2025-12-20T07:07:13.143134",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/los_angeles/latest/overview (status: error)",
+      "content_length": 0,
+      "metadata": {},
+      "scrape_details": {
+        "status": "error",
+        "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/los_angeles/latest/overview"
+      }
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/philadelphia/latest/overview",
+      "place_name": "City of Philadelphia",
+      "state_code": "PA",
+      "gnis": "1215531",
+      "timestamp": "2025-12-20T07:07:18.772011",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/philadelphia/latest/overview (status: error)",
+      "content_length": 0,
+      "metadata": {},
+      "scrape_details": {
+        "status": "error",
+        "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/philadelphia/latest/overview"
+      }
+    },
+    {
+      "url": "https://library.municode.com/tx/san_antonio",
+      "place_name": "City of San Antonio",
+      "state_code": "TX",
+      "gnis": "2411774",
+      "timestamp": "2025-12-20T07:07:24.094840",
+      "success": true,
+      "method_used": "content_addressed",
+      "content_hash": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "error": null,
+      "content_length": 6065,
+      "metadata": {
+        "url": "https://library.municode.com/tx/san_antonio",
+        "scraped_at": "2025-12-20T07:07:24.094968Z",
+        "content_length": 6065,
+        "content_type": "text/html; charset=utf-8",
+        "status_code": 200,
+        "place_name": "City of San Antonio",
+        "state_code": "TX",
+        "gnis": "2411774",
+        "source_type": "municipal_code"
+      },
+      "version": 3
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/honolulu/latest/overview",
+      "place_name": "City and County of Honolulu",
+      "state_code": "HI",
+      "gnis": "2709276",
+      "timestamp": "2025-12-20T07:07:25.925965",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/honolulu/latest/overview (status: error)",
+      "content_length": 0,
+      "metadata": {},
+      "scrape_details": {
+        "status": "error",
+        "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/honolulu/latest/overview"
+      }
+    },
+    {
+      "url": "https://library.municode.com/ca/san_jose",
+      "place_name": "City of San Jose",
+      "state_code": "CA",
+      "gnis": "2411790",
+      "timestamp": "2025-12-20T07:07:31.297007",
+      "success": true,
+      "method_used": "content_addressed",
+      "content_hash": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "error": null,
+      "content_length": 6065,
+      "metadata": {
+        "url": "https://library.municode.com/ca/san_jose",
+        "scraped_at": "2025-12-20T07:07:31.297179Z",
+        "content_length": 6065,
+        "content_type": "text/html; charset=utf-8",
+        "status_code": 200,
+        "place_name": "City of San Jose",
+        "state_code": "CA",
+        "gnis": "2411790",
+        "source_type": "municipal_code"
+      },
+      "version": 2
+    }
+  ]
+}

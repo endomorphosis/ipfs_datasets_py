@@ -1,0 +1,141 @@
+{
+  "summary": {
+    "total": 10,
+    "successful": 0,
+    "failed": 10,
+    "success_rate": 0.0,
+    "methods": {}
+  },
+  "results": [
+    {
+      "url": "https://codelibrary.amlegal.com/codes/los_angeles/latest/overview",
+      "place_name": "City of Los Angeles",
+      "state_code": "CA",
+      "gnis": "2410877",
+      "timestamp": "2025-12-20T07:05:50.500287",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/los_angeles/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/philadelphia/latest/overview",
+      "place_name": "City of Philadelphia",
+      "state_code": "PA",
+      "gnis": "1215531",
+      "timestamp": "2025-12-20T07:05:56.010960",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/philadelphia/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/tx/san_antonio",
+      "place_name": "City of San Antonio",
+      "state_code": "TX",
+      "gnis": "2411774",
+      "timestamp": "2025-12-20T07:06:01.330594",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/honolulu/latest/overview",
+      "place_name": "City and County of Honolulu",
+      "state_code": "HI",
+      "gnis": "2709276",
+      "timestamp": "2025-12-20T07:06:03.041991",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/honolulu/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/ca/san_jose",
+      "place_name": "City of San Jose",
+      "state_code": "CA",
+      "gnis": "2411790",
+      "timestamp": "2025-12-20T07:06:08.363154",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/tx/austin",
+      "place_name": "City of Austin",
+      "state_code": "TX",
+      "gnis": "2409761",
+      "timestamp": "2025-12-20T07:06:10.015153",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://codelibrary.amlegal.com/codes/ftworth/latest/overview",
+      "place_name": "City of Fort Worth",
+      "state_code": "TX",
+      "gnis": "2410531",
+      "timestamp": "2025-12-20T07:06:11.735499",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "403 Client Error: Forbidden for url: https://codelibrary.amlegal.com/codes/ftworth/latest/overview",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/wa/seattle",
+      "place_name": "City of Seattle",
+      "state_code": "WA",
+      "gnis": "2411856",
+      "timestamp": "2025-12-20T07:06:17.174483",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/co/denver",
+      "place_name": "City of Denver",
+      "state_code": "CO",
+      "gnis": "2410324",
+      "timestamp": "2025-12-20T07:06:18.889375",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    },
+    {
+      "url": "https://library.municode.com/ok/oklahoma_city",
+      "place_name": "City of Oklahoma City",
+      "state_code": "OK",
+      "gnis": "2411311",
+      "timestamp": "2025-12-20T07:06:20.598792",
+      "success": false,
+      "method_used": null,
+      "content_hash": null,
+      "error": "Unknown error",
+      "content_length": 0,
+      "metadata": {}
+    }
+  ]
+}

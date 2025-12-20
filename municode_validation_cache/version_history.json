@@ -1,0 +1,86 @@
+{
+  "https://library.municode.com/tx/san_antonio": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreid55fvp5v26jrsyolxjl3zl5soqiziimrlaqwdnfr7kh75u4z57ty",
+      "scraped_at": "2025-12-20T07:04:55.122941Z",
+      "content_length": 6065,
+      "changed": true
+    },
+    {
+      "version": 2,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreicikynzcqkq6y6djlmn6pxtefnw74bfzm3rvdy5a3otd4k3tp477i",
+      "scraped_at": "2025-12-20T07:06:01.330694Z",
+      "content_length": 6065,
+      "changed": false
+    },
+    {
+      "version": 3,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreicg55zikwvrtbp6feneqyvcgnfb3ivaghvr6hxkieaywb7czvmwhi",
+      "scraped_at": "2025-12-20T07:07:24.094968Z",
+      "content_length": 6065,
+      "changed": false
+    }
+  ],
+  "https://library.municode.com/ca/san_jose": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreigg3xj4pwdfofdbfgl6wuoyfzenhesrcamwurqn7mnvltm2wocpgu",
+      "scraped_at": "2025-12-20T07:06:08.363273Z",
+      "content_length": 6065,
+      "changed": true
+    },
+    {
+      "version": 2,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreigv7w6j4cthavas4btzbqgtuvbjvw4xjggbcagdaxa44d2o2rgpjm",
+      "scraped_at": "2025-12-20T07:07:31.297179Z",
+      "content_length": 6065,
+      "changed": false
+    }
+  ],
+  "https://library.municode.com/tx/austin": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreiema57lx6xposxbrlcp7agxk6wbqtxuckfbhc4sqeys7aorcgxwee",
+      "scraped_at": "2025-12-20T07:06:10.015207Z",
+      "content_length": 6065,
+      "changed": true
+    }
+  ],
+  "https://library.municode.com/wa/seattle": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreibjuzobespjnizh27zye4ltrs4x7jw3dyjer6fiuhqdu3k5iqgpka",
+      "scraped_at": "2025-12-20T07:06:17.174606Z",
+      "content_length": 6065,
+      "changed": true
+    }
+  ],
+  "https://library.municode.com/co/denver": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreifz35gbboeju5n6pjbszjyv3gceolmywcdtyqidupwiahlxgkd2xu",
+      "scraped_at": "2025-12-20T07:06:18.889464Z",
+      "content_length": 6065,
+      "changed": true
+    }
+  ],
+  "https://library.municode.com/ok/oklahoma_city": [
+    {
+      "version": 1,
+      "content_cid": "bafkreibovt5s4u654nqwm7c26m27bgtqjhj5qo6hfpxanra5qr4pdn3ema",
+      "metadata_cid": "bafkreidebm6mn4urqaicg6tqttyzbxl7nts3jdiv3s7jls7f57fviaydje",
+      "scraped_at": "2025-12-20T07:06:20.598878Z",
+      "content_length": 6065,
+      "changed": true
+    }
+  ]
+}
