@@ -4,7 +4,7 @@ American Legal Publishing Webscraper
 This module provides functions for scraping municipal codes from American Legal Publishing
 (codelibrary.amlegal.com), a major provider of municipal code content for 2,180+ US jurisdictions.
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 import aiohttp
 import asyncio
 from datetime import datetime
@@ -469,3 +469,29 @@ async def batch_scrape(
         }
     
     return response
+
+
+async def scrape_code(
+    url: str,
+    *,
+    api_first: bool = True,
+    timeout: int = 45,
+    capture_api_bodies: bool = False,
+    max_api_requests: int = 10,
+) -> Dict[str, Any]:
+    """Compatibility wrapper for the canonical American Legal API-first scraper.
+
+    This module is a legacy location; the maintained implementation lives in
+    `ipfs_datasets_py.legal_scrapers.scrapers.municipal_scrapers.american_legal_scraper`.
+    """
+    from ipfs_datasets_py.legal_scrapers.scrapers.municipal_scrapers.american_legal_scraper import (
+        scrape_code as _scrape_code,
+    )
+
+    return await _scrape_code(
+        url,
+        api_first=api_first,
+        timeout=timeout,
+        capture_api_bodies=capture_api_bodies,
+        max_api_requests=max_api_requests,
+    )

@@ -43,6 +43,12 @@ pdf_processing_metrics.json
 _log_probs_test.py
 # Scraper test results
 test_results/
+validation_*.json
+validation_*.jsonl
+validation_*.json.jsonl
+data/validation/validation_results_*.json
+data/validation/validation_results_*.jsonl
+data/validation/validation_results_*.json.jsonl
 *.pyc
 __pycache__/
 configs.yaml

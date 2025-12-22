@@ -16,7 +16,6 @@ setup(
         'numpy',
         'urllib3',
         'requests',
-        'boto3',
         'ipfsspec',
         "duckdb",
         "pyarrow>=10.0.0",
@@ -38,6 +37,19 @@ setup(
         "matplotlib>=3.5.0",
     ],
     extras_require={
+        # Optional proxy support for SOCKS / Tor routing.
+        # Required when using socks5/socks5h proxies (including local Tor).
+        'socks': [
+            'PySocks>=1.7.1',
+        ],
+        # Alias extra: Tor uses SOCKS under the hood; Tor itself is external.
+        'tor': [
+            'PySocks>=1.7.1',
+        ],
+        # Optional AWS SDK for the Athena-based Common Crawl index fallback.
+        'athena': [
+            'boto3>=1.26.0',
+        ],
         # Optional but recommended dependencies
         'ipld': [
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
@@ -76,6 +88,8 @@ setup(
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
         'all': [
+            'PySocks>=1.7.1',
+            'boto3>=1.26.0',
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
             'ipld-dag-pb>=0.0.1',  # Only 0.0.1 available on PyPI
             'archivenow==2020.7.18.12.19.44',

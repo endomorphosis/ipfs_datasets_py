@@ -4,12 +4,107 @@ American Legal Publishing Webscraper
 This module provides functions for scraping municipal codes from American Legal Publishing
 (codelibrary.amlegal.com), a major provider of municipal code content for 2,180+ US jurisdictions.
 """
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 import aiohttp
 import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
+from urllib.parse import urlparse
+import json
+
+
+def _extract_text_from_api_payload(
+    payload: Any,
+    *,
+    max_chars: int = 200_000,
+    min_fragment_len: int = 200,
+) -> Dict[str, Any]:
+    """Best-effort extraction of readable text from typical API JSON payloads."""
+
+    INTEREST_KEYS = {
+        "content",
+        "Content",
+        "html",
+        "Html",
+        "body",
+        "Body",
+        "text",
+        "Text",
+        "title",
+        "Title",
+        "name",
+        "Name",
+        "label",
+        "Label",
+        "heading",
+        "Heading",
+        "sectionText",
+        "section_text",
+    }
+
+    title: Optional[str] = None
+    fragments: List[str] = []
+    seen: set[str] = set()
+
+    def _clean_fragment(s: str) -> str:
+        s2 = s.strip()
+        if not s2:
+            return ""
+        if "<" in s2 and ">" in s2:
+            try:
+                s2 = BeautifulSoup(s2, "html.parser").get_text(" ", strip=True)
+            except Exception:
+                pass
+        return s2
+
+    def _add(s: str) -> None:
+        if not isinstance(s, str):
+            return
+        s2 = _clean_fragment(s)
+        if len(s2) < min_fragment_len:
+            return
+        key = s2[:160]
+        if key in seen:
+            return
+        seen.add(key)
+        fragments.append(s2)
+
+    def _walk(obj: Any) -> None:
+        nonlocal title
+        if obj is None:
+            return
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if title is None and isinstance(k, str) and k.lower() in {"title", "name", "label", "heading"} and isinstance(v, str):
+                    t = v.strip()
+                    if t:
+                        title = t
+                if isinstance(k, str) and k in INTEREST_KEYS and isinstance(v, str):
+                    _add(v)
+                _walk(v)
+            return
+        if isinstance(obj, list):
+            for it in obj:
+                _walk(it)
+            return
+        if isinstance(obj, str):
+            _add(obj)
+
+    _walk(payload)
+
+    content_parts: List[str] = []
+    total = 0
+    for frag in fragments:
+        if total >= max_chars:
+            break
+        remaining = max_chars - total
+        part = frag[:remaining]
+        content_parts.append(part)
+        total += len(part)
+
+    content = "\n\n".join(content_parts).strip()
+    return {"title": title, "content": content, "fragments": len(fragments)}
 
 
 async def search_jurisdictions(
@@ -114,7 +209,7 @@ async def search_jurisdictions(
                         "state": url_state,
                         "url": full_url,
                         "code_url": full_url,
-                        "provider": "municode",
+                        "provider": "american_legal",
                         "last_updated": datetime.now().isoformat() + "Z"
                     })
                     
@@ -218,6 +313,7 @@ async def scrape_jurisdiction(
         ...     print(f"First section: {result['sections'][0]['title']}")
         ...     return result
         >>> asyncio.run(example())
+
         Scraped 2 sections from Seattle, WA
         First section: Chapter 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
@@ -295,6 +391,17 @@ async def scrape_jurisdiction(
                             
                             if max_sections and len(sections_list) >= max_sections:
                                 break
+                else:
+                    # Treat non-200 responses (e.g., 403 bot challenges) as errors so
+                    # callers can trigger archive fallbacks.
+                    return {
+                        "jurisdiction": jurisdiction_name,
+                        "url": jurisdiction_url,
+                        "sections": [],
+                        "error": f"HTTP {status}",
+                        "error_type": "http_error",
+                        "status_code": status,
+                    }
     
     except aiohttp.ClientConnectorError:
         return {
@@ -469,3 +576,208 @@ async def batch_scrape(
         }
     
     return response
+
+
+async def scrape_code(
+    url: str,
+    *,
+    api_first: bool = True,
+    timeout: int = 45,
+    capture_api_bodies: bool = False,
+    max_api_requests: int = 10,
+) -> Dict[str, Any]:
+    """API-first scrape for American Legal (codelibrary.amlegal.com).
+
+    Tries to discover and call JSON endpoints used by the web app via Playwright
+    network observation (XHR/fetch). Falls back to HTML scraping.
+
+    Notes:
+    - No UA/cookie randomization or bot-evasion is performed.
+    - JSON capture is capped to avoid large downloads.
+    """
+    if not isinstance(url, str) or not url.strip():
+        return {"success": False, "url": url, "provider": "american_legal", "error": "Invalid URL"}
+    url = url.strip()
+
+    api_endpoints: List[str] = []
+    api_json: List[Dict[str, Any]] = []
+    archive_fallback_metadata: Dict[str, Any] = {}
+    archive_async: Optional[Dict[str, Any]] = None
+    archive_async_job_id: Optional[str] = None
+
+    if api_first:
+        try:
+            # Some American Legal endpoints require specific headers/session context.
+            # We observe the page's own XHR/fetch requests in Playwright and replay
+            # those requests via `context.request` using the same headers.
+            from playwright.async_api import async_playwright
+
+            captured_requests: List[Dict[str, Any]] = []
+            seen_keys: set[tuple[str, str]] = set()
+
+            def _looks_like_api(u: str) -> bool:
+                ul = u.lower()
+                return (
+                    "/api/" in ul
+                    or "graphql" in ul
+                    or ul.endswith(".json")
+                    or "api.amlegal.com" in ul
+                    or "codelibrary.amlegal.com/api" in ul
+                )
+
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context()
+                page = await context.new_page()
+
+                def _on_request(req) -> None:  # type: ignore[no-untyped-def]
+                    try:
+                        if req.resource_type not in {"xhr", "fetch"}:
+                            return
+                    except Exception:
+                        pass
+                    if not _looks_like_api(req.url):
+                        return
+                    key = (req.method, req.url)
+                    if key in seen_keys:
+                        return
+                    seen_keys.add(key)
+                    captured_requests.append(
+                        {
+                            "method": req.method,
+                            "url": req.url,
+                            "headers": dict(req.headers),
+                            "post_data": req.post_data,
+                        }
+                    )
+
+                page.on("request", _on_request)
+
+                await page.goto(url, wait_until="networkidle", timeout=int(timeout) * 1000)
+                await page.wait_for_timeout(1500)
+
+                forbidden = {"host", "connection", "content-length"}
+
+                best_title: Optional[str] = None
+                best_content: Optional[str] = None
+                best_fragments = 0
+
+                for req in captured_requests[: int(max_api_requests)]:
+                    method = str(req.get("method") or "GET").upper()
+                    u = str(req.get("url") or "").strip()
+                    if not u:
+                        continue
+                    hdrs0 = req.get("headers") if isinstance(req.get("headers"), dict) else {}
+                    hdrs = {k: v for k, v in hdrs0.items() if k.lower() not in forbidden}
+                    api_endpoints.append(u)
+
+                    try:
+                        if method == "POST":
+                            post_data = req.get("post_data")
+                            resp = await context.request.post(u, headers=hdrs, data=post_data)
+                        else:
+                            resp = await context.request.get(u, headers=hdrs)
+
+                        if resp.status != 200:
+                            continue
+                        txt = await resp.text()
+                        if len(txt.encode("utf-8", errors="ignore")) > 400_000:
+                            continue
+                        try:
+                            obj = json.loads(txt)
+                        except Exception:
+                            continue
+                        if capture_api_bodies:
+                            api_json.append(obj)
+                        extracted = _extract_text_from_api_payload(obj)
+                        content = extracted.get("content")
+                        if isinstance(content, str) and len(content) > (best_content and len(best_content) or 0):
+                            best_content = content
+                            best_title = extracted.get("title")
+                            best_fragments = int(extracted.get("fragments") or 0)
+                    except Exception:
+                        continue
+
+                await context.close()
+                await browser.close()
+
+            if isinstance(best_content, str) and len(best_content) > 800:
+                return {
+                    "success": True,
+                    "url": url,
+                    "provider": "american_legal",
+                    "method": "api_first",
+                    "title": best_title,
+                    "content": best_content,
+                    "api_endpoints": api_endpoints,
+                    "api_json": api_json,
+                    "api_fragments": best_fragments,
+                }
+        except Exception:
+            pass
+
+    html_result = await scrape_jurisdiction(url, include_metadata=True, max_sections=None)
+
+    # If the live scrape failed, try unified archive-first fallback and optionally
+    # enqueue an async archive submission job.
+    if isinstance(html_result, dict) and ("error" in html_result):
+        try:
+            from ipfs_datasets_py.unified_web_scraper import UnifiedWebScraper, ScraperConfig, ScraperMethod
+
+            cfg = ScraperConfig(
+                timeout=int(timeout),
+                extract_text=True,
+                extract_links=False,
+                fallback_enabled=True,
+                wayback_submit_on_miss=True,
+                wayback_submit_timeout=min(30.0, float(timeout) if timeout else 30.0),
+                wayback_submit_poll_attempts=1,
+                wayback_submit_poll_delay=2.0,
+                archive_async_submit_on_failure=True,
+                archive_async_submit_on_challenge=True,
+                preferred_methods=[
+                    ScraperMethod.COMMON_CRAWL,
+                    ScraperMethod.WAYBACK_MACHINE,
+                    ScraperMethod.IPWB,
+                    ScraperMethod.ARCHIVE_IS,
+                    ScraperMethod.BEAUTIFULSOUP,
+                    ScraperMethod.REQUESTS_ONLY,
+                ],
+            )
+            res = await UnifiedWebScraper(cfg).scrape(url)
+            archive_fallback_metadata = getattr(res, "metadata", None) or {}
+            if isinstance(archive_fallback_metadata, dict):
+                archive_async = archive_fallback_metadata.get("archive_async") if isinstance(archive_fallback_metadata.get("archive_async"), dict) else None
+                archive_async_job_id = archive_async.get("job_id") if isinstance(archive_async, dict) else None
+
+            # If we got meaningful archived content, return it.
+            text = getattr(res, "text", None) or getattr(res, "content", None) or ""
+            if getattr(res, "success", False) and isinstance(text, str) and len(text) > 800:
+                return {
+                    "success": True,
+                    "url": url,
+                    "provider": "american_legal",
+                    "method": "archive_fallback",
+                    "content": text,
+                    "api_endpoints": api_endpoints,
+                    "api_json": api_json,
+                    "archive_async_job_id": archive_async_job_id,
+                    "archive_async": archive_async,
+                    "archive_fallback_metadata": archive_fallback_metadata,
+                }
+        except Exception:
+            pass
+
+    return {
+        "success": ("error" not in html_result),
+        "url": url,
+        "provider": "american_legal",
+        "method": "html",
+        "api_endpoints": api_endpoints,
+        "api_json": api_json,
+        "archive_async_job_id": archive_async_job_id,
+        "archive_async": archive_async,
+        "archive_fallback_metadata": archive_fallback_metadata,
+        "result": html_result,
+        "host": urlparse(url).netloc,
+    }
