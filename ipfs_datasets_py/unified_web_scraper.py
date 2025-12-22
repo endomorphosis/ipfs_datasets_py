@@ -1147,7 +1147,6 @@ class UnifiedWebScraper:
                         "errors_by_method": errors_by_method,
                         "metadata_by_method": metadata_by_method,
                         "available_methods": {m.value: bool(self.available_methods.get(m, False)) for m in ScraperMethod},
-                **({"archive_async": archive_async} if archive_async else {}),
                     }
                     return result
 

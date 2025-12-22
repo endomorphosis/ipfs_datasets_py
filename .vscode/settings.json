@@ -39,5 +39,6 @@
         "pbar"
     ],
     "mypy.runUsingActiveInterpreter": true,
-    "mypy.dmypyExecutable": "/home/barberb/ipfs_datasets_py/.venv/bin/dmypy"
+    "mypy.dmypyExecutable": "/home/barberb/ipfs_datasets_py/.venv/bin/dmypy",
+    "python-envs.pythonProjects": []
 }
