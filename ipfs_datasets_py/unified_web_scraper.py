@@ -796,6 +796,59 @@ class UnifiedWebScraper:
             # For prefix matches, ignore querystrings to avoid over-filtering.
             candidates = {_normalize_url_no_query(u) for u in candidates_raw if u}
 
+        # For prefix matches, the block may contain many URLs under the host.
+        # Collect a small set and pick the best candidate (HTML + homepage-like),
+        # rather than returning the first match (often robots.txt/sitemap).
+        matches: List[Dict[str, Any]] = []
+
+        def _score_candidate(rec: Dict[str, Any]) -> int:
+            u0 = str(rec.get("url") or "")
+            u = _normalize_url_no_query(u0)
+            status_raw = rec.get("status")
+            try:
+                status = int(status_raw)
+            except Exception:
+                status = 0
+            mime = str(rec.get("mime") or rec.get("mime_type") or "").lower()
+
+            score = 0
+            if status == 200:
+                score += 100
+            if "text/html" in mime or mime.startswith("text/html"):
+                score += 60
+            # Prefer exact-ish URL matches when possible.
+            try:
+                if _normalize_url_no_query(target_url) == u:
+                    score += 80
+            except Exception:
+                pass
+
+            # Avoid common non-page captures.
+            lu = u0.lower()
+            if lu.endswith("/robots.txt") or "robots.txt" in lu:
+                score -= 120
+            if "sitemap" in lu or lu.endswith(".xml"):
+                score -= 80
+            if lu.endswith(".txt"):
+                score -= 30
+
+            # Prefer homepage-ish paths.
+            try:
+                from urllib.parse import urlparse
+
+                p = urlparse(u0)
+                path = p.path or "/"
+                if path in ("", "/"):
+                    score += 40
+                # Shorter paths tend to be more useful than deep assets.
+                score += max(0, 20 - min(len(path), 20))
+                if p.query:
+                    score -= 5
+            except Exception:
+                pass
+
+            return score
+
         for raw_line in decompressed.splitlines():
             raw_line = raw_line.strip()
             if not raw_line:
@@ -818,16 +871,35 @@ class UnifiedWebScraper:
                 ok = any(nu.startswith(pref) for pref in candidates if pref)
 
             if ok:
-                # Attach best-effort provenance for audit/debugging.
-                try:
-                    rec["_direct_index_shard_file"] = cdx_file
-                    rec["_direct_index_block_offset"] = offset
-                    rec["_direct_index_block_length"] = length
-                    rec["_direct_index_cluster_line"] = best_line
-                    rec["_direct_index_match_type"] = match_type
-                except Exception:
-                    pass
-                return rec
+                matches.append(rec)
+                # Exact matches are expected to be unique; return immediately.
+                if match_type == "exact":
+                    best = rec
+                    try:
+                        best["_direct_index_shard_file"] = cdx_file
+                        best["_direct_index_block_offset"] = offset
+                        best["_direct_index_block_length"] = length
+                        best["_direct_index_cluster_line"] = best_line
+                        best["_direct_index_match_type"] = match_type
+                    except Exception:
+                        pass
+                    return best
+
+                # For prefix matches, collect a few then decide.
+                if len(matches) >= 25:
+                    break
+
+        if matches:
+            best = max(matches, key=_score_candidate)
+            try:
+                best["_direct_index_shard_file"] = cdx_file
+                best["_direct_index_block_offset"] = offset
+                best["_direct_index_block_length"] = length
+                best["_direct_index_cluster_line"] = best_line
+                best["_direct_index_match_type"] = match_type
+            except Exception:
+                pass
+            return best
 
         return None
 
@@ -1122,6 +1194,7 @@ class UnifiedWebScraper:
         skipped_unavailable: List[str] = []
         errors_by_method: Dict[str, List[str]] = {}
         metadata_by_method: Dict[str, Dict[str, Any]] = {}
+        last_attempted_method: Optional[ScraperMethod] = None
 
         for method in self.config.preferred_methods:
             if not self.available_methods.get(method, False):
@@ -1129,6 +1202,7 @@ class UnifiedWebScraper:
                 continue
 
             attempted_methods.append(method.value)
+            last_attempted_method = method
 
             try:
                 logger.info(f"Trying {method.value} for {url}")
@@ -1183,6 +1257,7 @@ class UnifiedWebScraper:
             url=url,
             success=False,
             errors=errors or ["No scraping methods available"],
+            method_used=last_attempted_method,
             metadata={
                 "attempted_methods": attempted_methods,
                 "skipped_unavailable_methods": skipped_unavailable,
@@ -1336,11 +1411,43 @@ class UnifiedWebScraper:
                 page.on("response", _on_response)
             
             try:
-                await page.goto(url, wait_until=self.config.playwright_wait_for, timeout=self.config.timeout * 1000)
-                
+                resp = await page.goto(url, wait_until=self.config.playwright_wait_for, timeout=self.config.timeout * 1000)
+
+                status_code: Optional[int] = None
+                content_type: str = ""
+                try:
+                    if resp is not None:
+                        status_code = int(resp.status)
+                        try:
+                            headers = await resp.all_headers()
+                            content_type = str(headers.get("content-type") or headers.get("Content-Type") or "")
+                        except Exception:
+                            content_type = ""
+                except Exception:
+                    status_code = None
+                    content_type = ""
+
                 # Get content
                 html = await page.content()
                 title = await page.title()
+
+                # If the navigation completed but returned an error status, treat it as a failure.
+                # This avoids falsely marking WAF/403 pages as successful scrapes.
+                if status_code is not None and status_code >= 400:
+                    return ScraperResult(
+                        url=url,
+                        success=False,
+                        errors=[f"Playwright received HTTP {status_code} for URL"],
+                        method_used=ScraperMethod.PLAYWRIGHT,
+                        metadata={
+                            "method": "playwright",
+                            "status_code": status_code,
+                            "content_type": content_type,
+                            "final_url": page.url,
+                            "title": title,
+                            **({"api_calls": api_calls} if api_calls else {}),
+                        },
+                    )
 
                 # Detect common anti-bot challenge pages and fail fast so fallback continues.
                 if self.config.playwright_detect_challenge_pages:
@@ -1425,6 +1532,9 @@ class UnifiedWebScraper:
                     success=True,
                     metadata={
                         'method': 'playwright',
+                        **({"status_code": status_code} if status_code is not None else {}),
+                        **({"content_type": content_type} if content_type else {}),
+                        'final_url': page.url,
                         'content_length': len(html),
                         **({"api_calls": api_calls} if api_calls else {}),
                     }
@@ -1781,7 +1891,9 @@ class UnifiedWebScraper:
             }
 
         try:
-            from ipfs_datasets_py.mcp_server.tools.web_archive_tools import submit_archives_async
+            from ipfs_datasets_py.mcp_server.tools.web_archive_tools.archive_check_submit import (
+                submit_archives_async,
+            )
         except Exception as e:
             return {
                 "status": "error",
@@ -2165,6 +2277,27 @@ class UnifiedWebScraper:
                     script.decompose()
                 text_out = soup.get_text(separator='\n', strip=True)
 
+            # Avoid reporting an archived block/forbidden error page as a successful scrape.
+            # These are common for municipal sites and are usually not useful content.
+            t_low = (title or "").strip().lower()
+            preview = (text_out or "").strip().lower()[:300]
+            if (
+                ("403" in t_low and "forbidden" in t_low)
+                or (preview.startswith("403") and "forbidden" in preview)
+                or ("access denied" in t_low)
+            ):
+                return ScraperResult(
+                    url=url,
+                    success=False,
+                    errors=["Common Crawl returned an archived access-denied/forbidden page; treating as failure for fallback."],
+                    metadata={
+                        **metadata,
+                        'warc_url': warc_url,
+                        'title': title,
+                        'note': 'Archived error page detected (403/access denied).'
+                    },
+                )
+
             links: List[Dict[str, str]] = []
             if self.config.extract_links:
                 for link in soup.find_all('a', href=True):
@@ -2274,6 +2407,11 @@ class UnifiedWebScraper:
         # Each index has a CDX endpoint of form: https://index.commoncrawl.org/<id>-index
         tried_indexes: List[str] = []
         last_error: Optional[str] = None
+        # If the CDX endpoint is blocked/unreachable, and we have a fallback that
+        # does not rely on it (direct-index or Athena), bail out early rather than
+        # repeatedly probing multiple indexes.
+        cdx_failed_connectivity = False
+        stop_cdx = False
 
         parsed = urlparse(url)
         prefix_url = f"{parsed.scheme}://{parsed.netloc}/" if parsed.scheme and parsed.netloc else None
@@ -2312,6 +2450,7 @@ class UnifiedWebScraper:
                     # If Common Crawl is blocked/unreachable, avoid repeating slow failures for every URL.
                     msg = str(e)
                     if _is_connectivity_error(msg):
+                        cdx_failed_connectivity = True
                         # Mark this endpoint down and force reselection on next call.
                         try:
                             self._common_crawl_endpoint_down[base] = time.time() + 120.0
@@ -2323,6 +2462,10 @@ class UnifiedWebScraper:
                         # fallbacks that might still work (direct index / Athena).
                         if not (self.config.common_crawl_direct_index_enabled or self.config.common_crawl_athena_enabled):
                             self._common_crawl_down_until = time.time() + 120.0
+                        else:
+                            # We have a viable fallback that doesn't use the CDX service.
+                            # Don't keep probing other CDX indexes for this URL.
+                            stop_cdx = True
                     continue
 
                 lines = [ln.strip() for ln in (text or "").splitlines() if ln.strip()]
@@ -2359,16 +2502,19 @@ class UnifiedWebScraper:
                     metadata,
                 )
 
+            if stop_cdx:
+                break
+
             # Polite pacing between index attempts to avoid hammering the CDX API.
             if self.config.rate_limit_delay:
                 await asyncio.sleep(float(self.config.rate_limit_delay))
 
         # Determine if CDX is unreachable (connectivity errors), which gates Athena/direct-index fallbacks.
-        cdx_failed_connectivity = False
-        if last_error and _is_connectivity_error(last_error):
-            cdx_failed_connectivity = True
-        if self._common_crawl_down_reason and _is_connectivity_error(self._common_crawl_down_reason):
-            cdx_failed_connectivity = True
+        if not cdx_failed_connectivity:
+            if last_error and _is_connectivity_error(last_error):
+                cdx_failed_connectivity = True
+            if self._common_crawl_down_reason and _is_connectivity_error(self._common_crawl_down_reason):
+                cdx_failed_connectivity = True
 
         athena_fallback_error: Optional[str] = None
 
