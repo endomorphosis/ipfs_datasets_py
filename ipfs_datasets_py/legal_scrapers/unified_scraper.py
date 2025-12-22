@@ -28,13 +28,13 @@ except ImportError as e:
     logger.warning(f"ContentAddressedScraper not available: {e}")
     HAVE_CA_SCRAPER = False
 
-# Import unified scraping adapter
+# Import unified web scraper (multi-method fallbacks)
 try:
-    from unified_scraping_adapter import UnifiedScrapingAdapter
-    HAVE_UNIFIED_ADAPTER = True
+    from ipfs_datasets_py.unified_web_scraper import UnifiedWebScraper, ScraperConfig, ScraperMethod
+    HAVE_UNIFIED_WEB_SCRAPER = True
 except ImportError as e:
-    logger.warning(f"UnifiedScrapingAdapter not available: {e}")
-    HAVE_UNIFIED_ADAPTER = False
+    logger.warning(f"UnifiedWebScraper not available: {e}")
+    HAVE_UNIFIED_WEB_SCRAPER = False
 
 
 class UnifiedLegalScraper:
@@ -54,6 +54,7 @@ class UnifiedLegalScraper:
                  enable_ipfs: bool = False,
                  enable_warc: bool = True,
                  check_archives: bool = True,
+                 request_timeout: int = 60,
                  max_workers: Optional[int] = None):
         """
         Initialize unified legal scraper.
@@ -71,6 +72,7 @@ class UnifiedLegalScraper:
         self.enable_ipfs = enable_ipfs
         self.enable_warc = enable_warc
         self.check_archives = check_archives
+        self.request_timeout = int(request_timeout)
         self.max_workers = max_workers or cpu_count()
         
         # Initialize content addressed scraper
@@ -82,10 +84,10 @@ class UnifiedLegalScraper:
             self.ca_scraper = None
         
         # Initialize unified adapter
-        if HAVE_UNIFIED_ADAPTER:
-            self.adapter = UnifiedScrapingAdapter()
+        if HAVE_UNIFIED_WEB_SCRAPER:
+            self.web_scraper = UnifiedWebScraper()
         else:
-            self.adapter = None
+            self.web_scraper = None
         
         logger.info(f"UnifiedLegalScraper initialized (IPFS={enable_ipfs}, WARC={enable_warc})")
     
@@ -209,23 +211,76 @@ class UnifiedLegalScraper:
         Returns:
             Dict with scraping results
         """
-        if not self.adapter:
+        if not self.web_scraper:
             return {
                 "success": False,
                 "url": url,
-                "error": "UnifiedScrapingAdapter not available"
+                "error": "UnifiedWebScraper not available"
             }
         
         try:
-            result = await self.adapter.scrape_with_fallbacks(
-                url,
-                check_common_crawl=self.check_archives,
-                check_wayback=self.check_archives,
-                check_ipwb=self.check_archives,
-                use_playwright=True,
-                enable_warc=self.enable_warc
+            # If prefer archived sources, front-load archives; otherwise prefer live fetch.
+            if self.check_archives:
+                preferred_methods = [
+                    ScraperMethod.COMMON_CRAWL,
+                    ScraperMethod.WAYBACK_MACHINE,
+                    ScraperMethod.IPWB,
+                    ScraperMethod.ARCHIVE_IS,
+                    ScraperMethod.PLAYWRIGHT,
+                    ScraperMethod.BEAUTIFULSOUP,
+                    ScraperMethod.REQUESTS_ONLY,
+                    ScraperMethod.NEWSPAPER,
+                    ScraperMethod.READABILITY,
+                ]
+            else:
+                preferred_methods = [
+                    ScraperMethod.PLAYWRIGHT,
+                    ScraperMethod.BEAUTIFULSOUP,
+                    ScraperMethod.REQUESTS_ONLY,
+                    ScraperMethod.WAYBACK_MACHINE,
+                    ScraperMethod.ARCHIVE_IS,
+                    ScraperMethod.COMMON_CRAWL,
+                    ScraperMethod.IPWB,
+                    ScraperMethod.NEWSPAPER,
+                    ScraperMethod.READABILITY,
+                ]
+
+            self.web_scraper.config = ScraperConfig(
+                timeout=self.request_timeout,
+                extract_links=True,
+                extract_text=True,
+                fallback_enabled=True,
+                preferred_methods=preferred_methods,
             )
-            return result
+
+            web_result = await self.web_scraper.scrape(url)
+
+            if not web_result.success:
+                return {
+                    "success": False,
+                    "url": url,
+                    "error": "; ".join(web_result.errors) if web_result.errors else "Scraping failed",
+                    "errors": web_result.errors,
+                    "metadata": web_result.metadata,
+                }
+
+            method_used = web_result.method_used.value if web_result.method_used else None
+            source = method_used
+            if method_used in {"beautifulsoup", "requests_only", "newspaper", "readability"}:
+                source = "live"
+
+            return {
+                "success": True,
+                "url": url,
+                "content": web_result.content,
+                "html": web_result.html,
+                "title": web_result.title,
+                "text": web_result.text,
+                "links": web_result.links,
+                "source": source,
+                "method_used": method_used,
+                "metadata": web_result.metadata,
+            }
         except Exception as e:
             logger.error(f"Unified fallback scraping failed for {url}: {e}")
             return {
@@ -331,3 +386,7 @@ class UnifiedLegalScraper:
 def get_unified_legal_scraper(**kwargs) -> UnifiedLegalScraper:
     """Get a configured unified legal scraper instance."""
     return UnifiedLegalScraper(**kwargs)
+
+
+# Backward-compatible alias for older imports/tests
+UnifiedScraper = UnifiedLegalScraper

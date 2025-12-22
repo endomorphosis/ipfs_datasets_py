@@ -8,10 +8,287 @@ import asyncio
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
+import json
 
 
 import aiohttp
 from bs4 import BeautifulSoup
+
+
+def _extract_text_from_api_payload(
+    payload: Any,
+    *,
+    max_chars: int = 200_000,
+    min_fragment_len: int = 200,
+) -> Dict[str, Any]:
+    """Best-effort extraction of readable text from typical API JSON payloads."""
+
+    INTEREST_KEYS = {
+        "content",
+        "Content",
+        "html",
+        "Html",
+        "body",
+        "Body",
+        "text",
+        "Text",
+        "title",
+        "Title",
+        "name",
+        "Name",
+        "label",
+        "Label",
+        "heading",
+        "Heading",
+        "sectionText",
+        "section_text",
+    }
+
+    title: Optional[str] = None
+    fragments: List[str] = []
+    seen: set[str] = set()
+
+    def _clean_fragment(s: str) -> str:
+        s2 = s.strip()
+        if not s2:
+            return ""
+        # If HTML-ish, strip tags.
+        if "<" in s2 and ">" in s2:
+            try:
+                s2 = BeautifulSoup(s2, "html.parser").get_text(" ", strip=True)
+            except Exception:
+                pass
+        return s2
+
+    def _add(s: str) -> None:
+        nonlocal fragments
+        if not isinstance(s, str):
+            return
+        s2 = _clean_fragment(s)
+        if len(s2) < min_fragment_len:
+            return
+        key = s2[:160]
+        if key in seen:
+            return
+        seen.add(key)
+        fragments.append(s2)
+
+    def _walk(obj: Any) -> None:
+        nonlocal title
+        if obj is None:
+            return
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if title is None and isinstance(k, str) and k.lower() in {"title", "name", "label", "heading"} and isinstance(v, str):
+                    t = v.strip()
+                    if t:
+                        title = t
+                if isinstance(k, str) and k in INTEREST_KEYS and isinstance(v, str):
+                    _add(v)
+                _walk(v)
+            return
+        if isinstance(obj, list):
+            for it in obj:
+                _walk(it)
+            return
+        if isinstance(obj, str):
+            # Fallback: some APIs embed the whole document as a big string.
+            _add(obj)
+
+    _walk(payload)
+
+    content_parts: List[str] = []
+    total = 0
+    for frag in fragments:
+        if total >= max_chars:
+            break
+        remaining = max_chars - total
+        part = frag[:remaining]
+        content_parts.append(part)
+        total += len(part)
+
+    content = "\n\n".join(content_parts).strip()
+    return {"title": title, "content": content, "fragments": len(fragments)}
+
+
+async def scrape_code(
+    url: str,
+    *,
+    api_first: bool = True,
+    timeout: int = 45,
+    capture_api_bodies: bool = False,
+    max_api_requests: int = 10,
+) -> Dict[str, Any]:
+    """API-first scrape for Municode.
+
+    This tries to discover and call the same JSON endpoints used by the client-side
+    app (XHR/fetch) and only falls back to HTML scraping if no useful API content
+    is found.
+
+    Notes:
+    - No user-agent/cookie fuzzing or bot-evasion is performed.
+    - JSON response capture is strictly capped to avoid large downloads.
+    """
+    if not isinstance(url, str) or not url.strip():
+        return {"success": False, "url": url, "provider": "municode", "error": "Invalid URL"}
+
+    url = url.strip()
+
+    api_endpoints: List[str] = []
+    api_json: List[Dict[str, Any]] = []
+
+    if api_first:
+        try:
+            # Municode blocks direct HTTP requests to some API endpoints (401) unless the
+            # request matches what the webapp sends. We stay within a normal Playwright
+            # browser session and replay the *exact* request headers observed from the
+            # page's own XHR/fetch calls (no evasion/fuzzing).
+            from playwright.async_api import async_playwright
+
+            # If the caller points at the jurisdiction root, try the canonical code page.
+            candidate_urls = [url]
+            if "/codes/" not in url:
+                candidate_urls.insert(0, url.rstrip("/") + "/codes/code_of_ordinances")
+
+            codes_toc_url: Optional[str] = None
+            request_headers: Dict[str, str] = {}
+            job_id: Optional[str] = None
+            product_id: Optional[str] = None
+
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                context = await browser.new_context()
+                page = await context.new_page()
+
+                def _on_request(req) -> None:  # type: ignore[no-untyped-def]
+                    nonlocal codes_toc_url, request_headers
+                    if codes_toc_url is not None:
+                        return
+                    if "/api/codesToc?jobId=" in req.url and "productId=" in req.url:
+                        codes_toc_url = req.url
+                        request_headers = dict(req.headers)
+
+                page.on("request", _on_request)
+
+                for u in candidate_urls:
+                    try:
+                        await page.goto(u, wait_until="networkidle", timeout=int(timeout) * 1000)
+                        # Allow late XHRs to register.
+                        await page.wait_for_timeout(1500)
+                        if codes_toc_url:
+                            break
+                    except Exception:
+                        continue
+
+                if not codes_toc_url:
+                    await context.close()
+                    await browser.close()
+                    raise RuntimeError("Municode API discovery failed (no codesToc request observed)")
+
+                # Parse jobId/productId from observed codesToc URL.
+                try:
+                    job_id = codes_toc_url.split("jobId=")[1].split("&")[0]
+                    product_id = codes_toc_url.split("productId=")[1].split("&")[0]
+                except Exception:
+                    job_id = None
+                    product_id = None
+
+                # Replay further requests using the observed headers (some are required).
+                forbidden = {"host", "connection", "content-length"}
+                replay_headers = {k: v for k, v in request_headers.items() if k.lower() not in forbidden}
+
+                # Fetch TOC.
+                toc_resp = await context.request.get(codes_toc_url, headers=replay_headers)
+                if toc_resp.status != 200:
+                    await context.close()
+                    await browser.close()
+                    raise RuntimeError(f"Municode codesToc fetch failed: {toc_resp.status}")
+                toc_text = await toc_resp.text()
+                api_endpoints.append(codes_toc_url)
+                toc = json.loads(toc_text)
+
+                # Collect top-level nodes (these correspond to major chunks like Charter / Titles).
+                nodes: List[Dict[str, Any]] = []
+                for child in toc.get("Children") or []:
+                    if isinstance(child, dict) and child.get("Id"):
+                        nodes.append(child)
+
+                max_nodes = max(1, int(max_api_requests))
+                total_chars = 0
+                parts: List[str] = []
+                seen_prefixes: set[str] = set()
+
+                for node in nodes[:max_nodes]:
+                    node_id = str(node.get("Id"))
+                    heading = (node.get("Heading") or "").strip()
+                    cc_url = f"https://library.municode.com/api/CodesContent?jobId={job_id}&productId={product_id}&nodeId={node_id}"
+                    cc_resp = await context.request.get(cc_url, headers=replay_headers)
+                    api_endpoints.append(cc_url)
+                    if cc_resp.status != 200:
+                        continue
+                    cc_text = await cc_resp.text()
+                    # Cap per-node JSON size.
+                    if len(cc_text.encode("utf-8", errors="ignore")) > 400_000:
+                        continue
+                    try:
+                        cc_obj = json.loads(cc_text)
+                    except Exception:
+                        continue
+                    api_json.append(cc_obj)
+                    extracted = _extract_text_from_api_payload(cc_obj, max_chars=200_000)
+                    content = extracted.get("content")
+                    if not isinstance(content, str) or len(content) < 400:
+                        continue
+
+                    # Cross-node dedupe by prefix.
+                    prefix = content[:160]
+                    if prefix in seen_prefixes:
+                        continue
+                    seen_prefixes.add(prefix)
+
+                    header = heading or node_id
+                    chunk = f"{header}\n\n{content}".strip()
+                    parts.append(chunk)
+                    total_chars += len(chunk)
+                    if total_chars >= 700_000:
+                        break
+
+                await context.close()
+                await browser.close()
+
+            combined = "\n\n".join(parts).strip()
+            if combined and len(combined) > 800:
+                return {
+                    "success": True,
+                    "url": url,
+                    "provider": "municode",
+                    "method": "api_first",
+                    "title": (toc.get("Heading") if isinstance(toc, dict) else None),
+                    "content": combined,
+                    "api_endpoints": api_endpoints,
+                    "api_json": api_json,
+                    "job_id": job_id,
+                    "product_id": product_id,
+                    "nodes_fetched": len(parts),
+                }
+        except Exception as e:
+            # API-first is best-effort; fall through to HTML scraping.
+            api_json = api_json
+            api_endpoints = api_endpoints
+
+    # Fallback: existing HTML scraper.
+    html_result = await scrape_jurisdiction(url, include_metadata=True, max_sections=None)
+    return {
+        "success": ("error" not in html_result),
+        "url": url,
+        "provider": "municode",
+        "method": "html",
+        "api_endpoints": api_endpoints,
+        "api_json": api_json,
+        "result": html_result,
+        "host": urlparse(url).netloc,
+    }
 
 
 async def search_jurisdictions(

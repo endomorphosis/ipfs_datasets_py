@@ -426,3 +426,29 @@ async def batch_scrape(
         }
     
     return response
+
+
+async def scrape_code(
+    url: str,
+    *,
+    api_first: bool = True,
+    timeout: int = 45,
+    capture_api_bodies: bool = False,
+    max_api_requests: int = 10,
+) -> Dict[str, Any]:
+    """Compatibility wrapper for the canonical eCode360 API-first scraper.
+
+    This module is a legacy location; the maintained implementation lives in
+    `ipfs_datasets_py.legal_scrapers.scrapers.municipal_scrapers.ecode360_scraper`.
+    """
+    from ipfs_datasets_py.legal_scrapers.scrapers.municipal_scrapers.ecode360_scraper import (
+        scrape_code as _scrape_code,
+    )
+
+    return await _scrape_code(
+        url,
+        api_first=api_first,
+        timeout=timeout,
+        capture_api_bodies=capture_api_bodies,
+        max_api_requests=max_api_requests,
+    )

@@ -16,6 +16,7 @@ from .wayback_machine_search import search_wayback_machine, get_wayback_content,
 from .ipwb_integration import index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive, get_ipwb_content, verify_ipwb_archive
 from .autoscraper_integration import create_autoscraper_model, scrape_with_autoscraper, optimize_autoscraper_model, batch_scrape_with_autoscraper, list_autoscraper_models
 from .archive_is_integration import archive_to_archive_is, search_archive_is, get_archive_is_content, check_archive_status, batch_archive_to_archive_is
+from .archive_check_submit import check_and_submit_to_archives, batch_check_and_submit, submit_archives_async, get_archive_job
 
 # Brave Search tools
 from .brave_search import search_brave, search_brave_news, search_brave_images, batch_search_brave
@@ -77,6 +78,12 @@ __all__ = [
     "get_archive_is_content",
     "check_archive_status",
     "batch_archive_to_archive_is",
+
+    # Archive check/submit (async jobs)
+    "check_and_submit_to_archives",
+    "batch_check_and_submit",
+    "submit_archives_async",
+    "get_archive_job",
     
     # Brave Search tools
     "search_brave",

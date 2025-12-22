@@ -403,6 +403,15 @@ pip install ipfs-datasets-py[graphrag]
 # For web archive and multimedia scraping (ENHANCED)
 pip install ipfs-datasets-py[web_archive,multimedia]
 
+# For SOCKS proxy support (required for socks5/socks5h proxies)
+pip install ipfs-datasets-py[socks]
+
+# For routing scraper traffic through local Tor (Tor itself must be installed/running)
+pip install ipfs-datasets-py[tor]
+
+# For Common Crawl columnar-index fallback via Amazon Athena (requires AWS creds + S3 OutputLocation)
+pip install ipfs-datasets-py[athena]
+
 # For comprehensive web scraping tools
 pip install cdx-toolkit wayback internetarchive autoscraper ipwb warcio beautifulsoup4
 

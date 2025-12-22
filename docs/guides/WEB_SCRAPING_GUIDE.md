@@ -56,6 +56,16 @@ asyncio.run(example_usage())
 
 Access billions of web pages from Common Crawl's monthly datasets.
 
+Notes on reliability (especially on Windows/home networks):
+- The CDX service at `https://index.commoncrawl.org/` is sometimes unreachable from certain ISPs/networks (connection aborted / empty reply).
+- If you prefer to avoid AWS/S3 entirely, your best option is usually routing CDX requests through a proxy/VPN (HTTP(S) proxy or SOCKS5).
+    - For SOCKS5 with Python `requests`, you must bundle/install PySocks (`requests[socks]`).
+- If you don't have a proxy, you can also route through a local Tor client (Tor daemon or Tor Browser), which exposes a local SOCKS proxy (often 9050 or 9150). This also requires PySocks.
+- This repo also supports an optional fallback using the Common Crawl *columnar index* via Amazon Athena, but that requires AWS credentials and an S3 bucket for Athena query results.
+
+Global proxy/Tor:
+- You can route the *entire* unified scraper (not just Common Crawl) through a proxy/Tor by setting `ScraperConfig.proxy_url` or `ScraperConfig.use_tor=True`.
+
 ```python
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.common_crawl_search import (
     search_common_crawl,

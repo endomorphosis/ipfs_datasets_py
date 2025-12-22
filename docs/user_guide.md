@@ -458,6 +458,15 @@ if captures:
 
 Access large-scale web crawl data:
 
+Notes:
+- Some networks (including some home/Windows setups) may have trouble reaching `https://index.commoncrawl.org/`.
+- If you cannot reach the CDX endpoint and you want to avoid AWS/S3, use a proxy/VPN (HTTP(S) proxy or SOCKS5) so the CDX queries can complete.
+- If you don't have a proxy, you can also use a local Tor client (Tor daemon or Tor Browser) which provides a local SOCKS proxy (commonly 9050/9150). This requires PySocks (`requests[socks]`).
+- An alternative is using the Common Crawl *columnar index* via Amazon Athena, but that requires AWS credentials and an S3 bucket for Athena query results.
+
+Tip:
+- To route all requests-based methods through a proxy/Tor, set `ScraperConfig.proxy_url` or `ScraperConfig.use_tor=True`.
+
 ```python
 def query_common_crawl(domain, crawl_id="CC-MAIN-2024-10"):
     """Query Common Crawl for domain content."""
