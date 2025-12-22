@@ -9,7 +9,8 @@ setup(
         # Core dependencies
         'orbitdb_kit_py',
         # Install ipfs_kit_py from known_good branch (PyPI package is broken)
-        'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good',
+        # Use a ZIP URL (not git) to avoid submodule/SSH issues during pip install.
+        'ipfs_kit_py @ https://github.com/endomorphosis/ipfs_kit_py/archive/refs/heads/known_good.zip',
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
