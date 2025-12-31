@@ -353,25 +353,72 @@ def a_ucancapability_with_resourcefiledatatxt_and_actionread():
 
 
 @pytest.fixture
-def alice_has_capability_resourcekey123_actionencrypt(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice):
+def alice_has_capability_resourcekey123_actionencrypt(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice, audience_keypair_exists_with_diddidkeybob):
     """
     Given alice has capability resource="key-123" action="encrypt"
     
     Creates a token granting Alice the encrypt capability and returns the capability.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice
+        bob_keypair = audience_keypair_exists_with_diddidkeybob
+        
+        # Create capability
+        capability = UCANCapability(resource="key-123", action="encrypt")
+        
+        # Create token from a root authority (self-signed) to Alice
+        token = manager.create_token(
+            issuer_did=alice_keypair.did,
+            audience_did=alice_keypair.did,  # Self-grant
+            capabilities=[capability],
+            ttl=3600
+        )
+        
+        # Verify token was created
+        if not token or not token.token_id:
+            raise FixtureError('Failed to create fixture alice_has_capability_resourcekey123_actionencrypt: Token creation failed') from None
+        
+        return capability
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture alice_has_capability_resourcekey123_actionencrypt: {e}') from e
 
 
 @pytest.fixture
-def alice_has_capability_resourcekey123_actiondelegate(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice):
+def alice_has_capability_resourcekey123_actiondelegate(a_ucanmanager_instance_is_initialized, issuer_keypair_exists_with_diddidkeyalice, audience_keypair_exists_with_diddidkeybob):
     """
     Given alice has capability resource="key-123" action="delegate"
     
     Creates a token granting Alice the delegate capability and returns the capability.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice
+        
+        # Create capability
+        capability = UCANCapability(resource="key-123", action="delegate")
+        
+        # Create token from a root authority (self-signed) to Alice
+        token = manager.create_token(
+            issuer_did=alice_keypair.did,
+            audience_did=alice_keypair.did,  # Self-grant
+            capabilities=[capability],
+            ttl=3600
+        )
+        
+        # Verify token was created
+        if not token or not token.token_id:
+            raise FixtureError('Failed to create fixture alice_has_capability_resourcekey123_actiondelegate: Token creation failed') from None
+        
+        return capability
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture alice_has_capability_resourcekey123_actiondelegate: {e}') from e
 
 
 @pytest.fixture
@@ -417,7 +464,35 @@ def a_token_exists_with_audiencedidkeybob(a_ucanmanager_instance_is_initialized,
     Creates a token with Bob as audience and returns it.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice_and_private_key
+        bob_keypair = audience_keypair_exists_with_diddidkeybob
+        
+        # Create a simple capability
+        capability = UCANCapability(resource="file://test.txt", action="read")
+        
+        # Create token from Alice to Bob
+        token = manager.create_token(
+            issuer_did=alice_keypair.did,
+            audience_did=bob_keypair.did,
+            capabilities=[capability],
+            ttl=3600
+        )
+        
+        # Verify token was created
+        if not token or not token.token_id:
+            raise FixtureError('Failed to create fixture a_token_exists_with_audiencedidkeybob: Token creation failed') from None
+        
+        # Verify audience is correct
+        if token.audience != bob_keypair.did:
+            raise FixtureError(f'Failed to create fixture a_token_exists_with_audiencedidkeybob: Token audience is {token.audience}, expected {bob_keypair.did}') from None
+        
+        return token
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture a_token_exists_with_audiencedidkeybob: {e}') from e
 
 
 @pytest.fixture
@@ -428,7 +503,36 @@ def a_valid_token_exists_with_audiencedidkeybob(a_ucanmanager_instance_is_initia
     Creates a valid token with Bob as audience and returns it.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice_and_private_key
+        bob_keypair = audience_keypair_exists_with_diddidkeybob
+        
+        # Create capability
+        capability = UCANCapability(resource="file://secret.txt", action="read")
+        
+        # Create token from Alice to Bob
+        token = manager.create_token(
+            issuer_did=alice_keypair.did,
+            audience_did=bob_keypair.did,
+            capabilities=[capability],
+            ttl=3600
+        )
+        
+        # Verify token was created
+        if not token or not token.token_id:
+            raise FixtureError('Failed to create fixture a_valid_token_exists_with_audiencedidkeybob: Token creation failed') from None
+        
+        # Verify token is valid
+        is_valid, error = manager.verify_token(token.token_id)
+        if not is_valid:
+            raise FixtureError(f'Failed to create fixture a_valid_token_exists_with_audiencedidkeybob: Token is not valid: {error}') from None
+        
+        return token
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture a_valid_token_exists_with_audiencedidkeybob: {e}') from e
 
 
 @pytest.fixture
@@ -439,7 +543,31 @@ def a_token_exists_with_token_idtoken123(a_ucanmanager_instance_is_initialized, 
     Creates a token and returns it.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice_and_private_key
+        bob_keypair = audience_keypair_exists_with_diddidkeybob
+        
+        # Create capability
+        capability = UCANCapability(resource="file://data.txt", action="read")
+        
+        # Create token from Alice to Bob
+        token = manager.create_token(
+            issuer_did=alice_keypair.did,
+            audience_did=bob_keypair.did,
+            capabilities=[capability],
+            ttl=3600
+        )
+        
+        # Verify token was created
+        if not token or not token.token_id:
+            raise FixtureError('Failed to create fixture a_token_exists_with_token_idtoken123: Token creation failed') from None
+        
+        return token
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture a_token_exists_with_token_idtoken123: {e}') from e
 
 
 @pytest.fixture
@@ -534,4 +662,34 @@ def three_tokens_are_stored_with_ids_token1_token2_token3(a_ucanmanager_instance
     Creates 3 tokens and stores them in the manager.
     Raises FixtureError if token creation fails.
     """
-    raise NotImplementedError
+    try:
+        manager = a_ucanmanager_instance_is_initialized
+        alice_keypair = issuer_keypair_exists_with_diddidkeyalice_and_private_key
+        bob_keypair = audience_keypair_exists_with_diddidkeybob
+        
+        # Create 3 tokens
+        tokens = []
+        for i in range(3):
+            capability = UCANCapability(resource=f"file://test{i}.txt", action="read")
+            token = manager.create_token(
+                issuer_did=alice_keypair.did,
+                audience_did=bob_keypair.did,
+                capabilities=[capability],
+                ttl=3600
+            )
+            
+            # Verify token was created
+            if not token or not token.token_id:
+                raise FixtureError(f'Failed to create fixture three_tokens_are_stored_with_ids_token1_token2_token3: Token {i} creation failed') from None
+            
+            tokens.append(token)
+        
+        # Verify 3 tokens were created
+        if len(tokens) != 3:
+            raise FixtureError(f'Failed to create fixture three_tokens_are_stored_with_ids_token1_token2_token3: Expected 3 tokens, got {len(tokens)}') from None
+        
+        return tokens
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture three_tokens_are_stored_with_ids_token1_token2_token3: {e}') from e
