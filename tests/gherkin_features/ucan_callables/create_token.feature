@@ -8,22 +8,48 @@ Feature: UCANManager.create_token()
     And audience keypair exists with did="did:key:bob"
     And a UCANCapability with resource="file://data.txt" and action="read"
 
-  Scenario: Create token with single capability
+  Scenario: Create token with single capability returns instance
     When create_token() is called with issuer_did, audience_did, and capabilities list
     Then a UCANToken instance is returned
-    And the token has token_id as UUID string
-    And the token issuer is "did:key:alice"
-    And the token audience is "did:key:bob"
-    And the token capabilities contains 1 entry
-    And the token expires_at is ttl seconds from now
-    And the token has signature attribute
 
-  Scenario: Create token with multiple capabilities
+  Scenario: Created token has token_id as UUID string
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token has token_id as UUID string
+
+  Scenario: Created token has correct issuer
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token issuer is "did:key:alice"
+
+  Scenario: Created token has correct audience
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token audience is "did:key:bob"
+
+  Scenario: Created token capabilities contains 1 entry
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token capabilities contains 1 entry
+
+  Scenario: Created token expires_at is ttl seconds from now
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token expires_at is ttl seconds from now
+
+  Scenario: Created token has signature attribute
+    When create_token() is called with issuer_did, audience_did, and capabilities list
+    Then the token has signature attribute
+
+  Scenario: Create token with multiple capabilities contains 3 entries
     Given 3 UCANCapability instances for different resources
     When create_token() is called with capabilities list of 3
     Then the token capabilities contains 3 entries
-    And each capability has resource attribute
-    And each capability has action attribute
+
+  Scenario: Multiple capabilities each have resource attribute
+    Given 3 UCANCapability instances for different resources
+    When create_token() is called with capabilities list of 3
+    Then each capability has resource attribute
+
+  Scenario: Multiple capabilities each have action attribute
+    Given 3 UCANCapability instances for different resources
+    When create_token() is called with capabilities list of 3
+    Then each capability has action attribute
 
   Scenario: Create token with custom TTL
     When create_token() is called with ttl=7200
@@ -41,15 +67,30 @@ Feature: UCANManager.create_token()
   Scenario: Create token stores token in manager
     When create_token() is called with valid parameters
     Then the token is stored in tokens dictionary
-    And the token is indexed by token_id
-    And tokens.json file is updated
+
+  Scenario: Created token is indexed by token_id
+    When create_token() is called with valid parameters
+    Then the token is indexed by token_id
+
+  Scenario: Create token updates tokens.json file
+    When create_token() is called with valid parameters
+    Then tokens.json file is updated
 
   Scenario: Create token generates JWT signature
     When create_token() is called with valid parameters
     Then the token signature is a JWT string
-    And the signature contains token_id as jti claim
-    And the signature contains issuer_did as iss claim
-    And the signature contains audience_did as aud claim
+
+  Scenario: Token signature contains token_id as jti claim
+    When create_token() is called with valid parameters
+    Then the signature contains token_id as jti claim
+
+  Scenario: Token signature contains issuer_did as iss claim
+    When create_token() is called with valid parameters
+    Then the signature contains issuer_did as iss claim
+
+  Scenario: Token signature contains audience_did as aud claim
+    When create_token() is called with valid parameters
+    Then the signature contains audience_did as aud claim
 
   Scenario: Create token fails when manager not initialized
     Given the manager initialized attribute is False

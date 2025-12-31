@@ -50,13 +50,13 @@ Feature: UCANManager.has_capability()
 
   Scenario: Has capability checks all valid tokens for DID
     Given 3 valid tokens exist for did="did:key:bob"
-    And only token 3 has capability resource="file://data.txt" action="write"
+    Given only token 3 has capability resource="file://data.txt" action="write"
     When has_capability() is called with resource="file://data.txt" action="write"
     Then True is returned
 
   Scenario: Has capability returns True when any token matches
     Given token 1 has capability resource="file://a.txt" action="read"
-    And token 2 has capability resource="file://b.txt" action="read"
+    Given token 2 has capability resource="file://b.txt" action="read"
     When has_capability() is called with resource="file://b.txt" action="read"
     Then True is returned
 

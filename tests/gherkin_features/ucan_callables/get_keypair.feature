@@ -9,9 +9,18 @@ Feature: UCANManager.get_keypair()
   Scenario: Get keypair returns existing keypair
     When get_keypair() is called with did="did:key:alice"
     Then a UCANKeyPair instance is returned
-    And the keypair did is "did:key:alice"
-    And the keypair has public_key_pem attribute
-    And the keypair has private_key_pem attribute
+
+  Scenario: Returned keypair has correct did
+    When get_keypair() is called with did="did:key:alice"
+    Then the keypair did is "did:key:alice"
+
+  Scenario: Returned keypair has public_key_pem attribute
+    When get_keypair() is called with did="did:key:alice"
+    Then the keypair has public_key_pem attribute
+
+  Scenario: Returned keypair has private_key_pem attribute
+    When get_keypair() is called with did="did:key:alice"
+    Then the keypair has private_key_pem attribute
 
   Scenario: Get keypair returns None for unknown DID
     When get_keypair() is called with did="did:key:unknown"
@@ -30,5 +39,13 @@ Feature: UCANManager.get_keypair()
     Given keypairs dictionary contains 10 keypairs
     When get_keypair() is called with did="did:key:bob"
     Then the returned keypair did is "did:key:bob"
-    And the keypair is not "did:key:alice"
-    And the keypair is not "did:key:charlie"
+
+  Scenario: Returned keypair is not alice
+    Given keypairs dictionary contains 10 keypairs
+    When get_keypair() is called with did="did:key:bob"
+    Then the keypair is not "did:key:alice"
+
+  Scenario: Returned keypair is not charlie
+    Given keypairs dictionary contains 10 keypairs
+    When get_keypair() is called with did="did:key:bob"
+    Then the keypair is not "did:key:charlie"

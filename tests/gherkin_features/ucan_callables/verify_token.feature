@@ -10,8 +10,14 @@ Feature: UCANManager.verify_token()
   Scenario: Verify token succeeds for valid token
     When verify_token() is called with token_id="token-123"
     Then a tuple (True, None) is returned
-    And the first element is True
-    And the second element is None
+
+  Scenario: Valid token first element is True
+    When verify_token() is called with token_id="token-123"
+    Then the first element is True
+
+  Scenario: Valid token second element is None
+    When verify_token() is called with token_id="token-123"
+    Then the second element is None
 
   Scenario: Verify token fails when token not found
     When verify_token() is called with token_id="nonexistent"
@@ -21,9 +27,21 @@ Feature: UCANManager.verify_token()
     Given the token is in revocations dictionary
     When verify_token() is called with token_id="token-123"
     Then the first element is False
-    And the second element contains "Token revoked"
-    And the error message contains revoked_by DID
-    And the error message contains revocation reason
+
+  Scenario: Revoked token error contains Token revoked
+    Given the token is in revocations dictionary
+    When verify_token() is called with token_id="token-123"
+    Then the second element contains "Token revoked"
+
+  Scenario: Revoked token error contains revoked_by DID
+    Given the token is in revocations dictionary
+    When verify_token() is called with token_id="token-123"
+    Then the error message contains revoked_by DID
+
+  Scenario: Revoked token error contains revocation reason
+    Given the token is in revocations dictionary
+    When verify_token() is called with token_id="token-123"
+    Then the error message contains revocation reason
 
   Scenario: Verify token fails when token is expired
     Given the token expires_at is 1 hour in the past
@@ -39,7 +57,11 @@ Feature: UCANManager.verify_token()
     Given the token issuer is "did:key:unknown"
     When verify_token() is called with token_id="token-123"
     Then the first element is False
-    And the second element contains "Issuer" and "not found"
+
+  Scenario: Issuer not found error contains Issuer
+    Given the token issuer is "did:key:unknown"
+    When verify_token() is called with token_id="token-123"
+    Then the second element contains "Issuer" and "not found"
 
   Scenario: Verify token fails when signature missing
     Given the token signature is None
@@ -48,27 +70,37 @@ Feature: UCANManager.verify_token()
 
   Scenario: Verify token validates proof token when present
     Given the token has proof="parent-token-456"
-    And parent token is valid and not expired
+    Given parent token is valid and not expired
     When verify_token() is called with token_id="token-123"
     Then verify_token() is called recursively with token_id="parent-token-456"
-    And the first element is True if proof is valid
+
+  Scenario: Proof validation succeeds when proof is valid
+    Given the token has proof="parent-token-456"
+    Given parent token is valid and not expired
+    When verify_token() is called with token_id="token-123"
+    Then the first element is True if proof is valid
 
   Scenario: Verify token fails when proof token invalid
     Given the token has proof="parent-token-456"
-    And parent token is expired
+    Given parent token is expired
     When verify_token() is called with token_id="token-123"
     Then the first element is False
-    And the second element contains "Proof verification failed"
+
+  Scenario: Invalid proof error contains Proof verification failed
+    Given the token has proof="parent-token-456"
+    Given parent token is expired
+    When verify_token() is called with token_id="token-123"
+    Then the second element contains "Proof verification failed"
 
   Scenario: Verify token checks proof token delegation rights
     Given the token has proof="parent-token-456"
-    And parent token audience does not match token issuer
+    Given parent token audience does not match token issuer
     When verify_token() is called with token_id="token-123"
     Then a tuple (False, "Proof token audience does not match issuer") is returned
 
   Scenario: Verify token requires delegation capability in proof
     Given the token has proof="parent-token-456"
-    And parent token has no "delegate" action capability
+    Given parent token has no "delegate" action capability
     When verify_token() is called with token_id="token-123"
     Then a tuple (False, "Proof token does not have delegation capability") is returned
 

@@ -10,31 +10,80 @@ Feature: UCANManager.initialize()
     Given the cryptography module is installed
     When initialize() is called
     Then the method returns True
-    And the initialized attribute is set to True
-    And keypairs are loaded from keypairs.json
-    And tokens are loaded from tokens.json
-    And revocations are loaded from revocations.json
+
+  Scenario: Initialize sets initialized attribute to True
+    Given the cryptography module is installed
+    When initialize() is called
+    Then the initialized attribute is set to True
+
+  Scenario: Initialize loads keypairs from keypairs.json
+    Given the cryptography module is installed
+    When initialize() is called
+    Then keypairs are loaded from keypairs.json
+
+  Scenario: Initialize loads tokens from tokens.json
+    Given the cryptography module is installed
+    When initialize() is called
+    Then tokens are loaded from tokens.json
+
+  Scenario: Initialize loads revocations from revocations.json
+    Given the cryptography module is installed
+    When initialize() is called
+    Then revocations are loaded from revocations.json
 
   Scenario: Initialize fails when cryptography module is missing
     Given the cryptography module is not installed
     When initialize() is called
     Then the method returns False
-    And the initialized attribute remains False
-    And a warning message is printed to stdout
 
-  Scenario: Initialize with empty storage creates empty collections
+  Scenario: Initialize leaves initialized attribute False when cryptography missing
+    Given the cryptography module is not installed
+    When initialize() is called
+    Then the initialized attribute remains False
+
+  Scenario: Initialize prints warning when cryptography missing
+    Given the cryptography module is not installed
+    When initialize() is called
+    Then a warning message is printed to stdout
+
+  Scenario: Initialize returns True with empty storage
     Given the storage files do not exist
-    And the cryptography module is installed
+    Given the cryptography module is installed
     When initialize() is called
     Then the method returns True
-    And the keypairs dictionary is empty
-    And the tokens dictionary is empty
-    And the revocations dictionary is empty
 
-  Scenario: Initialize loads existing keypairs from file
+  Scenario: Initialize creates empty keypairs dictionary with empty storage
+    Given the storage files do not exist
+    Given the cryptography module is installed
+    When initialize() is called
+    Then the keypairs dictionary is empty
+
+  Scenario: Initialize creates empty tokens dictionary with empty storage
+    Given the storage files do not exist
+    Given the cryptography module is installed
+    When initialize() is called
+    Then the tokens dictionary is empty
+
+  Scenario: Initialize creates empty revocations dictionary with empty storage
+    Given the storage files do not exist
+    Given the cryptography module is installed
+    When initialize() is called
+    Then the revocations dictionary is empty
+
+  Scenario: Initialize loads 3 keypairs from file
     Given keypairs.json contains 3 keypairs
-    And the cryptography module is installed
+    Given the cryptography module is installed
     When initialize() is called
     Then the keypairs dictionary contains 3 entries
-    And each keypair has did attribute
-    And each keypair has public_key_pem attribute
+
+  Scenario: Loaded keypairs have did attribute
+    Given keypairs.json contains 3 keypairs
+    Given the cryptography module is installed
+    When initialize() is called
+    Then each keypair has did attribute
+
+  Scenario: Loaded keypairs have public_key_pem attribute
+    Given keypairs.json contains 3 keypairs
+    Given the cryptography module is installed
+    When initialize() is called
+    Then each keypair has public_key_pem attribute
