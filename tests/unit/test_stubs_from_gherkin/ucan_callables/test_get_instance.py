@@ -8,17 +8,6 @@ Feature: UCANManager.get_instance()
 import pytest
 
 
-# Fixtures for Background
-
-@pytest.fixture
-def the_ucanmanager_class_is_imported():
-    """
-    Given the UCANManager class is imported
-    """
-    # TODO: Implement fixture
-    pass
-
-
 # Test scenarios
 
 def test_first_call_to_get_instance_returns_ucanmanager_instance(the_ucanmanager_class_is_imported):
@@ -29,8 +18,13 @@ def test_first_call_to_get_instance_returns_ucanmanager_instance(the_ucanmanager
     When get_instance() is called for the first time
     Then a UCANManager instance is returned
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    
+    result = UCANManager.get_instance()
+    
+    expected_type = UCANManager
+    result_type = type(result)
+    assert isinstance(result, expected_type), f"expected instance of {expected_type}, got {result_type}"
 
 
 def test_returned_instance_has_initialized_attribute_set_to_false(the_ucanmanager_class_is_imported):
@@ -41,8 +35,13 @@ def test_returned_instance_has_initialized_attribute_set_to_false(the_ucanmanage
     When get_instance() is called for the first time
     Then the instance has initialized attribute set to False
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    instance = UCANManager.get_instance()
+    
+    result = instance.initialized
+    
+    expected = False
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_returned_instance_has_keypairs_dictionary(the_ucanmanager_class_is_imported):
@@ -53,8 +52,13 @@ def test_returned_instance_has_keypairs_dictionary(the_ucanmanager_class_is_impo
     When get_instance() is called for the first time
     Then the instance has keypairs dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    instance = UCANManager.get_instance()
+    
+    result = hasattr(instance, 'keypairs')
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_returned_instance_has_tokens_dictionary(the_ucanmanager_class_is_imported):
@@ -65,8 +69,13 @@ def test_returned_instance_has_tokens_dictionary(the_ucanmanager_class_is_import
     When get_instance() is called for the first time
     Then the instance has tokens dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    instance = UCANManager.get_instance()
+    
+    result = hasattr(instance, 'tokens')
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_returned_instance_has_revocations_dictionary(the_ucanmanager_class_is_imported):
@@ -77,8 +86,13 @@ def test_returned_instance_has_revocations_dictionary(the_ucanmanager_class_is_i
     When get_instance() is called for the first time
     Then the instance has revocations dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    instance = UCANManager.get_instance()
+    
+    result = hasattr(instance, 'revocations')
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_second_call_to_get_instance_returns_same_instance(the_ucanmanager_class_is_imported):
@@ -90,8 +104,13 @@ def test_second_call_to_get_instance_returns_same_instance(the_ucanmanager_class
     When get_instance() is called again
     Then the same UCANManager instance is returned
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    first_instance = UCANManager.get_instance()
+    
+    result = UCANManager.get_instance()
+    
+    expected = first_instance
+    assert result is expected, f"expected {expected}, got {result}"
 
 
 def test_second_call_instance_id_matches_the_first_call(the_ucanmanager_class_is_imported):
@@ -103,8 +122,14 @@ def test_second_call_instance_id_matches_the_first_call(the_ucanmanager_class_is
     When get_instance() is called again
     Then the instance id matches the first call
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    first_instance = UCANManager.get_instance()
+    second_instance = UCANManager.get_instance()
+    
+    result = id(second_instance)
+    
+    expected = id(first_instance)
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_multiple_calls_return_instances_with_same_id(the_ucanmanager_class_is_imported):
@@ -115,8 +140,15 @@ def test_multiple_calls_return_instances_with_same_id(the_ucanmanager_class_is_i
     When get_instance() is called 5 times
     Then all returned instances have the same id
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    num_calls = 5
+    instances = [UCANManager.get_instance() for _ in range(num_calls)]
+    first_instance_id = id(instances[0])
+    
+    result = all(id(instance) == first_instance_id for instance in instances)
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_multiple_calls_share_same_keypairs_dictionary(the_ucanmanager_class_is_imported):
@@ -127,8 +159,15 @@ def test_multiple_calls_share_same_keypairs_dictionary(the_ucanmanager_class_is_
     When get_instance() is called 5 times
     Then all instances share the same keypairs dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    num_calls = 5
+    instances = [UCANManager.get_instance() for _ in range(num_calls)]
+    first_keypairs_id = id(instances[0].keypairs)
+    
+    result = all(id(instance.keypairs) == first_keypairs_id for instance in instances)
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_multiple_calls_share_same_tokens_dictionary(the_ucanmanager_class_is_imported):
@@ -139,8 +178,15 @@ def test_multiple_calls_share_same_tokens_dictionary(the_ucanmanager_class_is_im
     When get_instance() is called 5 times
     Then all instances share the same tokens dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    num_calls = 5
+    instances = [UCANManager.get_instance() for _ in range(num_calls)]
+    first_tokens_id = id(instances[0].tokens)
+    
+    result = all(id(instance.tokens) == first_tokens_id for instance in instances)
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
 
 def test_multiple_calls_share_same_revocations_dictionary(the_ucanmanager_class_is_imported):
@@ -151,6 +197,13 @@ def test_multiple_calls_share_same_revocations_dictionary(the_ucanmanager_class_
     When get_instance() is called 5 times
     Then all instances share the same revocations dictionary
     """
-    # TODO: Implement test
-    pass
+    UCANManager = the_ucanmanager_class_is_imported
+    num_calls = 5
+    instances = [UCANManager.get_instance() for _ in range(num_calls)]
+    first_revocations_id = id(instances[0].revocations)
+    
+    result = all(id(instance.revocations) == first_revocations_id for instance in instances)
+    
+    expected = True
+    assert result == expected, f"expected {expected}, got {result}"
 
