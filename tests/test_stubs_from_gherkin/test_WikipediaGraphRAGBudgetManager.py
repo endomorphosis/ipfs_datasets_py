@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaGraphRAGBudgetManager
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediagraphragbudgetmanager_instance():
     """
     a WikipediaGraphRAGBudgetManager instance
     """
-    pass
+    try:
+        instance = WikipediaGraphRAGBudgetManager()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaGraphRAGBudgetManager instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediagraphragbudgetmanager_instance: {e}") from e
 
 
 def test_initialize_with_default_budget_default_budget_contains_category_traversal_ms_as_5000(wikipediagraphragbudgetmanager_instance):

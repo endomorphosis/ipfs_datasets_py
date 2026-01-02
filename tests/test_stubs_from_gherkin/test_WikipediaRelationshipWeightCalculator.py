@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaRelationshipWeightCalculator
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediarelationshipweightcalculator_instance():
     """
     a WikipediaRelationshipWeightCalculator instance
     """
-    pass
+    try:
+        instance = WikipediaRelationshipWeightCalculator()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaRelationshipWeightCalculator instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediarelationshipweightcalculator_instance: {e}") from e
 
 
 def test_initialize_calculator_with_default_weights_for_subclass_of(wikipediarelationshipweightcalculator_instance):

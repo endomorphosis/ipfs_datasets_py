@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaPathOptimizer
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediapathoptimizer_instance():
     """
     a WikipediaPathOptimizer instance
     """
-    pass
+    try:
+        instance = WikipediaPathOptimizer()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaPathOptimizer instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediapathoptimizer_instance: {e}") from e
 
 
 def test_initialize_with_default_configuration_relationship_calculator_is_set(wikipediapathoptimizer_instance):

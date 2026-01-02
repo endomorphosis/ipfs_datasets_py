@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaRAGQueryOptimizer
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediaragqueryoptimizer_instance():
     """
     a WikipediaRAGQueryOptimizer instance
     """
-    pass
+    try:
+        instance = WikipediaRAGQueryOptimizer()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaRAGQueryOptimizer instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediaragqueryoptimizer_instance: {e}") from e
 
 
 def test_initialize_with_default_parameters_relationship_calculator_is_set(wikipediaragqueryoptimizer_instance):

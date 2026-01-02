@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaCategoryHierarchyManager
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediacategoryhierarchymanager_instance():
     """
     a WikipediaCategoryHierarchyManager instance
     """
-    pass
+    try:
+        instance = WikipediaCategoryHierarchyManager()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaCategoryHierarchyManager instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediacategoryhierarchymanager_instance: {e}") from e
 
 
 def test_initialize_with_empty_category_depth_cache(wikipediacategoryhierarchymanager_instance):

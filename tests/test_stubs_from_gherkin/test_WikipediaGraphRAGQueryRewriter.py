@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaGraphRAGQueryRewriter
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediagraphragqueryrewriter_instance():
     """
     a WikipediaGraphRAGQueryRewriter instance
     """
-    pass
+    try:
+        instance = WikipediaGraphRAGQueryRewriter()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaGraphRAGQueryRewriter instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediagraphragqueryrewriter_instance: {e}") from e
 
 
 def test_initialize_with_default_configuration_relationship_calculator_is_set(wikipediagraphragqueryrewriter_instance):

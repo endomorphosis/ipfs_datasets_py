@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_x.index module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_x.index import test_ipfs_datasets_py
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def test_ipfs_datasets_py_instance():
     """
     a test_ipfs_datasets_py instance
     """
-    pass
+    try:
+        instance = test_ipfs_datasets_py()
+        if instance is None:
+            raise FixtureError("Failed to create test_ipfs_datasets_py instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture test_ipfs_datasets_py_instance: {e}") from e
 
 
 def test_initialize_with_processor_backend_processor_is_wikipediaprocessor_instance(test_ipfs_datasets_py_instance):

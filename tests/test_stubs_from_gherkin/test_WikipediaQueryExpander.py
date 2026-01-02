@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaQueryExpander
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediaqueryexpander_instance():
     """
     a WikipediaQueryExpander instance
     """
-    pass
+    try:
+        instance = WikipediaQueryExpander()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaQueryExpander instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediaqueryexpander_instance: {e}") from e
 
 
 def test_initialize_without_tracer_similarity_threshold_is_065(wikipediaqueryexpander_instance):

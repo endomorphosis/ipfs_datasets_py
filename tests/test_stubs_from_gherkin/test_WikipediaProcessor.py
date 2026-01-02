@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_x.index module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_x.index import WikipediaProcessor
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediaprocessor_instance():
     """
     a WikipediaProcessor instance
     """
-    pass
+    try:
+        instance = WikipediaProcessor()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaProcessor instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediaprocessor_instance: {e}") from e
 
 
 def test_initialize_with_default_configuration_config_is_wikipediaconfig_with_defaults(wikipediaprocessor_instance):

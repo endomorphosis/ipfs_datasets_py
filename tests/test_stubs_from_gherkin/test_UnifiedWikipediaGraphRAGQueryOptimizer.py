@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import UnifiedWikipediaGraphRAGQueryOptimizer
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def unifiedwikipediagraphragqueryoptimizer_instance():
     """
     a UnifiedWikipediaGraphRAGQueryOptimizer instance
     """
-    pass
+    try:
+        instance = UnifiedWikipediaGraphRAGQueryOptimizer()
+        if instance is None:
+            raise FixtureError("Failed to create UnifiedWikipediaGraphRAGQueryOptimizer instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture unifiedwikipediagraphragqueryoptimizer_instance: {e}") from e
 
 
 def test_initialize_with_default_components_rewriter_is_wikipediagraphragqueryrewriter(unifiedwikipediagraphragqueryoptimizer_instance):

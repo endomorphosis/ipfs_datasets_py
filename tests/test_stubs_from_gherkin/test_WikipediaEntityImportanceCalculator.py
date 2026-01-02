@@ -7,6 +7,7 @@ from ipfs_datasets_py.wikipedia_rag_optimizer module.
 
 import pytest
 from ipfs_datasets_py.wikipedia_rag_optimizer import WikipediaEntityImportanceCalculator
+from conftest import FixtureError
 
 
 @pytest.fixture
@@ -14,7 +15,13 @@ def wikipediaentityimportancecalculator_instance():
     """
     a WikipediaEntityImportanceCalculator instance
     """
-    pass
+    try:
+        instance = WikipediaEntityImportanceCalculator()
+        if instance is None:
+            raise FixtureError("Failed to create WikipediaEntityImportanceCalculator instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture wikipediaentityimportancecalculator_instance: {e}") from e
 
 
 def test_initialize_with_default_configuration_entity_importance_cache_is_empty(wikipediaentityimportancecalculator_instance):
