@@ -34,7 +34,16 @@ def test_initialize_calculator_with_default_weights_for_subclass_of(wikipediarel
     Then:
         the calculator has default weights for subclass_of as 1.5
     """
-    pass
+    # Given: wikipediarelationshipweightcalculator_instance from fixture
+    calculator = wikipediarelationshipweightcalculator_instance
+    relationship_type = "subclass_of"
+    expected_weight = 1.5
+    
+    # When: the calculator is initialized without custom weights (done in fixture)
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the calculator has default weights for subclass_of as 1.5
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_initialize_calculator_with_default_weights_for_instance_of(wikipediarelationshipweightcalculator_instance):
@@ -47,7 +56,16 @@ def test_initialize_calculator_with_default_weights_for_instance_of(wikipediarel
     Then:
         the calculator has default weights for instance_of as 1.4
     """
-    pass
+    # Given: wikipediarelationshipweightcalculator_instance from fixture
+    calculator = wikipediarelationshipweightcalculator_instance
+    relationship_type = "instance_of"
+    expected_weight = 1.4
+    
+    # When: the calculator is initialized without custom weights (done in fixture)
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the calculator has default weights for instance_of as 1.4
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_initialize_calculator_with_default_weights_for_mentions(wikipediarelationshipweightcalculator_instance):
@@ -60,7 +78,16 @@ def test_initialize_calculator_with_default_weights_for_mentions(wikipediarelati
     Then:
         the calculator has default weights for mentions as 0.5
     """
-    pass
+    # Given: wikipediarelationshipweightcalculator_instance from fixture
+    calculator = wikipediarelationshipweightcalculator_instance
+    relationship_type = "mentions"
+    expected_weight = 0.5
+    
+    # When: the calculator is initialized without custom weights (done in fixture)
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the calculator has default weights for mentions as 0.5
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_initialize_calculator_with_custom_weight_for_custom_relation(wikipediarelationshipweightcalculator_instance):
@@ -73,7 +100,16 @@ def test_initialize_calculator_with_custom_weight_for_custom_relation(wikipediar
     Then:
         the calculator has weight for custom_relation as 2.0
     """
-    pass
+    custom_weights = {"custom_relation": 2.0}
+    relationship_type = "custom_relation"
+    expected_weight = 2.0
+    
+    # When: the calculator is initialized with custom weight
+    calculator = WikipediaRelationshipWeightCalculator(custom_weights)
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the calculator has weight for custom_relation as 2.0
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_initialize_calculator_with_custom_weights_preserves_defaults(wikipediarelationshipweightcalculator_instance):
@@ -86,7 +122,16 @@ def test_initialize_calculator_with_custom_weights_preserves_defaults(wikipediar
     Then:
         the calculator has default weights for subclass_of as 1.5
     """
-    pass
+    custom_weights = {"custom_relation": 2.0}
+    relationship_type = "subclass_of"
+    expected_weight = 1.5
+    
+    # When: the calculator is initialized with custom weight
+    calculator = WikipediaRelationshipWeightCalculator(custom_weights)
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the calculator has default weights for subclass_of as 1.5
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_get_weight_for_known_relationship_type(wikipediarelationshipweightcalculator_instance):
@@ -99,7 +144,15 @@ def test_get_weight_for_known_relationship_type(wikipediarelationshipweightcalcu
     Then:
         the returned weight is 1.5
     """
-    pass
+    calculator = wikipediarelationshipweightcalculator_instance
+    relationship_type = "subclass_of"
+    expected_weight = 1.5
+    
+    # When: get_relationship_weight is called with subclass_of
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the returned weight is 1.5
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_get_weight_for_unknown_relationship_type(wikipediarelationshipweightcalculator_instance):
@@ -112,7 +165,15 @@ def test_get_weight_for_unknown_relationship_type(wikipediarelationshipweightcal
     Then:
         the returned weight is 0.5
     """
-    pass
+    calculator = wikipediarelationshipweightcalculator_instance
+    relationship_type = "unknown_type"
+    expected_weight = 0.5
+    
+    # When: get_relationship_weight is called with unknown_type
+    actual_weight = calculator.get_relationship_weight(relationship_type)
+    
+    # Then: the returned weight is 0.5
+    assert actual_weight == expected_weight, f"expected {expected_weight}, got {actual_weight}"
 
 
 def test_get_weight_with_normalized_relationship_type(wikipediarelationshipweightcalculator_instance):
