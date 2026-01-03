@@ -394,7 +394,8 @@ def test_filter_high_value_relationships_with_threshold_08_excludes_related_to(w
     """
     calculator = wikipediarelationshipweightcalculator_instance
     relationship_types = ["subclass_of", "mentions", "instance_of", "related_to"]
-    min_weight = 1.01
+    related_to_weight = 1.0
+    min_weight = related_to_weight + 0.01  # Threshold above related_to weight to exclude it
     excluded_type = "related_to"
     
     # When: get_filtered_high_value_relationships is called with min_weight above related_to weight
@@ -472,7 +473,8 @@ def test_filter_high_value_relationships_with_threshold_05_excludes_mentions(wik
     """
     calculator = wikipediarelationshipweightcalculator_instance
     relationship_types = ["subclass_of", "mentions", "instance_of"]
-    min_weight_threshold = 0.51
+    mentions_weight = 0.5
+    min_weight_threshold = mentions_weight + 0.01  # Threshold above mentions weight to exclude it
     excluded_type = "mentions"
     
     # When: get_filtered_high_value_relationships is called with threshold above mentions weight
