@@ -6,7 +6,8 @@ Feature: DeontologicalReasoningEngine.query_conflicts()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine, DeonticConflict, ConflictType
+from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine, DeonticConflict, ConflictType, DeonticStatement, DeonticModality
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -16,17 +17,67 @@ def a_deontologicalreasoningengine_fixture():
     """
     a DeontologicalReasoningEngine instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = DeontologicalReasoningEngine()
+        if instance is None:
+            raise FixtureError("Failed to create fixture a_deontologicalreasoningengine_fixture: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_deontologicalreasoningengine_fixture: {e}") from e
 
 
 @pytest.fixture
-def the_conflict_database_contains_10_conflicts_fixture():
+def the_conflict_database_contains_10_conflicts_fixture(a_deontologicalreasoningengine_fixture):
     """
     the conflict_database contains 10 conflicts
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        engine = a_deontologicalreasoningengine_fixture
+        
+        # Create 10 sample conflicts with statements
+        for i in range(10):
+            # Create two conflicting statements
+            stmt1 = DeonticStatement(
+                id=f"stmt_{i}_1",
+                entity="citizens",
+                action=f"action_{i}",
+                modality=DeonticModality.OBLIGATION,
+                source_document=f"doc_{i}_1",
+                source_text=f"Sample text {i} statement 1",
+                confidence=0.8,
+                context={}
+            )
+            stmt2 = DeonticStatement(
+                id=f"stmt_{i}_2",
+                entity="citizens",
+                action=f"action_{i}",
+                modality=DeonticModality.PROHIBITION,
+                source_document=f"doc_{i}_2",
+                source_text=f"Sample text {i} statement 2",
+                confidence=0.8,
+                context={}
+            )
+            
+            # Create a conflict between them
+            conflict = DeonticConflict(
+                id=f"conflict_{i}",
+                conflict_type=ConflictType.OBLIGATION_PROHIBITION,
+                statement1=stmt1,
+                statement2=stmt2,
+                severity="high",
+                explanation=f"Conflict {i}",
+                resolution_suggestions=[],
+                metadata={}
+            )
+            engine.conflict_database[conflict.id] = conflict
+        
+        # Verify the database was populated
+        if len(engine.conflict_database) != 10:
+            raise FixtureError(f"Failed to create fixture the_conflict_database_contains_10_conflicts_fixture: expected 10 conflicts, got {len(engine.conflict_database)}")
+        
+        return engine
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_conflict_database_contains_10_conflicts_fixture: {e}") from e
 
 
 # Test scenarios

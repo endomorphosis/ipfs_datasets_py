@@ -7,6 +7,7 @@ Feature: DeontologicalReasoningEngine.query_deontic_statements()
 
 import pytest
 from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine, DeonticStatement, DeonticModality
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -16,17 +17,44 @@ def a_deontologicalreasoningengine_fixture():
     """
     a DeontologicalReasoningEngine instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = DeontologicalReasoningEngine()
+        if instance is None:
+            raise FixtureError("Failed to create fixture a_deontologicalreasoningengine_fixture: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_deontologicalreasoningengine_fixture: {e}") from e
 
 
 @pytest.fixture
-def the_statement_database_contains_10_statements_fixture():
+def the_statement_database_contains_10_statements_fixture(a_deontologicalreasoningengine_fixture):
     """
     the statement_database contains 10 statements
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        engine = a_deontologicalreasoningengine_fixture
+        
+        # Create 10 sample statements
+        for i in range(10):
+            stmt = DeonticStatement(
+                id=f"stmt_{i}",
+                entity="citizens",
+                action=f"action_{i}",
+                modality=DeonticModality.OBLIGATION,
+                source_document=f"doc_{i}",
+                source_text=f"Sample text {i}",
+                confidence=0.8,
+                context={}
+            )
+            engine.statement_database[stmt.id] = stmt
+        
+        # Verify the database was populated
+        if len(engine.statement_database) != 10:
+            raise FixtureError(f"Failed to create fixture the_statement_database_contains_10_statements_fixture: expected 10 statements, got {len(engine.statement_database)}")
+        
+        return engine
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_statement_database_contains_10_statements_fixture: {e}") from e
 
 
 # Test scenarios

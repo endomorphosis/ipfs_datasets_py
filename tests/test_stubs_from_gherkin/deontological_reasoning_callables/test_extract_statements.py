@@ -12,6 +12,7 @@ from ipfs_datasets_py.deontological_reasoning import (
     DeonticStatement, 
     DeonticModality
 )
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -21,8 +22,13 @@ def deontic_extractor_instance():
     """
     Given a DeonticExtractor instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = DeonticExtractor()
+        if instance is None:
+            raise FixtureError("Failed to create fixture deontic_extractor_instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture deontic_extractor_instance: {e}") from e
 
 
 @pytest.fixture
@@ -30,8 +36,13 @@ def document_id():
     """
     And document_id is "doc1"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        doc_id = "doc1"
+        if not isinstance(doc_id, str) or len(doc_id) == 0:
+            raise FixtureError("Failed to create fixture document_id: invalid document ID")
+        return doc_id
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture document_id: {e}") from e
 
 
 # Test scenarios

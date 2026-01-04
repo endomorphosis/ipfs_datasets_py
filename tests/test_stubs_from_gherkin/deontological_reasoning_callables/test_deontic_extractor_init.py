@@ -8,6 +8,7 @@ Feature: DeonticExtractor.__init__()
 
 import pytest
 from ipfs_datasets_py.deontological_reasoning import DeonticExtractor, DeonticPatterns
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,8 +18,13 @@ def deontic_extractor_instance():
     """
     Given a DeonticExtractor instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = DeonticExtractor()
+        if instance is None:
+            raise FixtureError("Failed to create fixture deontic_extractor_instance: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture deontic_extractor_instance: {e}") from e
 
 
 # Test scenarios

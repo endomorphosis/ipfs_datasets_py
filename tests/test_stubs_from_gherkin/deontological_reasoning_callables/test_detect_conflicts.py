@@ -7,6 +7,7 @@ Feature: ConflictDetector.detect_conflicts()
 
 import pytest
 from ipfs_datasets_py.deontological_reasoning import ConflictDetector, DeonticStatement, DeonticConflict, ConflictType
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -16,8 +17,13 @@ def a_conflictdetector_fixture():
     """
     a ConflictDetector instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = ConflictDetector()
+        if instance is None:
+            raise FixtureError("Failed to create fixture a_conflictdetector_fixture: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_conflictdetector_fixture: {e}") from e
 
 
 # Test scenarios

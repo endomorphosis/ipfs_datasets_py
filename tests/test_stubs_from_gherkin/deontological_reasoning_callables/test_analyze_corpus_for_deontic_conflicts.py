@@ -7,6 +7,7 @@ Feature: DeontologicalReasoningEngine.analyze_corpus_for_deontic_conflicts()
 
 import pytest
 from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine
+from conftest import FixtureError
 
 
 # Fixtures from Background
@@ -16,8 +17,13 @@ def a_deontologicalreasoningengine_fixture():
     """
     a DeontologicalReasoningEngine instance
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        instance = DeontologicalReasoningEngine()
+        if instance is None:
+            raise FixtureError("Failed to create fixture a_deontologicalreasoningengine_fixture: instance is None")
+        return instance
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_deontologicalreasoningengine_fixture: {e}") from e
 
 
 # Test scenarios
