@@ -6,7 +6,11 @@ Feature: DeontologicalReasoningEngine.__init__()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine
+from ipfs_datasets_py.deontological_reasoning import (
+    DeontologicalReasoningEngine,
+    DeonticExtractor,
+    ConflictDetector
+)
 
 
 # Fixtures from Background
@@ -23,13 +27,18 @@ def test_initialize_creates_deontologicalreasoningengine_instance():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        a DeontologicalReasoningEngine instance is returned
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: a DeontologicalReasoningEngine instance is returned
+    expected_type = DeontologicalReasoningEngine
+    actual_type = type(result)
+    assert isinstance(result, expected_type), f"expected {expected_type}, got {actual_type}"
 
 
 def test_initialize_with_no_dashboard_parameter():
@@ -40,13 +49,18 @@ def test_initialize_with_no_dashboard_parameter():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        a DeontologicalReasoningEngine instance is returned
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: a DeontologicalReasoningEngine instance is returned
+    expected_type = DeontologicalReasoningEngine
+    actual_type = type(result)
+    assert isinstance(result, expected_type), f"expected {expected_type}, got {actual_type}"
 
 
 def test_initialize_with_mcp_dashboard_parameter():
@@ -57,13 +71,21 @@ def test_initialize_with_mcp_dashboard_parameter():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine(mcp_dashboard) is called
     
     Then:
-        (see scenario description)
+        a DeontologicalReasoningEngine instance is returned
     """
-    # TODO: Implement test
-    pass
+    # Given: an mcp_dashboard instance
+    mcp_dashboard = "mock_dashboard"
+    
+    # When: DeontologicalReasoningEngine(mcp_dashboard) is called
+    result = DeontologicalReasoningEngine(mcp_dashboard)
+    
+    # Then: a DeontologicalReasoningEngine instance is returned
+    expected_type = DeontologicalReasoningEngine
+    actual_type = type(result)
+    assert isinstance(result, expected_type), f"expected {expected_type}, got {actual_type}"
 
 
 def test_initialize_sets_dashboard_attribute():
@@ -74,13 +96,21 @@ def test_initialize_sets_dashboard_attribute():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine(mcp_dashboard) is called
     
     Then:
-        (see scenario description)
+        the dashboard attribute is set
     """
-    # TODO: Implement test
-    pass
+    # Given: an mcp_dashboard instance
+    mcp_dashboard = "mock_dashboard"
+    
+    # When: DeontologicalReasoningEngine(mcp_dashboard) is called
+    result = DeontologicalReasoningEngine(mcp_dashboard)
+    
+    # Then: the dashboard attribute is set
+    expected_has_attribute = True
+    actual_has_attribute = hasattr(result, 'dashboard')
+    assert actual_has_attribute == expected_has_attribute, f"expected {expected_has_attribute}, got {actual_has_attribute}"
 
 
 def test_initialize_sets_dashboard_to_none_when_not_provided():
@@ -91,13 +121,18 @@ def test_initialize_sets_dashboard_to_none_when_not_provided():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the dashboard attribute is None
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the dashboard attribute is None
+    expected_dashboard = None
+    actual_dashboard = result.dashboard
+    assert actual_dashboard == expected_dashboard, f"expected {expected_dashboard}, got {actual_dashboard}"
 
 
 def test_initialize_sets_extractor_attribute():
@@ -108,13 +143,18 @@ def test_initialize_sets_extractor_attribute():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the extractor attribute is set
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the extractor attribute is set
+    expected_has_attribute = True
+    actual_has_attribute = hasattr(result, 'extractor')
+    assert actual_has_attribute == expected_has_attribute, f"expected {expected_has_attribute}, got {actual_has_attribute}"
 
 
 def test_extractor_is_deonticextractor_instance():
@@ -125,13 +165,18 @@ def test_extractor_is_deonticextractor_instance():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the extractor attribute is DeonticExtractor instance
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the extractor attribute is DeonticExtractor instance
+    expected_type = DeonticExtractor
+    actual_type = type(result.extractor)
+    assert isinstance(result.extractor, expected_type), f"expected {expected_type}, got {actual_type}"
 
 
 def test_initialize_sets_conflict_detector_attribute():
@@ -142,13 +187,18 @@ def test_initialize_sets_conflict_detector_attribute():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the conflict_detector attribute is set
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the conflict_detector attribute is set
+    expected_has_attribute = True
+    actual_has_attribute = hasattr(result, 'conflict_detector')
+    assert actual_has_attribute == expected_has_attribute, f"expected {expected_has_attribute}, got {actual_has_attribute}"
 
 
 def test_conflict_detector_is_conflictdetector_instance():
@@ -159,13 +209,18 @@ def test_conflict_detector_is_conflictdetector_instance():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the conflict_detector attribute is ConflictDetector instance
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the conflict_detector attribute is ConflictDetector instance
+    expected_type = ConflictDetector
+    actual_type = type(result.conflict_detector)
+    assert isinstance(result.conflict_detector, expected_type), f"expected {expected_type}, got {actual_type}"
 
 
 def test_initialize_sets_statement_database_to_empty_dict():
@@ -176,13 +231,18 @@ def test_initialize_sets_statement_database_to_empty_dict():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the statement_database attribute is empty dictionary
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the statement_database attribute is empty dictionary
+    expected_length = 0
+    actual_length = len(result.statement_database)
+    assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
 
 
 def test_initialize_sets_conflict_database_to_empty_dict():
@@ -193,13 +253,18 @@ def test_initialize_sets_conflict_database_to_empty_dict():
         (implicit - no background)
     
     When:
-        (see scenario)
+        DeontologicalReasoningEngine() is called
     
     Then:
-        (see scenario description)
+        the conflict_database attribute is empty dictionary
     """
-    # TODO: Implement test
-    pass
+    # When: DeontologicalReasoningEngine() is called
+    result = DeontologicalReasoningEngine()
+    
+    # Then: the conflict_database attribute is empty dictionary
+    expected_length = 0
+    actual_length = len(result.conflict_database)
+    assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
 
 
 def test_statement_database_stores_statements_after_analysis():
@@ -207,16 +272,26 @@ def test_statement_database_stores_statements_after_analysis():
     Scenario: Statement database stores statements after analysis
     
     Given:
-        (implicit - no background)
+        a DeontologicalReasoningEngine instance
     
     When:
-        (see scenario)
+        analyze_corpus_for_deontic_conflicts() is called with 1 document
     
     Then:
-        (see scenario description)
+        the statement_database contains statements
     """
-    # TODO: Implement test
-    pass
+    # Given: a DeontologicalReasoningEngine instance
+    engine = DeontologicalReasoningEngine()
+    
+    # When: analyze_corpus_for_deontic_conflicts() is called with 1 document
+    import asyncio
+    documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes.'}]
+    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    
+    # Then: the statement_database contains statements
+    expected_has_statements = True
+    actual_has_statements = len(engine.statement_database) > 0
+    assert actual_has_statements == expected_has_statements, f"expected {expected_has_statements}, got {actual_has_statements}"
 
 
 def test_conflict_database_stores_conflicts_after_analysis():
@@ -224,16 +299,26 @@ def test_conflict_database_stores_conflicts_after_analysis():
     Scenario: Conflict database stores conflicts after analysis
     
     Given:
-        (implicit - no background)
+        a DeontologicalReasoningEngine instance
     
     When:
-        (see scenario)
+        analyze_corpus_for_deontic_conflicts() is called with conflicting statements
     
     Then:
-        (see scenario description)
+        the conflict_database contains conflicts
     """
-    # TODO: Implement test
-    pass
+    # Given: a DeontologicalReasoningEngine instance
+    engine = DeontologicalReasoningEngine()
+    
+    # When: analyze_corpus_for_deontic_conflicts() is called with conflicting statements
+    import asyncio
+    documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes. Citizens must not pay taxes.'}]
+    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    
+    # Then: the conflict_database contains conflicts
+    expected_has_conflicts = True
+    actual_has_conflicts = len(engine.conflict_database) > 0
+    assert actual_has_conflicts == expected_has_conflicts, f"expected {expected_has_conflicts}, got {actual_has_conflicts}"
 
 
 def test_statements_are_indexed_by_id_in_database():
@@ -241,16 +326,26 @@ def test_statements_are_indexed_by_id_in_database():
     Scenario: Statements are indexed by id in database
     
     Given:
-        (implicit - no background)
+        a DeontologicalReasoningEngine instance
     
     When:
-        (see scenario)
+        analyze_corpus_for_deontic_conflicts() is called
     
     Then:
-        (see scenario description)
+        each statement in statement_database is indexed by id
     """
-    # TODO: Implement test
-    pass
+    # Given: a DeontologicalReasoningEngine instance
+    engine = DeontologicalReasoningEngine()
+    
+    # When: analyze_corpus_for_deontic_conflicts() is called
+    import asyncio
+    documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes.'}]
+    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    
+    # Then: each statement in statement_database is indexed by id
+    expected_all_have_ids = True
+    actual_all_have_ids = all(stmt_id == stmt.id for stmt_id, stmt in engine.statement_database.items())
+    assert actual_all_have_ids == expected_all_have_ids, f"expected {expected_all_have_ids}, got {actual_all_have_ids}"
 
 
 def test_conflicts_are_indexed_by_id_in_database():
@@ -258,15 +353,24 @@ def test_conflicts_are_indexed_by_id_in_database():
     Scenario: Conflicts are indexed by id in database
     
     Given:
-        (implicit - no background)
+        a DeontologicalReasoningEngine instance
     
     When:
-        (see scenario)
+        analyze_corpus_for_deontic_conflicts() is called with conflicting statements
     
     Then:
-        (see scenario description)
+        each conflict in conflict_database is indexed by id
     """
-    # TODO: Implement test
-    pass
-
+    # Given: a DeontologicalReasoningEngine instance
+    engine = DeontologicalReasoningEngine()
+    
+    # When: analyze_corpus_for_deontic_conflicts() is called with conflicting statements
+    import asyncio
+    documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes. Citizens must not pay taxes.'}]
+    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    
+    # Then: each conflict in conflict_database is indexed by id
+    expected_all_have_ids = True
+    actual_all_have_ids = all(conflict_id == conflict.id for conflict_id, conflict in engine.conflict_database.items())
+    assert actual_all_have_ids == expected_all_have_ids, f"expected {expected_all_have_ids}, got {actual_all_have_ids}"
 
