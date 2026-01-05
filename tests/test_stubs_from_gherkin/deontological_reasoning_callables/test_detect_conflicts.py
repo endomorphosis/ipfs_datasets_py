@@ -36,13 +36,19 @@ def test_detect_conflicts_with_empty_statement_list_returns_empty_list(a_conflic
         a ConflictDetector instance
     
     When:
-        (see scenario)
+        detect_conflicts() is called with empty list
     
     Then:
-        (see scenario description)
+        an empty list is returned
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called with empty list
+    empty_list = []
+    result = a_conflictdetector_fixture.detect_conflicts(empty_list)
+    
+    # Then: an empty list is returned
+    expected_length = 0
+    actual_length = len(result)
+    assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
 
 
 def test_detect_conflicts_with_single_statement_returns_empty_list(a_conflictdetector_fixture):
@@ -51,15 +57,28 @@ def test_detect_conflicts_with_single_statement_returns_empty_list(a_conflictdet
     
     Given:
         a ConflictDetector instance
+        1 statement for "citizens" with modality OBLIGATION
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        an empty list is returned
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    statement = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([statement])
+    
+    # Then: an empty list is returned
+    expected_length = 0
+    actual_length = len(result)
+    assert actual_length == expected_length, f"expected {expected_length}, got {actual_length}"
 
 
 def test_detect_no_conflict_between_different_entities(a_conflictdetector_fixture):
@@ -68,15 +87,36 @@ def test_detect_no_conflict_between_different_entities(a_conflictdetector_fixtur
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "employees" must "submit reports"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        0 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="employees",
+        modality="OBLIGATION",
+        action="submit reports",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 0 conflicts are detected
+    expected_count = 0
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_detect_no_conflict_between_unrelated_actions(a_conflictdetector_fixture):
@@ -85,15 +125,36 @@ def test_detect_no_conflict_between_unrelated_actions(a_conflictdetector_fixture
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        0 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 0 conflicts are detected
+    expected_count = 0
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_detect_obligation_prohibition_conflict(a_conflictdetector_fixture):
@@ -102,15 +163,36 @@ def test_detect_obligation_prohibition_conflict(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        1 conflict is detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 1 conflict is detected
+    expected_count = 1
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_detected_conflict_has_conflict_type_obligation_prohibition(a_conflictdetector_fixture):
@@ -119,15 +201,36 @@ def test_detected_conflict_has_conflict_type_obligation_prohibition(a_conflictde
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict type is OBLIGATION_PROHIBITION
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict type is OBLIGATION_PROHIBITION
+    expected_type = ConflictType.OBLIGATION_PROHIBITION
+    actual_type = result[0].conflict_type
+    assert actual_type == expected_type, f"expected {expected_type}, got {actual_type}"
 
 
 def test_obligation_prohibition_conflict_has_severity_high(a_conflictdetector_fixture):
@@ -136,15 +239,36 @@ def test_obligation_prohibition_conflict_has_severity_high(a_conflictdetector_fi
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict severity is "high"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict severity is "high"
+    expected_severity = "high"
+    actual_severity = result[0].severity
+    assert actual_severity == expected_severity, f"expected {expected_severity}, got {actual_severity}"
 
 
 def test_conflict_has_unique_id(a_conflictdetector_fixture):
@@ -153,15 +277,36 @@ def test_conflict_has_unique_id(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict id is "conflict_stmt_1_stmt_2"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict id is "conflict_stmt_1_stmt_2"
+    expected_id = "conflict_stmt_1_stmt_2"
+    actual_id = result[0].id
+    assert actual_id == expected_id, f"expected {expected_id}, got {actual_id}"
 
 
 def test_conflict_has_statement1_and_statement2_attributes(a_conflictdetector_fixture):
@@ -170,15 +315,36 @@ def test_conflict_has_statement1_and_statement2_attributes(a_conflictdetector_fi
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict has statement1 and statement2 attributes
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict has statement1 and statement2 attributes
+    expected_has_attributes = True
+    actual_has_attributes = hasattr(result[0], 'statement1') and hasattr(result[0], 'statement2')
+    assert actual_has_attributes == expected_has_attributes, f"expected {expected_has_attributes}, got {actual_has_attributes}"
 
 
 def test_conflict_has_explanation_text(a_conflictdetector_fixture):
@@ -187,15 +353,37 @@ def test_conflict_has_explanation_text(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict explanation contains "conflicting obligations"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict explanation contains "conflicting obligations"
+    search_text = "conflicting obligations"
+    actual_contains = search_text in result[0].explanation.lower()
+    expected_contains = True
+    assert actual_contains == expected_contains, f"expected {expected_contains}, got {actual_contains}"
 
 
 def test_detect_permission_prohibition_conflict(a_conflictdetector_fixture):
@@ -204,15 +392,36 @@ def test_detect_permission_prohibition_conflict(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" may "vote"
+        statement 2: "citizens" cannot "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        1 conflict is detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 1 conflict is detected
+    expected_count = 1
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_permission_prohibition_has_conflict_type_permission_prohibition(a_conflictdetector_fixture):
@@ -221,15 +430,36 @@ def test_permission_prohibition_has_conflict_type_permission_prohibition(a_confl
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" may "vote"
+        statement 2: "citizens" cannot "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict type is PERMISSION_PROHIBITION
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict type is PERMISSION_PROHIBITION
+    expected_type = ConflictType.PERMISSION_PROHIBITION
+    actual_type = result[0].conflict_type
+    assert actual_type == expected_type, f"expected {expected_type}, got {actual_type}"
 
 
 def test_permission_prohibition_conflict_has_severity_high(a_conflictdetector_fixture):
@@ -238,15 +468,36 @@ def test_permission_prohibition_conflict_has_severity_high(a_conflictdetector_fi
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" may "vote"
+        statement 2: "citizens" cannot "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict severity is "high"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict severity is "high"
+    expected_severity = "high"
+    actual_severity = result[0].severity
+    assert actual_severity == expected_severity, f"expected {expected_severity}, got {actual_severity}"
 
 
 def test_permission_prohibition_explanation_mentions_permissions(a_conflictdetector_fixture):
@@ -255,15 +506,37 @@ def test_permission_prohibition_explanation_mentions_permissions(a_conflictdetec
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" may "vote"
+        statement 2: "citizens" cannot "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict explanation contains "conflicting permissions"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict explanation contains "conflicting permissions"
+    search_text = "conflicting permissions"
+    actual_contains = search_text in result[0].explanation.lower()
+    expected_contains = True
+    assert actual_contains == expected_contains, f"expected {expected_contains}, got {actual_contains}"
 
 
 def test_detect_conditional_conflict_between_conditionals(a_conflictdetector_fixture):
@@ -272,15 +545,38 @@ def test_detect_conditional_conflict_between_conditionals(a_conflictdetector_fix
     
     Given:
         a ConflictDetector instance
+        conditional statement 1: if "condition A" then "citizens" must "act"
+        conditional statement 2: if "condition A" then "citizens" must not "act"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        1 conflict is detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 1 conflict is detected
+    expected_count = 1
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_conditional_conflict_has_conflict_type_conditional_conflict(a_conflictdetector_fixture):
@@ -289,15 +585,38 @@ def test_conditional_conflict_has_conflict_type_conditional_conflict(a_conflictd
     
     Given:
         a ConflictDetector instance
+        conditional statement 1: if "condition A" then "citizens" must "act"
+        conditional statement 2: if "condition A" then "citizens" must not "act"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict type is CONDITIONAL_CONFLICT
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict type is CONDITIONAL_CONFLICT
+    expected_type = ConflictType.CONDITIONAL_CONFLICT
+    actual_type = result[0].conflict_type
+    assert actual_type == expected_type, f"expected {expected_type}, got {actual_type}"
 
 
 def test_conditional_conflict_has_severity_medium(a_conflictdetector_fixture):
@@ -306,15 +625,38 @@ def test_conditional_conflict_has_severity_medium(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        conditional statement 1: if "condition A" then "citizens" must "act"
+        conditional statement 2: if "condition A" then "citizens" must not "act"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict severity is "medium"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="act",
+        document_id="doc1",
+        conditions=["condition A"]
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict severity is "medium"
+    expected_severity = "medium"
+    actual_severity = result[0].severity
+    assert actual_severity == expected_severity, f"expected {expected_severity}, got {actual_severity}"
 
 
 def test_detect_jurisdictional_conflict_from_different_sources(a_conflictdetector_fixture):
@@ -323,15 +665,36 @@ def test_detect_jurisdictional_conflict_from_different_sources(a_conflictdetecto
     
     Given:
         a ConflictDetector instance
+        statement 1 from "doc1": "citizens" must "pay taxes"
+        statement 2 from "doc2": "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        1 conflict is detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc2"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 1 conflict is detected
+    expected_count = 1
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_jurisdictional_conflict_has_conflict_type_jurisdictional(a_conflictdetector_fixture):
@@ -340,15 +703,36 @@ def test_jurisdictional_conflict_has_conflict_type_jurisdictional(a_conflictdete
     
     Given:
         a ConflictDetector instance
+        statement 1 from "doc1": "citizens" must "pay taxes"
+        statement 2 from "doc2": "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict type is JURISDICTIONAL
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc2"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict type is JURISDICTIONAL
+    expected_type = ConflictType.JURISDICTIONAL
+    actual_type = result[0].conflict_type
+    assert actual_type == expected_type, f"expected {expected_type}, got {actual_type}"
 
 
 def test_jurisdictional_conflict_has_severity_medium(a_conflictdetector_fixture):
@@ -357,15 +741,36 @@ def test_jurisdictional_conflict_has_severity_medium(a_conflictdetector_fixture)
     
     Given:
         a ConflictDetector instance
+        statement 1 from "doc1": "citizens" must "pay taxes"
+        statement 2 from "doc2": "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict severity is "medium"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc2"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict severity is "medium"
+    expected_severity = "medium"
+    actual_severity = result[0].severity
+    assert actual_severity == expected_severity, f"expected {expected_severity}, got {actual_severity}"
 
 
 def test_conflict_has_resolution_suggestions_list(a_conflictdetector_fixture):
@@ -374,15 +779,36 @@ def test_conflict_has_resolution_suggestions_list(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict has resolution_suggestions list
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict has resolution_suggestions list
+    expected_has_list = True
+    actual_has_list = isinstance(result[0].resolution_suggestions, list)
+    assert actual_has_list == expected_has_list, f"expected {expected_has_list}, got {actual_has_list}"
 
 
 def test_obligation_prohibition_suggestions_include_checking_exceptions(a_conflictdetector_fixture):
@@ -391,15 +817,37 @@ def test_obligation_prohibition_suggestions_include_checking_exceptions(a_confli
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        resolution_suggestions contains "Check for exceptions"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: resolution_suggestions contains "Check for exceptions"
+    search_text = "Check for exceptions"
+    actual_contains = any(search_text in suggestion for suggestion in result[0].resolution_suggestions)
+    expected_contains = True
+    assert actual_contains == expected_contains, f"expected {expected_contains}, got {actual_contains}"
 
 
 def test_jurisdictional_suggestions_include_determining_precedence(a_conflictdetector_fixture):
@@ -408,15 +856,37 @@ def test_jurisdictional_suggestions_include_determining_precedence(a_conflictdet
     
     Given:
         a ConflictDetector instance
+        statement 1 from "doc1": "citizens" must "pay taxes"
+        statement 2 from "doc2": "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        resolution_suggestions contains "Determine which jurisdiction takes precedence"
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc2"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: resolution_suggestions contains "Determine which jurisdiction takes precedence"
+    search_text = "Determine which jurisdiction takes precedence"
+    actual_contains = any(search_text in suggestion for suggestion in result[0].resolution_suggestions)
+    expected_contains = True
+    assert actual_contains == expected_contains, f"expected {expected_contains}, got {actual_contains}"
 
 
 def test_detect_multiple_conflicts_in_list(a_conflictdetector_fixture):
@@ -425,15 +895,49 @@ def test_detect_multiple_conflicts_in_list(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        2 pairs of conflicting statements
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        2 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt3 = DeonticStatement(
+        id="stmt_3",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt4 = DeonticStatement(
+        id="stmt_4",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2, stmt3, stmt4])
+    
+    # Then: 2 conflicts are detected
+    expected_count = 2
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_detect_0_conflicts_with_3_non_conflicting_statements(a_conflictdetector_fixture):
@@ -442,15 +946,42 @@ def test_detect_0_conflicts_with_3_non_conflicting_statements(a_conflictdetector
     
     Given:
         a ConflictDetector instance
+        3 non-conflicting statements for same entity
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        0 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt3 = DeonticStatement(
+        id="stmt_3",
+        entity="citizens",
+        modality="PERMISSION",
+        action="protest",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2, stmt3])
+    
+    # Then: 0 conflicts are detected
+    expected_count = 0
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_actions_are_related_if_they_share_word_taxes(a_conflictdetector_fixture):
@@ -459,15 +990,36 @@ def test_actions_are_related_if_they_share_word_taxes(a_conflictdetector_fixture
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes annually"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        1 conflict is detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes annually",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 1 conflict is detected
+    expected_count = 1
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_actions_are_not_related_if_no_shared_words(a_conflictdetector_fixture):
@@ -476,15 +1028,36 @@ def test_actions_are_not_related_if_no_shared_words(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay"
+        statement 2: "citizens" must not "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        0 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 0 conflicts are detected
+    expected_count = 0
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_conflict_has_metadata_dictionary(a_conflictdetector_fixture):
@@ -493,15 +1066,36 @@ def test_conflict_has_metadata_dictionary(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" must "pay taxes"
+        statement 2: "citizens" must not "pay taxes"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        the conflict has metadata dictionary
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: the conflict has metadata dictionary
+    expected_has_metadata = True
+    actual_has_metadata = isinstance(result[0].metadata, dict)
+    assert actual_has_metadata == expected_has_metadata, f"expected {expected_has_metadata}, got {actual_has_metadata}"
 
 
 def test_detect_3_conflicts_from_4_statements(a_conflictdetector_fixture):
@@ -510,15 +1104,49 @@ def test_detect_3_conflicts_from_4_statements(a_conflictdetector_fixture):
     
     Given:
         a ConflictDetector instance
+        4 statements where 3 pairs conflict
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        3 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc1"
+    )
+    stmt3 = DeonticStatement(
+        id="stmt_3",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="pay taxes",
+        document_id="doc2"
+    )
+    stmt4 = DeonticStatement(
+        id="stmt_4",
+        entity="citizens",
+        modality="PROHIBITION",
+        action="pay taxes",
+        document_id="doc3"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2, stmt3, stmt4])
+    
+    # Then: 3 conflicts are detected
+    expected_count = 3
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_no_conflict_between_permission_and_obligation(a_conflictdetector_fixture):
@@ -527,15 +1155,36 @@ def test_no_conflict_between_permission_and_obligation(a_conflictdetector_fixtur
     
     Given:
         a ConflictDetector instance
+        statement 1: "citizens" may "vote"
+        statement 2: "citizens" must "vote"
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        0 conflicts are detected
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    stmt1 = DeonticStatement(
+        id="stmt_1",
+        entity="citizens",
+        modality="PERMISSION",
+        action="vote",
+        document_id="doc1"
+    )
+    stmt2 = DeonticStatement(
+        id="stmt_2",
+        entity="citizens",
+        modality="OBLIGATION",
+        action="vote",
+        document_id="doc1"
+    )
+    result = a_conflictdetector_fixture.detect_conflicts([stmt1, stmt2])
+    
+    # Then: 0 conflicts are detected
+    expected_count = 0
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
 def test_statements_grouped_by_entity_for_efficiency(a_conflictdetector_fixture):
@@ -544,14 +1193,64 @@ def test_statements_grouped_by_entity_for_efficiency(a_conflictdetector_fixture)
     
     Given:
         a ConflictDetector instance
+        10 statements for 3 different entities
     
     When:
-        (see scenario)
+        detect_conflicts() is called
     
     Then:
-        (see scenario description)
+        conflicts are detected only within same entity
     """
-    # TODO: Implement test
-    pass
+    # When: detect_conflicts() is called
+    statements = []
+    for i in range(3):
+        statements.append(DeonticStatement(
+            id=f"stmt_{i}_1",
+            entity=f"entity{i}",
+            modality="OBLIGATION",
+            action="action",
+            document_id="doc1"
+        ))
+        statements.append(DeonticStatement(
+            id=f"stmt_{i}_2",
+            entity=f"entity{i}",
+            modality="PROHIBITION",
+            action="action",
+            document_id="doc1"
+        ))
+    statements.append(DeonticStatement(
+        id="stmt_extra_1",
+        entity="entity0",
+        modality="OBLIGATION",
+        action="other",
+        document_id="doc1"
+    ))
+    statements.append(DeonticStatement(
+        id="stmt_extra_2",
+        entity="entity1",
+        modality="OBLIGATION",
+        action="other",
+        document_id="doc1"
+    ))
+    statements.append(DeonticStatement(
+        id="stmt_extra_3",
+        entity="entity2",
+        modality="OBLIGATION",
+        action="other",
+        document_id="doc1"
+    ))
+    statements.append(DeonticStatement(
+        id="stmt_extra_4",
+        entity="entity2",
+        modality="PERMISSION",
+        action="extra",
+        document_id="doc1"
+    ))
+    result = a_conflictdetector_fixture.detect_conflicts(statements)
+    
+    # Then: conflicts are detected only within same entity
+    expected_count = 3
+    actual_count = len(result)
+    assert actual_count == expected_count, f"expected {expected_count}, got {actual_count}"
 
 
