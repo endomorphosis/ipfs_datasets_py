@@ -18,4 +18,8 @@ Feature: test_multiformats_dependencies function from scripts/test_p2p_cache_enc
     Given multiformats package not installed
     When calling test_multiformats_dependencies
     Then warning message displays
-    And function returns false
+
+  Scenario: Multiformats missing - assertion 2
+    Given multiformats package not installed
+    When calling test_multiformats_dependencies
+    Then function returns false

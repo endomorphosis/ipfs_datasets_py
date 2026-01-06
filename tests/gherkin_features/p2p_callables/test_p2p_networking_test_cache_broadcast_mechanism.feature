@@ -10,7 +10,11 @@ Feature: test_cache_broadcast_mechanism function from scripts/test_p2p_networkin
     Given cache instance
     When putting test data with key "test/broadcast/endpoint"
     Then put operation completes
-    And broadcast mechanism executes
+
+  Scenario: Trigger broadcast with put operation - assertion 2
+    Given cache instance
+    When putting test data with key "test/broadcast/endpoint"
+    Then broadcast mechanism executes
 
   Scenario: Wait for async broadcast
     Given put operation completed

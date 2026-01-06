@@ -6,7 +6,12 @@ Feature: test_message_encryption_decryption function from scripts/test_p2p_cache
     And test message with key and entry
     When calling _encrypt_message
     Then encrypted bytes are returned
-    And encrypted data differs from plaintext
+
+  Scenario: Encrypt test message - assertion 2
+    Given cache with encryption initialized
+    And test message with key and entry
+    When calling _encrypt_message
+    Then encrypted data differs from plaintext
 
   Scenario: Decrypt encrypted message
     Given encrypted message
@@ -18,7 +23,12 @@ Feature: test_message_encryption_decryption function from scripts/test_p2p_cache
     And encrypted then decrypted message
     When comparing messages
     Then decrypted equals original
-    And function returns true
+
+  Scenario: Verify decryption matches original - assertion 2
+    Given original test message
+    And encrypted then decrypted message
+    When comparing messages
+    Then function returns true
 
   Scenario: Encryption or decryption fails
     Given encryption operation raises exception

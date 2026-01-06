@@ -10,13 +10,21 @@ Feature: test_encryption_key_derivation function from scripts/test_p2p_cache_enc
     Given cache instance
     When calling _init_encryption
     Then encryption initialization succeeds
-    And function returns true
+
+  Scenario: Initialize encryption - assertion 2
+    Given cache instance
+    When calling _init_encryption
+    Then function returns true
 
   Scenario: Verify Fernet cipher created
     Given encryption initialized
     When checking _cipher attribute
     Then cipher is not None
-    And cipher type is Fernet
+
+  Scenario: Verify Fernet cipher created - assertion 2
+    Given encryption initialized
+    When checking _cipher attribute
+    Then cipher type is Fernet
 
   Scenario: Encryption initialization fails
     Given encryption cannot be initialized

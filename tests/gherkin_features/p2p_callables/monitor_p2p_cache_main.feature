@@ -10,8 +10,16 @@ Feature: main function from scripts/monitor_p2p_cache.py
     Given --once flag provided
     When calling main
     Then banner prints
-    And stats print once
-    And program exits
+
+  Scenario: Run once mode - assertion 2
+    Given --once flag provided
+    When calling main
+    Then stats print once
+
+  Scenario: Run once mode - assertion 3
+    Given --once flag provided
+    When calling main
+    Then program exits
 
   Scenario: Run continuous monitoring
     Given no --once flag

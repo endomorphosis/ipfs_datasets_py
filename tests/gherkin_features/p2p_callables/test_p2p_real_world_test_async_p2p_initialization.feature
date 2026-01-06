@@ -4,13 +4,20 @@ Feature: test_async_p2p_initialization function from scripts/test_p2p_real_world
   Scenario: Create libp2p host
     When calling new_host
     Then host is created
-    And host has ID
+
+  Scenario: Create libp2p host - assertion 2
+    When calling new_host
+    Then host has ID
 
   Scenario: Get listen addresses
     Given host created
     When calling get_addrs
     Then addresses list is returned
-    And addresses are displayed
+
+  Scenario: Get listen addresses - assertion 2
+    Given host created
+    When calling get_addrs
+    Then addresses are displayed
 
   Scenario: Register stream handler
     Given host instance
@@ -26,7 +33,11 @@ Feature: test_async_p2p_initialization function from scripts/test_p2p_real_world
     Given host running
     When calling close
     Then host closes without error
-    And function returns true
+
+  Scenario: Close host cleanly - assertion 2
+    Given host running
+    When calling close
+    Then function returns true
 
   Scenario: P2P initialization fails
     Given host creation raises exception

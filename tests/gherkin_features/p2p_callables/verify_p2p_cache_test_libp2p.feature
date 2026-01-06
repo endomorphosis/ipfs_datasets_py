@@ -9,10 +9,18 @@ Feature: test_libp2p function from scripts/verify_p2p_cache.py
     Given libp2p package installed
     When calling new_host
     Then host has non-null ID
-    And function returns true
+
+  Scenario: Create libp2p host with ID - assertion 2
+    Given libp2p package installed
+    When calling new_host
+    Then function returns true
 
   Scenario: Libp2p library missing
     Given libp2p package not installed
     When calling test_libp2p
     Then exception is caught
-    And function returns false
+
+  Scenario: Libp2p library missing - assertion 2
+    Given libp2p package not installed
+    When calling test_libp2p
+    Then function returns false

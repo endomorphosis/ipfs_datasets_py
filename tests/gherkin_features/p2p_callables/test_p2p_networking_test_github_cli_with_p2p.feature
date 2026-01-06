@@ -10,7 +10,11 @@ Feature: test_github_cli_with_p2p function from scripts/test_p2p_networking.py
     Given GitHubCLI instance
     When calling get_global_cache
     Then cache instance is returned
-    And cache stats show p2p_enabled
+
+  Scenario: Get global cache from GitHubCLI - assertion 2
+    Given GitHubCLI instance
+    When calling get_global_cache
+    Then cache stats show p2p_enabled
 
   Scenario: Try GitHub CLI version command
     Given GitHubCLI created

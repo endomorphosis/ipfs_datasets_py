@@ -36,7 +36,12 @@ Feature: test_p2p_cache_operations function from test_p2p_async.py
     When getting stats from cache1
     And getting stats from cache2
     Then stats show p2p_enabled
-    And stats show connected_peers
+
+  Scenario: Check both cache statistics - assertion 2
+    Given both caches active
+    When getting stats from cache1
+    And getting stats from cache2
+    Then stats show connected_peers
 
   Scenario: Both caches have P2P enabled
     Given cache1 with p2p_enabled

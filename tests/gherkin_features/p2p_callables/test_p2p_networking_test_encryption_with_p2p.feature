@@ -20,7 +20,11 @@ Feature: test_encryption_with_p2p function from scripts/test_p2p_networking.py
     Given encrypted message
     When calling _decrypt_message
     Then decrypted data matches original
-    And function returns true
+
+  Scenario: Decrypt message with P2P - assertion 2
+    Given encrypted message
+    When calling _decrypt_message
+    Then function returns true
 
   Scenario: Encryption not initialized
     Given cache without encryption_key

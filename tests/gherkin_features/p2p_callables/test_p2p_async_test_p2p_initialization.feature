@@ -19,7 +19,11 @@ Feature: test_p2p_initialization function from test_p2p_async.py
     Given cache initialized
     When calling get_stats
     Then P2P enabled status displays
-    And connected peers displays
+
+  Scenario: Check cache statistics - assertion 2
+    Given cache initialized
+    When calling get_stats
+    Then connected peers displays
 
   Scenario: P2P fully initialized
     Given stats with p2p_enabled true

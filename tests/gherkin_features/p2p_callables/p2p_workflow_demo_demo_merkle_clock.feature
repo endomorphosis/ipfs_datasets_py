@@ -16,7 +16,12 @@ Feature: demo_merkle_clock function from examples/p2p_workflow_demo.py
     When "peer1" clock ticks twice
     And "peer2" clock ticks once
     Then "peer1" counter equals 2
-    And "peer2" counter equals 1
+
+  Scenario: Demonstrate independent clock advancement - assertion 2
+    Given two MerkleClock instances for "peer1" and "peer2"
+    When "peer1" clock ticks twice
+    And "peer2" clock ticks once
+    Then "peer2" counter equals 1
 
   Scenario: Demonstrate clock merging
     Given "peer1" clock with counter 2

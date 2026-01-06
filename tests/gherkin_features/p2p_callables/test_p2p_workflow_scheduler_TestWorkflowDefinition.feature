@@ -5,9 +5,21 @@ Feature: TestWorkflowDefinition class from tests/test_p2p_workflow_scheduler.py
     Given workflow parameters with id "wf1", name "Test Workflow", tags P2P_ELIGIBLE and CODE_GEN, priority 2.0
     When creating WorkflowDefinition
     Then workflow_id equals "wf1"
-    And name equals "Test Workflow"
-    And tags contain P2P_ELIGIBLE
-    And priority equals 2.0
+
+  Scenario: test_workflow_creation method - assertion 2
+    Given workflow parameters with id "wf1", name "Test Workflow", tags P2P_ELIGIBLE and CODE_GEN, priority 2.0
+    When creating WorkflowDefinition
+    Then name equals "Test Workflow"
+
+  Scenario: test_workflow_creation method - assertion 3
+    Given workflow parameters with id "wf1", name "Test Workflow", tags P2P_ELIGIBLE and CODE_GEN, priority 2.0
+    When creating WorkflowDefinition
+    Then tags contain P2P_ELIGIBLE
+
+  Scenario: test_workflow_creation method - assertion 4
+    Given workflow parameters with id "wf1", name "Test Workflow", tags P2P_ELIGIBLE and CODE_GEN, priority 2.0
+    When creating WorkflowDefinition
+    Then priority equals 2.0
 
   Scenario: test_workflow_is_p2p_eligible method with P2P_ELIGIBLE tag
     Given workflow with P2P_ELIGIBLE tag
@@ -38,6 +50,18 @@ Feature: TestWorkflowDefinition class from tests/test_p2p_workflow_scheduler.py
     Given WorkflowDefinition with id "wf1", name "Test", tags P2P_ELIGIBLE, priority 1.5
     When converting to dictionary
     Then dict workflow_id equals "wf1"
-    And dict name equals "Test"
-    And dict tags contain "p2p_eligible"
-    And dict priority equals 1.5
+
+  Scenario: test_workflow_to_dict method - assertion 2
+    Given WorkflowDefinition with id "wf1", name "Test", tags P2P_ELIGIBLE, priority 1.5
+    When converting to dictionary
+    Then dict name equals "Test"
+
+  Scenario: test_workflow_to_dict method - assertion 3
+    Given WorkflowDefinition with id "wf1", name "Test", tags P2P_ELIGIBLE, priority 1.5
+    When converting to dictionary
+    Then dict tags contain "p2p_eligible"
+
+  Scenario: test_workflow_to_dict method - assertion 4
+    Given WorkflowDefinition with id "wf1", name "Test", tags P2P_ELIGIBLE, priority 1.5
+    When converting to dictionary
+    Then dict priority equals 1.5

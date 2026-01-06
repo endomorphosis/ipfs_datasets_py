@@ -5,33 +5,75 @@ Feature: TestP2PWorkflowScheduler class from tests/test_p2p_workflow_scheduler.p
     Given peer ID "peer1"
     When creating P2PWorkflowScheduler
     Then scheduler peer_id equals "peer1"
-    And "peer1" is in peers set
-    And clock peer_id equals "peer1"
-    And workflow_queue size equals 0
+
+  Scenario: test_scheduler_initialization method - assertion 2
+    Given peer ID "peer1"
+    When creating P2PWorkflowScheduler
+    Then "peer1" is in peers set
+
+  Scenario: test_scheduler_initialization method - assertion 3
+    Given peer ID "peer1"
+    When creating P2PWorkflowScheduler
+    Then clock peer_id equals "peer1"
+
+  Scenario: test_scheduler_initialization method - assertion 4
+    Given peer ID "peer1"
+    When creating P2PWorkflowScheduler
+    Then workflow_queue size equals 0
 
   Scenario: test_scheduler_add_remove_peer method
     Given initialized scheduler
     When adding peer "peer2"
+    When removing peer "peer2"
     Then "peer2" is in peers
-    And peers length equals 2
+
+  Scenario: test_scheduler_add_remove_peer method - assertion 2
+    Given initialized scheduler
+    When adding peer "peer2"
+    When removing peer "peer2"
+    Then peers length equals 2
+
+  Scenario: test_scheduler_add_remove_peer method - assertion 3
+    Given initialized scheduler
+    When adding peer "peer2"
     When removing peer "peer2"
     Then "peer2" is not in peers
-    And peers length equals 1
+
+  Scenario: test_scheduler_add_remove_peer method - assertion 4
+    Given initialized scheduler
+    When adding peer "peer2"
+    When removing peer "peer2"
+    Then peers length equals 1
 
   Scenario: test_scheduler_schedule_github_workflow method
     Given scheduler with peer "peer1"
     And workflow with UNIT_TEST tag
     When scheduling workflow
     Then result success is false
-    And result reason contains "GitHub API"
+
+  Scenario: test_scheduler_schedule_github_workflow method - assertion 2
+    Given scheduler with peer "peer1"
+    And workflow with UNIT_TEST tag
+    When scheduling workflow
+    Then result reason contains "GitHub API"
 
   Scenario: test_scheduler_schedule_p2p_workflow method
     Given scheduler with peers "peer1", "peer2", "peer3"
     And workflow with P2P_ELIGIBLE and CODE_GEN tags, priority 1.0
     When scheduling workflow
     Then result success is true
-    And result contains assigned_peer
-    And assigned_peer is in scheduler peers
+
+  Scenario: test_scheduler_schedule_p2p_workflow method - assertion 2
+    Given scheduler with peers "peer1", "peer2", "peer3"
+    And workflow with P2P_ELIGIBLE and CODE_GEN tags, priority 1.0
+    When scheduling workflow
+    Then result contains assigned_peer
+
+  Scenario: test_scheduler_schedule_p2p_workflow method - assertion 3
+    Given scheduler with peers "peer1", "peer2", "peer3"
+    And workflow with P2P_ELIGIBLE and CODE_GEN tags, priority 1.0
+    When scheduling workflow
+    Then assigned_peer is in scheduler peers
 
   Scenario: test_scheduler_workflow_assignment_deterministic method
     Given scheduler with peers "peer1", "peer2", "peer3"
@@ -50,9 +92,24 @@ Feature: TestP2PWorkflowScheduler class from tests/test_p2p_workflow_scheduler.p
     And scheduled workflow
     When calling get_status
     Then status peer_id equals "peer1"
-    And status num_peers equals 2
-    And status contains clock
-    And status clock counter is greater than 0
+
+  Scenario: test_scheduler_get_status method - assertion 2
+    Given scheduler with peers "peer1", "peer2"
+    And scheduled workflow
+    When calling get_status
+    Then status num_peers equals 2
+
+  Scenario: test_scheduler_get_status method - assertion 3
+    Given scheduler with peers "peer1", "peer2"
+    And scheduled workflow
+    When calling get_status
+    Then status contains clock
+
+  Scenario: test_scheduler_get_status method - assertion 4
+    Given scheduler with peers "peer1", "peer2"
+    And scheduled workflow
+    When calling get_status
+    Then status clock counter is greater than 0
 
   Scenario: test_scheduler_merge_clock method
     Given scheduler1 with peer "peer1"

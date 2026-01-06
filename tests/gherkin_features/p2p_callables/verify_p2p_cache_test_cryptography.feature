@@ -18,4 +18,8 @@ Feature: test_cryptography function from scripts/verify_p2p_cache.py
     Given cryptography package not installed
     When calling test_cryptography
     Then ImportError is caught
-    And function returns false
+
+  Scenario: Cryptography library missing - assertion 2
+    Given cryptography package not installed
+    When calling test_cryptography
+    Then function returns false

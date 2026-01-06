@@ -5,15 +5,31 @@ Feature: monitor_loop function from scripts/monitor_p2p_cache.py
     Given interval of 10 seconds
     When calling monitor_loop
     Then banner prints
-    And cache initializes
-    And monitoring interval displays
+
+  Scenario: Initialize monitoring - assertion 2
+    Given interval of 10 seconds
+    When calling monitor_loop
+    Then cache initializes
+
+  Scenario: Initialize monitoring - assertion 3
+    Given interval of 10 seconds
+    When calling monitor_loop
+    Then monitoring interval displays
 
   Scenario: Run monitoring iterations
     Given monitoring active
     When iteration completes
     Then update header displays
-    And stats print
-    And function sleeps for interval
+
+  Scenario: Run monitoring iterations - assertion 2
+    Given monitoring active
+    When iteration completes
+    Then stats print
+
+  Scenario: Run monitoring iterations - assertion 3
+    Given monitoring active
+    When iteration completes
+    Then function sleeps for interval
 
   Scenario: Display tip on first iteration
     Given first monitoring iteration

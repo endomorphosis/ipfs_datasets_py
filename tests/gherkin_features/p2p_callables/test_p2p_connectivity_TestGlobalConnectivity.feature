@@ -4,9 +4,15 @@ Feature: TestGlobalConnectivity class from tests/unit/test_p2p_connectivity.py
   Scenario: test_get_global_connectivity method
     When calling get_universal_connectivity twice
     Then conn1 equals conn2
-    And same instance is returned
+
+  Scenario: test_get_global_connectivity method - assertion 2
+    When calling get_universal_connectivity twice
+    Then same instance is returned
 
   Scenario: test_get_with_custom_config method
     When calling get_universal_connectivity
     Then conn config is not None
-    And conn config is ConnectivityConfig instance
+
+  Scenario: test_get_with_custom_config method - assertion 2
+    When calling get_universal_connectivity
+    Then conn config is ConnectivityConfig instance

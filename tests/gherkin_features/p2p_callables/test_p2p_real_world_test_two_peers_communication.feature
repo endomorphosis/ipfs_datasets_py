@@ -4,7 +4,10 @@ Feature: test_two_peers_communication function from scripts/test_p2p_real_world.
   Scenario: Create bootstrap host
     When creating host1
     Then host1 has ID
-    And host1 has addresses
+
+  Scenario: Create bootstrap host - assertion 2
+    When creating host1
+    Then host1 has addresses
 
   Scenario: Register stream handler on host1
     Given host1 created
@@ -40,7 +43,11 @@ Feature: test_two_peers_communication function from scripts/test_p2p_real_world.
     Given both hosts active
     When calling close on both
     Then both hosts close
-    And function returns true
+
+  Scenario: Close hosts - assertion 2
+    Given both hosts active
+    When calling close on both
+    Then function returns true
 
   Scenario: Two peers communication fails
     Given communication raises exception

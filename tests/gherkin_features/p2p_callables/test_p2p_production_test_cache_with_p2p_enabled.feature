@@ -11,7 +11,11 @@ Feature: test_cache_with_p2p_enabled function from scripts/test_p2p_production.p
     Given P2P environment configured
     When creating GitHubAPICache instance
     Then cache creation succeeds
-    And cache statistics show p2p_enabled true
+
+  Scenario: Create cache instance with P2P - assertion 2
+    Given P2P environment configured
+    When creating GitHubAPICache instance
+    Then cache statistics show p2p_enabled true
 
   Scenario: Test cache put operation
     Given cache with P2P enabled
@@ -27,9 +31,21 @@ Feature: test_cache_with_p2p_enabled function from scripts/test_p2p_production.p
     Given active P2P cache
     When calling get_stats
     Then stats contain hits count
-    And stats contain misses count
-    And stats contain hit_rate
-    And stats contain p2p_enabled status
+
+  Scenario: Check cache statistics - assertion 2
+    Given active P2P cache
+    When calling get_stats
+    Then stats contain misses count
+
+  Scenario: Check cache statistics - assertion 3
+    Given active P2P cache
+    When calling get_stats
+    Then stats contain hit_rate
+
+  Scenario: Check cache statistics - assertion 4
+    Given active P2P cache
+    When calling get_stats
+    Then stats contain p2p_enabled status
 
   Scenario: Verify encryption status
     Given cache instance

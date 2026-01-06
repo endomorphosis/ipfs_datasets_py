@@ -20,10 +20,26 @@ Feature: test_github_cli_integration function from scripts/test_p2p_cache_encryp
     Given cache instance
     When calling get_stats
     Then stats contain cache_size
-    And stats contain p2p_enabled
-    And stats contain total_requests
-    And stats contain hit_rate
-    And function returns true
+
+  Scenario: Check cache statistics - assertion 2
+    Given cache instance
+    When calling get_stats
+    Then stats contain p2p_enabled
+
+  Scenario: Check cache statistics - assertion 3
+    Given cache instance
+    When calling get_stats
+    Then stats contain total_requests
+
+  Scenario: Check cache statistics - assertion 4
+    Given cache instance
+    When calling get_stats
+    Then stats contain hit_rate
+
+  Scenario: Check cache statistics - assertion 5
+    Given cache instance
+    When calling get_stats
+    Then function returns true
 
   Scenario: GitHub CLI integration fails
     Given GitHubCLI creation raises exception

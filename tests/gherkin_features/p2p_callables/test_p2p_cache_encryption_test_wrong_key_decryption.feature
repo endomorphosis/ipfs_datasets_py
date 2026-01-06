@@ -16,10 +16,18 @@ Feature: test_wrong_key_decryption function from scripts/test_p2p_cache_encrypti
     Given message encrypted with cache1
     When decrypting with cache2 _decrypt_message
     Then decryption returns None
-    And function returns true
+
+  Scenario: Attempt decrypt with wrong key - assertion 2
+    Given message encrypted with cache1
+    When decrypting with cache2 _decrypt_message
+    Then function returns true
 
   Scenario: Decryption succeeds with wrong key
     Given message encrypted with cache1
     When decrypting with cache2 succeeds
     Then security breach detected
-    And function returns false
+
+  Scenario: Decryption succeeds with wrong key - assertion 2
+    Given message encrypted with cache1
+    When decrypting with cache2 succeeds
+    Then function returns false

@@ -20,7 +20,11 @@ Feature: test_content_hashing function from scripts/test_p2p_cache_encryption.py
     Given modified validation fields
     When computing new hash
     Then new hash differs from original hash
-    And function returns true
+
+  Scenario: Hash changes with data - assertion 2
+    Given modified validation fields
+    When computing new hash
+    Then function returns true
 
   Scenario: Content hashing fails
     Given hashing operation raises exception

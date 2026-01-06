@@ -10,7 +10,11 @@ Feature: test_cache_operations function from scripts/verify_p2p_cache.py
     Given cache with data at "test_key"
     When getting data from cache
     Then retrieved data equals original data
-    And function returns true
+
+  Scenario: Test cache get operation - assertion 2
+    Given cache with data at "test_key"
+    When getting data from cache
+    Then function returns true
 
   Scenario: Cache operations fail
     Given cache operation raises exception

@@ -4,4 +4,7 @@ Feature: print_banner function from scripts/monitor_p2p_cache.py
   Scenario: Display monitor banner
     When calling print_banner
     Then P2P CACHE SYSTEM banner displays
-    And current time displays
+
+  Scenario: Display monitor banner - assertion 2
+    When calling print_banner
+    Then current time displays

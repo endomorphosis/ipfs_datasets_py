@@ -14,4 +14,8 @@ Feature: test_multiformats function from scripts/verify_p2p_cache.py
     Given multiformats package not installed
     When calling test_multiformats
     Then ImportError is caught
-    And function returns false
+
+  Scenario: Multiformats library missing - assertion 2
+    Given multiformats package not installed
+    When calling test_multiformats
+    Then function returns false

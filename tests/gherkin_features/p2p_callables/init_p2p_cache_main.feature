@@ -10,10 +10,26 @@ Feature: main function from scripts/ci/init_p2p_cache.py
     Given environment variables set
     When reading configuration
     Then cache_dir is read
-    And github_repo is read
-    And cache_size is read
-    And enable_p2p is read
-    And enable_peer_discovery is read
+
+  Scenario: Load configuration from environment - assertion 2
+    Given environment variables set
+    When reading configuration
+    Then github_repo is read
+
+  Scenario: Load configuration from environment - assertion 3
+    Given environment variables set
+    When reading configuration
+    Then cache_size is read
+
+  Scenario: Load configuration from environment - assertion 4
+    Given environment variables set
+    When reading configuration
+    Then enable_p2p is read
+
+  Scenario: Load configuration from environment - assertion 5
+    Given environment variables set
+    When reading configuration
+    Then enable_peer_discovery is read
 
   Scenario: Initialize cache with P2P
     Given configuration loaded
@@ -29,7 +45,11 @@ Feature: main function from scripts/ci/init_p2p_cache.py
     Given active peer registry
     When calling discover_peers with max_peers 5
     Then peers list is returned
-    And peer count displays
+
+  Scenario: Discover peers - assertion 2
+    Given active peer registry
+    When calling discover_peers with max_peers 5
+    Then peer count displays
 
   Scenario: Test cache functionality
     Given initialized cache
@@ -41,24 +61,48 @@ Feature: main function from scripts/ci/init_p2p_cache.py
     Given cache with operations
     When calling get_stats
     Then stats display total_entries
-    And stats display hits
-    And stats display misses
-    And stats display peer_hits
+
+  Scenario: Get cache statistics - assertion 2
+    Given cache with operations
+    When calling get_stats
+    Then stats display hits
+
+  Scenario: Get cache statistics - assertion 3
+    Given cache with operations
+    When calling get_stats
+    Then stats display misses
+
+  Scenario: Get cache statistics - assertion 4
+    Given cache with operations
+    When calling get_stats
+    Then stats display peer_hits
 
   Scenario: All initialization succeeds
     Given cache is operational
     When main completes
     Then exit code is 0
-    And success notice displays
+
+  Scenario: All initialization succeeds - assertion 2
+    Given cache is operational
+    When main completes
+    Then success notice displays
 
   Scenario: P2P modules not available
     Given import fails
     When calling main
     Then warning message displays
-    And exit code is 0
+
+  Scenario: P2P modules not available - assertion 2
+    Given import fails
+    When calling main
+    Then exit code is 0
 
   Scenario: Initialization fails
     Given cache initialization raises exception
     When calling main
     Then exit code is 1
-    And error message displays
+
+  Scenario: Initialization fails - assertion 2
+    Given cache initialization raises exception
+    When calling main
+    Then error message displays

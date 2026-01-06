@@ -5,13 +5,21 @@ Feature: demo_workflow_scheduling function from examples/p2p_workflow_demo.py
     Given peer IDs "peer1", "peer2", "peer3"
     When creating P2PWorkflowScheduler with "peer1" as main peer
     Then scheduler peer_id equals "peer1"
-    And known peers count equals 3
+
+  Scenario: Initialize scheduler with multiple peers - assertion 2
+    Given peer IDs "peer1", "peer2", "peer3"
+    When creating P2PWorkflowScheduler with "peer1" as main peer
+    Then known peers count equals 3
 
   Scenario: Schedule P2P eligible workflow
     Given an initialized P2PWorkflowScheduler
     When scheduling workflow with ID "wf1" with P2P_ELIGIBLE tag and priority 2.0
     Then workflow is assigned to a peer
-    And scheduling result contains success true
+
+  Scenario: Schedule P2P eligible workflow - assertion 2
+    Given an initialized P2PWorkflowScheduler
+    When scheduling workflow with ID "wf1" with P2P_ELIGIBLE tag and priority 2.0
+    Then scheduling result contains success true
 
   Scenario: Schedule P2P only workflow
     Given an initialized P2PWorkflowScheduler
@@ -22,7 +30,11 @@ Feature: demo_workflow_scheduling function from examples/p2p_workflow_demo.py
     Given an initialized P2PWorkflowScheduler
     When scheduling workflow with UNIT_TEST tag
     Then scheduling result contains success false
-    And result reason mentions GitHub API
+
+  Scenario: Reject non-P2P workflow - assertion 2
+    Given an initialized P2PWorkflowScheduler
+    When scheduling workflow with UNIT_TEST tag
+    Then result reason mentions GitHub API
 
   Scenario: Process workflows in priority order
     Given scheduler with 3 queued workflows
@@ -33,5 +45,13 @@ Feature: demo_workflow_scheduling function from examples/p2p_workflow_demo.py
     Given scheduler with assigned workflows
     When calling get_status
     Then status contains queue_size
-    And status contains assigned_workflows
-    And status contains clock counter
+
+  Scenario: Get scheduler status - assertion 2
+    Given scheduler with assigned workflows
+    When calling get_status
+    Then status contains assigned_workflows
+
+  Scenario: Get scheduler status - assertion 3
+    Given scheduler with assigned workflows
+    When calling get_status
+    Then status contains clock counter

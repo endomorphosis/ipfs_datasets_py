@@ -10,10 +10,18 @@ Feature: test_github_cli_integration function from scripts/test_p2p_production.p
     Given GitHubCLI instance created
     When getting global cache
     Then cache is integrated with GitHubCLI
-    And cache statistics are available
+
+  Scenario: Check cache integration with GitHubCLI - assertion 2
+    Given GitHubCLI instance created
+    When getting global cache
+    Then cache statistics are available
 
   Scenario: Verify cache P2P status with GitHubCLI
     Given GitHubCLI with cache
     When checking cache stats
     Then stats contain p2p_enabled field
-    And stats contain cache_size field
+
+  Scenario: Verify cache P2P status with GitHubCLI - assertion 2
+    Given GitHubCLI with cache
+    When checking cache stats
+    Then stats contain cache_size field

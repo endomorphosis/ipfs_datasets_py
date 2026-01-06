@@ -9,10 +9,18 @@ Feature: main function from scripts/test_p2p_real_world.py
     Given run_all_tests async function
     When calling asyncio.run
     Then async tests execute
-    And exit code is returned
+
+  Scenario: Run async tests with asyncio.run - assertion 2
+    Given run_all_tests async function
+    When calling asyncio.run
+    Then exit code is returned
 
   Scenario: Test suite fails to start
     Given import or setup fails
     When calling main
     Then exit code is 1
-    And error message displays
+
+  Scenario: Test suite fails to start - assertion 2
+    Given import or setup fails
+    When calling main
+    Then error message displays

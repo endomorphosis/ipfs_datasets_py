@@ -9,7 +9,11 @@ Feature: test_p2p_stream_protocol function from scripts/test_p2p_networking.py
     Given cache instance
     When checking protocol ID
     Then protocol ID equals "/github-cache/1.0.0"
-    And function returns true
+
+  Scenario: Check stream protocol ID - assertion 2
+    Given cache instance
+    When checking protocol ID
+    Then function returns true
 
   Scenario: Stream protocol test fails
     Given protocol check raises exception

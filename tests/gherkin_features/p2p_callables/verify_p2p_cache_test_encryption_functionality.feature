@@ -6,7 +6,12 @@ Feature: test_encryption_functionality function from scripts/verify_p2p_cache.py
     When encrypting test data
     And decrypting encrypted data
     Then decrypted data matches original
-    And function returns true
+
+  Scenario: Test encryption with available cipher - assertion 2
+    Given GitHubAPICache with cipher initialized
+    When encrypting test data
+    And decrypting encrypted data
+    Then function returns true
 
   Scenario: Test encryption without token
     Given GitHubAPICache without cipher

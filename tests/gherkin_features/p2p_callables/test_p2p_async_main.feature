@@ -13,16 +13,28 @@ Feature: main function from test_p2p_async.py
     Given all tests completed
     When printing summary
     Then passed count displays
-    And total count displays
+
+  Scenario: Display async test summary - assertion 2
+    Given all tests completed
+    When printing summary
+    Then total count displays
 
   Scenario: All async tests pass
     Given all results are true
     When main completes
     Then exit code is 0
-    And success message displays
+
+  Scenario: All async tests pass - assertion 2
+    Given all results are true
+    When main completes
+    Then success message displays
 
   Scenario: Some async tests fail
     Given at least one test fails
     When main completes
     Then exit code is 1
-    And failure message displays
+
+  Scenario: Some async tests fail - assertion 2
+    Given at least one test fails
+    When main completes
+    Then failure message displays

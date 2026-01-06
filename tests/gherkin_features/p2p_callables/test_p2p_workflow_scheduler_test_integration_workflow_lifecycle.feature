@@ -20,7 +20,11 @@ Feature: test_integration_workflow_lifecycle function from tests/test_p2p_workfl
     Given workflows in queue
     When getting next workflow repeatedly
     Then workflows are extracted
-    And processed list is populated
+
+  Scenario: Process workflows in priority order - assertion 2
+    Given workflows in queue
+    When getting next workflow repeatedly
+    Then processed list is populated
 
   Scenario: Verify queue is empty
     Given all workflows processed

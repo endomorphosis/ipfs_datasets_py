@@ -10,7 +10,11 @@ Feature: test_p2p_initialization function from scripts/test_p2p_networking.py
     Given cache instance created
     When calling get_stats
     Then p2p_enabled status is true
-    And function returns true
+
+  Scenario: Verify P2P enabled status - assertion 2
+    Given cache instance created
+    When calling get_stats
+    Then function returns true
 
   Scenario: P2P enabled but not active
     Given cache with p2p_enabled false

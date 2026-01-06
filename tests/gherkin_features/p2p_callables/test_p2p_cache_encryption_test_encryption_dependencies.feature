@@ -22,4 +22,8 @@ Feature: test_encryption_dependencies function from scripts/test_p2p_cache_encry
     Given cryptography package not installed
     When calling test_encryption_dependencies
     Then ImportError is caught
-    And function returns false
+
+  Scenario: Dependencies missing - assertion 2
+    Given cryptography package not installed
+    When calling test_encryption_dependencies
+    Then function returns false

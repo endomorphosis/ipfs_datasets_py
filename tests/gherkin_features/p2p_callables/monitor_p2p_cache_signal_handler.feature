@@ -5,4 +5,8 @@ Feature: signal_handler function from scripts/monitor_p2p_cache.py
     Given monitor is running
     When SIGINT signal is received
     Then monitoring stopped message prints
-    And program exits with code 0
+
+  Scenario: Receive interrupt signal - assertion 2
+    Given monitor is running
+    When SIGINT signal is received
+    Then program exits with code 0

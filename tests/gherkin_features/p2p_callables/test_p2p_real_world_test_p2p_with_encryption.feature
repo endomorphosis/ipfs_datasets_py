@@ -10,7 +10,11 @@ Feature: test_p2p_with_encryption function from scripts/test_p2p_real_world.py
     Given GitHub token
     When using PBKDF2HMAC with SHA256
     Then encryption key is derived
-    And Fernet cipher is created
+
+  Scenario: Derive encryption key from token - assertion 2
+    Given GitHub token
+    When using PBKDF2HMAC with SHA256
+    Then Fernet cipher is created
 
   Scenario: Create P2P host
     Given encryption initialized
@@ -26,7 +30,11 @@ Feature: test_p2p_with_encryption function from scripts/test_p2p_real_world.py
     Given encrypted bytes
     When decrypting with cipher
     Then decrypted message matches original
-    And function returns true
+
+  Scenario: Decrypt message - assertion 2
+    Given encrypted bytes
+    When decrypting with cipher
+    Then function returns true
 
   Scenario: Close host
     Given host running
