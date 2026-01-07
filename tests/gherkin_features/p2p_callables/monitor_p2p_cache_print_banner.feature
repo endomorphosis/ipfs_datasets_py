@@ -1,10 +1,10 @@
 Feature: print_banner function from scripts/monitor_p2p_cache.py
   This function prints monitoring banner
 
-  Scenario: Display monitor banner
-    When calling print_banner
-    Then P2P CACHE SYSTEM banner displays
+  Scenario: Banner contains P2P CACHE SYSTEM
+    When print_banner() is called
+    Then output contains "P2P CACHE SYSTEM"
 
-  Scenario: Display monitor banner - assertion 2
-    When calling print_banner
-    Then current time displays
+  Scenario: Banner contains current timestamp
+    When print_banner() is called
+    Then output contains timestamp matching ISO format

@@ -9,102 +9,139 @@ import pytest
 from examples.p2p_workflow_demo import demo_merkle_clock
 
 
-def test_demonstrate_merkle_clock_initialization():
+def test_create_two_merkle_clocks_with_counter_0():
     """
-    Scenario: Demonstrate merkle clock initialization
+    Scenario: Create two merkle clocks with counter 0
 
     Given:
-        two peers with IDs "peer1" and "peer2"
+        peer_id "peer1"
+        peer_id "peer2"
 
     When:
-        creating MerkleClock instances for each peer
+        MerkleClock("peer1") is called
+        MerkleClock("peer2") is called
 
     Then:
-        both clocks start with counter 0
+        clock1.counter == 0
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Create two merkle clocks with counter 0"
+    )
 
 
-def test_demonstrate_clock_advancement_through_ticks():
+def test_create_two_merkle_clocks_with_counter_0_peer2():
     """
-    Scenario: Demonstrate clock advancement through ticks
+    Scenario: Create two merkle clocks with counter 0 - peer2
 
     Given:
-        an initialized MerkleClock for "peer1"
+        peer_id "peer1"
+        peer_id "peer2"
 
     When:
-        calling tick twice on the clock
+        MerkleClock("peer1") is called
+        MerkleClock("peer2") is called
 
     Then:
-        the clock counter equals 2
+        clock2.counter == 0
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Create two merkle clocks with counter 0 - peer2"
+    )
 
 
-def test_demonstrate_independent_clock_advancement():
+def test_tick_clock_twice_increments_counter_to_2():
     """
-    Scenario: Demonstrate independent clock advancement
+    Scenario: Tick clock twice increments counter to 2
 
     Given:
-        two MerkleClock instances for "peer1" and "peer2"
+        MerkleClock("peer1")
 
     When:
-        "peer1" clock ticks twice
-        "peer2" clock ticks once
+        clock.tick() is called
+        clock.tick() is called
 
     Then:
-        "peer1" counter equals 2
+        clock.counter == 2
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Tick clock twice increments counter to 2"
+    )
 
 
-def test_demonstrate_independent_clock_advancement_assertion_2():
+def test_tick_peer1_clock_twice_sets_counter_to_2():
     """
-    Scenario: Demonstrate independent clock advancement - assertion 2
+    Scenario: Tick peer1 clock twice sets counter to 2
 
     Given:
-        two MerkleClock instances for "peer1" and "peer2"
+        MerkleClock("peer1")
+        MerkleClock("peer2")
 
     When:
-        "peer1" clock ticks twice
-        "peer2" clock ticks once
+        clock1.tick() is called twice
+        clock2.tick() is called once
 
     Then:
-        "peer2" counter equals 1
+        clock1.counter == 2
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Tick peer1 clock twice sets counter to 2"
+    )
 
 
-def test_demonstrate_clock_merging():
+def test_tick_peer2_clock_once_sets_counter_to_1():
     """
-    Scenario: Demonstrate clock merging
+    Scenario: Tick peer2 clock once sets counter to 1
 
     Given:
-        "peer1" clock with counter 2
-        "peer2" clock with counter 1
+        MerkleClock("peer1")
+        MerkleClock("peer2")
 
     When:
-        merging "peer2" clock into "peer1"
+        clock1.tick() is called twice
+        clock2.tick() is called once
 
     Then:
-        merged clock counter equals 3
+        clock2.counter == 1
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Tick peer2 clock once sets counter to 1"
+    )
 
 
-def test_demonstrate_hash_generation():
+def test_merge_clocks_with_counters_2_and_1_produces_counter_3():
     """
-    Scenario: Demonstrate hash generation
+    Scenario: Merge clocks with counters 2 and 1 produces counter 3
 
     Given:
-        an initialized MerkleClock
+        MerkleClock("peer1") with counter=2
+        MerkleClock("peer2") with counter=1
 
     When:
-        computing the hash
+        clock1.merge(clock2) is called
 
     Then:
-        hash is a non-empty string
+        merged_clock.counter == 3
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Merge clocks with counters 2 and 1 produces counter 3"
+    )
+
+
+def test_hash_returns_64_character_hex_string():
+    """
+    Scenario: Hash returns 64 character hex string
+
+    Given:
+        MerkleClock("peer1")
+
+    When:
+        clock.hash() is called
+
+    Then:
+        len(result) == 64
+    """
+    raise NotImplementedError(
+        "Test implementation needed for: Hash returns 64 character hex string"
+    )
 
 

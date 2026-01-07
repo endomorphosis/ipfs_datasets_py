@@ -9,155 +9,173 @@ import pytest
 from examples.p2p_workflow_demo import main
 
 
-def test_run_all_demonstrations():
+def test_main_calls_demo_merkle_clock():
     """
-    Scenario: Run all demonstrations
+    Scenario: Main calls demo_merkle_clock
 
     Given:
 
     When:
-        calling main function
+        main() is called
 
     Then:
-        demo_merkle_clock executes
+        demo_merkle_clock() is executed
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main calls demo_merkle_clock"
+    )
 
 
-def test_run_all_demonstrations_assertion_2():
+def test_main_calls_demo_workflow_scheduling():
     """
-    Scenario: Run all demonstrations - assertion 2
+    Scenario: Main calls demo_workflow_scheduling
 
     Given:
 
     When:
-        calling main function
+        main() is called
 
     Then:
-        demo_workflow_scheduling executes
+        demo_workflow_scheduling() is executed
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main calls demo_workflow_scheduling"
+    )
 
 
-def test_run_all_demonstrations_assertion_3():
+def test_main_calls_demo_peer_assignment():
     """
-    Scenario: Run all demonstrations - assertion 3
+    Scenario: Main calls demo_peer_assignment
 
     Given:
 
     When:
-        calling main function
+        main() is called
 
     Then:
-        demo_peer_assignment executes
+        demo_peer_assignment() is executed
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main calls demo_peer_assignment"
+    )
 
 
-def test_run_all_demonstrations_assertion_4():
+def test_main_calls_demo_mcp_tools():
     """
-    Scenario: Run all demonstrations - assertion 4
+    Scenario: Main calls demo_mcp_tools
 
     Given:
 
     When:
-        calling main function
+        main() is called
 
     Then:
-        demo_mcp_tools executes
+        demo_mcp_tools() is executed
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main calls demo_mcp_tools"
+    )
 
 
-def test_display_demonstration_banner():
+def test_main_prints_banner_with_p2p_workflow_scheduler():
     """
-    Scenario: Display demonstration banner
+    Scenario: Main prints banner with P2P WORKFLOW SCHEDULER
 
     Given:
 
     When:
-        starting main function
+        main() is called
 
     Then:
-        banner displays P2P WORKFLOW SCHEDULER DEMONSTRATION
+        output contains "P2P WORKFLOW SCHEDULER"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints banner with P2P WORKFLOW SCHEDULER"
+    )
 
 
-def test_display_demonstration_banner_assertion_2():
+def test_main_prints_banner_with_merkle_clock():
     """
-    Scenario: Display demonstration banner - assertion 2
+    Scenario: Main prints banner with merkle clock
 
     Given:
 
     When:
-        starting main function
+        main() is called
 
     Then:
-        description mentions merkle clock
+        output contains "merkle clock"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints banner with merkle clock"
+    )
 
 
-def test_display_demonstration_banner_assertion_3():
+def test_main_prints_banner_with_fibonacci_heap():
     """
-    Scenario: Display demonstration banner - assertion 3
+    Scenario: Main prints banner with fibonacci heap
 
     Given:
 
     When:
-        starting main function
+        main() is called
 
     Then:
-        description mentions fibonacci heap
+        output contains "fibonacci heap"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints banner with fibonacci heap"
+    )
 
 
-def test_display_demonstration_banner_assertion_4():
+def test_main_prints_banner_with_hamming_distance():
     """
-    Scenario: Display demonstration banner - assertion 4
+    Scenario: Main prints banner with hamming distance
 
     Given:
 
     When:
-        starting main function
+        main() is called
 
     Then:
-        description mentions hamming distance
+        output contains "hamming distance"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints banner with hamming distance"
+    )
 
 
-def test_complete_all_demonstrations():
+def test_main_prints_completion_message():
     """
-    Scenario: Complete all demonstrations
+    Scenario: Main prints completion message
 
     Given:
-        all demonstration functions
 
     When:
-        main executes
+        main() is called
 
     Then:
-        completion message displays
+        output contains completion message
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints completion message"
+    )
 
 
-def test_complete_all_demonstrations_assertion_2():
+def test_main_prints_usage_hints():
     """
-    Scenario: Complete all demonstrations - assertion 2
+    Scenario: Main prints usage hints
 
     Given:
-        all demonstration functions
 
     When:
-        main executes
+        main() is called
 
     Then:
-        usage hints are shown
+        output contains usage hints
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Main prints usage hints"
+    )
 
 

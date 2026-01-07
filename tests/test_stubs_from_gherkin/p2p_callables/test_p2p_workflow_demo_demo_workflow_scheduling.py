@@ -9,179 +9,206 @@ import pytest
 from examples.p2p_workflow_demo import demo_workflow_scheduling
 
 
-def test_initialize_scheduler_with_multiple_peers():
+def test_create_scheduler_with_3_peers():
     """
-    Scenario: Initialize scheduler with multiple peers
+    Scenario: Create scheduler with 3 peers
 
     Given:
-        peer IDs "peer1", "peer2", "peer3"
+        peer_ids ["peer1", "peer2", "peer3"]
 
     When:
-        creating P2PWorkflowScheduler with "peer1" as main peer
+        P2PWorkflowScheduler("peer1", peers=["peer1", "peer2", "peer3"]) is called
 
     Then:
-        scheduler peer_id equals "peer1"
+        scheduler.peer_id == "peer1"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Create scheduler with 3 peers"
+    )
 
 
-def test_initialize_scheduler_with_multiple_peers_assertion_2():
+def test_scheduler_knows_3_peers():
     """
-    Scenario: Initialize scheduler with multiple peers - assertion 2
+    Scenario: Scheduler knows 3 peers
 
     Given:
-        peer IDs "peer1", "peer2", "peer3"
+        peer_ids ["peer1", "peer2", "peer3"]
 
     When:
-        creating P2PWorkflowScheduler with "peer1" as main peer
+        P2PWorkflowScheduler("peer1", peers=["peer1", "peer2", "peer3"]) is called
 
     Then:
-        known peers count equals 3
+        len(scheduler.peers) == 3
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Scheduler knows 3 peers"
+    )
 
 
-def test_schedule_p2p_eligible_workflow():
+def test_schedule_p2p_eligible_workflow_returns_success_true():
     """
-    Scenario: Schedule P2P eligible workflow
+    Scenario: Schedule P2P eligible workflow returns success True
 
     Given:
-        an initialized P2PWorkflowScheduler
+        P2PWorkflowScheduler with peers
+        WorkflowDefinition(workflow_id="wf1", tags=[WorkflowTag.P2P_ELIGIBLE], priority=2.0)
 
     When:
-        scheduling workflow with ID "wf1" with P2P_ELIGIBLE tag and priority 2.0
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        workflow is assigned to a peer
+        result["success"] == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule P2P eligible workflow returns success True"
+    )
 
 
-def test_schedule_p2p_eligible_workflow_assertion_2():
+def test_schedule_p2p_eligible_workflow_assigns_to_peer():
     """
-    Scenario: Schedule P2P eligible workflow - assertion 2
+    Scenario: Schedule P2P eligible workflow assigns to peer
 
     Given:
-        an initialized P2PWorkflowScheduler
+        P2PWorkflowScheduler with peers
+        WorkflowDefinition(workflow_id="wf1", tags=[WorkflowTag.P2P_ELIGIBLE], priority=2.0)
 
     When:
-        scheduling workflow with ID "wf1" with P2P_ELIGIBLE tag and priority 2.0
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        scheduling result contains success true
+        result["assigned_peer"] in scheduler.peers
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule P2P eligible workflow assigns to peer"
+    )
 
 
-def test_schedule_p2p_only_workflow():
+def test_schedule_p2p_only_workflow_returns_success_true():
     """
-    Scenario: Schedule P2P only workflow
+    Scenario: Schedule P2P only workflow returns success True
 
     Given:
-        an initialized P2PWorkflowScheduler
+        P2PWorkflowScheduler with peers
+        WorkflowDefinition(workflow_id="wf2", tags=[WorkflowTag.P2P_ONLY], priority=1.0)
 
     When:
-        scheduling workflow with ID "wf2" with P2P_ONLY tag and priority 1.0
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        workflow is assigned to a peer
+        result["success"] == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule P2P only workflow returns success True"
+    )
 
 
-def test_reject_non_p2p_workflow():
+def test_schedule_non_p2p_workflow_returns_success_false():
     """
-    Scenario: Reject non-P2P workflow
+    Scenario: Schedule non-P2P workflow returns success False
 
     Given:
-        an initialized P2PWorkflowScheduler
+        P2PWorkflowScheduler with peers
+        WorkflowDefinition(tags=[WorkflowTag.UNIT_TEST])
 
     When:
-        scheduling workflow with UNIT_TEST tag
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        scheduling result contains success false
+        result["success"] == False
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule non-P2P workflow returns success False"
+    )
 
 
-def test_reject_non_p2p_workflow_assertion_2():
+def test_schedule_non_p2p_workflow_reason_contains_github_api():
     """
-    Scenario: Reject non-P2P workflow - assertion 2
+    Scenario: Schedule non-P2P workflow reason contains GitHub API
 
     Given:
-        an initialized P2PWorkflowScheduler
+        P2PWorkflowScheduler with peers
+        WorkflowDefinition(tags=[WorkflowTag.UNIT_TEST])
 
     When:
-        scheduling workflow with UNIT_TEST tag
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        result reason mentions GitHub API
+        "GitHub API" in result["reason"]
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule non-P2P workflow reason contains GitHub API"
+    )
 
 
-def test_process_workflows_in_priority_order():
+def test_get_next_workflow_returns_highest_priority_workflow():
     """
-    Scenario: Process workflows in priority order
+    Scenario: Get next workflow returns highest priority workflow
 
     Given:
-        scheduler with 3 queued workflows
+        scheduler with workflows priority 5.0, 1.0, 3.0
 
     When:
-        getting next workflow from queue
+        scheduler.get_next_workflow() is called
 
     Then:
-        workflow with priority 1.0 is returned first
+        next_workflow.workflow_id == "wf2"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get next workflow returns highest priority workflow"
+    )
 
 
-def test_get_scheduler_status():
+def test_get_status_returns_queue_size_as_integer():
     """
-    Scenario: Get scheduler status
+    Scenario: Get status returns queue_size as integer
 
     Given:
-        scheduler with assigned workflows
+        P2PWorkflowScheduler with scheduled workflow
 
     When:
-        calling get_status
+        scheduler.get_status() is called
 
     Then:
-        status contains queue_size
+        isinstance(status["queue_size"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get status returns queue_size as integer"
+    )
 
 
-def test_get_scheduler_status_assertion_2():
+def test_get_status_returns_assigned_workflows_as_dict():
     """
-    Scenario: Get scheduler status - assertion 2
+    Scenario: Get status returns assigned_workflows as dict
 
     Given:
-        scheduler with assigned workflows
+        P2PWorkflowScheduler with scheduled workflow
 
     When:
-        calling get_status
+        scheduler.get_status() is called
 
     Then:
-        status contains assigned_workflows
+        isinstance(status["assigned_workflows"], dict)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get status returns assigned_workflows as dict"
+    )
 
 
-def test_get_scheduler_status_assertion_3():
+def test_get_status_returns_clock_counter_greater_than_0():
     """
-    Scenario: Get scheduler status - assertion 3
+    Scenario: Get status returns clock counter greater than 0
 
     Given:
-        scheduler with assigned workflows
+        P2PWorkflowScheduler with scheduled workflow
 
     When:
-        calling get_status
+        scheduler.get_status() is called
 
     Then:
-        status contains clock counter
+        status["clock"]["counter"] > 0
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get status returns clock counter greater than 0"
+    )
 
 

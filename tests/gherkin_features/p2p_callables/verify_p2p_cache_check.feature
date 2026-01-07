@@ -1,37 +1,37 @@
 Feature: check function from scripts/verify_p2p_cache.py
   This function runs a test and prints result
 
-  Scenario: Run successful test
-    Given a test function that returns true
-    When calling check with test name
-    Then green checkmark prints
+  Scenario: Successful test prints green checkmark
+    Given test function returns True
+    When check("test_name", test_fn) is called
+    Then output contains "✓"
 
-  Scenario: Run successful test - assertion 2
-    Given a test function that returns true
-    When calling check with test name
-    Then function returns true
+  Scenario: Successful test returns True
+    Given test function returns True
+    When check("test_name", test_fn) is called
+    Then result == True
 
-  Scenario: Run failing test
-    Given a test function that returns false
-    When calling check with test name
-    Then red X prints
+  Scenario: Failed test prints red X
+    Given test function returns False
+    When check("test_name", test_fn) is called
+    Then output contains "✗"
 
-  Scenario: Run failing test - assertion 2
-    Given a test function that returns false
-    When calling check with test name
-    Then function returns false
+  Scenario: Failed test returns False
+    Given test function returns False
+    When check("test_name", test_fn) is called
+    Then result == False
 
-  Scenario: Handle test exception
-    Given a test function that raises exception
-    When calling check with test name
-    Then red X prints
+  Scenario: Exception prints red X
+    Given test function raises ValueError
+    When check("test_name", test_fn) is called
+    Then output contains "✗"
 
-  Scenario: Handle test exception - assertion 2
-    Given a test function that raises exception
-    When calling check with test name
-    Then exception message displays
+  Scenario: Exception prints error message
+    Given test function raises ValueError("test error")
+    When check("test_name", test_fn) is called
+    Then output contains "test error"
 
-  Scenario: Handle test exception - assertion 3
-    Given a test function that raises exception
-    When calling check with test name
-    Then function returns false
+  Scenario: Exception returns False
+    Given test function raises Exception
+    When check("test_name", test_fn) is called
+    Then result == False

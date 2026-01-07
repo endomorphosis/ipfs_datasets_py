@@ -1,53 +1,53 @@
 Feature: main function from scripts/verify_p2p_cache.py
   This function runs main verification
 
-  Scenario: Run all verification checks
-    When calling main function
-    Then dependency checks execute
+  Scenario: Main runs dependency checks
+    When main() is called
+    Then check("cryptography", test_cryptography) is called
 
-  Scenario: Run all verification checks - assertion 2
-    When calling main function
-    Then configuration checks execute
+  Scenario: Main runs configuration checks
+    When main() is called
+    Then check("github_token", test_github_token) is called
 
-  Scenario: Run all verification checks - assertion 3
-    When calling main function
-    Then core functionality checks execute
+  Scenario: Main runs functionality checks
+    When main() is called
+    Then check("cache_operations", test_cache_operations) is called
 
-  Scenario: Run all verification checks - assertion 4
-    When calling main function
-    Then test suite check executes
+  Scenario: Main runs test suite check
+    When main() is called
+    Then check("test_suite", run_test_suite) is called
 
-  Scenario: All checks pass
-    Given all checks return true
-    When main completes
-    Then exit code is 0
+  Scenario: All checks pass returns exit code 0
+    Given all check() calls return True
+    When main() completes
+    Then sys.exit(0) is called
 
-  Scenario: All checks pass - assertion 2
-    Given all checks return true
-    When main completes
-    Then success message displays
+  Scenario: All checks pass outputs success
+    Given all check() calls return True
+    When main() completes
+    Then output contains "SUCCESS"
 
-  Scenario: Most checks pass
-    Given 80 percent or more checks pass
-    When main completes
-    Then exit code is 0
+  Scenario: 80 percent checks pass returns exit code 0
+    Given 8 of 10 checks return True
+    When main() completes
+    Then sys.exit(0) is called
 
-  Scenario: Most checks pass - assertion 2
-    Given 80 percent or more checks pass
-    When main completes
-    Then mostly operational message displays
+  Scenario: 80 percent checks pass outputs operational
+    Given 8 of 10 checks return True
+    When main() completes
+    Then output contains "operational"
 
-  Scenario: Some checks fail
-    Given less than 80 percent checks pass
-    When main completes
-    Then exit code is 1
+  Scenario: Less than 80 percent pass returns exit code 1
+    Given 7 of 10 checks return True
+    When main() completes
+    Then sys.exit(1) is called
 
-  Scenario: Some checks fail - assertion 2
-    Given less than 80 percent checks pass
-    When main completes
-    Then failure message displays
+  Scenario: Less than 80 percent pass outputs failure
+    Given 7 of 10 checks return True
+    When main() completes
+    Then output contains "FAIL"
 
-  Scenario: Display usage hints
-    Given GitHub token not available
-    When main completes
-    Then usage hint displays for GITHUB_TOKEN
+  Scenario: No GitHub token outputs usage hint
+    Given test_github_token returns False
+    When main() completes
+    Then output contains "GITHUB_TOKEN"

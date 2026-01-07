@@ -1,44 +1,42 @@
 Feature: main function from examples/p2p_workflow_demo.py
   This function runs all P2P workflow demonstrations
 
-  Scenario: Run all demonstrations
-    When calling main function
-    Then demo_merkle_clock executes
+  Scenario: Main calls demo_merkle_clock
+    When main() is called
+    Then demo_merkle_clock() is executed
 
-  Scenario: Run all demonstrations - assertion 2
-    When calling main function
-    Then demo_workflow_scheduling executes
+  Scenario: Main calls demo_workflow_scheduling
+    When main() is called
+    Then demo_workflow_scheduling() is executed
 
-  Scenario: Run all demonstrations - assertion 3
-    When calling main function
-    Then demo_peer_assignment executes
+  Scenario: Main calls demo_peer_assignment
+    When main() is called
+    Then demo_peer_assignment() is executed
 
-  Scenario: Run all demonstrations - assertion 4
-    When calling main function
-    Then demo_mcp_tools executes
+  Scenario: Main calls demo_mcp_tools
+    When main() is called
+    Then demo_mcp_tools() is executed
 
-  Scenario: Display demonstration banner
-    When starting main function
-    Then banner displays P2P WORKFLOW SCHEDULER DEMONSTRATION
+  Scenario: Main prints banner with P2P WORKFLOW SCHEDULER
+    When main() is called
+    Then output contains "P2P WORKFLOW SCHEDULER"
 
-  Scenario: Display demonstration banner - assertion 2
-    When starting main function
-    Then description mentions merkle clock
+  Scenario: Main prints banner with merkle clock
+    When main() is called
+    Then output contains "merkle clock"
 
-  Scenario: Display demonstration banner - assertion 3
-    When starting main function
-    Then description mentions fibonacci heap
+  Scenario: Main prints banner with fibonacci heap
+    When main() is called
+    Then output contains "fibonacci heap"
 
-  Scenario: Display demonstration banner - assertion 4
-    When starting main function
-    Then description mentions hamming distance
+  Scenario: Main prints banner with hamming distance
+    When main() is called
+    Then output contains "hamming distance"
 
-  Scenario: Complete all demonstrations
-    Given all demonstration functions
-    When main executes
-    Then completion message displays
+  Scenario: Main prints completion message
+    When main() is called
+    Then output contains completion message
 
-  Scenario: Complete all demonstrations - assertion 2
-    Given all demonstration functions
-    When main executes
-    Then usage hints are shown
+  Scenario: Main prints usage hints
+    When main() is called
+    Then output contains usage hints

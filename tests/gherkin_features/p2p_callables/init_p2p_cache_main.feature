@@ -1,108 +1,115 @@
 Feature: main function from scripts/ci/init_p2p_cache.py
   This function initializes and tests P2P cache
 
-  Scenario: Import P2P cache modules
-    When importing from ipfs_datasets_py.cache
-    And importing from ipfs_datasets_py.p2p_peer_registry
-    Then imports succeed
+  Scenario: Import ipfs_datasets_py.cache succeeds
+    When from ipfs_datasets_py.cache import GitHubAPICache
+    Then ImportError not raised
 
-  Scenario: Load configuration from environment
-    Given environment variables set
-    When reading configuration
-    Then cache_dir is read
+  Scenario: Import p2p_peer_registry succeeds
+    When from ipfs_datasets_py.p2p_peer_registry import PeerRegistry
+    Then ImportError not raised
 
-  Scenario: Load configuration from environment - assertion 2
-    Given environment variables set
-    When reading configuration
-    Then github_repo is read
+  Scenario: Read CACHE_DIR environment variable
+    Given CACHE_DIR="/tmp/cache"
+    When os.getenv("CACHE_DIR") is called
+    Then result == "/tmp/cache"
 
-  Scenario: Load configuration from environment - assertion 3
-    Given environment variables set
-    When reading configuration
-    Then cache_size is read
+  Scenario: Read GITHUB_REPO environment variable
+    Given GITHUB_REPO="user/repo"
+    When os.getenv("GITHUB_REPO") is called
+    Then result == "user/repo"
 
-  Scenario: Load configuration from environment - assertion 4
-    Given environment variables set
-    When reading configuration
-    Then enable_p2p is read
+  Scenario: Read CACHE_SIZE environment variable
+    Given CACHE_SIZE="1000"
+    When int(os.getenv("CACHE_SIZE")) is called
+    Then result == 1000
 
-  Scenario: Load configuration from environment - assertion 5
-    Given environment variables set
-    When reading configuration
-    Then enable_peer_discovery is read
+  Scenario: Read ENABLE_P2P environment variable as True
+    Given ENABLE_P2P="true"
+    When os.getenv("ENABLE_P2P").lower() == "true"
+    Then result == True
 
-  Scenario: Initialize cache with P2P
-    Given configuration loaded
-    When creating GitHubAPICache
-    Then cache initializes successfully
+  Scenario: Read ENABLE_PEER_DISCOVERY environment variable as True
+    Given ENABLE_PEER_DISCOVERY="true"
+    When os.getenv("ENABLE_PEER_DISCOVERY").lower() == "true"
+    Then result == True
 
-  Scenario: Check peer registry active
-    Given cache with _peer_registry
-    When checking peer registry
-    Then peer discovery is active
+  Scenario: Create GitHubAPICache with enable_p2p True
+    Given config with enable_p2p=True
+    When GitHubAPICache(enable_p2p=True) is called
+    Then cache instance created
 
-  Scenario: Discover peers
-    Given active peer registry
-    When calling discover_peers with max_peers 5
-    Then peers list is returned
+  Scenario: Cache has _peer_registry attribute
+    Given cache with P2P enabled
+    When hasattr(cache, "_peer_registry") is checked
+    Then result == True
 
-  Scenario: Discover peers - assertion 2
-    Given active peer registry
-    When calling discover_peers with max_peers 5
-    Then peer count displays
+  Scenario: Discover 5 peers returns list
+    Given peer_registry with max_peers=5
+    When peer_registry.discover_peers(max_peers=5) is called
+    Then isinstance(result, list)
 
-  Scenario: Test cache functionality
-    Given initialized cache
-    When putting test data
-    And getting test data
-    Then retrieved data matches original
+  Scenario: Discover peers returns count
+    Given peer_registry with max_peers=5
+    When peer_registry.discover_peers(max_peers=5) is called
+    Then len(result) <= 5
 
-  Scenario: Get cache statistics
+  Scenario: Put test data succeeds
+    Given cache instance
+    When cache.put("test_key", {"data": "value"}) is called
+    Then no exception raised
+
+  Scenario: Get test data returns original
+    Given cache with data at "test_key"
+    When cache.get("test_key") is called
+    Then result == {"data": "value"}
+
+  Scenario: Get stats returns total_entries as integer
     Given cache with operations
-    When calling get_stats
-    Then stats display total_entries
+    When cache.get_stats() is called
+    Then isinstance(stats["total_entries"], int)
 
-  Scenario: Get cache statistics - assertion 2
+  Scenario: Get stats returns hits as integer
     Given cache with operations
-    When calling get_stats
-    Then stats display hits
+    When cache.get_stats() is called
+    Then isinstance(stats["hits"], int)
 
-  Scenario: Get cache statistics - assertion 3
+  Scenario: Get stats returns misses as integer
     Given cache with operations
-    When calling get_stats
-    Then stats display misses
+    When cache.get_stats() is called
+    Then isinstance(stats["misses"], int)
 
-  Scenario: Get cache statistics - assertion 4
-    Given cache with operations
-    When calling get_stats
-    Then stats display peer_hits
+  Scenario: Get stats returns peer_hits as integer
+    Given cache with P2P operations
+    When cache.get_stats() is called
+    Then isinstance(stats["peer_hits"], int)
 
-  Scenario: All initialization succeeds
-    Given cache is operational
-    When main completes
-    Then exit code is 0
+  Scenario: Successful initialization returns exit code 0
+    Given all initialization steps succeed
+    When main() completes
+    Then sys.exit(0) is called
 
-  Scenario: All initialization succeeds - assertion 2
-    Given cache is operational
-    When main completes
-    Then success notice displays
+  Scenario: Successful initialization outputs success message
+    Given all initialization steps succeed
+    When main() completes
+    Then output contains "SUCCESS"
 
-  Scenario: P2P modules not available
-    Given import fails
-    When calling main
-    Then warning message displays
+  Scenario: Import failure outputs warning
+    Given import raises ImportError
+    When main() is called
+    Then output contains "WARNING"
 
-  Scenario: P2P modules not available - assertion 2
-    Given import fails
-    When calling main
-    Then exit code is 0
+  Scenario: Import failure returns exit code 0
+    Given import raises ImportError
+    When main() is called
+    Then sys.exit(0) is called
 
-  Scenario: Initialization fails
-    Given cache initialization raises exception
-    When calling main
-    Then exit code is 1
+  Scenario: Initialization exception outputs error
+    Given cache initialization raises Exception
+    When main() is called
+    Then output contains "ERROR"
 
-  Scenario: Initialization fails - assertion 2
-    Given cache initialization raises exception
-    When calling main
-    Then error message displays
+  Scenario: Initialization exception returns exit code 1
+    Given cache initialization raises Exception
+    When main() is called
+    Then sys.exit(1) is called

@@ -9,35 +9,21 @@ import pytest
 # from scripts/monitor_p2p_cache.py import signal_handler
 
 
-def test_receive_interrupt_signal():
+def test_sigint_signal_exits_with_code_0():
     """
-    Scenario: Receive interrupt signal
+    Scenario: SIGINT signal exits with code 0
 
     Given:
-        monitor is running
+        monitor running
 
     When:
-        SIGINT signal is received
+        SIGINT signal received
 
     Then:
-        monitoring stopped message prints
+        exit_code == 0
     """
-    pass
-
-
-def test_receive_interrupt_signal_assertion_2():
-    """
-    Scenario: Receive interrupt signal - assertion 2
-
-    Given:
-        monitor is running
-
-    When:
-        SIGINT signal is received
-
-    Then:
-        program exits with code 0
-    """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: SIGINT signal exits with code 0"
+    )
 
 

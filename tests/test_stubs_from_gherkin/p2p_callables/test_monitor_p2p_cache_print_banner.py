@@ -9,33 +9,37 @@ import pytest
 # from scripts/monitor_p2p_cache.py import print_banner
 
 
-def test_display_monitor_banner():
+def test_banner_contains_p2p_cache_system():
     """
-    Scenario: Display monitor banner
+    Scenario: Banner contains P2P CACHE SYSTEM
 
     Given:
 
     When:
-        calling print_banner
+        print_banner() is called
 
     Then:
-        P2P CACHE SYSTEM banner displays
+        output contains "P2P CACHE SYSTEM"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Banner contains P2P CACHE SYSTEM"
+    )
 
 
-def test_display_monitor_banner_assertion_2():
+def test_banner_contains_current_timestamp():
     """
-    Scenario: Display monitor banner - assertion 2
+    Scenario: Banner contains current timestamp
 
     Given:
 
     When:
-        calling print_banner
+        print_banner() is called
 
     Then:
-        current time displays
+        output contains timestamp matching ISO format
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Banner contains current timestamp"
+    )
 
 

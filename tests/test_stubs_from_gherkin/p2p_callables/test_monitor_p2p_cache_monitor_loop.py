@@ -9,131 +9,149 @@ import pytest
 # from scripts/monitor_p2p_cache.py import monitor_loop
 
 
-def test_initialize_monitoring():
+def test_monitor_loop_calls_print_banner_once():
     """
-    Scenario: Initialize monitoring
+    Scenario: Monitor loop calls print_banner once
 
     Given:
-        interval of 10 seconds
+        interval 10
 
     When:
-        calling monitor_loop
+        monitor_loop(interval=10) is called
 
     Then:
-        banner prints
+        print_banner() called 1 time
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop calls print_banner once"
+    )
 
 
-def test_initialize_monitoring_assertion_2():
+def test_monitor_loop_creates_cache_instance():
     """
-    Scenario: Initialize monitoring - assertion 2
+    Scenario: Monitor loop creates cache instance
 
     Given:
-        interval of 10 seconds
+        interval 10
 
     When:
-        calling monitor_loop
+        monitor_loop(interval=10) is called
 
     Then:
-        cache initializes
+        GitHubAPICache() is instantiated
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop creates cache instance"
+    )
 
 
-def test_initialize_monitoring_assertion_3():
+def test_monitor_loop_outputs_monitoring_interval():
     """
-    Scenario: Initialize monitoring - assertion 3
+    Scenario: Monitor loop outputs monitoring interval
 
     Given:
-        interval of 10 seconds
+        interval 10
 
     When:
-        calling monitor_loop
+        monitor_loop(interval=10) is called
 
     Then:
-        monitoring interval displays
+        output contains "interval: 10"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop outputs monitoring interval"
+    )
 
 
-def test_run_monitoring_iterations():
+def test_monitor_loop_calls_print_stats_each_iteration():
     """
-    Scenario: Run monitoring iterations
+    Scenario: Monitor loop calls print_stats each iteration
 
     Given:
-        monitoring active
+        interval 10
+        3 iterations
 
     When:
-        iteration completes
+        monitor_loop(interval=10) runs 3 iterations
 
     Then:
-        update header displays
+        print_stats() called 3 times
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop calls print_stats each iteration"
+    )
 
 
-def test_run_monitoring_iterations_assertion_2():
+def test_monitor_loop_sleeps_for_interval_seconds():
     """
-    Scenario: Run monitoring iterations - assertion 2
+    Scenario: Monitor loop sleeps for interval seconds
 
     Given:
-        monitoring active
+        interval 10
 
     When:
-        iteration completes
+        monitor_loop(interval=10) completes iteration
 
     Then:
-        stats print
+        time.sleep(10) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop sleeps for interval seconds"
+    )
 
 
-def test_run_monitoring_iterations_assertion_3():
+def test_monitor_loop_outputs_update_header_each_iteration():
     """
-    Scenario: Run monitoring iterations - assertion 3
+    Scenario: Monitor loop outputs update header each iteration
 
     Given:
-        monitoring active
+        interval 10
+        2 iterations
 
     When:
-        iteration completes
+        monitor_loop(interval=10) runs 2 iterations
 
     Then:
-        function sleeps for interval
+        output contains "UPDATE" 2 times
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop outputs update header each iteration"
+    )
 
 
-def test_display_tip_on_first_iteration():
+def test_monitor_loop_outputs_tip_on_first_iteration():
     """
-    Scenario: Display tip on first iteration
+    Scenario: Monitor loop outputs tip on first iteration
 
     Given:
-        first monitoring iteration
+        interval 10
 
     When:
-        displaying stats
+        monitor_loop(interval=10) runs first iteration
 
     Then:
-        usage tip displays
+        output contains "Tip:"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Monitor loop outputs tip on first iteration"
+    )
 
 
-def test_stop_monitoring_with_keyboard_interrupt():
+def test_keyboardinterrupt_stops_monitor_loop():
     """
-    Scenario: Stop monitoring with keyboard interrupt
+    Scenario: KeyboardInterrupt stops monitor loop
 
     Given:
-        monitoring loop running
+        interval 10
 
     When:
-        keyboard interrupt occurs
+        KeyboardInterrupt raised
 
     Then:
-        signal_handler is called
+        monitor_loop exits
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: KeyboardInterrupt stops monitor loop"
+    )
 
 

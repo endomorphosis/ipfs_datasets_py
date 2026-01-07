@@ -1,31 +1,31 @@
 Feature: main function from scripts/monitor_p2p_cache.py
   This function is main entry point
 
-  Scenario: Parse command line arguments
-    Given command line with --interval 10
-    When calling main
-    Then interval is set to 10
+  Scenario: Parse --interval argument sets interval to 10
+    Given command line ["--interval", "10"]
+    When main() is called
+    Then interval == 10
 
-  Scenario: Run once mode
-    Given --once flag provided
-    When calling main
-    Then banner prints
+  Scenario: Run once mode calls print_banner
+    Given command line ["--once"]
+    When main() is called
+    Then print_banner() called 1 time
 
-  Scenario: Run once mode - assertion 2
-    Given --once flag provided
-    When calling main
-    Then stats print once
+  Scenario: Run once mode calls print_stats once
+    Given command line ["--once"]
+    When main() is called
+    Then print_stats() called 1 time
 
-  Scenario: Run once mode - assertion 3
-    Given --once flag provided
-    When calling main
+  Scenario: Run once mode exits after stats
+    Given command line ["--once"]
+    When main() is called
     Then program exits
 
-  Scenario: Run continuous monitoring
-    Given no --once flag
-    When calling main
-    Then monitor_loop executes with interval
+  Scenario: Continuous mode calls monitor_loop with interval
+    Given command line ["--interval", "15"]
+    When main() is called
+    Then monitor_loop(interval=15) is called
 
-  Scenario: Register signal handler
-    When main starts
-    Then SIGINT handler is registered
+  Scenario: Register SIGINT handler
+    When main() starts
+    Then signal.signal(signal.SIGINT, signal_handler) is called

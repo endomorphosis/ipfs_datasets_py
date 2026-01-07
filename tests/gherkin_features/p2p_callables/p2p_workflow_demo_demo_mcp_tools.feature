@@ -1,47 +1,47 @@
 Feature: demo_mcp_tools function from examples/p2p_workflow_demo.py
   This async function demonstrates MCP server tools
 
-  Scenario: Initialize P2P scheduler via MCP tools
-    Given MCP tools are available
-    When calling initialize_p2p_scheduler with peer_id "mcp_peer"
-    Then result success is true
+  Scenario: Initialize P2P scheduler returns success True
+    Given peer_id "mcp_peer"
+    When initialize_p2p_scheduler(peer_id="mcp_peer") is called
+    Then result["success"] == True
 
-  Scenario: Initialize P2P scheduler via MCP tools - assertion 2
-    Given MCP tools are available
-    When calling initialize_p2p_scheduler with peer_id "mcp_peer"
-    Then status contains peer_id "mcp_peer"
+  Scenario: Initialize P2P scheduler sets peer_id
+    Given peer_id "mcp_peer"
+    When initialize_p2p_scheduler(peer_id="mcp_peer") is called
+    Then status["peer_id"] == "mcp_peer"
 
-  Scenario: Get workflow tags via MCP tools
-    Given initialized MCP tools
-    When calling get_workflow_tags
-    Then result contains tags list
+  Scenario: Get workflow tags returns list
+    When get_workflow_tags() is called
+    Then isinstance(result["tags"], list)
 
-  Scenario: Get workflow tags via MCP tools - assertion 2
-    Given initialized MCP tools
-    When calling get_workflow_tags
-    Then result contains descriptions
+  Scenario: Get workflow tags returns descriptions dict
+    When get_workflow_tags() is called
+    Then isinstance(result["descriptions"], dict)
 
-  Scenario: Schedule workflow via MCP tools
-    Given initialized P2P scheduler via MCP
-    When calling schedule_p2p_workflow with ID "mcp_wf1"
-    Then result success is true
+  Scenario: Schedule workflow returns success True
+    Given P2P scheduler with peer_id "mcp_peer"
+    And workflow_id "mcp_wf1"
+    When schedule_p2p_workflow(workflow_id="mcp_wf1") is called
+    Then result["success"] == True
 
-  Scenario: Schedule workflow via MCP tools - assertion 2
-    Given initialized P2P scheduler via MCP
-    When calling schedule_p2p_workflow with ID "mcp_wf1"
-    Then workflow is assigned to a peer
+  Scenario: Schedule workflow assigns to peer
+    Given P2P scheduler with peer_id "mcp_peer"
+    And workflow_id "mcp_wf1"
+    When schedule_p2p_workflow(workflow_id="mcp_wf1") is called
+    Then "assigned_peer" in result
 
-  Scenario: Get scheduler status via MCP tools
-    Given active P2P scheduler via MCP
-    When calling get_p2p_scheduler_status
-    Then status contains queue_size
+  Scenario: Get scheduler status returns queue_size as integer
+    Given active P2P scheduler
+    When get_p2p_scheduler_status() is called
+    Then isinstance(status["queue_size"], int)
 
-  Scenario: Get scheduler status via MCP tools - assertion 2
-    Given active P2P scheduler via MCP
-    When calling get_p2p_scheduler_status
-    Then status contains total_workflows
+  Scenario: Get scheduler status returns total_workflows as integer
+    Given active P2P scheduler
+    When get_p2p_scheduler_status() is called
+    Then isinstance(status["total_workflows"], int)
 
-  Scenario: Handle MCP tools unavailable
-    Given MCP tools are not installed
-    When attempting to import MCP tools
-    Then function returns early with warning message
+  Scenario: MCP tools unavailable raises ImportError
+    Given MCP tools not installed
+    When importing MCP tools
+    Then ImportError is raised

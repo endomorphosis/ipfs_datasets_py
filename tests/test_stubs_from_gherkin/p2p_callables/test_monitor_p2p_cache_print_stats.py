@@ -9,195 +9,219 @@ import pytest
 # from scripts/monitor_p2p_cache.py import print_stats
 
 
-def test_display_cache_statistics():
+def test_print_stats_outputs_cache_size_line():
     """
-    Scenario: Display cache statistics
+    Scenario: Print stats outputs cache_size line
 
     Given:
-        cache instance with stats
+        cache with size 100
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        cache size displays
+        output contains "cache_size: 100"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs cache_size line"
+    )
 
 
-def test_display_cache_statistics_assertion_2():
+def test_print_stats_outputs_max_size_line():
     """
-    Scenario: Display cache statistics - assertion 2
+    Scenario: Print stats outputs max_size line
 
     Given:
-        cache instance with stats
+        cache with max_size 1000
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        max size displays
+        output contains "max_size: 1000"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs max_size line"
+    )
 
 
-def test_display_cache_statistics_assertion_3():
+def test_print_stats_outputs_fill_rate_as_percentage():
     """
-    Scenario: Display cache statistics - assertion 3
+    Scenario: Print stats outputs fill_rate as percentage
 
     Given:
-        cache instance with stats
+        cache with size 100 and max_size 1000
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        fill rate displays
+        output contains "fill_rate: 10.0%"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs fill_rate as percentage"
+    )
 
 
-def test_display_cache_statistics_assertion_4():
+def test_print_stats_outputs_total_requests_count():
     """
-    Scenario: Display cache statistics - assertion 4
+    Scenario: Print stats outputs total_requests count
 
     Given:
-        cache instance with stats
+        cache with total_requests 500
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        total requests displays
+        output contains "total_requests: 500"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs total_requests count"
+    )
 
 
-def test_display_cache_statistics_assertion_5():
+def test_print_stats_outputs_hit_rate_as_percentage():
     """
-    Scenario: Display cache statistics - assertion 5
+    Scenario: Print stats outputs hit_rate as percentage
 
     Given:
-        cache instance with stats
+        cache with hits 400 and total_requests 500
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        hit rate displays
+        output contains "hit_rate: 80.0%"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs hit_rate as percentage"
+    )
 
 
-def test_display_p2p_networking_status():
+def test_print_stats_outputs_p2p_status_enabled():
     """
-    Scenario: Display P2P networking status
+    Scenario: Print stats outputs P2P status ENABLED
 
     Given:
-        cache with P2P enabled
+        cache with p2p_enabled True
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        P2P status shows ENABLED
+        output contains "P2P: ENABLED"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs P2P status ENABLED"
+    )
 
 
-def test_display_p2p_networking_status_assertion_2():
+def test_print_stats_outputs_connected_peers_count():
     """
-    Scenario: Display P2P networking status - assertion 2
+    Scenario: Print stats outputs connected_peers count
 
     Given:
-        cache with P2P enabled
+        cache with 3 connected peers
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        connected peers count displays
+        output contains "connected_peers: 3"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs connected_peers count"
+    )
 
 
-def test_display_security_status():
+def test_print_stats_outputs_encryption_enabled():
     """
-    Scenario: Display security status
+    Scenario: Print stats outputs encryption ENABLED
 
     Given:
-        cache with encryption cipher
+        cache with cipher initialized
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        encryption status shows ENABLED
+        output contains "encryption: ENABLED"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs encryption ENABLED"
+    )
 
 
-def test_display_security_status_assertion_2():
+def test_print_stats_outputs_key_derivation_method():
     """
-    Scenario: Display security status - assertion 2
+    Scenario: Print stats outputs key_derivation method
 
     Given:
-        cache with encryption cipher
+        cache with key_derivation "PBKDF2-HMAC-SHA256"
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        key derivation method displays
+        output contains "key_derivation: PBKDF2-HMAC-SHA256"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs key_derivation method"
+    )
 
 
-def test_display_performance_metrics():
+def test_print_stats_outputs_api_reduction_percentage():
     """
-    Scenario: Display performance metrics
+    Scenario: Print stats outputs api_reduction percentage
 
     Given:
-        cache with requests processed
+        cache preventing 300 API calls from 500 requests
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        API reduction percentage displays
+        output contains "api_reduction: 60.0%"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs api_reduction percentage"
+    )
 
 
-def test_display_performance_metrics_assertion_2():
+def test_print_stats_outputs_time_saved_in_seconds():
     """
-    Scenario: Display performance metrics - assertion 2
+    Scenario: Print stats outputs time_saved in seconds
 
     Given:
-        cache with requests processed
+        cache saving 150 seconds
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        time saved displays
+        output contains "time_saved: 150s"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs time_saved in seconds"
+    )
 
 
-def test_display_performance_metrics_assertion_3():
+def test_print_stats_outputs_rate_limit_impact_count():
     """
-    Scenario: Display performance metrics - assertion 3
+    Scenario: Print stats outputs rate_limit_impact count
 
     Given:
-        cache with requests processed
+        cache preventing 50 rate limit hits
 
     When:
-        calling print_stats
+        print_stats(cache) is called
 
     Then:
-        rate limit impact displays
+        output contains "rate_limit_impact: 50"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Print stats outputs rate_limit_impact count"
+    )
 
 

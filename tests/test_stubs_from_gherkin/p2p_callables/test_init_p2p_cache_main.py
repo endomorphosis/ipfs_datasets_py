@@ -9,340 +9,415 @@ import pytest
 # from scripts/ci/init_p2p_cache.py import main
 
 
-def test_import_p2p_cache_modules():
+def test_import_ipfs_datasets_pycache_succeeds():
     """
-    Scenario: Import P2P cache modules
+    Scenario: Import ipfs_datasets_py.cache succeeds
 
     Given:
 
     When:
-        importing from ipfs_datasets_py.cache
-        importing from ipfs_datasets_py.p2p_peer_registry
+        from ipfs_datasets_py.cache import GitHubAPICache
 
     Then:
-        imports succeed
+        ImportError not raised
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Import ipfs_datasets_py.cache succeeds"
+    )
 
 
-def test_load_configuration_from_environment():
+def test_import_p2p_peer_registry_succeeds():
     """
-    Scenario: Load configuration from environment
+    Scenario: Import p2p_peer_registry succeeds
 
     Given:
-        environment variables set
 
     When:
-        reading configuration
+        from ipfs_datasets_py.p2p_peer_registry import PeerRegistry
 
     Then:
-        cache_dir is read
+        ImportError not raised
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Import p2p_peer_registry succeeds"
+    )
 
 
-def test_load_configuration_from_environment_assertion_2():
+def test_read_cache_dir_environment_variable():
     """
-    Scenario: Load configuration from environment - assertion 2
+    Scenario: Read CACHE_DIR environment variable
 
     Given:
-        environment variables set
+        CACHE_DIR="/tmp/cache"
 
     When:
-        reading configuration
+        os.getenv("CACHE_DIR") is called
 
     Then:
-        github_repo is read
+        result == "/tmp/cache"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Read CACHE_DIR environment variable"
+    )
 
 
-def test_load_configuration_from_environment_assertion_3():
+def test_read_github_repo_environment_variable():
     """
-    Scenario: Load configuration from environment - assertion 3
+    Scenario: Read GITHUB_REPO environment variable
 
     Given:
-        environment variables set
+        GITHUB_REPO="user/repo"
 
     When:
-        reading configuration
+        os.getenv("GITHUB_REPO") is called
 
     Then:
-        cache_size is read
+        result == "user/repo"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Read GITHUB_REPO environment variable"
+    )
 
 
-def test_load_configuration_from_environment_assertion_4():
+def test_read_cache_size_environment_variable():
     """
-    Scenario: Load configuration from environment - assertion 4
+    Scenario: Read CACHE_SIZE environment variable
 
     Given:
-        environment variables set
+        CACHE_SIZE="1000"
 
     When:
-        reading configuration
+        int(os.getenv("CACHE_SIZE")) is called
 
     Then:
-        enable_p2p is read
+        result == 1000
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Read CACHE_SIZE environment variable"
+    )
 
 
-def test_load_configuration_from_environment_assertion_5():
+def test_read_enable_p2p_environment_variable_as_true():
     """
-    Scenario: Load configuration from environment - assertion 5
+    Scenario: Read ENABLE_P2P environment variable as True
 
     Given:
-        environment variables set
+        ENABLE_P2P="true"
 
     When:
-        reading configuration
+        os.getenv("ENABLE_P2P").lower() == "true"
 
     Then:
-        enable_peer_discovery is read
+        result == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Read ENABLE_P2P environment variable as True"
+    )
 
 
-def test_initialize_cache_with_p2p():
+def test_read_enable_peer_discovery_environment_variable_as_true():
     """
-    Scenario: Initialize cache with P2P
+    Scenario: Read ENABLE_PEER_DISCOVERY environment variable as True
 
     Given:
-        configuration loaded
+        ENABLE_PEER_DISCOVERY="true"
 
     When:
-        creating GitHubAPICache
+        os.getenv("ENABLE_PEER_DISCOVERY").lower() == "true"
 
     Then:
-        cache initializes successfully
+        result == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Read ENABLE_PEER_DISCOVERY environment variable as True"
+    )
 
 
-def test_check_peer_registry_active():
+def test_create_githubapicache_with_enable_p2p_true():
     """
-    Scenario: Check peer registry active
+    Scenario: Create GitHubAPICache with enable_p2p True
 
     Given:
-        cache with _peer_registry
+        config with enable_p2p=True
 
     When:
-        checking peer registry
+        GitHubAPICache(enable_p2p=True) is called
 
     Then:
-        peer discovery is active
+        cache instance created
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Create GitHubAPICache with enable_p2p True"
+    )
 
 
-def test_discover_peers():
+def test_cache_has__peer_registry_attribute():
     """
-    Scenario: Discover peers
+    Scenario: Cache has _peer_registry attribute
 
     Given:
-        active peer registry
+        cache with P2P enabled
 
     When:
-        calling discover_peers with max_peers 5
+        hasattr(cache, "_peer_registry") is checked
 
     Then:
-        peers list is returned
+        result == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Cache has _peer_registry attribute"
+    )
 
 
-def test_discover_peers_assertion_2():
+def test_discover_5_peers_returns_list():
     """
-    Scenario: Discover peers - assertion 2
+    Scenario: Discover 5 peers returns list
 
     Given:
-        active peer registry
+        peer_registry with max_peers=5
 
     When:
-        calling discover_peers with max_peers 5
+        peer_registry.discover_peers(max_peers=5) is called
 
     Then:
-        peer count displays
+        isinstance(result, list)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Discover 5 peers returns list"
+    )
 
 
-def test_test_cache_functionality():
+def test_discover_peers_returns_count():
     """
-    Scenario: Test cache functionality
+    Scenario: Discover peers returns count
 
     Given:
-        initialized cache
+        peer_registry with max_peers=5
 
     When:
-        putting test data
-        getting test data
+        peer_registry.discover_peers(max_peers=5) is called
 
     Then:
-        retrieved data matches original
+        len(result) <= 5
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Discover peers returns count"
+    )
 
 
-def test_get_cache_statistics():
+def test_put_test_data_succeeds():
     """
-    Scenario: Get cache statistics
+    Scenario: Put test data succeeds
+
+    Given:
+        cache instance
+
+    When:
+        cache.put("test_key", {"data": "value"}) is called
+
+    Then:
+        no exception raised
+    """
+    raise NotImplementedError(
+        "Test implementation needed for: Put test data succeeds"
+    )
+
+
+def test_get_test_data_returns_original():
+    """
+    Scenario: Get test data returns original
+
+    Given:
+        cache with data at "test_key"
+
+    When:
+        cache.get("test_key") is called
+
+    Then:
+        result == {"data": "value"}
+    """
+    raise NotImplementedError(
+        "Test implementation needed for: Get test data returns original"
+    )
+
+
+def test_get_stats_returns_total_entries_as_integer():
+    """
+    Scenario: Get stats returns total_entries as integer
 
     Given:
         cache with operations
 
     When:
-        calling get_stats
+        cache.get_stats() is called
 
     Then:
-        stats display total_entries
+        isinstance(stats["total_entries"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get stats returns total_entries as integer"
+    )
 
 
-def test_get_cache_statistics_assertion_2():
+def test_get_stats_returns_hits_as_integer():
     """
-    Scenario: Get cache statistics - assertion 2
+    Scenario: Get stats returns hits as integer
 
     Given:
         cache with operations
 
     When:
-        calling get_stats
+        cache.get_stats() is called
 
     Then:
-        stats display hits
+        isinstance(stats["hits"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get stats returns hits as integer"
+    )
 
 
-def test_get_cache_statistics_assertion_3():
+def test_get_stats_returns_misses_as_integer():
     """
-    Scenario: Get cache statistics - assertion 3
+    Scenario: Get stats returns misses as integer
 
     Given:
         cache with operations
 
     When:
-        calling get_stats
+        cache.get_stats() is called
 
     Then:
-        stats display misses
+        isinstance(stats["misses"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get stats returns misses as integer"
+    )
 
 
-def test_get_cache_statistics_assertion_4():
+def test_get_stats_returns_peer_hits_as_integer():
     """
-    Scenario: Get cache statistics - assertion 4
+    Scenario: Get stats returns peer_hits as integer
 
     Given:
-        cache with operations
+        cache with P2P operations
 
     When:
-        calling get_stats
+        cache.get_stats() is called
 
     Then:
-        stats display peer_hits
+        isinstance(stats["peer_hits"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get stats returns peer_hits as integer"
+    )
 
 
-def test_all_initialization_succeeds():
+def test_successful_initialization_returns_exit_code_0():
     """
-    Scenario: All initialization succeeds
+    Scenario: Successful initialization returns exit code 0
 
     Given:
-        cache is operational
+        all initialization steps succeed
 
     When:
-        main completes
+        main() completes
 
     Then:
-        exit code is 0
+        sys.exit(0) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Successful initialization returns exit code 0"
+    )
 
 
-def test_all_initialization_succeeds_assertion_2():
+def test_successful_initialization_outputs_success_message():
     """
-    Scenario: All initialization succeeds - assertion 2
+    Scenario: Successful initialization outputs success message
 
     Given:
-        cache is operational
+        all initialization steps succeed
 
     When:
-        main completes
+        main() completes
 
     Then:
-        success notice displays
+        output contains "SUCCESS"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Successful initialization outputs success message"
+    )
 
 
-def test_p2p_modules_not_available():
+def test_import_failure_outputs_warning():
     """
-    Scenario: P2P modules not available
+    Scenario: Import failure outputs warning
 
     Given:
-        import fails
+        import raises ImportError
 
     When:
-        calling main
+        main() is called
 
     Then:
-        warning message displays
+        output contains "WARNING"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Import failure outputs warning"
+    )
 
 
-def test_p2p_modules_not_available_assertion_2():
+def test_import_failure_returns_exit_code_0():
     """
-    Scenario: P2P modules not available - assertion 2
+    Scenario: Import failure returns exit code 0
 
     Given:
-        import fails
+        import raises ImportError
 
     When:
-        calling main
+        main() is called
 
     Then:
-        exit code is 0
+        sys.exit(0) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Import failure returns exit code 0"
+    )
 
 
-def test_initialization_fails():
+def test_initialization_exception_outputs_error():
     """
-    Scenario: Initialization fails
+    Scenario: Initialization exception outputs error
 
     Given:
-        cache initialization raises exception
+        cache initialization raises Exception
 
     When:
-        calling main
+        main() is called
 
     Then:
-        exit code is 1
+        output contains "ERROR"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Initialization exception outputs error"
+    )
 
 
-def test_initialization_fails_assertion_2():
+def test_initialization_exception_returns_exit_code_1():
     """
-    Scenario: Initialization fails - assertion 2
+    Scenario: Initialization exception returns exit code 1
 
     Given:
-        cache initialization raises exception
+        cache initialization raises Exception
 
     When:
-        calling main
+        main() is called
 
     Then:
-        error message displays
+        sys.exit(1) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Initialization exception returns exit code 1"
+    )
 
 

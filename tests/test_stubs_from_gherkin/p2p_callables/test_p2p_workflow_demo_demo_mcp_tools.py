@@ -9,147 +9,165 @@ import pytest
 from examples.p2p_workflow_demo import demo_mcp_tools
 
 
-def test_initialize_p2p_scheduler_via_mcp_tools():
+def test_initialize_p2p_scheduler_returns_success_true():
     """
-    Scenario: Initialize P2P scheduler via MCP tools
+    Scenario: Initialize P2P scheduler returns success True
 
     Given:
-        MCP tools are available
+        peer_id "mcp_peer"
 
     When:
-        calling initialize_p2p_scheduler with peer_id "mcp_peer"
+        initialize_p2p_scheduler(peer_id="mcp_peer") is called
 
     Then:
-        result success is true
+        result["success"] == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Initialize P2P scheduler returns success True"
+    )
 
 
-def test_initialize_p2p_scheduler_via_mcp_tools_assertion_2():
+def test_initialize_p2p_scheduler_sets_peer_id():
     """
-    Scenario: Initialize P2P scheduler via MCP tools - assertion 2
+    Scenario: Initialize P2P scheduler sets peer_id
 
     Given:
-        MCP tools are available
+        peer_id "mcp_peer"
 
     When:
-        calling initialize_p2p_scheduler with peer_id "mcp_peer"
+        initialize_p2p_scheduler(peer_id="mcp_peer") is called
 
     Then:
-        status contains peer_id "mcp_peer"
+        status["peer_id"] == "mcp_peer"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Initialize P2P scheduler sets peer_id"
+    )
 
 
-def test_get_workflow_tags_via_mcp_tools():
+def test_get_workflow_tags_returns_list():
     """
-    Scenario: Get workflow tags via MCP tools
+    Scenario: Get workflow tags returns list
 
     Given:
-        initialized MCP tools
 
     When:
-        calling get_workflow_tags
+        get_workflow_tags() is called
 
     Then:
-        result contains tags list
+        isinstance(result["tags"], list)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get workflow tags returns list"
+    )
 
 
-def test_get_workflow_tags_via_mcp_tools_assertion_2():
+def test_get_workflow_tags_returns_descriptions_dict():
     """
-    Scenario: Get workflow tags via MCP tools - assertion 2
+    Scenario: Get workflow tags returns descriptions dict
 
     Given:
-        initialized MCP tools
 
     When:
-        calling get_workflow_tags
+        get_workflow_tags() is called
 
     Then:
-        result contains descriptions
+        isinstance(result["descriptions"], dict)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get workflow tags returns descriptions dict"
+    )
 
 
-def test_schedule_workflow_via_mcp_tools():
+def test_schedule_workflow_returns_success_true():
     """
-    Scenario: Schedule workflow via MCP tools
+    Scenario: Schedule workflow returns success True
 
     Given:
-        initialized P2P scheduler via MCP
+        P2P scheduler with peer_id "mcp_peer"
+        workflow_id "mcp_wf1"
 
     When:
-        calling schedule_p2p_workflow with ID "mcp_wf1"
+        schedule_p2p_workflow(workflow_id="mcp_wf1") is called
 
     Then:
-        result success is true
+        result["success"] == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule workflow returns success True"
+    )
 
 
-def test_schedule_workflow_via_mcp_tools_assertion_2():
+def test_schedule_workflow_assigns_to_peer():
     """
-    Scenario: Schedule workflow via MCP tools - assertion 2
+    Scenario: Schedule workflow assigns to peer
 
     Given:
-        initialized P2P scheduler via MCP
+        P2P scheduler with peer_id "mcp_peer"
+        workflow_id "mcp_wf1"
 
     When:
-        calling schedule_p2p_workflow with ID "mcp_wf1"
+        schedule_p2p_workflow(workflow_id="mcp_wf1") is called
 
     Then:
-        workflow is assigned to a peer
+        "assigned_peer" in result
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Schedule workflow assigns to peer"
+    )
 
 
-def test_get_scheduler_status_via_mcp_tools():
+def test_get_scheduler_status_returns_queue_size_as_integer():
     """
-    Scenario: Get scheduler status via MCP tools
+    Scenario: Get scheduler status returns queue_size as integer
 
     Given:
-        active P2P scheduler via MCP
+        active P2P scheduler
 
     When:
-        calling get_p2p_scheduler_status
+        get_p2p_scheduler_status() is called
 
     Then:
-        status contains queue_size
+        isinstance(status["queue_size"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get scheduler status returns queue_size as integer"
+    )
 
 
-def test_get_scheduler_status_via_mcp_tools_assertion_2():
+def test_get_scheduler_status_returns_total_workflows_as_integer():
     """
-    Scenario: Get scheduler status via MCP tools - assertion 2
+    Scenario: Get scheduler status returns total_workflows as integer
 
     Given:
-        active P2P scheduler via MCP
+        active P2P scheduler
 
     When:
-        calling get_p2p_scheduler_status
+        get_p2p_scheduler_status() is called
 
     Then:
-        status contains total_workflows
+        isinstance(status["total_workflows"], int)
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Get scheduler status returns total_workflows as integer"
+    )
 
 
-def test_handle_mcp_tools_unavailable():
+def test_mcp_tools_unavailable_raises_importerror():
     """
-    Scenario: Handle MCP tools unavailable
+    Scenario: MCP tools unavailable raises ImportError
 
     Given:
-        MCP tools are not installed
+        MCP tools not installed
 
     When:
-        attempting to import MCP tools
+        importing MCP tools
 
     Then:
-        function returns early with warning message
+        ImportError is raised
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: MCP tools unavailable raises ImportError"
+    )
 
 

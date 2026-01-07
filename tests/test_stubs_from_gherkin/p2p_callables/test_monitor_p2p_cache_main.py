@@ -9,98 +9,110 @@ import pytest
 # from scripts/monitor_p2p_cache.py import main
 
 
-def test_parse_command_line_arguments():
+def test_parse_interval_argument_sets_interval_to_10():
     """
-    Scenario: Parse command line arguments
+    Scenario: Parse --interval argument sets interval to 10
 
     Given:
-        command line with --interval 10
+        command line ["--interval", "10"]
 
     When:
-        calling main
+        main() is called
 
     Then:
-        interval is set to 10
+        interval == 10
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Parse --interval argument sets interval to 10"
+    )
 
 
-def test_run_once_mode():
+def test_run_once_mode_calls_print_banner():
     """
-    Scenario: Run once mode
+    Scenario: Run once mode calls print_banner
 
     Given:
-        --once flag provided
+        command line ["--once"]
 
     When:
-        calling main
+        main() is called
 
     Then:
-        banner prints
+        print_banner() called 1 time
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Run once mode calls print_banner"
+    )
 
 
-def test_run_once_mode_assertion_2():
+def test_run_once_mode_calls_print_stats_once():
     """
-    Scenario: Run once mode - assertion 2
+    Scenario: Run once mode calls print_stats once
 
     Given:
-        --once flag provided
+        command line ["--once"]
 
     When:
-        calling main
+        main() is called
 
     Then:
-        stats print once
+        print_stats() called 1 time
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Run once mode calls print_stats once"
+    )
 
 
-def test_run_once_mode_assertion_3():
+def test_run_once_mode_exits_after_stats():
     """
-    Scenario: Run once mode - assertion 3
+    Scenario: Run once mode exits after stats
 
     Given:
-        --once flag provided
+        command line ["--once"]
 
     When:
-        calling main
+        main() is called
 
     Then:
         program exits
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Run once mode exits after stats"
+    )
 
 
-def test_run_continuous_monitoring():
+def test_continuous_mode_calls_monitor_loop_with_interval():
     """
-    Scenario: Run continuous monitoring
+    Scenario: Continuous mode calls monitor_loop with interval
 
     Given:
-        no --once flag
+        command line ["--interval", "15"]
 
     When:
-        calling main
+        main() is called
 
     Then:
-        monitor_loop executes with interval
+        monitor_loop(interval=15) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Continuous mode calls monitor_loop with interval"
+    )
 
 
-def test_register_signal_handler():
+def test_register_sigint_handler():
     """
-    Scenario: Register signal handler
+    Scenario: Register SIGINT handler
 
     Given:
 
     When:
-        main starts
+        main() starts
 
     Then:
-        SIGINT handler is registered
+        signal.signal(signal.SIGINT, signal_handler) is called
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Register SIGINT handler"
+    )
 
 

@@ -9,21 +9,23 @@ import pytest
 from examples.p2p_workflow_demo import demo_peer_assignment
 
 
-def test_calculate_hamming_distance_for_peers():
+def test_calculate_hamming_distance_returns_non_negative_integer():
     """
-    Scenario: Calculate hamming distance for peers
+    Scenario: Calculate hamming distance returns non-negative integer
 
     Given:
-        5 peers in the network
-        a workflow with ID "demo_wf"
+        5 peers
+        workflow_id "demo_wf"
 
     When:
-        calculating hamming distance for each peer
+        calculate_hamming_distance(workflow_hash, peer_id) is called
 
     Then:
-        each peer has a non-negative distance value
+        distance >= 0
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Calculate hamming distance returns non-negative integer"
+    )
 
 
 def test_assign_workflow_to_peer_with_minimum_distance():
@@ -32,30 +34,35 @@ def test_assign_workflow_to_peer_with_minimum_distance():
 
     Given:
         scheduler with 5 peers
-        a workflow to schedule
+        workflow to schedule
 
     When:
-        scheduling the workflow
+        scheduler.schedule_workflow(workflow) is called
 
     Then:
-        workflow is assigned to peer with minimum hamming distance
+        assigned_peer has minimum hamming distance
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Assign workflow to peer with minimum distance"
+    )
 
 
-def test_display_peer_distances():
+def test_peer_distances_are_sorted_ascending():
     """
-    Scenario: Display peer distances
+    Scenario: Peer distances are sorted ascending
 
     Given:
         scheduler with peers "peer1" through "peer5"
+        workflow to schedule
 
     When:
-        computing distances for a workflow
+        computing distances for all peers
 
     Then:
-        distances are displayed in sorted order
+        distances[i] <= distances[i+1] for all i
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Peer distances are sorted ascending"
+    )
 
 

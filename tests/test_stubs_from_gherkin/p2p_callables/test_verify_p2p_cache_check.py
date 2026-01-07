@@ -9,115 +9,129 @@ import pytest
 # from scripts/verify_p2p_cache.py import check
 
 
-def test_run_successful_test():
+def test_successful_test_prints_green_checkmark():
     """
-    Scenario: Run successful test
+    Scenario: Successful test prints green checkmark
 
     Given:
-        a test function that returns true
+        test function returns True
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        green checkmark prints
+        output contains "✓"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Successful test prints green checkmark"
+    )
 
 
-def test_run_successful_test_assertion_2():
+def test_successful_test_returns_true():
     """
-    Scenario: Run successful test - assertion 2
+    Scenario: Successful test returns True
 
     Given:
-        a test function that returns true
+        test function returns True
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        function returns true
+        result == True
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Successful test returns True"
+    )
 
 
-def test_run_failing_test():
+def test_failed_test_prints_red_x():
     """
-    Scenario: Run failing test
+    Scenario: Failed test prints red X
 
     Given:
-        a test function that returns false
+        test function returns False
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        red X prints
+        output contains "✗"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Failed test prints red X"
+    )
 
 
-def test_run_failing_test_assertion_2():
+def test_failed_test_returns_false():
     """
-    Scenario: Run failing test - assertion 2
+    Scenario: Failed test returns False
 
     Given:
-        a test function that returns false
+        test function returns False
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        function returns false
+        result == False
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Failed test returns False"
+    )
 
 
-def test_handle_test_exception():
+def test_exception_prints_red_x():
     """
-    Scenario: Handle test exception
+    Scenario: Exception prints red X
 
     Given:
-        a test function that raises exception
+        test function raises ValueError
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        red X prints
+        output contains "✗"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Exception prints red X"
+    )
 
 
-def test_handle_test_exception_assertion_2():
+def test_exception_prints_error_message():
     """
-    Scenario: Handle test exception - assertion 2
+    Scenario: Exception prints error message
 
     Given:
-        a test function that raises exception
+        test function raises ValueError("test error")
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        exception message displays
+        output contains "test error"
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Exception prints error message"
+    )
 
 
-def test_handle_test_exception_assertion_3():
+def test_exception_returns_false():
     """
-    Scenario: Handle test exception - assertion 3
+    Scenario: Exception returns False
 
     Given:
-        a test function that raises exception
+        test function raises Exception
 
     When:
-        calling check with test name
+        check("test_name", test_fn) is called
 
     Then:
-        function returns false
+        result == False
     """
-    pass
+    raise NotImplementedError(
+        "Test implementation needed for: Exception returns False"
+    )
 
 
