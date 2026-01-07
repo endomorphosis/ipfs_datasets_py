@@ -302,6 +302,30 @@ def workflow_definition_unit_test():
         raise FixtureError(f'Failed to create fixture workflow_definition_unit_test: {e}') from e
 
 
+@pytest.fixture
+def scheduler_with_5_peers():
+    """
+    Fixture: P2PWorkflowScheduler with 5 peers
+    
+    Creates a scheduler with peers "peer1" through "peer5".
+    """
+    try:
+        from ipfs_datasets_py.p2p_workflow_scheduler import P2PWorkflowScheduler
+        
+        peers = ["peer1", "peer2", "peer3", "peer4", "peer5"]
+        scheduler = P2PWorkflowScheduler(peer_id="peer1", peers=peers)
+        
+        # Verify scheduler has correct number of peers
+        if len(scheduler.peers) != 5:
+            raise FixtureError(f'Failed to create fixture scheduler_with_5_peers: expected 5 peers, got {len(scheduler.peers)}') from None
+        
+        return scheduler
+    except FixtureError:
+        raise
+    except Exception as e:
+        raise FixtureError(f'Failed to create fixture scheduler_with_5_peers: {e}') from e
+
+
 # ============================================================================
 # Cache and Monitoring Fixtures
 # ============================================================================
