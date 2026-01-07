@@ -6,10 +6,10 @@ from scripts/verify_p2p_cache.py.
 """
 
 import pytest
-# from scripts/verify_p2p_cache.py import check
+from scripts.verify_p2p_cache import check
 
 
-def test_successful_test_prints_green_checkmark():
+def test_successful_test_prints_green_checkmark(mock_test_function_success, captured_output):
     """
     Scenario: Successful test prints green checkmark
 
@@ -22,12 +22,16 @@ def test_successful_test_prints_green_checkmark():
     Then:
         output contains "✓"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Successful test prints green checkmark"
-    )
+    expected_substring = "✓"
+    test_name = "test_name"
+    
+    check(test_name, mock_test_function_success)
+    
+    actual_output = captured_output.getvalue()
+    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
 
 
-def test_successful_test_returns_true():
+def test_successful_test_returns_true(mock_test_function_success):
     """
     Scenario: Successful test returns True
 
@@ -40,12 +44,15 @@ def test_successful_test_returns_true():
     Then:
         result == True
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Successful test returns True"
-    )
+    expected_result = True
+    test_name = "test_name"
+    
+    actual_result = check(test_name, mock_test_function_success)
+    
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
-def test_failed_test_prints_red_x():
+def test_failed_test_prints_red_x(mock_test_function_failure, captured_output):
     """
     Scenario: Failed test prints red X
 
@@ -58,12 +65,16 @@ def test_failed_test_prints_red_x():
     Then:
         output contains "✗"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Failed test prints red X"
-    )
+    expected_substring = "✗"
+    test_name = "test_name"
+    
+    check(test_name, mock_test_function_failure)
+    
+    actual_output = captured_output.getvalue()
+    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
 
 
-def test_failed_test_returns_false():
+def test_failed_test_returns_false(mock_test_function_failure):
     """
     Scenario: Failed test returns False
 
@@ -76,12 +87,15 @@ def test_failed_test_returns_false():
     Then:
         result == False
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Failed test returns False"
-    )
+    expected_result = False
+    test_name = "test_name"
+    
+    actual_result = check(test_name, mock_test_function_failure)
+    
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
-def test_exception_prints_red_x():
+def test_exception_prints_red_x(mock_test_function_exception, captured_output):
     """
     Scenario: Exception prints red X
 
@@ -94,12 +108,16 @@ def test_exception_prints_red_x():
     Then:
         output contains "✗"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Exception prints red X"
-    )
+    expected_substring = "✗"
+    test_name = "test_name"
+    
+    check(test_name, mock_test_function_exception)
+    
+    actual_output = captured_output.getvalue()
+    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
 
 
-def test_exception_prints_error_message():
+def test_exception_prints_error_message(mock_test_function_exception, captured_output):
     """
     Scenario: Exception prints error message
 
@@ -112,12 +130,16 @@ def test_exception_prints_error_message():
     Then:
         output contains "test error"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Exception prints error message"
-    )
+    expected_substring = "test error"
+    test_name = "test_name"
+    
+    check(test_name, mock_test_function_exception)
+    
+    actual_output = captured_output.getvalue()
+    assert expected_substring in actual_output, f"expected '{expected_substring}' in output, got {actual_output}"
 
 
-def test_exception_returns_false():
+def test_exception_returns_false(mock_test_function_exception):
     """
     Scenario: Exception returns False
 
@@ -130,8 +152,12 @@ def test_exception_returns_false():
     Then:
         result == False
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Exception returns False"
-    )
+    expected_result = False
+    test_name = "test_name"
+    
+    actual_result = check(test_name, mock_test_function_exception)
+    
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
+
 
 
