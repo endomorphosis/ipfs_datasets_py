@@ -258,12 +258,9 @@ def test_get_status_returns_clock_counter_greater_than_0(p2p_workflow_scheduler,
     
     actual_counter = status["clock"]["counter"]
     assert actual_counter > minimum_counter, f"expected > {minimum_counter}, got {actual_counter}"
-    raise NotImplementedError(
-        "Test implementation needed for: Schedule P2P eligible workflow assigns to peer"
-    )
 
 
-def test_schedule_p2p_only_workflow_returns_success_true():
+def test_schedule_p2p_only_workflow_returns_success_true(p2p_workflow_scheduler, workflow_definition_p2p_only):
     """
     Scenario: Schedule P2P only workflow returns success True
 
@@ -277,12 +274,15 @@ def test_schedule_p2p_only_workflow_returns_success_true():
     Then:
         result["success"] == True
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Schedule P2P only workflow returns success True"
-    )
+    expected_success = True
+    
+    result = p2p_workflow_scheduler.schedule_workflow(workflow_definition_p2p_only)
+    
+    actual_success = result["success"]
+    assert actual_success == expected_success, f"expected {expected_success}, got {actual_success}"
 
 
-def test_schedule_non_p2p_workflow_returns_success_false():
+def test_schedule_non_p2p_workflow_returns_success_false(p2p_workflow_scheduler, workflow_definition_unit_test):
     """
     Scenario: Schedule non-P2P workflow returns success False
 
@@ -296,12 +296,15 @@ def test_schedule_non_p2p_workflow_returns_success_false():
     Then:
         result["success"] == False
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Schedule non-P2P workflow returns success False"
-    )
+    expected_success = False
+    
+    result = p2p_workflow_scheduler.schedule_workflow(workflow_definition_unit_test)
+    
+    actual_success = result["success"]
+    assert actual_success == expected_success, f"expected {expected_success}, got {actual_success}"
 
 
-def test_schedule_non_p2p_workflow_reason_contains_github_api():
+def test_schedule_non_p2p_workflow_reason_contains_github_api(p2p_workflow_scheduler, workflow_definition_unit_test):
     """
     Scenario: Schedule non-P2P workflow reason contains GitHub API
 
@@ -315,12 +318,15 @@ def test_schedule_non_p2p_workflow_reason_contains_github_api():
     Then:
         "GitHub API" in result["reason"]
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Schedule non-P2P workflow reason contains GitHub API"
-    )
+    expected_substring = "GitHub API"
+    
+    result = p2p_workflow_scheduler.schedule_workflow(workflow_definition_unit_test)
+    
+    actual_reason = result["reason"]
+    assert expected_substring in actual_reason, f"expected '{expected_substring}' in {actual_reason}"
 
 
-def test_get_next_workflow_returns_highest_priority_workflow():
+def test_get_next_workflow_returns_highest_priority_workflow(p2p_workflow_scheduler):
     """
     Scenario: Get next workflow returns highest priority workflow
 
@@ -333,12 +339,26 @@ def test_get_next_workflow_returns_highest_priority_workflow():
     Then:
         next_workflow.workflow_id == "wf2"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Get next workflow returns highest priority workflow"
-    )
+    from examples.p2p_workflow_demo import WorkflowDefinition, WorkflowTag
+    
+    expected_workflow_id = "wf2"
+    
+    # Schedule workflows with different priorities
+    wf1 = WorkflowDefinition(workflow_id="wf1", tags=[WorkflowTag.P2P_ELIGIBLE], priority=5.0)
+    wf2 = WorkflowDefinition(workflow_id="wf2", tags=[WorkflowTag.P2P_ELIGIBLE], priority=1.0)
+    wf3 = WorkflowDefinition(workflow_id="wf3", tags=[WorkflowTag.P2P_ELIGIBLE], priority=3.0)
+    
+    p2p_workflow_scheduler.schedule_workflow(wf1)
+    p2p_workflow_scheduler.schedule_workflow(wf2)
+    p2p_workflow_scheduler.schedule_workflow(wf3)
+    
+    next_workflow = p2p_workflow_scheduler.get_next_workflow()
+    
+    actual_workflow_id = next_workflow.workflow_id
+    assert actual_workflow_id == expected_workflow_id, f"expected {expected_workflow_id}, got {actual_workflow_id}"
 
 
-def test_get_status_returns_queue_size_as_integer():
+def test_get_status_returns_queue_size_as_integer(p2p_workflow_scheduler, workflow_definition_p2p_eligible):
     """
     Scenario: Get status returns queue_size as integer
 
@@ -351,12 +371,16 @@ def test_get_status_returns_queue_size_as_integer():
     Then:
         isinstance(status["queue_size"], int)
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Get status returns queue_size as integer"
-    )
+    expected_is_int = True
+    
+    p2p_workflow_scheduler.schedule_workflow(workflow_definition_p2p_eligible)
+    status = p2p_workflow_scheduler.get_status()
+    
+    actual_is_int = isinstance(status["queue_size"], int)
+    assert actual_is_int == expected_is_int, f"expected {expected_is_int}, got {actual_is_int}"
 
 
-def test_get_status_returns_assigned_workflows_as_dict():
+def test_get_status_returns_assigned_workflows_as_dict(p2p_workflow_scheduler, workflow_definition_p2p_eligible):
     """
     Scenario: Get status returns assigned_workflows as dict
 
@@ -369,12 +393,16 @@ def test_get_status_returns_assigned_workflows_as_dict():
     Then:
         isinstance(status["assigned_workflows"], dict)
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Get status returns assigned_workflows as dict"
-    )
+    expected_is_dict = True
+    
+    p2p_workflow_scheduler.schedule_workflow(workflow_definition_p2p_eligible)
+    status = p2p_workflow_scheduler.get_status()
+    
+    actual_is_dict = isinstance(status["assigned_workflows"], dict)
+    assert actual_is_dict == expected_is_dict, f"expected {expected_is_dict}, got {actual_is_dict}"
 
 
-def test_get_status_returns_clock_counter_greater_than_0():
+def test_get_status_returns_clock_counter_greater_than_0_duplicate(p2p_workflow_scheduler, workflow_definition_p2p_eligible):
     """
     Scenario: Get status returns clock counter greater than 0
 
@@ -387,8 +415,12 @@ def test_get_status_returns_clock_counter_greater_than_0():
     Then:
         status["clock"]["counter"] > 0
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Get status returns clock counter greater than 0"
-    )
+    minimum_counter = 0
+    
+    p2p_workflow_scheduler.schedule_workflow(workflow_definition_p2p_eligible)
+    status = p2p_workflow_scheduler.get_status()
+    
+    actual_counter = status["clock"]["counter"]
+    assert actual_counter > minimum_counter, f"expected > {minimum_counter}, got {actual_counter}"
 
 
