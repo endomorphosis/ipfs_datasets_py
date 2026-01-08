@@ -116,17 +116,22 @@ def the_dictionary_has_category_set_to_data_access(a_dictionary_with_event_data_
         return event_dict
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_dictionary_has_category_set_to_data_access: {e}") from e
-    """
-    # TODO: Implement fixture
-    pass
 
 @pytest.fixture
-def the_dictionary_has_action_set_to_read():
+def the_dictionary_has_action_set_to_read(a_dictionary_with_event_data_exists):
     """
     Given the dictionary has "action" set to "read"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event_dict = a_dictionary_with_event_data_exists
+        
+        # Verify action is correct
+        if event_dict.get("action") != "read":
+            raise FixtureError(f"Failed to create fixture the_dictionary_has_action_set_to_read: action is {event_dict.get('action')}, expected 'read'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_dictionary_has_action_set_to_read: {e}") from e
 
 
 def test_from_dict_returns_auditevent_instance(a_dictionary_with_event_data_exists, the_dictionary_has_event_id_set_to_evt123, the_dictionary_has_timestamp_set_to_20240101t12000, the_dictionary_has_level_set_to_info, the_dictionary_has_category_set_to_data_access, the_dictionary_has_action_set_to_read):
