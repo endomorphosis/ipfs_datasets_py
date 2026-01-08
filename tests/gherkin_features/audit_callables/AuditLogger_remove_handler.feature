@@ -29,17 +29,25 @@ Feature: AuditLogger.remove_handler()
     When remove_handler() is called with name="file_handler"
     Then the handler close() method is called
 
-  Scenario: Remove handler is thread-safe
+  Scenario: Remove handler is thread-safe removes all handlers
     Given 5 handlers with names "h1" to "h5" are added
     When 5 threads call remove_handler() for each handler concurrently
     Then all handlers are removed
-    And the handlers list is empty
 
-  Scenario: Remove handler handles exceptions from close method
+  Scenario: Remove handler is thread-safe leaves empty list
+    Given 5 handlers with names "h1" to "h5" are added
+    When 5 threads call remove_handler() for each handler concurrently
+    Then the handlers list is empty
+
+  Scenario: Remove handler handles exceptions from close method completes without error
     Given a handler with name="error_handler" that raises Exception in close()
     When remove_handler() is called with name="error_handler"
     Then the method completes without raising Exception
-    And True is returned
+
+  Scenario: Remove handler handles exceptions from close method returns True
+    Given a handler with name="error_handler" that raises Exception in close()
+    When remove_handler() is called with name="error_handler"
+    Then True is returned
 
   Scenario: Remove handler from empty list
     Given the handlers list is empty
@@ -51,15 +59,27 @@ Feature: AuditLogger.remove_handler()
     And remove_handler() is called with name="file_handler" again
     Then the second call returns False
 
-  Scenario: Remove handler preserves other handlers
+  Scenario: Remove handler preserves other handlers has 2 handlers
     Given 3 handlers are added
     When remove_handler() is called with name of second handler
     Then the handlers list contains 2 handlers
-    And first handler is still present
-    And third handler is still present
 
-  Scenario: Removed handler no longer receives events
+  Scenario: Remove handler preserves other handlers keeps first handler
+    Given 3 handlers are added
+    When remove_handler() is called with name of second handler
+    Then first handler is still present
+
+  Scenario: Remove handler preserves other handlers keeps third handler
+    Given 3 handlers are added
+    When remove_handler() is called with name of second handler
+    Then third handler is still present
+
+  Scenario: Removed handler no longer receives events FileAuditHandler excluded
     When remove_handler() is called with name="file_handler"
-    And log() is called with level=INFO, category=SYSTEM, action="test"
+    When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the FileAuditHandler does not receive the event
-    And the JSONAuditHandler receives the event
+
+  Scenario: Removed handler no longer receives events JSONAuditHandler still active
+    When remove_handler() is called with name="file_handler"
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then the JSONAuditHandler receives the event

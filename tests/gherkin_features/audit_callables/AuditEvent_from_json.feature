@@ -29,12 +29,20 @@ Feature: AuditEvent.from_json()
     When from_json() is called
     Then the event action is "breach"
 
-  Scenario: From json handles nested details
+  Scenario: From json handles nested details returns dictionary
     Given the JSON contains "details": {"ip": "10.0.0.1", "count": 5}
     When from_json() is called
     Then the event details is a dictionary
-    And details contains "ip" with value "10.0.0.1"
-    And details contains "count" with value 5
+
+  Scenario: From json handles nested details contains ip
+    Given the JSON contains "details": {"ip": "10.0.0.1", "count": 5}
+    When from_json() is called
+    Then details contains "ip" with value "10.0.0.1"
+
+  Scenario: From json handles nested details contains count
+    Given the JSON contains "details": {"ip": "10.0.0.1", "count": 5}
+    When from_json() is called
+    Then details contains "count" with value 5
 
   Scenario: From json handles null values
     Given the JSON contains "user": null
@@ -46,11 +54,15 @@ Feature: AuditEvent.from_json()
     When from_json() is called with invalid string
     Then JSONDecodeError is raised
 
-  Scenario: From json with pretty formatted JSON
+  Scenario: From json with pretty formatted JSON returns AuditEvent
     Given a JSON string with indentation and newlines
     When from_json() is called
     Then an AuditEvent is returned without error
-    And the event has all expected fields
+
+  Scenario: From json with pretty formatted JSON has all fields
+    Given a JSON string with indentation and newlines
+    When from_json() is called
+    Then the event has all expected fields
 
   Scenario: From json with compact JSON
     Given a JSON string without whitespace

@@ -21,13 +21,23 @@ Feature: AuditLogger.add_handler()
     When add_handler() is called for each handler
     Then the handlers list contains 3 handlers
 
-  Scenario: Add handler allows handlers of different types
+  Scenario: Add handler allows handlers of different types has 2 handlers
     Given a FileAuditHandler exists
-    And a JSONAuditHandler exists
+    Given a JSONAuditHandler exists
     When add_handler() is called for both handlers
     Then the handlers list contains 2 handlers
-    And one handler is FileAuditHandler type
-    And one handler is JSONAuditHandler type
+
+  Scenario: Add handler allows handlers of different types includes FileAuditHandler
+    Given a FileAuditHandler exists
+    Given a JSONAuditHandler exists
+    When add_handler() is called for both handlers
+    Then one handler is FileAuditHandler type
+
+  Scenario: Add handler allows handlers of different types includes JSONAuditHandler
+    Given a FileAuditHandler exists
+    Given a JSONAuditHandler exists
+    When add_handler() is called for both handlers
+    Then one handler is JSONAuditHandler type
 
   Scenario: Add handler is thread-safe
     Given 10 threads call add_handler() concurrently

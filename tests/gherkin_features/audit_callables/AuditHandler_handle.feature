@@ -57,16 +57,26 @@ Feature: AuditHandler.handle()
     When handle() is called
     Then True is returned from handle()
     
-  Scenario: Handle method with event at exact min_level
+  Scenario: Handle method with event at exact min_level calls handler
     Given the handler min_level is WARNING
-    And an AuditEvent with level=WARNING exists
+    Given an AuditEvent with level=WARNING exists
     When handle() is called
     Then _handle_event() is called
-    And True is returned
 
-  Scenario: Handle method with event above min_level
+  Scenario: Handle method with event at exact min_level returns True
+    Given the handler min_level is WARNING
+    Given an AuditEvent with level=WARNING exists
+    When handle() is called
+    Then True is returned
+
+  Scenario: Handle method with event above min_level calls handler
     Given the handler min_level is INFO
-    And an AuditEvent with level=CRITICAL exists
+    Given an AuditEvent with level=CRITICAL exists
     When handle() is called
     Then _handle_event() is called
-    And True is returned
+
+  Scenario: Handle method with event above min_level returns True
+    Given the handler min_level is INFO
+    Given an AuditEvent with level=CRITICAL exists
+    When handle() is called
+    Then True is returned

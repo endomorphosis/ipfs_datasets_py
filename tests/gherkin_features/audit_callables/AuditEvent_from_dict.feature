@@ -49,11 +49,15 @@ Feature: AuditEvent.from_dict()
     When from_dict() is called
     Then the event status is "failure"
 
-  Scenario: From dict sets details when present
+  Scenario: From dict sets details when present returns dictionary
     Given the dictionary has "details" set to {"size": 2048}
     When from_dict() is called
     Then the event details is a dictionary
-    And details contains "size" with value 2048
+
+  Scenario: From dict sets details when present contains size
+    Given the dictionary has "details" set to {"size": 2048}
+    When from_dict() is called
+    Then details contains "size" with value 2048
 
   Scenario: From dict handles missing optional fields
     Given the dictionary has only required fields
