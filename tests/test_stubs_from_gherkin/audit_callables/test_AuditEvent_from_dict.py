@@ -7,8 +7,8 @@ This callable creates an AuditEvent instance from a dictionary.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,37 +17,105 @@ def a_dictionary_with_event_data_exists():
     """
     Given a dictionary with event data exists
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event_dict = {
+            "event_id": "evt123",
+            "timestamp": "2024-01-01T12:00:00Z",
+            "level": "INFO",
+            "category": "DATA_ACCESS",
+            "action": "read",
+            "user": "alice",
+            "resource_id": "file123",
+            "resource_type": "document",
+            "status": "success",
+            "details": {"key": "value"},
+            "client_ip": "192.168.1.1",
+            "session_id": "sess123",
+            "process_id": 1234,
+            "hostname": "testhost"
+        }
+        
+        # Verify dictionary was created
+        if event_dict is None:
+            raise FixtureError("Failed to create fixture a_dictionary_with_event_data_exists: Dictionary is None") from None
+        
+        # Verify it's actually a dict
+        if not isinstance(event_dict, dict):
+            raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: Object is {type(event_dict)}, expected dict") from None
+        
+        # Verify required keys exist
+        required_keys = ["event_id", "timestamp", "level", "category", "action"]
+        for key in required_keys:
+            if key not in event_dict:
+                raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: Missing required key '{key}'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_dictionary_with_event_data_exists: {e}") from e
 
 @pytest.fixture
-def the_dictionary_has_event_id_set_to_evt123():
+def the_dictionary_has_event_id_set_to_evt123(a_dictionary_with_event_data_exists):
     """
     Given the dictionary has "event_id" set to "evt123"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event_dict = a_dictionary_with_event_data_exists
+        
+        # Verify event_id is correct
+        if event_dict.get("event_id") != "evt123":
+            raise FixtureError(f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: event_id is {event_dict.get('event_id')}, expected 'evt123'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_dictionary_has_event_id_set_to_evt123: {e}") from e
 
 @pytest.fixture
-def the_dictionary_has_timestamp_set_to_20240101t12000():
+def the_dictionary_has_timestamp_set_to_20240101t12000(a_dictionary_with_event_data_exists):
     """
     Given the dictionary has "timestamp" set to "2024-01-01T12:00:00Z"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event_dict = a_dictionary_with_event_data_exists
+        
+        # Verify timestamp is correct
+        if event_dict.get("timestamp") != "2024-01-01T12:00:00Z":
+            raise FixtureError(f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: timestamp is {event_dict.get('timestamp')}, expected '2024-01-01T12:00:00Z'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_dictionary_has_timestamp_set_to_20240101t12000: {e}") from e
 
 @pytest.fixture
-def the_dictionary_has_level_set_to_info():
+def the_dictionary_has_level_set_to_info(a_dictionary_with_event_data_exists):
     """
     Given the dictionary has "level" set to "INFO"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event_dict = a_dictionary_with_event_data_exists
+        
+        # Verify level is correct
+        if event_dict.get("level") != "INFO":
+            raise FixtureError(f"Failed to create fixture the_dictionary_has_level_set_to_info: level is {event_dict.get('level')}, expected 'INFO'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_dictionary_has_level_set_to_info: {e}") from e
 
 @pytest.fixture
-def the_dictionary_has_category_set_to_data_access():
+def the_dictionary_has_category_set_to_data_access(a_dictionary_with_event_data_exists):
     """
     Given the dictionary has "category" set to "DATA_ACCESS"
+    """
+    try:
+        event_dict = a_dictionary_with_event_data_exists
+        
+        # Verify category is correct
+        if event_dict.get("category") != "DATA_ACCESS":
+            raise FixtureError(f"Failed to create fixture the_dictionary_has_category_set_to_data_access: category is {event_dict.get('category')}, expected 'DATA_ACCESS'") from None
+        
+        return event_dict
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_dictionary_has_category_set_to_data_access: {e}") from e
     """
     # TODO: Implement fixture
     pass

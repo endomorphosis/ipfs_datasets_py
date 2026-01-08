@@ -7,8 +7,8 @@ This callable adds a handler to the audit logger for processing audit events.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditHandler, AuditEvent
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,37 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, 'handlers'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'handlers' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def the_handlers_list_is_empty():
+def the_handlers_list_is_empty(an_auditlogger_instance_is_initialized):
     """
     Given the handlers list is empty
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Clear any existing handlers
+        logger.handlers = []
+        
+        # Verify handlers list is empty
+        if len(logger.handlers) != 0:
+            raise FixtureError(f"Failed to create fixture the_handlers_list_is_empty: Handlers list has {len(logger.handlers)} items, expected 0") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_handlers_list_is_empty: {e}") from e
 
 
 def test_add_handler_increases_handlers_count(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
