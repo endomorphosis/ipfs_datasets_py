@@ -16,85 +16,143 @@ Feature: AuditEvent.to_dict()
   Scenario: To dict includes event_id field
     When to_dict() is called
     Then the dictionary contains key "event_id"
-    And "event_id" value is a string
+
+  Scenario: To dict event_id value is a string
+    When to_dict() is called
+    Then "event_id" value is a string
 
   Scenario: To dict includes timestamp field
     When to_dict() is called
     Then the dictionary contains key "timestamp"
-    And "timestamp" value is an ISO format string
+
+  Scenario: To dict timestamp value is an ISO format string
+    When to_dict() is called
+    Then "timestamp" value is an ISO format string
 
   Scenario: To dict includes level field as string
     When to_dict() is called
     Then the dictionary contains key "level"
-    And "level" value is "INFO"
+
+  Scenario: To dict level value is INFO string
+    When to_dict() is called
+    Then "level" value is "INFO"
 
   Scenario: To dict includes category field as string
     When to_dict() is called
     Then the dictionary contains key "category"
-    And "category" value is "DATA_ACCESS"
+
+  Scenario: To dict category value is DATA_ACCESS string
+    When to_dict() is called
+    Then "category" value is "DATA_ACCESS"
 
   Scenario: To dict includes action field
     When to_dict() is called
     Then the dictionary contains key "action"
-    And "action" value is "read"
+
+  Scenario: To dict action value is read string
+    When to_dict() is called
+    Then "action" value is "read"
 
   Scenario: To dict includes user field
     When to_dict() is called
     Then the dictionary contains key "user"
-    And "user" value is "alice"
+
+  Scenario: To dict user value is alice string
+    When to_dict() is called
+    Then "user" value is "alice"
 
   Scenario: To dict includes resource_id when present
     Given the event has resource_id="file123"
     When to_dict() is called
     Then the dictionary contains key "resource_id"
-    And "resource_id" value is "file123"
+
+  Scenario: To dict resource_id value is file123 string
+    Given the event has resource_id="file123"
+    When to_dict() is called
+    Then "resource_id" value is "file123"
 
   Scenario: To dict includes resource_type when present
     Given the event has resource_type="dataset"
     When to_dict() is called
     Then the dictionary contains key "resource_type"
-    And "resource_type" value is "dataset"
+
+  Scenario: To dict resource_type value is dataset string
+    Given the event has resource_type="dataset"
+    When to_dict() is called
+    Then "resource_type" value is "dataset"
 
   Scenario: To dict includes status field
     Given the event has status="success"
     When to_dict() is called
     Then the dictionary contains key "status"
-    And "status" value is "success"
+
+  Scenario: To dict status value is success string
+    Given the event has status="success"
+    When to_dict() is called
+    Then "status" value is "success"
 
   Scenario: To dict includes details dictionary
     Given the event has details={"file_size": 1024}
     When to_dict() is called
     Then the dictionary contains key "details"
-    And "details" is a dictionary
-    And "details" contains "file_size" with value 1024
+
+  Scenario: To dict details is a dictionary
+    Given the event has details={"file_size": 1024}
+    When to_dict() is called
+    Then "details" is a dictionary
+
+  Scenario: To dict details contains file_size
+    Given the event has details={"file_size": 1024}
+    When to_dict() is called
+    Then "details" contains "file_size" with value 1024
 
   Scenario: To dict includes client_ip when present
     Given the event has client_ip="192.168.1.1"
     When to_dict() is called
     Then the dictionary contains key "client_ip"
-    And "client_ip" value is "192.168.1.1"
+
+  Scenario: To dict client_ip value is IP address string
+    Given the event has client_ip="192.168.1.1"
+    When to_dict() is called
+    Then "client_ip" value is "192.168.1.1"
 
   Scenario: To dict includes session_id when present
     Given the event has session_id="sess123"
     When to_dict() is called
     Then the dictionary contains key "session_id"
-    And "session_id" value is "sess123"
+
+  Scenario: To dict session_id value is sess123 string
+    Given the event has session_id="sess123"
+    When to_dict() is called
+    Then "session_id" value is "sess123"
 
   Scenario: To dict includes hostname
     When to_dict() is called
     Then the dictionary contains key "hostname"
-    And "hostname" value is a non-empty string
+
+  Scenario: To dict hostname value is a non-empty string
+    When to_dict() is called
+    Then "hostname" value is a non-empty string
 
   Scenario: To dict includes process_id
     When to_dict() is called
     Then the dictionary contains key "process_id"
-    And "process_id" value is an integer
 
-  Scenario: To dict converts enums to strings
+  Scenario: To dict process_id value is an integer
+    When to_dict() is called
+    Then "process_id" value is an integer
+
+  Scenario: To dict converts level enum to string
     When to_dict() is called
     Then the "level" value is string "INFO"
-    And the "category" value is string "DATA_ACCESS"
-    And neither value is an enum object
+
+  Scenario: To dict converts category enum to string
+    When to_dict() is called
+    Then the "category" value is string "DATA_ACCESS"
+
+  Scenario: To dict values are not enum objects
+    When to_dict() is called
+    Then neither value is an enum object
 
   Scenario: To dict includes all standard fields
     When to_dict() is called

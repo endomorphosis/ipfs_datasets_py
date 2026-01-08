@@ -22,48 +22,85 @@ Feature: AuditEvent.to_json()
     And the JSON is parsed
     Then the parsed object contains "event_id"
 
-  Scenario: To json includes level as string
+  Scenario: To json includes level as string contains level key
     When to_json() is called
-    And the JSON is parsed
+    When the JSON is parsed
     Then the parsed object contains "level"
-    And "level" value is "INFO"
 
-  Scenario: To json includes category as string
+  Scenario: To json includes level as string has INFO value
     When to_json() is called
-    And the JSON is parsed
-    Then the parsed object contains "category"
-    And "category" value is "DATA_ACCESS"
+    When the JSON is parsed
+    Then "level" value is "INFO"
 
-  Scenario: To json with pretty=False returns compact JSON
+  Scenario: To json includes category as string contains category key
+    When to_json() is called
+    When the JSON is parsed
+    Then the parsed object contains "category"
+
+  Scenario: To json includes category as string has DATA_ACCESS value
+    When to_json() is called
+    When the JSON is parsed
+    Then "category" value is "DATA_ACCESS"
+
+  Scenario: To json with pretty=False returns compact JSON without indentation
     When to_json() is called with pretty=False
     Then the string does not contain indentation
-    And the string does not contain newlines
 
-  Scenario: To json with pretty=True returns formatted JSON
+  Scenario: To json with pretty=False returns compact JSON without newlines
+    When to_json() is called with pretty=False
+    Then the string does not contain newlines
+
+  Scenario: To json with pretty=True returns formatted JSON with indentation
     When to_json() is called with pretty=True
     Then the string contains indentation
-    And the string contains newlines
 
-  Scenario: To json includes details as nested object
+  Scenario: To json with pretty=True returns formatted JSON with newlines
+    When to_json() is called with pretty=True
+    Then the string contains newlines
+
+  Scenario: To json includes details as nested object with details key
     Given the event has details={"file_size": 1024, "path": "/data"}
     When to_json() is called
-    And the JSON is parsed
+    When the JSON is parsed
     Then the parsed object contains "details"
-    And "details" is an object
-    And "details" contains "file_size" with value 1024
-    And "details" contains "path" with value "/data"
 
-  Scenario: To json handles None values
+  Scenario: To json includes details as nested object that is an object
+    Given the event has details={"file_size": 1024, "path": "/data"}
+    When to_json() is called
+    When the JSON is parsed
+    Then "details" is an object
+
+  Scenario: To json includes details with file_size
+    Given the event has details={"file_size": 1024, "path": "/data"}
+    When to_json() is called
+    When the JSON is parsed
+    Then "details" contains "file_size" with value 1024
+
+  Scenario: To json includes details with path
+    Given the event has details={"file_size": 1024, "path": "/data"}
+    When to_json() is called
+    When the JSON is parsed
+    Then "details" contains "path" with value "/data"
+
+  Scenario: To json handles None values without error
     Given the event has resource_id=None
     When to_json() is called
     Then the method completes without error
-    And the string is valid JSON
 
-  Scenario: To json includes timestamp in ISO format
+  Scenario: To json handles None values with valid JSON
+    Given the event has resource_id=None
     When to_json() is called
-    And the JSON is parsed
+    Then the string is valid JSON
+
+  Scenario: To json includes timestamp in ISO format contains timestamp
+    When to_json() is called
+    When the JSON is parsed
     Then the parsed object contains "timestamp"
-    And "timestamp" ends with "Z"
+
+  Scenario: To json includes timestamp in ISO format ends with Z
+    When to_json() is called
+    When the JSON is parsed
+    Then "timestamp" ends with "Z"
 
   Scenario: To json result can be parsed back
     When to_json() is called

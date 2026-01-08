@@ -20,12 +20,17 @@ Feature: AuditLogger.remove_event_listener()
     And log() is called with level=INFO, category=SYSTEM, action="test"
     Then the listener function is not called
 
-  Scenario: Remove event listener for specific category only
+  Scenario: Remove event listener for specific category stops AUTHENTICATION events
     Given a listener is registered for AUTHENTICATION
-    And the same listener is registered for DATA_ACCESS
+    Given the same listener is registered for DATA_ACCESS
     When remove_event_listener() is called with category=AUTHENTICATION
     Then the listener no longer receives AUTHENTICATION events
-    But the listener still receives DATA_ACCESS events
+
+  Scenario: Remove event listener for specific category preserves DATA_ACCESS events
+    Given a listener is registered for AUTHENTICATION
+    Given the same listener is registered for DATA_ACCESS
+    When remove_event_listener() is called with category=AUTHENTICATION
+    Then the listener still receives DATA_ACCESS events
 
   Scenario: Remove event listener is thread-safe
     Given 10 listeners are registered

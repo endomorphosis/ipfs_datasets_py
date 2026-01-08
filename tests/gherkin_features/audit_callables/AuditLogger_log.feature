@@ -7,19 +7,37 @@ Feature: AuditLogger.log()
     And the audit logger is enabled
     And at least one audit handler is attached
 
-  Scenario: Log method creates audit event with required fields
+  Scenario: Log method creates audit event
     When log() is called with level=INFO, category=AUTHENTICATION, action="login"
     Then an AuditEvent is created
-    And the event has event_id attribute
-    And the event has timestamp attribute
-    And the event level is INFO
-    And the event category is AUTHENTICATION
-    And the event action is "login"
+
+  Scenario: Log method creates event with event_id attribute
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then the event has event_id attribute
+
+  Scenario: Log method creates event with timestamp attribute
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then the event has timestamp attribute
+
+  Scenario: Log method creates event with correct level
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then the event level is INFO
+
+  Scenario: Log method creates event with correct category
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then the event category is AUTHENTICATION
+
+  Scenario: Log method creates event with correct action
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then the event action is "login"
 
   Scenario: Log method returns event ID
     When log() is called with level=INFO, category=DATA_ACCESS, action="read"
     Then a string event_id is returned
-    And the event_id is a valid UUID
+
+  Scenario: Log method returns valid UUID as event_id
+    When log() is called with level=INFO, category=DATA_ACCESS, action="read"
+    Then the event_id is a valid UUID
 
   Scenario: Log method includes user in event when provided
     When log() is called with level=INFO, category=DATA_ACCESS, action="read", user="alice"
@@ -40,7 +58,10 @@ Feature: AuditLogger.log()
   Scenario: Log method includes details dictionary when provided
     When log() is called with level=INFO, category=DATA_ACCESS, action="read", details={"file_size": 1024}
     Then the created event has details dictionary
-    And details contains key "file_size" with value 1024
+
+  Scenario: Log method includes details with correct content
+    When log() is called with level=INFO, category=DATA_ACCESS, action="read", details={"file_size": 1024}
+    Then details contains key "file_size" with value 1024
 
   Scenario: Log method includes client_ip when provided
     When log() is called with level=INFO, category=AUTHENTICATION, action="login", client_ip="192.168.1.1"
@@ -50,11 +71,15 @@ Feature: AuditLogger.log()
     When log() is called with level=INFO, category=AUTHENTICATION, action="login", session_id="sess123"
     Then the created event has session_id="sess123"
 
-  Scenario: Log method applies thread-local context to event
+  Scenario: Log method applies thread-local context user to event
     Given set_context() was called with user="bob", session_id="sess456"
     When log() is called with level=INFO, category=DATA_ACCESS, action="read"
     Then the created event has user="bob"
-    And the created event has session_id="sess456"
+
+  Scenario: Log method applies thread-local context session_id to event
+    Given set_context() was called with user="bob", session_id="sess456"
+    When log() is called with level=INFO, category=DATA_ACCESS, action="read"
+    Then the created event has session_id="sess456"
 
   Scenario: Log method dispatches event to all handlers
     Given 3 audit handlers are attached
@@ -70,41 +95,67 @@ Feature: AuditLogger.log()
     Given the audit logger is disabled
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then None is returned
-    And no event is created
+
+  Scenario: Log method creates no event when logger is disabled
+    Given the audit logger is disabled
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then no event is created
 
   Scenario: Log method returns None when level is below min_level
     Given the audit logger min_level is WARNING
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then None is returned
-    And no event is created
+
+  Scenario: Log method creates no event when level is below min_level
+    Given the audit logger min_level is WARNING
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then no event is created
 
   Scenario: Log method returns None when category is excluded
     Given category OPERATIONAL is in excluded_categories
     When log() is called with level=INFO, category=OPERATIONAL, action="test"
     Then None is returned
-    And no event is created
+
+  Scenario: Log method creates no event when category is excluded
+    Given category OPERATIONAL is in excluded_categories
+    When log() is called with level=INFO, category=OPERATIONAL, action="test"
+    Then no event is created
 
   Scenario: Log method returns None when category not in included_categories
     Given included_categories contains only SECURITY
     When log() is called with level=INFO, category=AUTHENTICATION, action="login"
     Then None is returned
-    And no event is created
+
+  Scenario: Log method creates no event when category not in included_categories
+    Given included_categories contains only SECURITY
+    When log() is called with level=INFO, category=AUTHENTICATION, action="login"
+    Then no event is created
 
   Scenario: Log method captures source_module from call stack
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event has source_module attribute
-    And source_module is not "audit_logger.py"
+
+  Scenario: Log method captures source_module not from audit_logger
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then source_module is not "audit_logger.py"
 
   Scenario: Log method captures source_function from call stack
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event has source_function attribute
-    And source_function is a non-empty string
+
+  Scenario: Log method captures non-empty source_function
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then source_function is a non-empty string
 
   Scenario: Log method handles handler exceptions gracefully
     Given an audit handler that raises Exception
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the method completes without raising Exception
-    And the event_id is returned
+
+  Scenario: Log method returns event_id despite handler exceptions
+    Given an audit handler that raises Exception
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then the event_id is returned
 
   Scenario: Log method stores event in events list
     When log() is called with level=INFO, category=AUTHENTICATION, action="login"
@@ -117,9 +168,15 @@ Feature: AuditLogger.log()
   Scenario: Log method creates event with default hostname
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event has hostname attribute
-    And hostname is a non-empty string
+
+  Scenario: Log method creates event with non-empty hostname
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then hostname is a non-empty string
 
   Scenario: Log method creates event with default process_id
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event has process_id attribute
-    And process_id is a positive integer
+
+  Scenario: Log method creates event with positive integer process_id
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then process_id is a positive integer

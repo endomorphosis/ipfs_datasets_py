@@ -46,10 +46,10 @@ Feature: ResponseRule.matches_alert()
     When matches_alert() is called
     Then False is returned
 
-  Scenario: Matches alert with multiple conditions requires all
+  Scenario: Matches alert with multiple conditions requires all returns False
     Given the rule has 2 RuleConditions
-    And the alert matches condition 1
-    But the alert does not match condition 2
+    Given the alert matches condition 1
+    Given the alert does not match condition 2
     When matches_alert() is called
     Then False is returned
 

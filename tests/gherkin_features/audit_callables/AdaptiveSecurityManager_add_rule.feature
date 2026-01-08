@@ -41,11 +41,15 @@ Feature: AdaptiveSecurityManager.add_rule()
     When all threads complete
     Then 10 rules are in response_rules list
 
-  Scenario: Add rule with disabled rule
+  Scenario: Add rule with disabled rule stores in list
     Given a ResponseRule with enabled=False exists
     When add_rule() is called
     Then the rule is in response_rules list
-    But the rule will not match alerts
+
+  Scenario: Add rule with disabled rule will not match alerts
+    Given a ResponseRule with enabled=False exists
+    When add_rule() is called
+    Then the rule will not match alerts
 
   Scenario: Add rule with multiple severity levels
     Given a ResponseRule for severity_levels=["medium", "high", "critical"]
