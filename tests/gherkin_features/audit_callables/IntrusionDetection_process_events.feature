@@ -48,11 +48,15 @@ Feature: IntrusionDetection.process_events()
     When process_events() is called with events
     Then all 3 pattern detectors are called
 
-  Scenario: Process events handles pattern detector exceptions
+  Scenario: Process events handles pattern detector exceptions completes without error
     Given a pattern detector that raises Exception
     When process_events() is called
     Then the method completes without raising Exception
-    And other pattern detectors still execute
+
+  Scenario: Process events handles pattern detector exceptions continues with other detectors
+    Given a pattern detector that raises Exception
+    When process_events() is called
+    Then other pattern detectors still execute
 
   Scenario: Process events filters out duplicate events
     Given event "evt123" was processed previously
@@ -82,9 +86,17 @@ Feature: IntrusionDetection.process_events()
     When process_events() is called with empty list
     Then an empty alert list is returned
 
-  Scenario: Process events aggregates multiple pattern matches
+  Scenario: Process events aggregates multiple pattern matches returns two alerts
     Given events trigger both brute_force and data_exfiltration patterns
     When process_events() is called
     Then 2 SecurityAlerts are returned
-    And one is type "brute_force_login"
-    And one is type "data_exfiltration"
+
+  Scenario: Process events aggregates multiple pattern matches includes brute_force type
+    Given events trigger both brute_force and data_exfiltration patterns
+    When process_events() is called
+    Then one is type "brute_force_login"
+
+  Scenario: Process events aggregates multiple pattern matches includes data_exfiltration type
+    Given events trigger both brute_force and data_exfiltration patterns
+    When process_events() is called
+    Then one is type "data_exfiltration"

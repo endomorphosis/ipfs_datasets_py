@@ -22,11 +22,15 @@ Feature: AnomalyDetector.process_event()
     When process_event() is called with new event
     Then current_window contains 51 events
 
-  Scenario: Process event maintains window_size limit
+  Scenario: Process event maintains window_size limit keeps size
     Given the current_window has 100 events (at limit)
     When process_event() is called with new event
     Then current_window still has 100 events
-    And the oldest event is removed
+
+  Scenario: Process event maintains window_size limit removes oldest
+    Given the current_window has 100 events (at limit)
+    When process_event() is called with new event
+    Then the oldest event is removed
 
   Scenario: Process event updates metrics
     Given an AuditEvent with category=AUTHENTICATION exists

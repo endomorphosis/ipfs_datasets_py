@@ -43,18 +43,27 @@ Feature: AuditLogger.add_event_listener()
     When all threads complete
     Then 10 listeners are registered
 
-  Scenario: Add event listener handles exceptions gracefully
+  Scenario: Add event listener handles exceptions gracefully completes without error
     Given a listener function that raises Exception
-    And the listener is registered
+    Given the listener is registered
     When log() is called with level=INFO, category=SYSTEM, action="test"
     Then the log() method completes without raising Exception
-    And the event is still logged
 
-  Scenario: Add same listener function twice
+  Scenario: Add event listener handles exceptions gracefully event still logged
+    Given a listener function that raises Exception
+    Given the listener is registered
+    When log() is called with level=INFO, category=SYSTEM, action="test"
+    Then the event is still logged
+
+  Scenario: Add same listener function twice adds to list
     Given a listener function exists
     When add_event_listener() is called twice with same listener
     Then the listener is in the list twice
-    And the listener is called twice per event
+
+  Scenario: Add same listener function twice calls listener twice
+    Given a listener function exists
+    When add_event_listener() is called twice with same listener
+    Then the listener is called twice per event
 
   Scenario: Add listener for multiple categories separately
     Given a listener function exists

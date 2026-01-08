@@ -11,7 +11,11 @@ Feature: FileAuditHandler._handle_event()
     Given an AuditEvent exists
     When _handle_event() is called
     Then the event is written to file
-    And the file contains the formatted event text
+
+  Scenario: Handle event file contains formatted event text
+    Given an AuditEvent exists
+    When _handle_event() is called
+    Then the file contains the formatted event text
 
   Scenario: Handle event returns True on success
     Given an AuditEvent exists
@@ -46,7 +50,11 @@ Feature: FileAuditHandler._handle_event()
     Given the file is closed
     When _handle_event() is called
     Then the file is reopened
-    And the event is written
+
+  Scenario: Handle event writes event after reopening
+    Given the file is closed
+    When _handle_event() is called
+    Then the event is written
 
   Scenario: Handle event returns False on file open error
     Given the file_path directory does not exist

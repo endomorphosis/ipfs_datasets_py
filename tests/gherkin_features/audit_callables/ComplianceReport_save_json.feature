@@ -16,31 +16,58 @@ Feature: ComplianceReport.save_json()
     And the file is read
     Then the content is valid JSON
 
-  Scenario: Save json with pretty=True formats JSON
+  Scenario: Save json with pretty=True formats JSON with indentation
     When save_json() is called with pretty=True
-    And the file is read
+    When the file is read
     Then the JSON contains indentation
-    And the JSON contains newlines
+
+  Scenario: Save json with pretty=True formats JSON with newlines
+    When save_json() is called with pretty=True
+    When the file is read
+    Then the JSON contains newlines
 
   Scenario: Save json with pretty=False writes compact JSON
     When save_json() is called with pretty=False
     And the file is read
     Then the JSON does not contain extra whitespace
 
-  Scenario: Save json includes all report fields
+  Scenario: Save json includes report_id field
     When save_json() is called
-    And the file is parsed as JSON
+    When the file is parsed as JSON
     Then the JSON contains "report_id"
-    And the JSON contains "standard"
-    And the JSON contains "generated_at"
-    And the JSON contains "requirements"
-    And the JSON contains "summary"
-    And the JSON contains "compliant"
 
-  Scenario: Save json creates parent directories
+  Scenario: Save json includes standard field
+    When save_json() is called
+    When the file is parsed as JSON
+    Then the JSON contains "standard"
+
+  Scenario: Save json includes generated_at field
+    When save_json() is called
+    When the file is parsed as JSON
+    Then the JSON contains "generated_at"
+
+  Scenario: Save json includes requirements field
+    When save_json() is called
+    When the file is parsed as JSON
+    Then the JSON contains "requirements"
+
+  Scenario: Save json includes summary field
+    When save_json() is called
+    When the file is parsed as JSON
+    Then the JSON contains "summary"
+
+  Scenario: Save json includes compliant field
+    When save_json() is called
+    When the file is parsed as JSON
+    Then the JSON contains "compliant"
+
+  Scenario: Save json creates parent directories creates directory
     When save_json() is called with file_path="/tmp/reports/2024/jan/report.json"
     Then the directory "/tmp/reports/2024/jan" exists
-    And the file exists
+
+  Scenario: Save json creates parent directories creates file
+    When save_json() is called with file_path="/tmp/reports/2024/jan/report.json"
+    Then the file exists
 
   Scenario: Save json overwrites existing file
     Given a file exists at "/tmp/report.json"

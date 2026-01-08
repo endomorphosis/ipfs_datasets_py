@@ -15,12 +15,17 @@ Feature: AuditLogger.clear_context()
     And log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event does not have user from context
 
-  Scenario: Clear context is thread-local
+  Scenario: Clear context is thread-local clears thread 1
     Given set_context() is called with user="user1" in thread 1
-    And set_context() is called with user="user2" in thread 2
+    Given set_context() is called with user="user2" in thread 2
     When clear_context() is called in thread 1
     Then thread 1 context does not exist
-    And thread 2 context still has user="user2"
+
+  Scenario: Clear context is thread-local preserves thread 2
+    Given set_context() is called with user="user1" in thread 1
+    Given set_context() is called with user="user2" in thread 2
+    When clear_context() is called in thread 1
+    Then thread 2 context still has user="user2"
 
   Scenario: Clear context when no context exists
     Given the thread-local context does not exist
@@ -34,9 +39,14 @@ Feature: AuditLogger.clear_context()
     And log() is called with level=INFO, category=SYSTEM, action="test"
     Then the created event has user="default_user"
 
-  Scenario: Set context after clear creates new context
+  Scenario: Set context after clear creates new context with user
     Given set_context() was called with user="bob"
     When clear_context() is called
-    And set_context() is called with user="charlie"
+    When set_context() is called with user="charlie"
     Then the thread-local context contains user="charlie"
-    And the thread-local context does not contain previous values
+
+  Scenario: Set context after clear removes previous values
+    Given set_context() was called with user="bob"
+    When clear_context() is called
+    When set_context() is called with user="charlie"
+    Then the thread-local context does not contain previous values

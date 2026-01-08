@@ -11,19 +11,25 @@ Feature: ComplianceReporter.generate_report()
     When generate_report() is called with events
     Then a ComplianceReport instance is returned
 
-  Scenario: Generate report sets report_id
+  Scenario: Generate report sets report_id with unique value
     When generate_report() is called
     Then the report has a unique report_id
-    And report_id format is "{standard}-{timestamp}"
+
+  Scenario: Generate report sets report_id with correct format
+    When generate_report() is called
+    Then report_id format is "{standard}-{timestamp}"
 
   Scenario: Generate report sets standard
     When generate_report() is called
     Then the report standard is GDPR
 
-  Scenario: Generate report sets time period from parameters
+  Scenario: Generate report sets time period start from parameters
     When generate_report() is called with start_time="2024-01-01T00:00:00Z", end_time="2024-01-31T23:59:59Z"
     Then the report time_period start is "2024-01-01T00:00:00Z"
-    And the report time_period end is "2024-01-31T23:59:59Z"
+
+  Scenario: Generate report sets time period end from parameters
+    When generate_report() is called with start_time="2024-01-01T00:00:00Z", end_time="2024-01-31T23:59:59Z"
+    Then the report time_period end is "2024-01-31T23:59:59Z"
 
   Scenario: Generate report uses default 30 day period when not specified
     When generate_report() is called without time parameters
@@ -54,13 +60,23 @@ Feature: ComplianceReporter.generate_report()
     When generate_report() is called
     Then requirement "GDPR-Art30" evidence_count is 25
 
-  Scenario: Generate report calculates compliance summary
+  Scenario: Generate report calculates compliance summary compliant_count
     Given 3 requirements are Compliant
-    And 2 requirements are Non-Compliant
+    Given 2 requirements are Non-Compliant
     When generate_report() is called
     Then summary compliant_count is 3
-    And summary non_compliant_count is 2
-    And summary total_requirements is 5
+
+  Scenario: Generate report calculates compliance summary non_compliant_count
+    Given 3 requirements are Compliant
+    Given 2 requirements are Non-Compliant
+    When generate_report() is called
+    Then summary non_compliant_count is 2
+
+  Scenario: Generate report calculates compliance summary total_requirements
+    Given 3 requirements are Compliant
+    Given 2 requirements are Non-Compliant
+    When generate_report() is called
+    Then summary total_requirements is 5
 
   Scenario: Generate report calculates compliance_rate percentage
     Given 4 out of 5 requirements are Compliant
@@ -78,29 +94,40 @@ Feature: ComplianceReporter.generate_report()
     When generate_report() is called
     Then report compliant is True
 
-  Scenario: Generate report generates remediation suggestions for failures
+  Scenario: Generate report generates remediation suggestions contains entries
     Given 2 requirements are Non-Compliant
     When generate_report() is called
     Then remediation_suggestions contains 2 entries
-    And each entry has a list of suggestions
+
+  Scenario: Generate report generates remediation suggestions with suggestion lists
+    Given 2 requirements are Non-Compliant
+    When generate_report() is called
+    Then each entry has a list of suggestions
 
   Scenario: Generate report uses custom verification function when provided
     Given requirement "CUSTOM-1" has a verification_function
     When generate_report() is called
     Then the verification_function is called for "CUSTOM-1"
 
-  Scenario: Generate report handles verification function errors
+  Scenario: Generate report handles verification function errors sets status
     Given requirement "ERROR-1" verification_function raises Exception
     When generate_report() is called
     Then the requirement status is "Non-Compliant"
-    And the report generation completes without error
+
+  Scenario: Generate report handles verification function errors completes without error
+    Given requirement "ERROR-1" verification_function raises Exception
+    When generate_report() is called
+    Then the report generation completes without error
 
   Scenario: Generate report with empty events list
     Given the events list is empty
     When generate_report() is called
     Then all requirements are marked "Non-Compliant"
 
-  Scenario: Generate report sets generated_at timestamp
+  Scenario: Generate report sets generated_at timestamp in ISO format
     When generate_report() is called
     Then the report generated_at is an ISO format timestamp
-    And generated_at is close to current time
+
+  Scenario: Generate report sets generated_at timestamp to current time
+    When generate_report() is called
+    Then generated_at is close to current time

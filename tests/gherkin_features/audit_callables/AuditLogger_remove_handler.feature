@@ -11,10 +11,13 @@ Feature: AuditLogger.remove_handler()
     When remove_handler() is called with name="file_handler"
     Then the handlers list contains 1 handler
 
-  Scenario: Remove handler removes correct handler
+  Scenario: Remove handler removes correct handler removes FileAuditHandler
     When remove_handler() is called with name="file_handler"
     Then the handlers list does not contain FileAuditHandler
-    And the handlers list contains JSONAuditHandler
+
+  Scenario: Remove handler removes correct handler keeps JSONAuditHandler
+    When remove_handler() is called with name="file_handler"
+    Then the handlers list contains JSONAuditHandler
 
   Scenario: Remove handler returns True when handler found
     When remove_handler() is called with name="file_handler"

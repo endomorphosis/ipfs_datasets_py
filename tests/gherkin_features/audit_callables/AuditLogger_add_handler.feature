@@ -60,11 +60,15 @@ Feature: AuditLogger.add_handler()
     And log() is called with level=INFO, category=SYSTEM, action="after"
     Then the FileAuditHandler receives only the "after" event
 
-  Scenario: Add handler with same name twice
+  Scenario: Add handler with same name twice adds both handlers
     Given a FileAuditHandler with name="handler1" is added
     When add_handler() is called with another handler named "handler1"
     Then the handlers list contains 2 handlers
-    And both handlers have name="handler1"
+
+  Scenario: Add handler with same name twice both have same name
+    Given a FileAuditHandler with name="handler1" is added
+    When add_handler() is called with another handler named "handler1"
+    Then both handlers have name="handler1"
 
   Scenario: Add handler preserves handler configuration
     Given a FileAuditHandler with min_level=ERROR exists

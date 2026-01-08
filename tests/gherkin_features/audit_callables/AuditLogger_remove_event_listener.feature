@@ -47,8 +47,12 @@ Feature: AuditLogger.remove_event_listener()
     And remove_event_listener() is called again with same listener
     Then the second call returns False
 
-  Scenario: Remove event listener preserves other listeners
+  Scenario: Remove event listener preserves other listeners keeps listener 1
     Given 3 listeners are registered
     When remove_event_listener() is called for listener 2
     Then listener 1 still receives events
-    And listener 3 still receives events
+
+  Scenario: Remove event listener preserves other listeners keeps listener 3
+    Given 3 listeners are registered
+    When remove_event_listener() is called for listener 2
+    Then listener 3 still receives events
