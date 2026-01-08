@@ -6,6 +6,7 @@ from examples/p2p_workflow_demo.py.
 """
 
 import pytest
+from unittest.mock import patch, MagicMock
 from examples.p2p_workflow_demo import main
 
 
@@ -21,9 +22,16 @@ def test_main_calls_demo_merkle_clock():
     Then:
         demo_merkle_clock() is executed
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main calls demo_merkle_clock"
-    )
+    expected_call_count = 1
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock") as mock_demo:
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_call_count = mock_demo.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
 def test_main_calls_demo_workflow_scheduling():
@@ -38,9 +46,16 @@ def test_main_calls_demo_workflow_scheduling():
     Then:
         demo_workflow_scheduling() is executed
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main calls demo_workflow_scheduling"
-    )
+    expected_call_count = 1
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling") as mock_demo:
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_call_count = mock_demo.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
 def test_main_calls_demo_peer_assignment():
@@ -55,9 +70,16 @@ def test_main_calls_demo_peer_assignment():
     Then:
         demo_peer_assignment() is executed
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main calls demo_peer_assignment"
-    )
+    expected_call_count = 1
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment") as mock_demo:
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_call_count = mock_demo.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
 def test_main_calls_demo_mcp_tools():
@@ -72,12 +94,19 @@ def test_main_calls_demo_mcp_tools():
     Then:
         demo_mcp_tools() is executed
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main calls demo_mcp_tools"
-    )
+    expected_call_count = 1
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run") as mock_run:
+                    main()
+    
+    actual_call_count = mock_run.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
-def test_main_prints_banner_with_p2p_workflow_scheduler():
+def test_main_prints_banner_with_p2p_workflow_scheduler(captured_output):
     """
     Scenario: Main prints banner with P2P WORKFLOW SCHEDULER
 
@@ -89,12 +118,19 @@ def test_main_prints_banner_with_p2p_workflow_scheduler():
     Then:
         output contains "P2P WORKFLOW SCHEDULER"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints banner with P2P WORKFLOW SCHEDULER"
-    )
+    expected_text = "P2P WORKFLOW SCHEDULER"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
-def test_main_prints_banner_with_merkle_clock():
+def test_main_prints_banner_with_merkle_clock(captured_output):
     """
     Scenario: Main prints banner with merkle clock
 
@@ -106,12 +142,19 @@ def test_main_prints_banner_with_merkle_clock():
     Then:
         output contains "merkle clock"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints banner with merkle clock"
-    )
+    expected_text = "merkle clock"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
-def test_main_prints_banner_with_fibonacci_heap():
+def test_main_prints_banner_with_fibonacci_heap(captured_output):
     """
     Scenario: Main prints banner with fibonacci heap
 
@@ -123,12 +166,19 @@ def test_main_prints_banner_with_fibonacci_heap():
     Then:
         output contains "fibonacci heap"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints banner with fibonacci heap"
-    )
+    expected_text = "fibonacci heap"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
-def test_main_prints_banner_with_hamming_distance():
+def test_main_prints_banner_with_hamming_distance(captured_output):
     """
     Scenario: Main prints banner with hamming distance
 
@@ -140,12 +190,19 @@ def test_main_prints_banner_with_hamming_distance():
     Then:
         output contains "hamming distance"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints banner with hamming distance"
-    )
+    expected_text = "hamming distance"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
-def test_main_prints_completion_message():
+def test_main_prints_completion_message(captured_output):
     """
     Scenario: Main prints completion message
 
@@ -155,14 +212,21 @@ def test_main_prints_completion_message():
         main() is called
 
     Then:
-        output contains completion message
+        output contains "DEMONSTRATION COMPLETE"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints completion message"
-    )
+    expected_text = "DEMONSTRATION COMPLETE"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
-def test_main_prints_usage_hints():
+def test_main_prints_usage_hints(captured_output):
     """
     Scenario: Main prints usage hints
 
@@ -172,10 +236,17 @@ def test_main_prints_usage_hints():
         main() is called
 
     Then:
-        output contains usage hints
+        output contains "For more information"
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Main prints usage hints"
-    )
+    expected_text = "For more information"
+    
+    with patch("examples.p2p_workflow_demo.demo_merkle_clock"):
+        with patch("examples.p2p_workflow_demo.demo_workflow_scheduling"):
+            with patch("examples.p2p_workflow_demo.demo_peer_assignment"):
+                with patch("examples.p2p_workflow_demo.asyncio.run"):
+                    main()
+    
+    actual_output = captured_output.getvalue()
+    assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
 
 
