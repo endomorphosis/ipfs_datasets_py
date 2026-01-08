@@ -6,7 +6,8 @@ from scripts/monitor_p2p_cache.py.
 """
 
 import pytest
-# from scripts/monitor_p2p_cache.py import main
+from unittest.mock import patch, MagicMock
+import signal
 
 
 def test_parse_interval_argument_sets_interval_to_10():
@@ -22,9 +23,18 @@ def test_parse_interval_argument_sets_interval_to_10():
     Then:
         interval == 10
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Parse --interval argument sets interval to 10"
-    )
+    expected_interval = 10
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--interval', '10']):
+        with patch('scripts.monitor_p2p_cache.print_banner'):
+            with patch('scripts.monitor_p2p_cache.print_stats'):
+                with patch('scripts.monitor_p2p_cache.monitor_loop') as mock_loop:
+                    with patch('scripts.monitor_p2p_cache.signal.signal'):
+                        from scripts.monitor_p2p_cache import main
+                        main()
+    
+    actual_interval = mock_loop.call_args[1]['interval'] if mock_loop.called else None
+    assert actual_interval == expected_interval, f"expected {expected_interval}, got {actual_interval}"
 
 
 def test_run_once_mode_calls_print_banner():
@@ -40,9 +50,17 @@ def test_run_once_mode_calls_print_banner():
     Then:
         print_banner() called 1 time
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Run once mode calls print_banner"
-    )
+    expected_call_count = 1
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--once']):
+        with patch('scripts.monitor_p2p_cache.print_banner') as mock_banner:
+            with patch('scripts.monitor_p2p_cache.print_stats'):
+                with patch('scripts.monitor_p2p_cache.signal.signal'):
+                    from scripts.monitor_p2p_cache import main
+                    main()
+    
+    actual_call_count = mock_banner.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
 def test_run_once_mode_calls_print_stats_once():
@@ -58,9 +76,17 @@ def test_run_once_mode_calls_print_stats_once():
     Then:
         print_stats() called 1 time
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Run once mode calls print_stats once"
-    )
+    expected_call_count = 1
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--once']):
+        with patch('scripts.monitor_p2p_cache.print_banner'):
+            with patch('scripts.monitor_p2p_cache.print_stats') as mock_stats:
+                with patch('scripts.monitor_p2p_cache.signal.signal'):
+                    from scripts.monitor_p2p_cache import main
+                    main()
+    
+    actual_call_count = mock_stats.call_count
+    assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
 
 
 def test_run_once_mode_exits_after_stats():
@@ -76,9 +102,18 @@ def test_run_once_mode_exits_after_stats():
     Then:
         program exits
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Run once mode exits after stats"
-    )
+    expected_monitor_loop_called = False
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--once']):
+        with patch('scripts.monitor_p2p_cache.print_banner'):
+            with patch('scripts.monitor_p2p_cache.print_stats'):
+                with patch('scripts.monitor_p2p_cache.monitor_loop') as mock_loop:
+                    with patch('scripts.monitor_p2p_cache.signal.signal'):
+                        from scripts.monitor_p2p_cache import main
+                        main()
+    
+    actual_monitor_loop_called = mock_loop.called
+    assert actual_monitor_loop_called == expected_monitor_loop_called, f"expected {expected_monitor_loop_called}, got {actual_monitor_loop_called}"
 
 
 def test_continuous_mode_calls_monitor_loop_with_interval():
@@ -94,9 +129,18 @@ def test_continuous_mode_calls_monitor_loop_with_interval():
     Then:
         monitor_loop(interval=15) is called
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Continuous mode calls monitor_loop with interval"
-    )
+    expected_interval = 15
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--interval', '15']):
+        with patch('scripts.monitor_p2p_cache.print_banner'):
+            with patch('scripts.monitor_p2p_cache.print_stats'):
+                with patch('scripts.monitor_p2p_cache.monitor_loop') as mock_loop:
+                    with patch('scripts.monitor_p2p_cache.signal.signal'):
+                        from scripts.monitor_p2p_cache import main
+                        main()
+    
+    actual_interval = mock_loop.call_args[1]['interval']
+    assert actual_interval == expected_interval, f"expected {expected_interval}, got {actual_interval}"
 
 
 def test_register_sigint_handler():
@@ -111,8 +155,16 @@ def test_register_sigint_handler():
     Then:
         signal.signal(signal.SIGINT, signal_handler) is called
     """
-    raise NotImplementedError(
-        "Test implementation needed for: Register SIGINT handler"
-    )
+    expected_signal = signal.SIGINT
+    
+    with patch('sys.argv', ['monitor_p2p_cache.py', '--once']):
+        with patch('scripts.monitor_p2p_cache.print_banner'):
+            with patch('scripts.monitor_p2p_cache.print_stats'):
+                with patch('scripts.monitor_p2p_cache.signal.signal') as mock_signal:
+                    from scripts.monitor_p2p_cache import main
+                    main()
+    
+    actual_signal = mock_signal.call_args[0][0]
+    assert actual_signal == expected_signal, f"expected {expected_signal}, got {actual_signal}"
 
 
