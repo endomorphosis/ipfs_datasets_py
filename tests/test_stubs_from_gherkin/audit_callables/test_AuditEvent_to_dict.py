@@ -7,8 +7,8 @@ This callable converts an AuditEvent to a dictionary representation.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,40 +17,107 @@ def an_auditevent_exists_with_all_fields_populated():
     """
     Given an AuditEvent exists with all fields populated
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        # Create an AuditEvent with all fields populated
+        event = AuditEvent(
+            event_id="test-event-123",
+            timestamp="2024-01-01T12:00:00Z",
+            level=AuditLevel.INFO,
+            category=AuditCategory.DATA_ACCESS,
+            action="read",
+            user="alice",
+            resource_id="file123",
+            resource_type="document",
+            status="success",
+            details={"key": "value"},
+            client_ip="192.168.1.1",
+            session_id="sess123",
+            process_id=1234,
+            hostname="testhost",
+            application="test_app",
+            duration_ms=100,
+            source_module="test_module",
+            source_function="test_function",
+            related_events=["event1", "event2"],
+            tags=["tag1", "tag2"],
+            version="1.0"
+        )
+        
+        # Verify event was created
+        if event is None:
+            raise FixtureError("Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent is None") from None
+        
+        # Verify essential attributes
+        if not hasattr(event, 'event_id'):
+            raise FixtureError("Failed to create fixture an_auditevent_exists_with_all_fields_populated: AuditEvent missing 'event_id' attribute") from None
+        
+        return event
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditevent_exists_with_all_fields_populated: {e}") from e
 
 @pytest.fixture
-def the_event_has_levelinfo():
+def the_event_has_levelinfo(an_auditevent_exists_with_all_fields_populated):
     """
     Given the event has level=INFO
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event = an_auditevent_exists_with_all_fields_populated
+        
+        # Verify level is INFO
+        if event.level != AuditLevel.INFO:
+            raise FixtureError(f"Failed to create fixture the_event_has_levelinfo: Event level is {event.level}, expected INFO") from None
+        
+        return event
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_event_has_levelinfo: {e}") from e
 
 @pytest.fixture
-def the_event_has_categorydata_access():
+def the_event_has_categorydata_access(an_auditevent_exists_with_all_fields_populated):
     """
     Given the event has category=DATA_ACCESS
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event = an_auditevent_exists_with_all_fields_populated
+        
+        # Verify category is DATA_ACCESS
+        if event.category != AuditCategory.DATA_ACCESS:
+            raise FixtureError(f"Failed to create fixture the_event_has_categorydata_access: Event category is {event.category}, expected DATA_ACCESS") from None
+        
+        return event
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_event_has_categorydata_access: {e}") from e
 
 @pytest.fixture
-def the_event_has_actionread():
+def the_event_has_actionread(an_auditevent_exists_with_all_fields_populated):
     """
     Given the event has action="read"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event = an_auditevent_exists_with_all_fields_populated
+        
+        # Verify action is "read"
+        if event.action != "read":
+            raise FixtureError(f"Failed to create fixture the_event_has_actionread: Event action is {event.action}, expected 'read'") from None
+        
+        return event
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_event_has_actionread: {e}") from e
 
 @pytest.fixture
-def the_event_has_useralice():
+def the_event_has_useralice(an_auditevent_exists_with_all_fields_populated):
     """
     Given the event has user="alice"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        event = an_auditevent_exists_with_all_fields_populated
+        
+        # Verify user is "alice"
+        if event.user != "alice":
+            raise FixtureError(f"Failed to create fixture the_event_has_useralice: Event user is {event.user}, expected 'alice'") from None
+        
+        return event
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_event_has_useralice: {e}") from e
 
 
 def test_to_dict_returns_dictionary(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):

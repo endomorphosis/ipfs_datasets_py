@@ -6,9 +6,12 @@ This callable logs an audit event with specified level, category, action, and de
 """
 
 import pytest
+import tempfile
+import os
+from pathlib import Path
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditHandler, AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +20,76 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        # Create a fresh AuditLogger instance
+        logger = AuditLogger()
+        
+        # Verify the logger was created successfully
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        # Verify essential attributes exist
+        if not hasattr(logger, 'handlers'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'handlers' attribute") from None
+        
+        if not hasattr(logger, 'enabled'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'enabled' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def the_audit_logger_is_enabled():
+def the_audit_logger_is_enabled(an_auditlogger_instance_is_initialized):
     """
     Given the audit logger is enabled
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Enable the audit logger
+        logger.enabled = True
+        
+        # Verify it's actually enabled
+        if not logger.enabled:
+            raise FixtureError("Failed to create fixture the_audit_logger_is_enabled: Logger enabled flag is not True") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_audit_logger_is_enabled: {e}") from e
 
 @pytest.fixture
-def at_least_one_audit_handler_is_attached():
+def at_least_one_audit_handler_is_attached(the_audit_logger_is_enabled):
     """
     Given at least one audit handler is attached
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = the_audit_logger_is_enabled
+        
+        # Create a simple test handler that stores events
+        class TestHandler(AuditHandler):
+            def __init__(self):
+                super().__init__(name="test_handler")
+                self.events = []
+            
+            def _handle_event(self, event: AuditEvent) -> bool:
+                self.events.append(event)
+                return True
+        
+        handler = TestHandler()
+        logger.add_handler(handler)
+        
+        # Verify handler was added
+        if len(logger.handlers) == 0:
+            raise FixtureError("Failed to create fixture at_least_one_audit_handler_is_attached: No handlers in logger.handlers list") from None
+        
+        # Verify our handler is in the list
+        if handler not in logger.handlers:
+            raise FixtureError("Failed to create fixture at_least_one_audit_handler_is_attached: Test handler not found in logger.handlers") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture at_least_one_audit_handler_is_attached: {e}") from e
 
 
 def test_log_method_creates_audit_event(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
