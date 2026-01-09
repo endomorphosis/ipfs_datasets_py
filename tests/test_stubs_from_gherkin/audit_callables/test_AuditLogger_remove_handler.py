@@ -6,9 +6,11 @@ This callable removes a handler from the audit logger by name.
 """
 
 import pytest
+import tempfile
+import os
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditHandler, AuditEvent
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +19,74 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, 'handlers'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'handlers' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def a_fileaudithandler_with_namefile_handler_is_added():
+def a_fileaudithandler_with_namefile_handler_is_added(an_auditlogger_instance_is_initialized):
     """
     Given a FileAuditHandler with name="file_handler" is added
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Create a test handler with the name "file_handler"
+        class TestFileHandler(AuditHandler):
+            def __init__(self):
+                super().__init__(name="file_handler")
+            
+            def _handle_event(self, event: AuditEvent) -> bool:
+                return True
+        
+        handler = TestFileHandler()
+        logger.add_handler(handler)
+        
+        # Verify handler was added
+        handler_names = [h.name for h in logger.handlers]
+        if "file_handler" not in handler_names:
+            raise FixtureError("Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: Handler 'file_handler' not found in logger") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_namefile_handler_is_added: {e}") from e
 
 @pytest.fixture
-def a_jsonaudithandler_with_namejson_handler_is_added():
+def a_jsonaudithandler_with_namejson_handler_is_added(a_fileaudithandler_with_namefile_handler_is_added):
     """
     Given a JSONAuditHandler with name="json_handler" is added
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = a_fileaudithandler_with_namefile_handler_is_added
+        
+        # Create a test handler with the name "json_handler"
+        class TestJSONHandler(AuditHandler):
+            def __init__(self):
+                super().__init__(name="json_handler")
+            
+            def _handle_event(self, event: AuditEvent) -> bool:
+                return True
+        
+        handler = TestJSONHandler()
+        logger.add_handler(handler)
+        
+        # Verify handler was added
+        handler_names = [h.name for h in logger.handlers]
+        if "json_handler" not in handler_names:
+            raise FixtureError("Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: Handler 'json_handler' not found in logger") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_jsonaudithandler_with_namejson_handler_is_added: {e}") from e
 
 
 def test_remove_handler_decreases_handlers_count(an_auditlogger_instance_is_initialized, a_fileaudithandler_with_namefile_handler_is_added, a_jsonaudithandler_with_namejson_handler_is_added):
