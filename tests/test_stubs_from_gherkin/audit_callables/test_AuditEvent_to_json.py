@@ -111,9 +111,6 @@ def the_event_has_useralice(an_auditevent_exists_with_all_fields_populated):
         return event
     except Exception as e:
         raise FixtureError(f"Failed to create fixture the_event_has_useralice: {e}") from e
-    """
-    # TODO: Implement fixture
-    pass
 
 
 def test_to_json_returns_string(an_auditevent_exists_with_all_fields_populated, the_event_has_levelinfo, the_event_has_categorydata_access, the_event_has_actionread, the_event_has_useralice):
