@@ -7,8 +7,8 @@ This callable adds a new security alert to the manager.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.intrusion import SecurityAlertManager, SecurityAlert, AlertSeverity
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,40 @@ def a_securityalertmanager_instance_is_initialized():
     """
     Given a SecurityAlertManager instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        manager = SecurityAlertManager()
+        
+        if manager is None:
+            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager instance is None") from None
+        
+        if not hasattr(manager, 'add_alert'):
+            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'add_alert' method") from None
+        
+        if not hasattr(manager, 'alerts'):
+            raise FixtureError("Failed to create fixture a_securityalertmanager_instance_is_initialized: SecurityAlertManager missing 'alerts' attribute") from None
+        
+        return manager
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_securityalertmanager_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def no_alerts_exist():
+def no_alerts_exist(a_securityalertmanager_instance_is_initialized):
     """
     Given no alerts exist
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        manager = a_securityalertmanager_instance_is_initialized
+        
+        # Clear all alerts
+        manager.alerts = {}
+        
+        # Verify no alerts exist
+        if len(manager.alerts) != 0:
+            raise FixtureError(f"Failed to create fixture no_alerts_exist: {len(manager.alerts)} alerts exist, expected 0") from None
+        
+        return manager
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture no_alerts_exist: {e}") from e
 
 
 def test_add_alert_stores_alert_in_alerts_dictionary(a_securityalertmanager_instance_is_initialized, no_alerts_exist):

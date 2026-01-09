@@ -7,8 +7,9 @@ This callable generates a security-focused audit report.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_reporting import AuditReportGenerator
+from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +18,80 @@ def an_auditreportgenerator_instance_is_initialized():
     """
     Given an AuditReportGenerator instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        generator = AuditReportGenerator()
+        
+        if generator is None:
+            raise FixtureError("Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator instance is None") from None
+        
+        if not hasattr(generator, 'generate_security_report'):
+            raise FixtureError("Failed to create fixture an_auditreportgenerator_instance_is_initialized: AuditReportGenerator missing 'generate_security_report' method") from None
+        
+        return generator
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditreportgenerator_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def metrics_aggregator_has_audit_data():
+def metrics_aggregator_has_audit_data(an_auditreportgenerator_instance_is_initialized):
     """
     Given metrics_aggregator has audit data
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        generator = an_auditreportgenerator_instance_is_initialized
+        
+        # Create test audit data for metrics aggregator
+        audit_data = []
+        for i in range(100):
+            event = AuditEvent(
+                level=AuditLevel.INFO if i % 2 == 0 else AuditLevel.WARNING,
+                category=AuditCategory.SECURITY if i % 3 == 0 else AuditCategory.DATA_ACCESS,
+                action=f"action_{i % 10}",
+                user=f"user_{i % 5}"
+            )
+            audit_data.append(event)
+        
+        # Set audit data on metrics aggregator
+        if not hasattr(generator, 'metrics_aggregator'):
+            generator.metrics_aggregator = type('MetricsAggregator', (), {})()
+        
+        generator.metrics_aggregator.audit_data = audit_data
+        
+        # Verify audit data was set
+        if not hasattr(generator.metrics_aggregator, 'audit_data'):
+            raise FixtureError("Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator missing 'audit_data' attribute") from None
+        
+        if len(generator.metrics_aggregator.audit_data) == 0:
+            raise FixtureError("Failed to create fixture metrics_aggregator_has_audit_data: metrics_aggregator has 0 audit data entries") from None
+        
+        return generator
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture metrics_aggregator_has_audit_data: {e}") from e
 
 @pytest.fixture
-def pattern_detector_is_configured():
+def pattern_detector_is_configured(metrics_aggregator_has_audit_data):
     """
     Given pattern_detector is configured
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        generator = metrics_aggregator_has_audit_data
+        
+        # Configure pattern detector
+        if not hasattr(generator, 'pattern_detector'):
+            generator.pattern_detector = type('PatternDetector', (), {})()
+        
+        generator.pattern_detector.configured = True
+        generator.pattern_detector.patterns = ["pattern1", "pattern2", "pattern3"]
+        
+        # Verify pattern detector is configured
+        if not hasattr(generator.pattern_detector, 'configured'):
+            raise FixtureError("Failed to create fixture pattern_detector_is_configured: pattern_detector missing 'configured' attribute") from None
+        
+        if not generator.pattern_detector.configured:
+            raise FixtureError("Failed to create fixture pattern_detector_is_configured: pattern_detector is not configured") from None
+        
+        return generator
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture pattern_detector_is_configured: {e}") from e
 
 
 def test_generate_security_report_returns_dictionary(an_auditreportgenerator_instance_is_initialized, metrics_aggregator_has_audit_data, pattern_detector_is_configured):

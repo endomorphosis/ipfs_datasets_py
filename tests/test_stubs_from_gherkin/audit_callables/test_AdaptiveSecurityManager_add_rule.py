@@ -7,8 +7,8 @@ This callable adds a response rule to the adaptive security manager.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.adaptive_security import AdaptiveSecurityManager, ResponseRule
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,40 @@ def an_adaptivesecuritymanager_instance_is_initialized():
     """
     Given an AdaptiveSecurityManager instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        manager = AdaptiveSecurityManager()
+        
+        if manager is None:
+            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager instance is None") from None
+        
+        if not hasattr(manager, 'add_rule'):
+            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'add_rule' method") from None
+        
+        if not hasattr(manager, 'response_rules'):
+            raise FixtureError("Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: AdaptiveSecurityManager missing 'response_rules' attribute") from None
+        
+        return manager
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_adaptivesecuritymanager_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def no_custom_response_rules_exist():
+def no_custom_response_rules_exist(an_adaptivesecuritymanager_instance_is_initialized):
     """
     Given no custom response rules exist
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        manager = an_adaptivesecuritymanager_instance_is_initialized
+        
+        # Clear all custom response rules
+        manager.response_rules = []
+        
+        # Verify no custom rules exist
+        if len(manager.response_rules) != 0:
+            raise FixtureError(f"Failed to create fixture no_custom_response_rules_exist: {len(manager.response_rules)} rules exist, expected 0") from None
+        
+        return manager
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture no_custom_response_rules_exist: {e}") from e
 
 
 def test_add_rule_increases_rules_count(an_adaptivesecuritymanager_instance_is_initialized, no_custom_response_rules_exist):

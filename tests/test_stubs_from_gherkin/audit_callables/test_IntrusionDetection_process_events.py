@@ -7,8 +7,9 @@ This callable processes audit events to detect potential intrusions.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.intrusion import IntrusionDetection
+from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,27 +18,72 @@ def an_intrusiondetection_instance_is_initialized():
     """
     Given an IntrusionDetection instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = IntrusionDetection()
+        
+        if detector is None:
+            raise FixtureError("Failed to create fixture an_intrusiondetection_instance_is_initialized: IntrusionDetection instance is None") from None
+        
+        if not hasattr(detector, 'process_events'):
+            raise FixtureError("Failed to create fixture an_intrusiondetection_instance_is_initialized: IntrusionDetection missing 'process_events' method") from None
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_intrusiondetection_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def baseline_metrics_are_established():
+def baseline_metrics_are_established(an_intrusiondetection_instance_is_initialized):
     """
     Given baseline metrics are established
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = an_intrusiondetection_instance_is_initialized
+        
+        # Establish baseline metrics
+        detector.establish_baseline()
+        
+        # Verify baseline was established
+        if not hasattr(detector, 'baseline') or detector.baseline is None:
+            raise FixtureError("Failed to create fixture baseline_metrics_are_established: Baseline is None after establish_baseline() call") from None
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture baseline_metrics_are_established: {e}") from e
 
 @pytest.fixture
-def 3_pattern_detectors_are_registered():
+def pattern_detectors_are_registered(baseline_metrics_are_established):
     """
     Given 3 pattern detectors are registered
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = baseline_metrics_are_established
+        
+        # Create 3 test pattern detectors (simple functions)
+        def detector1(events):
+            return []
+        
+        def detector2(events):
+            return []
+        
+        def detector3(events):
+            return []
+        
+        # Register detectors
+        if not hasattr(detector, 'pattern_detectors'):
+            detector.pattern_detectors = []
+        
+        detector.pattern_detectors = [detector1, detector2, detector3]
+        
+        # Verify 3 detectors registered
+        if len(detector.pattern_detectors) != 3:
+            raise FixtureError(f"Failed to create fixture pattern_detectors_are_registered: {len(detector.pattern_detectors)} detectors registered, expected 3") from None
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture pattern_detectors_are_registered: {e}") from e
 
 
-def test_process_events_returns_list_of_securityalerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_returns_list_of_securityalerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events returns list of SecurityAlerts
 
@@ -54,7 +100,7 @@ def test_process_events_returns_list_of_securityalerts(an_intrusiondetection_ins
     pass
 
 
-def test_process_events_returns_empty_list_when_no_threats_detected(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_returns_empty_list_when_no_threats_detected(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events returns empty list when no threats detected
 
@@ -71,7 +117,7 @@ def test_process_events_returns_empty_list_when_no_threats_detected(an_intrusion
     pass
 
 
-def test_process_events_detects_brute_force_login_attempts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_detects_brute_force_login_attempts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events detects brute force login attempts
 
@@ -88,7 +134,7 @@ def test_process_events_detects_brute_force_login_attempts(an_intrusiondetection
     pass
 
 
-def test_process_events_detects_account_compromise(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_detects_account_compromise(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events detects account compromise
 
@@ -105,7 +151,7 @@ def test_process_events_detects_account_compromise(an_intrusiondetection_instanc
     pass
 
 
-def test_process_events_detects_data_exfiltration(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_detects_data_exfiltration(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events detects data exfiltration
 
@@ -122,7 +168,7 @@ def test_process_events_detects_data_exfiltration(an_intrusiondetection_instance
     pass
 
 
-def test_process_events_calls_anomaly_detector_for_each_event(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_calls_anomaly_detector_for_each_event(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events calls anomaly detector for each event
 
@@ -139,7 +185,7 @@ def test_process_events_calls_anomaly_detector_for_each_event(an_intrusiondetect
     pass
 
 
-def test_process_events_converts_anomalies_to_securityalerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_converts_anomalies_to_securityalerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events converts anomalies to SecurityAlerts
 
@@ -156,7 +202,7 @@ def test_process_events_converts_anomalies_to_securityalerts(an_intrusiondetecti
     pass
 
 
-def test_process_events_calls_all_pattern_detectors(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_calls_all_pattern_detectors(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events calls all pattern detectors
 
@@ -173,7 +219,7 @@ def test_process_events_calls_all_pattern_detectors(an_intrusiondetection_instan
     pass
 
 
-def test_process_events_handles_pattern_detector_exceptions_completes_without_error(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_handles_pattern_detector_exceptions_completes_without_error(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events handles pattern detector exceptions completes without error
 
@@ -190,7 +236,7 @@ def test_process_events_handles_pattern_detector_exceptions_completes_without_er
     pass
 
 
-def test_process_events_handles_pattern_detector_exceptions_continues_with_other_detectors(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_handles_pattern_detector_exceptions_continues_with_other_detectors(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events handles pattern detector exceptions continues with other detectors
 
@@ -207,7 +253,7 @@ def test_process_events_handles_pattern_detector_exceptions_continues_with_other
     pass
 
 
-def test_process_events_filters_out_duplicate_events(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_filters_out_duplicate_events(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events filters out duplicate events
 
@@ -224,7 +270,7 @@ def test_process_events_filters_out_duplicate_events(an_intrusiondetection_insta
     pass
 
 
-def test_process_events_updates_recent_alerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_updates_recent_alerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events updates recent_alerts
 
@@ -238,7 +284,7 @@ def test_process_events_updates_recent_alerts(an_intrusiondetection_instance_is_
     pass
 
 
-def test_process_events_dispatches_alerts_to_handlers(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_dispatches_alerts_to_handlers(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events dispatches alerts to handlers
 
@@ -255,7 +301,7 @@ def test_process_events_dispatches_alerts_to_handlers(an_intrusiondetection_inst
     pass
 
 
-def test_process_events_maintains_seen_events_set(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_maintains_seen_events_set(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events maintains seen_events set
 
@@ -272,7 +318,7 @@ def test_process_events_maintains_seen_events_set(an_intrusiondetection_instance
     pass
 
 
-def test_process_events_returns_alerts_in_order_generated(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_returns_alerts_in_order_generated(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events returns alerts in order generated
 
@@ -289,7 +335,7 @@ def test_process_events_returns_alerts_in_order_generated(an_intrusiondetection_
     pass
 
 
-def test_process_events_with_empty_events_list(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_with_empty_events_list(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events with empty events list
 
@@ -303,7 +349,7 @@ def test_process_events_with_empty_events_list(an_intrusiondetection_instance_is
     pass
 
 
-def test_process_events_aggregates_multiple_pattern_matches_returns_two_alerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_aggregates_multiple_pattern_matches_returns_two_alerts(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events aggregates multiple pattern matches returns two alerts
 
@@ -320,7 +366,7 @@ def test_process_events_aggregates_multiple_pattern_matches_returns_two_alerts(a
     pass
 
 
-def test_process_events_aggregates_multiple_pattern_matches_includes_brute_force_type(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_aggregates_multiple_pattern_matches_includes_brute_force_type(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events aggregates multiple pattern matches includes brute_force type
 
@@ -337,7 +383,7 @@ def test_process_events_aggregates_multiple_pattern_matches_includes_brute_force
     pass
 
 
-def test_process_events_aggregates_multiple_pattern_matches_includes_data_exfiltration_type(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, 3_pattern_detectors_are_registered):
+def test_process_events_aggregates_multiple_pattern_matches_includes_data_exfiltration_type(an_intrusiondetection_instance_is_initialized, baseline_metrics_are_established, pattern_detectors_are_registered):
     """
     Scenario: Process events aggregates multiple pattern matches includes data_exfiltration type
 

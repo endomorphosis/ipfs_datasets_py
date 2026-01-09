@@ -7,8 +7,9 @@ This callable processes a single audit event and detects anomalies.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.intrusion import AnomalyDetector
+from ipfs_datasets_py.audit.audit_logger import AuditEvent, AuditLevel, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +18,70 @@ def an_anomalydetector_instance_is_initialized():
     """
     Given an AnomalyDetector instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = AnomalyDetector()
+        
+        if detector is None:
+            raise FixtureError("Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector instance is None") from None
+        
+        if not hasattr(detector, 'process_event'):
+            raise FixtureError("Failed to create fixture an_anomalydetector_instance_is_initialized: AnomalyDetector missing 'process_event' method") from None
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_anomalydetector_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def baseline_metrics_are_established_from_1000_histori():
+def baseline_metrics_are_established_from_1000_histori(an_anomalydetector_instance_is_initialized):
     """
     Given baseline metrics are established from 1000 historical events
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = an_anomalydetector_instance_is_initialized
+        
+        # Create 1000 historical events for baseline
+        historical_events = []
+        for i in range(1000):
+            event = AuditEvent(
+                level=AuditLevel.INFO,
+                category=AuditCategory.DATA_ACCESS,
+                action=f"action_{i % 10}",
+                user=f"user_{i % 20}"
+            )
+            historical_events.append(event)
+        
+        # Establish baseline from historical events
+        detector.establish_baseline(historical_events)
+        
+        # Verify baseline was established
+        if not hasattr(detector, 'baseline') or detector.baseline is None:
+            raise FixtureError("Failed to create fixture baseline_metrics_are_established_from_1000_histori: Baseline is None after establish_baseline() call") from None
+        
+        # Store historical events for test access
+        detector._test_historical_events = historical_events
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture baseline_metrics_are_established_from_1000_histori: {e}") from e
 
 @pytest.fixture
-def the_window_size_is_100():
+def the_window_size_is_100(baseline_metrics_are_established_from_1000_histori):
     """
     Given the window_size is 100
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        detector = baseline_metrics_are_established_from_1000_histori
+        
+        # Set window size to 100
+        detector.window_size = 100
+        
+        # Verify window size is set
+        if detector.window_size != 100:
+            raise FixtureError(f"Failed to create fixture the_window_size_is_100: window_size is {detector.window_size}, expected 100") from None
+        
+        return detector
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_window_size_is_100: {e}") from e
 
 
 def test_process_event_returns_list_of_anomalies(an_anomalydetector_instance_is_initialized, baseline_metrics_are_established_from_1000_histori, the_window_size_is_100):
