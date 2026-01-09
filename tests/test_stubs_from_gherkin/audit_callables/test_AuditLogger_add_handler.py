@@ -63,8 +63,18 @@ def test_add_handler_increases_handlers_count(an_auditlogger_instance_is_initial
     Then:
         the handlers list contains 1 handler
     """
-    # TODO: Implement test
-    pass
+    # Create test handler
+    class TestHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    test_handler = TestHandler()
+    
+    the_handlers_list_is_empty.add_handler(test_handler)
+    
+    actual_result = len(the_handlers_list_is_empty.handlers)
+    expected_result = 1
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_appends_to_handlers_list(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -80,8 +90,18 @@ def test_add_handler_appends_to_handlers_list(an_auditlogger_instance_is_initial
     Then:
         the handler is in the handlers list
     """
-    # TODO: Implement test
-    pass
+    # Create test handler
+    class TestHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    test_handler = TestHandler()
+    
+    the_handlers_list_is_empty.add_handler(test_handler)
+    
+    actual_result = test_handler in the_handlers_list_is_empty.handlers
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_allows_multiple_handlers(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -97,8 +117,22 @@ def test_add_handler_allows_multiple_handlers(an_auditlogger_instance_is_initial
     Then:
         the handlers list contains 3 handlers
     """
-    # TODO: Implement test
-    pass
+    # Create 3 test handlers
+    class TestHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    handler1 = TestHandler()
+    handler2 = TestHandler()
+    handler3 = TestHandler()
+    
+    the_handlers_list_is_empty.add_handler(handler1)
+    the_handlers_list_is_empty.add_handler(handler2)
+    the_handlers_list_is_empty.add_handler(handler3)
+    
+    actual_result = len(the_handlers_list_is_empty.handlers)
+    expected_result = 3
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_allows_handlers_of_different_types_has_2_handlers(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -115,8 +149,24 @@ def test_add_handler_allows_handlers_of_different_types_has_2_handlers(an_auditl
     Then:
         the handlers list contains 2 handlers
     """
-    # TODO: Implement test
-    pass
+    # Create 2 different handler types
+    class FileHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    class JSONHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    file_handler = FileHandler()
+    json_handler = JSONHandler()
+    
+    the_handlers_list_is_empty.add_handler(file_handler)
+    the_handlers_list_is_empty.add_handler(json_handler)
+    
+    actual_result = len(the_handlers_list_is_empty.handlers)
+    expected_result = 2
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_allows_handlers_of_different_types_includes_fileaudithandler(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -133,8 +183,26 @@ def test_add_handler_allows_handlers_of_different_types_includes_fileaudithandle
     Then:
         one handler is FileAuditHandler type
     """
-    # TODO: Implement test
-    pass
+    # Create 2 different handler types
+    class FileHandler(AuditHandler):
+        handler_type = "file"
+        def _handle_event(self, event):
+            pass
+    
+    class JSONHandler(AuditHandler):
+        handler_type = "json"
+        def _handle_event(self, event):
+            pass
+    
+    file_handler = FileHandler()
+    json_handler = JSONHandler()
+    
+    the_handlers_list_is_empty.add_handler(file_handler)
+    the_handlers_list_is_empty.add_handler(json_handler)
+    
+    actual_result = any(isinstance(h, FileHandler) for h in the_handlers_list_is_empty.handlers)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_allows_handlers_of_different_types_includes_jsonaudithandler(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -151,8 +219,26 @@ def test_add_handler_allows_handlers_of_different_types_includes_jsonaudithandle
     Then:
         one handler is JSONAuditHandler type
     """
-    # TODO: Implement test
-    pass
+    # Create 2 different handler types
+    class FileHandler(AuditHandler):
+        handler_type = "file"
+        def _handle_event(self, event):
+            pass
+    
+    class JSONHandler(AuditHandler):
+        handler_type = "json"
+        def _handle_event(self, event):
+            pass
+    
+    file_handler = FileHandler()
+    json_handler = JSONHandler()
+    
+    the_handlers_list_is_empty.add_handler(file_handler)
+    the_handlers_list_is_empty.add_handler(json_handler)
+    
+    actual_result = any(isinstance(h, JSONHandler) for h in the_handlers_list_is_empty.handlers)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_is_thread_safe(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -168,8 +254,30 @@ def test_add_handler_is_thread_safe(an_auditlogger_instance_is_initialized, the_
     Then:
         the handlers list contains 10 handlers
     """
-    # TODO: Implement test
-    pass
+    import threading
+    
+    # Create 10 handlers
+    handlers = []
+    for i in range(10):
+        class TestHandler(AuditHandler):
+            def _handle_event(self, event):
+                pass
+        handlers.append(TestHandler())
+    
+    # Add handlers in threads
+    threads = []
+    for handler in handlers:
+        thread = threading.Thread(target=the_handlers_list_is_empty.add_handler, args=(handler,))
+        threads.append(thread)
+        thread.start()
+    
+    # Wait for all threads
+    for thread in threads:
+        thread.join()
+    
+    actual_result = len(the_handlers_list_is_empty.handlers)
+    expected_result = 10
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_accepts_custom_handler_subclass(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -185,8 +293,18 @@ def test_add_handler_accepts_custom_handler_subclass(an_auditlogger_instance_is_
     Then:
         the handler is in the handlers list
     """
-    # TODO: Implement test
-    pass
+    # Create custom handler subclass
+    class CustomHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    custom_handler = CustomHandler()
+    
+    the_handlers_list_is_empty.add_handler(custom_handler)
+    
+    actual_result = custom_handler in the_handlers_list_is_empty.handlers
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_added_handler_receives_subsequent_events(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -202,8 +320,34 @@ def test_added_handler_receives_subsequent_events(an_auditlogger_instance_is_ini
     Then:
         the FileAuditHandler receives the event
     """
-    # TODO: Implement test
-    pass
+    from ipfs_datasets_py.audit.audit_logger import AuditLevel, AuditCategory
+    
+    # Create handler that stores events
+    class TestHandler(AuditHandler):
+        def __init__(self):
+            super().__init__()
+            self.events = []
+        
+        def _handle_event(self, event):
+            self.events.append(event)
+    
+    test_handler = TestHandler()
+    the_handlers_list_is_empty.add_handler(test_handler)
+    the_handlers_list_is_empty.enabled = True
+    
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    the_handlers_list_is_empty.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(test_handler.events)
+    expected_result = 1
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_does_not_affect_existing_events(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -219,8 +363,37 @@ def test_add_handler_does_not_affect_existing_events(an_auditlogger_instance_is_
     Then:
         the FileAuditHandler receives only the "after" event
     """
-    # TODO: Implement test
-    pass
+    from ipfs_datasets_py.audit.audit_logger import AuditLevel, AuditCategory
+    
+    # Create handler that stores events
+    class TestHandler(AuditHandler):
+        def __init__(self):
+            super().__init__()
+            self.events = []
+        
+        def _handle_event(self, event):
+            self.events.append(event)
+    
+    the_handlers_list_is_empty.enabled = True
+    
+    # Log before adding handler
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    before_action = "before"
+    
+    the_handlers_list_is_empty.log(
+        level=expected_level,
+        category=expected_category,
+        action=before_action
+    )
+    
+    # Add handler
+    test_handler = TestHandler()
+    the_handlers_list_is_empty.add_handler(test_handler)
+    
+    actual_result = len(test_handler.events)
+    expected_result = 0
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_with_same_name_twice_adds_both_handlers(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -236,8 +409,24 @@ def test_add_handler_with_same_name_twice_adds_both_handlers(an_auditlogger_inst
     Then:
         the handlers list contains 2 handlers
     """
-    # TODO: Implement test
-    pass
+    # Create 2 handlers with same name
+    class TestHandler(AuditHandler):
+        def __init__(self, name):
+            super().__init__()
+            self.name = name
+        
+        def _handle_event(self, event):
+            pass
+    
+    handler1 = TestHandler("handler1")
+    handler2 = TestHandler("handler1")
+    
+    the_handlers_list_is_empty.add_handler(handler1)
+    the_handlers_list_is_empty.add_handler(handler2)
+    
+    actual_result = len(the_handlers_list_is_empty.handlers)
+    expected_result = 2
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_with_same_name_twice_both_have_same_name(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -253,8 +442,25 @@ def test_add_handler_with_same_name_twice_both_have_same_name(an_auditlogger_ins
     Then:
         both handlers have name="handler1"
     """
-    # TODO: Implement test
-    pass
+    # Create 2 handlers with same name
+    class TestHandler(AuditHandler):
+        def __init__(self, name):
+            super().__init__()
+            self.name = name
+        
+        def _handle_event(self, event):
+            pass
+    
+    expected_name = "handler1"
+    handler1 = TestHandler(expected_name)
+    handler2 = TestHandler(expected_name)
+    
+    the_handlers_list_is_empty.add_handler(handler1)
+    the_handlers_list_is_empty.add_handler(handler2)
+    
+    actual_result = all(h.name == expected_name for h in the_handlers_list_is_empty.handlers)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_add_handler_preserves_handler_configuration(an_auditlogger_instance_is_initialized, the_handlers_list_is_empty):
@@ -270,6 +476,20 @@ def test_add_handler_preserves_handler_configuration(an_auditlogger_instance_is_
     Then:
         the handler in list has min_level=ERROR
     """
-    # TODO: Implement test
-    pass
+    from ipfs_datasets_py.audit.audit_logger import AuditLevel
+    
+    # Create handler with specific configuration
+    class TestHandler(AuditHandler):
+        def _handle_event(self, event):
+            pass
+    
+    test_handler = TestHandler()
+    expected_min_level = AuditLevel.ERROR
+    test_handler.min_level = expected_min_level
+    
+    the_handlers_list_is_empty.add_handler(test_handler)
+    
+    actual_result = the_handlers_list_is_empty.handlers[0].min_level
+    expected_result = AuditLevel.ERROR
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
