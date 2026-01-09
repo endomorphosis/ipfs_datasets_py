@@ -6,9 +6,11 @@ This callable writes an audit event to a file.
 """
 
 import pytest
+import os
+import tempfile
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.handlers import FileAuditHandler
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +19,69 @@ def a_fileaudithandler_with_file_pathtmpauditlog_is_in():
     """
     Given a FileAuditHandler with file_path="/tmp/audit.log" is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        # Create a temporary file for testing
+        temp_fd, temp_path = tempfile.mkstemp(suffix='.log', prefix='audit_test_')
+        os.close(temp_fd)
+        
+        handler = FileAuditHandler(file_path=temp_path)
+        
+        if handler is None:
+            raise FixtureError("Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler instance is None") from None
+        
+        if not hasattr(handler, 'file_path'):
+            raise FixtureError("Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler missing 'file_path' attribute") from None
+        
+        if handler.file_path != temp_path:
+            raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: Handler file_path is {handler.file_path}, expected {temp_path}") from None
+        
+        # Store temp path for cleanup
+        handler._test_temp_path = temp_path
+        
+        return handler
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_fileaudithandler_with_file_pathtmpauditlog_is_in: {e}") from e
 
 @pytest.fixture
-def the_handler_is_enabled():
+def the_handler_is_enabled(a_fileaudithandler_with_file_pathtmpauditlog_is_in):
     """
     Given the handler is enabled
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        handler = a_fileaudithandler_with_file_pathtmpauditlog_is_in
+        
+        # Enable the handler
+        handler.enabled = True
+        
+        # Verify handler is enabled
+        if not handler.enabled:
+            raise FixtureError("Failed to create fixture the_handler_is_enabled: Handler is not enabled after setting enabled=True") from None
+        
+        return handler
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_handler_is_enabled: {e}") from e
 
 @pytest.fixture
-def the_file_is_opened():
+def the_file_is_opened(the_handler_is_enabled):
     """
     Given the file is opened
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        handler = the_handler_is_enabled
+        
+        # Verify file exists (FileAuditHandler should create it if needed)
+        if not os.path.exists(handler.file_path):
+            # Try to create the file
+            with open(handler.file_path, 'a'):
+                pass
+        
+        # Verify file was created
+        if not os.path.exists(handler.file_path):
+            raise FixtureError(f"Failed to create fixture the_file_is_opened: File {handler.file_path} does not exist") from None
+        
+        return handler
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_file_is_opened: {e}") from e
 
 
 def test_handle_event_writes_formatted_event_to_file(a_fileaudithandler_with_file_pathtmpauditlog_is_in, the_handler_is_enabled, the_file_is_opened):

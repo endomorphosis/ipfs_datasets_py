@@ -7,8 +7,8 @@ This callable saves the compliance report to a JSON file.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.compliance import ComplianceReport, ComplianceStandard, ComplianceRequirement, RequirementResult
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,24 +17,77 @@ def a_compliancereport_instance_exists():
     """
     Given a ComplianceReport instance exists
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        report = ComplianceReport(
+            report_id="test_report_001",
+            standard=ComplianceStandard.GDPR,
+            start_time="2024-01-01T00:00:00",
+            end_time="2024-01-31T23:59:59",
+            requirements=[]
+        )
+        
+        if report is None:
+            raise FixtureError("Failed to create fixture a_compliancereport_instance_exists: Report instance is None") from None
+        
+        if not hasattr(report, 'save_json'):
+            raise FixtureError("Failed to create fixture a_compliancereport_instance_exists: Report missing 'save_json' method") from None
+        
+        return report
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_compliancereport_instance_exists: {e}") from e
 
 @pytest.fixture
-def the_report_has_standardgdpr():
+def the_report_has_standardgdpr(a_compliancereport_instance_exists):
     """
     Given the report has standard=GDPR
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        report = a_compliancereport_instance_exists
+        
+        # Set standard to GDPR
+        report.standard = ComplianceStandard.GDPR
+        
+        # Verify standard is set
+        if report.standard != ComplianceStandard.GDPR:
+            raise FixtureError(f"Failed to create fixture the_report_has_standardgdpr: Report standard is {report.standard}, expected GDPR") from None
+        
+        return report
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_report_has_standardgdpr: {e}") from e
 
 @pytest.fixture
-def the_report_has_5_requirements():
+def the_report_has_5_requirements(the_report_has_standardgdpr):
     """
     Given the report has 5 requirements
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        report = the_report_has_standardgdpr
+        
+        # Create 5 test requirements with results
+        requirements = []
+        for i in range(1, 6):
+            req_result = RequirementResult(
+                requirement=ComplianceRequirement(
+                    id=f"REQ-{i}",
+                    description=f"Test requirement {i}",
+                    categories=[]
+                ),
+                events_checked=10,
+                compliant_events=8,
+                non_compliant_events=2,
+                compliance_percentage=80.0
+            )
+            requirements.append(req_result)
+        
+        report.requirements = requirements
+        
+        # Verify 5 requirements were added
+        if len(report.requirements) != 5:
+            raise FixtureError(f"Failed to create fixture the_report_has_5_requirements: Report has {len(report.requirements)} requirements, expected 5") from None
+        
+        return report
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_report_has_5_requirements: {e}") from e
 
 
 def test_save_json_creates_file_at_specified_path(a_compliancereport_instance_exists, the_report_has_standardgdpr, the_report_has_5_requirements):
