@@ -7,8 +7,8 @@ This callable sets thread-local context that is included in future audit events.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,38 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, '_thread_local'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing '_thread_local' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def the_threadlocal_context_is_empty():
+def the_threadlocal_context_is_empty(an_auditlogger_instance_is_initialized):
     """
     Given the thread-local context is empty
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Clear any existing context
+        if hasattr(logger._thread_local, 'context'):
+            delattr(logger._thread_local, 'context')
+        
+        # Verify context is empty
+        if hasattr(logger._thread_local, 'context'):
+            raise FixtureError("Failed to create fixture the_threadlocal_context_is_empty: Context still exists after clearing") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture the_threadlocal_context_is_empty: {e}") from e
 
 
 def test_set_context_with_user_parameter(an_auditlogger_instance_is_initialized, the_threadlocal_context_is_empty):

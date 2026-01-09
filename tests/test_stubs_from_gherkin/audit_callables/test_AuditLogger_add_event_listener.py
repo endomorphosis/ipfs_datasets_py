@@ -7,8 +7,8 @@ This callable adds a listener function for audit events in real-time.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditCategory
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,38 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, 'event_listeners'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'event_listeners' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def no_event_listeners_are_registered():
+def no_event_listeners_are_registered(an_auditlogger_instance_is_initialized):
     """
     Given no event listeners are registered
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Clear all event listeners
+        logger.event_listeners = {None: []}
+        
+        # Verify no listeners registered
+        total_listeners = sum(len(listeners) for listeners in logger.event_listeners.values())
+        if total_listeners != 0:
+            raise FixtureError(f"Failed to create fixture no_event_listeners_are_registered: Found {total_listeners} listeners, expected 0") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture no_event_listeners_are_registered: {e}") from e
 
 
 def test_add_event_listener_for_all_categories(an_auditlogger_instance_is_initialized, no_event_listeners_are_registered):

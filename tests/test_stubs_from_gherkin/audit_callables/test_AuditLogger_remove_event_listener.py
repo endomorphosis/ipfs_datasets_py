@@ -7,8 +7,8 @@ This callable removes a listener function from audit event notifications.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,44 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, 'event_listeners'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing 'event_listeners' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def a_listener_function_is_registered_for_all_categori():
+def a_listener_function_is_registered_for_all_categori(an_auditlogger_instance_is_initialized):
     """
     Given a listener function is registered for all categories
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Create a test listener function
+        def test_listener(event):
+            pass
+        
+        # Register the listener for all categories (category=None)
+        logger.add_event_listener(test_listener, category=None)
+        
+        # Verify listener was added
+        if test_listener not in logger.event_listeners.get(None, []):
+            raise FixtureError("Failed to create fixture a_listener_function_is_registered_for_all_categori: Listener not found in event_listeners[None]") from None
+        
+        # Store listener function on logger for test access
+        logger._test_listener = test_listener
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture a_listener_function_is_registered_for_all_categori: {e}") from e
 
 
 def test_remove_event_listener_returns_true_when_found(an_auditlogger_instance_is_initialized, a_listener_function_is_registered_for_all_categori):

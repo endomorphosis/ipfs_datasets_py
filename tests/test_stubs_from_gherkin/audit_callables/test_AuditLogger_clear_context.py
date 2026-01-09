@@ -7,8 +7,8 @@ This callable clears the thread-local context for audit events.
 
 import pytest
 
-# TODO: Import actual classes from ipfs_datasets_py.audit
-# from ipfs_datasets_py.audit import ...
+from ipfs_datasets_py.audit.audit_logger import AuditLogger
+from ..conftest import FixtureError
 
 
 # Fixtures from Background
@@ -17,16 +17,44 @@ def an_auditlogger_instance_is_initialized():
     """
     Given an AuditLogger instance is initialized
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = AuditLogger()
+        
+        if logger is None:
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger instance is None") from None
+        
+        if not hasattr(logger, '_thread_local'):
+            raise FixtureError("Failed to create fixture an_auditlogger_instance_is_initialized: AuditLogger missing '_thread_local' attribute") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture an_auditlogger_instance_is_initialized: {e}") from e
 
 @pytest.fixture
-def set_context_was_called_with_useralice_session_idse():
+def set_context_was_called_with_useralice_session_idse(an_auditlogger_instance_is_initialized):
     """
     Given set_context() was called with user="alice", session_id="sess123"
     """
-    # TODO: Implement fixture
-    pass
+    try:
+        logger = an_auditlogger_instance_is_initialized
+        
+        # Set context values
+        logger.set_context(user="alice", session_id="sess123")
+        
+        # Verify context was set
+        if not hasattr(logger._thread_local, 'context'):
+            raise FixtureError("Failed to create fixture set_context_was_called_with_useralice_session_idse: Context not set after set_context() call") from None
+        
+        context = logger._thread_local.context
+        if context.get('user') != "alice":
+            raise FixtureError(f"Failed to create fixture set_context_was_called_with_useralice_session_idse: User is {context.get('user')}, expected 'alice'") from None
+        
+        if context.get('session_id') != "sess123":
+            raise FixtureError(f"Failed to create fixture set_context_was_called_with_useralice_session_idse: Session ID is {context.get('session_id')}, expected 'sess123'") from None
+        
+        return logger
+    except Exception as e:
+        raise FixtureError(f"Failed to create fixture set_context_was_called_with_useralice_session_idse: {e}") from e
 
 
 def test_clear_context_removes_all_context_values(an_auditlogger_instance_is_initialized, set_context_was_called_with_useralice_session_idse):
