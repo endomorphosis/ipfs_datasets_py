@@ -660,8 +660,19 @@ def test_log_method_notifies_event_listeners(an_auditlogger_instance_is_initiali
     Then:
         all 2 listeners are called with the event
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SECURITY
+    expected_action = "breach"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._test_listener_calls)
+    expected_result = 1
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_none_when_logger_is_disabled(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -677,8 +688,21 @@ def test_log_method_returns_none_when_logger_is_disabled(an_auditlogger_instance
     Then:
         None is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.enabled = False
+    
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result
+    expected_result = None
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_no_event_when_logger_is_disabled(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -694,8 +718,22 @@ def test_log_method_creates_no_event_when_logger_is_disabled(an_auditlogger_inst
     Then:
         no event is created
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.enabled = False
+    initial_event_count = len(at_least_one_audit_handler_is_attached._events)
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._events)
+    expected_result = initial_event_count
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_none_when_level_is_below_min_level(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -711,8 +749,21 @@ def test_log_method_returns_none_when_level_is_below_min_level(an_auditlogger_in
     Then:
         None is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.min_level = AuditLevel.WARNING
+    
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result
+    expected_result = None
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_no_event_when_level_is_below_min_level(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -728,8 +779,22 @@ def test_log_method_creates_no_event_when_level_is_below_min_level(an_auditlogge
     Then:
         no event is created
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.min_level = AuditLevel.WARNING
+    initial_event_count = len(at_least_one_audit_handler_is_attached._events)
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._events)
+    expected_result = initial_event_count
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_none_when_category_is_excluded(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -745,8 +810,21 @@ def test_log_method_returns_none_when_category_is_excluded(an_auditlogger_instan
     Then:
         None is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.OPERATIONAL
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.excluded_categories = [AuditCategory.OPERATIONAL]
+    
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result
+    expected_result = None
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_no_event_when_category_is_excluded(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -762,8 +840,22 @@ def test_log_method_creates_no_event_when_category_is_excluded(an_auditlogger_in
     Then:
         no event is created
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.OPERATIONAL
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.excluded_categories = [AuditCategory.OPERATIONAL]
+    initial_event_count = len(at_least_one_audit_handler_is_attached._events)
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._events)
+    expected_result = initial_event_count
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_none_when_category_not_in_included_categories(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -779,8 +871,21 @@ def test_log_method_returns_none_when_category_not_in_included_categories(an_aud
     Then:
         None is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.included_categories = [AuditCategory.SECURITY]
+    
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result
+    expected_result = None
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_no_event_when_category_not_in_included_categories(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -796,8 +901,22 @@ def test_log_method_creates_no_event_when_category_not_in_included_categories(an
     Then:
         no event is created
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.included_categories = [AuditCategory.SECURITY]
+    initial_event_count = len(at_least_one_audit_handler_is_attached._events)
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._events)
+    expected_result = initial_event_count
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_captures_source_module_from_call_stack(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -810,8 +929,20 @@ def test_log_method_captures_source_module_from_call_stack(an_auditlogger_instan
     Then:
         the created event has source_module attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'source_module')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_captures_source_module_not_from_audit_logger(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -824,8 +955,20 @@ def test_log_method_captures_source_module_not_from_audit_logger(an_auditlogger_
     Then:
         source_module is not "audit_logger.py"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.source_module != "audit_logger.py"
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_captures_source_function_from_call_stack(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -838,8 +981,20 @@ def test_log_method_captures_source_function_from_call_stack(an_auditlogger_inst
     Then:
         the created event has source_function attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'source_function')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_captures_non_empty_source_function(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -852,8 +1007,20 @@ def test_log_method_captures_non_empty_source_function(an_auditlogger_instance_i
     Then:
         source_function is a non-empty string
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = len(last_event.source_function) > 0
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_handles_handler_exceptions_gracefully(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -869,7 +1036,28 @@ def test_log_method_handles_handler_exceptions_gracefully(an_auditlogger_instanc
     Then:
         the method completes without raising Exception
     """
-    # TODO: Implement test
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    # Create a handler that raises exception
+    class FailingHandler(AuditHandler):
+        def _handle_event(self, event):
+            raise Exception("Handler failure")
+    
+    failing_handler = FailingHandler()
+    at_least_one_audit_handler_is_attached.add_handler(failing_handler)
+    
+    # Call log - should not raise exception
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result is not None
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
     pass
 
 
@@ -886,8 +1074,27 @@ def test_log_method_returns_event_id_despite_handler_exceptions(an_auditlogger_i
     Then:
         the event_id is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    # Create a handler that raises exception
+    class FailingHandler(AuditHandler):
+        def _handle_event(self, event):
+            raise Exception("Handler failure")
+    
+    failing_handler = FailingHandler()
+    at_least_one_audit_handler_is_attached.add_handler(failing_handler)
+    
+    result = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = isinstance(result, str)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_stores_event_in_events_list(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -900,8 +1107,21 @@ def test_log_method_stores_event_in_events_list(an_auditlogger_instance_is_initi
     Then:
         the event is appended to the events list
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    initial_event_count = len(at_least_one_audit_handler_is_attached._events)
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = len(at_least_one_audit_handler_is_attached._events)
+    expected_result = initial_event_count + 1
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_default_status(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -914,8 +1134,20 @@ def test_log_method_creates_event_with_default_status(an_auditlogger_instance_is
     Then:
         the created event has status="success"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.status
+    expected_result = "success"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_default_hostname(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -928,8 +1160,20 @@ def test_log_method_creates_event_with_default_hostname(an_auditlogger_instance_
     Then:
         the created event has hostname attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'hostname')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_non_empty_hostname(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -942,8 +1186,20 @@ def test_log_method_creates_event_with_non_empty_hostname(an_auditlogger_instanc
     Then:
         hostname is a non-empty string
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = len(last_event.hostname) > 0
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_default_process_id(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -956,8 +1212,20 @@ def test_log_method_creates_event_with_default_process_id(an_auditlogger_instanc
     Then:
         the created event has process_id attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'process_id')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_positive_integer_process_id(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -970,6 +1238,18 @@ def test_log_method_creates_event_with_positive_integer_process_id(an_auditlogge
     Then:
         process_id is a positive integer
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "test"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = isinstance(last_event.process_id, int) and last_event.process_id > 0
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
