@@ -87,6 +87,10 @@ def at_least_one_audit_handler_is_attached(the_audit_logger_is_enabled):
         if handler not in logger.handlers:
             raise FixtureError("Failed to create fixture at_least_one_audit_handler_is_attached: Test handler not found in logger.handlers") from None
         
+        # Store handler and events list on logger for easy test access
+        logger._test_handler = handler
+        logger._events = handler.events
+        
         return logger
     except Exception as e:
         raise FixtureError(f"Failed to create fixture at_least_one_audit_handler_is_attached: {e}") from e
@@ -339,8 +343,22 @@ def test_log_method_includes_resource_id_in_event_when_provided(an_auditlogger_i
     Then:
         the created event has resource_id="file123"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    expected_resource_id = "file123"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        resource_id=expected_resource_id
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.resource_id
+    expected_result = "file123"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_resource_type_in_event_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -353,8 +371,22 @@ def test_log_method_includes_resource_type_in_event_when_provided(an_auditlogger
     Then:
         the created event has resource_type="dataset"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    expected_resource_type = "dataset"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        resource_type=expected_resource_type
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.resource_type
+    expected_result = "dataset"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_status_in_event_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -367,8 +399,22 @@ def test_log_method_includes_status_in_event_when_provided(an_auditlogger_instan
     Then:
         the created event has status="failure"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    expected_status = "failure"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        status=expected_status
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.status
+    expected_result = "failure"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_details_dictionary_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -381,8 +427,22 @@ def test_log_method_includes_details_dictionary_when_provided(an_auditlogger_ins
     Then:
         the created event has details dictionary
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    expected_details = {"file_size": 1024}
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        details=expected_details
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = isinstance(last_event.details, dict)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_details_with_correct_content(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -395,8 +455,24 @@ def test_log_method_includes_details_with_correct_content(an_auditlogger_instanc
     Then:
         details contains key "file_size" with value 1024
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    expected_details = {"file_size": 1024}
+    expected_file_size_key = "file_size"
+    expected_file_size_value = 1024
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        details=expected_details
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.details.get(expected_file_size_key)
+    expected_result = 1024
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_client_ip_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
