@@ -485,8 +485,22 @@ def test_log_method_includes_client_ip_when_provided(an_auditlogger_instance_is_
     Then:
         the created event has client_ip="192.168.1.1"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    expected_client_ip = "192.168.1.1"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        client_ip=expected_client_ip
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.client_ip
+    expected_result = "192.168.1.1"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_session_id_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -499,8 +513,22 @@ def test_log_method_includes_session_id_when_provided(an_auditlogger_instance_is
     Then:
         the created event has session_id="sess123"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    expected_session_id = "sess123"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        session_id=expected_session_id
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.session_id
+    expected_result = "sess123"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_applies_thread_local_context_user_to_event(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -516,8 +544,26 @@ def test_log_method_applies_thread_local_context_user_to_event(an_auditlogger_in
     Then:
         the created event has user="bob"
     """
-    # TODO: Implement test
-    pass
+    expected_context_user = "bob"
+    expected_context_session_id = "sess456"
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    
+    # Set thread-local context first
+    at_least_one_audit_handler_is_attached.set_context(user=expected_context_user, session_id=expected_context_session_id)
+    
+    # Call log without explicit user parameter
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.user
+    expected_result = "bob"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_applies_thread_local_context_session_id_to_event(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -533,8 +579,26 @@ def test_log_method_applies_thread_local_context_session_id_to_event(an_auditlog
     Then:
         the created event has session_id="sess456"
     """
-    # TODO: Implement test
-    pass
+    expected_context_user = "bob"
+    expected_context_session_id = "sess456"
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    
+    # Set thread-local context first
+    at_least_one_audit_handler_is_attached.set_context(user=expected_context_user, session_id=expected_context_session_id)
+    
+    # Call log without explicit session_id parameter
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.session_id
+    expected_result = "sess456"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_dispatches_event_to_all_handlers(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -550,8 +614,37 @@ def test_log_method_dispatches_event_to_all_handlers(an_auditlogger_instance_is_
     Then:
         all 3 handlers receive the event
     """
-    # TODO: Implement test
-    pass
+    expected_handler_count = 3
+    expected_level = AuditLevel.SYSTEM
+    expected_category = AuditCategory.SYSTEM
+    expected_action = "startup"
+    
+    # Add 2 more handlers (1 already exists from fixture)
+    class TestHandler2(AuditHandler):
+        def __init__(self, name):
+            super().__init__(name=name)
+            self.events = []
+        def _handle_event(self, event: AuditEvent) -> bool:
+            self.events.append(event)
+            return True
+    
+    handler2 = TestHandler2("handler2")
+    handler3 = TestHandler2("handler3")
+    at_least_one_audit_handler_is_attached.add_handler(handler2)
+    at_least_one_audit_handler_is_attached.add_handler(handler3)
+    
+    # Call log
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    # Count handlers that received events
+    handlers_with_events = sum(1 for h in at_least_one_audit_handler_is_attached.handlers if len(h.events) > 0)
+    actual_result = handlers_with_events
+    expected_result = 3
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_notifies_event_listeners(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
