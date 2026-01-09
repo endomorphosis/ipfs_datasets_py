@@ -102,8 +102,19 @@ def test_log_method_creates_audit_event(an_auditlogger_instance_is_initialized, 
     Then:
         an AuditEvent is created
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    result_event_id = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = result_event_id is not None
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_event_id_attribute(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -116,8 +127,20 @@ def test_log_method_creates_event_with_event_id_attribute(an_auditlogger_instanc
     Then:
         the event has event_id attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'event_id')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_timestamp_attribute(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -130,8 +153,20 @@ def test_log_method_creates_event_with_timestamp_attribute(an_auditlogger_instan
     Then:
         the event has timestamp attribute
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = hasattr(last_event, 'timestamp')
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_correct_level(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -144,8 +179,20 @@ def test_log_method_creates_event_with_correct_level(an_auditlogger_instance_is_
     Then:
         the event level is INFO
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.level
+    expected_result = AuditLevel.INFO
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_correct_category(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -158,8 +205,20 @@ def test_log_method_creates_event_with_correct_category(an_auditlogger_instance_
     Then:
         the event category is AUTHENTICATION
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.category
+    expected_result = AuditCategory.AUTHENTICATION
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_creates_event_with_correct_action(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -172,8 +231,20 @@ def test_log_method_creates_event_with_correct_action(an_auditlogger_instance_is
     Then:
         the event action is "login"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.AUTHENTICATION
+    expected_action = "login"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.action
+    expected_result = "login"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_event_id(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -186,8 +257,19 @@ def test_log_method_returns_event_id(an_auditlogger_instance_is_initialized, the
     Then:
         a string event_id is returned
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    
+    result_event_id = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    actual_result = isinstance(result_event_id, str)
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_returns_valid_uuid_as_event_id(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -200,8 +282,23 @@ def test_log_method_returns_valid_uuid_as_event_id(an_auditlogger_instance_is_in
     Then:
         the event_id is a valid UUID
     """
-    # TODO: Implement test
-    pass
+    import uuid
+    
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    
+    result_event_id = at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action
+    )
+    
+    # Attempt to create UUID object from the result
+    parsed_uuid = uuid.UUID(result_event_id)
+    actual_result = str(parsed_uuid) == result_event_id
+    expected_result = True
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_user_in_event_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
@@ -214,8 +311,22 @@ def test_log_method_includes_user_in_event_when_provided(an_auditlogger_instance
     Then:
         the created event has user="alice"
     """
-    # TODO: Implement test
-    pass
+    expected_level = AuditLevel.INFO
+    expected_category = AuditCategory.DATA_ACCESS
+    expected_action = "read"
+    expected_user = "alice"
+    
+    at_least_one_audit_handler_is_attached.log(
+        level=expected_level,
+        category=expected_category,
+        action=expected_action,
+        user=expected_user
+    )
+    
+    last_event = at_least_one_audit_handler_is_attached._events[-1]
+    actual_result = last_event.user
+    expected_result = "alice"
+    assert actual_result == expected_result, f"expected {expected_result}, got {actual_result}"
 
 
 def test_log_method_includes_resource_id_in_event_when_provided(an_auditlogger_instance_is_initialized, the_audit_logger_is_enabled, at_least_one_audit_handler_is_attached):
