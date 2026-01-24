@@ -459,9 +459,9 @@ class YtDlpWrapper:
                 'output_dir': str(output_dir)
             }
             
-            # Execute download in thread pool
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, self._download_with_ytdlp, url, ydl_opts, extract_info_only
+            # Execute download in thread pool using anyio
+            result = await anyio.to_thread.run_sync(
+                self._download_with_ytdlp, url, ydl_opts, extract_info_only
             )
             
             # Update tracking
@@ -734,9 +734,9 @@ class YtDlpWrapper:
                 'output_dir': str(output_path)
             }
             
-            # Execute download
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, self._download_playlist_with_ytdlp, playlist_url, ydl_opts
+            # Execute download using anyio
+            result = await anyio.to_thread.run_sync(
+                self._download_playlist_with_ytdlp, playlist_url, ydl_opts
             )
             
             result.update({
@@ -1321,11 +1321,18 @@ class YtDlpWrapper:
                         **kwargs
                     )
             
-            # Execute all downloads concurrently
-            results = await asyncio.gather(
-                *[_download_with_semaphore(url) for url in urls],
-                return_exceptions=True
-            )
+            # Execute all downloads concurrently using anyio task group
+            results = []
+            async with anyio.create_task_group() as tg:
+                async def collect_result(url):
+                    try:
+                        result = await _download_with_semaphore(url)
+                        results.append(result)
+                    except Exception as e:
+                        results.append(e)
+                
+                for url in urls:
+                    tg.start_soon(collect_result, url)
             
             # Process results
             successful_downloads = []

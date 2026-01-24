@@ -3410,9 +3410,10 @@ class ResilienceManager:
 
                 tasks.append(sync_with_node(node_id))
 
-            # Wait for batch to complete
-            await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks)
+            # Wait for batch to complete using anyio task group
+            async with anyio.create_task_group() as tg:
+                for task_coro in tasks:
+                    tg.start_soon(task_coro)
 
         # Complete operation
         return operation.complete()
@@ -3612,8 +3613,8 @@ class ResilienceManager:
         async def execute_with_timeout(node_id):
             async with semaphore:
                 try:
-                    return await # TODO: Convert to anyio.fail_after() context manager
-    asyncio.wait_for(func(node_id), timeout_sec)
+                    with anyio.fail_after(timeout_sec):
+                        return await func(node_id)
                 except TimeoutError:
                     return TimeoutError(f"Operation timed out after {timeout_sec} seconds")
                 except Exception as e:
@@ -3622,36 +3623,20 @@ class ResilienceManager:
         # Create tasks
         tasks = {node_id: execute_with_timeout(node_id) for node_id in healthy_nodes}
 
-        # Wait for all tasks to complete or until min_success_count is reached
-        pending = set(# TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(coro) for coro in tasks.values())
-        success_count = 0
-
-        while pending and success_count < min_success_count:
-            done, pending = await asyncio.wait(
-                pending,
-                return_when=asyncio.FIRST_COMPLETED
-            )
-
-            # Process completed tasks
-            for task in done:
-                result = task.result()
-                # Count successes (not exceptions)
-                if not isinstance(result, Exception):
-                    success_count += 1
-
-        # Cancel any pending tasks if we have enough successes
-        if success_count >= min_success_count and pending:
-            for task in pending:
-                task.cancel()
-
-        # Wait for all tasks to complete
-        done, pending = await asyncio.wait(tasks.values(), return_when=asyncio.ALL_COMPLETED)
+        # Execute all tasks concurrently using anyio
+        results_dict = {}
+        async with anyio.create_task_group() as tg:
+            async def run_and_collect(node_id, coro):
+                result = await coro
+                results_dict[node_id] = result
+            
+            for node_id, coro in tasks.items():
+                tg.start_soon(run_and_collect, node_id, coro)
 
         # Map results back to node IDs
-        for node_id, task in zip(tasks.keys(), tasks.values()):
+        for node_id in tasks.keys():
             try:
-                results[node_id] = task.result()
+                results[node_id] = results_dict.get(node_id)
             except Exception as e:
                 results[node_id] = e
 
@@ -3752,9 +3737,18 @@ class ResilienceManager:
 
             tasks.append(send_to_node(node_id))
 
-        # Wait for all sends to complete
-        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=True)
+        # Wait for all sends to complete using anyio task group
+        results = []
+        async with anyio.create_task_group() as tg:
+            async def collect_result(task_coro):
+                try:
+                    result = await task_coro
+                    results.append(result)
+                except Exception as e:
+                    results.append(e)
+            
+            for task_coro in tasks:
+                tg.start_soon(collect_result, task_coro)
 
         # Count successes and failures
         for result in results:
