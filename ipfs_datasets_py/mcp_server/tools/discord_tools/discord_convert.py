@@ -104,16 +104,22 @@ async def discord_convert_export(
         
         # Build success response
         import os
+        from pathlib import Path
+        
         file_size = os.path.getsize(output_path) if os.path.exists(output_path) else 0
+        
+        # Detect input format from file extension
+        input_ext = Path(input_path).suffix.lower().lstrip('.')
+        from_format = input_ext if input_ext else 'json'  # Default to json if no extension
         
         return {
             'status': 'success',
             'input_path': input_path,
             'output_path': output_path,
-            'from_format': 'json',  # Discord exports are typically JSON
+            'from_format': from_format,
             'to_format': to_format,
             'file_size': file_size,
-            'message': f'Successfully converted to {to_format}'
+            'message': f'Successfully converted from {from_format} to {to_format}'
         }
     
     except ImportError as e:

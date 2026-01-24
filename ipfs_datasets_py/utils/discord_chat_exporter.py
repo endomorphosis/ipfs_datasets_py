@@ -233,7 +233,10 @@ class DiscordChatExporter:
                         continue
                     # Resolve target path and ensure it stays within install_dir
                     resolved_target = (install_dir_path / member_path).resolve()
-                    if not str(resolved_target).startswith(str(install_dir_path) + os.sep) and resolved_target != install_dir_path:
+                    # Use pathlib's is_relative_to for robust cross-platform path validation
+                    try:
+                        resolved_target.relative_to(install_dir_path)
+                    except ValueError:
                         logger.warning(f"Skipping potentially unsafe path in archive: {member.filename}")
                         continue
                     safe_members.append(member)

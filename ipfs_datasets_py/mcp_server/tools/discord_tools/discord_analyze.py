@@ -272,7 +272,9 @@ async def discord_analyze_export(
             if export_path_obj.is_absolute():
                 # Allow absolute paths if they resolve inside base_dir
                 resolved_export = export_path_obj.resolve()
-                if not str(resolved_export).startswith(str(base_dir) + os.sep) and resolved_export != base_dir:
+                try:
+                    resolved_export.relative_to(base_dir)
+                except ValueError:
                     return {
                         "status": "error",
                         "error": f"Absolute export paths must be within {base_dir}",
