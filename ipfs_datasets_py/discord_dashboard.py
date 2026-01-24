@@ -89,10 +89,18 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
                     "message": f"Token is valid. Found {result['count']} accessible servers."
                 })
             else:
+                # Use a generic error message unless it's a known, safe value
+                error_message = result.get('error') or 'Token validation failed'
+                if error_message not in {
+                    "Discord wrapper not available",
+                    "Discord token is required",
+                    "Discord wrapper not available for this operation"
+                }:
+                    error_message = 'Token validation failed'
                 return jsonify({
                     "status": "error",
                     "valid": False,
-                    "error": result.get('error', 'Token validation failed')
+                    "error": error_message
                 }), 401
                 
         except Exception as e:
@@ -100,7 +108,7 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
             return jsonify({
                 "status": "error",
                 "valid": False,
-                "error": str(e)
+                "error": "Internal server error while testing token"
             }), 500
     
     @discord_bp.route('/api/list_guilds', methods=['GET'])

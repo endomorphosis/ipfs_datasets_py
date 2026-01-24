@@ -192,7 +192,7 @@ class DiscordWrapper:
             logger.error(f"Failed to list guilds: {e}")
             return {
                 'status': 'error',
-                'error': str(e),
+                'error': 'Failed to list guilds due to an internal error.',
                 'guilds': [],
                 'count': 0
             }

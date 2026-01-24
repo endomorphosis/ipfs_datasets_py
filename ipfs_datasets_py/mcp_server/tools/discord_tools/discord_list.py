@@ -77,7 +77,7 @@ async def discord_list_guilds(token: Optional[str] = None) -> Dict[str, Any]:
         logger.error(f"Failed to list Discord guilds: {e}")
         return {
             "status": "error",
-            "error": str(e),
+            "error": "Failed to list Discord guilds due to an internal error.",
             "guilds": [],
             "count": 0,
             "tool": "discord_list_guilds"
@@ -194,7 +194,7 @@ async def discord_list_dm_channels(token: Optional[str] = None) -> Dict[str, Any
         logger.error(f"Failed to list Discord DM channels: {e}")
         return {
             "status": "error",
-            "error": str(e),
+            "error": "Failed to list Discord DM channels due to an internal error.",
             "channels": [],
             "count": 0,
             "tool": "discord_list_dm_channels"
