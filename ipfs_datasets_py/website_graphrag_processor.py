@@ -499,8 +499,19 @@ class WebsiteGraphRAGProcessor:
                 return await self.process_website(url, **kwargs)
         
         tasks = [process_single(url) for url in urls]
-        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Execute all processing concurrently using anyio task group
+        results = []
+        async with anyio.create_task_group() as tg:
+            async def collect_result(task_coro):
+                try:
+                    result = await task_coro
+                    results.append(result)
+                except Exception as e:
+                    results.append(e)
+            
+            for task_coro in tasks:
+                tg.start_soon(collect_result, task_coro)
         
         # Filter out exceptions and log errors
         successful_results = []

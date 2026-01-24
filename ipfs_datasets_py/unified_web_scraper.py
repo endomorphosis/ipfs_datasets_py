@@ -686,8 +686,18 @@ class UnifiedWebScraper:
                 return result
         
         tasks = [scrape_with_semaphore(url) for url in urls]
-        return await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=False)
+        
+        # Execute all scrapes concurrently using anyio task group
+        results = []
+        async with anyio.create_task_group() as tg:
+            async def collect_result(task_coro):
+                result = await task_coro
+                results.append(result)
+            
+            for task_coro in tasks:
+                tg.start_soon(collect_result, task_coro)
+        
+        return results
     
     def scrape_multiple_sync(self, urls: List[str], **kwargs) -> List[ScraperResult]:
         """Synchronous version of scrape_multiple."""

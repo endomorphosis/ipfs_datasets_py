@@ -121,9 +121,18 @@ class ExampleDataProcessor:
                     # Create task for each item
                     tasks.append(self._process_item_async(item, f"{chunk_id}_{j}"))
 
-                # Wait for all tasks to complete
-                results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=True)
+                # Wait for all tasks to complete using anyio task group
+                results = []
+                async with anyio.create_task_group() as tg:
+                    async def collect_result(task_coro):
+                        try:
+                            result = await task_coro
+                            results.append(result)
+                        except Exception as e:
+                            results.append(e)
+                    
+                    for task_coro in tasks:
+                        tg.start_soon(collect_result, task_coro)
 
                 # Count successful results
                 for result in results:
