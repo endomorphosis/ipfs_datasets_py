@@ -3611,7 +3611,7 @@ class ResilienceManager:
                 try:
                     with anyio.fail_after(timeout_sec):
                         return await func(node_id)
-                except TimeoutError:
+                except (TimeoutError, anyio.get_cancelled_exc_class()) as e:
                     return TimeoutError(f"Operation timed out after {timeout_sec} seconds")
                 except Exception as e:
                     return e

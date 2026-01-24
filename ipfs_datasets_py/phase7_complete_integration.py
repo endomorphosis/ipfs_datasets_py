@@ -319,19 +319,17 @@ class Phase7AdvancedGraphRAGSystem:
                     result = await self.process_website_with_ml_analysis(url, processing_options)
                     return url, result
             
-            # Execute all processing tasks
-            for url in website_urls:
-                task = # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(process_single_website(url))
-                processing_tasks.append(task)
-            
-            # Collect results
-            for task in asyncio.as_completed(processing_tasks):
-                try:
-                    url, result = await task
-                    website_results[url] = result
-                except Exception as e:
-                    logger.error(f"Failed to process website in batch: {e}")
+            # Execute all processing tasks using anyio task group
+            async with anyio.create_task_group() as tg:
+                async def collect_result(url):
+                    try:
+                        url, result = await process_single_website(url)
+                        website_results[url] = result
+                    except Exception as e:
+                        logger.error(f"Failed to process website {url} in batch: {e}")
+                
+                for url in website_urls:
+                    tg.start_soon(collect_result, url)
             
             # Step 2: Cross-website correlation analysis
             if self.config.enable_cross_site_analysis and len(website_results) > 1:
