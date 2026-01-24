@@ -255,8 +255,27 @@ async def discord_analyze_export(
         # and prevents path traversal through user-controlled export_path values.
         base_dir = Path(os.environ.get("DISCORD_EXPORT_BASE_DIR", ".")).resolve()
 
-        # Build the full path relative to the base directory and resolve it to a normalized path
-        export_file = (base_dir / export_path).resolve()
+        # Validate the user-provided export_path before using it in a filesystem operation.
+        if not export_path or not isinstance(export_path, str):
+            return {
+                "status": "error",
+                "error": "Invalid export path",
+                "export_path": export_path,
+            }
+
+        export_path_obj = Path(export_path)
+
+        # Reject absolute paths to ensure callers cannot escape the configured base directory.
+        if export_path_obj.is_absolute():
+            return {
+                "status": "error",
+                "error": "Absolute export paths are not allowed",
+                "export_path": export_path,
+            }
+
+        # Build the full path relative to the base directory and resolve it to a normalized path.
+        # Using resolve() on the joined path prevents traversal via ".." segments.
+        export_file = (base_dir / export_path_obj).resolve()
 
         # Ensure the resolved path is within the allowed base directory
         try:
