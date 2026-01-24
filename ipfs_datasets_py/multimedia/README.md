@@ -65,6 +65,35 @@ Utility functions and helpers for media operations.
 - Error handling and recovery
 - Progress reporting and logging
 
+### DiscordWrapper (`discord_wrapper.py`)
+Discord chat history export and analysis with DiscordChatExporter integration.
+
+**Capabilities:**
+- Export chat histories from Discord channels, servers (guilds), and DMs
+- Multiple export formats: JSON, HTML (Dark/Light), CSV, PlainText
+- Media asset downloading (attachments, avatars, emojis)
+- Date range filtering and message content filtering
+- Thread export support (active and archived threads)
+- Automatic pagination and rate limit handling
+- Chat data analysis (user activity, content patterns, temporal analysis)
+
+**Main Methods:**
+- `list_guilds()` - List all accessible Discord servers
+- `list_channels()` - List channels in a specific server
+- `list_dm_channels()` - List all direct message conversations
+- `export_channel()` - Export a single channel's history
+- `export_guild()` - Export all channels in a server
+- `export_all()` - Export all accessible channels and DMs
+
+**Key Features:**
+- **Cross-Platform Support**: Automatic binary installation for Linux, macOS, Windows (x64, arm64, arm)
+- **Format Options**: JSON for analysis, HTML for archives, CSV for data processing, PlainText for search
+- **Advanced Filtering**: Message filters (from:user, has:image, mentions:user, etc.)
+- **Media Handling**: Download and organize message attachments, user avatars, custom emojis
+- **Thread Support**: Export both active and archived threads with parent channel context
+- **Partition Support**: Split large exports by message count or file size
+- **Progress Tracking**: Monitor export progress for long-running operations
+
 ## Usage Examples
 
 ### Video Processing
@@ -147,6 +176,79 @@ print(f"Resolution: {info.width}x{info.height}")
 print(f"Quality score: {info.quality_score}")
 ```
 
+### Discord Chat Export
+```python
+from ipfs_datasets_py.multimedia import DiscordWrapper
+import asyncio
+
+async def export_discord_data():
+    # Initialize wrapper with Discord token
+    wrapper = DiscordWrapper(
+        token="YOUR_DISCORD_TOKEN",
+        default_format="Json",
+        default_output_dir="/exports/discord"
+    )
+    
+    # List all accessible servers
+    guilds = await wrapper.list_guilds()
+    print(f"Found {guilds['count']} servers")
+    
+    # Export a specific channel
+    result = await wrapper.export_channel(
+        channel_id="123456789",
+        format="Json",
+        download_media=True,  # Download attachments
+        after="2024-01-01",   # Messages after this date
+        filter_text="from:username has:image"  # Optional filtering
+    )
+    
+    print(f"Exported to: {result['output_path']}")
+    
+    # Export entire server
+    server_result = await wrapper.export_guild(
+        guild_id="987654321",
+        include_threads="all",  # Include all threads
+        include_vc=True         # Include voice channels
+    )
+    
+    print(f"Exported {server_result['channels_exported']} channels")
+
+asyncio.run(export_discord_data())
+```
+
+### Discord Data Analysis
+```python
+from ipfs_datasets_py.mcp_server.tools.discord_tools import (
+    discord_analyze_channel,
+    discord_analyze_export
+)
+import asyncio
+
+async def analyze_discord():
+    # Analyze a channel (exports automatically)
+    analysis = await discord_analyze_channel(
+        channel_id="123456789",
+        token="YOUR_TOKEN",
+        analysis_types=['message_stats', 'user_activity', 'content_patterns']
+    )
+    
+    # Print analysis results
+    if analysis['status'] == 'success':
+        stats = analysis['analyses']['message_stats']
+        print(f"Total messages: {stats['total_messages']}")
+        
+        activity = analysis['analyses']['user_activity']
+        print(f"Active users: {activity['total_users']}")
+        print(f"Top user: {activity['most_active_user']}")
+    
+    # Analyze a previously exported file
+    file_analysis = await discord_analyze_export(
+        export_path="/exports/discord/channel_123456789.json"
+    )
+
+asyncio.run(analyze_discord())
+```
+
 ## Configuration
 
 ### FFmpeg Configuration
@@ -198,6 +300,12 @@ processor_config = {
 
 ### Image Formats (from video)
 - **Output**: JPG, PNG, WebP, BMP (frame extraction)
+
+### Discord Export Formats
+- **JSON**: Machine-readable format for data analysis and processing
+- **HTML (Dark/Light)**: Human-readable archives with full formatting and media
+- **CSV**: Spreadsheet format for statistical analysis
+- **PlainText**: Simple text format for searching and reading
 
 ## Advanced Features
 
@@ -279,6 +387,11 @@ The multimedia module integrates with:
 - `ffmpeg-python` - FFmpeg Python bindings
 - `asyncio` - Asynchronous media processing
 
+### Discord Dependencies
+- No additional Python dependencies required
+- DiscordChatExporter CLI automatically downloaded on first use
+- Supports Linux (x64, arm64, arm, musl), macOS (x64, arm64), Windows (x64, x86, arm64)
+
 ### Optional Dependencies
 - `opencv-python` - Advanced image/video processing
 - `pillow` - Image manipulation and optimization
@@ -309,8 +422,10 @@ pip install ipfs-datasets-py[multimedia]
 
 ## See Also
 
+- [Discord Usage Examples](../../docs/discord_usage_examples.md) - Comprehensive Discord integration guide
 - [PDF Processing](../pdf_processing/README.md) - Document processing capabilities
 - [Utils](../utils/README.md) - Text processing utilities
 - [Embeddings](../embeddings/README.md) - Generate embeddings from media content
 - [IPFS Integration Guide](../../docs/distributed_features.md) - Decentralized storage
 - [Performance Guide](../../docs/performance_optimization.md) - Media processing optimization
+- [DiscordChatExporter Repository](https://github.com/Tyrrrz/DiscordChatExporter) - Upstream project

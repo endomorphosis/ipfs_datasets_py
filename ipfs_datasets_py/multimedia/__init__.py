@@ -4,6 +4,7 @@ Multimedia processing library for IPFS Datasets Python.
 This module provides comprehensive multimedia processing capabilities including:
 - Video and audio downloading (yt-dlp)
 - Media format conversion (FFmpeg)
+- Discord chat export and analysis
 - Media analysis and metadata extraction
 - Streaming and transcoding
 - Batch processing of multimedia content
@@ -14,8 +15,25 @@ optimized workflows for content processing and distribution.
 
 from .ytdlp_wrapper import YtDlpWrapper
 from .ffmpeg_wrapper import FFmpegWrapper
-from .media_processor import MediaProcessor
+
+# Import MediaProcessor conditionally (requires pydantic)
+try:
+    from .media_processor import MediaProcessor
+    HAVE_MEDIA_PROCESSOR = True
+except ImportError:
+    HAVE_MEDIA_PROCESSOR = False
+    MediaProcessor = None
+
 from .media_utils import MediaUtils
+
+# Import Discord wrapper (new addition)
+try:
+    from .discord_wrapper import DiscordWrapper, create_discord_wrapper
+    HAVE_DISCORD = True
+except ImportError:
+    HAVE_DISCORD = False
+    DiscordWrapper = None
+    create_discord_wrapper = None
 
 # Feature availability flags
 try:
@@ -35,6 +53,10 @@ __all__ = [
     "FFmpegWrapper", 
     "MediaProcessor",
     "MediaUtils",
+    "DiscordWrapper",
+    "create_discord_wrapper",
     "HAVE_YTDLP",
-    "HAVE_FFMPEG"
+    "HAVE_FFMPEG",
+    "HAVE_DISCORD",
+    "HAVE_MEDIA_PROCESSOR"
 ]
