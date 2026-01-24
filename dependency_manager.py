@@ -198,14 +198,33 @@ class InstallationManager:
     def _get_auto_installer(self):
         """Get the auto installer from the existing module"""
         try:
+            module_path = Path(__file__).resolve().parent / 'ipfs_datasets_py' / 'auto_installer.py'
+            if module_path.exists():
+                import importlib.util
+
+                spec = importlib.util.spec_from_file_location("ipfs_datasets_py.auto_installer", module_path)
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    get_installer = getattr(module, 'get_installer', None)
+                    if get_installer:
+                        return get_installer()
+        except Exception as direct_exc:
+            logger.debug(f"Direct load failed for auto installer: {direct_exc}")
+
+        try:
             from ipfs_datasets_py.auto_installer import get_installer
             return get_installer()
-        except ImportError:
-            logger.warning("Auto installer not available")
+        except ImportError as exc:
+            logger.warning(f"Auto installer not available: {exc}")
             return None
     
     def _create_installation_profiles(self) -> Dict[str, InstallationProfile]:
         """Create predefined installation profiles"""
+        pyarrow_dep = 'pyarrow' if sys.version_info < (3, 14) else None
+        ml_compiled_deps = []
+        if sys.version_info < (3, 14):
+            ml_compiled_deps.extend(['torch', 'sentence-transformers', 'scipy', 'scikit-learn'])
         profiles = {
             'minimal': InstallationProfile(
                 name='minimal',
@@ -219,8 +238,8 @@ class InstallationManager:
                 description='CLI tools functionality',
                 dependencies=[
                     'requests', 'pyyaml', 'tqdm', 'psutil', 'jsonschema',
-                    'pandas', 'numpy', 'pyarrow'
-                ]
+                    'pandas', 'numpy'
+                ] + ([pyarrow_dep] if pyarrow_dep else [])
             ),
             'pdf': InstallationProfile(
                 name='pdf',
@@ -236,10 +255,9 @@ class InstallationManager:
                 name='ml',
                 description='Machine learning and AI features',
                 dependencies=[
-                    'numpy', 'pandas', 'torch', 'transformers', 
-                    'sentence-transformers', 'datasets', 'scipy',
-                    'scikit-learn', 'nltk', 'tiktoken'
-                ]
+                    'numpy', 'pandas', 'transformers',
+                    'datasets', 'nltk', 'tiktoken'
+                ] + ml_compiled_deps
             ),
             'vectors': InstallationProfile(
                 name='vectors',

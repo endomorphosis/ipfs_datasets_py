@@ -5,6 +5,9 @@
 			"label": "Run MCP Tools Test",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"comprehensive_mcp_test.py"
 			],
@@ -19,6 +22,9 @@
 			"label": "Install Dependencies",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/pip",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\pip.exe"
+			},
 			"args": [
 				"install",
 				"-r",
@@ -35,6 +41,9 @@
 			"label": "Test Individual MCP Tool",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-c",
 				"import asyncio; from ipfs_datasets_py.mcp_server.tools.${input:toolCategory}.${input:toolName} import ${input:toolName}; result = asyncio.run(${input:toolName}(\"test\")); print(\"Result:\", result.get(\"status\", \"unknown\"))"
@@ -50,6 +59,9 @@
 			"label": "Start MCP Server",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-m",
 				"ipfs_datasets_py.mcp_server",
@@ -66,6 +78,9 @@
 			"label": "Test Dataset Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-c",
 				"import asyncio; from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset; result = asyncio.run(load_dataset(\"test_dataset\")); print(\"Load Dataset Result:\", result.get(\"status\"))"
@@ -81,6 +96,9 @@
 			"label": "Test IPFS Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-c",
 				"import asyncio; from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs; result = asyncio.run(get_from_ipfs(\"QmTest123\")); print(\"IPFS Get Result:\", result.get(\"status\"))"
@@ -96,6 +114,9 @@
 			"label": "Test Vector Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-c",
 				"import asyncio, numpy as np; from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index; vectors=[[0.1,0.2,0.3],[0.4,0.5,0.6]]; result = asyncio.run(create_vector_index(vectors, dimension=3, metric=\"cosine\", index_id=\"test_index\", index_name=\"Test Index\")); print(\"Vector Index Result:\", result.get(\"status\"))"
@@ -111,6 +132,9 @@
 			"label": "Test Audit Tools",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-c",
 				"import asyncio; from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report; result = asyncio.run(generate_audit_report(\"comprehensive\")); print(\"Audit Report Result:\", result.get(\"status\"))"
@@ -126,6 +150,9 @@
 			"label": "Start FastAPI Service",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"start_fastapi.py",
 				"--env",
@@ -144,6 +171,9 @@
 			"label": "Test FastAPI Service",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"test_fastapi_service.py"
 			],
@@ -158,6 +188,9 @@
 			"label": "Validate FastAPI",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"validate_fastapi.py"
 			],
@@ -172,6 +205,9 @@
 			"label": "Simple Integration Test",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"simple_test.py"
 			],
@@ -186,6 +222,9 @@
 			"label": "Start MCP Dashboard",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-m",
 				"ipfs_datasets_py.mcp_dashboard"
@@ -198,6 +237,9 @@
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-m",
 				"ipfs_datasets_py.mcp_dashboard"
@@ -248,6 +290,9 @@
 			"label": "Run MCP Dashboard Tests - Smoke",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
 				"--mode",
@@ -265,6 +310,9 @@
 			"label": "Run MCP Dashboard Tests - Comprehensive",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
 				"--mode",
@@ -282,6 +330,9 @@
 			"label": "Run MCP Dashboard Tests - Performance",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
 				"--mode",
@@ -299,6 +350,9 @@
 			"label": "Run MCP Dashboard Tests - Docker",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"tests/integration/dashboard/run_mcp_dashboard_tests.py",
 				"--mode",
@@ -450,6 +504,9 @@
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
 			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
 				"-m",
 				"ipfs_datasets_py.mcp_dashboard"

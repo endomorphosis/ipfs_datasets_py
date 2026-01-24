@@ -42,8 +42,9 @@ def install_package(package_name, logger):
     try:
         logger.info(f"Installing {package_name}...")
         result = subprocess.run([
-            sys.executable, '-m', 'pip', 'install', package_name, '--upgrade'
-        ], capture_output=True, text=True)
+            sys.executable, '-m', 'pip', 'install', package_name, '--upgrade',
+            '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
+        ], capture_output=True, text=True, timeout=1200)
         
         if result.returncode == 0:
             logger.info(f"✅ Successfully installed {package_name}")
@@ -51,16 +52,20 @@ def install_package(package_name, logger):
         else:
             logger.warning(f"❌ Failed to install {package_name}: {result.stderr}")
             return False
+    except subprocess.TimeoutExpired:
+        logger.error(f"❌ Installation timed out for {package_name}")
+        return False
     except Exception as e:
         logger.error(f"❌ Error installing {package_name}: {e}")
         return False
 
 def install_core_dependencies(logger):
     """Install core dependencies needed for CLI functionality"""
+    numpy_spec = 'numpy>=2.0.0' if sys.version_info >= (3, 14) else 'numpy>=1.21.0,<2.0.0'
     
     # Core packages needed for basic CLI functionality (cross-platform)
     core_packages = [
-        'numpy>=1.21.0',
+        numpy_spec,
         'pandas>=1.5.0', 
         'requests>=2.25.0',
         'pyyaml>=6.0.0',
@@ -73,13 +78,15 @@ def install_core_dependencies(logger):
     # Platform-specific core packages
     if IS_WINDOWS:
         # Windows may need special handling for some packages
-        core_packages.extend([
-            'pyarrow>=15.0.0',  # Test on Windows first
-        ])
+        if sys.version_info < (3, 14):
+            core_packages.extend([
+                'pyarrow>=15.0.0',  # Test on Windows first
+            ])
     else:
-        core_packages.extend([
-            'pyarrow>=15.0.0',
-        ])
+        if sys.version_info < (3, 14):
+            core_packages.extend([
+                'pyarrow>=15.0.0',
+            ])
     
     # Additional packages that many tools need
     enhanced_packages = [
@@ -144,7 +151,7 @@ print("✅ Auto-installation enabled for IPFS Datasets")
     # Try to create in the project directory
     try:
         config_file = Path('ipfs_auto_install_config.py')
-        with open(config_file, 'w') as f:
+        with open(config_file, 'w', encoding='utf-8') as f:
             f.write(config_content)
         logger.info(f"📝 Created auto-install configuration: {config_file}")
         return True
@@ -168,6 +175,15 @@ import os
 # Enable auto-installation
 os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'true'
 
+NUMPY_SPEC = 'numpy>=2.0.0' if sys.version_info >= (3, 14) else 'numpy>=1.21.0,<2.0.0'
+PYARROW_SPEC = 'pyarrow>=15.0.0' if sys.version_info < (3, 14) else None
+ML_COMPILED_DEPS = []
+if sys.version_info < (3, 14):
+    ML_COMPILED_DEPS.extend([
+        'torch>=1.9.0', 'sentence-transformers>=2.2.0',
+        'scipy>=1.11.0', 'scikit-learn>=1.3.0'
+    ])
+
 def install_profile(profile_name):
     """Install a specific dependency profile"""
     
@@ -177,20 +193,19 @@ def install_profile(profile_name):
             'psutil>=5.9.0', 'jsonschema>=4.0.0'
         ],
         'cli': [
-            'numpy>=1.21.0', 'pandas>=1.5.0', 'requests>=2.25.0',
+            NUMPY_SPEC, 'pandas>=1.5.0', 'requests>=2.25.0',
             'pyyaml>=6.0.0', 'tqdm>=4.60.0', 'psutil>=5.9.0',
-            'pydantic>=2.0.0', 'jsonschema>=4.0.0', 'pyarrow>=15.0.0'
-        ],
+            'pydantic>=2.0.0', 'jsonschema>=4.0.0'
+        ] + ([PYARROW_SPEC] if PYARROW_SPEC else []),
         'pdf': [
-            'numpy>=1.21.0', 'pandas>=1.5.0', 'pymupdf>=1.24.0',
+            NUMPY_SPEC, 'pandas>=1.5.0', 'pymupdf>=1.24.0',
             'pdfplumber>=0.10.0', 'pillow>=10.0.0', 'networkx>=3.0.0',
             'pytesseract>=0.3.10'
         ],
         'ml': [
-            'numpy>=1.21.0', 'torch>=1.9.0', 'transformers>=4.0.0',
-            'sentence-transformers>=2.2.0', 'datasets>=2.10.0',
-            'scipy>=1.11.0', 'scikit-learn>=1.3.0', 'nltk>=3.8.0'
-        ],
+            NUMPY_SPEC, 'transformers>=4.0.0',
+            'datasets>=2.10.0', 'nltk>=3.8.0'
+        ] + ML_COMPILED_DEPS,
         'web': [
             'requests>=2.25.0', 'beautifulsoup4>=4.12.0', 
             'aiohttp>=3.8.0', 'newspaper3k>=0.2.8'
@@ -210,14 +225,17 @@ def install_profile(profile_name):
         try:
             print(f"  Installing {package}...")
             result = subprocess.run([
-                sys.executable, '-m', 'pip', 'install', package, '--upgrade'
-            ], capture_output=True, text=True)
+                sys.executable, '-m', 'pip', 'install', package, '--upgrade',
+                '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
+            ], capture_output=True, text=True, timeout=1200)
             
             if result.returncode == 0:
                 print(f"  ✅ {package}")
                 success_count += 1
             else:
                 print(f"  ❌ {package}: {result.stderr.strip()}")
+        except subprocess.TimeoutExpired:
+            print(f"  ❌ {package}: Installation timed out")
         except Exception as e:
             print(f"  ❌ {package}: {e}")
     
@@ -237,7 +255,7 @@ if __name__ == '__main__':
     
     try:
         script_file = Path('install_deps.py')
-        with open(script_file, 'w') as f:
+        with open(script_file, 'w', encoding='utf-8') as f:
             f.write(script_content)
         
         # Make executable on Unix systems

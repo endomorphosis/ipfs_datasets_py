@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+import os
 import sys
 import platform
 
@@ -8,6 +9,13 @@ IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 IS_64BIT = sys.maxsize > 2**32
 
+use_git_ipfs_kit = os.environ.get('IPFS_KIT_PY_USE_GIT', 'false').lower() == 'true'
+ipfs_kit_dependency = (
+    'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good'
+    if use_git_ipfs_kit
+    else 'ipfs_kit_py'
+)
+
 setup(
     name="ipfs_datasets_py",
     version='0.2.0',
@@ -16,8 +24,9 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # Install ipfs_kit_py from known_good branch (PyPI package is broken)
-        'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good',
+        # Install ipfs_kit_py from known_good branch if IPFS_KIT_PY_USE_GIT=true
+        # (PyPI fallback is used by default for Windows reliability)
+        ipfs_kit_dependency,
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
@@ -27,7 +36,7 @@ setup(
         'boto3',
         'ipfsspec',
         "duckdb",
-        "pyarrow>=10.0.0",
+        "pyarrow>=10.0.0; python_version < '3.14'",
         "fsspec",
         "datasets>=2.10.0",
 

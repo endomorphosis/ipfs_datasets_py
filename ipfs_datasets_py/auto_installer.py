@@ -64,10 +64,10 @@ class DependencyInstaller:
                 'isabelle': 'isabelle',
             },
             'windows': {
-                'tesseract': 'tesseract',
-                'ffmpeg': 'ffmpeg',
+                'tesseract': 'UB-Mannheim.TesseractOCR',
+                'ffmpeg': 'Gyan.FFmpeg',
                 'opencv': 'opencv',
-                'poppler': 'poppler-utils',
+                'poppler': 'oschwartz10612.Poppler',
                 # Theorem Provers and SAT/SMT Solvers
                 'z3': 'z3',
                 'cvc4': 'cvc4',
@@ -78,9 +78,11 @@ class DependencyInstaller:
         }
         
         # Python package specifications with fallbacks
+        numpy_specs = ['numpy>=2.0.0'] if self.python_version >= (3, 14) else ['numpy>=1.21.0,<2.0.0']
+
         self.python_packages = {
             # Core ML/AI packages
-            'numpy': ['numpy>=1.21.0,<2.0.0'],
+            'numpy': numpy_specs,
             'pandas': ['pandas>=1.5.0,<3.0.0'],
             'torch': ['torch>=1.9.0,<3.0.0', 'torch-cpu>=1.9.0'],
             'transformers': ['transformers>=4.0.0,<5.0.0'],
@@ -189,6 +191,11 @@ class DependencyInstaller:
     def install_system_dependency(self, package_name: str) -> bool:
         """Install system-level dependency"""
         # Skip system dependency installation in sandboxed environments
+        if os.getenv('IPFS_INSTALL_SYSTEM_DEPS', 'true').lower() != 'true':
+            if self.verbose:
+                logger.info(f"Skipping system dependency {package_name} (IPFS_INSTALL_SYSTEM_DEPS=false)")
+            return False
+
         if not self.auto_install or os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
             if self.verbose:
                 logger.info(f"Skipping system dependency {package_name} in CI/sandbox environment")
@@ -203,6 +210,14 @@ class DependencyInstaller:
             
         system_package = self.system_packages[self.system][package_name]
         
+        winget_command = ['winget', 'install', system_package,
+                          '--accept-source-agreements', '--accept-package-agreements',
+                          '--silent', '--disable-interactivity']
+        if '.' in system_package:
+            winget_command = ['winget', 'install', '--id', system_package,
+                              '--accept-source-agreements', '--accept-package-agreements',
+                              '--silent', '--disable-interactivity']
+
         commands = {
             'apt': ['sudo', 'apt-get', 'install', '-y', system_package],
             'yum': ['sudo', 'yum', 'install', '-y', system_package],
@@ -213,7 +228,7 @@ class DependencyInstaller:
             'macports': ['sudo', 'port', 'install', system_package],
             'chocolatey': ['choco', 'install', system_package, '-y'],
             'scoop': ['scoop', 'install', system_package],
-            'winget': ['winget', 'install', system_package],
+            'winget': winget_command,
         }
         
         if package_manager not in commands:
@@ -226,7 +241,8 @@ class DependencyInstaller:
             if self.verbose:
                 logger.info(f"Installing system package {system_package} using {package_manager}")
                 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            timeout = 120 if package_manager == 'winget' else 300
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
             
             if result.returncode == 0:
                 if self.verbose:
@@ -272,7 +288,8 @@ class DependencyInstaller:
                 logger.info(f"Installing {package_spec} with pip")
                 
             result = subprocess.run([
-                sys.executable, '-m', 'pip', 'install', package_spec, '--quiet'
+                sys.executable, '-m', 'pip', 'install', package_spec, '--quiet',
+                '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
             ], capture_output=True, text=True, timeout=600)
             
             if result.returncode == 0:
