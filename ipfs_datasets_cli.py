@@ -105,6 +105,19 @@ Commands:
       theorems   List or apply financial theorems
       workflow   Execute end-to-end workflow pipelines
     
+    discord      Discord data export and analysis
+      guilds     List accessible Discord servers
+      channels   List channels in a server
+      dms        List direct message channels
+      export     Export a Discord channel
+      export-guild Export entire Discord server
+      export-dms Export all direct messages (native exportdm)
+      export-all Export all accessible content
+      analyze    Analyze a Discord channel
+      analyze-export Analyze exported Discord data
+      status     Check Discord integration status
+      install    Install DiscordChatExporter
+    
     detect-type  File type detection for GraphRAG
       detect     Detect single file type
       batch      Batch detect multiple files
@@ -2353,6 +2366,64 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 return
             except Exception as e:
                 print(f"Error executing p2p command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "discord":
+            """Handle Discord data export and analysis commands."""
+            subcommand = args[1] if len(args) > 1 else None
+            
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets discord - Discord Data Export and Analysis
+
+Usage: ipfs-datasets discord <subcommand> [options]
+
+Subcommands:
+  guilds        List accessible Discord servers
+  channels      List channels in a server
+  dms           List direct message channels
+  export        Export a Discord channel
+  export-guild  Export entire Discord server
+  export-dms    Export all DMs (native exportdm command)
+  export-all    Export all accessible content
+  analyze       Analyze a Discord channel
+  analyze-export Analyze exported Discord data
+  status        Check Discord integration status
+  install       Install DiscordChatExporter
+
+Environment:
+  DISCORD_TOKEN   Discord bot or user token (recommended)
+
+Examples:
+  ipfs-datasets discord guilds
+  ipfs-datasets discord channels GUILD_ID
+  ipfs-datasets discord export CHANNEL_ID --format Json
+  ipfs-datasets discord export-dms --format HtmlDark
+  ipfs-datasets discord export-guild GUILD_ID --threads all
+  ipfs-datasets discord analyze CHANNEL_ID --types message_stats,user_activity
+  ipfs-datasets discord status
+
+For detailed help: ipfs-datasets discord <subcommand> --help
+""")
+                return
+            
+            try:
+                # Import and delegate to discord_cli module
+                from ipfs_datasets_py.discord_cli import main as discord_main
+                
+                # Pass remaining args to discord CLI
+                discord_args = args[1:]
+                exit_code = discord_main(discord_args)
+                sys.exit(exit_code)
+                
+            except ImportError as e:
+                print(f"Error: Discord CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing discord command: {e}")
                 import traceback
                 traceback.print_exc()
                 return

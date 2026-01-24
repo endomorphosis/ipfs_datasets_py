@@ -606,6 +606,104 @@ class DiscordWrapper:
                 'export_time': time.time() - start_time
             }
     
+    async def export_dm(
+        self,
+        output_dir: Optional[str] = None,
+        format: Optional[str] = None,
+        token: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Export all direct message channels using native exportdm command.
+        
+        This uses the DiscordChatExporter's native `exportdm` command which is
+        more efficient than exporting DMs individually.
+        
+        Args:
+            output_dir: Output directory (auto-generated if not provided)
+            format: Export format (uses default if not provided)
+            token: Discord token (uses instance token if not provided)
+            **kwargs: Additional export options (e.g., download_media, partition_limit)
+        
+        Returns:
+            Dictionary with:
+                - status: 'success' or 'error'
+                - output_dir: Output directory path
+                - dm_channels_exported: Number of DM channels exported
+                - export_time: Total export time
+                - error: Error message if failed
+        
+        Example:
+            >>> result = await wrapper.export_dm(
+            ...     format="Json",
+            ...     output_dir="/exports/dms"
+            ... )
+        """
+        token = self._ensure_token(token)
+        export_format = format or self.default_format
+        
+        # Generate output directory if not provided
+        if output_dir is None:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            output_dir = self.default_output_dir / f"dm_exports_{timestamp}"
+        else:
+            output_dir = Path(output_dir)
+        
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Build command using native exportdm
+        cmd = ['exportdm', '-t', token, '-f', export_format, '-o', str(output_dir)]
+        
+        # Add optional parameters from kwargs
+        if kwargs.get('download_media'):
+            cmd.append('--media')
+            if kwargs.get('reuse_media'):
+                cmd.append('--reuse-media')
+        if kwargs.get('partition_limit'):
+            cmd.extend(['-p', kwargs['partition_limit']])
+        
+        # Execute export
+        export_id = f"dm_export_{int(time.time())}"
+        start_time = time.time()
+        
+        try:
+            logger.info(f"Exporting all DM channels to {output_dir}")
+            result = self.exporter.execute(cmd, timeout=1800)  # 30 min timeout
+            export_time = time.time() - start_time
+            
+            if result.returncode == 0:
+                # Count exported files
+                exported_files = list(output_dir.glob(f"*.{self._get_format_extension(export_format)}"))
+                
+                export_info = {
+                    'status': 'success',
+                    'export_id': export_id,
+                    'output_dir': str(output_dir),
+                    'format': export_format,
+                    'dm_channels_exported': len(exported_files),
+                    'export_time': export_time,
+                    'stdout': result.stdout
+                }
+                
+                self.exports[export_id] = export_info
+                return export_info
+            else:
+                return {
+                    'status': 'error',
+                    'export_id': export_id,
+                    'error': result.stderr,
+                    'export_time': export_time
+                }
+        
+        except Exception as e:
+            logger.error(f"Failed to export DM channels: {e}")
+            return {
+                'status': 'error',
+                'export_id': export_id,
+                'error': str(e),
+                'export_time': time.time() - start_time
+            }
+    
     def _get_format_extension(self, format: str) -> str:
         """Get file extension for export format."""
         format_map = {
