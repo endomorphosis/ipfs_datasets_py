@@ -8,6 +8,7 @@ The Discord integration provides three main components:
 1. **Discord Chat Exporter Utility** (`ipfs_datasets_py.utils.discord_chat_exporter`) - Low-level CLI tool management
 2. **Discord Wrapper** (`ipfs_datasets_py.multimedia.discord_wrapper`) - High-level Python interface
 3. **MCP Tools** (`ipfs_datasets_py.mcp_server.tools.discord_tools`) - Model Context Protocol integration
+4. **Discord Dashboard** (`ipfs_datasets_py.discord_dashboard`) - Web-based management UI
 
 ## Installation
 
@@ -18,11 +19,115 @@ The Discord Chat Exporter CLI tool will be automatically downloaded and installe
 
 No additional dependencies required beyond standard Python libraries.
 
+## Token Management
+
+### Environment Variable (Recommended)
+
+Set the `DISCORD_TOKEN` environment variable for automatic token management:
+
+```bash
+# Linux/macOS
+export DISCORD_TOKEN="your_discord_token_here"
+
+# Windows (PowerShell)
+$env:DISCORD_TOKEN="your_discord_token_here"
+
+# Windows (CMD)
+set DISCORD_TOKEN=your_discord_token_here
+```
+
+With this configured, all Discord tools will automatically use the token:
+
+```python
+from ipfs_datasets_py.multimedia import DiscordWrapper
+
+# Token automatically loaded from environment
+wrapper = DiscordWrapper()
+guilds = await wrapper.list_guilds()
+```
+
+### Direct Token Parameter
+
+You can also pass the token directly (not recommended for production):
+
+```python
+wrapper = DiscordWrapper(token="YOUR_TOKEN")
+```
+
+### Secure Token Storage
+
+For production environments, consider using:
+- AWS Secrets Manager
+- HashiCorp Vault
+- Azure Key Vault
+- Environment variables in secure CI/CD systems
+
 ## Getting a Discord Token
 
 To export Discord data, you need a Discord bot token or user token. See the [official DiscordChatExporter documentation](https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs/Token-and-IDs.md) for instructions.
 
 **Security Note**: Never commit your Discord token to source control. Use environment variables or secure configuration management.
+
+## Using the Discord Dashboard
+
+The Discord dashboard provides a web-based interface for managing Discord data exports and analytics.
+
+### Starting the Dashboard
+
+```bash
+# Start standalone dashboard
+python -m ipfs_datasets_py.discord_dashboard --port 8889
+
+# Or integrate with admin dashboard
+python -m ipfs_datasets_py.admin_dashboard
+# Dashboard available at: http://localhost:8888/mcp/discord
+```
+
+### Dashboard Features
+
+- **Token Management**: Test and validate Discord tokens
+- **Server Browser**: View all accessible Discord servers
+- **Channel Explorer**: Browse channels within servers
+- **Export Manager**: Configure and run exports with advanced options
+- **Analytics**: View message statistics, user activity, and content patterns
+- **Status Monitor**: Check integration health and configuration
+
+### API Endpoints
+
+The dashboard exposes REST API endpoints:
+
+- `POST /api/test_token` - Validate Discord token
+- `GET /api/list_guilds` - List accessible servers
+- `GET /api/list_channels/<guild_id>` - List channels in server
+- `POST /api/export_channel` - Export channel data
+- `POST /api/export_guild` - Export server data
+- `GET /api/analyze_channel/<channel_id>` - Analyze channel
+- `POST /api/analyze_export` - Analyze exported file
+- `GET /api/status` - Get integration status
+
+### Using the Dashboard API
+
+```python
+import requests
+
+# Test token
+response = requests.post('http://localhost:8889/mcp/discord/api/test_token', 
+                        json={"token": "YOUR_TOKEN"})
+print(response.json())
+
+# List guilds (uses DISCORD_TOKEN from environment)
+response = requests.get('http://localhost:8889/mcp/discord/api/list_guilds')
+guilds = response.json()['guilds']
+
+# Export channel
+response = requests.post('http://localhost:8889/mcp/discord/api/export_channel',
+                        json={
+                            "channel_id": "123456789",
+                            "format": "Json",
+                            "download_media": True
+                        })
+print(response.json())
+```
 
 ## Basic Usage
 
