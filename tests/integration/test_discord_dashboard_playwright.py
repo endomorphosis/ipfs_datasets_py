@@ -85,11 +85,20 @@ class DiscordDashboardTestRunner:
             # Wait for server to start
             for _ in range(30):  # 30 second timeout
                 try:
-                    import requests
-                    response = requests.get(f"{self.base_url}/mcp/discord/api/status", timeout=1)
-                    if response.status_code in [200, 500]:  # Accept both success and server errors
-                        logger.info(f"Discord Dashboard started successfully on {self.base_url}")
-                        return True
+                    # Use stdlib urllib.request instead of requests
+                    import urllib.request
+                    import urllib.error
+                    req = urllib.request.Request(f"{self.base_url}/mcp/discord/api/status")
+                    try:
+                        with urllib.request.urlopen(req, timeout=1) as response:
+                            if response.status in [200, 500]:  # Accept both success and server errors
+                                logger.info(f"Discord Dashboard started successfully on {self.base_url}")
+                                return True
+                    except urllib.error.HTTPError as e:
+                        # Server is responding, even if with errors
+                        if e.code in [200, 500]:
+                            logger.info(f"Discord Dashboard started successfully on {self.base_url}")
+                            return True
                 except:
                     pass
                 await asyncio.sleep(1)

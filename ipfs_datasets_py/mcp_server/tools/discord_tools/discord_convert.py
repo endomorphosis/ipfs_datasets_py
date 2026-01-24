@@ -81,10 +81,10 @@ async def discord_convert_export(
             )
     """
     try:
-        from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper
+        from ipfs_datasets_py.utils.data_format_converter import get_converter
         
-        # Initialize wrapper (token not required for conversion)
-        wrapper = DiscordWrapper(token=token)
+        # Get the universal converter directly (no Discord dependencies)
+        converter = get_converter()
         
         # Prepare conversion kwargs
         convert_kwargs = {}
@@ -94,15 +94,27 @@ async def discord_convert_export(
             convert_kwargs['compression'] = compression
         convert_kwargs.update(kwargs)
         
-        # Perform conversion
-        result = await wrapper.convert_export(
+        # Perform conversion using the universal converter
+        converter.convert_file(
             input_path=input_path,
             output_path=output_path,
             to_format=to_format,
             **convert_kwargs
         )
         
-        return result
+        # Build success response
+        import os
+        file_size = os.path.getsize(output_path) if os.path.exists(output_path) else 0
+        
+        return {
+            'status': 'success',
+            'input_path': input_path,
+            'output_path': output_path,
+            'from_format': 'json',  # Discord exports are typically JSON
+            'to_format': to_format,
+            'file_size': file_size,
+            'message': f'Successfully converted to {to_format}'
+        }
     
     except ImportError as e:
         error_msg = f"Required dependencies not available: {str(e)}"

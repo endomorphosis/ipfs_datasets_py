@@ -251,11 +251,10 @@ async def discord_analyze_export(
         ... )
     """
     try:
-        # Determine base directory for Discord exports. This confines analysis to a safe root
-        # and prevents path traversal through user-controlled export_path values.
-        base_dir = Path(os.environ.get("DISCORD_EXPORT_BASE_DIR", ".")).resolve()
-
-        # Validate the user-provided export_path before using it in a filesystem operation.
+        # Determine base directory for Discord exports
+        base_dir_env = os.environ.get("DISCORD_EXPORT_BASE_DIR")
+        
+        # Validate the user-provided export_path before using it
         if not export_path or not isinstance(export_path, str):
             return {
                 "status": "error",
@@ -265,27 +264,43 @@ async def discord_analyze_export(
 
         export_path_obj = Path(export_path)
 
-        # Reject absolute paths to ensure callers cannot escape the configured base directory.
-        if export_path_obj.is_absolute():
-            return {
-                "status": "error",
-                "error": "Absolute export paths are not allowed",
-                "export_path": export_path,
-            }
+        # If DISCORD_EXPORT_BASE_DIR is set, enforce path confinement
+        if base_dir_env:
+            base_dir = Path(base_dir_env).resolve()
+            
+            # Reject absolute paths when base_dir is configured
+            if export_path_obj.is_absolute():
+                # Allow absolute paths if they resolve inside base_dir
+                resolved_export = export_path_obj.resolve()
+                if not str(resolved_export).startswith(str(base_dir) + os.sep) and resolved_export != base_dir:
+                    return {
+                        "status": "error",
+                        "error": f"Absolute export paths must be within {base_dir}",
+                        "export_path": export_path,
+                    }
+                export_file = resolved_export
+            else:
+                # Build the full path relative to the base directory
+                export_file = (base_dir / export_path_obj).resolve()
+        else:
+            # No base_dir configured: allow absolute paths directly
+            if export_path_obj.is_absolute():
+                export_file = export_path_obj.resolve()
+            else:
+                # Relative path: resolve from current directory
+                export_file = Path.cwd() / export_path_obj
+                export_file = export_file.resolve()
 
-        # Build the full path relative to the base directory and resolve it to a normalized path.
-        # Using resolve() on the joined path prevents traversal via ".." segments.
-        export_file = (base_dir / export_path_obj).resolve()
-
-        # Ensure the resolved path is within the allowed base directory
-        try:
-            export_file.relative_to(base_dir)
-        except ValueError:
-            return {
-                "status": "error",
-                "error": "Export path is not allowed",
-                "export_path": export_path
-            }
+        # Ensure the resolved path is within the allowed base directory (if configured)
+        if base_dir_env:
+            try:
+                export_file.relative_to(base_dir)
+            except ValueError:
+                return {
+                    "status": "error",
+                    "error": "Export path is not within the allowed base directory",
+                    "export_path": export_path
+                }
         
         if not export_file.is_file():
             return {

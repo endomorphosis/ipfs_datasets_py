@@ -303,6 +303,7 @@ class TestSyntheticDataGenerator:
         # Check for nested structures
         has_nested = any(isinstance(v, dict) for v in d.values())
         # With depth=3, we should sometimes get nesting
+        assert has_nested, "Expected nested structures with max_depth=3"
     
     def test_generate_list_structure(self):
         """

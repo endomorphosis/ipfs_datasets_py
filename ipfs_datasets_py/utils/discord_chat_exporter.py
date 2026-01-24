@@ -188,8 +188,13 @@ class DiscordChatExporter:
         Check if DiscordChatExporter is installed.
         
         Returns:
-            True if CLI executable exists and is executable
+            True if CLI executable exists and is executable (on Unix-like systems),
+            or exists (on Windows)
         """
+        if self.platform_name == 'windows':
+            # On Windows, execute permission bits are not meaningful; existence is sufficient
+            return self.cli_executable.exists()
+        # On Unix-like systems, require both existence and executable permission
         return self.cli_executable.exists() and os.access(self.cli_executable, os.X_OK)
     
     def download_and_install(self, force: bool = False) -> bool:
@@ -217,7 +222,27 @@ class DiscordChatExporter:
             # Extract archive directly to install directory
             logger.info(f"Extracting DiscordChatExporter to {self.install_dir}")
             with zipfile.ZipFile(archive_path, 'r') as zip_ref:
-                zip_ref.extractall(self.install_dir)
+                # Safely extract ZIP contents to prevent Zip Slip (path traversal)
+                install_dir_path = Path(self.install_dir).resolve()
+                safe_members = []
+                for member in zip_ref.infolist():
+                    member_path = Path(member.filename)
+                    # Reject absolute paths
+                    if member_path.is_absolute():
+                        logger.warning(f"Skipping absolute path in archive: {member.filename}")
+                        continue
+                    # Resolve target path and ensure it stays within install_dir
+                    resolved_target = (install_dir_path / member_path).resolve()
+                    if not str(resolved_target).startswith(str(install_dir_path) + os.sep) and resolved_target != install_dir_path:
+                        logger.warning(f"Skipping potentially unsafe path in archive: {member.filename}")
+                        continue
+                    safe_members.append(member)
+
+                if not safe_members:
+                    logger.error("No safe files found to extract from DiscordChatExporter archive")
+                    return False
+
+                zip_ref.extractall(self.install_dir, members=safe_members)
             
             # Clean up archive
             archive_path.unlink()
