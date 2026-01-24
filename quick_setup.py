@@ -8,7 +8,13 @@ import os
 import sys
 import subprocess
 import logging
+import platform
 from pathlib import Path
+
+# Platform detection
+IS_WINDOWS = platform.system() == 'Windows'
+IS_LINUX = platform.system() == 'Linux'
+IS_MACOS = platform.system() == 'Darwin'
 
 # Enable auto-installation by setting environment variable
 os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'true'
@@ -52,7 +58,7 @@ def install_package(package_name, logger):
 def install_core_dependencies(logger):
     """Install core dependencies needed for CLI functionality"""
     
-    # Core packages needed for basic CLI functionality
+    # Core packages needed for basic CLI functionality (cross-platform)
     core_packages = [
         'numpy>=1.21.0',
         'pandas>=1.5.0', 
@@ -62,8 +68,18 @@ def install_core_dependencies(logger):
         'psutil>=5.9.0',
         'pydantic>=2.0.0',
         'jsonschema>=4.0.0',
-        'pyarrow>=15.0.0',
     ]
+    
+    # Platform-specific core packages
+    if IS_WINDOWS:
+        # Windows may need special handling for some packages
+        core_packages.extend([
+            'pyarrow>=15.0.0',  # Test on Windows first
+        ])
+    else:
+        core_packages.extend([
+            'pyarrow>=15.0.0',
+        ])
     
     # Additional packages that many tools need
     enhanced_packages = [
@@ -71,10 +87,21 @@ def install_core_dependencies(logger):
         'networkx>=3.1',
         'beautifulsoup4>=4.12.0',
         'pillow>=10.0.0',
-        'nltk>=3.8.0',
     ]
     
-    logger.info("🚀 Installing core dependencies for CLI tools...")
+    # Add platform-specific packages
+    if IS_LINUX:
+        enhanced_packages.append('python-magic>=0.4.27')
+    elif IS_WINDOWS:
+        enhanced_packages.append('python-magic-bin>=0.4.14')  # Windows binary version
+    
+    # Add NLTK only on non-Windows or if user confirms
+    if not IS_WINDOWS or os.environ.get('INSTALL_NLTK', '').lower() == 'true':
+        enhanced_packages.append('nltk>=3.8.0')
+    
+    logger.info(f"🚀 Installing core dependencies for {platform.system()}...")
+    logger.info(f"   Platform: {platform.system()} {platform.release()}")
+    logger.info(f"   Python: {platform.python_version()}")
     
     success_count = 0
     total_packages = core_packages + enhanced_packages

@@ -9,7 +9,13 @@ import sys
 import subprocess
 import argparse
 import json
+import platform
 from pathlib import Path
+
+# Platform detection
+IS_WINDOWS = platform.system() == 'Windows'
+IS_LINUX = platform.system() == 'Linux'
+IS_MACOS = platform.system() == 'Darwin'
 
 def run_setup_wizard():
     """Run the interactive setup wizard"""
