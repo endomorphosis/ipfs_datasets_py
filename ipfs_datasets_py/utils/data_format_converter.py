@@ -21,7 +21,7 @@ across the entire ipfs_datasets_py package.
 import os
 import json
 import logging
-from typing import Any, Dict, List, Optional, Union, BinaryIO
+from typing import Any, Dict, List, Optional, Union
 from pathlib import Path
 
 # Configure logging
@@ -557,15 +557,16 @@ class UniversalDataConverter:
     
     def _add_jsonld_context(self, data: Union[Dict, List], **kwargs) -> Union[Dict, List]:
         """Add @context to JSON-LD data if not present."""
+        # Use provided context or default to a generic schema.org context
         context = kwargs.get("context", {
-            "@vocab": "http://schema.org/",
-            "discord": "https://discord.com/developers/docs/",
-            "ipfs": "https://ipfs.io/",
+            "@vocab": "http://schema.org/"
         })
         
         if isinstance(data, dict):
             if "@context" not in data:
+                # Add context without overwriting existing data
                 data = {"@context": context, **data}
+            # If @context already exists, data is left unchanged
         elif isinstance(data, list):
             # Wrap list in a container with @context
             data = {

@@ -506,13 +506,23 @@ async def cmd_convert(args) -> int:
         # Handle context parameter
         context = None
         if args.context:
-            if os.path.exists(args.context):
-                # Load from file
-                with open(args.context, 'r') as f:
-                    context = json.load(f)
-            else:
-                # Parse as JSON string
-                context = json.loads(args.context)
+            try:
+                if os.path.exists(args.context):
+                    # Load from file
+                    with open(args.context, 'r') as f:
+                        context = json.load(f)
+                else:
+                    # Parse as JSON string
+                    context = json.loads(args.context)
+            except FileNotFoundError:
+                print(f"✗ Context file not found: {args.context}", file=sys.stderr)
+                return 1
+            except PermissionError:
+                print(f"✗ Permission denied reading context file: {args.context}", file=sys.stderr)
+                return 1
+            except json.JSONDecodeError as e:
+                print(f"✗ Invalid JSON in context: {e}", file=sys.stderr)
+                return 1
         
         # Prepare kwargs
         kwargs = {}
