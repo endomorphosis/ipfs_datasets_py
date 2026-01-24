@@ -10,7 +10,7 @@ This script tests the unified investigation dashboard by:
 5. Creating a comprehensive test report with visual documentation
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import multiprocessing
@@ -1105,4 +1105,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

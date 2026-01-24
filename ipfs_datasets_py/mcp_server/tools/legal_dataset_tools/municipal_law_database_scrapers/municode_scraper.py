@@ -4,7 +4,7 @@ Municode Library Web Scraper
 This module provides functions for scraping municipal codes from the Municode Library
 (library.municode.com), a major provider of municipal code content for 3,500+ US jurisdictions.
 """
-import asyncio
+import anyio
 import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -50,13 +50,13 @@ async def search_jurisdictions(
         TimeoutError: If the request times out.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     result = await search_jurisdictions(state="WA", limit=5)
         ...     print(f"Found {result['total']} jurisdictions")
         ...     print(f"First jurisdiction: {result['jurisdictions'][0]['name']}")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Found 145 jurisdictions
         First jurisdiction: Seattle, WA
         {'jurisdictions': [...], 'total': 145, 'limit': 5}
@@ -129,7 +129,7 @@ async def search_jurisdictions(
                     if len(jurisdictions_list) >= limit:
                         break
     
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise TimeoutError("Request to Municode Library timed out")
     except aiohttp.ClientConnectorError as e:
         raise ConnectionError(f"Unable to connect to Municode Library: {e}")
@@ -164,12 +164,12 @@ async def get_municode_jurisdictions(
         ValueError: If state code is invalid.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     jurisdictions = await get_municode_jurisdictions(state="CA", limit=3)
         ...     print(f"California jurisdictions: {jurisdictions}")
         ...     return jurisdictions
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         California jurisdictions: ['Los Angeles, CA', 'San Francisco, CA', 'San Diego, CA']
         ['Los Angeles, CA', 'San Francisco, CA', 'San Diego, CA']
     """
@@ -217,14 +217,14 @@ async def scrape_jurisdiction(
         HTTPError: If the server returns an error response.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     url = "https://library.municode.com/wa/seattle"
         ...     result = await scrape_jurisdiction(url, include_metadata=True, max_sections=2)
         ...     print(f"Scraped {result['total_sections']} sections from {result['jurisdiction']}")
         ...     print(f"First section: {result['sections'][0]['title']}")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Scraped 2 sections from Seattle, WA
         First section: Title 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
@@ -274,7 +274,7 @@ async def scrape_jurisdiction(
                     
                     html = await response.text()
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return {
                     "error": "Network timeout",
                     "error_type": "timeout",
@@ -421,7 +421,7 @@ async def batch_scrape(
         TimeoutError: If requests consistently timeout.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     result = await batch_scrape(
         ...         jurisdictions=["Seattle, WA", "Portland, OR"],
@@ -433,7 +433,7 @@ async def batch_scrape(
         ...     print(f"Total sections: {result['summary']['total_sections']}")
         ...     print(f"Duration: {result['summary']['duration_seconds']:.2f}s")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Scraped 2 jurisdictions
         Total sections: 20
         Duration: 8.45s
@@ -501,7 +501,7 @@ async def batch_scrape(
             
             # Rate limiting
             if rate_limit_delay > 0:
-                await asyncio.sleep(rate_limit_delay)
+                await anyio.sleep(rate_limit_delay)
         
         except Exception as e:
             errors_list.append({

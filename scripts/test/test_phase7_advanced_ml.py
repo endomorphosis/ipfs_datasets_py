@@ -5,7 +5,7 @@ Test Phase 7 Advanced Analytics & ML Integration
 Comprehensive test suite for Phase 7 ML and analytics components.
 """
 
-import asyncio
+import anyio
 import sys
 import tempfile
 from pathlib import Path
@@ -286,4 +286,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

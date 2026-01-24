@@ -5,7 +5,7 @@ Comprehensive integration tests for GraphRAG PDF processing with actual
 machine learning models, transformers, and full NLP pipeline functionality.
 """
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 import json

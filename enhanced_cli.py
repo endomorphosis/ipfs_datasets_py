@@ -15,7 +15,7 @@ Usage:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import sys
 import importlib
@@ -298,4 +298,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

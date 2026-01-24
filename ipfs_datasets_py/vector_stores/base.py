@@ -4,7 +4,7 @@ This module provides the abstract base class for vector store implementations,
 defining the common interface for vector storage and retrieval operations.
 """
 from abc import ABC, abstractmethod
-import asyncio
+import anyio
 from typing import List, Dict, Any, Optional, Tuple, Union
 import logging
 

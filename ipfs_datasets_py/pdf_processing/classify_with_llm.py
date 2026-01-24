@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import logging
 from typing import Any, Callable, Optional
 import math
@@ -108,7 +108,7 @@ async def _classify_with_openai_llm(
             if isinstance(e, openai.RateLimitError):
                 raise RuntimeError(f"Rate limit exceeded: {e}") from e
             elif isinstance(e, openai.APITimeoutError):
-                raise asyncio.TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
+                raise TimeoutError(f"Timeout while waiting for OpenAI response: {e}") from e
             elif isinstance(e, openai.OpenAIError):
                 raise ConnectionError(f"OpenAI API error during classification: {e}") from e
         # Generic handling for when openai is not available or other exceptions
@@ -145,10 +145,10 @@ async def _classify_with_transformers_llm(
     )
 
 
-_SEMAPHORE = asyncio.Semaphore(3)  # Limit concurrency to prevent rate-limit overruns
+_SEMAPHORE = anyio.Semaphore(3)  # Limit concurrency to prevent rate-limit overruns
 
 
-import asyncio
+import anyio
 
 
 async def classify_with_llm(
@@ -246,7 +246,7 @@ async def classify_with_llm(
             except ConnectionError as e:
                 print(f"Connection error on attempt {attempt}: {e}")
                 raise e
-            except asyncio.TimeoutError as e:
+            except TimeoutError as e:
                 if attempt == max_attempts - 1:
                     print(f"Timeout exceeded after {max_attempts} attempts: {e}")
                     raise e
@@ -257,7 +257,7 @@ async def classify_with_llm(
                     # Throttle and try again
                     print("Got rate limit error. Throttling and trying again.")
                     max_attempts += 1
-                    asyncio.sleep(1)
+                    anyio.sleep(1)
 
                 if attempt == max_attempts - 1:
                     print(f"Max retries exceeded after {max_attempts} attempts: {e}")

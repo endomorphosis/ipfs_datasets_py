@@ -5,7 +5,7 @@ Tests the DiscordNotifier, BotClient, and WebhookClient classes.
 """
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import Mock, MagicMock, AsyncMock, patch
 from pathlib import Path
 

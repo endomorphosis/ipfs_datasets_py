@@ -8,7 +8,7 @@ Optimizes extracted content for LLM consumption by:
 - Creating context-aware embeddings
 - Handling multi-modal content
 """
-import asyncio
+import anyio
 import logging
 from typing import Any, Optional, Annotated, Callable
 import re
@@ -492,7 +492,7 @@ EMBEDDING_PATTERN = r'embedding=array\([^)]*(?:\([^)]*\)[^)]*)*\)'
 EMBEDDING_REGEX = re.compile(EMBEDDING_PATTERN)
 
 
-SEMAPHORE = asyncio.Semaphore(3)
+SEMAPHORE = anyio.Semaphore(3)
 
 
 class LLMChunkMetadata(BaseModel):
@@ -2264,7 +2264,7 @@ class LLMOptimizer:
         Raises:
             TypeError: If arguments have incorrect types.
             ValueError: If text is empty, categories is empty, or openai client is not set.
-            asyncio.TimeoutError: If the API request exceeds the timeout.
+            TimeoutError: If the API request exceeds the timeout.
             openai.APIError: If the OpenAI API returns an error.
             RuntimeError: If max retries exceeded or response parsing fails.
 

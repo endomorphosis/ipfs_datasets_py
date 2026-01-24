@@ -11,7 +11,7 @@ Terminology:
 - analyzable_media_content: Media content with extractable technical characteristics
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

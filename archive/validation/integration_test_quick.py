@@ -3,7 +3,7 @@
 Quick integration test for IPFS Embeddings migration
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -102,4 +102,4 @@ async def main():
     print("\n✨ Integration test complete!")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

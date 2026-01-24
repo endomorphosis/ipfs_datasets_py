@@ -9,7 +9,7 @@ Provides advanced querying capabilities over processed PDF content:
 - IPLD-native query processing
 """
 
-import asyncio
+import anyio
 import logging
 import json
 from typing import Dict, List, Any, Optional

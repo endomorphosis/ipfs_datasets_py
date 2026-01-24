@@ -5,7 +5,7 @@ Complete MCP Tools Discovery and Testing Script
 This script discovers ALL MCP tools and tests them comprehensively.
 """
 
-import asyncio
+import anyio
 import json
 import sys
 import traceback
@@ -446,4 +446,4 @@ async def main():
         return 1
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    sys.exit(anyio.run(main()))

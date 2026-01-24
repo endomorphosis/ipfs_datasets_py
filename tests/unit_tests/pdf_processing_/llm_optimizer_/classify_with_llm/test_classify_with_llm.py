@@ -1,5 +1,5 @@
 
-import asyncio
+import anyio
 import os
 from unittest.mock import AsyncMock, Mock
 import random
@@ -73,7 +73,7 @@ LLM_FUNC_RETURNS = {
     "three_cats": [("Technology", -0.5), ("Science", -0.7), ("Art", -0.9)],
     "four_cats": [("Technology", -0.5), ("Science", -0.7), ("Art", -0.9), ("History", -1.2)],
     "connection_error": ConnectionError("Network error"),
-    "timeout_error": asyncio.TimeoutError("Request timeout"),
+    "timeout_error": TimeoutError("Request timeout"),
     "runtime_error": ValueError("Unexpected error"),
     "lowercase_token": [("tech", -0.5)],
     "partial_match": [("Art", -0.5)],
@@ -134,7 +134,7 @@ def connection_error_llm_func():
 def timeout_error_llm_func():
     """Create LLM function that raises TimeoutError."""
     async def llm_func(*args, **kwargs):
-        raise asyncio.TimeoutError("Request timeout")
+        raise TimeoutError("Request timeout")
     return llm_func
 
 
@@ -515,7 +515,7 @@ class TestClassifyWithLLM:
         retries = 2
         kwargs = kwargs['timeout_error_args']
         _ = kwargs.pop('llm_func')
-        with pytest.raises(asyncio.TimeoutError):
+        with pytest.raises(TimeoutError):
             await classify_with_llm(**kwargs, retries=retries, llm_func=timeout_error_llm_func)
 
 

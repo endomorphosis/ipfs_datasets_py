@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Inspect actual page content for Indiana and Tennessee."""
-import asyncio
+import anyio
 from playwright.async_api import async_playwright
 
 async def inspect_page(url, state_name):
@@ -81,4 +81,4 @@ async def main():
     await inspect_page("https://www.tn.gov/tga/statutes.html", "Tennessee")
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

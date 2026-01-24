@@ -9,7 +9,7 @@ and demonstrates the full analysis capabilities.
 """
 import sys
 import time
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path
@@ -167,7 +167,7 @@ class NewsSourcesIntegrationTest:
                         break
                     else:
                         print(f"  ⏳ Crawling... {status.get('crawled_pages', 0)} pages")
-                        await asyncio.sleep(10)
+                        await anyio.sleep(10)
                         wait_time += 10
                 
                 if wait_time >= max_wait_time:
@@ -181,7 +181,7 @@ class NewsSourcesIntegrationTest:
                 self.test_results["errors"].append(error_msg)
                 
             # Brief pause between crawls
-            await asyncio.sleep(5)
+            await anyio.sleep(5)
         
         print(f"\n{source_config['name']} Crawling Summary:")
         print(f"  • Total pages crawled: {crawl_results['total_pages']}")
@@ -456,7 +456,7 @@ class NewsSourcesIntegrationTest:
             
             # 3. Allow time for processing
             print("\n⏳ Waiting for content processing to complete...")
-            await asyncio.sleep(30)  # Give time for background processing
+            await anyio.sleep(30)  # Give time for background processing
             
             # 4. Test GraphRAG queries
             query_results = await self.test_graphrag_queries()
@@ -569,7 +569,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        exit_code = asyncio.run(main())
+        exit_code = anyio.run(main())
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n❌ Test interrupted by user")

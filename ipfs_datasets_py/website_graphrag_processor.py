@@ -13,7 +13,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
@@ -492,14 +492,24 @@ class WebsiteGraphRAGProcessor:
         **kwargs
     ) -> List[WebsiteGraphRAGSystem]:
         """Process multiple websites concurrently"""
-        semaphore = asyncio.Semaphore(self.config.max_parallel_processing)
+        semaphore = anyio.Semaphore(self.config.max_parallel_processing)
         
         async def process_single(url: str) -> WebsiteGraphRAGSystem:
             async with semaphore:
                 return await self.process_website(url, **kwargs)
         
-        tasks = [process_single(url) for url in urls]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Execute all processing concurrently using anyio task group
+        results = []
+        async with anyio.create_task_group() as tg:
+            async def collect_result(url):
+                try:
+                    result = await process_single(url)
+                    results.append(result)
+                except Exception as e:
+                    results.append(e)
+            
+            for url in urls:
+                tg.start_soon(collect_result, url)
         
         # Filter out exceptions and log errors
         successful_results = []
@@ -543,4 +553,4 @@ if __name__ == "__main__":
             print(f"Processing failed: {e}")
     
     # Run example
-    asyncio.run(main())
+    anyio.run(main())

@@ -23,7 +23,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -132,8 +132,19 @@ class RealTimeMonitor:
         self.is_monitoring = False
     
     async def start_monitoring(self):
-        """Start real-time monitoring"""
+        """Start real-time monitoring
+        
+        Note: This method starts a background task. In anyio, background tasks
+        should be managed via task groups by the caller. For now, this uses
+        the deprecated pattern and should be refactored to accept a task group.
+        
+        Recommended usage:
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(self._monitoring_loop)
+        """
         self.is_monitoring = True
+        # FIXME: Background task pattern - caller should manage via task group
+        import asyncio
         asyncio.create_task(self._monitoring_loop())
         logger.info("Real-time monitoring started")
     
@@ -154,11 +165,11 @@ class RealTimeMonitor:
                 await self._check_alert_conditions(system_metrics)
                 
                 # Wait for next collection cycle
-                await asyncio.sleep(5)  # Collect every 5 seconds
+                await anyio.sleep(5)  # Collect every 5 seconds
                 
             except Exception as e:
                 logger.error(f"Monitoring error: {e}")
-                await asyncio.sleep(10)  # Wait longer on error
+                await anyio.sleep(10)  # Wait longer on error
     
     async def _collect_system_metrics(self) -> Dict[str, Any]:
         """Collect current system metrics"""
@@ -1025,7 +1036,7 @@ async def demo_analytics_dashboard():
 
 
 if __name__ == "__main__":
-    import asyncio
+    import anyio
     
     # Run analytics dashboard demo
-    asyncio.run(demo_analytics_dashboard())
+    anyio.run(demo_analytics_dashboard())

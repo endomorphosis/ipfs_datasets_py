@@ -4,7 +4,7 @@ MCP tool for pinning content to IPFS.
 
 This tool handles pinning files and directories to IPFS.
 """
-import asyncio
+import anyio
 import os
 from pathlib import Path
 from typing import Dict, Any, Optional, Union

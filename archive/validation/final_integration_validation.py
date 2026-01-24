@@ -9,7 +9,7 @@ including all phases: dependencies, core modules, MCP tools, and FastAPI service
 import sys
 import logging
 import traceback
-import asyncio
+import anyio
 import time
 from pathlib import Path
 from typing import Dict, List, Any
@@ -309,5 +309,5 @@ async def main():
     return 0 if success else 1
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

@@ -4,7 +4,7 @@ MCP tool for loading datasets.
 
 This tool handles loading datasets from various sources and formats.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union
 
 from ipfs_datasets_py.mcp_server.logger import logger

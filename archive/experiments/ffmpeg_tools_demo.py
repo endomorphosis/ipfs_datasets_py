@@ -5,7 +5,7 @@ FFmpeg Tools Demonstration
 This script demonstrates the capabilities of the integrated FFmpeg tools
 in the IPFS Datasets MCP server.
 """
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path
@@ -219,7 +219,7 @@ async def demonstrate_ffmpeg_tools():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(demonstrate_ffmpeg_tools())
+        anyio.run(demonstrate_ffmpeg_tools())
         print("\n🎬 Demonstration completed successfully!")
     except Exception as e:
         print(f"\n❌ Demonstration failed: {e}")

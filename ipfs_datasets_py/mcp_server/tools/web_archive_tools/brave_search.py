@@ -496,7 +496,7 @@ async def batch_search_brave(
         Dict containing batch search results
     """
     try:
-        import asyncio
+        import anyio
         
         results = {}
         success_count = 0
@@ -513,7 +513,7 @@ async def batch_search_brave(
             
             # Add delay between requests
             if query != queries[-1]:  # Don't delay after last query
-                await asyncio.sleep(delay_seconds)
+                await anyio.sleep(delay_seconds)
         
         return {
             "status": "success",

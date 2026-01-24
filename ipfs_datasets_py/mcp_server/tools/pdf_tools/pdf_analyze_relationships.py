@@ -5,7 +5,7 @@ MCP tool for analyzing and discovering relationships within and between
 PDF documents in the GraphRAG system.
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional, List, Union
 

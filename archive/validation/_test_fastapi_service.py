@@ -5,7 +5,7 @@ FastAPI Service Testing Script
 This script tests the FastAPI service endpoints to ensure they're working correctly.
 """
 
-import asyncio
+import anyio
 import aiohttp
 import json
 import logging
@@ -225,5 +225,5 @@ async def main():
 
 if __name__ == "__main__":
     import sys
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

@@ -10,7 +10,7 @@ This script tests the complete workflow:
 """
 
 import sys
-import asyncio
+import anyio
 import json
 import tempfile
 from pathlib import Path

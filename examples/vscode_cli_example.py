@@ -87,7 +87,7 @@ def example_mcp_tool():
         return
         
     print("\n=== Example: MCP Tool ===")
-    import asyncio
+    import anyio
     
     async def run():
         tool = VSCodeCLIStatusTool()
@@ -95,7 +95,7 @@ def example_mcp_tool():
         print(f"Tool name: {tool.name}")
         print(f"Result: {json.dumps(result, indent=2)}")
     
-    asyncio.run(run())
+    anyio.run(run())
 
 
 def main():

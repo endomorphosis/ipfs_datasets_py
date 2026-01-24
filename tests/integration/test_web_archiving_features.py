@@ -4,7 +4,7 @@ Test script for web scraping and archival features.
 
 This script tests all the new web archiving and scraping integrations.
 """
-import asyncio
+import anyio
 import sys
 import os
 
@@ -147,4 +147,4 @@ async def main():
     print("=" * 60)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

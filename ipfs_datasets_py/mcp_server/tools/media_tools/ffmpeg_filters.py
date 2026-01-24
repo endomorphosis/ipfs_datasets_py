@@ -5,7 +5,7 @@ FFmpeg filters tool for the MCP server.
 This tool provides comprehensive audio and video filter application capabilities using FFmpeg,
 supporting complex filter graphs, real-time effects, and filter chain processing.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -249,7 +249,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_result = asyncio.run(ffmpeg_apply_filters(
+    test_result = anyio.run(ffmpeg_apply_filters(
         input_file="input.mp4",
         output_file="filtered_output.mp4",
         video_filters=["scale=1280:720", "brightness=0.1"],

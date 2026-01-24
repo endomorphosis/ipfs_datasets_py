@@ -4,7 +4,7 @@ Simplified pytest runner for core functionality validation.
 """
 
 import pytest
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 

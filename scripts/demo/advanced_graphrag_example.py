@@ -19,7 +19,7 @@ Features:
 
 import sys
 import os
-import asyncio
+import anyio
 import json
 from datetime import datetime
 from pathlib import Path
@@ -89,56 +89,56 @@ async def demonstrate_advanced_graphrag():
         print(f"   • Discovering website structure...")
         print(f"   • Archiving with multiple services...")
         print(f"   • Validating archive integrity...")
-        await asyncio.sleep(0.5)  # Simulate processing time
+        await anyio.sleep(0.5)  # Simulate processing time
         print(f"   ✅ Archived 127 resources (45.2MB)")
         
         print(f"\n🔍 Phase 2: Content Analysis")
         print(f"   • Analyzing content types...")
         print(f"   • Categorizing resources...")
         print(f"   • Quality assessment...")
-        await asyncio.sleep(0.3)
+        await anyio.sleep(0.3)
         print(f"   ✅ Analyzed: 85 HTML pages, 8 PDFs, 12 media files")
         
         print(f"\n🎬 Phase 3: Media Processing")
         print(f"   • Transcribing audio content...")
         print(f"   • Extracting video frames...")
         print(f"   • Processing subtitles...")
-        await asyncio.sleep(0.4)
+        await anyio.sleep(0.4)
         print(f"   ✅ Processed: 5 audio files (23.7 min), 3 videos")
         
         print(f"\n🧠 Phase 4: Knowledge Extraction")
         print(f"   • Multi-pass entity extraction...")
         print(f"   • Relationship discovery...")
         print(f"   • Knowledge graph construction...")
-        await asyncio.sleep(0.6)
+        await anyio.sleep(0.6)
         print(f"   ✅ Extracted: 189 entities, 67 relationships")
         
         print(f"\n🔍 Phase 5: Search System Creation")
         print(f"   • Building search indexes...")
         print(f"   • Optimizing query performance...")
         print(f"   • Enabling cross-content search...")
-        await asyncio.sleep(0.3)
+        await anyio.sleep(0.3)
         print(f"   ✅ Created: 4 indexes, 324 searchable items")
         
         print(f"\n⚡ Phase 6: Performance Analysis")
         print(f"   • Monitoring resource usage...")
         print(f"   • Generating recommendations...")
         print(f"   • Optimizing future processing...")
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         print(f"   ✅ Rate: 14.7 items/sec, Quality: 88.7%")
         
         print(f"\n📄 Phase 7: Output Generation")
         print(f"   • Generating reports...")
         print(f"   • Exporting data...")
         print(f"   • Creating documentation...")
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         print(f"   ✅ Generated: JSON report, knowledge graph export")
         
         print(f"\n📊 Phase 8: Analytics Dashboard")
         print(f"   • Building visualization...")
         print(f"   • Compiling metrics...")
         print(f"   • Creating dashboard...")
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         print(f"   ✅ Dashboard: complete_graphrag_output/dashboard.html")
         
         # Create mock comprehensive result
@@ -376,7 +376,7 @@ def main():
         return
     
     # Run the demonstration
-    success = asyncio.run(demonstrate_advanced_graphrag())
+    success = anyio.run(demonstrate_advanced_graphrag())
     
     if success:
         print(f"\n✅ Demonstration completed successfully!")

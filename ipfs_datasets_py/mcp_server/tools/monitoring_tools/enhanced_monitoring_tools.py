@@ -4,7 +4,7 @@ Enhanced monitoring and system health tools.
 Migrated and enhanced from ipfs_embeddings_py project with production features.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import psutil

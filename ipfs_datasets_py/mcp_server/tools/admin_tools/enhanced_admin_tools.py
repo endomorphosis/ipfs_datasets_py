@@ -4,7 +4,7 @@ Enhanced administrative operations and system management tools.
 Migrated and enhanced from ipfs_embeddings_py project with production features.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import psutil
@@ -124,20 +124,20 @@ class MockAdminService:
         if action == "start":
             if current_status == ServiceStatus.STOPPED:
                 self.services[service_name] = ServiceStatus.STARTING
-                await asyncio.sleep(0.1)  # Simulate startup time
+                await anyio.sleep(0.1)  # Simulate startup time
                 self.services[service_name] = ServiceStatus.RUNNING
             result_status = ServiceStatus.RUNNING
         elif action == "stop":
             if current_status == ServiceStatus.RUNNING:
                 self.services[service_name] = ServiceStatus.STOPPING
-                await asyncio.sleep(0.1)  # Simulate shutdown time
+                await anyio.sleep(0.1)  # Simulate shutdown time
                 self.services[service_name] = ServiceStatus.STOPPED
             result_status = ServiceStatus.STOPPED
         elif action == "restart":
             self.services[service_name] = ServiceStatus.STOPPING
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             self.services[service_name] = ServiceStatus.STARTING
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             self.services[service_name] = ServiceStatus.RUNNING
             result_status = ServiceStatus.RUNNING
         elif action == "status":
@@ -207,7 +207,7 @@ class MockAdminService:
             cleared_cache_entries = 5000
             services_restarted = ["cache_service"]
         
-        await asyncio.sleep(0.2)  # Simulate cleanup time
+        await anyio.sleep(0.2)  # Simulate cleanup time
         
         return {
             "cleanup_type": cleanup_type,

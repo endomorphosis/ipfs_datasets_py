@@ -9,7 +9,7 @@ to verify that all functionality is working correctly.
 
 import os
 import sys
-import asyncio
+import anyio
 import traceback
 from datetime import datetime
 from typing import Dict, List, Any

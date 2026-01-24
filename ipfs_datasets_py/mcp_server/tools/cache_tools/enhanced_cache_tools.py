@@ -4,7 +4,7 @@ Enhanced cache management and optimization tools.
 Migrated and enhanced from ipfs_embeddings_py project with production features.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import hashlib
@@ -160,7 +160,7 @@ class MockCacheService:
             clear_time = 0.8
         
         # Mock clearing operation
-        await asyncio.sleep(clear_time / 10)  # Simulate time
+        await anyio.sleep(clear_time / 10)  # Simulate time
         
         return {
             "cache_type": cache_type.value,
@@ -188,7 +188,7 @@ class MockCacheService:
         # TODO MORE FUCKING MOCKS
         elif action == "warm_up":
             # Mock cache warming
-            await asyncio.sleep(0.3)
+            await anyio.sleep(0.3)
             
             return {
                 "action": "warm_up",
@@ -201,7 +201,7 @@ class MockCacheService:
         
         elif action == "optimize":
             # Mock cache optimization
-            await asyncio.sleep(0.2)
+            await anyio.sleep(0.2)
             
             return {
                 "action": "optimize",

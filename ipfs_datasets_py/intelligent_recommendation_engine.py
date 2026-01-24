@@ -23,7 +23,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union, Tuple, Set
 from dataclasses import dataclass, field
@@ -1303,7 +1303,7 @@ async def demo_recommendation_engine():
 
 
 if __name__ == "__main__":
-    import asyncio
+    import anyio
     
     # Run recommendation engine demo
-    asyncio.run(demo_recommendation_engine())
+    anyio.run(demo_recommendation_engine())

@@ -15,7 +15,7 @@ Usage:
     python tests/e2e/test_municipal_codes_functional.py
 """
 
-import asyncio
+import anyio
 import subprocess
 import time
 import sys
@@ -247,7 +247,7 @@ def main():
         print("\n   Tests will run but may show connection errors.")
     
     # Run the async test
-    result = asyncio.run(test_municipal_codes_integration())
+    result = anyio.run(test_municipal_codes_integration())
     
     if result:
         print("\n✅ Integration test PASSED")

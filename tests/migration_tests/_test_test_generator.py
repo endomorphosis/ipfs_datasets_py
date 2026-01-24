@@ -4,7 +4,7 @@ Test the Test Generator Tool
 Basic validation that the test generator tool works correctly.
 """
 
-import asyncio
+import anyio
 import json
 import tempfile
 from pathlib import Path
@@ -170,4 +170,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

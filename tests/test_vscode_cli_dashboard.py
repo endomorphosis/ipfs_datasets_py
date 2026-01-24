@@ -19,7 +19,7 @@ Usage:
     python -m pytest tests/test_vscode_cli_dashboard.py -v -s --headed
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import os
@@ -198,7 +198,7 @@ class VSCodeCLIDashboardTester:
             for selector in execute_selectors:
                 try:
                     await page.click(selector, timeout=2000)
-                    await asyncio.sleep(1)
+                    await anyio.sleep(1)
                     break
                 except:
                     continue
@@ -542,4 +542,4 @@ async def test_vscode_cli_dashboard_integration():
 
 if __name__ == "__main__":
     # Run the test standalone
-    asyncio.run(test_vscode_cli_dashboard_integration())
+    anyio.run(test_vscode_cli_dashboard_integration())

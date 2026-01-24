@@ -9,7 +9,7 @@ All functionality is accessed via MCP tools using JSON-RPC communication.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime
@@ -548,4 +548,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

@@ -6,7 +6,7 @@ enabling easy integration of the migrated ipfs_embeddings_py functionality.
 Enhanced with production features including monitoring, validation, and caching.
 """
 
-import asyncio
+import anyio
 import inspect
 import logging
 import time

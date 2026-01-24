@@ -136,7 +136,7 @@ class UploadToHuggingFaceInParallel:
             uploader = UploadToHuggingFaceInParallel(configs=ExampleConfig())
             
             # Use the uploader
-            import asyncio
+            import anyio
             
             async def main():
                 result = await uploader.upload_to_hugging_face_in_parallel(
@@ -147,7 +147,7 @@ class UploadToHuggingFaceInParallel:
                 print(f"Upload results: {result}")
             
             # Run the async function
-            asyncio.run(main())
+            anyio.run(main())
     """
 
     _HUGGING_FACE_API_LIMIT_PER_HOUR = 300

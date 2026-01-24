@@ -6,7 +6,7 @@ Tests all major components and provides detailed reporting.
 
 import sys
 import os
-import asyncio
+import anyio
 from pathlib import Path
 from typing import Dict, Any, List
 
@@ -261,5 +261,5 @@ async def main():
     return 0 if passed == total else 1
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

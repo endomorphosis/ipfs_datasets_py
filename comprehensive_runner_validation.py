@@ -6,7 +6,7 @@ This script validates that the self-hosted runner can execute all expected
 functionality for the ipfs_datasets_py repository.
 """
 
-import asyncio
+import anyio
 import json
 import os
 import platform
@@ -592,5 +592,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

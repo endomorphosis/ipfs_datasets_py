@@ -1,5 +1,5 @@
 # Test script for the IPFS Datasets MCP server
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -23,7 +23,7 @@ async def test_mcp_server():
     server_task = asyncio.create_task(server.start(host="localhost", port=8765))
 
     # Give the server some time to start
-    await asyncio.sleep(2)
+    await anyio.sleep(2)
 
     try:
         # Connect to the server
@@ -66,11 +66,11 @@ async def test_mcp_server():
         server_task.cancel()
         try:
             await server_task
-        except asyncio.CancelledError:
+        except anyio.get_cancelled_exc_class()():
             pass
 
         print("\nServer stopped. Test complete.")
 
 
 if __name__ == "__main__":
-    asyncio.run(test_mcp_server())
+    anyio.run(test_mcp_server())

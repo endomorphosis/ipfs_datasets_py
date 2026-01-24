@@ -8,7 +8,7 @@ Feature: US Code Scraper Verification
   code 1 when failed count is greater than 0.
 """
 import pytest
-import asyncio
+import anyio
 from typing import Dict, Any
 
 from conftest import FixtureError

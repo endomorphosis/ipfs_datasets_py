@@ -5,7 +5,7 @@ MCP tool for searching vector indexes.
 This tool handles similarity search in vector indexes
 using the VectorSimilarityCalculator from vector_tools.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 
 import numpy as np

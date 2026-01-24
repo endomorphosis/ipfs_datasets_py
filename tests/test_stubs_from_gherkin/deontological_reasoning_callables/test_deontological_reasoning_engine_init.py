@@ -284,9 +284,9 @@ def test_statement_database_stores_statements_after_analysis():
     engine = DeontologicalReasoningEngine()
     
     # When: analyze_corpus_for_deontic_conflicts() is called with 1 document
-    import asyncio
+    import anyio
     documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes.'}]
-    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    anyio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
     
     # Then: the statement_database contains statements
     expected_has_statements = True
@@ -311,9 +311,9 @@ def test_conflict_database_stores_conflicts_after_analysis():
     engine = DeontologicalReasoningEngine()
     
     # When: analyze_corpus_for_deontic_conflicts() is called with conflicting statements
-    import asyncio
+    import anyio
     documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes. Citizens must not pay taxes.'}]
-    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    anyio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
     
     # Then: the conflict_database contains conflicts
     expected_has_conflicts = True
@@ -338,9 +338,9 @@ def test_statements_are_indexed_by_id_in_database():
     engine = DeontologicalReasoningEngine()
     
     # When: analyze_corpus_for_deontic_conflicts() is called
-    import asyncio
+    import anyio
     documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes.'}]
-    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    anyio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
     
     # Then: each statement in statement_database is indexed by id
     expected_all_have_ids = True
@@ -365,9 +365,9 @@ def test_conflicts_are_indexed_by_id_in_database():
     engine = DeontologicalReasoningEngine()
     
     # When: analyze_corpus_for_deontic_conflicts() is called with conflicting statements
-    import asyncio
+    import anyio
     documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes. Citizens must not pay taxes.'}]
-    asyncio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
+    anyio.run(engine.analyze_corpus_for_deontic_conflicts(documents))
     
     # Then: each conflict in conflict_database is indexed by id
     expected_all_have_ids = True

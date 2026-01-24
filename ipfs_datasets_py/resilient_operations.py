@@ -20,7 +20,7 @@ import os
 import time
 import random
 import logging
-import asyncio
+import anyio
 import heapq
 import json
 import threading
@@ -1411,7 +1411,7 @@ class resilient(object):
             return perform_important_task()
         
         # Async function support
-        @resilient(max_retries=3, retry_on_exceptions=[asyncio.TimeoutError])
+        @resilient(max_retries=3, retry_on_exceptions=[TimeoutError])
         async def async_api_call():
             return await aiohttp.get("https://api.example.com/async")
         
@@ -1642,7 +1642,7 @@ class resilient(object):
                 )
 
                 # Sleep for backoff time
-                await asyncio.sleep(backoff_ms / 1000)
+                await anyio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
@@ -2048,7 +2048,7 @@ class ResilienceManager:
                                 continue
 
                         # Perform health check asynchronously
-                        asyncio.run(self._check_node_health(peer_id))
+                        anyio.run(self._check_node_health(peer_id))
             except Exception as e:
                 logger.error(f"Error in health check loop: {str(e)}")
 
@@ -2746,7 +2746,7 @@ class ResilienceManager:
                 )
 
                 # Sleep for backoff time
-                await asyncio.sleep(backoff_ms / 1000)
+                await anyio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
@@ -3374,44 +3374,42 @@ class ResilienceManager:
         # Run sync operations concurrently in batches
         for i in range(0, len(target_node_ids), max_concurrent):
             batch = target_node_ids[i:i+max_concurrent]
-            tasks = []
 
-            for node_id in batch:
-                # Create sync task
-                async def sync_with_node(node_id):
-                    try:
-                        # Sync with circuit breaker and retry
-                        async def sync_with_circuit_breaker():
-                            return await self.execute_with_circuit_breaker_async(
-                                "dataset_sync",
-                                lambda: self.node.shard_manager.sync_dataset_with_node(dataset_id, node_id)
-                            )
+            # Wait for batch to complete using anyio task group
+            async with anyio.create_task_group() as tg:
+                for node_id in batch:
+                    # Create sync task
+                    async def sync_with_node(nid):
+                        try:
+                            # Sync with circuit breaker and retry
+                            async def sync_with_circuit_breaker():
+                                return await self.execute_with_circuit_breaker_async(
+                                    "dataset_sync",
+                                    lambda: self.node.shard_manager.sync_dataset_with_node(dataset_id, nid)
+                                )
 
-                        result = await self.retry_async(sync_with_circuit_breaker)
+                            result = await self.retry_async(sync_with_circuit_breaker)
 
-                        # Record success
-                        operation.add_success(node_id, result)
+                            # Record success
+                            operation.add_success(nid, result)
 
-                        # Update node health
-                        if node_id in self.node_health:
-                            self.node_health[node_id].record_success()
+                            # Update node health
+                            if nid in self.node_health:
+                                self.node_health[nid].record_success()
 
-                        return True
-                    except Exception as e:
-                        # Record failure
-                        operation.add_failure(node_id, str(e))
+                            return True
+                        except Exception as e:
+                            # Record failure
+                            operation.add_failure(nid, str(e))
 
-                        # Update node health
-                        if node_id in self.node_health:
-                            self.node_health[node_id].record_failure()
+                            # Update node health
+                            if nid in self.node_health:
+                                self.node_health[nid].record_failure()
 
-                        logger.warning(f"Failed to sync dataset {dataset_id} with node {node_id}: {str(e)}")
-                        return False
+                            logger.warning(f"Failed to sync dataset {dataset_id} with node {nid}: {str(e)}")
+                            return False
 
-                tasks.append(sync_with_node(node_id))
-
-            # Wait for batch to complete
-            await asyncio.gather(*tasks)
+                    tg.start_soon(sync_with_node, node_id)
 
         # Complete operation
         return operation.complete()
@@ -3606,13 +3604,14 @@ class ResilienceManager:
 
         # Execute function on each node concurrently
         results = {}
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = anyio.Semaphore(max_concurrent)
 
         async def execute_with_timeout(node_id):
             async with semaphore:
                 try:
-                    return await asyncio.wait_for(func(node_id), timeout_sec)
-                except asyncio.TimeoutError:
+                    with anyio.fail_after(timeout_sec):
+                        return await func(node_id)
+                except (TimeoutError, anyio.get_cancelled_exc_class()) as e:
                     return TimeoutError(f"Operation timed out after {timeout_sec} seconds")
                 except Exception as e:
                     return e
@@ -3620,35 +3619,20 @@ class ResilienceManager:
         # Create tasks
         tasks = {node_id: execute_with_timeout(node_id) for node_id in healthy_nodes}
 
-        # Wait for all tasks to complete or until min_success_count is reached
-        pending = set(asyncio.create_task(coro) for coro in tasks.values())
-        success_count = 0
-
-        while pending and success_count < min_success_count:
-            done, pending = await asyncio.wait(
-                pending,
-                return_when=asyncio.FIRST_COMPLETED
-            )
-
-            # Process completed tasks
-            for task in done:
-                result = task.result()
-                # Count successes (not exceptions)
-                if not isinstance(result, Exception):
-                    success_count += 1
-
-        # Cancel any pending tasks if we have enough successes
-        if success_count >= min_success_count and pending:
-            for task in pending:
-                task.cancel()
-
-        # Wait for all tasks to complete
-        done, pending = await asyncio.wait(tasks.values(), return_when=asyncio.ALL_COMPLETED)
+        # Execute all tasks concurrently using anyio
+        results_dict = {}
+        async with anyio.create_task_group() as tg:
+            async def run_and_collect(node_id, coro):
+                result = await coro
+                results_dict[node_id] = result
+            
+            for node_id, coro in tasks.items():
+                tg.start_soon(run_and_collect, node_id, coro)
 
         # Map results back to node IDs
-        for node_id, task in zip(tasks.keys(), tasks.values()):
+        for node_id in tasks.keys():
             try:
-                results[node_id] = task.result()
+                results[node_id] = results_dict.get(node_id)
             except Exception as e:
                 results[node_id] = e
 
@@ -3749,8 +3733,18 @@ class ResilienceManager:
 
             tasks.append(send_to_node(node_id))
 
-        # Wait for all sends to complete
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        # Wait for all sends to complete using anyio task group
+        results = []
+        async with anyio.create_task_group() as tg:
+            async def collect_result(task_coro):
+                try:
+                    result = await task_coro
+                    results.append(result)
+                except Exception as e:
+                    results.append(e)
+            
+            for task_coro in tasks:
+                tg.start_soon(collect_result, task_coro)
 
         # Count successes and failures
         for result in results:

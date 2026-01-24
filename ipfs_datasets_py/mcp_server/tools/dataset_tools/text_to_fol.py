@@ -5,7 +5,7 @@ MCP tool for converting natural language text to First-Order Logic (FOL).
 This tool converts natural language statements into formal first-order logic
 representations for automated reasoning, theorem proving, and logical analysis.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 import re
 
@@ -406,7 +406,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_result = asyncio.run(convert_text_to_fol(
+    test_result = anyio.run(convert_text_to_fol(
         "All cats are animals",
         output_format='json',
         include_metadata=True

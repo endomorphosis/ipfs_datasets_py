@@ -7,7 +7,7 @@ LLM Optimization → Entity Extraction → Vector Embedding →
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
 from __future__ import annotations
-import asyncio
+import anyio
 from contextlib import nullcontext
 from dataclasses import dataclass
 import datetime
@@ -253,13 +253,13 @@ class PDFProcessor:
         >>> processor = PDFProcessor()
         >>> 
         >>> # Process a simple PDF document
-        >>> import asyncio
+        >>> import anyio
         >>> async def process_document():
         ...     result = await processor.process_pdf("example.pdf")
         ...     return result
         >>> 
         >>> # Check processing results
-        >>> result = asyncio.run(process_document())
+        >>> result = anyio.run(process_document())
         >>> result['status']
         'success'
         >>> result['entities_count'] > 0
@@ -297,7 +297,7 @@ class PDFProcessor:
         ...     return results
         >>> 
         >>> # All documents processed successfully
-        >>> results = asyncio.run(batch_process())
+        >>> results = anyio.run(batch_process())
         >>> all(r['status'] == 'success' for r in results)
         True
 

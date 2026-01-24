@@ -7,7 +7,7 @@ role-specific buttons and provides a single entity-centric interface for
 analyzing large unstructured archives.
 """
 
-import asyncio
+import anyio
 import logging
 import sys
 from pathlib import Path

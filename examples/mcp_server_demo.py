@@ -4,7 +4,7 @@ Demo script for IPFS Datasets MCP server.
 
 This script demonstrates how to use the IPFS Datasets MCP server with a simple workflow.
 """
-import asyncio
+import anyio
 import json
 import os
 import sys
@@ -95,7 +95,7 @@ class MCPDemoRunner:
                 return
             except Exception:
                 # Wait and try again
-                await asyncio.sleep(0.5)
+                await anyio.sleep(0.5)
 
         raise TimeoutError("Server did not become ready in time")
 
@@ -237,4 +237,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

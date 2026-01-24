@@ -5,7 +5,7 @@ This module provides tools for creating, managing, and cleaning up
 user sessions and their associated resources.
 """
 
-import asyncio
+import anyio
 import logging
 import uuid
 from datetime import datetime, timedelta

@@ -324,7 +324,7 @@ async def batch_search_google(
         Dict containing batch search results
     """
     try:
-        import asyncio
+        import anyio
         
         results = {}
         success_count = 0
@@ -346,7 +346,7 @@ async def batch_search_google(
             
             # Add delay between requests
             if query != queries[-1]:
-                await asyncio.sleep(delay_seconds)
+                await anyio.sleep(delay_seconds)
         
         return {
             "status": "success",

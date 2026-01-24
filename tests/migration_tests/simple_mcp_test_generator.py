@@ -70,7 +70,7 @@ Test for the {category}.{tool} MCP tool.
 import unittest
 import sys
 import os
-import asyncio
+import anyio
 from unittest.mock import patch, MagicMock, AsyncMock
 
 # Add project root to path

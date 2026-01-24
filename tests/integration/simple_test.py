@@ -4,7 +4,7 @@ Simple test for web archiving features.
 
 This script tests the web archiving tools directly without the full MCP server.
 """
-import asyncio
+import anyio
 import sys
 import os
 import tempfile
@@ -188,4 +188,4 @@ async def main():
     print("=" * 50)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

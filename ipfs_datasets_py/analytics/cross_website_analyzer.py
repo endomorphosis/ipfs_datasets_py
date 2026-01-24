@@ -22,7 +22,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 import math
 import statistics
@@ -1594,4 +1594,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

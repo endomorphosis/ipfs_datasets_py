@@ -7,7 +7,7 @@ This script performs comprehensive validation and prepares for production deploy
 
 import sys
 import logging
-import asyncio
+import anyio
 import time
 import json
 import subprocess

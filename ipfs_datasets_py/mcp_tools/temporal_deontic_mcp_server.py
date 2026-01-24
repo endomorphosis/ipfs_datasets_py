@@ -19,7 +19,7 @@ Usage:
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -283,4 +283,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

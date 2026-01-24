@@ -4,7 +4,7 @@ MCP tool for checking access permissions.
 
 This tool handles checking if a user has permission to access a resource.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 
 from ipfs_datasets_py.mcp_server.logger import logger

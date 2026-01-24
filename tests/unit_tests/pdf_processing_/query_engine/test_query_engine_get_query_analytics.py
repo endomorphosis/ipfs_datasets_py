@@ -5,7 +5,7 @@
 
 import pytest
 import os
-import asyncio
+import anyio
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from dataclasses import dataclass
@@ -46,7 +46,7 @@ assert QueryEngine._generate_query_suggestions
 assert QueryEngine.get_query_analytics
 
 # Check if the modules's imports are accessible:
-import asyncio
+import anyio
 import logging
 import json
 from typing import Dict, List, Any, Optional

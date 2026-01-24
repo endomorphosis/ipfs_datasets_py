@@ -3,7 +3,7 @@
 Debug helper for individual MCP tools.
 Use this script to debug specific MCP tools.
 """
-import asyncio
+import anyio
 import sys
 from typing import Any, Dict
 
@@ -61,4 +61,4 @@ async def main():
     await debug_tool(tool_category, tool_name, *args)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

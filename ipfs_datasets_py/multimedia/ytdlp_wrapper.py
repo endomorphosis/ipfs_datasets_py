@@ -5,7 +5,7 @@ This module provides a comprehensive interface to yt-dlp for downloading
 content from YouTube, Vimeo, SoundCloud, and many other platforms.
 """
 
-import asyncio
+import anyio
 import logging
 import tempfile
 import time
@@ -459,9 +459,9 @@ class YtDlpWrapper:
                 'output_dir': str(output_dir)
             }
             
-            # Execute download in thread pool
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, self._download_with_ytdlp, url, ydl_opts, extract_info_only
+            # Execute download in thread pool using anyio
+            result = await anyio.to_thread.run_sync(
+                self._download_with_ytdlp, url, ydl_opts, extract_info_only
             )
             
             # Update tracking
@@ -734,9 +734,9 @@ class YtDlpWrapper:
                 'output_dir': str(output_path)
             }
             
-            # Execute download
-            result = await asyncio.get_event_loop().run_in_executor(
-                None, self._download_playlist_with_ytdlp, playlist_url, ydl_opts
+            # Execute download using anyio
+            result = await anyio.to_thread.run_sync(
+                self._download_playlist_with_ytdlp, playlist_url, ydl_opts
             )
             
             result.update({
@@ -1309,7 +1309,7 @@ class YtDlpWrapper:
         """
         try:
             batch_id = str(uuid.uuid4())
-            semaphore = asyncio.Semaphore(max_concurrent)
+            semaphore = anyio.Semaphore(max_concurrent)
             
             async def _download_with_semaphore(url):
                 async with semaphore:
@@ -1321,11 +1321,18 @@ class YtDlpWrapper:
                         **kwargs
                     )
             
-            # Execute all downloads concurrently
-            results = await asyncio.gather(
-                *[_download_with_semaphore(url) for url in urls],
-                return_exceptions=True
-            )
+            # Execute all downloads concurrently using anyio task group
+            results = []
+            async with anyio.create_task_group() as tg:
+                async def collect_result(url):
+                    try:
+                        result = await _download_with_semaphore(url)
+                        results.append(result)
+                    except Exception as e:
+                        results.append(e)
+                
+                for url in urls:
+                    tg.start_soon(collect_result, url)
             
             # Process results
             successful_downloads = []
@@ -1402,11 +1409,11 @@ class YtDlpWrapper:
             >>> result = wrapper.cleanup_downloads(max_age_hours=0)
             
             >>> # Scheduled cleanup in long-running application
-            >>> import asyncio
+            >>> import anyio
             >>> 
             >>> async def periodic_cleanup():
             ...     while True:
-            ...         await asyncio.sleep(3600)  # Every hour
+            ...         await anyio.sleep(3600)  # Every hour
             ...         result = wrapper.cleanup_downloads(max_age_hours=6)
             ...         if result['removed_downloads'] > 0:
             ...             print(f"Cleaned up {result['removed_downloads']} downloads")

@@ -8,7 +8,7 @@ Integrates processed PDF content into GraphRAG knowledge graph:
 - Enables semantic querying and retrieval
 - Maintains IPLD data integrity
 """
-import asyncio
+import anyio
 import hashlib
 import logging
 import re

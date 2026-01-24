@@ -6,7 +6,7 @@ Test suite for caselaw/legal domain scrapers.
 Tests all scrapers under ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 import sys
 

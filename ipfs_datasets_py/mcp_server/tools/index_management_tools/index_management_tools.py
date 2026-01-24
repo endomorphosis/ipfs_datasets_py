@@ -9,7 +9,7 @@ This module provides comprehensive index management functionality including:
 - Index optimization and configuration
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime, timedelta
@@ -157,7 +157,7 @@ async def load_index(
             logger.info(f"Loading index for dataset: {dataset}, index: {knn_index}")
             
             # Simulate loading time
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             
             result = {
                 "action": "load",
@@ -187,7 +187,7 @@ async def load_index(
             logger.info(f"Creating new index for dataset: {dataset}")
             
             # Simulate creation time
-            await asyncio.sleep(0.2)
+            await anyio.sleep(0.2)
             
             index_id = f"idx_{dataset.replace('/', '_')}_{int(datetime.now().timestamp())}"
             
@@ -218,7 +218,7 @@ async def load_index(
             logger.info(f"Reloading index: {knn_index}")
             
             # Simulate reload time
-            await asyncio.sleep(0.05)
+            await anyio.sleep(0.05)
             
             result = {
                 "action": "reload",
@@ -288,7 +288,7 @@ async def load_index(
             logger.info(f"Optimizing index: {knn_index}")
             
             # Simulate optimization time
-            await asyncio.sleep(0.3)
+            await anyio.sleep(0.3)
             
             result = {
                 "action": "optimize",
@@ -357,7 +357,7 @@ async def manage_shards(
             logger.info(f"Creating {num_shards} shards for dataset: {dataset}")
             
             # Simulate shard creation
-            await asyncio.sleep(0.2)
+            await anyio.sleep(0.2)
             
             created_shards = []
             for i in range(num_shards):
@@ -435,7 +435,7 @@ async def manage_shards(
             logger.info("Rebalancing shards across nodes")
             
             # Simulate rebalancing
-            await asyncio.sleep(0.3)
+            await anyio.sleep(0.3)
             
             rebalance_plan = [
                 {"shard_id": "caselaw_shard_001", "from_node": "node-1", "to_node": "node-3", "reason": "load_balancing"},
@@ -463,7 +463,7 @@ async def manage_shards(
             logger.info(f"Merging shards: {shard_ids}")
             
             # Simulate merge operation
-            await asyncio.sleep(0.2)
+            await anyio.sleep(0.2)
             
             merged_shard_id = f"merged_{int(datetime.now().timestamp())}"
             
@@ -499,7 +499,7 @@ async def manage_shards(
             logger.info(f"Distributing dataset shards: {dataset}")
             
             # Simulate distribution
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             
             result = {
                 "action": "distribute",
@@ -733,7 +733,7 @@ async def manage_index_configuration(
                 }
             
             # Simulate config update
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             
             result = {
                 "action": "update_config",
@@ -754,7 +754,7 @@ async def manage_index_configuration(
                 }
             
             # Simulate optimization analysis
-            await asyncio.sleep(0.2)
+            await anyio.sleep(0.2)
             
             optimizations = {
                 1: {  # Conservative

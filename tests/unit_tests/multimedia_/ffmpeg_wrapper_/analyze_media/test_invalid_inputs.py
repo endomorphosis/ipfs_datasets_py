@@ -11,7 +11,7 @@ Terminology:
 - invalid_boolean_parameter: A non-boolean value passed as boolean parameter
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

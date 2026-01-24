@@ -8,7 +8,7 @@ requiring API keys (uses mock searches for demo purposes).
 To use with real API keys, set the environment variables:
     BRAVE_API_KEY, GOOGLE_API_KEY, GOOGLE_CSE_ID, GITHUB_TOKEN, HF_TOKEN
 """
-import asyncio
+import anyio
 import sys
 import os
 
@@ -187,4 +187,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    sys.exit(anyio.run(main()))

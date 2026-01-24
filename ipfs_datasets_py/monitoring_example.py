@@ -13,7 +13,7 @@ This example demonstrates the core functionality of the monitoring system includ
 import os
 import time
 import random
-import asyncio
+import anyio
 import tempfile
 from typing import Dict, List, Optional
 from pathlib import Path
@@ -115,14 +115,18 @@ class ExampleDataProcessor:
             with log_context(chunk_id=chunk_id):
                 self.logger.debug(f"Processing chunk {chunk_id} with {len(chunk)} items")
 
-                # Simulate concurrent processing
-                tasks = []
-                for j, item in enumerate(chunk):
-                    # Create task for each item
-                    tasks.append(self._process_item_async(item, f"{chunk_id}_{j}"))
-
-                # Wait for all tasks to complete
-                results = await asyncio.gather(*tasks, return_exceptions=True)
+                # Wait for all tasks to complete using anyio task group
+                results = []
+                async with anyio.create_task_group() as tg:
+                    async def collect_result(item, item_id):
+                        try:
+                            result = await self._process_item_async(item, item_id)
+                            results.append(result)
+                        except Exception as e:
+                            results.append(e)
+                    
+                    for j, item in enumerate(chunk):
+                        tg.start_soon(collect_result, item, f"{chunk_id}_{j}")
 
                 # Count successful results
                 for result in results:
@@ -143,7 +147,7 @@ class ExampleDataProcessor:
         """Process a single item asynchronously."""
         try:
             # Simulate processing time
-            await asyncio.sleep(random.uniform(0.05, 0.2))
+            await anyio.sleep(random.uniform(0.05, 0.2))
 
             # Simulate occasional errors
             if random.random() < 0.1:
@@ -285,7 +289,7 @@ def monitoring_example():
 
         # Run async example
         logger.info("Starting async processing example")
-        asyncio.run(run_async_example())
+        anyio.run(run_async_example())
 
         # Generate report
         report = processor.generate_report()

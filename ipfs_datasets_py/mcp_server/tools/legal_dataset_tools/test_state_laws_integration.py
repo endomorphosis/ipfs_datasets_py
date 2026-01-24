@@ -17,7 +17,7 @@ Usage:
     PYTHONPATH=/path/to/repo python test_state_laws_integration.py
 """
 
-import asyncio
+import anyio
 import os
 import sys
 import tempfile
@@ -266,7 +266,7 @@ async def run_all_tests():
 
 if __name__ == '__main__':
     try:
-        exit_code = asyncio.run(run_all_tests())
+        exit_code = anyio.run(run_all_tests())
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n\nTests interrupted by user")

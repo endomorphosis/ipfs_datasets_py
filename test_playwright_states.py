@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test Playwright-enabled scrapers."""
-import asyncio
+import anyio
 import sys
 sys.path.insert(0, '/home/devel/ipfs_datasets_py')
 
@@ -50,4 +50,4 @@ async def main():
     print("="*60)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

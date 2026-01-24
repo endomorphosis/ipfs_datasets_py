@@ -706,7 +706,7 @@ class TestQueryGraph:
         AND results should be independent and correct
         AND no race conditions should occur
         """
-        import asyncio
+        import anyio
         
         integrator.global_graph.edges.return_value = []
         

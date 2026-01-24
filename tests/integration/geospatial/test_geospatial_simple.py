@@ -4,7 +4,7 @@
 Simple test for geospatial tools without MCP server dependencies.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime
@@ -365,4 +365,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

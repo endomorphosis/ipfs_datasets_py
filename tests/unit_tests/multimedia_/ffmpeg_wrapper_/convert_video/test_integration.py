@@ -10,7 +10,7 @@ Terminology:
 - concurrent_conversions: Testing multiple simultaneous conversion operations
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -134,7 +134,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         """
         try:
             from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
-            import asyncio
+            import anyio
             
             wrapper = FFmpegWrapper()
             

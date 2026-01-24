@@ -12,7 +12,7 @@ This example demonstrates:
 
 import os
 import time
-import asyncio
+import anyio
 import argparse
 import numpy as np
 import pandas as pd
@@ -89,7 +89,7 @@ async def run_coordinator(args):
     # Keep the node running
     print("\nCoordinator node is running. Press Ctrl+C to exit.")
     while True:
-        await asyncio.sleep(10)
+        await anyio.sleep(10)
 
         # Rebalance shards every 10 seconds
         if args.rebalance:
@@ -134,7 +134,7 @@ async def run_worker(args):
     # Keep the node running
     print("\nWorker node is running. Press Ctrl+C to exit.")
     while True:
-        await asyncio.sleep(30)
+        await anyio.sleep(30)
 
         # Sync with the network periodically
         print("Synchronizing with network...")
@@ -174,7 +174,7 @@ async def run_client(args):
     if network_status['dataset_count'] == 0:
         print("No datasets found. Waiting for datasets to be available...")
         while network_status['dataset_count'] == 0:
-            await asyncio.sleep(5)
+            await anyio.sleep(5)
             await manager.sync_with_network()
             network_status = await manager.get_network_status()
 
@@ -204,7 +204,7 @@ async def run_client(args):
         except Exception as e:
             print(f"Error performing search: {str(e)}")
 
-        await asyncio.sleep(10)
+        await anyio.sleep(10)
 
 
 def main():
@@ -237,11 +237,11 @@ def main():
 
     # Run the appropriate node type
     if args.role == "coordinator":
-        asyncio.run(run_coordinator(args))
+        anyio.run(run_coordinator(args))
     elif args.role == "worker":
-        asyncio.run(run_worker(args))
+        anyio.run(run_worker(args))
     elif args.role == "client":
-        asyncio.run(run_client(args))
+        anyio.run(run_client(args))
 
 
 if __name__ == "__main__":

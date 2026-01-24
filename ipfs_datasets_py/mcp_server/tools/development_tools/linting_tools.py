@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass
 import logging
-import asyncio
+import anyio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -674,7 +674,7 @@ def lint_python_codebase(path: str = ".",
 
         except RuntimeError:
             # No running loop, we can use asyncio.run
-            return asyncio.run(tool.execute(
+            return anyio.run(tool.execute(
                 path=path,
                 patterns=patterns,
                 exclude_patterns=exclude_patterns,

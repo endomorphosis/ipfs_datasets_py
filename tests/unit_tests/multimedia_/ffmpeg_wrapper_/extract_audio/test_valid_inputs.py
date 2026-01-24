@@ -11,7 +11,7 @@ Terminology:
 - valid_audio_bitrate: A bitrate specification for audio in correct format (e.g., '128k', '192k')
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

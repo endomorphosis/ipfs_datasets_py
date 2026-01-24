@@ -7,7 +7,7 @@ This module provides comprehensive tests for the news analysis dashboard
 functionality, including unit tests and integration tests.
 """
 import pytest
-import asyncio
+import anyio
 import json
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, AsyncMock

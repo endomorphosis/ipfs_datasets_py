@@ -8,7 +8,7 @@ news analysis dashboard by testing deontological conflict detection on
 legal and regulatory documents.
 """
 
-import asyncio
+import anyio
 import json
 import sys
 import traceback
@@ -408,4 +408,4 @@ if __name__ == "__main__":
     print("Testing legal/ethical conflict detection capabilities...")
     print()
     
-    asyncio.run(main())
+    anyio.run(main())

@@ -18,7 +18,7 @@ Test Coverage:
 """
 
 import pytest
-import asyncio
+import anyio
 import json
 from pathlib import Path
 

@@ -8,7 +8,7 @@ and optionally from Google Patents (via web scraping).
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 import time
@@ -319,10 +319,8 @@ class USPTOPatentScraper:
         Returns:
             List of Patent objects
         """
-        # Run synchronous search in executor
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        # Run synchronous search in executor using anyio
+        return await anyio.to_thread.run_sync(
             self.search_patents,
             criteria,
             fields
@@ -423,9 +421,7 @@ class PatentDatasetBuilder:
         Returns:
             Dataset metadata and statistics
         """
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None,
+        return await anyio.to_thread.run_sync(
             self.build_dataset,
             criteria,
             output_format,

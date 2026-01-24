@@ -4,7 +4,7 @@ Test script for legal dataset scrapers.
 
 This script demonstrates the functionality of the new legal dataset scraping tools.
 """
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path
@@ -232,5 +232,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

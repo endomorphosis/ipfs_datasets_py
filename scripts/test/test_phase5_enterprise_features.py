@@ -10,7 +10,7 @@ This script tests the newly implemented Phase 5 enterprise features:
 Demonstrates complete enterprise-grade functionality.
 """
 
-import asyncio
+import anyio
 import logging
 import json
 import tempfile
@@ -404,7 +404,7 @@ async def main():
 
 
 if __name__ == "__main__":
-    result = asyncio.run(main())
+    result = anyio.run(main())
     
     if result:
         print(f"\n📊 Final Test Results:")

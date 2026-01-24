@@ -9,7 +9,7 @@ and generates individual test files for tools that don't have dedicated tests.
 import os
 import sys
 import json
-import asyncio
+import anyio
 import traceback
 import tempfile
 import shutil
@@ -507,7 +507,7 @@ Test suite for CLI tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
 
 
@@ -541,7 +541,7 @@ Test suite for security tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import check_access_permission
 
 
@@ -568,7 +568,7 @@ Test suite for function execution tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.functions.execute_python_snippet import execute_python_snippet
 
 
@@ -600,7 +600,7 @@ Test suite for IPFS tools
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
@@ -639,7 +639,7 @@ Test suite for graph tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
 
 
@@ -666,7 +666,7 @@ Test suite for audit tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.audit_tools.record_audit_event import record_audit_event
 from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
 
@@ -695,7 +695,7 @@ Test suite for vector tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
 from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
 
@@ -725,7 +725,7 @@ Test suite for provenance tools
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.provenance_tools.record_provenance import record_provenance
 
 
@@ -747,7 +747,7 @@ Test suite for web archive tools
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools.extract_dataset_from_cdxj import extract_dataset_from_cdxj
@@ -803,7 +803,7 @@ Test suite for dataset tools
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
@@ -889,4 +889,4 @@ async def main():
     print(f"\nTest completed. Report saved and individual test files generated.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

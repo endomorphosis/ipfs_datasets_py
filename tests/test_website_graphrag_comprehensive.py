@@ -13,7 +13,7 @@ Test Coverage:
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import shutil
 import json
@@ -112,7 +112,7 @@ class TestWebsiteGraphRAGProcessor:
             mock_build.return_value = mock_graphrag
             
             # WHEN
-            result = asyncio.run(mock_processor.process_website(url))
+            result = anyio.run(mock_processor.process_website(url))
             
             # THEN
             assert result is not None
@@ -150,7 +150,7 @@ class TestWebsiteGraphRAGProcessor:
         # WHEN/THEN
         for invalid_url in invalid_urls:
             with pytest.raises(ValueError, match="Invalid URL"):
-                asyncio.run(mock_processor.process_website(invalid_url))
+                anyio.run(mock_processor.process_website(invalid_url))
     
     def test_given_processing_error_when_processing_website_then_raises_runtime_error(
         self, mock_processor, sample_website_data
@@ -169,7 +169,7 @@ class TestWebsiteGraphRAGProcessor:
             
             # WHEN/THEN
             with pytest.raises(RuntimeError, match="Processing failed"):
-                asyncio.run(mock_processor.process_website(url))
+                anyio.run(mock_processor.process_website(url))
     
     def test_given_multiple_websites_when_processing_batch_then_processes_all_successfully(
         self, mock_processor
@@ -192,7 +192,7 @@ class TestWebsiteGraphRAGProcessor:
             mock_process.side_effect = mock_systems
             
             # WHEN
-            results = asyncio.run(mock_processor.process_multiple_websites(urls))
+            results = anyio.run(mock_processor.process_multiple_websites(urls))
             
             # THEN
             assert len(results) == len(urls)
@@ -243,7 +243,7 @@ class TestContentDiscoveryEngine:
             mock_parse.return_value = list(mock_warc_content.values())
             
             # WHEN
-            result = asyncio.run(discovery_engine.discover_content(mock_warc_path))
+            result = anyio.run(discovery_engine.discover_content(mock_warc_path))
             
             # THEN
             assert isinstance(result, ContentManifest)
@@ -286,7 +286,7 @@ class TestContentDiscoveryEngine:
         base_url = "https://example.com"
         
         # WHEN
-        media_assets = asyncio.run(discovery_engine.extract_media_urls(html_content, base_url))
+        media_assets = anyio.run(discovery_engine.extract_media_urls(html_content, base_url))
         
         # THEN
         assert len(media_assets) >= 4  # video, audio, image, pdf
@@ -321,7 +321,7 @@ class TestContentDiscoveryEngine:
         
         # WHEN/THEN
         with pytest.raises(FileNotFoundError):
-            asyncio.run(discovery_engine.discover_content(nonexistent_path))
+            anyio.run(discovery_engine.discover_content(nonexistent_path))
 
 
 class TestMultiModalContentProcessor:
@@ -377,7 +377,7 @@ class TestMultiModalContentProcessor:
         manifest = sample_content_manifest
         
         # WHEN
-        result = asyncio.run(content_processor.process_content_batch(
+        result = anyio.run(content_processor.process_content_batch(
             content_manifest=manifest,
             include_embeddings=False,  # Skip embeddings for speed
             include_media=False
@@ -436,7 +436,7 @@ class TestMultiModalContentProcessor:
         )
         
         # WHEN
-        result = asyncio.run(content_processor._process_html(html_asset))
+        result = anyio.run(content_processor._process_html(html_asset))
         
         # THEN
         assert result is not None
@@ -495,7 +495,7 @@ class TestMultiModalContentProcessor:
         )
         
         # WHEN
-        result = asyncio.run(content_processor.process_content_batch(manifest))
+        result = anyio.run(content_processor.process_content_batch(manifest))
         
         # THEN
         # Should have processed the good content
@@ -811,7 +811,7 @@ class TestWebsiteGraphRAGIntegration:
             with patch('os.path.exists', return_value=True):
                 # WHEN - Process the website
                 try:
-                    graphrag_system = asyncio.run(processor.process_website(test_url))
+                    graphrag_system = anyio.run(processor.process_website(test_url))
                     
                     # THEN - Verify system was created successfully
                     assert graphrag_system is not None
@@ -856,7 +856,7 @@ class TestWebsiteGraphRAGIntegration:
             
             # WHEN/THEN - Should handle error gracefully
             with pytest.raises(RuntimeError, match="Processing failed"):
-                asyncio.run(processor.process_website(test_url))
+                anyio.run(processor.process_website(test_url))
 
 
 # Performance Tests
@@ -882,7 +882,7 @@ class TestPerformanceAndBenchmarks:
                 })
             
             with patch.object(engine, '_parse_warc_file', return_value=mock_records):
-                result = asyncio.run(engine.discover_content('/tmp/test.warc'))
+                result = anyio.run(engine.discover_content('/tmp/test.warc'))
                 return result
         
         result = benchmark(run_content_discovery)
@@ -916,7 +916,7 @@ class TestPerformanceAndBenchmarks:
                 discovery_timestamp=datetime.now()
             )
             
-            result = asyncio.run(processor.process_content_batch(
+            result = anyio.run(processor.process_content_batch(
                 manifest, 
                 include_embeddings=False,
                 include_media=False

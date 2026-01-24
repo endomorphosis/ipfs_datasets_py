@@ -4,7 +4,7 @@ Test suite for analysis tools functionality.
 """
 
 import pytest
-import asyncio
+import anyio
 import sys
 import numpy as np
 from pathlib import Path

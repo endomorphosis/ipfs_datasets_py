@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 # Generated test templates for missing tools
 
 # Test for ipfs_tools/get_from_ipfs:

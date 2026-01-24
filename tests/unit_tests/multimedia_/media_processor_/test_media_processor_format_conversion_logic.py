@@ -10,7 +10,7 @@ with optimal performance characteristics under various operational conditions.
 import pytest
 import os
 import time
-import asyncio
+import anyio
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
 # Make sure the input file and documentation file exist.

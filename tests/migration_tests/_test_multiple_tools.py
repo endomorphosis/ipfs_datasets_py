@@ -121,12 +121,12 @@ def test_vector_tools():
     # Test create_vector_index
     try:
         from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
-        import asyncio
+        import anyio
 
         vectors = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
         metadata = [{"id": "vec1"}, {"id": "vec2"}, {"id": "vec3"}]
 
-        result = asyncio.run(create_vector_index(vectors, metadata=metadata))
+        result = anyio.run(create_vector_index(vectors, metadata=metadata))
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -141,10 +141,10 @@ def test_vector_tools():
     # Test search_vector_index
     try:
         from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
-        import asyncio
+        import anyio
 
         query_vector = [1.0, 0.0, 0.0]
-        result = asyncio.run(search_vector_index("test_index", query_vector, top_k=5))
+        result = anyio.run(search_vector_index("test_index", query_vector, top_k=5))
         tools_tested += 1
 
         if result.get("status") == "success":
@@ -169,9 +169,9 @@ def test_graph_tools():
     # Test query_knowledge_graph
     try:
         from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
-        import asyncio
+        import anyio
 
-        result = asyncio.run(query_knowledge_graph(
+        result = anyio.run(query_knowledge_graph(
             graph_id="test_graph",
             query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
             query_type="sparql"

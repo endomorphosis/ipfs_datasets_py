@@ -6,7 +6,7 @@ This script demonstrates the peer-to-peer workflow scheduling system that
 bypasses GitHub API using merkle clock consensus and fibonacci heap prioritization.
 """
 
-import asyncio
+import anyio
 from ipfs_datasets_py.p2p_workflow_scheduler import (
     P2PWorkflowScheduler,
     WorkflowDefinition,
@@ -246,7 +246,7 @@ def main():
     # Run async MCP tools demo
     print("\n" + "=" * 60)
     print("Running MCP Tools demonstration...")
-    asyncio.run(demo_mcp_tools())
+    anyio.run(demo_mcp_tools())
     
     print("\n" + "=" * 60)
     print("DEMONSTRATION COMPLETE")

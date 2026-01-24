@@ -13,7 +13,7 @@ Usage:
     python test_mcp_server.py [--host HOST] [--port PORT] [--ipfs-kit-mcp-url URL]
 """
 import argparse
-import asyncio
+import anyio
 import sys
 import json
 import logging
@@ -92,7 +92,7 @@ class MCPServerTester:
         self.server_task = asyncio.create_task(self.server.start(self.host, self.port))
 
         # Wait for server to start
-        await asyncio.sleep(2)
+        await anyio.sleep(2)
 
         # Create client
         self.client = MCPClient(f"http://{self.host}:{self.port}")
@@ -105,7 +105,7 @@ class MCPServerTester:
             self.server_task.cancel()
             try:
                 await self.server_task
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 pass
 
         # Cleanup temp directory
@@ -334,4 +334,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

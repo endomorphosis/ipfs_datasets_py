@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import os
 import shlex
 import subprocess as sub
@@ -47,7 +47,7 @@ class _RunTool:
                     result = future.result()
                 else:
                     # If the event loop is not running, use asyncio.run
-                    result = asyncio.run(func(*args, **kwargs))
+                    result = anyio.run(func(*args, **kwargs))
             else:
                 result = func(*args, **kwargs)
             return self.result(f"\n'{func.__qualname__}' output: {result}")

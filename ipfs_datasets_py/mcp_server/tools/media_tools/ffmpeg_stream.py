@@ -5,7 +5,7 @@ FFmpeg streaming tools for the MCP server.
 This module provides tools for streaming media input and output using FFmpeg,
 supporting various streaming protocols and formats.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -308,14 +308,14 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_input = asyncio.run(ffmpeg_stream_input(
+    test_input = anyio.run(ffmpeg_stream_input(
         stream_url="rtmp://example.com/live/stream",
         output_file="captured_stream.mp4",
         duration="00:05:00"
     ))
     print(f"Stream input test result: {test_input}")
     
-    test_output = asyncio.run(ffmpeg_stream_output(
+    test_output = anyio.run(ffmpeg_stream_output(
         input_file="input.mp4",
         stream_url="rtmp://youtube.com/live/YOUR_STREAM_KEY",
         video_bitrate="2500k",

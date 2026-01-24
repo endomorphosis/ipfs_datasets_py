@@ -5,7 +5,7 @@ Comprehensive test suite for IPFS Datasets MCP Server Tools.
 This script tests all MCP tools to ensure they work correctly
 and can be properly integrated with the MCP server.
 """
-import asyncio
+import anyio
 import json
 import os
 import sys
@@ -129,8 +129,8 @@ class MCPToolTester:
             from search_vector_index import search_vector_index
 
             tests = [
-                ("create_vector_index", lambda: asyncio.run(create_vector_index(TEST_VECTORS, dimension=3))),
-                ("search_vector_index", lambda: asyncio.run(search_vector_index("test_index", [1.0, 0.0, 0.0], top_k=5)))
+                ("create_vector_index", lambda: anyio.run(create_vector_index(TEST_VECTORS, dimension=3))),
+                ("search_vector_index", lambda: anyio.run(search_vector_index("test_index", [1.0, 0.0, 0.0], top_k=5)))
             ]
 
             for test_name, test_func in tests:
@@ -162,7 +162,7 @@ class MCPToolTester:
             from query_knowledge_graph import query_knowledge_graph
 
             tests = [
-                ("query_knowledge_graph", lambda: asyncio.run(query_knowledge_graph(
+                ("query_knowledge_graph", lambda: anyio.run(query_knowledge_graph(
                     "test_graph",
                     "MATCH (n) RETURN n LIMIT 10",
                     "sparql"
@@ -207,10 +207,10 @@ class MCPToolTester:
                 json.dump(test_data, f)
 
             tests = [
-                ("load_dataset", lambda: asyncio.run(load_dataset("squad", "plain_text"))),
-                ("save_dataset", lambda: asyncio.run(save_dataset(test_data, os.path.join(self.temp_dir, "output.json")))),
-                ("process_dataset", lambda: asyncio.run(process_dataset(test_path, {"operation": "normalize"}))),
-                ("convert_dataset_format", lambda: asyncio.run(convert_dataset_format(
+                ("load_dataset", lambda: anyio.run(load_dataset("squad", "plain_text"))),
+                ("save_dataset", lambda: anyio.run(save_dataset(test_data, os.path.join(self.temp_dir, "output.json")))),
+                ("process_dataset", lambda: anyio.run(process_dataset(test_path, {"operation": "normalize"}))),
+                ("convert_dataset_format", lambda: anyio.run(convert_dataset_format(
                     test_path,
                     os.path.join(self.temp_dir, "converted.csv"),
                     "json",
@@ -248,8 +248,8 @@ class MCPToolTester:
             from pin_to_ipfs import pin_to_ipfs
 
             tests = [
-                ("get_from_ipfs", lambda: asyncio.run(get_from_ipfs("QmTestHash123", self.temp_dir))),
-                ("pin_to_ipfs", lambda: asyncio.run(pin_to_ipfs(os.path.join(self.temp_dir, "test_file.txt"))))
+                ("get_from_ipfs", lambda: anyio.run(get_from_ipfs("QmTestHash123", self.temp_dir))),
+                ("pin_to_ipfs", lambda: anyio.run(pin_to_ipfs(os.path.join(self.temp_dir, "test_file.txt"))))
             ]
 
             # Create test file for pinning
@@ -287,12 +287,12 @@ class MCPToolTester:
             from generate_audit_report import generate_audit_report
 
             tests = [
-                ("record_audit_event", lambda: asyncio.run(record_audit_event(
+                ("record_audit_event", lambda: anyio.run(record_audit_event(
                     "test_event",
                     "user123",
                     {"action": "test", "resource": "dataset"}
                 ))),
-                ("generate_audit_report", lambda: asyncio.run(generate_audit_report(
+                ("generate_audit_report", lambda: anyio.run(generate_audit_report(
                     start_date="2024-01-01",
                     end_date="2024-12-31"
                 )))
@@ -467,4 +467,4 @@ async def main():
         tester.cleanup()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

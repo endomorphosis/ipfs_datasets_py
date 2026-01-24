@@ -119,7 +119,7 @@ def execute_integrated_command(args):
     """Execute commands using integrated MCP server and ipfs_datasets_py functionality."""
     try:
         # Import required modules for integrated functionality
-        import asyncio
+        import anyio
         import json
         import logging
         import os
@@ -140,7 +140,7 @@ def execute_integrated_command(args):
         cli_handler = IntegratedCLIHandler()
         
         # Parse and execute command
-        result = asyncio.run(cli_handler.execute_command(args))
+        result = anyio.run(cli_handler.execute_command(args))
         
         # Output result
         if isinstance(result, dict) and '--json' in args:

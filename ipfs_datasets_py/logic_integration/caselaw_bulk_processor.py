@@ -6,7 +6,7 @@ a unified temporal deontic logic system from all available legal precedents.
 """
 
 import logging
-import asyncio
+import anyio
 import json
 import re
 import os

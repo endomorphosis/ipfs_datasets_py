@@ -5,7 +5,7 @@ MCP tool for optimizing PDF content specifically for Large Language Model
 consumption with advanced chunking, summarization, and context enhancement.
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional, List, Union
 

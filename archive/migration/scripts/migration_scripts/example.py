@@ -1842,7 +1842,7 @@ def sharded_dataset_example():
     # Import required components
     import pandas as pd
     import numpy as np
-    import asyncio
+    import anyio
 
     try:
         # Import libp2p components
@@ -1933,7 +1933,7 @@ def sharded_dataset_example():
 
                 # Allow some time for distribution to complete
                 print("Waiting for distribution to complete...")
-                await asyncio.sleep(2)
+                await anyio.sleep(2)
 
                 # Synchronize with the network
                 print("\nStep 5: Synchronizing metadata across nodes")
@@ -2017,7 +2017,7 @@ def federated_search_example():
     # Import required components
     import pandas as pd
     import numpy as np
-    import asyncio
+    import anyio
     import random
 
     try:
@@ -2183,7 +2183,7 @@ def federated_search_example():
 
                 # Allow some time for distribution to complete
                 print("Waiting for distribution to complete...")
-                await asyncio.sleep(2)
+                await anyio.sleep(2)
 
                 # Synchronize with the network
                 print("\nStep 4: Synchronizing metadata across nodes")
@@ -2404,8 +2404,8 @@ def resilient_operations_example():
     from ipfs_datasets_py.examples.resilient_operations_example import resilient_operations_example as run_example
 
     # Run the example
-    import asyncio
-    asyncio.run(run_example())
+    import anyio
+    anyio.run(run_example())
 
 
 def llm_reasoning_example():

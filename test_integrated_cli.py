@@ -6,7 +6,7 @@ Test script for the integrated CLI system.
 This tests the integration between the CLI, MCP server, and ipfs_datasets_py package
 to ensure all components work together with shared codebase.
 """
-import asyncio
+import anyio
 import json
 import subprocess
 import sys

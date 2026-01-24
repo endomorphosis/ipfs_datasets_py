@@ -1,6 +1,6 @@
 # ipfs_datasets_py/mcp_server/monitoring.py
 
-import asyncio
+import anyio
 import time
 import logging
 import psutil
@@ -136,26 +136,26 @@ class EnhancedMetricsCollector:
                 await self._collect_system_metrics()
                 await self._check_health()
                 await self._check_alerts()
-                await asyncio.sleep(30)  # Collect every 30 seconds
+                await anyio.sleep(30)  # Collect every 30 seconds
                 
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 break
             except Exception as e:
                 logger.error(f"Error in monitoring loop: {e}")
-                await asyncio.sleep(60)
+                await anyio.sleep(60)
     
     async def _cleanup_loop(self):
         """Clean up old metrics data."""
         while True:
             try:
                 await self._cleanup_old_data()
-                await asyncio.sleep(3600)  # Cleanup every hour
+                await anyio.sleep(3600)  # Cleanup every hour
                 
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 break
             except Exception as e:
                 logger.error(f"Error in cleanup loop: {e}")
-                await asyncio.sleep(3600)
+                await anyio.sleep(3600)
     
     async def _collect_system_metrics(self):
         """Collect system performance metrics."""
@@ -516,14 +516,14 @@ class EnhancedMetricsCollector:
             self.monitoring_task.cancel()
             try:
                 await self.monitoring_task
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 pass
         
         if self.cleanup_task:
             self.cleanup_task.cancel()
             try:
                 await self.cleanup_task
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 pass
 
 

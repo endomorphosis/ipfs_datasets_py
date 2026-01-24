@@ -2,7 +2,7 @@
 """
 Direct test of individual web archiving functions.
 """
-import asyncio
+import anyio
 import tempfile
 import json
 import os
@@ -268,4 +268,4 @@ async def main():
         print(f"\n⚠️  {total - passed} tests failed. Check implementation.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

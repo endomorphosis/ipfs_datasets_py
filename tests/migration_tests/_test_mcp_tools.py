@@ -12,7 +12,7 @@ Usage:
 import os
 import sys
 import json
-import asyncio
+import anyio
 import argparse
 import logging
 import importlib

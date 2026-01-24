@@ -6,7 +6,7 @@ Writes results to file to avoid terminal output issues.
 
 import sys
 import os
-import asyncio
+import anyio
 import traceback
 from pathlib import Path
 from datetime import datetime
@@ -183,7 +183,7 @@ def main():
     
     # Run async functionality test
     try:
-        func_result = asyncio.run(validate_functionality())
+        func_result = anyio.run(validate_functionality())
         results.append(("Functionality", func_result))
     except Exception as e:
         write_log(f"❌ Functionality test crashed: {e}")

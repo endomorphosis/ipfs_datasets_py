@@ -22,7 +22,7 @@ import os
 import json
 import time
 import logging
-import asyncio
+import anyio
 import numpy as np
 from typing import Dict, List, Any, Optional, Tuple, TypeVar
 from dataclasses import dataclass, field, asdict
@@ -1090,8 +1090,9 @@ class FederatedSearch:
 
         # Execute tasks with timeout
         try:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-        except asyncio.TimeoutError:
+            results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks, return_exceptions=True)
+        except TimeoutError:
             logging.warning(f"Search timed out after {timeout} seconds")
             results = [{"status": "error", "message": f"Timeout after {timeout} seconds"}] * len(tasks)
 

@@ -17,7 +17,7 @@ Usage:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path
@@ -110,19 +110,19 @@ Examples:
     # Execute command
     try:
         if args.command == 'add':
-            return asyncio.run(cmd_add(args))
+            return anyio.run(cmd_add(args))
         elif args.command == 'list':
-            return asyncio.run(cmd_list(args))
+            return anyio.run(cmd_list(args))
         elif args.command == 'run':
-            return asyncio.run(cmd_run(args))
+            return anyio.run(cmd_run(args))
         elif args.command == 'remove':
-            return asyncio.run(cmd_remove(args))
+            return anyio.run(cmd_remove(args))
         elif args.command == 'enable':
-            return asyncio.run(cmd_enable(args))
+            return anyio.run(cmd_enable(args))
         elif args.command == 'disable':
-            return asyncio.run(cmd_disable(args))
+            return anyio.run(cmd_disable(args))
         elif args.command == 'daemon':
-            return asyncio.run(cmd_daemon(args))
+            return anyio.run(cmd_daemon(args))
         else:
             print(f"Unknown command: {args.command}")
             return 1

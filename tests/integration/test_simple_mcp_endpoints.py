@@ -6,7 +6,7 @@ A focused integration test suite for validating MCP dashboard functionality
 and basic endpoint availability.
 """
 
-import asyncio
+import anyio
 import json
 import pytest
 import requests

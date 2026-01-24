@@ -1090,14 +1090,14 @@ def test_async_method_can_be_awaited(a_deontologicalreasoningengine_fixture):
         result is returned
     """
     # When: analyze_corpus_for_deontic_conflicts() is called with await
-    import asyncio
+    import anyio
     document = {"id": "doc1", "content": "Citizens must vote."}
     documents = [document]
     
     async def run_async():
         return await a_deontologicalreasoningengine_fixture.analyze_corpus_for_deontic_conflicts(documents)
     
-    result = asyncio.run(run_async())
+    result = anyio.run(run_async())
     
     # Then: result is returned
     expected_type = dict

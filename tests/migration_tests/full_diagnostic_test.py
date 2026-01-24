@@ -2,7 +2,7 @@
 """
 Full diagnostic test for TestRunner
 """
-import asyncio
+import anyio
 import sys
 import traceback
 import os
@@ -145,4 +145,4 @@ class SimpleTests(unittest.TestCase):
         traceback.print_exc()
 
 if __name__ == "__main__":
-    asyncio.run(run_test())
+    anyio.run(run_test())

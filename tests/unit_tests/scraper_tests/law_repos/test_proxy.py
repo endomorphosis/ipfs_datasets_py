@@ -254,7 +254,7 @@ class TestRequestExecutionWithProxy:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the request uses proxy "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         expected_proxy = "http://proxy1.example.com:8080"
@@ -263,7 +263,7 @@ class TestRequestExecutionWithProxy:
         async def run():
             return await proxy_instance.get(url)
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result.proxy_used == expected_proxy, f"expected {expected_proxy}, got {result.proxy_used}"
     
@@ -275,7 +275,7 @@ class TestRequestExecutionWithProxy:
         WHEN I call execute_request 2 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and url "https://library.municode.com"
         THEN the first request uses proxy "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         url = "https://library.municode.com"
         expected_proxy = "http://proxy1.example.com:8080"
@@ -286,7 +286,7 @@ class TestRequestExecutionWithProxy:
             await proxy_instance.get(url)
             return first_response
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result.proxy_used == expected_proxy, f"expected {expected_proxy}, got {result.proxy_used}"
     
@@ -298,7 +298,7 @@ class TestRequestExecutionWithProxy:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the response contains a body field
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         proxy_instance = proxy_configuration(proxy_url=proxy_url)
@@ -306,7 +306,7 @@ class TestRequestExecutionWithProxy:
         async def run():
             return await proxy_instance.get(url)
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert hasattr(result, "body"), f"expected body attribute, got {dir(result)}"
     
@@ -318,7 +318,7 @@ class TestRequestExecutionWithProxy:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the response contains a status_code field
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         proxy_instance = proxy_configuration(proxy_url=proxy_url)
@@ -326,7 +326,7 @@ class TestRequestExecutionWithProxy:
         async def run():
             return await proxy_instance.get(url)
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert hasattr(result, "status_code"), f"expected status_code attribute, got {dir(result)}"
     
@@ -338,7 +338,7 @@ class TestRequestExecutionWithProxy:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the response contains a headers field
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         proxy_instance = proxy_configuration(proxy_url=proxy_url)
@@ -346,7 +346,7 @@ class TestRequestExecutionWithProxy:
         async def run():
             return await proxy_instance.get(url)
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert hasattr(result, "headers"), f"expected headers attribute, got {dir(result)}"
 
@@ -362,7 +362,7 @@ class TestCustomHeaders:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com" and headers {"User-Agent": "Mozilla/5.0"}
         THEN the request includes header "User-Agent" with value "Mozilla/5.0"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         headers = {"User-Agent": "Mozilla/5.0"}
@@ -373,7 +373,7 @@ class TestCustomHeaders:
             await proxy_instance.get(url, headers=headers)
             return proxy_instance._request_headers.get("User-Agent")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_user_agent, f"expected {expected_user_agent}, got {result}"
     
@@ -385,7 +385,7 @@ class TestCustomHeaders:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com" and headers {"Accept": "text/html"}
         THEN the request includes header "Accept" with value "text/html"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         headers = {"Accept": "text/html"}
@@ -396,7 +396,7 @@ class TestCustomHeaders:
             await proxy_instance.get(url, headers=headers)
             return proxy_instance._request_headers.get("Accept")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_accept, f"expected {expected_accept}, got {result}"
     
@@ -408,7 +408,7 @@ class TestCustomHeaders:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com/wa/seattle" and headers {"Referer": "https://library.municode.com"}
         THEN the request includes header "Referer" with value "https://library.municode.com"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com/wa/seattle"
         headers = {"Referer": "https://library.municode.com"}
@@ -419,7 +419,7 @@ class TestCustomHeaders:
             await proxy_instance.get(url, headers=headers)
             return proxy_instance._request_headers.get("Referer")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_referer, f"expected {expected_referer}, got {result}"
     
@@ -431,7 +431,7 @@ class TestCustomHeaders:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com" and headers {"User-Agent": "Mozilla/5.0", "Accept": "text/html", "Accept-Language": "en-US"}
         THEN the request includes header "User-Agent" with value "Mozilla/5.0"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         headers = {"User-Agent": "Mozilla/5.0", "Accept": "text/html", "Accept-Language": "en-US"}
@@ -442,7 +442,7 @@ class TestCustomHeaders:
             await proxy_instance.get(url, headers=headers)
             return proxy_instance._request_headers.get("User-Agent")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_user_agent, f"expected {expected_user_agent}, got {result}"
 
@@ -458,7 +458,7 @@ class TestHeaderRotation:
         WHEN I call execute_request 3 times with proxy_url "http://proxy1.example.com:8080" and user_agents ["Mozilla/5.0 Chrome", "Mozilla/5.0 Firefox", "Mozilla/5.0 Safari"] and url "https://library.municode.com"
         THEN the first request uses User-Agent "Mozilla/5.0 Chrome"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         user_agents = ["Mozilla/5.0 Chrome", "Mozilla/5.0 Firefox", "Mozilla/5.0 Safari"]
@@ -469,7 +469,7 @@ class TestHeaderRotation:
             await proxy_instance.get(url)
             return proxy_instance._request_headers.get("User-Agent")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_user_agent, f"expected {expected_user_agent}, got {result}"
     
@@ -481,7 +481,7 @@ class TestHeaderRotation:
         WHEN I call execute_request 3 times with proxy_url "http://proxy1.example.com:8080" and user_agents ["Mozilla/5.0 Chrome", "Mozilla/5.0 Firefox"] and url "https://library.municode.com"
         THEN the third request uses User-Agent "Mozilla/5.0 Chrome"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         user_agents = ["Mozilla/5.0 Chrome", "Mozilla/5.0 Firefox"]
@@ -494,7 +494,7 @@ class TestHeaderRotation:
             await proxy_instance.get(url)
             return proxy_instance._request_headers.get("User-Agent")
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_user_agent, f"expected {expected_user_agent}, got {result}"
 
@@ -510,7 +510,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com" and first_request_returns HTTP 429
         THEN the proxy retries with proxy "http://proxy2.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com"
@@ -522,7 +522,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
@@ -534,7 +534,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com" and first_request_returns HTTP 503
         THEN the proxy retries with proxy "http://proxy2.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com"
@@ -546,7 +546,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
@@ -558,7 +558,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com" and first_request_times_out
         THEN the proxy retries with proxy "http://proxy2.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com"
@@ -570,7 +570,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
 
@@ -583,7 +583,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com" and first_request_fails_with_DNS_error
         THEN the proxy retries with proxy "http://proxy2.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com"
@@ -595,7 +595,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
 
@@ -608,7 +608,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 2 and url "https://library.municode.com" and all_requests_return HTTP 429
         THEN the proxy attempts 2 retries
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 2
         test_url = "https://library.municode.com"
@@ -620,7 +620,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.retry_count
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_retry_count, f"expected {expected_retry_count}, got {result}"
 
@@ -633,7 +633,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com/invalid" and first_request_returns HTTP 404
         THEN the proxy does not retry
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com/invalid"
@@ -645,7 +645,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.retry_count
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_retry_count, f"expected {expected_retry_count}, got {result}"
 
@@ -658,7 +658,7 @@ class TestRetryLogic:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and url "https://library.municode.com" and first_request_returns HTTP 200
         THEN the proxy does not retry
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         test_url = "https://library.municode.com"
@@ -669,7 +669,7 @@ class TestRetryLogic:
             response = await proxy_manager.get(test_url)
             return response.retry_count
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_retry_count, f"expected {expected_retry_count}, got {result}"
 
@@ -686,7 +686,7 @@ class TestRetryBackoffStrategy:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and backoff_strategy "exponential" and url "https://library.municode.com" and first_request_returns HTTP 429
         THEN the proxy waits before retry
         """
-        import asyncio
+        import anyio
         import time
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
@@ -701,7 +701,7 @@ class TestRetryBackoffStrategy:
             await proxy_manager.get(test_url)
             return time.time() - start_time
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result >= expected_min_wait, f"expected >= {expected_min_wait}, got {result}"
 
@@ -714,7 +714,7 @@ class TestRetryBackoffStrategy:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and backoff_strategy "exponential" and url "https://library.municode.com" and first_two_requests_return HTTP 429
         THEN the second retry wait time is greater than first retry wait time
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         backoff_strategy = "exponential"
@@ -729,7 +729,7 @@ class TestRetryBackoffStrategy:
             backoff_times = proxy_manager._backoff_times
             return len(backoff_times) >= 2 and backoff_times[1] > backoff_times[0] if backoff_times else False
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
@@ -742,7 +742,7 @@ class TestRetryBackoffStrategy:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and backoff_strategy "linear" and url "https://library.municode.com" and first_request_returns HTTP 429
         THEN the proxy waits before retry
         """
-        import asyncio
+        import anyio
         import time
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
@@ -757,7 +757,7 @@ class TestRetryBackoffStrategy:
             await proxy_manager.get(test_url)
             return time.time() - start_time
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result >= expected_min_wait, f"expected >= {expected_min_wait}, got {result}"
 
@@ -770,7 +770,7 @@ class TestRetryBackoffStrategy:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and max_retries 3 and backoff_strategy "linear" and backoff_delay 2.0 and url "https://library.municode.com" and first_two_requests_return HTTP 429
         THEN the first retry waits 2.0 seconds
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         backoff_strategy = "linear"
@@ -786,7 +786,7 @@ class TestRetryBackoffStrategy:
             backoff_times = proxy_manager._backoff_times
             return backoff_times[0] if backoff_times else 0.0
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_delay, f"expected {expected_delay}, got {result}"
 
@@ -803,7 +803,7 @@ class TestTimeoutConfiguration:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and timeout 30.0 and url "https://library.municode.com"
         THEN the request timeout is 30.0 seconds
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         timeout = 30.0
         test_url = "https://library.municode.com"
@@ -814,7 +814,7 @@ class TestTimeoutConfiguration:
             await proxy_manager.get(test_url)
             return proxy_manager._timeout
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_timeout, f"expected {expected_timeout}, got {result}"
 
@@ -827,7 +827,7 @@ class TestTimeoutConfiguration:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the request timeout is 30.0 seconds
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         test_url = "https://library.municode.com"
         expected_timeout = 30.0
@@ -837,7 +837,7 @@ class TestTimeoutConfiguration:
             await proxy_manager.get(test_url)
             return proxy_manager._timeout
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_timeout, f"expected {expected_timeout}, got {result}"
 
@@ -850,7 +850,7 @@ class TestTimeoutConfiguration:
         WHEN I call execute_request with proxy_url "http://proxy1.example.com:8080" and timeout 1.0 and url "https://library.municode.com" and request_takes_longer_than 1.0
         THEN the proxy returns an error
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         timeout = 1.0
         test_url = "https://library.municode.com"
@@ -862,7 +862,7 @@ class TestTimeoutConfiguration:
             response = await proxy_manager.get(test_url)
             return response.status >= 500
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
@@ -897,7 +897,7 @@ class TestConnectionPooling:
         WHEN I call execute_request 5 times with proxy_url "http://proxy1.example.com:8080" and pool_size 10 and url "https://library.municode.com"
         THEN the proxy reuses connections from pool
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         pool_size = 10
         test_url = "https://library.municode.com"
@@ -911,7 +911,7 @@ class TestConnectionPooling:
                 await proxy_manager.get(test_url)
             return proxy_manager._pool_reused
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
@@ -924,7 +924,7 @@ class TestConnectionPooling:
         WHEN I call execute_request 3 times with proxy_url "http://proxy1.example.com:8080" and pool_size 2 and url "https://library.municode.com"
         THEN the proxy creates a new connection for third request
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         pool_size = 2
         test_url = "https://library.municode.com"
@@ -938,7 +938,7 @@ class TestConnectionPooling:
                 await proxy_manager.get(test_url)
             return proxy_manager._new_connection_created
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
@@ -955,7 +955,7 @@ class TestSessionManagement:
         WHEN I call execute_request 2 times with proxy_url "http://proxy1.example.com:8080" and maintain_session true and urls ["https://library.municode.com", "https://library.municode.com/wa/seattle"] and first_response_sets_cookie "session_id" "abc123"
         THEN the second request includes cookie "session_id" with value "abc123"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         maintain_session = True
         test_urls = ["https://library.municode.com", "https://library.municode.com/wa/seattle"]
@@ -970,7 +970,7 @@ class TestSessionManagement:
             response = await proxy_manager.get(test_urls[1])
             return proxy_manager._last_request_cookie
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_cookie, f"expected {expected_cookie}, got {result}"
 
@@ -983,7 +983,7 @@ class TestSessionManagement:
         WHEN I call execute_request 2 times with proxy_url "http://proxy1.example.com:8080" and maintain_session false and urls ["https://library.municode.com", "https://library.municode.com/wa/seattle"] and first_response_sets_cookie "session_id" "abc123"
         THEN the second request does not include cookie "session_id"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         maintain_session = False
         test_urls = ["https://library.municode.com", "https://library.municode.com/wa/seattle"]
@@ -997,7 +997,7 @@ class TestSessionManagement:
             response = await proxy_manager.get(test_urls[1])
             return proxy_manager._last_request_cookie
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_result, f"expected {expected_result}, got {result}"
 
@@ -1014,7 +1014,7 @@ class TestRateLimiting:
         WHEN I call execute_request 2 times with proxy_url "http://proxy1.example.com:8080" and rate_limit_delay 2.0 and url "https://library.municode.com"
         THEN the proxy waits at least 2.0 seconds between requests
         """
-        import asyncio
+        import anyio
         import time
         proxy_url = "http://proxy1.example.com:8080"
         rate_limit_delay = 2.0
@@ -1029,7 +1029,7 @@ class TestRateLimiting:
             await proxy_manager.get(test_url)
             return time.time() - start_time
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result >= expected_min_delay, f"expected >= {expected_min_delay}, got {result}"
     
@@ -1041,7 +1041,7 @@ class TestRateLimiting:
         WHEN I call execute_request 5 times with proxy_url "http://proxy1.example.com:8080" and rate_limit_delay 1.0 and url "https://library.municode.com"
         THEN the total elapsed time is at least 4.0 seconds
         """
-        import asyncio
+        import anyio
         import time
         proxy_url = "http://proxy1.example.com:8080"
         rate_limit_delay = 1.0
@@ -1056,7 +1056,7 @@ class TestRateLimiting:
                 await proxy_manager.get(test_url)
             return time.time() - start_time
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result >= expected_min_time, f"expected >= {expected_min_time}, got {result}"
     
@@ -1068,7 +1068,7 @@ class TestRateLimiting:
         WHEN I call execute_request 3 times with proxy_url "http://proxy1.example.com:8080" and rate_limit_delay 0.0 and url "https://library.municode.com"
         THEN the proxy does not wait between requests
         """
-        import asyncio
+        import anyio
         import time
         proxy_url = "http://proxy1.example.com:8080"
         rate_limit_delay = 0.0
@@ -1083,7 +1083,7 @@ class TestRateLimiting:
                 await proxy_manager.get(test_url)
             return time.time() - start_time
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result < expected_max_time, f"expected < {expected_max_time}, got {result}"
 
@@ -1099,7 +1099,7 @@ class TestProxyHealthMonitoring:
         WHEN I call execute_request with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and health_check true and url "https://library.municode.com" and first_request_fails_with_connection_error
         THEN the proxy marks "http://proxy1.example.com:8080" as unhealthy
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         health_check = True
         test_url = "https://library.municode.com"
@@ -1111,7 +1111,7 @@ class TestProxyHealthMonitoring:
             await proxy_manager.get(test_url)
             return proxy_manager._unhealthy_proxies[0] if proxy_manager._unhealthy_proxies else None
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_unhealthy_proxy, f"expected {expected_unhealthy_proxy}, got {result}"
     
@@ -1123,7 +1123,7 @@ class TestProxyHealthMonitoring:
         WHEN I call execute_request 2 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and health_check true and url "https://library.municode.com" and first_request_fails_with_connection_error
         THEN the second request uses proxy "http://proxy2.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         health_check = True
         test_url = "https://library.municode.com"
@@ -1136,7 +1136,7 @@ class TestProxyHealthMonitoring:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
@@ -1148,7 +1148,7 @@ class TestProxyHealthMonitoring:
         WHEN I call execute_request 3 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and health_check true and health_check_cooldown 5.0 and url "https://library.municode.com" and first_request_fails_then_wait 5.0
         THEN the proxy attempts to use "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         import time
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         health_check = True
@@ -1165,7 +1165,7 @@ class TestProxyHealthMonitoring:
             response = await proxy_manager.get(test_url)
             return response.proxy_used
         
-        result = asyncio.run(run_test())
+        result = anyio.run(run_test())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
 
@@ -1181,7 +1181,7 @@ class TestStatisticsAndMonitoring:
         WHEN I call execute_request 5 times with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com" and get_statistics
         THEN the statistics show 5 total requests
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         num_requests = 5
@@ -1193,7 +1193,7 @@ class TestStatisticsAndMonitoring:
                 await proxy_instance.get(url)
             return proxy_instance.get_statistics()
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result["total_requests"] == expected_count, f"expected {expected_count}, got {result['total_requests']}"
     
@@ -1205,7 +1205,7 @@ class TestStatisticsAndMonitoring:
         WHEN I call execute_request 5 times with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com" and all_requests_return HTTP 200 and get_statistics
         THEN the statistics show 5 successful requests
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         num_requests = 5
@@ -1217,7 +1217,7 @@ class TestStatisticsAndMonitoring:
                 await proxy_instance.get(url)
             return proxy_instance.get_statistics()
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result["successful_requests"] == expected_count, f"expected {expected_count}, got {result['successful_requests']}"
     
@@ -1245,7 +1245,7 @@ class TestStatisticsAndMonitoring:
         WHEN I call execute_request 4 times with proxy_urls ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"] and url "https://library.municode.com" and get_statistics
         THEN the statistics show 2 requests for "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         url = "https://library.municode.com"
         num_requests = 4
@@ -1258,7 +1258,7 @@ class TestStatisticsAndMonitoring:
                 await proxy_instance.get(url)
             return proxy_instance.get_statistics()
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result["per_proxy_stats"][proxy_to_check]["requests"] == expected_count, f"expected {expected_count}, got {result['per_proxy_stats'][proxy_to_check]['requests']}"
 
@@ -1274,7 +1274,7 @@ class TestContextManagerSupport:
         WHEN I use proxy with proxy_url "http://proxy1.example.com:8080" as context manager
         THEN the proxy context manager enters
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         proxy_instance = proxy_configuration(proxy_url=proxy_url)
         
@@ -1282,7 +1282,7 @@ class TestContextManagerSupport:
             async with proxy_instance as session:
                 return session
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == proxy_instance, f"expected {proxy_instance}, got {result}"
     
@@ -1294,7 +1294,7 @@ class TestContextManagerSupport:
         WHEN I use proxy with proxy_url "http://proxy1.example.com:8080" and pool_size 10 as context manager and exit
         THEN the proxy closes all connections
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         pool_size = 10
         proxy_instance = proxy_configuration(proxy_url=proxy_url, pool_size=pool_size)
@@ -1304,7 +1304,7 @@ class TestContextManagerSupport:
                 pass
             return True
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == True, f"expected True, got {result}"
 
@@ -1320,7 +1320,7 @@ class TestAsyncSupport:
         WHEN I call async execute_request with proxy_url "http://proxy1.example.com:8080" and url "https://library.municode.com"
         THEN the request executes asynchronously
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         expected_status = 200
@@ -1330,7 +1330,7 @@ class TestAsyncSupport:
             response = await proxy_instance.get(url)
             return response.status
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_status, f"expected {expected_status}, got {result}"
     
@@ -1342,7 +1342,7 @@ class TestAsyncSupport:
         WHEN I call async execute_request concurrently with proxy_url "http://proxy1.example.com:8080" and urls ["https://library.municode.com", "https://codelibrary.amlegal.com", "https://ecode360.com"]
         THEN all 3 requests execute concurrently
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         urls = ["https://library.municode.com", "https://codelibrary.amlegal.com", "https://ecode360.com"]
         expected_count = 3
@@ -1352,7 +1352,7 @@ class TestAsyncSupport:
             responses = await asyncio.gather(*[proxy_instance.get(url) for url in urls])
             return len(responses)
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_count, f"expected {expected_count}, got {result}"
 
@@ -1368,7 +1368,7 @@ class TestIntegrationWithScrapers:
         WHEN I call municode search_jurisdictions with state "WA" using proxy_url "http://proxy1.example.com:8080"
         THEN the request uses proxy "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://library.municode.com"
         expected_proxy = "http://proxy1.example.com:8080"
@@ -1379,7 +1379,7 @@ class TestIntegrationWithScrapers:
                 response = await session.get(url)
                 return response.proxy_used
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
@@ -1391,7 +1391,7 @@ class TestIntegrationWithScrapers:
         WHEN I call american_legal search_jurisdictions with state "WA" using proxy_url "http://proxy1.example.com:8080"
         THEN the request uses proxy "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://codelibrary.amlegal.com"
         expected_proxy = "http://proxy1.example.com:8080"
@@ -1402,7 +1402,7 @@ class TestIntegrationWithScrapers:
                 response = await session.get(url)
                 return response.proxy_used
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"
     
@@ -1414,7 +1414,7 @@ class TestIntegrationWithScrapers:
         WHEN I call ecode360 search_jurisdictions with state "WA" using proxy_url "http://proxy1.example.com:8080"
         THEN the request uses proxy "http://proxy1.example.com:8080"
         """
-        import asyncio
+        import anyio
         proxy_url = "http://proxy1.example.com:8080"
         url = "https://ecode360.com"
         expected_proxy = "http://proxy1.example.com:8080"
@@ -1425,6 +1425,6 @@ class TestIntegrationWithScrapers:
                 response = await session.get(url)
                 return response.proxy_used
         
-        result = asyncio.run(run())
+        result = anyio.run(run())
         
         assert result == expected_proxy, f"expected {expected_proxy}, got {result}"

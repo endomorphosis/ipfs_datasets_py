@@ -13,7 +13,7 @@ Test results are saved to: ~/.ipfs_datasets/state_laws/test_samples/
 Each state gets its own parquet file: <state_code>_sample.parquet
 """
 
-import asyncio
+import anyio
 import os
 import sys
 from pathlib import Path
@@ -221,7 +221,7 @@ class StateLawsTester:
             print(f"⚠️  WARNING: Expected 51 states, found {len(all_states)}")
         
         # Create semaphore to limit concurrent operations
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = anyio.Semaphore(max_concurrent)
         
         async def test_with_semaphore(state_code: str):
             async with semaphore:
@@ -359,7 +359,7 @@ if __name__ == "__main__":
     print("This will scrape real data from all 51 state legislative websites.")
     print("Results will be saved to parquet files for validation.\n")
     
-    tester = asyncio.run(main())
+    tester = anyio.run(main())
     
     # Exit with appropriate code
     failed = sum(1 for r in tester.results.values() if not r['success'])

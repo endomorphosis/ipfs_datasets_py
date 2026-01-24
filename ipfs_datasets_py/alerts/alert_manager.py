@@ -10,7 +10,7 @@ This module provides the main alert management system that:
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 import time
 from dataclasses import dataclass, field

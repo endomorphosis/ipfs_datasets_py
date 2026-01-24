@@ -19,6 +19,12 @@ pytest-cov>=4.1.0,<6.0.0
 pytest-parallel>=0.1.1 # Allows parallel test execution
 pytest-xdist>=3.8.0
 pytest-timeout >=2.0.2 # To prevent test suites from hanging indefinitely
+pytest-asyncio>=0.21.0
+pytest-trio>=0.8.0
+
+# Async compatibility
+anyio>=4.0.0
+trio>=0.27.0
 
 
 # Basic utilities

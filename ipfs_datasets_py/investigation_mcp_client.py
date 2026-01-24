@@ -8,7 +8,7 @@ specifically for investigation and analysis operations.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from typing import Any, Dict, List, Optional
@@ -134,7 +134,7 @@ class InvestigationMCPClient:
                 f"Network error calling MCP tool '{tool_name}': {str(e)}",
                 {"tool_name": tool_name, "arguments": arguments, "error_type": type(e).__name__}
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise InvestigationMCPClientError(
                 f"Timeout calling MCP tool '{tool_name}' (timeout: {self.timeout}s)",
                 {"tool_name": tool_name, "arguments": arguments, "timeout": self.timeout}

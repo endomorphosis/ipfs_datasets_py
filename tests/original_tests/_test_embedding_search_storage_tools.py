@@ -3,7 +3,7 @@ Tests for embedding-related MCP tools.
 """
 
 import pytest
-import asyncio
+import anyio
 import os
 import tempfile
 import numpy as np

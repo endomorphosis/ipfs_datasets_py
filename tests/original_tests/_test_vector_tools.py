@@ -4,7 +4,7 @@ Test suite for vector store tools and functionality.
 """
 
 import pytest
-import asyncio
+import anyio
 import numpy as np
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import sys

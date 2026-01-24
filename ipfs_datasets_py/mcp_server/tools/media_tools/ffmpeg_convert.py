@@ -5,7 +5,7 @@ FFmpeg media conversion tool for the MCP server.
 This tool provides comprehensive media format conversion capabilities using FFmpeg,
 supporting video, audio, and container format transformations.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -238,7 +238,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_result = asyncio.run(ffmpeg_convert(
+    test_result = anyio.run(ffmpeg_convert(
         input_file="input.mp4",
         output_file="output.mp4",
         video_codec="libx264",

@@ -26,7 +26,7 @@ Usage:
     python discord_alerts_demo.py --dry-run
 """
 
-import asyncio
+import anyio
 import argparse
 import os
 import sys
@@ -299,7 +299,7 @@ async def demo_suppression(notifier: DiscordNotifier, dry_run: bool = False):
                 print(f"  ⊗ Alert suppressed (within suppression window)")
         
         if i < 2:
-            await asyncio.sleep(1)
+            await anyio.sleep(1)
     
     print("\nSuppression status:")
     status = manager.get_suppression_status()
@@ -417,5 +417,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

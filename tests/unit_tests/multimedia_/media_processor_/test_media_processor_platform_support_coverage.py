@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import AsyncMock
 from urllib.parse import urlparse
 

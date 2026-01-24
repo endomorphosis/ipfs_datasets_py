@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 import aiohttp
-import asyncio
+import anyio
 
 # Add the path directly to avoid triggering __init__.py imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -135,7 +135,7 @@ def mock_scrape_jurisdiction_network_timeout():
     async def _mock_timeout(**kwargs):
         mock_response = AsyncMock()
         mock_response.status = 408
-        with patch('aiohttp.ClientSession.get', side_effect=asyncio.TimeoutError()):
+        with patch('aiohttp.ClientSession.get', side_effect=TimeoutError()):
             return await scrape_jurisdiction(**kwargs)
 
     return _mock_timeout

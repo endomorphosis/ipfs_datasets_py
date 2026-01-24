@@ -11,7 +11,7 @@ Terminology:
 - read_only_output_directory: An output path in a directory without write permissions
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

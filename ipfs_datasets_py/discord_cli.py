@@ -14,7 +14,7 @@ Usage:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import os
 import sys
@@ -629,7 +629,7 @@ def main(argv: Optional[list] = None) -> int:
     
     handler = async_commands.get(args.command)
     if handler:
-        return asyncio.run(handler(args))
+        return anyio.run(handler(args))
     else:
         print(f"✗ Unknown command: {args.command}", file=sys.stderr)
         return 1

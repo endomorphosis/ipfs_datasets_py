@@ -22,7 +22,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 import pickle
 import hashlib
@@ -686,7 +686,7 @@ class ProductionMLModelServer:
         successful_predictions = 0
         
         # Process items concurrently with limit
-        semaphore = asyncio.Semaphore(self.config.get('max_concurrent_predictions', 10))
+        semaphore = anyio.Semaphore(self.config.get('max_concurrent_predictions', 10))
         
         async def analyze_single_item(content: ProcessedContent) -> List[ModelPrediction]:
             async with semaphore:
@@ -960,4 +960,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

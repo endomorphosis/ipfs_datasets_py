@@ -4,7 +4,7 @@ Unified verification runner for US Code and Federal Register scrapers.
 
 This script runs both verification tools and provides a combined summary.
 """
-import asyncio
+import anyio
 import sys
 import subprocess
 from pathlib import Path

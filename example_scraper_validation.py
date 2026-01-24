@@ -12,7 +12,7 @@ this example may not work when run directly from source without installation.
 
 See tests/scraper_tests/ for working examples used by the GitHub Actions workflow.
 """
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -53,7 +53,7 @@ async def example_scraper_test():
         This would be replaced with your actual scraper implementation.
         """
         # Simulate scraping delay
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         # Return sample data
         return {
@@ -72,7 +72,7 @@ async def example_scraper_test():
     # Create bad scraper that includes HTML
     async def bad_scraper(query: str = "test", max_results: int = 3):
         """Example of a scraper with data quality issues."""
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         return {
             'status': 'success',
@@ -159,4 +159,4 @@ async def example_scraper_test():
 
 
 if __name__ == '__main__':
-    asyncio.run(example_scraper_test())
+    anyio.run(example_scraper_test())

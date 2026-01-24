@@ -5,7 +5,7 @@ Core FFmpeg utilities and helpers for media processing tools.
 This module provides common functionality for FFmpeg operations including
 path validation, command construction, process execution, and error handling.
 """
-import asyncio
+import anyio
 import json
 import os
 import subprocess
@@ -196,7 +196,7 @@ class FFmpegUtils:
                     "duration": end_time - start_time
                 }
                 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "status": "error",
                 "error": "Command timed out",

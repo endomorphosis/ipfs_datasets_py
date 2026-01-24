@@ -3,7 +3,7 @@ Comprehensive tests for vector store MCP tools.
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import json
 import numpy as np
@@ -648,7 +648,8 @@ class TestVectorStoreToolsIntegration:
             add_embeddings_to_store_tool(store_id, embeddings_batch2, metadata_batch2)
         ]
 
-        results = await asyncio.gather(*add_tasks, return_exceptions=True)
+        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*add_tasks, return_exceptions=True)
 
         # Check that both operations succeeded
         success_count = sum(1 for r in results if isinstance(r, dict) and r.get("success"))

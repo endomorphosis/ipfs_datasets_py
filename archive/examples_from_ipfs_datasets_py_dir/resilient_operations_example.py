@@ -15,7 +15,7 @@ This script shows how to:
 import os
 import sys
 import time
-import asyncio
+import anyio
 import random
 import logging
 import json
@@ -134,7 +134,7 @@ async def resilient_operations_example():
     await connect_nodes(coordinator_node, [worker1_node, worker2_node, worker3_node])
 
     # Wait for peer discovery to complete
-    await asyncio.sleep(2)
+    await anyio.sleep(2)
 
     # Create distributed dataset manager
     print("\nCreating distributed dataset manager...")
@@ -154,7 +154,7 @@ async def resilient_operations_example():
 
     # Wait for health checks to complete
     print("\nWaiting for health checks to complete...")
-    await asyncio.sleep(5)
+    await anyio.sleep(5)
 
     # Show updated node health
     print("\nUpdated node health status:")
@@ -355,4 +355,4 @@ def simulate_error():
 
 if __name__ == "__main__":
     # Run the example
-    asyncio.run(resilient_operations_example())
+    anyio.run(resilient_operations_example())

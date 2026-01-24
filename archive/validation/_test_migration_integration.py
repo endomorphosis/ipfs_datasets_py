@@ -3,7 +3,7 @@
 Test script for the migrated MCP tools integration.
 """
 
-import asyncio
+import anyio
 import sys
 import traceback
 from pathlib import Path
@@ -182,7 +182,7 @@ def main():
     async_results = []
     for test in async_tests:
         try:
-            result = asyncio.run(test())
+            result = anyio.run(test())
             async_results.append(result)
         except Exception as e:
             print(f"❌ Async test {test.__name__} failed: {e}")

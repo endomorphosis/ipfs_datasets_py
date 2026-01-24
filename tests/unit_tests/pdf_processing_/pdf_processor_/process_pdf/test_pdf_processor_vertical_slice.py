@@ -3,7 +3,7 @@ import logging
 import inspect
 import os
 from pathlib import Path
-import asyncio
+import anyio
 import pytest
 
 

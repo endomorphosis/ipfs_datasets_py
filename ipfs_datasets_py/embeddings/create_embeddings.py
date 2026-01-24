@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import os
 
 
@@ -115,4 +115,4 @@ if __name__ == "__main__":
     resources = {
     }
     create_embeddings_batch = create_embeddings(resources, metadata)
-    asyncio.run(create_embeddings_batch.test(metadata["dataset"], metadata["split"], metadata["column"], metadata["dst_path"], metadata["models"]))
+    anyio.run(create_embeddings_batch.test(metadata["dataset"], metadata["split"], metadata["column"], metadata["dst_path"], metadata["models"]))

@@ -5,7 +5,7 @@ Provides detailed system status information for IPFS datasets infrastructure.
 Reports on service states, configuration status, and operational metrics.
 """
 
-import asyncio
+import anyio
 import os
 import sys
 import json

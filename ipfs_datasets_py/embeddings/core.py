@@ -8,7 +8,7 @@ Provides advanced embedding generation, vector search, and IPFS integration capa
 import os
 import sys
 import json
-import asyncio
+import anyio
 import time
 import gc
 import logging

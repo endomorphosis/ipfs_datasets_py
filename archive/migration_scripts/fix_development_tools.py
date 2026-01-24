@@ -4,7 +4,7 @@ Fix script to address failing development tools by improving tool discovery.
 The issue is that the test script is treating standard library imports as MCP tools.
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -262,7 +262,7 @@ async def fix_specific_development_tools():
     # 2. asdict parameter issue: "asdict() should be called on dataclass instances"
     # 3. abstractmethod parameter issue: "'str' object has no attribute '__isabstractmethod__'"
     # 4. development_tool_mcp_wrapper parameter issue: "'str' object has no attribute '__name__'"
-    # 5. run_comprehensive_tests asyncio issue: "asyncio.run() cannot be called from a running event loop"
+    # 5. run_comprehensive_tests asyncio issue: "anyio.run() cannot be called from a running event loop"
     # 6. test_generator and lint_python_codebase module attribute issues
     
     fixes = {
@@ -308,4 +308,4 @@ async def main():
     print("Next step: Update the comprehensive test script with improved filtering.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

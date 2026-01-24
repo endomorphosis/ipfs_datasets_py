@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 """
 Test stubs for Vector MCP tools.
 

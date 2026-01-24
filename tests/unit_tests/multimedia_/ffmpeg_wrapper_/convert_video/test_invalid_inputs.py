@@ -11,7 +11,7 @@ Terminology:
 - invalid_codec: A codec name not supported by FFmpeg
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

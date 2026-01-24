@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 from __future__ import annotations
-import asyncio
+import anyio
 import json
 import logging
 import os
@@ -773,4 +773,4 @@ async def main(input_files: Optional[list[Path]] = None) -> int:
     return 0
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    sys.exit(anyio.run(main()))

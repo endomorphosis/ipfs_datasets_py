@@ -473,7 +473,7 @@ async def batch_search_huggingface(
         Dict containing batch search results
     """
     try:
-        import asyncio
+        import anyio
         
         # Select the appropriate search function
         search_func = {
@@ -497,7 +497,7 @@ async def batch_search_huggingface(
             
             # Add delay between requests
             if query != queries[-1]:
-                await asyncio.sleep(delay_seconds)
+                await anyio.sleep(delay_seconds)
         
         return {
             "status": "success",

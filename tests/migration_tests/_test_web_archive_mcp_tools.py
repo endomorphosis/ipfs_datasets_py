@@ -5,7 +5,7 @@ Test runner for Web Archive MCP tools.
 This script tests the web archive tools in the MCP server by directly calling them
 with appropriate test data.
 """
-import asyncio
+import anyio
 import os
 import json
 import sys
@@ -161,4 +161,4 @@ async def test_web_archive_tools():
         print(f"Cleaned up test directory: {test_dir}")
 
 if __name__ == "__main__":
-    asyncio.run(test_web_archive_tools())
+    anyio.run(test_web_archive_tools())

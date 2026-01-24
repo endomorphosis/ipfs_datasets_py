@@ -13,7 +13,7 @@ import inspect
 import unittest
 import importlib
 import logging
-import asyncio
+import anyio
 from pathlib import Path
 from unittest.mock import patch, MagicMock, AsyncMock
 

@@ -4,7 +4,7 @@ Test suite for background_task_tools functionality with GIVEN WHEN THEN format.
 """
 
 import pytest
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch, MagicMock

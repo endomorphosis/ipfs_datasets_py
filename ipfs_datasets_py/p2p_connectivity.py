@@ -13,7 +13,7 @@ Features:
 - Hole punching for direct NAT traversal
 """
 
-import asyncio
+import anyio
 import logging
 import os
 from typing import Dict, List, Optional, Set
@@ -135,7 +135,8 @@ class UniversalConnectivity:
             logger.info(f"  TTL: {self.config.mdns_ttl}s")
             
             # Start periodic discovery
-            asyncio.create_task(self._mdns_discovery_loop(host))
+            # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._mdns_discovery_loop(host))
             
         except Exception as e:
             logger.warning(f"Failed to start mDNS discovery: {e}")
@@ -146,10 +147,10 @@ class UniversalConnectivity:
             try:
                 # Perform mDNS discovery
                 # In actual implementation, this would use libp2p's mDNS service
-                await asyncio.sleep(self.config.mdns_interval)
+                await anyio.sleep(self.config.mdns_interval)
             except Exception as e:
                 logger.error(f"mDNS discovery error: {e}")
-                await asyncio.sleep(self.config.mdns_interval)
+                await anyio.sleep(self.config.mdns_interval)
     
     async def configure_dht(self, host) -> None:
         """
@@ -225,7 +226,8 @@ class UniversalConnectivity:
             logger.info("✓ AutoNAT enabled")
             
             # Start reachability detection
-            asyncio.create_task(self._check_reachability(host))
+            # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._check_reachability(host))
             
         except Exception as e:
             logger.warning(f"Failed to enable AutoNAT: {e}")

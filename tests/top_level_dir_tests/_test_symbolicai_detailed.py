@@ -7,7 +7,7 @@ This script performs detailed testing of SymbolicAI integration
 with our First-Order Logic system using the configured API key.
 """
 
-import asyncio
+import anyio
 from datetime import datetime
 
 def test_fol_conversion_with_api():

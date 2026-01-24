@@ -4,7 +4,7 @@ Test suite for vector_store_tools functionality with GIVEN WHEN THEN format.
 """
 
 import pytest
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
@@ -406,7 +406,7 @@ class TestVectorStoreToolsIntegration:
         THEN expect the operation to complete successfully
         AND results should meet the expected criteria
         """
-        import asyncio
+        import anyio
         
         service = MockVectorStoreService()
         
@@ -421,7 +421,8 @@ class TestVectorStoreToolsIntegration:
             for i in range(3)
         ]
         
-        results = await asyncio.gather(*tasks)
+        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks)
         
         # All operations should complete successfully
         for result in results:

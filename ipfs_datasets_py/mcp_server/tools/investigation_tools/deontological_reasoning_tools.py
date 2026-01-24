@@ -7,7 +7,7 @@ Provides MCP tools for legal and ethical analysis using deontic logic.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime

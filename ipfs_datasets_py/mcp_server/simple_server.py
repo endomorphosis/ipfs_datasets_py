@@ -155,8 +155,8 @@ class SimpleIPFSDatasetsMCPServer:
 
                 # Handle async functions
                 if hasattr(result, "__await__"):
-                    import asyncio
-                    result = asyncio.run(result)
+                    import anyio
+                    result = anyio.run(result)
 
                 return jsonify({"result": result})
             except Exception as e:

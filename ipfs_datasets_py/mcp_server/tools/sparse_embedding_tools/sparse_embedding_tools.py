@@ -1,6 +1,6 @@
 # sparse_embedding_tools.py
 
-import asyncio
+import anyio
 import logging
 import numpy as np
 from typing import Dict, Any, List, Optional, Union, Tuple

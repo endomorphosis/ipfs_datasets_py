@@ -7,7 +7,7 @@ from the ipfs_embeddings_py project with enhanced monitoring and control feature
 
 import logging
 import uuid
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, List, Callable
 from datetime import datetime, timedelta
 from enum import Enum

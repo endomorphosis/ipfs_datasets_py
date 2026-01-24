@@ -5,7 +5,7 @@ Wraps GitHub CLI calls with distributed P2P cache to reduce API rate limit usage
 Uses pylibp2p for peer-to-peer cache sharing and ipfs_multiformats for content hashing.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 from typing import Optional, List, Dict, Any

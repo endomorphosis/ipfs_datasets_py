@@ -53,7 +53,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             async def test_download():
                 processor = MediaProcessor()
@@ -66,7 +66,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
                 return result
             
             # Run async test
-            result = asyncio.run(test_download())
+            result = anyio.run(test_download())
             assert isinstance(result, dict)
             
         except (ImportError, AttributeError):
@@ -106,7 +106,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             async def test_keys():
                 processor = MediaProcessor()
@@ -116,7 +116,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
                 )
                 return result
             
-            result = asyncio.run(test_keys())
+            result = anyio.run(test_keys())
             
             # Check if result has expected keys or error structure
             if isinstance(result, dict):
@@ -158,7 +158,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             processor = MediaProcessor()
             mock_url = "https://example.com/test_video.mp4"
@@ -206,7 +206,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             processor = MediaProcessor()
             mock_url = "https://example.com/test_video.mp4"
@@ -252,7 +252,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             async def test_status():
                 processor = MediaProcessor()
@@ -266,7 +266,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
                 assert result["status"] in ["success", "error"]  # Allow graceful errors in test environment
                 
             # Run async test
-            asyncio.run(test_status())
+            anyio.run(test_status())
             
         except Exception:
             # Graceful fallback for testing environment
@@ -327,7 +327,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             processor = MediaProcessor()
             mock_url = "https://example.com/test_video.mp4"
@@ -550,7 +550,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         """
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             import tempfile
             import os
             
@@ -570,7 +570,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
                     # Allow graceful error handling in test environment
                     assert "status" in result
                     
-            asyncio.run(test_custom_directory())
+            anyio.run(test_custom_directory())
             
         except Exception:
             # Graceful fallback for testing
@@ -591,7 +591,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         # GIVEN - valid URL and format kwargs
         try:
             from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
-            import asyncio
+            import anyio
             
             async def test_format_kwargs():
                 processor = MediaProcessor()

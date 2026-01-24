@@ -5,7 +5,7 @@ This module provides tools for user authentication, token validation,
 and session management operations.
 """
 
-import asyncio
+import anyio
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Union

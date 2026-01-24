@@ -5,7 +5,7 @@ This module provides comprehensive integration tests for all MCP endpoints,
 tools, and functionality across the IPFS Datasets ecosystem.
 """
 
-import asyncio
+import anyio
 import json
 import pytest
 import requests
@@ -554,5 +554,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

@@ -29,7 +29,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 import statistics
 from typing import Dict, List, Optional, Any, Union, Tuple
@@ -312,25 +312,24 @@ class Phase7AdvancedGraphRAGSystem:
             processing_tasks = []
             
             # Create processing tasks (limit concurrency)
-            semaphore = asyncio.Semaphore(self.config.max_concurrent_analyses)
+            semaphore = anyio.Semaphore(self.config.max_concurrent_analyses)
             
             async def process_single_website(url: str) -> Tuple[str, MLEnhancedProcessingResult]:
                 async with semaphore:
                     result = await self.process_website_with_ml_analysis(url, processing_options)
                     return url, result
             
-            # Execute all processing tasks
-            for url in website_urls:
-                task = asyncio.create_task(process_single_website(url))
-                processing_tasks.append(task)
-            
-            # Collect results
-            for task in asyncio.as_completed(processing_tasks):
-                try:
-                    url, result = await task
-                    website_results[url] = result
-                except Exception as e:
-                    logger.error(f"Failed to process website in batch: {e}")
+            # Execute all processing tasks using anyio task group
+            async with anyio.create_task_group() as tg:
+                async def collect_result(url):
+                    try:
+                        url, result = await process_single_website(url)
+                        website_results[url] = result
+                    except Exception as e:
+                        logger.error(f"Failed to process website {url} in batch: {e}")
+                
+                for url in website_urls:
+                    tg.start_soon(collect_result, url)
             
             # Step 2: Cross-website correlation analysis
             if self.config.enable_cross_site_analysis and len(website_results) > 1:
@@ -994,4 +993,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

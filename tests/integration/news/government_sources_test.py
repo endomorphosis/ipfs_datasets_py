@@ -10,7 +10,7 @@ Comprehensive test of the News Analysis Dashboard with government websites:
 """
 import sys
 import time
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path
@@ -596,7 +596,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        exit_code = asyncio.run(main())
+        exit_code = anyio.run(main())
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n❌ Test interrupted by user")

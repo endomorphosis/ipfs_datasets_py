@@ -44,7 +44,7 @@ assert QueryEngine.get_query_analytics
 
 
 # Check if the modules's imports are accessible:
-import asyncio
+import anyio
 import logging
 import json
 from typing import Dict, List, Any, Optional
@@ -102,7 +102,7 @@ assert QueryEngine._generate_query_suggestions
 assert QueryEngine.get_query_analytics
 
 # Check if the modules's imports are accessible:
-import asyncio
+import anyio
 import logging
 import json
 from typing import Dict, List, Any, Optional

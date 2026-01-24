@@ -4,7 +4,7 @@ Production readiness validation script.
 This script validates that the integration is ready for production deployment.
 """
 
-import asyncio
+import anyio
 import sys
 import json
 from pathlib import Path
@@ -217,7 +217,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        success = asyncio.run(main())
+        success = anyio.run(main())
         sys.exit(0 if success else 1)
     except Exception as e:
         print(f"❌ Validation failed: {e}")

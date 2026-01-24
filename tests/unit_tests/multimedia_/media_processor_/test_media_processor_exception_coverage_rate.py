@@ -3,7 +3,7 @@
 
 import pytest
 import os
-import asyncio
+import anyio
 from urllib.error import URLError, HTTPError
 import psutil
 import os
@@ -33,7 +33,7 @@ from tests._test_utils import (
 REQUIRED_EXCEPTION_TYPES = [
     "URLError", "HTTPError", "TimeoutError", "ConnectionError", "OSError",
     "PermissionError", "FileNotFoundError", "DiskSpaceError", "CalledProcessError",
-    "ValueError", "TypeError", "KeyError", "IndexError", "asyncio.CancelledError", "MemoryError"
+    "ValueError", "TypeError", "KeyError", "IndexError", "anyio.get_cancelled_exc_class()()", "MemoryError"
 ]
 
 TOTAL_EXCEPTION_COUNT = 15

@@ -6,7 +6,7 @@ This module provides functions for scraping municipal codes from American Legal 
 """
 from typing import Any, Dict, Optional
 import aiohttp
-import asyncio
+import anyio
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
@@ -49,13 +49,13 @@ async def search_jurisdictions(
         TimeoutError: If the request times out.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     result = await search_jurisdictions(state="WA", limit=5)
         ...     print(f"Found {result['total']} jurisdictions")
         ...     print(f"First jurisdiction: {result['jurisdictions'][0]['name']}")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Found 87 jurisdictions
         First jurisdiction: Seattle, WA
         {'jurisdictions': [...], 'total': 87, 'limit': 5}
@@ -123,7 +123,7 @@ async def search_jurisdictions(
     
     except aiohttp.ClientConnectorError:
         raise ConnectionError("Unable to connect to American Legal Publishing")
-    except asyncio.TimeoutError:
+    except TimeoutError:
         raise TimeoutError("Request timed out")
     
     return {
@@ -156,12 +156,12 @@ async def get_american_legal_jurisdictions(
         ValueError: If state code is invalid.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     jurisdictions = await get_american_legal_jurisdictions(state="CA", limit=3)
         ...     print(f"California jurisdictions: {jurisdictions}")
         ...     return jurisdictions
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         California jurisdictions: ['Los Angeles, CA', 'San Francisco, CA', 'Oakland, CA']
         ['Los Angeles, CA', 'San Francisco, CA', 'Oakland, CA']
     """
@@ -210,14 +210,14 @@ async def scrape_jurisdiction(
         HTTPError: If the server returns an error response.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     url = "https://codelibrary.amlegal.com/codes/seattle"
         ...     result = await scrape_jurisdiction(url, include_metadata=True, max_sections=2)
         ...     print(f"Scraped {result['total_sections']} sections from {result['jurisdiction']}")
         ...     print(f"First section: {result['sections'][0]['title']}")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Scraped 2 sections from Seattle, WA
         First section: Chapter 1 - General Provisions
         {'jurisdiction': 'Seattle, WA', 'url': '...', 'sections': [...], 'total_sections': 2, ...}
@@ -304,7 +304,7 @@ async def scrape_jurisdiction(
             "error": "DNS resolution failed",
             "error_type": "dns"
         }
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return {
             "jurisdiction": jurisdiction_name,
             "url": jurisdiction_url,
@@ -387,7 +387,7 @@ async def batch_scrape(
         TimeoutError: If requests consistently timeout.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> async def example():
         ...     result = await batch_scrape(
         ...         jurisdictions=["Seattle, WA", "Portland, OR"],
@@ -399,7 +399,7 @@ async def batch_scrape(
         ...     print(f"Total sections: {result['summary']['total_sections']}")
         ...     print(f"Duration: {result['summary']['duration_seconds']:.2f}s")
         ...     return result
-        >>> asyncio.run(example())
+        >>> anyio.run(example())
         Scraped 2 jurisdictions
         Total sections: 20
         Duration: 7.83s
@@ -453,7 +453,7 @@ async def batch_scrape(
         
         # Apply rate limiting between requests
         if len(data_list) < len(jurisdictions_to_scrape):
-            await asyncio.sleep(rate_limit_delay)
+            await anyio.sleep(rate_limit_delay)
     
     response = {
         "data": data_list,

@@ -553,7 +553,7 @@ class ContentDiscoveryEngine:
 
 # Example usage and testing
 if __name__ == "__main__":
-    import asyncio
+    import anyio
     
     async def test_discovery():
         """Test content discovery functionality"""
@@ -582,4 +582,4 @@ if __name__ == "__main__":
             print(f"  {asset.content_type}: {asset.url}")
     
     # Run test
-    asyncio.run(test_discovery())
+    anyio.run(test_discovery())

@@ -6,7 +6,7 @@ Tests current state of all MCP tools and validates documentation accuracy.
 
 import sys
 import os
-import asyncio
+import anyio
 import traceback
 from typing import Dict, Any, List
 
@@ -24,7 +24,7 @@ def test_security_validations():
         
         # This should fail (Python file rejection)
         try:
-            result = asyncio.run(load_dataset("malicious.py"))
+            result = anyio.run(load_dataset("malicious.py"))
             # Check if it returned an error status instead of raising
             if isinstance(result, dict) and result.get("status") == "error":
                 if "Python files" in result.get("message", ""):
@@ -49,7 +49,7 @@ def test_security_validations():
         from ipfs_datasets_py.mcp_server.tools.dataset_tools.save_dataset import save_dataset
         
         try:
-            result = asyncio.run(save_dataset({"test": "data"}, "malicious.py"))
+            result = anyio.run(save_dataset({"test": "data"}, "malicious.py"))
             # Check if it returned an error status instead of raising
             if isinstance(result, dict) and result.get("status") == "error":
                 if "executable file" in result.get("message", ""):
@@ -74,7 +74,7 @@ def test_security_validations():
         from ipfs_datasets_py.mcp_server.tools.dataset_tools.process_dataset import process_dataset
         
         try:
-            result = asyncio.run(process_dataset(
+            result = anyio.run(process_dataset(
                 {"test": "data"}, 
                 [{"type": "exec", "code": "malicious_code"}]
             ))

@@ -21,7 +21,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
@@ -191,7 +191,7 @@ class RealTimeMLAnalyticsDashboard:
                     # Send current metrics every few seconds
                     metrics = await self._collect_current_metrics()
                     await websocket.send_json(metrics)
-                    await asyncio.sleep(self.config['monitoring_interval_seconds'])
+                    await anyio.sleep(self.config['monitoring_interval_seconds'])
                     
             except WebSocketDisconnect:
                 self.websocket_connections.remove(websocket)
@@ -315,7 +315,8 @@ class RealTimeMLAnalyticsDashboard:
             
             # Start background monitoring
             if not self.is_monitoring:
-                self.monitoring_task = asyncio.create_task(self._monitoring_loop())
+                self.monitoring_task = # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._monitoring_loop())
                 self.is_monitoring = True
             
             # Start web dashboard if available
@@ -328,7 +329,7 @@ class RealTimeMLAnalyticsDashboard:
                 logger.info("Web dashboard not available - monitoring in background mode")
                 # Keep monitoring running
                 while self.is_monitoring:
-                    await asyncio.sleep(10)
+                    await anyio.sleep(10)
             
             return True
             
@@ -370,11 +371,11 @@ class RealTimeMLAnalyticsDashboard:
                     await self._broadcast_metrics(metrics)
                 
                 # Wait for next interval
-                await asyncio.sleep(self.config['monitoring_interval_seconds'])
+                await anyio.sleep(self.config['monitoring_interval_seconds'])
                 
             except Exception as e:
                 logger.error(f"Monitoring loop error: {e}")
-                await asyncio.sleep(5)  # Brief pause on error
+                await anyio.sleep(5)  # Brief pause on error
     
     async def _collect_current_metrics(self) -> Dict[str, Any]:
         """Collect current system metrics"""
@@ -674,7 +675,7 @@ class RealTimeMLAnalyticsDashboard:
             self.monitoring_task.cancel()
             try:
                 await self.monitoring_task
-            except asyncio.CancelledError:
+            except anyio.get_cancelled_exc_class()():
                 pass
         
         logger.info("Real-time monitoring stopped")
@@ -756,7 +757,7 @@ async def main():
         
         print(f"  📊 Iteration {i+1}: Quality={rt_metrics.average_quality_score:.2f}, Rate={rt_metrics.processing_rate:.1f}/s, Health={rt_metrics.system_health}")
         
-        await asyncio.sleep(0.5)  # Short delay for demo
+        await anyio.sleep(0.5)  # Short delay for demo
     
     # Generate analytics report
     analytics_report = await dashboard.generate_analytics_report()
@@ -800,11 +801,11 @@ async def main():
     
     if WEB_AVAILABLE:
         print(f"\n🌐 To start the web dashboard, run:")
-        print(f"   python -c \"import asyncio; from demonstrate_phase7_realtime_dashboard import start_phase7_dashboard; asyncio.run(start_phase7_dashboard())\"")
+        print(f"   python -c \"import anyio; from demonstrate_phase7_realtime_dashboard import start_phase7_dashboard; anyio.run(start_phase7_dashboard())\"")
         print(f"   Then visit: http://localhost:8080")
     
     return True
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

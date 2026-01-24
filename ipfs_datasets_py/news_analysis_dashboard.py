@@ -8,7 +8,7 @@ for news analysis workflows targeting data scientists, historians, and lawyers.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 import time

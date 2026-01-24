@@ -15,7 +15,7 @@ The notifier supports:
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 import os
 from abc import ABC, abstractmethod
@@ -191,7 +191,7 @@ class BotClient(DiscordBackend):
         self.default_channel_id = channel_id
         self.role_map = role_map or {}
         self.client: Optional[discord.Client] = None
-        self._ready = asyncio.Event()
+        self._ready = anyio.Event()
         
     async def _initialize_client(self):
         """Initialize the Discord client."""
@@ -206,13 +206,15 @@ class BotClient(DiscordBackend):
                 logger.info(f"Discord bot logged in as {self.client.user}")
                 self._ready.set()
             
-            # Start the client in the background
-            asyncio.create_task(self.client.start(self.bot_token))
-            # Wait for ready with timeout
-            try:
-                await asyncio.wait_for(self._ready.wait(), timeout=30.0)
-            except asyncio.TimeoutError:
-                raise RuntimeError("Discord bot failed to connect within 30 seconds")
+            # Start the client in the background using anyio
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(self.client.start, self.bot_token)
+                # Wait for ready with timeout
+                try:
+                    with anyio.fail_after(30.0):
+                        await self._ready.wait()
+                except TimeoutError:
+                    raise RuntimeError("Discord bot failed to connect within 30 seconds")
     
     def _build_role_mentions(self, role_names: Optional[List[str]]) -> str:
         """Build role mention string."""

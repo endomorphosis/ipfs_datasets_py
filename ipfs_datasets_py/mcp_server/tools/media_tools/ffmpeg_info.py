@@ -5,7 +5,7 @@ FFmpeg media information and analysis tools for the MCP server.
 This module provides tools for probing media file information and performing
 detailed analysis of audio/video streams using FFmpeg and FFprobe.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 import json
@@ -541,14 +541,14 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_probe = asyncio.run(ffmpeg_probe(
+    test_probe = anyio.run(ffmpeg_probe(
         input_file="test.mp4",
         show_format=True,
         show_streams=True
     ))
     print(f"Probe test result: {test_probe}")
     
-    test_analyze = asyncio.run(ffmpeg_analyze(
+    test_analyze = anyio.run(ffmpeg_analyze(
         input_file="test.mp4",
         analysis_type="comprehensive"
     ))

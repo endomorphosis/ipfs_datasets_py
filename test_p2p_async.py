@@ -6,7 +6,7 @@ Tests P2P cache functionality in a proper async runtime environment.
 This validates that the P2P networking actually works when run with asyncio.
 """
 
-import asyncio
+import anyio
 import sys
 import tempfile
 from pathlib import Path
@@ -44,7 +44,7 @@ async def test_p2p_initialization():
             )
             
             # Give P2P a moment to initialize
-            await asyncio.sleep(1)
+            await anyio.sleep(1)
             
             # Check stats
             stats = cache.get_stats()
@@ -111,7 +111,7 @@ async def test_p2p_cache_operations():
             )
             
             # Give P2P time to connect
-            await asyncio.sleep(2)
+            await anyio.sleep(2)
             
             # Test basic operations
             print("\n📝 Testing cache operations...")
@@ -126,7 +126,7 @@ async def test_p2p_cache_operations():
             
             # Check if cache2 can eventually get the data via P2P
             # (This may not work immediately as it requires P2P gossip)
-            await asyncio.sleep(1)
+            await anyio.sleep(1)
             
             stats1 = cache1.get_stats()
             stats2 = cache2.get_stats()
@@ -196,5 +196,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

@@ -5,7 +5,7 @@ MCP tool for creating vector indexes.
 This tool handles creating vector indexes for similarity search
 using the VectorStore from vector_tools.
 """
-import asyncio
+import anyio
 import uuid
 from typing import Dict, Any, Optional, Union, List
 

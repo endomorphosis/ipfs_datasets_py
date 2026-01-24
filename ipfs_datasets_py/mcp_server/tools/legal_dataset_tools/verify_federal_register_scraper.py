@@ -11,7 +11,7 @@ It performs various tests including:
 - Validating data structure
 - Testing different parameters
 """
-import asyncio
+import anyio
 import sys
 import json
 from pathlib import Path
@@ -551,7 +551,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        anyio.run(main())
     except KeyboardInterrupt:
         print("\n\nVerification cancelled by user.")
         sys.exit(1)

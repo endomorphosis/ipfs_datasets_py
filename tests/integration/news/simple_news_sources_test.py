@@ -7,7 +7,7 @@ Basic test to validate the News Analysis Dashboard can handle news sources.
 """
 import sys
 import time
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path

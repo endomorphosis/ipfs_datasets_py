@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import time
 import uuid
-import asyncio
+import anyio
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -426,7 +426,8 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                asyncio.create_task(self._process_website_graphrag(session_id, url, processing_config))
+                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._process_website_graphrag(session_id, url, processing_config))
                 
                 return jsonify({"session_id": session_id, "status": "started"})
                 
@@ -916,7 +917,8 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
+                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
                 
                 self.logger.info(f"Started bulk caselaw processing session: {session_id}")
                 
@@ -1181,7 +1183,7 @@ class MCPDashboard(AdminDashboard):
                     }), 404
                 
                 # Execute MCP tool
-                import asyncio
+                import anyio
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 
@@ -2337,7 +2339,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_us_code():
             """API endpoint to scrape US Code."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_us_code
                 
                 data = request.json or {}
@@ -2348,7 +2350,7 @@ class MCPDashboard(AdminDashboard):
                 max_sections = data.get('max_sections', None)
                 
                 # Run async scraper
-                result = asyncio.run(scrape_us_code(
+                result = anyio.run(scrape_us_code(
                     titles=titles,
                     output_format=output_format,
                     include_metadata=include_metadata,
@@ -2366,7 +2368,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_federal_register():
             """API endpoint to scrape Federal Register."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_federal_register
                 
                 data = request.json or {}
@@ -2379,7 +2381,7 @@ class MCPDashboard(AdminDashboard):
                 rate_limit_delay = data.get('rate_limit_delay', 1.0)
                 max_documents = data.get('max_documents', None)
                 
-                result = asyncio.run(scrape_federal_register(
+                result = anyio.run(scrape_federal_register(
                     agencies=agencies,
                     start_date=start_date,
                     end_date=end_date,
@@ -2400,7 +2402,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_state_laws():
             """API endpoint to scrape state laws."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_state_laws
                 
                 data = request.json or {}
@@ -2411,7 +2413,7 @@ class MCPDashboard(AdminDashboard):
                 rate_limit_delay = data.get('rate_limit_delay', 2.0)
                 max_statutes = data.get('max_statutes', None)
                 
-                result = asyncio.run(scrape_state_laws(
+                result = anyio.run(scrape_state_laws(
                     states=states,
                     legal_areas=legal_areas,
                     output_format=output_format,
@@ -2430,7 +2432,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_municipal_laws():
             """API endpoint to scrape municipal laws."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_municipal_laws
                 
                 data = request.json or {}
@@ -2440,7 +2442,7 @@ class MCPDashboard(AdminDashboard):
                 rate_limit_delay = data.get('rate_limit_delay', 2.0)
                 max_ordinances = data.get('max_ordinances', None)
                 
-                result = asyncio.run(scrape_municipal_laws(
+                result = anyio.run(scrape_municipal_laws(
                     cities=cities,
                     output_format=output_format,
                     include_metadata=include_metadata,
@@ -2458,7 +2460,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_recap_archive():
             """API endpoint to scrape RECAP Archive."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_recap_archive
                 
                 data = request.json or {}
@@ -2473,7 +2475,7 @@ class MCPDashboard(AdminDashboard):
                 rate_limit_delay = data.get('rate_limit_delay', 1.0)
                 max_documents = data.get('max_documents', None)
                 
-                result = asyncio.run(scrape_recap_archive(
+                result = anyio.run(scrape_recap_archive(
                     courts=courts,
                     document_types=document_types,
                     filed_after=filed_after,
@@ -2496,7 +2498,7 @@ class MCPDashboard(AdminDashboard):
         def api_search_recap():
             """API endpoint to search RECAP Archive."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import search_recap_documents
                 
                 data = request.json or {}
@@ -2508,7 +2510,7 @@ class MCPDashboard(AdminDashboard):
                 document_type = data.get('document_type', None)
                 limit = data.get('limit', 100)
                 
-                result = asyncio.run(search_recap_documents(
+                result = anyio.run(search_recap_documents(
                     query=query,
                     court=court,
                     case_name=case_name,
@@ -2579,10 +2581,10 @@ class MCPDashboard(AdminDashboard):
         def api_list_state_law_schedules():
             """API endpoint to list all state law update schedules."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import list_schedules
                 
-                result = asyncio.run(list_schedules())
+                result = anyio.run(list_schedules())
                 return jsonify(result)
                 
             except Exception as e:
@@ -2593,7 +2595,7 @@ class MCPDashboard(AdminDashboard):
         def api_create_state_law_schedule():
             """API endpoint to create a new state law update schedule."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import create_schedule
                 
                 data = request.json or {}
@@ -2609,7 +2611,7 @@ class MCPDashboard(AdminDashboard):
                         "error": "schedule_id is required"
                     }), 400
                 
-                result = asyncio.run(create_schedule(
+                result = anyio.run(create_schedule(
                     schedule_id=schedule_id,
                     states=states,
                     legal_areas=legal_areas,
@@ -2630,10 +2632,10 @@ class MCPDashboard(AdminDashboard):
         def api_delete_state_law_schedule(schedule_id: str):
             """API endpoint to delete a state law update schedule."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import remove_schedule
                 
-                result = asyncio.run(remove_schedule(schedule_id))
+                result = anyio.run(remove_schedule(schedule_id))
                 return jsonify(result)
                 
             except Exception as e:
@@ -2644,10 +2646,10 @@ class MCPDashboard(AdminDashboard):
         def api_run_state_law_schedule(schedule_id: str):
             """API endpoint to run a schedule immediately."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import run_schedule_now
                 
-                result = asyncio.run(run_schedule_now(schedule_id))
+                result = anyio.run(run_schedule_now(schedule_id))
                 return jsonify(result)
                 
             except Exception as e:
@@ -2658,13 +2660,13 @@ class MCPDashboard(AdminDashboard):
         def api_toggle_state_law_schedule(schedule_id: str):
             """API endpoint to enable/disable a schedule."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import enable_disable_schedule
                 
                 data = request.json or {}
                 enabled = data.get('enabled', True)
                 
-                result = asyncio.run(enable_disable_schedule(schedule_id, enabled))
+                result = anyio.run(enable_disable_schedule(schedule_id, enabled))
                 return jsonify(result)
                 
             except Exception as e:
@@ -2702,7 +2704,7 @@ class MCPDashboard(AdminDashboard):
         def api_scrape_recap_incremental():
             """API endpoint for incremental RECAP Archive scraping."""
             try:
-                import asyncio
+                import anyio
                 from .mcp_server.tools.legal_dataset_tools import scrape_recap_incremental
                 
                 data = request.json or {}
@@ -2720,7 +2722,7 @@ class MCPDashboard(AdminDashboard):
                     'resume': data.get('resume', False)
                 }
                 
-                result = asyncio.run(scrape_recap_incremental(
+                result = anyio.run(scrape_recap_incremental(
                     courts=courts,
                     document_types=document_types,
                     **kwargs
@@ -3332,7 +3334,7 @@ class MCPDashboard(AdminDashboard):
             # Execute, awaiting if coroutine
             if inspect.iscoroutinefunction(fn):
                 # Run in a fresh event loop to avoid conflicts
-                import asyncio
+                import anyio
                 loop = asyncio.new_event_loop()
                 try:
                     asyncio.set_event_loop(loop)

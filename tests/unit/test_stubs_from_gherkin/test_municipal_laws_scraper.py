@@ -6,7 +6,7 @@ Feature: Municipal Laws Scraper
   from major US cities for building municipal code datasets.
 """
 import pytest
-import asyncio
+import anyio
 from typing import Dict, Any, List, Optional
 
 from conftest import FixtureError

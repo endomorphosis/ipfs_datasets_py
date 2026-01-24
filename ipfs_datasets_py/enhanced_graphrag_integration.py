@@ -12,7 +12,7 @@ GraphRAG components for optimal performance and functionality:
 """
 
 import os
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
@@ -763,4 +763,4 @@ if __name__ == "__main__":
         return enhanced_system
     
     # Run comprehensive test
-    asyncio.run(test_enhanced_graphrag_system())
+    anyio.run(test_enhanced_graphrag_system())

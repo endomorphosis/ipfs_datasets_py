@@ -8,7 +8,7 @@ It serves as a quick health check for the entire system.
 
 import sys
 import importlib
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add the project root to Python path

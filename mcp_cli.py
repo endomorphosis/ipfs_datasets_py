@@ -21,7 +21,7 @@ Examples:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import sys
 import importlib
@@ -343,7 +343,7 @@ Tool-specific arguments use --key value format.""")
         print_result(result, output_format)
     
     try:
-        asyncio.run(run())
+        anyio.run(run())
     except KeyboardInterrupt:
         print("\nInterrupted by user")
     except Exception as e:

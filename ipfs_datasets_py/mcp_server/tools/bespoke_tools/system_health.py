@@ -5,7 +5,7 @@ Provides health monitoring and status checking for IPFS datasets system.
 Monitors CPU, memory, disk, service status, and overall system performance.
 """
 
-import asyncio
+import anyio
 import os
 import sys
 import psutil

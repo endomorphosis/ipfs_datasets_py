@@ -6,7 +6,7 @@ with support for custom entity types, relationship discovery,
 and integration with the GraphRAG knowledge graph.
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional, List, Union
 

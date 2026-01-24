@@ -29,7 +29,7 @@ import csv
 import os
 import tempfile
 import time
-import asyncio
+import anyio
 import threading
 import multiprocessing
 from pathlib import Path
@@ -409,7 +409,7 @@ class TestBatchProcessorProcessBatch:
         assert batch_status.total_jobs == 4  # 3 original + 1 duplicate
         
         # Wait a brief moment for processing to complete
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         # Check that all jobs were processed (queue should be empty or nearly empty)
         # Since workers process jobs immediately, we expect the queue to be processed

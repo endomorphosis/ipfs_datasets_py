@@ -10,7 +10,7 @@ Terminology:
 - audio_quality_preservation: Testing that extracted audio maintains expected quality characteristics
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
