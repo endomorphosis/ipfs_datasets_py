@@ -129,6 +129,83 @@ response = requests.post('http://localhost:8889/mcp/discord/api/export_channel',
 print(response.json())
 ```
 
+## Using the Discord CLI
+
+The comprehensive Discord CLI provides command-line access to all Discord features.
+
+### Installation Check
+
+```bash
+# Check if DiscordChatExporter is installed
+ipfs-datasets discord status
+
+# Install if needed
+ipfs-datasets discord install
+```
+
+### List Servers and Channels
+
+```bash
+# List all accessible Discord servers
+ipfs-datasets discord guilds
+
+# List channels in a specific server
+ipfs-datasets discord channels GUILD_ID
+
+# List all DM channels
+ipfs-datasets discord dms
+```
+
+### Export Commands
+
+```bash
+# Export a single channel
+ipfs-datasets discord export CHANNEL_ID --format Json --media
+
+# Export with date range and filter
+ipfs-datasets discord export CHANNEL_ID \
+  --format HtmlDark \
+  --after 2024-01-01 \
+  --before 2024-12-31 \
+  --filter "from:username has:image"
+
+# Export entire server with threads
+ipfs-datasets discord export-guild GUILD_ID \
+  --format Json \
+  --threads all
+
+# Export all DMs using native exportdm (most efficient)
+ipfs-datasets discord export-dms --format Json --media
+
+# Export all accessible content
+ipfs-datasets discord export-all --format Csv
+```
+
+### Analysis Commands
+
+```bash
+# Analyze a channel (exports first, then analyzes)
+ipfs-datasets discord analyze CHANNEL_ID \
+  --types message_stats,user_activity,content_patterns
+
+# Analyze a previously exported file
+ipfs-datasets discord analyze-export /path/to/export.json \
+  --types message_stats,user_activity
+
+# Save analysis to file
+ipfs-datasets discord analyze CHANNEL_ID --output analysis.json
+```
+
+### CLI Help
+
+```bash
+# Show all available commands
+ipfs-datasets discord --help
+
+# Show help for specific command
+ipfs-datasets discord export --help
+```
+
 ## Basic Usage
 
 ### 1. Using the High-Level Discord Wrapper
@@ -216,6 +293,29 @@ asyncio.run(filtered_export())
 
 ### 4. Exporting Direct Messages
 
+#### Native exportdm (Recommended - Most Efficient)
+
+```python
+import asyncio
+from ipfs_datasets_py.multimedia import DiscordWrapper
+
+async def export_all_dms():
+    wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
+    
+    # Export all DMs using native exportdm command (most efficient)
+    result = await wrapper.export_dm(
+        format="Json",
+        output_dir="/exports/dms"
+    )
+    
+    print(f"Exported {result['dm_channels_exported']} DM channels")
+    print(f"Output: {result['output_dir']}")
+
+asyncio.run(export_all_dms())
+```
+
+#### Individual DM Export
+
 ```python
 import asyncio
 from ipfs_datasets_py.multimedia import DiscordWrapper
@@ -237,6 +337,8 @@ async def export_dms():
 
 asyncio.run(export_dms())
 ```
+
+**Note**: Use `export_dm()` for exporting all DMs at once - it's significantly faster than exporting each DM individually as it uses Discord ChatExporter's native `exportdm` command.
 
 ## Using MCP Tools
 
@@ -279,6 +381,7 @@ import asyncio
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
     discord_export_channel,
     discord_export_guild,
+    discord_export_dm_channels,  # Native exportdm
     discord_export_all_channels
 )
 
@@ -298,6 +401,12 @@ async def mcp_exports():
         include_threads="all"
     )
     
+    # Export all DMs using native exportdm (most efficient)
+    dm_result = await discord_export_dm_channels(
+        token="YOUR_TOKEN",
+        format="Json"
+    )
+    
     # Export everything accessible
     all_result = await discord_export_all_channels(
         token="YOUR_TOKEN",
@@ -306,6 +415,7 @@ async def mcp_exports():
     
     print(f"Channel export: {channel_result['status']}")
     print(f"Guild export: {guild_result['status']}")
+    print(f"DM export: {dm_result['status']} - {dm_result['dm_channels_exported']} channels")
     print(f"All channels export: {all_result['status']}")
 
 asyncio.run(mcp_exports())
