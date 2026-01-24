@@ -375,22 +375,24 @@ class TestMCPToolsCLIIntegration:
         Purpose: Verify correct CLI command is invoked
         """
         from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_dm_channels
+        from unittest.mock import AsyncMock
         
         # Mock the wrapper to verify command usage
         with patch('ipfs_datasets_py.mcp_server.tools.discord_tools.discord_export.create_discord_wrapper') as mock_create:
             mock_wrapper = Mock()
             
-            # Use async def instead of deprecated asyncio.coroutine
-            async def mock_export_dm(**kwargs):
-                return {'status': 'success', 'dm_channels_exported': 5}
-            
-            mock_wrapper.export_dm = mock_export_dm
+            # Use AsyncMock for proper async function mocking
+            mock_wrapper.export_dm = AsyncMock(
+                return_value={'status': 'success', 'dm_channels_exported': 5}
+            )
             mock_create.return_value = mock_wrapper
             
             result = await discord_export_dm_channels(token="test_token")
             
-            # Verify result
+            # Verify export_dm was called and result is correct
+            mock_wrapper.export_dm.assert_called_once()
             assert result['status'] == 'success'
+            assert result['dm_channels_exported'] == 5
     
     @pytest.mark.asyncio
     async def test_mcp_list_guilds_parses_cli_output(self):
