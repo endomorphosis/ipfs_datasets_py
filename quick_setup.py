@@ -10,6 +10,7 @@ import subprocess
 import logging
 import platform
 from pathlib import Path
+import importlib.util
 
 # Platform detection
 IS_WINDOWS = platform.system() == 'Windows'
@@ -36,6 +37,67 @@ def check_pip():
         return True
     except subprocess.CalledProcessError:
         return False
+
+def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
+    """Check whether ipfs_kit_py is installed from the known_good repo path."""
+    try:
+        spec = importlib.util.find_spec('ipfs_kit_py')
+        if not spec or not spec.origin:
+            return False
+        origin_path = Path(spec.origin).resolve()
+        repo_resolved = repo_path.resolve()
+        return str(repo_resolved).lower() in str(origin_path).lower()
+    except Exception:
+        return False
+
+def ensure_known_good_ipfs_kit_py(logger):
+    """Ensure ipfs_kit_py is installed from the known_good branch on Windows."""
+    if not IS_WINDOWS:
+        return
+
+    if os.environ.get('IPFS_KIT_PY_INSTALLED', '').lower() == 'true':
+        return
+
+    os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
+    repo_root = Path(__file__).resolve().parent
+    repo_path = repo_root / '.third_party' / 'ipfs_kit_py'
+    marker_file = repo_path / '.known_good_installed'
+
+    if marker_file.exists():
+        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        return
+
+    if _is_known_good_ipfs_kit_py_installed(repo_path):
+        os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+        return
+
+    try:
+        subprocess.run(['git', '--version'], check=True, capture_output=True, text=True)
+    except Exception as e:
+        logger.warning(f"Git not available; skipping known_good ipfs_kit_py install: {e}")
+        return
+
+    try:
+        repo_path.parent.mkdir(parents=True, exist_ok=True)
+        if not (repo_path / '.git').exists():
+            subprocess.run([
+                'git', 'clone', '--filter=blob:none',
+                'https://github.com/endomorphosis/ipfs_kit_py.git',
+                str(repo_path)
+            ], check=False, text=True)
+
+        subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
+        subprocess.run(['git', '-C', str(repo_path), 'checkout', 'known_good'], check=False, text=True)
+
+        result = subprocess.run([
+            sys.executable, '-m', 'pip', 'install', '-e', str(repo_path),
+            '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
+        ], check=False, text=True)
+        if result.returncode == 0:
+            marker_file.write_text('known_good', encoding='utf-8')
+            os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
+    except Exception as e:
+        logger.warning(f"Failed to install known_good ipfs_kit_py: {e}")
 
 def install_package(package_name, logger):
     """Install a single package with pip"""
@@ -295,6 +357,8 @@ def test_cli_functionality(logger):
 def main():
     """Main setup function"""
     logger = setup_logging()
+
+    ensure_known_good_ipfs_kit_py(logger)
     
     logger.info("🔧 IPFS Datasets Quick Dependency Setup")
     logger.info("=" * 50)

@@ -251,6 +251,26 @@ class DependencyInstaller:
             else:
                 if self.verbose:
                     logger.warning(f"Failed to install {system_package}: {result.stderr}")
+                if package_manager == 'winget':
+                    fallback_name = package_name if '.' in system_package else system_package
+                    if self._command_exists('choco'):
+                        choco_cmd = ['choco', 'install', fallback_name, '-y']
+                        if self.verbose:
+                            logger.info(f"Retrying {fallback_name} using chocolatey")
+                        choco_result = subprocess.run(choco_cmd, capture_output=True, text=True, timeout=300)
+                        if choco_result.returncode == 0:
+                            if self.verbose:
+                                logger.info(f"Successfully installed {fallback_name} with chocolatey")
+                            return True
+                    if self._command_exists('scoop'):
+                        scoop_cmd = ['scoop', 'install', fallback_name]
+                        if self.verbose:
+                            logger.info(f"Retrying {fallback_name} using scoop")
+                        scoop_result = subprocess.run(scoop_cmd, capture_output=True, text=True, timeout=300)
+                        if scoop_result.returncode == 0:
+                            if self.verbose:
+                                logger.info(f"Successfully installed {fallback_name} with scoop")
+                            return True
                 return False
                 
         except subprocess.TimeoutExpired:
