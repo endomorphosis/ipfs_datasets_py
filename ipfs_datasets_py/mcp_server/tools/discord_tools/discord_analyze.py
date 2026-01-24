@@ -251,9 +251,24 @@ async def discord_analyze_export(
         ... )
     """
     try:
-        export_file = Path(export_path)
+        # Determine base directory for Discord exports. This confines analysis to a safe root
+        # and prevents path traversal through user-controlled export_path values.
+        base_dir = Path(os.environ.get("DISCORD_EXPORT_BASE_DIR", ".")).resolve()
+
+        # Build the full path relative to the base directory and resolve it to a normalized path
+        export_file = (base_dir / export_path).resolve()
+
+        # Ensure the resolved path is within the allowed base directory
+        try:
+            export_file.relative_to(base_dir)
+        except ValueError:
+            return {
+                "status": "error",
+                "error": "Export path is not allowed",
+                "export_path": export_path
+            }
         
-        if not export_file.exists():
+        if not export_file.is_file():
             return {
                 "status": "error",
                 "error": f"Export file not found: {export_path}",
