@@ -35,7 +35,7 @@ class DependencyHealthChecker:
         
         self.optional_deps = [
             'torch', 'transformers', 'datasets', 'pydantic', 'networkx',
-            'pillow', 'beautifulsoup4', 'nltk', 'scipy', 'sklearn'
+            'PIL', 'bs4', 'nltk', 'scipy', 'sklearn'
         ]
         
         self.cli_deps = [
@@ -116,27 +116,27 @@ class DependencyHealthChecker:
         """Test CLI functionality"""
         tests = {
             'basic_cli': {
-                'cmd': ['python', 'ipfs_datasets_cli.py', '--help'],
+                'cmd': [sys.executable, 'ipfs_datasets_cli.py', '--help'],
                 'description': 'Basic CLI help',
                 'critical': True
             },
             'enhanced_cli': {
-                'cmd': ['python', 'enhanced_cli.py', '--help'],
+                'cmd': [sys.executable, 'enhanced_cli.py', '--help'],
                 'description': 'Enhanced CLI help',
                 'critical': True
             },
             'cli_status': {
-                'cmd': ['python', 'ipfs_datasets_cli.py', 'info', 'status'],
+                'cmd': [sys.executable, 'ipfs_datasets_cli.py', 'info', 'status'],
                 'description': 'CLI status command',
                 'critical': True
             },
             'cli_list_tools': {
-                'cmd': ['python', 'ipfs_datasets_cli.py', 'info', 'list-tools'],
+                'cmd': [sys.executable, 'ipfs_datasets_cli.py', 'info', 'list-tools'],
                 'description': 'CLI list tools',
                 'critical': False
             },
             'enhanced_list_categories': {
-                'cmd': ['python', 'enhanced_cli.py', '--list-categories'],
+                'cmd': [sys.executable, 'enhanced_cli.py', '--list-categories'],
                 'description': 'Enhanced CLI list categories',
                 'critical': False
             }

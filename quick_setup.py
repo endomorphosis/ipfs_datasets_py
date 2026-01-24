@@ -152,10 +152,12 @@ def install_core_dependencies(logger):
     
     # Additional packages that many tools need
     enhanced_packages = [
-        'datasets>=2.10.0',
+        'datasets>=2.10.0,<3.0.0',
+        'fsspec>=2023.1.0,<=2025.10.0',
+        'huggingface-hub>=0.34.0,<1.0.0',
         'networkx>=3.1',
         'beautifulsoup4>=4.12.0',
-        'pillow>=10.0.0',
+        'pillow>=10.0.0,<12.0.0',
     ]
     
     # Add platform-specific packages

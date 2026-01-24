@@ -79,6 +79,9 @@ class DependencyInstaller:
         
         # Python package specifications with fallbacks
         numpy_specs = ['numpy>=2.0.0'] if self.python_version >= (3, 14) else ['numpy>=1.21.0,<2.0.0']
+        surya_specs: List[str] = []
+        if self.python_version < (3, 14) and self.system != 'windows':
+            surya_specs = ['surya-ocr>=0.14.0']
 
         self.python_packages = {
             # Core ML/AI packages
@@ -93,11 +96,11 @@ class DependencyInstaller:
             'pymupdf': ['pymupdf>=1.24.0,<2.0.0', 'PyMuPDF>=1.24.0'],
             'pdfplumber': ['pdfplumber>=0.10.0,<1.0.0'],
             'pytesseract': ['pytesseract>=0.3.10,<1.0.0'],
-            'pillow': ['pillow>=10.0.0', 'PIL>=10.0.0'],
+            'pillow': ['pillow>=10.0.0,<12.0.0', 'PIL>=10.0.0'],
             
             # OCR and vision
             'opencv-python': ['opencv-python>=4.5.0', 'opencv-contrib-python>=4.5.0'],
-            'surya-ocr': ['surya-ocr>=0.14.0'],
+            'surya-ocr': surya_specs,
             'easyocr': ['easyocr>=1.6.0'],
             
             # NLP
@@ -397,7 +400,6 @@ class DependencyInstaller:
             
             # OCR and vision
             ('cv2', 'opencv-python'),
-            ('surya', 'surya-ocr'),
             ('easyocr', 'easyocr'),
             
             # NLP
@@ -421,9 +423,12 @@ class DependencyInstaller:
             ('pydantic', 'pydantic'),
         ]
         
+        if self.python_packages.get('surya-ocr'):
+            dependencies.insert(11, ('surya', 'surya-ocr'))
+        
         success_count = 0
         total_count = len(dependencies)
-        
+
         for dep_info in dependencies:
             module_name = dep_info[0]
             package_name = dep_info[1] if len(dep_info) > 1 else module_name
@@ -636,10 +641,11 @@ def install_for_component(component: str) -> bool:
     elif component == 'ocr':
         dependencies = [
             ('cv2', 'opencv-python'),
-            ('surya', 'surya-ocr'),
             ('easyocr', 'easyocr'),
             ('pytesseract', 'pytesseract', ['tesseract']),
         ]
+        if installer.python_packages.get('surya-ocr'):
+            dependencies.insert(1, ('surya', 'surya-ocr'))
     elif component == 'ml':
         dependencies = [
             ('numpy', 'numpy'),

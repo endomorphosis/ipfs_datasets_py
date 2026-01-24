@@ -34,11 +34,12 @@ setup(
         'urllib3',
         'requests',
         'boto3',
-        'ipfsspec',
+        'ipfsspec<0.6.0',
         "duckdb",
         "pyarrow>=10.0.0; python_version < '3.14'",
-        "fsspec",
-        "datasets>=2.10.0",
+        "fsspec>=2023.1.0,<=2025.10.0",
+        "datasets>=2.10.0,<3.0.0",
+        "huggingface-hub>=0.34.0,<1.0.0",
 
         # Caching for CLI tools
         "cachetools>=5.3.0",
@@ -109,7 +110,7 @@ setup(
         'multimedia': [
             'yt-dlp>=2024.0.0',
             'ffmpeg-python>=0.2.0',
-            'pillow>=10.0.0',
+            'pillow>=10.0.0,<12.0.0',
             'moviepy',
         ],
         # Machine Learning extras
