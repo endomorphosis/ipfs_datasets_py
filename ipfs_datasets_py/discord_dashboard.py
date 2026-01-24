@@ -375,6 +375,133 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
                 "error": str(e)
             }), 500
     
+    @discord_bp.route('/api/list_dm_channels', methods=['GET'])
+    async def api_list_dm_channels():
+        """
+        API endpoint for listing DM channels.
+        
+        Returns:
+            JSON response with DM channel list
+        """
+        try:
+            from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_list_dm_channels
+            
+            # Get token
+            token = request.args.get('token') or os.environ.get('DISCORD_TOKEN')
+            
+            if not token:
+                return jsonify({
+                    "status": "error",
+                    "error": "No Discord token provided",
+                    "channels": [],
+                    "count": 0
+                }), 400
+            
+            # List DM channels
+            result = await discord_list_dm_channels(token=token)
+            return jsonify(result)
+            
+        except Exception as e:
+            logger.error(f"List DM channels API error: {e}", exc_info=True)
+            return jsonify({
+                "status": "error",
+                "error": str(e),
+                "channels": [],
+                "count": 0
+            }), 500
+    
+    @discord_bp.route('/api/export_dm_channels', methods=['POST'])
+    async def api_export_dm_channels():
+        """
+        API endpoint for exporting all DM channels using native exportdm.
+        
+        Request body:
+            {
+                "format": "Json",
+                "output_dir": "/path/to/output"
+            }
+        
+        Returns:
+            JSON response with export status
+        """
+        try:
+            from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_dm_channels
+            
+            # Get request data
+            data = request.get_json()
+            token = data.get('token') or os.environ.get('DISCORD_TOKEN')
+            
+            if not token:
+                return jsonify({
+                    "status": "error",
+                    "error": "No Discord token provided"
+                }), 400
+            
+            # Export DMs
+            result = await discord_export_dm_channels(
+                token=token,
+                format=data.get('format', 'Json'),
+                output_dir=data.get('output_dir')
+            )
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            logger.error(f"Export DMs API error: {e}", exc_info=True)
+            return jsonify({
+                "status": "error",
+                "error": str(e)
+            }), 500
+    
+    @discord_bp.route('/api/convert_export', methods=['POST'])
+    async def api_convert_export():
+        """
+        API endpoint for converting Discord export files.
+        
+        Request body:
+            {
+                "input_path": "/path/to/input.json",
+                "output_path": "/path/to/output.parquet",
+                "to_format": "parquet",
+                "compression": "snappy"
+            }
+        
+        Returns:
+            JSON response with conversion status
+        """
+        try:
+            from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_convert_export
+            
+            # Get request data
+            data = request.get_json()
+            input_path = data.get('input_path')
+            output_path = data.get('output_path')
+            to_format = data.get('to_format')
+            
+            if not input_path or not output_path or not to_format:
+                return jsonify({
+                    "status": "error",
+                    "error": "Missing required parameters: input_path, output_path, to_format"
+                }), 400
+            
+            # Convert export
+            result = await discord_convert_export(
+                input_path=input_path,
+                output_path=output_path,
+                to_format=to_format,
+                compression=data.get('compression'),
+                context=data.get('context')
+            )
+            
+            return jsonify(result)
+            
+        except Exception as e:
+            logger.error(f"Convert export API error: {e}", exc_info=True)
+            return jsonify({
+                "status": "error",
+                "error": str(e)
+            }), 500
+    
     @discord_bp.route('/api/status', methods=['GET'])
     def api_status():
         """
