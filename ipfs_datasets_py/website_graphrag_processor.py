@@ -498,20 +498,18 @@ class WebsiteGraphRAGProcessor:
             async with semaphore:
                 return await self.process_website(url, **kwargs)
         
-        tasks = [process_single(url) for url in urls]
-        
         # Execute all processing concurrently using anyio task group
         results = []
         async with anyio.create_task_group() as tg:
-            async def collect_result(task_coro):
+            async def collect_result(url):
                 try:
-                    result = await task_coro
+                    result = await process_single(url)
                     results.append(result)
                 except Exception as e:
                     results.append(e)
             
-            for task_coro in tasks:
-                tg.start_soon(collect_result, task_coro)
+            for url in urls:
+                tg.start_soon(collect_result, url)
         
         # Filter out exceptions and log errors
         successful_results = []

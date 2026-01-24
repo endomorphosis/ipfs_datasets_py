@@ -685,17 +685,15 @@ class UnifiedWebScraper:
                 await anyio.sleep(self.config.rate_limit_delay)
                 return result
         
-        tasks = [scrape_with_semaphore(url) for url in urls]
-        
         # Execute all scrapes concurrently using anyio task group
         results = []
         async with anyio.create_task_group() as tg:
-            async def collect_result(task_coro):
-                result = await task_coro
+            async def collect_result(url):
+                result = await scrape_with_semaphore(url)
                 results.append(result)
             
-            for task_coro in tasks:
-                tg.start_soon(collect_result, task_coro)
+            for url in urls:
+                tg.start_soon(collect_result, url)
         
         return results
     

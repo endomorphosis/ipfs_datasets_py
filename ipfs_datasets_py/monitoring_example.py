@@ -115,24 +115,18 @@ class ExampleDataProcessor:
             with log_context(chunk_id=chunk_id):
                 self.logger.debug(f"Processing chunk {chunk_id} with {len(chunk)} items")
 
-                # Simulate concurrent processing
-                tasks = []
-                for j, item in enumerate(chunk):
-                    # Create task for each item
-                    tasks.append(self._process_item_async(item, f"{chunk_id}_{j}"))
-
                 # Wait for all tasks to complete using anyio task group
                 results = []
                 async with anyio.create_task_group() as tg:
-                    async def collect_result(task_coro):
+                    async def collect_result(item, item_id):
                         try:
-                            result = await task_coro
+                            result = await self._process_item_async(item, item_id)
                             results.append(result)
                         except Exception as e:
                             results.append(e)
                     
-                    for task_coro in tasks:
-                        tg.start_soon(collect_result, task_coro)
+                    for j, item in enumerate(chunk):
+                        tg.start_soon(collect_result, item, f"{chunk_id}_{j}")
 
                 # Count successful results
                 for result in results:

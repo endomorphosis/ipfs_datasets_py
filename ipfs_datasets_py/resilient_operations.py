@@ -3374,46 +3374,42 @@ class ResilienceManager:
         # Run sync operations concurrently in batches
         for i in range(0, len(target_node_ids), max_concurrent):
             batch = target_node_ids[i:i+max_concurrent]
-            tasks = []
-
-            for node_id in batch:
-                # Create sync task
-                async def sync_with_node(node_id):
-                    try:
-                        # Sync with circuit breaker and retry
-                        async def sync_with_circuit_breaker():
-                            return await self.execute_with_circuit_breaker_async(
-                                "dataset_sync",
-                                lambda: self.node.shard_manager.sync_dataset_with_node(dataset_id, node_id)
-                            )
-
-                        result = await self.retry_async(sync_with_circuit_breaker)
-
-                        # Record success
-                        operation.add_success(node_id, result)
-
-                        # Update node health
-                        if node_id in self.node_health:
-                            self.node_health[node_id].record_success()
-
-                        return True
-                    except Exception as e:
-                        # Record failure
-                        operation.add_failure(node_id, str(e))
-
-                        # Update node health
-                        if node_id in self.node_health:
-                            self.node_health[node_id].record_failure()
-
-                        logger.warning(f"Failed to sync dataset {dataset_id} with node {node_id}: {str(e)}")
-                        return False
-
-                tasks.append(sync_with_node(node_id))
 
             # Wait for batch to complete using anyio task group
             async with anyio.create_task_group() as tg:
-                for task_coro in tasks:
-                    tg.start_soon(task_coro)
+                for node_id in batch:
+                    # Create sync task
+                    async def sync_with_node(nid):
+                        try:
+                            # Sync with circuit breaker and retry
+                            async def sync_with_circuit_breaker():
+                                return await self.execute_with_circuit_breaker_async(
+                                    "dataset_sync",
+                                    lambda: self.node.shard_manager.sync_dataset_with_node(dataset_id, nid)
+                                )
+
+                            result = await self.retry_async(sync_with_circuit_breaker)
+
+                            # Record success
+                            operation.add_success(nid, result)
+
+                            # Update node health
+                            if nid in self.node_health:
+                                self.node_health[nid].record_success()
+
+                            return True
+                        except Exception as e:
+                            # Record failure
+                            operation.add_failure(nid, str(e))
+
+                            # Update node health
+                            if nid in self.node_health:
+                                self.node_health[nid].record_failure()
+
+                            logger.warning(f"Failed to sync dataset {dataset_id} with node {nid}: {str(e)}")
+                            return False
+
+                    tg.start_soon(sync_with_node, node_id)
 
         # Complete operation
         return operation.complete()
