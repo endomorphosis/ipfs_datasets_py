@@ -673,3 +673,498 @@ For issues specific to:
 - **Discord integration**: Open an issue in ipfs_datasets_py repository
 - **DiscordChatExporter CLI**: See [upstream repository](https://github.com/Tyrrrz/DiscordChatExporter)
 - **Discord API**: Check [Discord Developer Portal](https://discord.com/developers/docs)
+
+## Format Conversion
+
+### Universal Data Format Converter
+
+The Discord integration includes a universal data format converter that supports conversion between 12+ formats. This is a package-wide utility available to all modules.
+
+#### Supported Formats
+
+- **JSON**: Standard JSON format
+- **JSONL**: JSON Lines (newline-delimited, streaming-friendly)
+- **JSON-LD**: JSON Linked Data with semantic web context
+- **JSON-LD-LOGIC**: JSON-LD with formal logic annotations
+- **Parquet**: Apache Parquet (columnar, analytics-optimized)
+- **IPLD**: InterPlanetary Linked Data (content-addressed)
+- **CAR**: Content Addressable aRchive (IPFS format)
+- **Arrow**: Apache Arrow tables
+- **CSV**: Comma-separated values
+- **DataFrame**: Pandas DataFrames
+- **HuggingFace**: HuggingFace Dataset objects
+- **Dict/List**: Python native formats
+
+### CLI Format Conversion
+
+#### Convert Single File
+
+```bash
+# Convert Discord JSON export to JSONL (streaming)
+ipfs-datasets discord convert chat.json chat.jsonl --to-format jsonl
+
+# Convert to Parquet with compression
+ipfs-datasets discord convert chat.json chat.parquet \
+  --to-format parquet \
+  --compression snappy
+
+# Convert to JSON-LD with semantic annotations
+ipfs-datasets discord convert chat.json chat.json-ld \
+  --to-format jsonld
+
+# Convert to JSON-LD-LOGIC with formal logic
+ipfs-datasets discord convert chat.json chat.logic.json-ld \
+  --to-format jsonld-logic
+
+# Convert to IPLD (content-addressed)
+ipfs-datasets discord convert chat.json chat.ipld \
+  --to-format ipld
+
+# Convert to CAR (IPFS archive)
+ipfs-datasets discord convert chat.json chat.car \
+  --to-format car
+
+# Convert to CSV
+ipfs-datasets discord convert chat.json chat.csv \
+  --to-format csv
+```
+
+#### Batch Convert Directory
+
+```bash
+# Convert all JSON files in a directory to Parquet
+ipfs-datasets discord batch-convert \
+  ./exports/json/ \
+  ./exports/parquet/ \
+  --to-format parquet
+
+# Convert with custom pattern and compression
+ipfs-datasets discord batch-convert \
+  ./exports/ \
+  ./converted/ \
+  --to-format parquet \
+  --pattern "channel_*.json" \
+  --compression gzip
+```
+
+### Python Package Format Conversion
+
+#### Using Universal Converter
+
+```python
+from ipfs_datasets_py.utils.data_format_converter import get_converter
+
+# Get the global converter instance
+converter = get_converter()
+
+# Convert between any supported formats
+converter.convert_file("data.json", "data.jsonl", to_format="jsonl")
+converter.convert_file("data.json", "data.parquet", to_format="parquet")
+converter.convert_file("data.json", "data.json-ld", to_format="jsonld")
+
+# Convert with options
+converter.convert_file(
+    "data.json",
+    "data.parquet",
+    to_format="parquet",
+    compression="snappy"
+)
+
+# Convert with custom JSON-LD context
+converter.convert_file(
+    "data.json",
+    "data.json-ld",
+    to_format="jsonld",
+    context={
+        "@vocab": "http://schema.org/",
+        "discord": "https://discord.com/developers/docs/"
+    }
+)
+
+# Programmatic conversion (in-memory)
+data = [{"id": 1, "text": "Hello"}, {"id": 2, "text": "World"}]
+parquet_table = converter.convert(data, "list", "parquet")
+jsonld_data = converter.convert(data, "list", "jsonld")
+```
+
+#### Using Discord Wrapper
+
+```python
+from ipfs_datasets_py.multimedia import DiscordWrapper
+import asyncio
+
+async def convert_exports():
+    wrapper = DiscordWrapper()
+    
+    # Export Discord channel
+    export_result = await wrapper.export_channel(
+        channel_id="123456789",
+        output_path="channel.json"
+    )
+    
+    # Convert to multiple formats
+    await wrapper.convert_export(
+        "channel.json",
+        "channel.jsonl",
+        to_format="jsonl"
+    )
+    
+    await wrapper.convert_export(
+        "channel.json",
+        "channel.parquet",
+        to_format="parquet",
+        compression="snappy"
+    )
+    
+    await wrapper.convert_export(
+        "channel.json",
+        "channel.json-ld",
+        to_format="jsonld",
+        context={"discord": "https://discord.com/developers/docs/"}
+    )
+
+asyncio.run(convert_exports())
+```
+
+### MCP Tools Format Conversion
+
+```python
+from ipfs_datasets_py.mcp_server.tools.discord_tools import (
+    discord_convert_export,
+    discord_batch_convert_exports
+)
+
+# Convert single export
+result = await discord_convert_export(
+    input_path="channel.json",
+    output_path="channel.parquet",
+    to_format="parquet",
+    compression="snappy"
+)
+
+print(f"Status: {result['status']}")
+print(f"Output: {result['output_path']}")
+print(f"Size: {result['file_size']} bytes")
+
+# Batch convert multiple exports
+batch_result = await discord_batch_convert_exports(
+    input_dir="./exports/json/",
+    output_dir="./exports/parquet/",
+    to_format="parquet",
+    file_pattern="*.json",
+    compression="snappy"
+)
+
+print(f"Total files: {batch_result['total_files']}")
+print(f"Successful: {batch_result['successful']}")
+print(f"Failed: {batch_result['failed']}")
+```
+
+### Format-Specific Features
+
+#### JSON-LD with Semantic Context
+
+```python
+from ipfs_datasets_py.utils.data_format_converter import get_converter
+
+converter = get_converter()
+
+# Convert with custom semantic context
+converter.convert_file(
+    "discord_export.json",
+    "discord_export.json-ld",
+    to_format="jsonld",
+    context={
+        "@vocab": "http://schema.org/",
+        "discord": "https://discord.com/developers/docs/",
+        "Message": "discord:Message",
+        "User": "discord:User",
+        "Guild": "discord:Guild",
+        "Channel": "discord:Channel",
+        "createdAt": {"@type": "http://www.w3.org/2001/XMLSchema#dateTime"},
+        "content": "http://schema.org/text"
+    }
+)
+```
+
+#### JSON-LD-LOGIC with Formal Annotations
+
+```python
+# Convert with formal logic annotations
+converter.convert_file(
+    "discord_export.json",
+    "discord_export.logic.json-ld",
+    to_format="jsonld-logic"
+)
+
+# The output includes logic annotations:
+# {
+#   "@context": {
+#     "logic": "http://www.w3.org/ns/logic#",
+#     "fol": "http://www.w3.org/ns/logic/fol#",
+#     "modal": "http://www.w3.org/ns/logic/modal#",
+#     "deontic": "http://www.w3.org/ns/logic/deontic#"
+#   },
+#   "logic:annotations": {
+#     "fol:axioms": [],
+#     "fol:rules": [],
+#     "modal:operators": [],
+#     "deontic:obligations": [],
+#     "deontic:permissions": [],
+#     "deontic:prohibitions": []
+#   },
+#   "@graph": [ ... data ... ]
+# }
+```
+
+#### Parquet with Compression
+
+```python
+# Convert to Parquet with different compression algorithms
+converter.convert_file(
+    "large_export.json",
+    "large_export.parquet",
+    to_format="parquet",
+    compression="snappy"  # Fast compression
+)
+
+converter.convert_file(
+    "large_export.json",
+    "large_export.parquet",
+    to_format="parquet",
+    compression="gzip"  # Better compression ratio
+)
+
+converter.convert_file(
+    "large_export.json",
+    "large_export.parquet",
+    to_format="parquet",
+    compression="brotli"  # Best compression
+)
+```
+
+#### IPLD and CAR for IPFS
+
+```python
+# Convert to IPLD (content-addressed)
+converter.convert_file(
+    "discord_export.json",
+    "discord_export.ipld",
+    to_format="ipld"
+)
+
+# Convert to CAR (IPFS archive)
+converter.convert_file(
+    "discord_export.json",
+    "discord_export.car",
+    to_format="car"
+)
+
+# The output can be directly added to IPFS:
+# ipfs dag import discord_export.car
+```
+
+### Complete Workflow Example
+
+```python
+from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.utils.data_format_converter import get_converter
+import asyncio
+
+async def complete_workflow():
+    """Complete workflow: Export -> Convert -> Analyze"""
+    wrapper = DiscordWrapper()
+    converter = get_converter()
+    
+    # 1. Export Discord channel
+    print("Exporting Discord channel...")
+    export_result = await wrapper.export_channel(
+        channel_id="123456789",
+        output_path="channel.json",
+        format="Json",
+        download_media=True
+    )
+    
+    # 2. Convert to multiple formats for different use cases
+    print("Converting to multiple formats...")
+    
+    # JSONL for streaming processing
+    converter.convert_file(
+        "channel.json",
+        "channel.jsonl",
+        to_format="jsonl"
+    )
+    
+    # Parquet for analytics
+    converter.convert_file(
+        "channel.json",
+        "channel.parquet",
+        to_format="parquet",
+        compression="snappy"
+    )
+    
+    # JSON-LD for semantic web
+    converter.convert_file(
+        "channel.json",
+        "channel.json-ld",
+        to_format="jsonld",
+        context={"discord": "https://discord.com/developers/docs/"}
+    )
+    
+    # IPLD for IPFS
+    converter.convert_file(
+        "channel.json",
+        "channel.ipld",
+        to_format="ipld"
+    )
+    
+    # 3. Analyze the data
+    print("Analyzing Discord data...")
+    from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_analyze_export
+    
+    analysis = await discord_analyze_export(
+        export_path="channel.json",
+        analysis_types=["message_stats", "user_activity", "content_patterns"]
+    )
+    
+    print(f"Total messages: {analysis['message_stats']['total_messages']}")
+    print(f"Unique users: {analysis['user_activity']['unique_users']}")
+    
+    return {
+        "export": export_result,
+        "formats": ["json", "jsonl", "parquet", "jsonld", "ipld"],
+        "analysis": analysis
+    }
+
+# Run the complete workflow
+result = asyncio.run(complete_workflow())
+```
+
+### Integration with IPFS Workflows
+
+```python
+from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.utils.data_format_converter import get_converter
+import subprocess
+
+async def export_to_ipfs():
+    """Export Discord data and add to IPFS"""
+    wrapper = DiscordWrapper()
+    converter = get_converter()
+    
+    # Export Discord server
+    await wrapper.export_guild(
+        guild_id="987654321",
+        output_dir="./discord_server/",
+        format="Json"
+    )
+    
+    # Convert all exports to CAR format
+    await wrapper.convert_export(
+        "./discord_server/export.json",
+        "./discord_server/export.car",
+        to_format="car"
+    )
+    
+    # Add to IPFS
+    result = subprocess.run(
+        ["ipfs", "dag", "import", "./discord_server/export.car"],
+        capture_output=True,
+        text=True
+    )
+    
+    print(f"IPFS CID: {result.stdout.strip()}")
+    
+    return result.stdout.strip()
+```
+
+## Best Practices
+
+### Format Selection Guide
+
+- **JSON**: Standard format, human-readable, good for small-medium datasets
+- **JSONL**: Streaming, line-by-line processing, good for large datasets
+- **JSON-LD**: Semantic web integration, linked data, graph databases
+- **JSON-LD-LOGIC**: Formal logic systems, theorem provers, reasoning engines
+- **Parquet**: Analytics, data warehouses, columnar queries, compression
+- **IPLD**: IPFS storage, content addressing, decentralized applications
+- **CAR**: IPFS archiving, bulk imports, offline IPFS bundles
+- **CSV**: Spreadsheets, simple analytics, legacy system integration
+
+### Performance Considerations
+
+- Use **JSONL** for streaming large datasets
+- Use **Parquet with snappy** for fast analytics
+- Use **Parquet with gzip/brotli** for storage optimization
+- Convert to **IPLD/CAR** before adding to IPFS
+- Use **batch conversion** for multiple files
+
+### Storage Optimization
+
+```python
+# Compare file sizes across formats
+import os
+
+files = {
+    "JSON": "channel.json",
+    "JSONL": "channel.jsonl",
+    "Parquet (snappy)": "channel.snappy.parquet",
+    "Parquet (gzip)": "channel.gzip.parquet",
+}
+
+for name, path in files.items():
+    if os.path.exists(path):
+        size_mb = os.path.getsize(path) / (1024 * 1024)
+        print(f"{name}: {size_mb:.2f} MB")
+```
+
+## Troubleshooting
+
+### Missing Dependencies
+
+If you get import errors for specific formats:
+
+```bash
+# For Parquet/Arrow support
+pip install pyarrow
+
+# For Pandas/DataFrame support
+pip install pandas
+
+# For HuggingFace datasets
+pip install datasets
+
+# For IPLD/CAR support (already included)
+# These are built into ipfs_datasets_py
+```
+
+### Conversion Errors
+
+```python
+from ipfs_datasets_py.utils.data_format_converter import get_converter
+
+converter = get_converter()
+
+try:
+    result = converter.convert_file("input.json", "output.parquet", to_format="parquet")
+except ImportError as e:
+    print(f"Missing dependency: {e}")
+except ValueError as e:
+    print(f"Invalid format or data: {e}")
+except Exception as e:
+    print(f"Conversion error: {e}")
+```
+
+## Summary
+
+The Discord integration provides comprehensive format conversion capabilities:
+
+✅ **12+ supported formats** - JSON, JSONL, JSON-LD, JSON-LD-LOGIC, Parquet, IPLD, CAR, Arrow, CSV, DataFrame, HuggingFace, native types
+✅ **Package-wide utility** - Centralized converter used across all modules
+✅ **All access methods** - CLI, Python package, MCP tools, MCP server, dashboard
+✅ **Format-specific features** - Compression, semantic context, logic annotations
+✅ **IPFS integration** - Native IPLD and CAR format support
+✅ **Batch processing** - Convert multiple files efficiently
+✅ **Streaming support** - JSONL format for large datasets
+
+For more examples and advanced usage, see the main Discord documentation.
