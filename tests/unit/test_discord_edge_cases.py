@@ -6,13 +6,15 @@ These tests focus on:
 2. Error handling scenarios
 3. Boundary conditions
 4. User error detection
+
+Uses anyio for asyncio/trio compatibility (libp2p integration)
 """
 import pytest
 import os
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
-import asyncio
+import anyio
 
 from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
 from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper, DISCORD_AVAILABLE

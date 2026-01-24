@@ -12,9 +12,10 @@ Features:
 - Thread export support
 - Comprehensive metadata extraction
 - Secure token management via environment variables
+- anyio support for asyncio/trio compatibility (libp2p integration)
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import os

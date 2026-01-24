@@ -2,10 +2,10 @@
 Integration tests for Discord data ingestion.
 
 Tests the Discord Chat Exporter installation, wrapper functionality,
-and MCP tools integration.
+and MCP tools integration. Uses anyio for asyncio/trio compatibility.
 """
 import pytest
-import asyncio
+import anyio
 import os
 import platform
 from pathlib import Path

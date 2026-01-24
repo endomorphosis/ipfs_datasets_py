@@ -36,6 +36,9 @@ setup(
         # Data provenance components
         "networkx>=2.8.0",
         "matplotlib>=3.5.0",
+        
+        # Async compatibility (anyio for trio/asyncio interop)
+        "anyio>=4.0.0",
     ],
     extras_require={
         # Optional but recommended dependencies

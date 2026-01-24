@@ -7,8 +7,10 @@ This tool provides Discord server, channel, and DM listing capabilities.
 Supports secure token management via:
 - Direct token parameter
 - DISCORD_TOKEN environment variable
+
+Uses anyio for asyncio/trio compatibility (libp2p integration)
 """
-import asyncio
+import anyio
 import os
 from typing import Dict, Any, Optional
 

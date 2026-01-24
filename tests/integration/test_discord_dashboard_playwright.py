@@ -28,9 +28,11 @@ Usage:
     
     # Run with headed browser and screenshots
     pytest tests/integration/test_discord_dashboard_playwright.py -v --headed --screenshot=on
+
+Uses anyio for asyncio/trio compatibility (libp2p integration)
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import os

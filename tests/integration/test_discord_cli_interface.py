@@ -7,9 +7,11 @@ identify whether issues originate from:
 1. External CLI changes (DiscordChatExporter updates)
 2. Application logic errors
 3. User input/configuration errors
+
+Uses anyio for asyncio/trio compatibility (libp2p integration)
 """
 import pytest
-import asyncio
+import anyio
 import os
 import platform
 import tempfile
