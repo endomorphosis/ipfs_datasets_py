@@ -5,7 +5,7 @@ This module provides a comprehensive interface to yt-dlp for downloading
 content from YouTube, Vimeo, SoundCloud, and many other platforms.
 """
 
-import asyncio
+import anyio
 import logging
 import tempfile
 import time
@@ -1309,7 +1309,7 @@ class YtDlpWrapper:
         """
         try:
             batch_id = str(uuid.uuid4())
-            semaphore = asyncio.Semaphore(max_concurrent)
+            semaphore = anyio.Semaphore(max_concurrent)
             
             async def _download_with_semaphore(url):
                 async with semaphore:
@@ -1402,11 +1402,11 @@ class YtDlpWrapper:
             >>> result = wrapper.cleanup_downloads(max_age_hours=0)
             
             >>> # Scheduled cleanup in long-running application
-            >>> import asyncio
+            >>> import anyio
             >>> 
             >>> async def periodic_cleanup():
             ...     while True:
-            ...         await asyncio.sleep(3600)  # Every hour
+            ...         await anyio.sleep(3600)  # Every hour
             ...         result = wrapper.cleanup_downloads(max_age_hours=6)
             ...         if result['removed_downloads'] > 0:
             ...             print(f"Cleaned up {result['removed_downloads']} downloads")

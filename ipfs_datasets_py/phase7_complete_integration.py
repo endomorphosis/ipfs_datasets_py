@@ -29,7 +29,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 import statistics
 from typing import Dict, List, Optional, Any, Union, Tuple
@@ -312,7 +312,7 @@ class Phase7AdvancedGraphRAGSystem:
             processing_tasks = []
             
             # Create processing tasks (limit concurrency)
-            semaphore = asyncio.Semaphore(self.config.max_concurrent_analyses)
+            semaphore = anyio.Semaphore(self.config.max_concurrent_analyses)
             
             async def process_single_website(url: str) -> Tuple[str, MLEnhancedProcessingResult]:
                 async with semaphore:
@@ -321,7 +321,8 @@ class Phase7AdvancedGraphRAGSystem:
             
             # Execute all processing tasks
             for url in website_urls:
-                task = asyncio.create_task(process_single_website(url))
+                task = # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(process_single_website(url))
                 processing_tasks.append(task)
             
             # Collect results
@@ -994,4 +995,4 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    anyio.run(main())

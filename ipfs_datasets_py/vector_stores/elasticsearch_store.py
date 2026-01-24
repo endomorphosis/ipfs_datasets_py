@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 import uuid
 from typing import List, Dict, Any, Optional, TypeAlias
-import asyncio
+import anyio
 import json
 
 from .base import BaseVectorStore, VectorStoreError, VectorStoreConnectionError, VectorStoreOperationError

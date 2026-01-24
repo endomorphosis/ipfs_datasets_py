@@ -5,7 +5,7 @@ Comprehensive end-to-end testing with different PDF document types,
 formats, and edge cases to validate robustness of the GraphRAG PDF system.
 """
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 import json
@@ -318,13 +318,14 @@ class TestPDFEdgeCases:
                 processor = PDFProcessor()
                 
                 # Should handle empty PDF gracefully (async test in sync context)
-                import asyncio
+                import anyio
                 if asyncio.get_event_loop().is_running():
                     # Already in async context
-                    task = asyncio.create_task(processor.process_pdf(pdf_path))
+                    task = # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(processor.process_pdf(pdf_path))
                 else:
                     # Create new event loop
-                    results = asyncio.run(processor.process_pdf(pdf_path))
+                    results = anyio.run(processor.process_pdf(pdf_path))
                     assert isinstance(results, dict)
                     assert 'status' in results
                     
@@ -353,8 +354,8 @@ class TestPDFEdgeCases:
                 processor = PDFProcessor()
                 
                 # Should handle corrupted PDF gracefully
-                import asyncio
-                results = asyncio.run(processor.process_pdf(pdf_path))
+                import anyio
+                results = anyio.run(processor.process_pdf(pdf_path))
                 
                 # Should return error status, not crash
                 assert isinstance(results, dict)
@@ -398,8 +399,8 @@ class TestPDFEdgeCases:
                 processor = PDFProcessor(enable_monitoring=True)
                 
                 # Should process large PDF efficiently
-                import asyncio
-                results = asyncio.run(processor.process_pdf(pdf_path))
+                import anyio
+                results = anyio.run(processor.process_pdf(pdf_path))
                 
                 # Should complete processing
                 assert isinstance(results, dict)
@@ -475,8 +476,8 @@ class TestSpecializedPDFFormats:
                 processor = PDFProcessor()
                 
                 # Should process form-like content
-                import asyncio
-                results = asyncio.run(processor.process_pdf(pdf_path))
+                import anyio
+                results = anyio.run(processor.process_pdf(pdf_path))
                 
                 # Should handle structured data
                 assert isinstance(results, dict)
@@ -528,8 +529,8 @@ class TestSpecializedPDFFormats:
                 processor = PDFProcessor()
                 
                 # Should process tabular content
-                import asyncio
-                results = asyncio.run(processor.process_pdf(pdf_path))
+                import anyio
+                results = anyio.run(processor.process_pdf(pdf_path))
                 
                 # Should handle tabular data
                 assert isinstance(results, dict)

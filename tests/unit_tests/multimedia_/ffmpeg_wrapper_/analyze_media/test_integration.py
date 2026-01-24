@@ -10,7 +10,7 @@ Terminology:
 - performance_profiling_verification: Testing that analysis provides accurate performance characteristics
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -110,7 +110,7 @@ class TestFFmpegWrapperAnalyzeMediaIntegration:
         
         try:
             # Simulate concurrent analysis operations
-            import asyncio
+            import anyio
             tasks = [
                 wrapper.analyze_media("video1.mp4"),
                 wrapper.analyze_media("video2.mp4"),

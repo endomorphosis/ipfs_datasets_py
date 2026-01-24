@@ -7,7 +7,7 @@ Provides MCP tools for ingesting news articles, documents, and websites.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime
@@ -264,9 +264,9 @@ async def ingest_news_feed(
             
             # Simulate parallel processing delay
             if processing_mode == "parallel":
-                await asyncio.sleep(0.1)
+                await anyio.sleep(0.1)
             else:
-                await asyncio.sleep(0.5)
+                await anyio.sleep(0.5)
         
         processing_logs.append({
             "step": "article_processing",
@@ -405,7 +405,7 @@ async def ingest_website(
                     discovered_urls.add(link)
                 
                 # Simulate crawling delay
-                await asyncio.sleep(0.1)
+                await anyio.sleep(0.1)
         
         crawl_logs.append({
             "step": "crawling_completed",
@@ -530,7 +530,7 @@ async def ingest_document_collection(
                 processed_documents.append(doc_result)
                 
                 # Simulate processing delay
-                await asyncio.sleep(0.2)
+                await anyio.sleep(0.2)
         
         processing_logs.append({
             "step": "document_processing",

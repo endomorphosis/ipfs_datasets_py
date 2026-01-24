@@ -9,7 +9,7 @@ import os
 import sys
 import ast
 from pathlib import Path
-import asyncio
+import anyio
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -137,7 +137,7 @@ if __name__ == "__main__":
         print("\nRunning web_archive_mcp_tools tests...")
         # The test_web_archive_mcp_tools function is async, so it needs to be awaited.
         # The main block is not async, so we use asyncio.run to run the async function.
-        success = asyncio.run(run_web_archive_mcp_tests())
+        success = anyio.run(run_web_archive_mcp_tests())
 
         if success:
             print("✓ All web_archive_mcp_tools tests passed.")

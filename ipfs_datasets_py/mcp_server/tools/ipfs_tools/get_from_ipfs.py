@@ -4,7 +4,7 @@ MCP tool for getting content from IPFS.
 
 This tool handles retrieving files and directories from IPFS.
 """
-import asyncio
+import anyio
 import os
 import json
 import requests

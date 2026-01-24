@@ -9,7 +9,7 @@ Feature: Federal Register Scraper Verification
   code 1 when failed count is greater than 0.
 """
 import pytest
-import asyncio
+import anyio
 from datetime import datetime, timedelta
 from typing import Dict, Any
 

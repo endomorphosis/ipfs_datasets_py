@@ -4,7 +4,7 @@ Test suite for all embedding-related tools and functionality.
 """
 
 import pytest
-import asyncio
+import anyio
 import numpy as np
 from unittest.mock import Mock, AsyncMock, patch
 import sys

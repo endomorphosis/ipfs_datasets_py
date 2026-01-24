@@ -9,7 +9,7 @@ This allows VS Code and other tools to start the MCP server easily.
 """
 
 import sys
-import asyncio
+import anyio
 import argparse
 from pathlib import Path
 

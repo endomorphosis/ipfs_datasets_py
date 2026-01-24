@@ -56,6 +56,7 @@ setup(
         
         # Async compatibility (anyio for trio/asyncio interop)
         "anyio>=4.0.0",
+        "trio>=0.27.0",
     ],
     extras_require={
         # Optional but recommended dependencies
@@ -91,6 +92,7 @@ setup(
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
             'pytest-asyncio>=0.21.0',
+            'pytest-trio>=0.8.0',
             'pytest-timeout>=2.0.2',
             'pytest-xdist>=3.8.0',
             'pytest-parallel>=0.1.1',

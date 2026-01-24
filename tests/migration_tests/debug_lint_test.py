@@ -4,7 +4,7 @@
 import sys
 import traceback
 import tempfile
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add the current directory to the Python path
@@ -47,7 +47,7 @@ def bad_function( a,b ):  # Extra space after open paren
         ))
     except RuntimeError:
         # No event loop in thread
-        result = asyncio.run(tool.execute(
+        result = anyio.run(tool.execute(
             path=temp_path,
             fix_issues=False,
             dry_run=True

@@ -8,7 +8,7 @@ features from the ipfs_datasets_py library.
 import os
 import sys
 import json
-import asyncio
+import anyio
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
@@ -274,4 +274,4 @@ async def main():
     logger.info("MCP Tools Test completed")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

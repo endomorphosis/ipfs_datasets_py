@@ -3,7 +3,7 @@ Example of using the IPFS Datasets MCP server with Claude.
 
 This example demonstrates how Claude can interact with IPFS datasets through the MCP server.
 """
-import asyncio
+import anyio
 import json
 import os
 from pathlib import Path

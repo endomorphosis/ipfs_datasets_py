@@ -16,7 +16,7 @@ Test Coverage:
 """
 
 import pytest
-import asyncio
+import anyio
 from typing import Dict, Any
 
 

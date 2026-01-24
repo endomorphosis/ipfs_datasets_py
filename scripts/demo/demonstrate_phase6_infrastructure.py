@@ -9,7 +9,7 @@ of the GraphRAG website processing system.
 import os
 import sys
 import json
-import asyncio
+import anyio
 import subprocess
 from pathlib import Path
 from datetime import datetime
@@ -276,4 +276,4 @@ async def demonstrate_phase6_infrastructure():
     print(f"📄 Phase 6 completion report saved to: {report_file}")
 
 if __name__ == "__main__":
-    asyncio.run(demonstrate_phase6_infrastructure())
+    anyio.run(demonstrate_phase6_infrastructure())

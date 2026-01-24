@@ -16,7 +16,7 @@ The output will provide detailed information about:
 - Suggestions for fixes based on the actual HTML
 """
 
-import asyncio
+import anyio
 import sys
 import json
 import logging
@@ -533,4 +533,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

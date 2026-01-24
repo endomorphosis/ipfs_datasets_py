@@ -20,7 +20,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
@@ -33,7 +33,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-import asyncio
+import anyio
 from contextlib import asynccontextmanager
 import time
 from collections import defaultdict, deque
@@ -277,7 +277,7 @@ class ProcessingJobManager:
             
             # Update progress during processing
             for progress in [0.1, 0.3, 0.5, 0.7, 0.9]:
-                await asyncio.sleep(1)  # Simulate processing time
+                await anyio.sleep(1)  # Simulate processing time
                 job_info["progress"] = progress
             
             # Actual processing
@@ -726,4 +726,4 @@ if __name__ == "__main__":
         server = uvicorn.Server(config)
         await server.serve()
     
-    asyncio.run(main())
+    anyio.run(main())

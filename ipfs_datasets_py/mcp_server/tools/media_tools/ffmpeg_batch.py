@@ -5,7 +5,7 @@ FFmpeg batch processing tool for the MCP server.
 This tool provides batch processing capabilities for multiple media files using FFmpeg,
 supporting parallel processing, queue management, and progress tracking.
 """
-import asyncio
+import anyio
 import json
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
@@ -197,7 +197,7 @@ async def ffmpeg_batch_process(
                 }
         
         # Process files in parallel with limited concurrency
-        semaphore = asyncio.Semaphore(max_parallel)
+        semaphore = anyio.Semaphore(max_parallel)
         
         async def bounded_process(file_path: str) -> Dict[str, Any]:
             async with semaphore:
@@ -365,7 +365,7 @@ async def main() -> Dict[str, Any]:
 if __name__ == "__main__":
     # Example usage
     test_files = ["input1.mp4", "input2.mp4", "input3.mp4"]
-    test_result = asyncio.run(ffmpeg_batch_process(
+    test_result = anyio.run(ffmpeg_batch_process(
         input_files=test_files,
         output_directory="./batch_output",
         operation="convert",

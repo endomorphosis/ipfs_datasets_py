@@ -12,7 +12,7 @@ This script validates that each of the 51 US jurisdictions (50 states + DC) has:
 import os
 import sys
 import importlib
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add parent directory to path for imports
@@ -190,7 +190,7 @@ def main():
     step2 = validate_scraper_classes()
     
     # Step 3: Test output
-    step3 = asyncio.run(test_scraper_output())
+    step3 = anyio.run(test_scraper_output())
     
     # Final summary
     print("\n" + "=" * 100)

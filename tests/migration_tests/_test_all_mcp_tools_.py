@@ -15,7 +15,7 @@ This test suite systematically tests all MCP tools including:
 - Function Tools
 """
 
-import asyncio
+import anyio
 import json
 import os
 import sys
@@ -180,7 +180,7 @@ class TestVectorTools(unittest.TestCase):
             metadata = [{"id": "vec1"}, {"id": "vec2"}, {"id": "vec3"}]
 
             # Run the async function
-            result = asyncio.run(create_vector_index(vectors, metadata=metadata))
+            result = anyio.run(create_vector_index(vectors, metadata=metadata))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -202,7 +202,7 @@ class TestVectorTools(unittest.TestCase):
             # Test data
             query_vector = [1.0, 0.0, 0.0]
 
-            result = asyncio.run(search_vector_index("test_index", query_vector, top_k=5))
+            result = anyio.run(search_vector_index("test_index", query_vector, top_k=5))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -225,7 +225,7 @@ class TestGraphTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
 
-            result = asyncio.run(query_knowledge_graph(
+            result = anyio.run(query_knowledge_graph(
                 graph_id="test_graph",
                 query="SELECT * WHERE { ?s ?p ?o } LIMIT 10",
                 query_type="sparql"
@@ -260,7 +260,7 @@ class TestDatasetTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
 
-            result = asyncio.run(load_dataset("test_dataset"))
+            result = anyio.run(load_dataset("test_dataset"))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -281,7 +281,7 @@ class TestDatasetTools(unittest.TestCase):
             test_data = {"data": [1, 2, 3], "metadata": {"name": "test"}}
             output_path = os.path.join(self.temp_dir, "test_dataset.json")
 
-            result = asyncio.run(save_dataset(test_data, output_path))
+            result = anyio.run(save_dataset(test_data, output_path))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -302,7 +302,7 @@ class TestDatasetTools(unittest.TestCase):
             test_data = {"data": [1, 2, 3]}
             operations = ["normalize", "filter"]
 
-            result = asyncio.run(process_dataset(test_data, operations))
+            result = anyio.run(process_dataset(test_data, operations))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -327,7 +327,7 @@ class TestDatasetTools(unittest.TestCase):
             with open(input_path, 'w') as f:
                 json.dump({"data": [{"a": 1, "b": 2}]}, f)
 
-            result = asyncio.run(convert_dataset_format(input_path, output_path, "json", "csv"))
+            result = anyio.run(convert_dataset_format(input_path, output_path, "json", "csv"))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -349,7 +349,7 @@ class TestIPFSTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.ipfs_tools.pin_to_ipfs import pin_to_ipfs
 
-            result = asyncio.run(pin_to_ipfs("QmTestHash"))
+            result = anyio.run(pin_to_ipfs("QmTestHash"))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -367,7 +367,7 @@ class TestIPFSTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs
 
-            result = asyncio.run(get_from_ipfs("QmTestHash"))
+            result = anyio.run(get_from_ipfs("QmTestHash"))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -396,7 +396,7 @@ class TestAuditTools(unittest.TestCase):
                 "timestamp": "2024-01-01T00:00:00Z"
             }
 
-            result = asyncio.run(record_audit_event(event_data))
+            result = anyio.run(record_audit_event(event_data))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -414,7 +414,7 @@ class TestAuditTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.audit_tools.generate_audit_report import generate_audit_report
 
-            result = asyncio.run(generate_audit_report(
+            result = anyio.run(generate_audit_report(
                 start_date="2024-01-01",
                 end_date="2024-01-02"
             ))
@@ -447,7 +447,7 @@ class TestProvenanceTools(unittest.TestCase):
                 "timestamp": "2024-01-01T00:00:00Z"
             }
 
-            result = asyncio.run(record_provenance(provenance_data))
+            result = anyio.run(record_provenance(provenance_data))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -469,7 +469,7 @@ class TestSecurityTools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.security_tools.check_access_permission import check_access_permission
 
-            result = asyncio.run(check_access_permission(
+            result = anyio.run(check_access_permission(
                 user_id="test_user",
                 resource="test_resource",
                 operation="read"
@@ -495,7 +495,7 @@ class TestCLITools(unittest.TestCase):
         try:
             from ipfs_datasets_py.mcp_server.tools.cli.execute_command import execute_command
 
-            result = asyncio.run(execute_command("echo 'Hello World'"))
+            result = anyio.run(execute_command("echo 'Hello World'"))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)
@@ -519,7 +519,7 @@ class TestFunctionTools(unittest.TestCase):
 
             code = "result = 2 + 2\nprint(f'Result: {result}')"
 
-            result = asyncio.run(execute_python_snippet(code))
+            result = anyio.run(execute_python_snippet(code))
 
             self.assertIsInstance(result, dict)
             self.assertIn("status", result)

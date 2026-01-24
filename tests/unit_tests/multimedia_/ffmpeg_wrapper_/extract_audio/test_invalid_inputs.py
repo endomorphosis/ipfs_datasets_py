@@ -11,7 +11,7 @@ Terminology:
 - invalid_bitrate_format: A bitrate specification in incorrect format
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

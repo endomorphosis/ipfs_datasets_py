@@ -67,7 +67,7 @@ class proxy:
         TypeError: If invalid types provided for arguments.
     
     Example:
-        >>> import asyncio
+        >>> import anyio
         >>> 
         >>> async def scrape_with_proxy():
         ...     # Configure proxy with rotation and retry
@@ -98,7 +98,7 @@ class proxy:
         ...     print(f"Success rate: {stats['success_rate']}%")
         ...     print(f"Average response time: {stats['avg_response_time']:.2f}s")
         >>> 
-        >>> asyncio.run(scrape_with_proxy())
+        >>> anyio.run(scrape_with_proxy())
         Status: 200
         Proxy used: http://proxy1.example.com:8080
         Response length: 1024 characters

@@ -11,7 +11,7 @@ This script demonstrates how to:
 Usage:
     python demo_patent_scraper.py
 """
-import asyncio
+import anyio
 from pathlib import Path
 
 from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
@@ -239,7 +239,7 @@ def main():
     
     # Run async demo
     try:
-        asyncio.run(demo_async_search())
+        anyio.run(demo_async_search())
     except Exception as e:
         print(f"\nAsync demo skipped: {e}")
     

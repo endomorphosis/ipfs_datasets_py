@@ -11,7 +11,7 @@ Usage:
     python setup_periodic_updates.py --custom
 """
 import argparse
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -362,7 +362,7 @@ Examples:
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        anyio.run(main())
     except KeyboardInterrupt:
         print("\n\nSetup cancelled by user.")
         sys.exit(1)

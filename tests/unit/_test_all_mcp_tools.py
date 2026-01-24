@@ -4,7 +4,7 @@ Comprehensive unit tests for all MCP tools.
 
 import pytest
 import json
-import asyncio
+import anyio
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from pathlib import Path
 import tempfile
@@ -645,7 +645,7 @@ class TestToolErrorHandling:
             
             # Simulate slow operation
             async def slow_process(*args, **kwargs):
-                await asyncio.sleep(2)  # Longer than timeout
+                await anyio.sleep(2)  # Longer than timeout
                 return {"status": "success"}
             
             mock_proc.process_batch = slow_process
@@ -653,14 +653,15 @@ class TestToolErrorHandling:
             
             # Test timeout handling
             try:
-                result = await asyncio.wait_for(
+                result = await # TODO: Convert to anyio.fail_after() context manager
+    asyncio.wait_for(
                     pdf_batch_process(json.dumps(request_data)),
                     timeout=1.5
                 )
                 # If no timeout, should still be valid response
                 response_data = json.loads(result["content"][0]["text"])
                 assert "status" in response_data
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Timeout is acceptable for this test
                 pass
 
@@ -718,7 +719,8 @@ class TestToolPerformance:
         ):
             # Execute tools concurrently
             tasks = [tool(json.dumps(data)) for tool, data in tools_and_data]
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+            results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks, return_exceptions=True)
             
             # All should complete successfully
             assert len(results) == 5

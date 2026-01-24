@@ -5,7 +5,7 @@ This will test the basic import and execution of each tool.
 """
 
 import sys
-import asyncio
+import anyio
 import importlib
 import traceback
 from typing import Dict, Any
@@ -98,4 +98,4 @@ async def main():
     print(f"\nDetailed results saved to tool_test_results.json")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

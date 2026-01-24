@@ -17,7 +17,7 @@ Usage:
     python scraper_management.py validate --input test_results/caselaw_scrapers_test.json
 """
 import argparse
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path
@@ -503,7 +503,7 @@ Examples:
             domains = [args.domain]
         
         for domain in domains:
-            asyncio.run(manager.test_domain_scrapers(
+            anyio.run(manager.test_domain_scrapers(
                 domain=domain,
                 output_dir=args.output_dir,
                 quick=not args.comprehensive

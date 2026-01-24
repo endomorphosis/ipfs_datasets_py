@@ -5,7 +5,7 @@ Verifies all tools are working correctly after VS Code reload.
 """
 
 import sys
-import asyncio
+import anyio
 import traceback
 from typing import Dict, Any
 
@@ -176,7 +176,7 @@ async def test_all_mcp_tools():
 def main():
     """Main verification function."""
     try:
-        success = asyncio.run(test_all_mcp_tools())
+        success = anyio.run(test_all_mcp_tools())
         return success
     except Exception as e:
         print(f"❌ Verification failed with error: {e}")

@@ -4,7 +4,7 @@
 
 import pytest
 import os
-import asyncio
+import anyio
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 

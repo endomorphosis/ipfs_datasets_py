@@ -10,7 +10,7 @@ This script tests a representative sample of states (5 states) to quickly verify
 Use this before running the full test_all_states_with_parquet.py
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print("\nRunning quick sample test...")
     print("This tests 5 representative states to verify functionality.\n")
     
-    tester = asyncio.run(test_sample())
+    tester = anyio.run(test_sample())
     
     # Check results
     failed = sum(1 for r in tester.results.values() if not r['success'])

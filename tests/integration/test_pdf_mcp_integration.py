@@ -5,7 +5,7 @@ This test module covers the integration between PDF processing components
 and MCP (Model Context Protocol) tools, including performance benchmarks.
 """
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 from pathlib import Path
@@ -103,7 +103,7 @@ class TestPerformanceIntegration:
         # Mock MCP integration since dependencies may not be available
         async def mock_process_pdf(path):
             """Mock async PDF processing"""
-            await asyncio.sleep(0.01)  # Simulate processing
+            await anyio.sleep(0.01)  # Simulate processing
             return {"status": "success", "path": path}
         
         result = await mock_process_pdf(sample_pdf_path)

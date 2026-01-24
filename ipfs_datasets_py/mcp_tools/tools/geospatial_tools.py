@@ -8,7 +8,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 import re
 from datetime import datetime
-import asyncio
+import anyio
 
 
 class GeospatialAnalysisTools:

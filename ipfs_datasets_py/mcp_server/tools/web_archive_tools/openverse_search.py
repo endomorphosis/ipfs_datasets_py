@@ -445,7 +445,7 @@ async def batch_search_openverse(
         Dict containing batch search results
     """
     try:
-        import asyncio
+        import anyio
         
         # Input validation
         if not queries or not isinstance(queries, list):
@@ -480,7 +480,7 @@ async def batch_search_openverse(
             
             # Add delay between requests
             if query != queries[-1]:
-                await asyncio.sleep(delay_seconds)
+                await anyio.sleep(delay_seconds)
         
         return {
             "status": "success",

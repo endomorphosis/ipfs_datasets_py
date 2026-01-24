@@ -10,7 +10,7 @@ This script tests the unified scraper's functionality including:
 """
 
 import sys
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add parent directory to path
@@ -224,7 +224,7 @@ def main():
         "Multiple URL Scraping": test_multiple_url_scraping(),
         "Specific Method": test_specific_method(),
         "Fallback Mechanism": test_fallback_mechanism(),
-        "Async Scraping": asyncio.run(test_async_scraping())
+        "Async Scraping": anyio.run(test_async_scraping())
     }
     
     # Summary

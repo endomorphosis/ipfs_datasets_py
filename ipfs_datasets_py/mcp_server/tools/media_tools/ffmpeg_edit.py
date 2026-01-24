@@ -5,7 +5,7 @@ FFmpeg editing tools for the MCP server.
 This module provides tools for cutting, splicing, and concatenating media files
 using FFmpeg for precise video and audio editing operations.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List, Tuple
 from pathlib import Path
 import tempfile
@@ -551,7 +551,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_cut = asyncio.run(ffmpeg_cut(
+    test_cut = anyio.run(ffmpeg_cut(
         input_file="input.mp4",
         output_file="cut_segment.mp4",
         start_time="00:01:00",
@@ -559,7 +559,7 @@ if __name__ == "__main__":
     ))
     print(f"Cut test result: {test_cut}")
     
-    test_concat = asyncio.run(ffmpeg_concat(
+    test_concat = anyio.run(ffmpeg_concat(
         input_files=["part1.mp4", "part2.mp4", "part3.mp4"],
         output_file="concatenated.mp4"
     ))

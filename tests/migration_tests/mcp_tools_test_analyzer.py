@@ -126,7 +126,7 @@ Test for the {tool_name} MCP tool in the {category} category.
 \"\"\"
 
 import unittest
-import asyncio
+import anyio
 from unittest.mock import patch, MagicMock, AsyncMock
 import sys
 sys.path.insert(0, '.')

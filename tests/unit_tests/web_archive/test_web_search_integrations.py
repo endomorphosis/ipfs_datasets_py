@@ -5,7 +5,7 @@ These tests verify the search API integration modules can be imported,
 have the correct function signatures, and handle errors appropriately.
 """
 import pytest
-import asyncio
+import anyio
 import os
 
 

@@ -6,7 +6,7 @@ This script demonstrates the complete Phase 7 advanced analytics and ML
 integration capabilities in a production-like environment.
 """
 
-import asyncio
+import anyio
 import json
 import sys
 import tempfile
@@ -293,5 +293,5 @@ async def main():
 
 
 if __name__ == '__main__':
-    success = asyncio.run(main())
+    success = anyio.run(main())
     sys.exit(0 if success else 1)

@@ -5,7 +5,7 @@ MCP tool for querying knowledge graphs.
 This tool handles querying knowledge graphs for information
 using the GraphRAGProcessor from graphrag_processor.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 
 from ipfs_datasets_py.mcp_server.logger import logger

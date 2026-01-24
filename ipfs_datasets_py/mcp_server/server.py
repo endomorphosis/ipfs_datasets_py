@@ -9,7 +9,7 @@ enabling AI models to interact with IPFS datasets through standardized tools.
 from __future__ import annotations
 
 import argparse
-import asyncio
+import anyio
 import importlib
 import os
 from pathlib import Path
@@ -633,7 +633,7 @@ def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
     # Start server in stdio mode
     try:
         logger.info("Starting MCP server in stdio mode")
-        asyncio.run(server.start_stdio())
+        anyio.run(server.start_stdio())
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -662,7 +662,7 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
     # Start server
     try:
         logger.info(f"Starting server at {host}:{port}")
-        asyncio.run(server.start(host, port))
+        anyio.run(server.start(host, port))
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -723,7 +723,7 @@ def main():
         # Create server with custom configuration
         server = IPFSDatasetsMCPServer(custom_configs)
         try:
-            asyncio.run(server.start(host, port))
+            anyio.run(server.start(host, port))
         except KeyboardInterrupt:
             logger.info("Server stopped by user")
         except Exception as e:

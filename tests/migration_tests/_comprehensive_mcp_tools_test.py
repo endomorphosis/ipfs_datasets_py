@@ -13,7 +13,7 @@ import inspect
 import unittest
 import importlib
 import logging
-import asyncio # Import asyncio for async tests
+import anyio # Import asyncio for async tests
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -289,7 +289,7 @@ class BaseToolTester(unittest.TestCase):
 
     def run_async_test(self, async_func, *args, **kwargs):
         """Helper method to run async functions in tests."""
-        return asyncio.run(async_func(*args, **kwargs))
+        return anyio.run(async_func(*args, **kwargs))
 
 # Dataset Tools Tests
 class DatasetToolsTest(BaseToolTester):
@@ -315,7 +315,7 @@ class DatasetToolsTest(BaseToolTester):
         format = "json"
 
         # Call function with test data (await since it's async)
-        result = asyncio.run(tool_func(source, format=format))
+        result = anyio.run(tool_func(source, format=format))
 
         # Assertions
         self.assertEqual(result["status"], "success")

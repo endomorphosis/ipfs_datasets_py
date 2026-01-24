@@ -6,7 +6,7 @@ from examples/p2p_workflow_demo.py.
 """
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import patch, MagicMock, AsyncMock
 from examples.p2p_workflow_demo import demo_mcp_tools
 
@@ -28,7 +28,7 @@ def test_demo_mcp_tools_prints_header(captured_output):
     
     with patch("examples.p2p_workflow_demo.importlib.util.spec_from_file_location") as mock_spec:
         mock_spec.return_value = None
-        asyncio.run(demo_mcp_tools())
+        anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -51,7 +51,7 @@ def test_demo_mcp_tools_handles_import_error(captured_output):
     
     with patch("examples.p2p_workflow_demo.importlib.util.spec_from_file_location") as mock_spec:
         mock_spec.side_effect = Exception("Module not found")
-        asyncio.run(demo_mcp_tools())
+        anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -74,7 +74,7 @@ def test_demo_mcp_tools_prints_optional_message(captured_output):
     
     with patch("examples.p2p_workflow_demo.importlib.util.spec_from_file_location") as mock_spec:
         mock_spec.side_effect = ImportError("test error")
-        asyncio.run(demo_mcp_tools())
+        anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -106,7 +106,7 @@ def test_demo_mcp_tools_prints_initialization_message(captured_output):
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -139,7 +139,7 @@ def test_demo_mcp_tools_prints_success_status(captured_output):
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -172,7 +172,7 @@ def test_demo_mcp_tools_prints_peer_id(captured_output):
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -204,7 +204,7 @@ def test_demo_mcp_tools_prints_getting_workflow_tags_message(captured_output):
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_output = captured_output.getvalue()
     assert expected_text in actual_output, f"expected {expected_text!r} in output, got {actual_output!r}"
@@ -237,7 +237,7 @@ def test_demo_mcp_tools_calls_initialize_p2p_scheduler():
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_call_count = mock_initialize.call_count
     assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"
@@ -270,7 +270,7 @@ def test_demo_mcp_tools_calls_get_workflow_tags():
         mock_spec_func.return_value = mock_spec
         
         with patch("examples.p2p_workflow_demo.importlib.util.module_from_spec", return_value=mock_module):
-            asyncio.run(demo_mcp_tools())
+            anyio.run(demo_mcp_tools())
     
     actual_call_count = mock_get_tags.call_count
     assert actual_call_count == expected_call_count, f"expected {expected_call_count}, got {actual_call_count}"

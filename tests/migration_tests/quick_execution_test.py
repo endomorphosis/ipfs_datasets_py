@@ -4,7 +4,7 @@ Quick execution test for the core 9 tools.
 """
 
 import sys
-import asyncio
+import anyio
 import importlib
 sys.path.insert(0, '.')
 
@@ -57,4 +57,4 @@ async def main():
     print(f"Success rate: {(success_count/total_count)*100:.1f}%")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

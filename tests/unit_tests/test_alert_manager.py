@@ -5,7 +5,7 @@ Tests the AlertManager and AlertRule classes.
 """
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import Mock, AsyncMock, MagicMock, patch
 from pathlib import Path
 import tempfile

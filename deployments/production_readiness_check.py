@@ -9,7 +9,7 @@ Checks configuration, dependencies, security, performance, and operational readi
 import os
 import sys
 import json
-import asyncio
+import anyio
 import subprocess
 import pkg_resources
 from pathlib import Path
@@ -373,7 +373,7 @@ def main():
     project_root = Path(__file__).parent.parent
     checker = ProductionReadinessChecker(project_root)
     
-    ready = asyncio.run(checker.run_all_checks())
+    ready = anyio.run(checker.run_all_checks())
     sys.exit(0 if ready else 1)
 
 if __name__ == "__main__":

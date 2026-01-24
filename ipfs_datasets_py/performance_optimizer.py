@@ -5,7 +5,7 @@ Provides adaptive processing pipeline optimization based on content complexity
 and available system resources.
 """
 
-import asyncio
+import anyio
 import os
 import psutil
 import logging
@@ -521,4 +521,4 @@ if __name__ == "__main__":
         print(f"  Recommended Workers: {plan.recommended_parallel_workers}")
         print(f"  Processing Order: {' -> '.join(plan.processing_order)}")
     
-    asyncio.run(main())
+    anyio.run(main())

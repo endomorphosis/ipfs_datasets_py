@@ -6,7 +6,7 @@ including entity extraction, relationship discovery, knowledge graph constructio
 and semantic querying capabilities.
 """
 import pytest
-import asyncio
+import anyio
 import tempfile
 import os
 import json

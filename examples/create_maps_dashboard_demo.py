@@ -4,7 +4,7 @@
 Screenshot demonstration of the enhanced MCP Dashboard with Maps tab.
 """
 
-import asyncio
+import anyio
 import time
 from pathlib import Path
 
@@ -730,4 +730,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    result = asyncio.run(main())
+    result = anyio.run(main())

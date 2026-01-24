@@ -30,7 +30,7 @@ Examples:
 import sys
 import argparse
 import json
-import asyncio
+import anyio
 from pathlib import Path
 from typing import List
 

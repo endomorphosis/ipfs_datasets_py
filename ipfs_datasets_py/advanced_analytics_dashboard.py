@@ -23,7 +23,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -134,7 +134,8 @@ class RealTimeMonitor:
     async def start_monitoring(self):
         """Start real-time monitoring"""
         self.is_monitoring = True
-        asyncio.create_task(self._monitoring_loop())
+        # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(self._monitoring_loop())
         logger.info("Real-time monitoring started")
     
     async def stop_monitoring(self):
@@ -154,11 +155,11 @@ class RealTimeMonitor:
                 await self._check_alert_conditions(system_metrics)
                 
                 # Wait for next collection cycle
-                await asyncio.sleep(5)  # Collect every 5 seconds
+                await anyio.sleep(5)  # Collect every 5 seconds
                 
             except Exception as e:
                 logger.error(f"Monitoring error: {e}")
-                await asyncio.sleep(10)  # Wait longer on error
+                await anyio.sleep(10)  # Wait longer on error
     
     async def _collect_system_metrics(self) -> Dict[str, Any]:
         """Collect current system metrics"""
@@ -1025,7 +1026,7 @@ async def demo_analytics_dashboard():
 
 
 if __name__ == "__main__":
-    import asyncio
+    import anyio
     
     # Run analytics dashboard demo
-    asyncio.run(demo_analytics_dashboard())
+    anyio.run(demo_analytics_dashboard())

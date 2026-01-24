@@ -5,7 +5,7 @@
 
 import pytest
 import os
-import asyncio
+import anyio
 import time
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Dict, List, Any, Optional
@@ -50,7 +50,7 @@ assert QueryEngine.get_query_analytics
 
 
 # Check if the modules's imports are accessible:
-import asyncio
+import anyio
 import logging
 import json
 from typing import Dict, List, Any, Optional
@@ -454,7 +454,7 @@ class TestQueryEngineQuery:
         query_engine._detect_query_type = Mock(return_value="entity_search")
         
         async def delayed_process(*args, **kwargs):
-            await asyncio.sleep(delay_seconds)
+            await anyio.sleep(delay_seconds)
             return [sample_query_result]
         
         query_engine._process_entity_query = delayed_process
@@ -481,7 +481,7 @@ class TestQueryEngineQuery:
         query_engine._detect_query_type = Mock(return_value="entity_search")
         
         async def delayed_process(*args, **kwargs):
-            await asyncio.sleep(delay_seconds)
+            await anyio.sleep(delay_seconds)
             return [sample_query_result]
         
         query_engine._process_entity_query = delayed_process
@@ -508,7 +508,7 @@ class TestQueryEngineQuery:
         query_engine._detect_query_type = Mock(return_value="entity_search")
         
         async def delayed_process(*args, **kwargs):
-            await asyncio.sleep(delay_seconds)
+            await anyio.sleep(delay_seconds)
             return [sample_query_result]
         
         query_engine._process_entity_query = delayed_process
@@ -994,7 +994,7 @@ class TestQueryMetadataCompleteness:
 # Integration Tests for QueryEngine.query method
 
 import pytest
-import asyncio
+import anyio
 import time
 from typing import Dict, List, Any, Optional
 from unittest.mock import AsyncMock, patch
@@ -1786,7 +1786,7 @@ class TestQueryEngineIntegration:
             - Performance benefits from concurrent processing
         """
         try:
-            import asyncio
+            import anyio
             
             # GIVEN - Multiple concurrent queries
             queries = [
@@ -1955,7 +1955,7 @@ class TestQueryEngineIntegration:
             except TimeoutError:
                 # If TimeoutError is implemented and raised, that's correct behavior
                 assert True, "TimeoutError correctly raised for complex query"
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # asyncio timeout is also acceptable
                 assert True, "AsyncIO TimeoutError correctly raised for complex query"
             except Exception as e:

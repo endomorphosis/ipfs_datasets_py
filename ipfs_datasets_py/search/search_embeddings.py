@@ -7,7 +7,7 @@ import os
 import json
 import pandas as pd
 import subprocess
-import asyncio
+import anyio
 import hashlib
 import random
 from multiprocessing import Pool
@@ -420,5 +420,5 @@ if __name__ == "__main__":
         ]
     }
     search_embeddings_instance = search_embeddings(resources, metadata)
-    asyncio.run(search_embeddings_instance.test())
+    anyio.run(search_embeddings_instance.test())
     print("Search embeddings test completed")

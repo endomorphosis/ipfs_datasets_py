@@ -8,7 +8,7 @@ import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import json
-import asyncio
+import anyio
 
 try:
     import requests
@@ -427,7 +427,7 @@ async def scrape_us_code(
                 sections_count += len(title_data["sections"])
             
             # Rate limiting between titles
-            await asyncio.sleep(rate_limit_delay)
+            await anyio.sleep(rate_limit_delay)
         
         elapsed_time = time.time() - start_time
         

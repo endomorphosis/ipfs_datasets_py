@@ -4,7 +4,7 @@ Minimal test to validate the migration integration.
 """
 
 import sys
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add project root to path
@@ -110,4 +110,4 @@ async def main():
     print("\n✨ Tests completed!")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

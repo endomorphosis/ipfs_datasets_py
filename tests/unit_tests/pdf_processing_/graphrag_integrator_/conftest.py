@@ -19,7 +19,7 @@ except ImportError as e:
     raise AssertionError(f"Could not import the module's dependencies: {e}") from e
 
 from enum import StrEnum
-import asyncio
+import anyio
 import os
 import random
 from typing import Callable, Optional

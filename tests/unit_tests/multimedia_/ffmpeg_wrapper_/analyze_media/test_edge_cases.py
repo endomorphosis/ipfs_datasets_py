@@ -11,7 +11,7 @@ Terminology:
 - media_with_unusual_characteristics: Media content with non-standard technical properties
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

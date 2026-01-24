@@ -13,7 +13,7 @@ Usage:
 """
 
 import argparse
-import asyncio
+import anyio
 import json
 import logging
 import os
@@ -294,7 +294,7 @@ class MCPDashboardTestRunner:
             except:
                 pass
             
-            await asyncio.sleep(2)
+            await anyio.sleep(2)
         
         logger.warning("Services health check timed out")
     
@@ -547,7 +547,7 @@ Examples:
         print("Screenshots saved in: test_outputs/screenshots/")
     
     # Run the async function
-    asyncio.run(run())
+    anyio.run(run())
 
 
 if __name__ == "__main__":

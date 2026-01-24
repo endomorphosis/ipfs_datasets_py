@@ -5,7 +5,7 @@
 
 import pytest
 import os
-import asyncio
+import anyio
 import json
 import networkx as nx
 from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship

@@ -2,7 +2,7 @@
 """
 Debug the TestRunner implementation
 """
-import asyncio
+import anyio
 import sys
 import traceback
 from pathlib import Path
@@ -49,7 +49,7 @@ if __name__ == "__main__":
             print(f"Result has keys: {result.keys() if isinstance(result, dict) else None}")
             return result
         
-        result = asyncio.run(test_execute())
+        result = anyio.run(test_execute())
         print("\nExecution successful!")
         
         # Test the wrapper function

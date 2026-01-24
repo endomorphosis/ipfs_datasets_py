@@ -9,7 +9,7 @@ during deployment and runtime monitoring.
 import os
 import sys
 import json
-import asyncio
+import anyio
 import aiohttp
 import asyncpg
 import redis.asyncio as redis
@@ -262,7 +262,8 @@ class GraphRAGHealthChecker:
         ipfs_url = os.getenv("IPFS_API_URL", "http://localhost:5001")
         
         # Run all health checks concurrently
-        health_checks = await asyncio.gather(
+        health_checks = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(
             self.check_database(db_url),
             self.check_redis(redis_url),
             self.check_api_service(api_url),
@@ -309,7 +310,7 @@ def main():
     """Main entry point."""
     checker = GraphRAGHealthChecker()
     
-    result = asyncio.run(checker.run_comprehensive_health_check())
+    result = anyio.run(checker.run_comprehensive_health_check())
     
     # Display summary
     print(f"\n🎯 Health Check Summary")

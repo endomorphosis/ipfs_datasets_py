@@ -29,7 +29,7 @@ import csv
 import os
 import tempfile
 import time
-import asyncio
+import anyio
 import threading
 import multiprocessing
 from pathlib import Path

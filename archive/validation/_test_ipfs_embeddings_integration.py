@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 import json
 from unittest.mock import patch, AsyncMock
 import pytest

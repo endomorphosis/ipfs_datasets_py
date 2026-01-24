@@ -3,7 +3,7 @@
 Robust integration test to validate core functionality after VS Code reload.
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -155,7 +155,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        result = asyncio.run(main())
+        result = anyio.run(main())
         sys.exit(0 if result else 1)
     except Exception as e:
         print(f"❌ Test execution failed: {e}")

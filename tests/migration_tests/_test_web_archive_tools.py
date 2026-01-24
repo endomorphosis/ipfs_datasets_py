@@ -9,7 +9,7 @@ import sys
 import json
 import unittest
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -58,7 +58,7 @@ class WebArchiveToolsTest(unittest.TestCase):
     
     def run_async_test(self, async_test_func, *args, **kwargs):
         """Helper to run async test methods in unittest."""
-        return asyncio.run(async_test_func(self, *args, **kwargs))
+        return anyio.run(async_test_func(self, *args, **kwargs))
 
     # Sync wrapper methods for unittest  
     @pytest.mark.skip(reason="Async test method - use pytest directly")

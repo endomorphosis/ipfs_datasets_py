@@ -4,7 +4,7 @@ Minimal integration test without external dependencies.
 """
 
 import sys
-import asyncio
+import anyio
 import os
 from pathlib import Path
 
@@ -150,7 +150,7 @@ def main():
     for test_name, test_func in tests:
         try:
             if test_name == "Basic Functionality":
-                result = asyncio.run(test_basic_functionality())
+                result = anyio.run(test_basic_functionality())
             else:
                 result = test_func()
             results.append((test_name, result))

@@ -11,7 +11,7 @@ Terminology:
 - supported_image_format: An image format extension supported by FFmpeg (e.g., 'jpg', 'png', 'webp')
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

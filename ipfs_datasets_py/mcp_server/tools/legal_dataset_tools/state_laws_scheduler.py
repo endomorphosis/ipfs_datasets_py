@@ -3,7 +3,7 @@
 This module provides functionality to schedule periodic updates for state law datasets,
 enabling automated scraping and incremental updates via cron jobs or continuous scheduling.
 """
-import asyncio
+import anyio
 import json
 import logging
 import os
@@ -230,7 +230,7 @@ class StateLawsUpdateScheduler:
             except Exception as e:
                 logger.error(f"Scheduler loop error: {e}")
             
-            await asyncio.sleep(check_interval_seconds)
+            await anyio.sleep(check_interval_seconds)
 
 
 async def create_schedule(

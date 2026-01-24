@@ -5,7 +5,7 @@ Migrated from ipfs_embeddings_py project.
 """
 
 import logging
-import asyncio
+import anyio
 import uuid
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime, timedelta
@@ -205,7 +205,7 @@ async def batch_process_datasets(
             logger.info(f"Processing batch {batch_num + 1}/{len(batches)}")
             
             # Create semaphore for parallel processing
-            semaphore = asyncio.Semaphore(parallel_workers)
+            semaphore = anyio.Semaphore(parallel_workers)
             
             async def process_dataset(dataset_config):
                 async with semaphore:
@@ -379,7 +379,7 @@ async def _execute_embedding_step(params: Dict[str, Any], context: Dict[str, Any
         model = params.get("model", "sentence-transformers/all-MiniLM-L6-v2")
         
         # Simulate processing
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         embeddings = {
             "model": model,
@@ -404,7 +404,7 @@ async def _execute_dataset_step(params: Dict[str, Any], context: Dict[str, Any])
         operation = params.get("operation", "load")
         
         # Mock dataset processing
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         result = {
             "operation": operation,
@@ -429,7 +429,7 @@ async def _execute_vector_step(params: Dict[str, Any], context: Dict[str, Any]) 
         dimension = params.get("dimension", 384)
         
         # Mock vector indexing
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         result = {
             "index_type": index_type,
@@ -454,7 +454,7 @@ async def _execute_ipfs_step(params: Dict[str, Any], context: Dict[str, Any]) ->
         content_hash = params.get("content_hash") or context.get("content_hash")
         
         # Mock IPFS operation
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         result = {
             "operation": operation,
@@ -503,7 +503,7 @@ async def _execute_parallel_step(params: Dict[str, Any], context: Dict[str, Any]
         max_workers = params.get("max_workers", 3)
         
         # Execute sub-steps in parallel
-        semaphore = asyncio.Semaphore(max_workers)
+        semaphore = anyio.Semaphore(max_workers)
         
         async def execute_sub_step(sub_step):
             async with semaphore:
@@ -535,7 +535,7 @@ async def _execute_generic_step(step_type: str, params: Dict[str, Any], context:
     """Execute a generic workflow step."""
     try:
         # Mock generic step execution
-        await asyncio.sleep(0.05)
+        await anyio.sleep(0.05)
         
         return {
             "success": True,
@@ -557,7 +557,7 @@ async def _process_single_dataset(dataset_config: Dict[str, Any], pipeline: List
         # Mock dataset processing through pipeline
         results = {}
         for step in pipeline:
-            await asyncio.sleep(0.02)  # Simulate processing time
+            await anyio.sleep(0.02)  # Simulate processing time
             results[step] = f"Completed {step} for dataset {dataset_id}"
             
         return {

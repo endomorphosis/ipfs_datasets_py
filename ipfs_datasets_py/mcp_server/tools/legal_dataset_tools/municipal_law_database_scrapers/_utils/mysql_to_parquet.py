@@ -1,5 +1,5 @@
 # !/usr/bin/env python3
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path
@@ -1007,4 +1007,4 @@ async def main() -> int:
         return 1
 
 if __name__ == "__main__":
-    sys.exit(asyncio.run(main()))
+    sys.exit(anyio.run(main()))

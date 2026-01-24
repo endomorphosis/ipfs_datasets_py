@@ -1,7 +1,7 @@
 # ipfs_datasets_py/mcp_server/tools/ipfs_cluster_tools/enhanced_ipfs_cluster_tools.py
 
 import logging
-import asyncio
+import anyio
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime, timedelta
 from ...validators import validator, ValidationError

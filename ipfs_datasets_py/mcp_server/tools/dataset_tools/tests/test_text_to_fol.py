@@ -2,7 +2,7 @@
 """
 Tests for the text to First-Order Logic conversion tool.
 """
-import asyncio
+import anyio
 import pytest
 from typing import Dict, Any
 
@@ -40,7 +40,7 @@ def test_text_to_fol_basic():
             # Should contain existential quantifier or appropriate structure
             assert any(symbol in formula2["fol_formula"] for symbol in ["∃", "∀"])
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 def test_text_to_fol_complex():
     """Test complex text to FOL conversion scenarios."""
@@ -78,7 +78,7 @@ def test_text_to_fol_complex():
         assert "successful_conversions" in summary
         assert "conversion_rate" in summary
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 def test_text_to_fol_output_formats():
     """Test different output formats for FOL conversion."""
@@ -108,7 +108,7 @@ def test_text_to_fol_output_formats():
             formula = result_tptp["fol_formulas"][0]
             assert "tptp_form" in formula
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 def test_text_to_fol_error_handling():
     """Test error handling in text to FOL conversion."""
@@ -134,7 +134,7 @@ def test_text_to_fol_error_handling():
             # Expected to fail due to type checking
             pass
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 def test_text_to_fol_confidence_scoring():
     """Test confidence scoring mechanism."""
@@ -165,7 +165,7 @@ def test_text_to_fol_confidence_scoring():
                 assert 0 <= high_conf <= 1
                 assert 0 <= low_conf <= 1
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 def test_text_to_fol_predicate_extraction():
     """Test predicate extraction and analysis."""
@@ -190,7 +190,7 @@ def test_text_to_fol_predicate_extraction():
             quantifiers = formula["quantifiers"]
             assert isinstance(quantifiers, list)
 
-    asyncio.run(run_test())
+    anyio.run(run_test())
 
 if __name__ == "__main__":
     print("Running text to FOL conversion tests...")

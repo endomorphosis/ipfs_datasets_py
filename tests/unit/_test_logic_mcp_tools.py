@@ -6,7 +6,7 @@ This test suite verifies that both the core logic functions and their MCP server
 tool interfaces work correctly and are properly exposed for AI assistant use.
 """
 
-import asyncio
+import anyio
 import sys
 import json
 import traceback
@@ -390,5 +390,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)

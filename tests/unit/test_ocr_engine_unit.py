@@ -4,7 +4,7 @@ Unit tests for OCR Engine component of PDF processing pipeline
 Tests OCR functionality for image extraction, text recognition,
 and integrated processing with PDF documents.
 """
-import asyncio
+import anyio
 import pytest
 import sys
 import os

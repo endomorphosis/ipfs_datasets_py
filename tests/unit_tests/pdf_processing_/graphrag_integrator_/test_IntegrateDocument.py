@@ -4,7 +4,7 @@
 # Auto-generated on 2025-07-07 02:28:56
 import pytest
 import os
-import asyncio
+import anyio
 import re
 import time
 import networkx as nx

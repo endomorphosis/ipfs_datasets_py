@@ -5,7 +5,7 @@ Simple MCP Tools Test Suite
 This script tests that all MCP tools can be imported and called successfully,
 focusing on functionality rather than mocking specific dependencies.
 """
-import asyncio
+import anyio
 import os
 import sys
 import json
@@ -83,7 +83,7 @@ class SimpleMCPToolsTest(unittest.TestCase):
             result = func(*args, **kwargs)
             # If it's a coroutine, run it with asyncio
             if hasattr(result, '__await__'):
-                return asyncio.run(result)
+                return anyio.run(result)
             else:
                 return result
         except Exception as e:

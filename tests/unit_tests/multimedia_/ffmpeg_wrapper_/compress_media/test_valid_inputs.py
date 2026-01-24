@@ -11,7 +11,7 @@ Terminology:
 - valid_quality_level: A quality preference specification ('low', 'medium', 'high', 'lossless')
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

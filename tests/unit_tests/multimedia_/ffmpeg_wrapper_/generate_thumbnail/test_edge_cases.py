@@ -11,7 +11,7 @@ Terminology:
 - video_without_visual_content: A video file containing only audio streams
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

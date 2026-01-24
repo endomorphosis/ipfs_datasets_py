@@ -5,7 +5,7 @@
 
 import os
 import time
-import asyncio
+import anyio
 from datetime import datetime
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
@@ -60,7 +60,7 @@ assert ChunkOptimizer.optimize_chunk_boundaries
 
 # 4. Check if the modules's imports are accessible:
 try:
-    import asyncio
+    import anyio
     import logging
     from typing import Dict, List, Any, Optional
     from dataclasses import dataclass

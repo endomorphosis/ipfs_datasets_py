@@ -25,7 +25,7 @@ are not tested as they cannot be confirmed through external observation.
 """
 
 import pytest
-import asyncio
+import anyio
 import time
 from unittest.mock import Mock, patch, MagicMock
 
@@ -124,7 +124,7 @@ class TestNonBlockingPerformance:
         
         try:
             await task
-        except asyncio.CancelledError:
+        except anyio.get_cancelled_exc_class()():
             pass
         
         cancellation_time_ms = (time.time() - start_time) * 1000

@@ -13,7 +13,7 @@ Features:
 """
 
 import json
-import asyncio
+import anyio
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 from datetime import datetime
@@ -494,7 +494,7 @@ def test_generator(
 
         except RuntimeError:
             # No running loop, we can use asyncio.run
-            return asyncio.run(tool.execute(
+            return anyio.run(tool.execute(
                 name=name,
                 description=description,
                 test_specification=test_specification,

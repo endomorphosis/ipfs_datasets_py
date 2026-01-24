@@ -3,7 +3,7 @@ Enhanced Embedding Tools for MCP Server
 Provides comprehensive embedding generation and management capabilities
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import os

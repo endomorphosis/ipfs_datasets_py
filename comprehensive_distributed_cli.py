@@ -7,7 +7,7 @@ Integrates all package features for distributed AI agent capabilities
 import sys
 import os
 import json
-import asyncio
+import anyio
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -133,7 +133,7 @@ def execute_distributed_command(args):
     command = args[0]
     
     # Import heavy modules only when needed
-    import asyncio
+    import anyio
     from ipfs_datasets_py.dataset_manager import DatasetManager
     from ipfs_datasets_py.mcp_server import SimpleIPFSDatasetsMCPServer
     

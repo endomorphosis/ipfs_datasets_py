@@ -10,7 +10,7 @@ import os
 import sys
 import json
 import yaml
-import asyncio
+import anyio
 import subprocess
 import argparse
 from pathlib import Path
@@ -84,7 +84,7 @@ class GraphRAGInfrastructureManager:
             
             # Wait for services to be healthy
             print("⏳ Waiting for services to be healthy...")
-            await asyncio.sleep(30)  # Give services time to start
+            await anyio.sleep(30)  # Give services time to start
             
             # Initialize database if requested
             if options.get("init_db", False):
@@ -523,4 +523,4 @@ async def main():
             subprocess.run(cmd)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

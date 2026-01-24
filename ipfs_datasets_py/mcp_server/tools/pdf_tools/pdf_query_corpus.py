@@ -6,7 +6,7 @@ using advanced query capabilities including semantic search, entity queries,
 relationship traversal, and cross-document analysis.
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional, List, Union
 

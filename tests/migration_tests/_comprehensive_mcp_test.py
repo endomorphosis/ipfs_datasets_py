@@ -121,14 +121,14 @@ def test_vector_tools():
 
     # Test create_vector_index
     try:
-        import asyncio
+        import anyio
         from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index
 
         # Create test vectors
         vectors = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]]
         metadata = [{"text": "test1"}, {"text": "test2"}, {"text": "test3"}]
 
-        result = asyncio.run(create_vector_index(vectors, dimension=3, metadata=metadata, index_id="test_index"))
+        result = anyio.run(create_vector_index(vectors, dimension=3, metadata=metadata, index_id="test_index"))
 
         if result.get("status") == "success":
             print("✓ create_vector_index")
@@ -142,11 +142,11 @@ def test_vector_tools():
 
     # Test search_vector_index
     try:
-        import asyncio
+        import anyio
         from ipfs_datasets_py.mcp_server.tools.vector_tools.search_vector_index import search_vector_index
 
         query_vector = [1.0, 2.0, 3.0]
-        result = asyncio.run(search_vector_index("test_index", query_vector, top_k=5))
+        result = anyio.run(search_vector_index("test_index", query_vector, top_k=5))
 
         if result.get("status") == "success":
             print("✓ search_vector_index")
@@ -169,11 +169,11 @@ def test_graph_tools():
 
     # Test query_knowledge_graph
     try:
-        import asyncio
+        import anyio
         from ipfs_datasets_py.mcp_server.tools.graph_tools.query_knowledge_graph import query_knowledge_graph
 
         query = "SELECT ?s ?p ?o WHERE { ?s ?p ?o } LIMIT 10"
-        result = asyncio.run(query_knowledge_graph("test_graph", query))
+        result = anyio.run(query_knowledge_graph("test_graph", query))
 
         if result.get("status") == "success":
             print("✓ query_knowledge_graph")
@@ -203,7 +203,7 @@ def test_dataset_tools():
 
     for tool_name, args in tools_to_test:
         try:
-            import asyncio
+            import anyio
             # Try to import and test each tool
             module_path = f"ipfs_datasets_py.mcp_server.tools.dataset_tools.{tool_name}"
             module = __import__(module_path, fromlist=[tool_name])
@@ -211,7 +211,7 @@ def test_dataset_tools():
 
             # Check if it's an async function
             if asyncio.iscoroutinefunction(tool_func):
-                result = asyncio.run(tool_func(*args))
+                result = anyio.run(tool_func(*args))
             else:
                 result = tool_func(*args)
 
@@ -241,14 +241,14 @@ def test_ipfs_tools():
 
     for tool_name, args in tools_to_test:
         try:
-            import asyncio
+            import anyio
             module_path = f"ipfs_datasets_py.mcp_server.tools.ipfs_tools.{tool_name}"
             module = __import__(module_path, fromlist=[tool_name])
             tool_func = getattr(module, tool_name)
 
             # Check if it's an async function
             if asyncio.iscoroutinefunction(tool_func):
-                result = asyncio.run(tool_func(*args))
+                result = anyio.run(tool_func(*args))
             else:
                 result = tool_func(*args)
 
@@ -301,7 +301,7 @@ def test_other_tools():
 
         for tool_name, args in tools.items():
             try:
-                import asyncio
+                import anyio
                 module_path = f"ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}"
                 module = __import__(module_path, fromlist=[tool_name])
                 tool_func = getattr(module, tool_name)
@@ -310,9 +310,9 @@ def test_other_tools():
                 if asyncio.iscoroutinefunction(tool_func):
                     # Handle dict args differently from list args
                     if isinstance(args, dict):
-                        result = asyncio.run(tool_func(**args))
+                        result = anyio.run(tool_func(**args))
                     else:
-                        result = asyncio.run(tool_func(*args))
+                        result = anyio.run(tool_func(*args))
                 else:
                     # Handle dict args differently from list args
                     if isinstance(args, dict):

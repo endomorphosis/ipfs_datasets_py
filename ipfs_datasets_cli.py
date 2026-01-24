@@ -221,7 +221,7 @@ def execute_heavy_command(args):
     """Execute commands that require heavy imports - only import when needed."""
     # Only import heavy modules when actually executing commands
     try:
-        import asyncio
+        import anyio
         import json
         import importlib
         from typing import Any, Dict, List
@@ -2167,7 +2167,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         else:
                             i += 1
                     
-                    result = asyncio.run(initialize_p2p_scheduler(peer_id=peer_id, peers=peers))
+                    result = anyio.run(initialize_p2p_scheduler(peer_id=peer_id, peers=peers))
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2216,7 +2216,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         print("Tags: p2p_eligible, p2p_only, code_gen, web_scrape, data_processing")
                         return
                     
-                    result = asyncio.run(schedule_p2p_workflow(
+                    result = anyio.run(schedule_p2p_workflow(
                         workflow_id=workflow_id,
                         name=name,
                         tags=tags,
@@ -2239,7 +2239,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 
                 elif subcommand == "next":
                     # Get next workflow from queue
-                    result = asyncio.run(get_next_p2p_workflow())
+                    result = anyio.run(get_next_p2p_workflow())
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2260,7 +2260,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 
                 elif subcommand == "status":
                     # Get scheduler status
-                    result = asyncio.run(get_p2p_scheduler_status())
+                    result = anyio.run(get_p2p_scheduler_status())
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2289,7 +2289,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         print("Usage: ipfs-datasets p2p add-peer <peer-id>")
                         return
                     
-                    result = asyncio.run(add_p2p_peer(peer_id))
+                    result = anyio.run(add_p2p_peer(peer_id))
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2310,7 +2310,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                         print("Usage: ipfs-datasets p2p remove-peer <peer-id>")
                         return
                     
-                    result = asyncio.run(remove_p2p_peer(peer_id))
+                    result = anyio.run(remove_p2p_peer(peer_id))
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2324,7 +2324,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 
                 elif subcommand == "tags":
                     # List workflow tags
-                    result = asyncio.run(get_workflow_tags())
+                    result = anyio.run(get_workflow_tags())
                     
                     if json_output:
                         print(json.dumps(result, indent=2))
@@ -2341,7 +2341,7 @@ For detailed help: ipfs-datasets finance <subcommand> --help
                 
                 elif subcommand == "assigned":
                     # Get assigned workflows
-                    result = asyncio.run(get_assigned_workflows())
+                    result = anyio.run(get_assigned_workflows())
                     
                     if json_output:
                         print(json.dumps(result, indent=2))

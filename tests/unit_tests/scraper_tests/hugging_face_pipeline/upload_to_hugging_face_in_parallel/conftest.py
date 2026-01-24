@@ -2,7 +2,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock, call
 import sys
-import asyncio
+import anyio
 
 
 class FixtureError(Exception):

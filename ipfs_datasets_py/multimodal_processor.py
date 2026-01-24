@@ -15,7 +15,7 @@ Processing Capabilities:
 import os
 import re
 import json
-import asyncio
+import anyio
 import logging
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
@@ -696,7 +696,7 @@ class MultiModalContentProcessor:
 
 # Example usage and testing
 if __name__ == "__main__":
-    import asyncio
+    import anyio
     from ipfs_datasets_py.content_discovery import ContentAsset, ContentManifest
     
     async def test_processing():
@@ -748,4 +748,4 @@ if __name__ == "__main__":
             print(f"Preview: {item.text_content[:100]}...")
     
     # Run test
-    asyncio.run(test_processing())
+    anyio.run(test_processing())

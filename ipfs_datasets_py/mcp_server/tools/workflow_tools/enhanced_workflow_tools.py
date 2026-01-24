@@ -4,7 +4,7 @@ Enhanced workflow orchestration and pipeline management tools.
 Migrated and enhanced from ipfs_embeddings_py project with production features.
 """
 
-import asyncio
+import anyio
 import json
 import uuid
 import logging
@@ -114,7 +114,7 @@ class MockWorkflowService:
         workflow.started_at = datetime.now()
         
         # Mock execution
-        await asyncio.sleep(0.1)  # Simulate processing time
+        await anyio.sleep(0.1)  # Simulate processing time
         
         # Mock successful execution
         for step in workflow.steps:
@@ -380,7 +380,7 @@ class EnhancedBatchProcessingTool(EnhancedBaseMCPTool):
         total_items = 5000  # Mock data
         
         # Simulate processing time
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         
         return {
             "operation_type": operation_type,
@@ -476,7 +476,7 @@ class EnhancedDataPipelineTool(EnhancedBaseMCPTool):
         load_config = pipeline_config["load"]
         
         # Mock pipeline execution
-        await asyncio.sleep(0.3)
+        await anyio.sleep(0.3)
         
         # Extract phase
         extracted_records = 10000

@@ -8,7 +8,7 @@ This test:
 5. Validates the response format
 """
 
-import asyncio
+import anyio
 import subprocess
 import time
 import sys
@@ -167,5 +167,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
+    success = anyio.run(main())
     sys.exit(0 if success else 1)

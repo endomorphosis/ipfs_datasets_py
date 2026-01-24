@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # File Path: ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py
 # Auto-generated on 2025-07-07 02:28:56"
-import asyncio
+import anyio
 from unittest.mock import MagicMock
 
 

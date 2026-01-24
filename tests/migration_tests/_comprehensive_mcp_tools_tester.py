@@ -12,7 +12,7 @@ This script will:
 
 import sys
 import os
-import asyncio
+import anyio
 import importlib
 import inspect
 import json
@@ -259,7 +259,7 @@ Generated tests for MCP tools.
 This file contains automatically generated tests for all MCP tools.
 """
 
-import asyncio
+import anyio
 import unittest
 from unittest.mock import patch, MagicMock, AsyncMock
 import sys
@@ -392,4 +392,4 @@ async def main():
     print(f"   Success Rate: {(summary['execution_success']/summary['total_tools']*100):.1f}%")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

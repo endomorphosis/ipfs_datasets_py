@@ -5,7 +5,7 @@ Executes predefined workflows and automation sequences.
 Supports complex multi-step data processing and orchestration tasks.
 """
 
-import asyncio
+import anyio
 import json
 import uuid
 from datetime import datetime, timedelta
@@ -162,7 +162,7 @@ async def execute_workflow(
             step_start = datetime.now()
             
             # Simulate step execution
-            await asyncio.sleep(0.1)  # Simulate processing time
+            await anyio.sleep(0.1)  # Simulate processing time
             
             step_duration = (datetime.now() - step_start).total_seconds()
             

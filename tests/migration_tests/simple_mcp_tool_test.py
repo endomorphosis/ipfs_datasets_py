@@ -9,7 +9,7 @@ import os
 import sys
 import importlib
 import traceback
-import asyncio
+import anyio
 from pathlib import Path
 
 # Import the configuration loading function
@@ -181,4 +181,4 @@ async def main():
     print(f"Success rate: {passed/total_tools*100:.1f}%" if total_tools > 0 else "0%")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

@@ -7,7 +7,7 @@ This module provides browser automation tests for the MCP server dashboard,
 covering all features including tool discovery, execution, and UI interaction.
 """
 
-import asyncio
+import anyio
 import json
 import os
 import sys
@@ -649,7 +649,7 @@ def main():
             print("\n✅ All tests passed!")
     
     try:
-        asyncio.run(run_tests())
+        anyio.run(run_tests())
     except KeyboardInterrupt:
         print("\nTests interrupted by user")
     except Exception as e:

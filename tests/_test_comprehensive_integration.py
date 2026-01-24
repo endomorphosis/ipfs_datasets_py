@@ -4,7 +4,7 @@ Test suite for comprehensive_integration functionality with GIVEN WHEN THEN form
 """
 
 import pytest
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch, MagicMock

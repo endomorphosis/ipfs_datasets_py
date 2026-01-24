@@ -4,7 +4,7 @@ Unit tests for PDFProcessor component of GraphRAG PDF processing pipeline
 Tests individual components and methods of PDFProcessor in isolation,
 focusing on core functionality, error handling, and component interaction.
 """
-import asyncio
+import anyio
 import pytest
 import tempfile
 import os

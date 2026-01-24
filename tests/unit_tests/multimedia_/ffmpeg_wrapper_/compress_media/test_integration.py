@@ -10,7 +10,7 @@ Terminology:
 - compression_efficiency_verification: Testing that compression achieves expected size and quality ratios
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 

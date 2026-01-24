@@ -10,7 +10,7 @@ Terminology:
 - image_quality_verification: Testing that generated thumbnails have expected visual characteristics
 """
 import pytest
-import asyncio
+import anyio
 from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
@@ -116,7 +116,7 @@ class TestFFmpegWrapperGenerateThumbnailIntegration:
         
         try:
             # Simulate concurrent thumbnail generation
-            import asyncio
+            import anyio
             tasks = [
                 wrapper.generate_thumbnail("video1.mp4", "thumb1.jpg"),
                 wrapper.generate_thumbnail("video2.mp4", "thumb2.jpg"),

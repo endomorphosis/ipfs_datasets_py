@@ -3,7 +3,7 @@
 # Test to verify that FOL and Deontic Logic tools are properly discoverable by the MCP server.
 # """
 
-# import asyncio
+# import anyio
 # import sys
 # from pathlib import Path
 
@@ -170,5 +170,5 @@
 #         return 1
 
 # if __name__ == "__main__":
-#     exit_code = asyncio.run(main())
+#     exit_code = anyio.run(main())
 #     sys.exit(exit_code)

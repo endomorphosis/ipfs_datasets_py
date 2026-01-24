@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, asdict
 import logging
-import asyncio
+import anyio
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -904,7 +904,7 @@ def run_comprehensive_tests(path: str = ".",
 
         except RuntimeError:
             # No running loop, we can use asyncio.run
-            return asyncio.run(test_runner.execute())
+            return anyio.run(test_runner.execute())
     except Exception as e:
         # Fallback to error result if execution fails
         return {

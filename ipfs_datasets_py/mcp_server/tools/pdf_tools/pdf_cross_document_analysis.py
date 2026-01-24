@@ -6,7 +6,7 @@ a corpus of PDF documents with entity linking, thematic analysis,
 and knowledge graph discovery.
 """
 
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional, List, Union
 

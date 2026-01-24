@@ -6,7 +6,7 @@ production-ready embedding generation capabilities.
 """
 
 from typing import List, Dict, Any, Optional, Union
-import asyncio
+import anyio
 import os
 import json
 import logging

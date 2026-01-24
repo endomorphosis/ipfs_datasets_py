@@ -6,7 +6,7 @@ GUI Screenshot Testing Script
 Takes screenshots of the News Analysis Dashboard GUI to identify bugs and improvement opportunities.
 """
 import sys
-import asyncio
+import anyio
 import time
 import threading
 from pathlib import Path

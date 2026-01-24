@@ -9,7 +9,7 @@ generating temporal deontic logic theorems for the medicine dashboard.
 
 import logging
 from typing import Dict, List, Optional, Any
-import asyncio
+import anyio
 
 try:
     from ..medical_research_scrapers.pubmed_scraper import PubMedScraper

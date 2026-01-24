@@ -5,7 +5,7 @@ YT-DLP download tool for the MCP server.
 This tool provides comprehensive video and audio downloading capabilities from
 various platforms using yt-dlp, supporting single videos, playlists, and batch operations.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -435,7 +435,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_result = asyncio.run(ytdlp_extract_info(
+    test_result = anyio.run(ytdlp_extract_info(
         url="https://www.youtube.com/watch?v=dQw4w9WgXcQ",
         download=False
     ))

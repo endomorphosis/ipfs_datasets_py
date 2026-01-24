@@ -6,7 +6,7 @@ Test script for geospatial MCP tools and dashboard integration.
 This script tests the new geospatial analysis tools and the Maps tab functionality.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime, timedelta
@@ -267,4 +267,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

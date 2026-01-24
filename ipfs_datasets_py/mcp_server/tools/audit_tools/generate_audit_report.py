@@ -4,7 +4,7 @@ MCP tool for generating audit reports.
 
 This tool handles generating reports based on audit logs.
 """
-import asyncio
+import anyio
 import datetime
 from typing import Dict, Any, Optional, Union, List
 

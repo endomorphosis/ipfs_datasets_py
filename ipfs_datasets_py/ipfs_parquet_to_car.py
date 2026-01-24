@@ -1,7 +1,7 @@
 import subprocess
 import json
 import os
-import asyncio
+import anyio
 import multiprocessing
 import time
 from multiprocessing import Pool
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     ipfs_parquet_to_car = ipfs_parquet_to_car_py(resources, metadata)
     ipfs_parquet_to_car.install()
     ipfs_parquet_to_car.test()
-    asyncio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
+    anyio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
 
 ipfs_parquet_to_car_py = ipfs_parquet_to_car_py
 ipfs_parquet_to_car = ipfs_parquet_to_car_py
@@ -103,5 +103,5 @@ if __name__ == "__main__":
     ipfs_parquet_to_car = ipfs_parquet_to_car_py(resources, metadata)
     ipfs_parquet_to_car.install()
     ipfs_parquet_to_car.test()
-    asyncio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
+    anyio.run(ipfs_parquet_to_car.run("/mnt/data/parquet", "/mnt/data/car"))
 

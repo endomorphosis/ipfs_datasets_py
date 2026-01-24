@@ -19,7 +19,7 @@ Features demonstrated:
 
 import sys
 import os
-import asyncio
+import anyio
 import tempfile
 import json
 from datetime import datetime
@@ -463,7 +463,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        anyio.run(main())
         print(f"\n🌟 Demo completed successfully!")
         sys.exit(0)
     except KeyboardInterrupt:

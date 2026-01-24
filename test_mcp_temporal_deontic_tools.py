@@ -8,7 +8,7 @@ for the temporal deontic logic RAG system. It tests the MCP tools directly
 and via JSON-RPC endpoints.
 """
 
-import asyncio
+import anyio
 import json
 import requests
 import sys
@@ -234,4 +234,4 @@ async def main():
         print("\n❌ Some tests failed - check the error messages above.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

@@ -5,7 +5,7 @@ This test suite covers integration between the multimedia library,
 MCP server tools, and the overall media processing pipeline.
 """
 
-import asyncio
+import anyio
 import pytest
 import tempfile
 import unittest.mock
@@ -243,7 +243,7 @@ class TestPerformanceIntegration:
             mock_instance = MagicMock()
             
             async def mock_download_delay(*args, **kwargs):
-                await asyncio.sleep(0.1)  # Simulate download time
+                await anyio.sleep(0.1)  # Simulate download time
                 return {"status": "success", "video_info": {"title": "Test"}}
             
             mock_instance.download_video.side_effect = mock_download_delay
@@ -257,7 +257,8 @@ class TestPerformanceIntegration:
                 for url in urls
             ]
             
-            results = await asyncio.gather(*tasks)
+            results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks)
             
             # All should complete successfully
             for result in results:

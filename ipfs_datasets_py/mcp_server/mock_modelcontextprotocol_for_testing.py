@@ -9,7 +9,7 @@ DO NOT USE THIS IN PRODUCTION - IT'S A TESTING MOCK ONLY
 """
 
 from typing import Any, Dict, List, Optional, Union, Callable
-import asyncio
+import anyio
 import logging
 
 logger = logging.getLogger(__name__)

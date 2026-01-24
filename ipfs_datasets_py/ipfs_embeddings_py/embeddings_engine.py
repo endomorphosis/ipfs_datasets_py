@@ -7,7 +7,7 @@ import os
 import sys
 import json
 import random
-import asyncio
+import anyio
 import logging
 import time
 import numpy as np

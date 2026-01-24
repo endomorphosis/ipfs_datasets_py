@@ -18,7 +18,7 @@ def test_imports():
     try:
         print("  ✓ Testing basic Python imports...")
         import json
-        import asyncio
+        import anyio
         print("  ✓ Basic imports successful")
 
         print("  ✓ Testing project imports...")

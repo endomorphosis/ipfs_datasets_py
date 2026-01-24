@@ -14,7 +14,7 @@ import logging
 import os
 import time
 import hashlib
-import asyncio
+import anyio
 import base64
 from dataclasses import dataclass, field
 from pathlib import Path

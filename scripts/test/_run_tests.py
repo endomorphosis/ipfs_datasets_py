@@ -2,7 +2,7 @@ from itertools import batched
 from concurrent.futures import ThreadPoolExecutor
 from tests._test_utils import get_ast_tree, BadDocumentationError
 
-import asyncio
+import anyio
 from pathlib import Path
 import importlib
 import importlib.util as importlib_util
@@ -96,7 +96,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        anyio.run(main())
     except KeyboardInterrupt:
         print("\nProcess interrupted by user.")
         exit(0)

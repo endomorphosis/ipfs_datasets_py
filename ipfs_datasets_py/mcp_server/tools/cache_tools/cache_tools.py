@@ -5,7 +5,7 @@ Migrated from ipfs_embeddings_py project.
 """
 
 import logging
-import asyncio
+import anyio
 import hashlib
 import json
 from typing import Dict, Any, List, Optional, Union

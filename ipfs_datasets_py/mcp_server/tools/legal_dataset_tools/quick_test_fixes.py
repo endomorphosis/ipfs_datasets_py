@@ -3,7 +3,7 @@
 Quick test of scraper fixes for the 7 failing states.
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -91,5 +91,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    successful, total = asyncio.run(main())
+    successful, total = anyio.run(main())
     sys.exit(0 if successful == total else 1)

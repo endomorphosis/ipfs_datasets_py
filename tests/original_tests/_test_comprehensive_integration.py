@@ -6,7 +6,7 @@ This test suite covers all new tools and features added during the ipfs_embeddin
 """
 
 import pytest
-import asyncio
+import anyio
 import tempfile
 import numpy as np
 from unittest.mock import Mock, AsyncMock, patch, MagicMock

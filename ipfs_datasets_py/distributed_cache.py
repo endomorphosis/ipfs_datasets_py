@@ -11,7 +11,7 @@ Key features:
 - Automatic peer discovery and synchronization
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import time

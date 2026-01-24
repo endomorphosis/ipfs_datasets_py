@@ -4,7 +4,7 @@ Simple DatasetManager implementation for MCP tools.
 This provides a basic DatasetManager class that the MCP tools can use
 for dataset operations.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union
 from datasets import Dataset, load_dataset
 
@@ -51,7 +51,7 @@ class ManagedDataset:
     async def save_async(self, destination: str, format: Optional[str] = None, **options) -> Dict[str, Any]:
         """Save the dataset asynchronously."""
         # Simulate async save operation
-        await asyncio.sleep(0.01)
+        await anyio.sleep(0.01)
 
         actual_format = format or self.format
 

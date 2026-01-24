@@ -8,7 +8,7 @@ with all components working together.
 
 import sys
 import os
-import asyncio
+import anyio
 import tempfile
 from datetime import datetime
 
@@ -272,7 +272,7 @@ async def test_complete_advanced_graphrag():
 
 if __name__ == "__main__":
     # Run the test
-    success = asyncio.run(test_complete_advanced_graphrag())
+    success = anyio.run(test_complete_advanced_graphrag())
     
     if success:
         print(f"\n✅ All tests passed - Complete Advanced GraphRAG system is ready!")

@@ -11,7 +11,7 @@ Terminology:
 - unsupported_image_format: An image format extension not supported by FFmpeg
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

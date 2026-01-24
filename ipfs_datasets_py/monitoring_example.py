@@ -13,7 +13,7 @@ This example demonstrates the core functionality of the monitoring system includ
 import os
 import time
 import random
-import asyncio
+import anyio
 import tempfile
 from typing import Dict, List, Optional
 from pathlib import Path
@@ -122,7 +122,8 @@ class ExampleDataProcessor:
                     tasks.append(self._process_item_async(item, f"{chunk_id}_{j}"))
 
                 # Wait for all tasks to complete
-                results = await asyncio.gather(*tasks, return_exceptions=True)
+                results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks, return_exceptions=True)
 
                 # Count successful results
                 for result in results:
@@ -143,7 +144,7 @@ class ExampleDataProcessor:
         """Process a single item asynchronously."""
         try:
             # Simulate processing time
-            await asyncio.sleep(random.uniform(0.05, 0.2))
+            await anyio.sleep(random.uniform(0.05, 0.2))
 
             # Simulate occasional errors
             if random.random() < 0.1:
@@ -285,7 +286,7 @@ def monitoring_example():
 
         # Run async example
         logger.info("Starting async processing example")
-        asyncio.run(run_async_example())
+        anyio.run(run_async_example())
 
         # Generate report
         report = processor.generate_report()

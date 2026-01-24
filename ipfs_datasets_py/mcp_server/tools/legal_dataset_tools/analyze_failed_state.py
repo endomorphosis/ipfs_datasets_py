@@ -9,7 +9,7 @@ Usage:
 """
 
 import sys
-import asyncio
+import anyio
 import argparse
 from typing import Dict, Any
 import requests
@@ -166,7 +166,7 @@ async def analyze_all_failed_states():
     for state_code in FAILED_STATES:
         result = await analyze_state_scraper(state_code)
         results.append(result)
-        await asyncio.sleep(2)  # Rate limiting
+        await anyio.sleep(2)  # Rate limiting
     
     # Summary
     print("\n" + "="*80)
@@ -189,7 +189,7 @@ def main():
     args = parser.parse_args()
     
     if args.all:
-        asyncio.run(analyze_all_failed_states())
+        anyio.run(analyze_all_failed_states())
     elif args.state_code:
         state_code = args.state_code.upper()
         if state_code not in STATE_JURISDICTIONS:
@@ -197,7 +197,7 @@ def main():
             print(f"Valid codes: {', '.join(sorted(STATE_JURISDICTIONS.keys()))}")
             sys.exit(1)
         
-        asyncio.run(analyze_state_scraper(state_code))
+        anyio.run(analyze_state_scraper(state_code))
     else:
         print("Usage:")
         print("  python3 analyze_failed_state.py AL")

@@ -6,7 +6,7 @@ This example demonstrates:
 2. Setting up a client to interact with it
 3. Using the MCP tools to work with IPFS datasets
 """
-import asyncio
+import anyio
 from modelcontextprotocol.client import MCPClient
 
 
@@ -105,7 +105,7 @@ def main():
 
     try:
         # Run the client example
-        asyncio.run(example_mcp_client())
+        anyio.run(example_mcp_client())
     finally:
         # Stop the server
         print("\nStopping IPFS Datasets MCP server...")

@@ -57,7 +57,7 @@ assert ChunkOptimizer.optimize_chunk_boundaries
 
 # 4. Check if the modules's imports are accessible:
 try:
-    import asyncio
+    import anyio
     import logging
     from typing import Dict, List, Any, Optional
     from dataclasses import dataclass
@@ -85,7 +85,7 @@ def results_from_multiple_runs(
     ) -> list[LLMDocument]:
     results = []
     for _ in range(number_of_runs):
-        result = asyncio.run(
+        result = anyio.run(
             llm_optimizer_with_mocks.optimize_for_llm(
                 consistency_decomposed_content, 
                 consistency_document_metadata

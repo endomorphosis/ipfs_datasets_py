@@ -9,7 +9,7 @@ the improvements and capabilities without complex dependencies.
 import sys
 import os
 import time
-import asyncio
+import anyio
 from datetime import datetime
 
 # Add current directory to path

@@ -7,7 +7,7 @@ are working correctly after the migration.
 """
 
 import sys
-import asyncio
+import anyio
 import logging
 from pathlib import Path
 from typing import Dict, List, Any
@@ -289,4 +289,4 @@ async def main():
     return success
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

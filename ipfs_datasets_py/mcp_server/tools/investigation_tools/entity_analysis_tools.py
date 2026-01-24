@@ -7,7 +7,7 @@ Provides MCP tools for entity analysis and investigation workflows.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 from datetime import datetime

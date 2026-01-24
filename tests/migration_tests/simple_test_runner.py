@@ -7,7 +7,7 @@ This runs individual tests and reports results safely.
 
 import sys
 import os
-import asyncio
+import anyio
 import traceback
 from unittest.mock import patch, MagicMock, AsyncMock
 
@@ -23,7 +23,7 @@ def test_audit_tools():
         print("✅ Audit tools import successful")
 
         # Test record_audit_event
-        result = asyncio.run(record_audit_event(
+        result = anyio.run(record_audit_event(
             "test_event", "system", "info",
             details={"test": "data"}
         ))
@@ -34,7 +34,7 @@ def test_audit_tools():
             print("❌ record_audit_event failed:", result.get("message"))
 
         # Test generate_audit_report
-        result = asyncio.run(generate_audit_report(
+        result = anyio.run(generate_audit_report(
             start_date="2025-05-01",
             end_date="2025-05-24"
         ))
@@ -58,7 +58,7 @@ def test_cli_tools():
         print("✅ CLI tools import successful")
 
         # Test execute_command with a safe command
-        result = asyncio.run(execute_command("echo test", "/tmp"))
+        result = anyio.run(execute_command("echo test", "/tmp"))
 
         if result.get("status") == "success":
             print("✅ execute_command working")
@@ -79,7 +79,7 @@ def test_function_tools():
         print("✅ Function tools import successful")
 
         # Test execute_python_snippet
-        result = asyncio.run(execute_python_snippet("print('test'); result = 2 + 2"))
+        result = anyio.run(execute_python_snippet("print('test'); result = 2 + 2"))
 
         if result.get("status") == "success":
             print("✅ execute_python_snippet working")
@@ -100,7 +100,7 @@ def test_security_tools():
         print("✅ Security tools import successful")
 
         # Test check_access_permission
-        result = asyncio.run(check_access_permission(
+        result = anyio.run(check_access_permission(
             "resource123", "user456", "read"
         ))
 
@@ -125,7 +125,7 @@ def test_vector_tools():
 
         # Test create_vector_index
         test_vectors = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-        result = asyncio.run(create_vector_index(test_vectors, dimension=3))
+        result = anyio.run(create_vector_index(test_vectors, dimension=3))
 
         if result.get("status") == "success":
             print("✅ create_vector_index working")

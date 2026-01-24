@@ -6,7 +6,7 @@ and external service failures, including IPLD storage and OCR service issues.
 Shared terminology: "service failure" refers to external dependency failures
 that prevent successful processing.
 """
-import asyncio
+import anyio
 import pytest
 from pathlib import Path
 from typing import Any

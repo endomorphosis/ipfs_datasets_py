@@ -8,7 +8,7 @@ including all professional workflows for data scientists, historians, and lawyer
 """
 import sys
 import time
-import asyncio
+import anyio
 import webbrowser
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -68,7 +68,7 @@ async def demo_single_article_ingestion(dashboard):
             print(f"  ✗ Exception during ingestion: {e}")
         
         # Small delay between requests
-        await asyncio.sleep(1)
+        await anyio.sleep(1)
     
     return True
 
@@ -526,7 +526,7 @@ Examples:
     
     if args.demo == 'comprehensive':
         print("Running comprehensive news analysis demo...")
-        success = asyncio.run(run_comprehensive_demo())
+        success = anyio.run(run_comprehensive_demo())
         sys.exit(0 if success else 1)
         
     elif args.demo == 'interactive':
@@ -536,7 +536,7 @@ Examples:
     elif args.demo == 'quick':
         print("Running quick news analysis demo...")
         # Quick demo would be a subset of comprehensive
-        success = asyncio.run(run_comprehensive_demo())
+        success = anyio.run(run_comprehensive_demo())
         if success:
             print("\nStarting interactive dashboard for exploration...")
             start_interactive_demo()

@@ -2,7 +2,7 @@
 """
 Tests for the logic utilities module.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, List
 
 from ..logic_utils.predicate_extractor import extract_predicates, normalize_predicate, extract_logical_relations

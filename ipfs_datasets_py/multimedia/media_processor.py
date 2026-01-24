@@ -5,7 +5,7 @@ This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
 from __future__ import annotations
-import asyncio
+import anyio
 import logging
 from typing import Dict, Any, Optional
 from pathlib import Path
@@ -330,7 +330,7 @@ class MediaProcessor:
             TypeError: If url is not a string or if quality/output_format parameters
                 are not strings.
             OSError: If output directory is not writable or disk space is insufficient.
-            asyncio.TimeoutError: If download or conversion operations exceed timeout limits.
+            TimeoutError: If download or conversion operations exceed timeout limits.
             Exception: For unexpected errors during download or conversion operations,
                 with error details logged and included in return dictionary.
 

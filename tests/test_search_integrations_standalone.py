@@ -6,7 +6,7 @@ the full pytest infrastructure or other package dependencies.
 """
 import sys
 import os
-import asyncio
+import anyio
 
 # Add the web_archive_tools directory to the path
 web_archive_tools_path = os.path.abspath(os.path.join(
@@ -169,7 +169,7 @@ def main():
         test_exports()
         
         # Test async functionality
-        asyncio.run(test_api_key_validation())
+        anyio.run(test_api_key_validation())
         
         print("\n" + "=" * 70)
         print("✅ All tests passed!")

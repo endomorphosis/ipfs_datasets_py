@@ -6,7 +6,7 @@ Demo script for testing the MCP-enabled Investigation Dashboard
 This script demonstrates how to use the unified investigation dashboard
 with MCP tools and JSON-RPC communication.
 """
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path
@@ -291,7 +291,7 @@ if __name__ == "__main__":
     print("================================")
     
     try:
-        result = asyncio.run(run_comprehensive_demo())
+        result = anyio.run(run_comprehensive_demo())
         exit(0 if result else 1)
     except KeyboardInterrupt:
         print("\nDemo interrupted by user")

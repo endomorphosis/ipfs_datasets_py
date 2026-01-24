@@ -5,7 +5,7 @@ This module provides tools for data transformation, chunking,
 format conversion, and other data processing operations.
 """
 
-import asyncio
+import anyio
 import logging
 import json
 import re

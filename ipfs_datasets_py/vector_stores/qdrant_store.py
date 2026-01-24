@@ -7,7 +7,7 @@ migrated and adapted from ipfs_embeddings_py.
 import logging
 import uuid
 from typing import List, Dict, Any, Optional, TypeAlias, TypeVar
-import asyncio
+import anyio
 import json
 import hashlib
 

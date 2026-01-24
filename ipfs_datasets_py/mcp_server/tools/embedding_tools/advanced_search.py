@@ -6,7 +6,7 @@ integrated with vector stores and IPFS content addressing.
 """
 
 from typing import List, Dict, Any, Optional, Union, Tuple
-import asyncio
+import anyio
 import os
 import json
 import logging

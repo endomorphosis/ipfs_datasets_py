@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Check Indiana static documents page."""
-import asyncio
+import anyio
 from playwright.async_api import async_playwright
 
 async def check_indiana():
@@ -34,4 +34,4 @@ async def check_indiana():
         finally:
             await browser.close()
 
-asyncio.run(check_indiana())
+anyio.run(check_indiana())

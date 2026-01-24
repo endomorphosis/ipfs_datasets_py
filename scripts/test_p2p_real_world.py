@@ -9,7 +9,7 @@ import os
 import sys
 import time
 import logging
-import asyncio
+import anyio
 from pathlib import Path
 
 # Configure logging
@@ -58,7 +58,7 @@ async def test_async_p2p_initialization():
         
         # Keep host running for a bit
         logger.info("Host running for 2 seconds...")
-        await asyncio.sleep(2)
+        await anyio.sleep(2)
         
         logger.info("✓ P2P host functional")
         
@@ -180,7 +180,7 @@ async def test_two_peers_communication():
         logger.info(f"✓ Host 1 listening on {len(host1_addrs)} addresses")
         
         # Message received flag
-        message_received = asyncio.Event()
+        message_received = anyio.Event()
         received_data = []
         
         # Set stream handler on host1
@@ -214,7 +214,7 @@ async def test_two_peers_communication():
             logger.info("✓ Hosts connected")
             
             # Wait a moment for connection to establish
-            await asyncio.sleep(0.5)
+            await anyio.sleep(0.5)
             
             # Send message from host2 to host1
             logger.info("Host 2 opening stream...")
@@ -233,7 +233,8 @@ async def test_two_peers_communication():
             logger.info("✓ Stream closed")
             
             # Wait for message to be received
-            await asyncio.wait_for(message_received.wait(), timeout=2.0)
+            await # TODO: Convert to anyio.fail_after() context manager
+    asyncio.wait_for(message_received.wait(), timeout=2.0)
             logger.info("✓ Two-way communication successful")
         else:
             logger.warning("⚠ No addresses available on host 1")
@@ -305,7 +306,7 @@ def main():
         from libp2p.peer.peerinfo import info_from_p2p_addr
         
         # Run async tests
-        return asyncio.run(run_all_tests())
+        return anyio.run(run_all_tests())
     except Exception as e:
         logger.error(f"✗ Test suite failed: {e}")
         import traceback

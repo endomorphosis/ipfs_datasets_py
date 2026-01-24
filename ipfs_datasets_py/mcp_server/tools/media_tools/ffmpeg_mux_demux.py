@@ -5,7 +5,7 @@ FFmpeg muxing and demuxing tools for the MCP server.
 This module provides tools for combining (muxing) and separating (demuxing)
 audio and video streams in media containers.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -367,14 +367,14 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_mux = asyncio.run(ffmpeg_mux(
+    test_mux = anyio.run(ffmpeg_mux(
         video_input="video.mp4",
         audio_inputs=["audio1.mp3", "audio2.mp3"],
         output_file="output.mkv"
     ))
     print(f"Mux test result: {test_mux}")
     
-    test_demux = asyncio.run(ffmpeg_demux(
+    test_demux = anyio.run(ffmpeg_demux(
         input_file="input.mkv",
         output_dir="extracted/",
         extract_video=True,

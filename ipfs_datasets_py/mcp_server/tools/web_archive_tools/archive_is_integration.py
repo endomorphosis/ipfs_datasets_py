@@ -394,19 +394,19 @@ async def batch_archive_to_archive_is(
             - error: Error message (if failed)
     """
     try:
-        import asyncio
+        import anyio
         
         results = {}
         success_count = 0
         error_count = 0
         
         # Create semaphore to limit concurrent requests
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = anyio.Semaphore(max_concurrent)
         
         async def archive_single_url(url):
             async with semaphore:
                 result = await archive_to_archive_is(url, wait_for_completion=False)
-                await asyncio.sleep(delay_seconds)
+                await anyio.sleep(delay_seconds)
                 return url, result
         
         # Process URLs concurrently with rate limiting

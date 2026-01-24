@@ -7,7 +7,7 @@ LLM Optimization → Entity Extraction → Vector Embedding →
 IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
 """
 
-import asyncio
+import anyio
 import logging
 import json
 from pathlib import Path
@@ -225,7 +225,7 @@ class PDFPipelineDemo:
             stage_time = time.time()
             
             # Simulate processing time
-            await asyncio.sleep(0.1)
+            await anyio.sleep(0.1)
             
             # Mock stage results
             stage_results[f"stage_{i+1}_{stage.lower().replace(' ', '_')}"] = {
@@ -276,7 +276,7 @@ class PDFPipelineDemo:
             query_start = time.time()
             
             # Mock query execution
-            await asyncio.sleep(0.05)  # Simulate query processing
+            await anyio.sleep(0.05)  # Simulate query processing
             
             mock_result = {
                 'query': query_data['query'],
@@ -327,7 +327,7 @@ class PDFPipelineDemo:
         }
         
         # Simulate processing time
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         
         self.processing_times['batch_processing'] = time.time() - stage_start
         
@@ -364,7 +364,7 @@ class PDFPipelineDemo:
         ]
         
         # Simulate analysis time
-        await asyncio.sleep(0.1)
+        await anyio.sleep(0.1)
         
         self.processing_times['cross_document_analysis'] = time.time() - stage_start
         
@@ -489,4 +489,4 @@ async def main():
 
 if __name__ == "__main__":
     # Run the demo
-    results = asyncio.run(main())
+    results = anyio.run(main())

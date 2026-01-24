@@ -7,7 +7,7 @@ This script demonstrates the legal/ethical reasoning capabilities through
 the dashboard interface and captures screenshots showing the functionality.
 """
 
-import asyncio
+import anyio
 import json
 import time
 from pathlib import Path
@@ -722,4 +722,4 @@ The deontological reasoning system is now fully integrated and ready for product
     print(f"   the unified investigation dashboard and ready for production use!")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    anyio.run(main())

@@ -18,7 +18,7 @@ Usage:
 
 import os
 import json
-import asyncio
+import anyio
 import logging
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -1032,7 +1032,7 @@ COMPLETE_PROCESSING_PRESETS = {
 
 if __name__ == "__main__":
     # Demonstration
-    import asyncio
+    import anyio
     
     async def demo_complete_system():
         """Demonstrate the complete GraphRAG system"""
@@ -1119,4 +1119,4 @@ if __name__ == "__main__":
         print("   • Unified search across all content types")
         print("   • Production-ready analytics and reporting")
     
-    asyncio.run(demo_complete_system())
+    anyio.run(demo_complete_system())

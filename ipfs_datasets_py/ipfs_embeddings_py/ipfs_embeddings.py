@@ -1,6 +1,6 @@
 from .ipfs_multiformats import *
 from .ipfs_only_hash import *
-import asyncio
+import anyio
 import subprocess
 import os
 import datasets

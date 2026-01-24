@@ -6,7 +6,7 @@ This module provides utility functions and classes for testing the MCP dashboard
 including test data generation, mock services, and testing helpers.
 """
 
-import asyncio
+import anyio
 import json
 import random
 import string
@@ -168,7 +168,7 @@ class MockMCPServer:
     
     async def _complete_execution(self, execution_id: str):
         """Complete a mock execution after a delay."""
-        await asyncio.sleep(random.uniform(1.0, 5.0))
+        await anyio.sleep(random.uniform(1.0, 5.0))
         
         if execution_id in self.executions:
             self.executions[execution_id].update({

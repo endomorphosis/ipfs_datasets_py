@@ -6,7 +6,7 @@ This script demonstrates all the key functionality of the YT-DLP integration
 with both the multimedia library and MCP server tools.
 """
 
-import asyncio
+import anyio
 import sys
 from pathlib import Path
 
@@ -201,5 +201,5 @@ async def main():
         return False
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
+    success = anyio.run(main())
     sys.exit(0 if success else 1)

@@ -20,7 +20,7 @@ making it resilient to various failure scenarios.
 """
 
 import logging
-import asyncio
+import anyio
 import time
 from typing import Dict, List, Optional, Any, Literal, Union, Callable
 from dataclasses import dataclass, field
@@ -273,7 +273,7 @@ class UnifiedWebScraper:
                 logger.warning(error_msg)
             
             # Rate limiting between attempts
-            await asyncio.sleep(self.config.rate_limit_delay)
+            await anyio.sleep(self.config.rate_limit_delay)
         
         # All methods failed
         return ScraperResult(
@@ -668,7 +668,7 @@ class UnifiedWebScraper:
     
     def scrape_sync(self, url: str, **kwargs) -> ScraperResult:
         """Synchronous version of scrape."""
-        return asyncio.run(self.scrape(url, **kwargs))
+        return anyio.run(self.scrape(url, **kwargs))
     
     async def scrape_multiple(
         self,
@@ -677,20 +677,21 @@ class UnifiedWebScraper:
         **kwargs
     ) -> List[ScraperResult]:
         """Scrape multiple URLs concurrently."""
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = anyio.Semaphore(max_concurrent)
         
         async def scrape_with_semaphore(url):
             async with semaphore:
                 result = await self.scrape(url, **kwargs)
-                await asyncio.sleep(self.config.rate_limit_delay)
+                await anyio.sleep(self.config.rate_limit_delay)
                 return result
         
         tasks = [scrape_with_semaphore(url) for url in urls]
-        return await asyncio.gather(*tasks, return_exceptions=False)
+        return await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks, return_exceptions=False)
     
     def scrape_multiple_sync(self, urls: List[str], **kwargs) -> List[ScraperResult]:
         """Synchronous version of scrape_multiple."""
-        return asyncio.run(self.scrape_multiple(urls, **kwargs))
+        return anyio.run(self.scrape_multiple(urls, **kwargs))
 
 
 # Convenience functions for backward compatibility

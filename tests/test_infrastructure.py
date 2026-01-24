@@ -1,7 +1,7 @@
 # GraphRAG System Infrastructure Test Suite
 
 import pytest
-import asyncio
+import anyio
 import docker
 import subprocess
 import time

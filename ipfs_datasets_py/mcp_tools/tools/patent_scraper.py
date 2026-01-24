@@ -8,7 +8,7 @@ and optionally from Google Patents (via web scraping).
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 import time

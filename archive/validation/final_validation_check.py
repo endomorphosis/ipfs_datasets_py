@@ -4,7 +4,7 @@ Final validation script - Run this to confirm everything is working after VS Cod
 """
 
 import sys
-import asyncio
+import anyio
 from pathlib import Path
 
 # Add project root to path
@@ -75,7 +75,7 @@ async def quick_validation():
 
 if __name__ == "__main__":
     try:
-        success = asyncio.run(quick_validation())
+        success = anyio.run(quick_validation())
         sys.exit(0 if success else 1)
     except Exception as e:
         print(f"❌ Validation failed: {e}")

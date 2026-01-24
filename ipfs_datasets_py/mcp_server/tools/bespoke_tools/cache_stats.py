@@ -5,7 +5,7 @@ Provides detailed cache performance statistics and metrics.
 Monitors cache hit rates, memory usage, and optimization opportunities.
 """
 
-import asyncio
+import anyio
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List

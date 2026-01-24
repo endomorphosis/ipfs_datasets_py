@@ -6,7 +6,7 @@ Feature: DeontologicalReasoningEngine.query_deontic_statements()
 """
 
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.deontological_reasoning import (
     DeontologicalReasoningEngine, 
     DeonticStatement, 
@@ -92,7 +92,7 @@ def test_query_with_no_filters_returns_all_statements(the_statement_database_con
         10 statements are returned
     """
     # When: query_deontic_statements() is called with no filters
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements())
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements())
     
     # Then: 10 statements are returned
     expected_count = 10
@@ -116,7 +116,7 @@ def test_query_with_entity_filter_for_citizens(the_statement_database_contains_1
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: 5 statements are returned
     expected_count = 5
@@ -140,7 +140,7 @@ def test_entity_filter_is_case_insensitive(the_statement_database_contains_10_st
     """
     # When: query_deontic_statements(entity="CITIZENS") is called
     entity_filter = "CITIZENS"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: statements are returned
     expected_count = 5
@@ -164,7 +164,7 @@ def test_entity_filter_does_partial_match(the_statement_database_contains_10_sta
     """
     # When: query_deontic_statements(entity="citi") is called
     entity_filter = "citi"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: statements are returned
     expected_count = 5
@@ -188,7 +188,7 @@ def test_query_with_modality_filter_obligation(the_statement_database_contains_1
     """
     # When: query_deontic_statements(modality=OBLIGATION) is called
     modality_filter = DeonticModality.OBLIGATION
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: 6 statements are returned
     expected_count = 6
@@ -212,7 +212,7 @@ def test_query_with_modality_filter_permission(the_statement_database_contains_1
     """
     # When: query_deontic_statements(modality=PERMISSION) is called
     modality_filter = DeonticModality.PERMISSION
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: 2 statements are returned
     expected_count = 2
@@ -236,7 +236,7 @@ def test_query_with_modality_filter_prohibition(the_statement_database_contains_
     """
     # When: query_deontic_statements(modality=PROHIBITION) is called
     modality_filter = DeonticModality.PROHIBITION
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: 2 statements are returned
     expected_count = 2
@@ -260,7 +260,7 @@ def test_query_with_action_keywords_filter_for_taxes(the_statement_database_cont
     """
     # When: query_deontic_statements(action_keywords=["taxes"]) is called
     action_keywords = ["taxes"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
     
     # Then: 3 statements are returned
     expected_count = 3
@@ -284,7 +284,7 @@ def test_action_keywords_filter_is_case_insensitive(the_statement_database_conta
     """
     # When: query_deontic_statements(action_keywords=["TAXES"]) is called
     action_keywords = ["TAXES"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
     
     # Then: 3 statements are returned
     expected_count = 3
@@ -308,7 +308,7 @@ def test_query_with_multiple_action_keywords(the_statement_database_contains_10_
     """
     # When: query_deontic_statements(action_keywords=["pay", "file"]) is called
     action_keywords = ["pay", "file"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
     
     # Then: 4 statements are returned
     expected_count = 4
@@ -333,7 +333,7 @@ def test_query_with_entity_and_modality_filters_combined(the_statement_database_
     # When: query_deontic_statements(entity="citizens", modality=OBLIGATION) is called
     entity_filter = "citizens"
     modality_filter = DeonticModality.OBLIGATION
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter, modality=modality_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter, modality=modality_filter))
     
     # Then: 4 statements are returned
     expected_count = 4
@@ -358,7 +358,7 @@ def test_query_with_entity_and_action_keywords_filters_combined(the_statement_da
     # When: query_deontic_statements(entity="citizens", action_keywords=["taxes"]) is called
     entity_filter = "citizens"
     action_keywords = ["taxes"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter, action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter, action_keywords=action_keywords))
     
     # Then: 3 statements are returned
     expected_count = 3
@@ -384,7 +384,7 @@ def test_query_with_all_three_filters_combined(the_statement_database_contains_1
     entity_filter = "citizens"
     modality_filter = DeonticModality.OBLIGATION
     action_keywords = ["taxes"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(
         entity=entity_filter, 
         modality=modality_filter, 
         action_keywords=action_keywords
@@ -412,7 +412,7 @@ def test_query_with_entity_that_does_not_exist_returns_empty_list(the_statement_
     """
     # When: query_deontic_statements(entity="nonexistent") is called
     entity_filter = "nonexistent"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: 0 statements are returned
     expected_count = 0
@@ -436,7 +436,7 @@ def test_query_with_action_keywords_that_do_not_exist_returns_empty_list(the_sta
     """
     # When: query_deontic_statements(action_keywords=["nonexistent"]) is called
     action_keywords = ["nonexistent"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
     
     # Then: 0 statements are returned
     expected_count = 0
@@ -460,7 +460,7 @@ def test_query_returns_list_of_deonticstatement_instances(the_statement_database
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each result is DeonticStatement instance
     expected_type = DeonticStatement
@@ -485,7 +485,7 @@ def test_returned_statements_have_id_attribute(the_statement_database_contains_1
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each statement has id attribute
     expected_has_attribute = True
@@ -509,7 +509,7 @@ def test_returned_statements_have_entity_attribute(the_statement_database_contai
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each statement entity is "citizens"
     expected_entity = "citizens"
@@ -534,7 +534,7 @@ def test_returned_statements_have_action_attribute(the_statement_database_contai
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each statement has action attribute
     expected_has_attribute = True
@@ -558,7 +558,7 @@ def test_returned_statements_have_modality_attribute(the_statement_database_cont
     """
     # When: query_deontic_statements(modality=OBLIGATION) is called
     modality_filter = DeonticModality.OBLIGATION
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: each statement modality is OBLIGATION
     expected_modality = DeonticModality.OBLIGATION
@@ -583,7 +583,7 @@ def test_returned_statements_have_source_document_attribute(the_statement_databa
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each statement has source_document attribute
     expected_has_attribute = True
@@ -607,7 +607,7 @@ def test_returned_statements_have_confidence_attribute(the_statement_database_co
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: each statement has confidence attribute
     expected_has_attribute = True
@@ -630,7 +630,7 @@ def test_query_empty_database_returns_empty_list(a_deontologicalreasoningengine_
         0 statements are returned
     """
     # When: query_deontic_statements() is called
-    result = asyncio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements())
+    result = anyio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements())
     
     # Then: 0 statements are returned
     expected_count = 0
@@ -654,7 +654,7 @@ def test_query_with_entity_filter_on_empty_database_returns_empty_list(a_deontol
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: 0 statements are returned
     expected_count = 0
@@ -677,7 +677,7 @@ def test_async_method_can_be_awaited(the_statement_database_contains_10_statemen
         result is returned
     """
     # When: query_deontic_statements() is called with await
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements())
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements())
     
     # Then: result is returned
     expected_is_not_none = True
@@ -700,10 +700,10 @@ def test_query_after_analyzing_corpus(a_deontologicalreasoningengine_fixture):
     """
     # Given: analyze_corpus_for_deontic_conflicts() was called
     documents = [{'id': 'doc1', 'content': 'Citizens must pay taxes.'}]
-    asyncio.run(a_deontologicalreasoningengine_fixture.analyze_corpus_for_deontic_conflicts(documents))
+    anyio.run(a_deontologicalreasoningengine_fixture.analyze_corpus_for_deontic_conflicts(documents))
     
     # When: query_deontic_statements() is called
-    result = asyncio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements())
+    result = anyio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements())
     
     # Then: statements from analysis are returned
     expected_has_statements = True
@@ -727,7 +727,7 @@ def test_query_filters_work_independently(the_statement_database_contains_10_sta
     """
     # When: query_deontic_statements(entity="citizens") is called
     entity_filter = "citizens"
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(entity=entity_filter))
     
     # Then: only entity filter is applied
     expected_all_match = True
@@ -764,7 +764,7 @@ def test_query_with_modality_conditional(a_deontologicalreasoningengine_fixture)
     
     # When: query_deontic_statements(modality=CONDITIONAL) is called
     modality_filter = DeonticModality.CONDITIONAL
-    result = asyncio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: 2 statements are returned
     expected_count = 2
@@ -800,7 +800,7 @@ def test_query_with_modality_exception(a_deontologicalreasoningengine_fixture):
     
     # When: query_deontic_statements(modality=EXCEPTION) is called
     modality_filter = DeonticModality.EXCEPTION
-    result = asyncio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(modality=modality_filter))
+    result = anyio.run(a_deontologicalreasoningengine_fixture.query_deontic_statements(modality=modality_filter))
     
     # Then: 1 statement is returned
     expected_count = 1
@@ -824,7 +824,7 @@ def test_query_with_action_keyword_matching_multiple_actions(the_statement_datab
     """
     # When: query_deontic_statements(action_keywords=["taxes"]) is called
     action_keywords = ["taxes"]
-    result = asyncio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
+    result = anyio.run(the_statement_database_contains_10_statements_fixture.query_deontic_statements(action_keywords=action_keywords))
     
     # Then: 3 statements are returned
     expected_count = 3

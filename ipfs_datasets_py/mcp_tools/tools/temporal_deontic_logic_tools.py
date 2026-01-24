@@ -17,7 +17,7 @@ These tools enable legal document debugging capabilities through the MCP framewo
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 import logging
 import time

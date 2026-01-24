@@ -5,7 +5,7 @@ Migrated from ipfs_embeddings_py project.
 """
 
 import logging
-import asyncio
+import anyio
 import psutil
 import time
 from typing import Dict, Any, List, Optional, Union
@@ -589,7 +589,7 @@ async def _check_service_status(service_name: str) -> Dict[str, Any]:
     try:
         # Mock service status check
         start_time = time.time()
-        await asyncio.sleep(0.01)  # Simulate network delay
+        await anyio.sleep(0.01)  # Simulate network delay
         response_time = (time.time() - start_time) * 1000  # ms
         
         # Simulate different service statuses

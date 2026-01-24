@@ -10,7 +10,7 @@ import os
 import sys
 import importlib
 import inspect
-import asyncio
+import anyio
 from pathlib import Path
 from typing import Dict, List, Any, Set, Tuple
 
@@ -169,7 +169,7 @@ This test verifies that the {tool} tool works correctly.
 import unittest
 import sys
 import os
-import asyncio
+import anyio
 from unittest.mock import patch, MagicMock, AsyncMock
 
 # Add project root to path

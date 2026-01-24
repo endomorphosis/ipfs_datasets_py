@@ -8,7 +8,7 @@ to construct a unified temporal deontic logic system.
 
 import sys
 import os
-import asyncio
+import anyio
 import tempfile
 import json
 from datetime import datetime
@@ -334,5 +334,5 @@ async def demonstrate_bulk_processing():
 
 if __name__ == "__main__":
     print("Starting bulk caselaw processing demonstration...")
-    success = asyncio.run(demonstrate_bulk_processing())
+    success = anyio.run(demonstrate_bulk_processing())
     exit(0 if success else 1)

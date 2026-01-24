@@ -11,7 +11,7 @@ Terminology:
 - invalid_quality_specification: A quality level not in supported format or range
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

@@ -13,7 +13,7 @@ and monitoring capabilities for the IPFS Datasets Python library, enabling:
 The monitoring system is designed to be lightweight yet powerful, with minimal
 performance impact when enabled, and zero overhead when disabled.
 """
-import asyncio
+import anyio
 import sys
 import json
 import time

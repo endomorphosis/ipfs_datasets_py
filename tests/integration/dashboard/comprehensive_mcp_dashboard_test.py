@@ -30,7 +30,7 @@ Usage:
     pytest tests/integration/dashboard/comprehensive_mcp_dashboard_test.py -v --headed
 """
 
-import asyncio
+import anyio
 import json
 import logging
 import os
@@ -106,7 +106,7 @@ class MCPDashboardTestRunner:
                         return True
                 except:
                     pass
-                await asyncio.sleep(1)
+                await anyio.sleep(1)
             
             logger.error("Failed to start MCP dashboard within timeout")
             return False

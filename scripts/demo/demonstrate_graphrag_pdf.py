@@ -12,7 +12,7 @@ Usage:
     
 If no PDF file is provided, a sample PDF will be created for demonstration.
 """
-import asyncio
+import anyio
 import sys
 import os
 import argparse
@@ -372,6 +372,6 @@ accuracy and user satisfaction compared to baseline methods.
             print(f"🧹 Cleaned up sample PDF")
 
 if __name__ == "__main__":
-    success = asyncio.run(main())
+    success = anyio.run(main())
     print(f"\n🏁 Demonstration {'successful' if success else 'completed with issues'}")
     sys.exit(0 if success else 1)

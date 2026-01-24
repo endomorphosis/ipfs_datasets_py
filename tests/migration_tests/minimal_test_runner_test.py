@@ -35,7 +35,7 @@ try:
     print(f"Is BaseDevelopmentTool: {isinstance(runner, BaseDevelopmentTool)}")
     
     # Basic run test
-    import asyncio
+    import anyio
     async def run_test():
         try:
             print("Running test directly on temp dir")
@@ -57,7 +57,7 @@ try:
             traceback.print_exc()
             return False
     
-    success = asyncio.run(run_test())
+    success = anyio.run(run_test())
     if success:
         print("SUCCESS: TestRunner works correctly!")
     else:

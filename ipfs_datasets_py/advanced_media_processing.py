@@ -611,7 +611,7 @@ MEDIA_PROCESSING_PRESETS = {
 
 if __name__ == "__main__":
     # Simple test
-    import asyncio
+    import anyio
     
     async def test_media_processor():
         """Test the media processor with a sample file"""
@@ -637,4 +637,4 @@ if __name__ == "__main__":
             print(f"   FFmpeg available: {HAS_FFMPEG}")
             print(f"   OpenCV available: {HAS_OPENCV}")
         
-    asyncio.run(test_media_processor())
+    anyio.run(test_media_processor())

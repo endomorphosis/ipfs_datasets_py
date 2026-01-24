@@ -4,7 +4,7 @@ Unit tests for QueryEngine component of PDF processing pipeline
 Tests semantic querying, natural language processing, vector similarity search,
 and cross-document reasoning capabilities in isolation.
 """
-import asyncio
+import anyio
 import pytest
 import sys
 import os

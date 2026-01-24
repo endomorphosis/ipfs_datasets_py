@@ -10,7 +10,7 @@ what would be extracted from these sources.
 """
 import sys
 import time
-import asyncio
+import anyio
 import json
 import logging
 from pathlib import Path
@@ -207,7 +207,7 @@ class NewsAnalysisDashboardDemo:
             
             for article in articles:
                 # Simulate article processing
-                await asyncio.sleep(0.01)  # Quick simulation
+                await anyio.sleep(0.01)  # Quick simulation
                 processed_count += 1
                 
                 if processed_count % 10 == 0:
@@ -288,7 +288,7 @@ class NewsAnalysisDashboardDemo:
             start_time = time.time()
             
             # Simulate query processing
-            await asyncio.sleep(random.uniform(0.5, 2.0))  # Realistic processing time
+            await anyio.sleep(random.uniform(0.5, 2.0))  # Realistic processing time
             
             processing_time = time.time() - start_time
             results_count = query.get("expected_results", random.randint(5, 20))
@@ -385,21 +385,21 @@ class NewsAnalysisDashboardDemo:
         print(f"\n🔍 Graph Analysis Operations:")
         
         # Community detection
-        await asyncio.sleep(0.5)  # Simulate processing time
+        await anyio.sleep(0.5)  # Simulate processing time
         print(f"  ✓ Community detection: {graph_stats['communities']} communities")
         
         # Path finding
-        await asyncio.sleep(0.3)
+        await anyio.sleep(0.3)
         path_length = random.randint(3, 7)
         print(f"  ✓ Shortest path analysis: Average path length {path_length}")
         
         # Centrality analysis
-        await asyncio.sleep(0.4)
+        await anyio.sleep(0.4)
         top_nodes = random.sample(MockNewsContent.ENTITIES, k=3)
         print(f"  ✓ Centrality analysis: Top nodes identified")
         
         # Filtering tests
-        await asyncio.sleep(0.2)
+        await anyio.sleep(0.2)
         filtered_count = int(total_entities * 0.3)
         print(f"  ✓ Node filtering: {filtered_count} nodes match financial criteria")
         
@@ -613,7 +613,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        exit_code = asyncio.run(main())
+        exit_code = anyio.run(main())
         sys.exit(exit_code)
     except KeyboardInterrupt:
         print("\n❌ Demonstration interrupted by user")

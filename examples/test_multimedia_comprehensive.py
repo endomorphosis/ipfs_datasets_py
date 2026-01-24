@@ -6,7 +6,7 @@ This script runs all unit tests for the YT-DLP wrapper library and MCP server to
 providing detailed reporting and validation of the multimedia integration.
 """
 
-import asyncio
+import anyio
 import os
 import sys
 import subprocess
@@ -95,7 +95,7 @@ def run_integration_tests():
     
     # Test multimedia library integration
     test_code = '''
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia import YtDlpWrapper, HAVE_YTDLP
 
 async def test_integration():
@@ -123,7 +123,7 @@ async def test_integration():
         return False
 
 if __name__ == "__main__":
-    result = asyncio.run(test_integration())
+    result = anyio.run(test_integration())
     exit(0 if result else 1)
 '''
     
@@ -143,7 +143,7 @@ def test_mcp_tools_integration():
     print("\n🔧 Testing MCP Tools Integration...")
     
     test_code = '''
-import asyncio
+import anyio
 from ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download import (
     ytdlp_extract_info, main
 )
@@ -164,7 +164,7 @@ async def test_mcp_tools():
     return init_result['status'] == 'success'
 
 if __name__ == "__main__":
-    result = asyncio.run(test_mcp_tools())
+    result = anyio.run(test_mcp_tools())
     exit(0 if result else 1)
 '''
     

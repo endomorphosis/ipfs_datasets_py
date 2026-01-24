@@ -1,4 +1,4 @@
-import asyncio
+import anyio
 """
 Test cases for PDF-specific validation issues in process_pdf method.
 

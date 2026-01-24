@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Capture screenshots of the MCP dashboard."""
 
-import asyncio
+import anyio
 from pathlib import Path
 from playwright.async_api import async_playwright
 
@@ -27,7 +27,7 @@ async def capture_dashboard_screenshot():
             await page.wait_for_selector("body", timeout=10000)
             
             # Give any dynamic content time to render
-            await asyncio.sleep(2)
+            await anyio.sleep(2)
             
             # Capture full-page screenshot
             full_screenshot_path = output_dir / "mcp_dashboard_full.png"
@@ -52,4 +52,4 @@ async def capture_dashboard_screenshot():
             await browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(capture_dashboard_screenshot())
+    anyio.run(capture_dashboard_screenshot())

@@ -11,7 +11,7 @@ Terminology:
 - encrypted_audio_track: A video file with DRM-protected audio streams
 """
 import pytest
-import asyncio
+import anyio
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 

@@ -6,7 +6,7 @@ the IPFS Datasets MCP server from your Python code.
 """
 from __future__ import annotations
 
-import asyncio
+import anyio
 import json
 from typing import Dict, List, Any, Optional, Union
 

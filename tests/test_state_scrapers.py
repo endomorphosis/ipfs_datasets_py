@@ -5,7 +5,7 @@ These tests verify scraper logic without requiring network access.
 """
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import Mock, patch, AsyncMock
 from bs4 import BeautifulSoup
 import sys

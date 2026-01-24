@@ -3,7 +3,7 @@
 Phase 1 Status Test - Simple validation
 """
 
-import asyncio
+import anyio
 import sys
 import traceback
 from pathlib import Path
@@ -118,12 +118,12 @@ import pytest
 
 def test_phase1_status_pytest():
     """Pytest wrapper for phase1 status test."""
-    success = asyncio.run(async_test_phase1_status())
+    success = anyio.run(async_test_phase1_status())
     assert success, "Phase 1 status test failed"
 
 if __name__ == "__main__":
     try:
-        success = asyncio.run(async_test_phase1_status())
+        success = anyio.run(async_test_phase1_status())
         print(f"Test {'PASSED' if success else 'FAILED'}")
     except Exception as e:
         print(f"Test failed with exception: {e}")

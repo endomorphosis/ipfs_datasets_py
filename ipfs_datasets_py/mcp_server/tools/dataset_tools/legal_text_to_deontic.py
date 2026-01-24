@@ -5,7 +5,7 @@ MCP tool for converting legal text to deontic logic.
 This tool converts legal text (statutes, regulations, contracts) into deontic
 logic for legal reasoning, compliance checking, and normative analysis.
 """
-import asyncio
+import anyio
 from typing import Dict, Any, Optional, Union, List
 import re
 from datetime import datetime
@@ -441,7 +441,7 @@ async def main() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Example usage
-    test_result = asyncio.run(convert_legal_text_to_deontic(
+    test_result = anyio.run(convert_legal_text_to_deontic(
         "Citizens must pay taxes by April 15th",
         jurisdiction='us',
         document_type='statute'

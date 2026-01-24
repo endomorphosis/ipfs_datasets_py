@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Test Delaware scraper with updated link extraction."""
-import asyncio
+import anyio
 import logging
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import DelawareScraper
 
@@ -24,4 +24,4 @@ async def test_delaware():
             print(f"  - {statute['title'][:80]}...")
 
 if __name__ == '__main__':
-    asyncio.run(test_delaware())
+    anyio.run(test_delaware())

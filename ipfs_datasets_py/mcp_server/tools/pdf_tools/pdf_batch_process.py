@@ -6,7 +6,7 @@ complete GraphRAG integration pipeline with parallel execution,
 progress tracking, and comprehensive reporting.
 """
 
-import asyncio
+import anyio
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Union

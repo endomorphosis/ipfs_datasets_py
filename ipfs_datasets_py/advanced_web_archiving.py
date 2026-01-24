@@ -14,7 +14,7 @@ import os
 import re
 import json
 import time
-import asyncio
+import anyio
 import aiohttp
 import logging
 from typing import Dict, List, Optional, Any, Union, Set, Tuple
@@ -287,7 +287,7 @@ class AdvancedWebArchiver:
                                     pending_urls.append(add_url)
                     
                     # Rate limiting
-                    await asyncio.sleep(self.config.request_delay)
+                    await anyio.sleep(self.config.request_delay)
                     
                 except Exception as e:
                     self.logger.error(f"Failed to analyze resource {url}: {e}")
@@ -555,7 +555,7 @@ class AdvancedWebArchiver:
                 failed += 1
                 
             # Rate limiting between requests
-            await asyncio.sleep(self.config.request_delay)
+            await anyio.sleep(self.config.request_delay)
         
         collection.archived_resources = successful
         collection.failed_resources = failed
@@ -928,7 +928,7 @@ ARCHIVING_PRESETS = {
 
 if __name__ == "__main__":
     # Test the archiver
-    import asyncio
+    import anyio
     
     async def test_archiver():
         """Test the web archiver"""
@@ -969,4 +969,4 @@ if __name__ == "__main__":
         else:
             print("📋 No existing archive collections found")
     
-    asyncio.run(test_archiver())
+    anyio.run(test_archiver())

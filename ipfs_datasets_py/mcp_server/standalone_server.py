@@ -4,7 +4,7 @@ Minimal standalone MCP server for Docker deployment.
 This version doesn't rely on the complex ipfs_datasets_py package structure.
 """
 
-import asyncio
+import anyio
 import json
 import logging
 from typing import Any, Dict, List, Optional

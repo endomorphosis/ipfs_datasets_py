@@ -5,7 +5,7 @@ This module provides tools for managing background tasks such as
 embedding creation, indexing, and other long-running operations.
 """
 
-import asyncio
+import anyio
 import logging
 import uuid
 from datetime import datetime, timedelta

@@ -20,7 +20,7 @@ import os
 import time
 import random
 import logging
-import asyncio
+import anyio
 import heapq
 import json
 import threading
@@ -1411,7 +1411,7 @@ class resilient(object):
             return perform_important_task()
         
         # Async function support
-        @resilient(max_retries=3, retry_on_exceptions=[asyncio.TimeoutError])
+        @resilient(max_retries=3, retry_on_exceptions=[TimeoutError])
         async def async_api_call():
             return await aiohttp.get("https://api.example.com/async")
         
@@ -1642,7 +1642,7 @@ class resilient(object):
                 )
 
                 # Sleep for backoff time
-                await asyncio.sleep(backoff_ms / 1000)
+                await anyio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
@@ -2048,7 +2048,7 @@ class ResilienceManager:
                                 continue
 
                         # Perform health check asynchronously
-                        asyncio.run(self._check_node_health(peer_id))
+                        anyio.run(self._check_node_health(peer_id))
             except Exception as e:
                 logger.error(f"Error in health check loop: {str(e)}")
 
@@ -2746,7 +2746,7 @@ class ResilienceManager:
                 )
 
                 # Sleep for backoff time
-                await asyncio.sleep(backoff_ms / 1000)
+                await anyio.sleep(backoff_ms / 1000)
             except Exception as e:
                 # Don't retry on non-retryable exceptions
                 raise
@@ -3411,7 +3411,8 @@ class ResilienceManager:
                 tasks.append(sync_with_node(node_id))
 
             # Wait for batch to complete
-            await asyncio.gather(*tasks)
+            await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks)
 
         # Complete operation
         return operation.complete()
@@ -3606,13 +3607,14 @@ class ResilienceManager:
 
         # Execute function on each node concurrently
         results = {}
-        semaphore = asyncio.Semaphore(max_concurrent)
+        semaphore = anyio.Semaphore(max_concurrent)
 
         async def execute_with_timeout(node_id):
             async with semaphore:
                 try:
-                    return await asyncio.wait_for(func(node_id), timeout_sec)
-                except asyncio.TimeoutError:
+                    return await # TODO: Convert to anyio.fail_after() context manager
+    asyncio.wait_for(func(node_id), timeout_sec)
+                except TimeoutError:
                     return TimeoutError(f"Operation timed out after {timeout_sec} seconds")
                 except Exception as e:
                     return e
@@ -3621,7 +3623,8 @@ class ResilienceManager:
         tasks = {node_id: execute_with_timeout(node_id) for node_id in healthy_nodes}
 
         # Wait for all tasks to complete or until min_success_count is reached
-        pending = set(asyncio.create_task(coro) for coro in tasks.values())
+        pending = set(# TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.create_task(coro) for coro in tasks.values())
         success_count = 0
 
         while pending and success_count < min_success_count:
@@ -3750,7 +3753,8 @@ class ResilienceManager:
             tasks.append(send_to_node(node_id))
 
         # Wait for all sends to complete
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+    asyncio.gather(*tasks, return_exceptions=True)
 
         # Count successes and failures
         for result in results:

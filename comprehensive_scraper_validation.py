@@ -8,7 +8,7 @@ This script validates that:
 3. Schemas match expected structure
 4. Data quality meets standards
 """
-import asyncio
+import anyio
 import json
 import sys
 from pathlib import Path
@@ -500,5 +500,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = asyncio.run(main())
+    exit_code = anyio.run(main())
     sys.exit(exit_code)
