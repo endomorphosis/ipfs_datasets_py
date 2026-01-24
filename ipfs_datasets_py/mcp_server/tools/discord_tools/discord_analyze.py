@@ -4,8 +4,13 @@ Discord analysis tools for the MCP server.
 
 This tool provides Discord chat data analysis capabilities including
 message statistics, user activity, and content analysis.
+
+Supports secure token management via:
+- Direct token parameter
+- DISCORD_TOKEN environment variable
 """
 import json
+import os
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from collections import Counter
@@ -16,7 +21,7 @@ from ipfs_datasets_py.mcp_server.logger import logger
 
 async def discord_analyze_channel(
     channel_id: str,
-    token: str,
+    token: Optional[str] = None,
     analysis_types: Optional[List[str]] = None
 ) -> Dict[str, Any]:
     """
@@ -27,7 +32,7 @@ async def discord_analyze_channel(
     
     Args:
         channel_id: Discord channel ID to analyze
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         analysis_types: Types of analysis to perform:
             - 'message_stats': Message count, date ranges
             - 'user_activity': Message counts per user
@@ -36,22 +41,17 @@ async def discord_analyze_channel(
             Default is all analyses.
         
     Returns:
-        Dict containing analysis results:
-            - status: 'success' or 'error'
-            - channel_id: Channel ID
-            - analyses: Dict of analysis results
-            - error: Error message if failed
+        Dict containing analysis results
     
-    Example:
-        >>> result = await discord_analyze_channel(
-        ...     channel_id="123456789",
-        ...     token="YOUR_TOKEN",
-        ...     analysis_types=["message_stats", "user_activity"]
-        ... )
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         # Import here to avoid circular dependency
         from ipfs_datasets_py.multimedia.discord_wrapper import create_discord_wrapper
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {
@@ -135,7 +135,7 @@ async def discord_analyze_channel(
 
 async def discord_analyze_guild(
     guild_id: str,
-    token: str,
+    token: Optional[str] = None,
     summary_only: bool = True
 ) -> Dict[str, Any]:
     """
@@ -143,27 +143,21 @@ async def discord_analyze_guild(
     
     Args:
         guild_id: Discord server (guild) ID to analyze
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         summary_only: If True, only return summary statistics without
             detailed channel-by-channel analysis
         
     Returns:
-        Dict containing guild analysis results:
-            - status: 'success' or 'error'
-            - guild_id: Guild ID
-            - channel_count: Number of channels
-            - summary: Summary statistics
-            - channels: Per-channel analysis (if summary_only=False)
-            - error: Error message if failed
+        Dict containing guild analysis results
     
-    Example:
-        >>> result = await discord_analyze_guild(
-        ...     guild_id="987654321",
-        ...     token="YOUR_TOKEN"
-        ... )
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         from ipfs_datasets_py.multimedia.discord_wrapper import create_discord_wrapper
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {

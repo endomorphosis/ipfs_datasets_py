@@ -11,11 +11,13 @@ Features:
 - Media download support with asset reuse
 - Thread export support
 - Comprehensive metadata extraction
+- Secure token management via environment variables
 """
 
 import asyncio
 import json
 import logging
+import os
 import tempfile
 import time
 from pathlib import Path
@@ -99,8 +101,8 @@ class DiscordWrapper:
                 "Ensure discord_chat_exporter.py is properly installed."
             )
         
-        # Store token (can be set later)
-        self.token = token
+        # Store token - check environment variable if not provided
+        self.token = token or os.environ.get('DISCORD_TOKEN')
         
         # Setup output directory
         if default_output_dir is None:

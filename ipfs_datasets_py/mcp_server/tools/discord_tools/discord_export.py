@@ -4,8 +4,14 @@ Discord export tools for the MCP server.
 
 This tool provides Discord channel, server, and DM export capabilities
 using DiscordChatExporter through the MCP protocol.
+
+Supports secure token management via:
+- Direct token parameter
+- DISCORD_TOKEN environment variable
+- Credential manager integration (future)
 """
 import asyncio
+import os
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 
@@ -22,7 +28,7 @@ except ImportError:
 
 async def discord_export_channel(
     channel_id: str,
-    token: str,
+    token: Optional[str] = None,
     output_path: Optional[str] = None,
     format: str = "Json",
     after_date: Optional[str] = None,
@@ -37,7 +43,7 @@ async def discord_export_channel(
     
     Args:
         channel_id: Discord channel ID to export
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         output_path: Output file path (auto-generated if not provided)
         format: Export format: 'HtmlDark', 'HtmlLight', 'Json', 'Csv', 'PlainText'
         after_date: Export messages after this date (ISO format)
@@ -60,9 +66,14 @@ async def discord_export_channel(
     Example:
         >>> result = await discord_export_channel(
         ...     channel_id="123456789",
-        ...     token="YOUR_TOKEN",
         ...     format="Json"
         ... )
+    
+    Note:
+        Token can be provided via:
+        1. Direct token parameter
+        2. DISCORD_TOKEN environment variable
+        3. Future: Credential manager integration
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -71,6 +82,9 @@ async def discord_export_channel(
                 "error": "Discord wrapper not available. Ensure discord_wrapper.py is installed.",
                 "tool": "discord_export_channel"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         # Validate inputs
         if not channel_id or not channel_id.strip():
@@ -120,7 +134,7 @@ async def discord_export_channel(
 
 async def discord_export_guild(
     guild_id: str,
-    token: str,
+    token: Optional[str] = None,
     output_dir: Optional[str] = None,
     format: str = "Json",
     include_threads: str = "none",
@@ -131,27 +145,17 @@ async def discord_export_guild(
     
     Args:
         guild_id: Discord server (guild) ID to export
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         output_dir: Output directory (auto-generated if not provided)
         format: Export format: 'HtmlDark', 'HtmlLight', 'Json', 'Csv', 'PlainText'
         include_threads: Thread inclusion: 'none', 'active', or 'all'
         include_vc: Include voice channels in export
         
     Returns:
-        Dict containing export results:
-            - status: 'success' or 'error'
-            - guild_id: Guild ID
-            - output_dir: Output directory path
-            - channels_exported: Number of channels exported
-            - export_time: Total export time
-            - error: Error message if failed
+        Dict containing export results
     
-    Example:
-        >>> result = await discord_export_guild(
-        ...     guild_id="987654321",
-        ...     token="YOUR_TOKEN",
-        ...     include_threads="all"
-        ... )
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -160,6 +164,9 @@ async def discord_export_guild(
                 "error": "Discord wrapper not available",
                 "tool": "discord_export_guild"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         # Validate inputs
         if not guild_id or not guild_id.strip():
@@ -212,7 +219,7 @@ async def discord_export_guild(
 
 
 async def discord_export_all_channels(
-    token: str,
+    token: Optional[str] = None,
     output_dir: Optional[str] = None,
     format: str = "Json",
     include_dm: bool = True
@@ -221,24 +228,16 @@ async def discord_export_all_channels(
     Export all accessible Discord channels and DMs.
     
     Args:
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         output_dir: Output directory (auto-generated if not provided)
         format: Export format: 'HtmlDark', 'HtmlLight', 'Json', 'Csv', 'PlainText'
         include_dm: Include direct messages in export
         
     Returns:
-        Dict containing export results:
-            - status: 'success' or 'error'
-            - output_dir: Output directory path
-            - files_exported: Number of files exported
-            - export_time: Total export time
-            - error: Error message if failed
+        Dict containing export results
     
-    Example:
-        >>> result = await discord_export_all_channels(
-        ...     token="YOUR_TOKEN",
-        ...     format="Json"
-        ... )
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -247,6 +246,9 @@ async def discord_export_all_channels(
                 "error": "Discord wrapper not available",
                 "tool": "discord_export_all_channels"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {
@@ -279,7 +281,7 @@ async def discord_export_all_channels(
 
 
 async def discord_export_dm_channels(
-    token: str,
+    token: Optional[str] = None,
     output_dir: Optional[str] = None,
     format: str = "Json"
 ) -> Dict[str, Any]:
@@ -290,17 +292,15 @@ async def discord_export_dm_channels(
     discord_export_all_channels with include_dm=True and excluding guilds.
     
     Args:
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         output_dir: Output directory (auto-generated if not provided)
         format: Export format: 'HtmlDark', 'HtmlLight', 'Json', 'Csv', 'PlainText'
         
     Returns:
         Dict containing export results
     
-    Example:
-        >>> result = await discord_export_dm_channels(
-        ...     token="YOUR_TOKEN"
-        ... )
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -309,6 +309,9 @@ async def discord_export_dm_channels(
                 "error": "Discord wrapper not available",
                 "tool": "discord_export_dm_channels"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {

@@ -3,8 +3,13 @@
 Discord listing tools for the MCP server.
 
 This tool provides Discord server, channel, and DM listing capabilities.
+
+Supports secure token management via:
+- Direct token parameter
+- DISCORD_TOKEN environment variable
 """
 import asyncio
+import os
 from typing import Dict, Any, Optional
 
 from ipfs_datasets_py.mcp_server.logger import logger
@@ -18,12 +23,12 @@ except ImportError:
     logger.warning("Discord wrapper not available")
 
 
-async def discord_list_guilds(token: str) -> Dict[str, Any]:
+async def discord_list_guilds(token: Optional[str] = None) -> Dict[str, Any]:
     """
     List all accessible Discord servers (guilds).
     
     Args:
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         
     Returns:
         Dict containing:
@@ -33,9 +38,12 @@ async def discord_list_guilds(token: str) -> Dict[str, Any]:
             - error: Error message if failed
     
     Example:
-        >>> result = await discord_list_guilds(token="YOUR_TOKEN")
+        >>> result = await discord_list_guilds()
         >>> for guild in result['guilds']:
         ...     print(f"{guild['id']}: {guild['name']}")
+    
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -44,6 +52,9 @@ async def discord_list_guilds(token: str) -> Dict[str, Any]:
                 "error": "Discord wrapper not available",
                 "tool": "discord_list_guilds"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {
@@ -75,30 +86,20 @@ async def discord_list_guilds(token: str) -> Dict[str, Any]:
 
 async def discord_list_channels(
     guild_id: str,
-    token: str
+    token: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     List all channels in a specific Discord server (guild).
     
     Args:
         guild_id: Discord server (guild) ID
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         
     Returns:
-        Dict containing:
-            - status: 'success' or 'error'
-            - guild_id: Guild ID
-            - channels: List of channel information with id, category, and name
-            - count: Number of channels
-            - error: Error message if failed
+        Dict containing channel list
     
-    Example:
-        >>> result = await discord_list_channels(
-        ...     guild_id="987654321",
-        ...     token="YOUR_TOKEN"
-        ... )
-        >>> for channel in result['channels']:
-        ...     print(f"{channel['name']} (Category: {channel['category']})")
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -107,6 +108,9 @@ async def discord_list_channels(
                 "error": "Discord wrapper not available",
                 "tool": "discord_list_channels"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not guild_id or not guild_id.strip():
             return {
@@ -145,24 +149,18 @@ async def discord_list_channels(
         }
 
 
-async def discord_list_dm_channels(token: str) -> Dict[str, Any]:
+async def discord_list_dm_channels(token: Optional[str] = None) -> Dict[str, Any]:
     """
     List all direct message channels.
     
     Args:
-        token: Discord bot or user token for authentication
+        token: Discord bot or user token. If not provided, uses DISCORD_TOKEN environment variable.
         
     Returns:
-        Dict containing:
-            - status: 'success' or 'error'
-            - channels: List of DM channel information with id and name
-            - count: Number of DM channels
-            - error: Error message if failed
+        Dict containing DM channel list
     
-    Example:
-        >>> result = await discord_list_dm_channels(token="YOUR_TOKEN")
-        >>> for dm in result['channels']:
-        ...     print(f"{dm['id']}: {dm['name']}")
+    Note:
+        Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
         if not DISCORD_AVAILABLE:
@@ -171,6 +169,9 @@ async def discord_list_dm_channels(token: str) -> Dict[str, Any]:
                 "error": "Discord wrapper not available",
                 "tool": "discord_list_dm_channels"
             }
+        
+        # Use environment variable if token not provided
+        token = token or os.environ.get('DISCORD_TOKEN')
         
         if not token or not token.strip():
             return {
