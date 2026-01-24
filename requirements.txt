@@ -69,6 +69,9 @@ toml>=0.10.2
 # Provides `mcp.server.FastMCP` and `mcp.types` used by the MCP server
 mcp>=1.2.0
 
+# Async compatibility (asyncio/trio via anyio)
+anyio>=4.0.0
+
 # System monitoring utilities
 psutil>=5.9.0
 

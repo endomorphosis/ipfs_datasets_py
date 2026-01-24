@@ -18,6 +18,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 from flask import Flask, request, jsonify
 
+from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
+
 # Local imports
 from ipfs_datasets_py.mcp_server.configs import Configs, configs
 from ipfs_datasets_py.mcp_server.logger import logger

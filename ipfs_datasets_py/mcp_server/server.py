@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import anyio
 import importlib
+import inspect
 import os
 from pathlib import Path
 import sys
@@ -27,6 +28,8 @@ except ImportError:
 
 from .configs import Configs, configs
 from .logger import logger
+
+from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 
 # Import error reporting
 try:
@@ -456,7 +459,7 @@ class IPFSDatasetsMCPServer:
         async def async_wrapper(*args, **kwargs):
             try:
                 # If the function is async, await it
-                if asyncio.iscoroutinefunction(tool_func):
+                if inspect.iscoroutinefunction(tool_func):
                     return await tool_func(*args, **kwargs)
                 else:
                     return tool_func(*args, **kwargs)
@@ -495,7 +498,7 @@ class IPFSDatasetsMCPServer:
                 raise
         
         # Return appropriate wrapper based on whether function is async
-        if asyncio.iscoroutinefunction(tool_func):
+        if inspect.iscoroutinefunction(tool_func):
             return async_wrapper
         else:
             return sync_wrapper

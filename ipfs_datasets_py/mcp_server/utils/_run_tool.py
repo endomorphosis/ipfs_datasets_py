@@ -1,4 +1,5 @@
 import anyio
+import inspect
 import os
 import shlex
 import subprocess as sub
@@ -11,6 +12,8 @@ from ..configs import configs, Configs
 from ..logger import mcp_logger
 from ._return_text_content import return_text_content
 from ._return_tool_call_results import return_tool_call_results, CallToolResultType
+
+from ipfs_datasets_py.utils.anyio_compat import AsyncContextError, run as run_anyio
 
 
 class _RunTool:
@@ -48,8 +51,19 @@ class _RunTool:
                 else:
                     # If the event loop is not running, use asyncio.run
                     result = anyio.run(func(*args, **kwargs))
+            if inspect.iscoroutinefunction(func):
+                try:
+                    result = run_anyio(func(*args, **kwargs))
+                except AsyncContextError as e:
+                    return self.result(e)
             else:
                 result = func(*args, **kwargs)
+                # Support functions that return awaitables without being declared async
+                if hasattr(result, "__await__"):
+                    try:
+                        result = run_anyio(result)
+                    except AsyncContextError as e:
+                        return self.result(e)
             return self.result(f"\n'{func.__qualname__}' output: {result}")
         except Exception as e:
             mcp_logger.exception(f"Exception occurred while running function tool '{func.__name__}': {e}")
