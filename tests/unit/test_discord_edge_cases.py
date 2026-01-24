@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch, MagicMock
 import anyio
 
 from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
-from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper, DISCORD_AVAILABLE
+from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper
 
 
 class TestInputValidationEdgeCases:
@@ -29,8 +29,6 @@ class TestInputValidationEdgeCases:
         WHEN: Wrapper is initialized
         THEN: Should treat as no token
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="", auto_install=False)
         
@@ -43,8 +41,6 @@ class TestInputValidationEdgeCases:
         WHEN: Wrapper validates token
         THEN: Should reject as invalid
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="   \t\n  ", auto_install=False)
         
@@ -57,8 +53,6 @@ class TestInputValidationEdgeCases:
         WHEN: Export is configured
         THEN: Should handle both appropriately
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         with tempfile.TemporaryDirectory() as tmpdir:
             wrapper = DiscordWrapper(
@@ -78,14 +72,13 @@ class TestInputValidationEdgeCases:
             )
             assert wrapper2.default_output_dir is not None
     
-    def test_invalid_channel_id_format(self):
+    @pytest.mark.anyio
+    async def test_invalid_channel_id_format(self):
         """
         GIVEN: Various invalid channel ID formats
         WHEN: Export is attempted
         THEN: Should detect invalid format before CLI call
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -95,10 +88,10 @@ class TestInputValidationEdgeCases:
         for invalid_id in invalid_ids:
             with patch.object(wrapper.exporter, 'execute') as mock_execute:
                 # Should either validate before calling or handle error
-                result = asyncio.run(wrapper.export_channel(
+                result = await wrapper.export_channel(
                     channel_id=invalid_id,
                     token="test"
-                ))
+                )
                 
                 # Should return error (validation or from CLI)
                 if mock_execute.called:
@@ -114,8 +107,6 @@ class TestInputValidationEdgeCases:
         WHEN: Output path is set
         THEN: Should handle appropriately
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         # Test paths that might cause issues
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -133,14 +124,13 @@ class TestInputValidationEdgeCases:
             
             assert wrapper.default_output_dir.exists()
     
-    def test_very_long_filter_text(self):
+    @pytest.mark.anyio
+    async def test_very_long_filter_text(self):
         """
         GIVEN: Very long filter text
         WHEN: Filter is applied
         THEN: Should not cause issues
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -154,11 +144,11 @@ class TestInputValidationEdgeCases:
         mock_result.stderr = ""
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-            result = asyncio.run(wrapper.export_channel(
+            result = await wrapper.export_channel(
                 channel_id="123456789",
                 token="test",
                 filter_text=long_filter
-            ))
+            )
             
             # Should complete (success or proper error)
             assert 'status' in result
@@ -174,8 +164,6 @@ class TestErrorHandlingScenarios:
         WHEN: Operation is attempted
         THEN: Should return clear error message
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         with tempfile.TemporaryDirectory() as tmpdir:
             wrapper = DiscordWrapper(
@@ -200,8 +188,6 @@ class TestErrorHandlingScenarios:
         WHEN: Timeout occurs
         THEN: Should return timeout error
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -219,8 +205,6 @@ class TestErrorHandlingScenarios:
         WHEN: Writing to protected location
         THEN: Should return permission error
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -247,8 +231,6 @@ class TestErrorHandlingScenarios:
         WHEN: Export is attempted
         THEN: Should return disk space error
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -274,8 +256,6 @@ class TestErrorHandlingScenarios:
         WHEN: Export is attempted
         THEN: Should return rate limit error
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -298,14 +278,13 @@ class TestErrorHandlingScenarios:
 class TestBoundaryConditions:
     """Test boundary conditions and limits."""
     
-    def test_maximum_date_range(self):
+    @pytest.mark.anyio
+    async def test_maximum_date_range(self):
         """
         GIVEN: Very large date range
         WHEN: Export is configured
         THEN: Should handle large ranges
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -316,26 +295,25 @@ class TestBoundaryConditions:
         mock_result.stderr = ""
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result) as mock_execute:
-            result = asyncio.run(wrapper.export_channel(
+            result = await wrapper.export_channel(
                 channel_id="123456789",
                 token="test",
                 after="1990-01-01",
                 before="2099-12-31"
-            ))
+            )
             
             # Should pass dates to CLI
             assert mock_execute.called
             call_args = mock_execute.call_args[0][0]
             assert '--after' in call_args or '-a' in ' '.join(call_args)
     
-    def test_zero_partition_limit(self):
+    @pytest.mark.anyio
+    async def test_zero_partition_limit(self):
         """
         GIVEN: Zero or negative partition limit
         WHEN: Export is configured
         THEN: Should handle invalid partition
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -348,23 +326,22 @@ class TestBoundaryConditions:
             
             with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
                 # Should either reject or pass to CLI to reject
-                result = asyncio.run(wrapper.export_channel(
+                result = await wrapper.export_channel(
                     channel_id="123456789",
                     token="test",
                     partition_limit=invalid_limit
-                ))
+                )
                 
                 # Result should be present
                 assert 'status' in result
     
-    def test_empty_guild_list(self):
+    @pytest.mark.anyio
+    async def test_empty_guild_list(self):
         """
         GIVEN: Account with no guilds
         WHEN: list_guilds is called
         THEN: Should return empty list (not error)
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -375,20 +352,19 @@ class TestBoundaryConditions:
         mock_result.stderr = ""
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-            result = asyncio.run(wrapper.list_guilds(token="test"))
+            result = await wrapper.list_guilds(token="test")
             
             assert result['status'] == 'success'
             assert result['count'] == 0
             assert len(result['guilds']) == 0
     
-    def test_very_large_guild_list(self):
+    @pytest.mark.anyio
+    async def test_very_large_guild_list(self):
         """
         GIVEN: Account with many guilds
         WHEN: list_guilds is called
         THEN: Should handle large lists
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -400,7 +376,7 @@ class TestBoundaryConditions:
         mock_result.stderr = ""
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-            result = asyncio.run(wrapper.list_guilds(token="test"))
+            result = await wrapper.list_guilds(token="test")
             
             assert result['status'] == 'success'
             assert result['count'] == 100
@@ -431,14 +407,13 @@ class TestUserErrorDetection:
                 # This is likely a user error
                 assert True  # Mark as user error case
     
-    def test_channel_id_not_found_detection(self):
+    @pytest.mark.anyio
+    async def test_channel_id_not_found_detection(self):
         """
         GIVEN: Non-existent channel ID
         WHEN: Export is attempted
         THEN: Error should indicate channel not found (user error)
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -449,23 +424,22 @@ class TestUserErrorDetection:
         mock_result.stderr = "Channel not found or not accessible"
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-            result = asyncio.run(wrapper.export_channel(
+            result = await wrapper.export_channel(
                 channel_id="999999999999999999",
                 token="test"
-            ))
+            )
             
             assert result['status'] == 'error'
             # Error should mention channel
             assert 'channel' in result.get('error', '').lower()
     
-    def test_insufficient_permissions_detection(self):
+    @pytest.mark.anyio
+    async def test_insufficient_permissions_detection(self):
         """
         GIVEN: Token without required permissions
         WHEN: Operation is attempted
         THEN: Error should indicate permission issue (user error)
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -476,22 +450,21 @@ class TestUserErrorDetection:
         mock_result.stderr = "Missing required permissions"
         
         with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-            result = asyncio.run(wrapper.export_channel(
+            result = await wrapper.export_channel(
                 channel_id="123456789",
                 token="test"
-            ))
+            )
             
             assert result['status'] == 'error'
             assert 'permission' in result.get('error', '').lower()
     
-    def test_invalid_date_format_detection(self):
+    @pytest.mark.anyio
+    async def test_invalid_date_format_detection(self):
         """
         GIVEN: Invalid date format
         WHEN: Export with date filter is attempted
         THEN: Should detect invalid format (user error)
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -505,11 +478,11 @@ class TestUserErrorDetection:
             mock_result.stderr = f"Invalid date format: {invalid_date}"
             
             with patch.object(wrapper.exporter, 'execute', return_value=mock_result):
-                result = asyncio.run(wrapper.export_channel(
+                result = await wrapper.export_channel(
                     channel_id="123456789",
                     token="test",
                     after=invalid_date
-                ))
+                )
                 
                 # Should indicate user error (invalid format)
                 assert result['status'] == 'error'
@@ -525,8 +498,6 @@ class TestExceptionHandling:
         WHEN: Output is parsed
         THEN: Should handle gracefully without crashing
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -550,8 +521,6 @@ class TestExceptionHandling:
         WHEN: Command is run
         THEN: Should detect crash and return error
         """
-        if not DISCORD_AVAILABLE:
-            pytest.skip("Discord wrapper not available")
         
         wrapper = DiscordWrapper(token="test_token", auto_install=False)
         
@@ -565,7 +534,7 @@ class TestExceptionHandling:
             result = await wrapper.export_channel(
                 channel_id="123456789",
                 token="test"
-            ))
+            )
             
             assert result['status'] == 'error'
             assert 'error' in result
