@@ -132,10 +132,20 @@ class RealTimeMonitor:
         self.is_monitoring = False
     
     async def start_monitoring(self):
-        """Start real-time monitoring"""
+        """Start real-time monitoring
+        
+        Note: This method starts a background task. In anyio, background tasks
+        should be managed via task groups by the caller. For now, this uses
+        the deprecated pattern and should be refactored to accept a task group.
+        
+        Recommended usage:
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(self._monitoring_loop)
+        """
         self.is_monitoring = True
-        # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._monitoring_loop())
+        # FIXME: Background task pattern - caller should manage via task group
+        import asyncio
+        asyncio.create_task(self._monitoring_loop())
         logger.info("Real-time monitoring started")
     
     async def stop_monitoring(self):

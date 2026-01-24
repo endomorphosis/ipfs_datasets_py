@@ -222,9 +222,7 @@ class SearchPatentsByKeywordTool(ClaudeMCPTool):
             from .patent_scraper import search_patents_by_keyword
             
             # Run search in executor
-            loop = asyncio.get_event_loop()
-            patents = await loop.run_in_executor(
-                None,
+            patents = await anyio.to_thread.run_sync(
                 search_patents_by_keyword,
                 parameters['keywords'],
                 parameters.get('limit', 100),
@@ -303,9 +301,7 @@ class SearchPatentsByInventorTool(ClaudeMCPTool):
             from .patent_scraper import search_patents_by_inventor
             
             # Run search in executor
-            loop = asyncio.get_event_loop()
-            patents = await loop.run_in_executor(
-                None,
+            patents = await anyio.to_thread.run_sync(
                 search_patents_by_inventor,
                 parameters['inventor_name'],
                 parameters.get('limit', 100),
@@ -384,9 +380,7 @@ class SearchPatentsByAssigneeTool(ClaudeMCPTool):
             from .patent_scraper import search_patents_by_assignee
             
             # Run search in executor
-            loop = asyncio.get_event_loop()
-            patents = await loop.run_in_executor(
-                None,
+            patents = await anyio.to_thread.run_sync(
                 search_patents_by_assignee,
                 parameters['assignee_name'],
                 parameters.get('limit', 100),
