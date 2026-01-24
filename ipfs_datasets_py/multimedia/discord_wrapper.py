@@ -735,6 +735,135 @@ class DiscordWrapper:
             List of export information dictionaries
         """
         return list(self.exports.values())
+    
+    async def convert_export(
+        self,
+        input_path: str,
+        output_path: str,
+        to_format: Literal['json', 'jsonl', 'jsonld', 'jsonld-logic', 'parquet', 'ipld', 'car', 'csv'] = 'jsonl',
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Convert a Discord export to a different format.
+        
+        This method converts Discord chat exports (typically in JSON format from 
+        DiscordChatExporter) to various data formats supported by ipfs_datasets_py,
+        including JSONL, JSON-LD, Parquet, IPLD, and CAR.
+        
+        Args:
+            input_path: Path to the input export file (typically JSON)
+            output_path: Path for the converted output file
+            to_format: Target format for conversion. Supported formats:
+                - 'json': Standard JSON
+                - 'jsonl': JSON Lines (newline-delimited JSON)
+                - 'jsonld': JSON-LD with semantic context
+                - 'jsonld-logic': JSON-LD with formal logic annotations
+                - 'parquet': Apache Parquet columnar format
+                - 'ipld': InterPlanetary Linked Data
+                - 'car': Content Addressable aRchive
+                - 'csv': Comma-separated values
+            **kwargs: Additional format-specific options:
+                - context: Custom JSON-LD @context (for jsonld/jsonld-logic)
+                - compression: Compression type for Parquet ('snappy', 'gzip')
+                - indent: JSON indentation level
+        
+        Returns:
+            Dict containing conversion status and metadata:
+                - status: 'success' or 'error'
+                - input_path: Source file path
+                - output_path: Destination file path
+                - from_format: Detected source format
+                - to_format: Target format
+                - message: Status message
+                - file_size: Output file size in bytes (if successful)
+        
+        Raises:
+            FileNotFoundError: If input file doesn't exist
+            ImportError: If required dependencies for target format aren't available
+            ValueError: If format conversion fails
+        
+        Example:
+            >>> # Export Discord channel as JSON
+            >>> result = await wrapper.export_channel("123456", output_path="chat.json")
+            >>> 
+            >>> # Convert to JSONL for streaming processing
+            >>> await wrapper.convert_export("chat.json", "chat.jsonl", to_format="jsonl")
+            >>> 
+            >>> # Convert to Parquet for analytics
+            >>> await wrapper.convert_export("chat.json", "chat.parquet", to_format="parquet")
+            >>> 
+            >>> # Convert to JSON-LD with semantic annotations
+            >>> await wrapper.convert_export(
+            ...     "chat.json",
+            ...     "chat.json-ld",
+            ...     to_format="jsonld",
+            ...     context={"discord": "https://discord.com/developers/docs/"}
+            ... )
+        """
+        try:
+            from ipfs_datasets_py.utils.data_format_converter import get_converter
+            
+            # Check input file exists
+            if not os.path.exists(input_path):
+                return {
+                    'status': 'error',
+                    'input_path': input_path,
+                    'output_path': output_path,
+                    'error': f"Input file not found: {input_path}"
+                }
+            
+            logger.info(f"Converting {input_path} to {to_format} format")
+            
+            # Get converter instance
+            converter = get_converter()
+            
+            # Discord exports are typically in JSON format
+            from_format = 'json'
+            
+            # Perform conversion
+            output_file = converter.convert_file(
+                input_path,
+                output_path,
+                from_format=from_format,
+                to_format=to_format,
+                **kwargs
+            )
+            
+            # Get file size
+            file_size = os.path.getsize(output_file)
+            
+            return {
+                'status': 'success',
+                'input_path': input_path,
+                'output_path': output_file,
+                'from_format': from_format,
+                'to_format': to_format,
+                'message': f'Successfully converted to {to_format} format',
+                'file_size': file_size
+            }
+        
+        except ImportError as e:
+            error_msg = f"Missing dependency for {to_format} conversion: {str(e)}"
+            logger.error(error_msg)
+            return {
+                'status': 'error',
+                'input_path': input_path,
+                'output_path': output_path,
+                'from_format': 'json',
+                'to_format': to_format,
+                'error': error_msg
+            }
+        except Exception as e:
+            error_msg = f"Conversion failed: {str(e)}"
+            logger.error(error_msg)
+            return {
+                'status': 'error',
+                'input_path': input_path,
+                'output_path': output_path,
+                'from_format': 'json',
+                'to_format': to_format,
+                'error': error_msg
+            }
 
 
 # Convenience function

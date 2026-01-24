@@ -117,6 +117,32 @@ def create_parser() -> argparse.ArgumentParser:
     install_parser = subparsers.add_parser('install', help='Install DiscordChatExporter')
     install_parser.add_argument('--force', action='store_true', help='Force reinstallation')
     
+    # Convert export command
+    convert_parser = subparsers.add_parser('convert', help='Convert Discord export to different format')
+    convert_parser.add_argument('input', help='Input export file path')
+    convert_parser.add_argument('output', help='Output file path')
+    convert_parser.add_argument('--to-format', '-t', required=True,
+                               choices=['json', 'jsonl', 'jsonld', 'jsonld-logic', 'parquet', 'ipld', 'car', 'csv'],
+                               help='Target format for conversion')
+    convert_parser.add_argument('--compression', '-c', 
+                               choices=['snappy', 'gzip', 'brotli'],
+                               help='Compression type (for Parquet)')
+    convert_parser.add_argument('--context', help='JSON-LD context (JSON string or file path)')
+    
+    # Batch convert command
+    batch_convert_parser = subparsers.add_parser('batch-convert', 
+                                                 help='Batch convert Discord exports')
+    batch_convert_parser.add_argument('input_dir', help='Input directory with export files')
+    batch_convert_parser.add_argument('output_dir', help='Output directory')
+    batch_convert_parser.add_argument('--to-format', '-t', required=True,
+                                     choices=['json', 'jsonl', 'jsonld', 'jsonld-logic', 'parquet', 'ipld', 'car', 'csv'],
+                                     help='Target format for conversion')
+    batch_convert_parser.add_argument('--pattern', '-p', default='*.json',
+                                     help='File pattern to match (default: *.json)')
+    batch_convert_parser.add_argument('--compression', '-c',
+                                     choices=['snappy', 'gzip', 'brotli'],
+                                     help='Compression type (for Parquet)')
+    
     return parser
 
 
@@ -472,6 +498,95 @@ def cmd_install(args) -> int:
         return 1
 
 
+async def cmd_convert(args) -> int:
+    """Execute convert command."""
+    try:
+        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_convert_export
+        
+        # Handle context parameter
+        context = None
+        if args.context:
+            if os.path.exists(args.context):
+                # Load from file
+                with open(args.context, 'r') as f:
+                    context = json.load(f)
+            else:
+                # Parse as JSON string
+                context = json.loads(args.context)
+        
+        # Prepare kwargs
+        kwargs = {}
+        if args.compression:
+            kwargs['compression'] = args.compression
+        if context:
+            kwargs['context'] = context
+        
+        print(f"Converting {args.input} to {args.to_format} format...")
+        
+        result = await discord_convert_export(
+            input_path=args.input,
+            output_path=args.output,
+            to_format=args.to_format,
+            **kwargs
+        )
+        
+        if result['status'] == 'success':
+            file_size_mb = result['file_size'] / (1024 * 1024)
+            print(f"✓ Conversion successful!")
+            print(f"  Input: {result['input_path']}")
+            print(f"  Output: {result['output_path']}")
+            print(f"  Format: {result['from_format']} → {result['to_format']}")
+            print(f"  Size: {file_size_mb:.2f} MB")
+            return 0
+        else:
+            print(f"✗ Conversion failed: {result.get('error')}", file=sys.stderr)
+            return 1
+            
+    except Exception as e:
+        print(f"✗ Error converting: {e}", file=sys.stderr)
+        return 1
+
+
+async def cmd_batch_convert(args) -> int:
+    """Execute batch convert command."""
+    try:
+        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_batch_convert_exports
+        
+        # Prepare kwargs
+        kwargs = {}
+        if args.compression:
+            kwargs['compression'] = args.compression
+        
+        print(f"Batch converting files in {args.input_dir}...")
+        
+        result = await discord_batch_convert_exports(
+            input_dir=args.input_dir,
+            output_dir=args.output_dir,
+            to_format=args.to_format,
+            file_pattern=args.pattern,
+            **kwargs
+        )
+        
+        if result['status'] in ['success', 'partial']:
+            print(f"✓ Batch conversion completed!")
+            print(f"  Total files: {result['total_files']}")
+            print(f"  Successful: {result['successful']}")
+            print(f"  Failed: {result['failed']}")
+            
+            if result['failed'] > 0:
+                print(f"\n  ⚠ Some conversions failed. Check output for details.")
+                return 2 if result['status'] == 'partial' else 1
+            
+            return 0
+        else:
+            print(f"✗ Batch conversion failed: {result.get('error')}", file=sys.stderr)
+            return 1
+            
+    except Exception as e:
+        print(f"✗ Error in batch conversion: {e}", file=sys.stderr)
+        return 1
+
+
 def main(argv: Optional[list] = None) -> int:
     """Main entry point for Discord CLI."""
     parser = create_parser()
@@ -498,6 +613,8 @@ def main(argv: Optional[list] = None) -> int:
         'export-all': cmd_export_all,
         'analyze': cmd_analyze,
         'analyze-export': cmd_analyze_export,
+        'convert': cmd_convert,
+        'batch-convert': cmd_batch_convert,
     }
     
     handler = async_commands.get(args.command)

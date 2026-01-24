@@ -1,8 +1,8 @@
 """
 Discord Tools for MCP Server
 
-This module provides tools for Discord data ingestion, export, and analysis
-via the Model Context Protocol (MCP) server.
+This module provides tools for Discord data ingestion, export, analysis,
+and format conversion via the Model Context Protocol (MCP) server.
 """
 
 from .discord_export import (
@@ -22,6 +22,10 @@ from .discord_analyze import (
     discord_analyze_guild,
     discord_analyze_export
 )
+from .discord_convert import (
+    discord_convert_export,
+    discord_batch_convert_exports
+)
 
 __all__ = [
     # Export tools
@@ -40,4 +44,8 @@ __all__ = [
     'discord_analyze_channel',
     'discord_analyze_guild',
     'discord_analyze_export',
+    
+    # Conversion tools
+    'discord_convert_export',
+    'discord_batch_convert_exports',
 ]
