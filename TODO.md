@@ -6,6 +6,11 @@
 ## Project-Level Tasks
 
 ### Completed ✅
+- [x] **Installer validation fixes** (2026-01-24)
+  - [x] Added `anyio` to quick setup and CLI install profiles
+  - [x] Ran CLI checks with the active interpreter to avoid missing venv deps
+  - [x] Aligned `fsspec` upper bound with `datasets` to fix `pip check`
+  - [x] Prevented full profile installs from aborting on `KeyboardInterrupt`
 - [x] **Worker 10 Assignment**: Split master_todo_list.md into separate TODO.md files
   - [x] Analyzed 2.4MB master_todo_list.md structure  
   - [x] Identified 15 target subdirectories (excluding mcp_server)

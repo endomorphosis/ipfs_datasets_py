@@ -31,7 +31,7 @@ def install_profile(profile_name):
         'cli': [
             NUMPY_SPEC, 'pandas>=1.5.0', 'requests>=2.25.0',
             'pyyaml>=6.0.0', 'tqdm>=4.60.0', 'psutil>=5.9.0',
-            'pydantic>=2.0.0', 'jsonschema>=4.0.0'
+            'anyio>=4.0.0', 'pydantic>=2.0.0', 'jsonschema>=4.0.0'
         ] + ([PYARROW_SPEC] if PYARROW_SPEC else []),
         'pdf': [
             NUMPY_SPEC, 'pandas>=1.5.0', 'pymupdf>=1.24.0',

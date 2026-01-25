@@ -26,6 +26,8 @@ from passlib.context import CryptContext
 from pydantic import BaseModel, Field
 import uvicorn
 
+logger = logging.getLogger(__name__)
+
 # Import our modules
 try:
     from .embeddings.core import IPFSEmbeddings
@@ -50,8 +52,6 @@ except ImportError:
         from fastapi_config import FastAPISettings
     except ImportError as e:
         logger.warning(f"Some imports failed, using mock implementations: {e}")
-
-logger = logging.getLogger(__name__)
 
 # Load configuration
 settings = FastAPISettings()

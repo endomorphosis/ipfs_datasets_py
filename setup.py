@@ -37,7 +37,7 @@ setup(
         'ipfsspec<0.6.0',
         "duckdb",
         "pyarrow>=10.0.0; python_version < '3.14'",
-        "fsspec>=2023.1.0,<=2025.10.0",
+        "fsspec>=2023.1.0,<=2024.6.1",
         "datasets>=2.10.0,<3.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
 
@@ -58,6 +58,7 @@ setup(
         # Async compatibility (anyio for trio/asyncio interop)
         "anyio>=4.0.0",
         "trio>=0.27.0",
+            'pydantic-settings>=2.0.0',
     ],
     extras_require={
         # Optional but recommended dependencies

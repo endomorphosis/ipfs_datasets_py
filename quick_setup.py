@@ -133,6 +133,7 @@ def install_core_dependencies(logger):
         'pyyaml>=6.0.0',
         'tqdm>=4.60.0',
         'psutil>=5.9.0',
+        'anyio>=4.0.0',
         'pydantic>=2.0.0',
         'jsonschema>=4.0.0',
     ]
@@ -153,7 +154,7 @@ def install_core_dependencies(logger):
     # Additional packages that many tools need
     enhanced_packages = [
         'datasets>=2.10.0,<3.0.0',
-        'fsspec>=2023.1.0,<=2025.10.0',
+        'fsspec>=2023.1.0,<=2024.6.1',
         'huggingface-hub>=0.34.0,<1.0.0',
         'networkx>=3.1',
         'beautifulsoup4>=4.12.0',
@@ -259,7 +260,7 @@ def install_profile(profile_name):
         'cli': [
             NUMPY_SPEC, 'pandas>=1.5.0', 'requests>=2.25.0',
             'pyyaml>=6.0.0', 'tqdm>=4.60.0', 'psutil>=5.9.0',
-            'pydantic>=2.0.0', 'jsonschema>=4.0.0'
+            'anyio>=4.0.0', 'pydantic>=2.0.0', 'jsonschema>=4.0.0'
         ] + ([PYARROW_SPEC] if PYARROW_SPEC else []),
         'pdf': [
             NUMPY_SPEC, 'pandas>=1.5.0', 'pymupdf>=1.24.0',
@@ -337,8 +338,8 @@ def test_cli_functionality(logger):
     logger.info("\n🧪 Testing CLI functionality...")
     
     tests = [
-        (['python', 'ipfs_datasets_cli.py', '--help'], "Basic CLI help"),
-        (['python', 'enhanced_cli.py', '--help'], "Enhanced CLI help"),
+        ([sys.executable, 'ipfs_datasets_cli.py', '--help'], "Basic CLI help"),
+        ([sys.executable, 'enhanced_cli.py', '--help'], "Enhanced CLI help"),
     ]
     
     success_count = 0

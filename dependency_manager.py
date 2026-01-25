@@ -361,6 +361,9 @@ class InstallationManager:
             try:
                 success = self.installer.install_python_dependency(dep)
                 results[dep] = success
+            except KeyboardInterrupt:
+                logger.warning(f"Installation interrupted for {dep}; continuing")
+                results[dep] = False
             except Exception as e:
                 logger.error(f"Failed to install {dep}: {e}")
                 results[dep] = False

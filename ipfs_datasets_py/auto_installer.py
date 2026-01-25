@@ -193,6 +193,11 @@ class DependencyInstaller:
 
     def install_system_dependency(self, package_name: str) -> bool:
         """Install system-level dependency"""
+        if self._is_system_dependency_available(package_name):
+            if self.verbose:
+                logger.info(f"System dependency {package_name} already available")
+            return True
+
         # Skip system dependency installation in sandboxed environments
         if os.getenv('IPFS_INSTALL_SYSTEM_DEPS', 'true').lower() != 'true':
             if self.verbose:
@@ -250,10 +255,21 @@ class DependencyInstaller:
             if result.returncode == 0:
                 if self.verbose:
                     logger.info(f"Successfully installed {system_package}")
+                if self.system == 'windows':
+                    self._ensure_windows_dependency_on_path(package_name)
                 return True
             else:
+                if "Found an existing package already installed" in (result.stdout or ""):
+                    if self.verbose:
+                        logger.info(f"{system_package} already installed via winget")
+                    if self.system == 'windows':
+                        self._ensure_windows_dependency_on_path(package_name)
+                    return True
                 if self.verbose:
-                    logger.warning(f"Failed to install {system_package}: {result.stderr}")
+                    logger.warning(
+                        f"Failed to install {system_package} using {package_manager}: "
+                        f"rc={result.returncode} stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
+                    )
                 if package_manager == 'winget':
                     fallback_name = package_name if '.' in system_package else system_package
                     if self._command_exists('choco'):
@@ -265,6 +281,13 @@ class DependencyInstaller:
                             if self.verbose:
                                 logger.info(f"Successfully installed {fallback_name} with chocolatey")
                             return True
+                        if self.verbose:
+                            logger.warning(
+                                f"Chocolatey install failed for {fallback_name}: "
+                                f"rc={choco_result.returncode} stdout={choco_result.stdout.strip()} stderr={choco_result.stderr.strip()}"
+                            )
+                    elif self.verbose:
+                        logger.warning("Chocolatey not available for fallback install")
                     if self._command_exists('scoop'):
                         scoop_cmd = ['scoop', 'install', fallback_name]
                         if self.verbose:
@@ -274,6 +297,13 @@ class DependencyInstaller:
                             if self.verbose:
                                 logger.info(f"Successfully installed {fallback_name} with scoop")
                             return True
+                        if self.verbose:
+                            logger.warning(
+                                f"Scoop install failed for {fallback_name}: "
+                                f"rc={scoop_result.returncode} stdout={scoop_result.stdout.strip()} stderr={scoop_result.stderr.strip()}"
+                            )
+                    elif self.verbose:
+                        logger.warning("Scoop not available for fallback install")
                 return False
                 
         except subprocess.TimeoutExpired:
@@ -283,6 +313,164 @@ class DependencyInstaller:
         except Exception as e:
             if self.verbose:
                 logger.warning(f"Error installing {system_package}: {e}")
+            return False
+
+    def _is_system_dependency_available(self, package_name: str) -> bool:
+        """Check if a system dependency appears to be installed."""
+        checks = {
+            'ffmpeg': [['ffmpeg', '-version']],
+            'tesseract': [['tesseract', '--version']],
+            'poppler': [['pdftotext', '-v'], ['pdfinfo', '-v']],
+        }
+
+        if package_name not in checks:
+            return False
+
+        for cmd in checks[package_name]:
+            try:
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    return True
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+                continue
+
+        if self.system == 'windows':
+            try:
+                where_map = {
+                    'ffmpeg': ['ffmpeg'],
+                    'tesseract': ['tesseract'],
+                    'poppler': ['pdftotext', 'pdfinfo'],
+                }
+                for exe in where_map.get(package_name, []):
+                    result = subprocess.run(['where', exe], capture_output=True, text=True, timeout=5)
+                    if result.returncode == 0:
+                        return True
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+                pass
+
+        return False
+
+    def _ensure_windows_dependency_on_path(self, package_name: str) -> bool:
+        """Ensure Windows system dependency is available on PATH."""
+        if self.system != 'windows':
+            return False
+
+        bins = self._find_windows_dependency_bins(package_name)
+        if not bins:
+            if self.verbose:
+                logger.warning(f"Could not locate install path for {package_name}")
+            return False
+
+        return self._add_to_user_path(bins)
+
+    def _find_windows_dependency_bins(self, package_name: str) -> List[str]:
+        """Find candidate bin directories for Windows system dependencies."""
+        exe_map = {
+            'ffmpeg': ['ffmpeg.exe'],
+            'tesseract': ['tesseract.exe'],
+            'poppler': ['pdftotext.exe', 'pdfinfo.exe'],
+        }
+
+        exes = exe_map.get(package_name, [])
+        if not exes:
+            return []
+
+        found_dirs: List[str] = []
+
+        # First, check current PATH via `where`
+        for exe in exes:
+            try:
+                result = subprocess.run(['where', exe], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    for line in result.stdout.splitlines():
+                        line = line.strip()
+                        if line.lower().endswith(exe.lower()):
+                            found_dirs.append(str(Path(line).parent))
+            except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
+                continue
+
+        if found_dirs:
+            return sorted(set(found_dirs))
+
+        # Search common install locations
+        base_dirs = [
+            os.environ.get('ProgramFiles', r'C:\Program Files'),
+            os.environ.get('ProgramFiles(x86)', r'C:\Program Files (x86)'),
+            os.environ.get('LOCALAPPDATA'),
+        ]
+
+        candidates: List[Path] = []
+        for base in filter(None, base_dirs):
+            candidates.extend([
+                Path(base) / 'ffmpeg' / 'bin',
+                Path(base) / 'Gyan' / 'FFmpeg' / 'bin',
+                Path(base) / 'Tesseract-OCR',
+                Path(base) / 'Poppler' / 'bin',
+                Path(base) / 'poppler' / 'Library' / 'bin',
+                Path(base) / 'poppler' / 'bin',
+                Path(base) / 'Programs' / 'ffmpeg' / 'bin',
+                Path(base) / 'Programs' / 'Gyan' / 'FFmpeg' / 'bin',
+                Path(base) / 'Programs' / 'Poppler' / 'bin',
+                Path(base) / 'Programs' / 'Tesseract-OCR',
+            ])
+
+        for candidate in candidates:
+            if candidate and candidate.exists():
+                found_dirs.append(str(candidate))
+
+        # Search WinGet package cache for executables
+        winget_root = Path(os.environ.get('LOCALAPPDATA', '')) / 'Microsoft' / 'WinGet' / 'Packages'
+        if winget_root.exists():
+            for exe in exes:
+                try:
+                    for path in winget_root.rglob(exe):
+                        found_dirs.append(str(path.parent))
+                except Exception:
+                    continue
+
+        return sorted(set(found_dirs))
+
+    def _add_to_user_path(self, paths: List[str]) -> bool:
+        """Add paths to the current user PATH without admin rights."""
+        if not paths:
+            return False
+
+        try:
+            existing_user_path = os.environ.get('PATH', '')
+            try:
+                import winreg  # type: ignore
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment', 0, winreg.KEY_READ) as key:
+                    existing_user_path = winreg.QueryValueEx(key, 'Path')[0]
+            except Exception:
+                pass
+
+            current_paths = [p.strip() for p in existing_user_path.split(';') if p.strip()]
+            updated = False
+            for path in paths:
+                if path not in current_paths:
+                    current_paths.insert(0, path)
+                    updated = True
+
+            if not updated:
+                return True
+
+            new_user_path = ';'.join(current_paths)
+
+            try:
+                import winreg  # type: ignore
+                with winreg.OpenKey(winreg.HKEY_CURRENT_USER, 'Environment', 0, winreg.KEY_SET_VALUE) as key:
+                    winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_user_path)
+            except Exception:
+                # Fallback to setx if registry update fails
+                subprocess.run(['setx', 'PATH', new_user_path], capture_output=True, text=True, timeout=30)
+
+            os.environ['PATH'] = new_user_path
+            if self.verbose:
+                logger.info(f"Updated user PATH with: {paths}")
+            return True
+        except Exception as e:
+            if self.verbose:
+                logger.warning(f"Failed to update user PATH: {e}")
             return False
 
     def install_python_dependency(self, package_name: str, force_reinstall: bool = False) -> bool:
@@ -326,6 +514,10 @@ class DependencyInstaller:
                 
         except subprocess.TimeoutExpired:
             logger.warning(f"Timeout installing {package_spec}")
+            return False
+        except KeyboardInterrupt:
+            if self.verbose:
+                logger.warning(f"Installation interrupted for {package_spec}")
             return False
         except Exception as e:
             logger.warning(f"Error installing {package_spec}: {e}")
