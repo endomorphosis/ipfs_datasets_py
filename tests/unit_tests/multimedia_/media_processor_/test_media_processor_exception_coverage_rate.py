@@ -5,7 +5,9 @@ import pytest
 import os
 import anyio
 from urllib.error import URLError, HTTPError
-import psutil
+import pytest
+
+psutil = pytest.importorskip("psutil")
 import os
 
 

@@ -6,6 +6,10 @@ from pathlib import Path
 import anyio
 import pytest
 
+pytestmark = pytest.mark.anyio
+
+pytest.importorskip("reportlab")
+
 
 from ipfs_datasets_py.pdf_processing import (
     PDFProcessor,

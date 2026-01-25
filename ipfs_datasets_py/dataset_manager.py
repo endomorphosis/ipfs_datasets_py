@@ -5,8 +5,18 @@ This provides a basic DatasetManager class that the MCP tools can use
 for dataset operations.
 """
 import anyio
-from typing import Dict, Any, Optional, Union
-from datasets import Dataset, load_dataset
+from typing import Dict, Any, Optional, Union, Protocol, runtime_checkable
+
+try:
+    from datasets import Dataset, load_dataset  # type: ignore
+except Exception:  # pragma: no cover
+    Dataset = None  # type: ignore
+    load_dataset = None  # type: ignore
+
+
+@runtime_checkable
+class _DatasetLike(Protocol):
+    def __str__(self) -> str: ...
 
 class DatasetManager:
     """Simple dataset manager for MCP tools."""
@@ -20,21 +30,28 @@ class DatasetManager:
         if dataset_id in self._datasets:
             return self._datasets[dataset_id]
 
-        # Try to load from HuggingFace Hub
-        try:
-            hf_dataset = load_dataset(dataset_id, split='train')
-            managed = ManagedDataset(hf_dataset, dataset_id)
-            self._datasets[dataset_id] = managed
-            return managed
-        except Exception:
-            # Return a mock dataset for testing
-            mock_data = {"text": ["sample text"], "label": [0]}
-            mock_dataset = Dataset.from_dict(mock_data)
-            managed = ManagedDataset(mock_dataset, dataset_id)
-            self._datasets[dataset_id] = managed
-            return managed
+        # Try to load from HuggingFace Hub (optional dependency)
+        if load_dataset is not None:
+            try:
+                hf_dataset = load_dataset(dataset_id, split='train')
+                managed = ManagedDataset(hf_dataset, dataset_id)
+                self._datasets[dataset_id] = managed
+                return managed
+            except Exception:
+                pass
 
-    def save_dataset(self, dataset_id: str, dataset: Dataset) -> None:
+        # Fallback: return a minimal mock dataset for testing/dev environments.
+        mock_dataset: _DatasetLike = {"text": ["sample text"], "label": [0]}
+        if Dataset is not None:
+            try:
+                mock_dataset = Dataset.from_dict(mock_dataset)  # type: ignore[assignment]
+            except Exception:
+                pass
+        managed = ManagedDataset(mock_dataset, dataset_id)
+        self._datasets[dataset_id] = managed
+        return managed
+
+    def save_dataset(self, dataset_id: str, dataset: _DatasetLike) -> None:
         """Save a dataset."""
         managed = ManagedDataset(dataset, dataset_id)
         self._datasets[dataset_id] = managed
@@ -42,7 +59,7 @@ class DatasetManager:
 class ManagedDataset:
     """A managed dataset wrapper."""
 
-    def __init__(self, dataset: Dataset, dataset_id: str):
+    def __init__(self, dataset: _DatasetLike, dataset_id: str):
         """Initialize managed dataset."""
         self.dataset = dataset
         self.dataset_id = dataset_id

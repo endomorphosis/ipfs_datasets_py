@@ -22,6 +22,7 @@ try:
 except ImportError as e:
     print(f"Warning: PDFProcessor not available: {e}")
     HAVE_PDF_PROCESSOR = False
+    PDFProcessor = None  # type: ignore[assignment]
 
 try:
     from ipfs_datasets_py.pdf_processing.ocr_engine import MultiEngineOCR, SuryaOCR, TesseractOCR, EasyOCR
@@ -29,6 +30,10 @@ try:
 except ImportError as e:
     print(f"Warning: OCR engines not available: {e}")
     HAVE_OCR_ENGINE = False
+    MultiEngineOCR = None  # type: ignore[assignment]
+    SuryaOCR = None  # type: ignore[assignment]
+    TesseractOCR = None  # type: ignore[assignment]
+    EasyOCR = None  # type: ignore[assignment]
 
 try:
     from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
@@ -36,6 +41,9 @@ try:
 except ImportError as e:
     print(f"Warning: LLM optimizer not available: {e}")
     HAVE_LLM_OPTIMIZER = False
+    LLMOptimizer = None  # type: ignore[assignment]
+    LLMDocument = None  # type: ignore[assignment]
+    LLMChunk = None  # type: ignore[assignment]
 
 try:
     from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
@@ -43,6 +51,10 @@ try:
 except ImportError as e:
     print(f"Warning: GraphRAG integrator not available: {e}")
     HAVE_GRAPHRAG_INTEGRATOR = False
+    GraphRAGIntegrator = None  # type: ignore[assignment]
+    KnowledgeGraph = None  # type: ignore[assignment]
+    Entity = None  # type: ignore[assignment]
+    Relationship = None  # type: ignore[assignment]
 
 try:
     from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult, QueryResponse
@@ -50,6 +62,9 @@ try:
 except ImportError as e:
     print(f"Warning: Query engine not available: {e}")
     HAVE_QUERY_ENGINE = False
+    QueryEngine = None  # type: ignore[assignment]
+    QueryResult = None  # type: ignore[assignment]
+    QueryResponse = None  # type: ignore[assignment]
 
 try:
     from ipfs_datasets_py.pdf_processing.batch_processor import BatchProcessor, ProcessingJob, BatchStatus
@@ -57,6 +72,9 @@ try:
 except ImportError as e:
     print(f"Warning: Batch processor not available: {e}")
     HAVE_BATCH_PROCESSOR = False
+    BatchProcessor = None  # type: ignore[assignment]
+    ProcessingJob = None  # type: ignore[assignment]
+    BatchStatus = None  # type: ignore[assignment]
 
 __all__ = [
     # Core processing

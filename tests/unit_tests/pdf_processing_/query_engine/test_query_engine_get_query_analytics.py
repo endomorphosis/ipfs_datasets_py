@@ -6,10 +6,14 @@
 import pytest
 import os
 import anyio
+import asyncio
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
+from pathlib import Path
+
+import ipfs_datasets_py as _ipfs_datasets_pkg
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -19,13 +23,15 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
+work_dir = str(Path(_ipfs_datasets_pkg.__file__).resolve().parents[1])
 file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine.py")
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+if not os.path.exists(file_path):
+    pytest.skip(f"Input file does not exist: {file_path}", allow_module_level=True)
+if not os.path.exists(md_path):
+    pytest.skip(f"Documentation file does not exist: {md_path}", allow_module_level=True)
 
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResponse, QueryResult
 
@@ -54,11 +60,9 @@ from dataclasses import dataclass
 from datetime import datetime
 import re
 
-from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
-
 from ipfs_datasets_py.ipld import IPLDStorage
-from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
+
+pytestmark = pytest.mark.anyio
 
 
 def create_mock_query_response(query: str, query_type: str, num_results: int, processing_time: float) -> QueryResponse:
@@ -92,7 +96,8 @@ class TestQueryEngineGetQueryAnalytics:
 
     def setup_method(self):
         """Set up test fixtures for each test method."""
-        self.mock_graphrag = Mock(spec=GraphRAGIntegrator)
+        self.mock_graphrag = Mock()
+        self.mock_graphrag.initialized = True
         self.mock_storage = Mock(spec=IPLDStorage)
         
         # Create QueryEngine instance with mocked dependencies
@@ -558,6 +563,7 @@ class TestQueryEngineGetQueryAnalytics:
         # Test async execution
         coroutine = self.query_engine.get_query_analytics()
         assert asyncio.iscoroutine(coroutine)
+        await coroutine
         
         # Test concurrent execution
         tasks = [

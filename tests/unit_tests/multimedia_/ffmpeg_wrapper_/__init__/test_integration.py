@@ -11,7 +11,6 @@ Terminology:
 """
 import pytest
 from unittest.mock import patch
-from pathlib import Path
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
@@ -66,8 +65,10 @@ class TestFFmpegWrapperInitIntegration:
         
         # THEN: Instance is created with correct directory path
         assert wrapper is not None
-        assert wrapper.default_output_dir == Path(output_dir)
-        assert isinstance(wrapper.default_output_dir, Path)
+        import os
+
+        assert wrapper.default_output_dir == os.path.abspath(output_dir)
+        assert os.path.isdir(wrapper.default_output_dir)
 
     def test_when_initialized_multiple_times_with_same_directory_then_all_instances_share_directory(self):
         """
@@ -85,7 +86,9 @@ class TestFFmpegWrapperInitIntegration:
         
         # THEN: All instances use the same directory
         assert wrapper1.default_output_dir == wrapper2.default_output_dir == wrapper3.default_output_dir
-        assert wrapper1.default_output_dir == Path(shared_dir)
+        import os
+
+        assert wrapper1.default_output_dir == os.path.abspath(shared_dir)
 
     def test_when_initialized_with_relative_path_then_resolves_against_current_working_directory(self):
         """
@@ -100,8 +103,10 @@ class TestFFmpegWrapperInitIntegration:
         wrapper = FFmpegWrapper(default_output_dir=relative_path)
         
         # THEN: Path is resolved relative to current directory
-        assert wrapper.default_output_dir == Path(relative_path)
-        assert wrapper.default_output_dir.name == "relative_output"
+        import os
+
+        assert wrapper.default_output_dir == os.path.abspath(relative_path)
+        assert wrapper.default_output_dir.endswith(os.sep + "relative_output")
 
     def test_when_initialized_with_logging_then_initializes_module_logger_for_subsequent_operations(self):
         """

@@ -464,5 +464,6 @@ class MediaProcessor:
         return {
             "download": YTDLP_AVAILABLE,
             "convert": FFMPEG_AVAILABLE,
+            "extract_metadata": (YTDLP_AVAILABLE or FFMPEG_AVAILABLE),
         }
 

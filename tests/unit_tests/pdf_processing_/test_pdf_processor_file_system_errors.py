@@ -67,7 +67,7 @@ class TestProcessPdfFileSystemErrors:
         """Expected error message for locked file."""
         return "PDF file is locked by another process"
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_nonexistent_file_provided_then_raises_file_not_found_error(
         self, 
         processor, 
@@ -85,7 +85,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert expected_file_not_found_message in str(exc_info.value)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_has_no_read_permissions_then_returns_error_status(
         self, 
         processor, 
@@ -101,7 +101,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_has_no_read_permissions_then_error_message_contains_permission_text(
         self, 
         processor, 
@@ -118,7 +118,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert expected_permission_denied_message in result['error']
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_is_locked_then_returns_error_status(
         self, 
         processor, 
@@ -139,7 +139,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_is_locked_then_error_message_contains_locked_text(
         self, 
         processor, 
@@ -161,7 +161,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert expected_locked_file_message in result['error']
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_deleted_during_processing_then_returns_error_status(
         self, 
         processor, 
@@ -191,7 +191,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_file_deleted_during_processing_then_error_message_contains_file_path(
         self, 
         processor, 
@@ -221,7 +221,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert file_path in result['error']
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_network_file_unavailable_then_returns_error_status(
         self, 
         processor,
@@ -238,7 +238,7 @@ class TestProcessPdfFileSystemErrors:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_network_file_unavailable_then_error_message_contains_network_path(
         self, 
         processor,

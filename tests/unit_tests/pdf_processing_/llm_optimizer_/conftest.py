@@ -5,6 +5,10 @@
 
 from datetime import datetime
 import pytest
+
+pytest.importorskip("numpy")
+pytest.importorskip("openai")
+pytest.importorskip("tiktoken")
 import os
 from unittest.mock import MagicMock, AsyncMock, Mock, patch
 

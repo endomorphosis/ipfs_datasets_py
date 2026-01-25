@@ -22,10 +22,23 @@ from ipfs_datasets_py.ipld.optimized_codec import (
     OptimizedEncoder, OptimizedDecoder, BatchProcessor,
     create_batch_processor, optimize_node_structure
 )
-from ipfs_datasets_py.ipld.vector_store import IPLDVectorStore, SearchResult
-from ipfs_datasets_py.ipld.knowledge_graph import (
-    IPLDKnowledgeGraph, Entity, Relationship
-)
+
+# Optional components: these can pull in heavy deps (e.g., numpy). Keep the
+# package import-safe so modules that only need core storage can still import.
+try:
+    from ipfs_datasets_py.ipld.vector_store import IPLDVectorStore, SearchResult
+except Exception:  # pragma: no cover
+    IPLDVectorStore = None  # type: ignore[assignment]
+    SearchResult = None  # type: ignore[assignment]
+
+try:
+    from ipfs_datasets_py.ipld.knowledge_graph import (
+        IPLDKnowledgeGraph, Entity, Relationship
+    )
+except Exception:  # pragma: no cover
+    IPLDKnowledgeGraph = None  # type: ignore[assignment]
+    Entity = None  # type: ignore[assignment]
+    Relationship = None  # type: ignore[assignment]
 
 # Check if official implementations are available
 try:

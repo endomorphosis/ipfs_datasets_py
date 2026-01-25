@@ -2,20 +2,43 @@ from unittest.mock import Mock, MagicMock, patch
 from typing import Generator, Any, Dict, Set, Type, Union
 import logging
 
-import faker
+import random
+
 import pytest
 
+try:
+    import faker  # type: ignore
+except Exception:
+    faker = None
+
 from ipfs_datasets_py.ipld.storage import IPLDStorage
-from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator, KnowledgeGraph
+
+try:
+    from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator, KnowledgeGraph
+except Exception:
+    GraphRAGIntegrator = None
+    KnowledgeGraph = None
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine, QueryResult, Relationship
 
 RANDOM_SEED = 420
 
-def faker_instance() -> faker.Faker:
-    """Create a Faker instance with a fixed seed for reproducibility."""
-    fake = faker.Faker()
-    fake.seed(RANDOM_SEED)
-    return fake
+def faker_instance() -> Any:
+    """Create a Faker-like instance with a fixed seed for reproducibility."""
+    if faker is not None:
+        fake = faker.Faker()
+        fake.seed(RANDOM_SEED)
+        return fake
+
+    rng = random.Random(RANDOM_SEED)
+
+    class _FallbackFaker:
+        def name(self) -> str:
+            return f"Test User {rng.randint(1, 1_000_000)}"
+
+        def company(self) -> str:
+            return f"Test Company {rng.randint(1, 1_000_000)}"
+
+    return _FallbackFaker()
 
 class QueryEngineFactory:
     """Factory class for creating test objects and mock instances for QueryEngine testing."""
@@ -77,8 +100,21 @@ class QueryEngineFactory:
         Returns:
             MagicMock: Configured mock GraphRAGIntegrator instance
         """
-        mock = MagicMock(spec=GraphRAGIntegrator)
-        mock.global_entities = MagicMock
+        mock = MagicMock()
+        mock.initialized = True
+
+        bill_gates = MagicMock()
+        bill_gates.id = "entity_001"
+        bill_gates.name = "Bill Gates"
+        bill_gates.type = "Person"
+        bill_gates.description = "Co-founder of Microsoft"
+        bill_gates.confidence = 0.9
+        bill_gates.properties = {"entity_type": "Person"}
+        bill_gates.source_chunks = ["doc1_chunk1"]
+
+        mock.global_entities = {
+            bill_gates.id: bill_gates,
+        }
         mock.knowledge_graphs = self.make_mock_knowledge_graph()
 
         if kwargs:

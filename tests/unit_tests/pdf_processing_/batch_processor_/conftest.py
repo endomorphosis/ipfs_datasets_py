@@ -7,6 +7,8 @@ in this directory and subdirectories.
 """
 
 import pytest
+
+pytest.importorskip("psutil")
 from unittest.mock import MagicMock
 from ipfs_datasets_py.pdf_processing.batch_processor import (
     BatchProcessor, BatchJobResult, BatchStatus, ProcessingJob

@@ -87,7 +87,7 @@ class TestProcessPdfFormatValidation:
         truncated_pdf.write_bytes(b"%PDF-1.4\n")
         return str(truncated_pdf)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_non_pdf_file_provided_then_returns_error_status(
         self, 
         processor, 
@@ -103,7 +103,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_corrupted_pdf_provided_then_returns_error_status(
         self, 
         processor, 
@@ -119,7 +119,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_empty_pdf_provided_then_returns_error_status(
         self, 
         processor, 
@@ -135,7 +135,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_password_protected_pdf_provided_then_returns_error_status(
         self, 
         processor, 
@@ -151,7 +151,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_zero_pages_pdf_provided_then_returns_error_status(
         self, 
         processor, 
@@ -167,7 +167,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_image_file_with_pdf_extension_provided_then_returns_error_status(
         self, 
         processor, 
@@ -183,7 +183,7 @@ class TestProcessPdfFormatValidation:
         
         assert result['status'] == 'error'
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_truncated_pdf_provided_then_returns_error_status(
         self, 
         processor, 
@@ -208,7 +208,7 @@ class TestProcessPdfFormatValidation:
         ("image_as_pdf_file", EXPECTED_INVALID_PDF_MESSAGE),
         ("truncated_pdf_file", EXPECTED_CORRUPTED_PDF_MESSAGE),
     ])
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_when_invalid_pdf_provided_then_returns_expected_error_message(
         self,
         processor,

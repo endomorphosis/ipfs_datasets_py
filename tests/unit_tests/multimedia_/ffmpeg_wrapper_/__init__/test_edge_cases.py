@@ -37,17 +37,12 @@ class TestFFmpegWrapperInitEdgeCases:
             nonexistent_dir = os.path.join(temp_dir, "new_directory")
             
             # WHEN: Initializing FFmpegWrapper with nonexistent directory
-            try:
-                wrapper = FFmpegWrapper(default_output_dir=nonexistent_dir)
-                
-                # THEN: Directory is created and wrapper is initialized properly
-                assert wrapper.default_output_dir == Path(nonexistent_dir)
-                # Note: Directory creation on initialization is implementation-dependent
-                # The constructor may not actually create directories
-                
-            except Exception as e:
-                # If constructor doesn't create directories, that's also valid behavior
-                assert isinstance(wrapper, FFmpegWrapper)
+            wrapper = FFmpegWrapper(default_output_dir=nonexistent_dir)
+            
+            # THEN: Directory is created and wrapper is initialized properly
+            assert isinstance(wrapper, FFmpegWrapper)
+            assert wrapper.default_output_dir == os.path.abspath(nonexistent_dir)
+            assert os.path.isdir(wrapper.default_output_dir)
 
     def test_when_initialized_with_read_only_parent_directory_then_raises_permission_error(self):
         """
@@ -93,16 +88,14 @@ class TestFFmpegWrapperInitEdgeCases:
         THEN creates FFmpegWrapper instance with default_output_dir set to current working directory
         """
         # GIVEN: Empty string as default_output_dir
-        from pathlib import Path
+        import os
         
         # WHEN: Initializing FFmpegWrapper with empty string
         wrapper = FFmpegWrapper(default_output_dir="")
         
-        # THEN: Should use current working directory (based on implementation)
-        # The constructor converts empty string to Path("") which resolves differently
         assert isinstance(wrapper, FFmpegWrapper)
         assert hasattr(wrapper, 'default_output_dir')
-        # Path("") behavior is implementation-specific
+        assert wrapper.default_output_dir == os.getcwd()
 
     def test_when_initialized_with_path_containing_spaces_then_creates_instance_with_spaced_path(self):
         """
@@ -111,8 +104,7 @@ class TestFFmpegWrapperInitEdgeCases:
         THEN creates FFmpegWrapper instance with default_output_dir preserving spaces in path
         """
         # GIVEN: Path with spaces
-        import tempfile
-        from pathlib import Path
+        import os
         
         # WHEN: Initializing FFmpegWrapper with spaced path
         spaced_path = "/tmp/path with spaces"
@@ -120,8 +112,8 @@ class TestFFmpegWrapperInitEdgeCases:
         
         # THEN: Wrapper is created with spaced path preserved
         assert isinstance(wrapper, FFmpegWrapper)
-        assert wrapper.default_output_dir == Path(spaced_path)
-        assert "with spaces" in str(wrapper.default_output_dir)
+        assert wrapper.default_output_dir == os.path.abspath(spaced_path)
+        assert "with spaces" in wrapper.default_output_dir
 
     def test_when_initialized_with_maximum_length_path_then_creates_instance_or_raises_os_error(self):
         """
@@ -131,7 +123,6 @@ class TestFFmpegWrapperInitEdgeCases:
         """
         # GIVEN: Very long path (approaching system limits)
         import os
-        from pathlib import Path
         
         # Create a long but reasonable path (not at true system maximum to avoid issues)
         long_path_component = "a" * 100
@@ -143,7 +134,7 @@ class TestFFmpegWrapperInitEdgeCases:
             
             # THEN: Either succeeds or raises appropriate error
             assert isinstance(wrapper, FFmpegWrapper)
-            assert wrapper.default_output_dir == Path(long_path)
+            assert wrapper.default_output_dir == os.path.abspath(long_path)
             
         except (OSError, ValueError) as e:
             # May raise OSError for path too long or ValueError for invalid path
@@ -156,7 +147,7 @@ class TestFFmpegWrapperInitEdgeCases:
         THEN creates FFmpegWrapper instance with default_output_dir preserving unicode characters
         """
         # GIVEN: Path with unicode characters
-        from pathlib import Path
+        import os
         
         unicode_path = "/tmp/测试目录/видео"  # Chinese and Russian characters
         
@@ -165,8 +156,8 @@ class TestFFmpegWrapperInitEdgeCases:
         
         # THEN: Wrapper is created with unicode path preserved
         assert isinstance(wrapper, FFmpegWrapper)
-        assert wrapper.default_output_dir == Path(unicode_path)
+        assert wrapper.default_output_dir == os.path.abspath(unicode_path)
         # Check that unicode characters are preserved
-        path_str = str(wrapper.default_output_dir)
+        path_str = wrapper.default_output_dir
         assert "测试目录" in path_str
         assert "видео" in path_str

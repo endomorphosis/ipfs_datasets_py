@@ -36,7 +36,7 @@ class TestProcessPdfInvalidPathArg:
         test_dir.mkdir()
         return test_dir
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @pytest.mark.parametrize(
         "invalid_path_input", [
             42,
@@ -67,7 +67,7 @@ class TestProcessPdfInvalidPathArg:
         with pytest.raises(TypeError, match=r"pdf_path must be a string or Path object") as exc_info:
             await default_pdf_processor.process_pdf(invalid_path_input, valid_metadata)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @pytest.mark.parametrize("invalid_path_string", [
         "",
         "   ",
@@ -87,7 +87,7 @@ class TestProcessPdfInvalidPathArg:
         with pytest.raises(ValueError, match=r"pdf_path cannot be empty or whitespace") as exc_info:
             await default_pdf_processor.process_pdf(invalid_path_string, valid_metadata)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @pytest.mark.parametrize("invalid_path_string", [
         "file\x00.pdf",
         "file\x01name.pdf",
@@ -126,7 +126,7 @@ class TestProcessPdfMetadataArg:
     - "invalid metadata": Metadata that violates Optional[dict[str, Any]] contract
     - "malformed metadata": Dictionary with invalid key types or structure
     """
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @pytest.mark.parametrize(
         "invalid_metadata", [
             "invalid metadata",
@@ -152,7 +152,7 @@ class TestProcessPdfMetadataArg:
         with pytest.raises(TypeError, match=r"metadata must be dict or None") as exc_info:
             await default_pdf_processor.process_pdf(valid_pdf_document, invalid_metadata)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     @pytest.mark.parametrize(
         "invalid_keys_metadata", [
             {123: "value", 456: "another_value"},

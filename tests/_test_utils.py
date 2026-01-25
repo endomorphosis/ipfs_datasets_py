@@ -21,10 +21,15 @@ from typing import Literal
 try:
     from nltk import word_tokenize, sent_tokenize
 except ImportError:
-    raise ImportError(
-        "The 'nltk' package is required for this module. "
-        "Please install it using 'pip install nltk'."
-    )
+    import re
+
+    def word_tokenize(text: str) -> list[str]:
+        """Fallback tokenizer when `nltk` isn't available."""
+        return [t for t in re.split(r"\s+", text) if t]
+
+    def sent_tokenize(text: str) -> list[str]:
+        """Fallback sentence splitter when `nltk` isn't available."""
+        return [s for s in re.split(r"(?<=[.!?])\s+", text.strip()) if s]
 
 
 

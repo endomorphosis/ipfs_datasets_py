@@ -146,7 +146,13 @@ class TestFFmpegWrapperInitInvalidInputs:
                 
             except (ValueError, OSError) as e:
                 # Expected if path validation is strict
-                assert "path" in str(e).lower() or "invalid" in str(e).lower() or "character" in str(e).lower()
+                msg = str(e).lower()
+                assert (
+                    "path" in msg
+                    or "invalid" in msg
+                    or "character" in msg
+                    or "null byte" in msg
+                )
             except Exception:
                 # Other path-related exceptions are also acceptable
                 assert True

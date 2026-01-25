@@ -43,12 +43,12 @@ class TestBraveSearchIntegration:
         )
         
         import inspect
-        assert asyncio.iscoroutinefunction(search_brave)
-        assert asyncio.iscoroutinefunction(search_brave_news)
-        assert asyncio.iscoroutinefunction(search_brave_images)
-        assert asyncio.iscoroutinefunction(batch_search_brave)
+        assert inspect.iscoroutinefunction(search_brave)
+        assert inspect.iscoroutinefunction(search_brave_news)
+        assert inspect.iscoroutinefunction(search_brave_images)
+        assert inspect.iscoroutinefunction(batch_search_brave)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_brave_search_requires_api_key(self):
         """GIVEN search_brave without API key, WHEN called, THEN returns error."""
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.brave_search import search_brave
@@ -68,7 +68,7 @@ class TestBraveSearchIntegration:
             if original_key:
                 os.environ["BRAVE_API_KEY"] = original_key
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_brave_search_accepts_parameters(self):
         """GIVEN search_brave with parameters, WHEN called, THEN handles them."""
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.brave_search import search_brave
@@ -107,11 +107,11 @@ class TestGoogleSearchIntegration:
         )
         
         import inspect
-        assert asyncio.iscoroutinefunction(search_google)
-        assert asyncio.iscoroutinefunction(search_google_images)
-        assert asyncio.iscoroutinefunction(batch_search_google)
+        assert inspect.iscoroutinefunction(search_google)
+        assert inspect.iscoroutinefunction(search_google_images)
+        assert inspect.iscoroutinefunction(batch_search_google)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_google_search_requires_credentials(self):
         """GIVEN search_google without credentials, WHEN called, THEN returns error."""
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.google_search import search_google
@@ -162,13 +162,13 @@ class TestGitHubSearchIntegration:
         )
         
         import inspect
-        assert asyncio.iscoroutinefunction(search_github_repositories)
-        assert asyncio.iscoroutinefunction(search_github_code)
-        assert asyncio.iscoroutinefunction(search_github_users)
-        assert asyncio.iscoroutinefunction(search_github_issues)
-        assert asyncio.iscoroutinefunction(batch_search_github)
+        assert inspect.iscoroutinefunction(search_github_repositories)
+        assert inspect.iscoroutinefunction(search_github_code)
+        assert inspect.iscoroutinefunction(search_github_users)
+        assert inspect.iscoroutinefunction(search_github_issues)
+        assert inspect.iscoroutinefunction(batch_search_github)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_github_search_works_without_token(self):
         """GIVEN search_github_repositories without token, WHEN called, THEN may succeed with rate limits."""
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.github_search import search_github_repositories
@@ -223,13 +223,13 @@ class TestHuggingFaceSearchIntegration:
         )
         
         import inspect
-        assert asyncio.iscoroutinefunction(search_huggingface_models)
-        assert asyncio.iscoroutinefunction(search_huggingface_datasets)
-        assert asyncio.iscoroutinefunction(search_huggingface_spaces)
-        assert asyncio.iscoroutinefunction(get_huggingface_model_info)
-        assert asyncio.iscoroutinefunction(batch_search_huggingface)
+        assert inspect.iscoroutinefunction(search_huggingface_models)
+        assert inspect.iscoroutinefunction(search_huggingface_datasets)
+        assert inspect.iscoroutinefunction(search_huggingface_spaces)
+        assert inspect.iscoroutinefunction(get_huggingface_model_info)
+        assert inspect.iscoroutinefunction(batch_search_huggingface)
 
-    @pytest.mark.asyncio
+    @pytest.mark.anyio
     async def test_huggingface_search_works_without_token(self):
         """GIVEN search_huggingface_models without token, WHEN called, THEN succeeds for public data."""
         from ipfs_datasets_py.mcp_server.tools.web_archive_tools.huggingface_search import search_huggingface_models

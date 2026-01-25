@@ -7,9 +7,10 @@ processing, and analysis operations.
 
 
 import logging
+import os
 
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -114,9 +115,11 @@ class FFmpegWrapper:
         - Success responses are: {"status": "success", "input_path": str, "output_path": str}
     """
     
-    def __init__(self, 
-                 default_output_dir: Optional[str] = None,
-                 enable_logging: bool = True):
+    def __init__(
+        self,
+        default_output_dir: Optional[Union[str, Path]] = None,
+        enable_logging: bool = True,
+    ):
         """
         Initialize FFmpeg wrapper with configuration options.
 
@@ -137,8 +140,8 @@ class FFmpegWrapper:
                 Logging output follows the module's logger configuration. Defaults to True.
 
         Attributes initialized:
-            default_output_dir (Path): Pathlib Path object representing the resolved output directory.
-                Automatically converted from string input and validated for existence.
+            default_output_dir (str): Absolute path string representing the resolved output directory.
+                Automatically converted from string/Path input and validated for existence.
             enable_logging (bool): Boolean flag controlling the verbosity of operation logging.
                 Used throughout the class to determine logging behavior.
 
@@ -167,12 +170,28 @@ class FFmpegWrapper:
             wrapper = FFmpegWrapper(default_output_dir="./processed_videos")
 
         Notes:
-            - The output directory path is stored as a pathlib.Path object for consistent handling
+            - The output directory path is stored as an absolute string for consistent handling
             - Directory creation is attempted during initialization, not during first use
             - Warning logs about missing dependencies are controlled by the logging configuration
             - The wrapper returns appropriate error response if ffmpeg is not available
         """
-        self.default_output_dir = Path(default_output_dir) if default_output_dir else Path.cwd()
+        if not isinstance(enable_logging, bool):
+            raise TypeError("enable_logging must be a bool")
+
+        resolved_output_dir: str
+        if default_output_dir is None or default_output_dir == "":
+            resolved_output_dir = os.getcwd()
+        elif isinstance(default_output_dir, Path):
+            resolved_output_dir = os.path.abspath(str(default_output_dir))
+        elif isinstance(default_output_dir, str):
+            resolved_output_dir = os.path.abspath(default_output_dir)
+        else:
+            raise TypeError("default_output_dir must be a string, Path, or None")
+
+        # Attempt to create the directory if it doesn't exist.
+        os.makedirs(resolved_output_dir, exist_ok=True)
+
+        self.default_output_dir = resolved_output_dir
         self.enable_logging = enable_logging
         
         if not FFMPEG_AVAILABLE:

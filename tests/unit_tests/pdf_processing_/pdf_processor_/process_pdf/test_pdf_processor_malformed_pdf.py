@@ -8,6 +8,8 @@ PDF specification or cannot be processed.
 """
 
 import pytest
+
+pytest.importorskip("reportlab")
 from pathlib import Path
 from typing import Any
 from PIL import Image

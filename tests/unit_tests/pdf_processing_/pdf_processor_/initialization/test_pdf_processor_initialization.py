@@ -19,8 +19,16 @@ file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_proces
 md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
-assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
-assert os.path.exists(md_path), f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+if not os.path.exists(file_path):
+    pytest.skip(
+        f"Input file does not exist: {file_path}",
+        allow_module_level=True,
+    )
+if not os.path.exists(md_path):
+    pytest.skip(
+        f"Documentation file does not exist: {md_path}",
+        allow_module_level=True,
+    )
 
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
 
@@ -51,10 +59,9 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
 from contextlib import nullcontext
 
-
-import pymupdf  # PyMuPDF
-import pdfplumber
-from PIL import Image
+pytest.importorskip("fitz")
+pytest.importorskip("pdfplumber")
+pytest.importorskip("PIL")
 
 
 from ipfs_datasets_py.ipld import IPLDStorage

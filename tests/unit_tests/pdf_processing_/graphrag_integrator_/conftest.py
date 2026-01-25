@@ -1,22 +1,27 @@
+import pytest
+
+# These tests exercise the full GraphRAG stack and require heavy optional deps.
+pytest.importorskip("tiktoken")
+pytest.importorskip("networkx")
+pytest.importorskip("numpy")
+pytest.importorskip("faker")
+
 # This checks if the imports of the module we're testing are accessible:
-try:
-    import logging
-    import hashlib
-    from typing import Dict, List, Any, Optional
-    from dataclasses import dataclass, asdict
-    from datetime import datetime
-    import uuid
-    import re
-    from tiktoken import get_encoding
+import logging
+import hashlib
+from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, asdict
+from datetime import datetime
+import uuid
+import re
+from tiktoken import get_encoding
 
-    import networkx as nx
-    import numpy as np
+import networkx as nx
+import numpy as np
 
-    from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.ipld import IPLDStorage
 
-    from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
-except ImportError as e:
-    raise AssertionError(f"Could not import the module's dependencies: {e}") from e
+from ipfs_datasets_py.pdf_processing.llm_optimizer import LLMDocument, LLMChunk, LLMChunkMetadata
 
 from enum import StrEnum
 import anyio
@@ -26,7 +31,6 @@ from typing import Callable, Optional
 from unittest.mock import MagicMock, AsyncMock, Mock
 
 
-import pytest
 import faker
 from faker.providers import DynamicProvider
 

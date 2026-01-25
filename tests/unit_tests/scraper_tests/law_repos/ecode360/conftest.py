@@ -8,8 +8,9 @@ import pytest
 import sys
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
-import aiohttp
 import anyio
+
+aiohttp = pytest.importorskip("aiohttp")
 
 # Add the path directly to avoid triggering __init__.py imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))

@@ -9,6 +9,10 @@ from unittest.mock import MagicMock
 import pytest
 import os
 
+pytestmark = pytest.mark.anyio
+
+pytest.importorskip("fitz")
+
 
 from tests._test_utils import (
     has_good_callable_metadata,
@@ -58,6 +62,8 @@ import pymupdf  # PyMuPDF
 import pdfplumber
 from PIL import Image
 import psutil
+
+pymupdf = pytest.importorskip("fitz")
 
 from ipfs_datasets_py.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger

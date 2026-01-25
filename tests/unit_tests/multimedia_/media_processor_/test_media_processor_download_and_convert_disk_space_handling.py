@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import pytest
+
+pyfakefs = pytest.importorskip("pyfakefs")
 import anyio
 from unittest.mock import AsyncMock
 from pathlib import Path
