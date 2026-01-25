@@ -106,11 +106,14 @@ def mock_llm_return(key):
     return llm_func
 
 
-def make_mock_llm_func(key, counter=0):
+def make_mock_llm_func(key):
+    """Create a mock async LLM function that tracks how many times it was called."""
+
     async def llm_func(*args, **kwargs):
-        nonlocal counter
-        counter += 1
+        llm_func.call_count += 1
         return LLM_FUNC_RETURNS[key]
+
+    llm_func.call_count = 0
     return llm_func
 
 
@@ -190,7 +193,7 @@ connection_error_args = make_valid_args(text="text", cat="one_cat", llm_func="co
 timeout_error_args = make_valid_args(text="text", cat="one_cat", llm_func="timeout_error")
 runtime_error_args = make_valid_args(text="text", cat="one_cat", llm_func="runtime_error")
 lowercase_error_args = make_valid_args(text="text", cat="one_cat", llm_func="lowercase_token")
-partial_match_args = make_valid_args(text="text", cat="two_cats", llm_func="partial_match")
+partial_match_args = make_valid_args(text="text", cat="three_cats", llm_func="partial_match")
 
 
 @pytest.fixture
@@ -352,15 +355,14 @@ class TestClassifyWithLLM:
         THEN expect the number of LLM calls to be less than or equal to the max retries
         """
         max_retries = 3
-        call_count = 0
         three_cats_args = kwargs['three_cats_args']
         _ = three_cats_args.pop('llm_func')
-        mock_llm_func = make_mock_llm_func("three_cats", call_count)
+        mock_llm_func = make_mock_llm_func("three_cats")
 
         _ = await classify_with_llm(**three_cats_args, retries=max_retries, llm_func=mock_llm_func)
 
-        assert call_count <= max_retries, \
-            f"Expected LLM call count to be <= {max_retries}, got {call_count} instead."
+        assert mock_llm_func.call_count <= max_retries, \
+            f"Expected LLM call count to be <= {max_retries}, got {mock_llm_func.call_count} instead."
 
 
     @pytest.mark.asyncio
@@ -449,16 +451,15 @@ class TestClassifyWithLLM:
         THEN expect single classification attempt
         """
         expected_count = 1
-        call_count = 0
 
         one_cat_args = kwargs['one_cat_args']
         _ = one_cat_args.pop('llm_func')
-        mock_llm_func = make_mock_llm_func("one_cat", call_count)
+        mock_llm_func = make_mock_llm_func("one_cat")
 
         _ = await classify_with_llm(**one_cat_args, llm_func=mock_llm_func)
 
-        assert call_count == expected_count, \
-            f"Expected LLM call count to be {expected_count}, got {call_count} instead."
+        assert mock_llm_func.call_count == expected_count, \
+            f"Expected LLM call count to be {expected_count}, got {mock_llm_func.call_count} instead."
 
 
     @pytest.mark.asyncio
@@ -470,15 +471,14 @@ class TestClassifyWithLLM:
         """
         retries = 0
         expected_value = 1
-        counter = 0
         two_cats_args = kwargs['two_cats_args']
         _ = two_cats_args.pop('llm_func')
-        llm_func = make_mock_llm_func("two_cats", counter)
+        llm_func = make_mock_llm_func("two_cats")
 
         await classify_with_llm(**two_cats_args, retries=retries, llm_func=llm_func)
 
-        assert counter == expected_value, \
-            f"Expected LLM call count to be {expected_value}, got {counter} instead."
+        assert llm_func.call_count == expected_value, \
+            f"Expected LLM call count to be {expected_value}, got {llm_func.call_count} instead."
 
 
     @pytest.mark.parametrize("threshold", [0.0, 1.5,])

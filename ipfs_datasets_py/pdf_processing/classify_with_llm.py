@@ -144,6 +144,117 @@ class CodexExecClient:
     api_key: Optional[str] = None  # forwarded as CODEX_API_KEY for this run
 
 
+@dataclass(frozen=True, slots=True)
+class _CompatTopLogProb:
+    token: str
+    logprob: float
+
+
+@dataclass(frozen=True, slots=True)
+class _CompatLogProbsContentItem:
+    top_logprobs: list[_CompatTopLogProb]
+
+
+@dataclass(frozen=True, slots=True)
+class _CompatLogProbs:
+    content: list[_CompatLogProbsContentItem]
+
+
+@dataclass(frozen=True, slots=True)
+class _CompatMessage:
+    content: str
+
+
+@dataclass(frozen=True, slots=True)
+class _CompatChoice:
+    message: _CompatMessage
+    logprobs: _CompatLogProbs
+
+
+@dataclass(frozen=True, slots=True)
+class _CompatResponse:
+    choices: list[_CompatChoice]
+
+
+class _CodexChatCompletionsCompat:
+    def __init__(self, client: CodexExecClient):
+        self._client = client
+
+    async def create(
+        self,
+        *,
+        messages: list[dict[str, str]],
+        model: str,
+        max_tokens: int = 1,
+        temperature: float = 0.0,
+        logprobs: bool = True,
+        top_logprobs: int = 1,
+        timeout: float = 30.0,
+        **_: Any,
+    ) -> _CompatResponse:
+        """OpenAI-compatible `chat.completions.create` powered by `codex exec`.
+
+        Codex CLI does not expose logprobs; we synthesize a single-token top_logprobs
+        entry with logprob 0.0 so existing filtering logic works.
+        """
+        del model, max_tokens, temperature, logprobs, top_logprobs
+
+        if shutil.which(self._client.codex_bin) is None:
+            raise RuntimeError(
+                "Codex CLI backend selected but 'codex' was not found on PATH. "
+                "Install with `npm i -g @openai/codex` (or `brew install --cask codex`)."
+            )
+
+        # Flatten messages into a single task.
+        rendered = "\n".join(f"{m.get('role', 'user')}: {m.get('content', '')}" for m in messages)
+        task = f"{rendered}\n\nReturn ONLY the category name, with no extra text."
+
+        env = os.environ.copy()
+        if self._client.api_key:
+            env["CODEX_API_KEY"] = self._client.api_key
+
+        cmd = [self._client.codex_bin, "exec", task]
+        with anyio.fail_after(timeout):
+            completed = await anyio.run_process(cmd, env=env)
+
+        output = (completed.stdout or b"").decode("utf-8", errors="replace").strip()
+        if not output:
+            # Return an empty token list in logprobs; upstream will treat as no classifications.
+            return _CompatResponse(
+                choices=[
+                    _CompatChoice(
+                        message=_CompatMessage(content=""),
+                        logprobs=_CompatLogProbs(content=[_CompatLogProbsContentItem(top_logprobs=[])]),
+                    )
+                ]
+            )
+
+        top = _CompatTopLogProb(token=output, logprob=0.0)
+        return _CompatResponse(
+            choices=[
+                _CompatChoice(
+                    message=_CompatMessage(content=output),
+                    logprobs=_CompatLogProbs(content=[_CompatLogProbsContentItem(top_logprobs=[top])]),
+                )
+            ]
+        )
+
+
+class _CodexOpenAICompatClient:
+    """Minimal OpenAI Async client shape: `.chat.completions.create(...)`."""
+
+    def __init__(self, client: CodexExecClient):
+        self.chat = type("_Chat", (), {})()
+        self.chat.completions = _CodexChatCompletionsCompat(client)
+
+
+def _coerce_openai_chat_client(client: Any) -> Any:
+    """Coerce supported backends into an OpenAI-chat-completions compatible client."""
+    if isinstance(client, CodexExecClient):
+        return _CodexOpenAICompatClient(client)
+    return client
+
+
 async def _classify_with_codex_exec_llm(
     prompt: str,
     system_prompt: str,
@@ -254,9 +365,7 @@ async def classify_with_llm(
             - confidence (float): Confidence score of the classification (0.0-1.0).
             If no classifications are found, returns an empty list.
     """
-    # Auto-select backend by client type.
-    if isinstance(client, CodexExecClient):
-        llm_func = _classify_with_codex_exec_llm
+    client = _coerce_openai_chat_client(client)
 
     winnowed_categories: set[str] = classifications
     if threshold <= 0 or threshold >= 1:
@@ -286,8 +395,12 @@ async def classify_with_llm(
 # Text
 {text}
 """
-    # FIXME: Use retries + 1 to ensure at least one attempt even when retries=0
-    max_attempts = retries + 1
+    # `retries` is treated as the maximum number of attempts.
+    # Ensure we always attempt at least once when retries=0.
+    if retries is None:
+        max_attempts = 3
+    else:
+        max_attempts = max(1, retries)
 
     async with _SEMAPHORE:
         for attempt in range(max_attempts):

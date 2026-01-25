@@ -322,7 +322,7 @@ UNICODE_TEXT = (
 
 @pytest.fixture
 def unicode_text() -> tuple[str, str, str]:
-    UNICODE_TEXT 
+    return UNICODE_TEXT
 
 
 def split_unicode_text():
