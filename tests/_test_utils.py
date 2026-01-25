@@ -14,6 +14,8 @@ These functions check for:
     - Unnecessary fallbacks that clutters the codebase and make it harder to test and debug.
 """
 import ast
+import inspect
+import textwrap
 from pathlib import Path
 from typing import Literal
 
@@ -116,7 +118,7 @@ def get_ast_tree(input_path: Path) -> ast.Module:
     return tree
 
 
-def has_good_callable_metadata(tree: ast.Module) -> Literal[True]:
+def has_good_callable_metadata(tree: ast.Module | object) -> Literal[True]:
     """
     Validate callable objects' metadata to ensure comprehensive documentation and proper signatures.
     
@@ -166,23 +168,48 @@ def has_good_callable_metadata(tree: ast.Module) -> Literal[True]:
         >>> has_good_callable_metadata(tree)
         'All callable metadata validation checks passed.'
     """
+    # Backwards-compatible: many generated tests pass a callable directly.
+    if not isinstance(tree, ast.AST):
+        try:
+            source = inspect.getsource(tree)  # type: ignore[arg-type]
+        except Exception as e:
+            raise BadDocumentationError(
+                f"Unable to introspect callable source for metadata validation: {e}"
+            ) from e
+
+        try:
+            parsed = ast.parse(textwrap.dedent(source))
+        except SyntaxError as e:
+            raise BadDocumentationError(
+                f"Unable to parse callable source for metadata validation: {e}"
+            ) from e
+
+        # Validate only the first definition in the parsed snippet.
+        for node in parsed.body:
+            match node:
+                case ast.FunctionDef() | ast.AsyncFunctionDef():
+                    raise_on_bad_signature(node)
+                    raise_on_bad_docstring(node, parsed)
+                    return True
+                case ast.ClassDef():
+                    raise_on_bad_docstring(node, parsed)
+                    return True
+                case _:
+                    continue
+
+        raise BadDocumentationError("No callable definition found for metadata validation.")
+
     for node in ast.walk(tree):
-        # Check if definition has a good signature and docstring
         match node:
             case ast.FunctionDef() | ast.AsyncFunctionDef():
                 raise_on_bad_signature(node)
                 raise_on_bad_docstring(node, tree)
             case ast.ClassDef():
-                # Classes should have a docstring, but not a signature
                 raise_on_bad_docstring(node, tree)
             case ast.Module():
-                # Modules should have a docstring, but not a signature
                 if not ast.get_docstring(node):
-                    raise BadDocumentationError(
-                        f"Module '{node.name}' is missing a docstring."
-                    )
+                    raise BadDocumentationError("Module is missing a docstring.")
             case _:
-                # Ignore other nodes
                 continue
     return True
 
