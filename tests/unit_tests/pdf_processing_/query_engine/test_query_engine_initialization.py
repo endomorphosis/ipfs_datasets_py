@@ -19,15 +19,22 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-work_dir = str(Path(_ipfs_datasets_pkg.__file__).resolve().parents[1])
+work_dir = os.path.abspath(os.path.dirname(__file__))
+while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
+    parent = os.path.dirname(work_dir)
+    if parent == work_dir:
+        break
+    work_dir = parent
 file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine.py")
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
-if not os.path.exists(file_path):
-    pytest.skip(f"Input file does not exist: {file_path}", allow_module_level=True)
-if not os.path.exists(md_path):
-    pytest.skip(f"Documentation file does not exist: {md_path}", allow_module_level=True)
+assert os.path.exists(file_path), (
+    f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
+)
+assert os.path.exists(md_path), (
+    f"Documentation file does not exist: {md_path}. Check to see if the file exists or has been moved or renamed."
+)
 
 from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
 
@@ -66,59 +73,6 @@ from datetime import datetime
 import re
 
 from ipfs_datasets_py.ipld import IPLDStorage
-
-
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-# File Path: ipfs_datasets_py/tests/ipfs_datasets_py_unit_tests/pdf_processing_/query_engine/test_query_engine_initialization.py
-
-import pytest
-import os
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-
-from tests._test_utils import (
-    has_good_callable_metadata,
-    raise_on_bad_callable_code_quality,
-    get_ast_tree,
-    BadDocumentationError,
-    BadSignatureError
-)
-
-work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
-file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
-
-# Make sure the input file and documentation file exist.
-work_dir = str(Path(_ipfs_datasets_pkg.__file__).resolve().parents[1])
-file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/query_engine_stubs.md")
-
-if not os.path.exists(file_path):
-    pytest.skip(f"Input file does not exist: {file_path}", allow_module_level=True)
-if not os.path.exists(md_path):
-    pytest.skip(f"Documentation file does not exist: {md_path}", allow_module_level=True)
-
-from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
-
-# Check if each classes methods are accessible:
-assert QueryEngine.query
-assert QueryEngine._normalize_query
-assert QueryEngine._detect_query_type
-assert QueryEngine._process_entity_query
-assert QueryEngine._process_relationship_query
-assert QueryEngine._process_semantic_query
-assert QueryEngine._process_document_query
-assert QueryEngine._process_cross_document_query
-assert QueryEngine._process_graph_traversal_query
-assert QueryEngine._extract_entity_names_from_query
-assert QueryEngine._get_entity_documents
-assert QueryEngine._get_relationship_documents
-assert QueryEngine._generate_query_suggestions
-assert QueryEngine.get_query_analytics
-
-# Check if the modules's imports are accessible:
-import anyio
-import logging
 import json
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass

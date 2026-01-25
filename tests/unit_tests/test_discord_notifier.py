@@ -5,18 +5,16 @@ Tests the DiscordNotifier, BotClient, and WebhookClient classes.
 """
 
 import pytest
-import anyio
 from unittest.mock import Mock, MagicMock, AsyncMock, patch
-from pathlib import Path
 
 from ipfs_datasets_py.alerts.discord_notifier import (
     DiscordNotifier,
     DiscordEmbed,
     BotClient,
     WebhookClient,
+    AIOHTTP_AVAILABLE,
     DiscordBackend
 )
-
 
 class TestDiscordEmbed:
     """Test DiscordEmbed data class."""
@@ -104,6 +102,10 @@ class TestWebhookClient:
         THEN expect webhook_url to be set and session to be None
         """
         webhook_url = "https://discord.com/api/webhooks/123/abc"
+        if not AIOHTTP_AVAILABLE:
+            with pytest.raises(ImportError, match="aiohttp is required"):
+                WebhookClient(webhook_url=webhook_url)
+            return
         client = WebhookClient(webhook_url=webhook_url)
         
         assert client.webhook_url == webhook_url
@@ -117,6 +119,10 @@ class TestWebhookClient:
         """
         webhook_url = "https://discord.com/api/webhooks/123/abc"
         role_map = {"trader": "123456789"}
+        if not AIOHTTP_AVAILABLE:
+            with pytest.raises(ImportError, match="aiohttp is required"):
+                WebhookClient(webhook_url=webhook_url, role_map=role_map)
+            return
         
         client = WebhookClient(webhook_url=webhook_url, role_map=role_map)
         
@@ -142,6 +148,8 @@ class TestWebhookClient:
         THEN expect correct HTTP POST to webhook URL
         """
         webhook_url = "https://discord.com/api/webhooks/123/abc"
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         client = WebhookClient(webhook_url=webhook_url)
         
         # Create proper async context manager mock
@@ -172,6 +180,8 @@ class TestWebhookClient:
         THEN expect correct payload with embed
         """
         webhook_url = "https://discord.com/api/webhooks/123/abc"
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         client = WebhookClient(webhook_url=webhook_url)
         
         embed = DiscordEmbed(title="Test Embed", description="Test Description")
@@ -203,6 +213,8 @@ class TestWebhookClient:
         THEN expect session to be closed
         """
         webhook_url = "https://discord.com/api/webhooks/123/abc"
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         client = WebhookClient(webhook_url=webhook_url)
         
         mock_session = AsyncMock()
@@ -225,6 +237,13 @@ class TestDiscordNotifier:
         WHEN DiscordNotifier is initialized
         THEN expect WebhookClient backend to be created
         """
+        if not AIOHTTP_AVAILABLE:
+            with pytest.raises(ImportError, match="aiohttp is required"):
+                DiscordNotifier(
+                    mode="webhook",
+                    webhook_url="https://discord.com/api/webhooks/123/abc"
+                )
+            return
         notifier = DiscordNotifier(
             mode="webhook",
             webhook_url="https://discord.com/api/webhooks/123/abc"
@@ -267,6 +286,10 @@ class TestDiscordNotifier:
         WHEN DiscordNotifier is initialized without parameters
         THEN expect configuration to be loaded from environment
         """
+        if not AIOHTTP_AVAILABLE:
+            with pytest.raises(ImportError, match="aiohttp is required"):
+                DiscordNotifier()
+            return
         notifier = DiscordNotifier()
         
         assert notifier.mode == "webhook"
@@ -281,6 +304,13 @@ class TestDiscordNotifier:
         WHEN DiscordNotifier is initialized
         THEN expect role_map to be parsed and loaded
         """
+        if not AIOHTTP_AVAILABLE:
+            with pytest.raises(ImportError, match="aiohttp is required"):
+                DiscordNotifier(
+                    mode="webhook",
+                    webhook_url="https://discord.com/api/webhooks/123/abc"
+                )
+            return
         notifier = DiscordNotifier(
             mode="webhook",
             webhook_url="https://discord.com/api/webhooks/123/abc"
@@ -300,6 +330,8 @@ class TestDiscordNotifierAsyncMethods:
         WHEN send_message is called
         THEN expect backend.send_message to be called with correct parameters
         """
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         notifier = DiscordNotifier(
             mode="webhook",
             webhook_url="https://discord.com/api/webhooks/123/abc"
@@ -319,6 +351,8 @@ class TestDiscordNotifierAsyncMethods:
         WHEN used as async context manager
         THEN expect proper initialization and cleanup
         """
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         notifier = DiscordNotifier(
             mode="webhook",
             webhook_url="https://discord.com/api/webhooks/123/abc"
@@ -338,6 +372,8 @@ class TestDiscordNotifierAsyncMethods:
         WHEN send_message is called
         THEN expect error response
         """
+        if not AIOHTTP_AVAILABLE:
+            pytest.skip("aiohttp not available")
         notifier = DiscordNotifier(
             mode="webhook",
             webhook_url="https://discord.com/api/webhooks/123/abc"

@@ -404,6 +404,87 @@ def insert_municode_sections_row(test_db_cursor, municode_sections_row):
 
 
 
+def generate_html_rows(gnis_values, rows_per_gnis=1, base_data=None):
+    """Generate html table test data.
+
+    Args:
+        gnis_values: List of GNIS values to generate data for.
+        rows_per_gnis: Number of rows to generate per GNIS value.
+        base_data: Optional dict with specific values.
+
+    Returns:
+        List of tuples representing html table rows.
+    """
+    rows = []
+    for gnis in gnis_values:
+        for i in range(rows_per_gnis):
+            if base_data:
+                rows.append(
+                    (
+                        base_data.get('cid', f'cid_{gnis}_{i}'),
+                        base_data.get('doc_id', f'doc_{gnis}_{i}'),
+                        base_data.get('doc_order', i),
+                        base_data.get('html_title', f'title_{gnis}_{i}'),
+                        base_data.get('html', f'<html>{gnis}-{i}</html>'),
+                        base_data.get('gnis', gnis),
+                    )
+                )
+            else:
+                rows.append(
+                    (
+                        f'cid_{gnis}_{i}',
+                        f'doc_{gnis}_{i}',
+                        i,
+                        f'title_{gnis}_{i}',
+                        f'<html>{gnis}-{i}</html>',
+                        gnis,
+                    )
+                )
+    return rows
+
+
+def generate_citation_rows(gnis_values, rows_per_gnis=1, base_data=None):
+    """Generate citation table test data.
+
+    Args:
+        gnis_values: List of GNIS values to generate data for.
+        rows_per_gnis: Number of rows to generate per GNIS value.
+        base_data: Optional dict with specific values.
+
+    Returns:
+        List of tuples representing citation table rows.
+    """
+    rows = []
+    for gnis in gnis_values:
+        for i in range(rows_per_gnis):
+            if base_data:
+                rows.append(
+                    (
+                        base_data.get('bluebook_cid', f'bb_cid_{gnis}_{i}'),
+                        base_data.get('cid', f'cid_{gnis}_{i}'),
+                        base_data.get('title', f'title_{gnis}_{i}'),
+                        base_data.get('chapter', f'chapter_{gnis}_{i}'),
+                        base_data.get('bluebook_citation', f'Citation {gnis}-{i}'),
+                        base_data.get('gnis', gnis),
+                        base_data.get('state_code', 'AR'),
+                    )
+                )
+            else:
+                rows.append(
+                    (
+                        f'bb_cid_{gnis}_{i}',
+                        f'cid_{gnis}_{i}',
+                        f'title_{gnis}_{i}',
+                        f'chapter_{gnis}_{i}',
+                        f'Citation {gnis}-{i}',
+                        gnis,
+                        'AR',
+                    )
+                )
+    return rows
+
+
+
 def generate_embedding_rows(gnis_values, rows_per_gnis=1, dimensions=768, base_data=None):
     """Generate embedding table test data.
     
@@ -473,6 +554,14 @@ def mock_duckdb():
             mock_df.__getitem__ = lambda x: mock_series
             mock_result.to_df.return_value = mock_df
             return mock_result
+
+        # Fallback complete groups query (used when no metadata table is available)
+        if "SELECT DISTINCT" in query and "AS gnis" in query:
+            mock_df = pd.DataFrame({'gnis': mock_db_connection._gnis_list})
+            mock_series = pd.Series(mock_db_connection._gnis_list)
+            mock_df.__getitem__ = lambda x: mock_series
+            mock_result.to_df.return_value = mock_df
+            return mock_result
         
         # Check if it's a metadata query
         if "place_metadata" in query and "html_metadata" in query:
@@ -504,6 +593,30 @@ def mock_duckdb():
                     mock_arrow.to_pandas.return_value = df
                     mock_result.arrow.return_value = mock_arrow
                     return mock_result
+
+        # Citation query
+        if "SELECT bluebook_cid" in query:
+            gnis_match = re.search(r"gnis = '(\d+)'", query)
+            if gnis_match:
+                gnis = int(gnis_match.group(1))
+                citation_data = mock_db_connection._query_results.get(f'citation_{gnis}', [])
+                df = pd.DataFrame(citation_data)
+                mock_arrow = MagicMock()
+                mock_arrow.to_pandas.return_value = df
+                mock_result.arrow.return_value = mock_arrow
+                return mock_result
+
+        # Embedding query
+        if "SELECT embedding_cid" in query:
+            gnis_match = re.search(r"gnis = '(\d+)'", query)
+            if gnis_match:
+                gnis = int(gnis_match.group(1))
+                embedding_data = mock_db_connection._query_results.get(f'embedding_{gnis}', [])
+                df = pd.DataFrame(embedding_data)
+                mock_arrow = MagicMock()
+                mock_arrow.to_pandas.return_value = df
+                mock_result.arrow.return_value = mock_arrow
+                return mock_result
         
         # Check if it's a raw API output query
         if "content_json" in query or query.startswith("SELECT * FROM"):
@@ -558,7 +671,7 @@ def mock_sql_configs(output_directory):
 @pytest.fixture
 def mock_sql_tables():
     mock_tables = Mock()
-    mock_tables.DATA_TABLE_NAMES = ["html", "citation"]
+    mock_tables.DATA_TABLE_NAMES = ["html", "citation", "embedding"]
     mock_tables.METADATA_TABLE_NAMES = ["html_metadata", "place_metadata"]
     return mock_tables
 
@@ -567,7 +680,7 @@ def mock_configs_instance(output_directory, mock_sql_configs, mock_sql_tables):
     """Create mock Configs instance"""
     try:
         configs = Mock()
-        configs.TARGET_DIR_NAME = "test_target"
+        configs.TARGET_DIR_NAME = "input_from_sql/repo_id"
 
         # Mock SQL configs
         configs.sql = Mock()
@@ -631,7 +744,7 @@ def mysql_server_running():
 
 
 @pytest.fixture
-def mock_mysql_factory(mysql_server_running):
+def mock_mysql_factory(mysql_server_running, mock_duckdb):
     """Factory to create MySQL database mocks with custom data.
     
     Returns a callable that accepts:
@@ -675,6 +788,63 @@ def mock_mysql_factory(mysql_server_running):
             html_data = html_data or []
             citation_data = citation_data or []
             embedding_data = embedding_data or []
+
+            # Populate the DuckDB mock that the production pipeline uses.
+            gnis_set = set()
+            html_payload_by_gnis: dict[int, list[dict]] = {}
+            citation_payload_by_gnis: dict[int, list[dict]] = {}
+            embedding_payload_by_gnis: dict[int, list[dict]] = {}
+
+            for (cid, doc_id, doc_order, html_title, html, gnis) in html_data:
+                gnis_int = int(gnis)
+                gnis_set.add(gnis_int)
+                html_payload_by_gnis.setdefault(gnis_int, []).append(
+                    {
+                        'gnis': gnis_int,
+                        'cid': cid,
+                        'doc_id': doc_id,
+                        'doc_order': doc_order,
+                        'html_title': html_title,
+                        'html': html,
+                    }
+                )
+
+            for (bluebook_cid, cid, title, chapter, bluebook_citation, gnis, state_code) in citation_data:
+                gnis_int = int(gnis)
+                gnis_set.add(gnis_int)
+                citation_payload_by_gnis.setdefault(gnis_int, []).append(
+                    {
+                        'bluebook_cid': bluebook_cid,
+                        'cid': cid,
+                        'title': title,
+                        'chapter': chapter,
+                        'bluebook_citation': bluebook_citation,
+                        'gnis': gnis_int,
+                        'state_code': state_code,
+                    }
+                )
+
+            for (embedding_cid, gnis, cid, text_chunk_order, embedding) in embedding_data:
+                gnis_int = int(gnis)
+                gnis_set.add(gnis_int)
+                embedding_payload_by_gnis.setdefault(gnis_int, []).append(
+                    {
+                        'embedding_cid': embedding_cid,
+                        'gnis': gnis_int,
+                        'cid': cid,
+                        'text_chunk_order': text_chunk_order,
+                        'embedding': embedding,
+                    }
+                )
+
+            mock_duckdb._gnis_list = sorted(gnis_set)
+            # Ensure query results storage exists
+            if not hasattr(mock_duckdb, '_query_results'):
+                mock_duckdb._query_results = {}
+            for gnis_int in mock_duckdb._gnis_list:
+                mock_duckdb._query_results[f'html_{gnis_int}'] = html_payload_by_gnis.get(gnis_int, [])
+                mock_duckdb._query_results[f'citation_{gnis_int}'] = citation_payload_by_gnis.get(gnis_int, [])
+                mock_duckdb._query_results[f'embedding_{gnis_int}'] = embedding_payload_by_gnis.get(gnis_int, [])
             
             cursor.last_query_type = None
             
@@ -837,25 +1007,39 @@ def mysql_database_with_zero_rows(mock_mysql_factory):
 
 
 @pytest.fixture
-def mysql_server_not_reachable():
-    """MySQL server is not reachable"""
-    mock_connection = Mock()
-    mock_connection.connect.side_effect = ConnectionError("Failed to connect to MySQL server")
-    yield mock_connection
+def mysql_server_not_reachable(mock_duckdb):
+    """MySQL server is not reachable (surface as DuckDB query failure)."""
+    mock_duckdb.sql.side_effect = ConnectionError("Failed to connect to MySQL server")
+    yield mock_duckdb
 
 @pytest.fixture
 def output_directory_cannot_be_created():
     """output directory does not exist and cannot be created"""
     invalid_path = "/invalid/path/that/cannot/be/created"
-    with patch('os.makedirs', side_effect=OSError("Failed to create output directory")):
+    with patch('pathlib.Path.mkdir', side_effect=OSError("Failed to create output directory")):
         yield invalid_path
 
 
 @pytest.fixture
-def disk_with_zero_bytes_free():
-    """disk has 0 bytes free"""
+def disk_with_zero_bytes_free(mock_duckdb):
+    """disk has 0 bytes free (raise during parquet write)."""
     try:
-        with patch('builtins.open', side_effect=OSError("No space left on device")):
+        # Seed at least one GNIS and one row so the pipeline attempts to write.
+        mock_duckdb._gnis_list = [66855]
+        mock_duckdb._query_results['html_66855'] = [
+            {
+                'gnis': 66855,
+                'cid': 'test_cid',
+                'doc_id': 'test_doc_id',
+                'doc_order': 1,
+                'html_title': 'test_title',
+                'html': 'test_html',
+            }
+        ]
+        mock_duckdb._query_results['citation_66855'] = []
+        mock_duckdb._query_results['embedding_66855'] = []
+
+        with patch('pandas.DataFrame.to_parquet', side_effect=OSError("No space left on device")):
             yield
     except Exception as e:
         raise FixtureError(f"disk_with_zero_bytes_free setup failed: {e}") from e

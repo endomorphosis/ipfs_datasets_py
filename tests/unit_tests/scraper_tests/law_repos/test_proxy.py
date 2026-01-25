@@ -6,8 +6,32 @@ Test suite for proxy functionality for web scraping.
 Tests are based on the Gherkin scenarios defined in proxy.feature.
 Each test corresponds to a specific scenario from the feature file.
 """
+import asyncio
+import inspect
+
+import anyio
 import pytest
 from .proxy import proxy
+
+
+# ---------------------------------------------------------------------------
+# Compatibility: this test suite historically used `anyio.run(coro())`.
+# AnyIO expects an async callable, not a coroutine object.
+# To keep this suite working (and avoid per-test boilerplate), accept
+# coroutine objects and wrap them.
+_real_anyio_run = anyio.run
+
+
+def _anyio_run_compat(func, *args, **kwargs):
+    if inspect.iscoroutine(func):
+        async def _runner():
+            return await func
+
+        return _real_anyio_run(_runner, *args, **kwargs)
+    return _real_anyio_run(func, *args, **kwargs)
+
+
+anyio.run = _anyio_run_compat
 
 
 # Background fixture - corresponds to "Given the proxy callable is available"
@@ -774,9 +798,9 @@ class TestRetryBackoffStrategy:
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         max_retries = 3
         backoff_strategy = "linear"
-        backoff_delay = 2.0
+        backoff_delay = 0.01
         test_url = "https://library.municode.com"
-        expected_delay = 2.0
+        expected_delay = 0.01
         
         async def run_test():
             proxy_manager = proxy_configuration(proxy_urls=proxy_urls, max_retries=max_retries, backoff_strategy=backoff_strategy, backoff_delay=backoff_delay)
@@ -1017,10 +1041,10 @@ class TestRateLimiting:
         import anyio
         import time
         proxy_url = "http://proxy1.example.com:8080"
-        rate_limit_delay = 2.0
+        rate_limit_delay = 0.01
         test_url = "https://library.municode.com"
         num_requests = 2
-        expected_min_delay = 2.0
+        expected_min_delay = 0.01
         
         async def run_test():
             proxy_manager = proxy_configuration(proxy_url=proxy_url, rate_limit_delay=rate_limit_delay)
@@ -1044,10 +1068,10 @@ class TestRateLimiting:
         import anyio
         import time
         proxy_url = "http://proxy1.example.com:8080"
-        rate_limit_delay = 1.0
+        rate_limit_delay = 0.01
         test_url = "https://library.municode.com"
         num_requests = 5
-        expected_min_time = 4.0
+        expected_min_time = 0.04
         
         async def run_test():
             proxy_manager = proxy_configuration(proxy_url=proxy_url, rate_limit_delay=rate_limit_delay)
@@ -1152,7 +1176,7 @@ class TestProxyHealthMonitoring:
         import time
         proxy_urls = ["http://proxy1.example.com:8080", "http://proxy2.example.com:8080"]
         health_check = True
-        health_check_cooldown = 5.0
+        health_check_cooldown = 0.01
         test_url = "https://library.municode.com"
         expected_proxy = "http://proxy1.example.com:8080"
         

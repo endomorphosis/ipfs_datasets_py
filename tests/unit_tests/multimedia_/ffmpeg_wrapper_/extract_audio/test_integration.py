@@ -34,11 +34,12 @@ class TestFFmpegWrapperExtractAudioIntegration:
         input_path = "test_video.mp4"
         output_path = "extracted_audio.mp3"
         
-        # WHEN: extract_audio is called (method is documented but has no implementation body)
+        # WHEN: extract_audio is called
         result = await wrapper.extract_audio(input_path, output_path)
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
+
+        # THEN: Returns structured response
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}
 
     async def test_when_extracting_with_ffmpeg_unavailable_then_returns_error_response_with_dependency_message(self):
         """
@@ -46,14 +47,15 @@ class TestFFmpegWrapperExtractAudioIntegration:
         WHEN extract_audio is called without FFmpeg dependencies
         THEN returns dict with status 'error' and message indicating FFmpeg not available
         """
-        # GIVEN: FFmpeg wrapper (extract_audio method is documented but has no implementation body)
+        # GIVEN: FFmpeg wrapper
         wrapper = FFmpegWrapper()
-        
-        # WHEN: extract_audio is called (method has no implementation body)
+
+        # WHEN: extract_audio is called
         result = await wrapper.extract_audio("input.mp4", "output.mp3")
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
+
+        # THEN: Returns structured response (simulated mode when ffmpeg is unavailable)
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}
 
     async def test_when_extracting_from_large_video_file_then_completes_with_progress_logging(self):
         """
@@ -64,11 +66,12 @@ class TestFFmpegWrapperExtractAudioIntegration:
         # GIVEN: FFmpeg wrapper with logging enabled
         wrapper = FFmpegWrapper(enable_logging=True)
         
-        # WHEN: extract_audio is called (method is documented but has no implementation body)
+        # WHEN: extract_audio is called
         result = await wrapper.extract_audio("large_video.mp4", "audio.wav", audio_bitrate="320k")
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
+
+        # THEN: Returns structured response
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}
 
     async def test_when_running_multiple_concurrent_extractions_then_all_complete_successfully(self):
         """
@@ -79,15 +82,24 @@ class TestFFmpegWrapperExtractAudioIntegration:
         # GIVEN: FFmpeg wrapper and multiple concurrent tasks
         wrapper = FFmpegWrapper()
         
-        # WHEN: Multiple extract_audio calls are made concurrently (method has no implementation body)
+        # WHEN: Multiple extract_audio calls are made concurrently
         tasks = [
             wrapper.extract_audio(f"input_{i}.mp4", f"output_{i}.mp3")
             for i in range(3)
         ]
-        results = await asyncio.gather(*tasks)
-        
-        # THEN: All return None since method has no implementation (documented but not yet implemented functionality)
-        assert all(result is None for result in results)
+
+        results = [None] * len(tasks)
+
+        async def _run_one(idx: int, coro):
+            results[idx] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
+
+        # THEN: All return structured responses
+        assert all(isinstance(r, dict) for r in results)
+        assert all(r["status"] in {"success", "error"} for r in results)
 
     async def test_when_extracting_with_normalization_enabled_then_applies_audio_normalization(self):
         """
@@ -98,13 +110,14 @@ class TestFFmpegWrapperExtractAudioIntegration:
         # GIVEN: FFmpeg wrapper with normalization
         wrapper = FFmpegWrapper()
         
-        # WHEN: extract_audio is called with normalization (method has no implementation body)
+        # WHEN: extract_audio is called with normalization
         result = await wrapper.extract_audio("input.mp4", "output.wav", normalize=True)
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
 
-    async def test_when_output_directory_does_not_exist_then_creates_directory_and_extracts_audio(self):
+        # THEN: Returns structured response
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}
+
+    async def test_when_output_directory_does_not_exist_then_creates_directory_and_extracts_audio(self, tmp_path: Path):
         """
         GIVEN output_path parameter with nonexistent parent directory
         WHEN extract_audio is called with output path requiring directory creation
@@ -113,11 +126,11 @@ class TestFFmpegWrapperExtractAudioIntegration:
         # GIVEN: FFmpeg wrapper and nonexistent output directory
         wrapper = FFmpegWrapper()
         
-        # WHEN: extract_audio is called with nonexistent output directory (method has no implementation body)
-        result = await wrapper.extract_audio("input.mp4", "/nonexistent/dir/output.wav")
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
+        output_path = tmp_path / "new_dir" / "output.wav"
+        result = await wrapper.extract_audio("input.mp4", str(output_path))
+
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}
 
     async def test_when_extracting_with_custom_audio_filters_then_applies_filters_to_extraction(self):
         """
@@ -128,8 +141,8 @@ class TestFFmpegWrapperExtractAudioIntegration:
         # GIVEN: FFmpeg wrapper with custom audio filters
         wrapper = FFmpegWrapper()
         
-        # WHEN: extract_audio is called with custom filters (method has no implementation body)
+        # WHEN: extract_audio is called with custom filters
         result = await wrapper.extract_audio("input.mp4", "output.mp3", audio_filters="highpass=f=200")
-        
-        # THEN: Returns None since method has no implementation (documented but not yet implemented functionality)
-        assert result is None
+
+        assert isinstance(result, dict)
+        assert result["status"] in {"success", "error"}

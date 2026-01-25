@@ -24,7 +24,12 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
+work_dir = os.path.abspath(os.path.dirname(__file__))
+while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
+    parent = os.path.dirname(work_dir)
+    if parent == work_dir:
+        break
+    work_dir = parent
 file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_integrator.py")
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/graphrag_integrator_stubs.md")
 

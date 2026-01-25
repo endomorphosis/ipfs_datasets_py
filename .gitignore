@@ -24,6 +24,7 @@ sql_configs.yaml
 *.log
 *.db
 batch_results_batch_*
+test.idx
 # Test files and directories
 tests/__pycache__/
 test_*.pyc

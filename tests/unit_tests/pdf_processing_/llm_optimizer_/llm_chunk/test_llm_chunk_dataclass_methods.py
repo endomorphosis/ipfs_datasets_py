@@ -29,7 +29,12 @@ from tests.unit_tests.pdf_processing_.llm_optimizer_.llm_chunk_metadata.llm_chun
     LLMChunkMetadataTestDataFactory
 )
 
-work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
+work_dir = os.path.abspath(os.path.dirname(__file__))
+while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
+    parent = os.path.dirname(work_dir)
+    if parent == work_dir:
+        break
+    work_dir = parent
 file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer.py")
 md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/llm_optimizer_stubs.md")
 

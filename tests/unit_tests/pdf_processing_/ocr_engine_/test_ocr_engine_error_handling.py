@@ -52,9 +52,10 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-work_dir = "/home/runner/work/ipfs_datasets_py/ipfs_datasets_py"
-file_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/ocr_engine.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/pdf_processing/ocr_engine_stubs.md")
+from tests.unit_tests.pdf_processing_.ocr_engine_ import REPO_ROOT
+
+file_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine.py")
+md_path = str(REPO_ROOT / "ipfs_datasets_py" / "pdf_processing" / "ocr_engine_stubs.md")
 
 # Make sure the input file and documentation file exist.
 assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."

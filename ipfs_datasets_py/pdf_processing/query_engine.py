@@ -10,7 +10,6 @@ Provides advanced querying capabilities over processed PDF content:
 """
 
 import anyio
-import asyncio
 import logging
 import json
 from typing import Dict, List, Any, Optional
@@ -673,7 +672,7 @@ class QueryEngine:
         if query_type is not None and query_type not in allowed_query_types:
             raise ValueError("Invalid query type")
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
         
         # Normalize query
         normalized_query = self._normalize_query(query_text)
@@ -720,7 +719,7 @@ class QueryEngine:
         # Generate suggestions
         suggestions = await self._generate_query_suggestions(normalized_query, results)
         
-        processing_time = asyncio.get_event_loop().time() - start_time
+        processing_time = time.monotonic() - start_time
         
         # Build response
         response = QueryResponse(

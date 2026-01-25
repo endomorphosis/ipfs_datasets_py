@@ -1,5 +1,6 @@
 """Configuration utilities for the municipal law database scrapers."""
 import logging
+import shutil
 from pathlib import Path
 from typing import Annotated as Ann, Optional
 
@@ -23,6 +24,27 @@ _SUPPORTED_FILE_TYPES = [
 ]
 
 _TOP_LEVEL_DIR = Path(__file__).parent.parent.parent.parent.parent.parent.parent
+
+
+def _load_yaml_mapping(path: Path) -> dict:
+    if not path.exists() or not path.is_file():
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as file:
+            loaded = yaml.safe_load(file) or {}
+        return loaded if isinstance(loaded, dict) else {}
+    except Exception:
+        return {}
+
+
+def _deep_merge_dicts(defaults: dict, overrides: dict) -> dict:
+    merged: dict = dict(defaults)
+    for key, value in (overrides or {}).items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge_dicts(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
 
 class Paths(BaseModel):
     _ROOT_DIR: DirectoryPath = _TOP_LEVEL_DIR
@@ -75,7 +97,14 @@ try:
                 if not path.parent.exists():
                     path.parent.mkdir(parents=True, exist_ok=True)
                 if not path.exists():
-                    path.touch()
+                    if path.name in {"configs.yaml", "sql_configs.yaml"}:
+                        example_path = paths.ROOT_DIR / f"{path.name}.example"
+                        if example_path.exists():
+                            shutil.copyfile(example_path, path)
+                        else:
+                            path.touch()
+                    else:
+                        path.touch()
                     print(f"Created file {path.name} at {path}")
             else:
                 if not path.exists():
@@ -104,11 +133,12 @@ def _make_log_level_an_int(value: str|int) -> int:
                 raise ValueError(f"Invalid log level: {value}")
 
 def _check_if_this_type_is_supported(value: str) -> str:
-    if value not in _SUPPORTED_FILE_TYPES:
+    normalized = value[1:] if value.startswith(".") else value
+    if normalized not in _SUPPORTED_FILE_TYPES:
         raise NotImplementedError(
             f"File type '{value}' is not currently supported. Supported types are: {', '.join(_SUPPORTED_FILE_TYPES)}"
         )
-    return value
+    return normalized
 
 class Tables(BaseModel):
     """Tables in the database"""
@@ -166,25 +196,16 @@ class Configs(BaseModel):
     _sql: Optional[Sql] = None
 
     def __init__(self, **data):
-        print("Loading general configs...")
-        try:
-            with open(paths.CONFIG_YAML_PATH, "r") as f:
-                data = dict(yaml.safe_load(f))
-        except Exception as e:
-            raise RuntimeError(f"Error loading general configs from {paths.CONFIG_YAML_PATH}: {e}") from e
-        super().__init__(**data)
+        defaults = _load_yaml_mapping(paths.ROOT_DIR / "configs.yaml.example")
+        overrides = _load_yaml_mapping(paths.CONFIG_YAML_PATH)
+        merged = _deep_merge_dicts(defaults, overrides)
 
-        print("General configs loaded. Loading Sql configs...")
-        try:
-            with open(paths.SQL_CONFIG_YAML_PATH, "r") as f:
-                sql_data = dict(yaml.safe_load(f))
-        except Exception as e:
-            raise RuntimeError(f"Error loading SQL configs from {paths.SQL_CONFIG_YAML_PATH}: {e}") from e
+        super().__init__(**merged)
 
-        self._sql = Sql(**sql_data)
-
-        print("Sql Configs loaded.")
-        print("All configs loaded successfully.")
+        sql_defaults = _load_yaml_mapping(paths.ROOT_DIR / "sql_configs.yaml.example")
+        sql_overrides = _load_yaml_mapping(paths.SQL_CONFIG_YAML_PATH)
+        sql_merged = _deep_merge_dicts(sql_defaults, sql_overrides)
+        self._sql = Sql(**sql_merged)
 
     @property
     def paths(self) -> Paths:

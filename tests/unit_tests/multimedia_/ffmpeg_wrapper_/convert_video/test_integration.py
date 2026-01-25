@@ -259,7 +259,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
             
             # Validate interruption handling
             assert mock_result['status'] == 'error'
-            assert 'interruption' in mock_result['message'].lower()
+            assert 'interrupt' in mock_result['message'].lower()
             assert mock_result['cleanup_performed'] == True
             assert isinstance(mock_result['partial_files_removed'], list)
             

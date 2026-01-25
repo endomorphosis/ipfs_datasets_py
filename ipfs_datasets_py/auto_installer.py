@@ -226,14 +226,25 @@ class DependencyInstaller:
                               '--accept-source-agreements', '--accept-package-agreements',
                               '--silent', '--disable-interactivity']
 
+        def _maybe_sudo(cmd: List[str]) -> List[str]:
+            # In many sandbox/CI environments, sudo is unavailable. If we're
+            # already root, run without sudo.
+            try:
+                if hasattr(os, 'geteuid') and os.geteuid() == 0:
+                    return cmd
+            except Exception:
+                pass
+            # Use non-interactive sudo so we never prompt ("zero touch").
+            return ['sudo', '-n'] + cmd
+
         commands = {
-            'apt': ['sudo', 'apt-get', 'install', '-y', system_package],
-            'yum': ['sudo', 'yum', 'install', '-y', system_package],
-            'dnf': ['sudo', 'dnf', 'install', '-y', system_package],
-            'pacman': ['sudo', 'pacman', '-S', '--noconfirm', system_package],
-            'zypper': ['sudo', 'zypper', 'install', '-y', system_package],
+            'apt': _maybe_sudo(['apt-get', 'install', '-y', system_package]),
+            'yum': _maybe_sudo(['yum', 'install', '-y', system_package]),
+            'dnf': _maybe_sudo(['dnf', 'install', '-y', system_package]),
+            'pacman': _maybe_sudo(['pacman', '-S', '--noconfirm', system_package]),
+            'zypper': _maybe_sudo(['zypper', 'install', '-y', system_package]),
             'brew': ['brew', 'install', system_package],
-            'macports': ['sudo', 'port', 'install', system_package],
+            'macports': _maybe_sudo(['port', 'install', system_package]),
             'chocolatey': ['choco', 'install', system_package, '-y'],
             'scoop': ['scoop', 'install', system_package],
             'winget': winget_command,
@@ -497,11 +508,22 @@ class DependencyInstaller:
         try:
             if self.verbose:
                 logger.info(f"Installing {package_spec} with pip")
-                
-            result = subprocess.run([
-                sys.executable, '-m', 'pip', 'install', package_spec, '--quiet',
-                '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
-            ], capture_output=True, text=True, timeout=600)
+
+            base_cmd = [
+                sys.executable, '-m', 'pip', 'install', package_spec,
+                '--quiet', '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
+            ]
+
+            result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=600)
+
+            # PEP 668 (externally managed environment) is common on Debian/Ubuntu.
+            # If we hit it, retry as a user install with the explicit override.
+            if result.returncode != 0 and (
+                'externally-managed-environment' in (result.stderr or '')
+                or 'ExternallyManagedEnvironment' in (result.stderr or '')
+            ):
+                retry_cmd = base_cmd + ['--user', '--break-system-packages']
+                result = subprocess.run(retry_cmd, capture_output=True, text=True, timeout=600)
             
             if result.returncode == 0:
                 if self.verbose:

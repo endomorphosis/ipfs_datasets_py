@@ -91,7 +91,15 @@ class TestFFmpegWrapperCompressMediaIntegration:
             wrapper.compress_media(f"input_{i}.mp4", f"output_{i}.mp4")
             for i in range(3)
         ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        results = [None] * len(tasks)
+
+        async def _run_one(idx: int, coro):
+            results[idx] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # THEN: All return error responses for missing input files
         for result in results:
