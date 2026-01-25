@@ -4,6 +4,9 @@ from typing import Any, Callable, Optional
 import math
 from functools import partial
 from itertools import islice, batched
+from dataclasses import dataclass
+import os
+import shutil
 
 
 try:
@@ -124,6 +127,70 @@ async def _classify_with_openai_llm(
     return filtered_token_prob_tuples
 
 
+@dataclass(frozen=True, slots=True)
+class CodexExecClient:
+    """Configuration wrapper for using the Codex CLI (npm `@openai/codex`) as an LLM backend.
+
+    This is intentionally lightweight: the Codex CLI is executed as a subprocess.
+    The client is used as a marker/type so `classify_with_llm` can auto-select the
+    correct backend.
+
+    Notes:
+        - Requires the `codex` executable to be on PATH (e.g. `npm i -g @openai/codex`).
+        - Auth can be via `codex login ...` or `CODEX_API_KEY` for `codex exec` runs.
+    """
+
+    codex_bin: str = "codex"
+    api_key: Optional[str] = None  # forwarded as CODEX_API_KEY for this run
+
+
+async def _classify_with_codex_exec_llm(
+    prompt: str,
+    system_prompt: str,
+    client: CodexExecClient,
+    num_categories: int,
+    model: str = "gpt-4.1-2025-04-14",
+    log_threshold: float = 0.05,
+    timeout: float = 30.0,
+) -> list[tuple[str, float]]:
+    """Classification backend that shells out to `codex exec`.
+
+    Codex CLI does not currently expose OpenAI-style logprobs in a stable API.
+    To preserve the existing `classify_with_llm` contract, we treat Codex's final
+    category selection as a single token with log-probability 0.0 (i.e. p=1.0).
+    """
+    del num_categories, model, log_threshold  # not used by Codex CLI
+
+    if shutil.which(client.codex_bin) is None:
+        raise RuntimeError(
+            "Codex CLI backend selected but 'codex' was not found on PATH. "
+            "Install with `npm i -g @openai/codex` (or `brew install --cask codex`)."
+        )
+
+    # Codex CLI runs inside a git repo by default; keep sandboxing conservative.
+    # It prints progress to stderr and only the final message to stdout.
+    task = (
+        f"{system_prompt}\n\n"
+        f"{prompt}\n\n"
+        "Return ONLY the category name, with no extra text."
+    )
+
+    env = os.environ.copy()
+    if client.api_key:
+        env["CODEX_API_KEY"] = client.api_key
+
+    cmd = [client.codex_bin, "exec", task]
+    with anyio.fail_after(timeout):
+        completed = await anyio.run_process(cmd, env=env)
+
+    output = (completed.stdout or b"").decode("utf-8", errors="replace").strip()
+    if not output:
+        return []
+
+    # Treat as a single high-confidence token.
+    return [(output, 0.0)]
+
+
 # Function to prevent rate-limits overruns.
 async def _run_task_with_limit(task: Callable):
     async with _SEMAPHORE:
@@ -187,6 +254,10 @@ async def classify_with_llm(
             - confidence (float): Confidence score of the classification (0.0-1.0).
             If no classifications are found, returns an empty list.
     """
+    # Auto-select backend by client type.
+    if isinstance(client, CodexExecClient):
+        llm_func = _classify_with_codex_exec_llm
+
     winnowed_categories: set[str] = classifications
     if threshold <= 0 or threshold >= 1:
         raise ValueError(f"Threshold must be a positive float between 0 and 1, got {threshold}.")

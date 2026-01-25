@@ -123,7 +123,11 @@ else:
     logger.info("✅ All LLM optimizer dependencies successfully installed and available")
 
 
-from ipfs_datasets_py.pdf_processing.classify_with_llm import classify_with_llm, ClassificationResult
+from ipfs_datasets_py.pdf_processing.classify_with_llm import (
+    classify_with_llm,
+    ClassificationResult,
+    CodexExecClient,
+)
 from ipfs_datasets_py.utils.text_processing import TextProcessor
 from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer
 
@@ -1375,16 +1379,25 @@ class LLMOptimizer:
             self.tokenizer = None
 
         try:
-            # Only initialize OpenAI client if we have the module and API key
-            if self.api_key and self.openai_async_client and HAVE_OPENAI:
-                self.openai_async_client = self.openai_async_client(api_key=self.api_key)
+            backend = os.environ.get("IPFS_DATASETS_OPENAI_BACKEND", "openai").strip().lower()
+
+            if backend == "codex":
+                # Use the Codex CLI (npm @openai/codex). Auth can be via `codex login`
+                # or by providing CODEX_API_KEY; we also fall back to the OpenAI API key.
+                api_key = os.environ.get("CODEX_API_KEY") or self.api_key
+                self.openai_async_client = CodexExecClient(api_key=api_key)
+                self.logger.info("OpenAI backend set to Codex CLI")
             else:
-                # For testing or when OpenAI is not available
-                self.openai_async_client = None
-                if not HAVE_OPENAI:
-                    self.logger.warning("OpenAI not available - using mock implementation")
-                elif not self.api_key:
-                    self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
+                # Default: standard OpenAI Python SDK Async client.
+                if self.api_key and self.openai_async_client and HAVE_OPENAI:
+                    self.openai_async_client = self.openai_async_client(api_key=self.api_key)
+                else:
+                    # For testing or when OpenAI is not available
+                    self.openai_async_client = None
+                    if not HAVE_OPENAI:
+                        self.logger.warning("OpenAI not available - using mock implementation")
+                    elif not self.api_key:
+                        self.logger.warning("OpenAI API key not available, OpenAI client not initialized")
         except Exception as e:
             self.logger.warning(f"Could not initialize OpenAI client: {e}")
             self.openai_async_client = None
