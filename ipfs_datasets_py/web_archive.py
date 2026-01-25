@@ -552,83 +552,155 @@ class WebArchiveProcessor:
             raise
 
     def extract_metadata_from_warc(self, warc_path: str) -> Dict[str, Any]:
-        """Extract text content from a WARC file.
+        """Extract record metadata and text from a WARC file.
 
-        Parses a WARC (Web ARChive) file and extracts text content from all records,
-        returning a list of extracted text along with associated metadata such as
-        URI, content type, and timestamp for each record processed.
+        This method performs a lightweight parse of a WARC-like file and returns a
+        consistent dictionary response that includes a list of per-record entries.
+        Each record includes the original URI, content type, timestamp (WARC-Date),
+        and extracted plain text. For HTML records, text is extracted using
+        :meth:`extract_text_from_html`. For non-HTML records, the body is returned
+        as-is (graceful degradation).
 
         Args:
             warc_path (str): Filesystem path to the WARC file to be processed.
 
         Returns:
-            List[Dict[str, Any]]: List of extracted records, each containing:
-                uri (str): The original URL of the archived web page.
-                text (str): Extracted plain text content from the WARC record.
-                content_type (str): MIME type of the original content, most commonly 'text/html'
-                    (expected_content_type_default="text/html", though other valid MIME types
-                    are accepted).
-                timestamp (str): ISO 8601 or WARC-format timestamp when the page was archived.
+            Dict[str, Any]: Metadata extraction result with the following structure:
+                status (str): 'success' or 'error'.
+                records (List[Dict[str, Any]]): Per-record data, where each record contains:
+                    uri (str): The original URL of the archived web page.
+                    text (str): Extracted or raw text content.
+                    content_type (str): MIME type of the record content.
+                    timestamp (str): Timestamp from WARC-Date.
+                metadata (Dict[str, Any]): Summary information about the file (filename,
+                    file_size, record_count, content_types, domains, creation_date).
 
         Raises:
             FileNotFoundError: If the specified WARC file does not exist.
-            Exception: If WARC parsing fails due to corruption or format issues.
 
         Example:
             >>> processor = WebArchiveProcessor()
-            >>> records = processor.extract_text_from_warc("/data/archives/snapshot.warc")
-            >>> for record in records:
-            ...     print(f"URI: {record['uri']}")
-            ...     print(f"Content-Type: {record['content_type']}")
-            ...     print(f"Text preview: {record['text'][:100]}...")
-            URI: https://example.com/page1
-            Content-Type: text/html
-            Text preview: Sample text content from page 1...
+            >>> result = processor.extract_metadata_from_warc("/data/archives/snapshot.warc")
+            >>> result["status"]
+            'success'
         """
-        try:
-            if not os.path.exists(warc_path):
-                return {"status": "error", "message": f"WARC file not found: {warc_path}"}
+        if not os.path.exists(warc_path):
+            raise FileNotFoundError(f"WARC file not found: {warc_path}")
 
+        try:
             file_size = os.path.getsize(warc_path)
+            if file_size == 0:
+                return {
+                    "status": "success",
+                    "records": [],
+                    "metadata": {
+                        "filename": os.path.basename(warc_path),
+                        "file_size": 0,
+                        "record_count": 0,
+                        "creation_date": "",
+                        "warc_version": "1.0",
+                        "content_types": [],
+                        "domains": [],
+                        "total_urls": 0,
+                    },
+                }
+
+            records: List[Dict[str, Any]] = []
+            content_types: List[str] = []
+            domains: List[str] = []
+            creation_date = ""
+
+            current_uri: Optional[str] = None
+            current_content_type: str = ""
+            current_timestamp: str = ""
+            body_lines: List[str] = []
+            in_body = False
+
+            def flush_record() -> None:
+                nonlocal current_uri, current_content_type, current_timestamp, body_lines, in_body
+                if not current_uri:
+                    current_uri = None
+                    current_content_type = ""
+                    current_timestamp = ""
+                    body_lines = []
+                    in_body = False
+                    return
+
+                body = "".join(body_lines).strip()
+                text = body
+                if current_content_type.lower().startswith("text/html"):
+                    extracted = self.extract_text_from_html(body)
+                    if isinstance(extracted, dict) and extracted.get("status") == "success":
+                        text = extracted.get("text", "")
+                    else:
+                        text = ""
+
+                records.append(
+                    {
+                        "uri": current_uri,
+                        "text": text,
+                        "content_type": current_content_type or "text/html",
+                        "timestamp": current_timestamp or creation_date or "",
+                    }
+                )
+
+                current_uri = None
+                current_content_type = ""
+                current_timestamp = ""
+                body_lines = []
+                in_body = False
+
+            with open(warc_path, "r", encoding="utf-8", errors="ignore") as f:
+                for raw_line in f:
+                    line = raw_line.rstrip("\r\n")
+                    lower = line.lower().strip()
+
+                    if not in_body:
+                        if lower.startswith("warc-target-uri:"):
+                            current_uri = line.split(":", 1)[1].strip()
+                            if current_uri and "//" in current_uri:
+                                domain = current_uri.split("//", 1)[1].split("/", 1)[0]
+                                if domain and domain not in domains:
+                                    domains.append(domain)
+                        elif lower.startswith("content-type:"):
+                            current_content_type = line.split(":", 1)[1].strip()
+                            if current_content_type and current_content_type not in content_types:
+                                content_types.append(current_content_type)
+                        elif lower.startswith("warc-date:"):
+                            current_timestamp = line.split(":", 1)[1].strip()
+                            if not creation_date:
+                                creation_date = current_timestamp
+                        elif lower == "":
+                            # Blank line separates headers from body.
+                            if current_uri is not None:
+                                in_body = True
+                    else:
+                        # Read body until next record start.
+                        if line.startswith("WARC/"):
+                            flush_record()
+                            # This line begins a new record; treat as header line.
+                            continue
+                        body_lines.append(raw_line)
+
+            flush_record()
+
             metadata = {
                 "filename": os.path.basename(warc_path),
                 "file_size": file_size,
-                "record_count": 0,
-                "creation_date": "2024-01-01T00:00:00Z",
+                "record_count": len(records),
+                "creation_date": creation_date,
                 "warc_version": "1.0",
-                "content_types": [],
-                "domains": [],
-                "total_urls": 0,
+                "content_types": content_types,
+                "domains": domains,
+                "total_urls": len(records),
             }
 
-            # Extremely lightweight header scan to populate some fields when present.
-            try:
-                with open(warc_path, "r", encoding="utf-8", errors="ignore") as f:
-                    for line in f:
-                        lower = line.lower().strip()
-                        if lower.startswith("warc-target-uri:"):
-                            uri = line.split(":", 1)[1].strip()
-                            metadata["total_urls"] += 1
-                            if uri and "//" in uri:
-                                domain = uri.split("//", 1)[1].split("/", 1)[0]
-                                if domain and domain not in metadata["domains"]:
-                                    metadata["domains"].append(domain)
-                        if lower.startswith("content-type:"):
-                            ct = line.split(":", 1)[1].strip()
-                            if ct and ct not in metadata["content_types"]:
-                                metadata["content_types"].append(ct)
-                        if lower.startswith("warc-date:"):
-                            metadata["creation_date"] = line.split(":", 1)[1].strip()
-            except Exception:
-                # Keep defaults; still return a consistent structure.
-                pass
-
             logger.info(f"Extracted metadata from WARC file: {warc_path}")
-            return {"status": "success", "metadata": metadata}
+            return {"status": "success", "records": records, "metadata": metadata}
 
         except Exception as e:
             logger.error(f"Failed to extract metadata from WARC: {e}")
-            return {"status": "error", "message": str(e)}
+            return {"status": "error", "error": str(e)}
 
     def extract_links_from_warc(self, warc_path: str) -> List[Dict[str, Any]]:
         """Extract links from a WARC file.

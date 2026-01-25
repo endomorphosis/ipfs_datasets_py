@@ -60,8 +60,7 @@ class TestWebArchiveProcessorIndexWarc:
         Then index file is created at returned path.
         """
         result = processor.index_warc(temp_warc)
-        path = result['path']
-        assert os.path.exists(path), f"Expected '{path}' to exist, but it does not."
+        assert os.path.exists(result), f"Expected '{result}' to exist, but it does not."
 
     def test_when_custom_output_then_returns_custom_path(self, processor, temp_warc):
         """
