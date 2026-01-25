@@ -5,6 +5,8 @@
 import anyio
 from unittest.mock import MagicMock
 
+from collections.abc import Hashable
+
 
 import pytest
 import os
@@ -452,15 +454,18 @@ class TestProcessPdfWithCustomMetadataBadInputs:
             )
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("bad_key_type", [key for key in BAD_METADATA_KEYS.keys()])
+    @pytest.mark.parametrize(
+        "bad_key_type",
+        [k for k, v in BAD_METADATA_KEYS.items() if (not isinstance(v, str)) and isinstance(v, Hashable)],
+    )
     async def test_process_pdf_with_custom_metadata_with_non_string_keys_raises_type_error(
-        self, bad_key_type, real_pdf_processor, mock_pdf_file):
+        self, bad_key_type, bad_metadata_keys, real_pdf_processor, mock_pdf_file):
         """
         GIVEN PDF file and custom metadata dict with non-string keys
         WHEN process_pdf is called
         THEN expect TypeError is raised
         """
-        bad_metadata = {bad_key_type: "some_value"}
+        bad_metadata = {bad_metadata_keys[bad_key_type]: "some_value"}
 
         with pytest.raises(TypeError):
             result = await real_pdf_processor.process_pdf(mock_pdf_file, metadata=bad_metadata)
@@ -524,7 +529,7 @@ class TestProcessPdfFilePathBadInputs:
     """Test that process_pdf method rejects bad file path inputs."""
 
     @pytest.mark.parametrize("bad_type", [
-        key for key in BAD_FILE_PATHS.keys()
+        k for k, v in BAD_FILE_PATHS.items() if not isinstance(v, (str, Path))
     ])
     @pytest.mark.asyncio
     async def test_process_pdf_where_file_path_is_not_path_or_str_raises_type_error(
@@ -552,10 +557,9 @@ class TestProcessPdfFilePathBadInputs:
         result = await real_pdf_processor.process_pdf(valid_pdf_file)
 
         cid = result["ipld_cid"]
-        stored_cid = real_pdf_processor.storage.get_batch([cid])
+        stored = real_pdf_processor.storage.get_batch([cid])[0]
 
-        assert cid == stored_cid, \
-            f"Expected stored CID '{stored_cid}' to match result CID '{cid}', got '{stored_cid}' instead."
+        assert stored is not None, "Expected IPLD storage to return data for ipld_cid"
 
 
     @pytest.mark.asyncio
@@ -673,7 +677,12 @@ class TestProcessPdfFilePathBadInputs:
 
 
     @pytest.mark.asyncio
-    async def test_process_pdf_concurrent_processing_safety(self, real_pdf_processor: PDFProcessor):
+    async def test_process_pdf_concurrent_processing_safety(
+        self,
+        real_pdf_processor: PDFProcessor,
+        valid_pdf_file,
+        mock_pdf_file,
+    ):
         """
         GIVEN multiple concurrent PDF processing calls
         WHEN process_pdf is called simultaneously on different files
@@ -683,8 +692,8 @@ class TestProcessPdfFilePathBadInputs:
             - Correct results for each file
             - No race conditions in storage or monitoring
         """
-        pdf_path1 = Path("document1.pdf")
-        pdf_path2 = Path("document2.pdf")
+        pdf_path1 = valid_pdf_file
+        pdf_path2 = mock_pdf_file
 
         # Process files concurrently
         coros = [

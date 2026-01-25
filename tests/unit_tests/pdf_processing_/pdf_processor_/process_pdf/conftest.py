@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import os
+from pathlib import Path
 
 
 from tests._test_utils import (
@@ -20,9 +21,9 @@ from tests._test_utils import (
     BadSignatureError
 )
 
-home_dir = os.path.expanduser('~')
-file_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor.py")
-md_path = os.path.join(home_dir, "ipfs_datasets_py/ipfs_datasets_py/pdf_processing/pdf_processor_stubs.md")
+repo_root = Path(__file__).resolve().parents[5]
+file_path = str(repo_root / "ipfs_datasets_py" / "pdf_processing" / "pdf_processor.py")
+md_path = str(repo_root / "ipfs_datasets_py" / "pdf_processing" / "pdf_processor_stubs.md")
 
 # Make sure the input file and documentation file exist.
 assert os.path.exists(file_path), f"Input file does not exist: {file_path}. Check to see if the file exists or has been moved or renamed."
@@ -219,14 +220,32 @@ def test_constants(tmp_path, faker_fixed_seed):
     }
 
 CUSTOM_METADATA = {
-    "ligma": "Ligma what?",
-    "sugma": 69,
-    "sawcon": ["buffa", "deeze", "nutz"]
+    "user_id": "user_12345",
+    "session_id": "session_67890",
+    "source": "web_upload",
+    "priority": "high",
+    "tags": ["invoice", "2023", "Q1"],
+    "reviewed": False,
+    "page_count": 10,
 }
 
 @pytest.fixture
 def custom_metadata():
-    CUSTOM_METADATA 
+    return CUSTOM_METADATA
+
+
+@pytest.fixture
+def large_pdf_path(tmp_path, pagesize, expected_text) -> Path:
+    """Create a reasonably sized PDF for large-file oriented tests.
+
+    The tests assert basic behavior (no crash), not actual file size.
+    """
+    path = tmp_path / "large.pdf"
+    with _make_canvas(path, pagesize) as c:
+        for _ in range(10):
+            _make_mock_pdf(c, [(100, 700, line) for line in expected_text])
+            c.showPage()
+    return path
 
 INVALID_PATHS = {
     "non_existent": Path("/path/to/non_existent_file.pdf"),
@@ -814,7 +833,7 @@ def valid_pdf_document(valid_pdf_document_path, expected_page_count, expected_te
 @pytest.fixture
 def real_init_params_for_pdf_processor():
     return {
-        "ipld_storage": IPLDStorage(),
+        "storage": IPLDStorage(),
         "enable_monitoring": True,
         "enable_audit": True,
         "logger": logging.getLogger("pdf_processor_test_logger"),
@@ -851,7 +870,7 @@ def real_ipld_storage():
 def mock_init_params_for_pdf_processor():
     """Fixture to provide mock initialization parameters for PDFProcessor."""
     return {
-        "ipld_storage": MagicMock(spec=IPLDStorage),
+        "storage": MagicMock(spec=IPLDStorage),
         "enable_monitoring": True,
         "enable_audit": True,
         "logger": MagicMock(spec=logging.Logger),

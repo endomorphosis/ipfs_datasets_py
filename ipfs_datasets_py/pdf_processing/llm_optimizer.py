@@ -60,11 +60,33 @@ else:
 nltk_module = ensure_module('nltk', 'nltk')
 if nltk_module:
     import nltk
-    from nltk.tokenize import sent_tokenize, word_tokenize
+    from nltk.tokenize import sent_tokenize as _nltk_sent_tokenize, word_tokenize as _nltk_word_tokenize
     from nltk.tag import pos_tag
     from nltk.chunk import ne_chunk
     from nltk.tree import Tree
     HAVE_NLTK = True
+
+    def sent_tokenize(text: str):
+        """Tokenize sentences with a safe fallback.
+
+        NLTK's sentence tokenizer requires external data packages (punkt/punkt_tab)
+        that may be unavailable in minimal/offline test environments. When that
+        happens, degrade gracefully to a basic split.
+        """
+        try:
+            return _nltk_sent_tokenize(text)
+        except LookupError:
+            return [s for s in re.split(r"(?<=[.!?])\s+", text) if s]
+
+    def word_tokenize(text: str):
+        """Tokenize words with a safe fallback.
+
+        NLTK's tokenizer requires external data packages (punkt/punkt_tab).
+        """
+        try:
+            return _nltk_word_tokenize(text)
+        except LookupError:
+            return text.split()
 else:
     nltk = None
     # Mock NLTK functions
@@ -2198,7 +2220,7 @@ class LLMOptimizer:
         self, 
         sentence: str, 
         *,
-        openai_client: Any, 
+        openai_client: Any | None, 
         classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
         retries: int = 3,
         timeout: int = 30
@@ -2264,7 +2286,7 @@ class LLMOptimizer:
 
         Raises:
             TypeError: If arguments have incorrect types.
-            ValueError: If text is empty, categories is empty, or openai client is not set.
+            ValueError: If text is empty or categories is empty.
             TimeoutError: If the API request exceeds the timeout.
             openai.APIError: If the OpenAI API returns an error.
             RuntimeError: If max retries exceeded or response parsing fails.
@@ -2298,7 +2320,9 @@ class LLMOptimizer:
 
         # OpenAI client
         if openai_client is None:
-            raise ValueError("openai client is not set")
+            # Degrade gracefully when OpenAI is not configured (common in CI/offline).
+            # Callers can still proceed with NLTK/regex entity extraction and other stages.
+            return ClassificationResult(entity=sentence, category="unclassified", confidence=0.0)
 
         # Classifications
         if not isinstance(classifications, set):

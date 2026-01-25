@@ -667,9 +667,12 @@ class PDFProcessor:
         operation_context: MonitoringSystem = None
         if self.monitoring:
             try:
+                # NOTE: MonitoringSystem.monitor_context forwards kwargs into log context.
+                # Using a key named "name" collides with logging.LogRecord's reserved
+                # attribute and raises: "Attempt to overwrite 'name' in LogRecord".
                 operation_context = self.monitoring.monitor_context(
-                    name="pdf_processing_pipeline",
-                    tags=["pdf", "llm_optimization"]
+                    operation_name="pdf_processing_pipeline",
+                    tags=["pdf", "llm_optimization"],
                 )
             except Exception as e:
                 raise RuntimeError(f"Monitoring context initialization failed: {e}") from e
