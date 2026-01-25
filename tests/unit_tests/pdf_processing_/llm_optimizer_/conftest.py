@@ -270,6 +270,9 @@ def llm_optimizer_with_mocks(
     optimizer.embedding_model.encode.return_value = mock_encode_return
     optimizer.tokenizer.encode.return_value = mock_token_list
 
+    # Avoid pulling external NLP resources (e.g., NLTK punkt models) during unit tests.
+    optimizer._extract_key_entities = AsyncMock(return_value=[])
+
     return optimizer
 
 
@@ -375,11 +378,11 @@ def realistic_decomposed_content(element_factory, metadata_factory, structure_fa
                 element_factory('realistic_paragraph', 'paragraph', xy),
             ]
         }
-    ],
+    ]
     return {
         'pages': pages,
         'metadata': metadata_factory(len(pages), title=title),
-        'structure': metadata_factory(len(pages), title=title),
+        'structure': structure_factory(len(pages), title=title),
     }
 
 
@@ -392,7 +395,7 @@ def consistency_decomposed_content(element_factory, metadata_factory):
     return {
         'pages': pages,
         'metadata': metadata_factory(len(pages), title=title),
-        'structure': metadata_factory(len(pages), title=title),
+        'structure': {'page_count': len(pages), 'title': title},
     }
 
 

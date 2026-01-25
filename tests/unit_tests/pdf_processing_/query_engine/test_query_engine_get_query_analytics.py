@@ -6,7 +6,7 @@
 import pytest
 import os
 import anyio
-import asyncio
+import inspect
 from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from dataclasses import dataclass
@@ -562,7 +562,7 @@ class TestQueryEngineGetQueryAnalytics:
         
         # Test async execution
         coroutine = self.query_engine.get_query_analytics()
-        assert asyncio.iscoroutine(coroutine)
+            assert inspect.iscoroutine(coroutine)
         await coroutine
         
         # Test concurrent execution
@@ -571,8 +571,15 @@ class TestQueryEngineGetQueryAnalytics:
             self.query_engine.get_query_analytics(),
             self.query_engine.get_query_analytics()
         ]
-        
-        results = await asyncio.gather(*tasks)
+
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # All results should be identical and valid
         assert len(results) == 3
@@ -643,9 +650,9 @@ class TestQueryEngineGetQueryAnalytics:
             self.query_engine.embedding_cache[f"embed_{i}"] = [0.1] * 50
         
         # Measure execution time
-        start_time = asyncio.get_event_loop().time()
+        start_time = anyio.current_time()
         analytics = await self.query_engine.get_query_analytics()
-        end_time = asyncio.get_event_loop().time()
+        end_time = anyio.current_time()
         
         execution_time = end_time - start_time
         

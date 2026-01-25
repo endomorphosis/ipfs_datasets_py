@@ -230,7 +230,17 @@ class TestConversionDecisionAccuracy:
             processor.download_and_convert("test_url", output_format="mp4")
             for processor in concurrent_processors
         ]
-        concurrent_results = await asyncio.gather(*concurrent_tasks, return_exceptions=True)
+        concurrent_results = [None] * len(concurrent_tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                concurrent_results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                concurrent_results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(concurrent_tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Execute sequential operations for comparison
         sequential_results = []

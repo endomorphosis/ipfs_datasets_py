@@ -1451,75 +1451,76 @@ class LLMOptimizer:
         if timeout < 0:
             raise ValueError(f"timeout must be non-negative, got {timeout}.")
 
-        async with asyncio.timeout(timeout):
+        try:
+            with anyio.fail_after(timeout):
 
-            self.logger.info("Starting LLM optimization process")
+                self.logger.info("Starting LLM optimization process")
 
-            # Extract text content with structure preservation
-            structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
-            self.logger.info("Extracted structured text content with preserved document structure")
-            self.logger.debug(f"structured_text: {structured_text}")
+                # Extract text content with structure preservation
+                structured_text: dict[str, Any] = await self._extract_structured_text(decomposed_content)
+                self.logger.info("Extracted structured text content with preserved document structure")
+                self.logger.debug(f"structured_text: {structured_text}")
 
-            # Generate document summary
-            document_summary: str = await self._generate_document_summary(structured_text)
+                # Generate document summary
+                document_summary: str = await self._generate_document_summary(structured_text)
 
-            self.logger.info("Generated document summary")
-            self.logger.debug(f"document_summary: {document_summary}")
+                self.logger.info("Generated document summary")
+                self.logger.debug(f"document_summary: {document_summary}")
 
-            # Create optimal chunks
-            try:
-                chunks: list[LLMChunk] = await self._create_optimal_chunks(structured_text)
-            except Exception as e:
-                self.logger.error(f"Error creating optimal chunks: {e}")
-                chunks = []
+                # Create optimal chunks
+                try:
+                    chunks: list[LLMChunk] = await self._create_optimal_chunks(structured_text)
+                except Exception as e:
+                    self.logger.error(f"Error creating optimal chunks: {e}")
+                    chunks = []
 
-            self.logger.info(f"Created {len(chunks)} initial chunks")
+                self.logger.info(f"Created {len(chunks)} initial chunks")
 
-            # Generate embeddings
-            try:
-                chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
-            except Exception as e:
-                self.logger.error(f"Error creating chunk embeddings: {e}")
-                chunks_with_embeddings = []
+                # Generate embeddings
+                try:
+                    chunks_with_embeddings: list[LLMChunk] = await self._generate_embeddings(chunks)
+                except Exception as e:
+                    self.logger.error(f"Error creating chunk embeddings: {e}")
+                    chunks_with_embeddings = []
 
-            self.logger.info("Generated embeddings for all chunks")
-            self.logger.debug(f"chunks_with_embeddings: {chunks_with_embeddings}")
+                self.logger.info("Generated embeddings for all chunks")
+                self.logger.debug(f"chunks_with_embeddings: {chunks_with_embeddings}")
 
-            # Extract key entities
-            # NOTE We use a global semaphore to limit concurrency.
-            async with SEMAPHORE:
-                key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
+                # Extract key entities
+                # NOTE We use a global semaphore to limit concurrency.
+                async with SEMAPHORE:
+                    key_entities: list[dict[str, Any]] = await self._extract_key_entities(structured_text)
 
-            self.logger.info(f"Extracted {len(key_entities)} key entities from document")
+                self.logger.info(f"Extracted {len(key_entities)} key entities from document")
 
-            # Create document-level embedding
-            document_embedding: np.ndarray | None = await self._generate_document_embedding(
-                document_summary, structured_text
-            )
+                # Create document-level embedding
+                document_embedding: np.ndarray | None = await self._generate_document_embedding(
+                    document_summary, structured_text
+                )
 
-            self.logger.info("Generated document-level embedding")
+                self.logger.info("Generated document-level embedding")
 
-            # Build LLM document
-            llm_document = LLMDocument(
-                document_id=document_metadata.get('document_id', ''),
-                title=document_metadata.get('title', ''),
-                chunks=chunks_with_embeddings,
-                summary=document_summary,
-                key_entities=key_entities,
-                document_embedding=document_embedding,
-                processing_metadata= LLMDocumentProcessingMetadata(
-                    optimization_timestamp=asyncio.get_event_loop().time(),
-                    chunk_count=len(chunks_with_embeddings),
-                    total_tokens=sum(chunk.token_count for chunk in chunks_with_embeddings),
-                    model_used=self.model_name,
-                    tokenizer_used=self.tokenizer_name
-                ).model_dump()
-            )
-            
-            self.logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
-            return llm_document
+                # Build LLM document
+                llm_document = LLMDocument(
+                    document_id=document_metadata.get('document_id', ''),
+                    title=document_metadata.get('title', ''),
+                    chunks=chunks_with_embeddings,
+                    summary=document_summary,
+                    key_entities=key_entities,
+                    document_embedding=document_embedding,
+                    processing_metadata=LLMDocumentProcessingMetadata(
+                        optimization_timestamp=anyio.current_time(),
+                        chunk_count=len(chunks_with_embeddings),
+                        total_tokens=sum(chunk.token_count for chunk in chunks_with_embeddings),
+                        model_used=self.model_name,
+                        tokenizer_used=self.tokenizer_name,
+                    ).model_dump(),
+                )
 
-        raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds")
+                self.logger.info(f"LLM optimization complete: {len(chunks_with_embeddings)} chunks created")
+                return llm_document
+        except TimeoutError as exc:
+            raise TimeoutError(f"LLM optimization process timed out after '{timeout}' seconds") from exc
 
     async def _extract_structured_text(self, decomposed_content: dict[str, Any]) -> dict[str, Any]:
         """

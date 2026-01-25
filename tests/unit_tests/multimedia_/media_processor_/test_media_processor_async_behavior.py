@@ -79,7 +79,17 @@ class TestNonBlockingPerformance:
             mock_processor.download_and_convert(test_url, "mp4", "best")
             for _ in range(num_concurrent_calls)
         ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
 
         # Assert
         for i, result in enumerate(results):
@@ -101,7 +111,17 @@ class TestNonBlockingPerformance:
             mock_processor.download_and_convert(test_url, "mp4", "best")
             for _ in range(num_concurrent_calls)
         ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Assert
         for i, result in enumerate(results):
@@ -118,13 +138,15 @@ class TestNonBlockingPerformance:
         max_cancellation_time_ms = EVENT_LOOP_YIELD_FREQUENCY
         
         # Act
-        task = asyncio.create_task(mock_processor.download_and_convert(test_url, "mp4", "best"))
         start_time = time.time()
-        task.cancel()
-        
+
         try:
-            await task
-        except anyio.get_cancelled_exc_class()():
+            with anyio.CancelScope() as scope:
+                async with anyio.create_task_group() as tg:
+                    tg.start_soon(mock_processor.download_and_convert, test_url, "mp4", "best")
+                    await anyio.sleep(0)
+                    scope.cancel()
+        except anyio.get_cancelled_exc_class():
             pass
         
         cancellation_time_ms = (time.time() - start_time) * 1000

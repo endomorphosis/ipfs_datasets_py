@@ -972,9 +972,10 @@ def self_loop_integrator(integrator_with_test_graph) -> GraphRAGIntegrator:
 def get_entity_neighborhood_concurrent_tasks(integrator_with_test_graph):
     """Create 10 concurrent tasks for testing concurrent access to get_entity_neighborhood."""
     async def _create_tasks(entity_id, depth=1):
-        return [asyncio.create_task(
+        return [
             integrator_with_test_graph.get_entity_neighborhood(entity_id, depth=depth)
-        ) for _ in range(10)]
+            for _ in range(10)
+        ]
     return _create_tasks
 
 

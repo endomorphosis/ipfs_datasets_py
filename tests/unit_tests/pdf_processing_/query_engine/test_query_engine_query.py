@@ -1834,7 +1834,17 @@ class TestQueryEngineIntegration:
             
             # WHEN - Execute queries concurrently
             tasks = [real_query_engine.query(query) for query in queries]
-            concurrent_results = await asyncio.gather(*tasks, return_exceptions=True)
+            concurrent_results = [None] * len(tasks)
+
+            async def _run_one(index: int, coro):
+                try:
+                    concurrent_results[index] = await coro
+                except Exception as exc:  # gather(..., return_exceptions=True)
+                    concurrent_results[index] = exc
+
+            async with anyio.create_task_group() as tg:
+                for i, coro in enumerate(tasks):
+                    tg.start_soon(_run_one, i, coro)
             
             # THEN - Validate concurrent execution
             assert len(concurrent_results) == len(queries)

@@ -28,7 +28,7 @@ def openai_client():
     import os
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
-        raise ValueError("OPENAI_API_KEY environment variable not set")
+        pytest.skip("OPENAI_API_KEY not set; skipping live OpenAI tests")
     return openai.AsyncOpenAI(api_key=api_key)
 
 @pytest.fixture

@@ -589,9 +589,12 @@ class TestProcessPdfFilePathBadInputs:
         """
         await default_pdf_processor.process_pdf(valid_pdf_file)
 
-        for idx, event in default_pdf_processor.audit_logger.events:
-            assert event['status'] == 'success', \
-                f"Expected audit event at index {idx} to have status 'success', got '{event['status']}' instead."
+        for idx, event in enumerate(default_pdf_processor.audit_logger.events):
+            status = getattr(event, "status", None)
+            if status is None and isinstance(event, dict):
+                status = event.get("status")
+            assert status == "success", \
+                f"Expected audit event at index {idx} to have status 'success', got '{status}' instead."
 
 
     @pytest.mark.asyncio
@@ -684,10 +687,18 @@ class TestProcessPdfFilePathBadInputs:
         pdf_path2 = Path("document2.pdf")
 
         # Process files concurrently
-        task1 = asyncio.create_task(real_pdf_processor.process_pdf(pdf_path1))
-        task2 = asyncio.create_task(real_pdf_processor.process_pdf(pdf_path2))
-        
-        results = await asyncio.gather(task1, task2)
+        coros = [
+            real_pdf_processor.process_pdf(pdf_path1),
+            real_pdf_processor.process_pdf(pdf_path2),
+        ]
+        results = [None] * len(coros)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(coros):
+                tg.start_soon(_run_one, i, coro)
         
         # Verify both completed successfully
         assert len(results) == 2

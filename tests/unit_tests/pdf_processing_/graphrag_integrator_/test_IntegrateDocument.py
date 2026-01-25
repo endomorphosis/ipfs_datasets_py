@@ -670,14 +670,21 @@ class TestIntegrateDocument:
         """
         # Act - Run concurrent integrations
         tasks = [integrator.integrate_document(doc) for doc in concurrent_test_documents]
-        results = await asyncio.gather(*tasks)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Assert
         assert len(results) == test_constants['CONCURRENT_TASK_COUNT'], \
             f"Expected {test_constants['CONCURRENT_TASK_COUNT']} results, got {len(results)}"
 
     @pytest.mark.asyncio
-    async def test_when_integrating_multiple_documents_concurrently_then_all_have_unique_document_ids(self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants):
+    async def test_when_integrating_multiple_documents_concurrently_then_each_document_has_unique_knowledge_graph(self, integrator: GraphRAGIntegrator, concurrent_test_documents, test_constants):
         """
         GIVEN multiple documents are being integrated concurrently
         WHEN integrate_document is called simultaneously
@@ -685,7 +692,14 @@ class TestIntegrateDocument:
         """
         # Act - Run concurrent integrations
         tasks = [integrator.integrate_document(doc) for doc in concurrent_test_documents]
-        results = await asyncio.gather(*tasks)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
 
         # Assert
         doc_ids = [result.document_id for result in results]

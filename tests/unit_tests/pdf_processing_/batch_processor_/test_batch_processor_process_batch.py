@@ -440,10 +440,16 @@ class TestBatchProcessorProcessBatch:
                 second_batch_files.append(str(pdf_path))
             
             # Start both batches concurrently
-            batch1_task = asyncio.create_task(processor.process_batch(pdf_paths=sample_pdf_files))
-            batch2_task = asyncio.create_task(processor.process_batch(pdf_paths=second_batch_files))
-            
-            batch1_id, batch2_id = await asyncio.gather(batch1_task, batch2_task)
+            results = [None, None]
+
+            async def _run_one(index: int, pdf_paths):
+                results[index] = await processor.process_batch(pdf_paths=pdf_paths)
+
+            async with anyio.create_task_group() as tg:
+                tg.start_soon(_run_one, 0, sample_pdf_files)
+                tg.start_soon(_run_one, 1, second_batch_files)
+
+            batch1_id, batch2_id = results
             
             # Verify both batches were created
             assert batch1_id != batch2_id

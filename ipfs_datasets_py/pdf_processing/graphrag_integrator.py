@@ -326,9 +326,17 @@ def _confirm_match_with_nltk(text: str, type_: str) -> str:
     nltk_entities = []
     
     # Tokenize, POS tag, and NER chunk
-    tokens = word_tokenize(text)
-    pos_tags = pos_tag(tokens)
-    ner_tree = ne_chunk(pos_tags, binary=False)
+    try:
+        tokens = word_tokenize(text)
+        pos_tags = pos_tag(tokens)
+        ner_tree = ne_chunk(pos_tags, binary=False)
+    except LookupError:
+        # NLTK data packages (e.g. punkt/punkt_tab) are not always available in
+        # minimal/offline environments. Fall back to the original type.
+        return type_
+    except Exception:
+        # Defensive fallback: NLTK isn't critical for correctness.
+        return type_
 
     # Convert tree to IOB tags for easier processing
     iob_tags = tree2conlltags(ner_tree)
@@ -1031,7 +1039,7 @@ class GraphRAGIntegrator:
                 raise AttributeError("LLMChunk must have 'content' and 'chunk_id' attributes")
 
         entity_mentions = {}  # Track entity mentions across chunks
-        chunk_entity_queue = asyncio.Queue()
+        extracted_by_chunk: List[tuple[int, LLMChunk, List[Dict[str, Any]]]] = []
         _print_time(step="Start entity extraction from chunks")
         for idx, chunk in enumerate(chunks, start=1):
             # Extract entities from chunk content
@@ -1046,10 +1054,9 @@ class GraphRAGIntegrator:
             else:
                 self.logger.debug(f"chunk_entities: {chunk_entities}")
                 _print_time(step=f"Extracted entities from chunk {idx}/{len(chunks)}")
-                chunk_entity_queue.put_nowait((chunk, chunk_entities))
+                extracted_by_chunk.append((idx, chunk, chunk_entities))
 
-        while not chunk_entity_queue.empty():
-            chunk, chunk_entities = await chunk_entity_queue.get()
+        for idx, chunk, chunk_entities in extracted_by_chunk:
             for entity_data in chunk_entities:
 
                 assert isinstance(entity_data, dict), \

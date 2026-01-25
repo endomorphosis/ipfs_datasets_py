@@ -829,6 +829,16 @@ def real_pdf_processor_defaults():
 def real_pdf_processor_init_params(real_init_params_for_pdf_processor):
     return PDFProcessor(**real_init_params_for_pdf_processor)
 
+
+@pytest.fixture
+def real_pdf_processor(real_pdf_processor_init_params) -> PDFProcessor:
+    """Alias fixture expected by tests.
+
+    The test suite refers to a `real_pdf_processor` fixture; the underlying
+    configured instance is provided by `real_pdf_processor_init_params`.
+    """
+    return real_pdf_processor_init_params
+
 @pytest.fixture
 def mock_ipld_storage():
     return MagicMock(spec=IPLDStorage)

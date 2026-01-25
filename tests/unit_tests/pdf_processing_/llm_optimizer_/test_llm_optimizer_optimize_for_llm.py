@@ -45,6 +45,19 @@ from ipfs_datasets_py.pdf_processing.llm_optimizer import (
 )
 
 
+async def _gather_in_order(coros):
+    results = [None] * len(coros)
+
+    async def _run_one(index: int, coro):
+        results[index] = await coro
+
+    async with anyio.create_task_group() as tg:
+        for index, coro in enumerate(coros):
+            tg.start_soon(_run_one, index, coro)
+
+    return results
+
+
 # Check if each classes methods are accessible:
 assert LLMOptimizer._initialize_models
 assert LLMOptimizer.optimize_for_llm
@@ -227,8 +240,13 @@ def multiple_documents(element_factory):
                 }
             ],
             "metadata": {'page_count': 1, 'title': f'Document {i + 1}'},
+            'structure': {'page_count': 1, 'title': f'Document {i + 1}'},
         }
-        doc_metadata = {'document_id': f'concurrent_test_{i + 1}', 'title': f'Concurrent Test {i + 1}'}
+        doc_metadata = {
+            'document_id': f'concurrent_test_{i + 1}',
+            'title': f'Concurrent Test {i + 1}',
+            'author': 'Test Author',
+        }
         documents.append((doc_content, doc_metadata))
     return documents
 
@@ -813,7 +831,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         assert len(results) == len(multiple_documents), \
@@ -833,7 +851,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         for i, result in enumerate(results):
@@ -854,7 +872,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         for i, result in enumerate(results):
@@ -876,7 +894,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         for idx, result in enumerate(results):
@@ -898,7 +916,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         for i, result in enumerate(results):
@@ -919,7 +937,7 @@ class TestLLMOptimizerOptimizeForLlm:
             llm_optimizer_with_mocks.optimize_for_llm(content, metadata)
             for content, metadata in multiple_documents
         ]
-        results = await asyncio.gather(*tasks)
+        results = await _gather_in_order(tasks)
 
         # Then
         for i, result in enumerate(results):

@@ -201,7 +201,17 @@ class TestResourceLeakPrevention:
         
         # Act
         tasks = [processor.download_and_convert(test_url) for processor in processors]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Assert
         assert len(results) == CONCURRENT_OPERATIONS_COUNT, f"Expected {CONCURRENT_OPERATIONS_COUNT} results, got {len(results)}"
@@ -218,7 +228,17 @@ class TestResourceLeakPrevention:
         
         # Act
         tasks = [processor.download_and_convert(test_url) for processor in processors]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Assert
         successful_results = [r for r in results if isinstance(r, dict) and r.get("status") == "success"]
@@ -236,7 +256,17 @@ class TestResourceLeakPrevention:
         
         # Act
         tasks = [processor.download_and_convert(test_url) for processor in processors]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            try:
+                results[index] = await coro
+            except Exception as exc:  # return_exceptions=True behavior
+                results[index] = exc
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Assert
         exceptions = [r for r in results if isinstance(r, Exception)]

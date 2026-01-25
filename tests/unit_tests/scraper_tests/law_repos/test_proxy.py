@@ -1373,8 +1373,17 @@ class TestAsyncSupport:
         proxy_instance = proxy_configuration(proxy_url=proxy_url)
         
         async def run():
-            responses = await asyncio.gather(*[proxy_instance.get(url) for url in urls])
-            return len(responses)
+            coros = [proxy_instance.get(url) for url in urls]
+            results = [None] * len(coros)
+
+            async def _run_one(index: int, coro):
+                results[index] = await coro
+
+            async with anyio.create_task_group() as tg:
+                for i, coro in enumerate(coros):
+                    tg.start_soon(_run_one, i, coro)
+
+            return len(results)
         
         result = anyio.run(run())
         

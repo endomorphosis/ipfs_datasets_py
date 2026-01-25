@@ -718,8 +718,15 @@ class TestQueryGraph:
         # Execute multiple queries concurrently
         queries = ["query1", "query2", "query3", "query4", "query5"]
         tasks = [integrator.query_graph(query) for query in queries]
-        
-        results = await asyncio.gather(*tasks)
+
+        results = [None] * len(tasks)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(tasks):
+                tg.start_soon(_run_one, i, coro)
         
         # Verify all results are correct and independent
         assert len(results) == 5

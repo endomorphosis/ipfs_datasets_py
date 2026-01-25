@@ -875,6 +875,18 @@ class TestGetEntityNeighborhood:
         # Assert
         assert len(self_loops) == 1, f"Expected exactly one self-loop edge, got {len(self_loops)}"
 
+    async def _gather_in_order(self, coros):
+        results = [None] * len(coros)
+
+        async def _run_one(index: int, coro):
+            results[index] = await coro
+
+        async with anyio.create_task_group() as tg:
+            for i, coro in enumerate(coros):
+                tg.start_soon(_run_one, i, coro)
+
+        return results
+
     @pytest.mark.asyncio
     async def test_when_getting_neighborhood_with_concurrent_calls_then_all_complete_successfully(
         self, get_entity_neighborhood_concurrent_tasks, entity_id
@@ -888,7 +900,7 @@ class TestGetEntityNeighborhood:
         tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
         
         # Act
-        results = await asyncio.gather(*tasks)
+        results = await self._gather_in_order(tasks)
         
         # Assert
         assert all("error" not in result for result in results), f"Expected all results to be successful, got errors in some results"
@@ -906,7 +918,7 @@ class TestGetEntityNeighborhood:
         tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
         
         # Act
-        results = await asyncio.gather(*tasks)
+        results = await self._gather_in_order(tasks)
         
         # Assert
         assert all(result["center_entity_id"] == entity_id for result in results), f"Expected all results to have center_entity_id {entity_id}"
@@ -925,7 +937,7 @@ class TestGetEntityNeighborhood:
         tasks = await get_entity_neighborhood_concurrent_tasks(entity_id, depth=expected_depth)
         
         # Act
-        results = await asyncio.gather(*tasks)
+        results = await self._gather_in_order(tasks)
         
         # Assert
         assert all(result["depth"] == expected_depth for result in results), f"Expected all results to have depth {expected_depth}"
@@ -944,7 +956,7 @@ class TestGetEntityNeighborhood:
         tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
         
         # Act
-        results = await asyncio.gather(*tasks)
+        results = await self._gather_in_order(tasks)
         
         # Assert
         assert all(result["node_count"] == expected_node_count for result in results), f"Expected all results to have node_count {expected_node_count}"
@@ -962,7 +974,7 @@ class TestGetEntityNeighborhood:
         tasks = await get_entity_neighborhood_concurrent_tasks(entity_id)
         
         # Act
-        results = await asyncio.gather(*tasks)
+        results = await self._gather_in_order(tasks)
         first_result = results[0]
         
         # Assert
