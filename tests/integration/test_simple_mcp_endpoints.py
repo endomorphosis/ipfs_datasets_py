@@ -10,6 +10,8 @@ import anyio
 import json
 import pytest
 import requests
+import socket
+import subprocess
 import time
 from pathlib import Path
 from typing import Dict, List, Any, Optional
@@ -320,11 +322,52 @@ class SimpleMCPTestSuite:
 # pytest integration
 class TestSimpleMCPIntegration:
     """Pytest-compatible test class."""
+
+    @staticmethod
+    def _find_free_port() -> int:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.bind(("127.0.0.1", 0))
+            return int(sock.getsockname()[1])
+
+    @pytest.fixture(scope="class")
+    def dashboard_base_url(self) -> str:
+        """Start the MCP dashboard for this test class and return its base URL."""
+        port = self._find_free_port()
+        base_url = f"http://127.0.0.1:{port}"
+
+        env = os.environ.copy()
+        env["MCP_DASHBOARD_HOST"] = "127.0.0.1"
+        env["MCP_DASHBOARD_PORT"] = str(port)
+        env["MCP_DASHBOARD_BLOCKING"] = "1"
+
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "ipfs_datasets_py.mcp_dashboard"],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
+        suite = SimpleMCPTestSuite(base_url=base_url)
+        if not suite.wait_for_dashboard(timeout=60):
+            proc.terminate()
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                proc.kill()
+            pytest.skip("MCP Dashboard could not be started in this environment")
+
+        yield base_url
+
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
     
     @pytest.fixture(scope="class")
-    def test_suite(self):
+    def test_suite(self, dashboard_base_url):
         """Create test suite instance."""
-        return SimpleMCPTestSuite()
+        return SimpleMCPTestSuite(base_url=dashboard_base_url)
     
     def test_dashboard_availability(self, test_suite):
         """Test that dashboard is available."""
