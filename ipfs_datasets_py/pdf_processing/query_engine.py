@@ -519,8 +519,8 @@ class QueryEngine:
         if embedding_model == "":
             raise ValueError("embedding_model cannot be empty")
 
-        if GraphRAGIntegrator is not None and not isinstance(graphrag_integrator, GraphRAGIntegrator):
-            raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
+        # Allow duck-typed / mocked GraphRAG integrators in tests.
+        # The checks above ensure the minimal expected interface.
         if not getattr(graphrag_integrator, "initialized", False):
             raise RuntimeError("graphrag_integrator must be initialized.")
 

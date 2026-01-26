@@ -25,8 +25,18 @@ RANDOM_SEED = 420
 def faker_instance() -> Any:
     """Create a Faker-like instance with a fixed seed for reproducibility."""
     if faker is not None:
+        # Newer Faker versions disallow instance-level `.seed()`.
+        try:
+            faker.Faker.seed(RANDOM_SEED)
+        except Exception:
+            pass
+
         fake = faker.Faker()
-        fake.seed(RANDOM_SEED)
+        if hasattr(fake, "seed_instance"):
+            try:
+                fake.seed_instance(RANDOM_SEED)
+            except Exception:
+                pass
         return fake
 
     rng = random.Random(RANDOM_SEED)
