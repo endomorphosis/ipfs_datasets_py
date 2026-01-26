@@ -765,9 +765,6 @@ class PDFProcessor:
                     'status': 'success',
                     'document_id': graph_nodes['document']['id'],
                     'ipld_cid': ipld_structure['root_cid'],
-                    'stages_completed': stages_completed,
-                    'extracted_entities': entities_and_relations.get('entities', []),
-                    'extracted_relationships': entities_and_relations.get('relationships', []),
                     'entities_count': len(entities_and_relations['entities']),
                     'relationships_count': len(entities_and_relations['relationships']),
                     'cross_doc_relations': len(cross_doc_relations),
@@ -814,7 +811,6 @@ class PDFProcessor:
 
             result = {
                 'status': 'error',
-                'stages_completed': stages_completed,
                 'error': str(e),
                 'message': str(e),
                 'pdf_path': str(pdf_path)
