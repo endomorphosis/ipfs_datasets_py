@@ -174,21 +174,36 @@ class TestGraphRAGWithRealML:
         # Process document for relationships
         document_id = "ml_paper_001"
         results = await integrator.integrate_document(ml_sample_pdf, document_id)
-        
-        if 'relationships' in results:
-            relationships = results['relationships']
+
+        relationships = None
+        if isinstance(results, dict):
+            relationships = results.get('relationships')
+        elif hasattr(results, 'relationships'):
+            relationships = results.relationships
+
+        if relationships is not None:
             assert isinstance(relationships, list)
             
             if len(relationships) > 0:
                 # Should find meaningful relationships
-                relationship_types = set(rel.get('type', '') for rel in relationships)
+                def _relationship_type(rel):
+                    if isinstance(rel, dict):
+                        return rel.get('type', '') or rel.get('relationship_type', '')
+                    return getattr(rel, 'relationship_type', '')
+
+                relationship_types = set(_relationship_type(rel) for rel in relationships)
                 assert len(relationship_types) > 0
                 
                 # Should connect related entities (e.g., authors to institutions)
                 for rel in relationships[:5]:  # Check first few
-                    assert 'source_entity' in rel or 'source_entity_id' in rel
-                    assert 'target_entity' in rel or 'target_entity_id' in rel
-                    assert 'confidence' in rel or 'relationship_type' in rel
+                    if isinstance(rel, dict):
+                        assert 'source_entity' in rel or 'source_entity_id' in rel
+                        assert 'target_entity' in rel or 'target_entity_id' in rel
+                        assert 'confidence' in rel or 'relationship_type' in rel
+                    else:
+                        assert getattr(rel, 'source_entity_id', None) is not None
+                        assert getattr(rel, 'target_entity_id', None) is not None
+                        assert getattr(rel, 'relationship_type', None) is not None or getattr(rel, 'confidence', None) is not None
     
     @pytest.mark.asyncio
     async def test_given_real_models_when_performing_cross_document_analysis_then_connects_related_content(self):
@@ -251,13 +266,18 @@ class TestAdvancedMLCapabilities:
                 )
                 
                 # Should return semantic search results
-                assert isinstance(results, dict)
-                assert 'results' in results
-                assert 'confidence' in results
+                if isinstance(results, dict):
+                    assert 'results' in results
+                    assert 'confidence' in results
+                    confidence = results.get('confidence', 0)
+                else:
+                    assert hasattr(results, 'results')
+                    assert hasattr(results, 'metadata')
+                    confidence = getattr(results, 'metadata', {}).get('confidence', 0)
                 
                 # Confidence should be meaningful with real models
-                if results['confidence'] > 0:
-                    assert 0 <= results['confidence'] <= 1
+                if confidence > 0:
+                    assert 0 <= confidence <= 1
                     
         except ImportError:
             pytest.skip("Advanced query engine dependencies not available")

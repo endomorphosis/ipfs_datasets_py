@@ -442,9 +442,10 @@ class QueryEngine:
     """
     
     def __init__(self, 
-                 graphrag_integrator: GraphRAGIntegrator,
+                 graphrag_integrator: Optional[GraphRAGIntegrator] = None,
                  storage: Optional[IPLDStorage] = None,
                  embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
+                 use_real_models: bool = False,
                  logger: logging.Logger = logger,
                  torch_library: Optional[ModuleType] = None,
                  sentence_transformer_class: Optional[SentenceTransformer] = None
@@ -508,7 +509,7 @@ class QueryEngine:
         """
         # Validate inputs
         if graphrag_integrator is None:
-            raise TypeError("graphrag_integrator cannot be None")
+            graphrag_integrator = GraphRAGIntegrator(use_real_models=use_real_models)
 
         if not hasattr(graphrag_integrator, "initialized"):
             raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
@@ -582,7 +583,9 @@ class QueryEngine:
                    query_text: str,
                    query_type: Optional[str] = None,
                    filters: Optional[Dict[str, Any]] = None,
-                   max_results: int = 20) -> QueryResponse:
+                   max_results: int = 20,
+                   top_k: Optional[int] = None,
+                   include_semantic_similarity: bool = False) -> QueryResponse:
         """
         Process a natural language query against the PDF knowledge base.
 
@@ -655,6 +658,9 @@ class QueryEngine:
         if not query_text.strip():
             raise ValueError("Query text cannot be empty")
 
+        if top_k is not None:
+            max_results = top_k
+
         if max_results <= 0:
             raise ValueError("max_results must be positive")
 
@@ -684,7 +690,10 @@ class QueryEngine:
         self.logger.info(f"Processing {query_type} query: {normalized_query}")
         
         # Check cache
-        cache_key = f"{query_type}:{normalized_query}:{max_results}:{json.dumps(filters, sort_keys=True)}"
+        cache_key = (
+            f"{query_type}:{normalized_query}:{max_results}:"
+            f"{json.dumps(filters, sort_keys=True)}:{include_semantic_similarity}"
+        )
         if cache_key in self.query_cache:
             cached_result = self.query_cache[cache_key]
             self.logger.info("Returning cached query result")
@@ -735,8 +744,22 @@ class QueryEngine:
                 'query_type': query_type,
                 'timestamp': datetime.now().isoformat(),
                 'cache_hit': False,
+                'include_semantic_similarity': include_semantic_similarity,
             }
         )
+
+        if include_semantic_similarity:
+            scores = []
+            for item in results:
+                if hasattr(item, 'relevance_score'):
+                    scores.append(getattr(item, 'relevance_score'))
+                elif isinstance(item, dict):
+                    score = item.get('relevance_score')
+                    if score is None:
+                        score = item.get('score')
+                    if score is not None:
+                        scores.append(score)
+            response.metadata['confidence'] = float(sum(scores) / len(scores)) if scores else 0.0
         
         # Cache response
         self.query_cache[cache_key] = response

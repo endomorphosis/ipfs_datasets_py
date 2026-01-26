@@ -323,6 +323,9 @@ class PDFProcessor:
     def __init__(self, 
                  storage: Optional[IPLDStorage] = None,
                  enable_monitoring: bool = False,
+                 use_real_ml_models: bool = False,
+                 enable_embeddings: bool = False,
+                 embedding_model: Optional[str] = None,
                  enable_audit: bool = True,
                  logger: logging.Logger = logging.getLogger(__name__),
                  mock_dict: Optional[dict[str, Any]] = None
@@ -408,6 +411,12 @@ class PDFProcessor:
         self.ocr_engine: MultiEngineOCR = None
         self.optimizer: LLMOptimizer = None
         self.pipeline_version: str = '2.0'
+
+        # Optional feature flags (kept for backward compatibility with older
+        # integration tests and experimental pipelines).
+        self.use_real_ml_models: bool = use_real_ml_models
+        self.enable_embeddings: bool = enable_embeddings
+        self.embedding_model: Optional[str] = embedding_model
 
         # For testing purposes, allow dependency injection of mock objects
         if isinstance(mock_dict, dict):

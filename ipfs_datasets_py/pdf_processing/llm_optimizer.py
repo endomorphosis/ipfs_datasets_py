@@ -2338,15 +2338,14 @@ class LLMOptimizer:
         PROB_THRESHOLD = 0.05
 
         # Input validation
-            # Sentence
+        # Sentence
         if not isinstance(sentence, str):
             raise TypeError("sentence must be a string")
-        if not sentence or not sentence.strip():
+        sentence = sentence.strip()
+        if not sentence:
             raise ValueError("text is empty")
         if len(sentence) > 512:
             raise ValueError("sentence must not exceed 512 characters")
-        if sentence != sentence.strip():
-            raise ValueError("sentence must not have leading or trailing whitespace")
 
         # OpenAI client
         if openai_client is None:

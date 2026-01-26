@@ -29,40 +29,6 @@ def batch_detect_file_types(
     export_path: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-
-    def _make_json_safe(value: Any, seen: Optional[set[int]] = None) -> Any:
-        """Convert arbitrary nested results into a JSON-serializable structure.
-
-        This tool output can include nested/cyclical references (e.g., debug
-        structures under `all_results`). When exporting, we replace cycles with
-        a placeholder to avoid `json.dump` failures.
-        """
-        if seen is None:
-            seen = set()
-
-        value_id = id(value)
-        if value_id in seen:
-            return "<circular_reference>"
-
-        if isinstance(value, (str, int, float, bool)) or value is None:
-            return value
-
-        if isinstance(value, dict):
-            seen.add(value_id)
-            try:
-                return {str(k): _make_json_safe(v, seen) for k, v in value.items()}
-            finally:
-                seen.remove(value_id)
-
-        if isinstance(value, (list, tuple, set)):
-            seen.add(value_id)
-            try:
-                return [_make_json_safe(v, seen) for v in value]
-            finally:
-                seen.remove(value_id)
-
-        # Fallback for Path, datetime, bytes, custom classes, etc.
-        return str(value)
     Detect file types for multiple files in batch.
     
     This tool can process files from a directory or a list of file paths.
@@ -102,6 +68,39 @@ def batch_detect_file_types(
             'failed': 0
         }
     """
+
+    def _make_json_safe(value: Any, seen: Optional[set[int]] = None) -> Any:
+        """Convert arbitrary nested results into a JSON-serializable structure.
+
+        This tool output can include nested/cyclical references (e.g., debug
+        structures under `all_results`). When exporting, we replace cycles with
+        a placeholder to avoid `json.dump` failures.
+        """
+        if seen is None:
+            seen = set()
+
+        value_id = id(value)
+        if value_id in seen:
+            return "<circular_reference>"
+
+        if isinstance(value, (str, int, float, bool)) or value is None:
+            return value
+
+        if isinstance(value, dict):
+            seen.add(value_id)
+            try:
+                return {str(k): _make_json_safe(v, seen) for k, v in value.items()}
+            finally:
+                seen.remove(value_id)
+
+        if isinstance(value, (list, tuple, set)):
+            seen.add(value_id)
+            try:
+                return [_make_json_safe(v, seen) for v in value]
+            finally:
+                seen.remove(value_id)
+
+        return str(value)
     if not HAVE_DETECTOR:
         return {
             'error': 'FileTypeDetector not available',

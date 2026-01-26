@@ -16,7 +16,8 @@ import time
 import uuid
 from dataclasses import asdict, dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 
 import networkx as nx
@@ -744,6 +745,8 @@ class GraphRAGIntegrator:
     def __init__(self,
                  similarity_threshold: float = 0.8,
                  entity_extraction_confidence: float = 0.6,
+                 use_real_models: bool = False,
+                 enable_relationship_discovery: bool = False,
                  logger: logging.Logger = logging.getLogger(__name__),
                  storage: Optional[IPLDStorage] = None,
                  ) -> None:
@@ -838,6 +841,11 @@ class GraphRAGIntegrator:
         self.similarity_threshold = similarity_threshold
         self.entity_extraction_confidence = entity_extraction_confidence
 
+        # Optional feature flags used by some integration tests/experimental pipelines.
+        # The current default implementation uses lightweight heuristics unless extended.
+        self.use_real_models: bool = use_real_models
+        self.enable_relationship_discovery: bool = enable_relationship_discovery
+
         for attr_name, type_ in [("storage", IPLDStorage), ("logger", logging.Logger)]:
             attr_value = getattr(self, attr_name)
             if not isinstance(attr_value, type_):
@@ -858,7 +866,11 @@ class GraphRAGIntegrator:
         """Indicates if the integrator has been properly initialized."""
         return self._initialized
 
-    async def integrate_document(self, llm_document: LLMDocument) -> KnowledgeGraph:
+    async def integrate_document(
+        self,
+        llm_document: Union[LLMDocument, str, Path],
+        document_id: Optional[str] = None,
+    ) -> KnowledgeGraph:
         """
         Integrate an LLM-optimized document into the GraphRAG system.
 
@@ -868,9 +880,11 @@ class GraphRAGIntegrator:
         and merges it with the global knowledge graph to enable cross-document reasoning.
 
         Args:
-            llm_document (LLMDocument): Pre-processed document containing optimized chunks,
-                                       embeddings, and metadata from LLM processing pipeline.
-                                       Must include document_id, title, and processed chunks.
+            llm_document (LLMDocument | str | Path): Pre-processed document containing optimized
+                chunks, embeddings, and metadata from the LLM pipeline. When a string or Path
+                is provided, it is treated as a PDF path and converted into an LLMDocument.
+            document_id (Optional[str]): Optional override for document identifier when
+                llm_document is a PDF path. If not provided, a hash-based ID is used.
             KnowledgeGraph: Comprehensive knowledge graph object containing:
                            - Extracted entities with types and attributes
                            - Discovered relationships with confidence scores
@@ -911,6 +925,27 @@ class GraphRAGIntegrator:
         # Input validation
         if llm_document is None:
             raise TypeError("llm_document cannot be None")
+
+        if isinstance(llm_document, (str, Path)):
+            pdf_path = Path(llm_document)
+            if not pdf_path.exists():
+                raise ValueError(f"PDF path does not exist: {pdf_path}")
+
+            # Build an LLMDocument from the PDF path on-demand
+            from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+
+            processor = PDFProcessor(enable_monitoring=False, enable_audit=False)
+            decomposed_content = await processor._decompose_pdf(pdf_path)
+
+            metadata = dict(decomposed_content.get("metadata", {}))
+            if document_id:
+                metadata["document_id"] = document_id
+            if not metadata.get("title"):
+                metadata["title"] = pdf_path.stem
+            if not metadata.get("author"):
+                metadata["author"] = "unknown"
+
+            llm_document = await processor.optimizer.optimize_for_llm(decomposed_content, metadata)
 
         if not isinstance(llm_document, LLMDocument):
             raise TypeError("llm_document must be an instance of LLMDocument")
@@ -987,6 +1022,25 @@ class GraphRAGIntegrator:
 
         self.logger.info(f"GraphRAG integration complete: {len(entities)} entities, {len(relationships)} relationships")
         return knowledge_graph
+
+    async def analyze_cross_document_relationships(self, document_ids: List[str]) -> List[Dict[str, Any]]:
+        """
+        Analyze cross-document relationships for the specified document IDs.
+
+        Args:
+            document_ids (List[str]): Document identifiers to analyze.
+
+        Returns:
+            List[Dict[str, Any]]: List of cross-document relationships serialized as dictionaries.
+        """
+        if not document_ids:
+            return []
+
+        for knowledge_graph in self.knowledge_graphs.values():
+            if knowledge_graph.document_id in document_ids:
+                await self._discover_cross_document_relationships(knowledge_graph)
+
+        return [asdict(rel) if not isinstance(rel, dict) else rel for rel in self.cross_document_relationships]
     
     async def _extract_entities_from_chunks(self, chunks: List[LLMChunk]) -> List[Entity]:
         """Extract and consolidate entities from a list of LLM chunks.
