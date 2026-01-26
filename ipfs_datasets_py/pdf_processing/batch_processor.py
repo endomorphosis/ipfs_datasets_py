@@ -39,6 +39,7 @@ Integration Points:
     • External APIs: RESTful interfaces for batch management and status queries
 """
 import anyio
+import asyncio
 import concurrent.futures
 import json
 import logging
@@ -798,10 +799,10 @@ class BatchProcessor:
                             future = executor.submit(asyncio.run, self._process_single_job(job, worker_name))
                             result = future.result()
                     else:
-                        result = anyio.run(self._process_single_job(job, worker_name))
+                        result = anyio.run(self._process_single_job, job, worker_name)
                 except RuntimeError:
                     # No event loop exists, safe to use asyncio.run
-                    result = anyio.run(self._process_single_job(job, worker_name))
+                    result = anyio.run(self._process_single_job, job, worker_name)
                 
                 # Update batch status
                 self._update_batch_status(job, result)
