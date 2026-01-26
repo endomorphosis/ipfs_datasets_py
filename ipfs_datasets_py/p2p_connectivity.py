@@ -135,8 +135,9 @@ class UniversalConnectivity:
             logger.info(f"  TTL: {self.config.mdns_ttl}s")
             
             # Start periodic discovery
-            # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._mdns_discovery_loop(host))
+            # Note: This module intentionally does not spawn background tasks.
+            # If you want continuous discovery, run `_mdns_discovery_loop()` in a
+            # caller-managed AnyIO task group.
             
         except Exception as e:
             logger.warning(f"Failed to start mDNS discovery: {e}")
@@ -226,8 +227,9 @@ class UniversalConnectivity:
             logger.info("✓ AutoNAT enabled")
             
             # Start reachability detection
-            # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._check_reachability(host))
+            # Note: This module intentionally does not spawn background tasks.
+            # If you want periodic reachability checks, run `_check_reachability()` in a
+            # caller-managed AnyIO task group.
             
         except Exception as e:
             logger.warning(f"Failed to enable AutoNAT: {e}")
