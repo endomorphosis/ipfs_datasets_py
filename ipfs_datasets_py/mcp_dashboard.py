@@ -22,6 +22,7 @@ import os
 import time
 import uuid
 import anyio
+import threading
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -426,8 +427,12 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._process_website_graphrag(session_id, url, processing_config))
+                # Run the async worker in a background thread so we don't depend on asyncio.
+                threading.Thread(
+                    target=anyio.run,
+                    args=(self._process_website_graphrag, session_id, url, processing_config),
+                    daemon=True,
+                ).start()
                 
                 return jsonify({"session_id": session_id, "status": "started"})
                 
@@ -917,8 +922,11 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
+                threading.Thread(
+                    target=anyio.run,
+                    args=(self._process_caselaw_bulk, session_id, processor),
+                    daemon=True,
+                ).start()
                 
                 self.logger.info(f"Started bulk caselaw processing session: {session_id}")
                 
