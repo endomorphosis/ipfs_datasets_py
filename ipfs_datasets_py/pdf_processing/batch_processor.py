@@ -39,8 +39,8 @@ Integration Points:
     • External APIs: RESTful interfaces for batch management and status queries
 """
 import anyio
-import asyncio
 import concurrent.futures
+import inspect
 import json
 import logging
 import multiprocessing as mp
@@ -660,7 +660,11 @@ class BatchProcessor:
         
         # Monitor progress
         if callback:
-            asyncio.create_task(self._monitor_batch_progress(batch_id, callback))
+            threading.Thread(
+                target=anyio.run,
+                args=(self._monitor_batch_progress, batch_id, callback),
+                daemon=True,
+            ).start()
         
         return batch_id
     
@@ -789,20 +793,7 @@ class BatchProcessor:
                     break
                 
                 # Process job
-                try:
-                    # Try to get the current event loop, if any
-                    current_loop = asyncio.get_event_loop()
-                    if current_loop.is_running():
-                        # If we're in an event loop context (like tests), create a new loop in a thread
-                        import concurrent.futures
-                        with concurrent.futures.ThreadPoolExecutor() as executor:
-                            future = executor.submit(asyncio.run, self._process_single_job(job, worker_name))
-                            result = future.result()
-                    else:
-                        result = anyio.run(self._process_single_job, job, worker_name)
-                except RuntimeError:
-                    # No event loop exists, safe to use asyncio.run
-                    result = anyio.run(self._process_single_job, job, worker_name)
+                result = anyio.run(self._process_single_job, job, worker_name)
                 
                 # Update batch status
                 self._update_batch_status(job, result)
@@ -1123,7 +1114,7 @@ class BatchProcessor:
             
             # Call progress callback
             try:
-                if asyncio.iscoroutinefunction(callback):
+                if inspect.iscoroutinefunction(callback):
                     await callback(batch_status)
                 else:
                     callback(batch_status)
