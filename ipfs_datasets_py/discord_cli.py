@@ -629,7 +629,7 @@ def main(argv: Optional[list] = None) -> int:
     
     handler = async_commands.get(args.command)
     if handler:
-        return anyio.run(handler(args))
+        return anyio.run(handler, args)
     else:
         print(f"✗ Unknown command: {args.command}", file=sys.stderr)
         return 1

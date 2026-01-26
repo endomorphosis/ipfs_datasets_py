@@ -85,6 +85,7 @@ class MCPDashboardConfig(DashboardConfig):
     enable_investigation: bool = True
     enable_real_time_monitoring: bool = True
     enable_tool_execution: bool = True
+    tool_timeout: float = 60.0
     max_concurrent_tools: int = 4
     open_browser: bool = False
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")

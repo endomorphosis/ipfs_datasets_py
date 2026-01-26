@@ -410,8 +410,10 @@ class TestMCPToolsCLIIntegration:
         # Test with mocked wrapper
         with patch('ipfs_datasets_py.mcp_server.tools.discord_tools.discord_list.create_discord_wrapper') as mock_create:
             mock_wrapper = Mock()
-            mock_wrapper.list_guilds = asyncio.coroutine(
-                lambda **kwargs: {
+            from unittest.mock import AsyncMock
+
+            mock_wrapper.list_guilds = AsyncMock(
+                return_value={
                     'status': 'success',
                     'guilds': [
                         {'id': '123', 'name': 'Test Guild'}

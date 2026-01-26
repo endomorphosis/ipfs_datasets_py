@@ -35,6 +35,9 @@ except ImportError:
     DISCORD_EXPORTER_AVAILABLE = False
     logger.warning("DiscordChatExporter utility not available")
 
+# Backward-compatible flag name used by tests/tools
+DISCORD_AVAILABLE = DISCORD_EXPORTER_AVAILABLE
+
 
 class DiscordWrapper:
     """
