@@ -889,6 +889,32 @@ class PDFProcessor:
         if not os.access(pdf_path, os.R_OK):
             raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
 
+        # Best-effort locked-file detection (POSIX advisory locks).
+        # Some tests simulate a locked PDF and expect processing to fail early.
+        if os.name == "posix":
+            try:
+                import fcntl  # POSIX only
+            except ImportError:
+                # Non-POSIX or stripped environments: ignore.
+                pass
+            else:
+                try:
+                    with open(str(pdf_path), "rb") as lock_f:
+                        fcntl.flock(lock_f.fileno(), fcntl.LOCK_SH | fcntl.LOCK_NB)
+                except BlockingIOError as e:
+                    # EWOULDBLOCK / EAGAIN -> another process holds an incompatible lock.
+                    raise PermissionError("PDF file is locked by another process") from e
+                except PermissionError as e:
+                    raise PermissionError("PDF file is locked by another process") from e
+                except OSError as e:
+                    # Filesystems that don't support flock: ignore. Other OS errors should surface.
+                    import errno
+
+                    if getattr(e, "errno", None) in {errno.EOPNOTSUPP, errno.ENOSYS, errno.EINVAL}:
+                        pass
+                    else:
+                        raise
+
         # If optional PDF libraries are unavailable, fall back to a lightweight
         # byte-based validator that still provides stable error messages.
         if pymupdf is None or USE_MOCK_PDF:
@@ -911,9 +937,9 @@ class PDFProcessor:
 
             # Simple heuristics for specific invalid cases used in unit tests.
             if b"/Encrypt" in data or b"Encrypt" in data:
-                raise ValueError("PDF file is password-protected")
+                raise ValueError("PDF file is encrypted")
             if b"/Count 0" in data:
-                raise ValueError("PDF file contains no pages")
+                raise ValueError("PDF file has zero pages")
 
             if len(data) < 100 or b"%%EOF" not in data:
                 raise ValueError("PDF file is corrupted or invalid")
@@ -1000,10 +1026,10 @@ class PDFProcessor:
             raise RuntimeError(f"Unexpected error opening PDF file '{pdf_path}': {e}") from e
         else:
             if is_encrypted is not None and is_encrypted == True:
-                errored.append("PDF file is password-protected")
+                errored.append("PDF file is encrypted")
 
             if page_count is not None and page_count == 0:
-                errored.append("PDF file contains no pages")
+                errored.append("PDF file has zero pages")
         finally:
             if doc is not None:
                 if not doc.is_closed:

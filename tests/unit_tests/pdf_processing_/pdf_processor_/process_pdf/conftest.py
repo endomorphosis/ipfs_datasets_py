@@ -539,22 +539,53 @@ def no_read_permissions_pdf_file(mock_pdf_file, pdf_elements, paths, pagesize) -
 
 @pytest.fixture
 def locked_pdf_file(paths, pagesize, pdf_elements):
-    """Simulate a PDF file locked by another process."""
+    """Simulate a PDF file locked by another process.
+
+    Notes:
+        On POSIX, file locking is advisory; consumers must attempt to acquire a
+        lock to observe it. This fixture acquires an exclusive lock so that the
+        PDF processor's lock probe can detect it.
+    """
     path = paths['locked']
     with _make_canvas(path, pagesize) as c:
         _ = _make_mock_pdf(c, pdf_elements)
 
-    # Open the file in write mode to simulate it being locked
+    # Acquire an OS-level lock while keeping the file handle open.
     assert os.path.getsize(path) > 0, "File should not be empty"
     print(f"Locked file path: {path}, size: {os.path.getsize(path)} bytes")
     file_handle = None
     try:
-        file_handle = open(path, 'a')
+        file_handle = open(path, 'r+b')
+
+        if os.name == "posix":
+            import fcntl
+
+            fcntl.flock(file_handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        elif os.name == "nt":
+            import msvcrt
+
+            lock_len = max(1, os.path.getsize(path))
+            msvcrt.locking(file_handle.fileno(), msvcrt.LK_NBLCK, lock_len)
+        else:
+            pytest.skip(f"File locking not supported on os.name={os.name!r}")
+
         yield path
     except Exception as e:
         raise RuntimeError(f"Failed to lock the file: {e}") from e
     finally:
         if file_handle is not None:
+            try:
+                if os.name == "posix":
+                    import fcntl
+
+                    fcntl.flock(file_handle.fileno(), fcntl.LOCK_UN)
+                elif os.name == "nt":
+                    import msvcrt
+
+                    lock_len = max(1, os.path.getsize(path))
+                    msvcrt.locking(file_handle.fileno(), msvcrt.LK_UNLCK, lock_len)
+            except Exception:
+                pass
             file_handle.close()
 
 
