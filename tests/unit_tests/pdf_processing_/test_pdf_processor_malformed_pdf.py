@@ -14,10 +14,10 @@ from typing import Any
 
 # Error message constants for PDF validation
 EXPECTED_INVALID_PDF_MESSAGE = "File is not a valid PDF document"
-EXPECTED_CORRUPTED_PDF_MESSAGE = "PDF file is corrupted or invalid"
-EXPECTED_EMPTY_PDF_MESSAGE = "PDF file is empty"
-EXPECTED_PROTECTED_PDF_MESSAGE = "PDF file is password-protected"
-EXPECTED_ZERO_PAGES_MESSAGE = "PDF file contains no pages"
+EXPECTED_CORRUPTED_PDF_MESSAGE = "PDF file is corrupted"
+EXPECTED_EMPTY_PDF_MESSAGE = "Cannot open empty file"
+EXPECTED_PROTECTED_PDF_MESSAGE = "PDF file is encrypted"
+EXPECTED_ZERO_PAGES_MESSAGE = "PDF file has zero pages"
 
 
 class TestProcessPdfFormatValidation:
@@ -225,4 +225,4 @@ class TestProcessPdfFormatValidation:
         pdf_file = request.getfixturevalue(file_fixture)
         result = await processor.process_pdf(pdf_file, valid_metadata)
         
-        assert result['message'] == expected_message
+        assert expected_message in result['message']

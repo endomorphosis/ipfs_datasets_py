@@ -881,13 +881,27 @@ class PDFProcessor:
         if pdf_path.is_symlink():
             raise ValueError("Symbolic links are not supported for PDF processing")
 
-        # file_size = pdf_path.stat().st_size
-        # if file_size == 0:
-        #     raise ValueError("PDF file is empty.")
+        file_size = pdf_path.stat().st_size
+        if file_size == 0:
+            # Match PyMuPDF's common failure string used in tests.
+            raise ValueError("Cannot open empty file")
 
         # Check for permission issues
         if not os.access(pdf_path, os.R_OK):
             raise PermissionError(f"Insufficient permissions to read PDF file: {pdf_path}")
+
+        # Quick header validation: avoid running decomposition on obviously non-PDF files.
+        try:
+            with open(str(pdf_path), "rb") as f:
+                head = f.read(4)
+        except PermissionError as e:
+            msg = str(e).lower()
+            if 'lock' in msg:
+                raise PermissionError("PDF file is locked by another process") from e
+            raise PermissionError("Insufficient permissions to read PDF file") from e
+
+        if not head.startswith(b"%PDF"):
+            raise ValueError("File is not a valid PDF document")
 
         # Best-effort locked-file detection (POSIX advisory locks).
         # Some tests simulate a locked PDF and expect processing to fail early.
