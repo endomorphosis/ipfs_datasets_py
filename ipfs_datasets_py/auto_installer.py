@@ -11,7 +11,7 @@ import subprocess
 import importlib
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Union, Tuple, Set
 import warnings
 
 logger = logging.getLogger(__name__)
@@ -29,9 +29,23 @@ class DependencyInstaller:
         self.system = platform.system().lower()
         self.architecture = platform.machine().lower()
         self.python_version = sys.version_info
+
+        # Resolve project root and local bin/deps directories.
+        # Default layout: <repo_root>/bin (repo_root is parent of package folder).
+        default_project_root = Path(__file__).resolve().parents[1]
+        self.project_root = Path(os.getenv('IPFS_DATASETS_PROJECT_ROOT', str(default_project_root))).resolve()
+        self.bin_dir = Path(os.getenv('IPFS_DATASETS_LOCAL_BIN', str(self.project_root / 'bin'))).resolve()
+        self.deps_dir = Path(os.getenv('IPFS_DATASETS_LOCAL_DEPS', str(self.bin_dir / '.deps'))).resolve()
+
+        self.bin_dir.mkdir(parents=True, exist_ok=True)
+        self.deps_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_bin_on_path()
         
         # Track installed packages to avoid duplicate installations
         self.installed_packages = set()
+
+        # Environment toggles
+        self.force_local_system_deps = os.getenv('IPFS_DATASETS_FORCE_LOCAL_SYSTEM_DEPS', 'false').lower() == 'true'
         
         # Package mappings for different systems
         self.system_packages = {
@@ -151,7 +165,263 @@ class DependencyInstaller:
             # Development
             'pytest': ['pytest>=8.0.0,<9.0.0'],
             'coverage': ['coverage>=7.0.0,<8.0.0'],
+
+            # Local binary helpers
+            'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
         }
+
+        # Minimal command mapping used to verify system tools.
+        # (This is intentionally small; local installers can extend it.)
+        self._system_dep_verify = {
+            'ffmpeg': (['ffmpeg', '-version'],),
+            'tesseract': (['tesseract', '--version'],),
+            'poppler': (['pdfinfo', '-v'], ['pdftoppm', '-v']),
+            'z3': (['z3', '--version'],),
+            'cvc4': (['cvc4', '--version'],),
+            'cvc5': (['cvc5', '--version'],),
+        }
+
+    def _ensure_bin_on_path(self) -> None:
+        """Prepend local bin directory to PATH for the current process."""
+        bin_str = str(self.bin_dir)
+        current = os.environ.get('PATH', '')
+        parts = current.split(os.pathsep) if current else []
+        if parts and parts[0] == bin_str:
+            return
+        if bin_str not in parts:
+            os.environ['PATH'] = os.pathsep.join([bin_str] + parts)
+
+    def _normalized_arch(self) -> str:
+        """Return a normalized architecture label."""
+        arch = (self.architecture or '').lower()
+        if arch in {'x86_64', 'amd64'}:
+            return 'amd64'
+        if arch in {'aarch64', 'arm64'}:
+            return 'arm64'
+        if arch.startswith('armv7') or arch == 'armv7l':
+            return 'armv7'
+        return arch or 'unknown'
+
+    def _command_exists_path(self, command: str) -> bool:
+        """Check if a command exists in PATH (without invoking it)."""
+        try:
+            from shutil import which
+        except Exception:
+            return False
+        return which(command) is not None
+
+    def _sudo_available(self) -> bool:
+        """Return True if passwordless sudo is available (non-interactive)."""
+        if self.system not in {'linux', 'darwin'}:
+            return False
+        if not self._command_exists_path('sudo'):
+            return False
+        try:
+            result = subprocess.run(['sudo', '-n', 'true'], capture_output=True, text=True, timeout=5)
+            return result.returncode == 0
+        except Exception:
+            return False
+
+    def _system_dep_satisfied(self, package_name: str) -> bool:
+        """Check whether a system dependency appears to already be installed."""
+        verify_cmds = self._system_dep_verify.get(package_name)
+        if not verify_cmds:
+            return False
+        for cmd in verify_cmds:
+            try:
+                if not cmd:
+                    continue
+                if not self._command_exists_path(cmd[0]):
+                    continue
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def _write_executable(self, path: Path, content: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding='utf-8')
+        try:
+            os.chmod(path, 0o755)
+        except Exception:
+            pass
+
+    def _install_ffmpeg_locally(self) -> bool:
+        """Install/enable ffmpeg locally in ./bin without sudo.
+
+        Strategy: install `imageio-ffmpeg` and create a wrapper `bin/ffmpeg`
+        that execs the platform-appropriate bundled binary.
+        """
+        if self._system_dep_satisfied('ffmpeg') and not self.force_local_system_deps:
+            return True
+
+        # Ensure helper package is available
+        if not self.install_python_dependency('imageio-ffmpeg'):
+            return False
+
+        wrapper = self.bin_dir / 'ffmpeg'
+        wrapper_py = """#!/usr/bin/env python3
+import os
+import sys
+
+try:
+    import imageio_ffmpeg
+except Exception as e:
+    sys.stderr.write(f"imageio-ffmpeg not available: {e}\\n")
+    sys.exit(1)
+
+exe = imageio_ffmpeg.get_ffmpeg_exe()
+args = [exe] + sys.argv[1:]
+os.execv(exe, args)
+"""
+        self._write_executable(wrapper, wrapper_py)
+        return self._system_dep_satisfied('ffmpeg')
+
+    def _apt_available_for_local_extract(self) -> bool:
+        """Check whether Debian/Ubuntu tooling exists for local extraction installs."""
+        return self._command_exists_path('apt-get') and self._command_exists_path('apt-cache') and self._command_exists_path('dpkg-deb')
+
+    def _apt_parse_depends(self, package: str) -> List[str]:
+        """Parse direct Depends/PreDepends for an apt package."""
+        try:
+            result = subprocess.run(['apt-cache', 'depends', package], capture_output=True, text=True, timeout=30)
+        except Exception:
+            return []
+        if result.returncode != 0:
+            return []
+        deps: List[str] = []
+        for line in (result.stdout or '').splitlines():
+            line = line.strip()
+            if not (line.startswith('Depends:') or line.startswith('PreDepends:')):
+                continue
+            _, dep = line.split(':', 1)
+            dep = dep.strip()
+            # Ignore virtual/alternative deps in angle brackets
+            if dep.startswith('<') and dep.endswith('>'):
+                continue
+            # apt-cache may prefix with "|" for alternatives
+            dep = dep.lstrip('|').strip()
+            if not dep or dep.startswith('<'):
+                continue
+            # Ignore self-references
+            if dep == package:
+                continue
+            deps.append(dep)
+        return deps
+
+    def _apt_collect_packages(self, roots: List[str], max_packages: int = 40) -> List[str]:
+        """Collect a bounded set of packages (roots + dependencies)."""
+        queue: List[str] = list(dict.fromkeys(roots))
+        seen: Set[str] = set(queue)
+        out: List[str] = []
+        while queue and len(out) < max_packages:
+            pkg = queue.pop(0)
+            out.append(pkg)
+            for dep in self._apt_parse_depends(pkg):
+                if dep not in seen:
+                    seen.add(dep)
+                    queue.append(dep)
+                if len(seen) >= max_packages:
+                    break
+        return out
+
+    def _apt_download_and_extract(self, packages: List[str]) -> Optional[Path]:
+        """Download and extract apt .debs into a local prefix under ./bin/.deps/apt."""
+        if not self._apt_available_for_local_extract():
+            return None
+        apt_root = self.deps_dir / 'apt'
+        apt_root.mkdir(parents=True, exist_ok=True)
+
+        download_dir = self.deps_dir / 'apt_downloads'
+        download_dir.mkdir(parents=True, exist_ok=True)
+
+        for pkg in packages:
+            try:
+                # Download into download_dir (no sudo required)
+                result = subprocess.run(
+                    ['apt-get', 'download', pkg],
+                    cwd=str(download_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                )
+                if result.returncode != 0 and self.verbose:
+                    logger.warning(f"apt-get download failed for {pkg}: {result.stderr.strip()}")
+            except Exception as e:
+                if self.verbose:
+                    logger.warning(f"apt-get download error for {pkg}: {e}")
+
+        debs = sorted(download_dir.glob('*.deb'))
+        if not debs:
+            return None
+
+        for deb in debs:
+            try:
+                subprocess.run(
+                    ['dpkg-deb', '-x', str(deb), str(apt_root)],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                )
+            except Exception as e:
+                if self.verbose:
+                    logger.warning(f"dpkg-deb extract failed for {deb.name}: {e}")
+
+        return apt_root
+
+    def _install_apt_extracted_binary(self, package: str, binary: str) -> bool:
+        """Install a binary via apt download+extract and create a wrapper in ./bin."""
+        if self._command_exists_path(binary):
+            return True
+        if not self._apt_available_for_local_extract():
+            return False
+
+        pkgs = self._apt_collect_packages([package])
+        apt_root = self._apt_download_and_extract(pkgs)
+        if apt_root is None:
+            return False
+
+        real_bin = apt_root / 'usr' / 'bin' / binary
+        if not real_bin.exists():
+            # Some packages install into /bin
+            real_bin = apt_root / 'bin' / binary
+        if not real_bin.exists():
+            return False
+
+        # Conservative LD_LIBRARY_PATH: include common lib dirs under extracted root.
+        lib_paths = []
+        for p in [
+            apt_root / 'usr' / 'lib',
+            apt_root / 'lib',
+            apt_root / 'usr' / 'lib' / f"{self._normalized_arch()}-linux-gnu",
+            apt_root / 'usr' / 'lib' / 'aarch64-linux-gnu',
+            apt_root / 'usr' / 'lib' / 'x86_64-linux-gnu',
+        ]:
+            if p.exists():
+                lib_paths.append(str(p))
+        ld_path = ':'.join(lib_paths)
+
+        wrapper_path = self.bin_dir / binary
+        wrapper_sh = f"""#!/usr/bin/env bash
+set -euo pipefail
+ROOT="{apt_root}"
+BIN1="$ROOT/usr/bin/{binary}"
+BIN2="$ROOT/bin/{binary}"
+if [[ -x "$BIN1" ]]; then
+  BIN="$BIN1"
+elif [[ -x "$BIN2" ]]; then
+  BIN="$BIN2"
+else
+  echo "Missing extracted binary: {binary}" 1>&2
+  exit 1
+fi
+export LD_LIBRARY_PATH="{ld_path}:$LD_LIBRARY_PATH"
+exec "$BIN" "$@"
+"""
+        self._write_executable(wrapper_path, wrapper_sh)
+        return self._command_exists_path(binary)
 
     def detect_package_manager(self) -> str:
         """Detect system package manager"""
@@ -198,16 +468,21 @@ class DependencyInstaller:
                 logger.info(f"System dependency {package_name} already available")
             return True
 
-        # Skip system dependency installation in sandboxed environments
         if os.getenv('IPFS_INSTALL_SYSTEM_DEPS', 'true').lower() != 'true':
             if self.verbose:
                 logger.info(f"Skipping system dependency {package_name} (IPFS_INSTALL_SYSTEM_DEPS=false)")
             return False
 
-        if not self.auto_install or os.getenv('CI') or os.getenv('GITHUB_ACTIONS'):
-            if self.verbose:
-                logger.info(f"Skipping system dependency {package_name} in CI/sandbox environment")
+        if not self.auto_install:
             return False
+
+        # Already satisfied?
+        # In forced-local mode, still proceed so we can drop a wrapper into ./bin.
+        if self._system_dep_satisfied(package_name) and not self.force_local_system_deps:
+            return True
+
+        # In CI/sandbox we avoid package-manager installs, but local installs are allowed.
+        in_ci = bool(os.getenv('CI') or os.getenv('GITHUB_ACTIONS'))
             
         package_manager = self.detect_package_manager()
         
@@ -260,61 +535,15 @@ class DependencyInstaller:
             if self.verbose:
                 logger.info(f"Installing system package {system_package} using {package_manager}")
                 
-            timeout = 120 if package_manager == 'winget' else 300
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             
             if result.returncode == 0:
                 if self.verbose:
                     logger.info(f"Successfully installed {system_package}")
-                if self.system == 'windows':
-                    self._ensure_windows_dependency_on_path(package_name)
                 return True
             else:
-                if "Found an existing package already installed" in (result.stdout or ""):
-                    if self.verbose:
-                        logger.info(f"{system_package} already installed via winget")
-                    if self.system == 'windows':
-                        self._ensure_windows_dependency_on_path(package_name)
-                    return True
                 if self.verbose:
-                    logger.warning(
-                        f"Failed to install {system_package} using {package_manager}: "
-                        f"rc={result.returncode} stdout={result.stdout.strip()} stderr={result.stderr.strip()}"
-                    )
-                if package_manager == 'winget':
-                    fallback_name = package_name if '.' in system_package else system_package
-                    if self._command_exists('choco'):
-                        choco_cmd = ['choco', 'install', fallback_name, '-y']
-                        if self.verbose:
-                            logger.info(f"Retrying {fallback_name} using chocolatey")
-                        choco_result = subprocess.run(choco_cmd, capture_output=True, text=True, timeout=300)
-                        if choco_result.returncode == 0:
-                            if self.verbose:
-                                logger.info(f"Successfully installed {fallback_name} with chocolatey")
-                            return True
-                        if self.verbose:
-                            logger.warning(
-                                f"Chocolatey install failed for {fallback_name}: "
-                                f"rc={choco_result.returncode} stdout={choco_result.stdout.strip()} stderr={choco_result.stderr.strip()}"
-                            )
-                    elif self.verbose:
-                        logger.warning("Chocolatey not available for fallback install")
-                    if self._command_exists('scoop'):
-                        scoop_cmd = ['scoop', 'install', fallback_name]
-                        if self.verbose:
-                            logger.info(f"Retrying {fallback_name} using scoop")
-                        scoop_result = subprocess.run(scoop_cmd, capture_output=True, text=True, timeout=300)
-                        if scoop_result.returncode == 0:
-                            if self.verbose:
-                                logger.info(f"Successfully installed {fallback_name} with scoop")
-                            return True
-                        if self.verbose:
-                            logger.warning(
-                                f"Scoop install failed for {fallback_name}: "
-                                f"rc={scoop_result.returncode} stdout={scoop_result.stdout.strip()} stderr={scoop_result.stderr.strip()}"
-                            )
-                    elif self.verbose:
-                        logger.warning("Scoop not available for fallback install")
+                    logger.warning(f"Failed to install {system_package}: {result.stderr}")
                 return False
                 
         except subprocess.TimeoutExpired:

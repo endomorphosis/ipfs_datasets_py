@@ -303,11 +303,20 @@ except ImportError:
 
 # PDF Processing Components with conditional automated dependency installation
 import os
-if installer.auto_install and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true':
-    print("🔧 Installing PDF processing dependencies...")
+if (
+    installer.auto_install
+    and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
+    and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
+):
+    # Import-time installation is opt-in because it can trigger heavyweight optional
+    # dependencies (e.g., OCR/ML stacks) and should not break basic imports.
     from .auto_installer import install_for_component
-    install_for_component('pdf')
-    install_for_component('ocr')
+    for _component in ('pdf', 'ocr'):
+        try:
+            install_for_component(_component)
+        except Exception as e:
+            import warnings
+            warnings.warn(f"Auto-install for component '{_component}' failed during import: {e}")
 
 try:
     from .pdf_processing import PDFProcessor

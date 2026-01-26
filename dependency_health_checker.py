@@ -10,6 +10,7 @@ import json
 import subprocess
 import importlib
 import time
+import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
@@ -41,6 +42,65 @@ class DependencyHealthChecker:
         self.cli_deps = [
             'json', 'argparse', 'subprocess', 'pathlib', 'sys', 'os'
         ]
+
+        # System-level tools (binaries) used by some features. These are validated
+        # via PATH lookup + a lightweight version command.
+        self.system_tools = {
+            'ffmpeg': ['ffmpeg', '-version'],
+            'tesseract': ['tesseract', '--version'],
+            # poppler-utils provides these
+            'pdfinfo': ['pdfinfo', '-v'],
+            'pdftoppm': ['pdftoppm', '-v'],
+        }
+
+    def check_system_tool(self, tool_name: str, version_cmd: List[str]) -> HealthStatus:
+        """Check health of a system tool (binary in PATH)."""
+        start_time = time.time()
+        if shutil.which(tool_name) is None:
+            return HealthStatus(
+                name=tool_name,
+                status='missing',
+                error=f"'{tool_name}' not found in PATH",
+                recommendation=(
+                    f"Install system dependency for {tool_name} (or enable zero-touch local bin installs)"
+                ),
+            )
+
+        try:
+            result = subprocess.run(version_cmd, capture_output=True, text=True, timeout=10)
+            import_time = time.time() - start_time
+            if result.returncode != 0:
+                return HealthStatus(
+                    name=tool_name,
+                    status='error',
+                    error=(result.stderr or result.stdout or '').strip() or f"Non-zero exit ({result.returncode})",
+                    import_time=import_time,
+                    recommendation=f"Reinstall/repair {tool_name} or use local bin fallback",
+                )
+
+            # Attempt to extract something vaguely version-like (best effort)
+            first_line = (result.stdout or result.stderr or '').splitlines()[:1]
+            version = first_line[0].strip() if first_line else None
+            return HealthStatus(
+                name=tool_name,
+                status='ok',
+                version=version,
+                import_time=import_time,
+            )
+        except subprocess.TimeoutExpired:
+            return HealthStatus(
+                name=tool_name,
+                status='error',
+                error='Timeout while running version command',
+                recommendation=f"Check {tool_name} installation or use local bin fallback",
+            )
+        except Exception as e:
+            return HealthStatus(
+                name=tool_name,
+                status='error',
+                error=str(e),
+                recommendation=f"Check {tool_name} installation or use local bin fallback",
+            )
     
     def check_dependency_health(self, name: str) -> HealthStatus:
         """Check health of a single dependency"""
@@ -93,7 +153,8 @@ class DependencyHealthChecker:
         results = {
             'critical': {},
             'optional': {},
-            'cli': {}
+            'cli': {},
+            'system': {},
         }
         
         print("🏥 Checking dependency health...")
@@ -109,6 +170,10 @@ class DependencyHealthChecker:
         # Check CLI dependencies (should always be available)
         for dep in self.cli_deps:
             results['cli'][dep] = self.check_dependency_health(dep)
+
+        # Check system tools
+        for tool, cmd in self.system_tools.items():
+            results['system'][tool] = self.check_system_tool(tool, cmd)
         
         return results
     
@@ -206,12 +271,15 @@ class DependencyHealthChecker:
                                  if result['success'] and result['critical'])
         critical_cli_total = sum(1 for result in cli_results.values() 
                                if result['critical'])
+
+        system_ok = sum(1 for status in dep_results['system'].values() if status.status == 'ok')
+        system_total = len(dep_results['system'])
         
         # Determine overall health
         overall_health = 'healthy'
         if critical_ok < critical_total or critical_cli_passed < critical_cli_total:
             overall_health = 'critical'
-        elif optional_ok < optional_total * 0.5 or cli_tests_passed < cli_tests_total * 0.8:
+        elif optional_ok < optional_total * 0.5 or cli_tests_passed < cli_tests_total * 0.8 or system_ok < system_total:
             overall_health = 'degraded'
         
         return {
@@ -221,7 +289,8 @@ class DependencyHealthChecker:
                 'critical_dependencies': f"{critical_ok}/{critical_total}",
                 'optional_dependencies': f"{optional_ok}/{optional_total}",
                 'cli_tests': f"{cli_tests_passed}/{cli_tests_total}",
-                'critical_cli_tests': f"{critical_cli_passed}/{critical_cli_total}"
+                'critical_cli_tests': f"{critical_cli_passed}/{critical_cli_total}",
+                'system_tools': f"{system_ok}/{system_total}",
             },
             'dependencies': dep_results,
             'cli_functionality': cli_results,
@@ -249,6 +318,11 @@ class DependencyHealthChecker:
                            if status.status == 'missing']
         if missing_optional:
             recommendations.append(f"💡 Consider installing optional packages: {', '.join(missing_optional[:3])}")
+
+        # Check for missing system tools
+        missing_tools = [name for name, status in dep_results.get('system', {}).items() if status.status != 'ok']
+        if missing_tools:
+            recommendations.append(f"💡 System tools missing/degraded: {', '.join(missing_tools[:3])}")
         
         # Check for slow imports
         slow_imports = [status.name for status in dep_results['critical'].values() 
@@ -284,6 +358,8 @@ def print_health_report(report: Dict):
     print(f"  Optional Dependencies: {summary['optional_dependencies']}")
     print(f"  CLI Tests: {summary['cli_tests']}")
     print(f"  Critical CLI Tests: {summary['critical_cli_tests']}")
+    if 'system_tools' in summary:
+        print(f"  System Tools: {summary['system_tools']}")
     
     # Critical dependency details
     print(f"\n🔴 Critical Dependencies:")
@@ -302,6 +378,16 @@ def print_health_report(report: Dict):
         print(f"  {emoji} {result['description']}{critical_mark}")
         if not result['success'] and 'error' in result:
             print(f"      Error: {result['error']}")
+
+    # System tool details
+    if 'system' in report.get('dependencies', {}):
+        print(f"\n🧰 System Tools:")
+        for name, status in report['dependencies']['system'].items():
+            emoji = '✅' if status.status == 'ok' else '❌'
+            version_str = f" - {status.version}" if status.version and status.status == 'ok' else ""
+            print(f"  {emoji} {name:12s}{version_str}")
+            if status.error and status.status != 'ok':
+                print(f"      Error: {status.error}")
     
     # Recommendations
     print(f"\n💡 Recommendations:")
