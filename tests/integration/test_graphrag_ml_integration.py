@@ -245,6 +245,9 @@ class TestAdvancedMLCapabilities:
         """
         try:
             from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
+            from ipfs_datasets_py.pdf_processing.query_engine import QueryResponse
+            from ipfs_datasets_py.pdf_processing.query_engine import QueryResponse
+            from ipfs_datasets_py.pdf_processing.query_engine import QueryResponse
             
             engine = QueryEngine(
                 embedding_model="all-MiniLM-L6-v2",
@@ -504,6 +507,7 @@ class TestEndToEndMLPipeline:
         """
         try:
             from ipfs_datasets_py.pdf_processing.query_engine import QueryEngine
+            from ipfs_datasets_py.pdf_processing.query_engine import QueryResponse
             
             engine = QueryEngine(
                 embedding_model="all-MiniLM-L6-v2",
@@ -530,15 +534,31 @@ class TestEndToEndMLPipeline:
                 query_results.append(result)
                 
                 # Should return intelligent responses
-                assert isinstance(result, dict)
-                assert 'results' in result
-                
+                assert isinstance(result, (dict, QueryResponse))
+
+                if isinstance(result, QueryResponse):
+                    result_dict = {
+                        'results': result.results,
+                        'confidence': result.metadata.get('confidence', 0)
+                    }
+                else:
+                    result_dict = result
+
+                assert 'results' in result_dict
+
                 # Real ML models should provide meaningful confidence scores
-                if 'confidence' in result and result['confidence'] > 0:
-                    assert 0 <= result['confidence'] <= 1
+                if 'confidence' in result_dict and result_dict['confidence'] > 0:
+                    assert 0 <= result_dict['confidence'] <= 1
             
             # Should handle multiple queries successfully
-            successful_queries = [r for r in query_results if r.get('confidence', 0) > 0]
+            successful_queries = []
+            for result in query_results:
+                if isinstance(result, QueryResponse):
+                    confidence = result.metadata.get('confidence', 0)
+                else:
+                    confidence = result.get('confidence', 0)
+                if confidence > 0:
+                    successful_queries.append(result)
             # At least some queries should succeed with real models
             
         except ImportError:

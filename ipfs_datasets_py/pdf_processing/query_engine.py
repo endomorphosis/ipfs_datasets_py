@@ -587,7 +587,9 @@ class QueryEngine:
                    filters: Optional[Dict[str, Any]] = None,
                    max_results: int = 20,
                    top_k: Optional[int] = None,
-                   include_semantic_similarity: bool = False) -> QueryResponse:
+                   include_semantic_similarity: bool = False,
+                   include_cross_document_reasoning: bool = False,
+                   enable_graph_traversal: bool = False) -> QueryResponse:
         """
         Process a natural language query against the PDF knowledge base.
 
@@ -612,6 +614,10 @@ class QueryEngine:
             max_results (int, optional): Maximum number of results to return.
                 Must be positive integer. Large values may impact performance.
                 Defaults to 20.
+            include_cross_document_reasoning (bool, optional): When True and query_type is
+                not specified, uses cross-document processing. Defaults to False.
+            enable_graph_traversal (bool, optional): When True and query_type is not
+                specified, uses graph traversal processing. Defaults to False.
 
         Returns:
             QueryResponse: Complete query response containing:
@@ -662,6 +668,12 @@ class QueryEngine:
 
         if top_k is not None:
             max_results = top_k
+
+        if query_type is None:
+            if enable_graph_traversal:
+                query_type = 'graph_traversal'
+            elif include_cross_document_reasoning:
+                query_type = 'cross_document'
 
         if max_results <= 0:
             raise ValueError("max_results must be positive")
@@ -2128,12 +2140,24 @@ class QueryEngine:
             raise ValueError("Query cannot be empty or contain only whitespace")
 
         # Tokenize and tag
-        tokens = word_tokenize(query)
-        pos_tags = pos_tag(tokens)
-        
-        # Named Entity Recognition
-        entities = ne_chunk(pos_tags, binary=False)
-        print(f"NER tree: {entities}")
+        try:
+            tokens = word_tokenize(query)
+            pos_tags = pos_tag(tokens)
+
+            # Named Entity Recognition
+            entities = ne_chunk(pos_tags, binary=False)
+            print(f"NER tree: {entities}")
+        except LookupError as e:
+            self.logger.warning(f"NLTK resources unavailable for NER; falling back to heuristic extraction: {e}")
+
+            def _fallback_entities(text: str) -> List[str]:
+                # Capture multi-word capitalized phrases and acronyms
+                phrases = re.findall(r"(?:\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b|\b[A-Z]{2,}\b)", text)
+                # Filter out question words and very short tokens
+                cleaned = [p for p in phrases if len(p) >= 3 and not self._is_question_word(p)]
+                return cleaned
+
+            return _fallback_entities(query)
 
         # Extract entities from NER tree
         entity_names = []
