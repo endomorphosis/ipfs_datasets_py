@@ -10,6 +10,7 @@ import json
 import pytest
 import requests
 import time
+import inspect
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import logging
@@ -58,6 +59,20 @@ class MCPIntegrationTestSuite:
         
         self.logger.error("MCP Dashboard failed to start within timeout")
         return False
+
+
+def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> str:
+    return (
+        "MCP dashboard service is required for these integration tests but was not reachable. "
+        "This test suite is service-dependent and will be skipped when the dashboard is not running.\n\n"
+        f"Tried polling: {base_url}/api/mcp/status (timeout={timeout_seconds}s).\n\n"
+        "To run locally, start the dashboard and re-run this test. For example:\n"
+        "  - VS Code task: Start MCP Dashboard (8899)\n"
+        "  - Or run: MCP_DASHBOARD_HOST=127.0.0.1 MCP_DASHBOARD_PORT=8899 MCP_DASHBOARD_BLOCKING=1 "
+        "python -m ipfs_datasets_py.mcp_dashboard\n\n"
+        "If the dashboard cannot be started in your environment (missing optional deps, port restrictions, etc.), "
+        "keep this test skipped and run the unit test suites instead."
+    )
     
     def test_basic_endpoints(self) -> Dict[str, Any]:
         """Test basic MCP dashboard endpoints."""
@@ -171,7 +186,7 @@ class MCPIntegrationTestSuite:
             
             # Execute the tool with test arguments
             start_time = time.time()
-            if asyncio.iscoroutinefunction(tool_func):
+            if inspect.iscoroutinefunction(tool_func):
                 result = await tool_func(**test_args)
             else:
                 result = tool_func(**test_args)
@@ -478,6 +493,10 @@ class TestMCPIntegration:
     @pytest.mark.asyncio
     async def test_comprehensive_integration(self, test_suite):
         """Run comprehensive integration tests."""
+        timeout_seconds = 60
+        if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
+            pytest.skip(_skip_reason_dashboard_unavailable(test_suite.base_url, timeout_seconds))
+
         results = await test_suite.run_comprehensive_tests()
         
         # Save results
@@ -493,8 +512,9 @@ class TestMCPIntegration:
     
     def test_basic_endpoints_only(self, test_suite):
         """Test only basic endpoints (synchronous)."""
-        if not test_suite.wait_for_dashboard():
-            pytest.skip("MCP Dashboard not available")
+        timeout_seconds = 60
+        if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
+            pytest.skip(_skip_reason_dashboard_unavailable(test_suite.base_url, timeout_seconds))
         
         results = test_suite.test_basic_endpoints()
         
@@ -507,8 +527,9 @@ class TestMCPIntegration:
     @pytest.mark.asyncio
     async def test_mcp_tools_availability(self, test_suite):
         """Test MCP tools availability."""
-        if not test_suite.wait_for_dashboard():
-            pytest.skip("MCP Dashboard not available")
+        timeout_seconds = 60
+        if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
+            pytest.skip(_skip_reason_dashboard_unavailable(test_suite.base_url, timeout_seconds))
         
         results = await test_suite.test_mcp_tools_loading()
         assert results.get('success', False), f"MCP tools loading failed: {results.get('error', 'Unknown error')}"
