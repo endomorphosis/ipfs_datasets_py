@@ -107,6 +107,8 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_UNSET = object()
+
 
 
 
@@ -442,7 +444,7 @@ class QueryEngine:
     """
     
     def __init__(self, 
-                 graphrag_integrator: Optional[GraphRAGIntegrator] = None,
+                 graphrag_integrator: Optional[GraphRAGIntegrator] = _UNSET,
                  storage: Optional[IPLDStorage] = None,
                  embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
                  use_real_models: bool = False,
@@ -509,8 +511,10 @@ class QueryEngine:
             - IPLD storage is created with default settings if not provided
         """
         # Validate inputs
-        if graphrag_integrator is None:
+        if graphrag_integrator is _UNSET:
             graphrag_integrator = GraphRAGIntegrator(use_real_models=use_real_models)
+        elif graphrag_integrator is None:
+            raise TypeError("graphrag_integrator cannot be None")
 
         if not hasattr(graphrag_integrator, "initialized"):
             raise TypeError("graphrag_integrator must be a GraphRAGIntegrator instance")
