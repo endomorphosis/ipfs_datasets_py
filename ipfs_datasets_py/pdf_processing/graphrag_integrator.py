@@ -1041,6 +1041,21 @@ class GraphRAGIntegrator:
                 await self._discover_cross_document_relationships(knowledge_graph)
 
         return [asdict(rel) if not isinstance(rel, dict) else rel for rel in self.cross_document_relationships]
+
+    def extract_entities(self, text: str) -> List[Dict[str, Any]]:
+        """
+        Extract entities from raw text using the internal NER pipeline.
+
+        Args:
+            text (str): Input text to analyze.
+
+        Returns:
+            List[Dict[str, Any]]: Extracted entities with type and metadata.
+        """
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("text must be a non-empty string")
+
+        return anyio.run(self._extract_entities_from_text, text, "adhoc_text")
     
     async def _extract_entities_from_chunks(self, chunks: List[LLMChunk]) -> List[Entity]:
         """Extract and consolidate entities from a list of LLM chunks.
