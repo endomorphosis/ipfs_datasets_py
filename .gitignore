@@ -20,6 +20,7 @@ dist/
 venv/
 deprecated/
 configs.yaml
+bin/
 sql_configs.yaml
 *.log
 *.db
