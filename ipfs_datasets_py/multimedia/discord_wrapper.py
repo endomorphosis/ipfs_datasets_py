@@ -138,7 +138,16 @@ class DiscordWrapper:
         Raises:
             ValueError: If no token is available
         """
-        use_token = token or self.token
+        use_token = token if token is not None else self.token
+        if use_token is None:
+            raise ValueError(
+                "No Discord token provided. Set token in constructor or pass to method. "
+                "See: https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs/Token-and-IDs.md"
+            )
+        if not isinstance(use_token, str):
+            raise TypeError("Discord token must be a string")
+
+        use_token = use_token.strip()
         if not use_token:
             raise ValueError(
                 "No Discord token provided. Set token in constructor or pass to method. "

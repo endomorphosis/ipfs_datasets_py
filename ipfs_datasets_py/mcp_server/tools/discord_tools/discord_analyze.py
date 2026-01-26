@@ -318,8 +318,16 @@ async def discord_analyze_export(
         logger.info(f"Analyzing Discord export: {export_path}")
         
         # Load exported data
-        with open(export_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        try:
+            with open(export_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        except json.JSONDecodeError as e:
+            return {
+                "status": "error",
+                "error": f"JSON parse error: {e}",
+                "export_path": export_path,
+                "tool": "discord_analyze_export",
+            }
         
         messages = data.get('messages', [])
         
