@@ -1201,6 +1201,7 @@ class LLMOptimizer:
                  max_chunk_size: int = 2048,
                  chunk_overlap: int = 200,
                  min_chunk_size: int = 100,
+                 classification_model: Optional[str] = None,
                  entity_classifications: set[str] = WIKIPEDIA_CLASSIFICATIONS,
                  api_key: Optional[str] = os.environ.get("OPENAI_API_KEY"),
                  async_openai: Any = None,
@@ -1288,6 +1289,8 @@ class LLMOptimizer:
         self.chunk_overlap: int = chunk_overlap
         self.min_chunk_size: int = min_chunk_size
         self.entity_classifications: set[str] = entity_classifications
+        self.classification_model: str = classification_model or "distilbert-base-uncased-finetuned-sst-2-english"
+        self._classification_pipeline = None
         self.api_key: Optional[str] = api_key
 
         self.tokenizer: Callable = None  # Will be set during model initialization
@@ -2392,6 +2395,36 @@ class LLMOptimizer:
                 # If multiple results, return the one with highest confidence
                 classification_results.sort(key=lambda x: x.confidence, reverse=True)
                 return classification_results[0]
+
+    async def classify_content(self, text: str) -> Dict[str, Any]:
+        """
+        Classify text content using a Hugging Face transformer pipeline.
+
+        Args:
+            text (str): Input text to classify.
+
+        Returns:
+            Dict[str, Any]: Classification result with label and confidence score.
+        """
+        if not isinstance(text, str) or not text.strip():
+            raise ValueError("text must be a non-empty string")
+
+        if self._classification_pipeline is None:
+            from transformers import pipeline
+
+            self._classification_pipeline = pipeline(
+                "text-classification",
+                model=self.classification_model,
+            )
+
+        result = await anyio.to_thread.run_sync(self._classification_pipeline, text)
+        if isinstance(result, list) and result:
+            first = result[0]
+            return {
+                "label": first.get("label"),
+                "confidence": float(first.get("score", 0.0)),
+            }
+        return {"label": None, "confidence": 0.0}
 
 
     async def _extract_key_entities(self, 

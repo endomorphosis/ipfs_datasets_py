@@ -326,6 +326,7 @@ class PDFProcessor:
                  use_real_ml_models: bool = False,
                  enable_embeddings: bool = False,
                  embedding_model: Optional[str] = None,
+                 enable_cross_document_analysis: bool = False,
                  enable_audit: bool = True,
                  logger: logging.Logger = logging.getLogger(__name__),
                  mock_dict: Optional[dict[str, Any]] = None
@@ -417,6 +418,7 @@ class PDFProcessor:
         self.use_real_ml_models: bool = use_real_ml_models
         self.enable_embeddings: bool = enable_embeddings
         self.embedding_model: Optional[str] = embedding_model
+        self.enable_cross_document_analysis: bool = enable_cross_document_analysis
 
         # For testing purposes, allow dependency injection of mock objects
         if isinstance(mock_dict, dict):
@@ -763,6 +765,8 @@ class PDFProcessor:
                     'status': 'success',
                     'document_id': graph_nodes['document']['id'],
                     'ipld_cid': ipld_structure['root_cid'],
+                    'extracted_entities': entities_and_relations.get('entities', []),
+                    'extracted_relationships': entities_and_relations.get('relationships', []),
                     'entities_count': len(entities_and_relations['entities']),
                     'relationships_count': len(entities_and_relations['relationships']),
                     'cross_doc_relations': len(cross_doc_relations),
