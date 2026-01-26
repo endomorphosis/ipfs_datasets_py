@@ -562,7 +562,7 @@ class TestQueryEngineGetQueryAnalytics:
         
         # Test async execution
         coroutine = self.query_engine.get_query_analytics()
-            assert inspect.iscoroutine(coroutine)
+        assert inspect.iscoroutine(coroutine)
         await coroutine
         
         # Test concurrent execution
