@@ -903,7 +903,7 @@ class PDFProcessor:
             raise PermissionError("Insufficient permissions to read PDF file") from e
 
         if not data.startswith(b"%PDF"):
-            raise ValueError("File is not a valid PDF document")
+            raise ValueError(f"File is not a valid PDF document: {pdf_path}")
 
         # Heuristics for common invalid cases used by unit tests.
         if b"/Encrypt" in data or b"Encrypt" in data:
