@@ -1879,18 +1879,17 @@ class TestQueryEngineIntegration:
             - Processing efficiency maintained with large datasets
         """
         try:
-            import psutil
-            expected_normalized = real_query_engine._normalize_query(raw_query)
-            response = await real_query_engine.query(raw_query, max_results=3)
-
-            assert isinstance(response, QueryResponse)
-            assert response.query == expected_normalized
-            assert response.metadata.get("normalized_query") == expected_normalized
-            # psutil not available - skip memory monitoring
+            import psutil  # noqa: F401
+        except ModuleNotFoundError:
             pytest.skip("psutil not available for memory monitoring")
-        except (ModuleNotFoundError, AttributeError) as e:
-            # Graceful fallback for missing dependencies
-            pytest.skip(f"QueryEngine dependencies not available: {e}")
+
+        raw_query = "Return a large set of results for memory testing"
+        expected_normalized = real_query_engine._normalize_query(raw_query)
+        response = await real_query_engine.query(raw_query, max_results=3)
+
+        assert isinstance(response, QueryResponse)
+        assert response.query == expected_normalized
+        assert response.metadata.get("normalized_query") == expected_normalized
 
     @pytest.mark.asyncio
     async def test_query_with_invalid_parameters_integration(self, real_query_engine):
