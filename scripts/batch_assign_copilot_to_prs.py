@@ -31,21 +31,22 @@ See:
 
 import sys
 
-print("=" * 80)
-print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
-print("=" * 80)
-print()
-print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
-print("This command has NEVER been part of GitHub CLI.")
-print()
-print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
-print()
-print("📖 Documentation:")
-print("   - DEPRECATED_SCRIPTS.md")
-print("   - COPILOT_INVOCATION_GUIDE.md")
-print()
-print("=" * 80)
-sys.exit(1)
+def _deprecated_exit() -> None:
+    print("=" * 80)
+    print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+    print("=" * 80)
+    print()
+    print("This script uses 'gh agent-task create' which DOES NOT EXIST.")
+    print("This command has NEVER been part of GitHub CLI.")
+    print()
+    print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+    print()
+    print("📖 Documentation:")
+    print("   - DEPRECATED_SCRIPTS.md")
+    print("   - COPILOT_INVOCATION_GUIDE.md")
+    print()
+    print("=" * 80)
+    sys.exit(1)
 
 # Original code below (disabled)
 """
@@ -436,13 +437,4 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\n\n⚠️  Interrupted by user")
-        sys.exit(1)
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    _deprecated_exit()

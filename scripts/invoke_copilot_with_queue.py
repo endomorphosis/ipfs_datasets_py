@@ -517,6 +517,7 @@ Focus on making clean, maintainable changes that directly address the issue."""
         copilot = status['copilot_cli']
         print(f"  Installed: {'✅' if copilot.get('installed') else '❌'}")
         print(f"  GitHub CLI: {'✅' if copilot.get('github_cli_available') else '❌'}")
+        print(f"  Fallback mode: {'enabled' if status.get('fallback_mode') else 'disabled'}")
         if status.get('fallback_mode'):
             print(f"  Mode: 🔄 Fallback (using GitHub CLI comments)")
         if copilot.get('version_info'):

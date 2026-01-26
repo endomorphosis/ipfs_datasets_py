@@ -190,8 +190,17 @@ class TestPerformanceBenchmarks:
                     concurrent_tasks.append(task)
                 
                 # Wait for all concurrent processing to complete
-                results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*concurrent_tasks, return_exceptions=True)
+                results = [None] * len(concurrent_tasks)
+
+                async def _run_task(index, coro):
+                    try:
+                        results[index] = await coro
+                    except Exception as exc:
+                        results[index] = exc
+
+                async with anyio.create_task_group() as task_group:
+                    for index, coro in enumerate(concurrent_tasks):
+                        task_group.start_soon(_run_task, index, coro)
                 
                 # Should handle concurrent processing
                 successful_results = [r for r in results if isinstance(r, dict) and r.get('status') in ['success', 'error']]
@@ -244,7 +253,7 @@ class TestRobustnessAndErrorHandling:
                 try:
                     # Process under memory pressure
                     import anyio
-                    results = anyio.run(processor.process_pdf(pdf_path))
+                    results = anyio.run(processor.process_pdf, pdf_path)
                     
                     # Should handle memory pressure gracefully
                     assert isinstance(results, dict)
@@ -327,7 +336,7 @@ class TestRobustnessAndErrorHandling:
                 
                 try:
                     import anyio
-                    results = anyio.run(processor.process_pdf(pdf_path))
+                    results = anyio.run(processor.process_pdf, pdf_path)
                     
                     # Should handle storage constraints
                     assert isinstance(results, dict)
@@ -383,10 +392,21 @@ class TestStressAndScalability:
                     for pdf_path in test_pdfs:
                         task = processor.process_pdf(pdf_path)
                         tasks.append(task)
-                    return await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks, return_exceptions=True)
+                    results = [None] * len(tasks)
+
+                    async def _run_task(index, coro):
+                        try:
+                            results[index] = await coro
+                        except Exception as exc:
+                            results[index] = exc
+
+                    async with anyio.create_task_group() as task_group:
+                        for index, coro in enumerate(tasks):
+                            task_group.start_soon(_run_task, index, coro)
+
+                    return results
                 
-                all_results = anyio.run(process_all())
+                all_results = anyio.run(process_all)
                 
                 # Should handle rapid processing
                 successful_results = [r for r in all_results if isinstance(r, dict)]
@@ -436,7 +456,7 @@ class TestStressAndScalability:
                 # Process multiple times to detect memory leaks
                 for iteration in range(3):  # Limited iterations for CI environment
                     import anyio
-                    results = anyio.run(processor.process_pdf(pdf_path))
+                    results = anyio.run(processor.process_pdf, pdf_path)
                     
                     # Force garbage collection
                     gc.collect()

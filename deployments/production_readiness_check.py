@@ -373,7 +373,7 @@ def main():
     project_root = Path(__file__).parent.parent
     checker = ProductionReadinessChecker(project_root)
     
-    ready = anyio.run(checker.run_all_checks())
+    ready = anyio.run(checker.run_all_checks)
     sys.exit(0 if ready else 1)
 
 if __name__ == "__main__":

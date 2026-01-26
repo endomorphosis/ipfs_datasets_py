@@ -10,9 +10,23 @@ import os
 import sys
 import json
 import anyio
-import aiohttp
-import asyncpg
-import redis.asyncio as redis
+try:
+    import aiohttp
+except ImportError as e:
+    print(f"connection dependency missing: aiohttp ({e})", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    import asyncpg
+except ImportError as e:
+    print(f"connection dependency missing: asyncpg ({e})", file=sys.stderr)
+    sys.exit(1)
+
+try:
+    import redis.asyncio as redis
+except ImportError as e:
+    print(f"connection dependency missing: redis ({e})", file=sys.stderr)
+    sys.exit(1)
 from pathlib import Path
 from typing import Dict, List, Optional
 from dataclasses import dataclass
@@ -262,15 +276,24 @@ class GraphRAGHealthChecker:
         ipfs_url = os.getenv("IPFS_API_URL", "http://localhost:5001")
         
         # Run all health checks concurrently
-        health_checks = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(
+        tasks = [
             self.check_database(db_url),
             self.check_redis(redis_url),
             self.check_api_service(api_url),
             self.check_elasticsearch(es_url),
             self.check_ipfs_node(ipfs_url),
-            return_exceptions=True
-        )
+        ]
+        health_checks = [None] * len(tasks)
+
+        async def _run_task(index, coro):
+            try:
+                health_checks[index] = await coro
+            except Exception as exc:
+                health_checks[index] = exc
+
+        async with anyio.create_task_group() as task_group:
+            for index, coro in enumerate(tasks):
+                task_group.start_soon(_run_task, index, coro)
         
         # Process results
         for result in health_checks:

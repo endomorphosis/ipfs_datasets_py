@@ -34,23 +34,25 @@ See:
 
 import sys
 
-print("=" * 80)
-print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
-print("=" * 80)
-print()
-print("This script uses incorrect Copilot CLI method and unnecessary throttling.")
-print()
-print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
-print("   - No throttling needed")
-print("   - Supports concurrent tasks")
-print("   - 100% success rate")
-print()
-print("📖 Documentation:")
-print("   - DEPRECATED_SCRIPTS.md")
-print("   - COPILOT_INVOCATION_GUIDE.md")
-print()
-print("=" * 80)
-sys.exit(1)
+
+def _print_deprecation_notice() -> None:
+    """Print deprecation notice for this script."""
+    print("=" * 80)
+    print("⚠️  ERROR: This script is DEPRECATED and should not be used!")
+    print("=" * 80)
+    print()
+    print("This script uses incorrect Copilot CLI method and unnecessary throttling.")
+    print()
+    print("✅ Use instead: scripts/invoke_copilot_on_pr.py")
+    print("   - No throttling needed")
+    print("   - Supports concurrent tasks")
+    print("   - 100% success rate")
+    print()
+    print("📖 Documentation:")
+    print("   - DEPRECATED_SCRIPTS.md")
+    print("   - COPILOT_INVOCATION_GUIDE.md")
+    print()
+    print("=" * 80)
 
 # Original code below (disabled)
 """
@@ -555,6 +557,12 @@ def main():
     )
     
     args = parser.parse_args()
+
+    _print_deprecation_notice()
+
+    if args.dry_run:
+        print("\nDRY RUN MODE - No changes will be made (deprecated script).\n")
+        sys.exit(0)
     
     # Create invoker
     invoker = ThrottledCopilotInvoker(

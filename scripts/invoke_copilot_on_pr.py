@@ -413,6 +413,10 @@ Please implement the necessary changes to complete this work."""
         return stats
 
 
+class CopilotPRInvoker(CopilotAgentInvoker):
+    """Backward-compatible invoker name for tests and older imports."""
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(

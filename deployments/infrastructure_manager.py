@@ -523,4 +523,4 @@ async def main():
             subprocess.run(cmd)
 
 if __name__ == "__main__":
-    anyio.run(main())
+    anyio.run(main)

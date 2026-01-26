@@ -4,6 +4,8 @@ import pytest
 import subprocess
 import tempfile
 import json
+import os
+import shutil
 from pathlib import Path
 
 class TestDeploymentInfrastructure:
@@ -12,6 +14,9 @@ class TestDeploymentInfrastructure:
     def test_docker_compose_syntax(self):
         """Test Docker Compose file syntax validation."""
         project_root = Path(__file__).parent.parent
+
+        if shutil.which("docker-compose") is None:
+            pytest.skip("docker-compose not available; skipping docker compose validation")
         
         result = subprocess.run(
             ["docker-compose", "config"],
@@ -26,6 +31,9 @@ class TestDeploymentInfrastructure:
     def test_kubernetes_manifest_validation(self):
         """Test Kubernetes manifests can be validated."""
         k8s_dir = Path(__file__).parent.parent / "deployments" / "kubernetes"
+
+        if shutil.which("kubectl") is None:
+            pytest.skip("kubectl not available; skipping Kubernetes manifest validation")
         
         for yaml_file in k8s_dir.glob("*.yaml"):
             # Test with kubectl dry-run if available

@@ -21,15 +21,15 @@ def generate_instruction(analysis_file):
     Generate Copilot instruction from failure analysis.
     
     Returns:
-        0 on success (instruction generated or default provided)
-        (Note: Always returns 0 as we provide fallback instruction)
+        0 on success (instruction generated)
+        1 on error (fallback instruction provided)
     """
     try:
         # Validate file exists and is readable
         if not analysis_file or not os.path.exists(analysis_file):
             print(f'Warning: Analysis file not found: {analysis_file}', file=sys.stderr)
             print(DEFAULT_INSTRUCTION)
-            return 0  # Return success as we provided fallback
+            return 1  # Return non-zero to indicate missing file
             
         with open(analysis_file) as f:
             data = json.load(f)
@@ -72,15 +72,15 @@ Focus on making clean, maintainable changes that directly address the issue."""
     except FileNotFoundError:
         print(f'Warning: Analysis file not found: {analysis_file}', file=sys.stderr)
         print(DEFAULT_INSTRUCTION)
-        return 0  # Return success as we provided fallback
+        return 1  # Return non-zero to indicate missing file
     except json.JSONDecodeError as e:
         print(f'Error: Invalid JSON in analysis file: {e}', file=sys.stderr)
         print(DEFAULT_INSTRUCTION)
-        return 0  # Return success as we provided fallback
+        return 1  # Return non-zero to indicate invalid input
     except Exception as e:
         print(f'Error generating instruction: {e}', file=sys.stderr)
         print(DEFAULT_INSTRUCTION)
-        return 0  # Return success as we provided fallback
+        return 1  # Return non-zero to indicate error
 
 
 def main():

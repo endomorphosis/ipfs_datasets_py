@@ -12,7 +12,6 @@ import anyio
 import json
 import logging
 import time
-import asyncio
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, Tuple
@@ -1046,16 +1045,12 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
                     return jsonify({"error": "Content is required"}), 400
                 
                 # Run async workflow
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.investigation_workflows.execute_entity_analysis_pipeline(
-                        content=content,
-                        analysis_type=AnalysisType(analysis_type),
-                        metadata=metadata
-                    )
+                result = anyio.run(
+                    self.investigation_workflows.execute_entity_analysis_pipeline,
+                    content=content,
+                    analysis_type=AnalysisType(analysis_type),
+                    metadata=metadata
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1067,12 +1062,10 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
         def explore_entity(entity_id):
             """Explore specific entity and its connections."""
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.entity_explorer.explore_entity_cluster(entity_id)
+                result = anyio.run(
+                    self.entity_explorer.explore_entity_cluster,
+                    entity_id
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1086,13 +1079,11 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
             try:
                 data = request.get_json()
                 entities = data.get('entities', [])
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.relationship_mapper.map_relationships(entities)
+
+                result = anyio.run(
+                    self.relationship_mapper.map_relationships,
+                    entities
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1104,12 +1095,10 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
         def get_entity_timeline(entity_id):
             """Get timeline for specific entity."""
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.timeline_analyzer.create_entity_timeline(entity_id)
+                result = anyio.run(
+                    self.timeline_analyzer.create_entity_timeline,
+                    entity_id
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1122,13 +1111,11 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
             """Detect patterns in the provided data."""
             try:
                 data = request.get_json()
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.pattern_detector.detect_patterns(data)
+
+                result = anyio.run(
+                    self.pattern_detector.detect_patterns,
+                    data
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1142,13 +1129,11 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
             try:
                 data = request.get_json()
                 documents = data.get('documents', [])
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.conflict_analyzer.detect_conflicts(documents)
+
+                result = anyio.run(
+                    self.conflict_analyzer.detect_conflicts,
+                    documents
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1160,12 +1145,10 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
         def track_provenance(entity_id):
             """Track provenance for specific entity."""
             try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.provenance_tracker.track_entity_provenance(entity_id)
+                result = anyio.run(
+                    self.provenance_tracker.track_entity_provenance,
+                    entity_id
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1182,13 +1165,11 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
                 
                 if not documents:
                     return jsonify({"error": "Documents are required"}), 400
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.conflict_analyzer.analyze_deontological_conflicts(documents)
+
+                result = anyio.run(
+                    self.conflict_analyzer.analyze_deontological_conflicts,
+                    documents
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1203,17 +1184,13 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
                 entity = request.args.get('entity')
                 modality = request.args.get('modality')  # obligation, permission, prohibition
                 action_keywords = request.args.getlist('action_keywords')
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.conflict_analyzer.query_deontic_statements(
-                        entity=entity,
-                        modality=modality,
-                        action_keywords=action_keywords if action_keywords else None
-                    )
+
+                result = anyio.run(
+                    self.conflict_analyzer.query_deontic_statements,
+                    entity=entity,
+                    modality=modality,
+                    action_keywords=action_keywords if action_keywords else None
                 )
-                loop.close()
                 
                 return jsonify(result)
                 
@@ -1228,17 +1205,13 @@ class NewsAnalysisDashboard(UnifiedInvestigationDashboard):
                 entity = request.args.get('entity')
                 conflict_type = request.args.get('conflict_type')  # obligation_prohibition, permission_prohibition, etc.
                 min_severity = request.args.get('min_severity')  # high, medium, low
-                
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                result = loop.run_until_complete(
-                    self.conflict_analyzer.query_deontic_conflicts(
-                        entity=entity,
-                        conflict_type=conflict_type,
-                        min_severity=min_severity
-                    )
+
+                result = anyio.run(
+                    self.conflict_analyzer.query_deontic_conflicts,
+                    entity=entity,
+                    conflict_type=conflict_type,
+                    min_severity=min_severity
                 )
-                loop.close()
                 
                 return jsonify(result)
                 

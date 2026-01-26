@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-01-26T14:57:08.416840",
+  "status": "FAIL",
+  "errors": [
+    "Required environment variable POSTGRES_PASSWORD not found in .env.example"
+  ],
+  "warnings": [
+    "Docker entrypoint script is not executable",
+    "docker-compose not available for validation",
+    "kubectl not available for validation"
+  ],
+  "checks_run": [
+    "docker_compose_config",
+    "kubernetes_manifests",
+    "environment_files",
+    "database_schema",
+    "deployment_scripts",
+    "monitoring_config"
+  ]
+}

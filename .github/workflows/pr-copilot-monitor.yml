@@ -132,6 +132,8 @@ jobs:
           echo "2. **Create Draft PRs**: Creates draft PRs for Copilot to work on (VS Code method)" >> $GITHUB_STEP_SUMMARY
           echo "3. **Copilot Responds**: Copilot **automatically** detects and implements changes" >> $GITHUB_STEP_SUMMARY
           echo "4. **Proven Method**: Uses draft PR invocation from VS Code (PR #401)" >> $GITHUB_STEP_SUMMARY
+          echo "5. **Fallback**: gh agent-task create (when enabled)" >> $GITHUB_STEP_SUMMARY
+          echo "6. **Proper Method**: Documents the correct Copilot invocation path" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ steps.monitor.outputs.drafts_created }}" -gt 0 ]; then

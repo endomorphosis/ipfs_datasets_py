@@ -324,6 +324,8 @@ class CopilotAutoFixAllPRs:
             'reasons': [],
             'instructions': ''
         }
+        is_auto_fix = False
+        is_draft_override = False
         
         # Check for auto-fix PRs (highest priority)
         if 'auto-fix' in title or 'autofix' in title or 'auto fix' in title:
@@ -331,44 +333,46 @@ class CopilotAutoFixAllPRs:
             analysis['fix_type'] = 'auto-fix'
             analysis['priority'] = 'critical'
             analysis['reasons'].append("Auto-generated fix PR")
+            is_auto_fix = True
+
+        # Draft PRs needing implementation
+        if is_draft and not is_auto_fix:
+            analysis['should_fix'] = True
+            analysis['fix_type'] = 'draft'
+            analysis['priority'] = 'normal'
+            analysis['reasons'].append("Draft PR needing implementation")
+            is_draft_override = True
         
         # Check for workflow/CI failures
-        if any(keyword in title for keyword in ['workflow', 'ci', 'github actions', 'action']):
+        if not is_auto_fix and not is_draft_override and any(keyword in title for keyword in ['workflow', 'ci', 'github actions', 'action']):
             analysis['should_fix'] = True
             analysis['fix_type'] = 'workflow'
             analysis['priority'] = 'high'
             analysis['reasons'].append("Workflow/CI fix")
         
         # Check for permission errors
-        if any(keyword in title or keyword in body for keyword in ['permission', 'denied', 'unauthorized']):
+        if not is_auto_fix and not is_draft_override and any(keyword in title or keyword in body for keyword in ['permission', 'denied', 'unauthorized']):
             analysis['should_fix'] = True
             analysis['fix_type'] = 'permissions'
             analysis['priority'] = 'high'
             analysis['reasons'].append("Permission error fix")
         
         # Check for syntax/compile errors
-        if any(keyword in title or keyword in body for keyword in ['syntax', 'compile', 'build', 'error']):
+        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title or keyword in body for keyword in ['syntax', 'compile', 'build', 'error']):
             analysis['should_fix'] = True
             analysis['fix_type'] = 'syntax'
             analysis['priority'] = 'high'
             analysis['reasons'].append("Syntax/compilation fix")
         
         # Check for test failures
-        if any(keyword in title for keyword in ['test', 'failing', 'failure']):
+        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title for keyword in ['test', 'failing', 'failure']):
             analysis['should_fix'] = True
             analysis['fix_type'] = 'test'
             analysis['priority'] = 'medium'
             analysis['reasons'].append("Test failure fix")
         
-        # Check for draft PRs needing implementation
-        if is_draft and not analysis['should_fix']:
-            analysis['should_fix'] = True
-            analysis['fix_type'] = 'draft'
-            analysis['priority'] = 'normal'
-            analysis['reasons'].append("Draft PR needing implementation")
-        
         # Check for bug fixes
-        if any(keyword in title for keyword in ['bug', 'fix', 'issue']):
+        if not is_auto_fix and not is_draft_override and analysis['fix_type'] == 'general' and any(keyword in title for keyword in ['bug', 'fix', 'issue']):
             analysis['should_fix'] = True
             analysis['fix_type'] = 'bugfix'
             analysis['priority'] = 'medium'
@@ -671,29 +675,44 @@ Please review and improve this PR."""
     
     def print_summary(self):
         """Print execution summary."""
-        logger.info(f"\n{'='*80}")
-        logger.info("📊 Execution Summary")
-        logger.info(f"{'='*80}")
-        logger.info(f"Total PRs found:          {self.stats['total_prs']}")
-        logger.info(f"PRs processed:            {self.stats['processed']}")
-        logger.info(f"Successfully invoked:     {self.stats['succeeded']}")
-        logger.info(f"Already had Copilot:      {self.stats['already_fixed']}")
-        logger.info(f"Skipped:                  {self.stats['skipped']}")
-        logger.info(f"Failed:                   {self.stats['failed']}")
+        lines = [
+            f"\n{'='*80}",
+            "📊 Execution Summary",
+            f"{'='*80}",
+            f"Total PRs found:          {self.stats['total_prs']}",
+            f"PRs processed:            {self.stats['processed']}",
+            f"Successfully invoked:     {self.stats['succeeded']}",
+            f"Already had Copilot:      {self.stats['already_fixed']}",
+            f"Skipped:                  {self.stats['skipped']}",
+            f"Failed:                   {self.stats['failed']}",
+        ]
+
+        for line in lines:
+            print(line)
+            logger.info(line)
         
         if self.stats['errors']:
+            print(f"\n{'─'*80}")
+            print("Errors:")
             logger.info(f"\n{'─'*80}")
             logger.info("Errors:")
             for error in self.stats['errors']:
-                logger.info(f"  PR #{error['pr']}: {error['error']}")
+                line = f"  PR #{error['pr']}: {error['error']}"
+                print(line)
+                logger.info(line)
         
+        print(f"{'='*80}\n")
         logger.info(f"{'='*80}\n")
         
         if self.stats['succeeded'] > 0:
-            logger.info(f"✨ Successfully invoked Copilot on {self.stats['succeeded']} PR(s)!")
+            line = f"✨ Successfully invoked Copilot on {self.stats['succeeded']} PR(s)!"
+            print(line)
+            logger.info(line)
         
         if self.dry_run:
-            logger.info("🔍 This was a DRY RUN - no actual changes were made")
+            line = "🔍 This was a DRY RUN - no actual changes were made"
+            print(line)
+            logger.info(line)
 
 
 def main():

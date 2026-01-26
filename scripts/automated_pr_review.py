@@ -58,7 +58,7 @@ class AutomatedPRReviewer:
     # Decision criteria weights
     CRITERIA_WEIGHTS = {
         'is_draft': 30,
-        'has_auto_fix_label': 40,
+        'has_auto_fix_label': 45,
         'workflow_failure': 45,
         'permission_issue': 40,
         'has_wip_label': -20,

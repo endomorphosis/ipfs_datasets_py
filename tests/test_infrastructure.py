@@ -2,11 +2,18 @@
 
 import pytest
 import anyio
-import docker
+import os
 import subprocess
 import time
 from pathlib import Path
 from typing import Dict, Any
+
+docker = pytest.importorskip(
+    "docker",
+    reason=(
+        "Docker SDK is not installed; skipping infrastructure tests that depend on Docker."
+    ),
+)
 
 class TestDockerInfrastructure:
     """Test Docker deployment infrastructure."""

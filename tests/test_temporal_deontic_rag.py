@@ -8,11 +8,17 @@ a legal debugger.
 import unittest
 import sys
 import os
+import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
 
 # Add the project root to the path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'ipfs_datasets_py'))
+
+pytest.importorskip(
+    "beartype",
+    reason="beartype is required for temporal deontic RAG tests but is not installed."
+)
 
 from ipfs_datasets_py.logic_integration.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent
