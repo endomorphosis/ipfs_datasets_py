@@ -11,6 +11,12 @@ import os
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+try:
+    import pytest_benchmark  # noqa: F401
+    _BENCHMARK_AVAILABLE = True
+except Exception:
+    _BENCHMARK_AVAILABLE = False
+
 
 class TestPerformanceIntegration:
     """Performance benchmark tests for PDF processing with MCP integration"""
@@ -39,6 +45,7 @@ class TestPerformanceIntegration:
         except ImportError:
             pytest.skip("reportlab not available for PDF creation")
 
+    @pytest.mark.skipif(not _BENCHMARK_AVAILABLE, reason="pytest-benchmark not installed")
     def test_given_sample_pdf_when_benchmarking_load_time_then_completes_quickly(self, sample_pdf_path, benchmark):
         """
         GIVEN a sample PDF file
@@ -63,6 +70,7 @@ class TestPerformanceIntegration:
         except ImportError:
             pytest.skip("PyPDF2 not available for PDF benchmarking")
 
+    @pytest.mark.skipif(not _BENCHMARK_AVAILABLE, reason="pytest-benchmark not installed")
     def test_given_pdf_text_when_benchmarking_extraction_then_extracts_efficiently(self, sample_pdf_path, benchmark):
         """
         GIVEN a PDF file with text content

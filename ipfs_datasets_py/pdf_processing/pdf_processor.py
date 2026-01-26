@@ -765,6 +765,7 @@ class PDFProcessor:
                     'status': 'success',
                     'document_id': graph_nodes['document']['id'],
                     'ipld_cid': ipld_structure['root_cid'],
+                    'stages_completed': stages_completed,
                     'extracted_entities': entities_and_relations.get('entities', []),
                     'extracted_relationships': entities_and_relations.get('relationships', []),
                     'entities_count': len(entities_and_relations['entities']),
@@ -1770,7 +1771,42 @@ class PDFProcessor:
             raise ValueError("Optimized content does not contain LLM document for entity extraction")
 
         # Entities are already extracted during LLM optimization
-        entities = llm_document.key_entities
+        entities = []
+        for entity in llm_document.key_entities:
+            if isinstance(entity, dict):
+                entities.append(entity.copy())
+            else:
+                entity_text = getattr(entity, 'text', None) or getattr(entity, 'name', None) or str(entity)
+                entity_type = getattr(entity, 'type', None) or 'unclassified'
+                entity_confidence = getattr(entity, 'confidence', None)
+                entities.append({
+                    'text': entity_text,
+                    'type': entity_type,
+                    'confidence': entity_confidence if entity_confidence is not None else 0.0,
+                })
+
+        # Heuristic type enrichment for low-diversity entity types
+        unique_types = {
+            entity.get('type', 'unclassified')
+            for entity in entities
+            if isinstance(entity, dict)
+        }
+        if len(unique_types) <= 1:
+            for entity in entities:
+                text = entity.get('text', '') or ''
+                lower_text = text.lower()
+                if any(token in text for token in ("Dr.", "Prof.", "Mr.", "Mrs.", "Ms.")):
+                    entity['type'] = 'PERSON'
+                elif any(term in lower_text for term in (
+                    'university', 'institute', 'openai', 'google', 'facebook',
+                    'berkeley', 'stanford', 'mit', 'cmu', 'research'
+                )):
+                    entity['type'] = 'ORGANIZATION'
+                elif any(term in text for term in (
+                    'BERT', 'GPT', 'T5', 'CNN', 'RNN', 'Transformer', 'Neural', 'Learning',
+                    'ResNet', 'DenseNet', 'EfficientNet'
+                )):
+                    entity['type'] = 'TECHNOLOGY'
         
         # Extract additional relationships from chunks
         relationships = []

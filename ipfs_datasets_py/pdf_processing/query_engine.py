@@ -446,6 +446,7 @@ class QueryEngine:
                  storage: Optional[IPLDStorage] = None,
                  embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2",
                  use_real_models: bool = False,
+                 enable_graph_traversal: bool = False,
                  logger: logging.Logger = logger,
                  torch_library: Optional[ModuleType] = None,
                  sentence_transformer_class: Optional[SentenceTransformer] = None
@@ -537,6 +538,7 @@ class QueryEngine:
         self.graphrag = graphrag_integrator
         self.storage = storage or IPLDStorage()
         self.logger = logger
+        self.enable_graph_traversal = enable_graph_traversal
 
         if not getattr(self.graphrag, "initialized", False):
             raise RuntimeError("GraphRAGIntegrator must be initialized before using QueryEngine")
