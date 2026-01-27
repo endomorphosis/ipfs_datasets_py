@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 # Workflow state tracking
 WORKFLOW_REGISTRY = {}
 EXECUTION_HISTORY = {}
+TEMPLATE_REGISTRY = {}
 
 
 async def execute_workflow(
@@ -23,7 +24,10 @@ async def execute_workflow(
     workflow_id: Optional[str] = None,
     context: Optional[Dict[str, Any]] = None,
     workflow: Optional[Dict[str, Any]] = None,
-    params: Optional[Dict[str, Any]] = None
+    params: Optional[Dict[str, Any]] = None,
+    async_execution: Optional[bool] = None,
+    action: Optional[str] = None,
+    template_spec: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Execute a multi-step workflow with conditional logic and error handling.
@@ -34,11 +38,38 @@ async def execute_workflow(
         context: Additional context data for workflow execution
         workflow: Legacy alias for `workflow_definition`.
         params: Legacy alias for `context`.
+        async_execution: Legacy flag for async execution (ignored; function is async).
+        action: Legacy action shortcut (pause/resume).
+        template_spec: Legacy alias for template definition when using template actions.
         
     Returns:
         Dict containing workflow execution results
     """
     try:
+        if action == "create_template":
+            return await create_template(template_spec or workflow_definition or {})
+
+        if action == "list_templates":
+            return await list_templates()
+
+        if action in {"pause", "resume"}:
+            if not workflow_id:
+                workflow_id = f"workflow_{uuid.uuid4().hex[:8]}"
+
+            workflow_info = WORKFLOW_REGISTRY.get(workflow_id, {})
+            workflow_info.setdefault("definition", workflow_definition or {})
+            workflow_info.setdefault("context", {})
+            workflow_info["status"] = "paused" if action == "pause" else "running"
+            workflow_info["updated_at"] = datetime.now().isoformat()
+            WORKFLOW_REGISTRY[workflow_id] = workflow_info
+
+            return {
+                "success": True,
+                "status": workflow_info["status"],
+                "workflow_id": workflow_id,
+                "timestamp": datetime.now().isoformat()
+            }
+
         if workflow_definition is None and workflow:
             workflow_definition = workflow
 
@@ -291,8 +322,8 @@ async def batch_process_datasets(
 
 
 async def schedule_workflow(
-    workflow_definition: Dict[str, Any],
-    schedule_config: Dict[str, Any]
+    workflow_definition: Optional[Dict[str, Any]] = None,
+    schedule_config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Schedule a workflow for future or repeated execution.
@@ -306,9 +337,23 @@ async def schedule_workflow(
     """
     try:
         schedule_id = f"schedule_{uuid.uuid4().hex[:8]}"
+
+        if schedule_config is None:
+            schedule_config = workflow_definition
+            workflow_definition = None
+
+        if schedule_config is None:
+            return {
+                "success": False,
+                "schedule_id": schedule_id,
+                "error": "Schedule configuration is required",
+                "timestamp": datetime.now().isoformat()
+            }
         
+        workflow_definition = workflow_definition or {}
+
         # Validate schedule configuration
-        schedule_type = schedule_config.get("type", "once")
+        schedule_type = schedule_config.get("type") or schedule_config.get("schedule_type") or "once"
         
         if schedule_type not in ["once", "interval", "cron", "event_triggered"]:
             return {
@@ -351,23 +396,95 @@ async def schedule_workflow(
         }
 
 
-async def get_workflow_status(workflow_id: str) -> Dict[str, Any]:
+async def create_workflow(
+    workflow_id: Optional[Union[str, Dict[str, Any]]] = None,
+    workflow_definition: Optional[Dict[str, Any]] = None
+) -> Dict[str, Any]:
+    """Create or register a workflow definition."""
+    if workflow_definition is None and isinstance(workflow_id, dict):
+        workflow_definition = workflow_id
+        workflow_id = None
+
+    if workflow_definition is None:
+        return {
+            "status": "failed",
+            "error": "Workflow definition is required"
+        }
+
+    if not workflow_id:
+        workflow_id = workflow_definition.get("name") or f"workflow_{uuid.uuid4().hex[:8]}"
+
+    if workflow_id in WORKFLOW_REGISTRY:
+        return {
+            "status": "exists",
+            "workflow_id": workflow_id
+        }
+
+    WORKFLOW_REGISTRY[workflow_id] = {
+        "definition": workflow_definition,
+        "status": "created",
+        "start_time": datetime.now().isoformat(),
+        "context": {}
+    }
+    return {
+        "status": "created",
+        "workflow_id": workflow_id
+    }
+
+
+async def run_workflow(workflow_id: str) -> Dict[str, Any]:
+    """Execute a previously registered workflow."""
+    workflow_info = WORKFLOW_REGISTRY.get(workflow_id)
+    if not workflow_info or not workflow_info.get("definition"):
+        return {
+            "status": "not_found",
+            "workflow_id": workflow_id,
+            "error": "Workflow not found"
+        }
+
+    result = await execute_workflow(
+        workflow_definition=workflow_info.get("definition"),
+        workflow_id=workflow_id
+    )
+    return result
+
+
+async def get_workflow_status(
+    workflow_id: Optional[str] = None,
+    execution_id: Optional[str] = None,
+    include_details: Optional[bool] = None
+) -> Dict[str, Any]:
     """
     Get the status and results of a workflow execution.
-    
+
     Args:
         workflow_id: ID of the workflow to check
-        
+        execution_id: Legacy alias for `workflow_id`.
+        include_details: Legacy flag to include extra details (ignored).
+
     Returns:
         Dict containing workflow status and details
     """
     try:
-        if workflow_id not in WORKFLOW_REGISTRY:
+        if not workflow_id:
+            workflow_id = execution_id
+
+        if not workflow_id:
             return {
                 "success": False,
+                "status": "failed",
                 "workflow_id": workflow_id,
                 "error": "Workflow not found",
                 "available_workflows": list(WORKFLOW_REGISTRY.keys())[-5:]  # Show last 5
+            }
+
+        if workflow_id not in WORKFLOW_REGISTRY:
+            return {
+                "success": False,
+                "status": "not_found",
+                "workflow_id": workflow_id,
+                "error": "Workflow not found",
+                "available_workflows": list(WORKFLOW_REGISTRY.keys())[-5:]
             }
             
         workflow_info = WORKFLOW_REGISTRY[workflow_id].copy()
@@ -396,6 +513,76 @@ async def get_workflow_status(workflow_id: str) -> Dict[str, Any]:
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
+
+
+async def create_template(template: Dict[str, Any]) -> Dict[str, Any]:
+    """Create and store a workflow template."""
+    template_id = template.get("name") or f"template_{uuid.uuid4().hex[:8]}"
+    TEMPLATE_REGISTRY[template_id] = template
+    return {
+        "status": "created",
+        "template_id": template_id,
+        "template": template
+    }
+
+
+async def list_templates() -> Dict[str, Any]:
+    """List available workflow templates."""
+    templates = [
+        {"template_id": template_id, **template}
+        for template_id, template in TEMPLATE_REGISTRY.items()
+    ]
+    return {
+        "status": "success",
+        "templates": templates
+    }
+
+
+async def pause_workflow(workflow_id: str) -> Dict[str, Any]:
+    """Pause a running workflow."""
+    return await execute_workflow(workflow_id=workflow_id, action="pause")
+
+
+async def resume_workflow(workflow_id: str) -> Dict[str, Any]:
+    """Resume a paused workflow."""
+    return await execute_workflow(workflow_id=workflow_id, action="resume")
+
+
+async def list_workflows(include_logs: Optional[bool] = None) -> Dict[str, Any]:
+    """List registered workflows with optional logs."""
+    workflows = []
+    for workflow_id, workflow_info in WORKFLOW_REGISTRY.items():
+        entry = {
+            "workflow_id": workflow_id,
+            "status": workflow_info.get("status")
+        }
+        if include_logs:
+            entry["logs"] = workflow_info.get("logs", [])
+        workflows.append(entry)
+
+    return {
+        "status": "success",
+        "workflows": workflows
+    }
+
+
+async def get_workflow_metrics(
+    workflow_id: Optional[str] = None,
+    include_performance: Optional[bool] = None,
+    time_range: Optional[str] = None
+) -> Dict[str, Any]:
+    """Return basic workflow metrics summary."""
+    workflow_info = WORKFLOW_REGISTRY.get(workflow_id) if workflow_id else None
+    metrics = {
+        "workflow_id": workflow_id,
+        "status": workflow_info.get("status") if workflow_info else None,
+        "time_range": time_range,
+        "has_performance": bool(include_performance)
+    }
+    return {
+        "status": "success",
+        "metrics": metrics
+    }
 
 
 # Helper functions for workflow step execution
