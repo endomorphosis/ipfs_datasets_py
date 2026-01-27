@@ -83,6 +83,11 @@ python scripts/demo/demonstrate_graphrag_pdf.py --create-sample --show-architect
 ./ipfs-datasets ipfs pin "data"               # IPFS operations
 ./ipfs-datasets vector search "query"         # Vector search
 
+# Data Ingestion CLIs
+./ipfs-datasets email export --server imap.gmail.com --folder INBOX  # Email ingestion (IMAP/POP3/.eml)
+./ipfs-datasets discord export [channel_id]    # Discord chat exports
+./ipfs-datasets finance stock AAPL             # Financial data scraping
+
 # Enhanced CLI - access to ALL 100+ tools
 python enhanced_cli.py --list-categories       # See all 31 categories
 python enhanced_cli.py dataset_tools load_dataset --source squad
