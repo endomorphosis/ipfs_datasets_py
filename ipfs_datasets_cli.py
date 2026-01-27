@@ -118,6 +118,15 @@ Commands:
       status     Check Discord integration status
       install    Install DiscordChatExporter
     
+    email        Email ingestion and analysis
+      test       Test email server connection
+      folders    List IMAP mailbox folders
+      export     Export emails from a folder
+      parse      Parse an .eml file
+      fetch      Fetch emails (no export)
+      analyze    Analyze an email export file
+      search     Search emails in an export file
+    
     detect-type  File type detection for GraphRAG
       detect     Detect single file type
       batch      Batch detect multiple files
@@ -2424,6 +2433,61 @@ For detailed help: ipfs-datasets discord <subcommand> --help
                 return
             except Exception as e:
                 print(f"Error executing discord command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        if command == "email":
+            """Handle email ingestion and analysis commands."""
+            subcommand = args[1] if len(args) > 1 else None
+            
+            if not subcommand or subcommand in ['-h', '--help']:
+                print("""
+ipfs-datasets email - Email Ingestion and Analysis
+
+Usage: ipfs-datasets email <subcommand> [options]
+
+Subcommands:
+  test       Test email server connection
+  folders    List IMAP mailbox folders
+  export     Export emails from a folder
+  parse      Parse an .eml file
+  fetch      Fetch emails (no export)
+  analyze    Analyze an email export file
+  search     Search emails in an export file
+
+Environment:
+  EMAIL_USER   Email account username (recommended)
+  EMAIL_PASS   Email account password (recommended)
+
+Examples:
+  ipfs-datasets email test --server imap.gmail.com --username user@gmail.com
+  ipfs-datasets email folders --server imap.gmail.com
+  ipfs-datasets email export --server imap.gmail.com --folder INBOX --format json
+  ipfs-datasets email parse message.eml --output parsed.json
+  ipfs-datasets email fetch --server imap.gmail.com --limit 10
+  ipfs-datasets email analyze inbox_export.json
+  ipfs-datasets email search inbox_export.json "meeting" --field subject
+
+For detailed help: ipfs-datasets email <subcommand> --help
+""")
+                return
+            
+            try:
+                # Import and delegate to email_cli module
+                from ipfs_datasets_py.email_cli import main as email_main
+                
+                # Pass remaining args to email CLI
+                email_args = args[1:]
+                exit_code = email_main(email_args)
+                sys.exit(exit_code)
+                
+            except ImportError as e:
+                print(f"Error: Email CLI module not available: {e}")
+                print("Make sure ipfs_datasets_py package is properly installed")
+                return
+            except Exception as e:
+                print(f"Error executing email command: {e}")
                 import traceback
                 traceback.print_exc()
                 return
