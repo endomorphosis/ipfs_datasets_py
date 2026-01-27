@@ -113,104 +113,174 @@ def create_parser() -> argparse.ArgumentParser:
 
 async def cmd_test(args):
     """Test email server connection."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_test_connection
+    from ipfs_datasets_py.multimedia import EmailProcessor
     
-    result = await email_test_connection(
-        protocol=args.protocol,
-        server=args.server,
-        port=args.port,
-        username=args.username,
-        password=args.password,
-        use_ssl=not args.no_ssl,
-        timeout=args.timeout
-    )
-    
-    print(json.dumps(result, indent=2))
-    return 0 if result['status'] == 'success' else 1
+    try:
+        processor = EmailProcessor(
+            protocol=args.protocol,
+            server=args.server,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+            use_ssl=not args.no_ssl,
+            timeout=args.timeout
+        )
+        
+        result = await processor.connect()
+        await processor.disconnect()
+        
+        print(json.dumps(result, indent=2))
+        return 0 if result['status'] == 'success' else 1
+        
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'protocol': args.protocol,
+            'server': args.server
+        }
+        print(json.dumps(result, indent=2))
+        return 1
 
 
 async def cmd_folders(args):
     """List IMAP mailbox folders."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_list_folders
+    from ipfs_datasets_py.multimedia import EmailProcessor
     
-    result = await email_list_folders(
-        server=args.server,
-        port=args.port,
-        username=args.username,
-        password=args.password,
-        use_ssl=not args.no_ssl,
-        timeout=args.timeout
-    )
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"Folders saved to {args.output}")
-    else:
+    try:
+        processor = EmailProcessor(
+            protocol='imap',
+            server=args.server,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+            use_ssl=not args.no_ssl,
+            timeout=args.timeout
+        )
+        
+        await processor.connect()
+        result = await processor.list_folders()
+        await processor.disconnect()
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(result, f, indent=2)
+            print(f"Folders saved to {args.output}")
+        else:
+            print(json.dumps(result, indent=2))
+        
+        return 0 if result['status'] == 'success' else 1
+        
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'server': args.server
+        }
         print(json.dumps(result, indent=2))
-    
-    return 0 if result['status'] == 'success' else 1
+        return 1
 
 
 async def cmd_export(args):
     """Export emails from a folder."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_export_folder
+    from ipfs_datasets_py.multimedia import EmailProcessor
     
-    result = await email_export_folder(
-        folder=args.folder,
-        output_path=args.output,
-        format=args.format,
-        server=args.server,
-        port=args.port,
-        username=args.username,
-        password=args.password,
-        protocol=args.protocol,
-        limit=args.limit,
-        search_criteria=args.search,
-        use_ssl=not args.no_ssl,
-        timeout=args.timeout
-    )
-    
-    print(json.dumps(result, indent=2))
-    return 0 if result['status'] == 'success' else 1
+    try:
+        processor = EmailProcessor(
+            protocol=args.protocol,
+            server=args.server,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+            use_ssl=not args.no_ssl,
+            timeout=args.timeout
+        )
+        
+        await processor.connect()
+        result = await processor.export_folder(
+            folder=args.folder,
+            output_path=args.output,
+            format=args.format,
+            limit=args.limit,
+            search_criteria=args.search
+        )
+        await processor.disconnect()
+        
+        print(json.dumps(result, indent=2))
+        return 0 if result['status'] == 'success' else 1
+        
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'folder': args.folder,
+            'server': args.server
+        }
+        print(json.dumps(result, indent=2))
+        return 1
 
 
 async def cmd_parse(args):
     """Parse an .eml file."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_parse_eml
+    from ipfs_datasets_py.multimedia import EmailProcessor
     
-    result = await email_parse_eml(
-        file_path=args.file_path,
-        include_attachments=not args.no_attachments
-    )
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"Parsed email saved to {args.output}")
-    else:
+    try:
+        processor = EmailProcessor(protocol='eml')
+        result = await processor.parse_eml_file(
+            file_path=args.file_path,
+            include_attachments=not args.no_attachments
+        )
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                json.dump(result, f, indent=2)
+            print(f"Parsed email saved to {args.output}")
+        else:
+            print(json.dumps(result, indent=2))
+        
+        return 0 if result['status'] == 'success' else 1
+        
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'file_path': args.file_path
+        }
         print(json.dumps(result, indent=2))
-    
-    return 0 if result['status'] == 'success' else 1
+        return 1
 
 
 async def cmd_fetch(args):
     """Fetch emails."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_fetch_emails
+    from ipfs_datasets_py.multimedia import EmailProcessor
     
-    result = await email_fetch_emails(
-        folder=args.folder,
-        server=args.server,
-        port=args.port,
-        username=args.username,
-        password=args.password,
-        protocol=args.protocol,
-        limit=args.limit,
-        search_criteria=args.search,
-        include_attachments=not args.no_attachments,
-        use_ssl=not args.no_ssl,
-        timeout=args.timeout
-    )
+    try:
+        processor = EmailProcessor(
+            protocol=args.protocol,
+            server=args.server,
+            port=args.port,
+            username=args.username,
+            password=args.password,
+            use_ssl=not args.no_ssl,
+            timeout=args.timeout
+        )
+        
+        await processor.connect()
+        result = await processor.fetch_emails(
+            folder=args.folder,
+            limit=args.limit,
+            search_criteria=args.search,
+            include_attachments=not args.no_attachments
+        )
+        await processor.disconnect()
+        
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'folder': args.folder,
+            'server': args.server
+        }
     
     if args.output:
         with open(args.output, 'w') as f:
@@ -231,48 +301,219 @@ async def cmd_fetch(args):
 
 async def cmd_analyze(args):
     """Analyze an email export file."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_analyze_export
+    import json as json_module
+    from collections import Counter
     
-    result = await email_analyze_export(file_path=args.file_path)
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"Analysis saved to {args.output}")
-    else:
-        print(json.dumps(result, indent=2))
-    
-    return 0 if result['status'] == 'success' else 1
+    try:
+        # Read export file
+        with open(args.file_path, 'r', encoding='utf-8') as f:
+            data = json_module.load(f)
+        
+        if 'emails' not in data:
+            result = {
+                'status': 'error',
+                'error': 'Invalid export file format. Expected "emails" key.',
+                'file_path': args.file_path
+            }
+        else:
+            emails = data['emails']
+            
+            if not emails:
+                result = {
+                    'status': 'success',
+                    'file_path': args.file_path,
+                    'total_emails': 0,
+                    'message': 'No emails to analyze'
+                }
+            else:
+                # Analyze emails
+                senders = [email.get('from') for email in emails if email.get('from')]
+                recipients = [email.get('to') for email in emails if email.get('to')]
+                dates = [email.get('date') for email in emails if email.get('date')]
+                lengths = [len(email.get('body_text', '') or email.get('body_html', '')) for email in emails]
+                attachments_count = sum(len(email.get('attachments', [])) for email in emails)
+                total_attachment_size = sum(
+                    sum(att.get('size', 0) for att in email.get('attachments', []))
+                    for email in emails
+                )
+                
+                # Threading
+                threads = {}
+                for email in emails:
+                    in_reply_to = email.get('in_reply_to', '')
+                    if in_reply_to:
+                        if in_reply_to not in threads:
+                            threads[in_reply_to] = []
+                        threads[in_reply_to].append(email.get('message_id_header', ''))
+                
+                sender_counts = Counter(senders)
+                recipient_counts = Counter(recipients)
+                
+                sorted_dates = sorted(dates) if dates else []
+                date_range = {
+                    'earliest': sorted_dates[0],
+                    'latest': sorted_dates[-1]
+                } if sorted_dates else None
+                
+                avg_length = sum(lengths) / len(lengths) if lengths else 0
+                
+                result = {
+                    'status': 'success',
+                    'file_path': args.file_path,
+                    'total_emails': len(emails),
+                    'date_range': date_range,
+                    'top_senders': [
+                        {'sender': sender, 'count': count}
+                        for sender, count in sender_counts.most_common(10)
+                    ],
+                    'top_recipients': [
+                        {'recipient': recipient, 'count': count}
+                        for recipient, count in recipient_counts.most_common(10)
+                    ],
+                    'attachment_stats': {
+                        'total_attachments': attachments_count,
+                        'total_size_bytes': total_attachment_size,
+                        'average_per_email': attachments_count / len(emails) if emails else 0
+                    },
+                    'average_body_length': int(avg_length),
+                    'thread_count': len(threads),
+                    'threads_with_replies': len([t for t in threads.values() if len(t) > 1])
+                }
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                json_module.dump(result, f, indent=2)
+            print(f"Analysis saved to {args.output}")
+        else:
+            print(json_module.dumps(result, indent=2))
+        
+        return 0 if result['status'] == 'success' else 1
+        
+    except FileNotFoundError:
+        result = {
+            'status': 'error',
+            'error': f'File not found: {args.file_path}',
+            'file_path': args.file_path
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
+    except json_module.JSONDecodeError:
+        result = {
+            'status': 'error',
+            'error': 'Invalid JSON file',
+            'file_path': args.file_path
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'file_path': args.file_path
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
 
 
 async def cmd_search(args):
     """Search emails in an export file."""
-    from ipfs_datasets_py.mcp_server.tools.email_tools import email_search_export
+    import json as json_module
     
-    result = await email_search_export(
-        file_path=args.file_path,
-        query=args.query,
-        field=args.field
-    )
-    
-    if args.output:
-        with open(args.output, 'w') as f:
-            json.dump(result, f, indent=2)
-        print(f"Search results saved to {args.output}")
-    else:
-        # Print summary
-        if result['status'] == 'success':
-            print(f"Found {result['match_count']} matching emails")
-            print(f"Query: {result['query']}")
-            print(f"Field: {result['field']}")
-            if result['match_count'] > 0 and result['match_count'] <= 5:
-                print("\nMatches:")
-                for match in result['matches']:
-                    print(f"  - {match.get('subject', 'No subject')} (from {match.get('from', 'Unknown')})")
+    try:
+        # Read export file
+        with open(args.file_path, 'r', encoding='utf-8') as f:
+            data = json_module.load(f)
+        
+        if 'emails' not in data:
+            result = {
+                'status': 'error',
+                'error': 'Invalid export file format. Expected "emails" key.',
+                'file_path': args.file_path
+            }
         else:
-            print(json.dumps(result, indent=2))
-    
-    return 0 if result['status'] == 'success' else 1
+            emails = data['emails']
+            query_lower = args.query.lower()
+            
+            # Search emails
+            matches = []
+            for email in emails:
+                match = False
+                
+                if args.field == 'all':
+                    search_text = ' '.join([
+                        str(email.get('subject', '')),
+                        str(email.get('from', '')),
+                        str(email.get('to', '')),
+                        str(email.get('body_text', '')),
+                        str(email.get('body_html', ''))
+                    ]).lower()
+                    match = query_lower in search_text
+                elif args.field == 'subject':
+                    match = query_lower in str(email.get('subject', '')).lower()
+                elif args.field == 'from':
+                    match = query_lower in str(email.get('from', '')).lower()
+                elif args.field == 'to':
+                    match = query_lower in str(email.get('to', '')).lower()
+                elif args.field == 'body':
+                    body_text = str(email.get('body_text', '')) + str(email.get('body_html', ''))
+                    match = query_lower in body_text.lower()
+                
+                if match:
+                    matches.append(email)
+            
+            result = {
+                'status': 'success',
+                'file_path': args.file_path,
+                'query': args.query,
+                'field': args.field,
+                'match_count': len(matches),
+                'matches': matches
+            }
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                json_module.dump(result, f, indent=2)
+            print(f"Search results saved to {args.output}")
+        else:
+            # Print summary
+            if result['status'] == 'success':
+                print(f"Found {result['match_count']} matching emails")
+                print(f"Query: {result['query']}")
+                print(f"Field: {result['field']}")
+                if result['match_count'] > 0 and result['match_count'] <= 5:
+                    print("\nMatches:")
+                    for match in result['matches']:
+                        print(f"  - {match.get('subject', 'No subject')} (from {match.get('from', 'Unknown')})")
+            else:
+                print(json_module.dumps(result, indent=2))
+        
+        return 0 if result['status'] == 'success' else 1
+        
+    except FileNotFoundError:
+        result = {
+            'status': 'error',
+            'error': f'File not found: {args.file_path}',
+            'file_path': args.file_path
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
+    except json_module.JSONDecodeError:
+        result = {
+            'status': 'error',
+            'error': 'Invalid JSON file',
+            'file_path': args.file_path
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
+    except Exception as e:
+        result = {
+            'status': 'error',
+            'error': str(e),
+            'file_path': args.file_path,
+            'query': args.query
+        }
+        print(json_module.dumps(result, indent=2))
+        return 1
 
 
 async def main_async(args):

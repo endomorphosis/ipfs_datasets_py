@@ -2,6 +2,22 @@
 
 This guide demonstrates how to use the email ingestion and analysis features in IPFS Datasets Python.
 
+## Integration Pattern
+
+The email functionality follows the correct integration pattern where all interfaces (CLI, MCP tools, JavaScript SDK) import directly from the core Python package:
+
+```
+Python Package (multimedia/email_processor.py)
+    ├── EmailProcessor class
+    └── create_email_processor factory
+         ↓
+    ┌────┼────┬────────┐
+    │         │        │
+   CLI    MCP Tools  JS SDK
+```
+
+**All interfaces are peer consumers of the core package**, not hierarchical dependencies.
+
 ## Overview
 
 The email functionality provides a unified interface for:
