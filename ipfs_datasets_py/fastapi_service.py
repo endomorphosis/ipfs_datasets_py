@@ -57,6 +57,45 @@ except ImportError:
     except ImportError as e:
         logger.warning(f"Some imports failed, using mock implementations: {e}")
 
+        class IPFSEmbeddings:  # type: ignore[too-many-public-methods]
+            """Fallback embeddings implementation when dependencies are missing."""
+
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+        class BaseVectorStore:  # type: ignore[too-many-public-methods]
+            """Fallback vector store base class."""
+
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+        class QdrantVectorStore(BaseVectorStore):
+            """Fallback Qdrant vector store."""
+
+        class FAISSVectorStore(BaseVectorStore):
+            """Fallback FAISS vector store."""
+
+        class IPFSDatasetsMCPServer:
+            """Fallback MCP server implementation."""
+
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+        class FastAPISettings:
+            """Fallback FastAPI settings with safe defaults."""
+
+            def __init__(self) -> None:
+                self.app_name = "IPFS Datasets API"
+                self.app_version = "1.0.0"
+                self.debug = False
+                self.environment = "development"
+                self.host = "0.0.0.0"
+                self.port = 8000
+                self.reload = False
+                self.secret_key = "your-secret-key-change-in-production"
+                self.algorithm = "HS256"
+                self.access_token_expire_minutes = 30
+
 # Load configuration
 settings = FastAPISettings()
 

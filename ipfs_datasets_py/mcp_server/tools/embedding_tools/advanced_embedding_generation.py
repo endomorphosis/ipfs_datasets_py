@@ -156,6 +156,8 @@ async def generate_batch_embeddings(
                 "embeddings": embeddings,
                 "model": model_name,
                 "total_processed": len(texts),
+                "count": len(texts),
+                "batch_size": batch_size,
                 "dimension": 4,
                 "message": "Using fallback - install embeddings dependencies for full functionality"
             }
@@ -187,6 +189,7 @@ async def generate_batch_embeddings(
             "embeddings": embeddings,
             "model": model_name,
             "total_processed": len(texts),
+            "count": len(texts),
             "dimension": len(result['embeddings'][0]) if result['embeddings'] else 0,
             "processing_time": result.get('processing_time', 0),
             "memory_usage": result.get('memory_usage', 0),

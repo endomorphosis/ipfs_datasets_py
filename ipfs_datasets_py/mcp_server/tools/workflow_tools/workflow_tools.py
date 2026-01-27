@@ -19,9 +19,11 @@ EXECUTION_HISTORY = {}
 
 
 async def execute_workflow(
-    workflow_definition: Dict[str, Any],
+    workflow_definition: Optional[Dict[str, Any]] = None,
     workflow_id: Optional[str] = None,
-    context: Optional[Dict[str, Any]] = None
+    context: Optional[Dict[str, Any]] = None,
+    workflow: Optional[Dict[str, Any]] = None,
+    params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
     """
     Execute a multi-step workflow with conditional logic and error handling.
@@ -30,22 +32,38 @@ async def execute_workflow(
         workflow_definition: Dictionary defining workflow steps and logic
         workflow_id: Optional workflow ID (generated if not provided)
         context: Additional context data for workflow execution
+        workflow: Legacy alias for `workflow_definition`.
+        params: Legacy alias for `context`.
         
     Returns:
         Dict containing workflow execution results
     """
     try:
+        if workflow_definition is None and workflow:
+            workflow_definition = workflow
+
+        if workflow_definition is None:
+            return {
+                "success": False,
+                "status": "failed",
+                "workflow_id": workflow_id,
+                "error": "Workflow definition is required",
+                "timestamp": datetime.now().isoformat()
+            }
+
         # Generate workflow ID if not provided
         if not workflow_id:
             workflow_id = f"workflow_{uuid.uuid4().hex[:8]}"
             
         # Initialize workflow tracking
         start_time = datetime.now()
+        workflow_context = {**(context or {}), **(params or {})}
+
         WORKFLOW_REGISTRY[workflow_id] = {
             "definition": workflow_definition,
             "status": "running",
             "start_time": start_time.isoformat(),
-            "context": context or {}
+            "context": workflow_context
         }
         
         # Extract workflow steps
@@ -53,6 +71,7 @@ async def execute_workflow(
         if not steps:
             return {
                 "success": False,
+                "status": "failed",
                 "workflow_id": workflow_id,
                 "error": "No steps defined in workflow",
                 "timestamp": datetime.now().isoformat()
@@ -60,12 +79,17 @@ async def execute_workflow(
             
         # Execute workflow steps
         step_results = {}
-        workflow_context = context or {}
         
         for i, step in enumerate(steps):
             step_id = step.get("id", f"step_{i}")
-            step_type = step.get("type", "unknown")
-            step_params = step.get("parameters", {})
+            step_type = step.get("type") or step.get("action", "unknown")
+            step_params = step.get("parameters") or step.get("params")
+            if step_params is None:
+                step_params = {
+                    key: value
+                    for key, value in step.items()
+                    if key not in {"id", "type", "action", "parameters", "params"}
+                }
             
             logger.info(f"Executing workflow {workflow_id}, step {step_id}: {step_type}")
             
@@ -110,9 +134,11 @@ async def execute_workflow(
                     
                     return {
                         "success": False,
+                        "status": "failed",
                         "workflow_id": workflow_id,
                         "error": f"Workflow failed at critical step {step_id}: {str(e)}",
                         "step_results": step_results,
+                        "steps": step_results,
                         "execution_time": (datetime.now() - start_time).total_seconds(),
                         "timestamp": datetime.now().isoformat()
                     }
@@ -129,8 +155,10 @@ async def execute_workflow(
         
         return {
             "success": True,
+            "status": "completed",
             "workflow_id": workflow_id,
             "step_results": step_results,
+            "steps": step_results,
             "execution_stats": {
                 "total_steps": total_steps,
                 "successful_steps": success_count,
@@ -149,6 +177,7 @@ async def execute_workflow(
             
         return {
             "success": False,
+            "status": "failed",
             "workflow_id": workflow_id,
             "error": str(e),
             "timestamp": datetime.now().isoformat()
