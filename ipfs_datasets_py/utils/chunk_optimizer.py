@@ -234,6 +234,8 @@ class ChunkOptimizer:
     def __init__(self, 
                  max_size: int = 2048,
                  overlap: int = 200,
+                 chunk_size: Optional[int] = None,
+                 overlap_percentage: Optional[int] = None,
                  min_size: int = 100,
                  logger: logging.Logger = logging.getLogger(__name__),
                  tiktoken: ModuleType = tiktoken,
@@ -312,6 +314,12 @@ class ChunkOptimizer:
         - Implement tiktoken integration for accurate token counting
         - Should validate that overlap is reasonable relative to max_size
         """
+        if chunk_size is not None:
+            max_size = chunk_size
+
+        if overlap_percentage is not None:
+            overlap = max(0, int(max_size * (overlap_percentage / 100)))
+
         self.max_size = max_size
         self.overlap = overlap
         self.min_size = min_size
@@ -410,6 +418,52 @@ class ChunkOptimizer:
             scored_chunks.append(chunk)
         
         return scored_chunks
+
+    def chunk_text(self, text: str, preserve_structure: bool = False) -> List[Dict[str, Any]]:
+        """
+        Chunk text into segments for lightweight consumption.
+
+        This convenience method provides a simplified chunking interface that defaults
+        to a sliding window strategy. Unlike `optimize_chunks`, it can include a final
+        smaller chunk to preserve overlap behavior when text length is close to the
+        configured maximum size.
+
+        Args:
+            text (str): The input text to chunk.
+            preserve_structure (bool, optional): When True, uses structure-aware chunking
+                via `optimize_chunks`. Defaults to False.
+
+        Returns:
+            List[Dict[str, Any]]: List of chunk dictionaries containing `content` and
+                basic metadata.
+        """
+        if not text:
+            return []
+
+        if preserve_structure:
+            return self.optimize_chunks(text, preserve_structure=True)
+
+        words = text.split()
+        chunks: List[Dict[str, Any]] = []
+        step_size = max(1, self.max_size - self.overlap)
+
+        for i in range(0, len(words), step_size):
+            chunk_words = words[i:i + self.max_size]
+            if not chunk_words:
+                continue
+
+            chunk_text = ' '.join(chunk_words)
+            chunk = self._create_chunk_dict(
+                chunk_text,
+                len(chunk_words),
+                [chunk_text],
+                'sliding_window'
+            )
+            chunk['start_index'] = i
+            chunk['end_index'] = i + len(chunk_words)
+            chunks.append(chunk)
+
+        return chunks
 
     def _create_structure_aware_chunks(self, text: str) -> List[Dict[str, Any]]:
         """

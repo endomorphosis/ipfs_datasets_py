@@ -18,7 +18,11 @@ from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_tools import (
     optimize_cache,
     cache_embeddings,
     get_cached_embeddings,
-    cache_stats
+    cache_stats,
+    cache_get,
+    cache_set,
+    cache_delete,
+    cache_clear
 )
 
 # Import additional cache tools from enhanced cache tools

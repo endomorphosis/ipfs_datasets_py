@@ -196,7 +196,7 @@ async def check_task_status(task_id: Optional[str] = None, task_type: str = "all
             task = await manager.get_task_status(task_id)
             if not task:
                 return {
-                    "status": "error",
+                    "status": "not_found",
                     "message": "Task not found"
                 }
             
@@ -251,7 +251,8 @@ async def check_task_status(task_id: Optional[str] = None, task_type: str = "all
 
 async def manage_background_tasks(action: str, task_id: Optional[str] = None,
                                  task_type: Optional[str] = None, parameters: Optional[Dict[str, Any]] = None,
-                                 priority: str = "normal", task_manager=None) -> Dict[str, Any]:
+                                 priority: str = "normal", task_manager=None,
+                                 task_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Manage background tasks with operations like creation, cancellation, and monitoring.
     
@@ -268,7 +269,7 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
     """
     try:
         # Input validation
-        if action not in ["create", "cancel", "pause", "resume", "get_stats"]:
+        if action not in ["create", "cancel", "pause", "resume", "get_stats", "list", "schedule"]:
             return {
                 "status": "error",
                 "message": "Invalid action. Must be one of: create, cancel, pause, resume, get_stats"
@@ -280,7 +281,12 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
                 "message": f"task_id is required for {action} action"
             }
         
-        if action == "create" and not task_type:
+        if task_config and action in ["create", "schedule"]:
+            task_type = task_type or task_config.get("type") or task_config.get("task_type")
+            parameters = parameters or task_config.get("parameters")
+            priority = task_config.get("priority", priority)
+
+        if action in ["create", "schedule"] and not task_type:
             return {
                 "status": "error",
                 "message": "task_type is required for create action"
@@ -309,13 +315,25 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
                 "timeout_at": task["timeout_at"].isoformat(),
                 "message": f"Background task created successfully"
             }
+
+        elif action == "schedule":
+            task_params = parameters or {}
+            task = await manager.create_task(task_type, task_params, priority)
+            return {
+                "status": "scheduled",
+                "task_id": task["task_id"],
+                "task_type": task["task_type"],
+                "priority": task["priority"],
+                "schedule": task_config.get("schedule") if task_config else None,
+                "message": "Recurring task scheduled successfully"
+            }
         
         elif action == "cancel":
             # Cancel task
             cancelled = await manager.cancel_task(task_id)
             if not cancelled:
                 return {
-                    "status": "error",
+                    "status": "not_found",
                     "message": "Task not found or cannot be cancelled"
                 }
             
@@ -324,6 +342,14 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
                 "task_id": task_id,
                 "action": "cancelled",
                 "message": "Task cancelled successfully"
+            }
+
+        elif action == "list":
+            tasks = await manager.list_tasks()
+            return {
+                "status": "success",
+                "tasks": tasks,
+                "count": len(tasks)
             }
         
         elif action == "pause":

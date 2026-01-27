@@ -578,6 +578,29 @@ class EnhancedCacheMonitoringTool(EnhancedBaseMCPTool):
         
         return monitoring_data
 
+
+# Module-level helpers for compatibility with legacy tests/usage
+_DEFAULT_CACHE_SERVICE = MockCacheService()
+
+
+async def get_cache_stats(cache_type: str = "all") -> Dict[str, Any]:
+    """Get cache statistics using the default cache service."""
+    return await _DEFAULT_CACHE_SERVICE.get_cache_stats(CacheType(cache_type))
+
+
+async def clear_cache(cache_type: str = "all", confirm_clear: bool = True) -> Dict[str, Any]:
+    """Clear cache entries using the default cache service."""
+    return await _DEFAULT_CACHE_SERVICE.clear_cache(CacheType(cache_type), confirm_clear)
+
+
+async def monitor_cache(
+    time_window: str = "1h",
+    metrics: Optional[List[str]] = None
+) -> Dict[str, Any]:
+    """Monitor cache performance using the default cache service."""
+    metrics = metrics or ["hit_rate", "latency", "memory_usage"]
+    return await _DEFAULT_CACHE_SERVICE.monitor_cache(time_window, metrics)
+
 # Export the enhanced tools
 __all__ = [
     "EnhancedCacheStatsTool",
@@ -587,5 +610,8 @@ __all__ = [
     "CacheStrategy",
     "CacheEntry",
     "CacheStats",
-    "MockCacheService"
+    "MockCacheService",
+    "get_cache_stats",
+    "clear_cache",
+    "monitor_cache"
 ]

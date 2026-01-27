@@ -420,9 +420,16 @@ class TestVectorStoreToolsIntegration:
             create_and_add(f"concurrent_{i}", [{"id": f"doc_{i}", "vector": [0.1] * 384}])
             for i in range(3)
         ]
-        
-        results = await # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.gather(*tasks)
+
+        results = []
+
+        async def _run_task(task_coro):
+            result = await task_coro
+            results.append(result)
+
+        async with anyio.create_task_group() as task_group:
+            for task_coro in tasks:
+                task_group.start_soon(_run_task, task_coro)
         
         # All operations should complete successfully
         for result in results:
@@ -432,8 +439,6 @@ class TestVectorStoreToolsIntegration:
 class TestVectorIndexTool:
     """Test VectorIndexTool functionality."""
 
-    @pytest.mark.asyncio
-    async def test_execute_create_action(self):
     @pytest.mark.asyncio
     async def test_execute_create_action(self):
         """GIVEN a system component for execute create action

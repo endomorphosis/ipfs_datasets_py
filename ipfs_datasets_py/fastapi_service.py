@@ -22,7 +22,11 @@ from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 
 import jwt
-from passlib.context import CryptContext
+import hashlib
+try:
+    from passlib.context import CryptContext
+except ImportError:  # pragma: no cover - optional dependency
+    CryptContext = None
 from pydantic import BaseModel, Field
 import uvicorn
 
@@ -61,7 +65,23 @@ SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+if CryptContext:
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+else:
+    logger.warning("passlib not available; falling back to SHA-256 password hashing.")
+
+    class _FallbackPasswordContext:
+        """Fallback password hashing when passlib is unavailable."""
+
+        def hash(self, password: str) -> str:
+            """Generate a SHA-256 hash for the password."""
+            return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+        def verify(self, plain_password: str, hashed_password: str) -> bool:
+            """Verify a plain password against a SHA-256 hash."""
+            return self.hash(plain_password) == hashed_password
+
+    pwd_context = _FallbackPasswordContext()
 security = HTTPBearer()
 
 # Rate limiting configuration

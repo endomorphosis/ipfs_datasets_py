@@ -19,6 +19,7 @@ class ClusteringAlgorithm(Enum):
     SPECTRAL = "spectral"
 
 class QualityMetric(Enum):
+    ACCURACY = "accuracy"
     SILHOUETTE = "silhouette"
     CALINSKI_HARABASZ = "calinski_harabasz"
     DAVIES_BOULDIN = "davies_bouldin"
@@ -357,9 +358,10 @@ class MockAnalysisEngine:
 _analysis_engine = MockAnalysisEngine()
 
 async def cluster_analysis(
-    data_source: str,
+    data_source: str = "mock",
     algorithm: str = "kmeans",
     n_clusters: Optional[int] = None,
+    vectors: Optional[List[List[float]]] = None,
     data_params: Optional[Dict[str, Any]] = None,
     clustering_params: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
@@ -377,7 +379,8 @@ async def cluster_analysis(
         Dict containing clustering analysis results
     """
     try:
-        logger.info(f"Performing {algorithm} clustering analysis on {data_source}")
+        source_label = "vectors" if vectors is not None else data_source
+        logger.info(f"Performing {algorithm} clustering analysis on {source_label}")
         
         # Validate algorithm
         try:
@@ -386,7 +389,10 @@ async def cluster_analysis(
             raise ValueError(f"Invalid algorithm: {algorithm}. Valid algorithms: {[a.value for a in ClusteringAlgorithm]}")
         
         # Load or generate data based on source
-        if data_source == "mock":
+        if vectors is not None:
+            data = np.array(vectors)
+            true_labels = None
+        elif data_source == "mock":
             n_samples = data_params.get("n_samples", 1000) if data_params else 1000
             n_features = data_params.get("n_features", 384) if data_params else 384
             data, true_labels = _analysis_engine._generate_mock_embeddings(n_samples, n_features)
@@ -410,15 +416,23 @@ async def cluster_analysis(
         for label in result.labels:
             cluster_sizes[label] = cluster_sizes.get(label, 0) + 1
         
-        return {
+            data_shape = list(data.shape) if hasattr(data, "shape") else [len(data), len(data[0]) if data else 0]
+
+            clusters = list(result.labels)
+
+            return {
+                "success": True,
+                "status": "success",
             "data_source": data_source,
             "algorithm": result.algorithm,
             "n_clusters": result.n_clusters,
             "cluster_labels": result.labels,
             "centroids": result.centroids,
+                "cluster_centers": result.centroids,
             "metrics": result.metrics,
             "cluster_sizes": cluster_sizes,
-            "data_shape": [len(data), len(data[0]) if data else 0],
+                "clusters": clusters,
+                "data_shape": data_shape,
             "parameters": {
                 "clustering": result.parameters,
                 "data_loading": data_params or {}
@@ -432,9 +446,11 @@ async def cluster_analysis(
         raise
 
 async def quality_assessment(
-    data_source: str,
+    data_source: str = "mock",
     assessment_type: str = "comprehensive",
     metrics: Optional[List[str]] = None,
+    data: Optional[Dict[str, Any]] = None,
+    embeddings: Optional[List[List[float]]] = None,
     data_params: Optional[Dict[str, Any]] = None,
     outlier_detection: bool = True
 ) -> Dict[str, Any]:
@@ -452,7 +468,14 @@ async def quality_assessment(
         Dict containing quality assessment results
     """
     try:
-        logger.info(f"Performing {assessment_type} quality assessment on {data_source}")
+        if data is not None and isinstance(data, dict) and data.get("vectors") is not None:
+            embeddings = data.get("vectors")
+            labels = data.get("labels")
+        else:
+            labels = None
+
+        source_label = "data" if data is not None else ("embeddings" if embeddings is not None else data_source)
+        logger.info(f"Performing {assessment_type} quality assessment on {source_label}")
         
         # Validate metrics
         metric_enums = []
@@ -461,10 +484,17 @@ async def quality_assessment(
                 try:
                     metric_enums.append(QualityMetric(metric))
                 except ValueError:
-                    raise ValueError(f"Invalid metric: {metric}. Valid metrics: {[m.value for m in QualityMetric]}")
+                    logger.warning(
+                        "Ignoring unsupported metric '%s'. Supported metrics: %s",
+                        metric,
+                        [m.value for m in QualityMetric]
+                    )
         
         # Load or generate data
-        if data_source == "mock":
+        if embeddings is not None:
+            data = np.array(embeddings)
+            # labels may already be set from structured data input
+        elif data_source == "mock":
             n_samples = data_params.get("n_samples", 1000) if data_params else 1000
             n_features = data_params.get("n_features", 384) if data_params else 384
             data, labels = _analysis_engine._generate_mock_embeddings(n_samples, n_features)
@@ -483,14 +513,18 @@ async def quality_assessment(
         )
         
         assessment_results = {
+            "success": True,
+            "status": "success",
             "data_source": data_source,
             "assessment_type": assessment_type,
             "overall_quality_score": result.overall_score,
+            "overall_score": result.overall_score,
             "quality_level": "excellent" if result.overall_score > 0.7 
                            else "good" if result.overall_score > 0.5
                            else "fair" if result.overall_score > 0.3
                            else "poor",
             "metric_scores": result.metric_scores,
+            "quality_scores": result.metric_scores,
             "data_statistics": result.data_stats,
             "recommendations": result.recommendations,
             "assessed_at": datetime.now().isoformat()
@@ -510,9 +544,11 @@ async def quality_assessment(
         raise
 
 async def dimensionality_reduction(
-    data_source: str,
+    data_source: str = "mock",
     method: str = "pca",
     target_dimensions: int = 2,
+    target_dims: Optional[int] = None,
+    vectors: Optional[List[List[float]]] = None,
     data_params: Optional[Dict[str, Any]] = None,
     method_params: Optional[Dict[str, Any]] = None,
     return_transformed_data: bool = True
@@ -532,7 +568,11 @@ async def dimensionality_reduction(
         Dict containing dimensionality reduction results
     """
     try:
-        logger.info(f"Performing {method} dimensionality reduction to {target_dimensions}D on {data_source}")
+        if target_dims is not None:
+            target_dimensions = target_dims
+
+        source_label = "vectors" if vectors is not None else data_source
+        logger.info(f"Performing {method} dimensionality reduction to {target_dimensions}D on {source_label}")
         
         # Validate method
         try:
@@ -541,7 +581,9 @@ async def dimensionality_reduction(
             raise ValueError(f"Invalid method: {method}. Valid methods: {[m.value for m in DimensionalityMethod]}")
         
         # Load or generate data
-        if data_source == "mock":
+        if vectors is not None:
+            data = np.array(vectors)
+        elif data_source == "mock":
             n_samples = data_params.get("n_samples", 1000) if data_params else 1000
             n_features = data_params.get("n_features", 384) if data_params else 384
             data, _ = _analysis_engine._generate_mock_embeddings(n_samples, n_features)
@@ -564,12 +606,16 @@ async def dimensionality_reduction(
             parameters=method_params
         )
         
+        data_shape = list(data.shape) if hasattr(data, "shape") else [len(data), len(data[0]) if data else 0]
+
         reduction_results = {
+            "success": True,
+            "status": "success",
             "data_source": data_source,
             "method": result.method,
             "original_dimensions": result.original_dim,
             "target_dimensions": result.reduced_dim,
-            "data_shape": [len(data), len(data[0])],
+            "data_shape": data_shape,
             "reduction_ratio": result.reduced_dim / result.original_dim,
             "reconstruction_error": result.reconstruction_error,
             "method_parameters": method_params or {},
@@ -585,6 +631,7 @@ async def dimensionality_reduction(
         
         if return_transformed_data:
             reduction_results["transformed_data"] = result.transformed_data
+            reduction_results["reduced_vectors"] = result.transformed_data
         else:
             reduction_results["transformed_data_shape"] = [len(result.transformed_data), len(result.transformed_data[0])]
         
@@ -595,8 +642,9 @@ async def dimensionality_reduction(
         raise
 
 async def analyze_data_distribution(
-    data_source: str,
+    data_source: str = "mock",
     analysis_type: str = "comprehensive",
+    data: Optional[List[Any]] = None,
     data_params: Optional[Dict[str, Any]] = None,
     visualization_config: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
@@ -613,10 +661,15 @@ async def analyze_data_distribution(
         Dict containing distribution analysis results
     """
     try:
-        logger.info(f"Analyzing data distribution for {data_source}")
+        source_label = "data" if data is not None else data_source
+        logger.info(f"Analyzing data distribution for {source_label}")
         
         # Load or generate data
-        if data_source == "mock":
+        if data is not None:
+            data = np.array(data)
+            if data.ndim == 1:
+                data = data.reshape(-1, 1)
+        elif data_source == "mock":
             n_samples = data_params.get("n_samples", 1000) if data_params else 1000
             n_features = data_params.get("n_features", 384) if data_params else 384
             data, _ = _analysis_engine._generate_mock_embeddings(n_samples, n_features)
@@ -680,6 +733,8 @@ async def analyze_data_distribution(
         }
         
         results = {
+            "success": True,
+            "status": "success",
             "data_source": data_source,
             "analysis_type": analysis_type,
             "data_shape": list(data.shape),

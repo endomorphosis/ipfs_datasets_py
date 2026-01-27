@@ -24,12 +24,47 @@ CACHE_STATS = {
 }
 
 
+async def cache_get(key: str, namespace: str = "default") -> Dict[str, Any]:
+    """Wrapper for cache get operation."""
+    result = await manage_cache(operation="get", key=key, namespace=namespace)
+    result.setdefault("status", "success" if result.get("success", True) else "error")
+    return result
+
+
+async def cache_set(
+    key: str,
+    value: Any,
+    ttl: Optional[int] = None,
+    namespace: str = "default",
+) -> Dict[str, Any]:
+    """Wrapper for cache set operation."""
+    result = await manage_cache(operation="set", key=key, value=value, ttl=ttl, namespace=namespace)
+    result.setdefault("status", "success" if result.get("success", True) else "error")
+    return result
+
+
+async def cache_delete(key: str, namespace: str = "default") -> Dict[str, Any]:
+    """Wrapper for cache delete operation."""
+    result = await manage_cache(operation="delete", key=key, namespace=namespace)
+    result.setdefault("status", "success" if result.get("success", True) else "error")
+    return result
+
+
+async def cache_clear(namespace: str = "default") -> Dict[str, Any]:
+    """Wrapper for cache clear operation."""
+    result = await manage_cache(operation="clear", namespace=namespace)
+    result.setdefault("status", "success" if result.get("success", True) else "error")
+    return result
+
+
 async def manage_cache(
-    operation: str,
+    operation: Optional[str] = None,
     key: Optional[str] = None,
     value: Optional[Any] = None,
     ttl: Optional[int] = None,
-    namespace: str = "default"
+    namespace: str = "default",
+    action: Optional[str] = None,
+    cache_type: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Manage cache operations including get, set, delete, and clear.
@@ -40,11 +75,27 @@ async def manage_cache(
         value: Value to store (for set operation)
         ttl: Time to live in seconds (for set operation)
         namespace: Cache namespace for organization
+        action: Legacy alias for `operation`.
+        cache_type: Legacy alias for `namespace`.
         
     Returns:
         Dict containing operation results
     """
     try:
+        if operation is None and action:
+            operation = action
+
+        if cache_type and namespace == "default":
+            namespace = cache_type
+
+        if not operation:
+            return {
+                "success": False,
+                "operation": operation,
+                "error": "Operation is required",
+                "valid_operations": ["get", "set", "delete", "clear", "stats", "list"]
+            }
+
         timestamp = datetime.now()
         cache_key = f"{namespace}:{key}" if key else None
         
@@ -202,8 +253,20 @@ async def manage_cache(
             
             return {
                 "success": True,
+                "status": "success",
                 "operation": operation,
                 "cache_stats": {
+                    "total_keys": len(CACHE_STORAGE),
+                    "total_size_bytes": total_size,
+                    "total_size_mb": round(total_size / (1024 * 1024), 2),
+                    "expired_keys": len(expired_keys),
+                    "hit_rate_percent": round(hit_rate, 2),
+                    "total_hits": CACHE_STATS["hits"],
+                    "total_misses": CACHE_STATS["misses"],
+                    "total_evictions": CACHE_STATS["evictions"],
+                    "total_operations": CACHE_STATS["total_operations"]
+                },
+                "stats": {
                     "total_keys": len(CACHE_STORAGE),
                     "total_size_bytes": total_size,
                     "total_size_mb": round(total_size / (1024 * 1024), 2),
@@ -267,6 +330,7 @@ async def manage_cache(
 
 
 async def optimize_cache(
+    cache_type: Optional[str] = None,
     strategy: str = "lru",
     max_size_mb: Optional[int] = None,
     max_age_hours: Optional[int] = None
@@ -398,6 +462,8 @@ async def optimize_cache(
         
         return {
             "success": True,
+            "status": "success",
+            "optimization": optimization_stats,
             "optimization_stats": optimization_stats,
             "cache_health": {
                 "total_keys": len(CACHE_STORAGE),
@@ -482,8 +548,9 @@ async def cache_embeddings(
 
 
 async def get_cached_embeddings(
-    text: str,
-    model: str
+    text: Optional[str] = None,
+    model: Optional[str] = None,
+    key: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Retrieve cached embeddings for text and model combination.
@@ -496,9 +563,19 @@ async def get_cached_embeddings(
         Dict containing cached embeddings or miss result
     """
     try:
-        # Create cache key from text and model
-        text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
-        cache_key = f"embeddings:{model}:{text_hash}"
+        if key:
+            cache_key = key
+            text_hash = None
+        else:
+            if text is None or model is None:
+                return {
+                    "success": False,
+                    "status": "error",
+                    "error": "text and model are required when key is not provided"
+                }
+            # Create cache key from text and model
+            text_hash = hashlib.md5(text.encode('utf-8')).hexdigest()
+            cache_key = f"embeddings:{model}:{text_hash}"
         
         # Try to get from cache
         result = await manage_cache(
@@ -511,6 +588,7 @@ async def get_cached_embeddings(
             cached_data = result["value"]
             return {
                 "success": True,
+                "status": "success",
                 "cache_hit": True,
                 "embeddings": cached_data["embeddings"],
                 "model": cached_data["model"],
@@ -521,6 +599,7 @@ async def get_cached_embeddings(
         else:
             return {
                 "success": True,
+                "status": "not_found",
                 "cache_hit": False,
                 "reason": result.get("reason", "not_found"),
                 "text_hash": text_hash,
@@ -531,6 +610,7 @@ async def get_cached_embeddings(
         logger.error(f"Failed to get cached embeddings: {e}")
         return {
             "success": False,
+            "status": "error",
             "error": str(e),
             "timestamp": datetime.now().isoformat()
         }
@@ -591,6 +671,7 @@ async def cache_stats(namespace: Optional[str] = None) -> Dict[str, Any]:
         
         result = {
             "success": True,
+            "status": "success",
             "global_stats": {
                 **global_stats,
                 "hit_rate_percent": round(hit_rate, 2),
@@ -599,9 +680,12 @@ async def cache_stats(namespace: Optional[str] = None) -> Dict[str, Any]:
                 "total_size_mb": round(total_size_bytes / (1024 * 1024), 2),
                 "active_namespaces": len(namespace_stats)
             },
+            "stats": None,
             "namespace_stats": namespace_stats,
             "timestamp": datetime.now().isoformat()
         }
+
+        result["stats"] = result["global_stats"]
         
         # Filter by namespace if specified
         if namespace:

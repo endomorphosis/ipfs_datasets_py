@@ -418,7 +418,7 @@ class GraphRAGNewsAnalyzer:
                     relationships.append(rel)
                     
                     if self.enable_graphrag:
-                        self.knowledge_graph.relationships.append(rel)
+                        self.knowledge_graph.add_relationship(rel)
         
         logger.info(f"Created {len(relationships)} executive-company relationships")
         return relationships
@@ -527,11 +527,11 @@ class GraphRAGNewsAnalyzer:
         """
         # Add executive entities
         for exec_prof in self.executives.values():
-            self.knowledge_graph.entities.append(exec_prof.to_entity())
+            self.knowledge_graph.add_entity(exec_prof.to_entity())
         
         # Add company entities
         for company in self.companies.values():
-            self.knowledge_graph.entities.append(company.to_entity())
+            self.knowledge_graph.add_entity(company.to_entity())
         
         logger.info(
             f"Built knowledge graph: {len(self.knowledge_graph.entities)} entities, "

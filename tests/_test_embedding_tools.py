@@ -296,7 +296,8 @@ class TestEmbeddingCore:
             assert "generate_embeddings" in mock_manager["methods"]
             assert "get_available_models" in mock_manager["methods"]
 
-    def test_embedding_schema_validation(self):
+    @pytest.mark.asyncio
+    async def test_embedding_schema_validation(self):
         """
         GIVEN EmbeddingRequest and EmbeddingResponse schema classes
         WHEN creating instances with valid data
