@@ -5,6 +5,7 @@ package-lock.json
 **/node_modules
 **/package-lock.json
 build/
+test_screenshots/
 dist/
 *.egg-info/
 *.venv/*

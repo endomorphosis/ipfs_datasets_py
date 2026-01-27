@@ -40,7 +40,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # Test help command
             result = exporter.execute(['--help'], timeout=10)
@@ -66,7 +67,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             version = exporter.get_version()
             
@@ -89,7 +91,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # Test export help
             result = exporter.execute(['export', '--help'], timeout=10)
@@ -113,7 +116,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # Test exportdm help
             result = exporter.execute(['exportdm', '--help'], timeout=10)
@@ -138,7 +142,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             result = exporter.execute(['export', '--help'], timeout=10)
             help_text = result.stdout.lower()
@@ -160,7 +165,8 @@ class TestDiscordChatExporterCLIInterface:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # Test with obviously invalid token
             result = exporter.execute([
@@ -445,7 +451,8 @@ class TestCLIVersionCompatibility:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             version = exporter.get_version()
             
@@ -468,7 +475,8 @@ class TestCLIVersionCompatibility:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # These commands should exist in all versions
             essential_commands = ['export', 'guilds', 'channels']
@@ -587,7 +595,8 @@ class TestCLIStabilityMonitoring:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             result = exporter.execute(['--help'], timeout=10)
             help_text = result.stdout
@@ -609,7 +618,8 @@ class TestCLIStabilityMonitoring:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             # Trigger error with invalid command
             result = exporter.execute(['invalid_command'], timeout=10)
@@ -630,7 +640,8 @@ class TestCLIStabilityMonitoring:
             exporter = DiscordChatExporter(install_dir=tmpdir)
             
             if not exporter.is_installed():
-                pytest.skip("DiscordChatExporter not installed")
+                if not exporter.download_and_install():
+                    pytest.skip("DiscordChatExporter not installed")
             
             import time
             start = time.time()
