@@ -149,9 +149,10 @@ def create_parser() -> argparse.ArgumentParser:
 async def cmd_guilds(args) -> int:
     """Execute guilds listing command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_list_guilds
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
-        result = await discord_list_guilds(token=args.token)
+        wrapper = DiscordWrapper(token=args.token)
+        result = await wrapper.list_guilds(token=args.token)
         
         if result['status'] == 'success':
             print(f"✓ Found {result['count']} Discord servers:")
@@ -175,9 +176,10 @@ async def cmd_guilds(args) -> int:
 async def cmd_channels(args) -> int:
     """Execute channels listing command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_list_channels
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
-        result = await discord_list_channels(guild_id=args.guild_id, token=args.token)
+        wrapper = DiscordWrapper(token=args.token)
+        result = await wrapper.list_channels(guild_id=args.guild_id, token=args.token)
         
         if result['status'] == 'success':
             print(f"✓ Found {result['count']} channels in server:")
@@ -201,9 +203,10 @@ async def cmd_channels(args) -> int:
 async def cmd_dms(args) -> int:
     """Execute DMs listing command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_list_dm_channels
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
-        result = await discord_list_dm_channels(token=args.token)
+        wrapper = DiscordWrapper(token=args.token)
+        result = await wrapper.list_dm_channels(token=args.token)
         
         if result['status'] == 'success':
             print(f"✓ Found {result['count']} DM channels:")
@@ -227,11 +230,12 @@ async def cmd_dms(args) -> int:
 async def cmd_export(args) -> int:
     """Execute channel export command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_channel
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
         print(f"Exporting channel {args.channel_id}...")
         
-        result = await discord_export_channel(
+        wrapper = DiscordWrapper(token=args.token)
+        result = await wrapper.export_channel(
             channel_id=args.channel_id,
             token=args.token,
             output_path=args.output,
@@ -262,11 +266,12 @@ async def cmd_export(args) -> int:
 async def cmd_export_guild(args) -> int:
     """Execute guild export command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_guild
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
         print(f"Exporting guild {args.guild_id}...")
         
-        result = await discord_export_guild(
+        wrapper = DiscordWrapper(token=args.token)
+        result = await wrapper.export_guild(
             guild_id=args.guild_id,
             token=args.token,
             output_dir=args.output_dir,
@@ -293,11 +298,12 @@ async def cmd_export_guild(args) -> int:
 async def cmd_export_dms(args) -> int:
     """Execute DMs export command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_dm_channels
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
         print("Exporting all DM channels...")
         
-        result = await discord_export_dm_channels(
+        wrapper = DiscordWrapper(token=args.token, default_output_dir=args.output_dir, default_format=args.format)
+        result = await wrapper.export_dm(
             token=args.token,
             output_dir=args.output_dir,
             format=args.format
@@ -306,7 +312,7 @@ async def cmd_export_dms(args) -> int:
         if result['status'] == 'success':
             print(f"✓ Export successful!")
             print(f"  Output directory: {result['output_dir']}")
-            print(f"  DM channels exported: {result['dm_channels_exported']}")
+            print(f"  DM channels exported: {result.get('dm_channels_exported', 'N/A')}")
             print(f"  Time: {result['export_time']:.2f}s")
             return 0
         else:
@@ -321,11 +327,12 @@ async def cmd_export_dms(args) -> int:
 async def cmd_export_all(args) -> int:
     """Execute export all command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_export_all_channels
+        from ipfs_datasets_py.multimedia import DiscordWrapper
         
         print("Exporting all accessible channels...")
         
-        result = await discord_export_all_channels(
+        wrapper = DiscordWrapper(token=args.token, default_output_dir=args.output_dir, default_format=args.format)
+        result = await wrapper.export_all(
             token=args.token,
             output_dir=args.output_dir,
             format=args.format,
