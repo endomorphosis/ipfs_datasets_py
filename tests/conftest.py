@@ -3,6 +3,11 @@ Test configuration and shared fixtures for the IPFS Datasets test suite.
 """
 
 from datetime import datetime
+from pathlib import Path
+import os
+import shutil
+import subprocess
+import sys
 
 import pytest
 
@@ -10,6 +15,47 @@ from ipfs_datasets_py.content_discovery import ContentManifest
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch, ProcessedContent
 from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+
+
+def _ensure_test_path_entries() -> None:
+	venv_bin = Path(sys.executable).resolve().parent
+	tools_bin = Path(__file__).resolve().parent.parent / '.tools' / 'bin'
+
+	path_entries = [str(venv_bin)]
+	if tools_bin.exists():
+		path_entries.append(str(tools_bin))
+
+	current_path = os.environ.get('PATH', '')
+	for entry in reversed(path_entries):
+		if entry and entry not in current_path.split(os.pathsep):
+			current_path = f"{entry}{os.pathsep}{current_path}"
+	os.environ['PATH'] = current_path
+
+
+def _ensure_github_token() -> None:
+	if os.environ.get('GITHUB_TOKEN'):
+		return
+
+	if shutil.which('gh') is None:
+		return
+
+	try:
+		result = subprocess.run(
+			['gh', 'auth', 'token'],
+			check=False,
+			capture_output=True,
+			text=True,
+			timeout=10
+		)
+		token = result.stdout.strip()
+		if token:
+			os.environ['GITHUB_TOKEN'] = token
+	except Exception:
+		return
+
+
+_ensure_test_path_entries()
+_ensure_github_token()
 
 
 @pytest.fixture

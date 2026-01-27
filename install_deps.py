@@ -52,6 +52,9 @@ def install_profile(profile_name):
         print(f"❌ Unknown profile: {profile_name}")
         print(f"Available profiles: {', '.join(profiles.keys())}")
         return False
+
+
+    
     
     packages = profiles[profile_name]
     print(f"🚀 Installing {profile_name} profile ({len(packages)} packages)...")

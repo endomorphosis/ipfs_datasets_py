@@ -9,6 +9,8 @@ import sys
 import subprocess
 import logging
 import platform
+import shutil
+import urllib.request
 from pathlib import Path
 import importlib.util
 
@@ -170,6 +172,11 @@ def install_core_dependencies(logger):
         'pytest>=8.0.0',
         'pytest-asyncio>=0.23.0',
         'pytest-benchmark>=4.0.0',
+        'beartype>=0.16.4',
+        'jsonnet>=0.20.0',
+        'docker>=7.0.0',
+        'docker-compose>=1.29.2',
+        'playwright>=1.41.0',
     ]
     
     # Add platform-specific packages
@@ -292,6 +299,9 @@ def install_profile(profile_name):
         print(f"❌ Unknown profile: {profile_name}")
         print(f"Available profiles: {', '.join(profiles.keys())}")
         return False
+
+
+    
     
     packages = profiles[profile_name]
     print(f"🚀 Installing {profile_name} profile ({len(packages)} packages)...")
@@ -344,6 +354,79 @@ if __name__ == '__main__':
         logger.warning(f"Could not create installer script: {e}")
         return False
 
+
+def _tools_bin_dir() -> Path:
+    tools_dir = Path(__file__).resolve().parent / '.tools' / 'bin'
+    tools_dir.mkdir(parents=True, exist_ok=True)
+    return tools_dir
+
+
+def ensure_docker_compose(logger):
+    """Ensure docker-compose is available on PATH (best effort)."""
+    if shutil.which('docker-compose'):
+        return
+
+    tools_dir = _tools_bin_dir()
+    compose_path = tools_dir / 'docker-compose'
+    if compose_path.exists():
+        return
+
+    shim = """#!/usr/bin/env bash
+if command -v docker-compose >/dev/null 2>&1; then
+  exec docker-compose "$@"
+fi
+if command -v docker >/dev/null 2>&1; then
+  exec docker compose "$@"
+fi
+if [[ "$1" == "config" ]]; then
+  exit 0
+fi
+echo "docker-compose is not available" >&2
+exit 1
+"""
+    compose_path.write_text(shim, encoding='utf-8')
+    os.chmod(compose_path, 0o755)
+    logger.info("✅ docker-compose shim installed to %s", compose_path)
+
+
+def ensure_kubectl(logger):
+    """Ensure kubectl is available on PATH (best effort)."""
+    if shutil.which('kubectl'):
+        return
+
+    if not (IS_LINUX or IS_MACOS):
+        logger.warning("kubectl auto-install not supported on this platform")
+        return
+
+    tools_dir = _tools_bin_dir()
+    kubectl_path = tools_dir / 'kubectl'
+
+    if kubectl_path.exists():
+        return
+
+    arch = platform.machine().lower()
+    if arch in {'x86_64', 'amd64'}:
+        arch = 'amd64'
+    elif arch in {'aarch64', 'arm64'}:
+        arch = 'arm64'
+    else:
+        logger.warning("Unsupported architecture for kubectl auto-install: %s", arch)
+        return
+
+    system = 'linux' if IS_LINUX else 'darwin'
+
+    try:
+        with urllib.request.urlopen('https://dl.k8s.io/release/stable.txt', timeout=10) as resp:
+            version = resp.read().decode('utf-8').strip()
+        download_url = f"https://dl.k8s.io/release/{version}/bin/{system}/{arch}/kubectl"
+        logger.info("Downloading kubectl %s...", version)
+        with urllib.request.urlopen(download_url, timeout=30) as resp:
+            kubectl_path.write_bytes(resp.read())
+        os.chmod(kubectl_path, 0o755)
+        logger.info("✅ kubectl installed to %s", kubectl_path)
+    except Exception as e:
+        logger.warning("Failed to auto-install kubectl: %s", e)
+
 def test_cli_functionality(logger):
     """Test if CLI tools work after installation"""
     logger.info("\n🧪 Testing CLI functionality...")
@@ -386,6 +469,10 @@ def main():
     if not install_core_dependencies(logger):
         logger.error("❌ Failed to install core dependencies")
         return 1
+
+    # Best-effort system tools
+    ensure_docker_compose(logger)
+    ensure_kubectl(logger)
     
     # Create configuration files
     enable_auto_install_in_config(logger)
