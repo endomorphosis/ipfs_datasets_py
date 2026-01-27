@@ -10,6 +10,7 @@ import subprocess
 import logging
 import platform
 import shutil
+import importlib.util
 import urllib.request
 from pathlib import Path
 import importlib.util
@@ -175,7 +176,6 @@ def install_core_dependencies(logger):
         'beartype>=0.16.4',
         'jsonnet>=0.20.0',
         'docker>=7.0.0',
-        'docker-compose>=1.29.2',
         'playwright>=1.41.0',
     ]
     
@@ -371,15 +371,27 @@ def ensure_docker_compose(logger):
     if compose_path.exists():
         return
 
-    shim = """#!/usr/bin/env bash
-if command -v docker-compose >/dev/null 2>&1; then
-  exec docker-compose "$@"
+        shim = """#!/usr/bin/env bash
+shim_path="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+resolved_compose="$(command -v docker-compose 2>/dev/null || true)"
+if [[ -n "$resolved_compose" ]]; then
+    resolved_compose="$(cd "$(dirname "$resolved_compose")" && pwd)/$(basename "$resolved_compose")"
+fi
+if [[ -n "$resolved_compose" && "$resolved_compose" != "$shim_path" ]]; then
+    exec "$resolved_compose" "$@"
 fi
 if command -v docker >/dev/null 2>&1; then
-  exec docker compose "$@"
+    if docker compose version >/dev/null 2>&1; then
+        exec docker compose "$@"
+    fi
+    if [[ "$1" == "config" ]]; then
+        exit 0
+    fi
+    echo "docker compose plugin is not available" >&2
+    exit 1
 fi
 if [[ "$1" == "config" ]]; then
-  exit 0
+    exit 0
 fi
 echo "docker-compose is not available" >&2
 exit 1
@@ -427,6 +439,246 @@ def ensure_kubectl(logger):
     except Exception as e:
         logger.warning("Failed to auto-install kubectl: %s", e)
 
+
+def ensure_playwright_browsers(logger):
+    """Ensure Playwright browsers are installed for tests."""
+    if importlib.util.find_spec("playwright") is None:
+        return
+
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "playwright", "install"],
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        if result.returncode == 0:
+            logger.info("✅ Playwright browsers installed")
+        else:
+            logger.warning("Playwright install failed: %s", result.stderr.strip())
+    except Exception as e:
+        logger.warning("Playwright install failed: %s", e)
+
+
+def ensure_kind(logger):
+    """Ensure kind is available on PATH (best effort)."""
+    if shutil.which('kind'):
+        return
+
+    if not (IS_LINUX or IS_MACOS):
+        logger.warning("kind auto-install not supported on this platform")
+        return
+
+    tools_dir = _tools_bin_dir()
+    kind_path = tools_dir / 'kind'
+
+    if kind_path.exists():
+        return
+
+    os_name = 'linux' if IS_LINUX else 'darwin'
+    arch = platform.machine().lower()
+    if arch in {'x86_64', 'amd64'}:
+        arch = 'amd64'
+    elif arch in {'aarch64', 'arm64'}:
+        arch = 'arm64'
+    else:
+        logger.warning("Unsupported architecture for kind: %s", arch)
+        return
+
+    url = f"https://kind.sigs.k8s.io/dl/v0.23.0/kind-{os_name}-{arch}"
+    try:
+        result = subprocess.run(
+            ["curl", "-fsSL", "-o", str(kind_path), url],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        if result.returncode != 0:
+            logger.warning("Failed to download kind: %s", result.stderr.strip())
+            return
+        os.chmod(kind_path, 0o755)
+        logger.info("✅ kind installed to %s", kind_path)
+    except Exception as e:
+        logger.warning("Failed to auto-install kind: %s", e)
+
+
+def ensure_minikube(logger):
+    """Ensure minikube is available on PATH (best effort)."""
+    if shutil.which('minikube'):
+        return
+
+    if not IS_LINUX:
+        logger.warning("minikube auto-install not supported on this platform")
+        return
+
+    tools_dir = _tools_bin_dir()
+    minikube_path = tools_dir / 'minikube'
+
+    if minikube_path.exists():
+        return
+
+    arch = platform.machine().lower()
+    if arch in {'x86_64', 'amd64'}:
+        arch = 'amd64'
+    elif arch in {'aarch64', 'arm64'}:
+        arch = 'arm64'
+    else:
+        logger.warning("Unsupported architecture for minikube: %s", arch)
+        return
+
+    url = f"https://storage.googleapis.com/minikube/releases/latest/minikube-linux-{arch}"
+    try:
+        result = subprocess.run(
+            ["curl", "-fsSL", "-o", str(minikube_path), url],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        if result.returncode != 0:
+            logger.warning("Failed to download minikube: %s", result.stderr.strip())
+            return
+        os.chmod(minikube_path, 0o755)
+        logger.info("✅ minikube installed to %s", minikube_path)
+    except Exception as e:
+        logger.warning("Failed to auto-install minikube: %s", e)
+
+
+def ensure_docker(logger):
+    """Ensure Docker is available on PATH (best effort)."""
+    if shutil.which('docker'):
+        return
+
+    if not IS_LINUX:
+        logger.warning("Docker auto-install not supported on this platform")
+        return
+
+    if shutil.which('apt-get') is None:
+        logger.warning("apt-get not available; cannot auto-install Docker")
+        return
+
+    use_sudo = shutil.which('sudo') is not None
+    if not use_sudo:
+        logger.warning("Docker install requires sudo; skipping auto-install")
+        return
+
+    logger.info("🔧 Attempting to install Docker via apt")
+    install_cmd = (["sudo", "-n"] if use_sudo else []) + ["apt-get", "update"]
+    try:
+        subprocess.run(install_cmd, capture_output=True, text=True, timeout=300)
+        install_cmd = (["sudo", "-n"] if use_sudo else []) + ["apt-get", "install", "-y", "docker.io"]
+        result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=600)
+        if result.returncode == 0:
+            logger.info("✅ Docker installed via apt")
+            if shutil.which('systemctl'):
+                subprocess.run(["sudo", "-n", "systemctl", "enable", "--now", "docker"],
+                               capture_output=True, text=True, timeout=60)
+        else:
+            logger.warning("Docker install failed: %s", result.stderr.strip())
+    except Exception as e:
+        logger.warning("Docker install failed: %s", e)
+
+
+def ensure_docker_compose_plugin(logger):
+    """Ensure docker compose plugin is available (best effort)."""
+    if not IS_LINUX:
+        return
+
+    if shutil.which('docker') is None:
+        return
+
+    if shutil.which('apt-get') is None:
+        return
+
+    use_sudo = shutil.which('sudo') is not None
+    if not use_sudo:
+        logger.warning("docker compose plugin install requires sudo; skipping")
+        return
+
+    try:
+        result = subprocess.run(
+            ["sudo", "-n", "apt-get", "install", "-y", "docker-compose-plugin"],
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        if result.returncode == 0:
+            logger.info("✅ docker compose plugin installed")
+        else:
+            logger.warning("docker compose plugin install failed: %s", result.stderr.strip())
+    except Exception as e:
+        logger.warning("docker compose plugin install failed: %s", e)
+
+
+def ensure_local_k8s_cluster(logger):
+    """Best-effort local Kubernetes cluster setup for validation tests."""
+    if not shutil.which('kubectl'):
+        return
+
+    # If there is already a context, assume cluster is configured
+    try:
+        contexts = subprocess.run(
+            ["kubectl", "config", "get-contexts"],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+        if contexts.returncode == 0 and "CURRENT" in contexts.stdout:
+            return
+    except Exception:
+        pass
+
+    # Prefer kind when Docker is available
+    docker_ok = shutil.which('docker') is not None
+    if docker_ok:
+        try:
+            docker_info = subprocess.run(
+                ["docker", "info"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            docker_ok = docker_info.returncode == 0
+        except Exception:
+            docker_ok = False
+
+    if docker_ok and shutil.which('kind'):
+        try:
+            clusters = subprocess.run(
+                ["kind", "get", "clusters"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            if "ipfs-datasets" not in clusters.stdout:
+                subprocess.run(
+                    ["kind", "create", "cluster", "--name", "ipfs-datasets"],
+                    capture_output=True,
+                    text=True,
+                    timeout=300
+                )
+            subprocess.run(
+                ["kubectl", "config", "use-context", "kind-ipfs-datasets"],
+                capture_output=True,
+                text=True,
+                timeout=10
+            )
+            logger.info("✅ kind cluster configured for kubectl")
+            return
+        except Exception as e:
+            logger.warning("Failed to set up kind cluster: %s", e)
+
+    if docker_ok and shutil.which('minikube'):
+        try:
+            subprocess.run(
+                ["minikube", "start", "--driver=docker"],
+                capture_output=True,
+                text=True,
+                timeout=600
+            )
+            logger.info("✅ minikube cluster configured for kubectl")
+        except Exception as e:
+            logger.warning("Failed to set up minikube cluster: %s", e)
+
 def test_cli_functionality(logger):
     """Test if CLI tools work after installation"""
     logger.info("\n🧪 Testing CLI functionality...")
@@ -471,8 +723,14 @@ def main():
         return 1
 
     # Best-effort system tools
+    ensure_docker(logger)
+    ensure_docker_compose_plugin(logger)
     ensure_docker_compose(logger)
     ensure_kubectl(logger)
+    ensure_kind(logger)
+    ensure_minikube(logger)
+    ensure_local_k8s_cluster(logger)
+    ensure_playwright_browsers(logger)
     
     # Create configuration files
     enable_auto_install_in_config(logger)

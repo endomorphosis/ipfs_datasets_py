@@ -1,14 +1,10 @@
 {
-  "timestamp": "2026-01-26T18:55:23.417069",
+  "timestamp": "2026-01-26T21:33:33.285967",
   "status": "FAIL",
   "errors": [
-    "Required environment variable POSTGRES_PASSWORD not found in .env.example"
+    "Kubernetes validation failed for ingress.yaml: error: error validating \"/home/barberb/ipfs_datasets_py/deployments/kubernetes/ingress.yaml\": error validating data: failed to download openapi: Get \"http://localhost:8080/openapi/v2?timeout=32s\": dial tcp 127.0.0.1:8080: connect: connection refused; if you choose to ignore these errors, turn validation off with --validate=false\n"
   ],
-  "warnings": [
-    "Docker entrypoint script is not executable",
-    "docker-compose not available for validation",
-    "kubectl not available for validation"
-  ],
+  "warnings": [],
   "checks_run": [
     "docker_compose_config",
     "kubernetes_manifests",

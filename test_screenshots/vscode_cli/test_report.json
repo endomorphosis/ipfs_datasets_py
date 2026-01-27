@@ -1,0 +1,114 @@
+{
+  "test_suite": "VSCode CLI MCP Dashboard Integration",
+  "timestamp": "2026-01-26T21:34:57.460514",
+  "results": {
+    "screenshots": [
+      {
+        "filename": "02_tool_categories_20260126_213412.png",
+        "path": "test_screenshots/vscode_cli/02_tool_categories_20260126_213412.png",
+        "description": "Tool categories in dashboard",
+        "timestamp": "20260126_213412",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "03_vscode_status_tool_20260126_213420.png",
+        "path": "test_screenshots/vscode_cli/03_vscode_status_tool_20260126_213420.png",
+        "description": "VSCode CLI Status tool",
+        "timestamp": "20260126_213420",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "04_vscode_status_executed_20260126_213429.png",
+        "path": "test_screenshots/vscode_cli/04_vscode_status_executed_20260126_213429.png",
+        "description": "VSCode CLI Status tool executed",
+        "timestamp": "20260126_213429",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "05_vscode_install_tool_20260126_213435.png",
+        "path": "test_screenshots/vscode_cli/05_vscode_install_tool_20260126_213435.png",
+        "description": "VSCode CLI Install tool",
+        "timestamp": "20260126_213435",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "06_vscode_extensions_tool_20260126_213443.png",
+        "path": "test_screenshots/vscode_cli/06_vscode_extensions_tool_20260126_213443.png",
+        "description": "VSCode extensions management tool",
+        "timestamp": "20260126_213443",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "07_vscode_tunnel_tool_20260126_213451.png",
+        "path": "test_screenshots/vscode_cli/07_vscode_tunnel_tool_20260126_213451.png",
+        "description": "VSCode tunnel management tool",
+        "timestamp": "20260126_213451",
+        "url": "chrome-error://chromewebdata/"
+      },
+      {
+        "filename": "09_vscode_execute_tool_20260126_213457.png",
+        "path": "test_screenshots/vscode_cli/09_vscode_execute_tool_20260126_213457.png",
+        "description": "VSCode CLI execute command tool",
+        "timestamp": "20260126_213457",
+        "url": "chrome-error://chromewebdata/"
+      }
+    ],
+    "interactions": [
+      {
+        "test": "tool_categories_visible",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:12.945084"
+      },
+      {
+        "test": "vscode_cli_status_tool",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:29.095295"
+      },
+      {
+        "test": "vscode_cli_install_tool",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:35.181174"
+      },
+      {
+        "test": "vscode_extensions_tool",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:43.256143"
+      },
+      {
+        "test": "vscode_tunnel_tool",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:51.363720",
+        "github_auth": "visible"
+      },
+      {
+        "test": "vscode_execute_tool",
+        "status": "partial",
+        "timestamp": "2026-01-26T21:34:57.452376"
+      }
+    ],
+    "tools_tested": [
+      "vscode_cli_status",
+      "vscode_cli_install",
+      "vscode_cli_extensions",
+      "vscode_cli_tunnel",
+      "vscode_cli_execute"
+    ],
+    "errors": [
+      {
+        "test": "dashboard_loads",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8899/\nCall log:\n  - navigating to \"http://127.0.0.1:8899/\", waiting until \"networkidle\"\n"
+      },
+      {
+        "test": "tool_api_endpoints",
+        "error": "Page.goto: net::ERR_CONNECTION_REFUSED at http://127.0.0.1:8899/api/mcp/tools\nCall log:\n  - navigating to \"http://127.0.0.1:8899/api/mcp/tools\", waiting until \"networkidle\"\n"
+      }
+    ]
+  },
+  "summary": {
+    "total_screenshots": 7,
+    "total_interactions": 6,
+    "tools_tested": 5,
+    "errors": 2,
+    "screenshots_directory": "test_screenshots/vscode_cli"
+  }
+}

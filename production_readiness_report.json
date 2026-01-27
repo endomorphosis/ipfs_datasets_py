@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-01-26T18:55:23.248453",
+  "timestamp": "2026-01-26T21:33:33.044844",
   "overall_status": "NOT_READY",
-  "readiness_score": 67.14285714285715,
+  "readiness_score": 81.42857142857143,
   "summary": {
-    "FAIL": 2,
-    "PASS": 4,
+    "FAIL": 1,
+    "PASS": 5,
     "WARNING": 1
   },
   "results": [
@@ -17,10 +17,10 @@
     },
     {
       "name": "System Dependencies",
-      "status": "FAIL",
-      "message": "Missing system commands: docker, docker-compose",
+      "status": "PASS",
+      "message": "All required system commands are available",
       "details": null,
-      "remediation": "Install missing system packages"
+      "remediation": null
     },
     {
       "name": "Configuration Files",
