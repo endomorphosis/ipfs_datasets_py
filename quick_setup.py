@@ -161,6 +161,8 @@ def install_core_dependencies(logger):
         'huggingface-hub>=0.34.0,<1.0.0',
         'networkx>=3.1',
         'beautifulsoup4>=4.12.0',
+        'readability-lxml>=0.8.1',
+        'newspaper3k>=0.2.8',
         'html2text>=2025.4.15',
         'pillow>=10.0.0,<12.0.0',
         'cachetools>=5.3.0',
