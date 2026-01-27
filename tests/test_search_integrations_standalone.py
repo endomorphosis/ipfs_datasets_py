@@ -15,6 +15,9 @@ web_archive_tools_path = os.path.abspath(os.path.join(
 ))
 sys.path.insert(0, web_archive_tools_path)
 
+import asyncio
+
+
 def test_brave_search():
     """Test Brave Search integration."""
     print("Testing Brave Search Integration...")

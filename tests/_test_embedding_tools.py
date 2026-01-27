@@ -190,6 +190,8 @@ class TestEmbeddingTools:
         ]
         
         try:
+            from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_tools import shard_embeddings
+
             result = await shard_embeddings(
                 embeddings=test_embeddings,
                 shard_count=4,

@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 async def generate_embedding(
-    text: str,
+    text: Union[str, Dict[str, Any]],
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2",
     normalize: bool = True,
     batch_size: int = 32,
@@ -36,7 +36,7 @@ async def generate_embedding(
     Generate a single embedding for text using the integrated IPFS embeddings core.
     
     Args:
-        text: Text to generate embedding for
+        text: Text to generate embedding for, or a multimodal payload containing a `text` field
         model_name: Name of the embedding model to use
         normalize: Whether to normalize the embedding vector
         batch_size: Batch size for processing
@@ -47,24 +47,33 @@ async def generate_embedding(
         Dict containing embedding results and metadata
     """
     try:
+        input_text = text
+        modality = None
+        if isinstance(text, dict):
+            modality = text.get("modality") or text.get("type")
+            input_text = text.get("text", "")
+
         if not HAVE_EMBEDDINGS:
             # Fallback to simple embedding for testing
             logger.warning("Using fallback embedding generation")
-            return {
+            result = {
                 "status": "success",
-                "text": text,
+                "text": input_text,
                 "embedding": [0.1, 0.2, 0.3, 0.4],  # Simple fallback
                 "model": model_name,
                 "dimension": 4,
                 "normalized": normalize,
                 "message": "Using fallback - install embeddings dependencies for full functionality"
             }
+            if modality:
+                result["modality"] = modality
+            return result
         
         # Validate input
-        if not text or not isinstance(text, str):
+        if not input_text or not isinstance(input_text, str):
             raise ValueError("Text must be a non-empty string")
         
-        if len(text) > 10000:
+        if len(input_text) > 10000:
             raise ValueError("Text length exceeds maximum limit of 10,000 characters")
         
         # Initialize embeddings engine
@@ -75,16 +84,16 @@ async def generate_embedding(
         )
         
         # Generate embedding
-        result = await embeddings_engine.generate_embeddings([text])
+        result = await embeddings_engine.generate_embeddings([input_text])
         
         if not result or not result.get('embeddings'):
             raise RuntimeError("Failed to generate embedding")
         
         embedding = result['embeddings'][0]
         
-        return {
+        output = {
             "status": "success",
-            "text": text,
+            "text": input_text,
             "embedding": embedding.tolist() if hasattr(embedding, 'tolist') else embedding,
             "model": model_name,
             "dimension": len(embedding),
@@ -92,6 +101,9 @@ async def generate_embedding(
             "processing_time": result.get('processing_time', 0),
             "memory_usage": result.get('memory_usage', 0)
         }
+        if modality:
+            output["modality"] = modality
+        return output
         
     except Exception as e:
         logger.error(f"Embedding generation failed: {e}")

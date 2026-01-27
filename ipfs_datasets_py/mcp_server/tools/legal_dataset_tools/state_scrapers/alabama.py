@@ -195,7 +195,7 @@ class AlabamaScraper(BaseStateScraper):
         self.logger.info("  1. Check https://web.archive.org for archived versions")
         self.logger.info("  2. Try again later when site is accessible")
         self.logger.info("  3. Contact Alabama Legislative Services")
-        return []
+        return await self._generic_scrape(code_name, code_url, citation_format, max_sections=max_sections)
 
 
 # Register this scraper with the registry
