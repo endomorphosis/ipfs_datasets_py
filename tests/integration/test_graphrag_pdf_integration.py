@@ -279,7 +279,29 @@ class TestGraphRAGPDFPerformance:
         WHEN processed through GraphRAG pipeline
         THEN should complete within reasonable time limits
         """
-        pytest.skip("Performance test - implement when dependencies are available")
+        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from reportlab.pdfgen import canvas
+        import time
+
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+            pdf_path = tmp_file.name
+
+        try:
+            c = canvas.Canvas(pdf_path)
+            for page in range(3):
+                c.drawString(50, 750, f"Performance page {page + 1}")
+                c.showPage()
+            c.save()
+
+            processor = PDFProcessor()
+            start_time = time.monotonic()
+            results = await processor.process_pdf(pdf_path)
+            elapsed = time.monotonic() - start_time
+
+            assert 'status' in results
+            assert elapsed < 60
+        finally:
+            os.unlink(pdf_path)
     
     @pytest.mark.slow  
     @pytest.mark.asyncio
@@ -289,7 +311,32 @@ class TestGraphRAGPDFPerformance:
         WHEN processed through GraphRAG pipeline
         THEN performance should scale reasonably
         """
-        pytest.skip("Batch processing test - implement when dependencies are available")
+        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from reportlab.pdfgen import canvas
+        import time
+
+        pdf_paths = []
+        try:
+            for idx in range(2):
+                with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
+                    pdf_paths.append(tmp_file.name)
+                c = canvas.Canvas(pdf_paths[-1])
+                c.drawString(50, 750, f"Batch PDF {idx + 1}")
+                c.save()
+
+            processor = PDFProcessor()
+            start_time = time.monotonic()
+            results = []
+            for path in pdf_paths:
+                results.append(await processor.process_pdf(path))
+            elapsed = time.monotonic() - start_time
+
+            assert all('status' in result for result in results)
+            assert elapsed < 120
+        finally:
+            for path in pdf_paths:
+                if os.path.exists(path):
+                    os.unlink(path)
 
 
 if __name__ == "__main__":
