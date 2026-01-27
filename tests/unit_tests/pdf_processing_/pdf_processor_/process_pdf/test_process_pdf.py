@@ -113,7 +113,10 @@ EXPECTED_KEY_TYPES = {
     "ipld_cid": str,
     "entities_count": int,
     "relationships_count": int,
+    "extracted_entities": list,
+    "extracted_relationships": list,
     "cross_doc_relations": int,
+    "stages_completed": list,
     "processing_metadata": dict,
     "pdf_info": dict
 }

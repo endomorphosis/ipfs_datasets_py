@@ -109,23 +109,43 @@ class SimpleMCPTestSuite:
                 }
             
             tools_data = response.json()
-            
+
+            normalized_tools: Dict[str, Dict[str, Any]] = {}
+            if isinstance(tools_data, dict):
+                if tools_data and all(isinstance(value, list) for value in tools_data.values()):
+                    for category, tools in tools_data.items():
+                        for tool in tools:
+                            if isinstance(tool, dict):
+                                tool_name = tool.get('name') or tool.get('tool')
+                                if tool_name:
+                                    tool_info = dict(tool)
+                                    tool_info.setdefault('category', category)
+                                    normalized_tools[tool_name] = tool_info
+                else:
+                    normalized_tools = tools_data
+            elif isinstance(tools_data, list):
+                for tool in tools_data:
+                    if isinstance(tool, dict):
+                        tool_name = tool.get('name') or tool.get('tool')
+                        if tool_name:
+                            normalized_tools[tool_name] = tool
+
             # Analyze tools
             tools_by_category = {}
-            for tool_name, tool_info in tools_data.items():
+            for tool_name, tool_info in normalized_tools.items():
                 category = tool_info.get('category', 'uncategorized')
                 if category not in tools_by_category:
                     tools_by_category[category] = []
                 tools_by_category[category].append(tool_name)
             
-            self.logger.info(f"✅ Found {len(tools_data)} MCP tools")
+            self.logger.info(f"✅ Found {len(normalized_tools)} MCP tools")
             self.logger.info(f"📊 Categories: {list(tools_by_category.keys())}")
             
             return {
                 'success': True,
-                'tools_count': len(tools_data),
+                'tools_count': len(normalized_tools),
                 'tools_by_category': tools_by_category,
-                'sample_tools': dict(list(tools_data.items())[:5]),
+                'sample_tools': dict(list(normalized_tools.items())[:5]),
                 'categories': list(tools_by_category.keys())
             }
             

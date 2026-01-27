@@ -716,6 +716,32 @@ class DiscordWrapper:
                 'error': str(e),
                 'export_time': time.time() - start_time
             }
+
+    async def export_dm(
+        self,
+        output_dir: Optional[str] = None,
+        format: Optional[str] = None,
+        token: Optional[str] = None,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Backward-compatible alias for exporting all direct message channels.
+
+        Args:
+            output_dir: Output directory (auto-generated if not provided)
+            format: Export format (uses default if not provided)
+            token: Discord token (uses instance token if not provided)
+            **kwargs: Additional export options (e.g., download_media, partition_limit)
+
+        Returns:
+            Export result dictionary.
+        """
+        return await self.export_dm_channels(
+            output_dir=output_dir,
+            format=format,
+            token=token,
+            **kwargs,
+        )
     
     def _get_format_extension(self, format: str) -> str:
         """Get file extension for export format."""

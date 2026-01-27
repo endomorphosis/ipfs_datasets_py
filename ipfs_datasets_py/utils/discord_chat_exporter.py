@@ -22,6 +22,7 @@ import platform
 import subprocess
 import zipfile
 import urllib.request
+import re
 from pathlib import Path
 from typing import Dict, Optional, Any
 import logging
@@ -317,7 +318,11 @@ class DiscordChatExporter:
             )
             
             if result.returncode == 0:
-                return result.stdout.strip()
+                version_info = result.stdout.strip()
+                match = re.search(r"(\d+\.\d+(?:\.\d+)?)", version_info)
+                if match:
+                    return match.group(1)
+                return version_info
             return None
             
         except Exception as e:

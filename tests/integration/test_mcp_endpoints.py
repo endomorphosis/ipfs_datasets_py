@@ -60,20 +60,6 @@ class MCPIntegrationTestSuite:
         
         self.logger.error("MCP Dashboard failed to start within timeout")
         return False
-
-
-def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> str:
-    return (
-        "MCP dashboard service is required for these integration tests but was not reachable. "
-        "This test suite is service-dependent and will be skipped when the dashboard is not running.\n\n"
-        f"Tried polling: {base_url}/api/mcp/status (timeout={timeout_seconds}s).\n\n"
-        "To run locally, start the dashboard and re-run this test. For example:\n"
-        "  - VS Code task: Start MCP Dashboard (8899)\n"
-        "  - Or run: MCP_DASHBOARD_HOST=127.0.0.1 MCP_DASHBOARD_PORT=8899 MCP_DASHBOARD_BLOCKING=1 "
-        "python -m ipfs_datasets_py.mcp_dashboard\n\n"
-        "If the dashboard cannot be started in your environment (missing optional deps, port restrictions, etc.), "
-        "keep this test skipped and run the unit test suites instead."
-    )
     
     def test_basic_endpoints(self) -> Dict[str, Any]:
         """Test basic MCP dashboard endpoints."""
@@ -130,6 +116,26 @@ def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> s
                 }
             
             tools_data = response.json()
+
+            normalized_tools: Dict[str, Dict[str, Any]] = {}
+            if isinstance(tools_data, dict):
+                if tools_data and all(isinstance(value, list) for value in tools_data.values()):
+                    for category, tools in tools_data.items():
+                        for tool in tools:
+                            if isinstance(tool, dict):
+                                tool_name = tool.get('name') or tool.get('tool')
+                                if tool_name:
+                                    tool_info = dict(tool)
+                                    tool_info.setdefault('category', category)
+                                    normalized_tools[tool_name] = tool_info
+                else:
+                    normalized_tools = tools_data
+            elif isinstance(tools_data, list):
+                for tool in tools_data:
+                    if isinstance(tool, dict):
+                        tool_name = tool.get('name') or tool.get('tool')
+                        if tool_name:
+                            normalized_tools[tool_name] = tool
             
             # Test direct tools import via MCP server
             direct_tools_count = 0
@@ -143,7 +149,7 @@ def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> s
             
             # Analyze tools by category
             tools_by_category = {}
-            for tool_name, tool_info in tools_data.items():
+            for tool_name, tool_info in normalized_tools.items():
                 category = tool_info.get('category', 'uncategorized')
                 if category not in tools_by_category:
                     tools_by_category[category] = []
@@ -151,10 +157,10 @@ def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> s
             
             return {
                 'success': True,
-                'api_tools_count': len(tools_data),
+                'api_tools_count': len(normalized_tools),
                 'direct_tools_count': direct_tools_count,
                 'tools_by_category': tools_by_category,
-                'sample_tools': dict(list(tools_data.items())[:10]),
+                'sample_tools': dict(list(normalized_tools.items())[:10]),
                 'categories': list(tools_by_category.keys())
             }
             
@@ -480,6 +486,20 @@ def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> s
             report.append("")
         
         return "\\n".join(report)
+
+
+def _skip_reason_dashboard_unavailable(base_url: str, timeout_seconds: int) -> str:
+    return (
+        "MCP dashboard service is required for these integration tests but was not reachable. "
+        "This test suite is service-dependent and will be skipped when the dashboard is not running.\n\n"
+        f"Tried polling: {base_url}/api/mcp/status (timeout={timeout_seconds}s).\n\n"
+        "To run locally, start the dashboard and re-run this test. For example:\n"
+        "  - VS Code task: Start MCP Dashboard (8899)\n"
+        "  - Or run: MCP_DASHBOARD_HOST=127.0.0.1 MCP_DASHBOARD_PORT=8899 MCP_DASHBOARD_BLOCKING=1 "
+        "python -m ipfs_datasets_py.mcp_dashboard\n\n"
+        "If the dashboard cannot be started in your environment (missing optional deps, port restrictions, etc.), "
+        "keep this test skipped and run the unit test suites instead."
+    )
 
 
 # pytest integration

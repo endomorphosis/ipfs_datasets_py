@@ -8,6 +8,7 @@ build/
 test_screenshots/
 dist/
 test_screenshots/
+test_outputs/
 *.egg-info/
 *.venv/*
 *.venv/

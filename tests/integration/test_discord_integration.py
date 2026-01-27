@@ -439,9 +439,12 @@ class TestEndToEndIntegration:
         channel_id = os.environ.get('DISCORD_TEST_CHANNEL_ID') or "123456"
 
         async def _fake_export_channel(**_kwargs):
+            output_path = Path(_kwargs['output_path'])
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text("{}")
             return {
                 'status': 'success',
-                'output_path': str(Path(_kwargs['output_path'])),
+                'output_path': str(output_path),
             }
 
         async def _fake_analyze_export(**_kwargs):
@@ -453,6 +456,8 @@ class TestEndToEndIntegration:
 
         monkeypatch.setattr('tests.integration.test_discord_integration.discord_export_channel', _fake_export_channel)
         monkeypatch.setattr('tests.integration.test_discord_integration.discord_analyze_export', _fake_analyze_export)
+        globals()['discord_export_channel'] = _fake_export_channel
+        globals()['discord_analyze_export'] = _fake_analyze_export
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # Export channel
