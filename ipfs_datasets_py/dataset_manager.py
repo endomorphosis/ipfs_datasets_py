@@ -2,7 +2,8 @@
 Simple DatasetManager implementation for MCP tools.
 
 This provides a basic DatasetManager class that the MCP tools can use
-for dataset operations.
+for dataset operations. Supports accelerate integration for distributed
+inference when available.
 """
 import anyio
 from typing import Dict, Any, Optional, Union, Protocol, runtime_checkable
@@ -13,6 +14,20 @@ except Exception:  # pragma: no cover
     Dataset = None  # type: ignore
     load_dataset = None  # type: ignore
 
+# Try to import accelerate integration for distributed inference
+try:
+    from .accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
+
 
 @runtime_checkable
 class _DatasetLike(Protocol):
@@ -21,9 +36,28 @@ class _DatasetLike(Protocol):
 class DatasetManager:
     """Simple dataset manager for MCP tools."""
 
-    def __init__(self):
-        """Initialize the dataset manager."""
+    def __init__(self, use_accelerate: bool = True):
+        """Initialize the dataset manager.
+        
+        Args:
+            use_accelerate: Whether to use ipfs_accelerate_py if available
+        """
         self._datasets = {}
+        
+        # Initialize accelerate manager if available and enabled
+        self.accelerate_manager = None
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager(
+                    resources={},
+                    enable_distributed=True
+                )
+                print("✓ Accelerate integration enabled for dataset processing")
+            except Exception as e:
+                print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
+                self.accelerate_manager = None
+        elif not HAVE_ACCELERATE or not is_accelerate_available():
+            print("⚠ Accelerate integration not available, using local processing only")
 
     def get_dataset(self, dataset_id: str) -> 'ManagedDataset':
         """Get a dataset by ID."""

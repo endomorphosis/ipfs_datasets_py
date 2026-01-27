@@ -13,6 +13,7 @@ Features:
 - Content anomaly detection with adaptive thresholds
 - Model serving infrastructure with caching and batch processing
 - Model versioning and A/B testing capabilities
+- Accelerate integration for distributed ML inference
 
 Usage:
     model_server = ProductionMLModelServer()
@@ -53,6 +54,20 @@ except ImportError:
     ProcessedContent = Any
     ContentAnalysis = Any
     QualityAssessmentResult = Any
+
+# Try to import accelerate integration for distributed ML inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 logger = logging.getLogger(__name__)
 
