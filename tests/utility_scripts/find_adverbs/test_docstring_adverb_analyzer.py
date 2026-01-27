@@ -5,8 +5,9 @@ Test suite for Python Docstring Adverb Analyzer.
 Tests the main control flow and all helper functions following the red-green-refactor
 methodology with comprehensive Given-When-Then test cases.
 """
+import ast
 import pytest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 # Make sure the input file and documentation file exist.
 # assert os.path.exists('/home/kylerose1946/ipfs_datasets_py/tests/utility_scripts/find_adverbs/docstring_adverb_analyzer.py'), "docstring_adverb_analyzer.py does not exist at the specified directory."
@@ -863,7 +864,8 @@ class TestAdverbAnalysis:
             if adverb_findings:  # If analysis implemented and working
                 # Should find "quickly" and "efficiently" as adverbs
                 found_adverbs = [finding.get("word", "") for finding in adverb_findings]
-                assert any("quickly" in str(found_adverbs).lower() or "efficiently" in str(found_adverbs).lower())
+                found_text = str(found_adverbs).lower()
+                assert "quickly" in found_text or "efficiently" in found_text
             
         except (ImportError, NameError):
             # Adverb analysis not implemented yet, skip test
@@ -995,12 +997,9 @@ class TestAdverbAnalysis:
         
         # WHEN: analyze_adverbs is called with empty list
         try:
-            # Try to import the analyzer module
-            import sys
-            sys.path.append('/home/runner/work/ipfs_datasets_py/ipfs_datasets_py')
-            from utility_scripts.find_adverbs.docstring_adverb_analyzer import analyze_adverbs
+            from tests.utility_scripts.find_adverbs.docstring_adverb_analyzer import _analyze_adverbs
             
-            result = analyze_adverbs(empty_docstrings)
+            result = _analyze_adverbs(empty_docstrings)
             
             # THEN: Should return empty list without errors
             assert isinstance(result, list)
@@ -1033,10 +1032,7 @@ class TestStatisticsGeneration:
         
         # WHEN: _generate_statistics() is called
         try:
-            # Try to import the analyzer module
-            import sys
-            sys.path.append('/home/runner/work/ipfs_datasets_py/ipfs_datasets_py')
-            from utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_statistics
+            from tests.utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_statistics
             
             result = _generate_statistics(mock_adverbs)
             
@@ -1064,10 +1060,7 @@ class TestStatisticsGeneration:
         
         # WHEN: _generate_statistics() is called with empty list
         try:
-            # Try to import the analyzer module
-            import sys
-            sys.path.append('/home/runner/work/ipfs_datasets_py/ipfs_datasets_py')
-            from utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_statistics
+            from tests.utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_statistics
             
             result = _generate_statistics(empty_adverbs)
             
@@ -1123,10 +1116,7 @@ class TestOutputGeneration:
         
         # WHEN: _generate_output() is called with findings
         try:
-            # Try to import the analyzer module
-            import sys
-            sys.path.append('/home/runner/work/ipfs_datasets_py/ipfs_datasets_py')
-            from utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_output
+            from tests.utility_scripts.find_adverbs.docstring_adverb_analyzer import _generate_output
             
             # Should generate output without crashing
             _generate_output(mock_adverbs, mock_stats)

@@ -9,9 +9,13 @@ for automatic error reporting.
 
 import sys
 import logging
-from typing import Optional, Any, Callable
+from contextlib import contextmanager
+from pathlib import Path
+from typing import Optional, Any, Callable, Dict, Iterator
 
 from .error_reporter import get_global_error_reporter
+from .config import ErrorReportingConfig
+from .issue_creator import GitHubIssueCreator
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +23,156 @@ logger = logging.getLogger(__name__)
 # Store original exception hook
 _original_excepthook: Optional[Callable] = None
 _error_handlers_installed = False
+
+
+class ErrorHandler:
+    """
+    Central error handler for capturing and reporting runtime errors.
+
+    Provides a singleton interface for error reporting, global exception
+    hooks, and helper utilities to wrap functions or code blocks.
+    """
+
+    _instance: Optional["ErrorHandler"] = None
+
+    def __new__(cls, *args: Any, **kwargs: Any) -> "ErrorHandler":
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
+    def __init__(
+        self,
+        config: Optional[ErrorReportingConfig] = None,
+        issue_creator: Optional[GitHubIssueCreator] = None,
+    ) -> None:
+        if getattr(self, "_initialized", False):
+            return
+
+        self.config = config or ErrorReportingConfig()
+        self.issue_creator = issue_creator or GitHubIssueCreator(self.config)
+        self._original_excepthook: Optional[Callable] = None
+        self._initialized = True
+
+    def report_error(
+        self,
+        error: Exception,
+        *,
+        source: str = "python",
+        additional_info: Optional[str] = None,
+        logs: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> Optional[str]:
+        """
+        Report an error via GitHub issue creation.
+
+        Args:
+            error: Exception to report.
+            source: Source identifier for the error.
+            additional_info: Extra context to include in the report.
+            logs: Log output to include (truncated).
+            context: Additional structured context.
+
+        Returns:
+            URL of created issue or None if not created.
+        """
+        context_payload: Dict[str, Any] = dict(context or {})
+        context_payload.setdefault("source", source)
+
+        if additional_info:
+            context_payload["additional_info"] = additional_info
+
+        if logs:
+            max_lines = self.config.max_log_lines
+            log_lines = logs.splitlines()
+            if len(log_lines) > max_lines:
+                log_lines = log_lines[:max_lines]
+                log_lines.append("...")
+            context_payload["logs"] = "\n".join(log_lines)
+
+        return self.issue_creator.create_issue(error, context_payload)
+
+    def _handle_exception(self, exc_type: type, exc_value: BaseException, exc_traceback) -> None:
+        if self._original_excepthook:
+            self._original_excepthook(exc_type, exc_value, exc_traceback)
+
+        if issubclass(exc_type, KeyboardInterrupt):
+            return
+
+        exception = exc_value if isinstance(exc_value, Exception) else Exception(str(exc_value))
+        if exc_traceback:
+            exception = exception.with_traceback(exc_traceback)
+
+        try:
+            self.report_error(exception, source="python", context={"uncaught": True})
+        except Exception as e:
+            logger.error(f"Failed to report exception: {e}")
+
+    def install_global_handler(self) -> None:
+        """Install a global exception handler for uncaught exceptions."""
+        if self._original_excepthook is not None:
+            return
+
+        self._original_excepthook = sys.excepthook
+        sys.excepthook = self._handle_exception
+
+    def uninstall_global_handler(self) -> None:
+        """Uninstall the global exception handler and restore the original hook."""
+        if self._original_excepthook is None:
+            return
+
+        sys.excepthook = self._original_excepthook
+        self._original_excepthook = None
+
+    def wrap_function(self, source: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Decorator that reports exceptions and re-raises them."""
+        def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+            def wrapper(*args: Any, **kwargs: Any) -> Any:
+                try:
+                    return func(*args, **kwargs)
+                except Exception as exc:
+                    self.report_error(exc, source=source)
+                    raise
+            return wrapper
+        return decorator
+
+    @contextmanager
+    def context_manager(self, source: str) -> Iterator[None]:
+        """Context manager that reports errors and re-raises them."""
+        try:
+            yield
+        except Exception as exc:
+            self.report_error(exc, source=source)
+            raise
+
+
+def get_recent_logs(log_file: Path, max_lines: int = 100) -> Optional[str]:
+    """
+    Get the most recent log lines from a log file.
+
+    Args:
+        log_file: Path to the log file.
+        max_lines: Maximum number of lines to return.
+
+    Returns:
+        Recent log content or None if file is missing.
+    """
+    if not log_file.exists():
+        return None
+
+    try:
+        content = log_file.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    lines = content.splitlines()
+    if max_lines <= 0:
+        return ""
+
+    return "\n".join(lines[-max_lines:])
+
+
+# Backwards-compatible alias for a global error handler instance
+error_reporter = ErrorHandler()
 
 
 def _custom_excepthook(exc_type, exc_value, exc_traceback):

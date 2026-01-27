@@ -258,12 +258,12 @@ class TestRoundTripConversion:
 class TestErrorHandling:
     """Test error handling in CAR conversion."""
     
-    def test_jsonnet_to_car_without_jsonnet_raises_error(self):
+    def test_jsonnet_to_car_without_jsonnet_raises_error(self, monkeypatch):
         """GIVEN jsonnet not available WHEN converting THEN raise ImportError"""
-        if HAVE_JSONNET:
-            pytest.skip("Jsonnet is available, cannot test import error")
+        from ipfs_datasets_py import car_conversion
+        monkeypatch.setattr(car_conversion, "HAVE_JSONNET", False)
         
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        DataInterchangeUtils = car_conversion.DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -277,12 +277,12 @@ class TestErrorHandling:
             with pytest.raises(ImportError, match="jsonnet library is required"):
                 converter.jsonnet_to_car(jsonnet_path, car_path)
     
-    def test_car_to_jsonnet_without_arrow_raises_error(self):
+    def test_car_to_jsonnet_without_arrow_raises_error(self, monkeypatch):
         """GIVEN PyArrow not available WHEN converting THEN raise ImportError"""
-        if HAVE_ARROW:
-            pytest.skip("PyArrow is available, cannot test import error")
+        from ipfs_datasets_py import car_conversion
+        monkeypatch.setattr(car_conversion, "HAVE_ARROW", False)
         
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        DataInterchangeUtils = car_conversion.DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         

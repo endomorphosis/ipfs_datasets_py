@@ -272,12 +272,12 @@ class TestJsonnetIntegrationWithOtherFormats:
 class TestErrorHandling:
     """Test error handling in Jsonnet serialization."""
     
-    def test_import_without_jsonnet_raises_error(self):
+    def test_import_without_jsonnet_raises_error(self, monkeypatch):
         """GIVEN jsonnet not available WHEN importing THEN raise ImportError"""
-        if HAVE_JSONNET:
-            pytest.skip("Jsonnet is available, cannot test import error")
+        from ipfs_datasets_py import dataset_serialization
+        monkeypatch.setattr(dataset_serialization, "HAVE_JSONNET", False)
         
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        DatasetSerializer = dataset_serialization.DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -289,12 +289,12 @@ class TestErrorHandling:
             with pytest.raises(ImportError, match="jsonnet library is required"):
                 serializer.import_from_jsonnet(jsonnet_path)
     
-    def test_serialize_without_jsonnet_raises_error(self):
+    def test_serialize_without_jsonnet_raises_error(self, monkeypatch):
         """GIVEN jsonnet not available WHEN serializing THEN raise ImportError"""
-        if HAVE_JSONNET:
-            pytest.skip("Jsonnet is available, cannot test import error")
+        from ipfs_datasets_py import dataset_serialization
+        monkeypatch.setattr(dataset_serialization, "HAVE_JSONNET", False)
         
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        DatasetSerializer = dataset_serialization.DatasetSerializer
         
         serializer = DatasetSerializer()
         

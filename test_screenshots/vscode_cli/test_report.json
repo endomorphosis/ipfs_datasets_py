@@ -1,55 +1,55 @@
 {
   "test_suite": "VSCode CLI MCP Dashboard Integration",
-  "timestamp": "2026-01-26T21:53:27.212721",
+  "timestamp": "2026-01-27T00:04:15.163754",
   "results": {
     "screenshots": [
       {
-        "filename": "02_tool_categories_20260126_215242.png",
-        "path": "test_screenshots/vscode_cli/02_tool_categories_20260126_215242.png",
+        "filename": "02_tool_categories_20260127_000330.png",
+        "path": "test_screenshots/vscode_cli/02_tool_categories_20260127_000330.png",
         "description": "Tool categories in dashboard",
-        "timestamp": "20260126_215242",
+        "timestamp": "20260127_000330",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "03_vscode_status_tool_20260126_215250.png",
-        "path": "test_screenshots/vscode_cli/03_vscode_status_tool_20260126_215250.png",
+        "filename": "03_vscode_status_tool_20260127_000338.png",
+        "path": "test_screenshots/vscode_cli/03_vscode_status_tool_20260127_000338.png",
         "description": "VSCode CLI Status tool",
-        "timestamp": "20260126_215250",
+        "timestamp": "20260127_000338",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "04_vscode_status_executed_20260126_215258.png",
-        "path": "test_screenshots/vscode_cli/04_vscode_status_executed_20260126_215258.png",
+        "filename": "04_vscode_status_executed_20260127_000346.png",
+        "path": "test_screenshots/vscode_cli/04_vscode_status_executed_20260127_000346.png",
         "description": "VSCode CLI Status tool executed",
-        "timestamp": "20260126_215258",
+        "timestamp": "20260127_000346",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "05_vscode_install_tool_20260126_215304.png",
-        "path": "test_screenshots/vscode_cli/05_vscode_install_tool_20260126_215304.png",
+        "filename": "05_vscode_install_tool_20260127_000352.png",
+        "path": "test_screenshots/vscode_cli/05_vscode_install_tool_20260127_000352.png",
         "description": "VSCode CLI Install tool",
-        "timestamp": "20260126_215304",
+        "timestamp": "20260127_000352",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "06_vscode_extensions_tool_20260126_215312.png",
-        "path": "test_screenshots/vscode_cli/06_vscode_extensions_tool_20260126_215312.png",
+        "filename": "06_vscode_extensions_tool_20260127_000400.png",
+        "path": "test_screenshots/vscode_cli/06_vscode_extensions_tool_20260127_000400.png",
         "description": "VSCode extensions management tool",
-        "timestamp": "20260126_215312",
+        "timestamp": "20260127_000400",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "07_vscode_tunnel_tool_20260126_215321.png",
-        "path": "test_screenshots/vscode_cli/07_vscode_tunnel_tool_20260126_215321.png",
+        "filename": "07_vscode_tunnel_tool_20260127_000408.png",
+        "path": "test_screenshots/vscode_cli/07_vscode_tunnel_tool_20260127_000408.png",
         "description": "VSCode tunnel management tool",
-        "timestamp": "20260126_215321",
+        "timestamp": "20260127_000408",
         "url": "chrome-error://chromewebdata/"
       },
       {
-        "filename": "09_vscode_execute_tool_20260126_215327.png",
-        "path": "test_screenshots/vscode_cli/09_vscode_execute_tool_20260126_215327.png",
+        "filename": "09_vscode_execute_tool_20260127_000415.png",
+        "path": "test_screenshots/vscode_cli/09_vscode_execute_tool_20260127_000415.png",
         "description": "VSCode CLI execute command tool",
-        "timestamp": "20260126_215327",
+        "timestamp": "20260127_000415",
         "url": "chrome-error://chromewebdata/"
       }
     ],
@@ -57,33 +57,33 @@
       {
         "test": "tool_categories_visible",
         "status": "partial",
-        "timestamp": "2026-01-26T21:52:42.562103"
+        "timestamp": "2026-01-27T00:03:30.421104"
       },
       {
         "test": "vscode_cli_status_tool",
         "status": "partial",
-        "timestamp": "2026-01-26T21:52:58.773321"
+        "timestamp": "2026-01-27T00:03:46.630896"
       },
       {
         "test": "vscode_cli_install_tool",
         "status": "partial",
-        "timestamp": "2026-01-26T21:53:04.881956"
+        "timestamp": "2026-01-27T00:03:52.730497"
       },
       {
         "test": "vscode_extensions_tool",
         "status": "partial",
-        "timestamp": "2026-01-26T21:53:12.978578"
+        "timestamp": "2026-01-27T00:04:00.867233"
       },
       {
         "test": "vscode_tunnel_tool",
         "status": "partial",
-        "timestamp": "2026-01-26T21:53:21.095127",
+        "timestamp": "2026-01-27T00:04:09.027176",
         "github_auth": "visible"
       },
       {
         "test": "vscode_execute_tool",
         "status": "partial",
-        "timestamp": "2026-01-26T21:53:27.202314"
+        "timestamp": "2026-01-27T00:04:15.152898"
       }
     ],
     "tools_tested": [

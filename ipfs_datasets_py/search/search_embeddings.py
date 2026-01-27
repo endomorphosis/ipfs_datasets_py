@@ -1,6 +1,10 @@
 import datasets
 import sys
-from ipfs_kit_py.ipfs_kit import ipfs_kit
+from typing import Optional
+try:
+    from ipfs_kit_py.ipfs_kit import ipfs_kit as ipfs_kit_module
+except Exception:
+    ipfs_kit_module = None
 # from ipfs_embeddings_py import ipfs_embeddings_py, qdrant_kit_py, faiss_kit_py # Commented out for now
 import numpy as np
 import os
@@ -217,7 +221,10 @@ class search_embeddings:
                 setattr(self, key, metadata[key])
         
         # Instantiate ipfs_kit
-        self.ipfs_kit = ipfs_kit.ipfs_kit(resources=resources, metadata=metadata) # Instantiate ipfs_kit
+        if ipfs_kit_module is None:
+            self.ipfs_kit = None
+        else:
+            self.ipfs_kit = ipfs_kit_module.ipfs_kit(resources=resources, metadata=metadata)  # Instantiate ipfs_kit
         
         # self.qdrant_kit_py = qdrant_kit_py(resources=resources, metadata=metadata) # Commented out for now
         # self.ipfs_embeddings_py = ipfs_embeddings_py(resources=resources, metadata=metadata) # Commented out for now

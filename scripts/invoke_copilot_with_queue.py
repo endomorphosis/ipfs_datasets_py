@@ -40,11 +40,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Add repo root and script directory to path for local imports
+repo_root = Path(__file__).parent.parent
+sys.path.insert(0, str(repo_root))
+sys.path.insert(0, str(Path(__file__).parent))
 
 from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
-from scripts.queue_manager import QueueManager
+from queue_manager import QueueManager
 
 logging.basicConfig(
     level=logging.INFO,

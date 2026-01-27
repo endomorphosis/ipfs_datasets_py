@@ -31,9 +31,7 @@ def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
         return False
 
 def ensure_known_good_ipfs_kit_py() -> None:
-    """Ensure ipfs_kit_py is installed from the known_good branch on Windows."""
-    if not IS_WINDOWS:
-        return
+    """Ensure ipfs_kit_py is installed from the known_good branch."""
 
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
 

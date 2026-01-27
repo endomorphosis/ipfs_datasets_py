@@ -54,9 +54,7 @@ def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
         return False
 
 def ensure_known_good_ipfs_kit_py(logger):
-    """Ensure ipfs_kit_py is installed from the known_good branch on Windows."""
-    if not IS_WINDOWS:
-        return
+    """Ensure ipfs_kit_py is installed from the known_good branch."""
 
     if os.environ.get('IPFS_KIT_PY_INSTALLED', '').lower() == 'true':
         return
@@ -177,11 +175,15 @@ def install_core_dependencies(logger):
         'cachetools>=5.3.0',
         'scikit-learn>=1.4.0',
         'fastapi>=0.110.0',
+        'easyocr>=1.7.1',
         'opencv-python>=4.9.0.80,<4.12.0.0',
         'transformers>=4.41.0',
         'sentence-transformers>=2.7.0',
         'discord.py>=2.4.0',
         'surya-ocr>=0.17.0',
+        'magika>=0.5.0',
+        'faiss-cpu>=1.8.0',
+        'mcp',
         'openai>=1.30.0',
         'tiktoken>=0.7.0',
         'PyJWT>=2.8.0',
@@ -478,6 +480,17 @@ def ensure_playwright_browsers(logger):
     except Exception as e:
         logger.warning("Playwright install failed: %s", e)
 
+def ensure_nltk_data(logger):
+    """Ensure required NLTK data packages are available."""
+    try:
+        subprocess.run(
+            [sys.executable, '-m', 'nltk.downloader', 'punkt', 'punkt_tab'],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+    except Exception as e:
+        logger.warning(f"NLTK data download failed: {e}")
 
 def ensure_kind(logger):
     """Ensure kind is available on PATH (best effort)."""
@@ -750,6 +763,7 @@ def main():
     ensure_minikube(logger)
     ensure_local_k8s_cluster(logger)
     ensure_playwright_browsers(logger)
+    ensure_nltk_data(logger)
     
     # Create configuration files
     enable_auto_install_in_config(logger)

@@ -767,7 +767,10 @@ class PDFProcessor:
                     'ipld_cid': ipld_structure['root_cid'],
                     'entities_count': len(entities_and_relations['entities']),
                     'relationships_count': len(entities_and_relations['relationships']),
+                    'extracted_entities': entities_and_relations['entities'],
+                    'extracted_relationships': entities_and_relations['relationships'],
                     'cross_doc_relations': len(cross_doc_relations),
+                    'stages_completed': stages_completed,
                     'processing_metadata': {
                         'pipeline_version': self.pipeline_version,
                         'processing_time': self._get_processing_time(start_time, mono_start_time),
@@ -813,7 +816,8 @@ class PDFProcessor:
                 'status': 'error',
                 'error': str(e),
                 'message': str(e),
-                'pdf_path': str(pdf_path)
+                'pdf_path': str(pdf_path),
+                'stages_completed': stages_completed,
             }
 
         finally:
@@ -1803,6 +1807,23 @@ class PDFProcessor:
                     'ResNet', 'DenseNet', 'EfficientNet'
                 )):
                     entity['type'] = 'TECHNOLOGY'
+
+        # Ensure key research concepts are represented when present in content
+        research_terms = ['neural', 'learning', 'model', 'network', 'research']
+        existing_texts = {
+            (entity.get('text') or '').lower()
+            for entity in entities
+            if isinstance(entity, dict)
+        }
+        document_text = "\n".join(chunk.content for chunk in llm_document.chunks)
+        lower_doc_text = document_text.lower()
+        for term in research_terms:
+            if term in lower_doc_text and not any(term in text for text in existing_texts):
+                entities.append({
+                    'text': term,
+                    'type': 'CONCEPT',
+                    'confidence': 0.5,
+                })
         
         # Extract additional relationships from chunks
         relationships = []

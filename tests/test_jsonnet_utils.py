@@ -30,15 +30,14 @@ pytestmark = pytest.mark.skipif(not HAVE_JSONNET, reason="jsonnet library not av
 class TestJsonnetConverter:
     """Test the JsonnetConverter class."""
     
-    def test_import_without_jsonnet(self):
+    def test_import_without_jsonnet(self, monkeypatch):
         """GIVEN jsonnet is not available WHEN importing THEN raise ImportError"""
-        if HAVE_JSONNET:
-            pytest.skip("Jsonnet is available, cannot test import error")
-        
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
-        
+        from ipfs_datasets_py import jsonnet_utils
+        monkeypatch.setattr(jsonnet_utils, "HAVE_JSONNET", False)
+        monkeypatch.setattr(jsonnet_utils, "_jsonnet", None, raising=False)
+
         with pytest.raises(ImportError, match="jsonnet library is required"):
-            JsonnetConverter()
+            jsonnet_utils.JsonnetConverter()
     
     def test_simple_jsonnet_to_json(self):
         """GIVEN a simple Jsonnet string WHEN converting to JSON THEN return valid JSON"""
