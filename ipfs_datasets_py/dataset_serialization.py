@@ -992,7 +992,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Then, add relationships as edges
         for rel_id, rel in knowledge_graph.relationships.items():
-                return records
+            source_id = rel.source_entity.id
             target_id = rel.target_entity.id
 
             if source_id in entity_to_node and target_id in entity_to_node:
