@@ -619,7 +619,7 @@ class DiscordWrapper:
                 'export_time': time.time() - start_time
             }
     
-    async def export_dm(
+    async def export_dm_channels(
         self,
         output_dir: Optional[str] = None,
         format: Optional[str] = None,

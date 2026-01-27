@@ -87,11 +87,9 @@ def create_parser() -> argparse.ArgumentParser:
 def cmd_stock(args) -> int:
     """Execute stock data fetching command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.finance_data_tools.stock_scrapers import (
-            fetch_stock_data
-        )
+        from ipfs_datasets_py.finance import get_stock_data
         
-        result = fetch_stock_data(
+        result = get_stock_data(
             symbol=args.symbol,
             start_date=args.start or (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
             end_date=args.end or datetime.now().strftime('%Y-%m-%d'),
@@ -100,10 +98,10 @@ def cmd_stock(args) -> int:
         
         if args.output:
             with open(args.output, 'w') as f:
-                f.write(result)
+                json.dump(result, f, indent=2)
             print(f"✓ Stock data saved to {args.output}")
         else:
-            print(result)
+            print(json.dumps(result, indent=2))
         
         return 0
     except Exception as e:
@@ -114,24 +112,26 @@ def cmd_stock(args) -> int:
 def cmd_news(args) -> int:
     """Execute news scraping command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.finance_data_tools.news_scrapers import (
-            fetch_financial_news
-        )
+        from ipfs_datasets_py.finance import scrape_financial_news
         
-        result = fetch_financial_news(
+        # Parse sources, ensuring it's a valid string
+        sources = args.sources if args.sources else 'reuters,ap,bloomberg'
+        sources_list = sources.split(',') if isinstance(sources, str) else []
+        
+        result = scrape_financial_news(
             topic=args.topic,
             start_date=args.start or (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
             end_date=args.end or datetime.now().strftime('%Y-%m-%d'),
-            sources=args.sources,
+            sources=sources_list,
             max_articles=args.max_articles
         )
         
         if args.output:
             with open(args.output, 'w') as f:
-                f.write(result)
+                f.write(json.dumps(result, indent=2))
             print(f"✓ News data saved to {args.output}")
         else:
-            print(result)
+            print(json.dumps(result, indent=2))
         
         return 0
     except Exception as e:
@@ -142,32 +142,30 @@ def cmd_news(args) -> int:
 def cmd_executives(args) -> int:
     """Execute executive analysis command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
-            analyze_executive_performance
-        )
+        from ipfs_datasets_py.finance import analyze_news_with_graphrag
         
         # Load input files
         with open(args.news, 'r') as f:
-            news_data = f.read()
+            news_data = json.load(f)
         
         with open(args.stocks, 'r') as f:
-            stock_data = f.read()
+            stock_data = json.load(f)
         
-        result = analyze_executive_performance(
-            news_articles_json=news_data,
-            stock_data_json=stock_data,
+        result = analyze_news_with_graphrag(
+            news_articles=news_data,
+            stock_data=stock_data,
+            analysis_type='executive_performance',
             hypothesis=args.hypothesis,
             attribute=args.attribute,
-            group_a=args.group_a,
-            group_b=args.group_b
+            groups={'A': args.group_a, 'B': args.group_b}
         )
         
         if args.output:
             with open(args.output, 'w') as f:
-                f.write(result)
+                json.dump(result, f, indent=2)
             print(f"✓ Analysis saved to {args.output}")
         else:
-            print(result)
+            print(json.dumps(result, indent=2))
         
         return 0
     except Exception as e:
@@ -180,20 +178,18 @@ def cmd_executives(args) -> int:
 def cmd_embeddings(args) -> int:
     """Execute embedding correlation command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.finance_data_tools.embedding_correlation import (
-            analyze_embedding_market_correlation
-        )
+        from ipfs_datasets_py.finance import analyze_multimodal_correlations
         
         # Load input files
         with open(args.news, 'r') as f:
-            news_data = f.read()
+            news_data = json.load(f)
         
         with open(args.stocks, 'r') as f:
-            stock_data = f.read()
+            stock_data = json.load(f)
         
-        result = analyze_embedding_market_correlation(
-            news_articles_json=news_data,
-            stock_data_json=stock_data,
+        result = analyze_multimodal_correlations(
+            news_articles=news_data,
+            stock_data=stock_data,
             enable_multimodal=args.multimodal,
             time_window=args.time_window,
             n_clusters=args.clusters
@@ -201,10 +197,10 @@ def cmd_embeddings(args) -> int:
         
         if args.output:
             with open(args.output, 'w') as f:
-                f.write(result)
+                json.dump(result, f, indent=2)
             print(f"✓ Embedding analysis saved to {args.output}")
         else:
-            print(result)
+            print(json.dumps(result, indent=2))
         
         return 0
     except Exception as e:
@@ -217,18 +213,16 @@ def cmd_embeddings(args) -> int:
 def cmd_theorems(args) -> int:
     """Execute theorems command."""
     try:
-        from ipfs_datasets_py.mcp_server.tools.finance_data_tools.finance_theorems import (
-            list_financial_theorems, apply_financial_theorem
-        )
+        from ipfs_datasets_py.finance import list_finance_theorems, apply_theorem
         
         if args.list:
-            result = list_financial_theorems(event_type=args.event_type)
+            result = list_finance_theorems(event_type=args.event_type)
             if args.output:
                 with open(args.output, 'w') as f:
-                    f.write(result)
+                    json.dump(result, f, indent=2)
                 print(f"✓ Theorems list saved to {args.output}")
             else:
-                print(result)
+                print(json.dumps(result, indent=2))
         
         elif args.apply:
             if not args.data:
@@ -236,19 +230,19 @@ def cmd_theorems(args) -> int:
                 return 1
             
             with open(args.data, 'r') as f:
-                event_data = f.read()
+                event_data = json.load(f)
             
-            result = apply_financial_theorem(
+            result = apply_theorem(
                 theorem_id=args.apply,
-                event_data_json=event_data
+                event_data=event_data
             )
             
             if args.output:
                 with open(args.output, 'w') as f:
-                    f.write(result)
+                    json.dump(result, f, indent=2)
                 print(f"✓ Theorem application saved to {args.output}")
             else:
-                print(result)
+                print(json.dumps(result, indent=2))
         else:
             print("✗ Error: Use --list or --apply", file=sys.stderr)
             return 1

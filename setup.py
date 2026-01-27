@@ -90,6 +90,10 @@ setup(
             'aiohttp>=3.8.0',
             'PyYAML>=6.0',
         ],
+        'email': [
+            # Email processing - all stdlib except optional HTML parsing
+            'beautifulsoup4>=4.12.0',  # For HTML email parsing (optional)
+        ],
         'test': [
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',
@@ -188,6 +192,8 @@ setup(
             'discord.py>=2.0.0',
             'aiohttp>=3.8.0',
             'PyYAML>=6.0',
+            # Email
+            'beautifulsoup4>=4.12.0',
             # Testing
             'pytest>=7.3.1',
             'pytest-cov>=4.1.0',

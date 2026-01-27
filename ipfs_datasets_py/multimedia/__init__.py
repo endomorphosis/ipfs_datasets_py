@@ -5,6 +5,7 @@ This module provides comprehensive multimedia processing capabilities including:
 - Video and audio downloading (yt-dlp)
 - Media format conversion (FFmpeg)
 - Discord chat export and analysis
+- Email processing and ingestion (IMAP/POP3/.eml)
 - Media analysis and metadata extraction
 - Streaming and transcoding
 - Batch processing of multimedia content
@@ -35,6 +36,15 @@ except ImportError:
     DiscordWrapper = None
     create_discord_wrapper = None
 
+# Import Email processor
+try:
+    from .email_processor import EmailProcessor, create_email_processor
+    HAVE_EMAIL = True
+except ImportError:
+    HAVE_EMAIL = False
+    EmailProcessor = None
+    create_email_processor = None
+
 # Feature availability flags
 try:
     import yt_dlp
@@ -55,8 +65,11 @@ __all__ = [
     "MediaUtils",
     "DiscordWrapper",
     "create_discord_wrapper",
+    "EmailProcessor",
+    "create_email_processor",
     "HAVE_YTDLP",
     "HAVE_FFMPEG",
     "HAVE_DISCORD",
+    "HAVE_EMAIL",
     "HAVE_MEDIA_PROCESSOR"
 ]

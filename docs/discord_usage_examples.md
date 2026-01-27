@@ -4,11 +4,22 @@ This document provides comprehensive examples for using the Discord data ingesti
 
 ## Overview
 
+The Discord integration follows the **correct integration pattern** where all interfaces are peer consumers of the core package:
+
+```
+    multimedia/discord_wrapper.py (Core Package)
+                ↓
+    ┌───────────┼──────────────┐
+    │           │              │
+   CLI      MCP Tools      Dashboard
+```
+
 The Discord integration provides three main components:
-1. **Discord Chat Exporter Utility** (`ipfs_datasets_py.utils.discord_chat_exporter`) - Low-level CLI tool management
-2. **Discord Wrapper** (`ipfs_datasets_py.multimedia.discord_wrapper`) - High-level Python interface
-3. **MCP Tools** (`ipfs_datasets_py.mcp_server.tools.discord_tools`) - Model Context Protocol integration
+1. **Discord Wrapper** (`ipfs_datasets_py.multimedia.discord_wrapper`) - Core Python interface ⭐
+2. **Discord CLI** (`discord_cli.py`) - Command-line interface (imports from multimedia)
+3. **MCP Tools** (`ipfs_datasets_py.mcp_server.tools.discord_tools`) - Model Context Protocol integration (imports from multimedia)
 4. **Discord Dashboard** (`ipfs_datasets_py.discord_dashboard`) - Web-based management UI
+5. **Discord Chat Exporter Utility** (`ipfs_datasets_py.utils.discord_chat_exporter`) - Low-level CLI tool management
 
 ## Installation
 
