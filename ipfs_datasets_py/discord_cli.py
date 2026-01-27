@@ -303,7 +303,7 @@ async def cmd_export_dms(args) -> int:
         print("Exporting all DM channels...")
         
         wrapper = DiscordWrapper(token=args.token, default_output_dir=args.output_dir, default_format=args.format)
-        result = await wrapper.export_dm(
+        result = await wrapper.export_dm_channels(
             token=args.token,
             output_dir=args.output_dir,
             format=args.format
