@@ -11,6 +11,7 @@ import pytest
 import requests
 import time
 import inspect
+import subprocess
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import logging
@@ -489,9 +490,44 @@ class TestMCPIntegration:
     def test_suite(self):
         """Create test suite instance."""
         return MCPIntegrationTestSuite()
+
+    @pytest.fixture(scope="class")
+    def dashboard_process(self, test_suite):
+        """Ensure the MCP dashboard is running for integration tests."""
+        timeout_seconds = 60
+        if test_suite.wait_for_dashboard(timeout=5):
+            yield None
+            return
+
+        env = os.environ.copy()
+        env.setdefault("MCP_DASHBOARD_HOST", "127.0.0.1")
+        env.setdefault("MCP_DASHBOARD_PORT", "8899")
+        env.setdefault("MCP_DASHBOARD_BLOCKING", "1")
+
+        process = subprocess.Popen(
+            [sys.executable, "-m", "ipfs_datasets_py.mcp_dashboard"],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
+            process.terminate()
+            process.wait(timeout=10)
+            pytest.skip(_skip_reason_dashboard_unavailable(test_suite.base_url, timeout_seconds))
+
+        try:
+            yield process
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
     
     @pytest.mark.asyncio
-    async def test_comprehensive_integration(self, test_suite):
+    async def test_comprehensive_integration(self, test_suite, dashboard_process):
         """Run comprehensive integration tests."""
         timeout_seconds = 60
         if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
@@ -510,7 +546,7 @@ class TestMCPIntegration:
         # Assert overall success
         assert results['success'], f"Integration tests failed. Failed categories: {results.get('failed_categories', [])}"
     
-    def test_basic_endpoints_only(self, test_suite):
+    def test_basic_endpoints_only(self, test_suite, dashboard_process):
         """Test only basic endpoints (synchronous)."""
         timeout_seconds = 60
         if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
@@ -525,7 +561,7 @@ class TestMCPIntegration:
             assert results[endpoint].get('success', False), f"Critical endpoint {endpoint} failed"
     
     @pytest.mark.asyncio
-    async def test_mcp_tools_availability(self, test_suite):
+    async def test_mcp_tools_availability(self, test_suite, dashboard_process):
         """Test MCP tools availability."""
         timeout_seconds = 60
         if not test_suite.wait_for_dashboard(timeout=timeout_seconds):
