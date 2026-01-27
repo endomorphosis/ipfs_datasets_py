@@ -114,11 +114,15 @@ def cmd_news(args) -> int:
     try:
         from ipfs_datasets_py.finance import scrape_financial_news
         
+        # Parse sources, ensuring it's a valid string
+        sources = args.sources if args.sources else 'reuters,ap,bloomberg'
+        sources_list = sources.split(',') if isinstance(sources, str) else []
+        
         result = scrape_financial_news(
             topic=args.topic,
             start_date=args.start or (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'),
             end_date=args.end or datetime.now().strftime('%Y-%m-%d'),
-            sources=args.sources.split(','),
+            sources=sources_list,
             max_articles=args.max_articles
         )
         
