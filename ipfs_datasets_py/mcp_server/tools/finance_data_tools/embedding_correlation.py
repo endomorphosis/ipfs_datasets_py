@@ -13,6 +13,7 @@ Features:
 - Temporal alignment of embeddings with market data
 - Pattern discovery in embedding space
 - Predictive signal extraction
+- Accelerate integration for distributed inference
 
 Use Cases:
 - Find which topics correlate with stock movements
@@ -76,6 +77,20 @@ try:
     logger.warning("Embedding libraries not available. Using stubs.")
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ...accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 @dataclass
