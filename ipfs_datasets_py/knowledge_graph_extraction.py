@@ -6,6 +6,7 @@ unstructured text. It handles entity and relationship extraction, confidence
 scoring, and conversion to a structured graph representation. It also includes
 support for Wikipedia integration, SPARQL validation against Wikidata, and
 detailed tracing of the extraction and validation processes.
+Supports accelerate integration for distributed LLM inference.
 
 Main Components:
 - Entity: Represents an entity in the knowledge graph
@@ -20,6 +21,7 @@ Key Features:
 - Detailed tracing of extraction and validation reasoning using WikipediaKnowledgeGraphTracer
 - Comparison of extraction results with different temperature settings
 - Visualization and explanation of extraction and validation results
+- Accelerate integration for distributed inference
 """
 
 import re
@@ -32,6 +34,20 @@ from collections import defaultdict
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 @dataclass

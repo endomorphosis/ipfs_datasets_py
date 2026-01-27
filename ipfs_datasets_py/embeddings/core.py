@@ -3,6 +3,7 @@ IPFS Embeddings Core Module
 
 Migrated from endomorphosis/ipfs_embeddings_py
 Provides advanced embedding generation, vector search, and IPFS integration capabilities.
+Supports accelerate integration for distributed inference.
 """
 
 import os
@@ -37,6 +38,20 @@ try:
     from ipfs_datasets_py.vector_stores.faiss_store import FAISSVectorStore
 except ImportError:
     FAISSVectorStore = None
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 @dataclass

@@ -3,6 +3,7 @@ Multi-Engine OCR Processor
 
 Implements intelligent OCR processing with multiple engines and retry strategies.
 Supports Surya, Tesseract, EasyOCR, TrOCR, PaddleOCR, and GOT-OCR2.0.
+Supports accelerate integration for distributed OCR model inference.
 """
 from abc import ABC, abstractmethod
 
@@ -28,6 +29,20 @@ try:
 except ImportError:
     np = None
     HAVE_NUMPY = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 logger = logging.getLogger(__name__)
 
