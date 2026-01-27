@@ -3,6 +3,7 @@ Enhanced Embedding Generation Tools with IPFS Embeddings Integration
 
 Migrated and enhanced from endomorphosis/ipfs_embeddings_py to provide
 production-ready embedding generation capabilities.
+Supports accelerate integration for distributed embedding generation.
 """
 
 from typing import List, Dict, Any, Optional, Union
@@ -20,6 +21,20 @@ try:
 except ImportError as e:
     logging.warning(f"Embeddings core module not available: {e}")
     HAVE_EMBEDDINGS = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 logger = logging.getLogger(__name__)
 

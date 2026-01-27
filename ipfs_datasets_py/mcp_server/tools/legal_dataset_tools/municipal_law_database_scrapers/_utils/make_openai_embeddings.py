@@ -23,6 +23,20 @@ import tiktoken
 from ipfs_datasets_py.ipfs_multiformats import get_cid
 from .configs import configs
 
+# Try to import accelerate integration for distributed inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
+
 
 logger = logging.getLogger(__name__)
 
