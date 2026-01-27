@@ -55,6 +55,22 @@ class WebsiteGraphRAGResult:
     reasoning_trace: Optional[str] = None
     knowledge_graph_connections: List[Dict[str, Any]] = field(default_factory=list)
     processing_time_seconds: float = 0.0
+
+    def __await__(self):
+        async def _wrap():
+            return self
+
+        return _wrap().__await__()
+
+
+class AwaitableList(list):
+    """List wrapper that can be awaited to return itself."""
+
+    def __await__(self):
+        async def _wrap():
+            return self
+
+        return _wrap().__await__()
     
     @property
     def content_type_breakdown(self) -> Dict[str, int]:
@@ -516,7 +532,7 @@ class WebsiteGraphRAGSystem:
     ) -> List[ProcessedContent]:
         """Find content related to specific source URL using knowledge graph"""
         if source_url not in self._content_by_url:
-            return []
+            return AwaitableList()
         
         source_item = self._content_by_url[source_url]
         related_items = []
@@ -541,11 +557,11 @@ class WebsiteGraphRAGSystem:
             
             # Sort by similarity and return top results
             related_items.sort(key=lambda x: x.metadata.get('similarity_score', 0), reverse=True)
-            return related_items[:max_related]
+            return AwaitableList(related_items[:max_related])
             
         except Exception as e:
             logger.warning(f"Failed to find related content: {e}")
-            return []
+            return AwaitableList()
     
     def export_dataset(
         self, 

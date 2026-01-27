@@ -160,6 +160,16 @@ def install_core_dependencies(logger):
         'beautifulsoup4>=4.12.0',
         'html2text>=2025.4.15',
         'pillow>=10.0.0,<12.0.0',
+        'cachetools>=5.3.0',
+        'scikit-learn>=1.4.0',
+        'fastapi>=0.110.0',
+        'PyJWT>=2.8.0',
+        'uvicorn>=0.29.0',
+        'pydantic-settings>=2.2.0',
+        'aiofiles>=23.2.1',
+        'pytest>=8.0.0',
+        'pytest-asyncio>=0.23.0',
+        'pytest-benchmark>=4.0.0',
     ]
     
     # Add platform-specific packages

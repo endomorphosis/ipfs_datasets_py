@@ -470,7 +470,7 @@ class ipfs_datasets_py:
         - IPFS integration requires network connectivity for distributed operations
         - Memory usage scales with dataset size and should be monitored for large corpora
     """
-    def __init__(self, resources: Any, metadata: Any) -> None:
+    def __init__(self, resources: Optional[Any] = None, metadata: Optional[Any] = None) -> None:
         """
         Initialize IPFS Dataset Management Platform with Comprehensive Configuration
 
@@ -576,13 +576,23 @@ class ipfs_datasets_py:
             - Memory allocation is optimized for the specified configuration parameters
             - Error handling is established for all network and processing operations
         """
+        if resources is None:
+            resources = {}
+        if metadata is None:
+            metadata = {}
         self.resources = resources
         self.metadata = metadata
         self.load_dataset = load_dataset
         self.ipfs_cluster_name = None
         self.dataset = None
         self.caches = {}
-        self.ipfs_parquet_to_car_py = ipfs_parquet_to_car_py(resources, metadata)
+        if 'ipfs_parquet_to_car_py' in globals():
+            try:
+                self.ipfs_parquet_to_car_py = ipfs_parquet_to_car_py(resources, metadata)
+            except Exception:
+                self.ipfs_parquet_to_car_py = None
+        else:
+            self.ipfs_parquet_to_car_py = None
         self.combine_checkpoints = self.combine_checkpoints
         self.load_checkpoints = self.load_checkpoints
         self.generate_clusters = self.generate_clusters

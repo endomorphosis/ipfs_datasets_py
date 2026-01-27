@@ -1,6 +1,70 @@
-# """
-# Test configuration and shared fixtures for the IPFS Datasets test suite.
-# """
+"""
+Test configuration and shared fixtures for the IPFS Datasets test suite.
+"""
+
+from datetime import datetime
+
+import pytest
+
+from ipfs_datasets_py.content_discovery import ContentManifest
+from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch, ProcessedContent
+from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+
+
+@pytest.fixture
+def sample_graphrag_system():
+	"""Create sample GraphRAG system for tests that need it."""
+	html_content = ProcessedContent(
+		source_url="https://example.com/ai-intro.html",
+		content_type="html",
+		text_content="Introduction to artificial intelligence and machine learning algorithms.",
+		metadata={"title": "AI Introduction"},
+		confidence_score=0.9,
+	)
+
+	pdf_content = ProcessedContent(
+		source_url="https://example.com/research.pdf",
+		content_type="pdf",
+		text_content="Research paper on deep learning neural networks and their applications.",
+		metadata={"title": "Deep Learning Research"},
+		confidence_score=0.85,
+	)
+
+	processed_batch = ProcessedContentBatch(
+		base_url="https://example.com",
+		processed_items=[html_content, pdf_content],
+		processing_stats={"html": 1, "pdf": 1, "total": 2},
+	)
+
+	ai_entity = Entity(name="Artificial Intelligence", entity_type="concept")
+	ml_entity = Entity(name="Machine Learning", entity_type="concept")
+	dl_entity = Entity(name="Deep Learning", entity_type="concept")
+
+	kg = KnowledgeGraph()
+	kg.add_entity(ai_entity)
+	kg.add_entity(ml_entity)
+	kg.add_entity(dl_entity)
+	kg.add_relationship(Relationship(ai_entity, ml_entity, "includes"))
+	kg.add_relationship(Relationship(ml_entity, dl_entity, "includes"))
+
+	manifest = ContentManifest(
+		base_url="https://example.com",
+		html_pages=[],
+		pdf_documents=[],
+		media_files=[],
+		structured_data=[],
+		total_assets=2,
+		discovery_timestamp=datetime.now(),
+	)
+
+	return WebsiteGraphRAGSystem(
+		url="https://example.com",
+		content_manifest=manifest,
+		processed_content=processed_batch,
+		knowledge_graph=kg,
+		graphrag=None,
+	)
 
 # import pytest
 # import anyio

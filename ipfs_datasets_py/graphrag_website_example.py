@@ -386,7 +386,7 @@ async def main():
         for query_short, query_long in search_queries:
             print(f"\n   Query: '{query_long}'")
             
-            results = website_system.query(
+            results = await website_system.query(
                 query_text=query_long,
                 content_types=['html'],
                 reasoning_depth="moderate",
