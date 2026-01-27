@@ -483,18 +483,18 @@ class EmailProcessor:
                 if content_type == 'text/plain':
                     try:
                         body_text += part.get_content()
-                    except:
+                    except (UnicodeDecodeError, LookupError, AttributeError):
                         body_text += str(part.get_payload(decode=True), errors='ignore')
                 elif content_type == 'text/html':
                     try:
                         body_html += part.get_content()
-                    except:
+                    except (UnicodeDecodeError, LookupError, AttributeError):
                         body_html += str(part.get_payload(decode=True), errors='ignore')
         else:
             content_type = email_message.get_content_type()
             try:
                 content = email_message.get_content()
-            except:
+            except (UnicodeDecodeError, LookupError, AttributeError):
                 content = str(email_message.get_payload(decode=True), errors='ignore')
             
             if content_type == 'text/plain':
@@ -532,7 +532,7 @@ class EmailProcessor:
             if isinstance(part, bytes):
                 try:
                     decoded_parts.append(part.decode(encoding or 'utf-8'))
-                except:
+                except (UnicodeDecodeError, LookupError):
                     decoded_parts.append(part.decode('utf-8', errors='ignore'))
             else:
                 decoded_parts.append(part)

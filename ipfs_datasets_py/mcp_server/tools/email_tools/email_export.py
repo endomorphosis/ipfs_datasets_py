@@ -9,6 +9,7 @@ Uses anyio for asyncio/trio compatibility (libp2p integration)
 """
 import anyio
 import os
+from datetime import datetime
 from typing import Dict, Any, Optional
 from pathlib import Path
 
@@ -125,9 +126,7 @@ async def email_export_folder(
         
         # Auto-generate output path if not provided
         if not output_path:
-            timestamp = anyio.from_thread.run_sync(
-                lambda: __import__('datetime').datetime.now().strftime('%Y%m%d_%H%M%S')
-            )
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             output_path = f"email_export_{folder}_{timestamp}.{format}"
         
         # Create processor
