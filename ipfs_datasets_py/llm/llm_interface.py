@@ -12,6 +12,7 @@ Main components:
 - PromptTemplate: Template class for structured prompts
 - PromptLibrary: Manager for maintaining and versioning prompt templates
 - AdaptivePrompting: Module for dynamically adjusting prompts based on context
+- Accelerate integration for distributed LLM inference
 """
 
 import copy
@@ -48,6 +49,20 @@ except ImportError:
         # Mock ndarray type for type hints
         ndarray = list
     np = MockNumpy()
+
+# Try to import accelerate integration for distributed LLM inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 class LLMConfig:
@@ -281,12 +296,13 @@ class LLMInterface:
 class MockLLMInterface(LLMInterface):
     """Mock implementation of LLM interface for development."""
 
-    def __init__(self, config: Optional[LLMConfig] = None):
+    def __init__(self, config: Optional[LLMConfig] = None, use_accelerate: bool = True):
         """
         Initialize mock LLM interface.
 
         Args:
             config: LLM configuration (uses default if None)
+            use_accelerate: Whether to use ipfs_accelerate_py if available
         """
         super().__init__(config or LLMConfig())
 
@@ -305,6 +321,21 @@ class MockLLMInterface(LLMInterface):
 
         # Response latency simulation (seconds)
         self.latency = 0.1
+        
+        # Initialize accelerate manager if available and enabled
+        self.accelerate_manager = None
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager(
+                    resources={"model_name": self.config.model_name},
+                    enable_distributed=True
+                )
+                print("✓ Accelerate integration enabled for LLM inference")
+            except Exception as e:
+                print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
+                self.accelerate_manager = None
+        elif not HAVE_ACCELERATE or not is_accelerate_available():
+            print("⚠ Accelerate integration not available, using mock LLM only")
 
     def generate(self,
                 prompt: str,
