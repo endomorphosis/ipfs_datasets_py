@@ -311,7 +311,7 @@ class IPLDStorage:
                 return b'{"mock": "data"}'
             raise ValueError(f"Block {cid} not found in local cache and no IPFS connection")
 
-    def store_json(self, obj: Any) -> str:
+    def store_json(self, obj: Any, key: Optional[str] = None) -> str:
         """
         Store a JSON-serializable object as an IPLD block.
 
@@ -325,6 +325,7 @@ class IPLDStorage:
         json_str = json.dumps(obj)
         data = json_str.encode('utf-8')
 
+        _ = key
         return self.store(data)
 
     def get_json(self, cid: str) -> Any:

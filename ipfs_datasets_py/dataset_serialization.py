@@ -14,574 +14,6 @@ Features:
 - JSONL import, export, and conversion capabilities
 """
 
-# Version 1.0.1 - Added JSONL serialization support
-
-import json
-import os
-import tempfile
-from typing import List, Dict, Any, Optional, Union, Tuple, Iterator, Generator, Callable, Set, TYPE_CHECKING, TypeVar, Generic
-
-if TYPE_CHECKING:
-    import pandas as pd
-    from datasets import Dataset, DatasetDict
-    import datasets
-    import pyarrow as pa
-
-# Lazy import to avoid circular imports
-# from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
-
-
-class DatasetSerializer:
-    """
-    Comprehensive Dataset Serialization and Format Conversion Platform
-
-    The DatasetSerializer class provides enterprise-grade functionality for converting,
-    serializing, and managing datasets across multiple formats with IPFS integration.
-    This platform enables seamless data transformation between popular data science
-    formats while maintaining schema integrity, metadata preservation, and content
-    addressability through IPLD (InterPlanetary Linked Data) storage systems.
-
-    The serializer supports bidirectional conversion between major data formats
-    including Apache Arrow tables, HuggingFace datasets, Pandas DataFrames, JSON
-    Lines, Parquet files, and IPLD-compatible structures. Advanced features include
-    streaming processing for large datasets, content-based deduplication, graph
-    dataset support, and vector embedding optimization for machine learning workflows.
-
-    Key Features:
-    - Multi-format dataset conversion with schema preservation
-    - IPLD serialization for content-addressable storage on IPFS networks
-    - Streaming processing for memory-efficient large dataset handling
-    - Content-based deduplication to minimize storage requirements
-    - Graph dataset support with relationship preservation
-    - Vector embedding storage with optimized indexing and retrieval
-    - JSONL import/export with flexible schema inference
-    - Metadata preservation across all format conversions
-
-    Supported Formats:
-    - Apache Arrow: Columnar in-memory format optimized for analytics
-    - HuggingFace Datasets: ML-optimized format with built-in preprocessing
-    - Pandas DataFrames: Python data analysis format with rich functionality
-    - Parquet Files: Columnar storage format for efficient archival
-    - JSON Lines: Streaming JSON format for large-scale data processing
-    - IPLD Structures: Content-addressable linked data for IPFS storage
-    - Graph Formats: Node/edge structures for network and knowledge graphs
-    - Vector Collections: Embedding arrays with metadata and indexing
-
-    Conversion Capabilities:
-    - Lossless conversion between supported formats with type preservation
-    - Automatic schema inference and validation for unstructured data
-    - Custom serialization handlers for complex data types and structures
-    - Incremental processing for append-only dataset operations
-    - Format-specific optimization for performance and storage efficiency
-    - Metadata enrichment with provenance and transformation tracking
-
-    IPFS Integration:
-    - Direct serialization to IPLD for content-addressable storage
-    - Automatic chunking and linking for large dataset distribution
-    - Content deduplication through cryptographic hashing
-    - Distributed dataset reconstruction from IPFS content identifiers
-    - Version tracking and immutable dataset snapshots
-
-    Attributes:
-        storage (IPLDStorage): IPLD storage backend for content-addressable
-            dataset persistence and retrieval operations with IPFS integration.
-            Manages content chunking, linking, and distributed storage coordination.
-
-    Public Methods:
-        to_arrow(data: Any, **kwargs) -> pyarrow.Table:
-            Convert various data formats to Apache Arrow tables with schema preservation
-        to_huggingface(data: Any, **kwargs) -> datasets.Dataset:
-            Transform data to HuggingFace datasets format with ML optimizations
-        to_pandas(data: Any, **kwargs) -> pandas.DataFrame:
-            Convert data to Pandas DataFrame with type inference and validation
-        to_parquet(data: Any, file_path: str, **kwargs) -> str:
-            Serialize data to Parquet format with compression and optimization
-        to_jsonl(data: Any, file_path: str, **kwargs) -> str:
-            Export data to JSON Lines format with streaming support
-        to_ipld(data: Any, **kwargs) -> Dict[str, Any]:
-            Serialize data to IPLD format for content-addressable storage
-        from_ipld(cid: str, **kwargs) -> Any:
-            Deserialize data from IPLD using content identifier retrieval
-        deduplicate(dataset: Any, **kwargs) -> Any:
-            Remove duplicate content using content-based hashing
-        stream_convert(source: str, target: str, format_from: str, format_to: str) -> str:
-            Stream-based conversion for large datasets with memory optimization
-
-    Usage Examples:
-        # Initialize serializer with IPFS storage
-        serializer = DatasetSerializer()
-        
-        # Convert HuggingFace dataset to Arrow format
-        hf_dataset = load_dataset("imdb", split="train")
-        arrow_table = serializer.to_arrow(hf_dataset)
-        
-        # Serialize dataset to IPLD for IPFS storage
-        ipld_data = serializer.to_ipld(arrow_table)
-        
-        # Convert Pandas DataFrame to Parquet with optimization
-        df = pd.read_csv("large_dataset.csv")
-        parquet_path = serializer.to_parquet(
-            df, 
-            "optimized_dataset.parquet",
-            compression="snappy"
-        )
-        
-        # Stream conversion for memory-efficient processing
-        converted_path = serializer.stream_convert(
-            source="huge_dataset.jsonl",
-            target="huge_dataset.parquet",
-            format_from="jsonl",
-            format_to="parquet"
-        )
-        
-        # Deduplicate dataset content
-        unique_dataset = serializer.deduplicate(
-            dataset=raw_dataset,
-            method="content_hash"
-        )
-
-    Dependencies:
-        Required:
-        - pyarrow: Apache Arrow format support and columnar operations
-        - datasets: HuggingFace datasets library for ML-optimized data handling
-        - pandas: Data manipulation and analysis framework
-        
-        Optional:
-        - ipfs_datasets_py.ipld: IPLD storage backend for IPFS integration
-        - ipfs_datasets_py.ipfs_knn_index: Vector indexing for embedding storage
-        - Various format-specific libraries for specialized conversion operations
-
-    Notes:
-        - Large dataset conversions benefit from streaming processing to manage memory
-        - Schema preservation ensures data integrity across format transformations
-        - Content deduplication reduces storage requirements and improves efficiency
-        - IPLD serialization enables distributed dataset storage and versioning
-        - Vector embedding storage includes optimized indexing for similarity search
-        - Graph dataset support maintains relationship structures and connectivity
-        - Metadata preservation includes transformation history and provenance tracking
-        - Performance optimization varies by format and dataset characteristics
-    """
-
-    def __init__(self, storage: Optional['IPLDStorage'] = None) -> None:
-        """
-        Initialize Dataset Serialization Platform with IPLD Storage Integration
-
-        Establishes a new DatasetSerializer instance with comprehensive format
-        conversion capabilities and content-addressable storage through IPLD
-        (InterPlanetary Linked Data) systems. This initialization configures
-        all necessary components for multi-format dataset operations while
-        maintaining optimal performance and storage efficiency.
-
-        The initialization process sets up storage backends, format handlers,
-        schema validation systems, and optimization parameters required for
-        enterprise-grade dataset serialization workflows. IPLD integration
-        enables content-addressable storage and distributed dataset management
-        across IPFS networks.
-
-        Args:
-            storage (Optional[IPLDStorage], default=None): IPLD storage backend
-                for content-addressable dataset persistence and distributed
-                storage operations. If None, a new IPLDStorage instance will
-                be created automatically with default configuration parameters.
-                
-                The storage backend provides:
-                - Content-addressable chunking and linking for large datasets
-                - Cryptographic hashing for content deduplication and integrity
-                - Distributed storage coordination across IPFS network nodes
-                - Version tracking and immutable dataset snapshot capabilities
-                - Metadata preservation and provenance tracking systems
-                
-                Custom storage configurations support:
-                - Alternative IPFS node endpoints and gateway configurations
-                - Custom chunking strategies for different dataset characteristics
-                - Compression and optimization settings for storage efficiency
-                - Access control and encryption for sensitive dataset operations
-
-        Attributes Initialized:
-            storage (IPLDStorage): Configured IPLD storage backend ready for
-                immediate dataset serialization and retrieval operations with
-                comprehensive IPFS integration and distributed storage support.
-
-        Raises:
-            ImportError: If the required IPLD storage dependencies are not available
-                or cannot be imported. This includes ipfs_datasets_py.ipld.storage
-                and associated IPFS integration libraries.
-            ConfigurationError: If the provided storage backend configuration is
-                invalid or incompatible with current system capabilities.
-            ConnectionError: If IPFS node connectivity tests fail during storage
-                backend initialization or network access validation.
-
-        Examples:
-            # Basic initialization with default IPLD storage
-            serializer = DatasetSerializer()
-            
-            # Custom IPLD storage configuration
-            from ipfs_datasets_py.ipld.storage import IPLDStorage
-            
-            custom_storage = IPLDStorage(
-                ipfs_gateway="http://custom-ipfs:8080",
-                chunk_size=1024*1024,  # 1MB chunks
-                compression="gzip",
-                enable_deduplication=True
-            )
-            serializer = DatasetSerializer(storage=custom_storage)
-            
-            # Development configuration with local IPFS node
-            dev_storage = IPLDStorage(
-                ipfs_gateway="http://localhost:8080",
-                debug_mode=True,
-                cache_size=100  # Small cache for development
-            )
-            dev_serializer = DatasetSerializer(storage=dev_storage)
-
-        Notes:
-            - IPLD storage enables content-addressable dataset operations with IPFS
-            - Default storage configuration provides secure and efficient operation
-            - Custom storage backends support specialized deployment requirements
-            - Storage initialization validates IPFS connectivity and configuration
-            - Content deduplication is enabled automatically for storage efficiency
-            - Distributed storage coordination requires network connectivity
-            - Storage backends support both synchronous and asynchronous operations
-        """
-        # Use the provided storage or create a new one
-        if storage is None:
-            from ipfs_datasets_py.ipld.storage import IPLDStorage
-            self.storage = IPLDStorage()
-        else:
-            self.storage = storage
-
-    def export_to_jsonnet(self, data: List[Dict[str, Any]], output_path: str, pretty: bool = True) -> str:
-        """
-        Export data to a Jsonnet file.
-
-        Args:
-            data (List[Dict]): List of JSON-serializable records
-            output_path (str): Path to the output Jsonnet file
-            pretty (bool): Whether to pretty-print the output
-
-        Returns:
-            str: Path to the created Jsonnet file
-        """
-        if pretty:
-            jsonnet_str = json.dumps(data, indent=2)
-        else:
-            jsonnet_str = json.dumps(data)
-        
-        with open(output_path, 'w') as f:
-            f.write(jsonnet_str)
-        return output_path
-
-    def import_from_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
-                           tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
-        """
-        Import data from a Jsonnet file to an Arrow table.
-
-        Args:
-            jsonnet_path (str): Path to the Jsonnet file
-            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
-            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
-
-        Returns:
-            pa.Table: Arrow table containing the data
-
-        Raises:
-            ImportError: If PyArrow or Jsonnet is not available
-        """
-        if not HAVE_ARROW:
-            raise ImportError("PyArrow is required for Jsonnet import")
-        
-        if not HAVE_JSONNET:
-            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
-
-        # Evaluate the Jsonnet file
-        ext_vars = ext_vars or {}
-        tla_vars = tla_vars or {}
-        
-        json_str = _jsonnet.evaluate_file(
-            jsonnet_path,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
-        
-        # Parse JSON
-        data = json.loads(json_str)
-        
-        # Ensure it's a list for table conversion
-        if not isinstance(data, list):
-            # If it's a single object, wrap it in a list
-            data = [data]
-        
-        # Convert to Arrow table
-        return pa.Table.from_pylist(data)
-
-    def convert_jsonnet_to_arrow(self, jsonnet_str: str, ext_vars: Optional[Dict[str, str]] = None,
-                                tla_vars: Optional[Dict[str, str]] = None) -> Optional['pa.Table']:
-        """
-        Convert a Jsonnet string to an Arrow table.
-
-        Args:
-            jsonnet_str (str): Jsonnet template string
-            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
-            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
-
-        Returns:
-            pa.Table: Arrow table containing the data
-
-        Raises:
-            ImportError: If PyArrow or Jsonnet is not available
-        """
-        if not HAVE_ARROW:
-            raise ImportError("PyArrow is required for Jsonnet to Arrow conversion")
-        
-        if not HAVE_JSONNET:
-            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
-
-        # Evaluate the Jsonnet string
-        ext_vars = ext_vars or {}
-        tla_vars = tla_vars or {}
-        
-        json_str = _jsonnet.evaluate_snippet(
-            "snippet",
-            jsonnet_str,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
-        
-        # Parse JSON
-        data = json.loads(json_str)
-        
-        # Ensure it's a list for table conversion
-        if not isinstance(data, list):
-            # If it's a single object, wrap it in a list
-            data = [data]
-        
-        # Convert to Arrow table
-        return pa.Table.from_pylist(data)
-
-    def serialize_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None,
-                         tla_vars: Optional[Dict[str, str]] = None) -> str:
-        """
-        Serialize a Jsonnet file to IPLD for storage on IPFS.
-
-        Args:
-            jsonnet_path (str): Path to the Jsonnet file
-            ext_vars (Dict[str, str], optional): External variables to pass to Jsonnet
-            tla_vars (Dict[str, str], optional): Top-level arguments to pass to Jsonnet
-
-        Returns:
-            str: CID of the serialized data
-        """
-        if not HAVE_JSONNET:
-            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
-
-        # Evaluate the Jsonnet file
-        ext_vars = ext_vars or {}
-        tla_vars = tla_vars or {}
-        
-        json_str = _jsonnet.evaluate_file(
-            jsonnet_path,
-            ext_vars=ext_vars,
-            tla_vars=tla_vars
-        )
-        
-        # Parse JSON
-        data = json.loads(json_str)
-        
-        # Structure for storage
-        dataset = {
-            "type": "jsonnet_dataset",
-            "source_file": os.path.basename(jsonnet_path),
-            "data": data,
-            "metadata": {
-                "created_at": datetime.datetime.now().isoformat(),
-                "ext_vars": ext_vars,
-                "tla_vars": tla_vars
-            }
-        }
-
-        # Store in IPLD
-        return self.storage.store_json(dataset)
-
-    def deserialize_jsonnet(self, cid: str, output_path: Optional[str] = None) -> Union[Dict[str, Any], List[Any], str]:
-        """
-        Deserialize Jsonnet data from IPLD/IPFS.
-
-        Args:
-            cid (str): CID of the serialized Jsonnet data
-            output_path (str, optional): If provided, write the data as Jsonnet to this path
-
-        Returns:
-            Union[Dict, List, str]: Data or path to output file if output_path is provided
-        """
-        # Get the data from IPFS
-        dataset = self.storage.get_json(cid)
-
-        # Verify it's a Jsonnet dataset
-        if dataset.get("type") != "jsonnet_dataset":
-            raise ValueError(f"CID {cid} does not contain a Jsonnet dataset")
-
-        # Extract data
-        data = dataset.get("data")
-
-        # If output path provided, write to file as Jsonnet
-        if output_path:
-            jsonnet_str = json.dumps(data, indent=2)
-            with open(output_path, 'w') as f:
-                f.write(jsonnet_str)
-            return output_path
-
-        # Otherwise return data
-        return data
-
-    def export_to_jsonl(self, data: List[Dict[str, Any]], output_path: str) -> str:
-        """
-        Export data to a JSONL (JSON Lines) file.
-
-        Args:
-            data (List[Dict]): List of JSON-serializable records
-            output_path (str): Path to the output JSONL file
-
-        Returns:
-            str: Path to the created JSONL file
-        """
-        with open(output_path, 'w') as f:
-            for record in data:
-                json_str = json.dumps(record)
-                f.write(json_str + '\n')
-        return output_path
-
-    def import_from_jsonl(self, jsonl_path: str) -> Optional['pa.Table']:
-        """
-        Import data from a JSONL file to an Arrow table.
-
-        Args:
-            jsonl_path (str): Path to the JSONL file
-
-        Returns:
-            pa.Table: Arrow table containing the data
-
-        Raises:
-            ImportError: If PyArrow is not available
-        """
-        if not HAVE_ARROW:
-            raise ImportError("PyArrow is required for JSONL import")
-
-        # Read the JSONL file
-        records = []
-        with open(jsonl_path, 'r') as f:
-            for line in f:
-                if line.strip():  # Skip empty lines
-                    records.append(json.loads(line))
-
-        # Convert to Arrow table
-        return pa.Table.from_pylist(records)
-
-    def convert_jsonl_to_huggingface(self, jsonl_path: str) -> Optional['Dataset']:
-        """
-        Convert a JSONL file to a HuggingFace dataset.
-
-        Args:
-            jsonl_path (str): Path to the JSONL file
-
-        Returns:
-            Dataset: HuggingFace dataset containing the data
-
-        Raises:
-            ImportError: If HuggingFace datasets library is not available
-        """
-        if not HAVE_HUGGINGFACE:
-            raise ImportError("HuggingFace datasets library is required for JSONL to HuggingFace conversion")
-
-        # Import the dataset from JSONL
-        from datasets import Dataset
-        return Dataset.from_json(jsonl_path)
-
-    def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str) -> str:
-        """
-        Convert an Arrow table to a JSONL file.
-
-        Args:
-            table (pa.Table): Arrow table to convert
-            output_path (str): Path to the output JSONL file
-
-        Returns:
-            str: Path to the created JSONL file
-
-        Raises:
-            ImportError: If PyArrow is not available
-        """
-        if not HAVE_ARROW:
-            raise ImportError("PyArrow is required for Arrow to JSONL conversion")
-
-        # Convert table to Python records
-        records = table.to_pylist()
-
-        # Write to JSONL
-        return self.export_to_jsonl(records, output_path)
-
-    def serialize_jsonl(self, jsonl_path: str) -> str:
-        """
-        Serialize a JSONL file to IPLD for storage on IPFS.
-
-        Args:
-            jsonl_path (str): Path to the JSONL file
-
-        Returns:
-            str: CID of the serialized data
-        """
-        # Read the JSONL file
-        records = []
-        with open(jsonl_path, 'r') as f:
-            for line in f:
-                if line.strip():  # Skip empty lines
-                    records.append(json.loads(line))
-
-        # Structure for storage
-        dataset = {
-            "type": "jsonl_dataset",
-            "record_count": len(records),
-            "records": records,
-            "metadata": {
-                "created_at": datetime.datetime.now().isoformat(),
-                "source_file": os.path.basename(jsonl_path)
-            }
-        }
-
-        # Store in IPLD
-        return self.storage.store_json(dataset)
-
-    def deserialize_jsonl(self, cid: str, output_path: Optional[str] = None) -> Union[List[Dict[str, Any]], str]:
-        """
-        Deserialize JSONL data from IPLD/IPFS.
-
-        Args:
-            cid (str): CID of the serialized JSONL data
-            output_path (str, optional): If provided, write the deserialized data to this path
-
-        Returns:
-            Union[List[Dict], str]: List of records, or path to the output file if output_path is provided
-        """
-        # Get the data from IPFS
-        dataset = self.storage.get_json(cid)
-
-        # Verify it's a JSONL dataset
-        if dataset.get("type") != "jsonl_dataset":
-            raise ValueError(f"CID {cid} does not contain a JSONL dataset")
-
-        # Extract records
-        records = dataset.get("records", [])
-
-        # If output path provided, write to file
-        if output_path:
-            with open(output_path, 'w') as f:
-                for record in records:
-                    json_str = json.dumps(record)
-                    f.write(json_str + '\n')
-            return output_path
-
-        # Otherwise return records
-        return records
-
 import os
 import json
 import hashlib
@@ -720,7 +152,6 @@ class GraphNode(Generic[T]):
         Returns:
             Dict: Dictionary representation of the node
         """
-        # Convert edges to list of dicts
         edges_list = []
         for edge_type, edges in self.edges.items():
             for edge in edges:
@@ -729,11 +160,8 @@ class GraphNode(Generic[T]):
                     "target_id": edge["target"].id,
                     "target_type": edge["target"].type
                 }
-
-                # Add properties if they exist
                 if edge["properties"]:
                     edge_dict["properties"] = edge["properties"]
-
                 edges_list.append(edge_dict)
 
         return {
@@ -745,7 +173,9 @@ class GraphNode(Generic[T]):
 
 
 class GraphDataset:
-    """A graph dataset containing nodes and edges with query capabilities."""
+    """
+    A graph dataset containing nodes and edges with query capabilities.
+    """
 
     def __init__(self, name: Optional[str] = None) -> None:
         """
@@ -758,193 +188,147 @@ class GraphDataset:
         self.nodes: Dict[str, GraphNode] = {}
         self.node_types: Set[str] = set()
         self.edge_types: Set[str] = set()
-
-        # Node and edge indexes for faster querying
         self._nodes_by_type: Dict[str, Set[str]] = defaultdict(set)
         self._edges_by_type: Dict[str, Set[Tuple[str, str]]] = defaultdict(set)
         self._properties_index: Dict[str, Dict[Any, Set[str]]] = defaultdict(lambda: defaultdict(set))
-
-        # Edge properties index for property-based edge queries
-        # Structure: {edge_type: {property_name: {property_value: {(source_id, target_id), ...}}}}
-        self._edge_properties_index: Dict[str, Dict[str, Dict[Any, Set[Tuple[str, str]]]]] = \
-            defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
+        self._edge_properties_index: Dict[str, Dict[Any, Set[Tuple[str, str]]]] = defaultdict(lambda: defaultdict(set))
 
     def add_node(self, node: GraphNode) -> GraphNode:
         """
-        Add a node to the graph.
+        Add a node to the graph and update indices.
 
         Args:
             node (GraphNode): Node to add
 
         Returns:
             GraphNode: The added node
-
-        Raises:
-            ValueError: If a node with the same ID already exists
         """
-        if node.id in self.nodes:
-            raise ValueError(f"Node with ID {node.id} already exists")
-
         self.nodes[node.id] = node
         self.node_types.add(node.type)
-
-        # Update indexes
         self._nodes_by_type[node.type].add(node.id)
 
-        # Index properties for searching
         for key, value in node.data.items():
             if isinstance(value, (str, int, float, bool)):
                 self._properties_index[key][value].add(node.id)
 
         return node
 
-    def add_edge(self, source_id: str, edge_type: str, target_id: str, properties: Optional[Dict[str, Any]] = None) -> None:
+    def add_edge(self, source_id: str, edge_type: str, target_id: str,
+                 properties: Optional[Dict[str, Any]] = None) -> None:
         """
-        Add an edge between nodes.
+        Add an edge between two nodes and update indices.
 
         Args:
             source_id (str): Source node ID
-            edge_type (str): Type of the edge
+            edge_type (str): Edge type
             target_id (str): Target node ID
-            properties (Dict, optional): Properties to associate with the edge
-
-        Raises:
-            ValueError: If source or target node does not exist
+            properties (Dict, optional): Edge properties
         """
-        if source_id not in self.nodes:
-            raise ValueError(f"Source node {source_id} does not exist")
+        if source_id not in self.nodes or target_id not in self.nodes:
+            raise ValueError("Source or target node does not exist")
 
-        if target_id not in self.nodes:
-            raise ValueError(f"Target node {target_id} does not exist")
+        source_node = self.nodes[source_id]
+        target_node = self.nodes[target_id]
+        source_node.add_edge(edge_type, target_node, properties)
 
-        # Add the edge
-        self.nodes[source_id].add_edge(edge_type, self.nodes[target_id], properties)
         self.edge_types.add(edge_type)
-
-        # Update edge index
         self._edges_by_type[edge_type].add((source_id, target_id))
 
-        # Index edge properties for querying
         if properties:
-            # Create edge property index if it doesn't exist
-            if not hasattr(self, '_edge_properties_index'):
-                self._edge_properties_index: Dict[str, Dict[str, Dict[Any, Set[Tuple[str, str]]]]] = \
-                    defaultdict(lambda: defaultdict(lambda: defaultdict(set)))
-
-            # Index each property value
             for key, value in properties.items():
                 if isinstance(value, (str, int, float, bool)):
-                    self._edge_properties_index[edge_type][key][value].add((source_id, target_id))
+                    self._edge_properties_index[key][value].add((source_id, target_id))
 
-    def get_node(self, node_id: str) -> Optional[GraphNode]:
+    def remove_node(self, node_id: str) -> bool:
         """
-        Get a node by ID.
+        Remove a node and any connected edges.
 
         Args:
-            node_id (str): Node ID
+            node_id (str): Node ID to remove
 
         Returns:
-            Optional[GraphNode]: The node, or None if not found
+            bool: True if removed, False if not found
         """
-        return self.nodes.get(node_id)
+        if node_id not in self.nodes:
+            return False
 
-    def get_nodes_by_type(self, node_type: str) -> List[GraphNode]:
+        node = self.nodes.pop(node_id)
+        if node.type in self._nodes_by_type:
+            self._nodes_by_type[node.type].discard(node_id)
+
+        for key, value in node.data.items():
+            if isinstance(value, (str, int, float, bool)):
+                self._properties_index[key][value].discard(node_id)
+
+        # Remove edges originating from this node
+        for edge_type, edges in list(node.edges.items()):
+            for edge in list(edges):
+                target_id = edge["target"].id
+                self._edges_by_type[edge_type].discard((node_id, target_id))
+
+        # Remove edges pointing to this node
+        for edge_type, edges in self._edges_by_type.items():
+            to_remove = {(src, tgt) for (src, tgt) in edges if tgt == node_id}
+            if to_remove:
+                edges.difference_update(to_remove)
+                for src_id, _ in to_remove:
+                    src_node = self.nodes.get(src_id)
+                    if src_node:
+                        src_node.edges[edge_type] = [
+                            e for e in src_node.edges.get(edge_type, [])
+                            if e["target"].id != node_id
+                        ]
+
+        return True
+
+    def remove_edge(self, source_id: str, edge_type: str, target_id: str) -> bool:
         """
-        Get all nodes of a given type.
+        Remove a specific edge.
 
         Args:
-            node_type (str): Node type
-
-        Returns:
-            List[GraphNode]: List of nodes
-        """
-        return [self.nodes[node_id] for node_id in self._nodes_by_type.get(node_type, set())]
-
-    def get_nodes_by_property(self, property_name: str, property_value: Any) -> List[GraphNode]:
-        """
-        Get all nodes with a specific property value.
-
-        Args:
-            property_name (str): Property name
-            property_value (Any): Property value
-
-        Returns:
-            List[GraphNode]: List of nodes
-        """
-        node_ids = self._properties_index.get(property_name, {}).get(property_value, set())
-        return [self.nodes[node_id] for node_id in node_ids]
-
-    def get_edges_by_type(self, edge_type: str) -> List[Tuple[GraphNode, GraphNode, Dict[str, Any]]]:
-        """
-        Get all edges of a given type.
-
-        Args:
+            source_id (str): Source node ID
             edge_type (str): Edge type
+            target_id (str): Target node ID
 
         Returns:
-            List[Tuple[GraphNode, GraphNode, Dict]]: List of (source, target, properties) tuples
+            bool: True if removed, False otherwise
         """
-        result = []
-        for src, tgt in self._edges_by_type.get(edge_type, set()):
-            source_node = self.nodes[src]
-            target_node = self.nodes[tgt]
-            properties = source_node.get_edge_properties(tgt, edge_type)
-            result.append((source_node, target_node, properties or {}))
-        return result
+        source_node = self.nodes.get(source_id)
+        if not source_node:
+            return False
 
-    def get_edges_by_property(self, edge_type: str, property_name: str, property_value: Any) -> List[Tuple[GraphNode, GraphNode, Dict[str, Any]]]:
+        edges = source_node.edges.get(edge_type, [])
+        new_edges = [e for e in edges if e["target"].id != target_id]
+        if len(new_edges) == len(edges):
+            return False
+
+        source_node.edges[edge_type] = new_edges
+        self._edges_by_type[edge_type].discard((source_id, target_id))
+        return True
+
+    def find_nodes_by_properties(self, query: Dict[str, Any]) -> List[GraphNode]:
         """
-        Get all edges of a given type with a specific property value.
+        Find nodes matching the provided property filters.
 
         Args:
-            edge_type (str): Edge type
-            property_name (str): Property name
-            property_value (Any): Property value
+            query (Dict[str, Any]): Property filters (e.g., {"type": "person", "name": "Ada"})
 
         Returns:
-            List[Tuple[GraphNode, GraphNode, Dict]]: List of (source, target, properties) tuples
-        """
-        if not hasattr(self, '_edge_properties_index'):
-            return []
-
-        edge_pairs = self._edge_properties_index.get(edge_type, {}).get(property_name, {}).get(property_value, set())
-
-        result = []
-        for src, tgt in edge_pairs:
-            source_node = self.nodes[src]
-            target_node = self.nodes[tgt]
-            properties = source_node.get_edge_properties(tgt, edge_type)
-            result.append((source_node, target_node, properties or {}))
-
-        return result
-
-    def query(self, query: Dict[str, Any]) -> List[GraphNode]:
-        """
-        Query nodes by multiple criteria.
-
-        Args:
-            query (Dict): Query conditions with property names and values
-
-        Returns:
-            List[GraphNode]: List of matching nodes
+            List[GraphNode]: Matching nodes
         """
         if not query:
             return list(self.nodes.values())
 
-        # Get candidate node IDs for the first condition
-        first_key = next(iter(query.keys()))
-        first_value = query[first_key]
-
+        candidate_ids: Set[str]
+        first_key, first_value = next(iter(query.items()))
         if first_key == "type":
-            candidate_ids = self._nodes_by_type.get(first_value, set())
+            candidate_ids = set(self._nodes_by_type.get(first_value, set()))
         else:
-            candidate_ids = self._properties_index.get(first_key, {}).get(first_value, set())
+            candidate_ids = set(self._properties_index.get(first_key, {}).get(first_value, set()))
 
-        # Apply remaining conditions
         for key, value in query.items():
             if key == first_key:
                 continue
-
             if key == "type":
                 candidate_ids &= self._nodes_by_type.get(value, set())
             else:
@@ -973,9 +357,9 @@ class GraphDataset:
         if start_node_id not in self.nodes:
             return []
 
-        visited = set()
-        result = []
-        queue = [(start_node_id, 0)]  # (node_id, depth)
+        visited: Set[str] = set()
+        result: List[GraphNode] = []
+        queue: List[Tuple[str, int]] = [(start_node_id, 0)]
 
         while queue:
             node_id, depth = queue.pop(0)
@@ -1608,7 +992,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Then, add relationships as edges
         for rel_id, rel in knowledge_graph.relationships.items():
-            source_id = rel.source_entity.id
+                return records
             target_id = rel.target_entity.id
 
             if source_id in entity_to_node and target_id in entity_to_node:
@@ -6712,6 +6096,163 @@ class DatasetSerializer:
 
         # Convert to HuggingFace dataset
         return Dataset(arrow_table=table)
+
+    def export_to_jsonnet(self, data: Union['pa.Table', List[Dict[str, Any]], Dict[str, Any]], output_path: str, pretty: bool = True) -> str:
+        """
+        Export data to a Jsonnet file.
+
+        Args:
+            data: Data to export (Arrow table or list/dict of records)
+            output_path: Path to the output Jsonnet file
+            pretty: Whether to pretty-print the output
+
+        Returns:
+            str: Path to the created Jsonnet file
+        """
+        if HAVE_ARROW and hasattr(data, 'to_pylist'):
+            records = data.to_pylist()
+        else:
+            records = data
+
+        if not isinstance(records, list):
+            records = [records]
+
+        jsonnet_str = json.dumps(records, indent=2) if pretty else json.dumps(records)
+        with open(output_path, 'w') as f:
+            f.write(jsonnet_str)
+        return output_path
+
+    def import_from_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> 'pa.Table':
+        """
+        Import data from a Jsonnet file to an Arrow table.
+
+        Args:
+            jsonnet_path: Path to the Jsonnet file
+            ext_vars: External variables to pass to Jsonnet
+            tla_vars: Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pyarrow.Table: Arrow table containing the data
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet import")
+
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+
+        data = json.loads(json_str)
+        if not isinstance(data, list):
+            data = [data]
+
+        return pa.Table.from_pylist(data)
+
+    def convert_jsonnet_to_arrow(self, jsonnet_str: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> 'pa.Table':
+        """
+        Convert a Jsonnet string to an Arrow table.
+
+        Args:
+            jsonnet_str: Jsonnet template string
+            ext_vars: External variables to pass to Jsonnet
+            tla_vars: Top-level arguments to pass to Jsonnet
+
+        Returns:
+            pyarrow.Table: Arrow table containing the data
+        """
+        if not HAVE_ARROW:
+            raise ImportError("PyArrow is required for Jsonnet to Arrow conversion")
+
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+
+        evaluated = _jsonnet.evaluate_snippet(
+            "snippet",
+            jsonnet_str,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+
+        data = json.loads(evaluated)
+        if not isinstance(data, list):
+            data = [data]
+
+        return pa.Table.from_pylist(data)
+
+    def serialize_jsonnet(self, jsonnet_path: str, ext_vars: Optional[Dict[str, str]] = None, tla_vars: Optional[Dict[str, str]] = None) -> str:
+        """
+        Serialize a Jsonnet file to IPLD for storage on IPFS.
+
+        Args:
+            jsonnet_path: Path to the Jsonnet file
+            ext_vars: External variables to pass to Jsonnet
+            tla_vars: Top-level arguments to pass to Jsonnet
+
+        Returns:
+            str: CID of the serialized data
+        """
+        if not HAVE_JSONNET:
+            raise ImportError("jsonnet library is required. Install it with: pip install jsonnet")
+
+        ext_vars = ext_vars or {}
+        tla_vars = tla_vars or {}
+
+        json_str = _jsonnet.evaluate_file(
+            jsonnet_path,
+            ext_vars=ext_vars,
+            tla_vars=tla_vars
+        )
+
+        data = json.loads(json_str)
+
+        dataset = {
+            "type": "jsonnet_dataset",
+            "source": os.path.basename(jsonnet_path),
+            "data": data,
+            "metadata": {
+                "created_at": datetime.datetime.now().isoformat(),
+                "ext_vars": ext_vars,
+                "tla_vars": tla_vars
+            }
+        }
+
+        return self.storage.store_json(dataset)
+
+    def deserialize_jsonnet(self, cid: str, output_path: Optional[str] = None) -> Union[List[Dict[str, Any]], str]:
+        """
+        Deserialize a Jsonnet dataset from IPLD.
+
+        Args:
+            cid: CID of the root IPLD block
+            output_path: Optional output Jsonnet path
+
+        Returns:
+            List of records or output path if provided
+        """
+        root_obj = self.storage.get_json(cid)
+        if not isinstance(root_obj, dict) or root_obj.get("type") != "jsonnet_dataset":
+            raise ValueError("CID does not contain a Jsonnet dataset")
+
+        data = root_obj.get("data", [])
+
+        if output_path:
+            if not isinstance(data, list):
+                data = [data]
+            with open(output_path, 'w') as f:
+                f.write(json.dumps(data, indent=2))
+            return output_path
+
+        return data
 
     def convert_arrow_to_jsonl(self, table: 'pa.Table', output_path: str, compression: Optional[str] = None) -> str:
         """
