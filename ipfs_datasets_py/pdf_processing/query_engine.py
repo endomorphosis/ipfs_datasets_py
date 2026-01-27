@@ -7,6 +7,7 @@ Provides advanced querying capabilities over processed PDF content:
 - Cross-document relationship analysis
 - Multi-modal content retrieval
 - IPLD-native query processing
+- Accelerate integration for distributed inference
 """
 
 import anyio
@@ -75,6 +76,20 @@ try:
 except ImportError:
     torch = None
     HAVE_TORCH = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 from ipfs_datasets_py.ipld import IPLDStorage
 
