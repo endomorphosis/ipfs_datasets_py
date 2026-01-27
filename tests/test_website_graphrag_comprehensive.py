@@ -112,7 +112,10 @@ class TestWebsiteGraphRAGProcessor:
             mock_build.return_value = mock_graphrag
             
             # WHEN
-            result = anyio.run(mock_processor.process_website(url))
+            async def _run():
+                return await mock_processor.process_website(url)
+
+            result = anyio.run(_run)
             
             # THEN
             assert result is not None
@@ -150,7 +153,10 @@ class TestWebsiteGraphRAGProcessor:
         # WHEN/THEN
         for invalid_url in invalid_urls:
             with pytest.raises(ValueError, match="Invalid URL"):
-                anyio.run(mock_processor.process_website(invalid_url))
+                async def _run_invalid():
+                    return await mock_processor.process_website(invalid_url)
+
+                anyio.run(_run_invalid)
     
     def test_given_processing_error_when_processing_website_then_raises_runtime_error(
         self, mock_processor, sample_website_data
@@ -169,7 +175,10 @@ class TestWebsiteGraphRAGProcessor:
             
             # WHEN/THEN
             with pytest.raises(RuntimeError, match="Processing failed"):
-                anyio.run(mock_processor.process_website(url))
+                async def _run_error():
+                    return await mock_processor.process_website(url)
+
+                anyio.run(_run_error)
     
     def test_given_multiple_websites_when_processing_batch_then_processes_all_successfully(
         self, mock_processor
@@ -192,7 +201,10 @@ class TestWebsiteGraphRAGProcessor:
             mock_process.side_effect = mock_systems
             
             # WHEN
-            results = anyio.run(mock_processor.process_multiple_websites(urls))
+            async def _run_batch():
+                return await mock_processor.process_multiple_websites(urls)
+
+            results = anyio.run(_run_batch)
             
             # THEN
             assert len(results) == len(urls)
@@ -239,11 +251,15 @@ class TestContentDiscoveryEngine:
         mock_warc_path = "/tmp/test.warc"
         
         # Mock WARC parsing
-        with patch.object(discovery_engine, '_parse_warc_file') as mock_parse:
+        with patch.object(discovery_engine, '_parse_warc_file') as mock_parse, \
+             patch('os.path.exists', return_value=True):
             mock_parse.return_value = list(mock_warc_content.values())
-            
+
             # WHEN
-            result = anyio.run(discovery_engine.discover_content(mock_warc_path))
+            async def _run_discover():
+                return await discovery_engine.discover_content(mock_warc_path)
+
+            result = anyio.run(_run_discover)
             
             # THEN
             assert isinstance(result, ContentManifest)
@@ -286,7 +302,10 @@ class TestContentDiscoveryEngine:
         base_url = "https://example.com"
         
         # WHEN
-        media_assets = anyio.run(discovery_engine.extract_media_urls(html_content, base_url))
+        async def _run_media():
+            return await discovery_engine.extract_media_urls(html_content, base_url)
+
+        media_assets = anyio.run(_run_media)
         
         # THEN
         assert len(media_assets) >= 4  # video, audio, image, pdf
@@ -321,7 +340,10 @@ class TestContentDiscoveryEngine:
         
         # WHEN/THEN
         with pytest.raises(FileNotFoundError):
-            anyio.run(discovery_engine.discover_content(nonexistent_path))
+            async def _run_discover():
+                return await discovery_engine.discover_content(nonexistent_path)
+
+            anyio.run(_run_discover)
 
 
 class TestMultiModalContentProcessor:
@@ -377,11 +399,14 @@ class TestMultiModalContentProcessor:
         manifest = sample_content_manifest
         
         # WHEN
-        result = anyio.run(content_processor.process_content_batch(
-            content_manifest=manifest,
-            include_embeddings=False,  # Skip embeddings for speed
-            include_media=False
-        ))
+        async def _run_process_batch():
+            return await content_processor.process_content_batch(
+                content_manifest=manifest,
+                include_embeddings=False,  # Skip embeddings for speed
+                include_media=False
+            )
+
+        result = anyio.run(_run_process_batch)
         
         # THEN
         assert isinstance(result, ProcessedContentBatch)
@@ -436,7 +461,10 @@ class TestMultiModalContentProcessor:
         )
         
         # WHEN
-        result = anyio.run(content_processor._process_html(html_asset))
+        async def _run_process_html():
+            return await content_processor._process_html(html_asset)
+
+        result = anyio.run(_run_process_html)
         
         # THEN
         assert result is not None
@@ -495,7 +523,10 @@ class TestMultiModalContentProcessor:
         )
         
         # WHEN
-        result = anyio.run(content_processor.process_content_batch(manifest))
+        async def _run_process_batch():
+            return await content_processor.process_content_batch(manifest)
+
+        result = anyio.run(_run_process_batch)
         
         # THEN
         # Should have processed the good content
@@ -586,7 +617,10 @@ class TestWebsiteGraphRAGSystem:
         query = "artificial intelligence machine learning"
         
         # WHEN
-        results = system.query(query, max_results=5)
+        async def _run_query():
+            return await system.query(query, max_results=5)
+
+        results = anyio.run(_run_query)
         
         # THEN
         assert isinstance(results, WebsiteGraphRAGResult)
@@ -672,7 +706,10 @@ class TestWebsiteGraphRAGSystem:
         source_url = "https://example.com/ai-intro.html"
         
         # WHEN
-        related_content = system.get_related_content(source_url, max_related=3)
+        async def _run_related_content():
+            return await system.get_related_content(source_url, max_related=3)
+
+        related_content = anyio.run(_run_related_content)
         
         # THEN
         assert isinstance(related_content, list)
@@ -811,7 +848,10 @@ class TestWebsiteGraphRAGIntegration:
             with patch('os.path.exists', return_value=True):
                 # WHEN - Process the website
                 try:
-                    graphrag_system = anyio.run(processor.process_website(test_url))
+                    async def _run_graphrag():
+                        return await processor.process_website(test_url)
+
+                    graphrag_system = anyio.run(_run_graphrag)
                     
                     # THEN - Verify system was created successfully
                     assert graphrag_system is not None
@@ -856,7 +896,10 @@ class TestWebsiteGraphRAGIntegration:
             
             # WHEN/THEN - Should handle error gracefully
             with pytest.raises(RuntimeError, match="Processing failed"):
-                anyio.run(processor.process_website(test_url))
+                async def _run_process():
+                    return await processor.process_website(test_url)
+
+                anyio.run(_run_process)
 
 
 # Performance Tests
@@ -882,7 +925,10 @@ class TestPerformanceAndBenchmarks:
                 })
             
             with patch.object(engine, '_parse_warc_file', return_value=mock_records):
-                result = anyio.run(engine.discover_content('/tmp/test.warc'))
+                async def _run_engine_discover():
+                    return await engine.discover_content('/tmp/test.warc')
+
+                result = anyio.run(_run_engine_discover)
                 return result
         
         result = benchmark(run_content_discovery)
@@ -916,11 +962,14 @@ class TestPerformanceAndBenchmarks:
                 discovery_timestamp=datetime.now()
             )
             
-            result = anyio.run(processor.process_content_batch(
-                manifest, 
-                include_embeddings=False,
-                include_media=False
-            ))
+            async def _run_process_batch():
+                return await processor.process_content_batch(
+                    manifest, 
+                    include_embeddings=False,
+                    include_media=False
+                )
+
+            result = anyio.run(_run_process_batch)
             return result
         
         result = benchmark(run_content_processing)

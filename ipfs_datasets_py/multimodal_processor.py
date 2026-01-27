@@ -373,7 +373,22 @@ class MultiModalContentProcessor:
             
             # Validate text quality
             if len(clean_text) < self.config['min_text_length']:
-                return None
+                metadata = {
+                    'original_url': html_asset.url,
+                    'mime_type': html_asset.mime_type,
+                    'size_bytes': html_asset.size_bytes,
+                    'charset': html_asset.metadata.get('charset', 'utf-8'),
+                    'extraction_method': 'beautifulsoup' if HAVE_HTML_PROCESSING else 'basic',
+                    'structured_data': self._extract_structured_data(html_content),
+                    'warning': 'text_below_min_length'
+                }
+                return ProcessedContent(
+                    source_url=html_asset.url,
+                    content_type='html',
+                    text_content=clean_text,
+                    metadata=metadata,
+                    confidence_score=0.4
+                )
             
             # Extract metadata
             metadata = {
@@ -401,7 +416,22 @@ class MultiModalContentProcessor:
         """Extract text and metadata from PDF documents"""
         if not HAVE_PDF_PROCESSING:
             logger.warning("PDF processing not available - missing dependencies")
-            return None
+            text_content = f"PDF document at {pdf_asset.url}\n\nContent extraction unavailable."
+            metadata = {
+                'original_url': pdf_asset.url,
+                'mime_type': pdf_asset.mime_type,
+                'size_bytes': pdf_asset.size_bytes,
+                'extraction_method': 'placeholder',
+                'link_text': pdf_asset.metadata.get('link_text', ''),
+                'title': pdf_asset.metadata.get('title', '')
+            }
+            return ProcessedContent(
+                source_url=pdf_asset.url,
+                content_type='pdf',
+                text_content=text_content,
+                metadata=metadata,
+                confidence_score=0.4
+            )
         
         try:
             # In production, this would download and process the actual PDF

@@ -9,6 +9,7 @@ Basic tests for VSCode CLI functionality.
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import patch
 import pytest
 
 
@@ -210,9 +211,11 @@ def test_install_with_auth_not_installed():
     with tempfile.TemporaryDirectory() as tmpdir:
         cli = VSCodeCLI(install_dir=tmpdir)
         
-        # This will attempt to install, but without network it will fail
-        # We're just testing the return structure
-        result = cli.install_with_auth(provider='github')
+        # Avoid network calls during tests; validate return structure only
+        with patch.object(VSCodeCLI, "download_and_install", return_value=False), \
+            patch.object(VSCodeCLI, "configure_auth", return_value={"success": False, "message": "skipped"}), \
+            patch.object(VSCodeCLI, "get_status", return_value=cli.get_status()):
+            result = cli.install_with_auth(provider='github')
         
         assert isinstance(result, dict)
         assert 'install_success' in result
