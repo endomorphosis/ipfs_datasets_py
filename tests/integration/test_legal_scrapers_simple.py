@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Test script for legal dataset scrapers.
+Simplified test script for legal dataset scrapers.
 
-This script demonstrates the functionality of the new legal dataset scraping tools.
+This script demonstrates the functionality without requiring full dependencies.
 """
 import anyio
 import json
@@ -10,21 +10,16 @@ import sys
 from pathlib import Path
 
 # Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
-    scrape_us_code,
-    get_us_code_titles,
-    scrape_federal_register,
-    search_federal_register,
-    scrape_state_laws,
-    list_state_jurisdictions,
-    scrape_municipal_laws,
-    search_municipal_codes,
-    scrape_recap_archive,
-    search_recap_documents,
-    get_recap_document
-)
+# Import scrapers directly
+sys.path.insert(0, str(Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "legal_dataset_tools"))
+
+import us_code_scraper
+import federal_register_scraper
+import state_laws_scraper
+import municipal_laws_scraper
+import recap_archive_scraper
 
 
 async def test_us_code_scraper():
@@ -34,12 +29,12 @@ async def test_us_code_scraper():
     print("="*60)
     
     # Get available titles
-    titles_result = await get_us_code_titles()
+    titles_result = await us_code_scraper.get_us_code_titles()
     print(f"\n✓ Available US Code Titles: {titles_result['count']}")
     print(f"  Sample titles: {list(titles_result['titles'].items())[:3]}")
     
     # Scrape sample titles
-    result = await scrape_us_code(
+    result = await us_code_scraper.scrape_us_code(
         titles=["1", "15", "18"],
         max_sections=5
     )
@@ -62,7 +57,7 @@ async def test_federal_register_scraper():
     print("="*60)
     
     # Search Federal Register
-    search_result = await search_federal_register(
+    search_result = await federal_register_scraper.search_federal_register(
         agencies=["EPA", "FDA"],
         limit=10
     )
@@ -70,7 +65,7 @@ async def test_federal_register_scraper():
     print(f"\n✓ Search completed: {search_result['count']} documents found")
     
     # Scrape documents
-    result = await scrape_federal_register(
+    result = await federal_register_scraper.scrape_federal_register(
         agencies=["EPA", "FDA"],
         max_documents=5
     )
@@ -93,11 +88,11 @@ async def test_state_laws_scraper():
     print("="*60)
     
     # Get available states
-    states_result = await list_state_jurisdictions()
+    states_result = await state_laws_scraper.list_state_jurisdictions()
     print(f"\n✓ Available States: {states_result['count']}")
     
     # Scrape sample states
-    result = await scrape_state_laws(
+    result = await state_laws_scraper.scrape_state_laws(
         states=["CA", "NY", "TX"],
         max_statutes=5
     )
@@ -120,14 +115,14 @@ async def test_municipal_laws_scraper():
     print("="*60)
     
     # Search municipal codes
-    search_result = await search_municipal_codes(
+    search_result = await municipal_laws_scraper.search_municipal_codes(
         city_name="New York City"
     )
     
     print(f"\n✓ Search completed: {search_result['count']} ordinances found")
     
     # Scrape sample cities
-    result = await scrape_municipal_laws(
+    result = await municipal_laws_scraper.scrape_municipal_laws(
         cities=["NYC", "LAX", "CHI"],
         max_ordinances=5
     )
@@ -150,7 +145,7 @@ async def test_recap_archive_scraper():
     print("="*60)
     
     # Search RECAP documents
-    search_result = await search_recap_documents(
+    search_result = await recap_archive_scraper.search_recap_documents(
         court="ca9",
         document_type="opinion",
         limit=10
@@ -161,7 +156,7 @@ async def test_recap_archive_scraper():
         print(f"  Sample document: {search_result['documents'][0]['case_name']}")
     
     # Scrape documents
-    result = await scrape_recap_archive(
+    result = await recap_archive_scraper.scrape_recap_archive(
         courts=["ca9", "nysd"],
         document_types=["opinion", "complaint"],
         max_documents=10
@@ -176,7 +171,7 @@ async def test_recap_archive_scraper():
         # Get a specific document
         if result['data'] and len(result['data']) > 0:
             doc_id = result['data'][0]['id']
-            doc_result = await get_recap_document(doc_id)
+            doc_result = await recap_archive_scraper.get_recap_document(doc_id)
             if doc_result['status'] == 'success':
                 print(f"  ✓ Retrieved document: {doc_result['document']['case_name']}")
     else:
@@ -221,6 +216,7 @@ async def main():
             json.dump(results, f, indent=2, default=str)
         
         print(f"\n✓ Full results saved to: {output_file}")
+        print("\n" + "="*60)
         
     except Exception as e:
         print(f"\n✗ Test suite failed: {e}")

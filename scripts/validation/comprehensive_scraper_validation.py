@@ -17,7 +17,7 @@ from dataclasses import dataclass, asdict
 from datetime import datetime
 
 # Add parent to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 from ipfs_datasets_py.scraper_testing_framework import (
     ScraperTestRunner,

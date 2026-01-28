@@ -248,7 +248,7 @@ jobs:
           
           # Run interoperability test if available
           if [ -f "test_cache_interoperability.py" ]; then
-            python3 test_cache_interoperability.py || true
+            python3 tests/integration/test_cache_interoperability.py || true
           else
             echo "ℹ️ Interoperability test not available" >> $GITHUB_STEP_SUMMARY
           fi

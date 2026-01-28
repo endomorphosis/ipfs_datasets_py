@@ -45,9 +45,9 @@ git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 cd ipfs_datasets_py
 
 # 🔧 QUICK DEPENDENCY SETUP (NEW!)
-python install.py --quick                    # Install core dependencies
-python install.py --profile ml              # Install ML features
-python dependency_health_checker.py check   # Verify installation
+python scripts/setup/install.py --quick                    # Install core dependencies
+python scripts/setup/install.py --profile ml              # Install ML features
+python scripts/utilities/dependency_health_checker.py check   # Verify installation
 
 # Install all theorem provers and dependencies automatically
 python scripts/demo/demonstrate_complete_pipeline.py --install-all --prove-long-statements
@@ -97,7 +97,7 @@ python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
 python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
 
 # Test all CLI functionality
-python comprehensive_cli_test.py               # Complete test suite
+python tests/integration/comprehensive_cli_test.py               # Complete test suite
 ```
 
 **Features:**
@@ -172,19 +172,19 @@ See [ACCELERATE_INTEGRATION_PLAN.md](ACCELERATE_INTEGRATION_PLAN.md) and [ipfs_d
 
 ```bash
 # Quick setup for core functionality
-python install.py --quick                       # Install essentials
+python scripts/setup/install.py --quick                       # Install essentials
 
 # Interactive wizard with recommendations  
-python install.py                              # Guided setup
+python scripts/setup/install.py                              # Guided setup
 
 # Install specific feature sets
-python install.py --profile pdf               # PDF processing
-python install.py --profile ml                # Machine learning
-python install.py --profile web               # Web scraping
+python scripts/setup/install.py --profile pdf               # PDF processing
+python scripts/setup/install.py --profile ml                # Machine learning
+python scripts/setup/install.py --profile web               # Web scraping
 
 # Health monitoring and diagnostics
-python dependency_health_checker.py check     # Verify installation
-python dependency_manager.py analyze          # Scan for issues
+python scripts/utilities/dependency_health_checker.py check     # Verify installation
+python scripts/utilities/dependency_manager.py analyze          # Scan for issues
 ```
 
 **Benefits:**

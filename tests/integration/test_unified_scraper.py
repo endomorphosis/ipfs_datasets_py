@@ -14,7 +14,7 @@ import anyio
 from pathlib import Path
 
 # Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 try:
     from ipfs_datasets_py.unified_web_scraper import (

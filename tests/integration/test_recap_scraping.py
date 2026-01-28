@@ -16,7 +16,7 @@ import sys
 from pathlib import Path
 
 # Add project to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 # Import directly from the scraper module to avoid circular import issues
 from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.recap_archive_scraper import (

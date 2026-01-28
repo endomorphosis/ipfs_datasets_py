@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 # Add current directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 
 async def test_p2p_initialization():
