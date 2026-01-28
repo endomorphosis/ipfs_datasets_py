@@ -92,8 +92,8 @@ jobs:
     
     - name: Build GraphRAG Test Docker Image
       run: |
-        if [ -f Dockerfile.graphrag-tests ]; then
-          docker build -f Dockerfile.graphrag-tests -t ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} \
+        if [ -f docker/Dockerfile.graphrag-tests ]; then
+          docker build -f docker/Dockerfile.graphrag-tests -t ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} \
             --build-arg PYTHON_VERSION=${{ matrix.python-version }} .
         else
           echo "Dockerfile.graphrag-tests not found, skipping Docker build"

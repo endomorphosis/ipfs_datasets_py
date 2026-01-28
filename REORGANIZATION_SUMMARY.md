@@ -42,6 +42,11 @@ The root directory has been successfully reorganized from 100+ cluttered files t
 - **Dashboard files** (11 HTML + 2 images) → `docs/dashboards/`
 - **Test results** (JSON files) → removed or moved to `docs/test_results/`
 
+
+### 🐳 **Docker Files** → `docker/`
+- **12 Dockerfiles** → `docker/` (Dockerfile, Dockerfile.test, Dockerfile.gpu, etc.)
+- **3 docker-compose files** → `docker/` (docker-compose.yml, docker-compose.mcp.yml, etc.)
+- **Updated references** in 9 GitHub workflow files and 7 shell scripts
 ## What Stayed in Root
 
 ### Essential Python Project Files
@@ -83,6 +88,8 @@ python dependency_health_checker.py   → python scripts/utilities/dependency_he
 python demo_cli.py                    → python scripts/demo/demo_cli.py
 bash setup_gpu_runner.sh              → bash scripts/setup/setup_gpu_runner.sh
 bash test_docker_integration.sh       → bash scripts/testing/test_docker_integration.sh
+docker build -f Dockerfile.test .     → docker build -f docker/Dockerfile.test .
+docker compose -f docker-compose.yml  → docker compose -f docker/docker-compose.yml
 ```
 
 ### For Documentation
@@ -117,7 +124,7 @@ ipfs_datasets_py/
 │   ├── README.md, CHANGELOG.md, TODO.md, CLAUDE.md
 │   └── pytest.ini, mypy.ini, *.yaml configs
 ├── CLI Tools (7 Python files)
-├── Docker (16 files)
+├── Docker (MOVED to docker/)
 ├── Main Package
 │   └── ipfs_datasets_py/
 ├── Tests

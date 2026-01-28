@@ -119,7 +119,7 @@ print_section "4. Docker Functionality"
 run_test "Pull test image" "docker pull alpine:latest"
 run_test "Run simple container" "docker run --rm alpine:latest echo 'Hello from Docker'"
 run_test "Docker network access" "docker run --rm alpine:latest ping -c 1 google.com"
-run_test "Docker build capability" "cd /home/barberb/ipfs_datasets_py && docker build -t test-runner:test -f Dockerfile.minimal-test . --quiet"
+run_test "Docker build capability" "cd /home/barberb/ipfs_datasets_py && docker build -t test-runner:test -f docker/Dockerfile.minimal-test . --quiet"
 
 if docker images | grep -q "test-runner.*test"; then
     run_test "Test image created" "docker images | grep -q 'test-runner.*test'"

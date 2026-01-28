@@ -31,7 +31,7 @@ fi
 echo "=================================================="
 echo "Test 1: Building Minimal Test Image"
 echo "=================================================="
-docker build -t ipfs-datasets-py:test-minimal -f Dockerfile.minimal-test . || {
+docker build -t ipfs-datasets-py:test-minimal -f docker/Dockerfile.minimal-test . || {
     echo -e "${RED}❌ Failed to build minimal test image${NC}"
     exit 1
 }

@@ -20,7 +20,7 @@ echo ""
 
 # Build GPU Docker image
 echo "🔨 Building GPU Docker image..."
-docker build -t ipfs-datasets-py:gpu-test -f Dockerfile.gpu .
+docker build -t ipfs-datasets-py:gpu-test -f docker/Dockerfile.gpu .
 echo ""
 
 # Test GPU in container

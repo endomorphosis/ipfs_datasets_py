@@ -53,7 +53,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Run Basic Integration Tests in Docker
         run: |
@@ -110,7 +110,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Run Comprehensive Integration Tests in Docker
         run: |
@@ -170,7 +170,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Test MCP Tools Loading in Container
         run: |
@@ -227,7 +227,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Run Performance Tests in Container
         run: |

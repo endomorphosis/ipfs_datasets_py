@@ -169,7 +169,7 @@ test_project_docker() {
     if [[ -f "Dockerfile.test" ]]; then
         print_info "Found Dockerfile.test - testing project build"
         
-        if docker build -t ipfs-datasets-test -f Dockerfile.test . >/dev/null 2>&1; then
+        if docker build -t ipfs-datasets-test -f docker/Dockerfile.test . >/dev/null 2>&1; then
             print_success "Project Docker build (Dockerfile.test) works"
             
             # Test basic import
@@ -189,7 +189,7 @@ test_project_docker() {
     fi
     
     # Test Docker Compose if available
-    if [[ -f "docker-compose.yml" ]]; then
+    if [[ -f "docker/docker-compose.yml" ]]; then
         print_info "Found docker-compose.yml - testing validation"
         
         if docker compose config >/dev/null 2>&1; then

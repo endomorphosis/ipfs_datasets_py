@@ -58,7 +58,7 @@ check_item $? "Dockerfile.mcp-minimal exists"
 [ -f "Dockerfile.dashboard-minimal" ]
 check_item $? "Dockerfile.dashboard-minimal exists"
 
-[ -f "docker-compose.yml" ]
+[ -f "docker/docker-compose.yml" ]
 check_item $? "docker-compose.yml exists"
 
 [ -f "docker-compose.mcp.yml" ]

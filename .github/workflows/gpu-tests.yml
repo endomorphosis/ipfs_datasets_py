@@ -180,7 +180,7 @@ jobs:
       
       - name: Build CPU Test Docker Image
         run: |
-          docker build -f Dockerfile.cpu-tests -t ipfs-datasets-cpu-tests:latest .
+          docker build -f docker/Dockerfile.cpu-tests -t ipfs-datasets-cpu-tests:latest .
       
       - name: Run CPU Tests in Docker
         run: |
@@ -212,7 +212,7 @@ jobs:
       - name: Build GPU Docker Image
         run: |
           docker build -t ipfs-datasets-py:gpu-test \
-            -f Dockerfile.gpu \
+            -f docker/Dockerfile.gpu \
             --build-arg CUDA_VERSION=12.0.0 \
             --build-arg PYTHON_VERSION=3.12 \
             .
