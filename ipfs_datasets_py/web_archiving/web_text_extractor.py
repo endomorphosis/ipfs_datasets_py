@@ -358,8 +358,9 @@ class WebTextExtractor:
 # Auto-install dependencies when imported
 def _ensure_web_dependencies():
     """Ensure web extraction dependencies are available."""
+    installer = None
     try:
-        from .auto_installer import get_installer
+        from ipfs_datasets_py.auto_installer import get_installer
         installer = get_installer()
         
         # Install web scraping dependencies
@@ -374,7 +375,7 @@ def _ensure_web_dependencies():
             installer.ensure_dependency(module_name, package_name)
             
     except Exception as e:
-        if installer.verbose:
+        if installer is not None and getattr(installer, "verbose", False):
             logger.warning(f"Could not auto-install web dependencies: {e}")
 
 

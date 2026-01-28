@@ -422,7 +422,7 @@ def ensure_docker_compose(logger):
     if compose_path.exists():
         return
 
-        shim = """#!/usr/bin/env bash
+    shim = """#!/usr/bin/env bash
 shim_path="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 resolved_compose="$(command -v docker-compose 2>/dev/null || true)"
 if [[ -n "$resolved_compose" ]]; then
@@ -447,6 +447,7 @@ fi
 echo "docker-compose is not available" >&2
 exit 1
 """
+
     compose_path.write_text(shim, encoding='utf-8')
     os.chmod(compose_path, 0o755)
     logger.info("✅ docker-compose shim installed to %s", compose_path)

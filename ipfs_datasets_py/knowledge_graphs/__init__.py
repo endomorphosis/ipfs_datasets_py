@@ -4,12 +4,10 @@ This module provides tools for building, querying, and reasoning over
 knowledge graphs, including cross-document lineage and SPARQL templates.
 """
 
-from .knowledge_graph_extraction import *
-from .advanced_knowledge_extractor import *
-from .cross_document_lineage import *
-from .cross_document_lineage_enhanced import *
-from .cross_document_reasoning import *
-from .sparql_query_templates import *
+# NOTE:
+# Keep this package initializer lightweight.
+# Some submodules have optional heavy dependencies (e.g., plotting libraries).
+# Import those submodules directly where needed.
 
 __all__ = [
     'knowledge_graph_extraction',

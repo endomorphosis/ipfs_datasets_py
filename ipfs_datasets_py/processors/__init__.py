@@ -1,13 +1,9 @@
 """Processor modules for IPFS Datasets Python."""
 
-# Import all processor modules for easy access
-from .graphrag_processor import *
-from .enhanced_multimodal_processor import *
-from .website_graphrag_processor import *
-from .advanced_graphrag_website_processor import *
-from .advanced_media_processing import *
-from .advanced_web_archiving import *
-from .multimodal_processor import *
+# NOTE:
+# Keep this package initializer lightweight.
+# Importing processor implementations can pull in optional dependencies
+# and/or modules that may not exist in minimal environments.
 
 __all__ = [
     'graphrag_processor',
