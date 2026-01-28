@@ -2420,7 +2420,7 @@ For detailed help: ipfs-datasets discord <subcommand> --help
             
             try:
                 # Import and delegate to discord_cli module
-                from ipfs_datasets_py.discord_cli import main as discord_main
+                from ipfs_datasets_py.cli.discord_cli import main as discord_main
                 
                 # Pass remaining args to discord CLI
                 discord_args = args[1:]

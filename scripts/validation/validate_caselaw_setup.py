@@ -47,7 +47,7 @@ def test_tool_discovery():
     
     try:
         from pathlib import Path
-        from ipfs_datasets_py import mcp_dashboard
+        from ipfs_datasets_py.dashboards import mcp_dashboard
         
         # Get tools directory
         dashboard_path = Path(mcp_dashboard.__file__).parent
@@ -91,7 +91,7 @@ def test_dashboard_template():
     
     try:
         from pathlib import Path
-        from ipfs_datasets_py import mcp_dashboard
+        from ipfs_datasets_py.dashboards import mcp_dashboard
         
         # Get template path
         dashboard_path = Path(mcp_dashboard.__file__).parent

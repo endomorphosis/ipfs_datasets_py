@@ -30,7 +30,7 @@ from ipfs_datasets_py.logic_integration import (
 
 # Try to import GraphRAG components
 try:
-    from ipfs_datasets_py.graphrag_integration import GraphRAGIntegration
+    from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGIntegration
     from ipfs_datasets_py.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
     GRAPHRAG_AVAILABLE = True
 except ImportError:

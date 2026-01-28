@@ -33,7 +33,7 @@ try:
     import ipfs_datasets_py.graphrag_processor
     print("✓ graphrag_processor module imported")
 
-    from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
+    from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
     print("✓ MockGraphRAGProcessor class imported")
 
     mock_proc = MockGraphRAGProcessor()

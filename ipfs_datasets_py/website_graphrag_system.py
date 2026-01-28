@@ -25,7 +25,7 @@ import numpy as np
 from ipfs_datasets_py.content_discovery import ContentManifest
 from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch, ProcessedContent
 from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
-from ipfs_datasets_py.graphrag_integration import GraphRAGIntegration
+from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGIntegration
 
 # Set up logging
 logger = logging.getLogger(__name__)

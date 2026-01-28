@@ -54,7 +54,7 @@ except ImportError:
     pytest.skip("Playwright not available", allow_module_level=True)
 
 try:
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig, start_mcp_dashboard
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig, start_mcp_dashboard
     MCP_DASHBOARD_AVAILABLE = True
 except ImportError as e:
     MCP_DASHBOARD_AVAILABLE = False

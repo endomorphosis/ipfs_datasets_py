@@ -19,7 +19,7 @@ def test_import_ipfs_datasets_pycache_succeeds():
     Given:
 
     When:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
 
     Then:
         ImportError not raised
@@ -27,7 +27,7 @@ def test_import_ipfs_datasets_pycache_succeeds():
     expected_result = True
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         actual_result = True
     except ImportError:
         actual_result = False

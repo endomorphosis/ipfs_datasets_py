@@ -25,7 +25,7 @@ except Exception as e:
 
 try:
     print("2. Testing graphrag_processor import...")
-    from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
+    from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
     print("   ✓ MockGraphRAGProcessor imported successfully")
 
     # Test instantiation

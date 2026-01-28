@@ -38,7 +38,7 @@ def test_basic_cache_operations():
     print("\n🧪 Test 1: Basic Cache Operations")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         with tempfile.TemporaryDirectory() as tmpdir:
             cache = GitHubAPICache(
@@ -79,7 +79,7 @@ def test_multiformats_hashing():
     print("\n🧪 Test 2: Multiformats Content Hashing")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         # Test validation hash computation
         validation_fields = {
@@ -116,7 +116,7 @@ def test_ttl_expiration():
     print("\n🧪 Test 3: TTL Expiration")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         with tempfile.TemporaryDirectory() as tmpdir:
             cache = GitHubAPICache(
@@ -159,7 +159,7 @@ def test_staleness_detection():
     print("\n🧪 Test 4: Staleness Detection")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         with tempfile.TemporaryDirectory() as tmpdir:
             cache = GitHubAPICache(
@@ -200,7 +200,7 @@ def test_disk_persistence():
     print("\n🧪 Test 5: Disk Persistence")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create cache and save data
@@ -245,7 +245,7 @@ def test_p2p_initialization():
     print("\n🧪 Test 6: P2P Networking Initialization")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         # Check if libp2p is available
         try:
@@ -298,7 +298,7 @@ def test_message_encryption():
     print("\n🧪 Test 7: Message Encryption")
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         # Check if cryptography is available
         try:
@@ -348,7 +348,7 @@ def test_cross_package_compatibility():
     
     try:
         # Try to import from both packages
-        from ipfs_datasets_py.cache import GitHubAPICache as Cache1
+        from ipfs_datasets_py.caching.cache import GitHubAPICache as Cache1
         
         # Check if ipfs_accelerate_py is available
         accelerate_path = Path(__file__).parent.parent / "ipfs_accelerate_py"

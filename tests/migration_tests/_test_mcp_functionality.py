@@ -104,7 +104,7 @@ def test_graphrag_functionality():
     print("\n=== Testing GraphRAG Functionality ===")
 
     try:
-        from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
+        from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
 
         processor = MockGraphRAGProcessor()
 
@@ -161,7 +161,7 @@ def create_simple_mcp_tool_registry():
 
     # Register GraphRAG tools
     try:
-        from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
+        from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
 
         def query_graph_tool(query: str):
             processor = MockGraphRAGProcessor()

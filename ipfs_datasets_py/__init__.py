@@ -263,7 +263,7 @@ except ImportError as e:
     ReasoningEnhancer = None
 
 try:
-    from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
+    from ipfs_datasets_py.integrations.graphrag_integration import enhance_dataset_with_llm
     HAVE_GRAPHRAG_INTEGRATION = True
 except ImportError:
     HAVE_GRAPHRAG_INTEGRATION = False

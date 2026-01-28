@@ -21,7 +21,7 @@ async def test_p2p_initialization():
     print("="*70)
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         # Check if libp2p is available
         try:
@@ -80,7 +80,7 @@ async def test_p2p_cache_operations():
     print("="*70)
     
     try:
-        from ipfs_datasets_py.cache import GitHubAPICache
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
         
         # Check if libp2p is available
         try:
