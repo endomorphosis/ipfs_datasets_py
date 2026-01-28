@@ -83,6 +83,22 @@ try:
 except ImportError:
     HAVE_IPLD = False
 
+# Import accelerate integration (graceful fallback if not available)
+try:
+    from .accelerate_integration import (
+        is_accelerate_available,
+        get_accelerate_status,
+        AccelerateManager,
+        HAVE_ACCELERATE_MANAGER
+    )
+    HAVE_ACCELERATE_INTEGRATION = True
+except ImportError:
+    HAVE_ACCELERATE_INTEGRATION = False
+    is_accelerate_available = None
+    get_accelerate_status = None
+    AccelerateManager = None
+    HAVE_ACCELERATE_MANAGER = False
+
 try:
     from .dataset_serialization import (
         DatasetSerializer, GraphDataset, GraphNode, VectorAugmentedGraphDataset,

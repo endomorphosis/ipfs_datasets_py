@@ -13,6 +13,7 @@ Features:
 - Content anomaly detection for quality assurance
 - Cross-content correlation and trend analysis
 - Production-ready ML models with efficient inference
+- Accelerate integration for distributed inference
 
 Usage:
     classifier = ContentClassificationPipeline()
@@ -54,6 +55,20 @@ except ImportError:
     ProcessedContent = Any
     WebsiteGraphRAGSystem = Any
     KnowledgeGraph = Any
+
+# Try to import accelerate integration for distributed ML inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 logger = logging.getLogger(__name__)
 

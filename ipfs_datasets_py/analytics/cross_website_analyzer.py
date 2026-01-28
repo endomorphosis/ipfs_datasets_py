@@ -57,6 +57,20 @@ except ImportError:
     ContentAnalysis = Any
     ProcessedContent = Any
 
+# Import accelerate integration with fallback
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False, "reason": "accelerate_integration not installed"}
+
 logger = logging.getLogger(__name__)
 
 

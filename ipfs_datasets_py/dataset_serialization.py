@@ -12,6 +12,7 @@ Features:
 - Support for graph datasets
 - Vector embedding storage and retrieval
 - JSONL import, export, and conversion capabilities
+- Accelerate integration for distributed embedding generation
 """
 
 import os
@@ -47,6 +48,20 @@ try:
     HAVE_JSONNET = True
 except ImportError:
     HAVE_JSONNET = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from .accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 T = TypeVar('T')

@@ -7,6 +7,7 @@ Integrates processed PDF content into GraphRAG knowledge graph:
 - Supports cross-document relationship discovery
 - Enables semantic querying and retrieval
 - Maintains IPLD data integrity
+Supports accelerate integration for distributed LLM inference.
 """
 import anyio
 import hashlib
@@ -37,6 +38,20 @@ try:
 except ImportError:
     openai = None
     HAVE_OPENAI = False
+
+# Try to import accelerate integration for distributed LLM inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 

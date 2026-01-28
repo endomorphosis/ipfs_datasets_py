@@ -172,6 +172,15 @@ setup(
         'legal': [
             # 'scrape_the_law_mk3 @ file:./ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
         ],
+        # Accelerate integration - distributed AI compute
+        'accelerate': [
+            # Install from submodule (development) or PyPI (production)
+            # Use: pip install -e ".[accelerate]" for submodule
+            # Or: pip install ipfs-accelerate-py for PyPI package
+            'sentence-transformers',
+            'torch>=2.0.0',
+            'transformers>=4.46.0',
+        ],
         'all': [
             # Combine all non-platform-specific extras
             # IPLD

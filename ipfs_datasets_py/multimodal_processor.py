@@ -60,9 +60,39 @@ try:
     from sentence_transformers import SentenceTransformer
     HAVE_SENTENCE_TRANSFORMERS = True
     
+    # Try to import accelerate integration for distributed inference
+    try:
+        from .accelerate_integration import (
+            AccelerateManager,
+            is_accelerate_available,
+            get_accelerate_status
+        )
+        HAVE_ACCELERATE = True
+    except ImportError:
+        HAVE_ACCELERATE = False
+        AccelerateManager = None
+        is_accelerate_available = lambda: False
+        get_accelerate_status = lambda: {"available": False}
+    
     class EmbeddingGenerator:
-        """Simple embedding generator using sentence transformers"""
-        def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2"):
+        """Simple embedding generator using sentence transformers with accelerate support"""
+        def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", use_accelerate: bool = True):
+            self.model_name = model_name
+            
+            # Initialize accelerate manager if available and enabled
+            self.accelerate_manager = None
+            if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+                try:
+                    self.accelerate_manager = AccelerateManager(
+                        resources={"model_name": model_name},
+                        enable_distributed=True
+                    )
+                    logger.info("✓ Accelerate integration enabled for multimodal embeddings")
+                except Exception as e:
+                    logger.warning(f"⚠ Failed to initialize accelerate manager: {e}")
+                    self.accelerate_manager = None
+            
+            # Load local model as fallback
             try:
                 self.model = SentenceTransformer(model_name)
                 self.is_dummy = False
@@ -74,6 +104,20 @@ try:
                 
         def generate_embeddings(self, texts: List[str]) -> np.ndarray:
             """Generate embeddings for list of texts"""
+            # Try accelerate first if available
+            if self.accelerate_manager:
+                try:
+                    result = self.accelerate_manager.run_inference(
+                        model_name=self.model_name,
+                        input_data=texts,
+                        task_type="embedding"
+                    )
+                    if result.get("status") == "success" and "embeddings" in result:
+                        return result["embeddings"]
+                except Exception as e:
+                    logger.warning(f"⚠ Accelerate inference failed, falling back to local: {e}")
+            
+            # Fall back to local model
             if self.is_dummy or self.model is None:
                 # Return dummy embeddings with consistent dimensions
                 return np.random.rand(len(texts), 384)  # 384-dim embeddings
@@ -82,10 +126,14 @@ try:
             
 except ImportError:
     HAVE_SENTENCE_TRANSFORMERS = False
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
     
     class EmbeddingGenerator:
         """Fallback embedding generator"""
-        def __init__(self, model_name: str = "dummy"):
+        def __init__(self, model_name: str = "dummy", use_accelerate: bool = True):
             self.model_name = model_name
             self.is_dummy = True
             print("Warning: Sentence transformers not available, using dummy embeddings")

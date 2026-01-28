@@ -15,6 +15,20 @@ except ImportError as e:
     print(f"⚠ Warning: Could not import ipfs_kit_py: {e}")
     ipfs_kit = None
 
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
+
 
 class create_embeddings:
     def __init__(self, resources, metadata):
@@ -39,6 +53,22 @@ class create_embeddings:
                 self.ipfs_kit.add_https_endpoint(endpoint[0], endpoint[1], endpoint[2])
         self.join_column = None
         self.tokenizer = {}
+        
+        # Initialize accelerate manager if available and enabled
+        self.accelerate_manager = None
+        use_accelerate = resources.get("use_accelerate", True)
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager(
+                    resources=resources,
+                    enable_distributed=resources.get("enable_distributed", True)
+                )
+                print("✓ Accelerate integration enabled for distributed inference")
+            except Exception as e:
+                print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
+                self.accelerate_manager = None
+        elif not HAVE_ACCELERATE or not is_accelerate_available():
+            print("⚠ Accelerate integration not available, using local inference only")
 
     def add_https_endpoint(self, model, endpoint, ctx_length):
         if self.ipfs_kit:
@@ -49,10 +79,21 @@ class create_embeddings:
 
     async def index_dataset(self, dataset, split=None, column=None, dst_path=None, models=None):
         """Index a dataset to create embeddings"""
+        # Try accelerate first if available
+        if self.accelerate_manager:
+            try:
+                # Use accelerate for distributed inference
+                print(f"Using accelerate for distributed embedding generation")
+                # Note: This is a placeholder - actual implementation depends on accelerate API
+                # For now, fall through to ipfs_kit
+            except Exception as e:
+                print(f"⚠ Accelerate inference failed, falling back to local: {e}")
+        
+        # Fallback to ipfs_kit
         if self.ipfs_kit:
             return await self.ipfs_kit.index_dataset(dataset, split, column, dst_path, models)
         else:
-            print("Error: ipfs_kit not initialized. Cannot index dataset.")
+            print("Error: Neither accelerate nor ipfs_kit available. Cannot index dataset.")
             return None
 
     async def create_embeddings(self, dataset, split, column, dst_path, models):

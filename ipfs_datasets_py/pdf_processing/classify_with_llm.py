@@ -25,6 +25,20 @@ except ImportError:
     openai = None
     HAVE_OPENAI = False
 
+# Try to import accelerate integration for distributed LLM inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
+
 if not HAVE_PYDANTIC or not HAVE_OPENAI:
     print(f"Info: LLM classification using mock implementation (missing: {'pydantic ' if not HAVE_PYDANTIC else ''}{'openai' if not HAVE_OPENAI else ''})")
 

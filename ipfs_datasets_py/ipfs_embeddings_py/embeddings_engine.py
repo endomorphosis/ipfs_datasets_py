@@ -1,6 +1,7 @@
 """
 Enhanced IPFS Embeddings Engine
 Advanced embeddings search engine with comprehensive MCP integration
+Includes accelerate integration for distributed inference
 """
 
 import os
@@ -25,6 +26,20 @@ try:
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 try:
     import datasets
@@ -67,10 +82,17 @@ class ChunkingConfig:
 class AdvancedIPFSEmbeddings:
     """
     Advanced IPFS embeddings engine with multi-backend support and MCP integration
+    Supports accelerate for distributed inference
     """
     
-    def __init__(self, resources: Dict[str, Any], metadata: Dict[str, Any]):
-        """Initialize the embeddings engine"""
+    def __init__(self, resources: Dict[str, Any], metadata: Dict[str, Any], use_accelerate: bool = True):
+        """Initialize the embeddings engine
+        
+        Args:
+            resources: Resource configuration
+            metadata: Metadata configuration
+            use_accelerate: Whether to use ipfs_accelerate_py if available
+        """
         self.resources = resources
         self.metadata = metadata
         
@@ -97,6 +119,21 @@ class AdvancedIPFSEmbeddings:
         self.cid_list = []
         self.all_cid_list = {}
         self.all_cid_set = {}
+        
+        # Initialize accelerate manager if available and enabled
+        self.accelerate_manager = None
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager(
+                    resources=resources,
+                    enable_distributed=True
+                )
+                logger.info("✓ Accelerate integration enabled for embeddings engine")
+            except Exception as e:
+                logger.warning(f"⚠ Failed to initialize accelerate manager: {e}")
+                self.accelerate_manager = None
+        elif not HAVE_ACCELERATE or not is_accelerate_available():
+            logger.info("⚠ Accelerate integration not available, using local/endpoint inference only")
         
         # Initialize endpoints from resources
         self._initialize_endpoints()

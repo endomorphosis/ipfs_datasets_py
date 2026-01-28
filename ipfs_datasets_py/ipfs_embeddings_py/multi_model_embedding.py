@@ -11,6 +11,7 @@ Key components:
 - Integrated chunking strategies for processing long documents
 - IPFS/IPLD integration for persistent storage of embeddings
 - Model fusion capabilities for improved retrieval
+- Accelerate integration for distributed inference
 """
 
 import os
@@ -30,6 +31,20 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
+
+# Try to import accelerate integration for distributed inference
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 
 class MultiModelEmbeddingGenerator:
@@ -53,7 +68,8 @@ class MultiModelEmbeddingGenerator:
         model_configs: Optional[List[Dict[str, Any]]] = None,
         device: str = "cpu",
         cache_dir: Optional[str] = None,
-        enable_model_fusion: bool = False
+        enable_model_fusion: bool = False,
+        use_accelerate: bool = True
     ):
         """
         Initialize the embedding generator with multiple models.
@@ -65,6 +81,7 @@ class MultiModelEmbeddingGenerator:
             device: Device to run models on ("cpu", "cuda", "mps")
             cache_dir: Directory to cache models and tokenizers
             enable_model_fusion: Whether to enable model fusion for improved embeddings
+            use_accelerate: Whether to use ipfs_accelerate_py for distributed inference
         """
         self.models = {}
         self.tokenizers = {}
@@ -85,6 +102,22 @@ class MultiModelEmbeddingGenerator:
             "total_embedding_time": 0.0,
             "embedding_errors": 0
         }
+
+        # Initialize accelerate manager if available and enabled
+        self.accelerate_manager = None
+        self.use_accelerate = use_accelerate
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager(
+                    resources={"device": device, "cache_dir": cache_dir},
+                    enable_distributed=True
+                )
+                logging.info("✓ Accelerate integration enabled for distributed embedding generation")
+            except Exception as e:
+                logging.warning(f"⚠ Failed to initialize accelerate manager: {e}")
+                self.accelerate_manager = None
+        elif not HAVE_ACCELERATE or not is_accelerate_available():
+            logging.info("⚠ Accelerate integration not available, using local inference only")
 
         # Load models if transformers is available
         if HAS_TRANSFORMERS:

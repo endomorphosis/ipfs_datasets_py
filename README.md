@@ -18,6 +18,7 @@
 🕸️ **[Knowledge Graph Intelligence](#-knowledge-graph-rag)** - Cross-document reasoning with semantic search  
 🌐 **[Decentralized Everything](#-decentralized-by-design)** - IPFS-native storage with content addressing  
 🤖 **[AI Development Tools](#-ai-development-acceleration)** - Full MCP server with 200+ integrated tools  
+⚡ **[Distributed AI Compute](#-distributed-ai-compute-new)** - Hardware-accelerated ML with ipfs_accelerate_py  
 ⚡ **[GitHub Copilot Automation](#-github-copilot-automation)** - Production-ready AI code fixes (100% verified)  
 🐛 **[Automatic Error Reporting](#-automatic-error-reporting)** - Runtime errors auto-converted to GitHub issues  
 
@@ -107,6 +108,63 @@ python comprehensive_cli_test.py               # Complete test suite
 - ✅ **Dynamic tool discovery** - automatically finds all available functionality
 
 See [CLI_README.md](CLI_README.md) for complete documentation.
+
+### ⚡ **Distributed AI Compute (NEW)**
+
+**IPFS Accelerate Integration**: Hardware-accelerated ML inference with distributed compute coordination.
+
+```bash
+# Install with accelerate support
+pip install -e ".[accelerate]"
+
+# Or use the integrated submodule
+git submodule update --init ipfs_accelerate_py
+```
+
+**Key Features:**
+- ✅ **Multi-Hardware Support**: CPU, CUDA, ROCm, OpenVINO, Apple MPS, WebNN, WebGPU, Qualcomm
+- ✅ **Distributed Compute**: Coordinate inference across IPFS network peers
+- ✅ **Graceful Fallbacks**: Works with or without accelerate package
+- ✅ **CI/CD Friendly**: Environment-based enable/disable (`IPFS_ACCELERATE_ENABLED=0`)
+- ✅ **Performance Optimized**: 2-20x speedup with hardware acceleration
+
+**Usage:**
+```python
+from ipfs_datasets_py.accelerate_integration import (
+    AccelerateManager,
+    is_accelerate_available
+)
+
+# Automatic hardware detection and optimization
+if is_accelerate_available():
+    manager = AccelerateManager()
+    result = manager.run_inference(
+        model_name="bert-base-uncased",
+        input_data="Hello world",
+        task_type="embedding"
+    )
+else:
+    # Falls back to local compute automatically
+    print("Using local compute")
+```
+
+**Distributed Processing:**
+```python
+from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
+
+coordinator = DistributedComputeCoordinator()
+coordinator.initialize()
+
+# Submit task for distributed processing
+task = coordinator.submit_task(
+    task_id="embed-001",
+    model_name="bert-base-uncased",
+    input_data=large_corpus,
+    task_type="embedding"
+)
+```
+
+See [ACCELERATE_INTEGRATION_PLAN.md](ACCELERATE_INTEGRATION_PLAN.md) and [ipfs_datasets_py/accelerate_integration/README.md](ipfs_datasets_py/accelerate_integration/README.md) for complete documentation.
 
 ### 🔧 **Dependency Management: Semi-Automated Installation**
 

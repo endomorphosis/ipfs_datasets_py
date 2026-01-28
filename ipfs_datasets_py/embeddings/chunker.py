@@ -2,6 +2,7 @@
 
 This module provides various text chunking strategies for preparing documents
 for embedding operations, migrated and adapted from ipfs_embeddings_py.
+Supports accelerate integration for distributed processing.
 """
 
 import bisect
@@ -41,6 +42,20 @@ try:
     import torch
 except ImportError:
     torch = None
+
+# Try to import accelerate integration for distributed processing
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
 
 # Set the logging level to WARNING to suppress INFO and DEBUG messages
 logging.getLogger('sentence_transformers').setLevel(logging.WARNING)

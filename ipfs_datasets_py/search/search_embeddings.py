@@ -16,6 +16,20 @@ import hashlib
 import random
 from multiprocessing import Pool
 
+# Try to import accelerate integration for distributed inference
+try:
+    from ipfs_datasets_py.accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False}
+
 class search_embeddings:
     """
     Advanced Semantic Search Engine for IPFS-Distributed Datasets

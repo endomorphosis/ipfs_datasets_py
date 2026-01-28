@@ -22,6 +22,20 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 
+# Try to import accelerate integration
+try:
+    from ..accelerate_integration import (
+        AccelerateManager,
+        is_accelerate_available,
+        get_accelerate_status
+    )
+    HAVE_ACCELERATE = True
+except ImportError:
+    HAVE_ACCELERATE = False
+    AccelerateManager = None
+    is_accelerate_available = lambda: False
+    get_accelerate_status = lambda: {"available": False, "reason": "not installed"}
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,12 +64,13 @@ class ClaudeCLI:
     # Claude is installed via pip
     CLAUDE_PACKAGE = "anthropic"
     
-    def __init__(self, install_dir: Optional[str] = None):
+    def __init__(self, install_dir: Optional[str] = None, use_accelerate: bool = True):
         """
         Initialize Claude CLI manager.
         
         Args:
             install_dir: Directory for configuration (defaults to ~/.claude-cli)
+            use_accelerate: Enable distributed AI compute via ipfs_accelerate_py (default: True)
         """
         if install_dir is None:
             install_dir = os.path.expanduser('~/.claude-cli')
@@ -67,6 +82,20 @@ class ClaudeCLI:
         
         # Ensure install directory exists
         self.install_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize accelerate integration for distributed LLM inference
+        self.accelerate_manager = None
+        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            try:
+                self.accelerate_manager = AccelerateManager()
+                logger.info("✓ Accelerate enabled for Claude CLI - using distributed LLM inference")
+            except Exception as e:
+                logger.debug(f"Failed to initialize accelerate for Claude CLI: {e}")
+                self.accelerate_manager = None
+        elif HAVE_ACCELERATE and use_accelerate:
+            logger.debug("Accelerate available but disabled or not initialized for Claude CLI")
+        else:
+            logger.debug("Accelerate not available for Claude CLI - using standard API calls")
     
     def is_installed(self) -> bool:
         """
