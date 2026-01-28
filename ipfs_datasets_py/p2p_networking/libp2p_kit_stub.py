@@ -2,7 +2,7 @@
 LibP2P Integration Stub for testing.
 
 This is a minimal stub implementation to prevent import hanging issues
-during testing. The full implementation is available in libp2p_kit.py.backup.
+during testing. The full implementation is available in archive/libp2p_kit.py.backup.
 """
 
 from typing import Dict, List, Any, Optional
