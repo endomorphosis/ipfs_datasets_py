@@ -9,7 +9,7 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from ipfs_datasets_py.web_archive import WebArchive, WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchive, WebArchiveProcessor
 
 
 class TestWebArchiveWorkingFunctionality:

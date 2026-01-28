@@ -24,7 +24,7 @@ from ipfs_datasets_py.data_provenance_enhanced import (
     EnhancedProvenanceManager, SourceRecord, TransformationRecord,
     ProvenanceRecordType
 )
-from ipfs_datasets_py.cross_document_lineage import (
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
     EnhancedLineageTracker, LineageNode, LineageLink, LineageDomain,
     LineageBoundary, LineageTransformationDetail, LineageVersion, LineageSubgraph
 )

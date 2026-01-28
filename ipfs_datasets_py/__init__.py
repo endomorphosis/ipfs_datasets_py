@@ -281,7 +281,7 @@ except ImportError:
 
 # P2P Workflow Scheduler
 try:
-    from ipfs_datasets_py.p2p_workflow_scheduler import (
+    from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
         P2PWorkflowScheduler,
         WorkflowDefinition,
         WorkflowTag,

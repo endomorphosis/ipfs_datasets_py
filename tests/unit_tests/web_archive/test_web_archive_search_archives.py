@@ -1,6 +1,6 @@
 import pytest
 
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorSearchArchives:
@@ -20,7 +20,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Return list of matching archive records
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             # Test with mock archive containing python-related URLs
             archive = WebArchive()
@@ -66,7 +66,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Each record contains id, url, timestamp, metadata, status
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             # Test required fields in archive records
             archive = WebArchive()
@@ -105,7 +105,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Only URLs containing "python" are returned
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "python"
@@ -139,7 +139,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Return matching archives regardless of case
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "PYTHON"  # Upper case query
@@ -171,7 +171,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Case-insensitive substring search performed
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             
@@ -203,7 +203,7 @@ class TestWebArchiveProcessorSearchArchives:
             - Return empty list []
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "nonexistentterm123"
@@ -235,7 +235,7 @@ class TestWebArchiveProcessorSearchArchives:
             - No errors or exceptions
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "nonexistentterm123"
@@ -266,7 +266,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with archived items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = ""  # Empty query
@@ -298,7 +298,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with archived items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = ""  # Empty query
@@ -332,7 +332,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with matching items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             
@@ -371,7 +371,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with matching items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             
@@ -405,7 +405,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with matching items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             from datetime import datetime
             
             archive = WebArchive()
@@ -445,7 +445,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with matching items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             
@@ -488,7 +488,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with matching items
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             
@@ -521,7 +521,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with items containing search term in metadata but not URL
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "python"  # Term in metadata but not URL
@@ -557,7 +557,7 @@ class TestWebArchiveProcessorSearchArchives:
         """
         # GIVEN archive with items containing search term in metadata but not URL
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             query = "documentation"  # Term in metadata but not URL

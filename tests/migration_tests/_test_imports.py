@@ -13,7 +13,7 @@ print("Starting import tests...")
 
 try:
     print("1. Testing web_archive import...")
-    from ipfs_datasets_py.web_archive import WebArchiveProcessor
+    from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
     print("   ✓ WebArchiveProcessor imported successfully")
 
     # Test instantiation

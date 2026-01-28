@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pytest
 
-from ipfs_datasets_py.web_archive import archive_web_content, retrieve_web_content
+from ipfs_datasets_py.web_archiving.web_archive import archive_web_content, retrieve_web_content
 
 
 SUCCESS_STATUS = "success"

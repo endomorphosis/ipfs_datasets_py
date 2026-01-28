@@ -17,7 +17,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 try:
-    from ipfs_datasets_py.unified_web_scraper import (
+    from ipfs_datasets_py.web_archiving.unified_web_scraper import (
         UnifiedWebScraper,
         ScraperConfig,
         ScraperMethod,

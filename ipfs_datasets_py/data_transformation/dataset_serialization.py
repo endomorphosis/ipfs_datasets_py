@@ -973,7 +973,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         Returns:
             List[str]: List of entity IDs that were added
         """
-        from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 
         if not isinstance(knowledge_graph, KnowledgeGraph):
             raise TypeError("knowledge_graph must be a KnowledgeGraph instance")

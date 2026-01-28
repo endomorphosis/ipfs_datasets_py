@@ -22,7 +22,7 @@ from dataclasses import dataclass
 # Import existing components
 from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
 from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGFactory
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.content_discovery import ContentDiscoveryEngine, ContentManifest
 from ipfs_datasets_py.multimodal_processor import MultiModalContentProcessor, ProcessedContentBatch
 from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem

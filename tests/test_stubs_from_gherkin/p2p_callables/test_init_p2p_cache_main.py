@@ -42,7 +42,7 @@ def test_import_p2p_peer_registry_succeeds():
     Given:
 
     When:
-        from ipfs_datasets_py.p2p_peer_registry import PeerRegistry
+        from ipfs_datasets_py.p2p_networking.p2p_peer_registry import PeerRegistry
 
     Then:
         ImportError not raised
@@ -50,7 +50,7 @@ def test_import_p2p_peer_registry_succeeds():
     expected_result = True
     
     try:
-        from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+        from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
         actual_result = True
     except ImportError:
         actual_result = False

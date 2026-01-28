@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Import the P2P workflow scheduler
 try:
-    from ipfs_datasets_py.p2p_workflow_scheduler import (
+    from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
         get_scheduler,
         WorkflowDefinition,
         WorkflowTag,

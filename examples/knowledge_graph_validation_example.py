@@ -15,7 +15,7 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # Import required modules
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractorWithValidation
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractorWithValidation
 
 def extract_from_text_example():
     """Example of extracting and validating a knowledge graph from text."""

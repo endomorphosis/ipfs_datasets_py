@@ -13,7 +13,7 @@ import datetime
 # Import audit and provenance components
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_logger import AuditLogger, AuditEvent, AuditLevel, AuditCategory
-from ipfs_datasets_py.data_provenance import ProvenanceManager
+from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager
 from ipfs_datasets_py.audit.audit_provenance_integration import setup_audit_provenance_dashboard, AuditProvenanceDashboard
 
 

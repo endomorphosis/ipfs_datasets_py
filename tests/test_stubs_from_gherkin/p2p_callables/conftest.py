@@ -66,7 +66,7 @@ def merkle_clock_peer1():
     Creates a MerkleClock instance with peer_id "peer1" and counter starting at 0.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import MerkleClock
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import MerkleClock
         
         clock = MerkleClock(peer_id="peer1")
         
@@ -95,7 +95,7 @@ def merkle_clock_peer2():
     Creates a MerkleClock instance with peer_id "peer2" and counter starting at 0.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import MerkleClock
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import MerkleClock
         
         clock = MerkleClock(peer_id="peer2")
         
@@ -124,7 +124,7 @@ def merkle_clock_with_counter_2():
     Creates a MerkleClock instance with peer_id "peer1" and manually sets counter to 2.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import MerkleClock
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import MerkleClock
         
         clock = MerkleClock(peer_id="peer1", counter=2)
         
@@ -147,7 +147,7 @@ def merkle_clock_with_counter_1():
     Creates a MerkleClock instance with peer_id "peer2" and manually sets counter to 1.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import MerkleClock
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import MerkleClock
         
         clock = MerkleClock(peer_id="peer2", counter=1)
         
@@ -197,7 +197,7 @@ def p2p_workflow_scheduler():
     Creates a P2PWorkflowScheduler instance with peer1 as the current peer.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import P2PWorkflowScheduler
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import P2PWorkflowScheduler
         
         peers = ["peer1", "peer2", "peer3"]
         scheduler = P2PWorkflowScheduler(peer_id="peer1", peers=peers)
@@ -223,7 +223,7 @@ def workflow_definition_p2p_eligible():
     Creates a workflow definition that is eligible for P2P execution.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
         
         workflow = WorkflowDefinition(
             workflow_id="wf1",
@@ -254,7 +254,7 @@ def workflow_definition_p2p_only():
     Creates a workflow definition that must use P2P execution only.
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
         
         workflow = WorkflowDefinition(
             workflow_id="wf2",
@@ -283,7 +283,7 @@ def workflow_definition_unit_test():
     Creates a workflow definition for unit tests (not P2P eligible).
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import WorkflowDefinition, WorkflowTag
         
         workflow = WorkflowDefinition(
             workflow_id="wf_unit_test",
@@ -310,7 +310,7 @@ def scheduler_with_5_peers():
     Creates a scheduler with peers "peer1" through "peer5".
     """
     try:
-        from ipfs_datasets_py.p2p_workflow_scheduler import P2PWorkflowScheduler
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import P2PWorkflowScheduler
         
         peers = ["peer1", "peer2", "peer3", "peer4", "peer5"]
         scheduler = P2PWorkflowScheduler(peer_id="peer1", peers=peers)

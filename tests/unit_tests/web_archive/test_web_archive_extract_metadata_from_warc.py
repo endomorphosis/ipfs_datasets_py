@@ -3,7 +3,7 @@
 Test WebArchiveProcessor.extract_metadata_from_warc method functionality.
 """
 
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorExtractMetadataFromWarc:

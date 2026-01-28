@@ -12,7 +12,7 @@ import numpy as np
 from typing import Dict, List, Any
 import json
 
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraphExtractor
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 # TODO WikipediaKnowledgeGraphOptimizer is hallucinated. Needs to be implemented.
 from ipfs_datasets_py.rag.rag_query_optimizer import WikipediaKnowledgeGraphOptimizer 

@@ -17,7 +17,7 @@ try:
     import ipfs_datasets_py.web_archive
     print("✓ web_archive module imported")
 
-    from ipfs_datasets_py.web_archive import WebArchiveProcessor
+    from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
     print("✓ WebArchiveProcessor class imported")
 
     processor = WebArchiveProcessor()

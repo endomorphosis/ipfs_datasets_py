@@ -13,7 +13,7 @@ import uuid
 from typing import Dict, List, Optional, Tuple, Any, Union, Generator
 
 from ipfs_datasets_py.ipld.storage import IPLDStorage
-from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
 
 
 class IPFSKnnIndex:

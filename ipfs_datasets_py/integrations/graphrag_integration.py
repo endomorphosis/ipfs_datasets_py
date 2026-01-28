@@ -72,7 +72,7 @@ from ipfs_datasets_py.llm.llm_semantic_validation import (
 from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     ReasoningTrace, ReasoningNodeType # Removed ReasoningStep, TracingManager, StepType, ConfidenceLevel
 )
-from ipfs_datasets_py.knowledge_graph_extraction import (
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity, Relationship, KnowledgeGraph
 )
 

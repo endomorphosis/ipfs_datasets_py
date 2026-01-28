@@ -6,7 +6,7 @@ from examples/p2p_workflow_demo.py.
 """
 
 import pytest
-from ipfs_datasets_py.p2p_workflow_scheduler import MerkleClock
+from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import MerkleClock
 
 
 def test_create_two_merkle_clocks_with_counter_0(peer_id_peer1, peer_id_peer2):

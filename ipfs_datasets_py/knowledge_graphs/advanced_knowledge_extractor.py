@@ -24,7 +24,7 @@ from collections import defaultdict, Counter
 import uuid
 
 # Import base classes
-from ipfs_datasets_py.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
 
 
 logger = logging.getLogger(__name__)

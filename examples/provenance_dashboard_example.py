@@ -19,8 +19,8 @@ logging.basicConfig(
 )
 
 # Import required modules
-from ipfs_datasets_py.data_provenance import ProvenanceManager, ProvenanceContext
-from ipfs_datasets_py.cross_document_lineage import LineageTracker
+from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager, ProvenanceContext
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import LineageTracker
 from ipfs_datasets_py.provenance_dashboard import ProvenanceDashboard, setup_provenance_dashboard
 
 # Optional imports for integrated dashboard

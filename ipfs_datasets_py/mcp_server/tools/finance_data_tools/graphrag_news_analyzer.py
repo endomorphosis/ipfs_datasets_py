@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import GraphRAG components
 try:
-    from ipfs_datasets_py.knowledge_graph_extraction import (
+    from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
         Entity, Relationship, KnowledgeGraph
     )
     from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGIntegration

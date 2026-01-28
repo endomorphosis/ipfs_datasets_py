@@ -36,7 +36,7 @@ import math
 
 # Import GraphRAG components
 from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 
 logger = logging.getLogger(__name__)
 
@@ -1179,7 +1179,7 @@ async def demo_recommendation_engine():
     
     # Create mock website system
     from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
-    from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity
+    from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity
     
     # Mock knowledge graph
     entities = [

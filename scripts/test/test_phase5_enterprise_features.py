@@ -114,7 +114,7 @@ async def test_recommendation_engine():
         
         # Create mock GraphRAG system for testing
         from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
-        from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity
         
         # Mock knowledge graph
         entities = [
@@ -324,7 +324,7 @@ async def demo_integrated_enterprise_system():
         # 4. Generate recommendations
         print("   🧠 Generating intelligent recommendations...")
         from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
-        from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph
         
         mock_system = WebsiteGraphRAGSystem(
             url=request.url,

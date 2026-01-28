@@ -24,7 +24,7 @@ import numpy as np
 # Import existing components
 from ipfs_datasets_py.content_discovery import ContentManifest
 from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch, ProcessedContent
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGIntegration
 
 # Set up logging
@@ -730,7 +730,7 @@ class WebsiteGraphRAGSystem:
 if __name__ == "__main__":
     from ipfs_datasets_py.content_discovery import ContentAsset, ContentManifest
     from ipfs_datasets_py.multimodal_processor import ProcessedContent, ProcessedContentBatch
-    from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+    from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
     
     def test_website_graphrag_system():
         """Test WebsiteGraphRAGSystem functionality"""

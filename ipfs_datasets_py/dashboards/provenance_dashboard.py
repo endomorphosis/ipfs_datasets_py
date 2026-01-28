@@ -53,8 +53,8 @@ except ImportError:
     TEMPLATE_ENGINE_AVAILABLE = False
 
 # Import related modules
-from ipfs_datasets_py.data_provenance import ProvenanceManager
-from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+from ipfs_datasets_py.analytics.data_provenance import ProvenanceManager
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
 from ipfs_datasets_py.rag.rag_query_visualization import RAGQueryVisualizer
 
 
@@ -1296,7 +1296,7 @@ def setup_provenance_dashboard(
     # Create lineage tracker if not provided and available
     if not lineage_tracker:
         try:
-            from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+            from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
             lineage_tracker = EnhancedLineageTracker()
         except ImportError:
             logging.warning("EnhancedLineageTracker not available")

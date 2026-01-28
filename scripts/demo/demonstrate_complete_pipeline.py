@@ -520,7 +520,7 @@ def create_comprehensive_knowledge_graph(text: str):
     
     # Import required classes
     try:
-        from ipfs_datasets_py.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
+        from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
     except ImportError:
         # Use mock classes
         from demonstrate_legal_deontic_logic import Entity, Relationship, KnowledgeGraph

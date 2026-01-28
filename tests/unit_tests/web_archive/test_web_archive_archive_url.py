@@ -1,6 +1,6 @@
 import pytest
 
-from ipfs_datasets_py.web_archive import WebArchive
+from ipfs_datasets_py.web_archiving.web_archive import WebArchive
 
 
 class TestWebArchiveArchiveUrl:
@@ -75,7 +75,7 @@ class TestWebArchiveArchiveUrl:
             - URL is stored in archived_items
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             url = "https://example.com"
@@ -102,7 +102,7 @@ class TestWebArchiveArchiveUrl:
             - Return dict with status="success"
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             url = "https://docs.python.org"
@@ -129,7 +129,7 @@ class TestWebArchiveArchiveUrl:
             - Return dict contains archive_id key
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             archive = WebArchive()
             url = "https://docs.python.org"

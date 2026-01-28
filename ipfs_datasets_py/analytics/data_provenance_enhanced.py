@@ -41,7 +41,7 @@ import numpy as np
 import hmac  # For cryptographic verification
 
 # Import from base provenance module
-from ipfs_datasets_py.data_provenance import (
+from ipfs_datasets_py.analytics.data_provenance import (
     ProvenanceRecordType, ProvenanceRecord, SourceRecord,
     TransformationRecord, MergeRecord, QueryRecord, ResultRecord,
     ProvenanceManager as BaseProvenanceManager,
@@ -894,16 +894,16 @@ class IPLDProvenanceStorage:
         # Determine class based on record_type
         record_type = record_dict.get('record_type')
         if record_type == 'source':
-            from ipfs_datasets_py.data_provenance import SourceRecord
+            from ipfs_datasets_py.analytics.data_provenance import SourceRecord
             return SourceRecord(**record_dict)
         elif record_type == 'transformation':
-            from ipfs_datasets_py.data_provenance import TransformationRecord
+            from ipfs_datasets_py.analytics.data_provenance import TransformationRecord
             return TransformationRecord(**record_dict)
         elif record_type == 'verification':
             return VerificationRecord(**record_dict)
         else:
             # Generic provenance record
-            from ipfs_datasets_py.data_provenance import ProvenanceRecord
+            from ipfs_datasets_py.analytics.data_provenance import ProvenanceRecord
             return ProvenanceRecord(**record_dict)
 
     def load_records_batch(self, cids: List[str]) -> Dict[str, 'ProvenanceRecord']:
@@ -1324,7 +1324,7 @@ class IPLDProvenanceStorage:
 
         # Sign the link record if crypto verification is enabled
         if self.crypto_verifier:
-            from ipfs_datasets_py.data_provenance import ProvenanceRecord
+            from ipfs_datasets_py.analytics.data_provenance import ProvenanceRecord
             # Convert to ProvenanceRecord for signing
             temp_record = ProvenanceRecord(
                 id=link_record["id"],
@@ -4166,7 +4166,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Check if cross-document lineage module is available
             try:
-                from ipfs_datasets_py.cross_document_lineage import EnhancedLineageTracker
+                from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
                 lineage_available = True
             except ImportError:
                 self.logger.warning("cross_document_lineage module not available")

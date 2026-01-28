@@ -1,6 +1,6 @@
 import pytest
 
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorProcessUrls:

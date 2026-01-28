@@ -31,7 +31,7 @@ class TestCarConversionJsonnet:
     
     def test_jsonnet_to_car(self):
         """GIVEN a Jsonnet file WHEN converting to CAR THEN create valid CAR file"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -55,7 +55,7 @@ class TestCarConversionJsonnet:
     
     def test_jsonnet_to_car_with_ext_vars(self):
         """GIVEN Jsonnet with external vars WHEN converting to CAR THEN use provided vars"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -82,7 +82,7 @@ class TestCarConversionJsonnet:
     
     def test_jsonnet_to_car_single_object(self):
         """GIVEN Jsonnet returning single object WHEN converting to CAR THEN wrap in array"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -101,7 +101,7 @@ class TestCarConversionJsonnet:
     
     def test_car_to_jsonnet(self):
         """GIVEN a CAR file WHEN converting to Jsonnet THEN create valid Jsonnet file"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -135,7 +135,7 @@ class TestCarConversionJsonnet:
     
     def test_jsonnet_to_car_with_hash_columns(self):
         """GIVEN Jsonnet and hash columns WHEN converting to CAR THEN use hash columns"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -166,7 +166,7 @@ class TestRoundTripConversion:
     
     def test_jsonnet_to_car_to_jsonnet_roundtrip(self):
         """GIVEN Jsonnet WHEN converting to CAR and back THEN data preserved"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         
@@ -206,7 +206,7 @@ class TestRoundTripConversion:
     
     def test_jsonnet_with_complex_data_roundtrip(self):
         """GIVEN complex Jsonnet data WHEN round-tripping through CAR THEN data preserved"""
-        from ipfs_datasets_py.car_conversion import DataInterchangeUtils
+        from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
         
         converter = DataInterchangeUtils()
         

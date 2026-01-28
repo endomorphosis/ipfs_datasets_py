@@ -20,7 +20,7 @@ def test_web_archive_functionality():
     print("=== Testing Web Archive Functionality ===")
 
     try:
-        from ipfs_datasets_py.web_archive import WebArchiveProcessor
+        from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
         processor = WebArchiveProcessor()
 
@@ -59,7 +59,7 @@ def test_vector_tools_functionality():
     print("\n=== Testing Vector Tools Functionality ===")
 
     try:
-        from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator, VectorStore
+        from ipfs_datasets_py.search.vector_tools import VectorSimilarityCalculator, VectorStore
 
         # Test similarity calculator
         calc = VectorSimilarityCalculator()
@@ -133,7 +133,7 @@ def create_simple_mcp_tool_registry():
 
     # Register web archive tools
     try:
-        from ipfs_datasets_py.web_archive import WebArchiveProcessor
+        from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
         def extract_text_tool(html_content: str):
             processor = WebArchiveProcessor()
@@ -147,7 +147,7 @@ def create_simple_mcp_tool_registry():
 
     # Register vector tools
     try:
-        from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator
+        from ipfs_datasets_py.search.vector_tools import VectorSimilarityCalculator
 
         def calculate_similarity_tool(vector1, vector2):
             calc = VectorSimilarityCalculator()

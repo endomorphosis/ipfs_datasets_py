@@ -43,7 +43,7 @@ from ipfs_datasets_py.website_graphrag_processor import WebsiteGraphRAGProcessor
 from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem, WebsiteGraphRAGResult
 from ipfs_datasets_py.content_discovery import ContentManifest
 from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph
 
 logger = logging.getLogger(__name__)
 
