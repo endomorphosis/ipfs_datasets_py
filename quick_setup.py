@@ -100,6 +100,36 @@ def ensure_known_good_ipfs_kit_py(logger):
     except Exception as e:
         logger.warning(f"Failed to install known_good ipfs_kit_py: {e}")
 
+
+def ensure_libp2p_main(logger) -> None:
+    """Ensure libp2p is installed from the git main branch."""
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                '-m',
+                'pip',
+                'install',
+                '--upgrade',
+                'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
+                '--disable-pip-version-check',
+                '--no-input',
+                '--progress-bar',
+                'off',
+            ],
+            capture_output=True,
+            text=True,
+            timeout=1200,
+        )
+        if result.returncode == 0:
+            logger.info("✅ Installed libp2p from git main branch")
+        else:
+            logger.warning("❌ Failed to install libp2p from git main: %s", result.stderr.strip())
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Installation timed out for libp2p (git main)")
+    except Exception as e:
+        logger.error("❌ Error installing libp2p from git main: %s", e)
+
 def install_package(package_name, logger):
     """Install a single package with pip"""
     try:
@@ -740,6 +770,7 @@ def main():
     logger = setup_logging()
 
     ensure_known_good_ipfs_kit_py(logger)
+    ensure_libp2p_main(logger)
     
     logger.info("🔧 IPFS Datasets Quick Dependency Setup")
     logger.info("=" * 50)

@@ -238,7 +238,8 @@ class InstallationManager:
                 description='CLI tools functionality',
                 dependencies=[
                     'requests', 'pyyaml', 'tqdm', 'psutil', 'jsonschema',
-                    'pandas', 'numpy'
+                    'pandas', 'numpy',
+                    'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main'
                 ] + ([pyarrow_dep] if pyarrow_dep else [])
             ),
             'pdf': InstallationProfile(

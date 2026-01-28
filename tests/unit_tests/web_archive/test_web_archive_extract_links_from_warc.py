@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
 
@@ -23,10 +24,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             warc_file_path = "/data/archives/website.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # WHEN extract_links_from_warc is called
                 try:
-                    result = processor.archive.extract_links_from_warc(warc_file_path)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(warc_file_path)
                     
                     # THEN expect return list of discovered links
                     assert isinstance(result, list)
@@ -138,11 +140,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             nonexistent_file = "/nonexistent/file.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # WHEN extract_links_from_warc is called
                 try:
                     with pytest.raises(FileNotFoundError):
-                        processor.archive.extract_links_from_warc(nonexistent_file)
+                        processor.extract_links_from_warc(nonexistent_file)
                         
                 except NotImplementedError:
                     pytest.skip("extract_links_from_warc method not implemented yet")
@@ -166,10 +168,10 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             nonexistent_path = "/nonexistent/file.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # WHEN extract_links_from_warc is called
                 with pytest.raises((FileNotFoundError, IOError, OSError)) as exc_info:
-                    processor.archive.extract_links_from_warc(nonexistent_path)
+                    processor.extract_links_from_warc(nonexistent_path)
                 
                 # THEN expect exception message indicates file not found
                 error_message = str(exc_info.value).lower()
@@ -247,7 +249,7 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         # GIVEN - validate expected link structure contains link_text
         try:
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # Mock expected link structure validation
                 mock_link_structure = {
                     'source_uri': 'https://example.com/page',
@@ -288,7 +290,7 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         # GIVEN - validate expected link structure contains link_type
         try:
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # Mock expected link structure validation
                 mock_link_structure = {
                     'source_uri': 'https://example.com/page',
@@ -322,13 +324,14 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         # GIVEN empty WARC file path
         try:
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # Test method behavior with empty files
                 empty_file_path = "/mock/empty.warc"
                 
                 try:
                     # WHEN extract_links_from_warc is called with empty file
-                    result = processor.archive.extract_links_from_warc(empty_file_path)
+                    with patch('os.path.exists', return_value=True), patch('os.path.getsize', return_value=0):
+                        result = processor.extract_links_from_warc(empty_file_path)
                     
                     # THEN expect return empty list
                     assert isinstance(result, list)
@@ -363,10 +366,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             empty_warc_path = "/data/archives/empty.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 try:
                     # WHEN extract_links_from_warc is called
-                    result = processor.archive.extract_links_from_warc(empty_warc_path)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(empty_warc_path)
                     
                     # THEN expect no exceptions raised and return empty list
                     assert isinstance(result, list)
@@ -398,10 +402,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             warc_with_hrefs = "/data/archives/sample_with_links.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 try:
                     # WHEN extract_links_from_warc is called
-                    result = processor.archive.extract_links_from_warc(warc_with_hrefs)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(warc_with_hrefs)
                     
                     # THEN expect standard hyperlinks extracted with link_type="href"
                     assert isinstance(result, list)
@@ -440,10 +445,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             warc_mixed_links = "/data/archives/mixed_links.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 try:
                     # WHEN extract_links_from_warc is called
-                    result = processor.archive.extract_links_from_warc(warc_mixed_links)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(warc_mixed_links)
                     
                     # THEN expect both internal and external links captured
                     assert isinstance(result, list)
@@ -489,10 +495,11 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
             warc_with_anchors = "/data/archives/anchors_with_text.warc"
             
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 try:
                     # WHEN extract_links_from_warc is called
-                    result = processor.archive.extract_links_from_warc(warc_with_anchors)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(warc_with_anchors)
                     
                     # THEN expect link text extracted from anchor tags
                     assert isinstance(result, list)
@@ -536,14 +543,15 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         try:
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # GIVEN: Mock WARC file with non-HTML content (images, PDFs, CSS)
                 mock_warc_path = "/tmp/test_non_html.warc"
                 
                 # WHEN: extract_links_from_warc is called on non-HTML content
                 # THEN: Should return empty list without crashing
                 try:
-                    result = processor.archive.extract_links_from_warc(mock_warc_path)
+                    with patch('os.path.exists', return_value=True):
+                        result = processor.extract_links_from_warc(mock_warc_path)
                     # Should return empty list for non-HTML content
                     assert isinstance(result, list)
                 except (FileNotFoundError, OSError):
@@ -567,14 +575,14 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         try:
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # GIVEN: Mock corrupted WARC file
                 corrupted_warc_path = "/tmp/corrupted.warc"
                 
                 # WHEN: extract_links_from_warc is called on corrupted file
                 # THEN: Should raise appropriate exception
                 try:
-                    processor.archive.extract_links_from_warc(corrupted_warc_path)
+                    processor.extract_links_from_warc(corrupted_warc_path)
                 except (FileNotFoundError, OSError):
                     # Expected for non-existent mock file
                     pass
@@ -596,14 +604,14 @@ class TestWebArchiveProcessorExtractLinksFromWarc:
         """
         try:
             # Check if method exists
-            if hasattr(processor.archive, 'extract_links_from_warc'):
+            if hasattr(processor, 'extract_links_from_warc'):
                 # GIVEN: Mock corrupted WARC file
                 corrupted_warc_path = "/tmp/corrupted.warc"
                 
                 # WHEN: extract_links_from_warc is called on corrupted file
                 # THEN: Exception message should describe parsing failure
                 try:
-                    processor.archive.extract_links_from_warc(corrupted_warc_path)
+                    processor.extract_links_from_warc(corrupted_warc_path)
                 except (FileNotFoundError, OSError) as e:
                     # Expected for non-existent mock file
                     error_message = str(e).lower()

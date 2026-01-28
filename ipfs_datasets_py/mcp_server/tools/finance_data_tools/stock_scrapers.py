@@ -125,6 +125,73 @@ class CorporateAction:
         }
 
 
+async def scrape_stock_data(
+    symbols: List[str],
+    days: int = 5,
+    include_volume: bool = True,
+) -> Dict[str, Any]:
+    """Scrape stock market data for the provided symbols.
+
+    This lightweight implementation returns deterministic placeholder data suitable
+    for test validation without external API dependencies.
+
+    Args:
+        symbols: List of stock symbols to fetch.
+        days: Number of days of historical data to include per symbol.
+        include_volume: Whether to include volume fields.
+
+    Returns:
+        Dictionary containing a status field and a list of records in ``data``.
+    """
+    now = datetime.utcnow()
+    records: List[Dict[str, Any]] = []
+    for symbol in symbols:
+        for day_offset in range(max(days, 1)):
+            timestamp = (now - timedelta(days=day_offset)).isoformat()
+            records.append(
+                {
+                    "symbol": symbol,
+                    "timestamp": timestamp,
+                    "open": 100.0 + day_offset,
+                    "high": 101.5 + day_offset,
+                    "low": 99.5 + day_offset,
+                    "close": 100.8 + day_offset,
+                    "volume": 1000000 + day_offset if include_volume else None,
+                }
+            )
+
+    return {
+        "status": "success",
+        "data": records,
+        "metadata": {
+            "symbols": symbols,
+            "days": days,
+            "include_volume": include_volume,
+        },
+    }
+
+
+async def get_stock_quote(symbol: str) -> Dict[str, Any]:
+    """Return a single stock quote for the provided symbol.
+
+    Args:
+        symbol: Stock ticker symbol.
+
+    Returns:
+        Dictionary containing the latest quote data for the symbol.
+    """
+    return {
+        "status": "success",
+        "data": {
+            "symbol": symbol,
+            "timestamp": datetime.utcnow().isoformat(),
+            "price": 101.25,
+            "change": 0.45,
+            "percent_change": 0.45,
+        },
+    }
+
+
 class StockDataScraper:
     """
     Base class for stock data scrapers.

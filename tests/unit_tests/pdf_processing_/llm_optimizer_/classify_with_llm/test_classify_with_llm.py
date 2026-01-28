@@ -1,6 +1,7 @@
 
 import anyio
 import os
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 import random
 
@@ -28,7 +29,24 @@ def openai_client():
     import os
     api_key = os.getenv('OPENAI_API_KEY')
     if not api_key:
-        pytest.skip("OPENAI_API_KEY not set; skipping live OpenAI tests")
+        mock_response = SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    logprobs=SimpleNamespace(
+                        content=[
+                            SimpleNamespace(
+                                top_logprobs=[
+                                    SimpleNamespace(token="Science", logprob=0.0)
+                                ]
+                            )
+                        ]
+                    )
+                )
+            ]
+        )
+        client = AsyncMock(spec_set=openai.AsyncOpenAI)
+        client.chat.completions.create = AsyncMock(return_value=mock_response)
+        return client
     return openai.AsyncOpenAI(api_key=api_key)
 
 @pytest.fixture

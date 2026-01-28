@@ -71,6 +71,9 @@ toml>=0.10.2
 # Provides `mcp.server.FastMCP` and `mcp.types` used by the MCP server
 mcp>=1.2.0
 
+# libp2p must be installed from git main
+libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
+
 # Async compatibility (asyncio/trio via anyio)
 anyio>=4.0.0
 

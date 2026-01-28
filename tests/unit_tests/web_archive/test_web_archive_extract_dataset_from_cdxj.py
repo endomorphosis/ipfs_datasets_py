@@ -1,4 +1,5 @@
 import pytest
+from unittest.mock import patch
 
 from ipfs_datasets_py.web_archive import WebArchiveProcessor
 
@@ -161,14 +162,14 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             # Check if method exists
-            if hasattr(processor.archive, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, 'extract_dataset_from_cdxj'):
                 # GIVEN: Valid CDXJ file path and CSV format
                 cdxj_path = "/data/indexes/crawl.cdxj"
                 
                 # WHEN: extract_dataset_from_cdxj is called with CSV format
                 # THEN: Should convert dataset to CSV format
                 try:
-                    result = processor.archive.extract_dataset_from_cdxj(cdxj_path, output_format="csv")
+                    result = processor.extract_dataset_from_cdxj(cdxj_path, output_format="csv")
                     assert isinstance(result, dict)
                     # Should contain CSV format data
                     if 'format' in result:
@@ -405,14 +406,14 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
         """
         try:
             # Check if method exists
-            if hasattr(processor.archive, 'extract_dataset_from_cdxj'):
+            if hasattr(processor, 'extract_dataset_from_cdxj'):
                 # GIVEN: Valid CDXJ file
                 cdxj_path = "/data/test.cdxj"
                 
                 # WHEN: extract_dataset_from_cdxj is called
                 # THEN: Should contain extraction_date timestamp
                 try:
-                    result = processor.archive.extract_dataset_from_cdxj(cdxj_path)
+                    result = processor.extract_dataset_from_cdxj(cdxj_path)
                     assert isinstance(result, dict)
                     # Should contain extraction_date field
                     if 'extraction_date' in result:

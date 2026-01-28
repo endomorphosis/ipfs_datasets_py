@@ -114,9 +114,7 @@ def real_query_engine_with_known_data(real_query_engine):
     Skipped in minimal environments where no deterministic labeled dataset is
     provided.
     """
-    pytest.skip(
-        "Known-data QueryEngine fixture not available in minimal test environment"
-    )
+    return real_query_engine
 
 
 @pytest.fixture

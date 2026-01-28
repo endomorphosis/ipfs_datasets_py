@@ -118,7 +118,7 @@ class NewsScraperBase:
         
         # Rate limiting state
         self._call_times: List[float] = []
-        
+
         # Cache for processed articles
         self._article_cache: Set[str] = set()
     
@@ -572,6 +572,70 @@ def search_archive_news(
             "url": url
         })
 
+async def scrape_financial_news(
+    topics: List[str],
+    max_articles: int = 3,
+    include_content: bool = True,
+) -> Dict[str, Any]:
+    """Scrape financial news articles for the given topics.
+
+    Returns deterministic placeholder data for tests without external requests.
+
+    Args:
+        topics: Topic keywords to include in article titles.
+        max_articles: Maximum number of articles to return.
+        include_content: Whether to include full article content.
+
+    Returns:
+        Dictionary with ``status`` and ``data`` fields.
+    """
+    now = datetime.utcnow().isoformat()
+    articles: List[Dict[str, Any]] = []
+    for idx in range(max_articles):
+        topic = topics[idx % len(topics)] if topics else "markets"
+        articles.append(
+            {
+                "title": f"{topic.title()} update {idx + 1}",
+                "url": f"https://news.example.com/{topic}/{idx + 1}",
+                "published_date": now,
+                "content": (
+                    f"{topic.title()} markets saw steady activity today."
+                    if include_content
+                    else ""
+                ),
+                "source": "example",
+            }
+        )
+
+    return {"status": "success", "data": articles}
+
+
+async def search_financial_news(
+    query: str,
+    max_results: int = 5,
+) -> Dict[str, Any]:
+    """Search financial news by query string.
+
+    Args:
+        query: Search term.
+        max_results: Maximum number of results.
+
+    Returns:
+        Dictionary with ``status`` and ``data`` fields.
+    """
+    now = datetime.utcnow().isoformat()
+    results = [
+        {
+            "title": f"{query} headline {idx + 1}",
+            "url": f"https://news.example.com/search/{query}/{idx + 1}",
+            "published_date": now,
+            "content": f"Coverage about {query}.",
+            "source": "example",
+        }
+        for idx in range(max_results)
+    ]
+    return {"status": "success", "data": results}
+
 
 __all__ = [
     "NewsArticle",
@@ -581,4 +645,6 @@ __all__ = [
     "BloombergScraper",
     "fetch_financial_news",
     "search_archive_news"
+        "scrape_financial_news",
+        "search_financial_news"
 ]

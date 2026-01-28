@@ -76,6 +76,33 @@ def ensure_known_good_ipfs_kit_py() -> None:
     except Exception as e:
         print(f"⚠️ Failed to install known_good ipfs_kit_py: {e}")
 
+
+def ensure_libp2p_main() -> None:
+    """Ensure libp2p is installed from the git main branch."""
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                '-m',
+                'pip',
+                'install',
+                '--upgrade',
+                'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
+                '--disable-pip-version-check',
+                '--no-input',
+                '--progress-bar',
+                'off',
+            ],
+            check=False,
+            text=True,
+        )
+        if result.returncode == 0:
+            print("✅ Installed libp2p from git main branch")
+        else:
+            print(f"⚠️ Failed to install libp2p from git main: {result.stderr.strip()}")
+    except Exception as e:
+        print(f"⚠️ Failed to install libp2p from git main: {e}")
+
 def run_setup_wizard():
     """Run the interactive setup wizard"""
     print("🧙 IPFS Datasets Setup Wizard")
@@ -265,8 +292,8 @@ Examples:
     
     args = parser.parse_args()
 
-    if IS_WINDOWS:
-        ensure_known_good_ipfs_kit_py()
+    ensure_known_good_ipfs_kit_py()
+    ensure_libp2p_main()
     
     # Enable auto-installation if requested
     if args.enable_auto_install:

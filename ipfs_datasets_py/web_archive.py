@@ -739,6 +739,12 @@ class WebArchiveProcessor:
             if not os.path.exists(warc_path):
                 raise FileNotFoundError(f"WARC file not found: {warc_path}")
 
+            try:
+                if os.path.getsize(warc_path) == 0:
+                    return []
+            except OSError:
+                return []
+
             # Mock link extraction
             links = [
                 {

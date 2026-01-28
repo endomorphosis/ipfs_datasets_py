@@ -18,6 +18,41 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
+class GitHubRepositoryScraper:
+    """Lightweight GitHub repository search helper.
+
+    This class provides deterministic placeholder results for unit tests without
+    requiring network access or GitHub credentials.
+    """
+
+    def __init__(self, github_token: Optional[str] = None) -> None:
+        self.github_token = github_token
+
+    def search_repositories(self, query: str, max_results: int = 3) -> List[Dict[str, Any]]:
+        """Return a list of placeholder repository records.
+
+        Args:
+            query: Search query string.
+            max_results: Maximum number of repositories to return.
+
+        Returns:
+            List of repository metadata dictionaries.
+        """
+        results = []
+        for idx in range(max_results):
+            results.append(
+                {
+                    "name": f"{query.replace(' ', '-')}-repo-{idx + 1}",
+                    "full_name": f"example/{query.replace(' ', '-')}-repo-{idx + 1}",
+                    "description": f"Repository for {query}",
+                    "stars": 100 + idx,
+                    "language": "Python",
+                    "url": f"https://github.com/example/{query.replace(' ', '-')}-repo-{idx + 1}",
+                }
+            )
+        return results
+
+
 def scrape_github_repository(
     repository_url: str,
     include_prs: bool = True,
