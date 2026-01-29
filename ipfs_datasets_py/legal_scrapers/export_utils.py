@@ -31,8 +31,13 @@ def _safe_output_path(output_path: str) -> Path:
     if not output_path:
         return _EXPORT_BASE_DIR / "dataset_export"
 
+    # Normalize user-supplied path and ensure it is not absolute
+    user_path = Path(output_path)
+    if user_path.is_absolute():
+        raise ValueError("Absolute output paths are not allowed")
+
     # Construct path under the base directory and resolve to eliminate ".."
-    candidate = (_EXPORT_BASE_DIR / output_path).resolve()
+    candidate = (_EXPORT_BASE_DIR / user_path).resolve()
 
     # Ensure the resolved path is still within the base directory
     base_resolved = _EXPORT_BASE_DIR.resolve()
