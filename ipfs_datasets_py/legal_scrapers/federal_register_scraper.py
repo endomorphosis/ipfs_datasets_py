@@ -87,6 +87,58 @@ def _is_safe_federal_register_url(url: str) -> bool:
     return True
 
 
+def _safe_get_federal_register_url(url: str) -> Optional[requests.Response]:
+    """
+    Safely perform a GET request to a Federal Register URL.
+
+    Enforces:
+      - http/https scheme
+      - Hostname restricted to federalregister.gov or its subdomains
+      - Resolved IP address is not private, loopback, or otherwise non-public
+      - No redirects to other hosts
+    """
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            logger.warning(f"Blocked Federal Register request with disallowed scheme: {url!r}")
+            return None
+
+        hostname = parsed.hostname or ""
+        if not hostname or not (
+            hostname == "federalregister.gov"
+            or hostname.endswith(".federalregister.gov")
+        ):
+            logger.warning(f"Blocked Federal Register request with disallowed host: {url!r}")
+            return None
+
+        try:
+            ip_str = socket.gethostbyname(hostname)
+            ip = ipaddress.ip_address(ip_str)
+        except Exception as e:
+            logger.warning(f"Failed to resolve Federal Register host {hostname!r}: {e}")
+            return None
+
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_multicast
+            or ip.is_reserved
+        ):
+            logger.warning(
+                f"Blocked Federal Register request to non-public IP {ip_str} for URL {url!r}"
+            )
+            return None
+
+        # Use a session and disallow redirects to avoid being bounced to an unsafe host.
+        with requests.Session() as session:
+            response = session.get(url, timeout=30, allow_redirects=False)
+        return response
+    except Exception as e:
+        logger.warning(f"Safe Federal Register request failed for URL {url!r}: {e}")
+        return None
+
+
 async def search_federal_register(
     agencies: Optional[List[str]] = None,
     start_date: Optional[str] = None,
@@ -350,9 +402,16 @@ async def scrape_federal_register(
                         )
                         if _is_safe_federal_register_url(str(raw_url)) and is_allowed_scheme and is_federalregister_host:
                             try:
-                                text_response = requests.get(str(raw_url), timeout=30)
-                                if text_response.status_code == 200:
+                                text_response = _safe_get_federal_register_url(str(raw_url))
+                                if text_response is not None and text_response.status_code == 200:
                                     doc['full_text'] = text_response.text
+                                else:
+                                    if text_response is not None:
+                                        logger.warning(
+                                            f"Full text fetch for {doc.get('document_number')} "
+                                            f"returned status {text_response.status_code}"
+                                        )
+                                    doc['full_text'] = None
                             except Exception as e:
                                 logger.warning(f"Failed to fetch full text for {doc.get('document_number')}: {e}")
                                 doc['full_text'] = None
