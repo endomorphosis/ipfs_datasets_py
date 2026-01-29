@@ -1,5 +1,10 @@
 """
 Test configuration and shared fixtures for the IPFS Datasets test suite.
+
+Includes:
+- Commit-hash based test caching
+- Test execution optimizations
+- Shared fixtures
 """
 
 from datetime import datetime
@@ -8,8 +13,147 @@ import os
 import shutil
 import subprocess
 import sys
+from typing import Optional
 
 import pytest
+
+
+# ==================== Commit-Hash Based Caching Plugin ====================
+
+def get_git_commit_hash() -> Optional[str]:
+    """Get the current git commit hash."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return result.stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def get_git_uncommitted_changes() -> bool:
+    """Check if there are uncommitted changes."""
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return bool(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
+
+
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    group = parser.getgroup("cache")
+    group.addoption(
+        "--show-cache-info",
+        action="store_true",
+        default=False,
+        help="Show cache information and exit",
+    )
+    group.addoption(
+        "--force-cache-clear",
+        action="store_true",
+        default=False,
+        help="Force clear cache regardless of commit hash",
+    )
+
+
+def pytest_configure(config):
+    """Configure the plugin with commit-hash tracking."""
+    if config.option.show_cache_info:
+        show_cache_info(config)
+        pytest.exit("Cache info displayed", returncode=0)
+
+    # Get current commit hash
+    current_commit = get_git_commit_hash()
+    has_uncommitted = get_git_uncommitted_changes()
+    
+    # Access pytest cache
+    cache = config.cache
+    
+    # Store commit info
+    if current_commit:
+        last_commit = cache.get("commit_hash", None)
+        
+        # Update stored values
+        cache.set("commit_hash", current_commit)
+        cache.set("uncommitted_changes", has_uncommitted)
+        
+        # Store metadata
+        cache.set("last_run_commit", current_commit)
+        cache.set("last_run_uncommitted", has_uncommitted)
+
+
+def show_cache_info(config):
+    """Display cache information."""
+    cache = config.cache
+    cache_dir = Path(config.cache._cachedir)
+    
+    print("\n" + "=" * 60)
+    print("Pytest Cache Information")
+    print("=" * 60)
+    
+    # Cache directory info
+    if cache_dir.exists():
+        cache_size = sum(f.stat().st_size for f in cache_dir.rglob('*') if f.is_file())
+        cache_size_mb = cache_size / (1024 * 1024)
+        print(f"Cache directory: {cache_dir}")
+        print(f"Cache size: {cache_size_mb:.2f} MB")
+    else:
+        print(f"Cache directory: {cache_dir} (does not exist)")
+    
+    # Git commit info
+    current_commit = get_git_commit_hash()
+    if current_commit:
+        print(f"\nCurrent commit: {current_commit[:8]}")
+        
+        last_commit = cache.get("commit_hash", None)
+        if last_commit:
+            print(f"Cached commit: {last_commit[:8]}")
+            if current_commit != last_commit:
+                print("⚠️  Commit has changed - cache may be stale")
+            else:
+                print("✓ Cache is up to date with current commit")
+        
+        if get_git_uncommitted_changes():
+            print("⚠️  Uncommitted changes detected")
+    else:
+        print("\nNot in a git repository")
+    
+    # Last run info
+    last_run_commit = cache.get("last_run_commit", None)
+    if last_run_commit:
+        print(f"\nLast successful run: {last_run_commit[:8]}")
+    
+    # Cache statistics
+    lastfailed = cache.get("cache/lastfailed", {})
+    if lastfailed:
+        print(f"\nLast failed tests: {len(lastfailed)}")
+    
+    print("=" * 60 + "\n")
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    """Add cache information to terminal summary."""
+    if config.option.verbose >= 1:
+        commit = get_git_commit_hash()
+        if commit:
+            terminalreporter.write_sep("=", "Cache Info")
+            terminalreporter.write_line(f"Commit hash: {commit[:8]}")
+            
+            if get_git_uncommitted_changes():
+                terminalreporter.write_line("Note: Uncommitted changes present")
+
+
+# ==================== End of Caching Plugin ====================
 
 
 def _ensure_test_path_entries() -> None:
