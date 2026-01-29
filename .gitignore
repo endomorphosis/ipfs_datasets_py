@@ -39,6 +39,7 @@ test_outputs/
 test_output/
 test_results/
 validation_results/
+relative_output/
 .coverage
 htmlcov/
 .tox/
