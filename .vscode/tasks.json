@@ -694,7 +694,7 @@
 			"group": "test"
 		},
 		{
-			"label": "Dev Tools: Compile Checker",
+			"label": "Dev Tools: Check Python Compilation",
 			"type": "shell",
 			"command": "python",
 			"args": [
@@ -713,7 +713,7 @@
 			}
 		},
 		{
-			"label": "Dev Tools: Import Checker",
+			"label": "Dev Tools: Check Imports",
 			"type": "shell",
 			"command": "python",
 			"args": [
@@ -733,13 +733,14 @@
 			}
 		},
 		{
-			"label": "Dev Tools: Python Checker",
+			"label": "Dev Tools: Python Code Quality Check",
 			"type": "shell",
 			"command": "python",
 			"args": [
 				"scripts/dev_tools/comprehensive_python_checker.py",
 				"--directory",
-				"${input:pythonCheckPath}"
+				"${input:pythonCheckPath}",
+				"--verbose"
 			],
 			"group": "test",
 			"presentation": {
@@ -752,7 +753,7 @@
 			}
 		},
 		{
-			"label": "Dev Tools: Docstring Audit",
+			"label": "Dev Tools: Audit Docstrings",
 			"type": "shell",
 			"command": "python",
 			"args": [
@@ -760,7 +761,8 @@
 				"--directory",
 				"${input:docstringAuditPath}",
 				"--output",
-				"${workspaceFolder}/tmp/docstring_report.json"
+				"docstring_report.json",
+				"--verbose"
 			],
 			"group": "test",
 			"presentation": {
@@ -781,7 +783,25 @@
 				"--directory",
 				"${input:findDocsPath}",
 				"--format",
-				"json",
+				"json"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Analyze Stub Coverage",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/stub_coverage_analysis.py",
+				"${input:stubAnalysisPath}",
 				"--verbose"
 			],
 			"group": "test",
@@ -795,15 +815,13 @@
 			}
 		},
 		{
-			"label": "Dev Tools: Stub Coverage Analysis",
+			"label": "Dev Tools: Split TODO List",
 			"type": "shell",
 			"command": "python",
 			"args": [
-				"scripts/dev_tools/stub_coverage_analysis.py",
-				"--directory",
-				"${input:stubAnalysisPath}"
+				"scripts/dev_tools/split_todo_script.py"
 			],
-			"group": "test",
+			"group": "none",
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"
@@ -820,24 +838,7 @@
 			"args": [
 				"scripts/dev_tools/update_todo_workers.py"
 			],
-			"group": "build",
-			"presentation": {
-				"reveal": "always",
-				"panel": "new"
-			},
-			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}"
-			}
-		},
-		{
-			"label": "Dev Tools: Split TODO Script",
-			"type": "shell",
-			"command": "python",
-			"args": [
-				"scripts/dev_tools/split_todo_script.py"
-			],
-			"group": "build",
+			"group": "none",
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"
