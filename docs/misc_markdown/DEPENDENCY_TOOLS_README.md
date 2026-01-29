@@ -251,8 +251,8 @@ python ipfs_datasets_cli.py --help
 python ipfs_datasets_cli.py info status
 
 # Test enhanced CLI
-python enhanced_cli.py --list-categories
-python enhanced_cli.py dataset_tools load_dataset --help
+python scripts/cli/enhanced_cli.py --list-categories
+python scripts/cli/enhanced_cli.py dataset_tools load_dataset --help
 
 # Run comprehensive tests
 python comprehensive_cli_test.py

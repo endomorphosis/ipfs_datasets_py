@@ -1,8 +1,8 @@
-# CLI Tool Merge: enhanced_cli.py → ipfs-datasets
+# CLI Tool Merge: scripts/cli/enhanced_cli.py → ipfs-datasets
 
 ## Summary
 
-The functionality from `enhanced_cli.py` has been successfully merged into the main `ipfs-datasets` CLI tool, providing a unified interface for all operations.
+The functionality from `scripts/cli/enhanced_cli.py` has been successfully merged into the main `ipfs-datasets` CLI tool, providing a unified interface for all operations.
 
 ## Migration Guide
 

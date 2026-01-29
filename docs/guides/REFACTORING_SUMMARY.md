@@ -14,7 +14,7 @@ This document summarizes the comprehensive repository reorganization completed t
 #### Files Moved:
 - **CLI Tools** → `scripts/cli/`
   - `mcp_cli.py`
-  - `enhanced_cli.py`  
+  - `scripts/cli/enhanced_cli.py`  
   - `integrated_cli.py`
   - `comprehensive_distributed_cli.py`
 
@@ -73,10 +73,10 @@ All imports have been updated to reflect the new structure:
 
 ```python
 # ❌ OLD (Before Refactoring)
-from ipfs_datasets_py.mcp_dashboard import MCPDashboard
-from ipfs_datasets_py.cache import GitHubAPICache
-from ipfs_datasets_py.discord_cli import main
-from ipfs_datasets_py.web_archive import create_web_archive
+from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
+from ipfs_datasets_py.caching.cache import GitHubAPICache
+from ipfs_datasets_py.cli.discord_cli import main
+from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
 from ipfs_datasets_py.knowledge_graph_extraction import Entity
 
 # ✅ NEW (After Refactoring)
@@ -111,7 +111,7 @@ logger = logging.getLogger(__name__)
 
 ### 5. CLI Consolidation
 
-Merged `enhanced_cli.py` functionality into main `ipfs-datasets` CLI:
+Merged `scripts/cli/enhanced_cli.py` functionality into main `ipfs-datasets` CLI:
 
 **New Features:**
 - Dynamic tool discovery for 100+ MCP tools
@@ -282,7 +282,7 @@ If you have existing code that imports from `ipfs_datasets_py`, update your impo
 If you reference files in the repository:
 
 1. **Update file paths:**
-   - `enhanced_cli.py` → `scripts/cli/enhanced_cli.py`
+   - `scripts/cli/enhanced_cli.py` → `scripts/cli/enhanced_cli.py`
    - `install.py` → `scripts/setup/install.py`
    - `us_code_scraper.py` → `scripts/scrapers/legal/us_code_scraper.py`
    - `Dockerfile.test` → `docker/Dockerfile.test`

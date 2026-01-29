@@ -246,7 +246,7 @@ ipfs-datasets --help
 **CLI Tools:**
 ```bash
 # Old
-python enhanced_cli.py --list-categories
+python scripts/cli/enhanced_cli.py --list-categories
 
 # New
 python scripts/cli/enhanced_cli.py --list-categories

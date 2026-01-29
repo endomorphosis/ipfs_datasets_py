@@ -9,7 +9,7 @@ This document describes the reorganization performed to prepare the repository f
 
 #### CLI Tools → `scripts/cli/` (4 files)
 - `mcp_cli.py` → `scripts/cli/mcp_cli.py`
-- `enhanced_cli.py` → `scripts/cli/enhanced_cli.py`
+- `scripts/cli/enhanced_cli.py` → `scripts/cli/enhanced_cli.py`
 - `integrated_cli.py` → `scripts/cli/integrated_cli.py`
 - `comprehensive_distributed_cli.py` → `scripts/cli/comprehensive_distributed_cli.py`
 
@@ -52,10 +52,10 @@ This document describes the reorganization performed to prepare the repository f
 - `scripts/scrapers/legal/README.md` - Documentation for legal scrapers
 
 #### References Updated (4 files)
-- `README.md` - Updated enhanced_cli.py paths
-- `.github/copilot-instructions.md` - Updated enhanced_cli.py paths
-- `scripts/setup/quick_setup.py` - Updated enhanced_cli.py paths
-- `scripts/utilities/dependency_health_checker.py` - Updated enhanced_cli.py paths
+- `README.md` - Updated scripts/cli/enhanced_cli.py paths
+- `.github/copilot-instructions.md` - Updated scripts/cli/enhanced_cli.py paths
+- `scripts/setup/quick_setup.py` - Updated scripts/cli/enhanced_cli.py paths
+- `scripts/utilities/dependency_health_checker.py` - Updated scripts/cli/enhanced_cli.py paths
 
 ## Result
 
@@ -131,7 +131,7 @@ scripts/
 ├── cli/                              # Alternative CLI tools
 │   ├── README.md
 │   ├── mcp_cli.py
-│   ├── enhanced_cli.py
+│   ├── scripts/cli/enhanced_cli.py
 │   ├── integrated_cli.py
 │   └── comprehensive_distributed_cli.py
 ├── scrapers/
@@ -153,7 +153,7 @@ scripts/
 
 **Before:**
 ```bash
-python enhanced_cli.py --list-categories
+python scripts/cli/enhanced_cli.py --list-categories
 python mcp_cli.py status
 ```
 

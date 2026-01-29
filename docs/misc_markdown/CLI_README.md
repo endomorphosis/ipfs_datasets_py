@@ -35,7 +35,7 @@ python ipfs_datasets_cli.py [command] [options]
 A comprehensive CLI that provides access to ALL 31+ tool categories available in the package.
 
 ```bash
-python enhanced_cli.py <category> <tool> [arguments]
+python scripts/cli/enhanced_cli.py <category> <tool> [arguments]
 ```
 
 **Features:**
@@ -53,10 +53,10 @@ python enhanced_cli.py <category> <tool> [arguments]
 ./ipfs-datasets info status
 
 # List all available tool categories
-python enhanced_cli.py --list-categories
+python scripts/cli/enhanced_cli.py --list-categories
 
 # List tools in a specific category
-python enhanced_cli.py --list-tools dataset_tools
+python scripts/cli/enhanced_cli.py --list-tools dataset_tools
 
 # Get detailed information in JSON format
 ./ipfs-datasets --format json info status
@@ -78,7 +78,7 @@ python enhanced_cli.py --list-tools dataset_tools
 ./ipfs-datasets dataset convert /path/to/data.json csv /path/to/output.csv
 
 # Using enhanced CLI for more dataset tools
-python enhanced_cli.py dataset_tools load_dataset --source squad --format json
+python scripts/cli/enhanced_cli.py dataset_tools load_dataset --source squad --format json
 ```
 
 ### IPFS Operations
@@ -91,8 +91,8 @@ python enhanced_cli.py dataset_tools load_dataset --source squad --format json
 ./ipfs-datasets ipfs pin "Hello, World!" --recursive
 
 # Using enhanced CLI
-python enhanced_cli.py ipfs_tools get_from_ipfs --hash QmHash123
-python enhanced_cli.py ipfs_tools pin_to_ipfs --data "test data"
+python scripts/cli/enhanced_cli.py ipfs_tools get_from_ipfs --hash QmHash123
+python scripts/cli/enhanced_cli.py ipfs_tools pin_to_ipfs --data "test data"
 ```
 
 ### Vector Operations
@@ -105,7 +105,7 @@ python enhanced_cli.py ipfs_tools pin_to_ipfs --data "test data"
 ./ipfs-datasets vector search "search query" --index-name my_index --limit 5
 
 # Using enhanced CLI
-python enhanced_cli.py vector_tools create_vector_index --data "text data" --index_name test_index
+python scripts/cli/enhanced_cli.py vector_tools create_vector_index --data "text data" --index_name test_index
 ```
 
 ### Advanced Tool Categories
@@ -114,20 +114,20 @@ The enhanced CLI provides access to many specialized tool categories:
 
 ```bash
 # PDF processing tools
-python enhanced_cli.py pdf_tools pdf_analyze_relationships --input document.pdf
+python scripts/cli/enhanced_cli.py pdf_tools pdf_analyze_relationships --input document.pdf
 
 # Media processing tools
-python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python scripts/cli/enhanced_cli.py media_tools ffmpeg_info --input video.mp4
 
 # Web archive tools
-python enhanced_cli.py web_archive_tools common_crawl_search --query "machine learning"
+python scripts/cli/enhanced_cli.py web_archive_tools common_crawl_search --query "machine learning"
 
 # Analysis tools
-python enhanced_cli.py analysis_tools analysis_tools
+python scripts/cli/enhanced_cli.py analysis_tools analysis_tools
 
 # System monitoring
-python enhanced_cli.py bespoke_tools system_status
-python enhanced_cli.py bespoke_tools system_health
+python scripts/cli/enhanced_cli.py bespoke_tools system_status
+python scripts/cli/enhanced_cli.py bespoke_tools system_health
 ```
 
 ## Tool Categories Available
@@ -296,8 +296,8 @@ opencv-contrib-python-headless>=4.11.0  # Computer vision
    - For advanced features: `pip install torch tiktoken openai`
 
 2. **Tool Not Found Errors**
-   - Use `python enhanced_cli.py --list-categories` to see available categories
-   - Use `python enhanced_cli.py --list-tools <category>` to see tools in a category
+   - Use `python scripts/cli/enhanced_cli.py --list-categories` to see available categories
+   - Use `python scripts/cli/enhanced_cli.py --list-tools <category>` to see tools in a category
 
 3. **Permission Errors**
    - Make wrapper script executable: `chmod +x ipfs-datasets`
@@ -314,19 +314,19 @@ opencv-contrib-python-headless>=4.11.0  # Computer vision
    ```bash
    ./ipfs-datasets --help
    ./ipfs-datasets <category> --help
-   python enhanced_cli.py --help
+   python scripts/cli/enhanced_cli.py --help
    ```
 
 2. Check system status:
    ```bash
    ./ipfs-datasets info status
-   python enhanced_cli.py bespoke_tools system_status
+   python scripts/cli/enhanced_cli.py bespoke_tools system_status
    ```
 
 3. List available tools:
    ```bash
    ./ipfs-datasets info list-tools
-   python enhanced_cli.py --list-categories
+   python scripts/cli/enhanced_cli.py --list-categories
    ```
 
 ## Architecture

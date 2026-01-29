@@ -30,14 +30,14 @@ Created custom Python script to scan ALL 300 files for:
 
 ### Batch 1 (Commit a5269a8) - 3 files
 1. `docs/guides/MCP_DASHBOARD_README.md`
-   - Updated: `from ipfs_datasets_py.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard`
+   - Updated: `from ipfs_datasets_py.dashboards.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard`
 
 2. `docs/misc_markdown/COMPREHENSIVE_MCP_DASHBOARD.md`
-   - Updated: `from ipfs_datasets_py.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard`
+   - Updated: `from ipfs_datasets_py.dashboards.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard`
 
 3. `docs/P2P_CACHE_SYSTEM.md`
-   - Updated (7x): `from ipfs_datasets_py.cache` → `from ipfs_datasets_py.caching.cache`
-   - Updated (4x): `from ipfs_datasets_py.p2p_peer_registry` → `from ipfs_datasets_py.p2p_networking.p2p_peer_registry`
+   - Updated (7x): `from ipfs_datasets_py.caching.cache` → `from ipfs_datasets_py.caching.cache`
+   - Updated (4x): `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` → `from ipfs_datasets_py.p2p_networking.p2p_peer_registry`
    - Updated paths in documentation text
 
 ### Batch 2 (Commit 6741f87) - 6 files
@@ -49,26 +49,26 @@ Created custom Python script to scan ALL 300 files for:
    - Updated: File path reference with deprecation note
 
 6. `docs/comprehensive_web_scraping_guide.md`
-   - Updated: `from ipfs_datasets_py.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated: `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
 
 7. `docs/migration_docs/MODULE_CREATION_SUMMARY.md`
-   - Updated: `from ipfs_datasets_py.web_archive` → `from ipfs_datasets_py.web_archiving.web_archive`
+   - Updated: `from ipfs_datasets_py.web_archiving.web_archive` → `from ipfs_datasets_py.web_archiving.web_archive`
 
 8. `docs/user_guide.md`
-   - Updated: `from ipfs_datasets_py.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated: `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
 
 9. `docs/tutorials/web_archive_tutorial.md`
-   - Updated (2x): `from ipfs_datasets_py.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated (2x): `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
 
 ### Batch 3 (Commit 73f3628) - 9 files
 10. `docs/GITHUB_ACTIONS_INFRASTRUCTURE.md`
-    - Updated (4x): `from ipfs_datasets_py.cache` → `from ipfs_datasets_py.caching.cache`
+    - Updated (4x): `from ipfs_datasets_py.caching.cache` → `from ipfs_datasets_py.caching.cache`
 
 11. `docs/distributed_features.md`
-    - Updated (3x): `from ipfs_datasets_py.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit`
+    - Updated (3x): `from ipfs_datasets_py.p2p_networking.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit`
 
 12. `docs/performance_optimization.md`
-    - Updated (2x): `from ipfs_datasets_py.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit`
+    - Updated (2x): `from ipfs_datasets_py.p2p_networking.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit`
 
 13. `docs/misc_markdown/CLI_README.md`
     - Updated: `enhanced_cli.py` → `scripts/cli/enhanced_cli.py` (deprecated)
@@ -91,11 +91,11 @@ Created custom Python script to scan ALL 300 files for:
 ## Patterns Corrected
 
 ### Import Path Updates
-- ✅ `from ipfs_datasets_py.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard` (2 files)
-- ✅ `from ipfs_datasets_py.cache` → `from ipfs_datasets_py.caching.cache` (2 files, 11 instances)
-- ✅ `from ipfs_datasets_py.p2p_peer_registry` → `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` (1 file, 4 instances)
-- ✅ `from ipfs_datasets_py.web_archive*` → `from ipfs_datasets_py.web_archiving.web_archive*` (4 files, 5 instances)
-- ✅ `from ipfs_datasets_py.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit` (2 files, 5 instances)
+- ✅ `from ipfs_datasets_py.dashboards.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard` (2 files)
+- ✅ `from ipfs_datasets_py.caching.cache` → `from ipfs_datasets_py.caching.cache` (2 files, 11 instances)
+- ✅ `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` → `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` (1 file, 4 instances)
+- ✅ `from ipfs_datasets_py.web_archiving.web_archive*` → `from ipfs_datasets_py.web_archiving.web_archive*` (4 files, 5 instances)
+- ✅ `from ipfs_datasets_py.p2p_networking.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit` (2 files, 5 instances)
 
 ### File Path Updates
 - ✅ `enhanced_cli.py` → `scripts/cli/enhanced_cli.py` (11 files) with deprecation notes
