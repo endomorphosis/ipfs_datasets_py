@@ -158,17 +158,17 @@ You can manually trigger this workflow from the Actions tab with optional parame
 ## Integration with Existing Tools
 
 This workflow leverages existing adhoc tools:
-- `adhoc_tools/find_documentation.py` - Discovers and catalogs documentation files
-- `adhoc_tools/docstring_audit.py` - Analyzes docstring quality and completeness
+- `scripts/dev_tools/find_documentation.py` - Discovers and catalogs documentation files
+- `scripts/dev_tools/docstring_audit.py` - Analyzes docstring quality and completeness
 
 These tools follow the standardized adhoc tool template and can also be run manually:
 
 ```bash
 # Find all documentation files
-python adhoc_tools/find_documentation.py --directory . --format json
+python scripts/dev_tools/find_documentation.py --directory . --format json
 
 # Audit docstring quality
-python adhoc_tools/docstring_audit.py --directory ipfs_datasets_py --output report.json
+python scripts/dev_tools/docstring_audit.py --directory ipfs_datasets_py --output report.json
 ```
 
 ## For AI Programming Agents
@@ -233,7 +233,7 @@ This workflow requires:
 - [CLAUDE.md](../../CLAUDE.md) - Worker coordination and documentation standards
 - [TODO.md](../../TODO.md) - Project-wide task tracking
 - [CHANGELOG.md](../../CHANGELOG.md) - Project history
-- [adhoc_tools/README.md](../../adhoc_tools/README.md) - Adhoc tools documentation
+- [scripts/dev_tools/README.md](../../scripts/dev_tools/README.md) - Adhoc tools documentation
 
 ## Support
 

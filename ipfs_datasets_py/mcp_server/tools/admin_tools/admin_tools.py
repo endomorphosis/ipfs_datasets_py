@@ -1,7 +1,13 @@
 # ipfs_datasets_py/mcp_server/tools/admin_tools/admin_tools.py
 """
-Administrative tools for system management and configuration.
-Lightweight mock implementations for testing and local usage.
+Administrative Tools MCP Interface
+
+This module provides lightweight mock implementations of administrative tools
+for testing and local usage. These are intentionally simple mock implementations
+without core business logic dependencies.
+
+For production use, these should be replaced with real implementations that
+connect to actual system management services.
 """
 
 from __future__ import annotations

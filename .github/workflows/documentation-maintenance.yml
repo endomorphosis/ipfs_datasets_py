@@ -54,7 +54,7 @@ jobs:
         id: find_docs
         run: |
           echo "🔍 Finding documentation files..."
-          python adhoc_tools/find_documentation.py \
+          python scripts/dev_tools/find_documentation.py \
             --directory . \
             --format json \
             --output /tmp/documentation_report.json \
@@ -72,7 +72,7 @@ jobs:
         id: docstring_audit
         run: |
           echo "📝 Auditing docstrings..."
-          python adhoc_tools/docstring_audit.py \
+          python scripts/dev_tools/docstring_audit.py \
             --directory ipfs_datasets_py \
             --output /tmp/docstring_report.json
           
