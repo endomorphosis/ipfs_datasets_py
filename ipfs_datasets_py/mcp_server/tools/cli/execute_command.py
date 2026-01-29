@@ -5,7 +5,9 @@ CLI tool for executing commands through the MCP interface.
 """
 from typing import Dict, Any, Optional, List
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def execute_command(
     command: str,

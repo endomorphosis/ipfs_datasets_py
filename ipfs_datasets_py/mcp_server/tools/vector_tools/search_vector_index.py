@@ -10,8 +10,10 @@ from typing import Dict, Any, Optional, Union, List
 
 import numpy as np
 
-from ipfs_datasets_py.mcp_server.logger import logger
-from ....vector_tools import VectorSimilarityCalculator, VectorStore
+import logging
+
+logger = logging.getLogger(__name__)
+from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator, VectorStore
 
 
 # Global manager instance to maintain state between calls

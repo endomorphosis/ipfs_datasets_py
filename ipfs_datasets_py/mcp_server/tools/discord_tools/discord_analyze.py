@@ -16,7 +16,9 @@ from pathlib import Path
 from collections import Counter
 from datetime import datetime
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def discord_analyze_channel(

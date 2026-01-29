@@ -6,7 +6,7 @@ using the WebArchiveProcessor from web_archive_utils.
 import os
 from typing import Dict, Optional, Any
 
-from ....web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 async def create_warc(
     url: str,

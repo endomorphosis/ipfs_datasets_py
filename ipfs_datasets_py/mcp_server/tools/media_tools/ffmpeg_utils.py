@@ -16,7 +16,9 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Union, Tuple
 import logging
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FFmpegError(Exception):
     """Custom exception for FFmpeg-related errors."""

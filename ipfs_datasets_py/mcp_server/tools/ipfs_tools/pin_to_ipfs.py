@@ -9,7 +9,9 @@ import os
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def pin_to_ipfs(
