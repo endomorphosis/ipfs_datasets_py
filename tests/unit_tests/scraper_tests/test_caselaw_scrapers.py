@@ -20,7 +20,7 @@ from ipfs_datasets_py.scraper_testing_framework import (
 )
 
 # Import legal scrapers
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
+from ipfs_datasets_py.legal_scrapers import (
     scrape_us_code,
     scrape_federal_register,
     scrape_state_laws,

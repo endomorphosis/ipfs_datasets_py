@@ -19,7 +19,7 @@ import pandas as pd
 import tqdm
 
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers._utils.configs import (
+from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers._utils.configs import (
     Configs, configs
 )
 from ipfs_datasets_py.ipfs_multiformats import get_cid
@@ -1012,7 +1012,7 @@ def make_mysql_to_parquet(configs: Configs = configs, resources: dict[str, Any] 
         InitializationError: If MySqlToParquet initialization fails unexpectedly.
     
     Example:
-        >>> from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers._utils.configs import configs
+        >>> from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers._utils.configs import configs
         >>> converter = make_mysql_to_parquet(configs=configs)
         >>> result = await converter.get_files_from_sql_server_as_parquet()
     """
