@@ -102,6 +102,7 @@ setup(
             'pytest-timeout>=2.0.2',
             'pytest-xdist>=3.8.0',
             'pytest-parallel>=0.1.1',
+            'pytest-benchmark>=4.0.0',
         ],
         # PDF processing dependencies
         'pdf': [
@@ -210,6 +211,7 @@ setup(
             'pytest-timeout>=2.0.2',
             'pytest-xdist>=3.8.0',
             'pytest-parallel>=0.1.1',
+            'pytest-benchmark>=4.0.0',
             # PDF
             'pdfplumber>=0.11.7',
             'pymupdf>=1.26.3',

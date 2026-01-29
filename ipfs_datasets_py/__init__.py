@@ -100,12 +100,18 @@ except ImportError:
     HAVE_ACCELERATE_MANAGER = False
 
 try:
-    from .dataset_serialization import (
+    from .data_transformation.dataset_serialization import (
         DatasetSerializer, GraphDataset, GraphNode, VectorAugmentedGraphDataset,
     )
     HAVE_DATASET_SERIALIZATION = True
 except ImportError:
     HAVE_DATASET_SERIALIZATION = False
+
+# Expose the module itself for `from ipfs_datasets_py import dataset_serialization`.
+try:
+    from .data_transformation import dataset_serialization as dataset_serialization  # type: ignore
+except Exception:
+    dataset_serialization = None  # type: ignore
 
 try:
     from .dataset_manager import DatasetManager
@@ -114,10 +120,22 @@ except ImportError:
     HAVE_DATASET_MANAGER = False
 
 try:
-    from .car_conversion import DataInterchangeUtils
+    from .data_transformation.car_conversion import DataInterchangeUtils
     HAVE_CAR_CONVERSION = True
 except ImportError:
     HAVE_CAR_CONVERSION = False
+
+# Expose the module itself for `from ipfs_datasets_py import car_conversion`.
+try:
+    from .data_transformation import car_conversion as car_conversion  # type: ignore
+except Exception:
+    car_conversion = None  # type: ignore
+
+# Expose Jsonnet helpers for `from ipfs_datasets_py import jsonnet_utils`.
+try:
+    from . import jsonnet_utils as jsonnet_utils  # type: ignore
+except Exception:
+    jsonnet_utils = None  # type: ignore
 
 try:
     from .unixfs_integration import UnixFSHandler, FixedSizeChunker, RabinChunker

@@ -648,8 +648,12 @@ class MultiModalContentProcessor:
     
     def _extract_text_basic(self, html_content: str) -> str:
         """Basic text extraction without external libraries"""
+        # Remove script/style blocks first (basic extraction keeps tag bodies).
+        text = re.sub(r'<script\b[^>]*>.*?</script>', ' ', html_content, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r'<style\b[^>]*>.*?</style>', ' ', text, flags=re.DOTALL | re.IGNORECASE)
+
         # Remove HTML tags
-        text = re.sub(r'<[^>]+>', ' ', html_content)
+        text = re.sub(r'<[^>]+>', ' ', text)
         
         # Decode HTML entities
         text = text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')

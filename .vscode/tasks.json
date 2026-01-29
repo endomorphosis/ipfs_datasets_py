@@ -498,8 +498,7 @@
 				"focus": false,
 				"panel": "shared"
 			}
-		}
-		,
+		},
 		{
 			"label": "Start MCP Dashboard (8899)",
 			"type": "shell",
@@ -534,7 +533,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Test MCP Dashboard Status",
@@ -547,7 +548,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Stop MCP Dashboard",
@@ -560,7 +563,9 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Run MCP CLI Tool",
@@ -575,7 +580,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "List MCP CLI Categories",
@@ -588,7 +595,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Run MCP Dashboard Playwright Tests",
@@ -603,7 +612,9 @@
 			"group": "test",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Start Docker MCP Server",
@@ -623,7 +634,9 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		},
 		{
 			"label": "Stop Docker MCP Server",
@@ -640,7 +653,45 @@
 			"group": "build",
 			"isBackground": false,
 			"problemMatcher": [],
-			"options": { "cwd": "${workspaceFolder}" }
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Probe __init__ content",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-c",
+				"import pathlib; p=pathlib.Path('ipfs_datasets_py/__init__.py'); print(p.read_text().splitlines()[10:18])"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Probe __init__ content 2",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-c",
+				"import pathlib; p=pathlib.Path(\"ipfs_datasets_py/__init__.py\"); print('\\n'.join(p.read_text().splitlines()[:25]))"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Probe __init__ content 3",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"-c",
+				"import pathlib; p=pathlib.Path(\"ipfs_datasets_py/__init__.py\"); print(\"\\\\n\".join(p.read_text().splitlines()[:25]))"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
 		}
 	],
 	"inputs": [
