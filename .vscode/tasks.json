@@ -692,9 +692,199 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
+		},
+		{
+			"label": "Dev Tools: Compile Checker",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/compile_checker.py",
+				"${input:compileCheckPath}",
+				"--verbose"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Import Checker",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/comprehensive_import_checker.py",
+				"--directory",
+				"${input:importCheckPath}",
+				"--verbose"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Python Checker",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/comprehensive_python_checker.py",
+				"--directory",
+				"${input:pythonCheckPath}"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Docstring Audit",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/docstring_audit.py",
+				"--directory",
+				"${input:docstringAuditPath}",
+				"--output",
+				"${workspaceFolder}/tmp/docstring_report.json"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Find Documentation",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/find_documentation.py",
+				"--directory",
+				"${input:findDocsPath}",
+				"--format",
+				"json",
+				"--verbose"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Stub Coverage Analysis",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/stub_coverage_analysis.py",
+				"--directory",
+				"${input:stubAnalysisPath}"
+			],
+			"group": "test",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Update TODO Workers",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/update_todo_workers.py"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "Dev Tools: Split TODO Script",
+			"type": "shell",
+			"command": "python",
+			"args": [
+				"scripts/dev_tools/split_todo_script.py"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
 		}
 	],
 	"inputs": [
+		{
+			"id": "compileCheckPath",
+			"description": "Path to check for compilation errors",
+			"default": "ipfs_datasets_py",
+			"type": "promptString"
+		},
+		{
+			"id": "importCheckPath",
+			"description": "Directory to check imports",
+			"default": "ipfs_datasets_py",
+			"type": "promptString"
+		},
+		{
+			"id": "pythonCheckPath",
+			"description": "Directory to check Python code",
+			"default": "ipfs_datasets_py",
+			"type": "promptString"
+		},
+		{
+			"id": "docstringAuditPath",
+			"description": "Directory to audit docstrings",
+			"default": "ipfs_datasets_py",
+			"type": "promptString"
+		},
+		{
+			"id": "findDocsPath",
+			"description": "Directory to find documentation",
+			"default": ".",
+			"type": "promptString"
+		},
+		{
+			"id": "stubAnalysisPath",
+			"description": "Directory to analyze stub coverage",
+			"default": "ipfs_datasets_py",
+			"type": "promptString"
+		},
 		{
 			"id": "toolCategory",
 			"description": "Tool category",
