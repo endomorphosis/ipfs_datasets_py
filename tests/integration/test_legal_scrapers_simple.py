@@ -12,14 +12,14 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
-# Import scrapers directly
-sys.path.insert(0, str(Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "legal_dataset_tools"))
-
-import us_code_scraper
-import federal_register_scraper
-import state_laws_scraper
-import municipal_laws_scraper
-import recap_archive_scraper
+# Import scrapers from their actual location
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
+    us_code_scraper,
+    federal_register_scraper,
+    state_laws_scraper,
+    municipal_laws_scraper,
+    recap_archive_scraper
+)
 
 
 async def test_us_code_scraper():
