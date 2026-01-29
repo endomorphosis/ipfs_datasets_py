@@ -25,7 +25,7 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_laws_scheduler import (
+from ipfs_datasets_py.legal_scrapers.state_laws_scheduler import (
     StateLawsUpdateScheduler,
     create_schedule,
     remove_schedule,

@@ -36,7 +36,7 @@ except ImportError:
     print("Install with: pip install requests beautifulsoup4")
     sys.exit(1)
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import (
+from ipfs_datasets_py.legal_scrapers.state_scrapers import (
     AlabamaScraper,
     ConnecticutScraper,
     DelawareScraper,

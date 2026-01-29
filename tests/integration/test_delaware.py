@@ -2,7 +2,7 @@
 """Test Delaware scraper with updated link extraction."""
 import anyio
 import logging
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import DelawareScraper
+from ipfs_datasets_py.legal_scrapers.state_scrapers import DelawareScraper
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 

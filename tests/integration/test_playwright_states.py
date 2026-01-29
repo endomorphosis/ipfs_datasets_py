@@ -4,7 +4,7 @@ import anyio
 import sys
 sys.path.insert(0, '/home/devel/ipfs_datasets_py')
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import (
+from ipfs_datasets_py.legal_scrapers.state_scrapers import (
     DelawareScraper, GeorgiaScraper, IndianaScraper, WyomingScraper
 )
 

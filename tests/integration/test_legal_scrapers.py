@@ -12,7 +12,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
+from ipfs_datasets_py.legal_scrapers import (
     scrape_us_code,
     get_us_code_titles,
     scrape_federal_register,

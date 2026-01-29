@@ -1,7 +1,7 @@
 """Compatibility shim for legacy imports.
 
 The legal scraper implementations live under
-`ipfs_datasets_py.mcp_server.tools.legal_dataset_tools`.
+`ipfs_datasets_py.legal_scrapers`.
 """
 
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.federal_register_scraper import *  # noqa: F401,F403
+from ipfs_datasets_py.legal_scrapers.federal_register_scraper import *  # noqa: F401,F403

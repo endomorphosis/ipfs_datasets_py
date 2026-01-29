@@ -16,7 +16,7 @@ aiohttp = pytest.importorskip("aiohttp")
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # Import directly from the module file
-from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers.ecode360_scraper import (
+from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers.ecode360_scraper import (
     search_jurisdictions,
     get_ecode360_jurisdictions,
     scrape_jurisdiction,
