@@ -110,7 +110,7 @@ def export_to_parquet(
                 "error": f"Required library not available: {ie}. Install with: pip install pyarrow"
             }
         
-        output_file = Path(output_path)
+        output_file = _safe_output_path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
         # Convert list of dicts to PyArrow Table
@@ -166,7 +166,7 @@ def export_to_csv(
     try:
         import csv
         
-        output_file = Path(output_path)
+        output_file = _safe_output_path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
         if not data:
