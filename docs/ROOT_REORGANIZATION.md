@@ -184,7 +184,7 @@ The following files remain in the root directory as they are standard for Python
 ### CLI Entry Points
 - `ipfs_datasets_cli.py` - Main CLI entry point
 - `mcp_cli.py` - MCP CLI entry point
-- `enhanced_cli.py` - Enhanced CLI interface
+- `scripts/cli/enhanced_cli.py` - Enhanced CLI interface (deprecated, use main CLI)
 - `integrated_cli.py` - Integrated CLI interface
 - `comprehensive_distributed_cli.py` - Distributed CLI
 - `comprehensive_mcp_tools.py` - MCP tools interface

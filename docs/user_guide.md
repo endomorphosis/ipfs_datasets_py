@@ -366,7 +366,7 @@ IPFS Datasets Python provides comprehensive web scraping and archiving capabilit
 Archive websites directly to IPFS with decentralized access:
 
 ```python
-from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
 
 processor = WebArchiveProcessor()
 

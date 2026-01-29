@@ -32,7 +32,7 @@ Web archives provide valuable historical data that can be processed into structu
 First, let's set up our environment for web archive processing:
 
 ```python
-from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
 import os
 import tempfile
 
@@ -638,7 +638,7 @@ import os
 import json
 import time
 from pathlib import Path
-from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
 
 def complete_web_archive_workflow():
     """Complete workflow for web archive processing."""
