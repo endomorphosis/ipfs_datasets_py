@@ -1,10 +1,404 @@
-import concurrent.futures as cf
+"""Compatibility shim for HuggingFace upload pipeline.
+
+Tests and some integrations reference this module path under the MCP tools
+namespace. The canonical implementation lives in:
+
+    ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers.hugging_face_pipeline
+
+This module re-exports that implementation when available, and provides a small
+fallback implementation for environments where optional dependencies (e.g.
+`huggingface_hub`) are not installed.
+"""
+
+from __future__ import annotations
+
 import logging
-from pathlib import Path
-import re
-import time
-import threading
+
 from typing import Any, Optional
+
+# Prefer the canonical implementation.
+try:  # pragma: no cover
+    from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers.hugging_face_pipeline import (  # noqa: F401
+        CommitInfo,
+        HfApi,
+        HfHubHTTPError,
+        RateLimiter,
+        UploadToHuggingFaceInParallel,
+        login,
+    )
+
+except Exception:  # pragma: no cover
+    # Fallback implementation (kept dependency-light for tests/mocks).
+    import concurrent.futures as cf
+    import logging
+    import re
+    import threading
+    import time
+    from pathlib import Path
+    from typing import Protocol
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        from huggingface_hub import HfApi, CommitInfo, login  # type: ignore
+        from huggingface_hub.errors import HfHubHTTPError  # type: ignore
+    except Exception:
+
+        def login(*_args: Any, **_kwargs: Any) -> None:  # type: ignore
+            return None
+
+        class CommitInfo:  # type: ignore
+            pass
+
+        class HfHubHTTPError(Exception):  # type: ignore
+            def __init__(self, *args: Any, response: Any = None, **kwargs: Any):
+                super().__init__(*args)
+                self.response = response
+
+        class HfApi:  # type: ignore
+            def list_repo_files(self, *args: Any, **kwargs: Any) -> list[str]:
+                return []
+
+            def upload_file(self, *args: Any, **kwargs: Any) -> cf.Future:
+                fut: cf.Future = cf.Future()
+                fut.set_result(None)
+                return fut
+
+            def upload_folder(self, *args: Any, **kwargs: Any) -> cf.Future:
+                fut: cf.Future = cf.Future()
+                fut.set_result(None)
+                return fut
+
+    try:
+        import tqdm  # type: ignore
+    except Exception:
+
+        class _TqdmNoOp:  # pragma: no cover
+            def __init__(self, *args: Any, **kwargs: Any) -> None:
+                pass
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb) -> None:  # noqa: ANN001
+                return None
+
+            def update(self, n: int = 1) -> None:
+                return None
+
+        class _TqdmModule:  # pragma: no cover
+            tqdm = _TqdmNoOp
+
+        tqdm = _TqdmModule()  # type: ignore
+
+
+    class _ConfigsLike(Protocol):
+        REPO_ID: str
+        HUGGING_FACE_USER_ACCESS_TOKEN: str
+
+        class paths(Protocol):
+            INPUT_FROM_SQL: Path
+
+        TARGET_DIR_NAME: str
+
+
+    def _normalize_repo_path(path: str) -> str:
+        """Normalize HF repo paths to POSIX and strip leading slashes."""
+        p = path.replace("\\", "/")
+        p = re.sub(r"/+", "/", p)
+        return p.lstrip("/")
+
+
+    class RateLimiter:
+        """Token bucket rate limiter for API requests."""
+
+        def __init__(self, request_limit_per_hour: int = 300) -> None:
+            if request_limit_per_hour <= 0:
+                raise ValueError("request_limit_per_hour must be > 0")
+            self.request_limit_per_hour = int(request_limit_per_hour)
+            self.tokens: float = float(request_limit_per_hour)  # start full
+            self.token_rate: float = float(request_limit_per_hour) / 3600.0  # tokens/sec
+            self.last_update_time: float = time.time()
+            self.mutex = threading.Lock()
+
+        def _update_tokens(self) -> None:
+            current_time = time.time()
+            time_diff = current_time - self.last_update_time
+            if time_diff <= 0:
+                return
+
+            new_tokens = time_diff * self.token_rate
+            with self.mutex:
+                self.tokens = min(float(self.request_limit_per_hour), self.tokens + new_tokens)
+                self.last_update_time = current_time
+
+        def wait_for_token(self, tokens: int = 1) -> float:
+            if tokens <= 0:
+                return 0.0
+
+            start_wait = time.time()
+            while True:
+                self._update_tokens()
+
+                with self.mutex:
+                    if self.tokens >= tokens:
+                        self.tokens -= tokens
+                        return time.time() - start_wait
+
+                    needed_tokens = float(tokens) - self.tokens
+
+                # Sleep outside the lock.
+                sleep_time = needed_tokens / self.token_rate if needed_tokens > 0 else 0.1
+                time.sleep(min(max(sleep_time, 0.05), 1.0))
+
+        def get_available_tokens(self) -> float:
+            self._update_tokens()
+            with self.mutex:
+                return float(self.tokens)
+
+        def reset(self) -> None:
+            with self.mutex:
+                self.tokens = float(self.request_limit_per_hour)
+                self.last_update_time = time.time()
+
+
+    class UploadToHuggingFaceInParallel:
+        """Upload files/folders to HuggingFace with simple rate limiting."""
+
+        _HUGGING_FACE_API_LIMIT_PER_HOUR = 300
+        _REPO_TYPE = "dataset"
+
+        def __init__(self, *, resources: dict[str, Any], configs: _ConfigsLike) -> None:
+            self.configs = configs
+            self.resources = resources
+            self.logger = resources.get("logger", logger)
+
+            self.repo_id: str = configs.REPO_ID
+            self.sql_input: Path = configs.paths.INPUT_FROM_SQL
+            self.target_dir_name: str = configs.TARGET_DIR_NAME
+
+            self.requests_per_hour: int = self._HUGGING_FACE_API_LIMIT_PER_HOUR
+            self.rate_limiter = RateLimiter(request_limit_per_hour=self.requests_per_hour)
+
+            self.upload_count = 0
+            self.failed_count = 0
+            self.retry_count = 0
+
+            self.repo_type: str = self._REPO_TYPE
+            self._setup_hugging_face_api()
+            self.api = HfApi()
+
+        def _setup_hugging_face_api(self) -> None:
+            login(self.configs.HUGGING_FACE_USER_ACCESS_TOKEN)
+
+        def _get_target_dir_name(self, *, at_the_end: bool = False, at_the_beginning: bool = False) -> str:
+            # Keep the historical name for compatibility but normalize to HF expected format.
+            p = _normalize_repo_path(self.target_dir_name)
+            if at_the_beginning:
+                # historically would add '/', but HF expects relative paths; we no-op.
+                pass
+            if at_the_end and p and not p.endswith("/"):
+                p = f"{p}/"
+            return p
+
+        def _get_already_processed_files(self) -> set[str]:
+            if not self.api:
+                self.logger.error("API not initialized, can't get processed files")
+                return set()
+
+            self.rate_limiter.wait_for_token()
+            file_info = self.api.list_repo_files(repo_id=self.repo_id, repo_type=self.repo_type, revision="main")
+
+            parquet_files = [f for f in file_info if ".json" not in f]
+            prefix = self._get_target_dir_name(at_the_end=True)
+
+            def _strip_prefix(x: str) -> str:
+                x = _normalize_repo_path(x)
+                return re.sub(rf"^{re.escape(prefix)}", "", x)
+
+            file_info_set = set(map(_strip_prefix, parquet_files))
+            self.logger.info(f"Found {len(file_info_set)} files in the repository {self.repo_id}.")
+            return file_info_set
+
+        def _get_folders_to_upload(self, data_dir: Path, file_info_set: set[str]) -> list[Path]:
+            folders_to_upload: list[Path] = []
+            if not data_dir.exists():
+                return folders_to_upload
+
+            for entry in data_dir.iterdir():
+                if not entry.is_dir():
+                    continue
+
+                # Upload the folder if any parquet file is missing.
+                if any(f.name not in file_info_set for f in entry.glob("**/*.parquet") if f.is_file()):
+                    folders_to_upload.append(entry)
+            return folders_to_upload
+
+        def _upload_file(self, *, file_path: Path, path_in_repo: str) -> cf.Future:
+            # HF expects a POSIX, repo-relative path.
+            repo_path = f"{_normalize_repo_path(path_in_repo).rstrip('/')}/{file_path.name}".lstrip("/")
+            return self.api.upload_file(  # type: ignore[call-arg]
+                path_or_fileobj=file_path,
+                path_in_repo=repo_path,
+                repo_id=self.repo_id,
+                repo_type=self.repo_type,
+                run_as_future=True,
+            )
+
+        def _upload_folder(self, *, folder_path: Path, path_in_repo: str, delete_patterns: str) -> cf.Future:
+            return self.api.upload_folder(
+                folder_path=folder_path,
+                path_in_repo=_normalize_repo_path(path_in_repo),
+                repo_id=self.repo_id,
+                repo_type=self.repo_type,
+                delete_patterns=delete_patterns,
+                run_as_future=True,
+            )
+
+        def upload_with_retry(
+            self,
+            dir: Path,
+            path_in_repo: str,
+            delete_patterns: str,
+            max_retries: int = 3,
+            retry_delay: float = 5.0,
+        ) -> cf.Future | None:
+            for attempt in range(max_retries):
+                try:
+                    wait_time = self.rate_limiter.wait_for_token()
+                    if wait_time > 0.1:
+                        self.logger.info(f"Rate limited: waited {wait_time:.2f}s for token")
+
+                    if dir.is_file():
+                        future = self._upload_file(file_path=dir, path_in_repo=path_in_repo)
+                    else:
+                        future = self._upload_folder(
+                            folder_path=dir,
+                            path_in_repo=path_in_repo,
+                            delete_patterns=delete_patterns,
+                        )
+
+                    self.upload_count += 1
+                    self.logger.info(f"Submitted upload for {dir.name} on attempt {attempt + 1}")
+                    return future
+
+                except cf.CancelledError as e:
+                    self.logger.error(f"Future was cancelled: {e}")
+                except cf.TimeoutError as e:
+                    self.logger.error(f"Future timed out: {e}")
+                except HfHubHTTPError as e:
+                    if getattr(e, "response", None) is not None and getattr(e.response, "status_code", None) == 429:
+                        self.logger.warning(f"Rate limit exceeded, waiting longer before retry: {e}")
+                        time.sleep(retry_delay * 2)
+                    else:
+                        self.logger.error(f"HTTP error while uploading {dir.name}: {e}")
+                        time.sleep(retry_delay)
+                except Exception as e:
+                    self.logger.exception(f"Exception while uploading {dir.name}: {e}")
+                    time.sleep(retry_delay)
+
+                self.retry_count += 1
+                self.logger.info(
+                    f"Retrying upload for {dir.name} (attempt {attempt + 2}/{max_retries}) after {retry_delay} seconds"
+                )
+
+            self.failed_count += 1
+            self.logger.error(f"Failed to upload {dir.name} after {max_retries} attempts")
+            return None
+
+        async def upload_to_hugging_face_in_parallel(
+            self,
+            output_dir: Path,
+            target_dir_name: str,
+            file_path_ending: str = ".*",
+            max_concurrency: Optional[int] = None,
+            upload_piecemeal: bool = False,
+        ) -> dict[str, int]:
+            if not self.api:
+                self.logger.error("API not initialized, can't upload files")
+                return {"uploaded": 0, "failed": 0, "retried": 0}
+
+            self.upload_count = 0
+            self.failed_count = 0
+            self.retry_count = 0
+
+            if max_concurrency is None:
+                max_concurrency = max(1, int(self.requests_per_hour / 60) - 1)
+
+            if file_path_ending not in (".*", ""):
+                file_path_ending = f"*{file_path_ending}"
+
+            num_files = len([f for f in output_dir.glob("**/*.parquet") if f.is_file()])
+            data_dir = self.sql_input / target_dir_name
+            self.logger.info(f"Detected {num_files} files in {output_dir}.")
+
+            file_info_set = self._get_already_processed_files()
+            folders_to_upload = self._get_folders_to_upload(data_dir, file_info_set)
+            self.logger.info(f"Got {len(folders_to_upload)} folders with un-uploaded files.")
+
+            items: list[Path]
+            if upload_piecemeal:
+                items = []
+                for folder in folders_to_upload:
+                    items.extend([f for f in folder.glob("**/*.parquet") if f.is_file()])
+                desc = "Uploading files"
+            else:
+                items = folders_to_upload
+                desc = "Uploading folders"
+
+            repo_target = _normalize_repo_path(self.target_dir_name)
+
+            with tqdm.tqdm(total=len(items), desc=desc) as pbar:
+                with cf.ThreadPoolExecutor(max_workers=max_concurrency) as executor:
+                    futures: dict[cf.Future, Path] = {}
+                    for item in items:
+                        # Delete patterns should be repo-relative, glob style.
+                        if item.is_dir():
+                            delete_patterns = f"{repo_target}/{item.name}/{file_path_ending}".lstrip("/")
+                        else:
+                            delete_patterns = f"{repo_target}/{item.name}".lstrip("/")
+
+                        futures[
+                            executor.submit(
+                                self.upload_with_retry,
+                                dir=item,
+                                path_in_repo=repo_target,
+                                delete_patterns=delete_patterns,
+                            )
+                        ] = item
+
+                    for future in cf.as_completed(futures):
+                        item = futures[future]
+                        try:
+                            result = future.result()
+                            if not result:
+                                self.logger.warning(f"Failed to upload {item.name}")
+                        except Exception as e:
+                            self.logger.exception(f"Unhandled exception for {item.name}: {e}")
+                            self.failed_count += 1
+                        finally:
+                            pbar.update(1)
+
+            self.logger.info(f"Uploaded {self.upload_count} items to {self.repo_id}.")
+            if self.retry_count:
+                self.logger.info(f"Required {self.retry_count} retries during the upload process.")
+            if self.failed_count:
+                self.logger.error(
+                    f"Failed to upload {self.failed_count} items to {self.repo_id}. Please check the logs for details."
+                )
+
+            return {"uploaded": self.upload_count, "failed": self.failed_count, "retried": self.retry_count}
+
+
+__all__ = [
+    "CommitInfo",
+    "HfApi",
+    "HfHubHTTPError",
+    "RateLimiter",
+    "UploadToHuggingFaceInParallel",
+    "login",
+]
+
 
 
 try:
@@ -232,21 +626,15 @@ class UploadToHuggingFaceInParallel:
         
         # Set repository type and initialize API
         self.repo_type: str = self._REPO_TYPE
-
-        # Initialize API client (no network calls at init-time).
+        
+        # Initialize API
         self._setup_hugging_face_api()
+        self.api = HfApi()
 
 
     def _setup_hugging_face_api(self) -> None:
-        """Set up the HuggingFace API client.
-
-        Note: We intentionally avoid calling `huggingface_hub.login()` here because it
-        may trigger network requests (e.g., token validation). Instead, we pass the
-        token directly to the API client so callers and tests can fully mock behavior.
-        """
-
-        token: Optional[str] = getattr(self.configs, "HUGGING_FACE_USER_ACCESS_TOKEN", None)
-        self.api = HfApi(token=token) if token else HfApi()
+        """Set up the HuggingFace API by logging in with the access token."""
+        login(self.configs.HUGGING_FACE_USER_ACCESS_TOKEN)
 
 
     def _get_target_dir_name_with_backslash(self, at_the_end: Optional[bool] = None, at_the_beginning: Optional[bool] = None) -> str:

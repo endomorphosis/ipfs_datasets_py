@@ -1,4 +1,7 @@
 """Configuration utilities for the municipal law database scrapers."""
+
+from __future__ import annotations
+
 import logging
 import shutil
 from pathlib import Path
@@ -15,6 +18,9 @@ from pydantic import (
     SecretStr
 )
 import yaml
+
+
+logger = logging.getLogger(__name__)
 
 
 _SUPPORTED_FILE_TYPES = [
@@ -88,30 +94,56 @@ class Paths(BaseModel):
     def INPUT_FROM_SQL(self):
         return self._INPUT_FROM_SQL
 
-# Iterate over Paths Enum
-try:
-    paths = Paths()
-    for _, path in paths:
-        if path not in {paths.ROOT_DIR, paths.HOME_DIR}:  # Use set for efficiency
-            if path.suffix in ('.csv', '.yaml', '.txt', '.json'):  # Use .suffix instead of endswith()
-                if not path.parent.exists():
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                if not path.exists():
-                    if path.name in {"configs.yaml", "sql_configs.yaml"}:
-                        example_path = paths.ROOT_DIR / f"{path.name}.example"
-                        if example_path.exists():
-                            shutil.copyfile(example_path, path)
-                        else:
-                            path.touch()
+
+_paths_instance: Paths | None = None
+
+
+def _ensure_paths_exist(current_paths: Paths) -> None:
+    for _, path in current_paths:
+        if path in {current_paths.ROOT_DIR, current_paths.HOME_DIR}:
+            continue
+
+        if path.suffix in (".csv", ".yaml", ".txt", ".json"):
+            if not path.parent.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+            if not path.exists():
+                if path.name in {"configs.yaml", "sql_configs.yaml"}:
+                    example_path = current_paths.ROOT_DIR / f"{path.name}.example"
+                    if example_path.exists():
+                        shutil.copyfile(example_path, path)
                     else:
                         path.touch()
-                    print(f"Created file {path.name} at {path}")
-            else:
-                if not path.exists():
-                    path.mkdir(parents=True, exist_ok=True)
-                    print(f"Created directory {path.name} at {path}")
-except Exception as e:
-    raise RuntimeError(f"Error initializing paths: {e}") from e
+                else:
+                    path.touch()
+                logger.debug("Created file %s at %s", path.name, path)
+        else:
+            if not path.exists():
+                path.mkdir(parents=True, exist_ok=True)
+                logger.debug("Created directory %s at %s", path.name, path)
+
+
+def get_paths(*, ensure_exists: bool = True) -> Paths:
+    """Return a cached :class:`Paths` instance.
+
+    This module historically performed filesystem writes at import time. That
+    made unit tests and import-time patching brittle, so path initialization is
+    now lazy.
+    """
+
+    global _paths_instance
+    if _paths_instance is None:
+        _paths_instance = Paths()
+    if ensure_exists:
+        _ensure_paths_exist(_paths_instance)
+    return _paths_instance
+
+
+class _PathsProxy:
+    def __getattr__(self, name: str):
+        return getattr(get_paths(ensure_exists=True), name)
+
+
+paths: Paths = _PathsProxy()  # type: ignore[assignment]
 
 
 def _make_log_level_an_int(value: str|int) -> int:
@@ -196,14 +228,15 @@ class Configs(BaseModel):
     _sql: Optional[Sql] = None
 
     def __init__(self, **data):
-        defaults = _load_yaml_mapping(paths.ROOT_DIR / "configs.yaml.example")
-        overrides = _load_yaml_mapping(paths.CONFIG_YAML_PATH)
+        current_paths = get_paths(ensure_exists=True)
+        defaults = _load_yaml_mapping(current_paths.ROOT_DIR / "configs.yaml.example")
+        overrides = _load_yaml_mapping(current_paths.CONFIG_YAML_PATH)
         merged = _deep_merge_dicts(defaults, overrides)
 
         super().__init__(**merged)
 
-        sql_defaults = _load_yaml_mapping(paths.ROOT_DIR / "sql_configs.yaml.example")
-        sql_overrides = _load_yaml_mapping(paths.SQL_CONFIG_YAML_PATH)
+        sql_defaults = _load_yaml_mapping(current_paths.ROOT_DIR / "sql_configs.yaml.example")
+        sql_overrides = _load_yaml_mapping(current_paths.SQL_CONFIG_YAML_PATH)
         sql_merged = _deep_merge_dicts(sql_defaults, sql_overrides)
         self._sql = Sql(**sql_merged)
 
@@ -217,7 +250,29 @@ class Configs(BaseModel):
             raise ValueError("SQL configuration for configs has not been set.")
         return self._sql
 
-try:
-    configs = Configs()
-except Exception as e:
-    raise RuntimeError(f"Error loading configurations: {e}") from e
+
+
+_configs_instance: Configs | None = None
+
+
+def load_configs() -> Configs:
+    """Load and return a cached :class:`Configs` instance.
+
+    Raises a :class:`RuntimeError` if configuration cannot be loaded.
+    """
+
+    global _configs_instance
+    if _configs_instance is None:
+        try:
+            _configs_instance = Configs()
+        except Exception as e:  # pragma: no cover
+            raise RuntimeError(f"Error loading configurations: {e}") from e
+    return _configs_instance
+
+
+class _ConfigsProxy:
+    def __getattr__(self, name: str):
+        return getattr(load_configs(), name)
+
+
+configs: Configs = _ConfigsProxy()  # type: ignore[assignment]
