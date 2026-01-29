@@ -5,9 +5,8 @@ including case law, statutes, regulations, and cross-references.
 """
 import re
 import logging
-from typing import Dict, List, Optional, Any, Set, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -438,3 +437,12 @@ def create_citation_network(documents: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     extractor = CitationExtractor()
     return extractor.create_citation_graph(documents)
+
+
+__all__ = [
+    "Citation",
+    "CitationExtractor",
+    "extract_citations_from_text",
+    "analyze_document_citations",
+    "create_citation_network",
+]

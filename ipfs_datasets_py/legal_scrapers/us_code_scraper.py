@@ -7,7 +7,6 @@ import logging
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-import json
 import anyio
 
 try:
@@ -460,3 +459,11 @@ async def scrape_us_code(
             "data": [],
             "metadata": {}
         }
+
+
+__all__ = [
+    "get_us_code_titles",
+    "scrape_us_code",
+    "search_us_code",
+    "fetch_us_code_title",
+]

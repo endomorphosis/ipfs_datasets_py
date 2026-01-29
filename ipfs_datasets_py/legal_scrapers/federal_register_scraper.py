@@ -464,3 +464,9 @@ async def scrape_federal_register(
             "data": [],
             "metadata": {}
         }
+
+
+__all__ = [
+    "search_federal_register",
+    "scrape_federal_register",
+]

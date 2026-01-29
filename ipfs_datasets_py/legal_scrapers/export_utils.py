@@ -5,7 +5,7 @@ JSON, Parquet, and CSV.
 """
 import logging
 import json
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from pathlib import Path
 import os
 
@@ -58,7 +58,7 @@ def export_to_json(
         Dict with status and file info
     """
     try:
-        output_file = Path(output_path)
+        output_file = _safe_output_path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
         
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -247,7 +247,9 @@ def export_dataset(
         format: Export format (json, parquet, csv)
         **kwargs: Format-specific options
     
-
+    Returns:
+        Dict with status and file info
+    """
     # Normalize and validate the output path to prevent path traversal and
     # uncontrolled writes outside of the export base directory.
     try:
@@ -258,9 +260,7 @@ def export_dataset(
             "status": "error",
             "error": "Invalid output path"
         }
-    Returns:
-        Dict with status and file info
-    """
+    
     format_lower = format.lower()
     
     # Ensure proper file extension
@@ -284,3 +284,11 @@ def export_dataset(
             "status": "error",
             "error": f"Unsupported format: {format}. Supported formats: json, parquet, csv"
         }
+
+
+__all__ = [
+    "export_to_json",
+    "export_to_parquet",
+    "export_to_csv",
+    "export_dataset",
+]

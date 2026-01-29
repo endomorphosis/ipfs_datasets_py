@@ -258,3 +258,9 @@ async def scrape_municipal_laws(
             "data": [],
             "metadata": {}
         }
+
+
+__all__ = [
+    "search_municipal_codes",
+    "scrape_municipal_laws",
+]

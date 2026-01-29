@@ -392,3 +392,9 @@ def _identify_legal_area(text: str, legal_areas: Optional[List[str]] = None) -> 
                 return area
     
     return "general"
+
+
+__all__ = [
+    "list_state_jurisdictions",
+    "scrape_state_laws",
+]

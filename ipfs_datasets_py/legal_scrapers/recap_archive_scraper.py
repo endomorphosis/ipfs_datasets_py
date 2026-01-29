@@ -618,7 +618,7 @@ async def scrape_recap_archive(
         # Try to get job_id from state if available
         try:
             state_job_id = job_id if 'job_id' in locals() else None
-        except:
+        except Exception:
             state_job_id = None
         
         return {
@@ -629,3 +629,10 @@ async def scrape_recap_archive(
             "job_id": state_job_id,
             "note": "Scraping failed. State saved for resume if job_id is available."
         }
+
+
+__all__ = [
+    "search_recap_documents",
+    "scrape_recap_archive",
+    "get_recap_document",
+]

@@ -6,8 +6,7 @@ including CAR file generation, IPLD DAG structures, metadata tracking, and pin m
 import logging
 import json
 import time
-import hashlib
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from datetime import datetime
 from pathlib import Path
 
@@ -498,3 +497,11 @@ def list_ipfs_datasets() -> Dict[str, Any]:
     """
     manager = IPFSStorageManager()
     return manager.list_datasets()
+
+
+__all__ = [
+    "IPFSStorageManager",
+    "store_dataset_to_ipfs",
+    "retrieve_dataset_from_ipfs",
+    "list_ipfs_datasets",
+]
