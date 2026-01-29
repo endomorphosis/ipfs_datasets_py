@@ -18,8 +18,8 @@ IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 
-def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
-    """Check whether ipfs_kit_py is installed from the known_good repo path."""
+def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
+    """Check whether ipfs_kit_py is installed from the main repo path."""
     try:
         spec = importlib.util.find_spec('ipfs_kit_py')
         if not spec or not spec.origin:
@@ -30,27 +30,27 @@ def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
     except Exception:
         return False
 
-def ensure_known_good_ipfs_kit_py() -> None:
-    """Ensure ipfs_kit_py is installed from the known_good branch."""
+def ensure_main_ipfs_kit_py() -> None:
+    """Ensure ipfs_kit_py is installed from the main branch."""
 
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
 
     repo_root = Path(__file__).resolve().parent
     repo_path = repo_root / '.third_party' / 'ipfs_kit_py'
-    marker_file = repo_path / '.known_good_installed'
+    marker_file = repo_path / '.main_installed'
 
     if marker_file.exists():
         os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
         return
 
-    if _is_known_good_ipfs_kit_py_installed(repo_path):
+    if _is_main_ipfs_kit_py_installed(repo_path):
         os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
         return
 
     try:
         subprocess.run(['git', '--version'], check=True, capture_output=True, text=True)
     except Exception as e:
-        print(f"⚠️ Git not available; skipping known_good ipfs_kit_py install: {e}")
+        print(f"⚠️ Git not available; skipping main ipfs_kit_py install: {e}")
         return
 
     try:
@@ -64,17 +64,17 @@ def ensure_known_good_ipfs_kit_py() -> None:
             ], check=False, text=True)
 
         subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
-        subprocess.run(['git', '-C', str(repo_path), 'checkout', 'known_good'], check=False, text=True)
+        subprocess.run(['git', '-C', str(repo_path), 'checkout', 'main'], check=False, text=True)
 
         result = subprocess.run([
             sys.executable, '-m', 'pip', 'install', '-e', str(repo_path),
             '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
         ], check=False, text=True)
         if result.returncode == 0:
-            marker_file.write_text('known_good', encoding='utf-8')
+            marker_file.write_text('main', encoding='utf-8')
             os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
     except Exception as e:
-        print(f"⚠️ Failed to install known_good ipfs_kit_py: {e}")
+        print(f"⚠️ Failed to install main ipfs_kit_py: {e}")
 
 
 def ensure_libp2p_main() -> None:
@@ -292,7 +292,7 @@ Examples:
     
     args = parser.parse_args()
 
-    ensure_known_good_ipfs_kit_py()
+    ensure_main_ipfs_kit_py()
     ensure_libp2p_main()
     
     # Enable auto-installation if requested

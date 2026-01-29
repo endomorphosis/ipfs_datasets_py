@@ -99,10 +99,10 @@ def test_submodule_git_status():
                 if line.startswith('*'):
                     branch_info = line.strip()
                     print(f"✅ Current branch: {branch_info}")
-                    if 'known_good' in branch_info:
-                        print("✅ Confirmed on known_good branch")
+                    if 'main' in branch_info:
+                        print("✅ Confirmed on main branch")
                     else:
-                        print("⚠️ Not on known_good branch")
+                        print("⚠️ Not on main branch")
                     break
         else:
             print(f"❌ Error checking branch: {result.stderr}")

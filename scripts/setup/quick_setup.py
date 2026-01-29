@@ -74,8 +74,8 @@ def check_pip():
     except subprocess.CalledProcessError:
         return False
 
-def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
-    """Check whether ipfs_kit_py is installed from the known_good repo path."""
+def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
+    """Check whether ipfs_kit_py is installed from the main repo path."""
     try:
         spec = importlib.util.find_spec('ipfs_kit_py')
         if not spec or not spec.origin:
@@ -86,12 +86,8 @@ def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
     except Exception:
         return False
 
-def ensure_known_good_ipfs_kit_py(logger):
-    """Ensure ipfs_kit_py is installed from the known_good branch.
-
-    Also tolerates the `known_goo` alias (typo-safe): tries `known_goo` first and
-    falls back to `known_good`.
-    """
+def ensure_main_ipfs_kit_py(logger):
+    """Ensure ipfs_kit_py is installed from the main branch."""
 
     if os.environ.get('IPFS_KIT_PY_INSTALLED', '').lower() == 'true':
         return
@@ -99,20 +95,20 @@ def ensure_known_good_ipfs_kit_py(logger):
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
     repo_root = Path(__file__).resolve().parent
     repo_path = repo_root / '.third_party' / 'ipfs_kit_py'
-    marker_file = repo_path / '.known_good_installed'
+    marker_file = repo_path / '.main_installed'
 
     if marker_file.exists():
         os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
         return
 
-    if _is_known_good_ipfs_kit_py_installed(repo_path):
+    if _is_main_ipfs_kit_py_installed(repo_path):
         os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
         return
 
     try:
         subprocess.run(['git', '--version'], check=True, capture_output=True, text=True)
     except Exception as e:
-        logger.warning(f"Git not available; skipping known_good ipfs_kit_py install: {e}")
+        logger.warning(f"Git not available; skipping main ipfs_kit_py install: {e}")
         return
 
     try:
@@ -126,20 +122,14 @@ def ensure_known_good_ipfs_kit_py(logger):
 
         subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
 
-        checked_out_branch = None
-        for branch in ("known_goo", "known_good"):
-            checkout = subprocess.run(
-                ['git', '-C', str(repo_path), 'checkout', branch],
-                check=False,
-                text=True,
-                capture_output=True,
-            )
-            if checkout.returncode == 0:
-                checked_out_branch = branch
-                break
-
-        if checked_out_branch is None:
-            logger.warning("Failed to checkout ipfs_kit_py branch 'known_goo' or 'known_good'")
+        checkout = subprocess.run(
+            ['git', '-C', str(repo_path), 'checkout', 'main'],
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+        if checkout.returncode != 0:
+            logger.warning("Failed to checkout ipfs_kit_py branch 'main'")
             return
 
         result = subprocess.run([
@@ -147,10 +137,10 @@ def ensure_known_good_ipfs_kit_py(logger):
             '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
         ], check=False, text=True)
         if result.returncode == 0:
-            marker_file.write_text(checked_out_branch, encoding='utf-8')
+            marker_file.write_text('main', encoding='utf-8')
             os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
     except Exception as e:
-        logger.warning(f"Failed to install known_good ipfs_kit_py: {e}")
+        logger.warning(f"Failed to install main ipfs_kit_py: {e}")
 
 
 def ensure_libp2p_main(logger) -> None:
@@ -828,7 +818,7 @@ def main():
     # repo-local virtualenv first so pip installs can proceed.
     _reexec_in_repo_venv(logger)
 
-    ensure_known_good_ipfs_kit_py(logger)
+    ensure_main_ipfs_kit_py(logger)
     ensure_libp2p_main(logger)
     
     logger.info("🔧 IPFS Datasets Quick Dependency Setup")

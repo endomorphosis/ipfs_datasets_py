@@ -11,9 +11,9 @@ from pathlib import Path
 import sys
 
 _repo_root = Path(__file__).resolve().parent.parent
-_known_good_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
-if _known_good_ipfs_kit.exists():
-    sys.path.insert(0, str(_known_good_ipfs_kit))
+_main_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
+if _main_ipfs_kit.exists():
+    sys.path.insert(0, str(_main_ipfs_kit))
 
 # File type detection
 try:

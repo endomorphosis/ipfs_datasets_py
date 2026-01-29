@@ -11,7 +11,7 @@ IS_64BIT = sys.maxsize > 2**32
 
 use_git_ipfs_kit = os.environ.get('IPFS_KIT_PY_USE_GIT', 'false').lower() == 'true'
 ipfs_kit_dependency = (
-    'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@known_good'
+    'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
     if use_git_ipfs_kit
     else 'ipfs_kit_py'
 )
@@ -24,7 +24,7 @@ setup(
     install_requires=[
         # Core dependencies
         'orbitdb_kit_py',
-        # Install ipfs_kit_py from known_good branch if IPFS_KIT_PY_USE_GIT=true
+        # Install ipfs_kit_py from main branch if IPFS_KIT_PY_USE_GIT=true
         # (PyPI fallback is used by default for Windows reliability)
         ipfs_kit_dependency,
         'ipfs_model_manager_py',
