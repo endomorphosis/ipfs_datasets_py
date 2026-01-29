@@ -319,6 +319,11 @@ class MetricsRegistry:
             metric = prometheus_client.Summary(
                 name, description, all_labels, registry=self.prometheus_registry
             )
+        elif metric_type == MetricType.TIMER:
+            # Timings map naturally to Prometheus Summary/Histogram (both support observe).
+            metric = prometheus_client.Summary(
+                name, description, all_labels, registry=self.prometheus_registry
+            )
         else:
             # Unsupported in Prometheus, use a gauge
             metric = prometheus_client.Gauge(
@@ -365,8 +370,12 @@ class MetricsRegistry:
         elif metric.type == MetricType.SUMMARY:
             prom_metric.labels(**labels).observe(metric.value)
         elif metric.type == MetricType.TIMER:
-            # For timer, we observe the duration
-            prom_metric.labels(**labels).observe(metric.value)
+            # For timer, observe duration when supported; otherwise fall back to setting.
+            labeled = prom_metric.labels(**labels)
+            if hasattr(labeled, "observe"):
+                labeled.observe(metric.value)
+            else:
+                labeled.set(metric.value)
 
     def record(self, name: str, value: Any, metric_type: MetricType,
               labels: Optional[Dict[str, str]] = None,

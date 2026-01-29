@@ -22,10 +22,12 @@ try:
     
     from ipfs_accelerate_py.ipfs_accelerate import ipfs_accelerate_py as AccelerateCore
     ACCELERATE_AVAILABLE = True
+    ACCELERATE_IMPORT_ERROR = None
 except ImportError as e:
     logger.debug(f"ipfs_accelerate_py not available: {e}")
     AccelerateCore = None
     ACCELERATE_AVAILABLE = False
+    ACCELERATE_IMPORT_ERROR = str(e)
 
 
 class AccelerateManager:
