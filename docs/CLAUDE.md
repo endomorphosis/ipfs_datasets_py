@@ -102,8 +102,8 @@
 
 ### Coordination Guidelines
 - **Cross-Directory Dependencies**: Coordinate with other workers through project-level TODO.md, CHANGELOG.md, and CLAUDE.md files.
-- **Tool Standards**: All adhoc tools must use argparse and follow template in `adhoc_tools/README.md`. Adhoc tools are defined as tools that are created by workers as they work on their assigned directories, but might be useful to other workers in the future. They are not part of the main codebase, but are used to help workers complete their tasks.
-- **Progress Monitoring**: Use `python adhoc_tools/find_documentation.py` to track documentation status
+- **Tool Standards**: All adhoc tools must use argparse and follow template in `scripts/dev_tools/README.md`. Adhoc tools are defined as tools that are created by workers as they work on their assigned directories, but might be useful to other workers in the future. They are not part of the main codebase, but are used to help workers complete their tasks.
+- **Progress Monitoring**: Use `python scripts/dev_tools/find_documentation.py` to track documentation status
 - **Completed Workers**: 67 (search/), 130 (tests/) - Available for coordination and integration tasks
 
 

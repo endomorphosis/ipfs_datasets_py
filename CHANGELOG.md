@@ -477,16 +477,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Automated worker assignment integration
 
 - **Adhoc Tools Infrastructure**
-  - Created `/adhoc_tools/` directory with standardized framework
+  - Created `/scripts/dev_tools/` directory with standardized framework
   - Implemented argparse-based tool template
   - Added comprehensive README with best practices
   - Created reusable utilities for project maintenance
 
 ### Tools Created
-- `adhoc_tools/split_todo_script.py` - Main TODO splitting utility with worker assignments
-- `adhoc_tools/update_todo_workers.py` - Worker assignment update utility
-- `adhoc_tools/find_documentation.py` - Documentation file finder with timestamps  
-- `adhoc_tools/README.md` - Framework documentation and standards
+- `scripts/dev_tools/split_todo_script.py` - Main TODO splitting utility with worker assignments
+- `scripts/dev_tools/update_todo_workers.py` - Worker assignment update utility
+- `scripts/dev_tools/find_documentation.py` - Documentation file finder with timestamps  
+- `scripts/dev_tools/README.md` - Framework documentation and standards
 
 ### Files Modified
 - `CLAUDE.md` - Added Worker 10 completion and Workers 61-75 assignments
