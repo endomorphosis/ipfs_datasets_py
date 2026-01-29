@@ -40,6 +40,20 @@ from .deontological_reasoning import (
 logger = logging.getLogger(__name__)
 
 
+def _run_async(async_callable, *args, **kwargs):
+    """Run an async callable from sync code using AnyIO.
+
+    This module is a Flask (sync) dashboard, but many underlying operations are
+    implemented as async coroutines. We use AnyIO rather than managing asyncio
+    event loops directly.
+    """
+
+    async def _runner():
+        return await async_callable(*args, **kwargs)
+
+    return anyio.run(_runner)
+
+
 class AnalysisType(Enum):
     """Types of analysis supported by the unified investigation dashboard."""
     ENTITY_ANALYSIS = "entity_analysis"
@@ -1078,7 +1092,9 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                 if not content:
                     return jsonify({"error": "Content is required"}), 400
                 
+<<<<<<< Updated upstream
                 # Run async workflow
+<<<<<<< Updated upstream
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(
@@ -1087,6 +1103,20 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                         analysis_type=AnalysisType(analysis_type),
                         metadata=metadata
                     )
+=======
+                result = anyio.run(
+                    self.investigation_workflows.execute_entity_analysis_pipeline,
+                    content=content,
+                    analysis_type=AnalysisType(analysis_type),
+                    metadata=metadata
+=======
+                result = _run_async(
+                    self.investigation_workflows.execute_entity_analysis_pipeline,
+                    content=content,
+                    analysis_type=AnalysisType(analysis_type),
+                    metadata=metadata,
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 )
                 loop.close()
                 
@@ -1100,12 +1130,23 @@ class UnifiedInvestigationDashboard(MCPDashboard):
         def explore_entity(entity_id):
             """Explore specific entity and its connections."""
             try:
+<<<<<<< Updated upstream
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(
                     self.entity_explorer.explore_entity_cluster(entity_id)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+                result = anyio.run(
+                    self.entity_explorer.explore_entity_cluster,
+                    entity_id
+                )
+=======
+                result = _run_async(self.entity_explorer.explore_entity_cluster, entity_id)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1119,6 +1160,7 @@ class UnifiedInvestigationDashboard(MCPDashboard):
             try:
                 data = request.get_json()
                 entities = data.get('entities', [])
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -1126,6 +1168,18 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                     self.relationship_mapper.map_relationships(entities)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.relationship_mapper.map_relationships,
+                    entities
+                )
+=======
+                
+                result = _run_async(self.relationship_mapper.map_relationships, entities)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1137,12 +1191,23 @@ class UnifiedInvestigationDashboard(MCPDashboard):
         def get_entity_timeline(entity_id):
             """Get timeline for specific entity."""
             try:
+<<<<<<< Updated upstream
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(
                     self.timeline_analyzer.create_entity_timeline(entity_id)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+                result = anyio.run(
+                    self.timeline_analyzer.create_entity_timeline,
+                    entity_id
+                )
+=======
+                result = _run_async(self.timeline_analyzer.create_entity_timeline, entity_id)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1155,6 +1220,7 @@ class UnifiedInvestigationDashboard(MCPDashboard):
             """Detect patterns in the provided data."""
             try:
                 data = request.get_json()
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -1162,6 +1228,18 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                     self.pattern_detector.detect_patterns(data)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.pattern_detector.detect_patterns,
+                    data
+                )
+=======
+                
+                result = _run_async(self.pattern_detector.detect_patterns, data)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1175,6 +1253,7 @@ class UnifiedInvestigationDashboard(MCPDashboard):
             try:
                 data = request.get_json()
                 documents = data.get('documents', [])
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -1182,6 +1261,18 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                     self.conflict_analyzer.detect_conflicts(documents)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.conflict_analyzer.detect_conflicts,
+                    documents
+                )
+=======
+                
+                result = _run_async(self.conflict_analyzer.detect_conflicts, documents)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1193,12 +1284,23 @@ class UnifiedInvestigationDashboard(MCPDashboard):
         def track_provenance(entity_id):
             """Track provenance for specific entity."""
             try:
+<<<<<<< Updated upstream
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(
                     self.provenance_tracker.track_entity_provenance(entity_id)
                 )
                 loop.close()
+=======
+<<<<<<< Updated upstream
+                result = anyio.run(
+                    self.provenance_tracker.track_entity_provenance,
+                    entity_id
+                )
+=======
+                result = _run_async(self.provenance_tracker.track_entity_provenance, entity_id)
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 
                 return jsonify(result)
                 
@@ -1215,11 +1317,24 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                 
                 if not documents:
                     return jsonify({"error": "Documents are required"}), 400
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 result = loop.run_until_complete(
                     self.conflict_analyzer.analyze_deontological_conflicts(documents)
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.conflict_analyzer.analyze_deontological_conflicts,
+                    documents
+=======
+                
+                result = _run_async(
+                    self.conflict_analyzer.analyze_deontological_conflicts, documents
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 )
                 loop.close()
                 
@@ -1236,6 +1351,7 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                 entity = request.args.get('entity')
                 modality = request.args.get('modality')  # obligation, permission, prohibition
                 action_keywords = request.args.getlist('action_keywords')
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -1245,6 +1361,23 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                         modality=modality,
                         action_keywords=action_keywords if action_keywords else None
                     )
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.conflict_analyzer.query_deontic_statements,
+                    entity=entity,
+                    modality=modality,
+                    action_keywords=action_keywords if action_keywords else None
+=======
+                
+                result = _run_async(
+                    self.conflict_analyzer.query_deontic_statements,
+                    entity=entity,
+                    modality=modality,
+                    action_keywords=action_keywords if action_keywords else None,
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 )
                 loop.close()
                 
@@ -1261,6 +1394,7 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                 entity = request.args.get('entity')
                 conflict_type = request.args.get('conflict_type')  # obligation_prohibition, permission_prohibition, etc.
                 min_severity = request.args.get('min_severity')  # high, medium, low
+<<<<<<< Updated upstream
                 
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
@@ -1270,6 +1404,23 @@ class UnifiedInvestigationDashboard(MCPDashboard):
                         conflict_type=conflict_type,
                         min_severity=min_severity
                     )
+=======
+<<<<<<< Updated upstream
+
+                result = anyio.run(
+                    self.conflict_analyzer.query_deontic_conflicts,
+                    entity=entity,
+                    conflict_type=conflict_type,
+                    min_severity=min_severity
+=======
+                
+                result = _run_async(
+                    self.conflict_analyzer.query_deontic_conflicts,
+                    entity=entity,
+                    conflict_type=conflict_type,
+                    min_severity=min_severity,
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
                 )
                 loop.close()
                 

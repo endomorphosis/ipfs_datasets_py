@@ -1,5 +1,13 @@
 {
+<<<<<<< Updated upstream
   "timestamp": "2026-01-28T18:09:10.218294",
+=======
+<<<<<<< Updated upstream
+  "timestamp": "2026-01-27T00:47:22.389027",
+=======
+  "timestamp": "2026-01-28T23:54:16.119780",
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
   "test_summary": {
     "entities_test": {
       "total_entities": 11,
@@ -226,7 +234,15 @@
           "west": -122.4194
         }
       },
+<<<<<<< Updated upstream
       "timestamp": "2026-01-28T18:09:10.217941"
+=======
+<<<<<<< Updated upstream
+      "timestamp": "2026-01-27T00:47:22.387421"
+=======
+      "timestamp": "2026-01-28T23:54:16.119372"
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     },
     "events": {
       "total_events": 5,
@@ -349,7 +365,15 @@
         "unique_locations": 5,
         "unique_event_types": 5
       },
+<<<<<<< Updated upstream
       "timestamp": "2026-01-28T18:09:10.218015"
+=======
+<<<<<<< Updated upstream
+      "timestamp": "2026-01-27T00:47:22.387796"
+=======
+      "timestamp": "2026-01-28T23:54:16.119452"
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     },
     "dashboard_query": {
       "query": "New York events",
@@ -439,7 +463,15 @@
       ],
       "center_location": "New York",
       "search_radius_km": 100,
+<<<<<<< Updated upstream
       "timestamp": "2026-01-28T18:09:10.218282"
+=======
+<<<<<<< Updated upstream
+      "timestamp": "2026-01-27T00:47:22.388766"
+=======
+      "timestamp": "2026-01-28T23:54:16.119767"
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     }
   }
 }
