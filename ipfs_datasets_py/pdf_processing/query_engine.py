@@ -776,6 +776,23 @@ class QueryEngine:
                     "sentence-transformers library is required for semantic search"
                 ) from e
             except Exception as e:
+                message = str(e)
+                if (
+                    "not a valid model identifier" in message
+                    or "not found or invalid" in message
+                ):
+                    # When callers provide a HuggingFace-style identifier and the
+                    # model cannot be resolved, preserve the historical behavior of
+                    # raising ValueError (tests patch SentenceTransformer to assert
+                    # this).
+                    if "/" in embedding_model:
+                        self.logger.error(
+                            "Embedding model '%s' not found or invalid.", embedding_model
+                        )
+                        raise ValueError(
+                            f"Embedding model '{embedding_model}' not found or invalid."
+                        ) from e
+
                 self.logger.warning(
                     "Unexpected failure loading embedding model '%s': %s. Falling back to a local stub.",
                     embedding_model,
