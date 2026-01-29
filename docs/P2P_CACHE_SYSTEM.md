@@ -34,13 +34,13 @@ This P2P (peer-to-peer) caching system **dramatically reduces GitHub API calls**
 
 ### Key Components
 
-1. **P2PPeerRegistry** (`ipfs_datasets_py/p2p_peer_registry.py`)
+1. **P2PPeerRegistry** (`ipfs_datasets_py/p2p_networking/p2p_peer_registry.py`)
    - Registers runner as a peer in GitHub Actions cache
    - Discovers other active peers
    - Uses GitHub CLI (`gh`) for cache operations
    - 30-minute TTL with automatic cleanup
 
-2. **GitHubAPICache** (`ipfs_datasets_py/cache.py`)
+2. **GitHubAPICache** (`ipfs_datasets_py/caching/cache.py`)
    - Caches GitHub API responses locally
    - Shares cache entries with peers via libp2p
    - Falls back to direct API calls if cache misses
@@ -90,7 +90,7 @@ source scripts/ci/setup_gh_auth_and_p2p.sh
 ### Python Integration
 
 ```python
-from ipfs_datasets_py.cache import GitHubAPICache
+from ipfs_datasets_py.caching.cache import GitHubAPICache
 
 # Initialize with P2P and peer discovery
 cache = GitHubAPICache(
@@ -125,7 +125,7 @@ if response is None:
 ### Peer Registry Configuration
 
 ```python
-from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
 
 registry = P2PPeerRegistry(
     repo="owner/repo",          # GitHub repository
@@ -208,7 +208,7 @@ gh auth status
 
 # Check peer registry
 python3 << EOF
-from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
 registry = P2PPeerRegistry(repo="owner/repo")
 peers = registry.discover_peers()
 print(f"Found {len(peers)} peers")
@@ -232,7 +232,7 @@ gh api rate_limit
 
 # Check cache statistics
 python3 << EOF
-from ipfs_datasets_py.cache import GitHubAPICache
+from ipfs_datasets_py.caching.cache import GitHubAPICache
 cache = GitHubAPICache(enable_p2p=True, github_repo="owner/repo")
 stats = cache.get_stats()
 print(f"Cache hits: {stats['hits']}")
@@ -253,7 +253,7 @@ Add cache statistics to your workflow summary:
   if: always()
   run: |
     python3 << 'EOF'
-    from ipfs_datasets_py.cache import GitHubAPICache
+    from ipfs_datasets_py.caching.cache import GitHubAPICache
     cache = GitHubAPICache(enable_p2p=True)
     stats = cache.get_stats()
     
@@ -282,7 +282,7 @@ Look for these in workflow logs:
 ### Custom Peer Bootstrap
 
 ```python
-from ipfs_datasets_py.cache import GitHubAPICache
+from ipfs_datasets_py.caching.cache import GitHubAPICache
 
 # Provide custom bootstrap peers
 cache = GitHubAPICache(
@@ -300,7 +300,7 @@ cache = GitHubAPICache(
 ```bash
 # Clean up stale peers
 python3 << EOF
-from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
 registry = P2PPeerRegistry(repo="owner/repo")
 removed = registry.cleanup_stale_peers()
 print(f"Removed {removed} stale peer(s)")

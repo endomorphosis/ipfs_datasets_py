@@ -76,7 +76,7 @@ curl -X POST http://localhost:8080/api/mcp/rag/query \
 
 ### Basic Configuration
 ```python
-from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
 
 config = MCPDashboardConfig(
     host="0.0.0.0",
