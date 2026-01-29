@@ -802,7 +802,7 @@ def test_cli_functionality(logger):
     
     tests = [
         ([sys.executable, 'ipfs_datasets_cli.py', '--help'], "Basic CLI help"),
-        ([sys.executable, 'enhanced_cli.py', '--help'], "Enhanced CLI help"),
+        ([sys.executable, 'scripts/cli/enhanced_cli.py', '--help'], "Enhanced CLI help"),
     ]
     
     success_count = 0

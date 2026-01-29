@@ -90,11 +90,11 @@ python scripts/demo/demonstrate_graphrag_pdf.py --create-sample --show-architect
 ./ipfs-datasets finance stock AAPL             # Financial data scraping
 
 # Enhanced CLI - access to ALL 100+ tools
-python enhanced_cli.py --list-categories       # See all 31 categories
-python enhanced_cli.py dataset_tools load_dataset --source squad
-python enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
-python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
-python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
+python scripts/cli/enhanced_cli.py --list-categories       # See all 31 categories
+python scripts/cli/enhanced_cli.py dataset_tools load_dataset --source squad
+python scripts/cli/enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
+python scripts/cli/enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python scripts/cli/enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
 
 # Test all CLI functionality
 python tests/integration/comprehensive_cli_test.py               # Complete test suite

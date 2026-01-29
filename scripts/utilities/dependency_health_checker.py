@@ -186,7 +186,7 @@ class DependencyHealthChecker:
                 'critical': True
             },
             'enhanced_cli': {
-                'cmd': [sys.executable, 'enhanced_cli.py', '--help'],
+                'cmd': [sys.executable, 'scripts/cli/enhanced_cli.py', '--help'],
                 'description': 'Enhanced CLI help',
                 'critical': True
             },
@@ -201,7 +201,7 @@ class DependencyHealthChecker:
                 'critical': False
             },
             'enhanced_list_categories': {
-                'cmd': [sys.executable, 'enhanced_cli.py', '--list-categories'],
+                'cmd': [sys.executable, 'scripts/cli/enhanced_cli.py', '--list-categories'],
                 'description': 'Enhanced CLI list categories',
                 'critical': False
             }
