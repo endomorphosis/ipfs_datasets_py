@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlparse
 import ipaddress
 import socket
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -340,9 +341,16 @@ async def scrape_federal_register(
                     # Optionally fetch full text
                     if include_full_text and doc.get('raw_text_url'):
                         raw_url = doc.get('raw_text_url')
-                        if _is_safe_federal_register_url(str(raw_url)):
+                        # Ensure the URL is both generally safe and restricted to federalregister.gov
+                        parsed_url = urlparse(str(raw_url))
+                        is_allowed_scheme = parsed_url.scheme in ("http", "https")
+                        hostname = parsed_url.hostname or ""
+                        is_federalregister_host = bool(hostname) and (
+                            hostname == "federalregister.gov" or hostname.endswith(".federalregister.gov")
+                        )
+                        if _is_safe_federal_register_url(str(raw_url)) and is_allowed_scheme and is_federalregister_host:
                             try:
-                                text_response = requests.get(raw_url, timeout=30)
+                                text_response = requests.get(str(raw_url), timeout=30)
                                 if text_response.status_code == 200:
                                     doc['full_text'] = text_response.text
                             except Exception as e:
