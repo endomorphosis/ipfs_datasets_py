@@ -24,7 +24,7 @@ from ipfs_datasets_py.search.query_optimizer import (
     create_query_optimizer, QueryOptimizer, VectorIndexOptimizer,
     KnowledgeGraphQueryOptimizer, HybridQueryOptimizer
 )
-from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
 
 # For demo purposes, let's create a simple mock knowledge graph class
 class SimpleKnowledgeGraph:

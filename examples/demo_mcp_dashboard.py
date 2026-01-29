@@ -19,7 +19,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     print("✓ Successfully imported MCP dashboard")
 except ImportError as e:
     print(f"✗ Failed to import MCP dashboard: {e}")

@@ -27,7 +27,7 @@ from ipfs_datasets_py.monitoring import (
     timed
 )
 
-from ipfs_datasets_py.admin_dashboard import (
+from ipfs_datasets_py.dashboards.admin_dashboard import (
     start_dashboard,
     stop_dashboard,
     DashboardConfig

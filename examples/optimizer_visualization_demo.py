@@ -16,7 +16,7 @@ import tempfile
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
 
 # Import the necessary modules
-from ipfs_datasets_py.optimizer_visualization_integration import (
+from ipfs_datasets_py.optimizers.optimizer_visualization_integration import (
     LiveOptimizerVisualization,
     setup_optimizer_visualization
 )

@@ -26,7 +26,7 @@ parent_dir = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(parent_dir)
 
 # Import components from the library
-from ipfs_datasets_py.libp2p_kit import (
+from ipfs_datasets_py.p2p_networking.libp2p_kit import (
     LibP2PNode,
     NodeRole,
     NetworkProtocol,

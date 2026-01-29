@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional
 
-from ipfs_datasets_py.libp2p_kit import (
+from ipfs_datasets_py.p2p_networking.libp2p_kit import (
     DistributedDatasetManager,
     NodeRole,
     LIBP2P_AVAILABLE

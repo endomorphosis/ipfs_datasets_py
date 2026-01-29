@@ -28,7 +28,7 @@ from ipfs_datasets_py.audit.security_provenance_integration import (
 
 # Try to import provenance module
 try:
-    from ipfs_datasets_py.data_provenance_enhanced import EnhancedProvenanceManager
+    from ipfs_datasets_py.analytics.data_provenance_enhanced import EnhancedProvenanceManager
     PROVENANCE_AVAILABLE = True
 except ImportError:
     PROVENANCE_AVAILABLE = False

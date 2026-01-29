@@ -1846,7 +1846,7 @@ def sharded_dataset_example():
 
     try:
         # Import libp2p components
-        from ipfs_datasets_py.libp2p_kit import (
+        from ipfs_datasets_py.p2p_networking.libp2p_kit import (
             DistributedDatasetManager,
             NodeRole,
             LibP2PNotAvailableError
@@ -2022,7 +2022,7 @@ def federated_search_example():
 
     try:
         # Import required components
-        from ipfs_datasets_py.libp2p_kit import (
+        from ipfs_datasets_py.p2p_networking.libp2p_kit import (
             DistributedDatasetManager,
             NodeRole,
             LibP2PNotAvailableError

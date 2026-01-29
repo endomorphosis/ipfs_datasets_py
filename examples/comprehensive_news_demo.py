@@ -134,7 +134,7 @@ class NewsAnalysisDashboardDemo:
         print("=" * 50)
         
         try:
-            from ipfs_datasets_py.news_analysis_dashboard import (
+            from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
                 NewsAnalysisDashboard, 
                 MCPDashboardConfig,
                 NewsArticle

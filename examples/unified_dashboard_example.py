@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import components
-from ipfs_datasets_py.unified_monitoring_dashboard import UnifiedDashboard, create_unified_dashboard
+from ipfs_datasets_py.dashboards.unified_monitoring_dashboard import UnifiedDashboard, create_unified_dashboard
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
 from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly, setup_learning_alerts
 from ipfs_datasets_py.monitoring import MetricsCollector

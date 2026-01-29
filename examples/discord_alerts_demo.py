@@ -37,7 +37,7 @@ import random
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parents[1]))
 
-from ipfs_datasets_py.alerts import (
+from ipfs_datasets_py.optimizers.optimizer_alert_system import (
     DiscordNotifier,
     DiscordEmbed,
     AlertManager,

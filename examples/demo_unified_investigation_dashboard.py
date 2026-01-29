@@ -15,7 +15,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.append(str(Path(__file__).parent))
 
-from ipfs_datasets_py.news_analysis_dashboard import (
+from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
     create_unified_investigation_dashboard,
     MCPDashboardConfig
 )
