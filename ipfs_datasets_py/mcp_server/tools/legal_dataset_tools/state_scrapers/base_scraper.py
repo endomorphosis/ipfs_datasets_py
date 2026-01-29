@@ -80,6 +80,36 @@ class NormalizedStatute:
         if self.metadata:
             data['metadata'] = self.metadata.to_dict()
         return data
+
+    def __getitem__(self, key: str) -> Any:
+        """Provide dict-like access for backward compatibility.
+
+        Some legacy tests/scripts treat scraper results as dictionaries.
+        """
+        if hasattr(self, key):
+            return getattr(self, key)
+
+        legacy_key_map = {
+            "id": "statute_id",
+            "title": "short_title",
+            "name": "short_title",
+            "url": "source_url",
+            "text": "full_text",
+            "summary": "summary",
+        }
+        mapped = legacy_key_map.get(key)
+        if mapped and hasattr(self, mapped):
+            value = getattr(self, mapped)
+            if value is not None:
+                return value
+
+        # Fallbacks for common legacy keys
+        if key == "title":
+            return self.short_title or self.section_name or self.statute_id
+        if key == "url":
+            return self.source_url
+
+        raise KeyError(key)
     
     def get_citation(self) -> str:
         """Get a standardized citation for this statute."""

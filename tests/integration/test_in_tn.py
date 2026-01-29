@@ -8,8 +8,11 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import
     IndianaScraper, TennesseeScraper
 )
 
-async def test_scraper(scraper_class, code, name):
-    """Test a single scraper."""
+async def run_scraper(scraper_class, code, name):
+    """Run a single scraper (helper for the main script).
+
+    Note: intentionally not named like a pytest test function.
+    """
     print(f"\n{'='*60}")
     print(f"Testing {name} ({code})")
     print('='*60)
@@ -42,8 +45,8 @@ async def main():
     """Test both scrapers."""
     results = []
     
-    results.append(await test_scraper(IndianaScraper, "IN", "Indiana"))
-    results.append(await test_scraper(TennesseeScraper, "TN", "Tennessee"))
+    results.append(await run_scraper(IndianaScraper, "IN", "Indiana"))
+    results.append(await run_scraper(TennesseeScraper, "TN", "Tennessee"))
     
     print(f"\n{'='*60}")
     print("SUMMARY")

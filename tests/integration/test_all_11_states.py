@@ -10,8 +10,11 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import
     SouthDakotaScraper, TennesseeScraper, WyomingScraper
 )
 
-async def test_scraper(scraper_class, code, name):
-    """Test a single scraper."""
+async def run_scraper(scraper_class, code, name):
+    """Run a single scraper (helper for the main script).
+
+    Note: this is intentionally not named like a pytest test function.
+    """
     try:
         scraper = scraper_class(code, name)
         codes = scraper.get_code_list()
@@ -44,7 +47,7 @@ async def main():
     results = []
     for scraper_class, code, name in states:
         print(f"Testing {name}...", end=" ", flush=True)
-        result = await test_scraper(scraper_class, code, name)
+        result = await run_scraper(scraper_class, code, name)
         results.append(result)
         
         if len(result) == 3:

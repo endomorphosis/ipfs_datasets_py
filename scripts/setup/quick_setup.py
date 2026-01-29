@@ -24,6 +24,39 @@ IS_MACOS = platform.system() == 'Darwin'
 os.environ['IPFS_DATASETS_AUTO_INSTALL'] = 'true'
 os.environ['IPFS_INSTALL_VERBOSE'] = 'true'
 
+
+def _repo_root() -> Path:
+    """Return repository root directory for this script."""
+    # scripts/setup/quick_setup.py -> repo root is two parents up from `scripts/`.
+    return Path(__file__).resolve().parents[2]
+
+
+def _reexec_in_repo_venv(logger) -> None:
+    """Re-exec this script inside a repo-local virtualenv if needed.
+
+    This avoids PEP 668 "externally managed environment" failures when running
+    under a system Python that disallows pip installs.
+    """
+    if os.environ.get('IPFS_DATASETS_IN_VENV', '').lower() == 'true':
+        return
+
+    repo_root = _repo_root()
+    venv_dir = repo_root / '.venv'
+    venv_python = venv_dir / 'bin' / 'python'
+
+    if not venv_python.exists():
+        logger.info("Creating repo virtualenv at %s", venv_dir)
+        subprocess.run([sys.executable, '-m', 'venv', str(venv_dir)], check=False, text=True)
+
+    try:
+        in_venv = Path(sys.prefix).resolve() == venv_dir.resolve()
+    except Exception:
+        in_venv = False
+
+    if venv_python.exists() and not in_venv:
+        os.environ['IPFS_DATASETS_IN_VENV'] = 'true'
+        os.execv(str(venv_python), [str(venv_python), str(Path(__file__).resolve())])
+
 def setup_logging():
     """Setup logging"""
     logging.basicConfig(
@@ -54,7 +87,11 @@ def _is_known_good_ipfs_kit_py_installed(repo_path: Path) -> bool:
         return False
 
 def ensure_known_good_ipfs_kit_py(logger):
-    """Ensure ipfs_kit_py is installed from the known_good branch."""
+    """Ensure ipfs_kit_py is installed from the known_good branch.
+
+    Also tolerates the `known_goo` alias (typo-safe): tries `known_goo` first and
+    falls back to `known_good`.
+    """
 
     if os.environ.get('IPFS_KIT_PY_INSTALLED', '').lower() == 'true':
         return
@@ -88,14 +125,29 @@ def ensure_known_good_ipfs_kit_py(logger):
             ], check=False, text=True)
 
         subprocess.run(['git', '-C', str(repo_path), 'fetch', '--all', '--prune'], check=False, text=True)
-        subprocess.run(['git', '-C', str(repo_path), 'checkout', 'known_good'], check=False, text=True)
+
+        checked_out_branch = None
+        for branch in ("known_goo", "known_good"):
+            checkout = subprocess.run(
+                ['git', '-C', str(repo_path), 'checkout', branch],
+                check=False,
+                text=True,
+                capture_output=True,
+            )
+            if checkout.returncode == 0:
+                checked_out_branch = branch
+                break
+
+        if checked_out_branch is None:
+            logger.warning("Failed to checkout ipfs_kit_py branch 'known_goo' or 'known_good'")
+            return
 
         result = subprocess.run([
             sys.executable, '-m', 'pip', 'install', '-e', str(repo_path),
             '--disable-pip-version-check', '--no-input', '--progress-bar', 'off'
         ], check=False, text=True)
         if result.returncode == 0:
-            marker_file.write_text('known_good', encoding='utf-8')
+            marker_file.write_text(checked_out_branch, encoding='utf-8')
             os.environ['IPFS_KIT_PY_INSTALLED'] = 'true'
     except Exception as e:
         logger.warning(f"Failed to install known_good ipfs_kit_py: {e}")
@@ -143,6 +195,8 @@ def install_package(package_name, logger):
             logger.info(f"✅ Successfully installed {package_name}")
             return True
         else:
+            if 'externally-managed-environment' in (result.stderr or '').lower():
+                _reexec_in_repo_venv(logger)
             logger.warning(f"❌ Failed to install {package_name}: {result.stderr}")
             return False
     except subprocess.TimeoutExpired:
@@ -769,6 +823,10 @@ def test_cli_functionality(logger):
 def main():
     """Main setup function"""
     logger = setup_logging()
+
+    # If running under an externally-managed system Python, bootstrap into the
+    # repo-local virtualenv first so pip installs can proceed.
+    _reexec_in_repo_venv(logger)
 
     ensure_known_good_ipfs_kit_py(logger)
     ensure_libp2p_main(logger)

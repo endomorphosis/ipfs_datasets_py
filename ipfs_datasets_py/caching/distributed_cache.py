@@ -24,13 +24,15 @@ import hashlib
 try:
     from libp2p import new_host
     from libp2p.crypto.secp256k1 import create_new_key_pair
-    from libp2p.network.stream.net_stream_interface import INetStream
+    from libp2p.network.stream.net_stream import INetStream
     from libp2p.peer.peerinfo import info_from_p2p_addr
-    from libp2p.typing import TProtocol
+    from libp2p.custom_types import TProtocol
     from multiaddr import Multiaddr
     LIBP2P_AVAILABLE = True
 except ImportError:
     LIBP2P_AVAILABLE = False
+    TProtocol = str  # type: ignore
+    INetStream = Any  # type: ignore
     logging.warning("pylibp2p not available, distributed cache will be disabled")
 
 try:

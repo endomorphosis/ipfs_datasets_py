@@ -11,11 +11,6 @@ import sys
 
 import pytest
 
-from ipfs_datasets_py.content_discovery import ContentManifest
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
-from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch, ProcessedContent
-from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
-
 
 def _ensure_test_path_entries() -> None:
 	venv_bin = Path(sys.executable).resolve().parent
@@ -61,6 +56,23 @@ _ensure_github_token()
 @pytest.fixture
 def sample_graphrag_system():
 	"""Create sample GraphRAG system for tests that need it."""
+	try:
+		from ipfs_datasets_py.content_discovery import ContentManifest
+		from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+			KnowledgeGraph,
+			Entity,
+			Relationship,
+		)
+		from ipfs_datasets_py.multimodal_processor import (
+			ProcessedContentBatch,
+			ProcessedContent,
+		)
+		from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+	except ModuleNotFoundError as e:
+		pytest.skip(f"Optional GraphRAG dependencies not installed: {e}")
+	except ImportError as e:
+		pytest.skip(f"GraphRAG components not available: {e}")
+
 	html_content = ProcessedContent(
 		source_url="https://example.com/ai-intro.html",
 		content_type="html",

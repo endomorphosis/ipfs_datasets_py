@@ -7,8 +7,12 @@ Tests each extras group to verify packages install and import correctly.
 import subprocess
 import sys
 from pathlib import Path
+import pytest
 
-def test_package_import(packages, description):
+
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="Windows-only extras smoke test")
+
+def package_import_smoke(packages, description):
     """Test if packages can be imported"""
     print(f"\nTesting {description}:")
     
@@ -66,7 +70,7 @@ def main():
     
     print("\nInstalled and tested packages:")
     for group, packages in test_groups.items():
-        results[group] = test_package_import(packages, f"{group} extras")
+        results[group] = package_import_smoke(packages, f"{group} extras")
     
     # Summary
     print("\n" + "=" * 70)

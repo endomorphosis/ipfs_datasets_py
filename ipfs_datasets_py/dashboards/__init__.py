@@ -1,15 +1,9 @@
 """Dashboard modules for IPFS Datasets Python."""
 
-# Import all dashboard modules for easy access
-from .admin_dashboard import *
-from .advanced_analytics_dashboard import *
-from .discord_dashboard import *
-from .mcp_dashboard import *
-from .mcp_investigation_dashboard import *
-from .news_analysis_dashboard import *
-from .patent_dashboard import *
-from .provenance_dashboard import *
-from .unified_monitoring_dashboard import *
+# NOTE:
+# Keep this package initializer lightweight.
+# Dashboard modules can have heavy/optional dependencies; importing them all here
+# can break test collection in minimal environments.
 
 __all__ = [
     'admin_dashboard',
