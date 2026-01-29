@@ -1,18 +1,34 @@
-# ipfs_datasets_py/mcp_server/tools/media_tools/ffmpeg_convert.py
 """
-FFmpeg media conversion tool for the MCP server.
+FFmpeg Media Conversion Tool - MCP Wrapper
 
-This tool provides comprehensive media format conversion capabilities using FFmpeg,
-supporting video, audio, and container format transformations.
+This module provides MCP tool interfaces for FFmpeg media conversion.
+The core implementation is in ipfs_datasets_py.multimedia.ffmpeg_wrapper
+
+All business logic should reside in the core module, and this file serves
+as a thin wrapper to expose that functionality through the MCP interface.
 """
+
 import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
-
 import logging
 
+# Import from core multimedia module
+from ipfs_datasets_py.multimedia import FFmpegWrapper
+
 logger = logging.getLogger(__name__)
-from .ffmpeg_utils import ffmpeg_utils, FFmpegError
+
+# Global wrapper instance for reuse
+_ffmpeg_wrapper = None
+
+
+def get_ffmpeg_wrapper() -> FFmpegWrapper:
+    """Get or create the global FFmpegWrapper instance."""
+    global _ffmpeg_wrapper
+    if _ffmpeg_wrapper is None:
+        _ffmpeg_wrapper = FFmpegWrapper(enable_logging=True)
+    return _ffmpeg_wrapper
+
 
 async def ffmpeg_convert(
     input_file: Union[str, Dict[str, Any]],
@@ -31,6 +47,8 @@ async def ffmpeg_convert(
 ) -> Dict[str, Any]:
     """
     Convert media files between different formats using FFmpeg.
+    
+    This is a thin wrapper around the core FFmpegWrapper.convert_video method.
     
     This tool supports comprehensive media conversion including:
     - Video format conversion (MP4, AVI, MOV, MKV, etc.)
@@ -58,6 +76,19 @@ async def ffmpeg_convert(
         Dict containing conversion results and metadata
     """
     try:
+        # Get the core FFmpeg wrapper
+        wrapper = get_ffmpeg_wrapper()
+        
+        # Check if FFmpeg is available
+        if not wrapper.is_available():
+            return {
+                "status": "error",
+                "success": False,
+                "error": "FFmpeg is not available. Please install FFmpeg.",
+                "input_file": str(input_file),
+                "output_file": output_file
+            }
+        
         # Handle dataset input
         if isinstance(input_file, dict):
             if 'file_path' in input_file:
@@ -67,184 +98,190 @@ async def ffmpeg_convert(
             else:
                 return {
                     "status": "error",
+                    "success": False,
                     "error": "Dataset input must contain 'file_path' or 'path' field",
                     "input": input_file
                 }
         else:
             input_path = str(input_file)
         
-        # Validate input file
-        if not ffmpeg_utils.validate_input_file(input_path):
+        # Validate input file exists
+        input_file_path = Path(input_path)
+        if not input_file_path.exists():
             return {
                 "status": "error",
-                "error": f"Input file not found or not accessible: {input_path}",
-                "input_file": input_path
-            }
-        
-        # Validate output path
-        if not ffmpeg_utils.validate_output_path(output_file):
-            return {
-                "status": "error",
-                "error": f"Output path not writable: {output_file}",
+                "success": False,
+                "error": f"Input file not found: {input_path}",
+                "input_file": input_path,
                 "output_file": output_file
             }
         
-        # Get input media info
-        input_info = await ffmpeg_utils.probe_media_info(input_path)
-        if input_info["status"] != "success":
-            return {
-                "status": "error",
-                "error": f"Could not probe input file: {input_info.get('error', 'Unknown error')}",
-                "input_file": input_path
-            }
+        # Build kwargs for the core wrapper
+        conversion_kwargs = {}
         
-        # Build FFmpeg arguments
-        args = []
-        
-        # Input file
-        args.extend(["-i", input_path])
-        
-        # Video codec
-        if video_codec:
-            args.extend(["-c:v", video_codec])
-        elif output_format in ['mp3', 'wav', 'flac', 'aac']:
-            # Audio-only formats
-            args.extend(["-vn"])  # No video
-        
-        # Audio codec
-        if audio_codec:
-            args.extend(["-c:a", audio_codec])
-        
-        # Quality settings
-        if quality:
-            if quality.lower() == "high":
-                if video_codec in ['libx264', 'libx265']:
-                    args.extend(["-crf", "18"])
-                else:
-                    args.extend(["-q:v", "2"])
-            elif quality.lower() == "medium":
-                if video_codec in ['libx264', 'libx265']:
-                    args.extend(["-crf", "23"])
-                else:
-                    args.extend(["-q:v", "5"])
-            elif quality.lower() == "low":
-                if video_codec in ['libx264', 'libx265']:
-                    args.extend(["-crf", "28"])
-                else:
-                    args.extend(["-q:v", "8"])
-            elif quality.isdigit():
-                # CRF value
-                args.extend(["-crf", quality])
-        
-        # Preset
-        if preset and video_codec in ['libx264', 'libx265']:
-            args.extend(["-preset", preset])
-        
-        # Video bitrate
-        if video_bitrate:
-            args.extend(["-b:v", video_bitrate])
-        
-        # Audio bitrate
-        if audio_bitrate:
-            args.extend(["-b:a", audio_bitrate])
-        
-        # Resolution
-        if resolution:
-            args.extend(["-s", resolution])
-        
-        # Frame rate
-        if framerate:
-            args.extend(["-r", framerate])
-        
-        # Output format
         if output_format:
-            args.extend(["-f", output_format])
-        
-        # Custom arguments
+            conversion_kwargs['output_format'] = output_format
+        if video_codec:
+            conversion_kwargs['video_codec'] = video_codec
+        if audio_codec:
+            conversion_kwargs['audio_codec'] = audio_codec
+        if video_bitrate:
+            conversion_kwargs['video_bitrate'] = video_bitrate
+        if audio_bitrate:
+            conversion_kwargs['audio_bitrate'] = audio_bitrate
+        if resolution:
+            conversion_kwargs['resolution'] = resolution
+        if framerate:
+            conversion_kwargs['framerate'] = framerate
+        if quality:
+            conversion_kwargs['quality'] = quality
+        if preset:
+            conversion_kwargs['preset'] = preset
         if custom_args:
-            args.extend(custom_args)
+            conversion_kwargs['custom_args'] = custom_args
+        if timeout:
+            conversion_kwargs['timeout'] = timeout
         
-        # Overwrite output file
-        args.append("-y")
+        # Delegate to core FFmpegWrapper
+        logger.info(f"Converting {input_path} to {output_file} using core FFmpegWrapper")
+        result = await wrapper.convert_video(
+            input_path=input_path,
+            output_path=output_file,
+            **conversion_kwargs
+        )
         
-        # Output file
-        args.append(output_file)
+        # Ensure standard response format
+        if not isinstance(result, dict):
+            result = {"status": "success", "result": result}
         
-        # Execute conversion
-        logger.info(f"Starting conversion: {input_path} -> {output_file}")
-        result = await ffmpeg_utils.run_ffmpeg_command(args, timeout=timeout)
+        # Add MCP-specific fields
+        result["input_file"] = input_path
+        result["output_file"] = output_file
         
-        if result["status"] == "success":
-            # Get output file info
-            output_info = await ffmpeg_utils.probe_media_info(output_file)
-            
-            # Calculate file sizes
-            input_size = Path(input_path).stat().st_size
-            output_size = Path(output_file).stat().st_size if Path(output_file).exists() else 0
-            
-            return {
-                "status": "success",
-                "message": "Media conversion completed successfully",
-                "input_file": input_path,
-                "output_file": output_file,
-                "input_info": input_info,
-                "output_info": output_info,
-                "conversion_stats": {
-                    "input_size_bytes": input_size,
-                    "output_size_bytes": output_size,
-                    "compression_ratio": round(output_size / input_size, 3) if input_size > 0 else 0,
-                    "size_reduction_percent": round((1 - output_size / input_size) * 100, 2) if input_size > 0 else 0
-                },
-                "ffmpeg_output": result.get("stderr", ""),
-                "command": result.get("command", "")
-            }
+        # Normalize status field
+        if "success" in result:
+            result["status"] = "success" if result["success"] else "error"
+        elif "status" not in result:
+            result["status"] = "success"
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"FFmpeg conversion failed: {e}", exc_info=True)
+        return {
+            "status": "error",
+            "success": False,
+            "error": str(e),
+            "error_type": type(e).__name__,
+            "input_file": str(input_file),
+            "output_file": output_file
+        }
+
+
+async def ffmpeg_extract_audio(
+    input_file: Union[str, Dict[str, Any]],
+    output_file: str,
+    audio_codec: Optional[str] = None,
+    audio_bitrate: Optional[str] = None,
+    sample_rate: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Extract audio from a media file.
+    
+    This is a thin wrapper around the core FFmpegWrapper.extract_audio method.
+    
+    Args:
+        input_file: Input media file path
+        output_file: Output audio file path
+        audio_codec: Audio codec (mp3, aac, flac, etc.)
+        audio_bitrate: Audio bitrate (e.g., '128k', '320k')
+        sample_rate: Sample rate (e.g., '44100', '48000')
+    
+    Returns:
+        Dict containing extraction results
+    """
+    try:
+        wrapper = get_ffmpeg_wrapper()
+        
+        # Handle dataset input
+        if isinstance(input_file, dict):
+            input_path = input_file.get('file_path') or input_file.get('path')
         else:
+            input_path = str(input_file)
+        
+        if not input_path:
             return {
                 "status": "error",
-                "error": "FFmpeg conversion failed",
-                "input_file": input_path,
-                "output_file": output_file,
-                "ffmpeg_error": result.get("stderr", ""),
-                "ffmpeg_output": result.get("stdout", ""),
-                "command": result.get("command", ""),
-                "returncode": result.get("returncode", -1)
+                "error": "Invalid input file"
             }
-    
-    except FFmpegError as e:
-        return {
-            "status": "error",
-            "error": f"FFmpeg error: {str(e)}",
-            "input_file": input_file,
-            "output_file": output_file
-        }
+        
+        # Build kwargs
+        kwargs = {}
+        if audio_codec:
+            kwargs['audio_codec'] = audio_codec
+        if audio_bitrate:
+            kwargs['audio_bitrate'] = audio_bitrate
+        if sample_rate:
+            kwargs['sample_rate'] = sample_rate
+        
+        # Delegate to core
+        result = await wrapper.extract_audio(
+            input_path=input_path,
+            output_path=output_file,
+            **kwargs
+        )
+        
+        return result
+        
     except Exception as e:
-        logger.error(f"Error in ffmpeg_convert: {e}")
+        logger.error(f"Audio extraction failed: {e}")
         return {
             "status": "error",
-            "error": str(e),
-            "input_file": input_file,
-            "output_file": output_file
+            "error": str(e)
         }
 
-# Async main function for MCP registration
-async def main() -> Dict[str, Any]:
-    """Main function for MCP tool registration."""
-    return {
-        "status": "success",
-        "message": "FFmpeg conversion tool initialized",
-        "tool": "ffmpeg_convert",
-        "description": "Convert media files between different formats using FFmpeg",
-        "supported_formats": ffmpeg_utils.get_supported_formats(),
-        "supported_codecs": ffmpeg_utils.get_supported_codecs()
-    }
 
-if __name__ == "__main__":
-    # Example usage
-    test_result = anyio.run(ffmpeg_convert(
-        input_file="input.mp4",
-        output_file="output.mp4",
-        video_codec="libx264",
-        audio_codec="aac",
-        quality="medium"
-    ))
-    print(f"Test result: {test_result}")
+async def ffmpeg_analyze(
+    input_file: Union[str, Dict[str, Any]]
+) -> Dict[str, Any]:
+    """
+    Analyze media file and extract metadata.
+    
+    This is a thin wrapper around the core FFmpegWrapper.analyze_media method.
+    
+    Args:
+        input_file: Input media file path
+    
+    Returns:
+        Dict containing media analysis results
+    """
+    try:
+        wrapper = get_ffmpeg_wrapper()
+        
+        # Handle dataset input
+        if isinstance(input_file, dict):
+            input_path = input_file.get('file_path') or input_file.get('path')
+        else:
+            input_path = str(input_file)
+        
+        if not input_path:
+            return {
+                "status": "error",
+                "error": "Invalid input file"
+            }
+        
+        # Delegate to core
+        result = await wrapper.analyze_media(input_path=input_path)
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Media analysis failed: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+
+# Legacy compatibility - map old function names
+ffmpeg_info = ffmpeg_analyze
