@@ -37,9 +37,10 @@ async def get_from_ipfs(
         logger.info(f"Getting content with CID {cid} from IPFS")
 
         # Determine if we're using direct ipfs_kit_py or MCP client
-        from ipfs_datasets_py.mcp_server.configs import configs
+        # Use environment variable or default to "direct"
+        ipfs_kit_integration = os.environ.get('IPFS_KIT_INTEGRATION', 'direct')
 
-        if configs.ipfs_kit_integration == "direct":
+        if ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
             try:
                 import ipfs_kit_py
@@ -124,8 +125,9 @@ async def get_from_ipfs(
                 from ...mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
             # Create client
+            ipfs_kit_mcp_url = os.environ.get('IPFS_KIT_MCP_URL', 'http://localhost:5001')
             try:
-                client = MCPClient(configs.ipfs_kit_mcp_url)
+                client = MCPClient(ipfs_kit_mcp_url)
             except Exception as e:
                 logger.warning(f"Failed to initialize MCP client for IPFS, using HTTP gateway fallback: {e}")
                 return await _fetch_via_http_gateway(cid, output_path, timeout_seconds, gateway)
