@@ -9,7 +9,7 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import
     MissouriScraper, TennesseeScraper
 )
 
-async def test_scraper(scraper_class, code, name):
+async def run_scraper(scraper_class, code, name):
     """Test a single scraper."""
     try:
         print(f"\nTesting {name} ({code})...")
@@ -43,7 +43,7 @@ async def main():
     
     results = []
     for scraper_class, code, name in scrapers:
-        result = await test_scraper(scraper_class, code, name)
+        result = await run_scraper(scraper_class, code, name)
         results.append(result)
     
     print("\n" + "="*70)

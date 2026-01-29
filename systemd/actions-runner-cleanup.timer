@@ -1,9 +1,0 @@
-[Unit]
-Description=Daily timer to cleanup GitHub Actions runner _temp dirs for ipfs_datasets_py
-
-[Timer]
-OnCalendar=daily
-Persistent=true
-
-[Install]
-WantedBy=timers.target

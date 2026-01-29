@@ -99,12 +99,17 @@ def get_accelerate_status() -> Dict[str, Any]:
     Returns:
         dict: Status information including availability, enabled state, and any errors
     """
+    # Re-read the environment at call time so status reporting reflects
+    # runtime configuration changes (e.g., tests using monkeypatch.setenv).
+    env_value = os.environ.get('IPFS_ACCELERATE_ENABLED', '1').lower()
+    env_disabled = env_value in ('0', 'false', 'no', 'disabled')
+
     return {
         "available": _ACCELERATE_AVAILABLE,
-        "enabled": not _ACCELERATE_DISABLED,
+        "enabled": not env_disabled,
         "import_error": _ACCELERATE_IMPORT_ERROR,
-        "env_disabled": _ACCELERATE_DISABLED,
-        "env_var": _ACCELERATE_ENABLED_ENV
+        "env_disabled": env_disabled,
+        "env_var": env_value,
     }
 
 

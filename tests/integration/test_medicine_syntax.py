@@ -12,7 +12,7 @@ import py_compile
 import os
 
 
-def test_syntax(filepath):
+def check_syntax(filepath):
     """Test that a Python file has valid syntax."""
     try:
         py_compile.compile(filepath, doraise=True)
@@ -51,7 +51,7 @@ def main():
             failed += 1
             continue
         
-        if test_syntax(filepath):
+        if check_syntax(filepath):
             print(f"  ✅ Syntax valid")
             passed += 1
         else:

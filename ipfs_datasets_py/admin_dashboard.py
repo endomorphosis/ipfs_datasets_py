@@ -21,6 +21,7 @@ import time
 import webbrowser
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
+from enum import Enum
 from functools import wraps
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Union, Callable
@@ -910,6 +911,21 @@ function fetchUpdatedData() {
         if not self.app:
             return
 
+        def _make_json_serializable(value: Any) -> Any:
+            """Convert values to JSON-serializable equivalents.
+
+            This is primarily used to keep dashboard templates resilient when they
+            use Jinja's `tojson` filter (which relies on Flask's JSON provider).
+            """
+            if isinstance(value, Enum):
+                # Use the symbolic name for readability/stability (e.g. LogLevel.INFO)
+                return value.name
+            if isinstance(value, dict):
+                return {k: _make_json_serializable(v) for k, v in value.items()}
+            if isinstance(value, (list, tuple)):
+                return [_make_json_serializable(v) for v in value]
+            return value
+
         @self.app.route('/')
         def index():
             """Render the main dashboard page."""
@@ -973,7 +989,9 @@ function fetchUpdatedData() {
                 "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 "refresh_interval": self.config.refresh_interval,
                 "dashboard_config": asdict(self.config),
-                "monitoring_config": asdict(MonitoringSystem.get_instance().config)
+                "monitoring_config": _make_json_serializable(
+                    asdict(MonitoringSystem.get_instance().config)
+                )
             }
 
             return render_template('index.html', **dashboard_data)

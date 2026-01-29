@@ -8,7 +8,7 @@ from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.state_scrapers import
     DelawareScraper, GeorgiaScraper, IndianaScraper, WyomingScraper
 )
 
-async def test_scraper(scraper_class, code, name):
+async def run_scraper(scraper_class, code, name):
     """Test a single scraper."""
     try:
         print(f"\nTesting {name} ({code})...")
@@ -42,7 +42,7 @@ async def main():
     
     total = 0
     for scraper_class, code, name in scrapers:
-        count = await test_scraper(scraper_class, code, name)
+        count = await run_scraper(scraper_class, code, name)
         total += count
     
     print("\n" + "="*60)
