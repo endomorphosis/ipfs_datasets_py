@@ -3,16 +3,38 @@
 """
 Enhanced IPFS Datasets CLI Tool
 
-A comprehensive command line interface that provides access to ALL MCP tools
-with simplified syntax. This tool exposes all 31+ tool categories available
-in the IPFS Datasets Python package.
+DEPRECATED: This tool's functionality has been merged into the main CLI tool.
+Please use 'ipfs-datasets' instead with the following commands:
 
-Usage:
+  ipfs-datasets tools categories          # List all tool categories
+  ipfs-datasets tools list <category>     # List tools in a category
+  ipfs-datasets tools run <category> <tool> [--arg value ...]  # Run a tool
+
+This file is kept for backward compatibility but will be removed in a future version.
+
+Legacy usage:
     enhanced-cli <category> <tool> [arguments]
     enhanced-cli --list-categories
     enhanced-cli --list-tools <category>
     enhanced-cli --help
 """
+
+import sys
+import os
+
+# Show deprecation warning
+print("=" * 70)
+print("DEPRECATION WARNING:")
+print("This 'enhanced-cli' tool has been merged into the main CLI.")
+print("Please use 'ipfs-datasets' instead:")
+print("")
+print("  ipfs-datasets tools categories")
+print("  ipfs-datasets tools list <category>")
+print("  ipfs-datasets tools run <category> <tool> [args...]")
+print("")
+print("This wrapper will be removed in a future version.")
+print("=" * 70)
+print("")
 
 import argparse
 import anyio
