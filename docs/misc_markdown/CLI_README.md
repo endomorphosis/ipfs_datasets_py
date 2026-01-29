@@ -30,7 +30,7 @@ python ipfs_datasets_cli.py [command] [options]
 - `graph` - Knowledge graph operations
 - `cli` - Command execution (limited for security)
 
-### 2. Enhanced CLI Tool (`enhanced_cli.py`)
+### 2. Enhanced CLI Tool (`scripts/cli/enhanced_cli.py`) - Deprecated
 
 A comprehensive CLI that provides access to ALL 31+ tool categories available in the package.
 

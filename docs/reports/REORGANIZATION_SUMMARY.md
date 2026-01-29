@@ -65,7 +65,7 @@ The root directory has been successfully reorganized from 100+ cluttered files t
 ### CLI Entry Points (7 files)
 ✅ `ipfs_datasets_cli.py` - Main CLI  
 ✅ `mcp_cli.py` - MCP CLI  
-✅ `enhanced_cli.py` - Enhanced interface  
+✅ `scripts/cli/enhanced_cli.py` - Enhanced interface (deprecated)  
 ✅ `integrated_cli.py` - Integrated interface  
 ✅ `comprehensive_distributed_cli.py` - Distributed CLI  
 ✅ `comprehensive_mcp_tools.py` - MCP tools  

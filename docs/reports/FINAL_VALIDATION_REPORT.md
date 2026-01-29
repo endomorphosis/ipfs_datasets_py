@@ -37,7 +37,7 @@ All required Python project files are in root:
 All CLI tools remain in root for easy access:
 - ✅ `ipfs_datasets_cli.py` - Main CLI (VERIFIED WORKING)
 - ✅ `mcp_cli.py` - MCP CLI
-- ✅ `enhanced_cli.py` - Enhanced CLI
+- ✅ `scripts/cli/enhanced_cli.py` - Enhanced CLI (deprecated)
 - ✅ `integrated_cli.py` - Integrated CLI
 - ✅ `comprehensive_distributed_cli.py` - Distributed CLI
 - ✅ `comprehensive_mcp_tools.py` - MCP tools

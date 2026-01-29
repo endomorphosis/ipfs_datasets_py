@@ -184,7 +184,7 @@ GitHub API response caching with P2P sharing.
 
 **Usage:**
 ```python
-from ipfs_datasets_py.cache import GitHubAPICache
+from ipfs_datasets_py.caching.cache import GitHubAPICache
 
 cache = GitHubAPICache(
     enable_p2p=True,
@@ -316,7 +316,7 @@ See `.github/workflows/example-cached-workflow.yml` for a complete example demon
 ### Example 2: Python Usage
 
 ```python
-from ipfs_datasets_py.cache import get_global_cache
+from ipfs_datasets_py.caching.cache import get_global_cache
 from ipfs_datasets_py.codeql_cache import get_global_codeql_cache
 from ipfs_datasets_py.credential_manager import get_global_credential_manager
 
@@ -496,7 +496,7 @@ p2p:
 ### Monitoring Cross-Repository Cache
 
 ```python
-from ipfs_datasets_py.cache import get_global_cache
+from ipfs_datasets_py.caching.cache import get_global_cache
 
 cache = get_global_cache()
 stats = cache.get_stats()
@@ -531,7 +531,7 @@ With proper configuration, expect:
 
 ```python
 # GitHub API Cache
-from ipfs_datasets_py.cache import get_global_cache
+from ipfs_datasets_py.caching.cache import get_global_cache
 stats = get_global_cache().get_stats()
 print(f"Hit rate: {stats['hit_rate']:.1%}")
 print(f"API calls saved: {stats['api_calls_saved']}")
