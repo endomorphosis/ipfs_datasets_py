@@ -14,7 +14,7 @@ import time
 # Add parent directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from ipfs_datasets_py.error_reporting import (
+from ipfs_datasets_py.monitoring import (
     install_error_handlers,
     get_global_error_reporter,
     ErrorReporter
@@ -133,7 +133,7 @@ def example_github_cli_status():
     print("Example 6: GitHub CLI Status")
     print("=" * 60)
     
-    from ipfs_datasets_py.error_reporting import GitHubIssueClient
+    from ipfs_datasets_py.monitoring import GitHubIssueClient
     
     client = GitHubIssueClient()
     available = client.is_available()

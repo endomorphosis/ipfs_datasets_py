@@ -14,6 +14,175 @@ import json
 from pathlib import Path
 
 
+# ============================================================================
+# Dynamic Tool Discovery and Execution (from enhanced_cli.py)
+# ============================================================================
+
+class DynamicToolRunner:
+    """Dynamically discover and run MCP tools."""
+    
+    def __init__(self):
+        self.tools_dir = Path(__file__).parent / "ipfs_datasets_py" / "mcp_server" / "tools"
+        self.discovered_tools = {}
+        self.discover_tools()
+    
+    def discover_tools(self):
+        """Discover all available tools."""
+        if not self.tools_dir.exists():
+            return
+        
+        for category_dir in self.tools_dir.iterdir():
+            if not category_dir.is_dir() or category_dir.name.startswith('_'):
+                continue
+            
+            category_name = category_dir.name
+            self.discovered_tools[category_name] = {}
+            
+            # Look for Python files in the category
+            for tool_file in category_dir.glob("*.py"):
+                if tool_file.name.startswith('_') or tool_file.name == "__init__.py":
+                    continue
+                
+                tool_name = tool_file.stem
+                module_path = f"ipfs_datasets_py.mcp_server.tools.{category_name}.{tool_name}"
+                self.discovered_tools[category_name][tool_name] = module_path
+    
+    def get_categories(self):
+        """Get list of available tool categories."""
+        return sorted(self.discovered_tools.keys())
+    
+    def get_tools(self, category):
+        """Get list of tools in a category."""
+        return sorted(self.discovered_tools.get(category, {}).keys())
+    
+    def get_tool_count(self, category):
+        """Get count of tools in a category."""
+        return len(self.discovered_tools.get(category, {}))
+    
+    async def run_tool(self, category, tool, **kwargs):
+        """Run a specific tool."""
+        import importlib
+        import inspect
+        
+        if category not in self.discovered_tools:
+            return {"status": "error", "error": f"Category '{category}' not found"}
+        
+        if tool not in self.discovered_tools[category]:
+            return {"status": "error", "error": f"Tool '{tool}' not found in category '{category}'"}
+        
+        module_path = self.discovered_tools[category][tool]
+        
+        try:
+            # Import the module
+            module = importlib.import_module(module_path)
+            
+            # Find callable functions in the module
+            functions = []
+            for name, obj in inspect.getmembers(module):
+                if inspect.isfunction(obj) and not name.startswith('_'):
+                    functions.append((name, obj))
+            
+            if not functions:
+                return {"status": "error", "error": f"No callable functions found in {module_path}"}
+            
+            # Try to find a function that matches the tool name or use the first one
+            target_function = None
+            for func_name, func_obj in functions:
+                if func_name == tool or func_name == f"{tool}_tool" or tool in func_name:
+                    target_function = func_obj
+                    break
+            
+            if not target_function:
+                # Use the first function
+                target_function = functions[0][1]
+            
+            # Get function signature
+            sig = inspect.signature(target_function)
+            
+            # Filter kwargs to match function parameters
+            filtered_kwargs = {}
+            for param_name in sig.parameters:
+                if param_name in kwargs:
+                    filtered_kwargs[param_name] = kwargs[param_name]
+            
+            # Call the function
+            import asyncio
+            if asyncio.iscoroutinefunction(target_function):
+                result = await target_function(**filtered_kwargs)
+            else:
+                result = target_function(**filtered_kwargs)
+            
+            # Ensure result is a dict
+            if not isinstance(result, dict):
+                result = {"status": "success", "result": str(result)}
+            
+            return result
+            
+        except ImportError as e:
+            return {"status": "error", "error": f"Failed to import {module_path}: {e}"}
+        except Exception as e:
+            return {"status": "error", "error": f"Failed to run tool: {e}"}
+
+
+def print_result(result, format_type="pretty"):
+    """Print results in a user-friendly format."""
+    if format_type == "json":
+        print(json.dumps(result, indent=2))
+        return
+    
+    if result.get("status") == "success":
+        print("✅ Success!")
+        if "message" in result:
+            print(f"Message: {result['message']}")
+        if "dataset_id" in result:
+            print(f"Dataset ID: {result['dataset_id']}")
+        if "summary" in result:
+            summary = result["summary"]
+            if isinstance(summary, dict):
+                print("Summary:")
+                for key, value in summary.items():
+                    print(f"  {key}: {value}")
+            else:
+                print(f"Summary: {summary}")
+        if "result" in result and result["result"] != result.get("message"):
+            print(f"Result: {result['result']}")
+    else:
+        print("❌ Error!")
+        if "error" in result:
+            print(f"Error: {result['error']}")
+        if "message" in result:
+            print(f"Message: {result['message']}")
+
+
+def parse_tool_args(args_list):
+    """Parse tool arguments from command line."""
+    kwargs = {}
+    i = 0
+    while i < len(args_list):
+        arg = args_list[i]
+        if arg.startswith('--'):
+            key = arg[2:]  # Remove --
+            if i + 1 < len(args_list) and not args_list[i + 1].startswith('--'):
+                value = args_list[i + 1]
+                # Try to parse as JSON, otherwise keep as string
+                try:
+                    kwargs[key] = json.loads(value)
+                except json.JSONDecodeError:
+                    kwargs[key] = value
+                i += 2
+            else:
+                # Boolean flag
+                kwargs[key] = True
+                i += 1
+        else:
+            i += 1
+    return kwargs
+
+
+# ============================================================================
+# Original CLI Functions
+# ============================================================================
+
 def show_help():
     """Show CLI help without importing anything heavy."""
     help_text = """
@@ -38,9 +207,10 @@ Commands:
             logs       Tail MCP dashboard logs
       
     tools        Tool management
-      categories List available tool categories
+      categories List available tool categories (all discovered tools)
       list       List tools in a category
       execute    Execute a specific tool
+      run        Run a tool directly: tools run <category> <tool> [--arg value ...]
       
     vscode       VSCode CLI management
       status     Show VSCode CLI installation status
@@ -263,6 +433,42 @@ def execute_heavy_command(args):
                 except Exception:
                     pass
             host, port = _default_host_port(config_override)
+            
+            # Handle enhanced "tools run" command
+            if subcommand == "run":
+                try:
+                    import anyio
+                    runner = DynamicToolRunner()
+                    
+                    # Parse: tools run <category> <tool> [--arg value ...]
+                    if len(args) < 4:
+                        print("Usage: ipfs-datasets tools run <category> <tool> [--arg value ...]")
+                        print("\nExamples:")
+                        print("  ipfs-datasets tools run dataset_tools load_dataset --source squad")
+                        print("  ipfs-datasets tools run ipfs_tools get_from_ipfs --cid QmHash123")
+                        print("  ipfs-datasets tools run vector_tools create_vector_index --data 'text'")
+                        return
+                    
+                    category = args[2]
+                    tool = args[3]
+                    tool_args = args[4:]
+                    
+                    # Parse tool arguments
+                    kwargs = parse_tool_args(tool_args)
+                    
+                    # Run the tool
+                    result = anyio.run(runner.run_tool, category, tool, **kwargs)
+                    
+                    # Print result
+                    print_result(result, "json" if json_output else "pretty")
+                    return
+                    
+                except Exception as e:
+                    print(f"Error running tool: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    return
+            
             # Parse common options for tools
             extra = args[2:]
             i = 0
@@ -292,25 +498,43 @@ def execute_heavy_command(args):
             try:
                 import requests
                 if subcommand == "categories":
-                    r = requests.get(f"{base}/tools", timeout=3)
-                    r.raise_for_status()
-                    data = r.json()
-                    cats = sorted(list(data.keys())) if isinstance(data, dict) else []
+                    # Use enhanced discovery if MCP server is not running
+                    try:
+                        r = requests.get(f"{base}/tools", timeout=3)
+                        r.raise_for_status()
+                        data = r.json()
+                        cats = sorted(list(data.keys())) if isinstance(data, dict) else []
+                    except Exception:
+                        # Fallback to local discovery
+                        runner = DynamicToolRunner()
+                        cats = runner.get_categories()
+                    
                     if json_output:
                         print(json.dumps({"categories": cats}))
                     else:
                         print("Available tool categories:")
+                        runner = DynamicToolRunner()
                         for c in cats:
-                            print(f"- {c}")
+                            count = runner.get_tool_count(c)
+                            print(f"  {c} ({count} tools)")
                     return
                 elif subcommand == "list":
                     if not category_arg:
                         print("Usage: ipfs-datasets tools list <category> [--host H --port P]")
                         return
-                    r = requests.get(f"{base}/tools", timeout=3)
-                    r.raise_for_status()
-                    data = r.json()
-                    tools = data.get(category_arg, []) if isinstance(data, dict) else []
+                    
+                    # Try MCP server first, fallback to local discovery
+                    try:
+                        r = requests.get(f"{base}/tools", timeout=3)
+                        r.raise_for_status()
+                        data = r.json()
+                        tools = data.get(category_arg, []) if isinstance(data, dict) else []
+                    except Exception:
+                        # Fallback to local discovery
+                        runner = DynamicToolRunner()
+                        tool_names = runner.get_tools(category_arg)
+                        tools = [{"name": name} for name in tool_names]
+                    
                     if not tools:
                         print(f"No tools found for category '{category_arg}'")
                         return
@@ -319,9 +543,12 @@ def execute_heavy_command(args):
                     else:
                         print(f"Tools in '{category_arg}':")
                         for t in tools:
-                            name = t.get("name", "unknown")
-                            desc = t.get("description", "")
-                            print(f"- {name}: {desc}")
+                            if isinstance(t, dict):
+                                name = t.get("name", "unknown")
+                                desc = t.get("description", "")
+                                print(f"  {name}: {desc}" if desc else f"  {name}")
+                            else:
+                                print(f"  {t}")
                     return
                 elif subcommand == "describe":
                     if not category_arg or not tool_arg:
@@ -2420,7 +2647,7 @@ For detailed help: ipfs-datasets discord <subcommand> --help
             
             try:
                 # Import and delegate to discord_cli module
-                from ipfs_datasets_py.discord_cli import main as discord_main
+                from ipfs_datasets_py.cli.discord_cli import main as discord_main
                 
                 # Pass remaining args to discord CLI
                 discord_args = args[1:]

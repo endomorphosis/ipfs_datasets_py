@@ -5,7 +5,9 @@ Function utility to provide custom code execution through MCP.
 """
 from typing import Dict, Any, Optional
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 async def execute_python_snippet( # Changed to async def
     code: str,

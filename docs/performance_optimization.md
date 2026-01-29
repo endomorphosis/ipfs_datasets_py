@@ -263,7 +263,7 @@ results = execute_query_plan(optimized_plan)
 Process data across multiple nodes:
 
 ```python
-from ipfs_datasets_py.libp2p_kit import DistributedProcessor
+from ipfs_datasets_py.p2p_networking.libp2p_kit import DistributedProcessor
 
 # Create a distributed processor
 processor = DistributedProcessor(
@@ -283,7 +283,7 @@ result = await processor.process_distributed(
 Execute queries in parallel across nodes:
 
 ```python
-from ipfs_datasets_py.libp2p_kit import ParallelQueryExecutor
+from ipfs_datasets_py.p2p_networking.libp2p_kit import ParallelQueryExecutor
 
 # Create a parallel query executor
 executor = ParallelQueryExecutor(

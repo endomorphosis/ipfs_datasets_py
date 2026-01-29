@@ -17,7 +17,7 @@ sys.path.append(parent_dir)
 
 # Import required modules
 from ipfs_datasets_py.llm.llm_semantic_validation import SPARQLValidator, ValidationResult
-from ipfs_datasets_py.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
 from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 def create_sample_knowledge_graph() -> KnowledgeGraph:

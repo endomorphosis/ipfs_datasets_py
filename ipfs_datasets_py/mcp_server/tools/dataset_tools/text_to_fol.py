@@ -9,7 +9,9 @@ import anyio
 from typing import Dict, Any, Optional, Union, List
 import re
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from .logic_utils.predicate_extractor import extract_predicates, extract_logical_relations, extract_variables
 from .logic_utils.fol_parser import parse_quantifiers, parse_logical_operators, build_fol_formula, validate_fol_syntax, convert_to_prolog, convert_to_tptp
 from .logic_utils.logic_formatter import format_fol, format_output

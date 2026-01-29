@@ -7,7 +7,9 @@ This tool handles applying transformations and operations to datasets.
 import anyio
 from typing import Dict, Any, Optional, Union, List
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Try to import Hugging Face datasets with fallback
 try:

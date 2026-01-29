@@ -22,7 +22,6 @@ import os
 import time
 import uuid
 import anyio
-import threading
 from collections import deque
 from datetime import datetime
 from pathlib import Path
@@ -85,8 +84,8 @@ class MCPDashboardConfig(DashboardConfig):
     enable_investigation: bool = True
     enable_real_time_monitoring: bool = True
     enable_tool_execution: bool = True
-    tool_timeout: float = 60.0
     max_concurrent_tools: int = 4
+    tool_timeout: float = 30.0
     open_browser: bool = False
     data_dir: str = os.path.expanduser("~/.ipfs_datasets/mcp_dashboard")
     graphrag_output_dir: str = os.path.expanduser("~/.ipfs_datasets/graphrag_output")
@@ -428,12 +427,8 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                # Run the async worker in a background thread so we don't depend on asyncio.
-                threading.Thread(
-                    target=anyio.run,
-                    args=(self._process_website_graphrag, session_id, url, processing_config),
-                    daemon=True,
-                ).start()
+                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+                asyncio.create_task(self._process_website_graphrag(session_id, url, processing_config))
                 
                 return jsonify({"session_id": session_id, "status": "started"})
                 
@@ -923,11 +918,8 @@ class MCPDashboard(AdminDashboard):
                 }
                 
                 # Start async processing
-                threading.Thread(
-                    target=anyio.run,
-                    args=(self._process_caselaw_bulk, session_id, processor),
-                    daemon=True,
-                ).start()
+                # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
+                asyncio.create_task(self._process_caselaw_bulk(session_id, processor))
                 
                 self.logger.info(f"Started bulk caselaw processing session: {session_id}")
                 

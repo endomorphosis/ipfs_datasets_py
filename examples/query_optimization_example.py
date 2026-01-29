@@ -20,11 +20,11 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 # Import the query optimizer
-from ipfs_datasets_py.query_optimizer import (
+from ipfs_datasets_py.search.query_optimizer import (
     create_query_optimizer, QueryOptimizer, VectorIndexOptimizer,
     KnowledgeGraphQueryOptimizer, HybridQueryOptimizer
 )
-from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
 
 # For demo purposes, let's create a simple mock knowledge graph class
 class SimpleKnowledgeGraph:

@@ -14,8 +14,8 @@ def main():
     
     try:
         # Import P2P cache modules
-        from ipfs_datasets_py.cache import GitHubAPICache
-        from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
+        from ipfs_datasets_py.caching.cache import GitHubAPICache
+        from ipfs_datasets_py.p2p_networking.p2p_peer_registry import P2PPeerRegistry
         
         print("✓ P2P cache modules imported successfully")
         

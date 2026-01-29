@@ -4,8 +4,8 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'Dockerfile*'
-      - 'docker-compose*.yml'
+      - 'docker/Dockerfile*'
+      - 'docker/docker-compose*.yml'
       - '.github/workflows/docker-ci.yml'
       - 'ipfs_datasets_py/**'
       - 'setup.py'
@@ -41,7 +41,7 @@ jobs:
       options: --user root
     strategy:
       matrix:
-        dockerfile: [Dockerfile.test, Dockerfile.mcp-minimal]
+        dockerfile: [docker/Dockerfile.test, Dockerfile.mcp-minimal]
         platform: [linux/amd64]
     
     permissions:
@@ -157,26 +157,26 @@ jobs:
       - name: Validate docker-compose files
         run: |
           echo "🔍 Validating docker-compose.yml..."
-          docker compose -f docker-compose.yml config > /dev/null
+          docker compose -f docker/docker-compose.yml config > /dev/null
           echo "✅ docker-compose.yml is valid"
           
           echo "🔍 Validating docker-compose.mcp.yml..."
-          docker compose -f docker-compose.mcp.yml config > /dev/null
+          docker compose -f docker/docker-compose.mcp.yml config > /dev/null
           echo "✅ docker-compose.mcp.yml is valid"
       
       - name: Test MCP services (quick start)
         run: |
           echo "🚀 Starting MCP services..."
-          docker compose -f docker-compose.mcp.yml up -d
+          docker compose -f docker/docker-compose.mcp.yml up -d
           
           echo "⏳ Waiting for services to be healthy..."
           sleep 30
           
           echo "🔍 Checking service status..."
-          docker compose -f docker-compose.mcp.yml ps
+          docker compose -f docker/docker-compose.mcp.yml ps
           
           echo "🧹 Cleaning up..."
-          docker compose -f docker-compose.mcp.yml down -v
+          docker compose -f docker/docker-compose.mcp.yml down -v
         timeout-minutes: 10
         continue-on-error: true
 

@@ -79,7 +79,7 @@ def test_crawling_infrastructure():
     print("=" * 50)
     
     try:
-        from ipfs_datasets_py.simple_crawler import SimpleWebCrawler
+        from ipfs_datasets_py.web_archiving.simple_crawler import SimpleWebCrawler
         
         crawler = SimpleWebCrawler(max_pages=5, max_depth=1)
         print("✓ SimpleWebCrawler available")

@@ -33,7 +33,7 @@ A sharded dataset is divided into manageable fragments (shards) distributed acro
 ### Creating Sharded Datasets
 
 ```python
-from ipfs_datasets_py.libp2p_kit import DistributedDatasetManager, NodeRole
+from ipfs_datasets_py.p2p_networking.libp2p_kit import DistributedDatasetManager, NodeRole
 import pandas as pd
 
 # Initialize a manager
@@ -349,7 +349,7 @@ kg_node = DistributedDatasetManager(
 You can extend the system with custom protocols:
 
 ```python
-from ipfs_datasets_py.libp2p_kit import Protocol
+from ipfs_datasets_py.p2p_networking.libp2p_kit import Protocol
 
 # Define a custom protocol
 class CustomAnalyticsProtocol(Protocol):
@@ -434,7 +434,7 @@ prefetch_shards = true
 ### Programmatic Configuration
 
 ```python
-from ipfs_datasets_py.libp2p_kit import DistributedConfig
+from ipfs_datasets_py.p2p_networking.libp2p_kit import DistributedConfig
 
 # Create a configuration
 config = DistributedConfig(

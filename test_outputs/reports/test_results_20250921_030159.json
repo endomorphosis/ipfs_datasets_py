@@ -1,7 +1,0 @@
-{
-  "command": "python -m pytest tests/integration/dashboard/comprehensive_mcp_dashboard_test.py -v --timeout=300 --html=test_outputs/reports/report.html --self-contained-html -k test_mcp_dashboard_api_endpoints",
-  "returncode": 4,
-  "stdout": "",
-  "stderr": "ERROR: usage: __main__.py [options] [file_or_dir] [file_or_dir] [...]\n__main__.py: error: unrecognized arguments: --timeout=300 --html=test_outputs/reports/report.html --self-contained-html\n  inifile: /home/devel/ipfs_datasets_py/pytest.ini\n  rootdir: /home/devel/ipfs_datasets_py\n\n",
-  "success": false
-}

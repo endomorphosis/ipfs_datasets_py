@@ -9,7 +9,9 @@ import os
 from pathlib import Path
 from typing import Dict, Any, Optional, Union
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def pin_to_ipfs(
@@ -61,9 +63,10 @@ async def pin_to_ipfs(
             }
 
         # Determine if we're using direct ipfs_kit_py or MCP client
-        from ipfs_datasets_py.mcp_server.configs import configs
+        # Use environment variable or default to "direct"
+        ipfs_kit_integration = os.environ.get('IPFS_KIT_INTEGRATION', 'direct')
 
-        if configs.ipfs_kit_integration == "direct":
+        if ipfs_kit_integration == "direct":
             # Direct integration with ipfs_kit_py
             try:
                 import ipfs_kit_py
@@ -115,7 +118,8 @@ async def pin_to_ipfs(
                 from ...mock_modelcontextprotocol_for_testing import MockMCPClientForTesting as MCPClient
 
             # Create client
-            client = MCPClient(configs.ipfs_kit_mcp_url)
+            ipfs_kit_mcp_url = os.environ.get('IPFS_KIT_MCP_URL', 'http://localhost:5001')
+            client = MCPClient(ipfs_kit_mcp_url)
 
             # Call the add tool
             result = await client.call_tool("add", {

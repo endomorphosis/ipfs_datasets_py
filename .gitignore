@@ -34,6 +34,11 @@ tests/__pycache__/
 test_*.pyc
 *.pytest_cache/
 .pytest_cache/
+test_screenshots/
+test_outputs/
+test_output/
+test_results/
+validation_results/
 .coverage
 htmlcov/
 .tox/

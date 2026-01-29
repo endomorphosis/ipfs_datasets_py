@@ -7,7 +7,7 @@ This file contains practical examples of using the MCP dashboard and JavaScript 
 # Example 1: Basic Dashboard Setup
 def basic_dashboard_setup():
     """Example of basic dashboard setup and startup."""
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     
     # Create configuration
     config = MCPDashboardConfig(
@@ -27,7 +27,7 @@ def basic_dashboard_setup():
 # Example 2: Advanced Dashboard Configuration
 def advanced_dashboard_setup():
     """Example of advanced dashboard configuration with custom settings."""
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     
     config = MCPDashboardConfig(
         host="0.0.0.0",                    # Listen on all interfaces
@@ -55,7 +55,7 @@ def advanced_dashboard_setup():
 # Example 3: Programmatic Tool Discovery and Execution
 def programmatic_tool_usage():
     """Example of discovering and executing tools programmatically."""
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     
     # Setup dashboard
     config = MCPDashboardConfig(enable_tool_execution=True)
@@ -85,7 +85,7 @@ def programmatic_tool_usage():
 # Example 4: Custom Tool Execution Handler
 def custom_execution_handler():
     """Example of custom tool execution with monitoring."""
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     import time
     import json
     
@@ -145,7 +145,7 @@ def custom_execution_handler():
 def integrate_with_flask():
     """Example of integrating MCP dashboard with existing Flask app."""
     from flask import Flask
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
     
     # Create main Flask app
     app = Flask(__name__)

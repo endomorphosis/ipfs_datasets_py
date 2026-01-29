@@ -8,7 +8,9 @@ import anyio
 import datetime
 from typing import Dict, Any, Optional, Union, List
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_reporting import AuditReportGenerator
 

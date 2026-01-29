@@ -46,7 +46,7 @@ jobs:
       - name: Build Docker image on self-hosted runner
         run: |
           echo "🔨 Building Docker image on self-hosted x86_64 runner..."
-          docker build -t ipfs-datasets-py:self-hosted -f Dockerfile.test .
+          docker build -t ipfs-datasets-py:self-hosted -f docker/Dockerfile.test .
           MSG="✅ Docker image built successfully"
           echo "$MSG" >> $GITHUB_STEP_SUMMARY
 
@@ -96,7 +96,7 @@ jobs:
       - name: Build Docker image on GitHub runner
         run: |
           echo "🔨 Building Docker image on GitHub-hosted runner..."
-          docker build -t ipfs-datasets-py:github-hosted -f Dockerfile.test .
+          docker build -t ipfs-datasets-py:github-hosted -f docker/Dockerfile.test .
           MSG="✅ Docker image built successfully"
           echo "$MSG" >> $GITHUB_STEP_SUMMARY
 

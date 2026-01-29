@@ -11,9 +11,9 @@ from pathlib import Path
 import sys
 
 _repo_root = Path(__file__).resolve().parent.parent
-_known_good_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
-if _known_good_ipfs_kit.exists():
-    sys.path.insert(0, str(_known_good_ipfs_kit))
+_main_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
+if _main_ipfs_kit.exists():
+    sys.path.insert(0, str(_main_ipfs_kit))
 
 # File type detection
 try:
@@ -263,7 +263,7 @@ except ImportError as e:
     ReasoningEnhancer = None
 
 try:
-    from ipfs_datasets_py.graphrag_integration import enhance_dataset_with_llm
+    from ipfs_datasets_py.integrations.graphrag_integration import enhance_dataset_with_llm
     HAVE_GRAPHRAG_INTEGRATION = True
 except ImportError:
     HAVE_GRAPHRAG_INTEGRATION = False
@@ -281,7 +281,7 @@ except ImportError:
 
 # P2P Workflow Scheduler
 try:
-    from ipfs_datasets_py.p2p_workflow_scheduler import (
+    from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
         P2PWorkflowScheduler,
         WorkflowDefinition,
         WorkflowTag,

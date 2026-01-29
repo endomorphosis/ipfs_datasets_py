@@ -19,7 +19,7 @@ on:
       - 'ipfs_datasets_py/**'
       - 'tests/**'
       - '.github/workflows/arm64-runner.yml'
-      - 'Dockerfile*'
+      - 'docker/Dockerfile*'
   pull_request:
     branches: [main, develop]
 
@@ -194,7 +194,7 @@ jobs:
           docker buildx build \
             --platform linux/arm64 \
             --tag ipfs-datasets-py:arm64-test \
-            --file Dockerfile.test \
+            --file docker/Dockerfile.test \
             --load \
             .
           echo "✅ ARM64 Docker image built successfully" >> $GITHUB_STEP_SUMMARY
@@ -237,7 +237,7 @@ jobs:
           docker buildx build \
             --platform linux/arm64 \
             --tag ipfs-datasets-mcp-dashboard:arm64 \
-            --file Dockerfile.dashboard-minimal \
+            --file docker/Dockerfile.dashboard-minimal \
             --load \
             .
       

@@ -1,6 +1,6 @@
 import pytest
 
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorInitialization:
@@ -50,7 +50,7 @@ class TestWebArchiveProcessorInitialization:
         """
         # GIVEN no arguments
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             
             # WHEN WebArchiveProcessor is initialized
             processor = WebArchiveProcessor()
@@ -71,7 +71,7 @@ class TestWebArchiveProcessorInitialization:
         """
         # GIVEN WebArchiveProcessor instance
         try:
-            from ipfs_datasets_py.web_archive import WebArchive
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchive
             processor = WebArchiveProcessor()
             
             # WHEN checking archive attribute

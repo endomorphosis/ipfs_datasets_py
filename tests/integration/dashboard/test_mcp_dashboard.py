@@ -14,7 +14,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig, start_mcp_dashboard
+    from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig, start_mcp_dashboard
     print("✓ Successfully imported MCP dashboard components")
 except ImportError as e:
     print(f"✗ Failed to import MCP dashboard: {e}")
@@ -152,7 +152,7 @@ def main():
         print("\n=== Test Summary ===")
         print("✓ All basic tests passed!")
         print("\nTo test the full dashboard, run:")
-        print("  python -c 'from ipfs_datasets_py.mcp_dashboard import start_mcp_dashboard; start_mcp_dashboard()'")
+        print("  python -c 'from ipfs_datasets_py.dashboards.mcp_dashboard import start_mcp_dashboard; start_mcp_dashboard()'")
         print("Then visit: http://localhost:8080/mcp")
         
     except Exception as e:

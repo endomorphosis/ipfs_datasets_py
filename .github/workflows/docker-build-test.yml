@@ -4,8 +4,8 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'Dockerfile*'
-      - 'docker-compose*.yml'
+      - 'docker/Dockerfile*'
+      - 'docker/docker-compose*.yml'
       - '.github/workflows/docker-build-test.yml'
       - 'ipfs_datasets_py/**'
       - 'setup.py'
@@ -51,7 +51,7 @@ jobs:
       - name: Build minimal test image
         run: |
           echo "🔨 Building Docker image for x86_64..."
-          docker build -t ipfs-datasets-py:test-x86 -f Dockerfile.minimal-test .
+          docker build -t ipfs-datasets-py:test-x86 -f docker/Dockerfile.minimal-test .
       
       - name: Test Docker container
         run: |
@@ -125,7 +125,7 @@ jobs:
       - name: Build Docker image
         run: |
           echo "🔨 Building Docker image on self-hosted runner..."
-          docker build -t ipfs-datasets-py:self-hosted-x86 -f Dockerfile.minimal-test .
+          docker build -t ipfs-datasets-py:self-hosted-x86 -f docker/Dockerfile.minimal-test .
       
       - name: Test Docker container
         run: |
@@ -180,7 +180,7 @@ jobs:
       - name: Build Docker image
         run: |
           echo "🔨 Building Docker image on ARM64 runner..."
-          docker build -t ipfs-datasets-py:self-hosted-arm64 -f Dockerfile.minimal-test .
+          docker build -t ipfs-datasets-py:self-hosted-arm64 -f docker/Dockerfile.minimal-test .
       
       - name: Test Docker container
         run: |
@@ -246,7 +246,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile.minimal-test
+          file: docker/Dockerfile.minimal-test
           platforms: ${{ github.event.inputs.platform || 'linux/amd64,linux/arm64' }}
           push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ steps.meta.outputs.tags }}

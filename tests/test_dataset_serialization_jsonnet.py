@@ -31,7 +31,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_import_from_jsonnet(self):
         """GIVEN a Jsonnet file WHEN importing THEN return Arrow table"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -50,7 +50,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_import_from_jsonnet_with_ext_vars(self):
         """GIVEN Jsonnet with external vars WHEN importing THEN use provided vars"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -75,7 +75,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_import_from_jsonnet_single_object(self):
         """GIVEN Jsonnet returning single object WHEN importing THEN wrap in array"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -91,7 +91,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_convert_jsonnet_to_arrow(self):
         """GIVEN Jsonnet string WHEN converting to Arrow THEN return table"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         jsonnet_str = '[{ id: 1, value: 10 }, { id: 2, value: 20 }]'
@@ -103,7 +103,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_export_to_jsonnet(self):
         """GIVEN data list WHEN exporting to Jsonnet THEN create valid file"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         data = [
@@ -128,7 +128,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_serialize_jsonnet(self):
         """GIVEN Jsonnet file WHEN serializing to IPLD THEN return CID"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -144,7 +144,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_serialize_and_deserialize_jsonnet(self):
         """GIVEN Jsonnet data WHEN serializing and deserializing THEN data preserved"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -165,7 +165,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_deserialize_jsonnet_to_file(self):
         """GIVEN serialized Jsonnet WHEN deserializing to file THEN create file"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -193,7 +193,7 @@ class TestDatasetSerializerJsonnet:
     
     def test_deserialize_wrong_type_raises_error(self):
         """GIVEN non-Jsonnet dataset CID WHEN deserializing THEN raise ValueError"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         
@@ -215,7 +215,7 @@ class TestJsonnetIntegrationWithOtherFormats:
     
     def test_jsonnet_to_arrow_to_parquet(self):
         """GIVEN Jsonnet WHEN converting through Arrow to Parquet THEN data preserved"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         import pyarrow.parquet as pq
         
         serializer = DatasetSerializer()
@@ -249,7 +249,7 @@ class TestJsonnetIntegrationWithOtherFormats:
     
     def test_jsonnet_with_comprehensions(self):
         """GIVEN Jsonnet with array comprehensions WHEN evaluating THEN work correctly"""
-        from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+        from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
         
         serializer = DatasetSerializer()
         

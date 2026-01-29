@@ -12,7 +12,9 @@ from pathlib import Path
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from .ffmpeg_utils import ffmpeg_utils, FFmpegError
 
 async def ffmpeg_batch_process(

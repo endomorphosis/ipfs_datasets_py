@@ -6,7 +6,7 @@ from examples/p2p_workflow_demo.py.
 """
 
 import pytest
-from ipfs_datasets_py.p2p_workflow_scheduler import P2PWorkflowScheduler, WorkflowDefinition, WorkflowTag
+from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import P2PWorkflowScheduler, WorkflowDefinition, WorkflowTag
 
 
 def test_create_scheduler_with_3_peers(peer_ids_list):

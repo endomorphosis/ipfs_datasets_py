@@ -28,7 +28,7 @@ from ipfs_datasets_py.website_graphrag_processor import WebsiteGraphRAGProcessor
 from ipfs_datasets_py.content_discovery import ContentDiscoveryEngine, ContentManifest, ContentAsset
 from ipfs_datasets_py.multimodal_processor import MultiModalContentProcessor, ProcessedContent, ProcessedContentBatch
 from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem, SearchResult, WebsiteGraphRAGResult
-from ipfs_datasets_py.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 
 
 class TestWebsiteGraphRAGProcessor:

@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 # Import the investigation components
 try:
-    from ipfs_datasets_py.investigation_mcp_client import create_investigation_mcp_client
-    from ipfs_datasets_py.mcp_investigation_dashboard import MCPInvestigationDashboard, MCPInvestigationDashboardConfig
+    from ipfs_datasets_py.mcp_server.investigation_mcp_client import create_investigation_mcp_client
+    from ipfs_datasets_py.dashboards.mcp_investigation_dashboard import MCPInvestigationDashboard, MCPInvestigationDashboardConfig
 except ImportError as e:
     logger.error(f"Import failed: {e}")
     print("Please run from the correct directory or install the package")

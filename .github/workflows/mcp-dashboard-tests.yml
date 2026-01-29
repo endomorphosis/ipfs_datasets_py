@@ -62,7 +62,7 @@ jobs:
           # Build with specific Python version
           docker build \
             --build-arg PYTHON_VERSION=${{ matrix.python-version }} \
-            -f Dockerfile.mcp-tests \
+            -f docker/Dockerfile.mcp-tests \
             -t ipfs-datasets-mcp-tests:py${{ matrix.python-version }} .
       
       - name: Run Dashboard Validation in Container
@@ -121,7 +121,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Run MCP Dashboard Tests in Docker
         run: |
@@ -180,7 +180,7 @@ jobs:
       
       - name: Build MCP Test Docker Image
         run: |
-          docker build -f Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
+          docker build -f docker/Dockerfile.mcp-tests -t ipfs-datasets-mcp-tests:latest .
       
       - name: Run Endpoint Tests in Container
         run: |

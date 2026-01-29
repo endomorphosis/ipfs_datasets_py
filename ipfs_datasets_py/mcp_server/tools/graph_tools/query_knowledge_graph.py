@@ -8,8 +8,10 @@ using the GraphRAGProcessor from graphrag_processor.
 import anyio
 from typing import Dict, Any, Optional, Union, List
 
-from ipfs_datasets_py.mcp_server.logger import logger
-from ipfs_datasets_py.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+import logging
+
+logger = logging.getLogger(__name__)
+from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
 
 
 async def query_knowledge_graph(

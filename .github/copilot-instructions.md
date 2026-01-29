@@ -319,11 +319,11 @@ Several CLI interfaces provide command-line access to functionality:
 
 **Enhanced CLI** (`enhanced_cli.py`) - Access to ALL 100+ tools:
 ```bash
-python enhanced_cli.py --list-categories       # See all 31+ categories
-python enhanced_cli.py dataset_tools load_dataset --source squad
-python enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
-python enhanced_cli.py media_tools ffmpeg_info --input video.mp4
-python enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
+python scripts/cli/enhanced_cli.py --list-categories       # See all 31+ categories
+python scripts/cli/enhanced_cli.py dataset_tools load_dataset --source squad
+python scripts/cli/enhanced_cli.py pdf_tools pdf_analyze_relationships --input doc.pdf
+python scripts/cli/enhanced_cli.py media_tools ffmpeg_info --input video.mp4
+python scripts/cli/enhanced_cli.py web_archive_tools common_crawl_search --query "AI"
 ```
 
 **Specialized CLIs:**

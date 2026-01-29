@@ -127,3 +127,55 @@ The system is ready for production use with:
 - Check individual module imports if issues occur
 
 **🚀 Congratulations! Your ipfs_datasets_py system is now fully operational!**
+
+
+---
+
+## Best Practices
+
+### Performance Optimization
+- **Use hardware acceleration**: Enable `ipfs_accelerate_py` for 2-20x performance improvements
+- **Batch processing**: Process data in batches for better throughput
+- **Caching**: Leverage caching mechanisms to avoid redundant operations
+- **Async operations**: Use async/await for I/O-bound operations
+
+### IPFS Integration
+- **Pin important content**: Use `ipfs_kit_py` to pin content for persistence
+- **Content addressing**: Leverage CID-based deduplication
+- **CAR files**: Use CAR archives for bulk storage and transfer
+- **Pinning services**: Configure remote pinning for reliability
+
+### Code Organization
+- **Follow reorganized structure**: Use correct import paths after refactoring
+  ```python
+  # Correct imports
+  from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
+  from ipfs_datasets_py.caching.cache import GitHubAPICache
+  from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+  ```
+
+### Error Handling
+- **Graceful degradation**: Handle missing dependencies gracefully
+- **Retry logic**: Implement retry for network operations
+- **Logging**: Use structured logging for debugging
+- **Validation**: Validate inputs before processing
+
+### Security
+- **Secrets management**: Use environment variables for sensitive data
+- **Input validation**: Sanitize and validate all user inputs
+- **Access control**: Implement proper authentication/authorization
+- **Audit logging**: Track important operations
+
+### Common Pitfalls to Avoid
+- ❌ Don't use old import paths (pre-refactoring)
+- ❌ Don't hardcode file paths
+- ❌ Don't ignore error handling
+- ❌ Don't skip dependency version pinning
+- ❌ Don't commit sensitive data
+
+### Integration Tips
+- **MCP Tools**: Use the unified CLI for tool execution
+- **Docker**: Use provided Dockerfiles in `docker/` directory
+- **Testing**: Run `pytest` with parallel execution for faster tests
+- **Documentation**: Refer to guides in `docs/guides/` for detailed info
+

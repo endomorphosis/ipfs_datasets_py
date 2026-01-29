@@ -62,24 +62,6 @@ DEFAULT_TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates", "ad
 DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_DATA_DIR, "dashboard_config.json")
 
 
-def _to_jsonable(value: Any) -> Any:
-    """Convert values to JSON-serializable equivalents.
-
-    Args:
-        value: Value to convert.
-
-    Returns:
-        JSON-serializable representation of the value.
-    """
-    if isinstance(value, Enum):
-        return value.value
-    if isinstance(value, dict):
-        return {key: _to_jsonable(val) for key, val in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_to_jsonable(item) for item in value]
-    return value
-
-
 @dataclass
 class DashboardConfig:
     """Configuration for the admin dashboard.
@@ -929,6 +911,21 @@ function fetchUpdatedData() {
         if not self.app:
             return
 
+        def _make_json_serializable(value: Any) -> Any:
+            """Convert values to JSON-serializable equivalents.
+
+            This is primarily used to keep dashboard templates resilient when they
+            use Jinja's `tojson` filter (which relies on Flask's JSON provider).
+            """
+            if isinstance(value, Enum):
+                # Use the symbolic name for readability/stability (e.g. LogLevel.INFO)
+                return value.name
+            if isinstance(value, dict):
+                return {k: _make_json_serializable(v) for k, v in value.items()}
+            if isinstance(value, (list, tuple)):
+                return [_make_json_serializable(v) for v in value]
+            return value
+
         @self.app.route('/')
         def index():
             """Render the main dashboard page."""
@@ -981,9 +978,6 @@ function fetchUpdatedData() {
             uptime = str(timedelta(seconds=int(uptime_seconds)))
 
             # Prepare dashboard data
-            dashboard_config = _to_jsonable(asdict(self.config))
-            monitoring_config = _to_jsonable(asdict(MonitoringSystem.get_instance().config))
-
             dashboard_data = {
                 "metrics": metrics,
                 "operations": operations,
@@ -994,8 +988,10 @@ function fetchUpdatedData() {
                 "uptime": uptime,
                 "last_updated": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                 "refresh_interval": self.config.refresh_interval,
-                "dashboard_config": dashboard_config,
-                "monitoring_config": monitoring_config
+                "dashboard_config": asdict(self.config),
+                "monitoring_config": _make_json_serializable(
+                    asdict(MonitoringSystem.get_instance().config)
+                )
             }
 
             return render_template('index.html', **dashboard_data)

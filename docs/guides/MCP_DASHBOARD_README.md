@@ -49,7 +49,7 @@ ipfs_datasets_py/
 ### Starting the Dashboard
 
 ```python
-from ipfs_datasets_py.mcp_dashboard import start_mcp_dashboard, MCPDashboardConfig
+from ipfs_datasets_py.dashboards.mcp_dashboard import start_mcp_dashboard, MCPDashboardConfig
 
 # Basic configuration
 config = MCPDashboardConfig(

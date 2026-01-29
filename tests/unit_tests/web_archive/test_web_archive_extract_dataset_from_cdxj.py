@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch
 
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorExtractDatasetFromCdxj:
@@ -21,7 +21,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
             - Return dict with dataset extraction result
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchiveProcessor
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
             
             processor = WebArchiveProcessor()
             cdxj_path = "/data/indexes/crawl.cdxj"
@@ -53,7 +53,7 @@ class TestWebArchiveProcessorExtractDatasetFromCdxj:
             - format field contains "json"
         """
         try:
-            from ipfs_datasets_py.web_archive import WebArchiveProcessor
+            from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
             
             processor = WebArchiveProcessor()
             cdxj_path = "/data/indexes/crawl.cdxj"

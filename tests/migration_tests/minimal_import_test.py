@@ -17,7 +17,7 @@ try:
     import ipfs_datasets_py.web_archive
     print("✓ web_archive module imported")
 
-    from ipfs_datasets_py.web_archive import WebArchiveProcessor
+    from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
     print("✓ WebArchiveProcessor class imported")
 
     processor = WebArchiveProcessor()
@@ -33,7 +33,7 @@ try:
     import ipfs_datasets_py.graphrag_processor
     print("✓ graphrag_processor module imported")
 
-    from ipfs_datasets_py.graphrag_processor import MockGraphRAGProcessor
+    from ipfs_datasets_py.processors.graphrag_processor import MockGraphRAGProcessor
     print("✓ MockGraphRAGProcessor class imported")
 
     mock_proc = MockGraphRAGProcessor()

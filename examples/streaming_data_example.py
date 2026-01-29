@@ -45,7 +45,7 @@ except ImportError:
     print("HuggingFace datasets is not installed. Some functionality will be limited.")
 
 # Import the streaming data loader
-from ipfs_datasets_py.streaming_data_loader import (
+from ipfs_datasets_py.search.streaming_data_loader import (
     load_parquet,
     load_csv,
     load_json,

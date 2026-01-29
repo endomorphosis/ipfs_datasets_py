@@ -2,7 +2,7 @@
 """Test suite for WebArchiveProcessor.extract_text_from_html method."""
 
 import pytest
-from ipfs_datasets_py.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
 
 STATUS_SUCCESS = "success"
 STATUS_ERROR = "error"

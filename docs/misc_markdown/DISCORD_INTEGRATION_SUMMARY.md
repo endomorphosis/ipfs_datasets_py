@@ -295,7 +295,7 @@ Added to both:
 
 #### CLI Integration
 
-Alert tools automatically discovered by `enhanced_cli.py`:
+Alert tools automatically discovered by `scripts/cli/enhanced_cli.py` (deprecated):
 
 ```bash
 # List alert tools

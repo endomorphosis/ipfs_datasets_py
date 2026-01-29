@@ -7,7 +7,9 @@ This tool handles recording audit events for security, compliance, and operation
 import anyio
 from typing import Dict, Any, Optional, Union, List
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from ipfs_datasets_py.audit import AuditLogger # Added import
 
 async def record_audit_event( # Changed to async def

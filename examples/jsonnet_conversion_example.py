@@ -13,7 +13,7 @@ import json
 # Add parent directory to path so we can import the module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from ipfs_datasets_py.jsonnet_utils import (
+from ipfs_datasets_py.utils.jsonnet_utils import (
     JsonnetConverter,
     jsonnet_to_json,
     jsonnet_to_jsonl,
@@ -21,8 +21,8 @@ from ipfs_datasets_py.jsonnet_utils import (
     jsonnet_to_parquet,
 )
 
-from ipfs_datasets_py.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
+from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
 
 
 def create_sample_jsonnet(file_path):

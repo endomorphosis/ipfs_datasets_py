@@ -7,7 +7,7 @@ bypasses GitHub API using merkle clock consensus and fibonacci heap prioritizati
 """
 
 import anyio
-from ipfs_datasets_py.p2p_workflow_scheduler import (
+from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
     P2PWorkflowScheduler,
     WorkflowDefinition,
     WorkflowTag,
@@ -122,7 +122,7 @@ def demo_peer_assignment():
     print("PEER ASSIGNMENT ALGORITHM DEMONSTRATION")
     print("=" * 60)
     
-    from ipfs_datasets_py.p2p_workflow_scheduler import calculate_hamming_distance
+    from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import calculate_hamming_distance
     import hashlib
     
     # Create scheduler with 5 peers
@@ -253,7 +253,7 @@ def main():
     print("=" * 60)
     print("\nFor more information:")
     print("  • CLI: ipfs-datasets p2p --help")
-    print("  • Python: from ipfs_datasets_py.p2p_workflow_scheduler import *")
+    print("  • Python: from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import *")
     print("  • MCP: Use MCP server tools in p2p_workflow_tools category")
 
 

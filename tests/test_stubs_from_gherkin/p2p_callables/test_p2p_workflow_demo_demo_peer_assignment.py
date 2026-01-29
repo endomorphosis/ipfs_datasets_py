@@ -6,7 +6,7 @@ from examples/p2p_workflow_demo.py.
 """
 
 import pytest
-from ipfs_datasets_py.p2p_workflow_scheduler import calculate_hamming_distance
+from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import calculate_hamming_distance
 import hashlib
 
 

@@ -10,7 +10,9 @@ from typing import Dict, Any, Optional, Union, List
 import re
 from datetime import datetime
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 from .logic_utils.deontic_parser import (
     extract_normative_elements, analyze_normative_sentence, build_deontic_formula,
     identify_obligations, detect_normative_conflicts

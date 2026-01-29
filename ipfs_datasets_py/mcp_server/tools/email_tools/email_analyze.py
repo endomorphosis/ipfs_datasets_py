@@ -13,7 +13,9 @@ from collections import Counter
 from datetime import datetime
 import json
 
-from ipfs_datasets_py.mcp_server.logger import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 async def email_analyze_export(

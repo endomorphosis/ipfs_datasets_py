@@ -24,7 +24,7 @@ from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     StepType,
     ConfidenceLevel
 )
-from ipfs_datasets_py.knowledge_graph_extraction import (
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     KnowledgeGraph,
     Entity,
     Relationship,

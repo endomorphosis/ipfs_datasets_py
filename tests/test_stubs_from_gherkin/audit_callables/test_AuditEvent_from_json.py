@@ -325,18 +325,7 @@ def test_from_json_with_compact_json(a_json_string_with_event_data_exists, the_j
 
 
 def test_from_json_roundtrip_preserves_data(a_json_string_with_event_data_exists, the_json_contains_event_id_evt789, the_json_contains_level_warning, the_json_contains_category_security, the_json_contains_action_breach):
-    """
-    Scenario: From json roundtrip preserves data
-
-    Given:
-        an original AuditEvent exists
-
-    When:
-        to_json() is called on the original
-
-    Then:
-        the new event matches the original event
-    """
+    # Scenario: From json roundtrip preserves data
     # TODO: Implement test
     pass
 

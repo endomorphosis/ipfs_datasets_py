@@ -289,11 +289,14 @@ for data_point in market_stream:
 
 ### CLI Usage
 
-The alert tools are accessible via the `enhanced_cli.py`:
+The alert tools are accessible via the `scripts/cli/enhanced_cli.py` (deprecated, use `ipfs-datasets` CLI instead):
 
 ```bash
-# List alert tools
-python enhanced_cli.py --list-tools alert_tools
+# List alert tools (deprecated)
+python scripts/cli/enhanced_cli.py --list-tools alert_tools
+
+# Recommended - use main CLI
+ipfs-datasets tools list alert_tools
 
 # The tools are available as functions in the discord_alert_tools module
 # For direct Python usage, see the Python API examples above

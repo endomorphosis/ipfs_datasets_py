@@ -6,7 +6,7 @@ Tests the merkle clock, fibonacci heap, and workflow scheduling functionality.
 
 import pytest
 import time
-from ipfs_datasets_py.p2p_workflow_scheduler import (
+from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
     MerkleClock,
     FibonacciHeap,
     WorkflowDefinition,

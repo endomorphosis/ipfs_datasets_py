@@ -35,7 +35,7 @@ All CLI tools are working as intended with proper error handling and security me
 
 ### Available CLI Interfaces
 1. **Main CLI** (`ipfs_datasets_cli.py`) - Curated common functions
-2. **Enhanced CLI** (`enhanced_cli.py`) - All 31+ categories, 100+ tools
+2. **Enhanced CLI** (`scripts/cli/enhanced_cli.py`) - All 31+ categories, 100+ tools (deprecated)
 3. **Wrapper Script** (`ipfs-datasets`) - Convenient shell script
 
 ### Tool Categories Accessible (33 total)
