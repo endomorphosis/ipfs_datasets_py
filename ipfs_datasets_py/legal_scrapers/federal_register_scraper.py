@@ -7,6 +7,9 @@ import logging
 import time
 from typing import Dict, List, Optional, Any
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
+import ipaddress
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +36,54 @@ FEDERAL_AGENCIES = {
     "FCC": "Federal Communications Commission",
     "CFPB": "Consumer Financial Protection Bureau"
 }
+
+
+def _is_public_ip(ip_str: str) -> bool:
+    """Return True if the IP address is globally routable (not private/loopback/etc.)."""
+    try:
+        ip = ipaddress.ip_address(ip_str)
+    except ValueError:
+        return False
+    return not (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_reserved
+        or ip.is_multicast
+    )
+
+
+def _is_safe_federal_register_url(url: str) -> bool:
+    """Validate that the URL points to the public Federal Register site and not an internal address."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False
+
+    if parsed.scheme not in ("http", "https"):
+        return False
+
+    hostname = parsed.hostname
+    if not hostname:
+        return False
+
+    # Only allow official Federal Register domains
+    if not (hostname == "www.federalregister.gov" or hostname.endswith(".federalregister.gov")):
+        return False
+
+    # Resolve hostname and ensure all addresses are public
+    try:
+        addrinfos = socket.getaddrinfo(hostname, None)
+    except OSError:
+        return False
+
+    for family, _, _, _, sockaddr in addrinfos:
+        if family in (socket.AF_INET, socket.AF_INET6):
+            ip_str = sockaddr[0]
+            if not _is_public_ip(ip_str):
+                return False
+
+    return True
 
 
 async def search_federal_register(
@@ -288,13 +339,20 @@ async def scrape_federal_register(
                     
                     # Optionally fetch full text
                     if include_full_text and doc.get('raw_text_url'):
-                        try:
-                            text_response = requests.get(doc['raw_text_url'], timeout=30)
-                            if text_response.status_code == 200:
-                                doc['full_text'] = text_response.text
-                        except Exception as e:
-                            logger.warning(f"Failed to fetch full text for {doc.get('document_number')}: {e}")
-                            doc['full_text'] = None
+                        raw_url = doc.get('raw_text_url')
+                        if _is_safe_federal_register_url(str(raw_url)):
+                            try:
+                                text_response = requests.get(raw_url, timeout=30)
+                                if text_response.status_code == 200:
+                                    doc['full_text'] = text_response.text
+                            except Exception as e:
+                                logger.warning(f"Failed to fetch full text for {doc.get('document_number')}: {e}")
+                                doc['full_text'] = None
+                        else:
+                            logger.warning(
+                                f"Skipping full text fetch for {doc.get('document_number')}: "
+                                f"unsafe raw_text_url={raw_url!r}"
+                            )
                     
                     doc['scraped_at'] = datetime.now().isoformat()
                     scraped_documents.append(doc)
