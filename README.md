@@ -713,9 +713,9 @@ car_cid = create_car_file("data/", "output.car")
 ## 📚 Documentation
 
 ### Getting Started
-- **[Quick Start Guide](docs/QUICK_START.md)** - Complete getting started tutorial
-- **[Installation Guide](docs/INSTALLATION.md)** - Detailed installation instructions
-- **[Architecture Overview](docs/ARCHITECTURE.md)** - Package structure and design
+- **[Quick Start Guide](docs/guides/QUICK_START.md)** - Complete getting started tutorial
+- **[Installation Guide](docs/installation.md)** - Detailed installation instructions
+- **[Architecture Overview](docs/architecture/)** - Package structure and design
 
 ### Features & Integration
 - **[Complete Features List](docs/FEATURES.md)** - All capabilities explained
