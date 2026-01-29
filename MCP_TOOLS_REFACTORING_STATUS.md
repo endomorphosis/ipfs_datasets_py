@@ -70,10 +70,22 @@ async def mcp_tool_function(**kwargs):
 10. **`dataset_tools/`** ✅ - Imports from Hugging Face `datasets`
 11. **`pdf_tools/`** ✅ - Imports from `ipfs_datasets_py.pdf_processing`
 
-### 🔴 Phase 5-9: REMAINING (6 tools, ~3,644 lines to extract)
+### ✅ Phase 5: COMPLETED (Media Tools)
+
+12. **`media_tools/`** ✅
+    - **Before:** Duplicate FFmpeg implementation (411 lines in `ffmpeg_utils.py`)
+    - **After:** Thin wrapper and compatibility shim (180 lines) delegating to core
+    - **Core Module:** `ipfs_datasets_py/multimedia/ffmpeg_wrapper.py` (EXISTING)
+    - **Files Updated:**
+      - `ffmpeg_convert.py` - Now delegates to core `FFmpegWrapper`
+      - `ffmpeg_utils.py` - Compatibility shim for backward compatibility
+    - **Lines Removed:** 411 lines of duplicate FFmpeg code
+    - **Status:** COMPLETED ✓
+
+### 🔴 Phase 6-9: REMAINING (5 tools, ~3,233 lines to extract)
 
 #### Critical Priority
-12. **`workflow_tools/`** 🔴 - 791 lines
+13. **`workflow_tools/`** 🔴 - 791 lines
     - **Issue:** Complete workflow engine embedded in MCP tool
     - **Lines:** 791 (workflow execution: 200+, templates: 100+, registries: 50+)
     - **Should Extract To:** `ipfs_datasets_py/workflow_engine/`
@@ -84,7 +96,7 @@ async def mcp_tool_function(**kwargs):
       - Batch processing engine
     - **Estimated Effort:** 3-4 hours
 
-13. **`storage_tools/`** 🔴 - 708 lines
+14. **`storage_tools/`** 🔴 - 708 lines
     - **Issue:** MockStorageManager with full storage operations
     - **Lines:** 708 (MockStorageManager: 330+, helpers: 100+)
     - **Should Extract To:** `ipfs_datasets_py/storage/manager.py`
@@ -95,16 +107,6 @@ async def mcp_tool_function(**kwargs):
       - Compression simulation
       - Stats tracking
     - **Estimated Effort:** 2-3 hours
-
-14. **`media_tools/`** 🔴 - 750+ lines
-    - **Issue:** Duplicate FFmpeg implementation
-    - **Files:** 
-      - `ffmpeg_utils.py` (411 lines) - DUPLICATE
-      - `ffmpeg_convert.py` (250 lines) - Uses local utils
-      - Other media tools (100+ lines)
-    - **Core Module EXISTS:** `ipfs_datasets_py/multimedia/ffmpeg_wrapper.py` ✓
-    - **Action Required:** Replace imports, remove duplicate
-    - **Estimated Effort:** 1-2 hours
 
 #### High Priority
 15. **`data_processing_tools/`** 🟠 - 522 lines
@@ -182,28 +184,30 @@ For each tool being refactored:
 ### Metrics
 - **Total Tools:** 17
 - **Already Correct:** 7 (41%)
-- **Refactored:** 4 (24%)
-- **Remaining:** 6 (35%)
-- **Lines Extracted:** 788 lines (analysis_tools)
-- **Lines Still Embedded:** ~3,644 lines
+- **Refactored:** 5 (29%)
+- **Remaining:** 5 (30%)
+- **Lines Extracted:** 1,199 lines (analysis_tools: 788, media_tools: 411)
+- **Lines Still Embedded:** ~3,233 lines
 
 ### Test Coverage
 - ✅ Core analytics engine - Tested
 - ✅ Audit tools wrapper - Tested
+- ✅ Media tools wrapper - Tested (imports work, backward compatible)
 - ⚠️ Vector tools wrapper - Needs runtime testing with actual stores
 - ⏳ Remaining tools - Tests needed after refactoring
 
 ## Next Actions
 
-### Immediate (Next Session)
-1. Complete `media_tools/` refactoring - Use core multimedia module
-2. Extract `workflow_tools/` business logic to core module
-3. Extract `storage_tools/` business logic to core module
+### Immediate (Completed)
+1. ✅ Complete `media_tools/` refactoring - Used core multimedia module
+2. ✅ Cleaned up backup files
 
-### Follow-up
-4. Extract `data_processing_tools/` logic
-5. Extract `ipfs_tools/` gateway logic
-6. Clean up `dataset_tools/` mocks
+### Follow-up (Next Session)
+3. Extract `workflow_tools/` business logic to core module (791 lines)
+4. Extract `storage_tools/` business logic to core module (708 lines)
+5. Extract `data_processing_tools/` logic (522 lines)
+6. Extract `ipfs_tools/` gateway logic (244 lines)
+7. Clean up `dataset_tools/` mocks (365 lines)
 
 ### Final
 7. Run comprehensive test suite
