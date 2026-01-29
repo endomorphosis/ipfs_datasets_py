@@ -870,6 +870,11 @@ IPFS Datasets Python now includes **industry-leading web scraping capabilities**
 
 ```python
 # Complete web scraping and archival example
+# Note: These are MCP tool imports for MCP server integration.
+# For direct usage without MCP server, use:
+#   from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+#   from ipfs_datasets_py.multimedia import FFmpegVideoProcessor
+
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_common_crawl,
     search_wayback_machine,
@@ -919,7 +924,8 @@ async def comprehensive_archiving_example():
     print(f"IPFS archived: {ipwb_result['ipfs_hash']}")
 
 # Enhanced AdvancedWebArchiver with all services
-from ipfs_datasets_py.advanced_web_archiving import AdvancedWebArchiver, ArchivingConfig
+# Note: This uses the reorganized web_archiving module
+from ipfs_datasets_py.web_archiving import AdvancedWebArchiver, ArchivingConfig
 
 config = ArchivingConfig(
     enable_local_warc=True,
@@ -962,6 +968,34 @@ pip install ipfs-datasets-py[web_archive,multimedia]
 
 ## Basic Usage
 
+### Two Usage Patterns
+
+**Pattern 1: Direct Imports** (Recommended for scripts and libraries)
+```python
+# Using reorganized module structure for direct access
+from ipfs_datasets_py.dataset_manager import DatasetManager
+from ipfs_datasets_py.search.query_optimizer import QueryOptimizer
+from ipfs_datasets_py.caching.cache import GitHubAPICache
+
+# Initialize dataset manager
+manager = DatasetManager(storage_backend="local")
+
+# Load and process dataset
+try:
+    dataset = manager.load_dataset("wikipedia", split="train[:1000]")
+    print(f"Loaded {len(dataset)} examples")
+    
+    # Process with query optimization
+    optimizer = QueryOptimizer()
+    optimized_query = optimizer.optimize("SELECT * FROM dataset WHERE length > 1000")
+    
+    # Save processed data
+    manager.save_dataset(dataset, "output/processed_data.parquet")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+**Pattern 2: MCP Tool Imports** (For MCP server integration)
 ```python
 # Using MCP tools for dataset operations
 from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset
@@ -986,16 +1020,119 @@ processed_result = await process_dataset(
 await save_dataset(processed_result["dataset_id"], "output/dataset.parquet", format="parquet")
 ```
 
+### Best Practices
+
+- **Use direct imports** for scripts, libraries, and when you don't need MCP server
+- **Use MCP tool imports** when integrating with MCP protocol or using the MCP server
+- **Always handle errors** with try/except blocks for production code
+- **Use type hints** for better code quality and IDE support
+
 ## MCP Server Usage
 
 ### Starting the MCP Server
 
 ```python
+# Complete MCP server setup with all integrations
+from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+from ipfs_accelerate_py import InferenceAccelerator
+from ipfs_kit_py import IPFSKit
 
+# Initialize integrations
+accelerator = InferenceAccelerator()  # Hardware acceleration (CUDA/ROCm/MPS/etc.)
+ipfs = IPFSKit()  # IPFS operations
+
+# Create and configure server
+server = IPFSDatasetsMCPServer(
+    host="localhost",
+    port=8765,
+    enable_acceleration=True,
+    accelerator=accelerator,
+    enable_ipfs=True,
+    ipfs_client=ipfs,
+)
+
+# Start the server
+await server.start()
+print(f"MCP server running on {server.host}:{server.port}")
+
+# Server provides 200+ tools across 50+ categories
+categories = await server.list_categories()
+print(f"Available categories: {len(categories)}")
+
+# List tools in a specific category
+tools = await server.list_tools("dataset_tools")
+print(f"Dataset tools: {[tool['name'] for tool in tools]}")
+```
+
+### Using MCP Tools Programmatically
+
+```python
+# Access tools through the server
+from ipfs_datasets_py.mcp_server import get_tool
+
+# Get a specific tool
+load_dataset_tool = await get_tool("dataset_tools", "load_dataset")
+
+# Execute the tool
+result = await load_dataset_tool.execute({
+    "source": "squad",
+    "split": "train"
+})
+print(f"Loaded: {result['summary']}")
+```
+
+### Integration Examples
+
+**With Hardware Acceleration (ipfs_accelerate_py):**
+```python
+from ipfs_datasets_py.pdf_processing import PDFProcessor
+from ipfs_accelerate_py import InferenceAccelerator
+
+# Create accelerator (auto-detects: CUDA, ROCm, MPS, OpenVINO, etc.)
+accelerator = InferenceAccelerator()
+print(f"Using backend: {accelerator.backend}")
+
+# Use with PDF processor for 2-20x speedup
+processor = PDFProcessor(
+    use_acceleration=True,
+    accelerator=accelerator
+)
+
+result = processor.process_document("document.pdf")
+print(f"Processed with {accelerator.backend}: {result['processing_time']}s")
+```
+
+**With IPFS Storage (ipfs_kit_py):**
+```python
+from ipfs_datasets_py.dataset_manager import DatasetManager
+from ipfs_kit_py import IPFSKit
+
+# Initialize IPFS
+ipfs = IPFSKit()
+
+# Create dataset manager with IPFS backend
+manager = DatasetManager(
+    storage_backend="ipfs",
+    ipfs_client=ipfs
+)
+
+# Load dataset
+dataset = manager.load_dataset("wikipedia", split="train[:100]")
+
+# Save to IPFS (automatically pins for persistence)
+cid = manager.save_to_ipfs(dataset)
+print(f"Dataset stored at IPFS CID: {cid}")
+
+# Retrieve later
+retrieved = manager.load_from_ipfs(cid)
+print(f"Retrieved {len(retrieved)} examples from IPFS")
+```
+
+### Installation for MCP Server
+
+```bash
 # Core installation
 pip install ipfs-datasets-py
-
-
 
 # For specific capabilities
 pip install ipfs-datasets-py[theorem_proving]  # Mathematical proofs
@@ -1003,10 +1140,9 @@ pip install ipfs-datasets-py[graphrag]         # Document AI
 pip install ipfs-datasets-py[multimedia]       # Media processing
 pip install ipfs-datasets-py[all]             # Everything
 
-# Start the MCP server with development tools
-from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-
-
+# Integration packages
+pip install ipfs-accelerate-py  # Hardware acceleration (2-20x speedup)
+pip install ipfs-kit-py         # IPFS operations (main branch)
 ```
 
 ### 🌟 30-Second Demo
