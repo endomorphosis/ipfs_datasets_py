@@ -11,7 +11,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Generic, TypeVar, Union, Callable, Optional, Any, AsyncIterator
 from enum import Enum
-import asyncio
+import anyio
+import inspect
 import logging
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ class Result(Generic[T]):
         """
         try:
             result = func(self.value)
-            if asyncio.iscoroutine(result):
+            if inspect.iscoroutine(result) or inspect.isawaitable(result):
                 result = await result
             return Result(result)
         except Exception as e:
@@ -275,7 +276,7 @@ class Pipeline:
             try:
                 # Handle async functions
                 result = func(current.value)
-                if asyncio.iscoroutine(result):
+                if inspect.iscoroutine(result) or inspect.isawaitable(result):
                     result = await result
                 
                 # Ensure result is Outcome type
@@ -331,14 +332,14 @@ class StreamProcessor:
         try:
             # Note: Python's builtin open doesn't support true async IO
             # For production, use aiofiles library
-            # For now, simulate with asyncio.sleep
+            # For now, use anyio.sleep to yield control
             with open(path, 'rb') as f:
                 while True:
                     chunk = f.read(self.chunk_size)
                     if not chunk:
                         break
                     yield chunk
-                    await asyncio.sleep(0)  # Yield control
+                    await anyio.sleep(0)  # Yield control
         except Exception as e:
             logger.error(f"Stream read error for {path}: {e}")
             raise
@@ -362,7 +363,7 @@ class StreamProcessor:
             results = []
             async for chunk in self.read_chunks(path):
                 result = processor(chunk)
-                if asyncio.iscoroutine(result):
+                if inspect.iscoroutine(result) or inspect.isawaitable(result):
                     result = await result
                 results.append(result)
             

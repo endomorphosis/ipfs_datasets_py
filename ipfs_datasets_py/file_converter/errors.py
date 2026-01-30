@@ -21,7 +21,7 @@ from enum import Enum
 from typing import Optional, Dict, Any, Callable, List, TypeVar, Awaitable
 from dataclasses import dataclass, field
 import logging
-import asyncio
+import anyio
 import time
 from pathlib import Path
 
@@ -389,7 +389,7 @@ async def retry_with_backoff(
             
             if attempt < max_retries:
                 logging.info(f"Attempt {attempt + 1} failed: {e.message}. Retrying in {delay}s...")
-                await asyncio.sleep(delay)
+                await anyio.sleep(delay)
                 delay *= backoff_factor
             else:
                 logging.error(f"All {max_retries + 1} attempts failed")
