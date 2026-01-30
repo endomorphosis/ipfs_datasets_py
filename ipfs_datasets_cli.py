@@ -13,6 +13,14 @@ import subprocess
 import json
 from pathlib import Path
 
+# Install CLI error handler early
+try:
+    from ipfs_datasets_py.error_reporting.cli_error_reporter import install_cli_error_handler
+    install_cli_error_handler()
+except ImportError:
+    # Error reporting not available, continue without it
+    pass
+
 
 # ============================================================================
 # Dynamic Tool Discovery and Execution (from enhanced_cli.py)
