@@ -7,7 +7,6 @@ to enable processing of remote files with automatic fallback for Cloudflare and
 other challenges.
 """
 
-import asyncio
 import os
 import tempfile
 import logging
@@ -15,6 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Dict, Any
 from urllib.parse import urlparse, unquote
+
+import anyio
+
+import anyio
 
 # Try to import comprehensive web scraping system
 try:
@@ -36,8 +39,6 @@ try:
     ANYIO_AVAILABLE = True
 except ImportError:
     ANYIO_AVAILABLE = False
-
-logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -431,16 +432,12 @@ def download_from_url_sync(
     Returns:
         URLDownloadResult with download information
     """
-    if ANYIO_AVAILABLE:
-        return anyio.from_thread.run(
-            download_from_url,
-            url,
-            dest_path,
-            timeout,
-            max_size_mb
+    async def _runner() -> URLDownloadResult:
+        return await download_from_url(
+            url=url,
+            dest_path=dest_path,
+            timeout=timeout,
+            max_size_mb=max_size_mb,
         )
-    else:
-        # Fallback to asyncio using modern loop management
-        return asyncio.run(
-            download_from_url(url, dest_path, timeout, max_size_mb)
-        )
+
+    return anyio.run(_runner)

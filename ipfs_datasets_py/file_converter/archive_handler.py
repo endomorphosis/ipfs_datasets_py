@@ -5,7 +5,6 @@ Supports ZIP, TAR, TAR.GZ, TAR.BZ2, GZ, BZ2, and 7Z formats with recursive extra
 safety checks, and automatic cleanup.
 """
 
-import asyncio
 import gzip
 import bz2
 import zipfile
