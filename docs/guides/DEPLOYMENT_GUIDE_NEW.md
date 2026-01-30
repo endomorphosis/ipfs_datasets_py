@@ -53,20 +53,9 @@ services:
       - IPFS_DATASETS_AUTO_INSTALL=true
       - IPFS_DATASETS_CACHE_DIR=/app/cache
       - IPFS_DATASETS_LOG_LEVEL=INFO
-      - POSTGRES_URL=postgresql://user:pass@postgres:5432/ipfs_datasets
+      - DATABASE_DIR=/app/data/databases
     depends_on:
-      - postgres
       - redis
-    restart: unless-stopped
-
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=ipfs_datasets
-      - POSTGRES_USER=ipfs_user
-      - POSTGRES_PASSWORD=secure_password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
   redis:
@@ -88,7 +77,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
   redis_data:
 ```
 
@@ -513,7 +501,7 @@ OS: Ubuntu 22.04 LTS, CentOS 8, or similar
 sudo apt update && sudo apt upgrade -y
 
 # Install system dependencies
-sudo apt install -y python3.11 python3.11-venv git curl nginx postgresql redis-server
+sudo apt install -y python3.11 python3.11-venv git curl nginx redis-server
 
 # Install theorem provers
 curl -L https://github.com/Z3Prover/z3/releases/latest/download/z3-linux.zip -o z3.zip
@@ -549,7 +537,7 @@ echo "🌐 Access at: http://$(hostname -I | awk '{print $1}')/"
 # /etc/systemd/system/ipfs-datasets.service
 [Unit]
 Description=IPFS Datasets Python Service
-After=network.target postgresql.service redis.service
+After=network.target redis.service
 
 [Service]
 Type=simple

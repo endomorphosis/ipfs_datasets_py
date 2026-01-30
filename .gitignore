@@ -27,6 +27,8 @@ bin/
 sql_configs.yaml
 *.log
 *.db
+*.duckdb
+data/databases/
 batch_results_batch_*
 test.idx
 # Test files and directories

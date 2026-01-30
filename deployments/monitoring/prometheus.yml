@@ -18,10 +18,6 @@ scrape_configs:
     static_configs:
       - targets: ['redis:6379']
 
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres:5432']
-
   - job_name: 'elasticsearch'
     static_configs:
       - targets: ['elasticsearch:9200']

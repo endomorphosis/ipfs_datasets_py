@@ -1583,7 +1583,7 @@ manager = EnhancedProvenanceManager(
 source_id = manager.record_source(
     output_id="source_dataset",
     source_type="database",
-    source_uri="postgresql://localhost/analytics",
+    source_uri="duckdb://data/databases/analytics.db",
     format="table",
     description="Raw customer data from analytics database"
 )

@@ -39,7 +39,7 @@ class InfrastructureValidator:
             
             # Check required services
             required_services = [
-                'postgres', 'redis', 'ipfs', 'elasticsearch',
+                'redis', 'ipfs', 'elasticsearch',
                 'website-graphrag-processor', 'job-worker'
             ]
             
@@ -120,8 +120,8 @@ class InfrastructureValidator:
         
         # Check for required environment variables
         required_vars = [
-            'POSTGRES_PASSWORD', 'JWT_SECRET_KEY', 'OPENAI_API_KEY',
-            'POSTGRES_URL', 'REDIS_URL', 'IPFS_API_URL'
+            'DATABASE_DIR', 'JWT_SECRET_KEY', 'OPENAI_API_KEY',
+            'REDIS_URL', 'IPFS_API_URL'
         ]
         
         with open(env_example) as f:
@@ -135,28 +135,23 @@ class InfrastructureValidator:
         return True
     
     def validate_database_schema(self) -> bool:
-        """Validate database initialization SQL."""
+        """Validate database schema initialization."""
         print("💾 Validating database schema...")
         
-        sql_file = self.project_root / "deployments" / "sql" / "init.sql"
-        if not sql_file.exists():
-            self.errors.append("Database initialization SQL not found")
+        # With SQLite/DuckDB, schema is initialized via Python code
+        # Check that the database_utils module exists
+        db_utils_file = self.project_root / "ipfs_datasets_py" / "database_utils.py"
+        if not db_utils_file.exists():
+            self.errors.append("Database utilities module not found")
             return False
         
-        with open(sql_file) as f:
-            sql_content = f.read()
+        # Check that init_database script exists
+        init_script = self.project_root / "ipfs_datasets_py" / "scripts" / "init_database.py"
+        if not init_script.exists():
+            self.errors.append("Database initialization script not found")
+            return False
         
-        # Check for required tables
-        required_tables = [
-            'users', 'processing_jobs', 'website_content',
-            'kg_entities', 'kg_relationships', 'system_metrics'
-        ]
-        
-        for table in required_tables:
-            if f"CREATE TABLE IF NOT EXISTS {table}" not in sql_content:
-                self.errors.append(f"Required table '{table}' not found in init.sql")
-        
-        print("✅ Database schema valid")
+        print("✅ Database schema configuration valid")
         return True
     
     def validate_deployment_scripts(self) -> bool:

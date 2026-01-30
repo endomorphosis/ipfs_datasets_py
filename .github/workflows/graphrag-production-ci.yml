@@ -76,19 +76,13 @@ jobs:
     
     - name: Start test services with Docker
       run: |
-        # Start PostgreSQL and Redis directly on host (not in container)
-        docker run -d --name postgres-test-${{ matrix.python-version }} \
-          -e POSTGRES_PASSWORD=test_password \
-          -e POSTGRES_DB=test_db \
-          -p 5434:5432 \
-          postgres:15
-        
+        # Start Redis for caching (SQLite/DuckDB don't need containers)
         docker run -d --name redis-test-${{ matrix.python-version }} \
           -p 6377:6379 \
           redis:7
         
         # Wait for services to be ready
-        sleep 10
+        sleep 5
     
     - name: Build GraphRAG Test Docker Image
       run: |
@@ -104,11 +98,10 @@ jobs:
         mkdir -p test-results
         # Run tests directly with python3 if Docker image doesn't exist
         if docker image inspect ipfs-datasets-graphrag-tests:py${{ matrix.python-version }} >/dev/null 2>&1; then
-          POSTGRES_PORT=5434
           REDIS_PORT=6377
           docker run --rm \
             -v $(pwd)/test-results:/app/test-results \
-            -e POSTGRES_URL=postgresql://postgres:test_password@localhost:${POSTGRES_PORT}/test_db \
+            -e DATABASE_DIR=/app/test-results/databases \
             -e REDIS_URL=redis://localhost:${REDIS_PORT}/0 \
             -e TESTING=true \
             --network host \
@@ -127,8 +120,8 @@ jobs:
     - name: Cleanup test services
       if: always()
       run: |
-        docker stop postgres-test-${{ matrix.python-version }} redis-test-${{ matrix.python-version }} 2>/dev/null || true
-        docker rm postgres-test-${{ matrix.python-version }} redis-test-${{ matrix.python-version }} 2>/dev/null || true
+        docker stop redis-test-${{ matrix.python-version }} 2>/dev/null || true
+        docker rm redis-test-${{ matrix.python-version }} 2>/dev/null || true
     
     - name: Upload coverage to Codecov
       if: hashFiles('test-results/coverage.xml') != ''

@@ -161,7 +161,7 @@ class GraphRAGInfrastructureManager:
             
             # Wait for infrastructure
             print("⏳ Waiting for infrastructure to be ready...")
-            infrastructure_deployments = ["postgres", "redis", "ipfs", "elasticsearch"]
+            infrastructure_deployments = ["redis", "ipfs", "elasticsearch"]
             
             for deployment in infrastructure_deployments:
                 subprocess.run([

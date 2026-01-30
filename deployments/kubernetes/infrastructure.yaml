@@ -13,10 +13,7 @@ metadata:
 data:
   config.yaml: |
     database:
-      host: postgres-service
-      port: 5432
-      name: graphrag_db
-      user: graphrag_user
+      dir: /app/data/databases
     
     redis:
       host: redis-service
@@ -46,101 +43,6 @@ data:
       port: 8000
       jwt_algorithm: HS256
       jwt_access_token_expire_minutes: 30
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-  namespace: graphrag-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-      - name: postgres
-        image: postgres:15-alpine
-        env:
-        - name: POSTGRES_DB
-          value: graphrag_db
-        - name: POSTGRES_USER
-          value: graphrag_user
-        - name: POSTGRES_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: postgres-password
-        ports:
-        - containerPort: 5432
-        volumeMounts:
-        - name: postgres-storage
-          mountPath: /var/lib/postgresql/data
-        - name: init-sql
-          mountPath: /docker-entrypoint-initdb.d
-        resources:
-          requests:
-            memory: "1Gi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "1000m"
-        livenessProbe:
-          exec:
-            command:
-            - pg_isready
-            - -U
-            - graphrag_user
-            - -d
-            - graphrag_db
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          exec:
-            command:
-            - pg_isready
-            - -U
-            - graphrag_user
-            - -d
-            - graphrag_db
-          initialDelaySeconds: 5
-          periodSeconds: 5
-      volumes:
-      - name: postgres-storage
-        persistentVolumeClaim:
-          claimName: postgres-pvc
-      - name: init-sql
-        configMap:
-          name: postgres-init-sql
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres-service
-  namespace: graphrag-system
-spec:
-  selector:
-    app: postgres
-  ports:
-  - port: 5432
-    targetPort: 5432
-  type: ClusterIP
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: postgres-pvc
-  namespace: graphrag-system
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 20Gi
 ---
 apiVersion: apps/v1
 kind: Deployment

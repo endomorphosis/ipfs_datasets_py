@@ -83,7 +83,7 @@ class ProductionReadinessChecker:
         """Check if all required Python dependencies are available."""
         try:
             required_packages = [
-                'fastapi', 'uvicorn', 'sqlalchemy', 'asyncpg',
+                'fastapi', 'uvicorn', 'duckdb', 'aiosqlite',
                 'redis', 'elasticsearch', 'sentence-transformers',
                 'transformers', 'torch', 'numpy', 'pandas'
             ]

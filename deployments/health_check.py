@@ -17,9 +17,9 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    import asyncpg
+    from ipfs_datasets_py.database_utils import check_database_health as check_db_health
 except ImportError as e:
-    print(f"connection dependency missing: asyncpg ({e})", file=sys.stderr)
+    print(f"connection dependency missing: database_utils ({e})", file=sys.stderr)
     sys.exit(1)
 
 try:
@@ -47,46 +47,37 @@ class GraphRAGHealthChecker:
     def __init__(self):
         self.results: List[HealthCheckResult] = []
     
-    async def check_database(self, db_url: str) -> HealthCheckResult:
-        """Check PostgreSQL database health."""
+    async def check_database(self) -> HealthCheckResult:
+        """Check SQLite/DuckDB database health."""
         start_time = datetime.now()
         
         try:
-            conn = await asyncpg.connect(db_url)
-            
-            # Test basic connectivity
-            await conn.fetchval("SELECT 1")
-            
-            # Check table existence
-            tables = await conn.fetch("""
-                SELECT table_name FROM information_schema.tables 
-                WHERE table_schema = 'public'
-            """)
-            
-            table_names = [row['table_name'] for row in tables]
-            required_tables = ['users', 'processing_jobs', 'website_content']
-            missing_tables = [t for t in required_tables if t not in table_names]
-            
-            await conn.close()
+            health = await check_db_health()
             
             response_time = (datetime.now() - start_time).total_seconds() * 1000
             
-            if missing_tables:
+            if health["status"] == "healthy":
+                sqlite_info = health["databases"]["sqlite"]
+                duckdb_info = health["databases"]["duckdb"]
+                
                 return HealthCheckResult(
                     service="database",
-                    status="DEGRADED",
+                    status="HEALTHY",
                     response_time_ms=response_time,
-                    message=f"Database accessible but missing tables: {missing_tables}",
-                    details={"tables_found": len(table_names), "missing_tables": missing_tables}
+                    message=f"SQLite and DuckDB databases healthy",
+                    details={
+                        "sqlite": sqlite_info,
+                        "duckdb": duckdb_info
+                    }
                 )
-            
-            return HealthCheckResult(
-                service="database",
-                status="HEALTHY",
-                response_time_ms=response_time,
-                message=f"Database healthy with {len(table_names)} tables",
-                details={"tables_count": len(table_names)}
-            )
+            else:
+                return HealthCheckResult(
+                    service="database",
+                    status="UNHEALTHY",
+                    response_time_ms=response_time,
+                    message="Database health check failed",
+                    details=health["databases"]
+                )
             
         except Exception as e:
             response_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -268,8 +259,7 @@ class GraphRAGHealthChecker:
         """Run health checks for all system components."""
         print("🏥 Running comprehensive health checks...")
         
-        # Get configuration from environment
-        db_url = os.getenv("POSTGRES_URL", "postgresql://graphrag_user:password@localhost:5432/graphrag_db")
+        # Get configuration from environment (no more POSTGRES_URL)
         redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
         api_url = os.getenv("API_URL", "http://localhost:8000")
         es_url = os.getenv("ELASTICSEARCH_URL", "http://localhost:9200")
@@ -277,7 +267,7 @@ class GraphRAGHealthChecker:
         
         # Run all health checks concurrently
         tasks = [
-            self.check_database(db_url),
+            self.check_database(),  # Now checks SQLite/DuckDB
             self.check_redis(redis_url),
             self.check_api_service(api_url),
             self.check_elasticsearch(es_url),
