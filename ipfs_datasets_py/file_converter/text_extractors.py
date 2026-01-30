@@ -427,9 +427,9 @@ class HTMLExtractor(TextExtractor):
         """Basic HTML extraction without BeautifulSoup."""
         import re
         
-        # Remove script and style tags
-        text = re.sub(r'<script[^>]*>.*?</script>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
-        text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.DOTALL | re.IGNORECASE)
+        # Remove script and style tags, handling flexible closing tags like </script foo="bar">
+        text = re.sub(r'<script[^>]*>.*?</script\s*[^>]*>', '', html_content, flags=re.DOTALL | re.IGNORECASE)
+        text = re.sub(r'<style[^>]*>.*?</style\s*[^>]*>', '', text, flags=re.DOTALL | re.IGNORECASE)
         
         # Remove HTML tags
         text = re.sub(r'<[^>]+>', '', text)
