@@ -61,6 +61,14 @@ from .knowledge_graph_integration import (
     TextSummaryResult
 )
 
+# Vector Embedding Integration (Phase 5)
+from .vector_embedding_integration import (
+    VectorEmbeddingPipeline,
+    VectorEmbeddingResult,
+    SearchResult,
+    create_vector_pipeline
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -99,6 +107,12 @@ __all__ = [
     'BatchKnowledgeGraphProcessor',
     'KnowledgeGraphResult',
     'TextSummaryResult',
+    
+    # Vector Embedding Integration (Phase 5)
+    'VectorEmbeddingPipeline',
+    'VectorEmbeddingResult',
+    'SearchResult',
+    'create_vector_pipeline',
 ]
 
-__version__ = '0.5.0'  # Phase 4 - Knowledge graph and RAG integration
+__version__ = '0.6.0'  # Phase 5 - Vector embedding integration
