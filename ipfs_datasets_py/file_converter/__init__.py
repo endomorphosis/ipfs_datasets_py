@@ -31,6 +31,13 @@ from .ipfs_accelerate_converter import (
     create_converter
 )
 
+# Advanced features: Metadata and Batch Processing
+from .metadata_extractor import MetadataExtractor, extract_metadata
+from .batch_processor import (
+    BatchProcessor, BatchProgress, ResourceLimits, CacheManager,
+    create_batch_processor
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -53,6 +60,11 @@ __all__ = [
     # IPFS integration (Phase 3)
     'IPFSBackend', 'get_ipfs_backend', 'IPFS_AVAILABLE',
     'IPFSAcceleratedConverter', 'IPFSConversionResult', 'create_converter',
+    
+    # Advanced features (Phase 3 continued)
+    'MetadataExtractor', 'extract_metadata',
+    'BatchProcessor', 'BatchProgress', 'ResourceLimits', 'CacheManager',
+    'create_batch_processor',
 ]
 
-__version__ = '0.3.0'  # Phase 3 - IPFS Storage & ML Acceleration Integration
+__version__ = '0.3.1'  # Phase 3 - Enhanced with metadata and batch processing
