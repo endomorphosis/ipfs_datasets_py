@@ -499,6 +499,52 @@ class OfficeFormatExtractor(TextExtractor):
         )
 
 
+class ImageExtractor(TextExtractor):
+    """
+    Extractor for image files with OCR support.
+    
+    Supports: JPEG, PNG, GIF, WebP, SVG, BMP, TIFF, ICO, APNG
+    Optional: Tesseract OCR for text extraction
+    """
+    
+    supported_formats = {
+        '.jpg', '.jpeg', '.png', '.gif', '.webp',
+        '.svg', '.bmp', '.tiff', '.tif', '.ico'
+    }
+    
+    def can_extract(self, file_path: Path) -> bool:
+        """Check if file is a supported image format."""
+        return file_path.suffix.lower() in self.supported_formats
+    
+    def extract(self, file_path: Path) -> ExtractionResult:
+        """Extract text from image using OCR."""
+        try:
+            from .image_processor import ImageProcessor
+            
+            processor = ImageProcessor(ocr_enabled=True)
+            result = processor.extract_text(str(file_path))
+            
+            return ExtractionResult(
+                text=result.get('text', ''),
+                metadata=result.get('metadata', {}),
+                success=result.get('success', False),
+                error=result.get('error')
+            )
+            
+        except ImportError:
+            logger.warning("image_processor not available")
+            return ExtractionResult(
+                success=False,
+                error="Image processing not available"
+            )
+        except Exception as e:
+            logger.error(f"Image extraction failed: {e}")
+            return ExtractionResult(
+                success=False,
+                error=str(e)
+            )
+
+
 class ExtractorRegistry:
     """
     Registry of available text extractors.
@@ -518,6 +564,7 @@ class ExtractorRegistry:
             XLSXExtractor(),
             HTMLExtractor(),
             OfficeFormatExtractor(),  # Additional office formats
+            ImageExtractor(),  # Image formats with OCR
         ]
     
     def get_extractor(self, file_path: Union[str, Path]) -> Optional[TextExtractor]:
