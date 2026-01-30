@@ -2,16 +2,28 @@
 URL/Network Resource Handler for File Converter.
 
 Provides async downloading and processing of files from HTTP/HTTPS URLs.
-Integrates with the file conversion pipeline to enable processing of remote files.
+Integrates with the file conversion pipeline and comprehensive web scraping system
+to enable processing of remote files with automatic fallback for Cloudflare and
+other challenges.
 """
 
 import asyncio
 import os
 import tempfile
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Dict, Any
 from urllib.parse import urlparse, unquote
+
+# Try to import comprehensive web scraping system
+try:
+    from ipfs_datasets_py.web_archiving.unified_web_scraper import (
+        UnifiedWebScraper, ScraperConfig, ScraperMethod
+    )
+    WEB_SCRAPER_AVAILABLE = True
+except ImportError:
+    WEB_SCRAPER_AVAILABLE = False
 
 try:
     import aiohttp
@@ -24,6 +36,8 @@ try:
     ANYIO_AVAILABLE = True
 except ImportError:
     ANYIO_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -50,6 +64,8 @@ class URLHandler:
     
     Features:
     - Async downloading with aiohttp
+    - Integration with comprehensive web scraping system for Cloudflare handling
+    - Automatic fallback through multiple methods (Playwright, BeautifulSoup, archives)
     - Content-type detection from headers
     - Automatic filename extraction
     - Progress tracking (future)
@@ -68,7 +84,8 @@ class URLHandler:
         temp_dir: Optional[str] = None,
         timeout: int = 30,
         max_size_mb: Optional[int] = None,
-        chunk_size: int = 8192
+        chunk_size: int = 8192,
+        use_web_scraper: bool = True
     ):
         """
         Initialize URL handler.
@@ -78,31 +95,55 @@ class URLHandler:
             timeout: Download timeout in seconds (default: 30)
             max_size_mb: Maximum file size in MB (default: no limit)
             chunk_size: Download chunk size in bytes (default: 8192)
+            use_web_scraper: Use comprehensive web scraping system for challenging URLs
+                           (Cloudflare, etc.) (default: True)
         """
         self.temp_dir = temp_dir or tempfile.gettempdir()
         self.timeout = timeout
         self.max_size_mb = max_size_mb
         self.chunk_size = chunk_size
+        self.use_web_scraper = use_web_scraper and WEB_SCRAPER_AVAILABLE
         
         if not AIOHTTP_AVAILABLE:
             raise ImportError(
                 "aiohttp is required for URL downloading. "
                 "Install with: pip install aiohttp"
             )
+        
+        # Initialize web scraper if available and enabled
+        self.web_scraper = None
+        if self.use_web_scraper:
+            try:
+                config = ScraperConfig(
+                    timeout=timeout,
+                    fallback_enabled=True,
+                    verify_ssl=True
+                )
+                self.web_scraper = UnifiedWebScraper(config)
+                logger.info("Unified web scraper enabled for URL handling (Cloudflare protection)")
+            except Exception as e:
+                logger.warning(f"Could not initialize web scraper: {e}")
+                self.web_scraper = None
     
     async def download(
         self,
         url: str,
         dest_path: Optional[str] = None,
-        filename: Optional[str] = None
+        filename: Optional[str] = None,
+        use_web_scraper_fallback: bool = True
     ) -> URLDownloadResult:
         """
         Download a file from a URL.
+        
+        First attempts direct download via aiohttp. If that fails (e.g., due to
+        Cloudflare protection), automatically falls back to the comprehensive
+        web scraping system with Playwright, archive.is, Wayback Machine, etc.
         
         Args:
             url: HTTP/HTTPS URL to download from
             dest_path: Destination path (default: temp directory)
             filename: Specific filename to use (default: from URL or Content-Disposition)
+            use_web_scraper_fallback: Use web scraper if direct download fails (default: True)
         
         Returns:
             URLDownloadResult with download information
@@ -184,20 +225,115 @@ class URLHandler:
                         success=True
                     )
         
-        except aiohttp.ClientError as e:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            error_msg = f"Direct download failed: {str(e)}"
+            logger.warning(error_msg)
+            
+            # Try web scraper fallback if enabled
+            if use_web_scraper_fallback and self.web_scraper:
+                logger.info(f"Attempting web scraper fallback for: {url}")
+                try:
+                    return await self._download_via_web_scraper(
+                        url, dest_path, filename
+                    )
+                except Exception as scraper_error:
+                    logger.error(f"Web scraper fallback failed: {scraper_error}")
+                    return URLDownloadResult(
+                        url=url,
+                        local_path="",
+                        success=False,
+                        error=f"{error_msg}. Scraper fallback also failed: {str(scraper_error)}"
+                    )
+            
             return URLDownloadResult(
                 url=url,
                 local_path="",
                 success=False,
-                error=f"Download failed: {str(e)}"
+                error=error_msg
             )
         except Exception as e:
+            error_msg = f"Unexpected error: {str(e)}"
+            logger.warning(error_msg)
+            
+            # Try web scraper fallback if enabled
+            if use_web_scraper_fallback and self.web_scraper:
+                logger.info(f"Attempting web scraper fallback for: {url}")
+                try:
+                    return await self._download_via_web_scraper(
+                        url, dest_path, filename
+                    )
+                except Exception as scraper_error:
+                    logger.error(f"Web scraper fallback failed: {scraper_error}")
+                    return URLDownloadResult(
+                        url=url,
+                        local_path="",
+                        success=False,
+                        error=f"{error_msg}. Scraper fallback also failed: {str(scraper_error)}"
+                    )
+            
             return URLDownloadResult(
                 url=url,
                 local_path="",
                 success=False,
-                error=f"Unexpected error: {str(e)}"
+                error=error_msg
             )
+    
+    async def _download_via_web_scraper(
+        self,
+        url: str,
+        dest_path: str,
+        filename: str
+    ) -> URLDownloadResult:
+        """
+        Download content using the comprehensive web scraping system.
+        
+        This method handles Cloudflare protection and other challenges by
+        automatically trying multiple scraping methods (Playwright, BeautifulSoup,
+        Wayback Machine, archive.is, Common Crawl, etc.).
+        
+        Args:
+            url: URL to scrape
+            dest_path: Destination path for downloaded content
+            filename: Filename to use
+        
+        Returns:
+            URLDownloadResult with scraping result
+        """
+        logger.info(f"Using comprehensive web scraper for: {url}")
+        
+        # Scrape using unified web scraper
+        result = await self.web_scraper.scrape(url)
+        
+        if not result.success:
+            raise Exception(f"All scraping methods failed: {', '.join(result.errors)}")
+        
+        # Save scraped content to file
+        os.makedirs(os.path.dirname(dest_path) or '.', exist_ok=True)
+        
+        # Save HTML or text content
+        content_to_save = result.html or result.content or result.text
+        if not content_to_save:
+            raise Exception("No content extracted from URL")
+        
+        with open(dest_path, 'w', encoding='utf-8') as f:
+            f.write(content_to_save)
+        
+        file_size = os.path.getsize(dest_path)
+        
+        logger.info(
+            f"Successfully downloaded via {result.method_used.value if result.method_used else 'unknown'}: "
+            f"{url} ({file_size} bytes)"
+        )
+        
+        return URLDownloadResult(
+            url=url,
+            local_path=dest_path,
+            content_type='text/html',  # Web scraper returns HTML/text
+            content_length=file_size,
+            filename=filename,
+            headers={'X-Scraper-Method': result.method_used.value if result.method_used else 'unknown'},
+            success=True
+        )
     
     def _extract_filename(self, url: str) -> str:
         """Extract filename from URL."""
