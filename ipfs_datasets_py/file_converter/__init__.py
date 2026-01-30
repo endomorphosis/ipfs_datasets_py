@@ -99,6 +99,9 @@ from .url_handler import (
     is_url
 )
 
+# CLI Interface (Phase 6.4)
+from .cli import main as cli_main
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -167,6 +170,9 @@ __all__ = [
     'download_from_url',
     'download_from_url_sync',
     'is_url',
+    
+    # CLI Interface (Phase 6.4)
+    'cli_main',
 ]
 
-__version__ = '0.6.3'  # Phase 6.3 - URL/Network resource handler
+__version__ = '0.6.4'  # Phase 6.4 - CLI interface

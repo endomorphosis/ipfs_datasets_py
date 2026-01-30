@@ -58,7 +58,10 @@ setup(
         # Async compatibility (anyio for trio/asyncio interop)
         "anyio>=4.0.0",
         "trio>=0.27.0",
-            'pydantic-settings>=2.0.0',
+        'pydantic-settings>=2.0.0',
+        
+        # CLI framework
+        'click>=8.0.0',
     ],
     extras_require={
         # Optional but recommended dependencies
@@ -278,6 +281,9 @@ setup(
         'console_scripts': [
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+            # File converter CLI (Phase 6.4)
+            'file-converter=ipfs_datasets_py.file_converter.cli:main',
+            'fc=ipfs_datasets_py.file_converter.cli:main',
         ],
     },
     classifiers=[
