@@ -36,6 +36,7 @@ setup(
         'boto3',
         'ipfsspec<0.6.0',
         "duckdb",
+        "aiosqlite>=0.17.0",  # Async SQLite for metadata/auth
         "pyarrow>=10.0.0; python_version < '3.14'",
         "fsspec>=2023.1.0,<=2024.6.1",
         "datasets>=2.10.0,<3.0.0",

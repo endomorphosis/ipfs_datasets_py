@@ -38,6 +38,9 @@ from contextlib import asynccontextmanager
 import time
 from collections import defaultdict, deque
 
+# Import database utilities
+from ipfs_datasets_py.database_utils import get_database_url
+
 # Import GraphRAG components
 from ipfs_datasets_py.complete_advanced_graphrag import (
     CompleteGraphRAGSystem, CompleteProcessingConfiguration, CompleteProcessingResult

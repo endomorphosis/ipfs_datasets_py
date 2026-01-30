@@ -2,7 +2,7 @@
 """
 Database Initialization Script for GraphRAG System
 
-This script initializes the PostgreSQL database with the required schema
+This script initializes the SQLite and DuckDB databases with the required schema
 for the GraphRAG website processing system.
 """
 
@@ -15,8 +15,11 @@ from pathlib import Path
 # Add the parent directory to the path so we can import our modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import asyncpg
-from ipfs_datasets_py.enterprise_api import get_database_url
+from ipfs_datasets_py.database_utils import (
+    initialize_databases,
+    check_database_health as check_db_health,
+    get_database_url
+)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,51 +27,42 @@ logger = logging.getLogger(__name__)
 async def init_database():
     """Initialize the GraphRAG database schema."""
     try:
-        # Get database URL from environment
-        db_url = get_database_url()
-        logger.info(f"Connecting to database...")
+        logger.info("Initializing SQLite and DuckDB databases...")
         
-        # Connect to database
-        conn = await asyncpg.connect(db_url)
-        logger.info("Connected to database successfully")
+        # Initialize both databases
+        databases = await initialize_databases()
         
-        # Read the SQL initialization file
-        sql_file = Path(__file__).parent.parent.parent / "deployments" / "sql" / "init.sql"
-        if not sql_file.exists():
-            logger.error(f"SQL initialization file not found: {sql_file}")
-            return False
-        
-        with open(sql_file, 'r') as f:
-            sql_content = f.read()
-        
-        # Execute the SQL
-        logger.info("Executing database initialization SQL...")
-        await conn.execute(sql_content)
         logger.info("Database initialized successfully")
+        logger.info(f"SQLite database: {get_database_url('sqlite')}")
+        logger.info(f"DuckDB database: {get_database_url('duckdb')}")
         
-        # Close connection
-        await conn.close()
         return True
         
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 async def check_database_health():
     """Check if database is healthy and accessible."""
     try:
-        db_url = get_database_url()
-        conn = await asyncpg.connect(db_url)
+        health = await check_db_health()
         
-        # Run a simple query
-        result = await conn.fetchval("SELECT COUNT(*) FROM users")
-        logger.info(f"Database health check passed. Users table has {result} records.")
-        
-        await conn.close()
-        return True
+        if health["status"] == "healthy":
+            logger.info("Database health check passed")
+            for db_name, db_health in health["databases"].items():
+                logger.info(f"  {db_name}: {db_health}")
+            return True
+        else:
+            logger.error("Database health check failed")
+            logger.error(f"Health status: {health}")
+            return False
         
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def main():
