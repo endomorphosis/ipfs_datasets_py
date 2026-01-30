@@ -391,36 +391,79 @@ class DuckDBManager:
         
         conn.commit()
     
-    def query_parquet(self, parquet_path: str, query: str) -> List[Dict[str, Any]]:
+    def query_parquet(self, parquet_path: str, query: str = None) -> List[Dict[str, Any]]:
         """
         Query parquet files directly with DuckDB.
         
         Args:
-            parquet_path: Path to parquet file or directory
-            query: SQL query to execute
+            parquet_path: Path to parquet file or directory (will be validated)
+            query: SQL query to execute. If None, selects all columns.
             
         Returns:
             Query results as list of dictionaries
         """
+        # Validate parquet path
+        parquet_path = str(Path(parquet_path).resolve())
+        if not Path(parquet_path).exists():
+            raise FileNotFoundError(f"Parquet file not found: {parquet_path}")
+        
         conn = self.get_connection()
-        result = conn.execute(query).fetchdf()
+        
+        # If no query provided, select all
+        if query is None:
+            query = "SELECT * FROM read_parquet(?)"
+            result = conn.execute(query, (parquet_path,)).fetchdf()
+        else:
+            # Execute user-provided query with parquet path as parameter
+            result = conn.execute(query, (parquet_path,)).fetchdf()
+        
         return result.to_dict('records')
     
     def load_parquet_to_table(self, table_name: str, parquet_path: str):
-        """Load parquet file into DuckDB table"""
+        """
+        Load parquet file into DuckDB table.
+        
+        Args:
+            table_name: Name of the table (will be validated)
+            parquet_path: Path to parquet file (will be validated)
+        """
+        # Validate table name to prevent SQL injection
+        if not table_name.replace('_', '').isalnum():
+            raise ValueError(f"Invalid table name: {table_name}")
+        
+        # Validate parquet path
+        parquet_path = str(Path(parquet_path).resolve())
+        if not Path(parquet_path).exists():
+            raise FileNotFoundError(f"Parquet file not found: {parquet_path}")
+        
         conn = self.get_connection()
         conn.execute(f"""
             CREATE OR REPLACE TABLE {table_name} AS 
-            SELECT * FROM read_parquet('{parquet_path}')
-        """)
+            SELECT * FROM read_parquet(?)
+        """, (parquet_path,))
         conn.commit()
     
     def export_to_parquet(self, table_name: str, output_path: str):
-        """Export DuckDB table to parquet file"""
+        """
+        Export DuckDB table to parquet file.
+        
+        Args:
+            table_name: Name of the table (will be validated)
+            output_path: Path for output parquet file
+        """
+        # Validate table name to prevent SQL injection
+        if not table_name.replace('_', '').isalnum():
+            raise ValueError(f"Invalid table name: {table_name}")
+        
+        # Ensure output directory exists
+        output_path = str(Path(output_path).resolve())
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        
         conn = self.get_connection()
         conn.execute(f"""
-            COPY {table_name} TO '{output_path}' (FORMAT PARQUET)
-        """)
+            COPY {table_name} TO ? (FORMAT PARQUET)
+        """, (output_path,))
+        conn.commit()
     
     def check_health(self) -> Dict[str, Any]:
         """Check DuckDB health"""
@@ -483,21 +526,25 @@ async def check_database_health() -> Dict[str, Any]:
     sqlite_manager = SQLiteManager()
     duckdb_manager = DuckDBManager()
     
-    sqlite_health = await sqlite_manager.check_health()
-    duckdb_health = duckdb_manager.check_health()
-    
-    overall_healthy = (
-        sqlite_health["status"] == "healthy" and 
-        duckdb_health["status"] == "healthy"
-    )
-    
-    return {
-        "status": "healthy" if overall_healthy else "unhealthy",
-        "databases": {
-            "sqlite": sqlite_health,
-            "duckdb": duckdb_health
+    try:
+        sqlite_health = await sqlite_manager.check_health()
+        duckdb_health = duckdb_manager.check_health()
+        
+        overall_healthy = (
+            sqlite_health["status"] == "healthy" and 
+            duckdb_health["status"] == "healthy"
+        )
+        
+        return {
+            "status": "healthy" if overall_healthy else "unhealthy",
+            "databases": {
+                "sqlite": sqlite_health,
+                "duckdb": duckdb_health
+            }
         }
-    }
+    finally:
+        # Clean up DuckDB connection
+        duckdb_manager.close()
 
 
 if __name__ == "__main__":
