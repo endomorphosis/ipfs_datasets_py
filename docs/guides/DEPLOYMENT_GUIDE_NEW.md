@@ -49,7 +49,6 @@ services:
       - ./data:/app/data
       - ./cache:/app/cache
       - ./logs:/app/logs
-      - ./data:/app/data
     environment:
       - IPFS_DATASETS_AUTO_INSTALL=true
       - IPFS_DATASETS_CACHE_DIR=/app/cache

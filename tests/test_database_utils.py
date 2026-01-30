@@ -6,7 +6,6 @@ SQLite (for metadata/auth) and DuckDB (for analytics).
 """
 
 import pytest
-import anyio
 import tempfile
 import shutil
 from pathlib import Path
@@ -18,6 +17,7 @@ from ipfs_datasets_py.database_utils import (
     check_database_health,
     get_database_url
 )
+import ipfs_datasets_py.database_utils as db_utils
 
 
 class TestSQLiteManager:
@@ -29,7 +29,7 @@ class TestSQLiteManager:
         temp_dir = Path(tempfile.mkdtemp())
         db_path = temp_dir / "test.db"
         manager = SQLiteManager(db_path)
-        await manager.initialize_schema()
+        await manager.initialize_schema(create_default_users=True)
         yield manager
         # Cleanup
         shutil.rmtree(temp_dir)
@@ -122,28 +122,33 @@ class TestDatabaseIntegration:
         # Create temporary directory
         temp_dir = Path(tempfile.mkdtemp())
         
+        # Save original config values
+        original_data_dir = db_utils._db_config.data_dir
+        original_sqlite_path = db_utils._db_config.sqlite_path
+        original_duckdb_path = db_utils._db_config.duckdb_path
+        
         # Override database paths
-        import ipfs_datasets_py.database_utils as db_utils
-        original_config = db_utils._db_config
         db_utils._db_config.data_dir = temp_dir
         db_utils._db_config.sqlite_path = temp_dir / "metadata.db"
         db_utils._db_config.duckdb_path = temp_dir / "analytics.db"
         
         yield temp_dir
         
-        # Restore original config
-        db_utils._db_config = original_config
+        # Restore original config values
+        db_utils._db_config.data_dir = original_data_dir
+        db_utils._db_config.sqlite_path = original_sqlite_path
+        db_utils._db_config.duckdb_path = original_duckdb_path
         
         # Cleanup
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir, ignore_errors=True)
     
     async def test_initialize_databases(self, temp_databases):
         """Test initializing both databases."""
         # GIVEN: Temporary database directory
         temp_dir = temp_databases
         
-        # WHEN: Initializing databases
-        databases = await initialize_databases()
+        # WHEN: Initializing databases with default users for testing
+        databases = await initialize_databases(create_default_users=True)
         
         # THEN: Both databases should be initialized
         assert "sqlite" in databases
@@ -152,11 +157,14 @@ class TestDatabaseIntegration:
         # Check that files were created
         assert (temp_dir / "metadata.db").exists()
         assert (temp_dir / "analytics.db").exists()
+        
+        # Clean up DuckDB connection
+        databases['duckdb'].close()
     
     async def test_check_database_health(self, temp_databases):
         """Test checking database health."""
         # GIVEN: Initialized databases
-        await initialize_databases()
+        await initialize_databases(create_default_users=True)
         
         # WHEN: Checking health
         health = await check_database_health()

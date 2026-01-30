@@ -42,13 +42,17 @@ class DatabaseConfig:
     
     def __init__(self):
         self.data_dir = Path(os.getenv("DATABASE_DIR", "./data/databases"))
-        self.data_dir.mkdir(parents=True, exist_ok=True)
+        # Don't create directory during init - defer to first use
         
         # SQLite database for metadata and auth
         self.sqlite_path = self.data_dir / "metadata.db"
         
         # DuckDB database for analytics and parquet operations
         self.duckdb_path = self.data_dir / "analytics.db"
+    
+    def ensure_data_dir(self):
+        """Ensure data directory exists (called on first use)."""
+        self.data_dir.mkdir(parents=True, exist_ok=True)
     
     def get_sqlite_url(self) -> str:
         """Get SQLite database URL"""
@@ -99,6 +103,9 @@ class SQLiteManager:
         if aiosqlite is None:
             raise ImportError("aiosqlite is required. Install with: pip install aiosqlite")
         
+        # Ensure data directory exists on first use
+        _db_config.ensure_data_dir()
+        
         self.db_path = db_path or _db_config.sqlite_path
         self._conn = None
     
@@ -115,8 +122,13 @@ class SQLiteManager:
         finally:
             await conn.close()
     
-    async def initialize_schema(self):
-        """Initialize SQLite database schema"""
+    async def initialize_schema(self, create_default_users: bool = False):
+        """
+        Initialize SQLite database schema.
+        
+        Args:
+            create_default_users: If True, create default admin/demo users (for dev/test only)
+        """
         async with self.get_connection() as conn:
             # Users table
             await conn.execute("""
@@ -275,11 +287,17 @@ class SQLiteManager:
             
             await conn.commit()
             
-            # Insert default users
-            await self._create_default_users(conn)
+            # Insert default users only if explicitly requested (dev/test mode)
+            if create_default_users:
+                await self._create_default_users(conn)
     
     async def _create_default_users(self, conn):
-        """Create default admin and demo users"""
+        """
+        Create default admin and demo users.
+        
+        WARNING: Only use in development/test environments!
+        Default passwords are well-known and insecure.
+        """
         import uuid
         
         # Check if users already exist
@@ -287,6 +305,8 @@ class SQLiteManager:
         count = (await cursor.fetchone())[0]
         
         if count == 0:
+            logger.warning("Creating default users with well-known passwords - FOR DEV/TEST ONLY!")
+            
             # Admin user (password: admin)
             await conn.execute("""
                 INSERT INTO users (id, username, email, password_hash, role)
@@ -353,6 +373,9 @@ class DuckDBManager:
         if duckdb is None:
             raise ImportError("duckdb is required. Install with: pip install duckdb")
         
+        # Ensure data directory exists on first use
+        _db_config.ensure_data_dir()
+        
         self.db_path = db_path or _db_config.duckdb_path
         self._conn = None
     
@@ -391,16 +414,22 @@ class DuckDBManager:
         
         conn.commit()
     
-    def query_parquet(self, parquet_path: str, query: str = None) -> List[Dict[str, Any]]:
+    def query_parquet(self, parquet_path: str, select_columns: List[str] = None, where_clause: str = None) -> List[Dict[str, Any]]:
         """
-        Query parquet files directly with DuckDB.
+        Query parquet files directly with DuckDB using structured parameters.
         
         Args:
             parquet_path: Path to parquet file or directory (will be validated)
-            query: SQL query to execute. If None, selects all columns.
+            select_columns: List of column names to select (None = all columns)
+            where_clause: Optional WHERE clause conditions as string (should not include WHERE keyword)
             
         Returns:
             Query results as list of dictionaries
+            
+        Note:
+            This method uses structured query parameters instead of raw SQL to prevent
+            SQL injection. For advanced queries, use get_connection() directly with
+            proper parameterization.
         """
         # Validate parquet path
         parquet_path = str(Path(parquet_path).resolve())
@@ -409,14 +438,27 @@ class DuckDBManager:
         
         conn = self.get_connection()
         
-        # If no query provided, select all
-        if query is None:
-            query = "SELECT * FROM read_parquet(?)"
-            result = conn.execute(query, (parquet_path,)).fetchdf()
+        # Build safe query with structured parameters
+        if select_columns:
+            # Validate column names (alphanumeric + underscore only)
+            for col in select_columns:
+                if not col.replace('_', '').replace('.', '').isalnum():
+                    raise ValueError(f"Invalid column name: {col}")
+            columns = ", ".join(select_columns)
         else:
-            # Execute user-provided query with parquet path as parameter
-            result = conn.execute(query, (parquet_path,)).fetchdf()
+            columns = "*"
         
+        # Build query
+        query = f"SELECT {columns} FROM read_parquet(?)"
+        
+        if where_clause:
+            # Note: where_clause should be validated by caller or use parameterized conditions
+            # This is a basic safety check but not foolproof
+            if any(keyword in where_clause.upper() for keyword in ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'CREATE', 'ALTER']):
+                raise ValueError("WHERE clause contains disallowed SQL keywords")
+            query += f" WHERE {where_clause}"
+        
+        result = conn.execute(query, (parquet_path,)).fetchdf()
         return result.to_dict('records')
     
     def load_parquet_to_table(self, table_name: str, parquet_path: str):
@@ -492,9 +534,12 @@ class DuckDBManager:
             self._conn = None
 
 
-async def initialize_databases():
+async def initialize_databases(create_default_users: bool = False):
     """
     Initialize both SQLite and DuckDB databases.
+    
+    Args:
+        create_default_users: If True, create default admin/demo users (for dev/test only)
     
     This function should be called during application startup.
     """
@@ -502,7 +547,7 @@ async def initialize_databases():
     
     # Initialize SQLite
     sqlite_manager = SQLiteManager()
-    await sqlite_manager.initialize_schema()
+    await sqlite_manager.initialize_schema(create_default_users=create_default_users)
     logger.info("SQLite database initialized")
     
     # Initialize DuckDB
@@ -554,8 +599,8 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.INFO)
         
         try:
-            # Initialize databases
-            databases = await initialize_databases()
+            # Initialize databases with default users for testing
+            await initialize_databases(create_default_users=True)
             logger.info("Databases initialized successfully")
             
             # Check health

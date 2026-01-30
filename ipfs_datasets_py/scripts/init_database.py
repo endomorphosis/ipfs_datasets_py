@@ -30,7 +30,7 @@ async def init_database():
         logger.info("Initializing SQLite and DuckDB databases...")
         
         # Initialize both databases
-        databases = await initialize_databases()
+        await initialize_databases()
         
         logger.info("Database initialized successfully")
         logger.info(f"SQLite database: {get_database_url('sqlite')}")
