@@ -100,7 +100,7 @@ def report_js_error():
         logger.error(f"Error in report_js_error endpoint: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Internal server error'
         }), 500
 
 
@@ -125,7 +125,7 @@ def js_error_stats():
         logger.error(f"Error in js_error_stats endpoint: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Internal server error'
         }), 500
 
 
@@ -157,7 +157,7 @@ def js_error_history():
         logger.error(f"Error in js_error_history endpoint: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Internal server error'
         }), 500
 
 
