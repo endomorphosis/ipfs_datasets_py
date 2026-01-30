@@ -69,6 +69,14 @@ from .vector_embedding_integration import (
     create_vector_pipeline
 )
 
+# Archive Handling (Phase 6)
+from .archive_handler import (
+    ArchiveHandler,
+    ArchiveExtractionResult,
+    extract_archive,
+    is_archive
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -113,6 +121,12 @@ __all__ = [
     'VectorEmbeddingResult',
     'SearchResult',
     'create_vector_pipeline',
+    
+    # Archive Handling (Phase 6)
+    'ArchiveHandler',
+    'ArchiveExtractionResult',
+    'extract_archive',
+    'is_archive',
 ]
 
-__version__ = '0.6.0'  # Phase 5 - Vector embedding integration
+__version__ = '0.6.1'  # Phase 6.1 - Archive handling
