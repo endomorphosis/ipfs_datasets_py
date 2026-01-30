@@ -65,6 +65,56 @@ Utility functions and helpers for media operations.
 - Error handling and recovery
 - Progress reporting and logging
 
+### File Conversion Systems (Git Submodules)
+
+Two comprehensive file conversion systems are available as git submodules for converting arbitrary file types to text for GraphRAG and knowledge graph generation:
+
+#### omni_converter_mk2 (Submodule)
+Advanced multi-format file converter with comprehensive format support.
+
+**Location:** `ipfs_datasets_py/multimedia/omni_converter_mk2/`  
+**Repository:** https://github.com/endomorphosis/omni_converter_mk2
+
+**Key Features:**
+- 100% format coverage across 25+ file types
+- Text, Image, Audio, Video, and Application format support
+- Batch processing with parallel execution
+- Resource management with configurable limits
+- Security validation for all processed files
+- Comprehensive metadata extraction
+- CLI and Python API interfaces
+
+**Supported Formats:**
+- **Text:** HTML, XML, Plain Text, CSV, iCal
+- **Image:** JPEG, PNG, GIF, WebP, SVG
+- **Audio:** MP3, WAV, OGG, FLAC, AAC
+- **Video:** MP4, WebM, AVI, MKV, MOV
+- **Application:** PDF, JSON, DOCX, XLSX, ZIP
+
+#### convert_to_txt_based_on_mime_type (Submodule)
+Lightweight, production-ready MIME-based file converter with async support.
+
+**Location:** `ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/`  
+**Repository:** https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
+
+**Key Features:**
+- 96+ MIME types support via MarkItDown integration
+- Async/await native implementation
+- Stream-based processing for memory efficiency
+- Functional programming with error monads
+- URL and web file support
+- Azure AI Document Intelligence integration
+- Designed as library/utility (not standalone)
+
+**Recommended For:**
+- GraphRAG document processing
+- Knowledge graph generation from arbitrary files
+- Web-scale file conversion from URLs
+- Real-time document pipelines
+- Memory-efficient batch processing
+
+**See Also:** [File Conversion Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md) for comprehensive comparison and integration recommendations.
+
 ### DiscordWrapper (`discord_wrapper.py`)
 Discord chat history export and analysis with DiscordChatExporter integration.
 
@@ -216,6 +266,48 @@ async def export_discord_data():
 asyncio.run(export_discord_data())
 ```
 
+### File Conversion for GraphRAG
+```python
+from ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type import (
+    FileUnit,
+    file_converter
+)
+from ipfs_datasets_py.rag import GraphRAG
+import asyncio
+
+async def convert_files_for_graphrag():
+    # Initialize GraphRAG system
+    graph = GraphRAG()
+    
+    # Convert a single file
+    file_unit = FileUnit(file_path="document.pdf")
+    converted = await file_converter(file_unit)
+    text_content = converted.data
+    
+    # Process with GraphRAG
+    embeddings = await graph.process_document(text_content)
+    print(f"Generated {len(embeddings)} embeddings")
+    
+    # Batch convert multiple files
+    file_paths = [
+        "report.docx",
+        "presentation.pptx",
+        "data.xlsx",
+        "article.html"
+    ]
+    
+    for file_path in file_paths:
+        file_unit = FileUnit(file_path=file_path)
+        converted = await file_converter(file_unit)
+        await graph.add_document(converted.data, metadata={"source": file_path})
+    
+    # Query the knowledge graph
+    results = await graph.query("What are the main findings?")
+    print(f"Found {len(results)} relevant passages")
+
+asyncio.run(convert_files_for_graphrag())
+```
+
 ### Discord Data Analysis
 ```python
 from ipfs_datasets_py.mcp_server.tools.discord_tools import (
@@ -307,6 +399,33 @@ processor_config = {
 - **CSV**: Spreadsheet format for statistical analysis
 - **PlainText**: Simple text format for searching and reading
 
+### File Conversion Formats (via Submodules)
+
+**Text Formats:**
+- Plain Text (.txt), Markdown (.md), ReStructuredText (.rst)
+- HTML (.html, .htm), XML (.xml), LaTeX (.tex)
+- CSV (.csv), TSV (.tsv), YAML (.yaml, .yml)
+- JSON (.json, .jsonl), TOML (.toml), INI (.ini)
+- Source Code (Python, JavaScript, CSS, SQL, etc.)
+
+**Document Formats:**
+- PDF (.pdf)
+- Microsoft Office: Word (.docx, .doc), Excel (.xlsx, .xls), PowerPoint (.pptx, .ppt)
+- OpenDocument: Text (.odt), Spreadsheet (.ods), Presentation (.odp)
+- Rich Text Format (.rtf)
+- iCal/Calendar (.ics)
+
+**Image Formats:**
+- JPEG (.jpg, .jpeg), PNG (.png), GIF (.gif)
+- WebP (.webp), SVG (.svg), BMP (.bmp)
+- TIFF (.tif, .tiff), AVIF (.avif), APNG (.apng)
+
+**Archive Formats:**
+- ZIP (.zip), TAR (.tar), RAR (.rar)
+- 7-Zip (.7z), GZip (.gz), BZip2 (.bz2)
+
+**See:** [FILE_CONVERSION_SYSTEMS_ANALYSIS.md](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md) for complete format list and capabilities.
+
 ## Advanced Features
 
 ### Quality Optimization
@@ -360,9 +479,11 @@ The multimedia module integrates with:
 - **IPFS Storage** - Decentralized media storage and distribution
 - **Embeddings** - Generate embeddings from media content
 - **Search Module** - Media content search and discovery
-- **RAG Module** - Multimedia content in RAG workflows
+- **RAG Module** - Multimedia content in RAG workflows (including arbitrary file conversion for GraphRAG)
+- **Knowledge Graphs** - Extract entities and relationships from any file type
 - **MCP Tools** - AI assistant access to media processing
 - **Audit Module** - Media processing operation logging
+- **File Conversion Systems** - Convert arbitrary files to text for AI processing (via submodules)
 
 ## Error Handling
 
@@ -397,6 +518,15 @@ The multimedia module integrates with:
 - `pillow` - Image manipulation and optimization
 - `mutagen` - Audio metadata processing
 
+### File Conversion Dependencies (Submodules)
+- `markitdown` - Microsoft's file-to-markdown converter (convert_to_txt_based_on_mime_type)
+- `pydantic` - Data validation (both converters)
+- `playwright` - Browser automation for web content (convert_to_txt_based_on_mime_type)
+- `azure-ai-documentintelligence` - Cloud AI document processing (convert_to_txt_based_on_mime_type)
+- `openai-whisper` - Audio transcription (omni_converter_mk2)
+- `pytesseract` - OCR capabilities (omni_converter_mk2)
+- `python-docx`, `openpyxl`, `python-pptx` - Office format support (omni_converter_mk2)
+
 ### System Dependencies
 - `ffmpeg` - Media processing engine (system install)
 - `yt-dlp` - Video downloader (pip install)
@@ -422,10 +552,14 @@ pip install ipfs-datasets-py[multimedia]
 
 ## See Also
 
+- **[File Conversion Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md)** - Comprehensive comparison of conversion systems
 - [Discord Usage Examples](../../docs/discord_usage_examples.md) - Comprehensive Discord integration guide
 - [PDF Processing](../pdf_processing/README.md) - Document processing capabilities
 - [Utils](../utils/README.md) - Text processing utilities
 - [Embeddings](../embeddings/README.md) - Generate embeddings from media content
+- [RAG Module](../rag/README.md) - GraphRAG and knowledge graph capabilities
 - [IPFS Integration Guide](../../docs/distributed_features.md) - Decentralized storage
 - [Performance Guide](../../docs/performance_optimization.md) - Media processing optimization
 - [DiscordChatExporter Repository](https://github.com/Tyrrrz/DiscordChatExporter) - Upstream project
+- [omni_converter_mk2 Repository](https://github.com/endomorphosis/omni_converter_mk2) - Submodule
+- [convert_to_txt_based_on_mime_type Repository](https://github.com/endomorphosis/convert_to_txt_based_on_mime_type) - Submodule

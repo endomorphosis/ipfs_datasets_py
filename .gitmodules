@@ -11,3 +11,9 @@
 	path = ipfs_accelerate_py
 	url = https://github.com/endomorphosis/ipfs_accelerate_py.git
 	branch = main
+[submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
+	path = ipfs_datasets_py/multimedia/omni_converter_mk2
+	url = https://github.com/endomorphosis/omni_converter_mk2
+[submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
+	path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
+	url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
