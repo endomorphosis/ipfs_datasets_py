@@ -229,7 +229,32 @@ class DashboardErrorCapture {
     }
     
     generateSessionId() {
-        return 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+        // Use a cryptographically secure random value when available
+        const cryptoObj = (typeof window !== 'undefined') && (window.crypto || window.msCrypto);
+        
+        const generateSecureRandomString = (length) => {
+            const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+            const charsLength = chars.length;
+            const randomBytes = new Uint8Array(length);
+            cryptoObj.getRandomValues(randomBytes);
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                // Map byte to an index in [0, charsLength)
+                result += chars[randomBytes[i] % charsLength];
+            }
+            return result;
+        };
+        
+        let randomPart;
+        if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
+            // 13 characters to roughly match the original substring(2, 15) length
+            randomPart = generateSecureRandomString(13);
+        } else {
+            // Fallback to Math.random() only if crypto is unavailable
+            randomPart = Math.random().toString(36).substring(2, 15);
+        }
+        
+        return 'session_' + Date.now() + '_' + randomPart;
     }
     
     // Manual error reporting
