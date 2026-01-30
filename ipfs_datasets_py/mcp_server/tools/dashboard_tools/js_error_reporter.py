@@ -214,10 +214,11 @@ class JavaScriptErrorReporter:
             return result
             
         except Exception as e:
-            logger.error(f"Failed to process error report: {e}")
+            # Log full exception details server-side, but do not expose them to the client
+            logger.error("Failed to process error report", exc_info=True)
             return {
                 'success': False,
-                'error': str(e)
+                'error': 'Failed to process error report'
             }
     
     def _create_github_issue(self, error_report: Dict[str, Any]) -> Dict[str, Any]:
