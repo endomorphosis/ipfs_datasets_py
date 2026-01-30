@@ -195,6 +195,13 @@ class AdminDashboard:
             register_patent_routes(self.app)
         except Exception as e:
             self.logger.warning(f"Could not register patent dashboard routes: {e}")
+        
+        # Register dashboard error reporting routes
+        try:
+            from ipfs_datasets_py.dashboards.dashboard_error_api import setup_dashboard_error_routes
+            setup_dashboard_error_routes(self.app)
+        except Exception as e:
+            self.logger.warning(f"Could not register dashboard error reporting routes: {e}")
 
     def _create_default_templates(self) -> None:
         """Create default template files if they don't exist."""
