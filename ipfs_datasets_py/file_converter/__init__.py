@@ -3,6 +3,7 @@ Unified File Converter for IPFS Datasets Python
 
 Phase 1: Import and wrap existing libraries (omni_converter_mk2, convert_to_txt_based_on_mime_type)
 Phase 2: Native reimplementation (format detection, extractors, async pipeline)
+Phase 3: IPFS storage and ML acceleration integration
 
 This module provides a single, clean API for file conversion while allowing
 gradual migration from external libraries to native implementation.
@@ -20,6 +21,14 @@ from .text_extractors import ExtractorRegistry, ExtractionResult, extract_text a
 from .errors import (
     FileConversionError, ErrorHandler, FallbackStrategy,
     with_fallback, retry_with_backoff, ignore_errors, aggregate_errors
+)
+
+# Phase 3: IPFS and Acceleration integration
+from .backends.ipfs_backend import IPFSBackend, get_ipfs_backend, IPFS_AVAILABLE
+from .ipfs_accelerate_converter import (
+    IPFSAcceleratedConverter,
+    IPFSConversionResult,
+    create_converter
 )
 
 __all__ = [
@@ -40,6 +49,10 @@ __all__ = [
     # Error handling (Phase 2 Feature 4)
     'FileConversionError', 'ErrorHandler', 'FallbackStrategy',
     'with_fallback', 'retry_with_backoff', 'ignore_errors', 'aggregate_errors',
+    
+    # IPFS integration (Phase 3)
+    'IPFSBackend', 'get_ipfs_backend', 'IPFS_AVAILABLE',
+    'IPFSAcceleratedConverter', 'IPFSConversionResult', 'create_converter',
 ]
 
-__version__ = '0.2.0'  # Phase 2 - Native Implementation Complete (All 4 Features)
+__version__ = '0.3.0'  # Phase 3 - IPFS Storage & ML Acceleration Integration
