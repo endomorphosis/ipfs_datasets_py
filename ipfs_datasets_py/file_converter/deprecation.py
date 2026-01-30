@@ -10,8 +10,8 @@ from functools import wraps
 from typing import Optional, Callable, Any
 
 
-class DeprecationWarning(UserWarning):
-    """Custom warning for deprecated features."""
+class FileConverterDeprecationWarning(UserWarning):
+    """Custom warning for deprecated file converter features."""
     pass
 
 
@@ -19,7 +19,7 @@ def deprecated(
     reason: str,
     alternative: Optional[str] = None,
     removal_version: Optional[str] = None,
-    category: type = DeprecationWarning
+    category: type = FileConverterDeprecationWarning
 ) -> Callable:
     """
     Decorator to mark functions/classes as deprecated.
@@ -84,7 +84,7 @@ def warn_deprecated_backend(backend_name: str, alternative: str = "native") -> N
         f"Migration: FileConverter(backend='{alternative}')\n"
         f"Documentation: See docs/FILE_CONVERSION_INTEGRATION_PLAN.md"
     )
-    warnings.warn(message, DeprecationWarning, stacklevel=3)
+    warnings.warn(message, FileConverterDeprecationWarning, stacklevel=3)
 
 
 def check_deprecated_import(module_name: str) -> None:
@@ -99,7 +99,7 @@ def check_deprecated_import(module_name: str) -> None:
         f"This module will be removed in version 0.5.0.\n"
         f"Please update your imports to use the native implementation."
     )
-    warnings.warn(message, DeprecationWarning, stacklevel=3)
+    warnings.warn(message, FileConverterDeprecationWarning, stacklevel=3)
 
 
 # Deprecation timeline

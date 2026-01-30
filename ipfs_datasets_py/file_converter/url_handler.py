@@ -304,8 +304,7 @@ def download_from_url_sync(
             max_size_mb
         )
     else:
-        # Fallback to asyncio
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
+        # Fallback to asyncio using modern loop management
+        return asyncio.run(
             download_from_url(url, dest_path, timeout, max_size_mb)
         )

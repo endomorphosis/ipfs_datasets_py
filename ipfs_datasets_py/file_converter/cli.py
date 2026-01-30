@@ -22,7 +22,8 @@ try:
         UniversalKnowledgeGraphPipeline,
         TextSummarizationPipeline,
         VectorEmbeddingPipeline,
-        is_url
+        is_url,
+        __version__
     )
 except ImportError:
     # Try relative import for development
@@ -31,7 +32,8 @@ except ImportError:
         UniversalKnowledgeGraphPipeline,
         TextSummarizationPipeline,
         VectorEmbeddingPipeline,
-        is_url
+        is_url,
+        __version__
     )
 
 
@@ -75,7 +77,7 @@ def print_result(result, format_type='text', output_file=None):
 # ============================================================================
 
 @click.group()
-@click.version_option(version='0.6.4', prog_name='file-converter')
+@click.version_option(prog_name='file-converter')
 def cli():
     """
     File Converter CLI - Convert files to text, extract knowledge graphs,
