@@ -51,7 +51,7 @@ class TestPDFProcessorInitialization:
         assert hasattr(processor, 'audit_logger')
         assert hasattr(processor, 'monitoring')
         assert hasattr(processor, 'pipeline_version')
-        assert processor.pipeline_version == "1.0.0"
+        assert processor.pipeline_version == "2.0"
         
     def test_given_monitoring_enabled_when_initializing_pdf_processor_then_configures_monitoring(self):
         """
@@ -74,24 +74,25 @@ class TestPDFProcessorInitialization:
         """
         from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
         
-        custom_config = {
-            "max_workers": 4,
-            "timeout_seconds": 300,
-            "chunk_size": 2048
-        }
-        
-        processor = PDFProcessor(config=custom_config)
-        
-        # Verify custom configuration is applied
-        assert hasattr(processor, 'config')
-        if hasattr(processor, 'config'):
-            assert processor.config.get('max_workers') == 4
+        processor = PDFProcessor(
+            enable_audit=False,
+            enable_monitoring=False,
+            use_real_ml_models=False,
+            enable_embeddings=False,
+            embedding_model="dummy-model",
+            enable_cross_document_analysis=True,
+        )
+
+        assert processor.enable_cross_document_analysis is True
+        assert processor.enable_embeddings is False
+        assert processor.embedding_model == "dummy-model"
 
 
 class TestPDFProcessorValidation:
     """Unit tests for PDF file validation functionality"""
     
-    def test_given_valid_pdf_path_when_validating_pdf_then_returns_true(self):
+    @pytest.mark.asyncio
+    async def test_given_valid_pdf_path_when_validating_pdf_then_returns_true(self):
         """
         GIVEN a valid PDF file path
         WHEN validating the PDF
@@ -104,16 +105,23 @@ class TestPDFProcessorValidation:
         # Create temporary PDF file
         with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp_file:
             pdf_path = tmp_file.name
-            tmp_file.write(b"%PDF-1.4\n")  # Minimal PDF header
+            # Create a real minimal PDF using PyMuPDF to satisfy the
+            # processor's validation and analysis logic.
+            import fitz  # PyMuPDF
+            doc = fitz.open()
+            doc.new_page()
+            doc.save(pdf_path)
+            doc.close()
         
         try:
-            # Test validation - should not raise exception
-            result = processor._validate_pdf_path(pdf_path)
-            assert result is not False  # May return True or validation data
+            pdf_info = await processor._validate_and_analyze_pdf(Path(pdf_path))
+            assert isinstance(pdf_info, dict)
+            assert pdf_info.get('page_count') == 1
         finally:
             os.unlink(pdf_path)
             
-    def test_given_nonexistent_file_when_validating_pdf_then_raises_error(self):
+    @pytest.mark.asyncio
+    async def test_given_nonexistent_file_when_validating_pdf_then_raises_error(self):
         """
         GIVEN a non-existent file path
         WHEN validating the PDF
@@ -124,9 +132,10 @@ class TestPDFProcessorValidation:
         processor = PDFProcessor()
         
         with pytest.raises((FileNotFoundError, ValueError)):
-            processor._validate_pdf_path("/nonexistent/path.pdf")
+            await processor._validate_and_analyze_pdf(Path("/nonexistent/path.pdf"))
             
-    def test_given_non_pdf_file_when_validating_pdf_then_handles_gracefully(self):
+    @pytest.mark.asyncio
+    async def test_given_non_pdf_file_when_validating_pdf_then_handles_gracefully(self):
         """
         GIVEN a non-PDF file
         WHEN validating the PDF
@@ -142,13 +151,8 @@ class TestPDFProcessorValidation:
             tmp_file.write(b"Not a PDF file")
         
         try:
-            # Should either raise exception or return False
-            result = processor._validate_pdf_path(txt_path)
-            # Accept either behavior as valid
-            assert result is not None
-        except (ValueError, TypeError):
-            # Expected for invalid file type
-            pass
+            with pytest.raises((ValueError, TypeError)):
+                await processor._validate_and_analyze_pdf(Path(txt_path))
         finally:
             os.unlink(txt_path)
 
@@ -261,13 +265,18 @@ class TestPDFProcessorErrorHandling:
             tmp_file.write(b"%PDF-1.4\n")
         
         try:
-            # Mock missing dependencies scenario
-            with patch('ipfs_datasets_py.pdf_processing.pdf_processor.logger') as mock_logger:
+            # Mock missing dependencies scenario: the processor uses an instance logger
+            # (module-level logger is not guaranteed to exist in all dependency modes).
+            import logging
+            mock_logger = Mock()
+            mock_logger.level = logging.INFO
+
+            with patch.object(processor, 'logger', mock_logger):
                 result = await processor.process_pdf(pdf_path)
-                
-                # Should handle missing dependencies gracefully
-                assert isinstance(result, dict)
-                assert 'status' in result
+
+            # Should handle missing dependencies gracefully
+            assert isinstance(result, dict)
+            assert 'status' in result
                 
         finally:
             os.unlink(pdf_path)

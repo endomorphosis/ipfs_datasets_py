@@ -27,8 +27,24 @@ def pytest_collection_modifyitems(config, items):
     These files are stubs/templates for implementing tests with pytest-bdd.
     They are not meant to be run directly.
     """
-    # Remove all collected items from this directory
-    items[:] = []
+    # Remove only collected items from this stub/template directory.
+    # This conftest is imported for the whole run, so we must not clear
+    # unrelated tests from other directories.
+    stubs_root = Path(__file__).resolve().parent
+
+    kept_items = []
+    for item in items:
+        try:
+            item_path = Path(str(item.fspath)).resolve()
+        except Exception:
+            kept_items.append(item)
+            continue
+
+        if item_path.is_relative_to(stubs_root):
+            continue
+        kept_items.append(item)
+
+    items[:] = kept_items
 
 
 def pytest_configure(config):
