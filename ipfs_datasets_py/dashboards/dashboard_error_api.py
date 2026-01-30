@@ -10,6 +10,7 @@ and creating GitHub issues with auto-healing triggers.
 import logging
 from typing import Dict, Any
 from flask import Flask, request, jsonify, Blueprint
+import os
 
 from ipfs_datasets_py.mcp_server.tools.dashboard_tools import get_js_error_reporter
 
@@ -194,4 +195,5 @@ def create_dashboard_error_api() -> Flask:
 if __name__ == '__main__':
     # Run standalone server for testing
     app = create_dashboard_error_api()
-    app.run(host='127.0.0.1', port=5001, debug=True)
+    debug_mode = os.getenv('FLASK_DEBUG', '0') == '1'
+    app.run(host='127.0.0.1', port=5001, debug=debug_mode)
