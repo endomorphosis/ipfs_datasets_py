@@ -3,11 +3,15 @@ Adapter for omni_converter_mk2.
 
 This backend wraps the omni_converter_mk2 library for rich metadata extraction
 and comprehensive batch processing.
+
+DEPRECATED: This backend is deprecated in favor of the native implementation.
+Use FileConverter(backend='native') instead.
 """
 
 from pathlib import Path
 from typing import Union
 import logging
+from ..deprecation import warn_deprecated_backend
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +27,17 @@ class OmniBackend:
         """
         Initialize Omni backend.
         
+        DEPRECATED: Use NativeBackend instead for better performance and zero dependencies.
+        
         Args:
             **options: Backend-specific options
         """
+        # Issue deprecation warning
+        warn_deprecated_backend('omni', alternative='native')
+        
         self.options = options
         self._converter = None
-        logger.debug("OmniBackend initialized")
+        logger.debug("OmniBackend initialized (DEPRECATED)")
     
     def _get_converter(self):
         """Lazy-load converter on first use."""

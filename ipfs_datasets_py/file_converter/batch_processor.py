@@ -4,7 +4,7 @@ Enhanced batch processing with progress tracking and resource management.
 Combines features from both converter systems with IPFS acceleration.
 """
 
-import asyncio
+import anyio
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -124,40 +124,38 @@ class BatchProcessor:
         progress = BatchProgress(total=len(file_paths))
         results = []
         
-        # Create semaphore for concurrency control
-        semaphore = asyncio.Semaphore(self.limits.max_concurrent)
+        # Create limiter for concurrency control
+        limiter = anyio.CapacityLimiter(self.limits.max_concurrent)
         
-        async def process_one(file_path: str):
+        async def process_one(file_path: str, index: int):
             """Process a single file with error handling."""
-            async with semaphore:
+            async with limiter:
                 try:
                     # Check file size limits
                     if not self.limits.check_file_size(file_path):
                         logger.warning(f"File too large, skipping: {file_path}")
                         progress.skipped += 1
                         self._notify_progress(progress)
-                        return None
+                        return (index, None)
                     
                     # Apply timeout if specified
                     if self.limits.timeout_seconds:
-                        result = await asyncio.wait_for(
-                            self.converter.convert(file_path, **convert_kwargs),
-                            timeout=self.limits.timeout_seconds
-                        )
+                        with anyio.fail_after(self.limits.timeout_seconds):
+                            result = await self.converter.convert(file_path, **convert_kwargs)
                     else:
                         result = await self.converter.convert(file_path, **convert_kwargs)
                     
                     progress.completed += 1
                     self._notify_progress(progress)
-                    return result
+                    return (index, result)
                 
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     error_msg = f"Timeout processing {file_path}"
                     logger.error(error_msg)
                     progress.failed += 1
                     progress.errors.append(error_msg)
                     self._notify_progress(progress)
-                    return None
+                    return (index, None)
                 
                 except Exception as e:
                     error_msg = f"Error processing {file_path}: {str(e)}"
@@ -165,14 +163,17 @@ class BatchProcessor:
                     progress.failed += 1
                     progress.errors.append(error_msg)
                     self._notify_progress(progress)
-                    return None
+                    return (index, None)
         
         # Process all files concurrently
-        tasks = [process_one(path) for path in file_paths]
-        results = await asyncio.gather(*tasks, return_exceptions=False)
+        result_tuples = []
+        async with anyio.create_task_group() as tg:
+            for i, path in enumerate(file_paths):
+                tg.start_soon(lambda p, idx: result_tuples.append(process_one(p, idx)), path, i)
         
-        # Filter out None results
-        results = [r for r in results if r is not None]
+        # Sort by index and filter out None results
+        result_tuples.sort(key=lambda x: x[0])
+        results = [r[1] for r in result_tuples if r[1] is not None]
         
         return results
     
@@ -199,14 +200,7 @@ class BatchProcessor:
         Returns:
             List of conversion results
         """
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            return loop.run_until_complete(
-                self.process_batch(file_paths, **convert_kwargs)
-            )
-        finally:
-            loop.close()
+        return anyio.from_thread.run(self.process_batch, file_paths, **convert_kwargs)
 
 
 class CacheManager:

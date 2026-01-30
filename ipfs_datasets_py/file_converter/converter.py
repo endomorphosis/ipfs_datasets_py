@@ -8,7 +8,7 @@ to native implementation.
 from pathlib import Path
 from typing import Optional, Union, List, Literal
 from dataclasses import dataclass
-import asyncio
+import anyio
 import logging
 
 logger = logging.getLogger(__name__)
@@ -185,7 +185,7 @@ class FileConverter:
             result = converter.convert_sync('document.pdf')
             print(result.text)
         """
-        return asyncio.run(self.convert(file_path, **kwargs))
+        return anyio.from_thread.run(self.convert, file_path, **kwargs)
     
     async def convert_batch(
         self,
@@ -211,24 +211,31 @@ class FileConverter:
             successful = [r for r in results if r.success]
             print(f"Converted {len(successful)}/{len(files)} files")
         """
-        semaphore = asyncio.Semaphore(max_concurrent)
+        limiter = anyio.CapacityLimiter(max_concurrent)
+        results = []
         
-        async def convert_with_semaphore(path):
-            async with semaphore:
+        async def convert_with_limiter(path, index):
+            async with limiter:
                 try:
-                    return await self.convert(path, **kwargs)
+                    result = await self.convert(path, **kwargs)
+                    results.append((index, result))
                 except Exception as e:
                     logger.error(f"Error converting {path}: {e}")
-                    return ConversionResult(
+                    results.append((index, ConversionResult(
                         text='',
                         metadata={},
                         backend=self.backend_name,
                         success=False,
                         error=str(e)
-                    )
+                    )))
         
-        tasks = [convert_with_semaphore(p) for p in file_paths]
-        return await asyncio.gather(*tasks)
+        async with anyio.create_task_group() as tg:
+            for i, path in enumerate(file_paths):
+                tg.start_soon(convert_with_limiter, path, i)
+        
+        # Sort results by original order
+        results.sort(key=lambda x: x[0])
+        return [r[1] for r in results]
     
     def get_supported_formats(self) -> List[str]:
         """

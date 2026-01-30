@@ -7,6 +7,12 @@ Phase 3: IPFS storage and ML acceleration integration
 
 This module provides a single, clean API for file conversion while allowing
 gradual migration from external libraries to native implementation.
+
+MIGRATION NOTICE:
+The markitdown and omni backends are deprecated. Please use the native backend instead:
+  FileConverter(backend='native')
+
+See docs/FILE_CONVERSION_INTEGRATION_PLAN.md for migration guide.
 """
 
 from .converter import FileConverter, ConversionResult
@@ -38,6 +44,14 @@ from .batch_processor import (
     create_batch_processor
 )
 
+# Deprecation utilities
+from .deprecation import (
+    warn_deprecated_backend,
+    get_deprecation_info,
+    is_deprecated,
+    DEPRECATION_TIMELINE
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -65,6 +79,10 @@ __all__ = [
     'MetadataExtractor', 'extract_metadata',
     'BatchProcessor', 'BatchProgress', 'ResourceLimits', 'CacheManager',
     'create_batch_processor',
+    
+    # Deprecation utilities
+    'warn_deprecated_backend', 'get_deprecation_info', 'is_deprecated',
+    'DEPRECATION_TIMELINE',
 ]
 
-__version__ = '0.3.1'  # Phase 3 - Enhanced with metadata and batch processing
+__version__ = '0.4.0'  # Phase 3 - anyio migration + deprecation system

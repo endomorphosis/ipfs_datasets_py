@@ -18,7 +18,7 @@ import os
 import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, List
-import asyncio
+import anyio
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ class IPFSBackend:
         
         try:
             # Add file to IPFS
-            result = await asyncio.to_thread(
+            result = await anyio.to_thread.run_sync(
                 self.ipfs_client.add,
                 str(file_path)
             )
@@ -156,7 +156,7 @@ class IPFSBackend:
         
         try:
             # Get file from IPFS
-            content = await asyncio.to_thread(
+            content = await anyio.to_thread.run_sync(
                 self.ipfs_client.cat,
                 cid
             )
@@ -185,7 +185,7 @@ class IPFSBackend:
             return False
         
         try:
-            await asyncio.to_thread(
+            await anyio.to_thread.run_sync(
                 self.ipfs_client.pin_add,
                 cid
             )
@@ -209,7 +209,7 @@ class IPFSBackend:
             return False
         
         try:
-            await asyncio.to_thread(
+            await anyio.to_thread.run_sync(
                 self.ipfs_client.pin_rm,
                 cid
             )
@@ -230,7 +230,7 @@ class IPFSBackend:
             return []
         
         try:
-            result = await asyncio.to_thread(
+            result = await anyio.to_thread.run_sync(
                 self.ipfs_client.pin_ls
             )
             return list(result.get('Keys', {}).keys()) if isinstance(result, dict) else []

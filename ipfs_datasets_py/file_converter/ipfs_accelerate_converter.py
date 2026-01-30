@@ -20,7 +20,7 @@ Environment Variables:
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Union
-import asyncio
+import anyio
 from dataclasses import dataclass, field
 
 from .converter import FileConverter, ConversionResult
@@ -214,7 +214,7 @@ class IPFSAcceleratedConverter:
         Returns:
             IPFSConversionResult: Conversion result
         """
-        return asyncio.run(self.convert(file_path, **kwargs))
+        return anyio.from_thread.run(self.convert, file_path, **kwargs)
     
     async def convert_batch(
         self,
@@ -233,14 +233,25 @@ class IPFSAcceleratedConverter:
         Returns:
             list: List of conversion results
         """
-        semaphore = asyncio.Semaphore(max_concurrent)
+        limiter = anyio.CapacityLimiter(max_concurrent)
+        results = []
         
-        async def convert_with_semaphore(path):
-            async with semaphore:
-                return await self.convert(path, **kwargs)
+        async def convert_with_limiter(path, index):
+            async with limiter:
+                try:
+                    result = await self.convert(path, **kwargs)
+                    results.append((index, result))
+                except Exception as e:
+                    logger.error(f"Error converting {path}: {e}")
+                    results.append((index, None))
         
-        tasks = [convert_with_semaphore(path) for path in file_paths]
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        async with anyio.create_task_group() as tg:
+            for i, path in enumerate(file_paths):
+                tg.start_soon(convert_with_limiter, path, i)
+        
+        # Sort by index and filter None
+        results.sort(key=lambda x: x[0])
+        return [r[1] for r in results if r[1] is not None]
     
     async def retrieve_from_ipfs(
         self,

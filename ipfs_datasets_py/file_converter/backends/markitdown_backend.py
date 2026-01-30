@@ -3,11 +3,15 @@ Adapter for convert_to_txt_based_on_mime_type / MarkItDown.
 
 This backend wraps the MarkItDown library for file conversion.
 Falls back to using the submodule if the package is not installed.
+
+DEPRECATED: This backend is deprecated in favor of the native implementation.
+Use FileConverter(backend='native') instead.
 """
 
 from pathlib import Path
 from typing import Union
 import logging
+from ..deprecation import warn_deprecated_backend
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +27,17 @@ class MarkItDownBackend:
         """
         Initialize MarkItDown backend.
         
+        DEPRECATED: Use NativeBackend instead for better performance and zero dependencies.
+        
         Args:
             **options: Backend-specific options (currently unused)
         """
+        # Issue deprecation warning
+        warn_deprecated_backend('markitdown', alternative='native')
+        
         self.options = options
         self._converter = None
-        logger.debug("MarkItDownBackend initialized")
+        logger.debug("MarkItDownBackend initialized (DEPRECATED)")
     
     def _get_converter(self):
         """Lazy-load converter on first use."""
