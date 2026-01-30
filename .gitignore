@@ -60,3 +60,6 @@ test_results/
 __pycache__/
 configs.yaml
 sql_configs.yaml
+# Demo and debug output directories
+unified_deontic_logic_system_demo/
+unified_deontic_logic_system/

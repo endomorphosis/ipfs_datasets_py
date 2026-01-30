@@ -183,9 +183,13 @@ async def demonstrate_bulk_processing():
         print(f"\n🔧 Configuring Bulk Processing...")
         print("-" * 50)
         
+        # Use /tmp directory for demo outputs
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_dir = f"/tmp/unified_deontic_logic_system_demo_{timestamp}"
+        
         config = BulkProcessingConfig(
             caselaw_directories=[caselaw_dir],
-            output_directory="unified_deontic_logic_system_demo",
+            output_directory=output_dir,
             max_concurrent_documents=3,
             enable_parallel_processing=True,
             min_precedent_strength=0.7,

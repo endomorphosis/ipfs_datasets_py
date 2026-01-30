@@ -164,8 +164,9 @@ def demonstrate_bulk_processing_concept():
     print(f"\n🔧 PHASE 5: System Export")
     print("-" * 50)
     
-    # Simulate export
-    output_dir = "unified_deontic_logic_system_demo"
+    # Simulate export - use /tmp directory for demo outputs
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    output_dir = f"/tmp/unified_deontic_logic_system_demo_{timestamp}"
     os.makedirs(output_dir, exist_ok=True)
     
     # Export unified system
