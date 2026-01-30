@@ -77,9 +77,10 @@ The ipfs_datasets_py repository has undergone comprehensive reorganization acros
 ├── ipfs_kit_py/                     # IPFS kit submodule
 ├── scripts/                          # Scripts (organized)
 ├── tests/                            # Test suite
-├── tools/                            # Development tools
-└── unified_deontic_logic_system_demo/ # Demo system
+└── tools/                            # Development tools
 ```
+
+**Note:** Demo scripts output to `/tmp/unified_deontic_logic_system_demo_{timestamp}` to avoid cluttering the repository.
 
 **Service Files (2):**
 ```
