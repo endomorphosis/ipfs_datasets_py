@@ -10,14 +10,14 @@ other challenges.
 import os
 import tempfile
 import logging
+import asyncio
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 from urllib.parse import urlparse, unquote
 
 import anyio
 
-import anyio
+logger = logging.getLogger(__name__)
 
 # Try to import comprehensive web scraping system
 try:
@@ -33,12 +33,6 @@ try:
     AIOHTTP_AVAILABLE = True
 except ImportError:
     AIOHTTP_AVAILABLE = False
-
-try:
-    import anyio
-    ANYIO_AVAILABLE = True
-except ImportError:
-    ANYIO_AVAILABLE = False
 
 
 @dataclass
