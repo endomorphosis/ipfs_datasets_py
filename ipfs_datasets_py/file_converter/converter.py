@@ -158,7 +158,57 @@ class FileConverter:
                 print(result.text)
             else:
                 print(f"Error: {result.error}")
+                
+            # Also works with URLs
+            result = await converter.convert('https://example.com/doc.pdf')
         """
+        # Check if input is a URL
+        file_path_str = str(file_path)
+        
+        try:
+            from .url_handler import is_url, download_from_url
+            
+            if is_url(file_path_str):
+                logger.info(f"Detected URL input: {file_path_str}")
+                
+                # Download the file
+                download_result = await download_from_url(
+                    file_path_str,
+                    timeout=kwargs.pop('download_timeout', 30),
+                    max_size_mb=kwargs.pop('max_download_size_mb', None)
+                )
+                
+                if not download_result.success:
+                    return ConversionResult(
+                        text='',
+                        metadata={'url': file_path_str},
+                        backend=self.backend_name,
+                        success=False,
+                        error=f"Download failed: {download_result.error}"
+                    )
+                
+                # Convert the downloaded file
+                try:
+                    backend = self._get_backend()
+                    logger.debug(f"Converting downloaded file from {file_path_str}")
+                    result = await backend.convert(download_result.local_path, **kwargs)
+                    
+                    # Add URL metadata
+                    result.metadata['source_url'] = file_path_str
+                    result.metadata['content_type'] = download_result.content_type
+                    result.metadata['downloaded_file'] = download_result.local_path
+                    
+                    return result
+                finally:
+                    # Clean up downloaded file
+                    from .url_handler import URLHandler
+                    handler = URLHandler()
+                    handler.cleanup(download_result)
+        except ImportError:
+            # URL handler not available, treat as regular file
+            logger.debug("URL handler not available, treating as file path")
+        
+        # Regular file path
         backend = self._get_backend()
         logger.debug(f"Converting {file_path} with {backend.__class__.__name__}")
         return await backend.convert(file_path, **kwargs)

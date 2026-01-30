@@ -90,6 +90,15 @@ from .office_format_extractors import (
     OfficeExtractionResult
 )
 
+# URL/Network Resource Handler (Phase 6.3)
+from .url_handler import (
+    URLHandler,
+    URLDownloadResult,
+    download_from_url,
+    download_from_url_sync,
+    is_url
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -151,6 +160,13 @@ __all__ = [
     'get_supported_office_formats',
     'is_office_format_supported',
     'OfficeExtractionResult',
+    
+    # URL/Network Resource Handler (Phase 6.3)
+    'URLHandler',
+    'URLDownloadResult',
+    'download_from_url',
+    'download_from_url_sync',
+    'is_url',
 ]
 
-__version__ = '0.6.2'  # Phase 6.2 - Additional office formats (PPT, XLS, RTF, EPUB, ODT/ODS/ODP)
+__version__ = '0.6.3'  # Phase 6.3 - URL/Network resource handler
