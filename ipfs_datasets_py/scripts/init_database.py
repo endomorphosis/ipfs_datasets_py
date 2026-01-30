@@ -77,7 +77,7 @@ def main():
     args = parser.parse_args()
     
     if args.health_check:
-        success = anyio.run(check_database_health())
+        success = anyio.run(check_database_health)
         sys.exit(0 if success else 1)
     
     if args.wait_for_db:
@@ -86,7 +86,7 @@ def main():
         max_attempts = 30
         for attempt in range(max_attempts):
             try:
-                success = anyio.run(check_database_health())
+                success = anyio.run(check_database_health)
                 if success:
                     logger.info("Database is ready!")
                     sys.exit(0)
@@ -100,11 +100,11 @@ def main():
         sys.exit(1)
     
     if args.init:
-        success = anyio.run(init_database())
+        success = anyio.run(init_database)
         sys.exit(0 if success else 1)
     
     # Default action is to initialize
-    success = anyio.run(init_database())
+    success = anyio.run(init_database)
     sys.exit(0 if success else 1)
 
 if __name__ == "__main__":

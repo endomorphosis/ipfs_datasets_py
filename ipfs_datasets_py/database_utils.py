@@ -502,7 +502,7 @@ async def check_database_health() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     # Test database initialization
-    async def main():
+    async def test_main():
         import sys
         logging.basicConfig(level=logging.INFO)
         
@@ -521,4 +521,4 @@ if __name__ == "__main__":
             logger.error(f"Database initialization failed: {e}")
             sys.exit(1)
     
-    anyio.run(main())
+    anyio.run(test_main)
