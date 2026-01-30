@@ -62,7 +62,7 @@ case "$1" in
         ;;
     "dependency-check")
         echo "🔍 Running comprehensive dependency check..."
-        exec python tools/dependency_checker.py --install-optional --verbose
+        exec python scripts/utilities/dependency_checker.py --install-optional --verbose
         ;;
     "worker")
         echo "⚙️  Starting Background Worker..."

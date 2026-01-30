@@ -159,7 +159,10 @@ try:
     @app.route('/api/mcp/caselaw/bulk_process/<session_id>')
     def api_bulk_status(session_id):
         """Get bulk processing status (demo implementation)."""
-        # Simulate completed processing
+        # Simulate completed processing - use /tmp directory for demo outputs
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_dir = f"/tmp/unified_deontic_logic_system_demo_{timestamp}"
+        
         return jsonify({
             "session_id": session_id,
             "status": "completed",
@@ -173,7 +176,7 @@ try:
                 "success_rate": 0.95
             },
             "processing_time": "45 minutes",
-            "output_directory": "unified_deontic_logic_system_demo"
+            "output_directory": output_dir
         })
     
     if __name__ == '__main__':

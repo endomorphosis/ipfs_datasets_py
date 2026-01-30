@@ -98,7 +98,7 @@ fi
 
 # Pre-launch dependency check and installation
 echo "Running comprehensive dependency check..."
-python tools/dependency_checker.py --install-optional
+python scripts/utilities/dependency_checker.py --install-optional
 
 # Additional quick check for critical packages
 check_and_install_dependencies
