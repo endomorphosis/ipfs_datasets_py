@@ -545,6 +545,52 @@ class ImageExtractor(TextExtractor):
             )
 
 
+class AudioExtractor(TextExtractor):
+    """
+    Extractor for audio files with Whisper transcription support.
+    
+    Supports: MP3, WAV, OGG, FLAC, AAC, WebM audio, 3GPP audio
+    Optional: OpenAI Whisper for speech-to-text transcription
+    """
+    
+    supported_formats = {
+        '.mp3', '.wav', '.ogg', '.oga', '.flac',
+        '.aac', '.m4a', '.webm', '.3gp', '.3gpp', '.3g2'
+    }
+    
+    def can_extract(self, file_path: Path) -> bool:
+        """Check if file is a supported audio format."""
+        return file_path.suffix.lower() in self.supported_formats
+    
+    def extract(self, file_path: Path) -> ExtractionResult:
+        """Extract text from audio using Whisper transcription."""
+        try:
+            from .audio_processor import AudioProcessor
+            
+            processor = AudioProcessor(transcription_enabled=True)
+            result = processor.extract_text(str(file_path))
+            
+            return ExtractionResult(
+                text=result.get('text', ''),
+                metadata=result.get('metadata', {}),
+                success=not result.get('error'),
+                error=result.get('error')
+            )
+            
+        except ImportError:
+            logger.warning("audio_processor not available")
+            return ExtractionResult(
+                success=False,
+                error="Audio processing not available"
+            )
+        except Exception as e:
+            logger.error(f"Audio extraction failed: {e}")
+            return ExtractionResult(
+                success=False,
+                error=str(e)
+            )
+
+
 class ExtractorRegistry:
     """
     Registry of available text extractors.
@@ -565,6 +611,7 @@ class ExtractorRegistry:
             HTMLExtractor(),
             OfficeFormatExtractor(),  # Additional office formats
             ImageExtractor(),  # Image formats with OCR
+            AudioExtractor(),  # Audio formats with Whisper transcription
         ]
     
     def get_extractor(self, file_path: Union[str, Path]) -> Optional[TextExtractor]:
