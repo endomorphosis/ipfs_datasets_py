@@ -69,12 +69,25 @@ from .vector_embedding_integration import (
     create_vector_pipeline
 )
 
-# Archive Handling (Phase 6)
+# Archive Handling (Phase 6.1)
 from .archive_handler import (
     ArchiveHandler,
     ArchiveExtractionResult,
     extract_archive,
     is_archive
+)
+
+# Office Format Extractors (Phase 6.2)
+from .office_format_extractors import (
+    PowerPointExtractor,
+    ExcelLegacyExtractor,
+    RTFExtractor,
+    EPUBExtractor,
+    OpenDocumentExtractor,
+    extract_office_format,
+    get_supported_office_formats,
+    is_office_format_supported,
+    OfficeExtractionResult
 )
 
 __all__ = [
@@ -122,11 +135,22 @@ __all__ = [
     'SearchResult',
     'create_vector_pipeline',
     
-    # Archive Handling (Phase 6)
+    # Archive Handling (Phase 6.1)
     'ArchiveHandler',
     'ArchiveExtractionResult',
     'extract_archive',
     'is_archive',
+    
+    # Office Format Extractors (Phase 6.2)
+    'PowerPointExtractor',
+    'ExcelLegacyExtractor',
+    'RTFExtractor',
+    'EPUBExtractor',
+    'OpenDocumentExtractor',
+    'extract_office_format',
+    'get_supported_office_formats',
+    'is_office_format_supported',
+    'OfficeExtractionResult',
 ]
 
-__version__ = '0.6.1'  # Phase 6.1 - Archive handling
+__version__ = '0.6.2'  # Phase 6.2 - Additional office formats (PPT, XLS, RTF, EPUB, ODT/ODS/ODP)

@@ -451,6 +451,54 @@ class HTMLExtractor(TextExtractor):
         )
 
 
+class OfficeFormatExtractor(TextExtractor):
+    """
+    Extract text from additional office formats (PPT, XLS, RTF, EPUB, OD*).
+    
+    Uses office_format_extractors module with graceful fallbacks.
+    """
+    
+    def __init__(self):
+        # Lazy import to avoid circular dependency
+        from .office_format_extractors import (
+            extract_office_format,
+            get_supported_office_formats,
+            is_office_format_supported
+        )
+        self._extract = extract_office_format
+        self._is_supported = is_office_format_supported
+        self._formats = get_supported_office_formats()
+    
+    @property
+    def supported_formats(self) -> list:
+        return [
+            'application/vnd.ms-powerpoint',  # PPT
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',  # PPTX
+            'application/vnd.ms-excel',  # XLS
+            'application/rtf',  # RTF
+            'application/epub+zip',  # EPUB
+            'application/vnd.oasis.opendocument.text',  # ODT
+            'application/vnd.oasis.opendocument.spreadsheet',  # ODS
+            'application/vnd.oasis.opendocument.presentation',  # ODP
+        ]
+    
+    def can_extract(self, file_path: Path) -> bool:
+        """Check if we can extract from this file."""
+        return self._is_supported(file_path)
+    
+    def extract(self, file_path: Path) -> ExtractionResult:
+        """Extract text from office format file."""
+        office_result = self._extract(file_path)
+        
+        # Convert to ExtractionResult
+        return ExtractionResult(
+            text=office_result.text,
+            metadata=office_result.metadata,
+            success=office_result.success,
+            error=office_result.error
+        )
+
+
 class ExtractorRegistry:
     """
     Registry of available text extractors.
@@ -469,6 +517,7 @@ class ExtractorRegistry:
             DOCXExtractor(),
             XLSXExtractor(),
             HTMLExtractor(),
+            OfficeFormatExtractor(),  # Additional office formats
         ]
     
     def get_extractor(self, file_path: Union[str, Path]) -> Optional[TextExtractor]:
