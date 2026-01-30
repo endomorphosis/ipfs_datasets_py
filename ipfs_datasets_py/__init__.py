@@ -25,6 +25,15 @@ except ImportError:
     DetectionMethod = None
     DetectionStrategy = None
 
+# File conversion (Phase 1: Import & Wrap existing libraries)
+try:
+    from .file_converter import FileConverter, ConversionResult
+    HAVE_FILE_CONVERTER = True
+except ImportError:
+    HAVE_FILE_CONVERTER = False
+    FileConverter = None
+    ConversionResult = None
+
 # Import automated dependency installer
 from .auto_installer import get_installer, ensure_module
 

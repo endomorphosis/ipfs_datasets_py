@@ -49,7 +49,7 @@ This documentation is organized into several sections:
 ## Core Features
 
 - **Data Processing** - Working with datasets from various sources
-- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](FILE_CONVERSION_PROS_CONS.md) | [Full Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) | [Merge Feasibility](FILE_CONVERSION_MERGE_FEASIBILITY.md))
+- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](FILE_CONVERSION_PROS_CONS.md) | [Full Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) | [Merge Feasibility](FILE_CONVERSION_MERGE_FEASIBILITY.md) | [Integration Plan](FILE_CONVERSION_INTEGRATION_PLAN.md))
 - **PDF Processing** - Advanced PDF decomposition and LLM-optimized content extraction
 - **IPLD Integration** - Content-addressed data structures with IPLD
 - **Vector Storage** - Efficient storage and retrieval of vector embeddings

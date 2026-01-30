@@ -51,6 +51,7 @@
 - [📝 File Conversion Systems](FILE_CONVERSION_PROS_CONS.md) - Convert any file type to text (Quick Guide)
 - [📋 File Conversion Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) - Detailed comparison of conversion systems
 - [🔀 Merge Feasibility Study](FILE_CONVERSION_MERGE_FEASIBILITY.md) - Analysis of merging conversion codebases
+- [🚀 Integration Plan](FILE_CONVERSION_INTEGRATION_PLAN.md) - Gradual integration strategy (CURRENT)
 - [🔄 Data Pipelines](guides/PIPELINE_GUIDE.md) - Automated data processing workflows
 - [📈 Analytics](guides/ANALYTICS_GUIDE.md) - Data analysis and visualization
 
