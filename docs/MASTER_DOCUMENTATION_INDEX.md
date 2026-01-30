@@ -50,6 +50,7 @@
 - [📊 Dataset Management](guides/DATASET_GUIDE.md) - Loading, processing, and storing datasets
 - [📝 File Conversion Systems](FILE_CONVERSION_PROS_CONS.md) - Convert any file type to text (Quick Guide)
 - [📋 File Conversion Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) - Detailed comparison of conversion systems
+- [🔀 Merge Feasibility Study](FILE_CONVERSION_MERGE_FEASIBILITY.md) - Analysis of merging conversion codebases
 - [🔄 Data Pipelines](guides/PIPELINE_GUIDE.md) - Automated data processing workflows
 - [📈 Analytics](guides/ANALYTICS_GUIDE.md) - Data analysis and visualization
 
