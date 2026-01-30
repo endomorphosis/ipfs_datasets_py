@@ -230,7 +230,7 @@ class DashboardErrorCapture {
     
     generateSessionId() {
         // Use a cryptographically secure random value when available
-        const cryptoObj = (typeof window !== 'undefined') && (window.crypto || window.msCrypto);
+        const cryptoObj = (typeof window !== 'undefined') ? window.crypto : undefined;
         
         const generateSecureRandomString = (length) => {
             const chars = '0123456789abcdefghijklmnopqrstuvwxyz';

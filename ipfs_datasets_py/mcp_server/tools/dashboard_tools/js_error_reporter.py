@@ -218,7 +218,7 @@ class JavaScriptErrorReporter:
             logger.error("Failed to process error report", exc_info=True)
             return {
                 'success': False,
-                'error': 'Failed to process error report'
+                'error': f"Failed to process error report: {type(e).__name__}"
             }
     
     def _create_github_issue(self, error_report: Dict[str, Any]) -> Dict[str, Any]:

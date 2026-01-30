@@ -100,7 +100,7 @@ def report_js_error():
         logger.error(f"Error in report_js_error endpoint: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': 'Internal server error'
+            'error': f'Internal server error: {type(e).__name__}'
         }), 500
 
 
