@@ -26,7 +26,7 @@ services:
       retries: 3
       start_period: 40s
     restart: unless-stopped
-    command: ["sh", "-c", "cd /app && python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
+    command: ["sh", "-c", "cd /app && python scripts/utilities/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
 
   # MCP Dashboard
   mcp-dashboard:
@@ -58,7 +58,7 @@ services:
       retries: 3
       start_period: 60s
     restart: unless-stopped
-    command: ["sh", "-c", "cd /app && python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_dashboard"]
+    command: ["sh", "-c", "cd /app && python scripts/utilities/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_dashboard"]
 
   # IPFS Node (optional)
   ipfs:

@@ -17,7 +17,7 @@ services:
       - IPFS_DATASETS_CONFIG=/app/config/mcp_config.yaml
       # Force dependency check on startup
       - RUN_DEPENDENCY_CHECK=true
-    command: ["sh", "-c", "python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
+    command: ["sh", "-c", "python scripts/utilities/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
 
   # Enhanced MCP Dashboard with full dependency management
   mcp-dashboard:
@@ -34,7 +34,7 @@ services:
       - MCP_SERVER_PORT=8000
       # Force dependency check on startup
       - RUN_DEPENDENCY_CHECK=true
-    command: ["sh", "-c", "python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_dashboard"]
+    command: ["sh", "-c", "python scripts/utilities/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_dashboard"]
 
   # Dependency Validation Service (optional)
   dependency-validator:
@@ -48,5 +48,5 @@ services:
       - ./dependency_reports:/app/reports
     profiles:
       - validation
-    command: ["sh", "-c", "python tools/dependency_checker.py --install-optional --verbose > /app/reports/dependency_report.txt 2>&1 && echo 'Dependency validation complete'"]
+    command: ["sh", "-c", "python scripts/utilities/dependency_checker.py --install-optional --verbose > /app/reports/dependency_report.txt 2>&1 && echo 'Dependency validation complete'"]
     restart: "no"

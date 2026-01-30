@@ -20,13 +20,13 @@ RUN apt-get update && apt-get install -y \
 
 # Copy project files and dependency checker
 COPY . /app/
-COPY tools/dependency_checker.py /app/tools/dependency_checker.py
+COPY scripts/utilities/dependency_checker.py /app/scripts/utilities/dependency_checker.py
 
 # Install the full package with dependency checking
 RUN pip install --no-cache-dir -e .
 
 # Run dependency checker for comprehensive setup (install missing packages)
-RUN cd /app && python tools/dependency_checker.py --install-optional && echo "✅ All dependencies installed"
+RUN cd /app && python scripts/utilities/dependency_checker.py --install-optional && echo "✅ All dependencies installed"
 
 # Install additional MCP dependencies
 RUN pip install --no-cache-dir \
@@ -48,4 +48,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 EXPOSE 8000
 
 # Start the real MCP server with dependency checking
-CMD ["sh", "-c", "cd /app && python tools/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "cd /app && python scripts/utilities/dependency_checker.py --check-only && python -m ipfs_datasets_py.mcp_server --host 0.0.0.0 --port 8000"]
