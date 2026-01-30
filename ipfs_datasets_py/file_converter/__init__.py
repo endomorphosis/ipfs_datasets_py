@@ -17,6 +17,10 @@ from .pipeline import (
 )
 from .format_detector import FormatDetector, detect_format as detect_file_format
 from .text_extractors import ExtractorRegistry, ExtractionResult, extract_text as extract_file_text
+from .errors import (
+    FileConversionError, ErrorHandler, FallbackStrategy,
+    with_fallback, retry_with_backoff, ignore_errors, aggregate_errors
+)
 
 __all__ = [
     # Main API (Phase 1)
@@ -32,6 +36,10 @@ __all__ = [
     # Native components (Phase 2)
     'FormatDetector', 'detect_file_format',
     'ExtractorRegistry', 'ExtractionResult', 'extract_file_text',
+    
+    # Error handling (Phase 2 Feature 4)
+    'FileConversionError', 'ErrorHandler', 'FallbackStrategy',
+    'with_fallback', 'retry_with_backoff', 'ignore_errors', 'aggregate_errors',
 ]
 
-__version__ = '0.2.0'  # Phase 2 - Native Implementation (Features 1-3)
+__version__ = '0.2.0'  # Phase 2 - Native Implementation Complete (All 4 Features)
