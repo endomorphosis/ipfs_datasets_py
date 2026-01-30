@@ -102,6 +102,33 @@ from .url_handler import (
 # CLI Interface (Phase 6.4)
 from .cli import main as cli_main
 
+# Package Exports for External Consumption (CLI, MCP server, dashboard)
+from .exports import (
+    # Core conversion
+    convert_file,
+    convert_file_sync,
+    batch_convert_files,
+    batch_convert_files_sync,
+    # Knowledge graphs
+    extract_knowledge_graph,
+    extract_knowledge_graph_sync,
+    # Summarization
+    generate_summary,
+    generate_summary_sync,
+    # Embeddings
+    generate_embeddings,
+    generate_embeddings_sync,
+    # Archives
+    extract_archive_contents,
+    extract_archive_contents_sync,
+    # URLs
+    download_from_url_export,
+    download_from_url_export_sync,
+    # File info
+    get_file_info,
+    get_file_info_sync,
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -173,6 +200,16 @@ __all__ = [
     
     # CLI Interface (Phase 6.4)
     'cli_main',
+    
+    # Package Exports for External Consumption
+    'convert_file', 'convert_file_sync',
+    'batch_convert_files', 'batch_convert_files_sync',
+    'extract_knowledge_graph', 'extract_knowledge_graph_sync',
+    'generate_summary', 'generate_summary_sync',
+    'generate_embeddings', 'generate_embeddings_sync',
+    'extract_archive_contents', 'extract_archive_contents_sync',
+    'download_from_url_export', 'download_from_url_export_sync',
+    'get_file_info', 'get_file_info_sync',
 ]
 
-__version__ = '0.6.4'  # Phase 6.4 - CLI interface
+__version__ = '0.7.0'  # Phase 7 - Package exports and MCP/CLI integration
