@@ -39,7 +39,7 @@ class InfrastructureValidator:
             
             # Check required services
             required_services = [
-                'postgres', 'redis', 'ipfs', 'elasticsearch',
+                'redis', 'ipfs', 'elasticsearch',
                 'website-graphrag-processor', 'job-worker'
             ]
             

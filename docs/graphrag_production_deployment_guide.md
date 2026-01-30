@@ -58,10 +58,6 @@ kubectl apply -f deployments/kubernetes/
 
 2. **Configure secrets:**
 ```bash
-kubectl create secret generic db-credentials \
-  --from-literal=postgres-url="postgresql://user:pass@postgres:5432/graphrag" \
-  -n graphrag-system
-
 kubectl create secret generic api-keys \
   --from-literal=openai-api-key="your-key" \
   --from-literal=huggingface-token="your-token" \
@@ -87,8 +83,8 @@ ENVIRONMENT=production
 DEBUG=false
 LOG_LEVEL=INFO
 
-# Database Configuration
-POSTGRES_URL=postgresql://user:pass@postgres:5432/graphrag_db
+# Database Configuration (SQLite and DuckDB)
+DATABASE_DIR=/app/data/databases
 REDIS_URL=redis://redis:6379/0
 
 # IPFS Configuration

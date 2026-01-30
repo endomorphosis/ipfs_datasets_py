@@ -1196,11 +1196,8 @@ spec:
         env:
         - name: REDIS_URL
           value: "redis://redis-service:6379"
-        - name: POSTGRES_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: postgres-url
+        - name: DATABASE_DIR
+          value: "/app/data/databases"
         resources:
           requests:
             memory: "2Gi"
@@ -1261,11 +1258,10 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-      - postgres
       - ipfs
     environment:
       - REDIS_URL=redis://redis:6379
-      - POSTGRES_URL=postgresql://graphrag:password@postgres:5432/graphrag_db
+      - DATABASE_DIR=/app/data/databases
       - IPFS_API_URL=http://ipfs:5001
     volumes:
       - ./data:/app/data
@@ -1277,17 +1273,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=graphrag_db
-      - POSTGRES_USER=graphrag
-      - POSTGRES_PASSWORD=password
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
   ipfs:
     image: ipfs/go-ipfs:latest
@@ -1309,7 +1294,6 @@ services:
 
 volumes:
   redis_data:
-  postgres_data:
   ipfs_data:
   grafana_data:
 ```
