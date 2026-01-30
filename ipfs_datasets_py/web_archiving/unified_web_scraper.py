@@ -668,7 +668,10 @@ class UnifiedWebScraper:
     
     def scrape_sync(self, url: str, **kwargs) -> ScraperResult:
         """Synchronous version of scrape."""
-        return anyio.run(self.scrape(url, **kwargs))
+        async def _runner() -> ScraperResult:
+            return await self.scrape(url, **kwargs)
+
+        return anyio.run(_runner)
     
     async def scrape_multiple(
         self,
@@ -699,7 +702,10 @@ class UnifiedWebScraper:
     
     def scrape_multiple_sync(self, urls: List[str], **kwargs) -> List[ScraperResult]:
         """Synchronous version of scrape_multiple."""
-        return anyio.run(self.scrape_multiple(urls, **kwargs))
+        async def _runner() -> List[ScraperResult]:
+            return await self.scrape_multiple(urls, **kwargs)
+
+        return anyio.run(_runner)
 
 
 # Convenience functions for backward compatibility

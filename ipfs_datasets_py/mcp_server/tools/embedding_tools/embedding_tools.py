@@ -47,9 +47,10 @@ class EmbeddingManager:
 async def generate_embeddings(
     texts: List[str],
     model_name: str = DEFAULT_MODEL,
-    **_: Any
+    **kwargs: Any
 ) -> Dict[str, Any]:
     """Generate embeddings for multiple texts."""
+    _ = kwargs
     manager = EmbeddingManager(model_name=model_name)
     result = await manager.generate_embeddings(texts)
     if result.get("status") == "success":
@@ -61,9 +62,10 @@ async def shard_embeddings(
     embeddings: List[Any],
     shard_count: int = 4,
     strategy: str = "balanced",
-    **_: Any
+    **kwargs: Any
 ) -> Dict[str, Any]:
     """Shard embeddings into a fixed number of shards."""
+    _ = kwargs
     await anyio.sleep(0)
     if not embeddings or shard_count <= 0:
         return {"status": "error", "error": "Invalid embeddings or shard_count"}

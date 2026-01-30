@@ -19,12 +19,59 @@ import traceback
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import pydantic
-try:    
+
+# MCP is an optional dependency in some environments; avoid leaving globals
+# undefined when imports fail so initialization fails clearly instead of with
+# NameError.
+try:
     from mcp.server import FastMCP
     from mcp.types import CallToolResult, TextContent, Tool
     from mcp import CallToolRequest
-except ImportError:
-    print("Failed to import mcp.server. Please ensure the mcp library is installed.")
+except ImportError as e:
+    # Some environments add bundled third-party code to sys.path (e.g. ipfs_kit_py)
+    # that includes a top-level 'mcp.py' module, which can shadow the real 'mcp'
+    # package (that provides mcp.server/FastMCP). If we detect this, de-prioritize
+    # those paths and retry the imports once.
+    try:
+        import sys as _sys
+
+        try:
+            import mcp as _maybe_mcp
+            _mcp_file = getattr(_maybe_mcp, "__file__", "") or ""
+        except Exception:
+            _mcp_file = ""
+
+        if _mcp_file.endswith("ipfs_kit_py/mcp.py") or ("ipfs_kit_py" in _mcp_file and _mcp_file.endswith("mcp.py")):
+            _sys.modules.pop("mcp", None)
+
+            # De-prioritize any path entries that provide a top-level mcp.py,
+            # since that masks the real 'mcp' package.
+            _shadow_paths: list[str] = []
+            for _p in list(_sys.path):
+                if not isinstance(_p, str) or not _p:
+                    continue
+                try:
+                    if Path(_p, "mcp.py").exists():
+                        _shadow_paths.append(_p)
+                except Exception:
+                    continue
+
+            if _shadow_paths:
+                _sys.path = [p for p in _sys.path if p not in _shadow_paths] + _shadow_paths
+
+            from mcp.server import FastMCP  # type: ignore[no-redef]
+            from mcp.types import CallToolResult, TextContent, Tool  # type: ignore[no-redef]
+            from mcp import CallToolRequest  # type: ignore[no-redef]
+        else:
+            raise
+    except Exception:
+        # Final fallback: leave MCP symbols undefined-but-present.
+        FastMCP = None  # type: ignore[assignment]
+        CallToolResult = None  # type: ignore[assignment]
+        TextContent = None  # type: ignore[assignment]
+        Tool = None  # type: ignore[assignment]
+        CallToolRequest = None  # type: ignore[assignment]
+        print(f"Failed to import mcp.server ({e}). Please ensure the mcp library is installed.")
 
 from .configs import Configs, configs
 from .logger import logger
@@ -339,6 +386,8 @@ class IPFSDatasetsMCPServer:
                 logger.warning(f"Failed to install error reporter: {e}")
 
         # Initialize MCP server
+        if FastMCP is None:
+            raise ImportError("MCP dependency is not available (FastMCP import failed). Install the 'mcp' package to use the MCP server.")
         self.mcp = FastMCP("ipfs_datasets")
 
         # Dictionary to store registered tools

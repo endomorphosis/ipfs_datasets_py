@@ -1,5 +1,5 @@
 {
-  "timestamp": 1769747080.307157,
+  "timestamp": 1769750570.7957745,
   "success": true,
   "errors": [],
   "basic_endpoints": {
@@ -7,14 +7,14 @@
       "name": "Main Dashboard",
       "status_code": 200,
       "success": true,
-      "response_time": 0.113554,
+      "response_time": 0.120958,
       "content_type": "text/html; charset=utf-8"
     },
     "/api/mcp/status": {
       "name": "MCP Status API",
       "status_code": 200,
       "success": true,
-      "response_time": 0.004036,
+      "response_time": 0.006035,
       "content_type": "application/json",
       "json_valid": true,
       "data_keys": [
@@ -36,7 +36,7 @@
       "name": "MCP Tools API",
       "status_code": 200,
       "success": true,
-      "response_time": 0.004675,
+      "response_time": 0.005047,
       "content_type": "application/json",
       "json_valid": true,
       "data_keys": [
@@ -87,21 +87,21 @@
       "name": "Health Check",
       "status_code": 404,
       "success": false,
-      "response_time": 0.002564,
+      "response_time": 0.002152,
       "content_type": "text/html; charset=utf-8"
     },
     "/mcp": {
       "name": "MCP Interface",
       "status_code": 200,
       "success": true,
-      "response_time": 0.027286,
+      "response_time": 0.03284,
       "content_type": "text/html; charset=utf-8"
     }
   },
   "mcp_tools_loading": {
     "success": true,
     "api_tools_count": 174,
-    "direct_tools_count": 0,
+    "direct_tools_count": 324,
     "tools_by_category": {
       "admin_tools": [
         "enhanced_admin_tools",
@@ -469,74 +469,80 @@
   "dataset_tools": {
     "list_datasets": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool list_datasets not found"
     },
     "get_dataset_info": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool get_dataset_info not found"
     },
     "create_dataset": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool create_dataset not found"
     }
   },
   "ipfs_tools": {
     "ipfs_node_info": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool ipfs_node_info not found"
     },
     "ipfs_pin_list": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool ipfs_pin_list not found"
     },
     "get_from_ipfs": {
-      "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "success": true,
+      "execution_time": 7.557868957519531e-05,
+      "result_type": "dict",
+      "result_keys": [
+        "status",
+        "cid",
+        "content_type",
+        "content",
+        "binary_size"
+      ],
+      "result_size": 141
     }
   },
   "vector_tools": {
     "create_vector_index": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool create_vector_index not found"
     },
     "vector_similarity_search": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool vector_similarity_search not found"
     }
   },
   "audit_tools": {
     "generate_audit_report": {
-      "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "success": true,
+      "execution_time": 0.00019168853759765625,
+      "result_type": "dict",
+      "result_keys": [
+        "status",
+        "message",
+        "report_type"
+      ],
+      "result_size": 92
     },
     "get_system_logs": {
       "success": false,
-      "error": "name 'FastMCP' is not defined",
-      "error_type": "NameError"
+      "error": "Tool get_system_logs not found"
     }
   },
   "performance": {
     "/api/mcp/status": {
-      "avg_response_time": 0.005129551887512207,
-      "min_response_time": 0.003247976303100586,
-      "max_response_time": 0.006500244140625,
+      "avg_response_time": 0.004238009452819824,
+      "min_response_time": 0.003106355667114258,
+      "max_response_time": 0.005735158920288086,
       "successful_requests": 10,
       "failed_requests": 0,
       "success_rate": 1.0
     },
     "/api/mcp/tools": {
-      "avg_response_time": 0.004877948760986328,
-      "min_response_time": 0.0034842491149902344,
-      "max_response_time": 0.007495880126953125,
+      "avg_response_time": 0.0038787841796875,
+      "min_response_time": 0.0028486251831054688,
+      "max_response_time": 0.0049896240234375,
       "successful_requests": 10,
       "failed_requests": 0,
       "success_rate": 1.0
