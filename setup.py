@@ -59,7 +59,10 @@ setup(
         # Async compatibility (anyio for trio/asyncio interop)
         "anyio>=4.0.0",
         "trio>=0.27.0",
-            'pydantic-settings>=2.0.0',
+        'pydantic-settings>=2.0.0',
+        
+        # CLI framework
+        'click>=8.0.0',
     ],
     extras_require={
         # Optional but recommended dependencies
@@ -119,6 +122,26 @@ setup(
             'ffmpeg-python>=0.2.0',
             'pillow>=10.0.0,<12.0.0',
             'moviepy',
+        ],
+        # File conversion (Phase 1: Import & Wrap external libraries)
+        'file_conversion': [
+            # MarkItDown backend (recommended)
+            'markitdown>=0.1.0',
+            'aiohttp>=3.8.0',
+            'playwright>=1.40.0',
+        ],
+        'file_conversion_full': [
+            # All file conversion backends with full format support
+            'markitdown>=0.1.0',
+            'aiohttp>=3.8.0',
+            'playwright>=1.40.0',
+            # Additional format support
+            'pytesseract>=0.3.10',  # OCR for images
+            'python-docx>=0.8.11',  # Word documents
+            'openpyxl>=3.0.0',      # Excel files
+            'PyPDF2>=3.0.0',        # PDF processing
+            'python-pptx>=0.6.21',  # PowerPoint files
+            'beautifulsoup4>=4.11.0',  # HTML parsing
         ],
         # Machine Learning extras
         'ml': [
@@ -224,6 +247,9 @@ setup(
             'ffmpeg-python>=0.2.0',
             'pillow>=10.0.0',
             'moviepy',
+            # File conversion
+            'markitdown>=0.1.0',
+            'aiohttp>=3.8.0',
             # Scraping
             'beautifulsoup4>=4.12.0',
             'selenium>=4.15.0',
@@ -256,6 +282,9 @@ setup(
         'console_scripts': [
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
+            # File converter CLI (Phase 6.4)
+            'file-converter=ipfs_datasets_py.file_converter.cli:main',
+            'fc=ipfs_datasets_py.file_converter.cli:main',
         ],
     },
     classifiers=[
