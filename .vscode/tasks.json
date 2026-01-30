@@ -482,9 +482,14 @@
 		{
 			"label": "Test IPFS Datasets CLI Suite",
 			"type": "shell",
-			"command": "python",
+			"command": "${workspaceFolder}/.venv/bin/python",
+			"windows": {
+				"command": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+			},
 			"args": [
-				"test_cli.py"
+				"-m",
+				"pytest",
+				"tests/integration/test_cli.py"
 			],
 			"group": "test",
 			"isBackground": false,
