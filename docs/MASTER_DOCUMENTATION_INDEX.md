@@ -47,7 +47,9 @@
 - [🤖 LLM Integration](guides/LLM_INTEGRATION_GUIDE.md) - Large language model workflows
 
 ### Data Processing
-- [📊 Dataset Management](guides/DATASET_GUIDE.md) - Loading, processing, and storing datasets  
+- [📊 Dataset Management](guides/DATASET_GUIDE.md) - Loading, processing, and storing datasets
+- [📝 File Conversion Systems](FILE_CONVERSION_PROS_CONS.md) - Convert any file type to text (Quick Guide)
+- [📋 File Conversion Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) - Detailed comparison of conversion systems
 - [🔄 Data Pipelines](guides/PIPELINE_GUIDE.md) - Automated data processing workflows
 - [📈 Analytics](guides/ANALYTICS_GUIDE.md) - Data analysis and visualization
 

@@ -12,8 +12,40 @@ Both repositories have been added as git submodules to `ipfs_datasets_py/multime
 
 ### Quick Recommendation
 
-**For immediate production use:** `convert_to_txt_based_on_mime_type`
-**For long-term investment:** `omni_converter_mk2` (with stabilization work)
+**For immediate production use:** `convert_to_txt_based_on_mime_type` ✅  
+**For long-term investment:** `omni_converter_mk2` (with stabilization work) ⏳
+
+### Quick Comparison
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    QUICK COMPARISON CHART                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  convert_to_txt_based_on_mime_type    VS    omni_converter_mk2    │
+│  ════════════════════════════════════       ═══════════════════    │
+│                                                                     │
+│  ✅ Production Ready NOW                     ⏳ After Stabilization │
+│  ✅ 96+ Formats                              ✅ 25 Formats          │
+│  ✅ Async/Stream Native                      ⚠️ Limited Async       │
+│  ✅ URL Support                              ❌ No URLs             │
+│  ✅ Memory Efficient                         ⚠️ Heavy Memory        │
+│  ✅ Simple (103 files)                       ⚠️ Complex (342 files) │
+│  ⚠️ Basic Metadata                           ✅ Rich Metadata        │
+│  ⚠️ Basic Batch                              ✅ Advanced Batch      │
+│  ⚠️ Early v0.1.0                             ✅ Mature v1.7.0       │
+│  ✅ Stable Architecture                      ⚠️ Refactoring         │
+│                                                                     │
+│  BEST FOR:                                  BEST FOR:              │
+│  • GraphRAG & Knowledge Graphs              • Rich Metadata Needs  │
+│  • Web-scale Operations                     • Batch Processing     │
+│  • Real-time Pipelines                      • Training Data Prep   │
+│  • Immediate Use                            • Future Use           │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**See:** [FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md) for quick pros/cons guide.
 
 ---
 
@@ -530,16 +562,25 @@ ipfs_datasets_py/multimedia/
 
 1. ✅ Add both repositories as submodules
 2. ✅ Create comprehensive analysis document
-3. 🔄 Implement integration wrapper for convert_to_txt_based_on_mime_type
-4. 🔄 Add unit tests for file conversion pipeline
-5. 🔄 Integrate with GraphRAG system
-6. 🔄 Test with IPFS Accelerate AI system
-7. 🔄 Create documentation and examples
-8. 🔄 Monitor omni_converter_mk2 for future consideration
+3. ✅ Create quick pros/cons reference guide ([FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md))
+4. 🔄 Implement integration wrapper for convert_to_txt_based_on_mime_type
+5. 🔄 Add unit tests for file conversion pipeline
+6. 🔄 Integrate with GraphRAG system
+7. 🔄 Test with IPFS Accelerate AI system
+8. 🔄 Create documentation and examples
+9. 🔄 Monitor omni_converter_mk2 for future consideration
 
 ---
 
-**Document Version:** 1.0  
+## 📚 Related Documentation
+
+- **Quick Reference:** [FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md) - Concise pros/cons comparison
+- **Multimedia README:** [../ipfs_datasets_py/multimedia/README.md](../ipfs_datasets_py/multimedia/README.md)
+- **Documentation Index:** [index.md](index.md) | [MASTER_DOCUMENTATION_INDEX.md](MASTER_DOCUMENTATION_INDEX.md)
+
+---
+
+**Document Version:** 1.1  
 **Last Updated:** January 30, 2026  
 **Author:** GitHub Copilot  
-**Review Status:** Initial Analysis
+**Review Status:** Initial Analysis + Quick Reference Guide Added
