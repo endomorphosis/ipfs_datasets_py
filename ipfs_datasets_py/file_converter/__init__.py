@@ -52,6 +52,15 @@ from .deprecation import (
     DEPRECATION_TIMELINE
 )
 
+# Knowledge Graph and RAG Integration (Phase 4)
+from .knowledge_graph_integration import (
+    UniversalKnowledgeGraphPipeline,
+    TextSummarizationPipeline,
+    BatchKnowledgeGraphProcessor,
+    KnowledgeGraphResult,
+    TextSummaryResult
+)
+
 __all__ = [
     # Main API (Phase 1)
     'FileConverter', 
@@ -83,6 +92,13 @@ __all__ = [
     # Deprecation utilities
     'warn_deprecated_backend', 'get_deprecation_info', 'is_deprecated',
     'DEPRECATION_TIMELINE',
+    
+    # Knowledge Graph and RAG Integration (Phase 4)
+    'UniversalKnowledgeGraphPipeline',
+    'TextSummarizationPipeline',
+    'BatchKnowledgeGraphProcessor',
+    'KnowledgeGraphResult',
+    'TextSummaryResult',
 ]
 
-__version__ = '0.4.0'  # Phase 3 - anyio migration + deprecation system
+__version__ = '0.5.0'  # Phase 4 - Knowledge graph and RAG integration
