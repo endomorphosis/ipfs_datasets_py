@@ -26,6 +26,7 @@
 
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
 - 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs (182+ production tests)
+- 📝 **Universal File Conversion** - Convert any file type to text for AI processing (Phase 1: Import & Wrap)
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
 - 🕸️ **Knowledge Graph Intelligence** - Cross-document reasoning with semantic search
 - 🌐 **Decentralized Storage** - IPFS-native with content addressing (ipfs_kit_py)
@@ -63,6 +64,18 @@ from ipfs_datasets_py.dataset_manager import DatasetManager
 manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
+```
+
+```python
+# Convert any file type to text for GraphRAG
+from ipfs_datasets_py.file_converter import FileConverter
+
+converter = FileConverter()  # Auto-selects best backend
+result = await converter.convert('document.pdf')
+print(result.text)  # Ready for knowledge graph processing
+
+# Or use synchronously
+result = converter.convert_sync('document.pdf')
 ```
 
 ### Try Demo Scripts
