@@ -24,7 +24,14 @@ from .autoscraper_integration import create_autoscraper_model, scrape_with_autos
 from .archive_is_integration import archive_to_archive_is, search_archive_is, get_archive_is_content, check_archive_status, batch_archive_to_archive_is
 
 # Brave Search tools
-from .brave_search import search_brave, search_brave_news, search_brave_images, batch_search_brave
+from .brave_search import (
+    search_brave,
+    search_brave_news,
+    search_brave_images,
+    batch_search_brave,
+    get_brave_cache_stats,
+    clear_brave_cache
+)
 
 # Google Search tools
 from .google_search import search_google, search_google_images, batch_search_google
@@ -95,6 +102,8 @@ __all__ = [
     "search_brave_news",
     "search_brave_images",
     "batch_search_brave",
+    "get_brave_cache_stats",
+    "clear_brave_cache",
     
     # Google Search tools
     "search_google",

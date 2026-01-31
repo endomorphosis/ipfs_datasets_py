@@ -10,6 +10,13 @@ from .simple_crawler import *
 from .unified_web_scraper import *
 from .scraper_testing_framework import *
 from .common_crawl_integration import CommonCrawlSearchEngine, create_search_engine
+from .brave_search_client import (
+    BraveSearchClient,
+    brave_web_search,
+    brave_web_search_page,
+    brave_search_cache_stats,
+    clear_brave_search_cache
+)
 
 __all__ = [
     'web_archive',
@@ -20,4 +27,9 @@ __all__ = [
     'scraper_testing_framework',
     'CommonCrawlSearchEngine',
     'create_search_engine',
+    'BraveSearchClient',
+    'brave_web_search',
+    'brave_web_search_page',
+    'brave_search_cache_stats',
+    'clear_brave_search_cache',
 ]

@@ -1,7 +1,8 @@
 """Brave Search API integration for web search and data discovery.
 
 This tool provides integration with Brave Search API for web search,
-enabling dataset creation from search results.
+enabling dataset creation from search results. It now uses the improved
+brave_search_client module from web_archiving with caching support.
 """
 import logging
 from typing import Dict, List, Optional, Any, Literal
@@ -10,9 +11,25 @@ import os
 
 logger = logging.getLogger(__name__)
 
+# Import the improved Brave Search client
+try:
+    from ipfs_datasets_py.web_archiving.brave_search_client import (
+        BraveSearchClient,
+        brave_search_cache_stats,
+        clear_brave_search_cache
+    )
+    HAVE_BRAVE_CLIENT = True
+except ImportError:
+    HAVE_BRAVE_CLIENT = False
+    BraveSearchClient = None
+
 
 class BraveSearchAPI:
-    """Brave Search API class with install, config, and queue methods."""
+    """Brave Search API class with install, config, and queue methods.
+    
+    This class provides a backward-compatible interface while using the
+    improved BraveSearchClient under the hood when available.
+    """
     
     def __init__(self, api_key: Optional[str] = None):
         """Initialize Brave Search API.
@@ -20,7 +37,7 @@ class BraveSearchAPI:
         Args:
             api_key: Brave Search API key (can use BRAVE_API_KEY env var)
         """
-        self.api_key = api_key or os.environ.get("BRAVE_API_KEY")
+        self.api_key = api_key or os.environ.get("BRAVE_API_KEY") or os.environ.get("BRAVE_SEARCH_API_KEY")
         self.queue = []
         self.config = {
             "timeout": 30,
@@ -28,6 +45,12 @@ class BraveSearchAPI:
             "default_lang": "en",
             "default_country": "US"
         }
+        
+        # Use improved client if available
+        if HAVE_BRAVE_CLIENT and self.api_key:
+            self.client = BraveSearchClient(api_key=self.api_key)
+        else:
+            self.client = None
     
     def _install(self) -> Dict[str, Any]:
         """Install and verify Brave Search API dependencies.
@@ -41,13 +64,26 @@ class BraveSearchAPI:
         except ImportError:
             aiohttp_installed = False
         
+        try:
+            import requests
+            requests_installed = True
+        except ImportError:
+            requests_installed = False
+        
         return {
-            "status": "success" if (aiohttp_installed and self.api_key) else "incomplete",
+            "status": "success" if ((aiohttp_installed or requests_installed) and self.api_key) else "incomplete",
             "dependencies": {
                 "aiohttp": {
                     "installed": aiohttp_installed,
+                    "required": False,
+                    "install_command": "pip install aiohttp",
+                    "note": "Required for async functions"
+                },
+                "requests": {
+                    "installed": requests_installed,
                     "required": True,
-                    "install_command": "pip install aiohttp"
+                    "install_command": "pip install requests",
+                    "note": "Required for sync functions and caching"
                 }
             },
             "environment_variables": {
@@ -58,11 +94,12 @@ class BraveSearchAPI:
                 }
             },
             "instructions": {
-                "1": "Install aiohttp: pip install aiohttp" if not aiohttp_installed else "✓ Dependencies installed",
-                "2": "Set BRAVE_API_KEY environment variable" if not self.api_key else "✓ API key configured",
+                "1": "Install requests: pip install requests" if not requests_installed else "✓ Dependencies installed",
+                "2": "Set BRAVE_API_KEY or BRAVE_SEARCH_API_KEY environment variable" if not self.api_key else "✓ API key configured",
                 "3": "Get API key from: https://brave.com/search/api/"
             },
-            "ready": aiohttp_installed and bool(self.api_key)
+            "ready": (aiohttp_installed or requests_installed) and bool(self.api_key),
+            "caching_available": HAVE_BRAVE_CLIENT
         }
     
     def _config(self, **kwargs) -> Dict[str, Any]:
@@ -81,6 +118,9 @@ class BraveSearchAPI:
                 self.config[key] = value
             elif key == "api_key":
                 self.api_key = value
+                # Update client if using improved version
+                if HAVE_BRAVE_CLIENT:
+                    self.client = BraveSearchClient(api_key=self.api_key)
         
         return {
             "status": "success",
@@ -92,7 +132,8 @@ class BraveSearchAPI:
                 "max_count": 20,
                 "default_lang": "en",
                 "default_country": "US"
-            }
+            },
+            "caching_available": HAVE_BRAVE_CLIENT
         }
     
     def _queue(self, operation: str, **params) -> Dict[str, Any]:
@@ -139,6 +180,34 @@ class BraveSearchAPI:
             "cleared_count": cleared_count,
             "message": f"Cleared {cleared_count} queued operations"
         }
+    
+    def cache_stats(self) -> Dict[str, Any]:
+        """Get Brave Search cache statistics.
+        
+        Returns:
+            Dict containing cache stats if caching is available
+        """
+        if HAVE_BRAVE_CLIENT:
+            return brave_search_cache_stats()
+        else:
+            return {
+                "status": "unavailable",
+                "message": "Caching requires brave_search_client module"
+            }
+    
+    def clear_cache(self) -> Dict[str, Any]:
+        """Clear the Brave Search cache.
+        
+        Returns:
+            Dict containing cache clearing result
+        """
+        if HAVE_BRAVE_CLIENT:
+            return clear_brave_search_cache()
+        else:
+            return {
+                "status": "unavailable",
+                "message": "Caching requires brave_search_client module"
+            }
 
 
 
@@ -526,6 +595,58 @@ async def batch_search_brave(
         
     except Exception as e:
         logger.error(f"Failed batch Brave search: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+
+async def get_brave_cache_stats() -> Dict[str, Any]:
+    """Get Brave Search cache statistics.
+    
+    Returns:
+        Dict containing cache statistics if caching is available
+    """
+    try:
+        if HAVE_BRAVE_CLIENT:
+            stats = brave_search_cache_stats()
+            return {
+                "status": "success",
+                **stats
+            }
+        else:
+            return {
+                "status": "unavailable",
+                "message": "Caching requires brave_search_client module. Install with: pip install requests"
+            }
+    except Exception as e:
+        logger.error(f"Failed to get cache stats: {e}")
+        return {
+            "status": "error",
+            "error": str(e)
+        }
+
+
+async def clear_brave_cache() -> Dict[str, Any]:
+    """Clear the Brave Search cache.
+    
+    Returns:
+        Dict containing cache clearing result
+    """
+    try:
+        if HAVE_BRAVE_CLIENT:
+            result = clear_brave_search_cache()
+            return {
+                "status": "success",
+                **result
+            }
+        else:
+            return {
+                "status": "unavailable",
+                "message": "Caching requires brave_search_client module"
+            }
+    except Exception as e:
+        logger.error(f"Failed to clear cache: {e}")
         return {
             "status": "error",
             "error": str(e)
