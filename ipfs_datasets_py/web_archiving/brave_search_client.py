@@ -5,11 +5,18 @@ the common_crawl_search_engine submodule. It includes:
 
 - Disk-based caching with TTL and LRU eviction
 - File locking for concurrent access safety
+- IPFS/libp2p content-addressed distributed caching
 - Pagination metadata support
 - Cache statistics and management
 - Both sync and async interfaces
 
 The client can be used by any web archiving tool in the package, not just Common Crawl.
+
+Caching Strategy:
+1. Check local file cache (fast)
+2. Check IPFS cache if enabled (distributed)
+3. Make API request if cache miss
+4. Store in both local and IPFS cache
 """
 
 from __future__ import annotations
@@ -24,6 +31,14 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Literal
 
 logger = logging.getLogger(__name__)
+
+# Try to import IPFS cache module
+try:
+    from .brave_search_ipfs_cache import BraveSearchIPFSCache
+    HAVE_IPFS_CACHE = True
+except ImportError:
+    HAVE_IPFS_CACHE = False
+    BraveSearchIPFSCache = None
 
 
 def brave_web_search_max_count() -> int:
@@ -323,7 +338,22 @@ def brave_web_search(
     max_entries = int((os.environ.get("BRAVE_SEARCH_CACHE_MAX_ENTRIES") or "1000").strip() or "1000")
     cache_key = _brave_cache_key(q=q, count=int(count), offset=int(offset), country=str(country), safesearch=str(safesearch))
     
-    # Try to retrieve from cache
+    # IPFS cache configuration
+    ipfs_cache_enabled = (os.environ.get("BRAVE_SEARCH_IPFS_CACHE") or "").strip().lower() in {
+        "1", "true", "yes", "on"
+    } and HAVE_IPFS_CACHE
+    ipfs_cache = None
+    if ipfs_cache_enabled:
+        try:
+            ipfs_cache = BraveSearchIPFSCache()
+            if not ipfs_cache.is_available():
+                ipfs_cache = None
+                logger.debug("IPFS cache not available, falling back to local cache only")
+        except Exception as e:
+            logger.debug(f"Failed to initialize IPFS cache: {e}")
+            ipfs_cache = None
+    
+    # Try to retrieve from local cache first (fastest)
     if not cache_disable and ttl_s > 0:
         try:
             cache_path = _brave_cache_path()
@@ -348,7 +378,24 @@ def brave_web_search(
                             return out_cached
         except Exception as e:
             # Cache is best-effort; fall back to live request
-            logger.debug(f"Cache retrieval failed: {e}")
+            logger.debug(f"Local cache retrieval failed: {e}")
+            pass
+    
+    # Try IPFS cache if local cache missed
+    if ipfs_cache and not cache_disable:
+        try:
+            ipfs_result = ipfs_cache.retrieve(
+                query=q,
+                count=count,
+                offset=offset,
+                country=country,
+                safesearch=safesearch
+            )
+            if ipfs_result:
+                logger.info(f"Brave Search IPFS cache hit for query: {q}")
+                return ipfs_result["results"]
+        except Exception as e:
+            logger.debug(f"IPFS cache retrieval failed: {e}")
             pass
     
     # Make live API request
@@ -393,7 +440,7 @@ def brave_web_search(
             "description": str(it.get("description") or ""),
         })
     
-    # Save to cache
+    # Save to local cache
     if not cache_disable and ttl_s > 0:
         try:
             cache_path = _brave_cache_path()
@@ -416,6 +463,23 @@ def brave_web_search(
                 logger.debug(f"Cached Brave Search results for query: {q}")
         except Exception as e:
             logger.debug(f"Failed to cache results: {e}")
+            pass
+    
+    # Save to IPFS cache if enabled
+    if ipfs_cache and not cache_disable:
+        try:
+            cid = ipfs_cache.store(
+                query=q,
+                results=out,
+                count=count,
+                offset=offset,
+                country=country,
+                safesearch=safesearch
+            )
+            if cid:
+                logger.debug(f"Stored Brave Search results in IPFS: {cid}")
+        except Exception as e:
+            logger.debug(f"Failed to store in IPFS cache: {e}")
             pass
     
     return out
@@ -635,6 +699,20 @@ class BraveSearchClient:
             "safesearch": "moderate",
             "default_count": 10,
         }
+        
+        # Initialize IPFS cache if enabled
+        self.ipfs_cache = None
+        if HAVE_IPFS_CACHE:
+            ipfs_cache_enabled = (os.environ.get("BRAVE_SEARCH_IPFS_CACHE") or "").strip().lower() in {
+                "1", "true", "yes", "on"
+            }
+            if ipfs_cache_enabled:
+                try:
+                    self.ipfs_cache = BraveSearchIPFSCache()
+                    if not self.ipfs_cache.is_available():
+                        self.ipfs_cache = None
+                except Exception:
+                    self.ipfs_cache = None
     
     def search(
         self,
@@ -731,6 +809,96 @@ class BraveSearchClient:
             Cache clearing result
         """
         return clear_brave_search_cache()
+    
+    def ipfs_cache_stats(self) -> Dict[str, Any]:
+        """Get IPFS cache statistics.
+        
+        Returns:
+            IPFS cache statistics dict
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.stats()
+        else:
+            return {
+                "available": False,
+                "message": "IPFS cache not enabled. Set BRAVE_SEARCH_IPFS_CACHE=1"
+            }
+    
+    def ipfs_cache_clear_index(self) -> Dict[str, Any]:
+        """Clear IPFS cache CID index.
+        
+        Returns:
+            Clear result
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.clear_index()
+        else:
+            return {
+                "status": "unavailable",
+                "message": "IPFS cache not enabled"
+            }
+    
+    def ipfs_cache_gc(self) -> Dict[str, Any]:
+        """Garbage collect IPFS cache.
+        
+        Returns:
+            GC result
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.gc()
+        else:
+            return {
+                "status": "unavailable",
+                "message": "IPFS cache not enabled"
+            }
+    
+    def ipfs_cache_pin(self, cid: str) -> Dict[str, Any]:
+        """Pin an IPFS cache entry.
+        
+        Args:
+            cid: IPFS CID to pin
+            
+        Returns:
+            Pin result
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.pin_entry(cid)
+        else:
+            return {
+                "status": "unavailable",
+                "message": "IPFS cache not enabled"
+            }
+    
+    def ipfs_cache_unpin(self, cid: str) -> Dict[str, Any]:
+        """Unpin an IPFS cache entry.
+        
+        Args:
+            cid: IPFS CID to unpin
+            
+        Returns:
+            Unpin result
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.unpin_entry(cid)
+        else:
+            return {
+                "status": "unavailable",
+                "message": "IPFS cache not enabled"
+            }
+    
+    def ipfs_cache_list_pins(self) -> Dict[str, Any]:
+        """List pinned IPFS cache entries.
+        
+        Returns:
+            List of pinned CIDs
+        """
+        if self.ipfs_cache:
+            return self.ipfs_cache.list_pins()
+        else:
+            return {
+                "status": "unavailable",
+                "message": "IPFS cache not enabled"
+            }
 
 
 __all__ = [

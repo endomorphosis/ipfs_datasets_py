@@ -1,7 +1,7 @@
 """Tests for Brave Search Client with caching.
 
 These tests verify the improved Brave Search client functionality extracted
-from the common_crawl_search_engine submodule.
+from the common_crawl_search_engine submodule, including IPFS cache support.
 """
 
 import os
@@ -39,6 +39,17 @@ class TestBraveSearchClient:
         assert brave_search_cache_stats is not None
         assert clear_brave_search_cache is not None
     
+    def test_import_ipfs_cache(self):
+        """Test that IPFS cache can be imported."""
+        # GIVEN the web_archiving module
+        # WHEN importing IPFS cache
+        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        
+        # THEN it should be imported (may be None if not available)
+        assert HAVE_IPFS_CACHE is not None  # Boolean flag
+        if HAVE_IPFS_CACHE:
+            assert BraveSearchIPFSCache is not None
+    
     def test_brave_search_client_initialization(self):
         """Test BraveSearchClient initialization."""
         # GIVEN the BraveSearchClient class
@@ -54,6 +65,112 @@ class TestBraveSearchClient:
         assert hasattr(client, 'search_page')
         assert hasattr(client, 'cache_stats')
         assert hasattr(client, 'clear_cache')
+        assert hasattr(client, 'ipfs_cache')  # NEW
+        assert hasattr(client, 'ipfs_cache_stats')  # NEW
+    
+    def test_brave_search_client_ipfs_methods(self):
+        """Test that client has IPFS cache management methods."""
+        # GIVEN a BraveSearchClient instance
+        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        
+        client = BraveSearchClient()
+        
+        # WHEN checking for IPFS methods
+        # THEN they should exist
+        assert hasattr(client, 'ipfs_cache_stats')
+        assert hasattr(client, 'ipfs_cache_clear_index')
+        assert hasattr(client, 'ipfs_cache_gc')
+        assert hasattr(client, 'ipfs_cache_pin')
+        assert hasattr(client, 'ipfs_cache_unpin')
+        assert hasattr(client, 'ipfs_cache_list_pins')
+        
+        # All should be callable
+        assert callable(client.ipfs_cache_stats)
+        assert callable(client.ipfs_cache_clear_index)
+        assert callable(client.ipfs_cache_gc)
+        assert callable(client.ipfs_cache_pin)
+        assert callable(client.ipfs_cache_unpin)
+        assert callable(client.ipfs_cache_list_pins)
+    
+    def test_ipfs_cache_stats_when_disabled(self):
+        """Test IPFS cache stats when cache is disabled."""
+        # GIVEN a BraveSearchClient instance
+        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        
+        # Ensure IPFS cache is disabled
+        os.environ.pop("BRAVE_SEARCH_IPFS_CACHE", None)
+        
+        client = BraveSearchClient()
+        
+        # WHEN calling ipfs_cache_stats
+        stats = client.ipfs_cache_stats()
+        
+        # THEN it should return unavailable status
+        assert isinstance(stats, dict)
+        assert "available" in stats
+        assert stats["available"] is False
+    
+    def test_ipfs_cache_class_initialization(self):
+        """Test BraveSearchIPFSCache class initialization."""
+        # GIVEN the BraveSearchIPFSCache class
+        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        
+        if not HAVE_IPFS_CACHE:
+            pytest.skip("IPFS cache not available")
+        
+        # WHEN initializing the cache
+        cache = BraveSearchIPFSCache()
+        
+        # THEN it should have expected methods
+        assert hasattr(cache, 'is_available')
+        assert hasattr(cache, 'store')
+        assert hasattr(cache, 'retrieve')
+        assert hasattr(cache, 'stats')
+        assert hasattr(cache, 'clear_index')
+        assert hasattr(cache, 'gc')
+        assert hasattr(cache, 'pin_entry')
+        assert hasattr(cache, 'unpin_entry')
+        assert hasattr(cache, 'list_pins')
+    
+    def test_ipfs_cache_stats(self):
+        """Test IPFS cache stats method."""
+        # GIVEN a BraveSearchIPFSCache instance
+        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        
+        if not HAVE_IPFS_CACHE:
+            pytest.skip("IPFS cache not available")
+        
+        cache = BraveSearchIPFSCache()
+        
+        # WHEN calling stats
+        stats = cache.stats()
+        
+        # THEN it should return a dict with expected keys
+        assert isinstance(stats, dict)
+        assert "available" in stats
+        assert "ipfs_connected" in stats
+        assert "cid_index_entries" in stats
+        assert "cid_index_path" in stats
+        assert "pin_enabled" in stats
+        assert "ttl_s" in stats
+    
+    def test_ipfs_cache_clear_index(self):
+        """Test IPFS cache clear_index method."""
+        # GIVEN a BraveSearchIPFSCache instance
+        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        
+        if not HAVE_IPFS_CACHE:
+            pytest.skip("IPFS cache not available")
+        
+        cache = BraveSearchIPFSCache()
+        
+        # WHEN calling clear_index
+        result = cache.clear_index()
+        
+        # THEN it should return success
+        assert isinstance(result, dict)
+        assert "status" in result
+        assert "cleared_entries" in result
     
     def test_brave_search_client_configure(self):
         """Test BraveSearchClient configuration."""

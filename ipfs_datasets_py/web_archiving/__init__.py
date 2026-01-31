@@ -18,6 +18,14 @@ from .brave_search_client import (
     clear_brave_search_cache
 )
 
+# Try to import IPFS cache (may not be available without ipfshttpclient)
+try:
+    from .brave_search_ipfs_cache import BraveSearchIPFSCache
+    HAVE_IPFS_CACHE = True
+except ImportError:
+    BraveSearchIPFSCache = None
+    HAVE_IPFS_CACHE = False
+
 __all__ = [
     'web_archive',
     'web_archive_utils',
@@ -32,4 +40,6 @@ __all__ = [
     'brave_web_search_page',
     'brave_search_cache_stats',
     'clear_brave_search_cache',
+    'BraveSearchIPFSCache',
+    'HAVE_IPFS_CACHE',
 ]
