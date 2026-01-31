@@ -17,3 +17,13 @@
 [submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
 	path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
 	url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
+
+[submodule ".third_party/ipfs_kit_py"]
+	path = .third_party/ipfs_kit_py
+	url = https://github.com/endomorphosis/ipfs_kit_py.git
+	branch = main
+
+[submodule "scripts/setup/.third_party/ipfs_kit_py"]
+	path = scripts/setup/.third_party/ipfs_kit_py
+	url = https://github.com/endomorphosis/ipfs_kit_py.git
+	branch = main
