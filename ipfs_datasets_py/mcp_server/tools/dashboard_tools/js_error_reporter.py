@@ -378,7 +378,9 @@ def get_js_error_reporter() -> JavaScriptErrorReporter:
 # while others patch `ipfs_datasets_py.mcp_server...`.
 _this_module = sys.modules.get(__name__)
 if _this_module is not None:
-    sys.modules.setdefault(
-        'ipfs_datasets_py.mcp_server.tools.dashboard_tools.js_error_reporter',
-        _this_module,
-    )
+    # Prefer a single shared module object regardless of how it was imported.
+    # This prevents unit-test patching from missing the symbols used at runtime.
+    sys.modules[
+        'ipfs_datasets_py.mcp_server.tools.dashboard_tools.js_error_reporter'
+    ] = _this_module
+    sys.modules['mcp_server.tools.dashboard_tools.js_error_reporter'] = _this_module
