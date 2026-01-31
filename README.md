@@ -750,10 +750,6 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 - **Issues:** [GitHub Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
 - **Discussions:** [GitHub Discussions](https://github.com/endomorphosis/ipfs_datasets_py/discussions)
 
----
-
-**Built with** ❤️ **for decentralized AI**
-
 ## Credits
 
 **Endomorphosis** [Github](https://github.com/endomorphosis/) Senior ML-OPS Architect
@@ -761,3 +757,7 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 **The-Ride-Never-Ends** [Github](https://github.com/the-ride-never-ends) Junior Developer / Political Scientist
 
 **Coregod360** [Github](https://github.com/Coregod360) Formerly Junior Developer 
+
+---
+
+**Built with** ❤️ **for decentralized AI**
