@@ -10,7 +10,6 @@ other challenges.
 import os
 import tempfile
 import logging
-import asyncio
 from dataclasses import dataclass
 from typing import Optional, Dict
 from urllib.parse import urlparse, unquote
@@ -219,32 +218,30 @@ class URLHandler:
                         headers=dict(response.headers),
                         success=True
                     )
-        
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+
+        except (aiohttp.ClientError, TimeoutError) as e:
             error_msg = f"Direct download failed: {str(e)}"
             logger.warning(error_msg)
-            
+
             # Try web scraper fallback if enabled
             if use_web_scraper_fallback and self.web_scraper:
                 logger.info(f"Attempting web scraper fallback for: {url}")
                 try:
-                    return await self._download_via_web_scraper(
-                        url, dest_path, filename
-                    )
+                    return await self._download_via_web_scraper(url, dest_path, filename)
                 except Exception as scraper_error:
                     logger.error(f"Web scraper fallback failed: {scraper_error}")
                     return URLDownloadResult(
                         url=url,
                         local_path="",
                         success=False,
-                        error=f"{error_msg}. Scraper fallback also failed: {str(scraper_error)}"
+                        error=f"{error_msg}. Scraper fallback also failed: {str(scraper_error)}",
                     )
-            
+
             return URLDownloadResult(
                 url=url,
                 local_path="",
                 success=False,
-                error=error_msg
+                error=error_msg,
             )
         except Exception as e:
             error_msg = f"Unexpected error: {str(e)}"
