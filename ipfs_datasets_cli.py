@@ -2904,6 +2904,21 @@ For detailed help: ipfs-datasets email <subcommand> --help
                 traceback.print_exc()
                 return
         
+        # Handle common-crawl commands
+        if command in ['common-crawl', 'cc']:
+            try:
+                from ipfs_datasets_py.cli.common_crawl_cli import handle_common_crawl_command
+                handle_common_crawl_command(args)
+                return
+            except ImportError as e:
+                print(f"Error: Common Crawl CLI module not available: {e}")
+                return
+            except Exception as e:
+                print(f"Error executing common-crawl command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -3126,7 +3141,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
         execute_heavy_command(args)
         return
 

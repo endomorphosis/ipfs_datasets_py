@@ -161,9 +161,15 @@ except ImportError:
 
 try:
     from .web_archive import WebArchiveProcessor
+    from .web_archiving import CommonCrawlSearchEngine, create_search_engine
     HAVE_WEB_ARCHIVE = True
+    HAVE_COMMON_CRAWL = True
 except ImportError:
+    WebArchiveProcessor = None
+    CommonCrawlSearchEngine = None
+    create_search_engine = None
     HAVE_WEB_ARCHIVE = False
+    HAVE_COMMON_CRAWL = False
 
 try:
     from .unified_web_scraper import (
