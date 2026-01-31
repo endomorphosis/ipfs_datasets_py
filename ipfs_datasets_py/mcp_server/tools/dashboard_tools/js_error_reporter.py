@@ -9,11 +9,28 @@ create GitHub issues, and trigger auto-healing workflows.
 
 import json
 import logging
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+
+# Exposed for unit tests to patch/mocking.
+try:
+    from ipfs_datasets_py.error_reporting.github_issue_client import GitHubIssueClient
+except Exception:  # pragma: no cover
+    GitHubIssueClient = None  # type: ignore[assignment]
+
+
+# Exposed for unit tests to patch/mocking.
+try:
+    from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.auto_healing_coordinator import (
+        coordinate_auto_healing,
+    )
+except Exception:  # pragma: no cover
+    coordinate_auto_healing = None  # type: ignore[assignment]
 
 
 class JavaScriptErrorReporter:
@@ -232,8 +249,8 @@ class JavaScriptErrorReporter:
             Issue creation result
         """
         try:
-            # Import GitHub issue client
-            from ipfs_datasets_py.error_reporting.github_issue_client import GitHubIssueClient
+            if GitHubIssueClient is None:
+                raise ImportError("GitHubIssueClient not available")
             
             # Create issue title
             first_error = error_report['errors'][0] if error_report['errors'] else {}
@@ -285,11 +302,10 @@ class JavaScriptErrorReporter:
         try:
             if not issue_number:
                 return
-            
-            # Import auto-healing coordinator
-            from ipfs_datasets_py.mcp_server.tools.software_engineering_tools.auto_healing_coordinator import (
-                coordinate_auto_healing
-            )
+
+            if coordinate_auto_healing is None:
+                logger.warning("coordinate_auto_healing not available; skipping auto-healing")
+                return
             
             # Create error report for auto-healing
             healing_report = {
@@ -355,3 +371,14 @@ def get_js_error_reporter() -> JavaScriptErrorReporter:
     if _js_error_reporter is None:
         _js_error_reporter = JavaScriptErrorReporter()
     return _js_error_reporter
+
+
+# Allow patching/consuming this module via either import path.
+# Some tests import `mcp_server...` directly after adding `ipfs_datasets_py/` to sys.path,
+# while others patch `ipfs_datasets_py.mcp_server...`.
+_this_module = sys.modules.get(__name__)
+if _this_module is not None:
+    sys.modules.setdefault(
+        'ipfs_datasets_py.mcp_server.tools.dashboard_tools.js_error_reporter',
+        _this_module,
+    )

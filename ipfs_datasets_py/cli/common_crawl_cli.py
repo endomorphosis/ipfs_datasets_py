@@ -5,7 +5,6 @@ Provides command-line access to Common Crawl search and archiving functionality.
 
 import sys
 import json
-import asyncio
 from typing import Optional
 
 

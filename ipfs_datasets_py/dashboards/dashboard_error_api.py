@@ -51,7 +51,7 @@ def report_js_error():
         JSON response with processing result
     """
     try:
-        data = request.get_json()
+        data = request.get_json(silent=True)
         
         if not data:
             return jsonify({
@@ -77,8 +77,8 @@ def report_js_error():
         
         # Process the error report
         result = reporter.process_error_report(
-            error_data=data,
-            create_issue=True  # Always create GitHub issues
+            data,
+            create_issue=True,  # Always create GitHub issues
         )
         
         # Log the result
@@ -100,7 +100,7 @@ def report_js_error():
         logger.error(f"Error in report_js_error endpoint: {e}", exc_info=True)
         return jsonify({
             'success': False,
-            'error': f'Internal server error: {type(e).__name__}'
+            'error': f'Internal server error: {e}'
         }), 500
 
 

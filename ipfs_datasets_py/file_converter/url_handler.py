@@ -10,7 +10,6 @@ other challenges.
 import os
 import tempfile
 import logging
-import asyncio
 from dataclasses import dataclass
 from typing import Optional, Dict
 from urllib.parse import urlparse, unquote
@@ -220,7 +219,7 @@ class URLHandler:
                         success=True
                     )
         
-        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        except (aiohttp.ClientError, TimeoutError) as e:
             error_msg = f"Direct download failed: {str(e)}"
             logger.warning(error_msg)
             
