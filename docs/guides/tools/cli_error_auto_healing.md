@@ -319,7 +319,7 @@ def load_dataset(name):
 
 ## References
 
-- [Dashboard Error Auto-Healing](javascript_error_auto_healing.md)
+- [Dashboard Error Auto-Healing](guides/javascript_error_auto_healing.md)
 - [GitHub CLI Documentation](https://cli.github.com/manual/)
 - [Auto-Healing Coordinator](../ipfs_datasets_py/mcp_server/tools/software_engineering_tools/auto_healing_coordinator.py)
 - [Error Reporting Infrastructure](../ipfs_datasets_py/error_reporting/)

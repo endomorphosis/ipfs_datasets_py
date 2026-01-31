@@ -398,9 +398,9 @@ logs = processor.get_processing_logs()
 
 - [Getting Started Guide](getting_started.md) - Basic setup and usage
 - [GraphRAG Tutorial](tutorials/graphrag_tutorial.md) - Knowledge graph integration
-- [Advanced Examples](advanced_examples.md) - Complex processing scenarios
+- [Advanced Examples](examples/advanced_examples.md) - Complex processing scenarios
 - [Performance Optimization](performance_optimization.md) - Optimization strategies
-- [API Reference](api_reference.md) - Complete API documentation
+- [API Reference](reference/api_reference.md) - Complete API documentation
 
 For detailed implementation specifications, see:
 - [PDF LLM Optimization Summary](../PDF_LLM_OPTIMIZATION_SUMMARY.md)

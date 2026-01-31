@@ -447,7 +447,7 @@ except IPFSConnectionError as e:
 
 - **[Complete Examples](../examples/)** - Working code for all APIs
 - **[Testing Guide](guides/TESTING_GUIDE.md)** - How to test your code
-- **[Performance Guide](performance_optimization.md)** - Optimization strategies
+- **[Performance Guide](guides/performance_optimization.md)** - Optimization strategies
 - **[Troubleshooting](guides/TROUBLESHOOTING.md)** - Common issues and solutions
 
 ---

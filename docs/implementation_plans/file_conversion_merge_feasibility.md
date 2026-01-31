@@ -736,8 +736,8 @@ Merging would create a "jack of all trades, master of none."
 
 ## 📚 Related Documentation
 
-- **Pros/Cons Guide:** [FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md)
-- **Full Analysis:** [FILE_CONVERSION_SYSTEMS_ANALYSIS.md](FILE_CONVERSION_SYSTEMS_ANALYSIS.md)
+- **Pros/Cons Guide:** [file_conversion_pros_cons.md](file_conversion_pros_cons.md)
+- **Full Analysis:** [file_conversion_systems_analysis.md](file_conversion_systems_analysis.md)
 - **Multimedia README:** [../ipfs_datasets_py/multimedia/README.md](../ipfs_datasets_py/multimedia/README.md)
 
 ---

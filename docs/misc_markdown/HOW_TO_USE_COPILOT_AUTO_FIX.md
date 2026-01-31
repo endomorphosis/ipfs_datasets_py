@@ -402,7 +402,7 @@ python examples/copilot_auto_fix_example.py
 
 ## More Information
 
-- Full Documentation: [docs/copilot_auto_fix_all_prs.md](docs/copilot_auto_fix_all_prs.md)
+- Full Documentation: [guides/infrastructure/copilot_auto_fix_all_prs.md](guides/infrastructure/copilot_auto_fix_all_prs.md)
 - Implementation Summary: [COPILOT_AUTO_FIX_IMPLEMENTATION.md](COPILOT_AUTO_FIX_IMPLEMENTATION.md)
 - Example Code: [examples/copilot_auto_fix_example.py](examples/copilot_auto_fix_example.py)
 - Test Suite: [tests/test_copilot_auto_fix_all_prs.py](tests/test_copilot_auto_fix_all_prs.py)
@@ -411,7 +411,7 @@ python examples/copilot_auto_fix_example.py
 
 For issues or questions:
 1. Check the [troubleshooting section](#troubleshooting)
-2. Review the [full documentation](docs/copilot_auto_fix_all_prs.md)
+2. Review the [full documentation](guides/infrastructure/copilot_auto_fix_all_prs.md)
 3. Check [existing issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
 4. Create a new issue with:
    - Command you ran

@@ -492,7 +492,7 @@ print(f"Success: {result.success}")
 - [Installation Guide](installation.md)
 - [User Guide](user_guide.md)
 - [Developer Guide](developer_guide.md)
-- [API Reference](api_reference.md)
+- [API Reference](guides/reference/api_reference.md)
 
 ---
 

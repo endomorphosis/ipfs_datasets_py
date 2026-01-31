@@ -905,15 +905,15 @@ config.save_to_file("config.toml")
 
 This user guide covered the main features and functionality of IPFS Datasets Python. For more detailed information, please refer to the following resources:
 
-- [API Reference](api_reference.md)
+- [API Reference](guides/reference/api_reference.md)
 - [Installation Guide](installation.md)
-- [Performance Optimization](performance_optimization.md)
-- [IPLD Optimization](ipld_optimization.md)
-- [Query Optimization](query_optimization.md)
-- [Security & Governance](security_governance.md)
-- [Data Provenance](data_provenance.md)
-- [Audit Logging](audit_logging.md)
-- [Distributed Features](distributed_features.md)
+- [Performance Optimization](guides/performance_optimization.md)
+- [IPLD Optimization](guides/ipld_optimization.md)
+- [Query Optimization](guides/query_optimization.md)
+- [Security & Governance](guides/security/security_governance.md)
+- [Data Provenance](guides/data_provenance.md)
+- [Audit Logging](guides/security/audit_logging.md)
+- [Distributed Features](guides/distributed_features.md)
 
 For additional examples and tutorials, check out the `examples/` directory in the repository.
 

@@ -48,5 +48,5 @@ pip install ipfs-datasets-py[examples]
 ## Related Resources
 
 - [Getting Started Guide](../getting_started.md): Basic introduction to the library
-- [Advanced Examples](../advanced_examples.md): Documentation of complex usage patterns
+- [Advanced Examples](advanced_examples.md): Documentation of complex usage patterns
 - [Tutorials](../tutorials/): Step-by-step guides for specific features

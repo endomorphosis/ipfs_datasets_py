@@ -106,8 +106,8 @@ The IPFS Datasets Python project now has a clean, professional root directory st
 
 ### Key Resources
 - **Main Documentation**: [`README.md`](../README.md)
-- **Project Structure**: [`PROJECT_STRUCTURE.md`](../PROJECT_STRUCTURE.md)  
-- **Logic Tools**: [`LOGIC_TOOLS_VERIFICATION.md`](LOGIC_TOOLS_VERIFICATION.md)
+- **Project Structure**: [`PROJECT_STRUCTURE.md`](architecture/project_structure.md)  
+- **Logic Tools**: [`analysis/logic_tools_verification.md`](analysis/logic_tools_verification.md)
 - **Development History**: [`archive/`](../archive/)
 - **Current Tests**: [`tests/`](../tests/)
 - **Utility Scripts**: [`scripts/`](../scripts/)

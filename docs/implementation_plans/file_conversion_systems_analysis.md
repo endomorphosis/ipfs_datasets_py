@@ -45,7 +45,7 @@ Both repositories have been added as git submodules to `ipfs_datasets_py/multime
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**See:** [FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md) for quick pros/cons guide.
+**See:** [file_conversion_pros_cons.md](file_conversion_pros_cons.md) for quick pros/cons guide.
 
 ---
 
@@ -562,7 +562,7 @@ ipfs_datasets_py/multimedia/
 
 1. ✅ Add both repositories as submodules
 2. ✅ Create comprehensive analysis document
-3. ✅ Create quick pros/cons reference guide ([FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md))
+3. ✅ Create quick pros/cons reference guide ([file_conversion_pros_cons.md](file_conversion_pros_cons.md))
 4. 🔄 Implement integration wrapper for convert_to_txt_based_on_mime_type
 5. 🔄 Add unit tests for file conversion pipeline
 6. 🔄 Integrate with GraphRAG system
@@ -574,10 +574,10 @@ ipfs_datasets_py/multimedia/
 
 ## 📚 Related Documentation
 
-- **Quick Reference:** [FILE_CONVERSION_PROS_CONS.md](FILE_CONVERSION_PROS_CONS.md) - Concise pros/cons comparison
-- **Merge Feasibility:** [FILE_CONVERSION_MERGE_FEASIBILITY.md](FILE_CONVERSION_MERGE_FEASIBILITY.md) - Can these be merged?
+- **Quick Reference:** [file_conversion_pros_cons.md](file_conversion_pros_cons.md) - Concise pros/cons comparison
+- **Merge Feasibility:** [file_conversion_merge_feasibility.md](file_conversion_merge_feasibility.md) - Can these be merged?
 - **Multimedia README:** [../ipfs_datasets_py/multimedia/README.md](../ipfs_datasets_py/multimedia/README.md)
-- **Documentation Index:** [index.md](index.md) | [MASTER_DOCUMENTATION_INDEX.md](MASTER_DOCUMENTATION_INDEX.md)
+- **Documentation Index:** [index.md](index.md) | [archive/deprecated/master_documentation_index.md](archive/deprecated/master_documentation_index.md)
 
 ---
 

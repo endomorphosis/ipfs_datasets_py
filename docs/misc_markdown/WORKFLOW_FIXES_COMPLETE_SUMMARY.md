@@ -325,7 +325,7 @@ After:
 ## References
 
 **Documentation:**
-- [Complete Setup Guide](docs/RUNNER_AUTHENTICATION_SETUP.md)
+- [Complete Setup Guide](guides/deployment/runner_authentication_setup.md)
 - [Quick Reference](RUNNER_AUTH_QUICKSTART.md)
 - [Workflow README](.github/workflows/README.md)
 

@@ -282,7 +282,7 @@ The reorganization script (`reorganize_root.py`) is preserved for reference but 
 ## Related Documentation
 
 - [Project README](../README.md)
-- [Contributing Guide](../CLAUDE.md)
+- [Contributing Guide](archive/deprecated/claude.md)
 - [Scripts Documentation](../scripts/README.md)
 - [Testing Guide](../tests/README.md)
 

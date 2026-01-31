@@ -79,7 +79,7 @@ docker compose -f docker-compose.mcp.yml up -d
 
 ### Set Up Self-Hosted Runners
 
-See **[docs/RUNNER_SETUP.md](./docs/RUNNER_SETUP.md)** for complete instructions.
+See **[docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)** for complete instructions.
 
 Quick steps:
 1. Go to Settings → Actions → Runners
@@ -225,7 +225,7 @@ newgrp docker
 
 If you encounter issues:
 1. Check the [Actions tab](../../actions) for build logs
-2. Review [docs/RUNNER_SETUP.md](./docs/RUNNER_SETUP.md)
+2. Review [docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)
 3. Open an issue with:
    - Your OS and architecture
    - Docker version

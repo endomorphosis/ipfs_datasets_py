@@ -359,7 +359,7 @@ Failed:                   0
    - Step-by-step workflows
    - Common use cases
 
-2. **[docs/copilot_auto_fix_all_prs.md](docs/copilot_auto_fix_all_prs.md)**
+2. **[guides/infrastructure/copilot_auto_fix_all_prs.md](guides/infrastructure/copilot_auto_fix_all_prs.md)**
    - Complete technical documentation
    - API reference
    - Advanced usage

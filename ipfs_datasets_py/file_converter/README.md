@@ -186,10 +186,10 @@ class ConversionResult:
 
 ## Related Documentation
 
-- [Integration Plan](../../docs/FILE_CONVERSION_INTEGRATION_PLAN.md) - Full migration strategy
-- [Pros & Cons](../../docs/FILE_CONVERSION_PROS_CONS.md) - Backend comparison
-- [Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md) - Detailed analysis
-- [Merge Feasibility](../../docs/FILE_CONVERSION_MERGE_FEASIBILITY.md) - Why this approach
+- [Integration Plan](../../docs/implementation_plans/file_conversion_integration_plan.md) - Full migration strategy
+- [Pros & Cons](../../docs/implementation_plans/file_conversion_pros_cons.md) - Backend comparison
+- [Systems Analysis](../../docs/implementation_plans/file_conversion_systems_analysis.md) - Detailed analysis
+- [Merge Feasibility](../../docs/implementation_plans/file_conversion_merge_feasibility.md) - Why this approach
 
 ## Contributing
 
@@ -200,4 +200,4 @@ Adding new formats to native backend:
 3. Add tests in `tests/test_file_converter.py`
 4. Update this README
 
-See [INTEGRATION_PLAN.md](../../docs/FILE_CONVERSION_INTEGRATION_PLAN.md) for roadmap.
+See [INTEGRATION_PLAN.md](../../docs/implementation_plans/file_conversion_integration_plan.md) for roadmap.

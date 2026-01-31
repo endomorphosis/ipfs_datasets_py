@@ -133,7 +133,7 @@ docker compose -f docker-compose.mcp.yml up -d
 
 - **Runner Setup Guide**: [RUNNER_QUICKSTART.md](./RUNNER_QUICKSTART.md)
 - **Complete Documentation**: [DOCKER_GITHUB_ACTIONS_SETUP.md](./DOCKER_GITHUB_ACTIONS_SETUP.md)
-- **Detailed Runner Guide**: [docs/RUNNER_SETUP.md](./docs/RUNNER_SETUP.md)
+- **Detailed Runner Guide**: [docs/RUNNER_SETUP.md](guides/deployment/runner_setup.md)
 
 ## 📋 Files Created/Modified
 
