@@ -676,4 +676,4 @@ To further enhance your security and compliance setup:
 4. Customize intrusion detection rules for your specific security requirements
 5. Integrate with existing identity management systems
 
-For more information, see the [Security and Governance documentation](../security_governance.md) and [Audit Logging documentation](../../ipfs_datasets_py/audit/README.md).
+For more information, see the [Security and Governance documentation](guides/security/security_governance.md) and [Audit Logging documentation](../../ipfs_datasets_py/audit/README.md).

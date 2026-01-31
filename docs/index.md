@@ -7,8 +7,8 @@ Welcome to the IPFS Datasets Python documentation. This comprehensive guide cove
 - **New Users**: Start with the [Getting Started Guide](getting_started.md)
 - **Installation**: See [Installation Guide](installation.md)
 - **Examples**: Check out [Examples Overview](examples/)
-- **API Reference**: Browse the [Complete API Reference](api_reference.md)
-- **Complete Navigation**: Use the [Master Documentation Index](MASTER_DOCUMENTATION_INDEX.md) for comprehensive access to all documentation
+- **API Reference**: Browse the [Complete API Reference](guides/reference/api_reference.md)
+- **Complete Navigation**: Use the [Master Documentation Index](archive/deprecated/master_documentation_index.md) for comprehensive access to all documentation
 
 ## 📚 Documentation Organization
 
@@ -43,13 +43,13 @@ This documentation is organized into several sections:
 - [Getting Started Guide](getting_started.md) - Introduction to basic concepts and quick start
 - [Installation Guide](installation.md) - Detailed installation instructions
 - [User Guide](user_guide.md) - Comprehensive guide for using the library
-- [API Reference](api_reference.md) - Complete API documentation
+- [API Reference](guides/reference/api_reference.md) - Complete API documentation
 - [Developer Guide](developer_guide.md) - Guide for developers contributing to the project
 
 ## Core Features
 
 - **Data Processing** - Working with datasets from various sources
-- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](FILE_CONVERSION_PROS_CONS.md) | [Full Analysis](FILE_CONVERSION_SYSTEMS_ANALYSIS.md) | [Merge Feasibility](FILE_CONVERSION_MERGE_FEASIBILITY.md) | [Integration Plan](FILE_CONVERSION_INTEGRATION_PLAN.md))
+- **File Conversion** - Convert arbitrary file types to text for GraphRAG ([Quick Guide](implementation_plans/file_conversion_pros_cons.md) | [Full Analysis](implementation_plans/file_conversion_systems_analysis.md) | [Merge Feasibility](implementation_plans/file_conversion_merge_feasibility.md) | [Integration Plan](implementation_plans/file_conversion_integration_plan.md))
 - **PDF Processing** - Advanced PDF decomposition and LLM-optimized content extraction
 - **IPLD Integration** - Content-addressed data structures with IPLD
 - **Vector Storage** - Efficient storage and retrieval of vector embeddings
@@ -60,20 +60,20 @@ This documentation is organized into several sections:
 
 ## Advanced Features
 
-- [Security & Governance](security_governance.md) - Encryption, access control, provenance, and audit logging
-- [Performance Optimization](performance_optimization.md) - Optimizing for large datasets
-- [Distributed Features](distributed_features.md) - Multi-node capabilities
-- [IPLD Optimization](ipld_optimization.md) - IPLD encoding/decoding optimizations
-- [Query Optimization](query_optimization.md) - Optimizing graph and vector queries
-- [Data Provenance](data_provenance.md) - Detailed lineage tracking
-- [Audit Logging](audit_logging.md) - Comprehensive audit logging capabilities
-- [PDF Processing](pdf_processing.md) - Advanced PDF decomposition and LLM optimization
+- [Security & Governance](guides/security/security_governance.md) - Encryption, access control, provenance, and audit logging
+- [Performance Optimization](guides/performance_optimization.md) - Optimizing for large datasets
+- [Distributed Features](guides/distributed_features.md) - Multi-node capabilities
+- [IPLD Optimization](guides/ipld_optimization.md) - IPLD encoding/decoding optimizations
+- [Query Optimization](guides/query_optimization.md) - Optimizing graph and vector queries
+- [Data Provenance](guides/data_provenance.md) - Detailed lineage tracking
+- [Audit Logging](guides/security/audit_logging.md) - Comprehensive audit logging capabilities
+- [PDF Processing](guides/pdf_processing.md) - Advanced PDF decomposition and LLM optimization
 
 ## Tutorials & Examples
 
-- [Advanced Examples](advanced_examples.md) - Comprehensive examples for complex scenarios
-- [Docker Deployment](docker_deployment.md) - Guide for containerizing with Docker
-- [MCP Server Integration](mcp_server_integration.md) - AI assistant access via Model Context Protocol
+- [Advanced Examples](examples/advanced_examples.md) - Comprehensive examples for complex scenarios
+- [Docker Deployment](guides/deployment/docker_deployment.md) - Guide for containerizing with Docker
+- [MCP Server Integration](guides/tools/mcp_server_integration.md) - AI assistant access via Model Context Protocol
 - [Examples Overview](examples/) - Detailed overview of available examples
 
 ## Tutorials
@@ -81,7 +81,7 @@ This documentation is organized into several sections:
 - [GraphRAG Tutorial](tutorials/graphrag_tutorial.md) - Building knowledge-enhanced retrieval systems
 - [Web Archive Processing](tutorials/web_archive_tutorial.md) - Complete web archiving and processing workflow
 - [Media Scraping Tutorial](tutorials/media_scraping_tutorial.md) - Comprehensive multimedia content scraping and processing
-- [Comprehensive Web Scraping Guide](comprehensive_web_scraping_guide.md) - Complete guide to all web scraping capabilities
+- [Comprehensive Web Scraping Guide](guides/comprehensive_web_scraping_guide.md) - Complete guide to all web scraping capabilities
 - [Distributed Dataset Management](tutorials/distributed_dataset_tutorial.md) - Managing datasets across nodes  
 - [Security Implementation](tutorials/security_tutorial.md) - Implementing security features
 
@@ -179,16 +179,16 @@ The IPFS Datasets Python library architecture is organized around several key co
 └─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
           │                              │                               │
           ▼                              ▼                               ▼
-┌──────────────────┐           ┌────────────────────┐           ┌──────────────────┐
-│  Transformations │           │     Conversion     │           │  IPLD Components │
+┌───────────────────┐           ┌────────────────────┐           ┌──────────────────┐
+│  Transformations  │           │     Conversion     │           │  IPLD Components │
 │ - Vector Encoding │           │     Components     │           │ - CAR            │
 │ - KG Extraction   │           │ - Parquet ↔ CAR    │           │ - DAG-PB         │
 │ - Entity Linking  │           │ - Arrow ↔ IPLD     │           │ - UnixFS         │
-└─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
-          │                              │                               │
-          └──────────────────────────────┼───────────────────────────────┘
-                                         │
-                                         ▼
+└─────────┬─────────┘           └─────────┬──────────┘           └────────┬─────────┘
+          │                               │                               │
+          └───────────────────────────────┼───────────────────────────────┘
+                                          │
+                                          ▼
                                ┌────────────────────┐
                                │   Query Systems    │
                                │ - Vector Search    │

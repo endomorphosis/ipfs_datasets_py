@@ -119,7 +119,7 @@ Best practices:
 
 ## Links
 
-- **Full Documentation:** [docs/RUNNER_AUTHENTICATION_SETUP.md](../docs/RUNNER_AUTHENTICATION_SETUP.md)
+- **Full Documentation:** [docs/RUNNER_AUTHENTICATION_SETUP.md](guides/deployment/runner_authentication_setup.md)
 - **Setup Script:** [scripts/setup_gh_copilot_auth_on_runner.sh](../scripts/setup_gh_copilot_auth_on_runner.sh)
 - **GitHub CLI Docs:** https://cli.github.com/manual/gh_auth_login
 - **Copilot CLI:** https://github.com/features/copilot/cli

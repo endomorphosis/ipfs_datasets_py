@@ -148,4 +148,4 @@ After completing your chosen path, explore these advanced topics:
 **🎯 Success rate: 100% with proper dependencies**  
 **🚀 Ready for production: Yes**  
 
-[← Back to README](../README.md) | [API Reference →](api_reference.md)
+[← Back to README](../README.md) | [API Reference →](guides/reference/api_reference.md)
