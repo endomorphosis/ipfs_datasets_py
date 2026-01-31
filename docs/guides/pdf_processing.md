@@ -396,12 +396,12 @@ logs = processor.get_processing_logs()
 
 ## See Also
 
-- [Getting Started Guide](getting_started.md) - Basic setup and usage
-- [GraphRAG Tutorial](tutorials/graphrag_tutorial.md) - Knowledge graph integration
-- [Advanced Examples](examples/advanced_examples.md) - Complex processing scenarios
+- [Getting Started Guide](../getting_started.md) - Basic setup and usage
+- [GraphRAG Tutorial](../tutorials/graphrag_tutorial.md) - Knowledge graph integration
+- [Advanced Examples](../examples/advanced_examples.md) - Complex processing scenarios
 - [Performance Optimization](performance_optimization.md) - Optimization strategies
 - [API Reference](reference/api_reference.md) - Complete API documentation
 
 For detailed implementation specifications, see:
-- [PDF LLM Optimization Summary](../PDF_LLM_OPTIMIZATION_SUMMARY.md)
-- [Logic Tools Implementation Plan](../LOGIC_TOOLS_IMPLEMENTATION_PLAN.md)
+- [Architecture Documentation](../architecture/) - System design and technical specifications
+- [Implementation Plans](../implementation_plans/) - Implementation roadmaps
