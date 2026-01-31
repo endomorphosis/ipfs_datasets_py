@@ -179,16 +179,16 @@ The IPFS Datasets Python library architecture is organized around several key co
 └─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
           │                              │                               │
           ▼                              ▼                               ▼
-┌──────────────────┐           ┌────────────────────┐           ┌──────────────────┐
-│  Transformations │           │     Conversion     │           │  IPLD Components │
+┌───────────────────┐           ┌────────────────────┐           ┌──────────────────┐
+│  Transformations  │           │     Conversion     │           │  IPLD Components │
 │ - Vector Encoding │           │     Components     │           │ - CAR            │
 │ - KG Extraction   │           │ - Parquet ↔ CAR    │           │ - DAG-PB         │
 │ - Entity Linking  │           │ - Arrow ↔ IPLD     │           │ - UnixFS         │
-└─────────┬────────┘           └─────────┬──────────┘           └────────┬─────────┘
-          │                              │                               │
-          └──────────────────────────────┼───────────────────────────────┘
-                                         │
-                                         ▼
+└─────────┬─────────┘           └─────────┬──────────┘           └────────┬─────────┘
+          │                               │                               │
+          └───────────────────────────────┼───────────────────────────────┘
+                                          │
+                                          ▼
                                ┌────────────────────┐
                                │   Query Systems    │
                                │ - Vector Search    │
