@@ -401,4 +401,4 @@ pip install beautifulsoup4 requests  # For web scraping
 - [Email Usage Examples](email_usage_examples.md) - Email ingestion
 - [Discord Usage Examples](discord_usage_examples.md) - Discord chat exports
 - [GraphRAG Documentation](../README.md#graphrag) - Knowledge graph analysis
-- [Logic Integration](../ipfs_datasets_py/logic_integration/README.md) - Theorem proving
+- [Logic Integration Guide](../guides/THEOREM_PROVER_INTEGRATION_GUIDE.md) - Theorem proving and formal logic

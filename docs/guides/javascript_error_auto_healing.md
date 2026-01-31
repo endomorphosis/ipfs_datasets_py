@@ -390,6 +390,6 @@ gh auth login
 ## References
 
 - [GitHub CLI Documentation](https://cli.github.com/manual/)
-- [GitHub Actions Auto-Healing](.github/workflows/copilot-agent-autofix.yml)
-- [Auto-Healing Coordinator](ipfs_datasets_py/mcp_server/tools/software_engineering_tools/auto_healing_coordinator.py)
-- [Error Reporting Infrastructure](ipfs_datasets_py/error_reporting/)
+- [GitHub Actions Auto-Healing](../../.github/workflows/copilot-agent-autofix.yml)
+- [Auto-Healing Coordinator](../../ipfs_datasets_py/mcp_server/tools/software_engineering_tools/auto_healing_coordinator.py)
+- [Error Reporting Infrastructure](../../ipfs_datasets_py/error_reporting/)

@@ -596,5 +596,5 @@ anyio.run(analyze_and_filter)
 
 - [Discord Integration](discord_usage_examples.md) - Similar message ingestion for Discord
 - [Finance Data Tools](finance_usage_examples.md) - Financial data collection and analysis
-- [Multimedia Processing](../ipfs_datasets_py/multimedia/README.md) - Overview of multimedia tools
-- [MCP Server](../ipfs_datasets_py/mcp_server/README.md) - Model Context Protocol server documentation
+- [Multimedia Processing](../../ipfs_datasets_py/multimedia/README.md) - Overview of multimedia tools
+- [MCP Server](../../ipfs_datasets_py/mcp_server/README.md) - Model Context Protocol server documentation

@@ -460,9 +460,9 @@ pip install ipfs-datasets-py[all]
 ## 📖 Documentation Links
 
 **Primary:**
-- [ANYIO_MIGRATION_GUIDE.md](guides/infrastructure/anyio_migration_guide.md) ⭐ NEW
+- [ANYIO_MIGRATION_GUIDE.md](../guides/infrastructure/anyio_migration_guide.md) ⭐ NEW
 - [FILE_CONVERSION_INTEGRATION_PLAN.md](file_conversion_integration_plan.md)
-- [COMPLETE_INTEGRATION_SUMMARY.md](analysis/complete_integration_summary.md)
+- [COMPLETE_INTEGRATION_SUMMARY.md](../analysis/complete_integration_summary.md)
 
 **Analysis:**
 - [FILE_CONVERSION_SYSTEMS_ANALYSIS.md](file_conversion_systems_analysis.md)
@@ -470,8 +470,8 @@ pip install ipfs-datasets-py[all]
 - [FILE_CONVERSION_MERGE_FEASIBILITY.md](file_conversion_merge_feasibility.md)
 
 **Phase Summaries:**
-- [PHASE_2_COMPLETION_SUMMARY.md](reports/phase_2_completion_summary.md)
-- [PHASE_3_COMPLETION_SUMMARY.md](reports/phase_3_completion_summary.md)
+- [PHASE_2_COMPLETION_SUMMARY.md](../reports/phase_2_completion_summary.md)
+- [PHASE_3_COMPLETION_SUMMARY.md](../reports/phase_3_completion_summary.md)
 
 ---
 

@@ -372,7 +372,7 @@ python -m ipfs_datasets_py.auto_installer theorem_provers --verbose
 ### Q: Where can I get more help?
 
 **A**: **Support channels**:
-- **📖 Documentation**: [Complete docs](docs/MASTER_DOCUMENTATION_INDEX_NEW.md)
+- **📖 Documentation**: [Complete docs](../index.md)
 - **💬 Discussions**: [GitHub Discussions](https://github.com/endomorphosis/ipfs_datasets_py/discussions)
 - **🐛 Issues**: [Bug reports](https://github.com/endomorphosis/ipfs_datasets_py/issues)
 - **📧 Email**: [starworks5@gmail.com](mailto:starworks5@gmail.com)
@@ -409,4 +409,4 @@ python -m ipfs_datasets_py.auto_installer theorem_provers --verbose
 
 **🎯 Still have questions?** [Ask in GitHub Discussions](https://github.com/endomorphosis/ipfs_datasets_py/discussions) or [email us](mailto:starworks5@gmail.com)!
 
-[← Back to Documentation](../MASTER_DOCUMENTATION_INDEX_NEW.md) | [Getting Started →](../getting_started_new.md)
+[← Back to Documentation](../index.md) | [Getting Started →](../getting_started.md)
