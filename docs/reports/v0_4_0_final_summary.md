@@ -489,10 +489,10 @@ print(f"Success: {result.success}")
 - Pull Requests: Contribute improvements
 
 **Resources:**
-- [Installation Guide](installation.md)
-- [User Guide](user_guide.md)
-- [Developer Guide](developer_guide.md)
-- [API Reference](guides/reference/api_reference.md)
+- [Installation Guide](../installation.md)
+- [User Guide](../user_guide.md)
+- [Developer Guide](../developer_guide.md)
+- [API Reference](../guides/reference/api_reference.md)
 
 ---
 

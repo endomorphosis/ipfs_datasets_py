@@ -1,54 +1,20 @@
-# Deployment Guides
+# Deployment Guides (Legacy)
 
-Comprehensive deployment documentation for various environments and configurations.
+⚠️ **Note:** Most deployment guides have been moved to [`guides/deployment/`](../guides/deployment/).
 
-## Available Guides
+## Current Documentation
 
-- [Docker Deployment](docker_deployment.md) - Container-based deployment
-- [GraphRAG Production Deployment](graphrag_production_deployment_guide.md) - Production GraphRAG setup
-- [Runner Setup](runner_setup.md) - GitHub Actions self-hosted runners
-- [ARM64 Runner Setup](arm64_runner_setup.md) - ARM-based runner configuration
-- [GPU Runner Setup](gpu_runner_setup.md) - GPU-enabled runner deployment
-- [Runner Authentication Setup](runner_authentication_setup.md) - Authentication configuration
-- [Docker Permission Fix](docker_permission_fix.md) - Docker permission issues
-- [Docker Permission Infrastructure Solutions](docker_permission_infrastructure_solutions.md) - Infrastructure-level solutions
+For deployment documentation, see:
+- **[guides/deployment/](../guides/deployment/)** - Main deployment guides directory
+  - Docker deployment
+  - GraphRAG production setup
+  - Runner setup (standard, ARM64, GPU)
+  - Authentication and permission fixes
 
-## Deployment Options
+## Legacy Files in This Directory
 
-### Container Deployment
-- **Docker**: Single-container deployment
-- **Docker Compose**: Multi-container orchestration
-- **Kubernetes**: Cloud-native deployment
-
-### Runner Deployment
-- **Standard Runners**: x86_64 GitHub Actions runners
-- **ARM64 Runners**: ARM-based runners
-- **GPU Runners**: CUDA-enabled runners
-
-### Production Deployment
-- **GraphRAG**: Production GraphRAG with knowledge graphs
-- **MCP Server**: Model Context Protocol server deployment
-- **API Servers**: RESTful API deployment
-
-## Quick Start
-
-### Docker Deployment
-```bash
-# Build and run
-docker-compose up -d
-
-# Check status
-docker-compose ps
-```
-
-### Runner Setup
-```bash
-# Download runner
-./deployments/setup_runner.sh
-
-# Configure and start
-./run.sh
-```
+- [DOCKER_DEPLOYMENT_GUIDE.md](DOCKER_DEPLOYMENT_GUIDE.md) - Legacy Docker guide
+- [PYPI_PREPARATION.md](PYPI_PREPARATION.md) - PyPI publication preparation
 
 ## Related Documentation
 
