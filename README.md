@@ -25,7 +25,7 @@
 ## ✨ Key Features
 
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
-- 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs (4,400+ production tests)
+- 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs
 - 📝 **Universal File Conversion** - Convert any file type to text for AI processing
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
 - 🕸️ **Knowledge Graph Intelligence** - Cross-document reasoning with semantic search
@@ -761,3 +761,9 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 ---
 
 **Built with** ❤️ **for decentralized AI**
+
+## Credits
+
+**Endomorphosis** [Github](https://github.com/endomorphosis/) Senior ML-OPS Architect
+**The-Ride-Never-Ends** [Github](https://github.com/the-ride-never-ends) Junior Developer / Political Scientist
+**Coregod360** [Github](https://github.com/Coregod360) Formerly Junior Developer 
