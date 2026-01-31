@@ -757,5 +757,7 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 ## Credits
 
 **Endomorphosis** [Github](https://github.com/endomorphosis/) Senior ML-OPS Architect
+
 **The-Ride-Never-Ends** [Github](https://github.com/the-ride-never-ends) Junior Developer / Political Scientist
+
 **Coregod360** [Github](https://github.com/Coregod360) Formerly Junior Developer 
