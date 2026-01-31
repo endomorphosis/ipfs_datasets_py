@@ -143,22 +143,6 @@ Look for issues labeled:
 - **Bug fixes**: Check the issue tracker
 - **Features**: Propose new features via issues first
 
-## Code of Conduct
-
-### Our Standards
-
-- **Be respectful** and inclusive
-- **Be collaborative** and constructive
-- **Focus on what's best** for the community
-- **Show empathy** towards others
-
-### Unacceptable Behavior
-
-- Harassment or discriminatory language
-- Trolling or insulting comments
-- Personal or political attacks
-- Publishing others' private information
-
 ## Getting Help
 
 - **Documentation**: See [docs/](docs/)
