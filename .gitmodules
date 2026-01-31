@@ -27,3 +27,6 @@
 	path = scripts/setup/.third_party/ipfs_kit_py
 	url = https://github.com/endomorphosis/ipfs_kit_py.git
 	branch = main
+[submodule "ipfs_datasets_py/web_archiving/common_crawl_search_engine"]
+	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
+	url = https://github.com/endomorphosis/common_crawl_search_engine

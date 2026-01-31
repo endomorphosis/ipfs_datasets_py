@@ -12,6 +12,12 @@ from .index_warc import index_warc
 
 # New archiving tools
 from .common_crawl_search import search_common_crawl, get_common_crawl_content, list_common_crawl_indexes
+from .common_crawl_advanced import (
+    search_common_crawl_advanced,
+    fetch_warc_record_advanced,
+    list_common_crawl_collections_advanced,
+    get_common_crawl_collection_info_advanced
+)
 from .wayback_machine_search import search_wayback_machine, get_wayback_content, archive_to_wayback
 from .ipwb_integration import index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive, get_ipwb_content, verify_ipwb_archive
 from .autoscraper_integration import create_autoscraper_model, scrape_with_autoscraper, optimize_autoscraper_model, batch_scrape_with_autoscraper, list_autoscraper_models
@@ -51,6 +57,12 @@ __all__ = [
     "search_common_crawl",
     "get_common_crawl_content", 
     "list_common_crawl_indexes",
+    
+    # Common Crawl Advanced tools (from submodule)
+    "search_common_crawl_advanced",
+    "fetch_warc_record_advanced",
+    "list_common_crawl_collections_advanced",
+    "get_common_crawl_collection_info_advanced",
     
     # Wayback Machine tools
     "search_wayback_machine",

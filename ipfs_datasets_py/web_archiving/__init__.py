@@ -9,6 +9,7 @@ from .web_text_extractor import *
 from .simple_crawler import *
 from .unified_web_scraper import *
 from .scraper_testing_framework import *
+from .common_crawl_integration import CommonCrawlSearchEngine, create_search_engine
 
 __all__ = [
     'web_archive',
@@ -17,4 +18,6 @@ __all__ = [
     'simple_crawler',
     'unified_web_scraper',
     'scraper_testing_framework',
+    'CommonCrawlSearchEngine',
+    'create_search_engine',
 ]

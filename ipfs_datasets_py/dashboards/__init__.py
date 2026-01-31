@@ -8,6 +8,7 @@
 __all__ = [
     'admin_dashboard',
     'advanced_analytics_dashboard',
+    'common_crawl_dashboard',
     'discord_dashboard',
     'mcp_dashboard',
     'mcp_investigation_dashboard',
