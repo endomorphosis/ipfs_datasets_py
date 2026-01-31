@@ -26,7 +26,7 @@
 
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
 - 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs (182+ production tests)
-- 📝 **Universal File Conversion** - Convert any file type to text for AI processing (Phase 1: Import & Wrap)
+- 📝 **Universal File Conversion** - Convert any file type to text for AI processing
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
 - 🕸️ **Knowledge Graph Intelligence** - Cross-document reasoning with semantic search
 - 🌐 **Decentralized Storage** - IPFS-native with content addressing (ipfs_kit_py)
@@ -739,14 +739,6 @@ car_cid = create_car_file("data/", "output.car")
 ### Migration & CLI
 - **[Migration Guide](docs/guides/REFACTORING_SUMMARY.md)** - Updating from old versions
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for:
-- Code style and standards
-- Testing requirements
-- Pull request process
-- Development setup
 
 ## 📄 License
 
