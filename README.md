@@ -2,10 +2,10 @@
 
 > **Decentralized AI Data Platform - Production Ready**
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![Production Ready](https://img.shields.io/badge/status-production%20ready-green)](#)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
-[![Tests](https://img.shields.io/badge/tests-182%2B-brightgreen)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-4400%2B-brightgreen)](./tests/)
 
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
 
@@ -25,8 +25,8 @@
 ## ✨ Key Features
 
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
-- 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs (182+ production tests)
-- 📝 **Universal File Conversion** - Convert any file type to text for AI processing (Phase 1: Import & Wrap)
+- 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs (4,400+ production tests)
+- 📝 **Universal File Conversion** - Convert any file type to text for AI processing
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
 - 🕸️ **Knowledge Graph Intelligence** - Cross-document reasoning with semantic search
 - 🌐 **Decentralized Storage** - IPFS-native with content addressing (ipfs_kit_py)
