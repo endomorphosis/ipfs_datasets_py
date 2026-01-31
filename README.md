@@ -740,14 +740,6 @@ car_cid = create_car_file("data/", "output.car")
 - **[Migration Guide](docs/guides/REFACTORING_SUMMARY.md)** - Updating from old versions
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for:
-- Code style and standards
-- Testing requirements
-- Pull request process
-- Development setup
-
 ## 📄 License
 
 This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
