@@ -10,6 +10,7 @@ __version__ = "0.2.0"
 from pathlib import Path
 import sys
 import os
+import warnings
 
 _repo_root = Path(__file__).resolve().parent.parent
 _main_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
