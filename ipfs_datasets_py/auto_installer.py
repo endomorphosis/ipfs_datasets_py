@@ -111,6 +111,7 @@ class DependencyInstaller:
             'pdfplumber': ['pdfplumber>=0.10.0,<1.0.0'],
             'pytesseract': ['pytesseract>=0.3.10,<1.0.0'],
             'pillow': ['pillow>=10.0.0,<12.0.0', 'PIL>=10.0.0'],
+                'reportlab': ['reportlab>=4.0.0,<5.0.0'],
             
             # OCR and vision
             'opencv-python': ['opencv-python>=4.5.0', 'opencv-contrib-python>=4.5.0'],
@@ -171,6 +172,9 @@ class DependencyInstaller:
             'anyio': ['anyio>=4.0.0,<5.0.0'],
             'coverage': ['coverage>=7.0.0,<8.0.0'],
 
+            # Test utilities
+            'faker': ['Faker>=24.0.0,<26.0.0', 'faker>=24.0.0,<26.0.0'],
+            'reportlab': ['reportlab>=4.0.0,<5.0.0'],
             # Local binary helpers
             'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
         }
