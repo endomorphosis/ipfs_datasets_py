@@ -3770,7 +3770,7 @@ Current usage patterns:
 
 #### 1. Install the New Package
 ```bash
-pip install ipfs_kit_py
+pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main
 ```
 
 #### 2. Update Import Statements

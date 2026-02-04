@@ -9,12 +9,8 @@ IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 IS_64BIT = sys.maxsize > 2**32
 
-use_git_ipfs_kit = os.environ.get('IPFS_KIT_PY_USE_GIT', 'false').lower() == 'true'
-ipfs_kit_dependency = (
-    'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
-    if use_git_ipfs_kit
-    else 'ipfs_kit_py'
-)
+# Always use GitHub repositories instead of PyPI
+ipfs_kit_dependency = 'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
 
 setup(
     name="ipfs_datasets_py",
@@ -22,10 +18,9 @@ setup(
     packages=find_packages(),
     py_modules=["ipfs_datasets_cli"],
     install_requires=[
-        # Core dependencies
+        # Core dependencies - all from GitHub main branches
         'orbitdb_kit_py',
-        # Install ipfs_kit_py from main branch if IPFS_KIT_PY_USE_GIT=true
-        # (PyPI fallback is used by default for Windows reliability)
+        # ipfs_kit_py from GitHub main branch
         ipfs_kit_dependency,
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
@@ -199,9 +194,8 @@ setup(
         ],
         # Accelerate integration - distributed AI compute
         'accelerate': [
-            # Install from submodule (development) or PyPI (production)
-            # Use: pip install -e ".[accelerate]" for submodule
-            # Or: pip install ipfs-accelerate-py for PyPI package
+            # Install from GitHub main branch
+            'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
             'sentence-transformers',
             'torch>=2.0.0',
             'transformers>=4.46.0',

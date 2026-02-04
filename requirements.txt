@@ -1,8 +1,13 @@
 # Core dependencies only - for initial testing
 # Use this to test if basic setup works, then add more dependencies gradually
 
+# GitHub dependencies - always install from main branch
+git+https://github.com/endomorphosis/ipfs_kit_py.git@main
+git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
+
 # Local submodule dependencies
-# -e ./ipfs_kit_py  # Commented out - directory is empty and not properly configured
+# -e ./ipfs_kit_py  # Commented out - now using GitHub direct install above
+# -e ./ipfs_accelerate_py  # Commented out - now using GitHub direct install above
 
 # Core Python packages
 numpy>=1.21.0,<2.0.0; python_version < '3.14'

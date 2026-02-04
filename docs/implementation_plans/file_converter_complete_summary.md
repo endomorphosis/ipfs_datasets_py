@@ -400,10 +400,10 @@ result = await pipeline.process(FileUnit.from_path("doc.pdf"))
 pip install ipfs-datasets-py[file_conversion]
 
 # With IPFS
-pip install ipfs_kit_py
+pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main
 
 # With ML acceleration
-pip install ipfs_accelerate_py
+pip install git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
 
 # Everything
 pip install ipfs-datasets-py[all]

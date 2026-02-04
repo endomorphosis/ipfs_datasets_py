@@ -103,6 +103,35 @@ def ensure_libp2p_main() -> None:
     except Exception as e:
         print(f"⚠️ Failed to install libp2p from git main: {e}")
 
+
+def ensure_ipfs_accelerate_py() -> None:
+    """Ensure ipfs_accelerate_py is installed from the main branch."""
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                '-m',
+                'pip',
+                'install',
+                '--upgrade',
+                'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
+                '--disable-pip-version-check',
+                '--no-input',
+                '--progress-bar',
+                'off',
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print("✅ Installed ipfs_accelerate_py from git main branch")
+        else:
+            error_msg = result.stderr or result.stdout or "No error details available"
+            print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {error_msg.strip()}")
+    except Exception as e:
+        print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {e}")
+
 def run_setup_wizard():
     """Run the interactive setup wizard"""
     print("🧙 IPFS Datasets Setup Wizard")
@@ -294,6 +323,7 @@ Examples:
 
     ensure_main_ipfs_kit_py()
     ensure_libp2p_main()
+    ensure_ipfs_accelerate_py()
     
     # Enable auto-installation if requested
     if args.enable_auto_install:

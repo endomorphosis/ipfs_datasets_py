@@ -11,10 +11,9 @@ WORKDIR /app
 # Copy only necessary files
 COPY setup.py README.md ./
 COPY ipfs_datasets_py/ ./ipfs_datasets_py/
-# Copy the ipfs_kit_py submodule (known_good branch)
-COPY ipfs_kit_py/ ./ipfs_kit_py/
+# No longer copying ipfs_kit_py submodule - now installed from GitHub via setup.py
 
-# Install package in development mode
+# Install package in development mode (installs dependencies from GitHub)
 RUN pip install --no-cache-dir -e .
 
 # Health check
