@@ -327,14 +327,14 @@ async def main():
         print(f"   • Graceful fallback to local mode when needed")
         
         print(f"\n📚 Next Steps:")
-        print(f"   1. Install IPFS: pip install ipfs_kit_py")
-        print(f"   2. Install acceleration: pip install ipfs_accelerate_py")
+        print(f"   1. Install IPFS: pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main")
+        print(f"   2. Install acceleration: pip install git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main")
         print(f"   3. Run IPFS daemon: ipfs daemon")
         print(f"   4. Try with real documents!")
         
         if not IPFS_AVAILABLE:
             print(f"\n⚠️  Note: ipfs_kit_py not installed - running in local-only mode")
-            print(f"   Install with: pip install ipfs_kit_py")
+            print(f"   Install with: pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main")
         
         return 0
         
