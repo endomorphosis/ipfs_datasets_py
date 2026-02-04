@@ -121,12 +121,14 @@ def ensure_ipfs_accelerate_py() -> None:
                 'off',
             ],
             check=False,
+            capture_output=True,
             text=True,
         )
         if result.returncode == 0:
             print("✅ Installed ipfs_accelerate_py from git main branch")
         else:
-            print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {result.stderr}")
+            error_msg = result.stderr or result.stdout or "No error details available"
+            print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {error_msg.strip()}")
     except Exception as e:
         print(f"⚠️ Failed to install ipfs_accelerate_py from git main: {e}")
 

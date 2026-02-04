@@ -20,7 +20,8 @@ setup(
     install_requires=[
         # Core dependencies - all from GitHub main branches
         'orbitdb_kit_py',
-        ipfs_kit_dependency,  # GitHub: endomorphosis/ipfs_kit_py@main
+        # ipfs_kit_py from GitHub main branch
+        ipfs_kit_dependency,
         'ipfs_model_manager_py',
         'ipfs_faiss_py',
         'transformers',
