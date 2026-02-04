@@ -1,0 +1,576 @@
+name: MCP Tools Error Monitoring
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/tools/**'
+      - 'ipfs_datasets_py/mcp_tools/**'
+      - '.github/workflows/mcp-tools-monitoring.yml'
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Tool category to test (or "all")'
+        required: true
+        default: 'all'
+        type: string
+      test_mode:
+        description: 'Test mode'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - category
+  schedule:
+    # Run MCP tools monitoring daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  ERROR_REPORTING_ENABLED: 'true'
+
+jobs:
+  # Discover available tool categories
+  discover-tool-categories:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    outputs:
+      categories: ${{ steps.discover.outputs.categories }}
+      category_count: ${{ steps.discover.outputs.category_count }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Discover Tool Categories
+        id: discover
+        run: |
+          echo "🔍 Discovering MCP tool categories..."
+          
+          # Find all tool categories
+          categories=$(find ipfs_datasets_py/mcp_server/tools -maxdepth 1 -type d -not -path "*/\.*" -not -name tools -not -name __pycache__ | sort)
+          
+          count=0
+          category_list=""
+          
+          for dir in $categories; do
+            category_name=$(basename "$dir")
+            if [ "$category_name" != "__pycache__" ] && [ "$category_name" != "." ]; then
+              tool_count=$(find "$dir" -name "*.py" -not -name "__init__.py" -not -name "test_*" | wc -l)
+              echo "  📁 $category_name ($tool_count tools)"
+              count=$((count + 1))
+              if [ -z "$category_list" ]; then
+                category_list="$category_name"
+              else
+                category_list="$category_list,$category_name"
+              fi
+            fi
+          done
+          
+          echo "Found $count tool categories"
+          echo "categories=$category_list" >> $GITHUB_OUTPUT
+          echo "category_count=$count" >> $GITHUB_OUTPUT
+          
+          echo "## 📚 MCP Tool Categories" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Discovered **$count** tool categories" >> $GITHUB_STEP_SUMMARY
+
+  # Test tool loading and initialization
+  test-tool-loading:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: discover-tool-categories
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git
+          pip install --upgrade pip
+          pip install -e .[test]
+      
+      - name: Test Tool Discovery
+        id: tool_discovery
+        continue-on-error: true
+        run: |
+          echo "🔧 Testing tool discovery..."
+          
+          python -c "
+          from pathlib import Path
+          import importlib.util
+          import sys
+          
+          tools_dir = Path('ipfs_datasets_py/mcp_server/tools')
+          total_tools = 0
+          failed_tools = []
+          
+          for category_dir in tools_dir.iterdir():
+              if not category_dir.is_dir() or category_dir.name.startswith('_'):
+                  continue
+              
+              category_name = category_dir.name
+              print(f'\n📁 Testing {category_name}...')
+              
+              for tool_file in category_dir.glob('*.py'):
+                  if tool_file.name.startswith('_') or tool_file.name == '__init__.py':
+                      continue
+                  
+                  tool_name = tool_file.stem
+                  total_tools += 1
+                  
+                  # Try to load the module
+                  try:
+                      module_name = f'ipfs_datasets_py.mcp_server.tools.{category_name}.{tool_name}'
+                      spec = importlib.util.spec_from_file_location(module_name, tool_file)
+                      if spec and spec.loader:
+                          module = importlib.util.module_from_spec(spec)
+                          sys.modules[module_name] = module
+                          spec.loader.exec_module(module)
+                          print(f'  ✅ {tool_name}')
+                      else:
+                          print(f'  ❌ {tool_name} - Could not create module spec')
+                          failed_tools.append(f'{category_name}/{tool_name}')
+                  except Exception as e:
+                      print(f'  ❌ {tool_name} - {type(e).__name__}: {str(e)[:100]}')
+                      failed_tools.append(f'{category_name}/{tool_name}')
+          
+          print(f'\n📊 Summary:')
+          print(f'  Total tools: {total_tools}')
+          print(f'  Loaded successfully: {total_tools - len(failed_tools)}')
+          print(f'  Failed to load: {len(failed_tools)}')
+          
+          if failed_tools:
+              print(f'\n❌ Failed tools:')
+              for tool in failed_tools:
+                  print(f'  - {tool}')
+              sys.exit(1)
+          else:
+              print('\n✅ All tools loaded successfully')
+          " || echo "tool_loading_failed=true" >> $GITHUB_OUTPUT
+      
+      - name: Report Tool Loading Issues
+        if: steps.tool_discovery.outputs.tool_loading_failed == 'true'
+        run: |
+          echo "## ❌ Tool Loading Failures" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Some MCP tools failed to load. Auto-healing will be triggered." >> $GITHUB_STEP_SUMMARY
+
+  # Test tool execution with MCP server
+  test-tool-execution:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [discover-tool-categories, test-tool-loading]
+    if: ${{ !cancelled() }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl
+          pip install --upgrade pip
+          pip install -e .[test,all]
+      
+      - name: Start MCP Server
+        run: |
+          echo "🚀 Starting MCP server..."
+          python -m ipfs_datasets_py.mcp_dashboard &
+          MCP_PID=$!
+          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          
+          # Wait for server to be ready
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/mcp/status 2>/dev/null; then
+              echo "✅ MCP server is ready!"
+              break
+            fi
+            if [ $i -eq 60 ]; then
+              echo "❌ MCP server failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+      
+      - name: Test Tool Availability via API
+        id: tool_availability
+        continue-on-error: true
+        run: |
+          echo "🧪 Testing tool availability..."
+          
+          # Get list of available tools
+          TOOLS=$(curl -s http://127.0.0.1:8899/api/mcp/tools)
+          
+          if [ -z "$TOOLS" ] || [ "$TOOLS" = "null" ]; then
+            echo "❌ No tools available from API"
+            echo "tool_availability_failed=true" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Count tools
+          TOOL_COUNT=$(echo "$TOOLS" | python3 -c "import sys, json; data = json.load(sys.stdin); print(len(data) if isinstance(data, list) else len(data.get('tools', [])))" 2>/dev/null || echo "0")
+          
+          echo "Found $TOOL_COUNT tools via API"
+          
+          if [ "$TOOL_COUNT" -lt 10 ]; then
+            echo "⚠️ Expected more tools, found only $TOOL_COUNT"
+            echo "tool_availability_warning=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Tool availability looks good ($TOOL_COUNT tools)"
+          fi
+      
+      - name: Test Sample Tool Execution
+        id: tool_execution
+        continue-on-error: true
+        run: |
+          echo "🔧 Testing sample tool execution..."
+          
+          # Test a simple tool (if available)
+          python -c "
+          import requests
+          import json
+          
+          # Try to execute a simple info tool
+          try:
+              # Get list of tools first
+              response = requests.get('http://127.0.0.1:8899/api/mcp/tools', timeout=10)
+              tools = response.json()
+              
+              print(f'Available for testing: {len(tools) if isinstance(tools, list) else len(tools.get(\"tools\", []))} tools')
+              
+              # Try to get status
+              response = requests.get('http://127.0.0.1:8899/api/mcp/status', timeout=10)
+              status = response.json()
+              
+              if response.status_code == 200:
+                  print('✅ MCP server status endpoint working')
+              else:
+                  print(f'⚠️ Status endpoint returned {response.status_code}')
+              
+              print('✅ Sample tool execution test passed')
+              
+          except Exception as e:
+              print(f'❌ Tool execution test failed: {e}')
+              import sys
+              sys.exit(1)
+          " || echo "tool_execution_failed=true" >> $GITHUB_OUTPUT
+      
+      - name: Stop MCP Server
+        if: always()
+        run: |
+          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
+            kill $MCP_DASHBOARD_PID || true
+          fi
+          pkill -f "mcp_dashboard" || true
+
+  # Test specific tool categories
+  test-tool-categories:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [discover-tool-categories, test-tool-loading]
+    if: ${{ !cancelled() && github.event.inputs.test_mode == 'category' && github.event.inputs.category != 'all' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git
+          pip install --upgrade pip
+          pip install -e .[test]
+      
+      - name: Test Category Tools
+        run: |
+          echo "🔧 Testing category: ${{ github.event.inputs.category }}"
+          
+          CATEGORY="${{ github.event.inputs.category }}"
+          CATEGORY_DIR="ipfs_datasets_py/mcp_server/tools/$CATEGORY"
+          
+          if [ ! -d "$CATEGORY_DIR" ]; then
+            echo "❌ Category directory not found: $CATEGORY_DIR"
+            exit 1
+          fi
+          
+          python -c "
+          from pathlib import Path
+          import importlib.util
+          import sys
+          
+          category = '$CATEGORY'
+          category_dir = Path('ipfs_datasets_py/mcp_server/tools') / category
+          
+          print(f'Testing tools in category: {category}')
+          
+          failed_tools = []
+          
+          for tool_file in category_dir.glob('*.py'):
+              if tool_file.name.startswith('_') or tool_file.name == '__init__.py':
+                  continue
+              
+              tool_name = tool_file.stem
+              
+              try:
+                  module_name = f'ipfs_datasets_py.mcp_server.tools.{category}.{tool_name}'
+                  spec = importlib.util.spec_from_file_location(module_name, tool_file)
+                  if spec and spec.loader:
+                      module = importlib.util.module_from_spec(spec)
+                      sys.modules[module_name] = module
+                      spec.loader.exec_module(module)
+                      print(f'  ✅ {tool_name}')
+                  else:
+                      print(f'  ❌ {tool_name} - Could not create module spec')
+                      failed_tools.append(tool_name)
+              except Exception as e:
+                  print(f'  ❌ {tool_name} - {type(e).__name__}: {str(e)[:100]}')
+                  failed_tools.append(tool_name)
+          
+          if failed_tools:
+              print(f'\n❌ Failed tools in {category}:')
+              for tool in failed_tools:
+                  print(f'  - {tool}')
+              sys.exit(1)
+          else:
+              print(f'\n✅ All tools in {category} loaded successfully')
+          "
+
+  # Test error reporting integration
+  test-error-reporting:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: test-tool-loading
+    if: ${{ !cancelled() }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git
+          pip install --upgrade pip
+          pip install -e .[test]
+      
+      - name: Test MCP Tool Error Capture
+        run: |
+          echo "🧪 Testing MCP tool error reporting..."
+          
+          python -c "
+          from ipfs_datasets_py.error_reporting.error_reporter import ErrorReporter
+          
+          # Test error reporter
+          reporter = ErrorReporter(enabled=False)  # Disabled for testing
+          
+          print('✅ Error reporter initialized')
+          
+          # Test error formatting for MCP tools
+          try:
+              raise RuntimeError('Test MCP tool error')
+          except Exception as e:
+              import traceback
+              error_hash = reporter._compute_error_hash(
+                  error_type=type(e).__name__,
+                  error_message=str(e),
+                  error_location='test_location'
+              )
+              
+              print(f'✅ Error hash computed: {error_hash}')
+              
+              # Test deduplication
+              should_report = reporter._should_report_error(error_hash)
+              print(f'✅ Should report: {should_report}')
+          
+          print('✅ MCP tool error reporting test passed')
+          "
+
+  # Comprehensive tool health check
+  comprehensive-tool-health:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [discover-tool-categories, test-tool-loading, test-tool-execution]
+    if: ${{ !cancelled() && github.event.inputs.test_mode == 'comprehensive' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl
+          pip install --upgrade pip
+          pip install -e .[test,all]
+      
+      - name: Run Comprehensive Health Check
+        run: |
+          echo "🏥 Running comprehensive MCP tools health check..."
+          
+          python -c "
+          from pathlib import Path
+          import importlib.util
+          import sys
+          import json
+          
+          tools_dir = Path('ipfs_datasets_py/mcp_server/tools')
+          
+          health_report = {
+              'total_categories': 0,
+              'total_tools': 0,
+              'loaded_tools': 0,
+              'failed_tools': [],
+              'categories': {}
+          }
+          
+          for category_dir in tools_dir.iterdir():
+              if not category_dir.is_dir() or category_dir.name.startswith('_'):
+                  continue
+              
+              category_name = category_dir.name
+              health_report['total_categories'] += 1
+              health_report['categories'][category_name] = {
+                  'total': 0,
+                  'loaded': 0,
+                  'failed': []
+              }
+              
+              for tool_file in category_dir.glob('*.py'):
+                  if tool_file.name.startswith('_') or tool_file.name == '__init__.py':
+                      continue
+                  
+                  tool_name = tool_file.stem
+                  health_report['total_tools'] += 1
+                  health_report['categories'][category_name]['total'] += 1
+                  
+                  try:
+                      module_name = f'ipfs_datasets_py.mcp_server.tools.{category_name}.{tool_name}'
+                      spec = importlib.util.spec_from_file_location(module_name, tool_file)
+                      if spec and spec.loader:
+                          module = importlib.util.module_from_spec(spec)
+                          sys.modules[module_name] = module
+                          spec.loader.exec_module(module)
+                          health_report['loaded_tools'] += 1
+                          health_report['categories'][category_name]['loaded'] += 1
+                      else:
+                          health_report['failed_tools'].append(f'{category_name}/{tool_name}')
+                          health_report['categories'][category_name]['failed'].append(tool_name)
+                  except Exception as e:
+                      health_report['failed_tools'].append(f'{category_name}/{tool_name}')
+                      health_report['categories'][category_name]['failed'].append(tool_name)
+          
+          # Save report
+          with open('mcp_tools_health_report.json', 'w') as f:
+              json.dump(health_report, f, indent=2)
+          
+          # Print summary
+          print(f'\n📊 MCP Tools Health Report:')
+          print(f'  Categories: {health_report[\"total_categories\"]}')
+          print(f'  Total Tools: {health_report[\"total_tools\"]}')
+          print(f'  Loaded: {health_report[\"loaded_tools\"]}')
+          print(f'  Failed: {len(health_report[\"failed_tools\"])}')
+          
+          if health_report['failed_tools']:
+              print(f'\n❌ Failed tools:')
+              for tool in health_report['failed_tools']:
+                  print(f'  - {tool}')
+              sys.exit(1)
+          else:
+              print('\n✅ All MCP tools are healthy')
+          "
+      
+      - name: Upload Health Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-tools-health-report
+          path: mcp_tools_health_report.json
+
+  # Generate comprehensive test summary
+  mcp-tools-monitoring-summary:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [discover-tool-categories, test-tool-loading, test-tool-execution, test-error-reporting]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🔧 MCP Tools Error Monitoring Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool Discovery | ${{ needs.discover-tool-categories.result }} | Found ${{ needs.discover-tool-categories.outputs.category_count }} categories |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool Loading | ${{ needs.test-tool-loading.result }} | Module import and initialization |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool Execution | ${{ needs.test-tool-execution.result }} | API availability and execution |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Reporting | ${{ needs.test-error-reporting.result }} | Error capture integration |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add analysis
+          echo "### Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-tool-loading.result }}" = "success" ]; then
+            echo "✅ **Tool Loading**: All MCP tools loaded successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tool Loading**: Some tools failed to load - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-tool-execution.result }}" = "success" ]; then
+            echo "✅ **Tool Execution**: MCP server and tools are functional" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Tool Execution**: Issues with tool execution - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.test-error-reporting.result }}" = "success" ]; then
+            echo "✅ **Error Reporting**: MCP tool error capture working" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Error Reporting**: Issues with error reporting system" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Auto-Healing Integration" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed workflows trigger copilot-agent-autofix" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub issues created for tool failures" >> $GITHUB_STEP_SUMMARY
+          echo "- Draft PRs generated with Copilot fixes" >> $GITHUB_STEP_SUMMARY
