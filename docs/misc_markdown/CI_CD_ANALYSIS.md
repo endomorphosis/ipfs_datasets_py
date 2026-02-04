@@ -173,11 +173,10 @@ Based on x86_64 success, ARM64 builds should work identically once:
 
 1. **Fix External Dependency** (CRITICAL)
    ```bash
-   # Test older version of ipfs_kit_py
-   pip install ipfs_kit_py==0.2.9  # or latest working version
+   # Install from GitHub main branch (latest version)
+   pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main
    ```
-   - Check package history for last working version
-   - Update `setup.py` to pin working version
+   - Install from GitHub main branch for latest updates
    - Or make `ipfs_kit_py` an optional dependency
 
 2. **Verify .env.example Fix**

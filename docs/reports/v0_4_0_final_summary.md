@@ -354,10 +354,10 @@ await anyio.sleep(1)
 pip install ipfs-datasets-py[file_conversion]
 
 # With IPFS support
-pip install ipfs_kit_py
+pip install git+https://github.com/endomorphosis/ipfs_kit_py.git@main
 
 # With ML acceleration
-pip install ipfs_accelerate_py
+pip install git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
 
 # Everything
 pip install ipfs-datasets-py[all]
