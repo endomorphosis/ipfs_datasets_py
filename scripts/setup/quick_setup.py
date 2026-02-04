@@ -172,6 +172,37 @@ def ensure_libp2p_main(logger) -> None:
     except Exception as e:
         logger.error("❌ Error installing libp2p from git main: %s", e)
 
+
+def ensure_ipfs_accelerate_py(logger) -> None:
+    """Ensure ipfs_accelerate_py is installed from the git main branch."""
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                '-m',
+                'pip',
+                'install',
+                '--upgrade',
+                'ipfs_accelerate_py @ git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main',
+                '--disable-pip-version-check',
+                '--no-input',
+                '--progress-bar',
+                'off',
+            ],
+            capture_output=True,
+            text=True,
+            timeout=1200,
+        )
+        if result.returncode == 0:
+            logger.info("✅ Installed ipfs_accelerate_py from git main branch")
+        else:
+            error_msg = result.stderr or result.stdout or "No error details available"
+            logger.warning("❌ Failed to install ipfs_accelerate_py from git main: %s", error_msg.strip())
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Installation timed out for ipfs_accelerate_py (git main)")
+    except Exception as e:
+        logger.error("❌ Error installing ipfs_accelerate_py from git main: %s", e)
+
 def install_package(package_name, logger):
     """Install a single package with pip"""
     try:
@@ -820,6 +851,7 @@ def main():
 
     ensure_main_ipfs_kit_py(logger)
     ensure_libp2p_main(logger)
+    ensure_ipfs_accelerate_py(logger)
     
     logger.info("🔧 IPFS Datasets Quick Dependency Setup")
     logger.info("=" * 50)

@@ -15,11 +15,11 @@ The accelerate integration enables:
 ### Option 1: Install with accelerate support (recommended)
 
 ```bash
-# Install with accelerate extras
+# Install with accelerate extras (installs from GitHub main)
 pip install -e ".[accelerate]"
 
-# Or install full ipfs_accelerate_py from PyPI
-pip install ipfs-accelerate-py
+# Or install full ipfs_accelerate_py from GitHub main
+pip install git+https://github.com/endomorphosis/ipfs_accelerate_py.git@main
 ```
 
 ### Option 2: Use the submodule (development)
