@@ -5,7 +5,7 @@
 The IPFS Datasets Python auto-healing system automatically detects, reports, and fixes errors across all major components of the platform:
 
 - **CLI Tools** (ipfs-datasets, enhanced CLI, MCP CLI)
-- **MCP Server Tools** (200+ tools across 49+ categories)
+- **MCP Server Tools** (200+ tools across 49 categories)
 - **JavaScript SDK** (mcp-sdk.js, mcp-api-client.js)
 - **MCP Dashboard** (Web UI and error reporting)
 
