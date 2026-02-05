@@ -11,6 +11,7 @@ import os
 import shlex
 import shutil
 import subprocess
+from pathlib import Path
 from copy import deepcopy
 from typing import Any, Dict, List, Tuple
 
@@ -125,6 +126,32 @@ def _cli_available(command: str) -> bool:
     return shutil.which(parts[0]) is not None
 
 
+def _local_bin_paths() -> List[str]:
+    project_root = Path(
+        os.getenv("IPFS_DATASETS_PROJECT_ROOT", str(Path(__file__).resolve().parents[1]))
+    ).resolve()
+    bin_dir = Path(os.getenv("IPFS_DATASETS_LOCAL_BIN", str(project_root / "bin"))).resolve()
+    npm_prefix = Path(os.getenv("IPFS_DATASETS_NPM_PREFIX", str(bin_dir / ".deps" / "npm"))).resolve()
+    npm_bin = npm_prefix / "bin"
+    return [str(bin_dir), str(npm_bin)]
+
+
+def _resolve_copilot_cli_path() -> str | None:
+    env_path = os.environ.get("COPILOT_CLI_PATH")
+    if env_path and Path(env_path).exists():
+        return env_path
+
+    for base_path in _local_bin_paths():
+        candidate = Path(base_path) / "copilot"
+        if candidate.exists():
+            return str(candidate)
+
+    resolved = shutil.which("copilot")
+    if resolved:
+        return resolved
+    return None
+
+
 def _run_cli_command(command: str, prompt: str) -> str:
     if not command:
         raise RuntimeError("CLI command not configured")
@@ -134,11 +161,17 @@ def _run_cli_command(command: str, prompt: str) -> str:
     else:
         cmd = shlex.split(command)
         cmd.append(prompt)
+    env = os.environ.copy()
+    local_paths = [p for p in _local_bin_paths() if p]
+    if local_paths:
+        current_path = env.get("PATH", "")
+        env["PATH"] = os.pathsep.join(local_paths + [current_path])
     proc = subprocess.run(
         cmd,
         text=True,
         capture_output=True,
         check=False,
+        env=env,
     )
     if proc.returncode != 0:
         raise RuntimeError(proc.stderr.strip() or "CLI command failed")
@@ -151,37 +184,54 @@ def _gemini_cli_generate(prompt: str) -> str:
 
 
 def _copilot_cli_generate(prompt: str) -> str:
-    command = os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")
+    command = os.environ.get(
+        "IPFS_DATASETS_PY_COPILOT_CLI_CMD",
+        "npx --yes @github/copilot -p",
+    )
     return _run_cli_command(command, prompt)
 
 
 def _claude_code_generate(prompt: str) -> str:
-    command = os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude-code")
+    command = os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")
     return _run_cli_command(command, prompt)
 
 
 def _copilot_sdk_generate(prompt: str) -> str:
     try:
-        import copilot_sdk  # type: ignore
+        import copilot  # type: ignore
     except Exception as exc:
         raise RuntimeError("copilot-sdk not available") from exc
 
-    for attr_name in ("Client", "Copilot", "CopilotClient"):
-        client_cls = getattr(copilot_sdk, attr_name, None)
-        if client_cls is None:
-            continue
+    cli_path = _resolve_copilot_cli_path()
+    if cli_path:
+        os.environ["COPILOT_CLI_PATH"] = cli_path
+
+    async def _run() -> str:
+        options = {}
+        if cli_path:
+            options["cli_path"] = cli_path
+        client = copilot.CopilotClient(options or None)
+        await client.start()
+        session = await client.create_session()
         try:
-            client = client_cls()
-        except Exception:
-            continue
+            event = await session.send_and_wait({"prompt": prompt})
+            if event and getattr(event, "data", None) is not None:
+                content = getattr(event.data, "content", None)
+                if content is not None:
+                    return str(content)
+            return ""
+        finally:
+            await session.destroy()
+            await client.stop()
 
-        for method_name in ("complete", "generate", "chat", "ask", "prompt"):
-            method = getattr(client, method_name, None)
-            if callable(method):
-                response = method(prompt)
-                return str(response)
+    try:
+        import asyncio
 
-    raise RuntimeError("copilot-sdk client API not recognized")
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_run())
+
+    raise RuntimeError("copilot-sdk requires a non-running event loop context")
 
 
 def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
@@ -205,16 +255,12 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
     except Exception as exc:
         metadata["errors"].append(f"ipfs_accelerate_py: {exc}")
 
-    hf_model = model_name
-    if not hf_model or hf_model == "default":
-        hf_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", "gpt2")
     try:
-        text = _hf_generate(prompt, hf_model)
-        metadata["backend"] = "huggingface"
-        metadata["model"] = hf_model
+        text = _copilot_sdk_generate(prompt)
+        metadata["backend"] = "copilot_sdk"
         return text, metadata
     except Exception as exc:
-        metadata["errors"].append(f"huggingface: {exc}")
+        metadata["errors"].append(f"copilot_sdk: {exc}")
 
     try:
         if _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")):
@@ -225,15 +271,7 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
         metadata["errors"].append(f"gemini_cli: {exc}")
 
     try:
-        if _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")):
-            text = _copilot_cli_generate(prompt)
-            metadata["backend"] = "copilot_cli"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"copilot_cli: {exc}")
-
-    try:
-        if _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude-code")):
+        if _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")):
             text = _claude_code_generate(prompt)
             metadata["backend"] = "claude_code"
             return text, metadata
@@ -241,11 +279,12 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
         metadata["errors"].append(f"claude_code: {exc}")
 
     try:
-        text = _copilot_sdk_generate(prompt)
-        metadata["backend"] = "copilot_sdk"
-        return text, metadata
+        if _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")):
+            text = _copilot_cli_generate(prompt)
+            metadata["backend"] = "copilot_cli"
+            return text, metadata
     except Exception as exc:
-        metadata["errors"].append(f"copilot_sdk: {exc}")
+        metadata["errors"].append(f"copilot_cli: {exc}")
 
     try:
         if GeminiCLI and GeminiCLI().is_installed():
@@ -262,6 +301,17 @@ def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
             return text, metadata
     except Exception as exc:
         metadata["errors"].append(f"claude_py: {exc}")
+
+    hf_model = model_name
+    if not hf_model or hf_model == "default":
+        hf_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", "Qwen/Qwen3-1.7B-Thinker")
+    try:
+        text = _hf_generate(prompt, hf_model)
+        metadata["backend"] = "huggingface"
+        metadata["model"] = hf_model
+        return text, metadata
+    except Exception as exc:
+        metadata["errors"].append(f"huggingface: {exc}")
 
     raise RuntimeError("No available backend for SyMAI router: " + "; ".join(metadata["errors"]))
 

@@ -403,6 +403,13 @@ if (
             import warnings
             warnings.warn(f"Auto-install for component '{_component}' failed during import: {e}")
 
+    if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
+        try:
+            install_for_component('symai_router')
+        except Exception as e:
+            import warnings
+            warnings.warn(f"Auto-install for component 'symai_router' failed during import: {e}")
+
 try:
     from .pdf_processing import PDFProcessor
     HAVE_PDF_PROCESSOR = True

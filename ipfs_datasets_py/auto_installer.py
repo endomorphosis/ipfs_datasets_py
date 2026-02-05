@@ -36,9 +36,13 @@ class DependencyInstaller:
         self.project_root = Path(os.getenv('IPFS_DATASETS_PROJECT_ROOT', str(default_project_root))).resolve()
         self.bin_dir = Path(os.getenv('IPFS_DATASETS_LOCAL_BIN', str(self.project_root / 'bin'))).resolve()
         self.deps_dir = Path(os.getenv('IPFS_DATASETS_LOCAL_DEPS', str(self.bin_dir / '.deps'))).resolve()
+        self.npm_prefix_dir = Path(os.getenv('IPFS_DATASETS_NPM_PREFIX', str(self.deps_dir / 'npm'))).resolve()
+        self.npm_bin_dir = self.npm_prefix_dir / 'bin'
 
         self.bin_dir.mkdir(parents=True, exist_ok=True)
         self.deps_dir.mkdir(parents=True, exist_ok=True)
+        self.npm_prefix_dir.mkdir(parents=True, exist_ok=True)
+        self.npm_bin_dir.mkdir(parents=True, exist_ok=True)
         self._ensure_bin_on_path()
         
         # Track installed packages to avoid duplicate installations
@@ -177,6 +181,24 @@ class DependencyInstaller:
             'reportlab': ['reportlab>=4.0.0,<5.0.0'],
             # Local binary helpers
             'imageio-ffmpeg': ['imageio-ffmpeg>=0.6.0'],
+            # Copilot SDK
+            'github-copilot-sdk': ['github-copilot-sdk>=0.1.0'],
+        }
+
+        # Node CLI packages used by the SyMAI router (npm install -g)
+        self.node_cli_packages = {
+            'gemini-cli': {
+                'package': '@google/gemini-cli',
+                'command': 'npx',
+            },
+            'copilot': {
+                'package': '@github/copilot',
+                'command': 'copilot',
+            },
+            'claude-code': {
+                'package': '@anthropic-ai/claude-code',
+                'command': 'claude',
+            },
         }
 
         # Minimal command mapping used to verify system tools.
@@ -193,12 +215,16 @@ class DependencyInstaller:
     def _ensure_bin_on_path(self) -> None:
         """Prepend local bin directory to PATH for the current process."""
         bin_str = str(self.bin_dir)
+        npm_bin = str(self.npm_bin_dir)
         current = os.environ.get('PATH', '')
         parts = current.split(os.pathsep) if current else []
-        if parts and parts[0] == bin_str:
+        new_parts = []
+        for entry in [bin_str, npm_bin]:
+            if entry and entry not in parts and entry not in new_parts:
+                new_parts.append(entry)
+        if not new_parts:
             return
-        if bin_str not in parts:
-            os.environ['PATH'] = os.pathsep.join([bin_str] + parts)
+        os.environ['PATH'] = os.pathsep.join(new_parts + parts)
 
     def _normalized_arch(self) -> str:
         """Return a normalized architecture label."""
@@ -469,6 +495,147 @@ exec "$BIN" "$@"
             return True
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
+
+    def _npm_available(self) -> bool:
+        return self._command_exists_path('npm')
+
+    def _node_version_tuple(self, node_cmd: str = 'node') -> Optional[Tuple[int, int, int]]:
+        try:
+            result = subprocess.run([node_cmd, '--version'], capture_output=True, text=True, timeout=5)
+        except Exception:
+            return None
+        if result.returncode != 0:
+            return None
+        version_text = (result.stdout or result.stderr or '').strip()
+        if not version_text:
+            return None
+        if version_text.startswith('v'):
+            version_text = version_text[1:]
+        parts = version_text.split('.')
+        try:
+            major = int(parts[0])
+            minor = int(parts[1]) if len(parts) > 1 else 0
+            patch = int(parts[2]) if len(parts) > 2 else 0
+        except ValueError:
+            return None
+        return (major, minor, patch)
+
+    def _node_dist_target(self) -> Optional[str]:
+        arch = self._normalized_arch()
+        if self.system == 'linux':
+            if arch == 'amd64':
+                return 'linux-x64'
+            if arch == 'arm64':
+                return 'linux-arm64'
+        if self.system == 'darwin':
+            if arch == 'amd64':
+                return 'darwin-x64'
+            if arch == 'arm64':
+                return 'darwin-arm64'
+        return None
+
+    def install_nodejs_local(self, version: str) -> bool:
+        target = self._node_dist_target()
+        if not target:
+            if self.verbose:
+                logger.warning("No local Node.js build for %s/%s", self.system, self.architecture)
+            return False
+
+        node_dir = self.deps_dir / f"node-v{version}-{target}"
+        node_bin = node_dir / 'bin'
+        if not node_dir.exists():
+            url = f"https://nodejs.org/dist/v{version}/node-v{version}-{target}.tar.xz"
+            archive_path = self.deps_dir / f"node-v{version}-{target}.tar.xz"
+            if self.verbose:
+                logger.info("Downloading Node.js %s from %s", version, url)
+            try:
+                from urllib.request import urlopen
+                with urlopen(url, timeout=120) as response, open(archive_path, 'wb') as archive_file:
+                    archive_file.write(response.read())
+            except Exception as exc:
+                if self.verbose:
+                    logger.warning("Failed to download Node.js: %s", exc)
+                return False
+
+            try:
+                import tarfile
+                with tarfile.open(archive_path, 'r:xz') as archive:
+                    archive.extractall(self.deps_dir)
+            except Exception as exc:
+                if self.verbose:
+                    logger.warning("Failed to extract Node.js archive: %s", exc)
+                return False
+
+        if not node_bin.exists():
+            if self.verbose:
+                logger.warning("Node.js bin directory missing: %s", node_bin)
+            return False
+
+        for binary_name in ('node', 'npm', 'npx'):
+            source_path = node_bin / binary_name
+            if not source_path.exists():
+                continue
+            target_path = self.bin_dir / binary_name
+            if target_path.exists():
+                continue
+            try:
+                os.symlink(source_path, target_path)
+            except Exception:
+                try:
+                    import shutil
+                    shutil.copy2(source_path, target_path)
+                except Exception:
+                    if self.verbose:
+                        logger.warning("Failed to link %s", binary_name)
+        self._ensure_bin_on_path()
+        return self._node_version_tuple(str(self.bin_dir / 'node')) is not None
+
+    def ensure_nodejs(self, min_major: int = 20) -> bool:
+        version = self._node_version_tuple()
+        if version and version[0] >= min_major:
+            return True
+        if not self.auto_install:
+            return False
+        version_str = os.getenv('IPFS_DATASETS_NODE_VERSION', '20.11.1')
+        if not self.install_nodejs_local(version_str):
+            return False
+        version = self._node_version_tuple(str(self.bin_dir / 'node'))
+        return bool(version and version[0] >= min_major)
+
+    def install_node_cli_dependency(self, package_name: str) -> bool:
+        if not self.auto_install:
+            return False
+        if not self._npm_available():
+            if not self.ensure_nodejs(min_major=20):
+                if self.verbose:
+                    logger.warning("Node.js 20+ not available; cannot install %s", package_name)
+                return False
+        if not self._npm_available():
+            if self.verbose:
+                logger.warning("npm is not available; cannot install %s", package_name)
+            return False
+
+        try:
+            cmd = ['npm', 'install', '-g', '--prefix', str(self.npm_prefix_dir), package_name]
+            if self.verbose:
+                logger.info("Installing Node CLI package %s", package_name)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
+            if result.returncode == 0:
+                return True
+            if self.verbose:
+                logger.warning("npm install failed for %s: %s", package_name, result.stderr.strip())
+            return False
+        except Exception as e:
+            if self.verbose:
+                logger.warning("npm install error for %s: %s", package_name, e)
+            return False
+
+    def verify_node_cli(self, command: str) -> bool:
+        if not command:
+            return False
+        if command == 'npx':
+            return self._npm_available()
+        return self._command_exists_path(command)
 
     def install_system_dependency(self, package_name: str) -> bool:
         """Install system-level dependency"""
@@ -1147,6 +1314,34 @@ def install_for_component(component: str) -> bool:
             ('newspaper', 'newspaper3k'),
             ('readability', 'readability-lxml'),
         ]
+    elif component == 'symai_router':
+        dependencies = [
+            ('copilot', 'github-copilot-sdk'),
+        ]
+        if not installer.ensure_nodejs(min_major=20):
+            if installer.verbose:
+                logger.warning("Node.js 20+ not available; CLI installs may fail")
+            return False
+        cli_success = 0
+        cli_total = 0
+        for cli_info in installer.node_cli_packages.values():
+            cli_total += 1
+            command = cli_info.get('command', '')
+            if installer.verify_node_cli(command):
+                cli_success += 1
+                continue
+            if installer.install_node_cli_dependency(cli_info.get('package', '')):
+                if installer.verify_node_cli(command):
+                    cli_success += 1
+        success_count = 0
+        for dep_info in dependencies:
+            module_name = dep_info[0]
+            package_name = dep_info[1] if len(dep_info) > 1 else module_name
+            system_deps = dep_info[2] if len(dep_info) > 2 else None
+            success, _ = installer.ensure_dependency(module_name, package_name, system_deps)
+            if success:
+                success_count += 1
+        return success_count >= len(dependencies) and cli_success == cli_total
     else:
         logger.warning(f"Unknown component: {component}")
         return False
