@@ -442,10 +442,41 @@ if SYMBOLIC_AI_AVAILABLE:
                 "failed_conversions": 0,
                 "average_confidence": 0.0
             }
+
+        def _coerce_input(self, input_data: Any) -> FOLInput:
+            """Normalize dynamic input into a validated FOLInput instance."""
+            if isinstance(input_data, FOLInput):
+                return input_data
+
+            if isinstance(input_data, dict):
+                payload = input_data
+            else:
+                payload = {}
+                if hasattr(input_data, "text"):
+                    payload["text"] = getattr(input_data, "text")
+                elif hasattr(input_data, "natural_language"):
+                    payload["text"] = getattr(input_data, "natural_language")
+
+                if hasattr(input_data, "domain_predicates"):
+                    payload["domain_predicates"] = getattr(input_data, "domain_predicates")
+                if hasattr(input_data, "confidence_threshold"):
+                    payload["confidence_threshold"] = getattr(input_data, "confidence_threshold")
+                if hasattr(input_data, "output_format"):
+                    payload["output_format"] = getattr(input_data, "output_format")
+                if hasattr(input_data, "reasoning_depth"):
+                    payload["reasoning_depth"] = getattr(input_data, "reasoning_depth")
+                if hasattr(input_data, "validate_syntax"):
+                    payload["validate_syntax"] = getattr(input_data, "validate_syntax")
+
+            if "text" not in payload:
+                raise ValueError("Input data missing required 'text' field")
+
+            return FOLInput(**payload)
         
         def pre(self, input_data: FOLInput) -> bool:
             """Validate input before processing."""
             try:
+            input_data = self._coerce_input(input_data)
                 # Basic input validation is handled by Pydantic
                 
                 # Additional semantic validation
@@ -499,6 +530,8 @@ if SYMBOLIC_AI_AVAILABLE:
             """Main conversion logic."""
             try:
                 from .symbolic_fol_bridge import SymbolicFOLBridge
+
+                input_data = self._coerce_input(input_data)
                 
                 # Create bridge and process
                 bridge = SymbolicFOLBridge(
@@ -541,8 +574,9 @@ if SYMBOLIC_AI_AVAILABLE:
             except Exception as e:
                 logger.error(f"Conversion failed: {e}")
                 # Return minimal valid output for error cases
+                text_value = getattr(input_data, "text", str(input_data))
                 return FOLOutput(
-                    fol_formula=f"Error({input_data.text.replace(' ', '_')})",
+                    fol_formula=f"Error({text_value.replace(' ', '_')})",
                     confidence=0.0,
                     logical_components={"quantifiers": [], "predicates": [], "entities": []},
                     reasoning_steps=[],
