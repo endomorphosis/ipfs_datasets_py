@@ -27,9 +27,14 @@ try:
 
     chosen_engine = choose_symai_neurosymbolic_engine()
     if chosen_engine:
+        # If we're routing through Codex, force-refresh the venv config so a
+        # previously written (and potentially unsupported) model string doesn't
+        # stick around.
+        force_config = bool(chosen_engine.get("model", "").startswith("codex:"))
         ensure_symai_config(
             neurosymbolic_model=chosen_engine["model"],
             neurosymbolic_api_key=chosen_engine["api_key"],
+            force=force_config,
         )
 
     import symai

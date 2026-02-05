@@ -121,7 +121,10 @@ def choose_symai_neurosymbolic_engine() -> Optional[Dict[str, str]]:
     if not codex_path:
         return None
 
-    codex_model = os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL", "o3-mini")
+    # Under many Codex (ChatGPT/OAuth) logins, only certain model IDs are supported.
+    # We have empirically validated `gpt-5.2` works in this environment, while
+    # some `*-chat-latest` / `*-pro` variants can be rejected.
+    codex_model = os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL", "gpt-5.2")
     return {
         # We'll register a plugin engine that claims `neurosymbolic` when model starts with `codex:`
         "model": f"codex:{codex_model}",
