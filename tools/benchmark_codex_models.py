@@ -120,6 +120,11 @@ def main() -> int:
         workspace / "outputs" / "codex_model_benchmark.log",
     ))
     log_path.parent.mkdir(parents=True, exist_ok=True)
+    tee_log_path = Path(os.environ.get(
+        "IPFS_DATASETS_PY_CODEX_BENCHMARK_TEE_LOG",
+        workspace.parent / "outputs" / "last_run.log",
+    ))
+    tee_log_path.parent.mkdir(parents=True, exist_ok=True)
 
     def log(message: str) -> None:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
@@ -127,6 +132,11 @@ def main() -> int:
         print(line, flush=True)
         try:
             with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
+        except Exception:
+            pass
+        try:
+            with tee_log_path.open("a", encoding="utf-8") as handle:
                 handle.write(line + "\n")
         except Exception:
             pass
