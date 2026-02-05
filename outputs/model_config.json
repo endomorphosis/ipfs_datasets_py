@@ -1,0 +1,8 @@
+{
+  "copilot_cli_models": [
+    "gpt-5-mini"
+  ],
+  "copilot_sdk_models": [
+    "gpt-5-mini"
+  ]
+}

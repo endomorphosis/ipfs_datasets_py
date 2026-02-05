@@ -7,34 +7,17 @@ import time
 from pathlib import Path
 from typing import Dict, List
 
+from ipfs_datasets_py.utils.model_manager import load_model_config
 
-DEFAULT_MODELS = [
-    "gpt-5.2-codex",
-    "gpt-5.1-codex-mini",
-    "gpt-5.1-codex-max",
-    "gpt-5.2",
-    "gpt-5.1",
-    "gpt-5.1-codex",
-    "gpt-5-codex",
-    "gpt-5-codex-mini",
-    "gpt-5",
-]
 
-DEFAULT_BACKENDS = [
-    "codex",
-    "copilot_sdk",
-    "copilot_cli",
-    "gemini_cli",
-    "claude_code",
-    "gemini_py",
-    "claude_py",
-    "huggingface",
-    "ipfs_accelerate_py",
-]
+DEFAULT_MODELS: List[str] = []
 
-DEFAULT_HF_MODELS = [
-    "Qwen/Qwen3-1.7B-Thinker",
-]
+DEFAULT_BACKENDS: List[str] = []
+
+DEFAULT_HF_MODELS: List[str] = []
+
+DEFAULT_COPILOT_CLI_MODELS: List[str] = []
+DEFAULT_COPILOT_SDK_MODELS: List[str] = []
 
 
 def _parse_model_list(value: str) -> List[str]:
@@ -142,12 +125,22 @@ def main() -> int:
                 handle.write(line + "\n")
         except Exception:
             pass
+    config = load_model_config()
     env_models = _parse_model_list(os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL_LIST", ""))
-    models = env_models or DEFAULT_MODELS
+    models = env_models or config.get("codex_models") or DEFAULT_MODELS
     env_backends = _parse_list(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_BACKENDS", ""))
-    backends = env_backends or DEFAULT_BACKENDS
+    backends = env_backends or config.get("backends") or DEFAULT_BACKENDS
     env_hf_models = _parse_list(os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL_LIST", ""))
-    hf_models = env_hf_models or DEFAULT_HF_MODELS
+    hf_models = env_hf_models or config.get("hf_models") or DEFAULT_HF_MODELS
+    env_copilot_models = _parse_list(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_MODEL_LIST", ""))
+    copilot_models = env_copilot_models or config.get("copilot_cli_models") or DEFAULT_COPILOT_CLI_MODELS
+    env_copilot_sdk_models = _parse_list(os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL_LIST", ""))
+    copilot_sdk_models = (
+        env_copilot_sdk_models
+        or config.get("copilot_sdk_models")
+        or copilot_models
+        or DEFAULT_COPILOT_SDK_MODELS
+    )
 
     tests = _collect_tests(workspace)
     if not tests:
@@ -161,6 +154,8 @@ def main() -> int:
         "backends": backends,
         "codex_models": models,
         "hf_models": hf_models,
+        "copilot_cli_models": copilot_models,
+        "copilot_sdk_models": copilot_sdk_models,
         "tests": [str(p) for p in tests],
         "runs": runs,
         "entries": [],
@@ -186,6 +181,24 @@ def main() -> int:
                 variants.append({
                     "label": f"huggingface:{model}",
                     "backend": "huggingface",
+                    "model": model,
+                })
+            continue
+
+        if backend == "copilot_cli":
+            for model in copilot_models:
+                variants.append({
+                    "label": f"copilot_cli:{model}",
+                    "backend": "copilot_cli",
+                    "model": model,
+                })
+            continue
+
+        if backend == "copilot_sdk":
+            for model in copilot_sdk_models:
+                variants.append({
+                    "label": f"copilot_sdk:{model}",
+                    "backend": "copilot_sdk",
                     "model": model,
                 })
             continue
@@ -225,6 +238,12 @@ def main() -> int:
                 env["IPFS_DATASETS_PY_SYMAI_BACKEND"] = variant["backend"]
                 if variant["backend"] == "huggingface" and variant["model"]:
                     env["IPFS_DATASETS_PY_SYMAI_HF_MODEL"] = variant["model"]
+                if variant["backend"] == "copilot_cli" and variant["model"]:
+                    env["IPFS_DATASETS_PY_COPILOT_CLI_CMD"] = (
+                        f"npx --yes @github/copilot --model {variant['model']} -p {{prompt}}"
+                    )
+                if variant["backend"] == "copilot_sdk" and variant["model"]:
+                    env["IPFS_DATASETS_PY_COPILOT_SDK_MODEL"] = variant["model"]
 
             for test_path in tests:
                 start_time = time.monotonic()

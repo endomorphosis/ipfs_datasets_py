@@ -252,6 +252,7 @@ def _copilot_sdk_generate(prompt: str) -> str:
     cli_path = _resolve_copilot_cli_path()
     if cli_path:
         os.environ["COPILOT_CLI_PATH"] = cli_path
+    model = os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "").strip()
 
     async def _run() -> str:
         options = {}
@@ -259,7 +260,10 @@ def _copilot_sdk_generate(prompt: str) -> str:
             options["cli_path"] = cli_path
         client = copilot.CopilotClient(options or None)
         await client.start()
-        session = await client.create_session()
+        if model:
+            session = await client.create_session({"model": model})
+        else:
+            session = await client.create_session()
         try:
             event = await session.send_and_wait({"prompt": prompt})
             if event and getattr(event, "data", None) is not None:
