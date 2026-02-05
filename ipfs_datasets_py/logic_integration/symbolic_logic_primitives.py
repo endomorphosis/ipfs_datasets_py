@@ -19,7 +19,7 @@ try:
     from symai.ops.primitives import Primitive
     import symai.core as core
     SYMBOLIC_AI_AVAILABLE = True
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     logger.warning("SymbolicAI not available. Logic primitives will use fallback implementations.")
     

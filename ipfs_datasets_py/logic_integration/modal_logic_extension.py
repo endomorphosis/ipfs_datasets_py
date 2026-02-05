@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 try:
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     logger.warning("SymbolicAI not available. Modal logic features will be limited.")
     

@@ -24,7 +24,7 @@ try:
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True
     logger.info("SymbolicAI available for enhanced legal analysis")
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     logger.warning("SymbolicAI not available - using fallback legal analysis")
 

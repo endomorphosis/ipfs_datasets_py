@@ -21,7 +21,7 @@ try:
     from symai import Expression
     from symai.strategy import contract
     SYMBOLIC_AI_AVAILABLE = True
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     logger.warning("SymbolicAI not available. Contract system will use fallback implementation.")
     
