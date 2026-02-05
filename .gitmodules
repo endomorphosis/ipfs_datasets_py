@@ -1,8 +1,3 @@
-[submodule "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3"]
-	path = ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3
-	url = https://github.com/the-ride-never-ends/scrape_the_law_mk3
-	# Note: This submodule has a broken nested 'database' submodule
-	# CI workflows should NOT use 'recursive' option when checking out this submodule
 [submodule "ipfs_kit_py"]
         path = ipfs_kit_py
         url = https://github.com/endomorphosis/ipfs_kit_py.git
@@ -14,10 +9,6 @@
 [submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
 	path = ipfs_datasets_py/multimedia/omni_converter_mk2
 	url = https://github.com/endomorphosis/omni_converter_mk2
-[submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
-	path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
-	url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
-
 [submodule "ipfs_datasets_py/web_archiving/common_crawl_search_engine"]
 	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
 	url = https://github.com/endomorphosis/common_crawl_search_engine
