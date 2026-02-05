@@ -100,13 +100,18 @@ def _configure_neurosymbolic_router() -> None:
         return
 
     router_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default")
-    if not os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL"):
+    current_env_model = os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL", "")
+    if not current_env_model or current_env_model.startswith("codex:"):
         os.environ["NEUROSYMBOLIC_ENGINE_MODEL"] = router_model
     if not os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY"):
         os.environ["NEUROSYMBOLIC_ENGINE_API_KEY"] = "ipfs"
 
     current_model = SYMAI_CONFIG.get("NEUROSYMBOLIC_ENGINE_MODEL")
-    if not (isinstance(current_model, str) and current_model.startswith(("ipfs:", "codex:"))):
+    if not isinstance(current_model, str):
+        SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_MODEL"] = os.environ["NEUROSYMBOLIC_ENGINE_MODEL"]
+    elif current_model.startswith("codex:"):
+        SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_MODEL"] = os.environ["NEUROSYMBOLIC_ENGINE_MODEL"]
+    elif not current_model.startswith("ipfs:"):
         SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_MODEL"] = os.environ["NEUROSYMBOLIC_ENGINE_MODEL"]
     if not SYMAI_CONFIG.get("NEUROSYMBOLIC_ENGINE_API_KEY"):
         SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_API_KEY"] = os.environ["NEUROSYMBOLIC_ENGINE_API_KEY"]
@@ -459,6 +464,12 @@ class IPFSSyMAIEngine(Engine):
 
         parts: List[str] = []
 
+        response_format = getattr(argument.prop, "response_format", None)
+        if response_format is None:
+            payload = getattr(argument.prop, "payload", None)
+            if isinstance(payload, dict):
+                response_format = payload.get("response_format")
+
         prompt = getattr(argument.prop, "prompt", None)
         if prompt:
             parts.append(str(prompt).strip())
@@ -467,9 +478,12 @@ class IPFSSyMAIEngine(Engine):
         if processed:
             parts.append(str(processed))
 
-        parts.append(
-            "\n\nIMPORTANT: Return only the final answer text. Do not run commands. Do not describe steps."
-        )
+        if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+            parts.append("\n\nIMPORTANT: Return only a valid JSON object. Do not include extra text.")
+        else:
+            parts.append(
+                "\n\nIMPORTANT: Return only the final answer text. Do not run commands. Do not describe steps."
+            )
 
         argument.prop.prepared_input = "\n\n".join([p for p in parts if p])
 
