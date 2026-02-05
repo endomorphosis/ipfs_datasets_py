@@ -33,7 +33,7 @@ try:
         )
 
     import symai
-    from symai import Symbol, Expression
+    from symai import Expression
 
     # If we are routing via Codex, register the custom engine before any queries.
     try:
@@ -116,8 +116,8 @@ class LegalSymbolicAnalyzer:
     def _initialize_symbolic_ai(self):
         """Initialize SymbolicAI components for legal analysis."""
         try:
-            # Configure SymbolicAI for legal domain
-            self.legal_context = Symbol("""
+            # Store prompt context strings; evaluation happens via `Expression.prompt(...)()`.
+            self.legal_context_text = """
 You are an expert legal analyst specializing in converting legal text into formal logic.
 Your task is to identify:
 1. Legal obligations (what parties MUST do)
@@ -128,21 +128,21 @@ Your task is to identify:
 6. Conditional requirements (under what circumstances)
 
 Focus on precise identification of deontic concepts for formal logic conversion.
-""")
-            
-            self.entity_extractor = Symbol("""
+""".strip()
+
+            self.entity_extractor_text = """
 Extract all legal entities (parties, organizations, roles) from the given legal text.
 Return a structured list with entity names, types, and roles.
-""")
-            
-            self.deontic_extractor = Symbol("""
+""".strip()
+
+            self.deontic_extractor_text = """
 Identify all deontic statements (obligations, permissions, prohibitions) in the legal text.
 For each statement, identify:
 - The deontic operator (must/shall/may/must not/shall not)
 - The agent (who has the obligation/permission/prohibition)
 - The action or proposition
 - Any conditions or temporal constraints
-""")
+""".strip()
             
             logger.info("SymbolicAI legal analysis components initialized")
             
@@ -181,8 +181,10 @@ Provide structured analysis with confidence scores.
 """
             
             # Get SymbolicAI analysis
-            analysis_symbol = Symbol(analysis_prompt)
-            result = self.legal_context(analysis_symbol)
+            result = Expression.prompt(
+                analysis_prompt,
+                static_context=self.legal_context_text,
+            )()
             
             # Parse the result (this would be more sophisticated in real implementation)
             return self._parse_symbolic_analysis(str(result), text)
@@ -218,8 +220,10 @@ Text: {text}
 Format as structured list with confidence scores.
 """
             
-            extraction_symbol = Symbol(extraction_prompt)
-            result = self.deontic_extractor(extraction_symbol)
+            result = Expression.prompt(
+                extraction_prompt,
+                static_context=f"{self.legal_context_text}\n\n{self.deontic_extractor_text}",
+            )()
             
             return self._parse_deontic_propositions(str(result), text)
             
@@ -254,8 +258,10 @@ Text: {text}
 Provide entity names, types (person/organization/government), and roles with confidence scores.
 """
             
-            entity_symbol = Symbol(entity_prompt)
-            result = self.entity_extractor(entity_symbol)
+            result = Expression.prompt(
+                entity_prompt,
+                static_context=f"{self.legal_context_text}\n\n{self.entity_extractor_text}",
+            )()
             
             return self._parse_legal_entities(str(result))
             
@@ -290,8 +296,10 @@ Text: {text}
 Provide structured temporal information with normalized dates where possible.
 """
             
-            temporal_symbol = Symbol(temporal_prompt)
-            result = self.legal_context(temporal_symbol)
+            result = Expression.prompt(
+                temporal_prompt,
+                static_context=self.legal_context_text,
+            )()
             
             return self._parse_temporal_conditions(str(result))
             
