@@ -5,6 +5,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def _truthy(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _default_symai_config() -> Dict[str, Any]:
     # Mirrors symai.setup_wizard() defaults to avoid KeyErrors at import-time.
     return {
@@ -36,6 +40,7 @@ def ensure_symai_config(
     neurosymbolic_model: str,
     neurosymbolic_api_key: str,
     force: bool = False,
+    apply_engine_router: bool = False,
 ) -> Optional[Path]:
     """Ensure `symai` has a config file so `import symai` doesn't call sys.exit(1).
 
@@ -73,6 +78,22 @@ def ensure_symai_config(
         config["NEUROSYMBOLIC_ENGINE_MODEL"] = neurosymbolic_model
     if force or not config.get("NEUROSYMBOLIC_ENGINE_API_KEY"):
         config["NEUROSYMBOLIC_ENGINE_API_KEY"] = neurosymbolic_api_key
+
+    if apply_engine_router:
+        def set_if_empty(key: str, value: str) -> None:
+            if force or not config.get(key):
+                config[key] = value
+
+        set_if_empty("SYMBOLIC_ENGINE", "ipfs")
+        set_if_empty("EMBEDDING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"))
+        set_if_empty("SEARCH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"))
+        set_if_empty("OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default"))
+        set_if_empty("SPEECH_TO_TEXT_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SPEECH_TO_TEXT_MODEL", "ipfs:default"))
+        set_if_empty("TEXT_TO_SPEECH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_TEXT_TO_SPEECH_MODEL", "ipfs:default"))
+        set_if_empty("DRAWING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_DRAWING_MODEL", "ipfs:default"))
+        set_if_empty("VISION_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_VISION_MODEL", "ipfs:default"))
+        set_if_empty("CAPTION_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_CAPTION_MODEL", "ipfs:default"))
+        set_if_empty("INDEXING_ENGINE_ENVIRONMENT", os.environ.get("IPFS_DATASETS_PY_SYMAI_INDEXING_ENV", "ipfs:default"))
 
     try:
         config_path.write_text(json.dumps(config, indent=4), encoding="utf-8")

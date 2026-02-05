@@ -103,6 +103,20 @@ except ImportError:
     AccelerateManager = None
     HAVE_ACCELERATE_MANAGER = False
 
+# Optional SyMAI engine router registration
+try:
+    if os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }:
+        from .utils.symai_ipfs_engine import register_ipfs_symai_engines
+
+        register_ipfs_symai_engines()
+except Exception:
+    pass
+
 try:
     from .data_transformation.dataset_serialization import (
         DatasetSerializer, GraphDataset, GraphNode, VectorAugmentedGraphDataset,

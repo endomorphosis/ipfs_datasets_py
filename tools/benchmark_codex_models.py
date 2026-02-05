@@ -1,7 +1,9 @@
 import json
 import os
 import subprocess
+import select
 import sys
+import time
 from pathlib import Path
 from typing import Dict, List
 
@@ -40,15 +42,45 @@ def _parse_summary(output: str) -> Dict[str, int]:
     return {"passed": passed, "total": total}
 
 
-def _run_test(test_path: Path, env: Dict[str, str]) -> Dict[str, object]:
-    proc = subprocess.run(
+def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
+    output_lines: List[str] = []
+    heartbeat_seconds = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_HEARTBEAT", "30"))
+    start_time = time.monotonic()
+    last_heartbeat = start_time
+    proc = subprocess.Popen(
         [sys.executable, str(test_path)],
         text=True,
-        capture_output=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         env=env,
-        check=False,
+        bufsize=1,
     )
-    output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    if proc.stdout:
+        while True:
+            ready, _, _ = select.select([proc.stdout], [], [], 1.0)
+            if ready:
+                line = proc.stdout.readline()
+                if line:
+                    output_lines.append(line)
+                    log(f"  | {line.rstrip()}")
+                elif proc.poll() is not None:
+                    break
+            else:
+                if proc.poll() is not None:
+                    break
+
+            now = time.monotonic()
+            if heartbeat_seconds > 0 and now - last_heartbeat >= heartbeat_seconds:
+                log(f"  | ... still running ({now - start_time:.0f}s elapsed)")
+                last_heartbeat = now
+
+        remainder = proc.stdout.read()
+        if remainder:
+            output_lines.append(remainder)
+            for line in remainder.splitlines():
+                log(f"  | {line}")
+    proc.wait()
+    output = "".join(output_lines)
     summary = _parse_summary(output)
     return {
         "exit_code": proc.returncode,
@@ -68,13 +100,34 @@ def _collect_tests(workspace: Path) -> List[Path]:
 
 def main() -> int:
     workspace = Path(__file__).resolve().parents[1]
+    try:
+        sys.stdout.reconfigure(line_buffering=True)
+    except Exception:
+        pass
+    log_path = Path(os.environ.get(
+        "IPFS_DATASETS_PY_CODEX_BENCHMARK_LOG",
+        workspace / "outputs" / "codex_model_benchmark.log",
+    ))
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def log(message: str) -> None:
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        line = f"[{timestamp}] {message}"
+        print(line, flush=True)
+        try:
+            with log_path.open("a", encoding="utf-8") as handle:
+                handle.write(line + "\n")
+        except Exception:
+            pass
     env_models = _parse_model_list(os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL_LIST", ""))
     models = env_models or DEFAULT_MODELS
 
     tests = _collect_tests(workspace)
     if not tests:
-        print("No tests found to run.")
+        log("No tests found to run.")
         return 1
+
+    log(f"Starting benchmark with {len(models)} models and {len(tests)} tests.")
 
     runs = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_RUNS", "1"))
     results = {
@@ -86,12 +139,14 @@ def main() -> int:
 
     base_env = os.environ.copy()
     base_env["IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"] = "1"
+    base_env["PYTHONUNBUFFERED"] = "1"
 
     for model in models:
         model_entry = {
             "model": model,
             "runs": [],
         }
+        log(f"=== Model: {model} ===")
         for run_idx in range(runs):
             run_entry = {
                 "index": run_idx,
@@ -101,11 +156,19 @@ def main() -> int:
                 "total": 0,
                 "failures": 0,
             }
+            log(f"Run {run_idx + 1}/{runs}")
             env = base_env.copy()
             env["IPFS_DATASETS_PY_CODEX_MODEL"] = model
 
             for test_path in tests:
-                test_result = _run_test(test_path, env)
+                start_time = time.monotonic()
+                log(f"- {test_path}")
+                test_result = _run_test(test_path, env, log)
+                elapsed = time.monotonic() - start_time
+                log(
+                    f"  exit={test_result['exit_code']} passed={test_result['passed']} "
+                    f"total={test_result['total']} time={elapsed:.1f}s"
+                )
                 run_entry["tests"].append(
                     {
                         "path": str(test_path),
@@ -129,7 +192,7 @@ def main() -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-    print(f"Wrote benchmark results to {output_path}")
+    log(f"Wrote benchmark results to {output_path}")
     return 0
 
 

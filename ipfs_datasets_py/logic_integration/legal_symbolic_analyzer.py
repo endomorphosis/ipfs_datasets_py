@@ -6,6 +6,7 @@ understanding of legal concepts, reasoning, and deontic logic extraction.
 """
 
 import logging
+import os
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -31,10 +32,12 @@ try:
         # previously written (and potentially unsupported) model string doesn't
         # stick around.
         force_config = bool(chosen_engine.get("model", "").startswith("codex:"))
+        router_enabled = os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "1")
         ensure_symai_config(
             neurosymbolic_model=chosen_engine["model"],
             neurosymbolic_api_key=chosen_engine["api_key"],
             force=force_config,
+            apply_engine_router=router_enabled.strip().lower() in {"1", "true", "yes", "on"},
         )
 
     import symai
@@ -54,6 +57,13 @@ try:
             )
     except Exception as e:
         logger.warning("Failed to register Codex-backed symai engine (%s)", e)
+
+    try:
+        from ipfs_datasets_py.utils.symai_ipfs_engine import register_ipfs_symai_engines
+
+        register_ipfs_symai_engines()
+    except Exception as e:
+        logger.warning("Failed to register IPFS-backed symai engines (%s)", e)
 
     SYMBOLIC_AI_AVAILABLE = True
     logger.info("SymbolicAI available for enhanced legal analysis")
