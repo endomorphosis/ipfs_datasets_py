@@ -108,6 +108,7 @@ def _openai_key_from_common_files() -> Optional[str]:
         home / ".openai" / "auth.json",
         home / ".codex" / "auth.json",
         home / ".codex" / "config.json",
+        home / ".codex" / "config.toml",
         # OpenAI CLI / SDK configs (best-effort)
         openai_dir / "api_key",
         openai_dir / "apikey",
@@ -119,8 +120,10 @@ def _openai_key_from_common_files() -> Optional[str]:
         # Codex CLI (npm @openai/codex) best-effort
         codex_dir / "auth.json",
         codex_dir / "config.json",
+        codex_dir / "config.toml",
         codex_scoped_dir / "auth.json",
         codex_scoped_dir / "config.json",
+        codex_scoped_dir / "config.toml",
     )
 
     for path in candidates:
@@ -174,7 +177,12 @@ def autoconfigure_engine_env(
         if not value:
             return
         os.environ[name] = value
-        changed[name] = value
+        # Avoid returning secrets in the changed dict; many callers log/print it.
+        upper = name.upper()
+        if any(marker in upper for marker in ("API_KEY", "TOKEN", "SECRET", "PASSWORD")):
+            changed[name] = "<set>"
+        else:
+            changed[name] = value
 
     def keyring_or_none(name: str) -> Optional[str]:
         if not allow_keyring:
