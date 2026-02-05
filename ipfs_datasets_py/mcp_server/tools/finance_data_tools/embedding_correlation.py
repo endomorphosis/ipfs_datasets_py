@@ -69,14 +69,13 @@ except ImportError:
 
 # Try to import embedding libraries
 try:
-    # For production, these would be used
-    # from sentence_transformers import SentenceTransformer
-    # from transformers import CLIPProcessor, CLIPModel
-    # import torch
-    EMBEDDINGS_AVAILABLE = False
-    logger.warning("Embedding libraries not available. Using stubs.")
+    from sentence_transformers import SentenceTransformer  # type: ignore
+    from transformers import CLIPProcessor, CLIPModel  # type: ignore
+    import torch  # type: ignore
+    EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
+    logger.warning("Embedding libraries not available. Using stubs.")
 
 # Try to import accelerate integration for distributed inference
 try:

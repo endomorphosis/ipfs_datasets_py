@@ -34,12 +34,15 @@ except ImportError as e:
     # those paths and retry the imports once.
     try:
         import sys as _sys
+        import importlib as _importlib
 
         try:
             import mcp as _maybe_mcp
             _mcp_file = getattr(_maybe_mcp, "__file__", "") or ""
+            _mcp_is_package = bool(getattr(_maybe_mcp, "__path__", None))
         except Exception:
             _mcp_file = ""
+            _mcp_is_package = False
 
         _looks_like_ipfs_kit_shadow = False
         if _mcp_file:
@@ -51,7 +54,7 @@ except ImportError as e:
             if ("ipfs_kit_py" in _mcp_file) and ("/mcp/" in _mcp_file or _mcp_file.endswith("mcp/__init__.py")):
                 _looks_like_ipfs_kit_shadow = True
 
-        if _looks_like_ipfs_kit_shadow:
+        if _looks_like_ipfs_kit_shadow or not _mcp_is_package:
             _sys.modules.pop("mcp", None)
 
             # De-prioritize any path entries from ipfs_kit_py that provide a
@@ -72,11 +75,10 @@ except ImportError as e:
             if _shadow_paths:
                 _sys.path = [p for p in _sys.path if p not in _shadow_paths] + _shadow_paths
 
-            from mcp.server import FastMCP  # type: ignore[no-redef]
-            from mcp.types import CallToolResult, TextContent, Tool  # type: ignore[no-redef]
-            from mcp import CallToolRequest  # type: ignore[no-redef]
-        else:
-            raise
+        _importlib.import_module("mcp.server")
+        from mcp.server import FastMCP  # type: ignore[no-redef]
+        from mcp.types import CallToolResult, TextContent, Tool  # type: ignore[no-redef]
+        from mcp import CallToolRequest  # type: ignore[no-redef]
     except Exception:
         # Final fallback: leave MCP symbols undefined-but-present.
         FastMCP = None  # type: ignore[assignment]

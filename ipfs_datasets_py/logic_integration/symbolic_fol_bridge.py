@@ -108,14 +108,18 @@ class SymbolicFOLBridge:
         """Initialize fallback components from original FOL system."""
         try:
             # Import original FOL tools as fallback
-            from ..mcp_server.tools.dataset_tools.logic_utils.predicate_extractor import extract_predicates
-            from ..mcp_server.tools.dataset_tools.logic_utils.fol_parser import parse_fol
-            
-            self.predicate_extractor = extract_predicates
-            self.fol_parser = parse_fol
+            from ..mcp_server.tools.dataset_tools.logic_utils import predicate_extractor
+            from ..mcp_server.tools.dataset_tools.logic_utils import fol_parser
+
+            self.predicate_extractor = predicate_extractor.extract_predicates
+            self.fol_parser = getattr(fol_parser, "parse_fol", None)
+
+            if self.fol_parser is None:
+                raise AttributeError("parse_fol not available in fol_parser")
+
             self.fallback_available = True
-            
-        except ImportError as e:
+
+        except (ImportError, AttributeError) as e:
             logger.warning(f"Could not import fallback components: {e}")
             self.fallback_available = False
     

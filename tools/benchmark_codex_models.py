@@ -164,6 +164,12 @@ def main() -> int:
     base_env = os.environ.copy()
     base_env["PYTHONUNBUFFERED"] = "1"
     base_env["IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER"] = "1"
+    local_pythonpath = str(workspace)
+    existing_pythonpath = base_env.get("PYTHONPATH", "")
+    if existing_pythonpath:
+        base_env["PYTHONPATH"] = os.pathsep.join([local_pythonpath, existing_pythonpath])
+    else:
+        base_env["PYTHONPATH"] = local_pythonpath
 
     variants: List[Dict[str, str]] = []
     for backend in backends:
