@@ -85,6 +85,11 @@ def ensure_symai_config(
                 config[key] = value
 
         set_if_empty("SYMBOLIC_ENGINE", "ipfs")
+        set_if_empty(
+            "NEUROSYMBOLIC_ENGINE_MODEL",
+            os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default"),
+        )
+        set_if_empty("NEUROSYMBOLIC_ENGINE_API_KEY", "ipfs")
         set_if_empty("EMBEDDING_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_EMBEDDING_MODEL", "ipfs:default"))
         set_if_empty("SEARCH_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_SEARCH_MODEL", "ipfs:default"))
         set_if_empty("OCR_ENGINE_MODEL", os.environ.get("IPFS_DATASETS_PY_SYMAI_OCR_MODEL", "ipfs:default"))

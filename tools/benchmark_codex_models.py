@@ -20,12 +20,35 @@ DEFAULT_MODELS = [
     "gpt-5",
 ]
 
+DEFAULT_BACKENDS = [
+    "codex",
+    "copilot_sdk",
+    "copilot_cli",
+    "gemini_cli",
+    "claude_code",
+    "gemini_py",
+    "claude_py",
+    "huggingface",
+    "ipfs_accelerate_py",
+]
+
+DEFAULT_HF_MODELS = [
+    "Qwen/Qwen3-1.7B-Thinker",
+]
+
 
 def _parse_model_list(value: str) -> List[str]:
     if not value:
         return []
     models = [item.strip() for item in value.split(",")]
     return [m for m in models if m]
+
+
+def _parse_list(value: str) -> List[str]:
+    if not value:
+        return []
+    items = [item.strip() for item in value.split(",")]
+    return [item for item in items if item]
 
 
 def _parse_summary(output: str) -> Dict[str, int]:
@@ -121,32 +144,66 @@ def main() -> int:
             pass
     env_models = _parse_model_list(os.environ.get("IPFS_DATASETS_PY_CODEX_MODEL_LIST", ""))
     models = env_models or DEFAULT_MODELS
+    env_backends = _parse_list(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_BACKENDS", ""))
+    backends = env_backends or DEFAULT_BACKENDS
+    env_hf_models = _parse_list(os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL_LIST", ""))
+    hf_models = env_hf_models or DEFAULT_HF_MODELS
 
     tests = _collect_tests(workspace)
     if not tests:
         log("No tests found to run.")
         return 1
 
-    log(f"Starting benchmark with {len(models)} models and {len(tests)} tests.")
+    log(f"Starting benchmark with {len(backends)} backends and {len(tests)} tests.")
 
     runs = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_RUNS", "1"))
     results = {
-        "models": models,
+        "backends": backends,
+        "codex_models": models,
+        "hf_models": hf_models,
         "tests": [str(p) for p in tests],
         "runs": runs,
         "entries": [],
     }
 
     base_env = os.environ.copy()
-    base_env["IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"] = "1"
     base_env["PYTHONUNBUFFERED"] = "1"
+    base_env["IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER"] = "1"
 
-    for model in models:
+    variants: List[Dict[str, str]] = []
+    for backend in backends:
+        if backend == "codex":
+            for model in models:
+                variants.append({
+                    "label": f"codex:{model}",
+                    "backend": "codex",
+                    "model": model,
+                })
+            continue
+
+        if backend == "huggingface":
+            for model in hf_models:
+                variants.append({
+                    "label": f"huggingface:{model}",
+                    "backend": "huggingface",
+                    "model": model,
+                })
+            continue
+
+        variants.append({
+            "label": backend,
+            "backend": backend,
+            "model": "",
+        })
+
+    for variant in variants:
         model_entry = {
-            "model": model,
+            "label": variant["label"],
+            "backend": variant["backend"],
+            "model": variant.get("model", ""),
             "runs": [],
         }
-        log(f"=== Model: {model} ===")
+        log(f"=== Variant: {variant['label']} ===")
         for run_idx in range(runs):
             run_entry = {
                 "index": run_idx,
@@ -158,7 +215,16 @@ def main() -> int:
             }
             log(f"Run {run_idx + 1}/{runs}")
             env = base_env.copy()
-            env["IPFS_DATASETS_PY_CODEX_MODEL"] = model
+
+            if variant["backend"] == "codex":
+                env["IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"] = "1"
+                env["IPFS_DATASETS_PY_CODEX_MODEL"] = variant["model"]
+                env.pop("IPFS_DATASETS_PY_SYMAI_BACKEND", None)
+            else:
+                env["IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"] = "0"
+                env["IPFS_DATASETS_PY_SYMAI_BACKEND"] = variant["backend"]
+                if variant["backend"] == "huggingface" and variant["model"]:
+                    env["IPFS_DATASETS_PY_SYMAI_HF_MODEL"] = variant["model"]
 
             for test_path in tests:
                 start_time = time.monotonic()

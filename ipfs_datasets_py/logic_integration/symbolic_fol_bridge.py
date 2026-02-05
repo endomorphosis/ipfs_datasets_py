@@ -5,6 +5,7 @@ This module provides the core bridge between SymbolicAI and the existing FOL sys
 enabling semantic analysis and enhanced natural language to logic conversion.
 """
 
+import hashlib
 import logging
 import re
 from typing import Dict, List, Optional, Union, Any, Tuple
@@ -250,6 +251,28 @@ class SymbolicFOLBridge:
             list(set(entities)),
             list(set(connectives))
         )
+
+    def _get_cache_key(
+        self,
+        text: str,
+        operation: str,
+        extra: Optional[Dict[str, Any]] = None
+    ) -> str:
+        """Generate a stable cache key for a text + operation combination."""
+        normalized_text = (text or "").strip()
+        normalized_operation = (operation or "").strip()
+        parts = [
+            normalized_operation,
+            normalized_text,
+            str(self.confidence_threshold),
+            str(self.fallback_enabled),
+            str(self.enable_caching)
+        ]
+        if extra:
+            for key in sorted(extra.keys()):
+                parts.append(f"{key}={extra[key]}")
+        digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()
+        return digest
     
     @beartype
     def semantic_to_fol(self, symbol: Symbol, output_format: str = "symbolic") -> FOLConversionResult:

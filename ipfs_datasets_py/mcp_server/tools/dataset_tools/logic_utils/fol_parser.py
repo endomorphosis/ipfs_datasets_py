@@ -5,6 +5,8 @@ First-Order Logic parsing and formula generation utilities.
 import re
 from typing import List, Dict, Tuple, Any, Optional
 
+from .predicate_extractor import extract_logical_relations, extract_predicates
+
 def parse_quantifiers(text: str) -> List[Dict[str, Any]]:
     """
     Parse quantifier words and expressions from text.
@@ -193,6 +195,43 @@ def build_fol_formula(
         return " ∧ ".join(f"({f})" for f in formulas)
     else:
         return "⊤"
+
+
+def parse_fol(text: str) -> Dict[str, Any]:
+    """
+    Parse natural language text into a simple FOL formula representation.
+
+    Args:
+        text: Natural language input
+
+    Returns:
+        Dictionary with FOL formula and extracted components
+    """
+    normalized = (text or "").strip()
+    if not normalized:
+        return {
+            "fol_formula": "⊤",
+            "quantifiers": [],
+            "operators": [],
+            "predicates": {},
+            "relations": [],
+            "validation": validate_fol_syntax("⊤"),
+        }
+
+    quantifiers = parse_quantifiers(normalized)
+    operators = parse_logical_operators(normalized)
+    predicates = extract_predicates(normalized)
+    relations = extract_logical_relations(normalized)
+    fol_formula = build_fol_formula(quantifiers, predicates, operators, relations)
+
+    return {
+        "fol_formula": fol_formula,
+        "quantifiers": quantifiers,
+        "operators": operators,
+        "predicates": predicates,
+        "relations": relations,
+        "validation": validate_fol_syntax(fol_formula),
+    }
 
 def normalize_predicate_name(name: str) -> str:
     """Normalize predicate names for FOL."""

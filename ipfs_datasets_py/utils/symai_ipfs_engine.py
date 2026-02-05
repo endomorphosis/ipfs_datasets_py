@@ -55,6 +55,14 @@ def _dry_run_enabled() -> bool:
     return _truthy(os.environ.get("IPFS_DATASETS_PY_SYMAI_ROUTER_DRY_RUN"))
 
 
+def _router_enabled() -> bool:
+    return _truthy(os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER"))
+
+
+def _codex_routing_enabled() -> bool:
+    return _truthy(os.environ.get("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"))
+
+
 def _use_router(model_value: str | None) -> bool:
     if not model_value:
         return False
@@ -68,6 +76,40 @@ def _extract_model(model_value: str | None) -> str:
     if model_str.startswith("ipfs:"):
         return model_str[len("ipfs:") :]
     return model_str
+
+
+def _parse_backend_list(value: str | None) -> List[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _preferred_backends() -> List[str]:
+    value = os.environ.get("IPFS_DATASETS_PY_SYMAI_BACKEND")
+    if not value:
+        value = os.environ.get("IPFS_DATASETS_PY_SYMAI_BACKENDS")
+    if not value:
+        return []
+    if value.strip().lower() in {"auto", "default"}:
+        return []
+    return _parse_backend_list(value)
+
+
+def _configure_neurosymbolic_router() -> None:
+    if not _router_enabled() or _codex_routing_enabled():
+        return
+
+    router_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_NEUROSYMBOLIC_MODEL", "ipfs:default")
+    if not os.environ.get("NEUROSYMBOLIC_ENGINE_MODEL"):
+        os.environ["NEUROSYMBOLIC_ENGINE_MODEL"] = router_model
+    if not os.environ.get("NEUROSYMBOLIC_ENGINE_API_KEY"):
+        os.environ["NEUROSYMBOLIC_ENGINE_API_KEY"] = "ipfs"
+
+    current_model = SYMAI_CONFIG.get("NEUROSYMBOLIC_ENGINE_MODEL")
+    if not (isinstance(current_model, str) and current_model.startswith(("ipfs:", "codex:"))):
+        SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_MODEL"] = os.environ["NEUROSYMBOLIC_ENGINE_MODEL"]
+    if not SYMAI_CONFIG.get("NEUROSYMBOLIC_ENGINE_API_KEY"):
+        SYMAI_CONFIG["NEUROSYMBOLIC_ENGINE_API_KEY"] = os.environ["NEUROSYMBOLIC_ENGINE_API_KEY"]
 
 
 def _hf_generate(prompt: str, model_name: str) -> str:
@@ -237,6 +279,81 @@ def _copilot_sdk_generate(prompt: str) -> str:
 def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
     metadata: Dict[str, Any] = {"backend": "", "errors": []}
 
+    preferred = _preferred_backends()
+    if preferred:
+        for backend in preferred:
+            try:
+                if backend == "ipfs_accelerate_py":
+                    from ipfs_accelerate_py.llm_integration import RealLLMInterface
+                    from ipfs_datasets_py.llm.llm_interface import LLMConfig
+
+                    llm = RealLLMInterface(LLMConfig(model_name=model_name or "router"))
+                    if hasattr(llm, "generate_text"):
+                        text = llm.generate_text(prompt)
+                    elif hasattr(llm, "generate"):
+                        text = llm.generate(prompt)
+                    elif callable(llm):
+                        text = llm(prompt)
+                    else:
+                        raise RuntimeError("ipfs_accelerate_py LLM interface has no generate method")
+                    metadata["backend"] = "ipfs_accelerate_py"
+                    return str(text), metadata
+
+                if backend == "copilot_sdk":
+                    text = _copilot_sdk_generate(prompt)
+                    metadata["backend"] = "copilot_sdk"
+                    return text, metadata
+
+                if backend == "gemini_cli":
+                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")):
+                        raise RuntimeError("Gemini CLI not available")
+                    text = _gemini_cli_generate(prompt)
+                    metadata["backend"] = "gemini_cli"
+                    return text, metadata
+
+                if backend == "claude_code":
+                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")):
+                        raise RuntimeError("Claude Code CLI not available")
+                    text = _claude_code_generate(prompt)
+                    metadata["backend"] = "claude_code"
+                    return text, metadata
+
+                if backend == "copilot_cli":
+                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")):
+                        raise RuntimeError("Copilot CLI not available")
+                    text = _copilot_cli_generate(prompt)
+                    metadata["backend"] = "copilot_cli"
+                    return text, metadata
+
+                if backend == "gemini_py":
+                    if not (GeminiCLI and GeminiCLI().is_installed()):
+                        raise RuntimeError("Gemini CLI wrapper not available")
+                    text = _gemini_generate(prompt)
+                    metadata["backend"] = "gemini_py"
+                    return text, metadata
+
+                if backend == "claude_py":
+                    if not (ClaudeCLI and ClaudeCLI().is_installed()):
+                        raise RuntimeError("Claude CLI wrapper not available")
+                    text = _claude_generate(prompt)
+                    metadata["backend"] = "claude_py"
+                    return text, metadata
+
+                if backend == "huggingface":
+                    hf_model = model_name
+                    if not hf_model or hf_model == "default":
+                        hf_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", "Qwen/Qwen3-1.7B-Thinker")
+                    text = _hf_generate(prompt, hf_model)
+                    metadata["backend"] = "huggingface"
+                    metadata["model"] = hf_model
+                    return text, metadata
+
+                raise RuntimeError(f"Unknown backend '{backend}'")
+            except Exception as exc:
+                metadata["errors"].append(f"{backend}: {exc}")
+
+        raise RuntimeError("No available backend for SyMAI router: " + "; ".join(metadata["errors"]))
+
     try:
         from ipfs_accelerate_py.llm_integration import RealLLMInterface
         from ipfs_datasets_py.llm.llm_interface import LLMConfig
@@ -383,15 +500,30 @@ class IPFSSyMAISymbolicEngine(IPFSSyMAIEngine):
         return super().id()
 
 
+class IPFSSyMAINeurosymbolicEngine(IPFSSyMAIEngine):
+    """SyMAI neurosymbolic engine router (NEUROSYMBOLIC_ENGINE_MODEL)."""
+    def __init__(self, engine_id: str, model_key: str, mode: str = "text") -> None:
+        super().__init__(engine_id, model_key, mode=mode)
+        if not hasattr(self, "model"):
+            self.model = _extract_model(self.config.get(model_key, ""))
+
+
 def register_ipfs_symai_engines() -> None:
     try:
         from symai.functional import EngineRepository
     except Exception:
         return
 
+    _configure_neurosymbolic_router()
+
     EngineRepository.register(
         "symbolic",
         IPFSSyMAISymbolicEngine("symbolic", "SYMBOLIC_ENGINE"),
+        allow_engine_override=True,
+    )
+    EngineRepository.register(
+        "neurosymbolic",
+        IPFSSyMAINeurosymbolicEngine("neurosymbolic", "NEUROSYMBOLIC_ENGINE_MODEL"),
         allow_engine_override=True,
     )
     EngineRepository.register(
