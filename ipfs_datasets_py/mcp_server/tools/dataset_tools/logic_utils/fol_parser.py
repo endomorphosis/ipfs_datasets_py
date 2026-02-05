@@ -5,7 +5,7 @@ First-Order Logic parsing and formula generation utilities.
 import re
 from typing import List, Dict, Tuple, Any, Optional
 
-from .predicate_extractor import extract_logical_relations, extract_predicates
+from .predicate_extractor import extract_predicates, extract_logical_relations
 
 def parse_quantifiers(text: str) -> List[Dict[str, Any]]:
     """
@@ -347,3 +347,38 @@ def convert_to_tptp(fol_formula: str) -> str:
     tptp_formula = re.sub(r'([∀∃]\w+)', r'\1]:', tptp_formula)
     
     return f"fof(formula1, axiom, {tptp_formula})."
+
+
+def parse_fol(text: str) -> Dict[str, Any]:
+    """
+    Parse natural language into a basic FOL structure and formula.
+
+    Args:
+        text: Input natural language text
+
+    Returns:
+        Dictionary with parsed components and generated formula
+    """
+    quantifiers = parse_quantifiers(text)
+    operators = parse_logical_operators(text)
+    predicates = extract_predicates(text)
+    relations = extract_logical_relations(text)
+
+    fol_formula = build_fol_formula(
+        quantifiers=quantifiers,
+        predicates=predicates,
+        operators=operators,
+        relations=relations
+    )
+
+    validation = validate_fol_syntax(fol_formula)
+
+    return {
+        "input_text": text,
+        "fol_formula": fol_formula,
+        "quantifiers": quantifiers,
+        "operators": operators,
+        "predicates": predicates,
+        "relations": relations,
+        "validation": validation
+    }

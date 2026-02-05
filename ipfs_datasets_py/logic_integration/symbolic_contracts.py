@@ -472,6 +472,40 @@ if SYMBOLIC_AI_AVAILABLE:
                 raise ValueError("Input data missing required 'text' field")
 
             return FOLInput(**payload)
+
+        def _coerce_output(self, output_data: Any) -> FOLOutput:
+            """Normalize dynamic output into a validated FOLOutput instance."""
+            if isinstance(output_data, FOLOutput):
+                return output_data
+
+            if isinstance(output_data, dict):
+                payload = output_data
+            else:
+                payload = {}
+                if hasattr(output_data, "fol_formula"):
+                    payload["fol_formula"] = getattr(output_data, "fol_formula")
+                if hasattr(output_data, "confidence"):
+                    payload["confidence"] = getattr(output_data, "confidence")
+                if hasattr(output_data, "logical_components"):
+                    payload["logical_components"] = getattr(output_data, "logical_components")
+                if hasattr(output_data, "reasoning_steps"):
+                    payload["reasoning_steps"] = getattr(output_data, "reasoning_steps")
+                if hasattr(output_data, "validation_results"):
+                    payload["validation_results"] = getattr(output_data, "validation_results")
+                if hasattr(output_data, "warnings"):
+                    payload["warnings"] = getattr(output_data, "warnings")
+                if hasattr(output_data, "metadata"):
+                    payload["metadata"] = getattr(output_data, "metadata")
+
+            if "fol_formula" not in payload:
+                raise ValueError("Output data missing required 'fol_formula' field")
+
+            if "confidence" not in payload:
+                payload["confidence"] = 0.0
+            if "logical_components" not in payload:
+                payload["logical_components"] = {"quantifiers": [], "predicates": [], "entities": []}
+
+            return FOLOutput(**payload)
         
         def pre(self, input_data: FOLInput) -> bool:
             """Validate input before processing."""
@@ -502,6 +536,7 @@ if SYMBOLIC_AI_AVAILABLE:
         def post(self, output_data: FOLOutput) -> bool:
             """Validate output after processing."""
             try:
+            output_data = self._coerce_output(output_data)
                 # Validate the FOL formula
                 validation_result = self.validator.validate_formula(output_data.fol_formula)
                 
