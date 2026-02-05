@@ -95,16 +95,32 @@ def _openai_key_from_common_files() -> Optional[str]:
     """
 
     home = pathlib.Path.home()
+    xdg_config = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", str(home / ".config")))
+
+    openai_dir = xdg_config / "openai"
+    codex_dir = xdg_config / "codex"
+    # npm scoped package configs sometimes land under '@openai/codex'
+    codex_scoped_dir = xdg_config / "@openai" / "codex"
+
     candidates: Iterable[pathlib.Path] = (
         # Explicit common patterns
         home / ".openai_api_key",
-        home / ".config" / "openai" / "api_key",
-        home / ".config" / "openai" / "apikey",
-        home / ".config" / "openai" / "credentials",
-        home / ".config" / "openai" / "credentials.json",
-        # Codex CLI (best effort; filenames may differ by version)
-        home / ".config" / "codex" / "auth.json",
-        home / ".config" / "codex" / "config.json",
+        home / ".openai" / "auth.json",
+        home / ".codex" / "auth.json",
+        home / ".codex" / "config.json",
+        # OpenAI CLI / SDK configs (best-effort)
+        openai_dir / "api_key",
+        openai_dir / "apikey",
+        openai_dir / "auth.json",
+        openai_dir / "credentials",
+        openai_dir / "credentials.json",
+        openai_dir / "config.json",
+        openai_dir / ".env",
+        # Codex CLI (npm @openai/codex) best-effort
+        codex_dir / "auth.json",
+        codex_dir / "config.json",
+        codex_scoped_dir / "auth.json",
+        codex_scoped_dir / "config.json",
     )
 
     for path in candidates:

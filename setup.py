@@ -1,4 +1,6 @@
 from setuptools import setup, find_packages
+from setuptools.command.develop import develop as _develop
+from setuptools.command.install import install as _install
 import os
 import sys
 import platform
@@ -26,6 +28,68 @@ def _ipfs_kit_dependency() -> str:
 
 
 ipfs_kit_dependency = _ipfs_kit_dependency()
+
+
+def _env_truthy(name: str, default: str = "1") -> bool:
+    value = os.environ.get(name, default)
+    return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def _maybe_download_nltk_data() -> None:
+    """Best-effort NLTK data download during install.
+
+    Controlled via env var:
+    - IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD (default: 1)
+    """
+
+    if not _env_truthy("IPFS_DATASETS_PY_AUTO_NLTK_DOWNLOAD", "1"):
+        return
+
+    try:
+        import nltk  # type: ignore
+    except Exception:
+        return
+
+    # If the user specified NLTK_DATA, prefer its first entry as download target.
+    download_dir = os.environ.get("IPFS_DATASETS_PY_NLTK_DOWNLOAD_DIR")
+    if not download_dir:
+        nltk_data = os.environ.get("NLTK_DATA")
+        if nltk_data:
+            download_dir = nltk_data.split(os.pathsep)[0]
+
+    quiet = _env_truthy("IPFS_DATASETS_PY_NLTK_DOWNLOAD_QUIET", "1")
+
+    resources = [
+        ("tokenizers/punkt", "punkt"),
+        ("taggers/averaged_perceptron_tagger", "averaged_perceptron_tagger"),
+        ("chunkers/maxent_ne_chunker", "maxent_ne_chunker"),
+        ("corpora/words", "words"),
+    ]
+
+    for find_path, package_id in resources:
+        try:
+            nltk.data.find(find_path)
+            continue
+        except Exception:
+            pass
+
+        try:
+            nltk.download(package_id, download_dir=download_dir, quiet=bool(quiet))
+        except Exception:
+            # Best-effort only; don't fail installs.
+            continue
+
+
+class _PostInstall(_install):
+    def run(self):  # type: ignore[override]
+        super().run()
+        _maybe_download_nltk_data()
+
+
+class _PostDevelop(_develop):
+    def run(self):  # type: ignore[override]
+        super().run()
+        _maybe_download_nltk_data()
 
 setup(
     name="ipfs_datasets_py",
@@ -290,6 +354,10 @@ setup(
             # Note: ML extras (torch, llama-index) not included in 'all' due to size
             # Install separately with pip install -e ".[ml]"
         ],
+    },
+    cmdclass={
+        "install": _PostInstall,
+        "develop": _PostDevelop,
     },
     python_requires='>=3.12',
     description="IPFS Datasets - A unified interface for data processing and distribution across decentralized networks",

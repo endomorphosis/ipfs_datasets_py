@@ -200,17 +200,25 @@ _UNSET = object()
 
 # Ensure required NLTK data is available (best-effort, no downloads at import time)
 if HAVE_NLTK:
-    CORPORA = [
-        'tokenizers/punkt',
-        'taggers/averaged_perceptron_tagger',
-        'chunkers/maxent_ne_chunker',
-        'corpora/words',
-    ]
-    for corpus in CORPORA:
-        try:
-            nltk.data.find(corpus)
-        except Exception as e:
-            logger.warning(f"NLTK data not found for {corpus}: {e}")
+    try:
+        from ipfs_datasets_py.utils.nltk_data import ensure_nltk_data
+
+        downloaded = ensure_nltk_data()
+        if downloaded:
+            logger.info("Downloaded NLTK data packages: %s", ", ".join(downloaded))
+    except Exception:
+        # Preserve prior behavior (warn only) if bootstrap helper isn't available.
+        CORPORA = [
+            'tokenizers/punkt',
+            'taggers/averaged_perceptron_tagger',
+            'chunkers/maxent_ne_chunker',
+            'corpora/words',
+        ]
+        for corpus in CORPORA:
+            try:
+                nltk.data.find(corpus)
+            except Exception as e:
+                logger.warning(f"NLTK data not found for {corpus}: {e}")
 
 
 @dataclass

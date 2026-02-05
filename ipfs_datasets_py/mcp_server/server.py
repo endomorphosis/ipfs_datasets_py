@@ -41,17 +41,30 @@ except ImportError as e:
         except Exception:
             _mcp_file = ""
 
-        if _mcp_file.endswith("ipfs_kit_py/mcp.py") or ("ipfs_kit_py" in _mcp_file and _mcp_file.endswith("mcp.py")):
+        _looks_like_ipfs_kit_shadow = False
+        if _mcp_file:
+            if _mcp_file.endswith("ipfs_kit_py/mcp.py") or ("ipfs_kit_py" in _mcp_file and _mcp_file.endswith("mcp.py")):
+                _looks_like_ipfs_kit_shadow = True
+            # ipfs_kit_py also ships a top-level `mcp/` package in its repo root.
+            # If that repo root is on sys.path, it can shadow the real `mcp` PyPI
+            # package (which provides `mcp.server`).
+            if ("ipfs_kit_py" in _mcp_file) and ("/mcp/" in _mcp_file or _mcp_file.endswith("mcp/__init__.py")):
+                _looks_like_ipfs_kit_shadow = True
+
+        if _looks_like_ipfs_kit_shadow:
             _sys.modules.pop("mcp", None)
 
-            # De-prioritize any path entries that provide a top-level mcp.py,
-            # since that masks the real 'mcp' package.
+            # De-prioritize any path entries from ipfs_kit_py that provide a
+            # top-level mcp.py or mcp/ package, since those mask the real 'mcp'
+            # package.
             _shadow_paths: list[str] = []
             for _p in list(_sys.path):
                 if not isinstance(_p, str) or not _p:
                     continue
                 try:
-                    if Path(_p, "mcp.py").exists():
+                    if "ipfs_kit_py" not in _p:
+                        continue
+                    if Path(_p, "mcp.py").exists() or Path(_p, "mcp").is_dir():
                         _shadow_paths.append(_p)
                 except Exception:
                     continue
