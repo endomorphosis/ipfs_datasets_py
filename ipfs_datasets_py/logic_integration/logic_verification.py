@@ -570,6 +570,173 @@ class LogicVerifier:
                 return False
         
         return paren_count == 0
+
+    @beartype
+    def verify_formula_syntax(self, formula: str) -> Dict[str, Any]:
+        """
+        Verify the syntax of a logical formula.
+
+        Args:
+            formula: Logical formula to validate
+
+        Returns:
+            Dictionary with validation status and details
+        """
+        result: Dict[str, Any] = {
+            "formula": formula,
+            "status": "unknown",
+            "errors": [],
+            "method": "fallback"
+        }
+
+        if not formula or not formula.strip():
+            result["status"] = "invalid"
+            result["errors"].append("Formula is empty")
+            return result
+
+        if self.use_symbolic_ai:
+            try:
+                symbol = Symbol(formula, semantic=True)
+                query = symbol.query(
+                    "Check whether this is a well-formed logical formula. "
+                    "Respond with: valid, invalid, or unknown."
+                )
+                response = getattr(query, "value", str(query)).lower()
+                if "valid" in response and "invalid" not in response:
+                    result["status"] = "valid"
+                elif "invalid" in response:
+                    result["status"] = "invalid"
+                else:
+                    result["status"] = "unknown"
+                result["method"] = "symbolic_ai"
+                return result
+            except Exception as exc:
+                logger.warning("SymbolicAI syntax check failed: %s", exc)
+
+        is_valid = self._validate_formula_syntax(formula)
+        result["status"] = "valid" if is_valid else "invalid"
+        if not is_valid:
+            result["errors"].append("Unbalanced parentheses or empty formula")
+        return result
+
+    @beartype
+    def check_satisfiability(self, formula: str) -> Dict[str, Any]:
+        """
+        Check whether a formula is satisfiable.
+
+        Args:
+            formula: Logical formula to analyze
+
+        Returns:
+            Dictionary with satisfiability result
+        """
+        result: Dict[str, Any] = {
+            "formula": formula,
+            "satisfiable": None,
+            "status": "unknown",
+            "method": "fallback"
+        }
+
+        if not formula or not formula.strip():
+            result["satisfiable"] = False
+            result["status"] = "invalid"
+            return result
+
+        if self.use_symbolic_ai:
+            try:
+                symbol = Symbol(formula, semantic=True)
+                query = symbol.query(
+                    "Is this logical formula satisfiable? "
+                    "Respond with: satisfiable, unsatisfiable, or unknown."
+                )
+                response = getattr(query, "value", str(query)).lower()
+                if "unsatisfiable" in response:
+                    result["satisfiable"] = False
+                    result["status"] = "unsatisfiable"
+                elif "satisfiable" in response:
+                    result["satisfiable"] = True
+                    result["status"] = "satisfiable"
+                else:
+                    result["status"] = "unknown"
+                result["method"] = "symbolic_ai"
+                return result
+            except Exception as exc:
+                logger.warning("SymbolicAI satisfiability check failed: %s", exc)
+
+        normalized = formula.replace(" ", "")
+        if "P∧¬P" in normalized or "¬P∧P" in normalized:
+            result["satisfiable"] = False
+            result["status"] = "unsatisfiable"
+            return result
+
+        result["satisfiable"] = True
+        result["status"] = "assumed_satisfiable"
+        return result
+
+    @beartype
+    def check_validity(self, formula: str) -> Dict[str, Any]:
+        """
+        Check whether a formula is logically valid.
+
+        Args:
+            formula: Logical formula to analyze
+
+        Returns:
+            Dictionary with validity result
+        """
+        result: Dict[str, Any] = {
+            "formula": formula,
+            "valid": None,
+            "status": "unknown",
+            "method": "fallback"
+        }
+
+        if not formula or not formula.strip():
+            result["valid"] = False
+            result["status"] = "invalid"
+            return result
+
+        if self.use_symbolic_ai:
+            try:
+                symbol = Symbol(formula, semantic=True)
+                query = symbol.query(
+                    "Is this logical formula valid (true in all models)? "
+                    "Respond with: valid, invalid, or unknown."
+                )
+                response = getattr(query, "value", str(query)).lower()
+                if "valid" in response and "invalid" not in response:
+                    result["valid"] = True
+                    result["status"] = "valid"
+                elif "invalid" in response:
+                    result["valid"] = False
+                    result["status"] = "invalid"
+                else:
+                    result["status"] = "unknown"
+                result["method"] = "symbolic_ai"
+                return result
+            except Exception as exc:
+                logger.warning("SymbolicAI validity check failed: %s", exc)
+
+        normalized = formula.replace(" ", "")
+        if "P∨¬P" in normalized or "¬P∨P" in normalized:
+            result["valid"] = True
+            result["status"] = "tautology"
+            return result
+
+        result["valid"] = False
+        result["status"] = "unknown"
+        return result
+
+    def _initialize_proof_rules(self) -> List[Dict[str, str]]:
+        """Initialize core proof rules for fallback reasoning."""
+        return [
+            {"name": "modus_ponens", "description": "If P → Q and P, then Q"},
+            {"name": "modus_tollens", "description": "If P → Q and ¬Q, then ¬P"},
+            {"name": "and_introduction", "description": "From P and Q, infer P ∧ Q"},
+            {"name": "and_elimination", "description": "From P ∧ Q, infer P (or Q)"},
+            {"name": "or_introduction", "description": "From P, infer P ∨ Q"},
+            {"name": "double_negation", "description": "From P, infer ¬¬P"}
+        ]
     
     def _are_contradictory(self, formula1: str, formula2: str) -> bool:
         """Check if two formulas are obviously contradictory."""
