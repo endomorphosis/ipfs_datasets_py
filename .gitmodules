@@ -6,9 +6,6 @@
 	path = ipfs_accelerate_py
 	url = https://github.com/endomorphosis/ipfs_accelerate_py.git
 	branch = main
-[submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
-	path = ipfs_datasets_py/multimedia/omni_converter_mk2
-	url = https://github.com/endomorphosis/omni_converter_mk2
 [submodule "ipfs_datasets_py/web_archiving/common_crawl_search_engine"]
 	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
 	url = https://github.com/endomorphosis/common_crawl_search_engine
