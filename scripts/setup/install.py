@@ -36,7 +36,7 @@ def ensure_main_ipfs_kit_py() -> None:
     os.environ.setdefault('IPFS_KIT_PY_USE_GIT', 'true')
 
     repo_root = Path(__file__).resolve().parent
-    repo_path = repo_root / '.third_party' / 'ipfs_kit_py'
+    repo_path = repo_root / '.tools' / 'ipfs_kit_py'
     marker_file = repo_path / '.main_installed'
 
     if marker_file.exists():

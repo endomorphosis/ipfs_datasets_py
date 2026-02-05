@@ -7,21 +7,8 @@ with automated dependency installation for full functionality.
 
 __version__ = "0.2.0"
 
-from pathlib import Path
-import sys
 import os
 import warnings
-
-_repo_root = Path(__file__).resolve().parent.parent
-_main_ipfs_kit = _repo_root / ".third_party" / "ipfs_kit_py"
-if _main_ipfs_kit.exists():
-    # The bundled third-party tree contains overlapping top-level packages
-    # (notably a different 'mcp' package) that can shadow real dependencies.
-    # Make this opt-in to avoid surprising import behavior in tests/runtime.
-    if os.environ.get("IPFS_DATASETS_USE_BUNDLED_IPFS_KIT") == "1":
-        p = str(_main_ipfs_kit)
-        if p not in sys.path:
-            sys.path.append(p)
 
 # File type detection
 try:
