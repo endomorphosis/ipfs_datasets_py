@@ -58,6 +58,20 @@ except ImportError:
 from .ipfs_multiformats import ipfs_multiformats_py
 from .ipfs_only_hash import ipfs_only_hash_py
 
+try:
+    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+except Exception:
+    embed_texts = None
+
+
+def _use_embedding_adapter() -> bool:
+    return str(os.getenv("IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -258,6 +272,12 @@ class AdvancedIPFSEmbeddings:
         """Generate embeddings for a list of texts"""
         if not texts:
             return np.array([])
+
+        if _use_embedding_adapter() and embed_texts is not None:
+            adapter_embeddings = await anyio.to_thread.run_sync(
+                lambda: embed_texts(texts, model_name=model)
+            )
+            return np.array(adapter_embeddings, dtype=np.float32)
             
         # Select endpoint if not specified
         if endpoint is None:

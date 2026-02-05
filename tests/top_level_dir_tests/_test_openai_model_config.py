@@ -13,15 +13,31 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, '/home/barberb/ipfs_datasets_py')
 
+def _codex_routing_enabled() -> bool:
+    return os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+def _resolved_model() -> str:
+    if _codex_routing_enabled():
+        return f"codex:{os.getenv('IPFS_DATASETS_PY_CODEX_MODEL', 'gpt-5.2')}"
+    return os.getenv('NEUROSYMBOLIC_ENGINE_MODEL') or ""
+
 def test_environment_config():
     """Test environment configuration"""
     print("=== Environment Configuration ===")
     
     api_key = os.getenv('NEUROSYMBOLIC_ENGINE_API_KEY')
-    model = os.getenv('NEUROSYMBOLIC_ENGINE_MODEL')
+    model = _resolved_model()
     max_tokens = os.getenv('NEUROSYMBOLIC_ENGINE_MAX_TOKENS')
     temperature = os.getenv('NEUROSYMBOLIC_ENGINE_TEMPERATURE')
+    use_codex = _codex_routing_enabled()
     
+    if use_codex:
+        print("Codex Routing: ✓ Enabled")
     print(f"API Key: {'✓ Set' if api_key else '✗ Missing'}")
     print(f"Model: {model if model else '✗ Not set'}")
     print(f"Max Tokens: {max_tokens if max_tokens else '✗ Not set'}")
@@ -30,6 +46,8 @@ def test_environment_config():
     if api_key:
         print(f"API Key (partial): {api_key[:20]}...{api_key[-10:]}")
     
+    if use_codex:
+        return bool(model)
     return bool(api_key and model)
 
 def test_config_file():
@@ -47,6 +65,8 @@ def test_config_file():
         print(f"Max Tokens: {config.get('NEUROSYMBOLIC_ENGINE_MAX_TOKENS', '✗ Not set')}")
         print(f"Temperature: {config.get('NEUROSYMBOLIC_ENGINE_TEMPERATURE', '✗ Not set')}")
         
+        if _codex_routing_enabled():
+            return bool(config.get('NEUROSYMBOLIC_ENGINE_MODEL'))
         return bool(config.get('NEUROSYMBOLIC_ENGINE_API_KEY') and config.get('NEUROSYMBOLIC_ENGINE_MODEL'))
         
     except FileNotFoundError:
@@ -61,16 +81,22 @@ def test_symai_basic():
     print("\n=== Basic SymbolicAI Test ===")
     
     try:
-        from symai import Symbol
-        print("✓ SymbolicAI imported successfully")
-        
-        # Test basic symbol creation
-        symbol = Symbol("Hello World")
-        print(f"✓ Basic symbol created: {symbol}")
-        
-        # Test semantic symbol creation (this should use the configured model)
-        semantic_symbol = Symbol("Test semantic symbol", semantic=True)
-        print(f"✓ Semantic symbol created: {semantic_symbol}")
+        if _codex_routing_enabled():
+            from symai import Expression
+            print("✓ SymbolicAI imported successfully")
+            result = Expression.prompt("Reply with OK only.")
+            print(f"✓ Codex prompt result: {result}")
+        else:
+            from symai import Symbol
+            print("✓ SymbolicAI imported successfully")
+            
+            # Test basic symbol creation
+            symbol = Symbol("Hello World")
+            print(f"✓ Basic symbol created: {symbol}")
+            
+            # Test semantic symbol creation (this should use the configured model)
+            semantic_symbol = Symbol("Test semantic symbol", semantic=True)
+            print(f"✓ Semantic symbol created: {semantic_symbol}")
         
         return True
         
@@ -84,24 +110,39 @@ def test_api_connection():
     print("\n=== API Connection Test ===")
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Create a semantic symbol for API testing
-        symbol = Symbol("What is 2 + 2?", semantic=True)
-        print("✓ Created semantic symbol for API test")
+        if use_codex:
+            print("✓ Codex routing enabled for API test")
+        else:
+            symbol = Symbol("What is 2 + 2?", semantic=True)
+            print("✓ Created semantic symbol for API test")
         
         # Test a simple query that should use the OpenAI API
         print("Testing API call (this may take a moment)...")
         try:
             # Simple math question to test API
-            result = symbol.query("Answer this simple math question")
+            if use_codex:
+                result = Expression.prompt("Answer this simple math question: What is 2 + 2?")
+            else:
+                result = symbol.query("Answer this simple math question")
             print(f"✓ API call successful!")
             print(f"  Question: What is 2 + 2?")
             print(f"  Response: {result}")
             
             # Test logic-related query
-            logic_symbol = Symbol("All cats are animals", semantic=True)
-            logic_result = logic_symbol.query("Convert this to first-order logic")
+            if use_codex:
+                logic_result = Expression.prompt(
+                    "Convert this to first-order logic: All cats are animals."
+                )
+            else:
+                logic_symbol = Symbol("All cats are animals", semantic=True)
+                logic_result = logic_symbol.query("Convert this to first-order logic")
             print(f"✓ Logic query successful!")
             print(f"  Statement: All cats are animals")
             print(f"  FOL Response: {logic_result}")
@@ -127,7 +168,11 @@ def test_model_capabilities():
     print("\n=== Model Capabilities Test ===")
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Test various logic-related tasks
         test_cases = [
@@ -140,8 +185,13 @@ def test_model_capabilities():
         results = []
         for test_case in test_cases:
             try:
-                symbol = Symbol(test_case, semantic=True)
-                fol_result = symbol.query("Convert this to first-order logic formula")
+                if use_codex:
+                    fol_result = Expression.prompt(
+                        f"Convert this to first-order logic formula: {test_case}"
+                    )
+                else:
+                    symbol = Symbol(test_case, semantic=True)
+                    fol_result = symbol.query("Convert this to first-order logic formula")
                 results.append({
                     "input": test_case,
                     "output": fol_result,
@@ -217,8 +267,8 @@ def main():
         print("⚠ Model may need adjustment for complex logic tasks")
     
     # Model information
-    print(f"\nConfigured Model: gpt-4o")
-    print(f"Recommended for: Complex reasoning, logic conversion, semantic understanding")
+    print(f"\nConfigured Model: {_resolved_model() or 'not set'}")
+    print("Recommended for: Complex reasoning, logic conversion, semantic understanding")
     print(f"Max Tokens: 4096 (optimal for logic formulas)")
     print(f"Temperature: 0.1 (low for consistent logical reasoning)")
     

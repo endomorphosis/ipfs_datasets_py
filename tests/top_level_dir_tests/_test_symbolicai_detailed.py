@@ -4,11 +4,21 @@ Detailed SymbolicAI Logic Integration Test
 ==========================================
 
 This script performs detailed testing of SymbolicAI integration
-with our First-Order Logic system using the configured API key.
+with our First-Order Logic system using the configured backend
+(API key or Codex routing).
 """
 
 import anyio
 from datetime import datetime
+import os
+
+def _codex_routing_enabled() -> bool:
+    return os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 def test_fol_conversion_with_api():
     """Test FOL conversion using SymbolicAI API."""
@@ -16,9 +26,17 @@ def test_fol_conversion_with_api():
     
     try:
         from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
-        from symai import Symbol
+        if _codex_routing_enabled():
+            from symai import Expression
         
         bridge = SymbolicFOLBridge()
+
+        if _codex_routing_enabled():
+            try:
+                sanity = Expression.prompt("Reply with OK only.")
+                print(f"   ✓ Codex routing sanity check: {sanity}")
+            except Exception as e:
+                print(f"   ! Codex routing sanity check failed: {e}")
         
         test_statements = [
             "All cats are animals",
@@ -39,8 +57,10 @@ def test_fol_conversion_with_api():
                 # Extract logical components using SymbolicAI
                 components = bridge.extract_logical_components(symbol)
                 print(f"   ✓ Components extracted:")
-                for key, value in components.items():
-                    print(f"     {key}: {str(value)[:100]}...")
+                print(f"     quantifiers: {components.quantifiers}")
+                print(f"     predicates: {components.predicates}")
+                print(f"     entities: {components.entities}")
+                print(f"     connectives: {components.logical_connectives}")
                     
             except Exception as e:
                 print(f"   ! API extraction failed: {e}")
@@ -139,11 +159,11 @@ def test_modal_logic_with_api():
                 print(f"  ✓ Detected type: {detected_type} (expected: {expected_type})")
                 
                 # Test conversion
-                result = converter.convert_to_appropriate_logic(text)
+                result = converter.convert_to_modal_logic(text)
                 print(f"  ✓ Conversion result:")
-                print(f"    Logic type: {result.get('logic_type', 'unknown')}")
-                print(f"    Formula: {str(result.get('formula', 'N/A'))[:60]}...")
-                print(f"    Confidence: {result.get('confidence', 'N/A')}")
+                print(f"    Logic type: {result.modal_type}")
+                print(f"    Formula: {str(result.formula)[:60]}...")
+                print(f"    Confidence: {result.confidence}")
                 
             except Exception as e:
                 print(f"  ! API conversion failed: {e}")

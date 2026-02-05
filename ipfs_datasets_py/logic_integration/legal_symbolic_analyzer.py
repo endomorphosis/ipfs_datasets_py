@@ -121,7 +121,7 @@ class LegalSymbolicAnalyzer:
     def _initialize_symbolic_ai(self):
         """Initialize SymbolicAI components for legal analysis."""
         try:
-            # Store prompt context strings; evaluation happens via `Expression.prompt(...)()`.
+            # Store prompt context strings; evaluation happens via `Expression.prompt(...)`.
             self.legal_context_text = """
 You are an expert legal analyst specializing in converting legal text into formal logic.
 Your task is to identify:
@@ -189,7 +189,7 @@ Provide structured analysis with confidence scores.
             result = Expression.prompt(
                 analysis_prompt,
                 static_context=self.legal_context_text,
-            )()
+            )
             
             # Parse the result (this would be more sophisticated in real implementation)
             return self._parse_symbolic_analysis(str(result), text)
@@ -228,7 +228,7 @@ Format as structured list with confidence scores.
             result = Expression.prompt(
                 extraction_prompt,
                 static_context=f"{self.legal_context_text}\n\n{self.deontic_extractor_text}",
-            )()
+            )
             
             return self._parse_deontic_propositions(str(result), text)
             
@@ -266,7 +266,7 @@ Provide entity names, types (person/organization/government), and roles with con
             result = Expression.prompt(
                 entity_prompt,
                 static_context=f"{self.legal_context_text}\n\n{self.entity_extractor_text}",
-            )()
+            )
             
             return self._parse_legal_entities(str(result))
             
@@ -304,7 +304,7 @@ Provide structured temporal information with normalized dates where possible.
             result = Expression.prompt(
                 temporal_prompt,
                 static_context=self.legal_context_text,
-            )()
+            )
             
             return self._parse_temporal_conditions(str(result))
             
@@ -473,7 +473,7 @@ class LegalReasoningEngine:
     def _initialize_reasoning_components(self):
         """Initialize SymbolicAI reasoning components."""
         try:
-            self.consistency_checker = Symbol("""
+            self.consistency_checker_text = """
 You are a legal logic consistency checker. Analyze sets of legal rules for:
 1. Logical contradictions (obligations vs prohibitions)
 2. Circular dependencies
@@ -481,15 +481,15 @@ You are a legal logic consistency checker. Analyze sets of legal rules for:
 4. Conflicting temporal requirements
 
 Provide detailed consistency analysis with confidence scores.
-""")
+""".strip()
             
-            self.implication_reasoner = Symbol("""
+            self.implication_reasoner_text = """
 You are a legal implication reasoner. Given a set of explicit legal rules,
 identify implicit obligations, permissions, and prohibitions that follow
 from the explicit rules through legal reasoning.
 
 Focus on standard legal inferences and well-established legal principles.
-""")
+""".strip()
             
             logger.info("SymbolicAI legal reasoning components initialized")
             
@@ -524,8 +524,10 @@ Consider standard legal principles like:
 - Compliance obligations
 """
             
-            reasoning_symbol = Symbol(reasoning_prompt)
-            result = self.implication_reasoner(reasoning_symbol)
+            result = Expression.prompt(
+                reasoning_prompt,
+                static_context=self.implication_reasoner_text,
+            )
             
             return self._parse_implicit_obligations(str(result))
             
@@ -561,8 +563,10 @@ Identify:
 Provide detailed analysis with confidence scores.
 """
             
-            consistency_symbol = Symbol(consistency_prompt)
-            result = self.consistency_checker(consistency_symbol)
+            result = Expression.prompt(
+                consistency_prompt,
+                static_context=self.consistency_checker_text,
+            )
             
             return self._parse_consistency_result(str(result))
             

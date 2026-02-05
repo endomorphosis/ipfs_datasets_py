@@ -28,14 +28,25 @@ def timeout(duration):
 def test_symbolicai_quick():
     """Quick test of SymbolicAI with timeout"""
     print("Testing SymbolicAI API connection...")
+
+    use_codex = os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    codex_model = os.getenv("IPFS_DATASETS_PY_CODEX_MODEL", "gpt-5.2")
     
     # Check environment
     api_key = os.getenv('NEUROSYMBOLIC_ENGINE_API_KEY')
-    if not api_key:
-        print("✗ No API key found")
+    if not api_key and not use_codex:
+        print("✗ No API key found and Codex routing is disabled")
         return False
     
-    print(f"✓ API key found: {api_key[:20]}...")
+    if api_key:
+        print(f"✓ API key found: {api_key[:20]}...")
+    if use_codex:
+        print(f"✓ Codex routing enabled (model: {codex_model})")
     
     try:
         with timeout(30):  # 30 second timeout
@@ -67,13 +78,12 @@ def test_logic_integration_quick():
     try:
         from ipfs_datasets_py.logic_integration import (
             SymbolicFOLBridge,
-            get_available_engines
+            SYMBOLIC_AI_AVAILABLE
         )
         print("✓ Logic integration modules imported")
         
-        # Check available engines
-        engines = get_available_engines()
-        print(f"✓ Available engines: {engines}")
+        # Report SymbolicAI availability
+        print(f"✓ SymbolicAI available: {SYMBOLIC_AI_AVAILABLE}")
         
         # Quick bridge test (with fallback)
         bridge = SymbolicFOLBridge()

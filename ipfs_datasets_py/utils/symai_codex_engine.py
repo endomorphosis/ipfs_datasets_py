@@ -1,6 +1,7 @@
 import os
 import subprocess
 import tempfile
+import time
 from copy import deepcopy
 from typing import Any, Dict, List, Tuple
 
@@ -26,9 +27,25 @@ class CodexExecNeurosymbolicEngine(Engine):
         raw_model = self.config.get("NEUROSYMBOLIC_ENGINE_MODEL", "")
         self.model = raw_model[len("codex:") :] if raw_model.startswith("codex:") else raw_model
 
+        self.fallback_model = os.environ.get("IPFS_DATASETS_PY_CODEX_FALLBACK_MODEL", "gpt-5.1-codex-mini")
+        self.max_retries = int(os.environ.get("IPFS_DATASETS_PY_CODEX_MAX_RETRIES", "3"))
+        self.backoff_base = float(os.environ.get("IPFS_DATASETS_PY_CODEX_BACKOFF_BASE", "1.0"))
+
         # Safety defaults for agentic behavior.
         self.sandbox = os.environ.get("IPFS_DATASETS_PY_CODEX_SANDBOX", "read-only")
         self.skip_git_repo_check = True
+
+    def _is_backoff_error(self, stderr: str) -> bool:
+        if not stderr:
+            return False
+        lowered = stderr.lower()
+        return any(token in lowered for token in ["429", "too many requests", "rate limit", "usage_limit"]) 
+
+    def _is_unsupported_model(self, stderr: str) -> bool:
+        if not stderr:
+            return False
+        lowered = stderr.lower()
+        return "not supported" in lowered
 
     def id(self) -> str:
         model = self.config.get("NEUROSYMBOLIC_ENGINE_MODEL")
@@ -79,42 +96,97 @@ class CodexExecNeurosymbolicEngine(Engine):
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as last_msg:
             last_msg_path = last_msg.name
 
-        cmd: List[str] = ["codex", "exec"]
-        if self.skip_git_repo_check:
-            cmd.append("--skip-git-repo-check")
-        cmd.extend(["--sandbox", self.sandbox])
-        if self.model:
-            cmd.extend(["-m", self.model])
-        cmd.extend(["--output-last-message", last_msg_path])
-        cmd.append("-")
+        last_metadata: Dict[str, Any] = {}
+        last_error: str = ""
+        fallback_enabled = bool(self.fallback_model)
 
-        try:
-            proc = subprocess.run(
-                cmd,
-                input=str(prompt),
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-        except FileNotFoundError as e:
-            raise RuntimeError("codex CLI not found on PATH") from e
+        for attempt in range(self.max_retries):
+            primary_model = self.model
+            if not primary_model:
+                break
 
-        try:
-            with open(last_msg_path, "r", encoding="utf-8", errors="replace") as f:
-                text_out = f.read().strip()
-        except Exception:
-            text_out = ""
+            cmd: List[str] = ["codex", "exec"]
+            if self.skip_git_repo_check:
+                cmd.append("--skip-git-repo-check")
+            cmd.extend(["--sandbox", self.sandbox])
+            cmd.extend(["-m", primary_model])
+            cmd.extend(["--output-last-message", last_msg_path])
+            cmd.append("-")
 
-        metadata: Dict[str, Any] = {
-            "raw_output": {
-                "exit_code": proc.returncode,
-                "stderr": proc.stderr[-4000:] if proc.stderr else "",
+            try:
+                proc = subprocess.run(
+                    cmd,
+                    input=str(prompt),
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                )
+            except FileNotFoundError as e:
+                raise RuntimeError("codex CLI not found on PATH") from e
+
+            try:
+                with open(last_msg_path, "r", encoding="utf-8", errors="replace") as f:
+                    text_out = f.read().strip()
+            except Exception:
+                text_out = ""
+
+            last_metadata = {
+                "raw_output": {
+                    "exit_code": proc.returncode,
+                    "stderr": proc.stderr[-4000:] if proc.stderr else "",
+                }
             }
-        }
 
-        if proc.returncode != 0 and not text_out:
-            raise RuntimeError(
-                f"codex exec failed (exit {proc.returncode}). stderr: {metadata['raw_output']['stderr']}"
-            )
+            if proc.returncode == 0 or text_out:
+                return [text_out], last_metadata
 
-        return [text_out], metadata
+            last_error = last_metadata["raw_output"].get("stderr", "")
+            if not self._is_backoff_error(last_error):
+                break
+
+            if fallback_enabled:
+                cmd = ["codex", "exec"]
+                if self.skip_git_repo_check:
+                    cmd.append("--skip-git-repo-check")
+                cmd.extend(["--sandbox", self.sandbox])
+                cmd.extend(["-m", self.fallback_model])
+                cmd.extend(["--output-last-message", last_msg_path])
+                cmd.append("-")
+
+                try:
+                    proc = subprocess.run(
+                        cmd,
+                        input=str(prompt),
+                        text=True,
+                        capture_output=True,
+                        check=False,
+                    )
+                except FileNotFoundError as e:
+                    raise RuntimeError("codex CLI not found on PATH") from e
+
+                try:
+                    with open(last_msg_path, "r", encoding="utf-8", errors="replace") as f:
+                        text_out = f.read().strip()
+                except Exception:
+                    text_out = ""
+
+                last_metadata = {
+                    "raw_output": {
+                        "exit_code": proc.returncode,
+                        "stderr": proc.stderr[-4000:] if proc.stderr else "",
+                    }
+                }
+
+                if proc.returncode == 0 or text_out:
+                    return [text_out], last_metadata
+
+                last_error = last_metadata["raw_output"].get("stderr", "")
+                if self._is_unsupported_model(last_error):
+                    fallback_enabled = False
+
+            if attempt < self.max_retries - 1:
+                time.sleep(self.backoff_base * (2 ** attempt))
+
+        raise RuntimeError(
+            f"codex exec failed after retries. stderr: {last_error}"
+        )

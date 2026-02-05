@@ -16,6 +16,20 @@ import hashlib
 import random
 from multiprocessing import Pool
 
+try:
+    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+except Exception:
+    embed_texts = None
+
+
+def _use_embedding_adapter() -> bool:
+    return str(os.getenv("IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
 # Try to import accelerate integration for distributed inference
 try:
     from ipfs_datasets_py.accelerate_integration import (
@@ -272,6 +286,13 @@ class search_embeddings:
             query = [query]
         elif not isinstance(query, list):
             raise ValueError("Query must be a string or a list of strings")
+        if _use_embedding_adapter() and embed_texts is not None:
+            adapter_embeddings = await anyio.to_thread.run_sync(
+                lambda: embed_texts(query, model_name=model)
+            )
+            return np.array(adapter_embeddings, dtype=np.float32)
+        if self.ipfs_kit is None:
+            raise RuntimeError("IPFS kit is unavailable and embedding adapter is disabled")
         self.ipfs_kit.index_knn(query, "")
         selected_endpoint = self.ipfs_kit.choose_endpoint(model)
         embeddings = await self.ipfs_kit.index_knn(selected_endpoint, model)

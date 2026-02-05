@@ -25,6 +25,13 @@ import uuid
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+try:
+    from ..utils.embedding_adapter import embed_text as adapter_embed_text
+    from ..utils.embedding_adapter import embed_texts as adapter_embed_texts
+except Exception:
+    adapter_embed_text = None
+    adapter_embed_texts = None
+
 # Optional numpy with graceful fallback
 try:
     import numpy as np
@@ -321,6 +328,11 @@ class MockLLMInterface(LLMInterface):
 
         # Response latency simulation (seconds)
         self.latency = 0.1
+
+        # Optional embeddings adapter (Gemini CLI or local HF models).
+        self._use_embedding_adapter = os.getenv(
+            "IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", ""
+        ).strip().lower() in {"1", "true", "yes", "on"}
         
         # Initialize accelerate manager if available and enabled
         self.accelerate_manager = None
@@ -418,6 +430,14 @@ class MockLLMInterface(LLMInterface):
         Returns:
             Mock embedding vector
         """
+        if self._use_embedding_adapter and adapter_embed_text is not None:
+            try:
+                embedding = adapter_embed_text(text)
+                return np.array(embedding)
+            except Exception:
+                # Fall back to mock embeddings if adapter fails.
+                pass
+
         # Generate deterministic but variable embedding based on text
         hash_val = hash(text) % 10000
         random_state = np.random.RandomState(hash_val)
@@ -438,6 +458,14 @@ class MockLLMInterface(LLMInterface):
         Returns:
             Array of mock embedding vectors
         """
+        if self._use_embedding_adapter and adapter_embed_texts is not None:
+            try:
+                embeddings = adapter_embed_texts(texts)
+                return np.array(embeddings)
+            except Exception:
+                # Fall back to mock embeddings if adapter fails.
+                pass
+
         # Generate embeddings for each text
         embeddings = [self.embed_text(text) for text in texts]
 

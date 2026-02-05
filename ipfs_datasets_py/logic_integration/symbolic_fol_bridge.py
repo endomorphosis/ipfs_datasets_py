@@ -450,6 +450,10 @@ class SymbolicFOLBridge:
                 fallback_used=True,
                 errors=[str(e)]
             )
+
+    def _fallback_to_fol_conversion(self, text: str, output_format: str = "symbolic") -> FOLConversionResult:
+        """Compatibility shim for legacy callers."""
+        return self._fallback_conversion(text, output_format)
     
     def validate_fol_formula(self, formula: str) -> Dict[str, Any]:
         """

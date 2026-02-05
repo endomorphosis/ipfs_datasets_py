@@ -53,6 +53,20 @@ except ImportError:
     is_accelerate_available = lambda: False
     get_accelerate_status = lambda: {"available": False}
 
+try:
+    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+except Exception:
+    embed_texts = None
+
+
+def _use_embedding_adapter() -> bool:
+    return str(os.getenv("IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
 
 @dataclass
 class PerformanceMetrics:
@@ -321,6 +335,15 @@ class IPFSEmbeddings:
     async def _generate_batch_embeddings(self, texts: List[str], config: EmbeddingConfig) -> List[np.ndarray]:
         """Generate embeddings for a batch of texts"""
         try:
+            if _use_embedding_adapter() and embed_texts is not None:
+                adapter_embeddings = await anyio.to_thread.run_sync(
+                    lambda: embed_texts(texts, model_name=config.model_name, device=config.device)
+                )
+                embeddings = [np.array(vec, dtype=np.float32) for vec in adapter_embeddings]
+                if config.normalize_embeddings:
+                    embeddings = [vec / np.linalg.norm(vec) for vec in embeddings]
+                return embeddings
+
             # For now, use a simple implementation
             # This would be replaced with actual embedding model inference
             embeddings = []
@@ -330,7 +353,7 @@ class IPFSEmbeddings:
                 if config.normalize_embeddings:
                     embedding = embedding / np.linalg.norm(embedding)
                 embeddings.append(embedding)
-            
+
             return embeddings
             
         except Exception as e:

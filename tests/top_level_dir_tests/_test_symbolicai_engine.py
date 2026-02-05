@@ -3,8 +3,8 @@
 Comprehensive SymbolicAI Engine Test Suite
 ==========================================
 
-This script tests the SymbolicAI integration with a configured API key
-to verify that all functionality is working correctly.
+This script tests the SymbolicAI integration with the configured backend
+(API key or Codex routing) to verify that functionality is working correctly.
 """
 
 import os
@@ -14,37 +14,59 @@ import traceback
 from datetime import datetime
 from typing import Dict, List, Any
 
+def _codex_routing_enabled() -> bool:
+    return os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+def _resolved_model() -> str:
+    if _codex_routing_enabled():
+        return f"codex:{os.getenv('IPFS_DATASETS_PY_CODEX_MODEL', 'gpt-5.2')}"
+    return os.getenv('NEUROSYMBOLIC_ENGINE_MODEL') or ""
+
 def test_environment_setup():
     """Test that environment variables are properly set."""
     print("=== Environment Setup Test ===")
     
     api_key = os.getenv('NEUROSYMBOLIC_ENGINE_API_KEY')
-    model = os.getenv('NEUROSYMBOLIC_ENGINE_MODEL')
+    model = _resolved_model()
+    use_codex = _codex_routing_enabled()
     
+    if use_codex:
+        print("Codex Routing: ✓ Enabled")
     print(f"API Key: {'✓ Set' if api_key else '✗ Missing'}")
     print(f"Model: {model if model else '✗ Not set (will use default)'}")
     
     if api_key:
         print(f"API Key (partial): {api_key[:20]}...{api_key[-10:]}")
         return True
-    else:
-        print("⚠️  API key not found. Tests will use fallback mechanisms.")
-        return False
+    if use_codex:
+        return bool(model)
+    print("⚠️  API key not found. Tests will use fallback mechanisms.")
+    return False
 
 def test_basic_symbolic_ai():
     """Test basic SymbolicAI functionality."""
     print("\n=== Basic SymbolicAI Test ===")
     
     try:
-        from symai import Symbol
-        
-        # Test basic symbol creation
-        symbol = Symbol("Hello, SymbolicAI!")
-        print(f"✓ Symbol created: {symbol}")
-        
-        # Test semantic symbol
-        semantic_symbol = Symbol("All cats are animals", semantic=True)
-        print(f"✓ Semantic symbol created: {semantic_symbol}")
+        if _codex_routing_enabled():
+            from symai import Expression
+            result = Expression.prompt("Reply with OK only.")
+            print(f"✓ Codex prompt result: {result}")
+        else:
+            from symai import Symbol
+            
+            # Test basic symbol creation
+            symbol = Symbol("Hello, SymbolicAI!")
+            print(f"✓ Symbol created: {symbol}")
+            
+            # Test semantic symbol
+            semantic_symbol = Symbol("All cats are animals", semantic=True)
+            print(f"✓ Semantic symbol created: {semantic_symbol}")
         
         return True
         
@@ -76,7 +98,8 @@ def test_logic_integration_modules():
         # Test Modal Logic
         from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
         converter = AdvancedLogicConverter()
-        print(f"✓ Modal logic converter: {len(converter.supported_logics)} logic types supported")
+        logic_type = converter.detect_logic_type("All cats are animals")
+        print(f"✓ Modal logic converter: detected {logic_type.logic_type}")
         
         # Test Logic Verification
         from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
@@ -96,23 +119,38 @@ def test_semantic_operations():
     print("\n=== Semantic Operations Test ===")
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Test basic semantic queries
         text = "All cats are animals and some cats are black"
-        symbol = Symbol(text, semantic=True)
+        if not use_codex:
+            symbol = Symbol(text, semantic=True)
         
         print(f"Testing text: '{text}'")
         
         # Test query operations (these require API access)
         try:
-            entities = symbol.query("Extract all entities mentioned in this text")
+            if use_codex:
+                entities = Expression.prompt(
+                    f"Extract all entities mentioned in this text: {text}"
+                )
+            else:
+                entities = symbol.query("Extract all entities mentioned in this text")
             print(f"✓ Entities extracted: {entities}")
         except Exception as e:
             print(f"! Entity extraction (requires API): {e}")
         
         try:
-            predicates = symbol.query("Extract predicates and relationships")
+            if use_codex:
+                predicates = Expression.prompt(
+                    f"Extract predicates and relationships in this text: {text}"
+                )
+            else:
+                predicates = symbol.query("Extract predicates and relationships")
             print(f"✓ Predicates extracted: {predicates}")
         except Exception as e:
             print(f"! Predicate extraction (requires API): {e}")
@@ -146,14 +184,20 @@ def test_fol_conversion():
                 # Test with SymbolicAI (requires API)
                 symbol = bridge.create_semantic_symbol(stmt)
                 components = bridge.extract_logical_components(symbol)
-                print(f"✓ Logical components: {list(components.keys())}")
+                print(
+                    "✓ Logical components: "
+                    f"quantifiers={components.quantifiers}, "
+                    f"predicates={components.predicates}, "
+                    f"entities={components.entities}, "
+                    f"connectives={components.logical_connectives}"
+                )
                 
             except Exception as e:
                 print(f"! SymbolicAI extraction (requires API): {e}")
                 
                 # Test fallback
-                fallback_result = bridge.fallback_extract_predicates(stmt)
-                print(f"✓ Fallback extraction: {len(fallback_result)} predicates")
+                quantifiers, predicates, entities, connectives = bridge._fallback_extraction(stmt)
+                print(f"✓ Fallback extraction: {len(predicates)} predicates")
         
         return True
         
@@ -232,8 +276,8 @@ def test_modal_logic():
                 print(f"✓ Detected type: {detected_type}")
                 
                 # Test conversion
-                result = converter.convert_to_appropriate_logic(text)
-                print(f"✓ Conversion result: {result.get('logic_type', 'unknown')}")
+                result = converter.convert_to_modal_logic(text)
+                print(f"✓ Conversion result: {result.modal_type}")
                 
             except Exception as e:
                 print(f"! Modal logic analysis (requires API): {e}")

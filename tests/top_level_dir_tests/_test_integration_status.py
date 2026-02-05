@@ -13,6 +13,19 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, '/home/barberb/ipfs_datasets_py')
 
+def _codex_routing_enabled() -> bool:
+    return os.getenv("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+def _resolved_model() -> str:
+    if _codex_routing_enabled():
+        return f"codex:{os.getenv('IPFS_DATASETS_PY_CODEX_MODEL', 'gpt-5.2')}"
+    return os.getenv('NEUROSYMBOLIC_ENGINE_MODEL') or ""
+
 def check_configuration():
     """Check SymbolicAI configuration"""
     print("🔧 SYMBOLICAI CONFIGURATION STATUS")
@@ -20,11 +33,14 @@ def check_configuration():
     
     # Environment variables
     api_key = os.getenv('NEUROSYMBOLIC_ENGINE_API_KEY')
-    model = os.getenv('NEUROSYMBOLIC_ENGINE_MODEL')
+    model = _resolved_model()
     max_tokens = os.getenv('NEUROSYMBOLIC_ENGINE_MAX_TOKENS')
     temperature = os.getenv('NEUROSYMBOLIC_ENGINE_TEMPERATURE')
+    use_codex = _codex_routing_enabled()
     
     print("Environment Variables:")
+    if use_codex:
+        print("  Codex Routing: ✅ Enabled")
     print(f"  API Key: {'✅ CONFIGURED' if api_key else '❌ Missing'}")
     print(f"  Model: {'✅ ' + model if model else '❌ Not set'}")
     print(f"  Max Tokens: {'✅ ' + max_tokens if max_tokens else '❌ Not set'}")
@@ -45,6 +61,8 @@ def check_configuration():
     except Exception as e:
         print(f"\n❌ Config file error: {e}")
     
+    if use_codex:
+        return bool(model)
     return bool(api_key and model)
 
 def test_basic_functionality():
@@ -109,13 +127,24 @@ def test_api_quota_handling():
     print("=" * 60)
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Test API call with quota handling
-        symbol = Symbol("Test API call", semantic=True)
-        print("✅ Semantic symbol for API test: SUCCESS")
+        if use_codex:
+            print("✅ Codex routing enabled for API test")
+        else:
+            symbol = Symbol("Test API call", semantic=True)
+            print("✅ Semantic symbol for API test: SUCCESS")
         
         try:
+            if use_codex:
+                result = Expression.prompt("Simple test. Reply with OK only.")
+                print(f"✅ Codex API call succeeded: {result}")
+                return True
             # This should fail due to quota, but gracefully
             result = symbol.query("Simple test")
             print(f"✅ API call succeeded unexpectedly: {result}")
@@ -170,13 +199,20 @@ def test_api_connectivity():
     print("=" * 60)
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Test 1: Basic Math Query
         print("Test 1: Basic Math Query")
         try:
-            math_symbol = Symbol("What is 2 + 2?", semantic=True)
-            math_result = math_symbol.query("Answer this simple math question")
+            if use_codex:
+                math_result = Expression.prompt("Answer this simple math question: What is 2 + 2?")
+            else:
+                math_symbol = Symbol("What is 2 + 2?", semantic=True)
+                math_result = math_symbol.query("Answer this simple math question")
             print(f"✅ Math Query: SUCCESS - {math_result}")
         except Exception as e:
             print(f"❌ Math Query: FAILED - {e}")
@@ -185,8 +221,13 @@ def test_api_connectivity():
         # Test 2: Logic Conversion Query
         print("\nTest 2: Logic Conversion Query")
         try:
-            logic_symbol = Symbol("All cats are animals", semantic=True)
-            logic_result = logic_symbol.query("Convert this statement to first-order logic formula")
+            if use_codex:
+                logic_result = Expression.prompt(
+                    "Convert this statement to first-order logic formula: All cats are animals."
+                )
+            else:
+                logic_symbol = Symbol("All cats are animals", semantic=True)
+                logic_result = logic_symbol.query("Convert this statement to first-order logic formula")
             print(f"✅ Logic Conversion: SUCCESS - {logic_result}")
         except Exception as e:
             print(f"❌ Logic Conversion: FAILED - {e}")
@@ -195,8 +236,13 @@ def test_api_connectivity():
         # Test 3: Complex Reasoning Query
         print("\nTest 3: Complex Reasoning Query")
         try:
-            reasoning_symbol = Symbol("If all birds can fly and Tweety is a bird, what can we conclude?", semantic=True)
-            reasoning_result = reasoning_symbol.query("Apply logical reasoning to reach a conclusion")
+            if use_codex:
+                reasoning_result = Expression.prompt(
+                    "Apply logical reasoning to reach a conclusion: If all birds can fly and Tweety is a bird, what can we conclude?"
+                )
+            else:
+                reasoning_symbol = Symbol("If all birds can fly and Tweety is a bird, what can we conclude?", semantic=True)
+                reasoning_result = reasoning_symbol.query("Apply logical reasoning to reach a conclusion")
             print(f"✅ Complex Reasoning: SUCCESS - {reasoning_result}")
         except Exception as e:
             print(f"❌ Complex Reasoning: FAILED - {e}")
@@ -214,35 +260,57 @@ def test_symbolic_operations():
     print("=" * 60)
     
     try:
-        from symai import Symbol
+        use_codex = _codex_routing_enabled()
+        if use_codex:
+            from symai import Expression
+        else:
+            from symai import Symbol
         
         # Test logical combination
         print("Test 1: Logical Symbol Combination")
         try:
-            symbol1 = Symbol("All birds can fly", semantic=True)
-            symbol2 = Symbol("Tweety is a bird", semantic=True)
-            
-            # Test logical AND operation
-            combined = symbol1 & symbol2
-            print(f"✅ Logical AND: SUCCESS - Combined {len(str(combined))} characters")
-            
-            # Test logical inference
-            inference = combined.query("What logical conclusion can be drawn?")
-            print(f"✅ Logical Inference: SUCCESS - {inference}")
+            if use_codex:
+                combined_text = "All birds can fly. Tweety is a bird."
+                inference = Expression.prompt(
+                    f"What logical conclusion can be drawn from: {combined_text}"
+                )
+                print(f"✅ Logical Inference: SUCCESS - {inference}")
+            else:
+                symbol1 = Symbol("All birds can fly", semantic=True)
+                symbol2 = Symbol("Tweety is a bird", semantic=True)
+                
+                # Test logical AND operation
+                combined = symbol1 & symbol2
+                print(f"✅ Logical AND: SUCCESS - Combined {len(str(combined))} characters")
+                
+                # Test logical inference
+                inference = combined.query("What logical conclusion can be drawn?")
+                print(f"✅ Logical Inference: SUCCESS - {inference}")
         except Exception as e:
             print(f"⚠️ Logical Operations: PARTIAL - {e}")
         
         # Test symbol properties
         print("\nTest 2: Symbol Properties")
         try:
-            test_symbol = Symbol("Test statement for properties", semantic=True)
-            
-            # Test different query types
-            analysis = test_symbol.query("Analyze the logical structure of this statement")
-            print(f"✅ Analysis Query: SUCCESS - {analysis}")
-            
-            entities = test_symbol.query("Extract all entities from this statement")
-            print(f"✅ Entity Extraction: SUCCESS - {entities}")
+            if use_codex:
+                analysis = Expression.prompt(
+                    "Analyze the logical structure of this statement: Test statement for properties"
+                )
+                print(f"✅ Analysis Query: SUCCESS - {analysis}")
+                
+                entities = Expression.prompt(
+                    "Extract all entities from this statement: Test statement for properties"
+                )
+                print(f"✅ Entity Extraction: SUCCESS - {entities}")
+            else:
+                test_symbol = Symbol("Test statement for properties", semantic=True)
+                
+                # Test different query types
+                analysis = test_symbol.query("Analyze the logical structure of this statement")
+                print(f"✅ Analysis Query: SUCCESS - {analysis}")
+                
+                entities = test_symbol.query("Extract all entities from this statement")
+                print(f"✅ Entity Extraction: SUCCESS - {entities}")
             
         except Exception as e:
             print(f"❌ Symbol Properties: FAILED - {e}")
