@@ -179,14 +179,15 @@ try:
         "SYMBOLIC_AI_AVAILABLE"
     ]
     
-except ImportError:
+except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
     
     # Provide fallback stubs when SymbolicAI is not available
     class _SymbolicAINotAvailable:
         def __init__(self, *args, **kwargs):
             raise ImportError(
-                "SymbolicAI is not installed. Install with: pip install symbolicai>=0.13.1"
+                "SymbolicAI is not available (not installed or misconfigured). "
+                "To enable it, install and configure SymbolicAI (symai)."
             )
     
     InteractiveFOLConstructor = _SymbolicAINotAvailable
