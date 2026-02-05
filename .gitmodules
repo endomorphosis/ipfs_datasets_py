@@ -9,3 +9,16 @@
 [submodule "ipfs_datasets_py/web_archiving/common_crawl_search_engine"]
 	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
 	url = https://github.com/endomorphosis/common_crawl_search_engine
+	branch = main
+[submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
+	path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
+	url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
+	branch = main
+[submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
+	path = ipfs_datasets_py/multimedia/omni_converter_mk2
+	url = https://github.com/endomorphosis/omni_converter_mk2
+	branch = main
+[submodule "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3"]
+	path = ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3
+	url = https://github.com/the-ride-never-ends/scrape_the_law_mk3
+	branch = main
