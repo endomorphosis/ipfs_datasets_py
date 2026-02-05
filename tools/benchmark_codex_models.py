@@ -53,8 +53,13 @@ def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
     heartbeat_seconds = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_HEARTBEAT", "30"))
     start_time = time.monotonic()
     last_heartbeat = start_time
+    bootstrap = (
+        "import runpy, sys; "
+        f"sys.path.insert(0, {str(test_path.parents[1])!r}); "
+        f"runpy.run_path({str(test_path)!r}, run_name='__main__')"
+    )
     proc = subprocess.Popen(
-        [sys.executable, str(test_path)],
+        [sys.executable, "-c", bootstrap],
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
