@@ -23,8 +23,33 @@ try:
     from ..utils.engine_env import autoconfigure_engine_env
     autoconfigure_engine_env()
 
+    from ..utils.symai_config import choose_symai_neurosymbolic_engine, ensure_symai_config
+
+    chosen_engine = choose_symai_neurosymbolic_engine()
+    if chosen_engine:
+        ensure_symai_config(
+            neurosymbolic_model=chosen_engine["model"],
+            neurosymbolic_api_key=chosen_engine["api_key"],
+        )
+
     import symai
     from symai import Symbol, Expression
+
+    # If we are routing via Codex, register the custom engine before any queries.
+    try:
+        if chosen_engine and chosen_engine.get("model", "").startswith("codex:"):
+            from symai.functional import EngineRepository
+
+            from ipfs_datasets_py.utils.symai_codex_engine import CodexExecNeurosymbolicEngine
+
+            EngineRepository.register(
+                "neurosymbolic",
+                CodexExecNeurosymbolicEngine(),
+                allow_engine_override=True,
+            )
+    except Exception as e:
+        logger.warning("Failed to register Codex-backed symai engine (%s)", e)
+
     SYMBOLIC_AI_AVAILABLE = True
     logger.info("SymbolicAI available for enhanced legal analysis")
 except (ImportError, SystemExit):
