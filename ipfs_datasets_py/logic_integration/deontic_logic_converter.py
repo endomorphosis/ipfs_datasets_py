@@ -130,8 +130,18 @@ class DeonticLogicConverter:
                 from .legal_symbolic_analyzer import LegalSymbolicAnalyzer
                 self.symbolic_analyzer = LegalSymbolicAnalyzer()
                 logger.info("SymbolicAI legal analyzer initialized")
-            except ImportError:
-                logger.warning("SymbolicAI not available - using fallback analysis")
+            except (ImportError, SystemExit) as e:
+                self.symbolic_analyzer = None
+                logger.warning(
+                    "SymbolicAI not available or misconfigured (%s) - using fallback analysis",
+                    e,
+                )
+            except Exception as e:
+                self.symbolic_analyzer = None
+                logger.warning(
+                    "SymbolicAI initialization failed (%s) - using fallback analysis",
+                    e,
+                )
         
         # Conversion statistics
         self.conversion_stats = {

@@ -153,6 +153,10 @@ from .symbolic_contracts import (
 
 # Optional imports (only available if SymbolicAI is installed)
 try:
+    # Attempt to populate required engine env vars from existing auth (e.g. OPENAI_API_KEY)
+    from ..utils.engine_env import autoconfigure_engine_env
+    autoconfigure_engine_env()
+
     import symai
     SYMBOLIC_AI_AVAILABLE = True
     

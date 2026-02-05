@@ -20,6 +20,9 @@ logger = logging.getLogger(__name__)
 
 # Check for SymbolicAI availability
 try:
+    from ..utils.engine_env import autoconfigure_engine_env
+    autoconfigure_engine_env()
+
     import symai
     from symai import Symbol, Expression
     SYMBOLIC_AI_AVAILABLE = True

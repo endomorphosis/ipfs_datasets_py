@@ -9,8 +9,23 @@ IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 IS_64BIT = sys.maxsize > 2**32
 
-# Always use GitHub repositories instead of PyPI
-ipfs_kit_dependency = 'ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main'
+def _ipfs_kit_dependency() -> str:
+    """Prefer the vendored submodule checkout when present.
+
+    This keeps `pip install -e .` fast and reproducible (no nested git+submodule
+    fetches) while still allowing installs from source tarballs or non-vendored
+    contexts.
+    """
+
+    local_path = os.path.join(os.path.dirname(__file__), "ipfs_kit_py")
+    if os.path.isdir(local_path):
+        # `file:` URL must be absolute for reliability.
+        return f"ipfs_kit_py @ file://{os.path.abspath(local_path)}"
+
+    return "ipfs_kit_py @ git+https://github.com/endomorphosis/ipfs_kit_py.git@main"
+
+
+ipfs_kit_dependency = _ipfs_kit_dependency()
 
 setup(
     name="ipfs_datasets_py",
@@ -60,6 +75,12 @@ setup(
         'click>=8.0.0',
     ],
     extras_require={
+        # Logic integration / legal reasoning
+        # SymbolicAI is imported as `symai` but distributed on PyPI as `symbolicai`.
+        'logic': [
+            'nltk>=3.8.1',
+            'symbolicai>=0.13.1',
+        ],
         # Optional but recommended dependencies
         'ipld': [
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI
@@ -202,6 +223,9 @@ setup(
         ],
         'all': [
             # Combine all non-platform-specific extras
+            # Logic
+            'nltk>=3.8.1',
+            'symbolicai>=0.13.1',
             # IPLD
             'ipld-car>=0.0.1',
             'ipld-dag-pb>=0.0.1',
