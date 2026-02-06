@@ -48,8 +48,22 @@ def _parse_summary(output: str) -> Dict[str, int]:
     return {"passed": passed, "total": total}
 
 
+def _line_has_rate_limit(line: str) -> bool:
+    if not line:
+        return False
+    needles = [
+        "usage_limit_reached",
+        "Too Many Requests",
+        "error=http 429",
+        "HTTP 429",
+        "You've hit your usage limit",
+    ]
+    return any(needle in line for needle in needles)
+
+
 def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
     output_lines: List[str] = []
+    saw_rate_limit = False
     heartbeat_seconds = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_HEARTBEAT", "30"))
     start_time = time.monotonic()
     last_heartbeat = start_time
@@ -81,6 +95,8 @@ def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
                 line = proc.stdout.readline()
                 if line:
                     output_lines.append(line)
+                    if _line_has_rate_limit(line):
+                        saw_rate_limit = True
                     log(f"  | {line.rstrip()}")
                 elif proc.poll() is not None:
                     break
@@ -97,6 +113,8 @@ def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
         if remainder:
             output_lines.append(remainder)
             for line in remainder.splitlines():
+                if _line_has_rate_limit(line):
+                    saw_rate_limit = True
                 log(f"  | {line}")
     proc.wait()
     output = "".join(output_lines)
@@ -106,6 +124,7 @@ def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
         "passed": summary["passed"],
         "total": summary["total"],
         "output": output[-4000:],
+        "rate_limited": saw_rate_limit,
     }
 
 
@@ -187,7 +206,8 @@ def main() -> int:
     base_env = os.environ.copy()
     base_env["PYTHONUNBUFFERED"] = "1"
     base_env["IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER"] = "1"
-    local_pythonpath = str(workspace)
+    ipfs_kit_root = workspace / "ipfs_kit_py"
+    local_pythonpath = os.pathsep.join([str(ipfs_kit_root), str(workspace)])
     existing_pythonpath = base_env.get("PYTHONPATH", "")
     if existing_pythonpath:
         base_env["PYTHONPATH"] = os.pathsep.join([local_pythonpath, existing_pythonpath])
@@ -257,6 +277,9 @@ def main() -> int:
             }
             log(f"Run {run_idx + 1}/{runs}")
             env = base_env.copy()
+            backoff_base = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BACKOFF_BASE", "30"))
+            backoff_max = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BACKOFF_MAX", "600"))
+            rate_limit_hits = 0
 
             if variant["backend"] == "codex":
                 env["IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI"] = "1"
@@ -294,6 +317,13 @@ def main() -> int:
                 run_entry["total"] += test_result["total"]
                 if test_result["exit_code"] != 0:
                     run_entry["failures"] += 1
+                if test_result.get("rate_limited"):
+                    delay = min(backoff_max, backoff_base * (2 ** rate_limit_hits))
+                    log(f"Rate limit detected; backing off for {delay}s")
+                    time.sleep(delay)
+                    rate_limit_hits += 1
+                else:
+                    rate_limit_hits = 0
 
             model_entry["runs"].append(run_entry)
 

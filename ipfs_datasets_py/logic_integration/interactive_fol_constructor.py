@@ -505,24 +505,37 @@ class InteractiveFOLConstructor:
         Returns:
             Dictionary with exported session data
         """
+        export_data = {
+            "session_metadata": {
+                "session_id": self.session_id,
+                "domain": self.domain,
+                "created_at": self.metadata.created_at.isoformat(),
+                "exported_at": datetime.now().isoformat(),
+                "total_statements": len(self.session_statements),
+                "average_confidence": self.metadata.average_confidence
+            },
+            "statements": [],
+            "fol_formulas": [],
+            "logical_analysis": {},
+            "consistency_report": {},
+            "errors": []
+        }
+
         try:
-            export_data = {
-                "session_metadata": {
-                    "session_id": self.session_id,
-                    "domain": self.domain,
-                    "created_at": self.metadata.created_at.isoformat(),
-                    "exported_at": datetime.now().isoformat(),
-                    "total_statements": len(self.session_statements),
-                    "average_confidence": self.metadata.average_confidence
-                },
-                "statements": [],
-                "fol_formulas": [],
-                "logical_analysis": self.analyze_logical_structure().get("analysis", {}),
-                "consistency_report": self.validate_consistency().get("consistency_report", {})
-            }
-            
-            # Export statements and formulas
-            for statement in self.session_statements.values():
+            export_data["logical_analysis"] = self.analyze_logical_structure().get("analysis", {})
+        except Exception as e:
+            logger.warning(f"Failed to analyze logical structure during export: {e}")
+            export_data["errors"].append(f"logical_analysis: {e}")
+
+        try:
+            export_data["consistency_report"] = self.validate_consistency().get("consistency_report", {})
+        except Exception as e:
+            logger.warning(f"Failed to validate consistency during export: {e}")
+            export_data["errors"].append(f"consistency_report: {e}")
+
+        # Export statements and formulas
+        for statement in self.session_statements.values():
+            try:
                 statement_data = {
                     "id": statement.id,
                     "text": statement.text,
@@ -531,7 +544,7 @@ class InteractiveFOLConstructor:
                     "is_consistent": statement.is_consistent,
                     "tags": statement.tags
                 }
-                
+
                 if statement.logical_components:
                     statement_data["logical_components"] = {
                         "quantifiers": statement.logical_components.quantifiers,
@@ -539,9 +552,9 @@ class InteractiveFOLConstructor:
                         "entities": statement.logical_components.entities,
                         "connectives": statement.logical_components.logical_connectives
                     }
-                
+
                 export_data["statements"].append(statement_data)
-                
+
                 # Add FOL formula in requested format
                 if statement.fol_formula:
                     fol_data = {
@@ -550,30 +563,30 @@ class InteractiveFOLConstructor:
                         "fol_formula": statement.fol_formula,
                         "format": format
                     }
-                    
-                    # Convert to different formats if needed
+
                     if format != "symbolic":
-                        converted_formula = self._convert_fol_format(statement.fol_formula, format)
-                        fol_data["fol_formula"] = converted_formula
-                    
+                        try:
+                            fol_data["exported_formula"] = self._convert_fol_format(
+                                statement.fol_formula,
+                                format
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to convert formula for statement {statement.id}: {e}")
+                            export_data["errors"].append(
+                                f"fol_format {statement.id}: {e}"
+                            )
+                            fol_data["exported_formula"] = statement.fol_formula
+                    else:
+                        fol_data["exported_formula"] = statement.fol_formula
+
                     export_data["fol_formulas"].append(fol_data)
-            
-            return {
-                "status": "success",
-                "export_data": export_data,
-                "format": format,
-                "session_metadata": export_data["session_metadata"],
-                "statements": export_data["statements"],
-                "fol_formulas": export_data["fol_formulas"],
-            }
-            
-        except Exception as e:
-            logger.error(f"Failed to export session: {e}")
-            return {
-                "status": "error",
-                "message": str(e)
-            }
-    
+            except Exception as e:
+                logger.warning(f"Failed to export statement {statement.id}: {e}")
+                export_data["errors"].append(f"statement {statement.id}: {e}")
+
+        return export_data
+
+
     def get_session_statistics(self) -> Dict[str, Any]:
         """Get comprehensive session statistics."""
         return {
