@@ -129,6 +129,11 @@ setup(
         # Note: 0.8.0 stable not available yet, using 0.8.0a2 or fallback to 0.7.0
         "ipfshttpclient>=0.7.0",
 
+        # libp2p crypto/pubsub dependencies (avoid runtime warnings)
+        "protobuf>=3.20.0",
+        "eth-hash>=0.3.2",
+        "eth-keys>=0.5.0",
+
         # IPLD components
         "multiformats>=0.2.1",
 

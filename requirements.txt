@@ -83,6 +83,9 @@ mcp>=1.2.0
 
 # libp2p must be installed from git main
 libp2p @ git+https://github.com/libp2p/py-libp2p.git@main
+protobuf>=3.20.0
+eth-hash>=0.3.2
+eth-keys>=0.5.0
 
 # Async compatibility (asyncio/trio via anyio)
 anyio>=4.0.0

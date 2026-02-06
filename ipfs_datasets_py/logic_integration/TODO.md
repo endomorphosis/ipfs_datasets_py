@@ -1,5 +1,9 @@
 # TODO List for logic_integration/
 
+## Recent Updates - 2026-02-06
+- Added `_semantic` initialization in `ModalLogicSymbol` to avoid SymbolicAI API conversion errors.
+- Normalized list responses into Symbol-compatible items and preserved `static_context` on `ModalLogicSymbol`.
+
 ## Worker Assignment
 **Worker 75**: Complete TDD tasks for logic_integration/ directory
 

@@ -72,9 +72,15 @@ class ModalLogicSymbol(Symbol):
 
     def __init__(self, value: str, semantic: bool = True, **kwargs):
         """Initialize modal logic symbol."""
+        static_context = kwargs.pop("static_context", None)
         if kwargs:
             logger.debug("Ignoring unsupported ModalLogicSymbol kwargs: %s", list(kwargs.keys()))
         super().__init__(value, semantic)
+        # Ensure compatibility with code paths expecting a _semantic attribute.
+        self._semantic = bool(semantic)
+        # Preserve static context for SymbolicAI-compatible attributes when provided.
+        if static_context is not None:
+            self.static_context = static_context
         self._modal_operators = {
             'necessity': '□',
             'possibility': '◇', 
@@ -153,10 +159,26 @@ class AdvancedLogicConverter:
     def _normalize_query_response(self, response: Any) -> str:
         """Normalize SymbolicAI responses to a lowercase-friendly string."""
         if isinstance(response, list):
-            return " ".join(str(item) for item in response)
+            normalized_items = self._normalize_symbol_items(response)
+            return " ".join(str(item) for item in normalized_items)
         if isinstance(response, dict):
             return json.dumps(response)
         return str(response)
+
+    def _normalize_symbol_items(self, items: List[Any]) -> List[Any]:
+        """Normalize list items into Symbol-compatible objects with _semantic set."""
+        normalized: List[Any] = []
+        for item in items:
+            if isinstance(item, list):
+                normalized.extend(self._normalize_symbol_items(item))
+                continue
+            if isinstance(item, Symbol):
+                if not hasattr(item, "_semantic"):
+                    item._semantic = True
+                normalized.append(item)
+                continue
+            normalized.append(ModalLogicSymbol(str(item), semantic=True))
+        return normalized
         
     @beartype
     def detect_logic_type(self, text: str) -> LogicClassification:

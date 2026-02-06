@@ -5,6 +5,12 @@ All notable changes to the logic integration module will be documented in this f
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-02-06
+
+### Fixed
+- Ensure `ModalLogicSymbol` always sets `_semantic` to prevent API conversion failures when SymbolicAI is available.
+- Normalize list responses into Symbol-compatible items and preserve `static_context` on `ModalLogicSymbol` when provided.
+
 ## [0.1.0] - 2025-07-04
 
 ### Added - Initial Implementation
