@@ -68,9 +68,11 @@ class LogicClassification:
 
 class ModalLogicSymbol(Symbol):
     """Extended Symbol class with modal logic operators."""
-    
-    def __init__(self, value: str, semantic: bool = True):
+
+    def __init__(self, value: str, semantic: bool = True, **kwargs):
         """Initialize modal logic symbol."""
+        if kwargs:
+            logger.debug("Ignoring unsupported ModalLogicSymbol kwargs: %s", list(kwargs.keys()))
         super().__init__(value, semantic)
         self._modal_operators = {
             'necessity': '□',
@@ -138,9 +140,12 @@ class AdvancedLogicConverter:
         """Initialize the converter."""
         self.confidence_threshold = confidence_threshold
         self._logic_indicators = {
-            'modal': ['must', 'might', 'could', 'necessarily', 'possibly', 'required'],
+            'modal': ['might', 'could', 'necessarily', 'possibly'],
             'temporal': ['always', 'never', 'eventually', 'sometimes', 'until', 'before', 'after'],
-            'deontic': ['ought', 'should', 'permitted', 'forbidden', 'obliged', 'allowed'],
+            'deontic': [
+                'must', 'shall', 'must not', 'shall not', 'ought', 'should',
+                'permitted', 'forbidden', 'obliged', 'allowed', 'required'
+            ],
             'epistemic': ['knows', 'believes', 'aware', 'certain', 'doubts', 'thinks']
         }
         
