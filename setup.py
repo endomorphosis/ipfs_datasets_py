@@ -115,6 +115,7 @@ setup(
         "fsspec>=2023.1.0,<=2024.6.1",
         "datasets>=2.10.0,<3.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
+        "jsonpatch>=1.33",
 
         # IPLD components (always available)
         "ipld-car>=0.0.1",
