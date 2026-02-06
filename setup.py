@@ -137,6 +137,9 @@ setup(
         
         # CLI framework
         'click>=8.0.0',
+
+        # Error reporting API (Flask endpoints)
+        'Flask>=3.1.1',
     ],
     extras_require={
         # Logic integration / legal reasoning
