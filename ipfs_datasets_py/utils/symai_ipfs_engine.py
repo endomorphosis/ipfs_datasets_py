@@ -253,6 +253,7 @@ def _copilot_sdk_generate(prompt: str) -> str:
     if cli_path:
         os.environ["COPILOT_CLI_PATH"] = cli_path
     model = os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", "").strip()
+    timeout_seconds = float(os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_TIMEOUT", "120"))
 
     async def _run() -> str:
         options = {}
@@ -265,7 +266,15 @@ def _copilot_sdk_generate(prompt: str) -> str:
         else:
             session = await client.create_session()
         try:
-            event = await session.send_and_wait({"prompt": prompt})
+            try:
+                event = await asyncio.wait_for(
+                    session.send_and_wait({"prompt": prompt}),
+                    timeout=timeout_seconds,
+                )
+            except asyncio.TimeoutError as exc:
+                raise RuntimeError(
+                    f"copilot_sdk timeout after {timeout_seconds:.1f}s waiting for session.idle"
+                ) from exc
             if event and getattr(event, "data", None) is not None:
                 content = getattr(event.data, "content", None)
                 if content is not None:

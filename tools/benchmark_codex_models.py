@@ -53,9 +53,17 @@ def _run_test(test_path: Path, env: Dict[str, str], log) -> Dict[str, object]:
     heartbeat_seconds = int(os.environ.get("IPFS_DATASETS_PY_CODEX_BENCHMARK_HEARTBEAT", "30"))
     start_time = time.monotonic()
     last_heartbeat = start_time
+    repo_root = test_path.parents[2]
+    ipfs_kit_root = repo_root / "ipfs_kit_py"
     bootstrap = (
-        "import runpy, sys; "
-        f"sys.path.insert(0, {str(test_path.parents[1])!r}); "
+        "import runpy, sys, importlib; "
+        f"repo_root = {str(repo_root)!r}; "
+        f"ipfs_kit_root = {str(ipfs_kit_root)!r}; "
+        "sys.path = [p for p in sys.path if p and p != repo_root and not p.endswith('/ipfs_datasets_py') and '/home/barberb/ipfs_datasets_py' not in p]; "
+        "sys.path.insert(0, ipfs_kit_root); "
+        "sys.path.insert(0, repo_root); "
+        "sc = importlib.import_module('ipfs_datasets_py.logic_integration.symbolic_contracts'); "
+        "print(f'SYMAI_DEBUG symbolic_contracts={sc.__file__}'); "
         f"runpy.run_path({str(test_path)!r}, run_name='__main__')"
     )
     proc = subprocess.Popen(

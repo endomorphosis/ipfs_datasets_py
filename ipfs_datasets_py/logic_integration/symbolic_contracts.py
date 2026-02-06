@@ -20,26 +20,31 @@ logger = logging.getLogger(__name__)
 try:
     from symai import Expression
     from symai.strategy import contract
+    try:
+        from symai.strategy import LLMDataModel
+    except Exception:
+        LLMDataModel = BaseModel
     SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):
     SYMBOLIC_AI_AVAILABLE = False
+    LLMDataModel = BaseModel
     logger.warning("SymbolicAI not available. Contract system will use fallback implementation.")
-    
+
     # Mock classes for development without SymbolicAI
     class Expression:
         def __init__(self, *args, **kwargs):
             pass
-        
+
         def __call__(self, *args, **kwargs):
             return {"status": "success", "result": "mock_result"}
-    
+
     def contract(**kwargs):
         def decorator(cls):
             return cls
         return decorator
 
 
-class FOLInput(BaseModel):
+class FOLInput(LLMDataModel):
     """Input model for FOL conversion with validation."""
     
     model_config = ConfigDict(
@@ -119,7 +124,7 @@ class FOLInput(BaseModel):
         return valid_predicates
 
 
-class FOLOutput(BaseModel):
+class FOLOutput(LLMDataModel):
     """Output model for FOL conversion with validation."""
     
     model_config = ConfigDict(validate_assignment=True)
@@ -512,9 +517,15 @@ if SYMBOLIC_AI_AVAILABLE:
             try:
             input_data = self._coerce_input(input_data)
                 # Basic input validation is handled by Pydantic
-                
+                text = getattr(input_data, "text", None)
+                if text is None and isinstance(input_data, dict):
+                    text = input_data.get("text")
+                if not isinstance(text, str):
+                    logger.error("Pre-condition validation failed: missing text field")
+                    return False
+
                 # Additional semantic validation
-                if len(input_data.text.split()) > 100:
+                if len(text.split()) > 100:
                     logger.warning("Input text is very long, may affect conversion quality")
                 
                 # Check for problematic patterns
@@ -524,7 +535,7 @@ if SYMBOLIC_AI_AVAILABLE:
                 ]
                 
                 for pattern in problematic_patterns:
-                    if re.search(pattern, input_data.text):
+                    if re.search(pattern, text):
                         logger.warning(f"Input contains potentially problematic patterns: {pattern}")
                 
                 return True
