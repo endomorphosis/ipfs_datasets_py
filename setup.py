@@ -145,6 +145,8 @@ setup(
 
         # Error reporting API (Flask endpoints)
         'Flask>=3.1.1',
+        # Default OCR engine (Surya; skip Windows / Python 3.14+)
+        'surya-ocr>=0.14.6; platform_system!="Windows" and python_version < "3.14"',
     ],
     extras_require={
         # Logic integration / legal reasoning
