@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Try to import IPLD components
 try:
-    from ..ipld.ipld_block_manager import IPLDBlockManager
-    from ..ipld.ipld_vector_store import IPLDVectorStore
+    from ..ipld.storage import IPLDStorage
+    from ..ipld.vector_store import IPLDVectorStore
     IPLD_AVAILABLE = True
 except ImportError:
     IPLD_AVAILABLE = False
@@ -105,7 +105,7 @@ class LogicIPLDStorage:
         # Initialize IPLD components if available
         if IPLD_AVAILABLE:
             try:
-                self.block_manager = IPLDBlockManager()
+                self.block_manager = IPLDStorage()
                 self.vector_store = IPLDVectorStore()
                 self.use_ipld = True
                 logger.info("IPLD logic storage initialized with full IPLD support")

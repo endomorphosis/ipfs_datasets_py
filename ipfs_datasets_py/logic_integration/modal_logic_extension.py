@@ -11,6 +11,7 @@ Modal Logic Types Supported:
 - Epistemic Logic: Knowledge (K), Belief (B), Common Knowledge (C)
 """
 
+import json
 import logging
 import re
 from typing import Dict, List, Optional, Union, Any, Tuple
@@ -148,6 +149,14 @@ class AdvancedLogicConverter:
             ],
             'epistemic': ['knows', 'believes', 'aware', 'certain', 'doubts', 'thinks']
         }
+
+    def _normalize_query_response(self, response: Any) -> str:
+        """Normalize SymbolicAI responses to a lowercase-friendly string."""
+        if isinstance(response, list):
+            return " ".join(str(item) for item in response)
+        if isinstance(response, dict):
+            return json.dumps(response)
+        return str(response)
         
     @beartype
     def detect_logic_type(self, text: str) -> LogicClassification:
@@ -239,7 +248,9 @@ class AdvancedLogicConverter:
                 "Does this express necessity, possibility, or something else? "
                 "Respond with: necessity, possibility, or neither"
             )
-            modal_type_str = getattr(modal_type, 'value', str(modal_type)).lower()
+            modal_type_str = self._normalize_query_response(
+                getattr(modal_type, 'value', modal_type)
+            ).lower()
         else:
             # Fallback logic for when SymbolicAI is not available
             text_lower = text.lower()
@@ -279,7 +290,9 @@ class AdvancedLogicConverter:
                 "Does this express something that is always true, eventually true, or something else? "
                 "Respond with: always, eventually, or neither"
             )
-            temporal_type_str = getattr(temporal_type, 'value', str(temporal_type)).lower()
+            temporal_type_str = self._normalize_query_response(
+                getattr(temporal_type, 'value', temporal_type)
+            ).lower()
         else:
             # Fallback logic
             text_lower = text.lower()
@@ -319,7 +332,9 @@ class AdvancedLogicConverter:
                 "Does this express an obligation, permission, prohibition, or something else? "
                 "Respond with: obligation, permission, prohibition, or neither"
             )
-            deontic_type_str = getattr(deontic_type, 'value', str(deontic_type)).lower()
+            deontic_type_str = self._normalize_query_response(
+                getattr(deontic_type, 'value', deontic_type)
+            ).lower()
         else:
             # Fallback logic
             text_lower = text.lower()
@@ -365,7 +380,9 @@ class AdvancedLogicConverter:
                 "Does this express knowledge, belief, or something else? "
                 "Respond with: knowledge, belief, or neither"
             )
-            epistemic_type_str = getattr(epistemic_type, 'value', str(epistemic_type)).lower()
+            epistemic_type_str = self._normalize_query_response(
+                getattr(epistemic_type, 'value', epistemic_type)
+            ).lower()
         else:
             # Fallback logic
             text_lower = text.lower()

@@ -116,6 +116,11 @@ setup(
         "datasets>=2.10.0,<3.0.0",
         "huggingface-hub>=0.34.0,<1.0.0",
 
+        # IPLD components (always available)
+        "ipld-car>=0.0.1",
+        "ipld-dag-pb>=0.0.1",
+        "dag-cbor>=0.3.3",
+
         # Caching for CLI tools
         "cachetools>=5.3.0",
 
