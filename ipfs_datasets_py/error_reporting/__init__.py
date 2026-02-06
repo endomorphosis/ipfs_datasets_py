@@ -9,7 +9,7 @@ runtime errors into GitHub issues for automated tracking and resolution.
 
 from .error_reporter import ErrorReporter, get_global_error_reporter
 from .github_issue_client import GitHubIssueClient
-from .error_handler import install_error_handlers, uninstall_error_handlers
+from .error_handler import install_error_handlers, uninstall_error_handlers, get_recent_logs
 
 __all__ = [
     'ErrorReporter',
@@ -17,4 +17,5 @@ __all__ = [
     'GitHubIssueClient',
     'install_error_handlers',
     'uninstall_error_handlers',
+    'get_recent_logs',
 ]
