@@ -561,7 +561,10 @@ class InteractiveFOLConstructor:
             return {
                 "status": "success",
                 "export_data": export_data,
-                "format": format
+                "format": format,
+                "session_metadata": export_data["session_metadata"],
+                "statements": export_data["statements"],
+                "fol_formulas": export_data["fol_formulas"],
             }
             
         except Exception as e:
