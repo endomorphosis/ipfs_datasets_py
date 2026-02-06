@@ -515,7 +515,7 @@ if SYMBOLIC_AI_AVAILABLE:
         def pre(self, input_data: FOLInput) -> bool:
             """Validate input before processing."""
             try:
-            input_data = self._coerce_input(input_data)
+                input_data = self._coerce_input(input_data)
                 # Basic input validation is handled by Pydantic
                 text = getattr(input_data, "text", None)
                 if text is None and isinstance(input_data, dict):
@@ -547,7 +547,7 @@ if SYMBOLIC_AI_AVAILABLE:
         def post(self, output_data: FOLOutput) -> bool:
             """Validate output after processing."""
             try:
-            output_data = self._coerce_output(output_data)
+                output_data = self._coerce_output(output_data)
                 # Validate the FOL formula
                 validation_result = self.validator.validate_formula(output_data.fol_formula)
                 
