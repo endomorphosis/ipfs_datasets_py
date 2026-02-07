@@ -11,6 +11,8 @@ import os
 import shlex
 import shutil
 import subprocess
+import hashlib
+import importlib.util
 from pathlib import Path
 from copy import deepcopy
 from typing import Any, Dict, List, Tuple
@@ -71,6 +73,132 @@ def _dry_run_json_object(prompt: str) -> str:
         "metadata": {"backend": "dry_run"},
     }
     return json.dumps(payload, ensure_ascii=False)
+
+
+def _symai_cache_enabled() -> bool:
+    value = os.environ.get("IPFS_DATASETS_PY_SYMAI_ROUTER_CACHE")
+    if value is None:
+        # Default to enabled in benchmark contexts (determinism + speed), off otherwise.
+        return _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK"))
+    return str(value).strip() != "0"
+
+
+def _symai_cache_key_strategy() -> str:
+    """Return request-cache key strategy.
+
+    - "cid" (default): CIDv1 derived from request payload
+    - "sha256": compact deterministic sha256 key
+    """
+
+    return os.environ.get("IPFS_DATASETS_PY_SYMAI_CACHE_KEY", "cid").strip().lower() or "cid"
+
+
+def _symai_cache_cid_base() -> str:
+    return os.environ.get("IPFS_DATASETS_PY_SYMAI_CACHE_CID_BASE", "base32").strip() or "base32"
+
+
+def _symai_backend_policy() -> str:
+    value = os.environ.get("IPFS_DATASETS_PY_SYMAI_BACKEND")
+    if value is None:
+        value = os.environ.get("IPFS_DATASETS_PY_SYMAI_BACKENDS")
+    return (value or "auto").strip() or "auto"
+
+
+def _backend_capabilities_fingerprint() -> Dict[str, Any]:
+    """Best-effort backend availability snapshot.
+
+    This is included in cache keys to avoid cross-machine mismatches when
+    different machines have different available backends.
+    """
+
+    return {
+        "ipfs_accelerate_py": importlib.util.find_spec("ipfs_accelerate_py") is not None,
+        "copilot_sdk": importlib.util.find_spec("copilot") is not None,
+        "gemini_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")),
+        "claude_code": _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")),
+        "copilot_cli": _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")),
+        "transformers": importlib.util.find_spec("transformers") is not None,
+        "torch": importlib.util.find_spec("torch") is not None,
+    }
+
+
+def _symai_request_cache_key(
+    *,
+    engine_id: str,
+    mode: str,
+    model_name: str,
+    prompt: str,
+    wants_json: bool,
+) -> str:
+    payload: Dict[str, Any] = {
+        "v": 1,
+        "kind": "symai_ipfs_engine",
+        "engine_id": str(engine_id or ""),
+        "mode": str(mode or ""),
+        "model": str(model_name or ""),
+        "prompt": str(prompt or ""),
+        "wants_json": bool(wants_json),
+        "backend_policy": _symai_backend_policy(),
+        "backend_caps": _backend_capabilities_fingerprint(),
+        "max_tokens": os.environ.get("IPFS_DATASETS_PY_SYMAI_MAX_TOKENS", ""),
+        "hf_model": os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", ""),
+        "copilot_sdk_model": os.environ.get("IPFS_DATASETS_PY_COPILOT_SDK_MODEL", ""),
+    }
+
+    strategy = _symai_cache_key_strategy()
+    if strategy == "sha256":
+        try:
+            from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes
+
+            digest = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+        except Exception:
+            digest = hashlib.sha256(repr(sorted(payload.items())).encode("utf-8")).hexdigest()
+        return f"symai:{digest}"
+
+    # Default: CID (CIDv1, sha2-256, raw) derived from the request payload.
+    try:
+        from ipfs_datasets_py.utils.cid_utils import cid_for_obj
+
+        return cid_for_obj(payload, base=_symai_cache_cid_base())
+    except Exception:
+        # Fallback: still deterministic and content-addressed, but not a multiformats CID.
+        try:
+            from ipfs_datasets_py.utils.cid_utils import canonical_json_bytes
+
+            digest = hashlib.sha256(canonical_json_bytes(payload)).hexdigest()
+        except Exception:
+            digest = hashlib.sha256(repr(sorted(payload.items())).encode("utf-8")).hexdigest()
+        return f"symai:{digest}"
+
+
+def _get_symai_router_deps():
+    """Return RouterDeps, best-effort wiring a remote cache when opted in."""
+
+    try:
+        from ipfs_datasets_py.router_deps import get_default_router_deps
+
+        deps = get_default_router_deps()
+    except Exception:
+        return None
+
+    # If a remote cache is already injected, use it.
+    if getattr(deps, "remote_cache", None) is not None:
+        return deps
+
+    # Opt-in auto-wiring (kept conservative to avoid import-time side effects).
+    enable = _truthy(os.environ.get("IPFS_DATASETS_PY_SYMAI_REMOTE_CACHE")) or _truthy(
+        os.environ.get("IPFS_DATASETS_PY_REMOTE_CACHE_NETWORK")
+    )
+    if not enable:
+        return deps
+
+    try:
+        from ipfs_datasets_py.caching.router_remote_cache import make_ipfs_remote_cache
+
+        deps.remote_cache = make_ipfs_remote_cache(deps=deps)
+    except Exception:
+        deps.remote_cache = None
+    return deps
 
 
 def _wants_json_response(argument, prompt: str) -> bool:
@@ -535,6 +663,38 @@ class IPFSSyMAIEngine(Engine):
     def forward(self, argument) -> Tuple[List[str], Dict[str, Any]]:
         prompt = argument.prop.prepared_input
 
+        wants_json = False
+        try:
+            wants_json = _wants_json_response(argument, str(prompt))
+        except Exception:
+            wants_json = False
+
+        cache_key: str | None = None
+        deps = None
+        if self.mode != "embedding" and _symai_cache_enabled():
+            cache_key = _symai_request_cache_key(
+                engine_id=self.engine_id,
+                mode=self.mode,
+                model_name=getattr(self, "model", "") or "",
+                prompt=str(prompt or ""),
+                wants_json=wants_json,
+            )
+            deps = _get_symai_router_deps()
+            getter = getattr(deps, "get_cached_or_remote", None) if deps is not None else None
+            if callable(getter):
+                cached = getter(cache_key)
+            else:
+                cached = None
+
+            if isinstance(cached, dict) and "text" in cached:
+                metadata = dict(cached.get("metadata") or {})
+                if metadata.get("backend") not in (None, "", "cache"):
+                    metadata.setdefault("cached_backend", metadata.get("backend"))
+                metadata["backend"] = "cache"
+                metadata["cache"] = "hit"
+                metadata["cache_key"] = cache_key
+                return [str(cached.get("text") or "")], metadata
+
         if _dry_run_enabled():
             if self.mode == "embedding":
                 return [json.dumps([0.0, 0.0, 0.0])], {"backend": "dry_run"}
@@ -549,6 +709,24 @@ class IPFSSyMAIEngine(Engine):
             return [json.dumps(embeddings[0])], {"backend": "embedding_adapter"}
 
         text, metadata = _generate_text(prompt, self.model)
+        if cache_key and deps is not None:
+            setter = getattr(deps, "set_cached_and_remote", None)
+            if callable(setter):
+                setter(
+                    cache_key,
+                    {
+                        "text": text,
+                        "metadata": metadata,
+                        "engine_id": self.engine_id,
+                        "mode": self.mode,
+                        "model": getattr(self, "model", "") or "",
+                        "format": "json" if wants_json else "text",
+                    },
+                )
+        if cache_key:
+            metadata = dict(metadata or {})
+            metadata["cache"] = "miss"
+            metadata["cache_key"] = cache_key
         return [text], metadata
 
 
