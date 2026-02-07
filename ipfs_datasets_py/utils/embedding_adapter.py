@@ -12,7 +12,9 @@ import json
 import os
 import shutil
 import subprocess
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
+
+from ipfs_datasets_py.deps_resolver import resolve_module
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -67,12 +69,30 @@ def _gemini_embed(texts: List[str]) -> List[List[float]]:
     return results
 
 
-def _hf_embed(texts: List[str], model_name: str, device: str) -> List[List[float]]:
-    try:
-        import torch
-        from transformers import AutoModel, AutoTokenizer
-    except Exception as exc:
-        raise RuntimeError("transformers/torch not available for HF embeddings") from exc
+def _hf_embed(
+    texts: List[str],
+    model_name: str,
+    device: str,
+    *,
+    deps: object | None = None,
+    torch_module: Any | None = None,
+    transformers_module: Any | None = None,
+) -> List[List[float]]:
+    torch = resolve_module("torch", deps=deps, module_override=torch_module, cache_key="pip::torch")
+    transformers = resolve_module(
+        "transformers",
+        deps=deps,
+        module_override=transformers_module,
+        cache_key="pip::transformers",
+    )
+
+    if torch is None or transformers is None:
+        raise RuntimeError("transformers/torch not available for HF embeddings")
+
+    AutoTokenizer = getattr(transformers, "AutoTokenizer", None)
+    AutoModel = getattr(transformers, "AutoModel", None)
+    if AutoTokenizer is None or AutoModel is None:
+        raise RuntimeError("transformers missing AutoTokenizer/AutoModel")
 
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     model = AutoModel.from_pretrained(model_name)
@@ -108,6 +128,9 @@ def embed_texts(
     *,
     model_name: Optional[str] = None,
     device: Optional[str] = None,
+    deps: object | None = None,
+    torch_module: Any | None = None,
+    transformers_module: Any | None = None,
 ) -> List[List[float]]:
     """Embed texts using the selected backend."""
     text_list = [t for t in texts]
@@ -127,13 +150,19 @@ def embed_texts(
         )
         device_name = device or os.getenv("IPFS_DATASETS_PY_EMBEDDINGS_DEVICE")
         if not device_name:
+            torch = resolve_module("torch", deps=deps, module_override=torch_module, cache_key="pip::torch")
             try:
-                import torch
-
-                device_name = "cuda" if torch.cuda.is_available() else "cpu"
+                device_name = "cuda" if (torch is not None and torch.cuda.is_available()) else "cpu"
             except Exception:
                 device_name = "cpu"
-        return _hf_embed(text_list, model, device_name)
+        return _hf_embed(
+            text_list,
+            model,
+            device_name,
+            deps=deps,
+            torch_module=torch_module,
+            transformers_module=transformers_module,
+        )
 
     raise RuntimeError(f"Unknown embeddings backend: {backend}")
 
@@ -143,6 +172,16 @@ def embed_text(
     *,
     model_name: Optional[str] = None,
     device: Optional[str] = None,
+    deps: object | None = None,
+    torch_module: Any | None = None,
+    transformers_module: Any | None = None,
 ) -> List[float]:
     """Embed a single text string."""
-    return embed_texts([text], model_name=model_name, device=device)[0]
+    return embed_texts(
+        [text],
+        model_name=model_name,
+        device=device,
+        deps=deps,
+        torch_module=torch_module,
+        transformers_module=transformers_module,
+    )[0]

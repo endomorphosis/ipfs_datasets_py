@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_DID_LOG_INIT = False
+
 # Fallback imports when SymbolicAI is not available
 try:
     from symai import Symbol, Expression
@@ -97,19 +99,22 @@ class SymbolicFOLBridge:
         
         # Initialize fallback components
         self._initialize_fallback_system()
-        
-        logger.info(
-            f"SymbolicFOLBridge initialized. "
-            f"SymbolicAI available: {SYMBOLIC_AI_AVAILABLE}, "
-            f"Fallback enabled: {fallback_enabled}"
-        )
+
+        global _DID_LOG_INIT
+        if not _DID_LOG_INIT:
+            _DID_LOG_INIT = True
+            logger.info(
+                f"SymbolicFOLBridge initialized. "
+                f"SymbolicAI available: {SYMBOLIC_AI_AVAILABLE}, "
+                f"Fallback enabled: {fallback_enabled}"
+            )
     
     def _initialize_fallback_system(self):
         """Initialize fallback components from original FOL system."""
         try:
             # Import original FOL tools as fallback
-            from ..mcp_server.tools.dataset_tools.logic_utils import predicate_extractor
-            from ..mcp_server.tools.dataset_tools.logic_utils import fol_parser
+            from ..logic_tools.logic_utils import predicate_extractor
+            from ..logic_tools.logic_utils import fol_parser
 
             self.predicate_extractor = predicate_extractor.extract_predicates
             self.fol_parser = getattr(fol_parser, "parse_fol", None)

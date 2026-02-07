@@ -278,28 +278,23 @@ async def get_ipwb_content(
     """
     try:
         try:
-            import ipfshttpclient
-        except ImportError:
+            from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+        except Exception:
             return {
                 "status": "error",
-                "error": "ipfshttpclient not installed. Install with: pip install ipfshttpclient"
+                "error": "IPFS backend router not available"
             }
 
-        # Set IPFS endpoint
-        if not ipfs_endpoint:
-            ipfs_endpoint = '/ip4/127.0.0.1/tcp/5001'
+        if ipfs_endpoint:
+            os.environ["IPFS_HOST"] = ipfs_endpoint
 
-        # Connect to IPFS
-        with ipfshttpclient.connect(ipfs_endpoint) as client:
-            # Get content from IPFS
-            content = client.cat(ipfs_hash)
-            
-            return {
-                "status": "success",
-                "content": content,
-                "ipfs_hash": ipfs_hash,
-                "ipfs_endpoint": ipfs_endpoint
-            }
+        content = ipfs_router.cat(ipfs_hash)
+        return {
+            "status": "success",
+            "content": content,
+            "ipfs_hash": ipfs_hash,
+            "ipfs_endpoint": ipfs_endpoint or os.environ.get("IPFS_HOST")
+        }
 
     except Exception as e:
         logger.error(f"Failed to get IPWB content for hash {ipfs_hash}: {e}")

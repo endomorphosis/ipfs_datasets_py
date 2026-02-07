@@ -1,10 +1,28 @@
 import datasets
 import sys
 from typing import Optional
-try:
-    from ipfs_kit_py.ipfs_kit import ipfs_kit as ipfs_kit_module
-except Exception:
-    ipfs_kit_module = None
+import os
+
+
+def _should_enable_ipfs_kit() -> bool:
+    if str(os.getenv("IPFS_KIT_DISABLE", "")).strip().lower() in {"1", "true", "yes", "on"}:
+        return False
+    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {"1", "true", "yes", "on"}:
+        return False
+    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _lazy_load_ipfs_kit_module():
+    if not _should_enable_ipfs_kit():
+        return None
+    try:
+        from ipfs_kit_py.ipfs_kit import ipfs_kit as ipfs_kit_module
+        return ipfs_kit_module
+    except Exception:
+        return None
+
+
+ipfs_kit_module = None
 # from ipfs_embeddings_py import ipfs_embeddings_py, qdrant_kit_py, faiss_kit_py # Commented out for now
 import numpy as np
 import os
@@ -17,9 +35,9 @@ import random
 from multiprocessing import Pool
 
 try:
-    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+    from ipfs_datasets_py.embeddings_router import embed_texts as router_embed_texts
 except Exception:
-    embed_texts = None
+    router_embed_texts = None
 
 
 def _use_embedding_adapter() -> bool:
@@ -240,6 +258,7 @@ class search_embeddings:
             - Memory optimization settings are applied during backend initialization
             - Service availability is continuously monitored for adaptive backend selection
         """
+        global ipfs_kit_module
         self.resources = resources
         self.metadata = metadata
         self.datasets = datasets
@@ -248,11 +267,16 @@ class search_embeddings:
             for key in metadata.keys():
                 setattr(self, key, metadata[key])
         
-        # Instantiate ipfs_kit
+        # Instantiate ipfs_kit (opt-in; disabled in benchmarks by default)
+        self.ipfs_kit = None
         if ipfs_kit_module is None:
-            self.ipfs_kit = None
-        else:
-            self.ipfs_kit = ipfs_kit_module.ipfs_kit(resources=resources, metadata=metadata)  # Instantiate ipfs_kit
+            ipfs_kit_module = _lazy_load_ipfs_kit_module()
+        if ipfs_kit_module is not None:
+            try:
+                # `_lazy_load_ipfs_kit_module` returns the `ipfs_kit` factory.
+                self.ipfs_kit = ipfs_kit_module(resources=resources, metadata=metadata)
+            except Exception:
+                self.ipfs_kit = None
         
         # self.qdrant_kit_py = qdrant_kit_py(resources=resources, metadata=metadata) # Commented out for now
         # self.ipfs_embeddings_py = ipfs_embeddings_py(resources=resources, metadata=metadata) # Commented out for now
@@ -286,9 +310,9 @@ class search_embeddings:
             query = [query]
         elif not isinstance(query, list):
             raise ValueError("Query must be a string or a list of strings")
-        if _use_embedding_adapter() and embed_texts is not None:
+        if _use_embedding_adapter() and router_embed_texts is not None:
             adapter_embeddings = await anyio.to_thread.run_sync(
-                lambda: embed_texts(query, model_name=model)
+                lambda: router_embed_texts(query, model_name=model)
             )
             return np.array(adapter_embeddings, dtype=np.float32)
         if self.ipfs_kit is None:

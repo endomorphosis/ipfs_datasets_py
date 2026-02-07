@@ -23,23 +23,12 @@ from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
 
-
-def _get_ipfs_client():
-    """Get IPFS client instance.
-    
-    Returns:
-        ipfshttpclient.Client or None if not available
-    """
-    try:
-        import ipfshttpclient
-        
-        # Try to connect to IPFS daemon
-        ipfs_host = os.environ.get("IPFS_HOST", "/ip4/127.0.0.1/tcp/5001")
-        client = ipfshttpclient.connect(ipfs_host)
-        return client
-    except Exception as e:
-        logger.debug(f"IPFS client not available: {e}")
-        return None
+try:
+    from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+    _IPFS_ROUTER_AVAILABLE = True
+except Exception:
+    ipfs_router = None
+    _IPFS_ROUTER_AVAILABLE = False
 
 
 def _compute_cache_cid_key(*, q: str, count: int, offset: int, country: str, safesearch: str) -> str:
@@ -96,8 +85,7 @@ class BraveSearchIPFSCache:
     
     def __init__(self):
         """Initialize IPFS cache."""
-        self.ipfs_client = _get_ipfs_client()
-        self._available = self.ipfs_client is not None
+        self._available = _IPFS_ROUTER_AVAILABLE
         
         # Local CID index: query_key -> CID mapping
         self._cid_index_path = Path(
@@ -190,21 +178,14 @@ class BraveSearchIPFSCache:
             }
             
             # Store in IPFS
-            cache_json = json.dumps(cache_entry, sort_keys=True, indent=2)
-            result = self.ipfs_client.add_json(cache_entry)
-            cid = result if isinstance(result, str) else result.get("Hash")
+            cache_json = json.dumps(cache_entry, sort_keys=True, indent=2).encode("utf-8")
+            cid = ipfs_router.add_bytes(cache_json, pin=self._pin_cache_entries)
             
             if not cid:
                 logger.warning("Failed to get CID from IPFS add result")
                 return None
             
-            # Pin if configured
-            if self._pin_cache_entries:
-                try:
-                    self.ipfs_client.pin.add(cid)
-                    logger.debug(f"Pinned cache entry: {cid}")
-                except Exception as e:
-                    logger.debug(f"Failed to pin cache entry: {e}")
+            # Pin handled by router.add_bytes(pin=...)
             
             # Update local CID index
             query_key = _compute_cache_cid_key(
@@ -271,7 +252,8 @@ class BraveSearchIPFSCache:
             cid = cid_entry["cid"]
             
             # Retrieve from IPFS
-            cache_entry = self.ipfs_client.get_json(cid)
+            raw = ipfs_router.cat(cid)
+            cache_entry = json.loads(raw.decode("utf-8"))
             
             if not isinstance(cache_entry, dict):
                 logger.warning(f"Invalid cache entry from IPFS: {cid}")
@@ -305,15 +287,10 @@ class BraveSearchIPFSCache:
             Dict with cache statistics
         """
         ipfs_connected = False
-        ipfs_version = None
-        ipfs_peer_id = None
+        ipfs_backend = os.environ.get("IPFS_DATASETS_PY_IPFS_BACKEND", "").strip() or None
         
         if self._available:
             try:
-                version_info = self.ipfs_client.version()
-                ipfs_version = version_info.get("Version")
-                id_info = self.ipfs_client.id()
-                ipfs_peer_id = id_info.get("ID")
                 ipfs_connected = True
             except Exception:
                 pass
@@ -321,13 +298,12 @@ class BraveSearchIPFSCache:
         return {
             "available": self._available,
             "ipfs_connected": ipfs_connected,
-            "ipfs_version": ipfs_version,
-            "ipfs_peer_id": ipfs_peer_id,
+            "ipfs_backend": ipfs_backend,
             "cid_index_entries": len(self._cid_index),
             "cid_index_path": str(self._cid_index_path),
             "pin_enabled": self._pin_cache_entries,
             "ttl_s": self._cache_ttl_s,
-            "ipfs_host": os.environ.get("IPFS_HOST", "/ip4/127.0.0.1/tcp/5001")
+            "kubo_cmd": os.environ.get("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")
         }
     
     def clear_index(self) -> Dict[str, Any]:
@@ -368,17 +344,10 @@ class BraveSearchIPFSCache:
             }
         
         try:
-            result = self.ipfs_client.repo.gc()
-            
-            # Count freed items
-            freed_count = 0
-            if isinstance(result, list):
-                freed_count = len(result)
-            
             return {
                 "status": "success",
-                "freed_count": freed_count,
-                "message": f"Garbage collected {freed_count} items"
+                "freed_count": 0,
+                "message": "Garbage collection via router is not implemented"
             }
         except Exception as e:
             return {
@@ -402,7 +371,7 @@ class BraveSearchIPFSCache:
             }
         
         try:
-            self.ipfs_client.pin.add(cid)
+            ipfs_router.pin(cid)
             return {
                 "status": "success",
                 "cid": cid,
@@ -430,7 +399,7 @@ class BraveSearchIPFSCache:
             }
         
         try:
-            self.ipfs_client.pin.rm(cid)
+            ipfs_router.unpin(cid)
             return {
                 "status": "success",
                 "cid": cid,
@@ -454,27 +423,10 @@ class BraveSearchIPFSCache:
                 "message": "IPFS not available"
             }
         
-        try:
-            pins = self.ipfs_client.pin.ls()
-            pin_list = []
-            
-            if isinstance(pins, dict):
-                for cid, info in pins.get("Keys", {}).items():
-                    pin_list.append({
-                        "cid": cid,
-                        "type": info.get("Type", "unknown")
-                    })
-            
-            return {
-                "status": "success",
-                "pins": pin_list,
-                "count": len(pin_list)
-            }
-        except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+        return {
+            "status": "error",
+            "error": "list_pins is not implemented for router backends"
+        }
 
 
 __all__ = [

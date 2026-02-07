@@ -320,11 +320,11 @@ _load_thread = _threading.Thread(target=_test_for_non_critical_dependencies, dae
 _load_thread.start()
 
 
-# Check for dependencies
+# Check for IPFS capability (prefer router entrypoint)
 try:
-    import ipfshttpclient
+    from . import ipfs_backend_router as _ipfs_backend_router
     HAVE_IPFS = True
-except ImportError:
+except Exception:
     HAVE_IPFS = False
 
 try:

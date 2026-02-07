@@ -54,7 +54,7 @@ except ImportError:
     get_accelerate_status = lambda: {"available": False}
 
 try:
-    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+    from ipfs_datasets_py.embeddings_router import embed_texts
 except Exception:
     embed_texts = None
 

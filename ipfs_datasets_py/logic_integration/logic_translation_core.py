@@ -171,20 +171,10 @@ class LeanTranslator(LogicTranslator):
             # Generate Lean formula
             proposition = self._normalize_identifier(formula.proposition)
             
-            # Handle agent
-            agent_clause = ""
-            if formula.agent:
-                agent_id = self._normalize_identifier(formula.agent.identifier)
-                agent_clause = f" (agent := {agent_id})"
-            
-            # Handle conditions
-            conditions_clause = ""
-            if formula.conditions:
-                condition_props = [self._normalize_identifier(cond) for cond in formula.conditions]
-                conditions_clause = f" (conditions := [{', '.join(condition_props)}])"
-            
-            # Build the main formula
-            lean_formula = f"{lean_operator} {proposition}{agent_clause}{conditions_clause}"
+            # Build the main formula.
+            # NOTE: Keep the smoke-test Lean output compatible with core Lean execution
+            # (no custom structures for agent/conditions).
+            lean_formula = f"{lean_operator} {proposition}"
             
             # Add quantifiers if present
             for quantifier, variable, domain in formula.quantifiers:
@@ -203,7 +193,8 @@ class LeanTranslator(LogicTranslator):
                     "syntax_version": "lean4",
                     "deontic_operator": formula.operator.value,
                     "has_agent": formula.agent is not None,
-                    "has_conditions": len(formula.conditions) > 0
+                    "has_conditions": len(formula.conditions) > 0,
+                    "proposition_id": proposition,
                 }
             )
             

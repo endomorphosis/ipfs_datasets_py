@@ -25,8 +25,8 @@ async def main():
     print("-" * 40)
     
     try:
-        from ipfs_datasets_py.mcp_server.tools.dataset_tools.text_to_fol import convert_text_to_fol
-        from ipfs_datasets_py.mcp_server.tools.dataset_tools.legal_text_to_deontic import convert_legal_text_to_deontic
+        from ipfs_datasets_py.logic_tools.text_to_fol import convert_text_to_fol
+        from ipfs_datasets_py.logic_tools.legal_text_to_deontic import convert_legal_text_to_deontic
         
         # Test FOL core function
         fol_result = await convert_text_to_fol(
@@ -81,9 +81,9 @@ async def main():
     print("-" * 40)
     
     try:
-        from ipfs_datasets_py.mcp_server.tools.dataset_tools.logic_utils.predicate_extractor import extract_predicates
-        from ipfs_datasets_py.mcp_server.tools.dataset_tools.logic_utils.fol_parser import parse_quantifiers
-        from ipfs_datasets_py.mcp_server.tools.dataset_tools.logic_utils.deontic_parser import extract_normative_elements
+        from ipfs_datasets_py.logic_tools.logic_utils.predicate_extractor import extract_predicates
+        from ipfs_datasets_py.logic_tools.logic_utils.fol_parser import parse_quantifiers
+        from ipfs_datasets_py.logic_tools.logic_utils.deontic_parser import extract_normative_elements
         
         # Test predicate extraction
         predicates = extract_predicates("All cats are curious animals")
@@ -97,11 +97,12 @@ async def main():
         
         # Test deontic parsing
         normative = extract_normative_elements("Citizens must vote in elections")
-        assert isinstance(normative, dict)
+        assert isinstance(normative, list)
+        assert normative and isinstance(normative[0], dict)
         print("   ✅ Deontic normative element extraction working")
         
     except Exception as e:
-        print(f"   ❌ Logic utilities test failed: {e}")
+        print(f"   ❌ Logic utilities test failed: {type(e).__name__}: {e!r}")
         return False
     
     # 4. Integration and Discoverability Tests
@@ -196,5 +197,5 @@ async def main():
     return True
 
 if __name__ == "__main__":
-    success = anyio.run(main())
+    success = anyio.run(main)
     sys.exit(0 if success else 1)

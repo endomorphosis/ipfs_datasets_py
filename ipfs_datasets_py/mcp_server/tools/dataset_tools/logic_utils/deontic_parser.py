@@ -94,6 +94,8 @@ def extract_legal_subject(sentence: str) -> List[str]:
     subject_patterns = [
         r'\b(?:citizens?|residents?|persons?|individuals?|people)\b',
         r'\b(?:companies?|corporations?|businesses?|entities?)\b',
+        r'\b(?:developers?|operators?|providers?|controllers?|processors?)\b',
+        r'\b(?:systems?|services?|platforms?|applications?|software)\b',
         r'\b(?:employees?|workers?|staff)\b',
         r'\b(?:drivers?|operators?|users?)\b',
         r'\b(?:owners?|lessees?|tenants?)\b',
@@ -105,9 +107,15 @@ def extract_legal_subject(sentence: str) -> List[str]:
         matches = re.findall(pattern, sentence.lower())
         subjects.extend(matches)
     
-    # Also look for specific named entities (would use NER in full implementation)
+    # Also look for simple named entities (would use NER in full implementation)
+    # - Title-cased words/phrases (e.g. "Federal Agency")
     capitalized_words = re.findall(r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b', sentence)
     subjects.extend(capitalized_words[:2])  # Limit to avoid noise
+    # - Acronyms (e.g. "AI", "EU") and acronym-led phrases (e.g. "AI systems")
+    acronyms = re.findall(r'\b[A-Z]{2,}\b', sentence)
+    subjects.extend(acronyms[:2])
+    acronym_phrases = re.findall(r'\b[A-Z]{2,}\s+[a-z]+(?:\s+[a-z]+)*\b', sentence)
+    subjects.extend(acronym_phrases[:2])
     
     return list(set(subjects))
 
@@ -118,6 +126,11 @@ def extract_legal_action(sentence: str) -> List[str]:
     # Look for verbs after modal auxiliaries
     modal_verb_pattern = r'(?:must|shall|may|can|cannot|must not|shall not)\s+(?:not\s+)?(\w+(?:\s+\w+)*?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)'
     matches = re.findall(modal_verb_pattern, sentence.lower())
+    actions.extend([match.strip() for match in matches])
+
+    # Prohibition/permission phrasing that doesn't use a simple modal auxiliary.
+    prohibited_pattern = r'(?:prohibited from|prohibited to|forbidden to)\s+([^.]+?)(?:\s+(?:by|before|after|until|unless|except)|\.|$)'
+    matches = re.findall(prohibited_pattern, sentence.lower())
     actions.extend([match.strip() for match in matches])
     
     # Look for specific legal action verbs

@@ -18,9 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 # Import the MCP tool interfaces directly
 from ipfs_datasets_py.mcp_server.tools.dataset_tools import text_to_fol, legal_text_to_deontic
 
-# Import the core functions for comparison
-from ipfs_datasets_py.mcp_server.tools.dataset_tools.text_to_fol import convert_text_to_fol
-from ipfs_datasets_py.mcp_server.tools.dataset_tools.legal_text_to_deontic import convert_legal_text_to_deontic
+# Import the package-level core functions for comparison
+from ipfs_datasets_py.logic_tools.text_to_fol import convert_text_to_fol
+from ipfs_datasets_py.logic_tools.legal_text_to_deontic import convert_legal_text_to_deontic
 
 
 class LogicMCPToolsTester:
@@ -390,5 +390,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    exit_code = anyio.run(main())
+    exit_code = anyio.run(main)
     sys.exit(exit_code)

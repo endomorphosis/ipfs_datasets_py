@@ -608,8 +608,11 @@ class LogicVerifier:
                     result["status"] = "invalid"
                 else:
                     result["status"] = "unknown"
-                result["method"] = "symbolic_ai"
-                return result
+                # Only treat the LLM answer as authoritative when it commits to
+                # valid/invalid. If it returns unknown, fall back to local checks.
+                if result["status"] != "unknown":
+                    result["method"] = "symbolic_ai"
+                    return result
             except Exception as exc:
                 logger.warning("SymbolicAI syntax check failed: %s", exc)
 
@@ -658,8 +661,10 @@ class LogicVerifier:
                     result["status"] = "satisfiable"
                 else:
                     result["status"] = "unknown"
-                result["method"] = "symbolic_ai"
-                return result
+                # Same as syntax: if the model is non-committal, fall back.
+                if result["status"] != "unknown" and result["satisfiable"] is not None:
+                    result["method"] = "symbolic_ai"
+                    return result
             except Exception as exc:
                 logger.warning("SymbolicAI satisfiability check failed: %s", exc)
 

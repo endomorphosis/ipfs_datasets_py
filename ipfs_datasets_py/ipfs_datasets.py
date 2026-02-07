@@ -470,7 +470,15 @@ class ipfs_datasets_py:
         - IPFS integration requires network connectivity for distributed operations
         - Memory usage scales with dataset size and should be monitored for large corpora
     """
-    def __init__(self, resources: Optional[Any] = None, metadata: Optional[Any] = None) -> None:
+    def __init__(
+        self,
+        resources: Optional[Any] = None,
+        metadata: Optional[Any] = None,
+        *,
+        deps: object | None = None,
+        ipfs_kit=None,
+        ipfs_accelerate=None,
+    ) -> None:
         """
         Initialize IPFS Dataset Management Platform with Comprehensive Configuration
 
@@ -576,6 +584,26 @@ class ipfs_datasets_py:
             - Memory allocation is optimized for the specified configuration parameters
             - Error handling is established for all network and processing operations
         """
+
+        # Store injected cross-package dependencies (best-effort).
+        self.deps = deps
+        self.ipfs_kit = ipfs_kit
+        self.ipfs_accelerate = ipfs_accelerate
+
+        if isinstance(resources, dict):
+            if self.deps is None:
+                self.deps = resources.get("deps")
+            if self.ipfs_kit is None:
+                self.ipfs_kit = resources.get("ipfs_kit")
+            if self.ipfs_accelerate is None:
+                self.ipfs_accelerate = resources.get("ipfs_accelerate")
+
+            if self.deps is not None:
+                resources.setdefault("deps", self.deps)
+            if self.ipfs_kit is not None:
+                resources.setdefault("ipfs_kit", self.ipfs_kit)
+            if self.ipfs_accelerate is not None:
+                resources.setdefault("ipfs_accelerate", self.ipfs_accelerate)
         if resources is None:
             resources = {}
         if metadata is None:

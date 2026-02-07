@@ -7,13 +7,23 @@ import datasets
 from datasets import load_dataset, Dataset
 
 
-# Try to import ipfs_kit_py
-try:
-    from ipfs_kit_py.ipfs_kit import ipfs_kit
-    print("✓ Successfully imported ipfs_kit from ipfs_kit_py")
-except ImportError as e:
-    print(f"⚠ Warning: Could not import ipfs_kit_py: {e}")
-    ipfs_kit = None
+def _should_enable_ipfs_kit(resources: dict) -> bool:
+    if str(os.getenv("IPFS_KIT_DISABLE", "")).strip().lower() in {"1", "true", "yes", "on"}:
+        return False
+    if str(os.getenv("IPFS_DATASETS_PY_BENCHMARK", "")).strip().lower() in {"1", "true", "yes", "on"}:
+        return False
+    # Explicit opt-in via resources or env.
+    if bool(resources.get("enable_ipfs_kit")):
+        return True
+    return str(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_KIT", "")).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _lazy_load_ipfs_kit():
+    try:
+        from ipfs_kit_py.ipfs_kit import ipfs_kit
+        return ipfs_kit
+    except Exception:
+        return None
 
 # Try to import accelerate integration for distributed inference
 try:
@@ -41,12 +51,15 @@ class create_embeddings:
             for key in metadata.keys():
                 setattr(self, key, metadata[key])
 
-        # Initialize ipfs_kit if available
-        if ipfs_kit:
-            self.ipfs_kit = ipfs_kit(resources, metadata)
-        else:
-            print("⚠ Warning: ipfs_kit not initialized, creating placeholder")
-            self.ipfs_kit = None
+        # Initialize ipfs_kit lazily and only when enabled.
+        self.ipfs_kit = None
+        if _should_enable_ipfs_kit(resources):
+            ipfs_kit_factory = _lazy_load_ipfs_kit()
+            if ipfs_kit_factory:
+                try:
+                    self.ipfs_kit = ipfs_kit_factory(resources, metadata)
+                except Exception:
+                    self.ipfs_kit = None
             
         if "https_endpoints" in resources.keys() and self.ipfs_kit:
             for endpoint in resources["https_endpoints"]:

@@ -19,7 +19,7 @@ from symai.backend.base import Engine
 from symai.backend.settings import SYMAI_CONFIG
 
 try:
-    from ipfs_datasets_py.utils.embedding_adapter import embed_texts
+    from ipfs_datasets_py.embeddings_router import embed_texts
 except Exception:
     embed_texts = None
 
@@ -53,6 +53,38 @@ def _truthy(value: str | None) -> bool:
 
 def _dry_run_enabled() -> bool:
     return _truthy(os.environ.get("IPFS_DATASETS_PY_SYMAI_ROUTER_DRY_RUN"))
+
+
+def _dry_run_json_object(prompt: str) -> str:
+    lowered = str(prompt or "").lower()
+    fol_formula = "∀x (Student(x) → Studies(x))" if "student" in lowered else "∀x (Cat(x) → Animal(x))"
+    payload: Dict[str, Any] = {
+        "fol_formula": fol_formula,
+        "confidence": 0.9,
+        "logical_components": {
+            "quantifiers": ["∀"],
+            "predicates": ["Student", "Studies"] if "student" in lowered else ["Cat", "Animal"],
+        },
+        "reasoning_steps": ["dry-run"],
+        "validation_results": {"syntax": "skipped"},
+        "warnings": ["dry_run"],
+        "metadata": {"backend": "dry_run"},
+    }
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def _wants_json_response(argument, prompt: str) -> bool:
+    response_format = getattr(argument.prop, "response_format", None)
+    if response_format is None:
+        payload = getattr(argument.prop, "payload", None)
+        if isinstance(payload, dict):
+            response_format = payload.get("response_format")
+
+    if isinstance(response_format, dict) and response_format.get("type") == "json_object":
+        return True
+
+    lowered = str(prompt or "").lower()
+    return any(token in lowered for token in ["return a json object", "valid json object", "<output_data_model>", "[[schema]]"])
 
 
 def _router_enabled() -> bool:
@@ -506,6 +538,8 @@ class IPFSSyMAIEngine(Engine):
         if _dry_run_enabled():
             if self.mode == "embedding":
                 return [json.dumps([0.0, 0.0, 0.0])], {"backend": "dry_run"}
+            if _wants_json_response(argument, str(prompt)):
+                return [_dry_run_json_object(str(prompt))], {"backend": "dry_run", "format": "json"}
             return ["OK"], {"backend": "dry_run"}
 
         if self.mode == "embedding":

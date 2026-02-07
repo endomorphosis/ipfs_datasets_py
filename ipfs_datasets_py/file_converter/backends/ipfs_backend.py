@@ -22,35 +22,58 @@ import anyio
 
 logger = logging.getLogger(__name__)
 
-# Check if IPFS storage should be enabled
-_IPFS_ENABLED_ENV = os.environ.get('IPFS_STORAGE_ENABLED', '1').lower()
-_IPFS_DISABLED = _IPFS_ENABLED_ENV in ('0', 'false', 'no', 'disabled')
+def _truthy(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
-# Try to import ipfs_kit_py
-IPFS_AVAILABLE = False
-IPFS_IMPORT_ERROR = None
-ipfs_kit = None
 
-if not _IPFS_DISABLED:
+def _ipfs_storage_enabled() -> bool:
+    """Whether the IPFS backend should be enabled in this process.
+
+    Importantly, this must NOT trigger heavy imports at module import time.
+    """
+
+    enabled_env = os.environ.get("IPFS_STORAGE_ENABLED", "1").strip().lower()
+    if enabled_env in {"0", "false", "no", "disabled"}:
+        return False
+
+    # If IPFS Kit integration is explicitly disabled, keep the IPFS backend off.
+    if _truthy(os.environ.get("IPFS_KIT_DISABLE")):
+        return False
+
+    # Benchmarks/tests should remain hermetic and avoid daemon/binary startup.
+    if _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK")):
+        return False
+
+    return True
+
+
+def _import_ipfs_kit_py() -> tuple[object | None, str | None]:
+    """Best-effort import of ipfs_kit_py, returning (callable, error_message)."""
+
+    # Try installed package first.
     try:
-        # Try to import from installed package
-        try:
-            from ipfs_kit_py import ipfs_kit_py
-            ipfs_kit = ipfs_kit_py
-            IPFS_AVAILABLE = True
-        except ImportError:
-            # Try local path
-            _repo_root = Path(__file__).resolve().parent.parent.parent.parent
-            _ipfs_kit_path = _repo_root / "ipfs_kit_py"
-            if _ipfs_kit_path.exists() and str(_ipfs_kit_path) not in sys.path:
-                sys.path.insert(0, str(_ipfs_kit_path))
-            
-            from ipfs_kit_py import ipfs_kit_py
-            ipfs_kit = ipfs_kit_py
-            IPFS_AVAILABLE = True
-    except ImportError as e:
-        logger.debug(f"ipfs_kit_py not available: {e}")
-        IPFS_IMPORT_ERROR = str(e)
+        from ipfs_kit_py import ipfs_kit_py as ipfs_kit_callable  # type: ignore
+        return ipfs_kit_callable, None
+    except Exception as exc:
+        installed_error = exc
+
+    # Fall back to workspace checkout if present.
+    try:
+        repo_root = Path(__file__).resolve().parents[4]
+        ipfs_kit_path = repo_root / "ipfs_kit_py"
+        if ipfs_kit_path.exists() and str(ipfs_kit_path) not in sys.path:
+            sys.path.insert(0, str(ipfs_kit_path))
+        from ipfs_kit_py import ipfs_kit_py as ipfs_kit_callable  # type: ignore
+        return ipfs_kit_callable, None
+    except Exception as exc:
+        # Preserve the most relevant error for debugging.
+        return None, f"{installed_error!r}; {exc!r}"
+
+
+# Legacy module-level status (computed lazily in IPFSBackend.__init__).
+IPFS_AVAILABLE = False
+IPFS_IMPORT_ERROR: str | None = None
+ipfs_kit = None
 
 
 class IPFSBackend:
@@ -79,17 +102,23 @@ class IPFSBackend:
         self.enable_pinning = enable_pinning
         self.auto_pin_on_add = auto_pin_on_add
         self.ipfs_client = None
-        
+
+        global IPFS_AVAILABLE, IPFS_IMPORT_ERROR, ipfs_kit
+        if _ipfs_storage_enabled():
+            ipfs_kit_callable, err = _import_ipfs_kit_py()
+            ipfs_kit = ipfs_kit_callable
+            IPFS_IMPORT_ERROR = err
+            IPFS_AVAILABLE = ipfs_kit_callable is not None
+
         if IPFS_AVAILABLE and ipfs_kit:
             try:
-                # Initialize ipfs_kit client
                 self.ipfs_client = ipfs_kit(resources={"ipfs_gateway": self.gateway_url})
                 logger.info(f"IPFS backend initialized with gateway: {self.gateway_url}")
             except Exception as e:
                 logger.warning(f"Failed to initialize IPFS client: {e}")
                 self.ipfs_client = None
         else:
-            logger.info("IPFS backend initialized in local-only mode (ipfs_kit_py not available)")
+            logger.info("IPFS backend initialized in local-only mode")
     
     def is_available(self) -> bool:
         """Check if IPFS backend is available and connected."""

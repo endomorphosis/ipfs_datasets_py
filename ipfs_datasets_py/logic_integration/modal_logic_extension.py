@@ -75,12 +75,21 @@ class ModalLogicSymbol(Symbol):
         static_context = kwargs.pop("static_context", None)
         if kwargs:
             logger.debug("Ignoring unsupported ModalLogicSymbol kwargs: %s", list(kwargs.keys()))
-        super().__init__(value, semantic)
+
+        # Some Symbol implementations treat `static_context` as a reserved/managed attribute.
+        # Prefer passing it through the base constructor when supported; otherwise keep it
+        # on a private attribute to avoid reserved-property assignment errors.
+        if static_context is not None:
+            try:
+                super().__init__(value, semantic, static_context=static_context)
+            except TypeError:
+                super().__init__(value, semantic)
+                self._static_context = static_context
+        else:
+            super().__init__(value, semantic)
+
         # Ensure compatibility with code paths expecting a _semantic attribute.
         self._semantic = bool(semantic)
-        # Preserve static context for SymbolicAI-compatible attributes when provided.
-        if static_context is not None:
-            self.static_context = static_context
         self._modal_operators = {
             'necessity': '□',
             'possibility': '◇', 

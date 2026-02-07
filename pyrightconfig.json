@@ -1,0 +1,9 @@
+{
+  "include": ["ipfs_datasets_py"],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": ["."]
+    }
+  ]
+}

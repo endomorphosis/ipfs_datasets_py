@@ -3,6 +3,7 @@
 This module provides comprehensive IPFS storage capabilities for legal datasets,
 including CAR file generation, IPLD DAG structures, metadata tracking, and pin management.
 """
+import asyncio
 import logging
 import json
 import time
@@ -12,17 +13,12 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-# Try to import IPFS dependencies
 try:
-    import sys
-    import os
-    # Add parent paths to import ipfs_kit_py
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../../'))
-    from ipfs_kit_py import ipfs_kit_py as ipfs_kit
+    from ipfs_datasets_py import ipfs_backend_router as ipfs_router
     IPFS_AVAILABLE = True
-except ImportError:
+except Exception:
     IPFS_AVAILABLE = False
-    logger.warning("ipfs_kit_py not available. IPFS storage features disabled.")
+    logger.warning("IPFS backend router not available. IPFS storage features disabled.")
 
 
 class IPFSStorageManager:
@@ -48,14 +44,22 @@ class IPFSStorageManager:
         self.metadata_dir.mkdir(parents=True, exist_ok=True)
         
         if not IPFS_AVAILABLE:
-            logger.warning("IPFS functionality disabled - ipfs_kit_py not available")
-        elif not self.ipfs:
-            try:
-                self.ipfs = ipfs_kit(resources={})
-                logger.info("Initialized IPFS storage manager")
-            except Exception as e:
-                logger.error(f"Failed to initialize IPFS: {e}")
-                self.ipfs = None
+            logger.warning("IPFS functionality disabled - backend router unavailable")
+
+        if not self.ipfs and IPFS_AVAILABLE:
+            logger.info("Initialized IPFS storage manager (router backend)")
+
+    async def _router_add_bytes(self, data: bytes, *, pin: bool) -> str:
+        return await asyncio.to_thread(ipfs_router.add_bytes, data, pin=pin)
+
+    async def _router_cat(self, cid: str) -> bytes:
+        return await asyncio.to_thread(ipfs_router.cat, cid)
+
+    async def _router_pin(self, cid: str) -> None:
+        await asyncio.to_thread(ipfs_router.pin, cid)
+
+    async def _router_unpin(self, cid: str) -> None:
+        await asyncio.to_thread(ipfs_router.unpin, cid)
     
     async def add_dataset(
         self,
@@ -85,10 +89,10 @@ class IPFSStorageManager:
                 - error: Error message (if failed)
         """
         try:
-            if not IPFS_AVAILABLE or not self.ipfs:
+            if not IPFS_AVAILABLE:
                 return {
                     "status": "error",
-                    "error": "IPFS not available. Install ipfs_kit_py or check IPFS daemon status.",
+                    "error": "IPFS not available.",
                     "cid": None
                 }
             
@@ -110,12 +114,13 @@ class IPFSStorageManager:
             
             # Add to IPFS
             try:
-                # Use ipfs_kit to add file
-                add_result = await self.ipfs.add_bytes(data_bytes)
-                cid = add_result.get("Hash") or add_result.get("cid")
-                
-                if not cid:
-                    raise ValueError("No CID returned from IPFS add operation")
+                if self.ipfs is not None:
+                    add_result = await self.ipfs.add_bytes(data_bytes)
+                    cid = add_result.get("Hash") or add_result.get("cid")
+                    if not cid:
+                        raise ValueError("No CID returned from IPFS add operation")
+                else:
+                    cid = await self._router_add_bytes(data_bytes, pin=pin)
                 
             except Exception as e:
                 logger.error(f"IPFS add failed: {e}")
@@ -129,7 +134,10 @@ class IPFSStorageManager:
             pinned = False
             if pin:
                 try:
-                    await self.ipfs.pin_add(cid)
+                    if self.ipfs is not None:
+                        await self.ipfs.pin_add(cid)
+                    else:
+                        await self._router_pin(cid)
                     pinned = True
                     logger.info(f"Pinned dataset {name} with CID {cid}")
                 except Exception as e:
@@ -191,7 +199,7 @@ class IPFSStorageManager:
                 - error: Error message (if failed)
         """
         try:
-            if not IPFS_AVAILABLE or not self.ipfs:
+            if not IPFS_AVAILABLE:
                 return {
                     "status": "error",
                     "error": "IPFS not available",
@@ -223,7 +231,10 @@ class IPFSStorageManager:
             
             # Get from IPFS
             try:
-                data_bytes = await self.ipfs.cat(cid)
+                if self.ipfs is not None:
+                    data_bytes = await self.ipfs.cat(cid)
+                else:
+                    data_bytes = await self._router_cat(cid)
                 data = json.loads(data_bytes.decode('utf-8'))
             except Exception as e:
                 logger.error(f"Failed to retrieve from IPFS: {e}")
@@ -258,13 +269,16 @@ class IPFSStorageManager:
             Dict with status and pin information
         """
         try:
-            if not IPFS_AVAILABLE or not self.ipfs:
+            if not IPFS_AVAILABLE:
                 return {
                     "status": "error",
                     "error": "IPFS not available"
                 }
-            
-            await self.ipfs.pin_add(cid)
+
+            if self.ipfs is not None:
+                await self.ipfs.pin_add(cid)
+            else:
+                await self._router_pin(cid)
             logger.info(f"Pinned CID: {cid}")
             
             return {
@@ -291,13 +305,16 @@ class IPFSStorageManager:
             Dict with status
         """
         try:
-            if not IPFS_AVAILABLE or not self.ipfs:
+            if not IPFS_AVAILABLE:
                 return {
                     "status": "error",
                     "error": "IPFS not available"
                 }
-            
-            await self.ipfs.pin_rm(cid)
+
+            if self.ipfs is not None:
+                await self.ipfs.pin_rm(cid)
+            else:
+                await self._router_unpin(cid)
             logger.info(f"Unpinned CID: {cid}")
             
             return {

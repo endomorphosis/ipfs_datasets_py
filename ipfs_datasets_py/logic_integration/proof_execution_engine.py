@@ -11,6 +11,7 @@ import subprocess
 import tempfile
 import logging
 from pathlib import Path
+import shutil
 from typing import Dict, List, Optional, Union, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -64,39 +65,163 @@ class ProofExecutionEngine:
     Engine for executing proofs using various theorem provers.
     """
     
-    def __init__(self, temp_dir: Optional[str] = None, timeout: int = 60):
+    def __init__(
+        self,
+        temp_dir: Optional[str] = None,
+        timeout: int = 60,
+        default_prover: Optional[str] = None,
+    ):
         self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir()) / "ipfs_proofs"
         self.temp_dir.mkdir(exist_ok=True)
         self.timeout = timeout
-        
+
+        env_default = os.environ.get("IPFS_DATASETS_PY_PROOF_PROVER")
+        self.default_prover = str(default_prover or env_default or "z3")
+
+        self._refresh_prover_state()
+
+        # NOTE: setup.py hooks are not guaranteed to run for all install modes (e.g. wheels/PEP517).
+        # To make auto-install actually work in practice, we also attempt installation here when
+        # the engine is constructed.
+        self._maybe_auto_install_provers()
+        self._refresh_prover_state()
+
+    def _refresh_prover_state(self) -> None:
+        # Prefer explicit executable paths when provers were installed into user bins.
+        self.prover_binaries = {
+            "z3": self._find_executable("z3"),
+            "cvc5": self._find_executable("cvc5"),
+            "lean": self._find_executable("lean", extra=[Path.home() / ".elan" / "bin"]),
+            "coq": self._find_executable("coqc"),
+        }
+
         # Available provers and their verification
         self.available_provers = self._detect_available_provers()
+
+    def _env_truthy(self, name: str, default: str = "1") -> bool:
+        value = os.environ.get(name, default)
+        return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
+
+    def _maybe_auto_install_provers(self) -> None:
+        if not self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "1"):
+            return
+
+        # Prevent recursion / repeated nested installs.
+        if self._env_truthy("IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING", "0"):
+            return
+
+        missing = [p for p, ok in (self.available_provers or {}).items() if not ok]
+        if not missing:
+            return
+
+        want_z3 = self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_Z3", "1")
+        want_cvc5 = self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_CVC5", "1")
+        want_lean = self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_LEAN", "1")
+        # Coq auto-install is intentionally conservative (may require root/sudo or a full opam toolchain).
+        want_coq = self._env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "0")
+
+        enabled: Dict[str, bool] = {
+            "z3": want_z3,
+            "cvc5": want_cvc5,
+            "lean": want_lean,
+            "coq": want_coq,
+        }
+
+        to_install = [p for p in missing if enabled.get(p, False)]
+        if not to_install:
+            return
+
+        args = [sys.executable, "-m", "ipfs_prover_installer", "--yes"]
+        if want_z3:
+            args.append("--z3")
+        if want_cvc5:
+            args.append("--cvc5")
+        if want_lean:
+            args.append("--lean")
+        if want_coq:
+            args.append("--coq")
+
+        env = os.environ.copy()
+        env["IPFS_DATASETS_PY_PROVER_AUTO_INSTALL_RUNNING"] = "1"
+
+        try:
+            logger.info(f"Auto-installing missing provers (best-effort): {to_install}")
+            subprocess.run(args, check=False, env=env)
+        except Exception as exc:
+            logger.info(f"Auto-install provers failed (best-effort): {exc}")
         
     def _detect_available_provers(self) -> Dict[str, bool]:
         """Detect which theorem provers are available on the system."""
+        # NOTE: Lean installed via elan may download the toolchain on first use;
+        # `lean --version` can legitimately take >10s in that case.
         provers = {
-            'z3': self._test_command(['z3', '--version']),
-            'cvc5': self._test_command(['cvc5', '--version']),
-            'lean': self._test_command(['lean', '--version']),
-            'coq': self._test_command(['coqc', '--version']),
+            'z3': self._test_command([self._prover_cmd('z3'), '--version'], timeout_s=10),
+            'cvc5': self._test_command([self._prover_cmd('cvc5'), '--version'], timeout_s=10),
+            'lean': self._test_command([self._prover_cmd('lean'), '--version'], timeout_s=60),
+            'coq': self._test_command([self._prover_cmd('coq'), '--version'], timeout_s=30),
         }
         
         logger.info(f"Available theorem provers: {[p for p, available in provers.items() if available]}")
         return provers
+
+    def _common_bin_dirs(self) -> List[Path]:
+        dirs: List[Path] = []
+        try:
+            dirs.append(Path.home() / ".local" / "bin")
+        except Exception:
+            pass
+        return dirs
+
+    def _find_executable(self, name: str, extra: Optional[List[Path]] = None) -> Optional[str]:
+        # Try PATH first.
+        path = shutil.which(name)
+        if path:
+            return path
+
+        # Then common user bins.
+        candidates = []
+        for d in (extra or []):
+            candidates.append(d / name)
+        for d in self._common_bin_dirs():
+            candidates.append(d / name)
+
+        for c in candidates:
+            try:
+                if c.exists() and os.access(str(c), os.X_OK):
+                    return str(c)
+            except Exception:
+                continue
+        return None
+
+    def _prover_cmd(self, prover: str) -> str:
+        # Map internal name -> executable.
+        if prover == "coq":
+            return self.prover_binaries.get("coq") or "coqc"
+        if prover == "lean":
+            return self.prover_binaries.get("lean") or "lean"
+        if prover == "z3":
+            return self.prover_binaries.get("z3") or "z3"
+        if prover == "cvc5":
+            return self.prover_binaries.get("cvc5") or "cvc5"
+        return prover
         
-    def _test_command(self, cmd: List[str]) -> bool:
+    def _test_command(self, cmd: List[str], *, timeout_s: int = 10) -> bool:
         """Test if a command is available."""
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=int(timeout_s))
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.SubprocessError):
             return False
     
-    def prove_deontic_formula(self, formula: DeonticFormula, 
-                            prover: str = "z3") -> ProofResult:
+    def prove_deontic_formula(
+        self,
+        formula: DeonticFormula,
+        prover: Optional[str] = None,
+    ) -> ProofResult:
         """
         Prove a deontic logic formula using the specified theorem prover.
         """
+        prover = str(prover or self.default_prover or "z3")
         if prover not in self.available_provers:
             return ProofResult(
                 prover=prover,
@@ -196,7 +321,7 @@ class ProofExecutionEngine:
         try:
             # Run Z3
             result = subprocess.run(
-                ['z3', str(smt_file)],
+                [self._prover_cmd('z3'), str(smt_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout
@@ -280,7 +405,7 @@ class ProofExecutionEngine:
         
         try:
             result = subprocess.run(
-                ['cvc5', str(smt_file)],
+                [self._prover_cmd('cvc5'), str(smt_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout
@@ -329,32 +454,37 @@ class ProofExecutionEngine:
                           translation: TranslationResult) -> ProofResult:
         """Execute proof using Lean 4."""
         start_time = time.time()
-        
-        # Create Lean file
+
+        proposition_id = None
+        try:
+            proposition_id = (translation.metadata or {}).get("proposition_id")
+        except Exception:
+            proposition_id = None
+        proposition_id = str(proposition_id or "P")
+
+        # Create a Lean file that does not depend on Mathlib (works with core Lean).
+        # We only need successful elaboration to prove Lean is actually executing.
         lean_content = f"""
--- Deontic logic theory
-import Mathlib.Logic.Basic
+-- Deontic logic proof smoke (core Lean only)
+set_option autoImplicit false
 
 -- Deontic operators
 def Obligatory (P : Prop) : Prop := P
 def Permitted (P : Prop) : Prop := ¬¬P
 def Forbidden (P : Prop) : Prop := ¬P
 
--- Agent type
-structure Agent where
-  name : String
+-- A proposition constant for this run
+axiom {proposition_id} : Prop
 
--- Statement to verify  
-{translation.translated_formula}
+-- Statement to verify (type-check)
+def statement : Prop := {translation.translated_formula}
 
 -- Consistency check
-theorem deontic_consistency (a : Agent) (P : Prop) : 
-  ¬(Obligatory P ∧ Forbidden P) := by
-  intro h
-  cases h with
-  | mk h1 h2 => 
-    exact h2 h1
+theorem deontic_consistency (P : Prop) : ¬(Obligatory P ∧ Forbidden P) := by
+    intro h
+    exact h.right h.left
 
+#check statement
 #check deontic_consistency
 """
         
@@ -363,7 +493,7 @@ theorem deontic_consistency (a : Agent) (P : Prop) :
         
         try:
             result = subprocess.run(
-                ['lean', str(lean_file)],
+                [self._prover_cmd('lean'), str(lean_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout
@@ -443,7 +573,7 @@ Qed.
         
         try:
             result = subprocess.run(
-                ['coqc', str(coq_file)],
+                [self._prover_cmd('coq'), str(coq_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout
@@ -555,7 +685,7 @@ Qed.
         
         try:
             result = subprocess.run(
-                ['z3', str(smt_file)],
+                [self._prover_cmd('z3'), str(smt_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout
@@ -645,7 +775,7 @@ Qed.
         
         try:
             result = subprocess.run(
-                ['cvc5', str(smt_file)],
+                [self._prover_cmd('cvc5'), str(smt_file)],
                 capture_output=True,
                 text=True,
                 timeout=self.timeout

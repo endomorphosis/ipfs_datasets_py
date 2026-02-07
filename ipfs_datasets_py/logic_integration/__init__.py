@@ -144,11 +144,13 @@ from .document_consistency_checker import (
 
 # Legacy SymbolicAI exports
 from .symbolic_fol_bridge import SymbolicFOLBridge
-from .symbolic_logic_primitives import LogicPrimitives
+from .symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
 from .symbolic_contracts import (
     ContractedFOLConverter,
     FOLInput,
     FOLOutput,
+    create_fol_converter,
+    validate_fol_input,
 )
 
 # Optional imports (only available if SymbolicAI is installed)
@@ -170,6 +172,9 @@ try:
         "ContractedFOLConverter",
         "FOLInput",
         "FOLOutput",
+        "create_logic_symbol",
+        "create_fol_converter",
+        "validate_fol_input",
         "InteractiveFOLConstructor",
         "ModalLogicSymbol",
         "AdvancedLogicConverter",
@@ -205,6 +210,9 @@ except (ImportError, SystemExit):
         "ContractedFOLConverter", 
         "FOLInput",
         "FOLOutput",
+        "create_logic_symbol",
+        "create_fol_converter",
+        "validate_fol_input",
         "SYMBOLIC_AI_AVAILABLE"
     ]
 

@@ -33,11 +33,10 @@ Dependencies:
 import os
 from typing import List
 
-# Check for dependencies
 try:
-    import ipfshttpclient
+    from ipfs_datasets_py import ipfs_backend_router as ipfs_router
     HAVE_IPFS = True
-except ImportError:
+except Exception:
     HAVE_IPFS = False
 
 try:
@@ -496,14 +495,8 @@ class UnixFSHandler:
         """
         self.ipfs_api = ipfs_api
 
-        # Connect to IPFS if available
-        self.ipfs_client = None
-        if HAVE_IPFS:
-            try:
-                self.ipfs_client = ipfshttpclient.connect(self.ipfs_api)
-            except Exception as e:
-                print(f"Warning: Could not connect to IPFS at {self.ipfs_api}: {e}")
-                print("Operating in local-only mode. Use connect() to retry connection.")
+        # Resolve backend via router (best-effort).
+        self._backend_available = bool(HAVE_IPFS)
 
     def connect(self, ipfs_api: str | None = None):
         """
@@ -543,15 +536,13 @@ class UnixFSHandler:
             self.ipfs_api = ipfs_api
 
         if not HAVE_IPFS:
-            print("Warning: ipfshttpclient not available. Install with pip install ipfshttpclient")
+            print("Warning: IPFS backend router not available")
             return False
 
-        try:
-            self.ipfs_client = ipfshttpclient.connect(self.ipfs_api)
-            return True
-        except Exception as e:
-            print(f"Error connecting to IPFS at {self.ipfs_api}: {e}")
-            return False
+        # For HTTPAPI backends, ipfs_backend_router uses IPFS_HOST env var.
+        os.environ["IPFS_HOST"] = self.ipfs_api
+        self._backend_available = True
+        return True
 
     def write_file(self, file_path, chunker=None):
         """
@@ -592,7 +583,7 @@ class UnixFSHandler:
             >>> rabin_chunker = RabinChunker(min_size=256*1024, avg_size=1024*1024)
             >>> cid = handler.write_file("/path/to/dataset.tar", rabin_chunker)
         """
-        if not self.ipfs_client:
+        if not self._backend_available:
             raise ImportError("IPFS client is not available")
 
         if not os.path.isfile(file_path):
@@ -609,15 +600,7 @@ class UnixFSHandler:
                 chunker_str = f"rabin-{chunker.min_size}-{chunker.avg_size}-{chunker.max_size}"
 
         # Add the file to IPFS
-        with open(file_path, 'rb') as f:
-            result = self.ipfs_client.add(
-                f,
-                chunker=chunker_str,
-                pin=True
-            )
-
-        # Return the CID
-        return result['Hash']
+        return ipfs_router.add_path(file_path, recursive=False, pin=True, chunker=chunker_str)
 
     def write_directory(self, dir_path, recursive=True):
         """
@@ -656,21 +639,13 @@ class UnixFSHandler:
             >>> docs_cid = handler.write_directory("/path/to/docs", recursive=False)
             >>> home_cid = handler.write_directory(os.path.expanduser("~/important_docs"))
         """
-        if not self.ipfs_client:
+        if not self._backend_available:
             raise ImportError("IPFS client is not available")
 
         if not os.path.isdir(dir_path):
             raise NotADirectoryError(f"Not a directory: {dir_path}")
 
-        # Add the directory to IPFS
-        result = self.ipfs_client.add(
-            dir_path,
-            recursive=recursive,
-            pin=True
-        )
-
-        # The last item in the result is the directory itself
-        return result[-1]['Hash']
+        return ipfs_router.add_path(dir_path, recursive=recursive, pin=True)
 
     def write_to_car(self, path, car_path, chunker=None):
         """
@@ -727,12 +702,12 @@ class UnixFSHandler:
             raise FileNotFoundError(f"Path not found: {path}")
 
         # Export from IPFS to CAR
-        if not self.ipfs_client:
+        if not self._backend_available:
             raise ImportError("IPFS client is not available")
 
         # Use 'dag export' to create a CAR file
         with open(car_path, 'wb') as f:
-            data = self.ipfs_client.dag.export(cid)
+            data = ipfs_router.dag_export(cid)
             f.write(data)
 
         return cid
@@ -779,22 +754,17 @@ class UnixFSHandler:
             >>> print(f"File saved to: {output_file}")
             >>> image_data = handler.get_file(image_cid)
         """
-        if not self.ipfs_client:
+        if not self._backend_available:
             raise ImportError("IPFS client is not available")
 
         if output_path:
-            # Get and save to file
-            self.ipfs_client.get(cid, target=os.path.dirname(output_path))
-
-            # IPFS client saves with the CID as the filename, so rename
-            cid_path = os.path.join(os.path.dirname(output_path), cid)
-            if os.path.exists(cid_path):
-                os.rename(cid_path, output_path)
-
+            data = ipfs_router.cat(cid)
+            os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+            with open(output_path, "wb") as f:
+                f.write(data)
             return output_path
         else:
-            # Get and return content
-            return self.ipfs_client.cat(cid)
+            return ipfs_router.cat(cid)
 
     def get_directory(self, cid, output_dir=None):
         """
@@ -841,18 +811,18 @@ class UnixFSHandler:
             >>> print(f"Extracted files: {extracted}")
             >>> large_dir_contents = handler.get_directory(dataset_cid)
         """
-        if not self.ipfs_client:
+        if not self._backend_available:
             raise ImportError("IPFS client is not available")
 
         if output_dir:
             # Create the output directory
             os.makedirs(output_dir, exist_ok=True)
 
-            # Get and extract to directory
-            self.ipfs_client.get(cid, target=output_dir)
+            # Extract to a subpath named by CID (so we can normalize layout)
+            cid_dir = os.path.join(output_dir, cid)
+            ipfs_router.get_to_path(cid, output_path=cid_dir)
 
             # List the files
-            cid_dir = os.path.join(output_dir, cid)
             if os.path.exists(cid_dir) and os.path.isdir(cid_dir):
                 # Move contents from cid directory to output directory
                 for item in os.listdir(cid_dir):
@@ -865,13 +835,4 @@ class UnixFSHandler:
 
             return os.listdir(output_dir)
         else:
-            # Get the directory listing
-            listing = self.ipfs_client.ls(cid)
-
-            # Return just the names
-            if 'Objects' in listing and listing['Objects']:
-                objects = listing['Objects'][0]
-                if 'Links' in objects:
-                    return [link['Name'] for link in objects['Links']]
-
-            return []
+            return ipfs_router.ls(cid)

@@ -18,6 +18,46 @@ IS_WINDOWS = platform.system() == 'Windows'
 IS_LINUX = platform.system() == 'Linux'
 IS_MACOS = platform.system() == 'Darwin'
 
+
+def ensure_logic_provers() -> None:
+    """Best-effort install of external provers (Z3/CVC5/Lean/Coq).
+
+    This script is what users commonly run for setup; setup.py hooks do not run
+    in all pip install modes (e.g. wheels/PEP517), so we also run the installer here.
+
+    Controlled via env vars (defaults ON):
+    - IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS
+    - IPFS_DATASETS_PY_AUTO_INSTALL_Z3
+    - IPFS_DATASETS_PY_AUTO_INSTALL_CVC5
+    - IPFS_DATASETS_PY_AUTO_INSTALL_LEAN
+    - IPFS_DATASETS_PY_AUTO_INSTALL_COQ
+    """
+
+    def env_truthy(name: str, default: str = "1") -> bool:
+        value = os.environ.get(name, default)
+        return str(value).strip().lower() not in {"0", "false", "no", "off", ""}
+
+    if not env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS", "1"):
+        return
+
+    repo_root = Path(__file__).resolve().parents[2]
+    installer = repo_root / "ipfs_prover_installer.py"
+    if not installer.exists():
+        return
+
+    args = [sys.executable, str(installer), "--yes"]
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_Z3", "1"):
+        args.append("--z3")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_CVC5", "1"):
+        args.append("--cvc5")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_LEAN", "1"):
+        args.append("--lean")
+    if env_truthy("IPFS_DATASETS_PY_AUTO_INSTALL_COQ", "1"):
+        args.append("--coq")
+
+    print("\n🧠 Installing theorem provers (best-effort)...")
+    subprocess.run(args, check=False, text=True)
+
 def _is_main_ipfs_kit_py_installed(repo_path: Path) -> bool:
     """Check whether ipfs_kit_py is installed from the main repo path."""
     try:
@@ -324,6 +364,7 @@ Examples:
     ensure_main_ipfs_kit_py()
     ensure_libp2p_main()
     ensure_ipfs_accelerate_py()
+    ensure_logic_provers()
     
     # Enable auto-installation if requested
     if args.enable_auto_install:

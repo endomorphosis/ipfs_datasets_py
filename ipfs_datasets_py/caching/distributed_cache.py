@@ -22,18 +22,91 @@ from pathlib import Path
 import hashlib
 
 try:
-    from libp2p import new_host
-    from libp2p.crypto.secp256k1 import create_new_key_pair
-    from libp2p.network.stream.net_stream import INetStream
-    from libp2p.peer.peerinfo import info_from_p2p_addr
-    from libp2p.custom_types import TProtocol
-    from multiaddr import Multiaddr
+    from ipfs_datasets_py.deps_resolver import resolve_module as _resolve_module
+    from ipfs_datasets_py.deps_resolver import deps_get as _deps_get
+    from ipfs_datasets_py.deps_resolver import deps_set as _deps_set
+except Exception:  # pragma: no cover
+    _resolve_module = None  # type: ignore
+    _deps_get = None  # type: ignore
+    _deps_set = None  # type: ignore
+
+
+# libp2p is optional; we resolve it lazily (and allow injection) to avoid
+# import-time side effects and to support sharing one module instance via deps.
+LIBP2P_AVAILABLE = False
+new_host = None
+create_new_key_pair = None
+info_from_p2p_addr = None
+Multiaddr = None
+TProtocol = str  # type: ignore
+INetStream = Any  # type: ignore
+
+
+_default_deps: object | None = None
+
+
+def set_default_deps(deps: object | None) -> None:
+    global _default_deps
+    _default_deps = deps
+
+
+def configure_libp2p(*, deps: object | None = None, libp2p_module=None) -> bool:
+    """Resolve and configure libp2p symbols.
+
+    - Supports injection via `libp2p_module`.
+    - Supports caching via a deps container implementing get_cached/set_cached.
+    """
+    global LIBP2P_AVAILABLE, new_host, create_new_key_pair, info_from_p2p_addr, Multiaddr, TProtocol, INetStream
+
+    if deps is None:
+        deps = _default_deps
+
+    if deps is not None and callable(_deps_get):
+        try:
+            if _deps_get(deps, "pip::libp2p") is not None and _deps_get(deps, "ipfs_datasets_py::libp2p_configured"):
+                return bool(LIBP2P_AVAILABLE)
+        except Exception:
+            pass
+
+    libp2p = libp2p_module
+    if libp2p is None and callable(_resolve_module):
+        libp2p = _resolve_module("libp2p", deps=deps, cache_key="pip::libp2p")
+    if libp2p is None:
+        try:
+            import libp2p as libp2p  # type: ignore
+        except Exception:
+            logging.warning("pylibp2p not available, distributed cache will be disabled")
+            LIBP2P_AVAILABLE = False
+            return False
+
+    try:
+        from libp2p import new_host as _new_host  # type: ignore
+        from libp2p.crypto.secp256k1 import create_new_key_pair as _create_new_key_pair  # type: ignore
+        from libp2p.network.stream.net_stream import INetStream as _INetStream  # type: ignore
+        from libp2p.peer.peerinfo import info_from_p2p_addr as _info_from_p2p_addr  # type: ignore
+        from libp2p.custom_types import TProtocol as _TProtocol  # type: ignore
+        from multiaddr import Multiaddr as _Multiaddr  # type: ignore
+    except Exception:
+        logging.warning("libp2p components not available, distributed cache will be disabled")
+        LIBP2P_AVAILABLE = False
+        return False
+
+    new_host = _new_host
+    create_new_key_pair = _create_new_key_pair
+    info_from_p2p_addr = _info_from_p2p_addr
+    INetStream = _INetStream  # type: ignore
+    TProtocol = _TProtocol  # type: ignore
+    Multiaddr = _Multiaddr
     LIBP2P_AVAILABLE = True
-except ImportError:
-    LIBP2P_AVAILABLE = False
-    TProtocol = str  # type: ignore
-    INetStream = Any  # type: ignore
-    logging.warning("pylibp2p not available, distributed cache will be disabled")
+
+    if deps is not None and callable(_deps_set):
+        try:
+            _deps_set(deps, "pip::libp2p", libp2p)
+            _deps_set(deps, "ipfs_datasets_py::libp2p_configured", True)
+        except Exception:
+            pass
+
+    return True
 
 try:
     from multiformats import CID, multihash, multicodec
@@ -136,7 +209,10 @@ class DistributedGitHubCache:
         cache_dir: Optional[Path] = None,
         listen_port: int = 9000,
         bootstrap_peers: Optional[List[str]] = None,
-        default_ttl: int = 300  # 5 minutes
+        default_ttl: int = 300,  # 5 minutes
+        *,
+        deps: object | None = None,
+        libp2p_module=None,
     ):
         self.cache_dir = cache_dir or Path.home() / ".github-cache"
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -153,7 +229,9 @@ class DistributedGitHubCache:
         self.host = None
         self.peer_id = None
         self.connected_peers: Set[str] = set()
-        self.libp2p_enabled = LIBP2P_AVAILABLE
+        # Resolve libp2p lazily and allow injection/caching.
+        configure_libp2p(deps=deps, libp2p_module=libp2p_module)
+        self.libp2p_enabled = bool(LIBP2P_AVAILABLE)
         
         # Statistics
         self.stats = {
@@ -201,6 +279,9 @@ class DistributedGitHubCache:
         
         try:
             # Generate or load key pair
+            if not callable(create_new_key_pair) or not callable(new_host) or Multiaddr is None or info_from_p2p_addr is None:
+                raise RuntimeError("libp2p is not configured")
+
             key_pair = create_new_key_pair()
             
             # Create libp2p host

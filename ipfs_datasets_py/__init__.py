@@ -7,63 +7,204 @@ with automated dependency installation for full functionality.
 
 __version__ = "0.2.0"
 
+import logging
 import os
 import warnings
 
-# File type detection
+# Routers + dependency injection
 try:
-    from .file_detector import FileTypeDetector, DetectionMethod, DetectionStrategy
-    HAVE_FILE_DETECTOR = True
-except ImportError:
+    from .router_deps import RouterDeps, get_default_router_deps, set_default_router_deps
+except Exception:
+    RouterDeps = None  # type: ignore
+    get_default_router_deps = None  # type: ignore
+    set_default_router_deps = None  # type: ignore
+
+
+def _truthy(value: str | None) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+# In benchmark/CI contexts we want imports to be as hermetic as possible.
+# This prevents package import-time side effects from optional subsystems
+# (FastAPI services, vector stores, search integrations) that are unrelated to
+# model routing benchmarks.
+_MINIMAL_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_MINIMAL_IMPORTS")) or _truthy(
+    os.environ.get("IPFS_DATASETS_PY_BENCHMARK")
+)
+
+# Optional import-time exports.
+#
+# IMPORTANT: The package core should not import MCP/FastAPI/tooling layers unless
+# explicitly requested. Importing submodules like `ipfs_datasets_py.logic_tools`
+# necessarily executes this __init__, so keep default imports as hermetic as
+# possible.
+_ENABLE_MCP_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_ENABLE_MCP_IMPORTS"))
+_ENABLE_FASTAPI_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_ENABLE_FASTAPI_IMPORTS"))
+_ENABLE_FINANCE_DASHBOARD_IMPORTS = _truthy(
+    os.environ.get("IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS")
+)
+
+# File type detection
+if _MINIMAL_IMPORTS:
     HAVE_FILE_DETECTOR = False
     FileTypeDetector = None
     DetectionMethod = None
     DetectionStrategy = None
+else:
+    try:
+        from .file_detector import FileTypeDetector, DetectionMethod, DetectionStrategy
+        HAVE_FILE_DETECTOR = True
+    except ImportError:
+        HAVE_FILE_DETECTOR = False
+        FileTypeDetector = None
+        DetectionMethod = None
+        DetectionStrategy = None
+
+def _dedupe_root_logging_handlers() -> None:
+    """
+    Reduce duplicate root handlers when running benchmarks.
+    """
+    if os.environ.get("IPFS_DATASETS_PY_LOG_DEDUP", "0") != "1":
+        return
+
+    root_logger = logging.getLogger()
+    handlers = list(root_logger.handlers)
+    if not handlers:
+        return
+
+    unique_handlers = []
+    seen = set()
+
+    for handler in handlers:
+        stream = getattr(handler, "stream", None)
+        filename = getattr(handler, "baseFilename", None)
+        key = (type(handler), id(stream), filename)
+        if key in seen:
+            continue
+        seen.add(key)
+        unique_handlers.append(handler)
+
+    if unique_handlers != handlers:
+        root_logger.handlers = unique_handlers
+
+
+_dedupe_root_logging_handlers()
+
+
+def initialize(
+    *,
+    deps: "RouterDeps | None" = None,
+    register_symai_engines: bool | None = None,
+) -> "RouterDeps | None":
+    """Initialize process-wide shared dependencies.
+
+    Goals:
+    - Provide an explicit entrypoint for applications/tests to share router deps.
+    - Keep import-time side effects minimal; this function is opt-in.
+
+    Parameters:
+    - deps: optional RouterDeps container to install as the process-global default.
+    - register_symai_engines: if True, attempt best-effort SyMAI engine registration.
+      If None, respects existing env flags.
+    """
+
+    if set_default_router_deps is not None and deps is not None:
+        try:
+            set_default_router_deps(deps)
+        except Exception:
+            pass
+
+    resolved_deps = None
+    if get_default_router_deps is not None:
+        try:
+            resolved_deps = get_default_router_deps()
+        except Exception:
+            resolved_deps = None
+
+    # Optional SyMAI engine registration (kept best-effort).
+    should_register = register_symai_engines
+    if should_register is None:
+        should_register = os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
+
+    if should_register and not _MINIMAL_IMPORTS:
+        try:
+            from .utils.symai_ipfs_engine import register_ipfs_symai_engines
+
+            register_ipfs_symai_engines()
+        except Exception:
+            pass
+
+    return resolved_deps
 
 # File conversion (Phase 1: Import & Wrap existing libraries)
-try:
-    from .file_converter import FileConverter, ConversionResult
-    HAVE_FILE_CONVERTER = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_FILE_CONVERTER = False
     FileConverter = None
     ConversionResult = None
+else:
+    try:
+        from .file_converter import FileConverter, ConversionResult
+        HAVE_FILE_CONVERTER = True
+    except ImportError:
+        HAVE_FILE_CONVERTER = False
+        FileConverter = None
+        ConversionResult = None
 
 # Import automated dependency installer
-from .auto_installer import get_installer, ensure_module
+if _MINIMAL_IMPORTS:
+    class _MinimalInstaller:
+        auto_install = False
+        verbose = False
 
-# Initialize installer with environment configuration
-installer = get_installer()
+    installer = _MinimalInstaller()
+
+    def ensure_module(*_: object, **__: object) -> bool:  # type: ignore
+        return False
+else:
+    from .auto_installer import get_installer, ensure_module
+
+    # Initialize installer with environment configuration
+    installer = get_installer()
+
+class _FallbackIPFSDatasets:
+    """Fallback IPFSDatasets interface when core dependencies are missing."""
+
+    def __init__(self, *_: object, **__: object) -> None:
+        self.status = "initialized"
+
+    def list_datasets(self) -> list:
+        """Return an empty dataset list as a safe fallback."""
+        return []
+
+    def download_dataset(self, *_: object, **__: object) -> dict:
+        """Return a stub response for dataset downloads."""
+        return {"status": "success", "dataset": None}
+
+    def upload_dataset(self, *_: object, **__: object) -> dict:
+        """Return a stub response for dataset uploads."""
+        return {"status": "success"}
+
 
 # Main entry points with automated installation
-try:
-    from .ipfs_datasets import ipfs_datasets_py
-    # Provide alias for backward compatibility and clearer naming
-    IPFSDatasets = ipfs_datasets_py
-    HAVE_IPFS_DATASETS = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_IPFS_DATASETS = False
-    ipfs_datasets_py = None
-    class _FallbackIPFSDatasets:
-        """Fallback IPFSDatasets interface when core dependencies are missing."""
-
-        def __init__(self, *_: object, **__: object) -> None:
-            self.status = "initialized"
-
-        def list_datasets(self) -> list:
-            """Return an empty dataset list as a safe fallback."""
-            return []
-
-        def download_dataset(self, *_: object, **__: object) -> dict:
-            """Return a stub response for dataset downloads."""
-            return {"status": "success", "dataset": None}
-
-        def upload_dataset(self, *_: object, **__: object) -> dict:
-            """Return a stub response for dataset uploads."""
-            return {"status": "success"}
-
     ipfs_datasets_py = _FallbackIPFSDatasets
     IPFSDatasets = _FallbackIPFSDatasets
+else:
+    try:
+        from .ipfs_datasets import ipfs_datasets_py
+        # Provide alias for backward compatibility and clearer naming
+        IPFSDatasets = ipfs_datasets_py
+        HAVE_IPFS_DATASETS = True
+    except ImportError:
+        HAVE_IPFS_DATASETS = False
+        ipfs_datasets_py = _FallbackIPFSDatasets
+        IPFSDatasets = _FallbackIPFSDatasets
 
 # Re-export key functions with automated installation
 datasets_module = ensure_module('datasets', 'datasets', required=False)
@@ -88,20 +229,27 @@ except ImportError:
     HAVE_IPLD = False
 
 # Import accelerate integration (graceful fallback if not available)
-try:
-    from .accelerate_integration import (
-        is_accelerate_available,
-        get_accelerate_status,
-        AccelerateManager,
-        HAVE_ACCELERATE_MANAGER
-    )
-    HAVE_ACCELERATE_INTEGRATION = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_ACCELERATE_INTEGRATION = False
     is_accelerate_available = None
     get_accelerate_status = None
     AccelerateManager = None
     HAVE_ACCELERATE_MANAGER = False
+else:
+    try:
+        from .accelerate_integration import (
+            is_accelerate_available,
+            get_accelerate_status,
+            AccelerateManager,
+            HAVE_ACCELERATE_MANAGER,
+        )
+        HAVE_ACCELERATE_INTEGRATION = True
+    except ImportError:
+        HAVE_ACCELERATE_INTEGRATION = False
+        is_accelerate_available = None
+        get_accelerate_status = None
+        AccelerateManager = None
+        HAVE_ACCELERATE_MANAGER = False
 
 # Optional SyMAI engine router registration
 try:
@@ -117,37 +265,61 @@ try:
 except Exception:
     pass
 
-try:
-    from .data_transformation.dataset_serialization import (
-        DatasetSerializer, GraphDataset, GraphNode, VectorAugmentedGraphDataset,
-    )
-    HAVE_DATASET_SERIALIZATION = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_DATASET_SERIALIZATION = False
-
-# Expose the module itself for `from ipfs_datasets_py import dataset_serialization`.
-try:
-    from .data_transformation import dataset_serialization as dataset_serialization  # type: ignore
-except Exception:
+    DatasetSerializer = None
+    GraphDataset = None
+    GraphNode = None
+    VectorAugmentedGraphDataset = None
     dataset_serialization = None  # type: ignore
 
-try:
-    from .dataset_manager import DatasetManager
-    HAVE_DATASET_MANAGER = True
-except ImportError:
     HAVE_DATASET_MANAGER = False
+    DatasetManager = None
 
-try:
-    from .data_transformation.car_conversion import DataInterchangeUtils
-    HAVE_CAR_CONVERSION = True
-except ImportError:
     HAVE_CAR_CONVERSION = False
-
-# Expose the module itself for `from ipfs_datasets_py import car_conversion`.
-try:
-    from .data_transformation import car_conversion as car_conversion  # type: ignore
-except Exception:
+    DataInterchangeUtils = None
     car_conversion = None  # type: ignore
+else:
+    try:
+        from .data_transformation.dataset_serialization import (
+            DatasetSerializer,
+            GraphDataset,
+            GraphNode,
+            VectorAugmentedGraphDataset,
+        )
+        HAVE_DATASET_SERIALIZATION = True
+    except ImportError:
+        HAVE_DATASET_SERIALIZATION = False
+        DatasetSerializer = None
+        GraphDataset = None
+        GraphNode = None
+        VectorAugmentedGraphDataset = None
+
+    # Expose the module itself for `from ipfs_datasets_py import dataset_serialization`.
+    try:
+        from .data_transformation import dataset_serialization as dataset_serialization  # type: ignore
+    except Exception:
+        dataset_serialization = None  # type: ignore
+
+    try:
+        from .dataset_manager import DatasetManager
+        HAVE_DATASET_MANAGER = True
+    except ImportError:
+        HAVE_DATASET_MANAGER = False
+        DatasetManager = None
+
+    try:
+        from .data_transformation.car_conversion import DataInterchangeUtils
+        HAVE_CAR_CONVERSION = True
+    except ImportError:
+        HAVE_CAR_CONVERSION = False
+        DataInterchangeUtils = None
+
+    # Expose the module itself for `from ipfs_datasets_py import car_conversion`.
+    try:
+        from .data_transformation import car_conversion as car_conversion  # type: ignore
+    except Exception:
+        car_conversion = None  # type: ignore
 
 # Expose Jsonnet helpers for `from ipfs_datasets_py import jsonnet_utils`.
 try:
@@ -155,138 +327,229 @@ try:
 except Exception:
     jsonnet_utils = None  # type: ignore
 
-try:
-    from .unixfs_integration import UnixFSHandler, FixedSizeChunker, RabinChunker
-    HAVE_UNIXFS = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_UNIXFS = False
+    UnixFSHandler = None
+    FixedSizeChunker = None
+    RabinChunker = None
+else:
+    try:
+        from .integrations.unixfs_integration import UnixFSHandler, FixedSizeChunker, RabinChunker
+        HAVE_UNIXFS = True
+    except ImportError:
+        HAVE_UNIXFS = False
+        UnixFSHandler = None
+        FixedSizeChunker = None
+        RabinChunker = None
 
-try:
-    from .web_archive import WebArchiveProcessor
-    from .web_archiving import CommonCrawlSearchEngine, create_search_engine
-    HAVE_WEB_ARCHIVE = True
-    HAVE_COMMON_CRAWL = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     WebArchiveProcessor = None
     CommonCrawlSearchEngine = None
     create_search_engine = None
     HAVE_WEB_ARCHIVE = False
     HAVE_COMMON_CRAWL = False
+else:
+    try:
+        from .web_archive import WebArchiveProcessor
+        from .web_archiving import CommonCrawlSearchEngine, create_search_engine
+        HAVE_WEB_ARCHIVE = True
+        HAVE_COMMON_CRAWL = True
+    except ImportError:
+        WebArchiveProcessor = None
+        CommonCrawlSearchEngine = None
+        create_search_engine = None
+        HAVE_WEB_ARCHIVE = False
+        HAVE_COMMON_CRAWL = False
 
-try:
-    from .unified_web_scraper import (
-        UnifiedWebScraper,
-        ScraperConfig,
-        ScraperMethod,
-        ScraperResult,
-        scrape_url,
-        scrape_urls,
-        scrape_url_async,
-        scrape_urls_async
-    )
-    HAVE_UNIFIED_SCRAPER = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_UNIFIED_SCRAPER = False
     UnifiedWebScraper = None
     ScraperConfig = None
     ScraperMethod = None
     ScraperResult = None
+    scrape_url = None
+    scrape_urls = None
+    scrape_url_async = None
+    scrape_urls_async = None
+else:
+    try:
+        from .unified_web_scraper import (
+            UnifiedWebScraper,
+            ScraperConfig,
+            ScraperMethod,
+            ScraperResult,
+            scrape_url,
+            scrape_urls,
+            scrape_url_async,
+            scrape_urls_async,
+        )
+        HAVE_UNIFIED_SCRAPER = True
+    except ImportError:
+        HAVE_UNIFIED_SCRAPER = False
+        UnifiedWebScraper = None
+        ScraperConfig = None
+        ScraperMethod = None
+        ScraperResult = None
+        scrape_url = None
+        scrape_urls = None
+        scrape_url_async = None
+        scrape_urls_async = None
 
-try:
-    from .vector_tools import VectorSimilarityCalculator
-    HAVE_VECTOR_TOOLS = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_VECTOR_TOOLS = False
+    VectorSimilarityCalculator = None
+else:
+    try:
+        from .search.vector_tools import VectorSimilarityCalculator
+        HAVE_VECTOR_TOOLS = True
+    except ImportError:
+        HAVE_VECTOR_TOOLS = False
+        VectorSimilarityCalculator = None
 
-try:
-    from . import search
-    HAVE_SEARCH = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_SEARCH = False
+else:
+    try:
+        from . import search
+        HAVE_SEARCH = True
+    except ImportError:
+        HAVE_SEARCH = False
 
-try:
-    # Import new embeddings and vector store capabilities
-    from .embeddings.core import IPFSEmbeddings, PerformanceMetrics
-    # FIXME All the embeddings models in schema are hallucinated
-    from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
-    from .embeddings.chunker import Chunker, ChunkingStrategy
-    HAVE_EMBEDDINGS = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_EMBEDDINGS = False
+else:
+    try:
+        # Import new embeddings and vector store capabilities
+        from .embeddings.core import IPFSEmbeddings, PerformanceMetrics
+        # FIXME All the embeddings models in schema are hallucinated
+        from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
+        from .embeddings.chunker import Chunker, ChunkingStrategy
+        HAVE_EMBEDDINGS = True
+    except ImportError:
+        HAVE_EMBEDDINGS = False
 
-try:
-    # Import vector store implementations
-    from .vector_stores.base import BaseVectorStore
-    from .vector_stores.qdrant_store import QdrantVectorStore
-    from .vector_stores.elasticsearch_store import ElasticsearchVectorStore
-    from .vector_stores.faiss_store import FAISSVectorStore
-    HAVE_VECTOR_STORES = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_VECTOR_STORES = False
+else:
+    try:
+        # Import vector store implementations
+        from .vector_stores.base import BaseVectorStore
+        from .vector_stores.qdrant_store import QdrantVectorStore
+        from .vector_stores.elasticsearch_store import ElasticsearchVectorStore
+        from .vector_stores.faiss_store import FAISSVectorStore
+        HAVE_VECTOR_STORES = True
+    except ImportError:
+        HAVE_VECTOR_STORES = False
 
 # MCP Tools availability
-try:
-    # from .mcp_server.tools.embedding_tools import embedding_generation
-    from .mcp_server.tools.vector_tools import create_vector_index
-    HAVE_MCP_TOOLS = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_MCP_TOOLS = False
+    create_vector_index = None
+else:
+    if _ENABLE_MCP_IMPORTS:
+        try:
+            # from .mcp_server.tools.embedding_tools import embedding_generation
+            from .mcp_server.tools.vector_tools import create_vector_index
+            HAVE_MCP_TOOLS = True
+        except ImportError:
+            HAVE_MCP_TOOLS = False
+            create_vector_index = None
+    else:
+        HAVE_MCP_TOOLS = False
+        create_vector_index = None
 
-# FastAPI service availability  
-try:
-    from .fastapi_service import app as fastapi_app
-    HAVE_FASTAPI = True
-except ImportError:
+# FastAPI service availability
+if _MINIMAL_IMPORTS:
     HAVE_FASTAPI = False
+    fastapi_app = None
+else:
+    if _ENABLE_FASTAPI_IMPORTS:
+        try:
+            from .mcp_server.fastapi_service import app as fastapi_app
+            HAVE_FASTAPI = True
+        except ImportError:
+            HAVE_FASTAPI = False
+            fastapi_app = None
+    else:
+        HAVE_FASTAPI = False
+        fastapi_app = None
 
-try:
-    from .graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
-    HAVE_GRAPHRAG_PROCESSOR = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_GRAPHRAG_PROCESSOR = False
+    GraphRAGProcessor = None
+    MockGraphRAGProcessor = None
+else:
+    try:
+        from .processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+        HAVE_GRAPHRAG_PROCESSOR = True
+    except ImportError:
+        HAVE_GRAPHRAG_PROCESSOR = False
+        GraphRAGProcessor = None
+        MockGraphRAGProcessor = None
 
-try:
-    from .ipfs_knn_index import IPFSKnnIndex
-    HAVE_KNN = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_KNN = False
+    IPFSKnnIndex = None
+else:
+    try:
+        from .ipfs_knn_index import IPFSKnnIndex
+        HAVE_KNN = True
+    except ImportError:
+        HAVE_KNN = False
+        IPFSKnnIndex = None
 
 # RAG optimizer components
-from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
-
-try:
-    from .rag.rag_query_optimizer import (
-        QueryRewriter,
-        QueryBudgetManager,
-        UnifiedGraphRAGQueryOptimizer
-    )
-except ImportError as e:
-    import warnings
-    warnings.warn(f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}")
-    # Provide minimal fallbacks
+if _MINIMAL_IMPORTS:
+    GraphRAGQueryOptimizer = None
+    GraphRAGQueryStats = None
     QueryRewriter = None
     QueryBudgetManager = None
     UnifiedGraphRAGQueryOptimizer = None
+else:
+    from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
+
+    try:
+        from .rag.rag_query_optimizer import (
+            QueryRewriter,
+            QueryBudgetManager,
+            UnifiedGraphRAGQueryOptimizer,
+        )
+    except ImportError as e:
+        import warnings
+        warnings.warn(
+            f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}"
+        )
+        # Provide minimal fallbacks
+        QueryRewriter = None
+        QueryBudgetManager = None
+        UnifiedGraphRAGQueryOptimizer = None
 
 
-try:
-    from .knowledge_graph_extraction import KnowledgeGraph, KnowledgeGraphExtractor, Entity, Relationship
-    HAVE_KG_EXTRACTION = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_KG_EXTRACTION = False
+    KnowledgeGraph = None
+    KnowledgeGraphExtractor = None
+    Entity = None
+    Relationship = None
+else:
+    try:
+        from .knowledge_graph_extraction import (
+            KnowledgeGraph,
+            KnowledgeGraphExtractor,
+            Entity,
+            Relationship,
+        )
+        HAVE_KG_EXTRACTION = True
+    except ImportError:
+        HAVE_KG_EXTRACTION = False
+        KnowledgeGraph = None
+        KnowledgeGraphExtractor = None
+        Entity = None
+        Relationship = None
 
 # LLM Integration Components
-try:
-    from .llm.llm_interface import (
-        LLMInterface, MockLLMInterface, LLMConfig, PromptTemplate,
-        LLMInterfaceFactory, GraphRAGPromptTemplates
-    )
-    HAVE_LLM_INTERFACE = True
-except ImportError as e:
-    import warnings
-    warnings.warn(f"LLM interface unavailable due to missing dependencies: {e}")
+if _MINIMAL_IMPORTS:
     HAVE_LLM_INTERFACE = False
-    # Provide minimal fallbacks
     LLMInterface = None
     MockLLMInterface = None
     LLMConfig = None
@@ -294,46 +557,85 @@ except ImportError as e:
     LLMInterfaceFactory = None
     GraphRAGPromptTemplates = None
 
-try:
-    from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
-    HAVE_LLM_GRAPHRAG = True
-except ImportError as e:
-    import warnings
-    warnings.warn(f"GraphRAG LLM processor unavailable due to missing dependencies: {e}")
     HAVE_LLM_GRAPHRAG = False
     GraphRAGLLMProcessor = None
     ReasoningEnhancer = None
 
-try:
-    from ipfs_datasets_py.integrations.graphrag_integration import enhance_dataset_with_llm
-    HAVE_GRAPHRAG_INTEGRATION = True
-except ImportError:
     HAVE_GRAPHRAG_INTEGRATION = False
+    enhance_dataset_with_llm = None
+else:
+    try:
+        from .llm.llm_interface import (
+            LLMInterface,
+            MockLLMInterface,
+            LLMConfig,
+            PromptTemplate,
+            LLMInterfaceFactory,
+            GraphRAGPromptTemplates,
+        )
+        HAVE_LLM_INTERFACE = True
+    except ImportError as e:
+        import warnings
+        warnings.warn(f"LLM interface unavailable due to missing dependencies: {e}")
+        HAVE_LLM_INTERFACE = False
+        # Provide minimal fallbacks
+        LLMInterface = None
+        MockLLMInterface = None
+        LLMConfig = None
+        PromptTemplate = None
+        LLMInterfaceFactory = None
+        GraphRAGPromptTemplates = None
+
+    try:
+        from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+        HAVE_LLM_GRAPHRAG = True
+    except ImportError as e:
+        import warnings
+        warnings.warn(
+            f"GraphRAG LLM processor unavailable due to missing dependencies: {e}"
+        )
+        HAVE_LLM_GRAPHRAG = False
+        GraphRAGLLMProcessor = None
+        ReasoningEnhancer = None
+
+    try:
+        from ipfs_datasets_py.integrations.graphrag_integration import enhance_dataset_with_llm
+        HAVE_GRAPHRAG_INTEGRATION = True
+    except ImportError:
+        HAVE_GRAPHRAG_INTEGRATION = False
+        enhance_dataset_with_llm = None
 
 # Security and Audit Components
-try:
-    from ipfs_datasets_py.audit import (
-        AuditLogger, AuditEvent, AuditLevel, AuditCategory,
-        IntrusionDetection, SecurityAlertManager,
-        AdaptiveSecurityManager, ResponseRule, ResponseAction
-    )
-    HAVE_AUDIT = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_AUDIT = False
+    AuditLogger = None
+    AuditEvent = None
+    AuditLevel = None
+    AuditCategory = None
+    IntrusionDetection = None
+    SecurityAlertManager = None
+    AdaptiveSecurityManager = None
+    ResponseRule = None
+    ResponseAction = None
+else:
+    try:
+        from ipfs_datasets_py.audit import (
+            AuditLogger,
+            AuditEvent,
+            AuditLevel,
+            AuditCategory,
+            IntrusionDetection,
+            SecurityAlertManager,
+            AdaptiveSecurityManager,
+            ResponseRule,
+            ResponseAction,
+        )
+        HAVE_AUDIT = True
+    except ImportError:
+        HAVE_AUDIT = False
 
 # P2P Workflow Scheduler
-try:
-    from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
-        P2PWorkflowScheduler,
-        WorkflowDefinition,
-        WorkflowTag,
-        MerkleClock,
-        FibonacciHeap,
-        calculate_hamming_distance,
-        get_scheduler
-    )
-    HAVE_P2P_WORKFLOW_SCHEDULER = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_P2P_WORKFLOW_SCHEDULER = False
     P2PWorkflowScheduler = None
     WorkflowDefinition = None
@@ -342,143 +644,199 @@ except ImportError:
     FibonacciHeap = None
     calculate_hamming_distance = None
     get_scheduler = None
+else:
+    try:
+        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
+            P2PWorkflowScheduler,
+            WorkflowDefinition,
+            WorkflowTag,
+            MerkleClock,
+            FibonacciHeap,
+            calculate_hamming_distance,
+            get_scheduler,
+        )
+        HAVE_P2P_WORKFLOW_SCHEDULER = True
+    except ImportError:
+        HAVE_P2P_WORKFLOW_SCHEDULER = False
+        P2PWorkflowScheduler = None
+        WorkflowDefinition = None
+        WorkflowTag = None
+        MerkleClock = None
+        FibonacciHeap = None
+        calculate_hamming_distance = None
+        get_scheduler = None
 
-# Check for dependencies
+# Check for IPFS capability (prefer router entrypoint)
 try:
-    import ipfshttpclient
+    from . import ipfs_backend_router as _ipfs_backend_router
     HAVE_IPFS = True
-except ImportError:
+except Exception:
     HAVE_IPFS = False
 
-try:
-    import ipld_car
-    HAVE_IPLD_CAR = True
-except ImportError:
+if _MINIMAL_IMPORTS:
     HAVE_IPLD_CAR = False
-
-try:
-    from ipld_dag_pb import PBNode, PBLink
-    HAVE_IPLD_DAG_PB = True
-except ImportError:
     HAVE_IPLD_DAG_PB = False
+    PBNode = None
+    PBLink = None
 
-try:
-    import pyarrow as pa
-    HAVE_ARROW = True
-except ImportError:
     HAVE_ARROW = False
+    pa = None  # type: ignore
 
-try:
-    from datasets import Dataset
-    HAVE_HUGGINGFACE = True
-except ImportError:
     HAVE_HUGGINGFACE = False
+    Dataset = None
 
-try:
-    import archivenow
-    HAVE_ARCHIVENOW = True
-except ImportError:
     HAVE_ARCHIVENOW = False
-
-try:
-    import ipwb
-    HAVE_IPWB = True
-except ImportError:
     HAVE_IPWB = False
+else:
+    try:
+        import ipld_car
+        HAVE_IPLD_CAR = True
+    except ImportError:
+        HAVE_IPLD_CAR = False
+
+    try:
+        from ipld_dag_pb import PBNode, PBLink
+        HAVE_IPLD_DAG_PB = True
+    except ImportError:
+        HAVE_IPLD_DAG_PB = False
+
+    try:
+        import pyarrow as pa
+        HAVE_ARROW = True
+    except ImportError:
+        HAVE_ARROW = False
+
+    try:
+        from datasets import Dataset
+        HAVE_HUGGINGFACE = True
+    except ImportError:
+        HAVE_HUGGINGFACE = False
+
+    try:
+        import archivenow  # type: ignore
+        HAVE_ARCHIVENOW = True
+    except ImportError:
+        HAVE_ARCHIVENOW = False
+
+    try:
+        import ipwb  # type: ignore
+        HAVE_IPWB = True
+    except ImportError:
+        HAVE_IPWB = False
 
 # PDF Processing Components with conditional automated dependency installation
 import os
-if (
-    installer.auto_install
-    and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
-    and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
-):
-    # Import-time installation is opt-in because it can trigger heavyweight optional
-    # dependencies (e.g., OCR/ML stacks) and should not break basic imports.
-    from .auto_installer import install_for_component
-    for _component in ('pdf', 'ocr'):
-        try:
-            install_for_component(_component)
-        except Exception as e:
-            import warnings
-            warnings.warn(f"Auto-install for component '{_component}' failed during import: {e}")
-
-    if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
-        try:
-            install_for_component('symai_router')
-        except Exception as e:
-            import warnings
-            warnings.warn(f"Auto-install for component 'symai_router' failed during import: {e}")
-
-try:
-    from .pdf_processing import PDFProcessor
-    HAVE_PDF_PROCESSOR = True
-    if installer.verbose:
-        print("✅ PDFProcessor successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ PDFProcessor installation failed: {e}")
+if _MINIMAL_IMPORTS:
     PDFProcessor = None
-    HAVE_PDF_PROCESSOR = False
-
-try:
-    from .pdf_processing import MultiEngineOCR
-    HAVE_MULTI_ENGINE_OCR = True
-    if installer.verbose:
-        print("✅ MultiEngineOCR successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ MultiEngineOCR installation failed: {e}")
     MultiEngineOCR = None
-    HAVE_MULTI_ENGINE_OCR = False
-
-try:
-    from .pdf_processing import LLMOptimizer
-    HAVE_LLM_OPTIMIZER = True
-    if installer.verbose:
-        print("✅ LLMOptimizer successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ LLMOptimizer installation failed: {e}")
     LLMOptimizer = None
-    HAVE_LLM_OPTIMIZER = False
-
-try:
-    from .pdf_processing import GraphRAGIntegrator
-    HAVE_GRAPHRAG_INTEGRATOR = True
-    if installer.verbose:
-        print("✅ GraphRAGIntegrator successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ GraphRAGIntegrator installation failed: {e}")
     GraphRAGIntegrator = None
-    HAVE_GRAPHRAG_INTEGRATOR = False
-
-try:
-    from .pdf_processing import QueryEngine
-    HAVE_QUERY_ENGINE = True
-    if installer.verbose:
-        print("✅ QueryEngine successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ QueryEngine installation failed: {e}")
     QueryEngine = None
-    HAVE_QUERY_ENGINE = False
-
-try:
-    from .pdf_processing import BatchProcessor
-    HAVE_BATCH_PROCESSOR = True
-    if installer.verbose:
-        print("✅ BatchProcessor successfully installed and available")
-except ImportError as e:
-    if installer.verbose:
-        print(f"⚠️ BatchProcessor installation failed: {e}")
     BatchProcessor = None
+    HAVE_PDF_PROCESSOR = False
+    HAVE_MULTI_ENGINE_OCR = False
+    HAVE_LLM_OPTIMIZER = False
+    HAVE_GRAPHRAG_INTEGRATOR = False
+    HAVE_QUERY_ENGINE = False
     HAVE_BATCH_PROCESSOR = False
+    HAVE_PDF_PROCESSING = False
+else:
+    if (
+        installer.auto_install
+        and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
+        and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
+    ):
+        # Import-time installation is opt-in because it can trigger heavyweight optional
+        # dependencies (e.g., OCR/ML stacks) and should not break basic imports.
+        from .auto_installer import install_for_component
+        for _component in ('pdf', 'ocr'):
+            try:
+                install_for_component(_component)
+            except Exception as e:
+                import warnings
+                warnings.warn(f"Auto-install for component '{_component}' failed during import: {e}")
 
-HAVE_PDF_PROCESSING = (HAVE_PDF_PROCESSOR or HAVE_MULTI_ENGINE_OCR or 
-                       HAVE_LLM_OPTIMIZER or HAVE_GRAPHRAG_INTEGRATOR or 
-                       HAVE_QUERY_ENGINE or HAVE_BATCH_PROCESSOR)
+        if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
+            try:
+                install_for_component('symai_router')
+            except Exception as e:
+                import warnings
+                warnings.warn(f"Auto-install for component 'symai_router' failed during import: {e}")
+
+    try:
+        from .pdf_processing import PDFProcessor
+        HAVE_PDF_PROCESSOR = True
+        if installer.verbose:
+            print("✅ PDFProcessor successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ PDFProcessor installation failed: {e}")
+        PDFProcessor = None
+        HAVE_PDF_PROCESSOR = False
+
+    try:
+        from .pdf_processing import MultiEngineOCR
+        HAVE_MULTI_ENGINE_OCR = True
+        if installer.verbose:
+            print("✅ MultiEngineOCR successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ MultiEngineOCR installation failed: {e}")
+        MultiEngineOCR = None
+        HAVE_MULTI_ENGINE_OCR = False
+
+    try:
+        from .pdf_processing import LLMOptimizer
+        HAVE_LLM_OPTIMIZER = True
+        if installer.verbose:
+            print("✅ LLMOptimizer successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ LLMOptimizer installation failed: {e}")
+        LLMOptimizer = None
+        HAVE_LLM_OPTIMIZER = False
+
+    try:
+        from .pdf_processing import GraphRAGIntegrator
+        HAVE_GRAPHRAG_INTEGRATOR = True
+        if installer.verbose:
+            print("✅ GraphRAGIntegrator successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ GraphRAGIntegrator installation failed: {e}")
+        GraphRAGIntegrator = None
+        HAVE_GRAPHRAG_INTEGRATOR = False
+
+    try:
+        from .pdf_processing import QueryEngine
+        HAVE_QUERY_ENGINE = True
+        if installer.verbose:
+            print("✅ QueryEngine successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ QueryEngine installation failed: {e}")
+        QueryEngine = None
+        HAVE_QUERY_ENGINE = False
+
+    try:
+        from .pdf_processing import BatchProcessor
+        HAVE_BATCH_PROCESSOR = True
+        if installer.verbose:
+            print("✅ BatchProcessor successfully installed and available")
+    except ImportError as e:
+        if installer.verbose:
+            print(f"⚠️ BatchProcessor installation failed: {e}")
+        BatchProcessor = None
+        HAVE_BATCH_PROCESSOR = False
+
+    HAVE_PDF_PROCESSING = (
+        HAVE_PDF_PROCESSOR
+        or HAVE_MULTI_ENGINE_OCR
+        or HAVE_LLM_OPTIMIZER
+        or HAVE_GRAPHRAG_INTEGRATOR
+        or HAVE_QUERY_ENGINE
+        or HAVE_BATCH_PROCESSOR
+    )
 
 # Define base exports that should always be available
 __all__ = [
@@ -630,7 +988,7 @@ if HAVE_PDF_PROCESSING:
 
 # Web Text Extraction
 try:
-    from .web_text_extractor import (
+    from .web_archiving.web_text_extractor import (
         WebTextExtractor,
         WebTextExtractionResult,
         extract_website_text,
@@ -652,8 +1010,12 @@ except ImportError as e:
         warnings.warn(f"Web text extractor unavailable due to missing dependencies: {e}")
 
 # Proper module aliasing for backward compatibility
-from . import llm
-from . import rag
+if _MINIMAL_IMPORTS:
+    llm = None  # type: ignore
+    rag = None  # type: ignore
+else:
+    from . import llm
+    from . import rag
 
 # Direct aliases without polluting sys.modules
 try:
@@ -673,57 +1035,86 @@ except AttributeError:
 
 # Finance Dashboard Tools - Phase 7 Enhancement
 try:
-    from .mcp_server.tools.finance_data_tools import stock_scrapers
-    from .mcp_server.tools.finance_data_tools import news_scrapers
-    from .mcp_server.tools.finance_data_tools import finance_theorems
-    from .mcp_server.tools.finance_data_tools import graphrag_news_analyzer
-    from .mcp_server.tools.finance_data_tools import embedding_correlation
-    
-    # Software Engineering Tools
-    from .mcp_server.tools.software_engineering_tools import (
-        github_repository_scraper,
-        github_actions_analyzer,
-        systemd_log_parser,
-        kubernetes_log_analyzer,
-        dependency_chain_analyzer,
-        dag_workflow_planner,
-        gpu_provisioning_predictor,
-        error_pattern_detector,
-        auto_healing_coordinator,
-        software_theorems
-    )
-    
-    # Expose key classes
-    StockDataScraper = stock_scrapers.StockDataScraper
-    NewsScraperBase = news_scrapers.NewsScraperBase
-    FinancialTheoremLibrary = finance_theorems.FinancialTheoremLibrary
-    GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
-    VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
-    
-    # Expose MCP tool functions
-    fetch_stock_data = stock_scrapers.fetch_stock_data
-    fetch_financial_news = news_scrapers.fetch_financial_news
-    list_financial_theorems = finance_theorems.list_financial_theorems
-    analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
-    
-    # Software Engineering Tool Functions
-    scrape_github_repository = github_repository_scraper.scrape_github_repository
-    analyze_github_actions = github_actions_analyzer.analyze_github_actions
-    parse_systemd_logs = systemd_log_parser.parse_systemd_logs
-    parse_kubernetes_logs = kubernetes_log_analyzer.parse_kubernetes_logs
-    analyze_dependency_chain = dependency_chain_analyzer.analyze_dependency_chain
-    create_workflow_dag = dag_workflow_planner.create_workflow_dag
-    plan_speculative_execution = dag_workflow_planner.plan_speculative_execution
-    predict_gpu_needs = gpu_provisioning_predictor.predict_gpu_needs
-    detect_error_patterns = error_pattern_detector.detect_error_patterns
-    coordinate_auto_healing = auto_healing_coordinator.coordinate_auto_healing
-    list_software_theorems = software_theorems.list_software_theorems
-    validate_against_theorem = software_theorems.validate_against_theorem
-    
-    HAVE_SOFTWARE_ENGINEERING_TOOLS = True
-    HAVE_FINANCE_TOOLS = True
-    if installer.verbose:
-        print("✅ Finance dashboard tools successfully loaded")
+    if (not _MINIMAL_IMPORTS) and _ENABLE_FINANCE_DASHBOARD_IMPORTS:
+        # Core package modules (MCP/CLI wrappers should depend on these)
+        from .finance import graphrag_news as graphrag_news_analyzer
+        from .mcp_server.tools.finance_data_tools import stock_scrapers
+        from .mcp_server.tools.finance_data_tools import news_scrapers
+        from .mcp_server.tools.finance_data_tools import finance_theorems
+        from .mcp_server.tools.finance_data_tools import embedding_correlation
+
+        # Software Engineering Tools
+        from .mcp_server.tools.software_engineering_tools import (
+            github_repository_scraper,
+            github_actions_analyzer,
+            systemd_log_parser,
+            kubernetes_log_analyzer,
+            dependency_chain_analyzer,
+            dag_workflow_planner,
+            gpu_provisioning_predictor,
+            error_pattern_detector,
+            auto_healing_coordinator,
+            software_theorems,
+        )
+
+        # Expose key classes
+        StockDataScraper = stock_scrapers.StockDataScraper
+        NewsScraperBase = news_scrapers.NewsScraperBase
+        FinancialTheoremLibrary = finance_theorems.FinancialTheoremLibrary
+        GraphRAGNewsAnalyzer = graphrag_news_analyzer.GraphRAGNewsAnalyzer
+        VectorEmbeddingAnalyzer = embedding_correlation.VectorEmbeddingAnalyzer
+
+        # Expose MCP tool functions
+        fetch_stock_data = stock_scrapers.fetch_stock_data
+        fetch_financial_news = news_scrapers.fetch_financial_news
+        list_financial_theorems = finance_theorems.list_financial_theorems
+        analyze_executive_performance = graphrag_news_analyzer.analyze_executive_performance
+
+        # Software Engineering Tool Functions
+        scrape_github_repository = github_repository_scraper.scrape_github_repository
+        analyze_github_actions = github_actions_analyzer.analyze_github_actions
+        parse_systemd_logs = systemd_log_parser.parse_systemd_logs
+        parse_kubernetes_logs = kubernetes_log_analyzer.parse_kubernetes_logs
+        analyze_dependency_chain = dependency_chain_analyzer.analyze_dependency_chain
+        create_workflow_dag = dag_workflow_planner.create_workflow_dag
+        plan_speculative_execution = dag_workflow_planner.plan_speculative_execution
+        predict_gpu_needs = gpu_provisioning_predictor.predict_gpu_needs
+        detect_error_patterns = error_pattern_detector.detect_error_patterns
+        coordinate_auto_healing = auto_healing_coordinator.coordinate_auto_healing
+        list_software_theorems = software_theorems.list_software_theorems
+        validate_against_theorem = software_theorems.validate_against_theorem
+
+        HAVE_SOFTWARE_ENGINEERING_TOOLS = True
+        HAVE_FINANCE_TOOLS = True
+        if installer.verbose:
+            print("✅ Finance dashboard tools successfully loaded")
+    else:
+        HAVE_SOFTWARE_ENGINEERING_TOOLS = False
+        HAVE_FINANCE_TOOLS = False
+
+        StockDataScraper = None
+        NewsScraperBase = None
+        FinancialTheoremLibrary = None
+        GraphRAGNewsAnalyzer = None
+        VectorEmbeddingAnalyzer = None
+        fetch_stock_data = None
+        fetch_financial_news = None
+        list_financial_theorems = None
+        analyze_executive_performance = None
+        analyze_embedding_market_correlation = None
+
+        scrape_github_repository = None
+        analyze_github_actions = None
+        parse_systemd_logs = None
+        parse_kubernetes_logs = None
+        analyze_dependency_chain = None
+        create_workflow_dag = None
+        plan_speculative_execution = None
+        predict_gpu_needs = None
+        detect_error_patterns = None
+        coordinate_auto_healing = None
+        list_software_theorems = None
+        validate_against_theorem = None
 except ImportError as e:
     HAVE_SOFTWARE_ENGINEERING_TOOLS = False
     HAVE_FINANCE_TOOLS = False

@@ -55,6 +55,25 @@ pip install -e ".[all]"  # All features
 pip install -e ".[ml]"   # ML/AI features only
 ```
 
+#### Optional: Z3 / CVC5 / Lean / Coq theorem provers
+
+Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
+
+- Manual best-effort installer:
+	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
+
+- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
+	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
+	- Fine-grained toggles:
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
+
+Notes:
+- Lean installs via `elan` into your user home.
+- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
+
 ### Basic Usage
 
 ```python
@@ -65,6 +84,29 @@ manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
 ```
+
+## 🔌 Router Dependency Injection (Reuse Heavy Clients)
+
+Routers support dependency injection via a shared `RouterDeps` container.
+This lets you reuse the same heavyweight managers/clients (and avoid repeated
+initialization cascades) across multiple modules and even across related repos
+within the same Python process.
+
+```python
+from ipfs_datasets_py.router_deps import RouterDeps
+from ipfs_datasets_py import llm_router, embeddings_router, ipfs_backend_router
+
+deps = RouterDeps()
+
+text = llm_router.generate_text("Write a short summary", deps=deps)
+vecs = embeddings_router.embed_texts(["hello", "world"], deps=deps)
+cid = ipfs_backend_router.add_bytes(b"data", deps=deps)
+```
+
+Notes:
+- Set `IPFS_DATASETS_PY_ROUTER_CACHE=0` to disable in-process caching.
+- You can pass `provider_instance=` (LLM/embeddings) or `backend_instance=` (IPFS)
+	if you want full control over the exact instance being used.
 
 ```python
 # Convert any file type to text for GraphRAG

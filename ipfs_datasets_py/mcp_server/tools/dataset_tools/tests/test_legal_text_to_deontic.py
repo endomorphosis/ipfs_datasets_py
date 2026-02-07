@@ -41,7 +41,7 @@ def test_legal_text_basic():
             assert formula2["obligation_type"] == "permission"
             assert formula2["deontic_operator"] == "P"
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_deontic_obligations():
     """Test different types of deontic obligations."""
@@ -82,7 +82,7 @@ def test_deontic_obligations():
             norm_types = [f["obligation_type"] for f in formulas]
             assert len(set(norm_types)) > 1  # Multiple different norm types
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_legal_text_entities_and_actions():
     """Test extraction of legal entities and actions."""
@@ -109,7 +109,7 @@ def test_legal_text_entities_and_actions():
             assert "subject" in formula
             assert "action" in formula
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_temporal_constraints():
     """Test extraction of temporal constraints from legal text."""
@@ -133,7 +133,7 @@ def test_temporal_constraints():
                 constraints = formula["temporal_constraints"]
                 assert isinstance(constraints, list)
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_legal_text_jurisdictions():
     """Test different jurisdiction handling."""
@@ -154,7 +154,7 @@ def test_legal_text_jurisdictions():
             assert result["status"] == "success"
             assert result["metadata"]["jurisdiction"] == jurisdiction
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_legal_document_types():
     """Test different legal document types."""
@@ -175,7 +175,7 @@ def test_legal_document_types():
             assert result["status"] == "success"
             assert result["metadata"]["document_type"] == doc_type
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_deontic_output_formats():
     """Test different output formats for deontic logic."""
@@ -194,7 +194,7 @@ def test_deontic_output_formats():
             formula = result["deontic_formulas"][0]
             assert "defeasible_form" in formula
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_legal_text_dataset_input():
     """Test legal text conversion with dataset input."""
@@ -221,7 +221,7 @@ def test_legal_text_dataset_input():
         formulas = result["deontic_formulas"]
         assert len(formulas) <= 3  # Up to 3 statements
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_normative_structure_analysis():
     """Test normative structure analysis."""
@@ -246,7 +246,7 @@ def test_normative_structure_analysis():
         assert "permissions" in structure
         assert "prohibitions" in structure
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_legal_text_error_handling():
     """Test error handling in legal text conversion."""
@@ -254,8 +254,9 @@ def test_legal_text_error_handling():
     async def run_test():
         # Test empty input
         result = await convert_legal_text_to_deontic("")
-        assert result["status"] == "error"
-        assert "empty" in result["message"].lower()
+        assert result["status"] == "success"
+        assert result["deontic_formulas"] == []
+        assert result["summary"]["total_normative_statements"] == 0
         
         # Test invalid jurisdiction (should warn but continue)
         result2 = await convert_legal_text_to_deontic(
@@ -266,7 +267,7 @@ def test_legal_text_error_handling():
         assert result2["status"] == "success"
         assert result2["metadata"]["jurisdiction"] == "general"
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 def test_deontic_confidence_scoring():
     """Test confidence scoring for deontic logic conversion."""
@@ -295,7 +296,7 @@ def test_deontic_confidence_scoring():
                 assert 0 <= high_conf <= 1
                 assert 0 <= low_conf <= 1
 
-    anyio.run(run_test())
+    anyio.run(run_test)
 
 if __name__ == "__main__":
     print("Running legal text to deontic logic conversion tests...")

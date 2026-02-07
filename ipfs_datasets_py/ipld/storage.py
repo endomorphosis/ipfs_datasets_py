@@ -27,9 +27,11 @@ from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Union, Any, Set, Callable, Generator, Type, TypeVar
 
 try:
-    import ipfshttpclient
-except ImportError:
-    ipfshttpclient = None
+    from ipfs_datasets_py import ipfs_backend_router as ipfs_router
+    _IPFS_ROUTER_AVAILABLE = True
+except Exception:
+    ipfs_router = None
+    _IPFS_ROUTER_AVAILABLE = False
 
 try:
     from multiformats import CID
@@ -153,15 +155,10 @@ class IPLDStorage:
         self.base_dir = base_dir or tempfile.mkdtemp()
         self.ipfs_api = ipfs_api
 
-        # Initialize IPFS client if available
-        
-        self.ipfs_client = None
-        if ipfshttpclient:
-            try:
-                self.ipfs_client = ipfshttpclient.connect(self.ipfs_api)
-            except Exception as e:
-                print(f"Warning: Could not connect to IPFS at {self.ipfs_api}: {e}")
-                print("Operating in local-only mode. Use connect() to retry connection.")
+        # Router-backed IPFS operations are best-effort.
+        # If any IPFS call fails, we fall back to local-only mode.
+        self._ipfs_enabled = bool(_IPFS_ROUTER_AVAILABLE)
+        self._ipfs_failed = False
 
         # Create the base directory if it doesn't exist with proper permission handling
         try:
@@ -206,16 +203,18 @@ class IPLDStorage:
         if ipfs_api:
             self.ipfs_api = ipfs_api
 
-        if not ipfshttpclient:
-            print("Warning: ipfshttpclient not available. Install with pip install ipfshttpclient")
+        if not _IPFS_ROUTER_AVAILABLE:
+            print("Warning: ipfs_backend_router not available. Operating in local-only mode.")
+            self._ipfs_enabled = False
             return False
 
-        try:
-            self.ipfs_client = ipfshttpclient.connect(self.ipfs_api)
-            return True
-        except Exception as e:
-            print(f"Error connecting to IPFS at {self.ipfs_api}: {e}")
-            return False
+        # Enable again and let the next operation validate connectivity.
+        self._ipfs_enabled = True
+        self._ipfs_failed = False
+        return True
+
+    def _ipfs_ok(self) -> bool:
+        return bool(self._ipfs_enabled and not self._ipfs_failed and _IPFS_ROUTER_AVAILABLE)
 
     def store(self, data: bytes, links: Optional[List[Dict]] = None) -> str:
         """
@@ -229,23 +228,19 @@ class IPLDStorage:
         Returns:
             str: CID of the stored block
         """
-        if self.ipfs_client:
-            # Use IPFS to store the block
-            if not links:
-                # Simple case: just store the data
-                res = self.ipfs_client.block.put(io.BytesIO(data))
-                return res['Key']
-            else:
-                # Complex case: create a DAG node with links
-                # This requires DAG-PB format
+        if self._ipfs_ok():
+            try:
+                if not links:
+                    # Simple case: store as raw block.
+                    return ipfs_router.block_put(data, codec="raw")
 
-
-                # Create a DAG node with the data and links
+                # Complex case: create a DAG-PB node with links.
                 node_data = create_dag_node(data, links)
-
-                # Store the node
-                res = self.ipfs_client.block.put(io.BytesIO(node_data))
-                return res['Key']
+                return ipfs_router.block_put(node_data, codec="dag-pb")
+            except Exception as e:
+                self._ipfs_failed = True
+                print(f"Warning: Could not store to IPFS via backend router: {e}")
+                print("Operating in local-only mode. Use connect() to retry connection.")
 
         else:
             # Local-only mode: calculate CID based on the data and links
@@ -283,14 +278,13 @@ class IPLDStorage:
         if cid in self._block_cache:
             return self._block_cache[cid]
 
-        if self.ipfs_client:
-            # Use IPFS to retrieve the block
+        if self._ipfs_ok():
             try:
-                data = self.ipfs_client.block.get(cid)
-                # Update cache
+                data = ipfs_router.block_get(cid)
                 self._block_cache[cid] = data
                 return data
             except Exception as e:
+                self._ipfs_failed = True
                 raise ValueError(f"Error retrieving block {cid}: {e}")
         else:
             # In local-only mode, we only have access to blocks we've stored
@@ -478,11 +472,12 @@ class IPLDStorage:
         for cid, block_data in blocks.items():
             self._block_cache[cid] = block_data
 
-            # Also store in IPFS if connected
-            if self.ipfs_client:
+            # Best-effort store to IPFS (codec unknown; store as raw).
+            if self._ipfs_ok():
                 try:
-                    self.ipfs_client.block.put(io.BytesIO(block_data))
+                    ipfs_router.block_put(block_data, codec="raw")
                 except Exception as e:
+                    self._ipfs_failed = True
                     print(f"Warning: Error storing block {cid} in IPFS: {e}")
 
         return roots
@@ -527,25 +522,20 @@ class IPLDStorage:
 
         # Store blocks
         cids = []
-        if self.ipfs_client:
-            # Store in IPFS in parallel
+        if self._ipfs_ok():
             with ThreadPoolExecutor() as executor:
                 futures = []
-                for encoded_data, cid in results:
-                    future = executor.submit(
-                        self.ipfs_client.block.put,
-                        io.BytesIO(encoded_data)
-                    )
-                    futures.append((future, cid))
+                for encoded_data, _precomputed_cid in results:
+                    futures.append(executor.submit(ipfs_router.block_put, encoded_data, codec="dag-pb"))
 
-                # Collect results
-                for future, cid in futures:
+                for i, future in enumerate(futures):
+                    encoded_data, _precomputed_cid = results[i]
                     try:
-                        future.result()
-                        cids.append(cid)
-                        # Cache the block
-                        self._block_cache[cid] = encoded_data
+                        stored_cid = future.result()
+                        cids.append(stored_cid)
+                        self._block_cache[stored_cid] = encoded_data
                     except Exception as e:
+                        self._ipfs_failed = True
                         print(f"Warning: Error storing block in IPFS: {e}")
                         cids.append(None)
         else:
@@ -589,27 +579,20 @@ class IPLDStorage:
             return results
 
         # Fetch missing blocks
-        if self.ipfs_client:
-            # Fetch in parallel from IPFS
+        if self._ipfs_ok():
             with ThreadPoolExecutor() as executor:
-                futures = {}
+                futures: Dict[int, Any] = {}
                 for i, cid in enumerate(cids):
                     if cid in cache_misses:
-                        try:
-                            futures[i] = executor.submit(self.ipfs_client.block.get, cid)
-                        except Exception:
-                            # Keep None for this CID
-                            pass
+                        futures[i] = executor.submit(ipfs_router.block_get, cid)
 
-                # Collect results
                 for i, future in futures.items():
                     try:
                         data = future.result()
                         results[i] = data
-                        # Update cache
                         self._block_cache[cids[i]] = data
                     except Exception:
-                        # Keep None for this CID
+                        self._ipfs_failed = True
                         pass
         else:
             # In local-only mode, provide mock data for testing
@@ -817,18 +800,16 @@ class IPLDStorage:
             for cid, block_data in blocks.items():
                 self._block_cache[cid] = block_data
 
-                # Also store in IPFS if connected
-                if self.ipfs_client:
-                    futures.append(executor.submit(
-                        self.ipfs_client.block.put,
-                        io.BytesIO(block_data)
-                    ))
+                # Best-effort store to IPFS (codec unknown; store as raw).
+                if self._ipfs_ok():
+                    futures.append(executor.submit(ipfs_router.block_put, block_data, codec="raw"))
 
             # Wait for all IPFS operations to complete
             for future in futures:
                 try:
                     future.result()
                 except Exception as e:
+                    self._ipfs_failed = True
                     print(f"Warning: Error storing block in IPFS: {e}")
 
         return roots

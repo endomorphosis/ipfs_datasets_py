@@ -136,3 +136,8 @@ Issues = "https://github.com/endomorphosis/ipfs_datasets_py/issues"
 [project.scripts]
 ipfs-datasets = "ipfs_datasets_cli:cli_main"
 ipfs-datasets-cli = "ipfs_datasets_cli:cli_main"
+ipfs-datasets-install-provers = "ipfs_prover_installer:main"
+
+[tool.setuptools]
+packages = { find = {} }
+py-modules = ["ipfs_datasets_cli", "ipfs_prover_installer"]
