@@ -1,75 +1,27 @@
-"""
-Multimedia processing library for IPFS Datasets Python.
+"""Compatibility shim for the deprecated `ipfs_datasets_py.multimedia` namespace.
 
-This module provides comprehensive multimedia processing capabilities including:
-- Video and audio downloading (yt-dlp)
-- Media format conversion (FFmpeg)
-- Discord chat export and analysis
-- Email processing and ingestion (IMAP/POP3/.eml)
-- Media analysis and metadata extraction
-- Streaming and transcoding
-- Batch processing of multimedia content
-
-The library integrates with IPFS for decentralized storage and provides
-optimized workflows for content processing and distribution.
+The canonical implementation lives under `ipfs_datasets_py.data_transformation.multimedia`.
 """
 
-from .ytdlp_wrapper import YtDlpWrapper
-from .ffmpeg_wrapper import FFmpegWrapper
+from __future__ import annotations
 
-# Import MediaProcessor conditionally (requires pydantic)
-try:
-    from .media_processor import MediaProcessor
-    HAVE_MEDIA_PROCESSOR = True
-except ImportError:
-    HAVE_MEDIA_PROCESSOR = False
-    MediaProcessor = None
+import warnings
 
-from .media_utils import MediaUtils
+warnings.warn(
+    "`ipfs_datasets_py.multimedia` is deprecated; use `ipfs_datasets_py.data_transformation.multimedia`.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-# Import Discord wrapper (new addition)
-try:
-    from .discord_wrapper import DiscordWrapper, create_discord_wrapper
-    HAVE_DISCORD = True
-except ImportError:
-    HAVE_DISCORD = False
-    DiscordWrapper = None
-    create_discord_wrapper = None
-
-# Import Email processor
-try:
-    from .email_processor import EmailProcessor, create_email_processor
-    HAVE_EMAIL = True
-except ImportError:
-    HAVE_EMAIL = False
-    EmailProcessor = None
-    create_email_processor = None
-
-# Feature availability flags
-try:
-    import yt_dlp
-    HAVE_YTDLP = True
-except ImportError:
-    HAVE_YTDLP = False
-
-try:
-    import ffmpeg
-    HAVE_FFMPEG = True
-except ImportError:
-    HAVE_FFMPEG = False
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
 
 __all__ = [
-    "YtDlpWrapper",
-    "FFmpegWrapper", 
     "MediaProcessor",
-    "MediaUtils",
-    "DiscordWrapper",
-    "create_discord_wrapper",
-    "EmailProcessor",
-    "create_email_processor",
-    "HAVE_YTDLP",
-    "HAVE_FFMPEG",
-    "HAVE_DISCORD",
-    "HAVE_EMAIL",
-    "HAVE_MEDIA_PROCESSOR"
+    "make_media_processor",
+    "YtDlpWrapper",
+    "YTDLP_AVAILABLE",
+    "FFmpegWrapper",
+    "FFMPEG_AVAILABLE",
 ]

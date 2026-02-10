@@ -1133,7 +1133,10 @@ if _MINIMAL_IMPORTS:
     llm = None  # type: ignore
     rag = None  # type: ignore
 else:
-    from . import llm
+    try:
+        from . import llm
+    except ImportError:
+        llm = None  # type: ignore
 
 # Direct aliases without polluting sys.modules
 try:

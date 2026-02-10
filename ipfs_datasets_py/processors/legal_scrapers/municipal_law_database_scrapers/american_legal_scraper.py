@@ -6,22 +6,21 @@ This module provides functions for scraping municipal codes from American Legal 
 """
 from typing import Any, Dict, Optional
 import anyio
+import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
-import requests
+
+import aiohttp
 
 
 async def _fetch_url(url: str, timeout_seconds: float = 30.0) -> tuple[int, str]:
-    def _get() -> tuple[int, str]:
-        response = requests.get(
-            url,
-            timeout=timeout_seconds,
-            headers={"User-Agent": "ipfs_datasets_py/american_legal_scraper"},
-        )
-        return int(response.status_code), str(response.text)
+    timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+    headers = {"User-Agent": "ipfs_datasets_py/american_legal_scraper"}
 
-    return await anyio.to_thread.run_sync(_get)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        async with session.get(url, headers=headers) as response:
+            return int(response.status), str(await response.text())
 
 
 async def search_jurisdictions(
@@ -124,9 +123,9 @@ async def search_jurisdictions(
             if len(jurisdictions_list) >= limit:
                 break
 
-    except (TimeoutError, requests.exceptions.Timeout):
+    except (TimeoutError, asyncio.TimeoutError):
         raise TimeoutError("Request timed out")
-    except (requests.exceptions.ConnectionError, ConnectionError) as e:
+    except (aiohttp.ClientError, ConnectionError) as e:
         raise ConnectionError(f"Unable to connect to American Legal Publishing: {e}")
     
     return {
@@ -301,7 +300,7 @@ async def scrape_jurisdiction(
                 if max_sections and len(sections_list) >= max_sections:
                     break
 
-    except (requests.exceptions.ConnectionError, ConnectionError):
+    except (aiohttp.ClientConnectorError, aiohttp.ClientError, ConnectionError):
         return {
             "jurisdiction": jurisdiction_name,
             "url": jurisdiction_url,
@@ -309,7 +308,7 @@ async def scrape_jurisdiction(
             "error": "DNS resolution failed",
             "error_type": "dns"
         }
-    except (TimeoutError, requests.exceptions.Timeout):
+    except (TimeoutError, asyncio.TimeoutError):
         return {
             "jurisdiction": jurisdiction_name,
             "url": jurisdiction_url,

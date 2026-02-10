@@ -8,7 +8,7 @@ functionality is reusable by CLI and other integrations.
 
 from __future__ import annotations
 
-from ipfs_datasets_py.workflow_automation.workflow_api import (
+from ipfs_datasets_py.cli.workflow_api import (
     execute_workflow,
     batch_process_datasets,
     schedule_workflow,
