@@ -25,7 +25,7 @@ from typing import Dict, List, Optional, Any, Tuple, Callable, TYPE_CHECKING
 
 import numpy as np
 
-from ipfs_datasets_py.llm.llm_interface import (
+from ipfs_datasets_py.ml.llm.llm_interface import (
     LLMInterface, 
     LLMInterfaceFactory, 
     GraphRAGPromptTemplates,

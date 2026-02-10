@@ -9,20 +9,19 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import requests
+import aiohttp
 from bs4 import BeautifulSoup
 
 
 async def _fetch_url(url: str, timeout_seconds: float = 30.0) -> tuple[int, str]:
-    def _get() -> tuple[int, str]:
-        response = requests.get(
-            url,
-            timeout=timeout_seconds,
-            headers={"User-Agent": "ipfs_datasets_py/municode_scraper"},
-        )
-        return int(response.status_code), str(response.text)
-
-    return await anyio.to_thread.run_sync(_get)
+    timeout = aiohttp.ClientTimeout(total=timeout_seconds)
+    async with aiohttp.ClientSession(
+        timeout=timeout,
+        headers={"User-Agent": "ipfs_datasets_py/municode_scraper"},
+    ) as session:
+        with anyio.fail_after(timeout_seconds):
+            async with session.get(url) as response:
+                return int(response.status), str(await response.text())
 
 
 async def search_jurisdictions(
@@ -135,9 +134,9 @@ async def search_jurisdictions(
                     if len(jurisdictions_list) >= limit:
                         break
     
-    except (TimeoutError, requests.exceptions.Timeout):
+    except TimeoutError:
         raise TimeoutError("Request to Municode Library timed out")
-    except (requests.exceptions.ConnectionError, ConnectionError) as e:
+    except (aiohttp.ClientConnectorError, ConnectionError, OSError) as e:
         raise ConnectionError(f"Unable to connect to Municode Library: {e}")
     
     return {
@@ -276,13 +275,13 @@ async def scrape_jurisdiction(
                     "sections": [],
                 }
 
-        except (TimeoutError, requests.exceptions.Timeout):
+        except TimeoutError:
             return {
                 "error": "Network timeout",
                 "error_type": "timeout",
                 "sections": [],
             }
-        except (requests.exceptions.ConnectionError, ConnectionError):
+        except (aiohttp.ClientConnectorError, ConnectionError, OSError):
             return {
                 "error": "DNS resolution failed",
                 "error_type": "dns",

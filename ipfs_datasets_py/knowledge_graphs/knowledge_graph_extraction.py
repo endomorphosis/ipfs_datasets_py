@@ -33,7 +33,7 @@ from typing import Dict, List, Any, Set, Optional, Tuple, Union
 from collections import defaultdict
 
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
-from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
 # Try to import accelerate integration for distributed inference
 try:
@@ -1953,7 +1953,7 @@ class KnowledgeGraphExtractorWithValidation:
 
         # Initialize validator
         try:
-            from ipfs_datasets_py.llm.llm_semantic_validation import SPARQLValidator
+            from ipfs_datasets_py.ml.llm.llm_semantic_validation import SPARQLValidator
             self.validator = SPARQLValidator(
                 endpoint_url=sparql_endpoint_url,
                 tracer=self.tracer,

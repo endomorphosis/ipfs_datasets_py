@@ -136,8 +136,8 @@ except ImportError:
 
 # Import for Wikipedia-specific optimizations
 # Import necessary components
-from ipfs_datasets_py.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor # Added import
+from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor # Added import
 
 # Import for Wikipedia-specific optimizations
 try:
@@ -153,7 +153,7 @@ except ImportError:
 
 # Avoid circular imports with conditional imports
 if TYPE_CHECKING:
-    # from ipfs_datasets_py.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer # Keep commented if not strictly needed for type hints here
+    # from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer # Keep commented if not strictly needed for type hints here
     pass
 
 class QueryMetricsCollector:

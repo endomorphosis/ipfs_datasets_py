@@ -25,7 +25,7 @@ import numpy as np
 from dataclasses import dataclass, field
 import uuid
 
-from ipfs_datasets_py.llm.llm_reasoning_tracer import (
+from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
 )
@@ -735,7 +735,7 @@ class CrossDocumentReasoner:
 
 def example_usage():
     """Example usage of the cross-document reasoner."""
-    from ipfs_datasets_py.llm.llm_reasoning_tracer import LLMReasoningTracer
+    from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import LLMReasoningTracer
     from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
 
     # Initialize components

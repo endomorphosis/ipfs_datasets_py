@@ -7,9 +7,22 @@ actual attributes.
 
 from __future__ import annotations
 
+import logging
+
 # Re-export integration symbols for convenience.
 from .graphrag_integration import *  # noqa: F401,F403
-from .enhanced_graphrag_integration import *  # noqa: F401,F403
-from .unixfs_integration import *  # noqa: F401,F403
+
+# Optional integrations may depend on heavyweight or extra dependencies.
+try:  # pragma: no cover
+	from .enhanced_graphrag_integration import *  # noqa: F401,F403
+except Exception as e:  # pragma: no cover
+	logging.getLogger(__name__).warning(
+		"Enhanced GraphRAG integration unavailable: %s", e
+	)
+
+try:  # pragma: no cover
+	from .unixfs_integration import *  # noqa: F401,F403
+except Exception as e:  # pragma: no cover
+	logging.getLogger(__name__).warning("UnixFS integration unavailable: %s", e)
 
 # Do not define __all__ here; the imported modules may define their own.

@@ -531,7 +531,7 @@ if _MINIMAL_IMPORTS:
     enhance_dataset_with_llm = None
 else:
     try:
-        from .llm.llm_interface import (
+        from .ml.llm.llm_interface import (
             LLMInterface,
             MockLLMInterface,
             LLMConfig,
@@ -553,7 +553,7 @@ else:
         GraphRAGPromptTemplates = None
 
     try:
-        from .llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
+        from .ml.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
         HAVE_LLM_GRAPHRAG = True
     except ImportError as e:
         import warnings

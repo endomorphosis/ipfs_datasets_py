@@ -1396,8 +1396,8 @@ def get_llm_interface(
     """
 
     # Lazy import to keep llm_router lightweight.
-    from ipfs_datasets_py.llm.llm_interface import LLMConfig
-    from ipfs_datasets_py.llm.llm_router_interface import RoutedLLMInterface
+    from ipfs_datasets_py.ml.llm.llm_interface import LLMConfig
+    from ipfs_datasets_py.ml.llm.llm_router_interface import RoutedLLMInterface
 
     cfg_model = model_name or os.getenv("IPFS_DATASETS_PY_LLM_MODEL") or "mock-llm"
     config = LLMConfig(model_name=str(cfg_model), **{k: v for k, v in config_kwargs.items()})

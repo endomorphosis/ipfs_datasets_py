@@ -62,16 +62,56 @@ import time
 import logging
 from typing import Dict, List, Any, Optional, Union, Tuple, Callable, Set
 import numpy as np
+from collections import deque
+import hashlib
 
-from ipfs_datasets_py.ml.llm.llm_graphrag import (
-    ReasoningEnhancer, GraphRAGLLMProcessor, GraphRAGPerformanceMonitor
-)
-from ipfs_datasets_py.ml.llm.llm_semantic_validation import (
-    SchemaValidator, SemanticAugmenter, SemanticValidator
-)
-from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
-    ReasoningTrace, ReasoningNodeType # Removed ReasoningStep, TracingManager, StepType, ConfidenceLevel
-)
+# Optional LLM-related imports. These can pull in heavyweight optional
+# dependencies (e.g. HuggingFace `datasets`). Graph traversal + hybrid search
+# should remain usable without them.
+try:
+    from ipfs_datasets_py.ml.llm.llm_graphrag import (
+        ReasoningEnhancer, GraphRAGLLMProcessor, GraphRAGPerformanceMonitor
+    )
+except Exception as e:  # pragma: no cover
+    logging.getLogger(__name__).warning("LLM GraphRAG modules unavailable: %s", e)
+
+    class ReasoningEnhancer:  # type: ignore
+        pass
+
+    class GraphRAGLLMProcessor:  # type: ignore
+        pass
+
+    class GraphRAGPerformanceMonitor:  # type: ignore
+        pass
+
+try:
+    from ipfs_datasets_py.ml.llm.llm_semantic_validation import (
+        SchemaValidator, SemanticAugmenter, SemanticValidator
+    )
+except Exception as e:  # pragma: no cover
+    logging.getLogger(__name__).warning("LLM semantic validation modules unavailable: %s", e)
+
+    class SchemaValidator:  # type: ignore
+        pass
+
+    class SemanticAugmenter:  # type: ignore
+        pass
+
+    class SemanticValidator:  # type: ignore
+        pass
+
+try:
+    from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
+        ReasoningTrace, ReasoningNodeType
+    )
+except Exception as e:  # pragma: no cover
+    logging.getLogger(__name__).warning("LLM reasoning tracer modules unavailable: %s", e)
+
+    class ReasoningTrace:  # type: ignore
+        pass
+
+    class ReasoningNodeType:  # type: ignore
+        pass
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity, Relationship, KnowledgeGraph
 )
@@ -801,7 +841,11 @@ class HybridVectorGraphSearch:
         graph_weight: float = 0.4,
         max_graph_hops: int = 2,
         min_score_threshold: float = 0.5,
-        use_bidirectional_traversal: bool = True
+        use_bidirectional_traversal: bool = True,
+        max_nodes_visited: int = 5000,
+        max_edges_traversed: int = 20000,
+        max_vector_rescore: Optional[int] = None,
+        max_neighbors_per_node: Optional[int] = None
     ):
         """
         Initialize hybrid search.
@@ -820,11 +864,20 @@ class HybridVectorGraphSearch:
         self.max_graph_hops = max_graph_hops
         self.min_score_threshold = min_score_threshold
         self.use_bidirectional_traversal = use_bidirectional_traversal
+        self.max_nodes_visited = max_nodes_visited
+        self.max_edges_traversed = max_edges_traversed
+        self.max_vector_rescore = max_vector_rescore
+        self.max_neighbors_per_node = max_neighbors_per_node
 
         # Normalize weights
         total_weight = self.vector_weight + self.graph_weight
-        self.vector_weight = self.vector_weight / total_weight
-        self.graph_weight = self.graph_weight / total_weight
+        if total_weight <= 0:
+            # Defensive: avoid divide-by-zero and nonsensical negative totals.
+            self.vector_weight = 0.5
+            self.graph_weight = 0.5
+        else:
+            self.vector_weight = self.vector_weight / total_weight
+            self.graph_weight = self.graph_weight / total_weight
 
         # Initialize metrics
         self.metrics = {
@@ -838,6 +891,9 @@ class HybridVectorGraphSearch:
         # Cache for recent searches to avoid redundant computation
         self._search_cache = {}
         self._max_cache_size = 100
+        self._last_query_stats: Dict[str, Any] = {}
+        self._last_entity_mediated_stats: Dict[str, Any] = {}
+        self._last_rescore_stats: Dict[str, Any] = {}
 
     def hybrid_search(
         self,
@@ -846,7 +902,10 @@ class HybridVectorGraphSearch:
         relationship_types: Optional[List[str]] = None,
         entity_types: Optional[List[str]] = None,
         min_vector_score: float = 0.0,
-        rerank_with_llm: bool = False
+        rerank_with_llm: bool = False,
+        max_graph_hops: Optional[int] = None,
+        max_nodes_visited: Optional[int] = None,
+        max_edges_traversed: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Perform hybrid vector + graph search.
@@ -862,8 +921,40 @@ class HybridVectorGraphSearch:
         Returns:
             List of search results with scores and traversal paths
         """
-        # Create cache key
-        cache_key = f"hybrid:{hash(query_embedding.tobytes())}:{top_k}:{relationship_types}:{entity_types}:{min_vector_score}"
+        if top_k <= 0:
+            self._last_query_stats = {
+                "top_k": int(top_k),
+                "seed_count": 0,
+                "expanded_count": 0,
+                "returned_count": 0,
+                "max_hops": 0,
+                "max_nodes_visited": 0,
+                "max_edges_traversed": 0,
+            }
+            return []
+
+        effective_max_hops = self.max_graph_hops if max_graph_hops is None else max_graph_hops
+        if effective_max_hops < 0:
+            effective_max_hops = 0
+        effective_max_nodes = self.max_nodes_visited if max_nodes_visited is None else max_nodes_visited
+        effective_max_edges = self.max_edges_traversed if max_edges_traversed is None else max_edges_traversed
+
+        def _canon_list(values: Optional[List[str]]) -> Optional[Tuple[str, ...]]:
+            if not values:
+                return None
+            return tuple(sorted(str(v) for v in values))
+
+        rel_types_key = _canon_list(relationship_types)
+        ent_types_key = _canon_list(entity_types)
+
+        # Create cache key (stable within-process and low collision risk)
+        emb_bytes = np.ascontiguousarray(query_embedding).tobytes()
+        emb_digest = hashlib.sha256(emb_bytes).hexdigest()[:16]
+        cache_key = (
+            f"hybrid:{emb_digest}:topk={int(top_k)}:rels={rel_types_key}:ents={ent_types_key}:minv={float(min_vector_score)}:"
+            f"hops={int(effective_max_hops)}:nodes={int(effective_max_nodes)}:edges={int(effective_max_edges)}:"
+            f"rescore={self.max_vector_rescore}:nbrcap={self.max_neighbors_per_node}"
+        )
 
         # Check cache
         if cache_key in self._search_cache:
@@ -881,12 +972,23 @@ class HybridVectorGraphSearch:
         )
 
         # Phase 2: Graph traversal to expand results
-        expanded_results = self._expand_through_graph(
-            vector_results,
-            max_hops=self.max_graph_hops,
-            relationship_types=relationship_types,
-            entity_types=entity_types
-        )
+        if effective_max_hops == 0:
+            expanded_results = list(vector_results)
+            self._last_traversal_stats = {
+                "nodes_visited": int(len(vector_results)),
+                "edges_traversed": 0,
+                "avg_hops": 0.0,
+                "termination_reason": "max_hops=0",
+            }
+        else:
+            expanded_results = self._expand_through_graph(
+                vector_results,
+                max_hops=effective_max_hops,
+                relationship_types=relationship_types,
+                entity_types=entity_types,
+                max_nodes_visited=effective_max_nodes,
+                max_edges_traversed=effective_max_edges
+            )
 
         # Phase 3: Score and rank combined results
         ranked_results = self._score_and_rank_results(
@@ -906,6 +1008,20 @@ class HybridVectorGraphSearch:
         # Limit to top_k results
         results = filtered_results[:top_k]
 
+        self._last_query_stats = {
+            "top_k": top_k,
+            "seed_count": len(vector_results),
+            "expanded_count": len(expanded_results),
+            "returned_count": len(results),
+            "max_hops": effective_max_hops,
+            "max_nodes_visited": effective_max_nodes,
+            "max_edges_traversed": effective_max_edges,
+            "relationship_types": list(rel_types_key) if rel_types_key else None,
+            "entity_types": list(ent_types_key) if ent_types_key else None,
+            **getattr(self, "_last_traversal_stats", {}),
+            **getattr(self, "_last_rescore_stats", {}),
+        }
+
         # Update cache
         if len(self._search_cache) >= self._max_cache_size:
             # Remove oldest entry
@@ -915,6 +1031,14 @@ class HybridVectorGraphSearch:
         self._search_cache[cache_key] = results
 
         return results
+
+    def get_last_query_stats(self) -> Dict[str, Any]:
+        """Return a shallow copy of the last query's stats."""
+        return dict(self._last_query_stats)
+
+    def get_last_entity_mediated_stats(self) -> Dict[str, Any]:
+        """Return a shallow copy of the last entity-mediated search stats."""
+        return dict(self._last_entity_mediated_stats)
 
     def _perform_vector_search(
         self,
@@ -974,7 +1098,9 @@ class HybridVectorGraphSearch:
         seed_results: List[Dict[str, Any]],
         max_hops: int,
         relationship_types: Optional[List[str]] = None,
-        entity_types: Optional[List[str]] = None
+        entity_types: Optional[List[str]] = None,
+        max_nodes_visited: int = 5000,
+        max_edges_traversed: int = 20000
     ) -> List[Dict[str, Any]]:
         """
         Expand seed results through graph traversal.
@@ -988,24 +1114,35 @@ class HybridVectorGraphSearch:
         Returns:
             List of expanded results with traversal paths
         """
-        all_results = seed_results.copy()
+        # Track best known result per node ID so we can update paths/scores if a
+        # better route is discovered.
+        results_by_id: Dict[str, Dict[str, Any]] = {}
+        for seed in seed_results:
+            seed_id = seed["id"]
+            seed.setdefault("seed_id", seed_id)
+            seed.setdefault("seed_vector_score", seed.get("vector_score", 0.0))
+            results_by_id[seed_id] = seed
 
-        # Set to track visited nodes
-        visited_nodes: Set[str] = set()
-        for result in seed_results:
-            visited_nodes.add(result["id"])
-
-        # Queue for BFS traversal
-        queue = [(result["id"], result, 0) for result in seed_results]  # (node_id, seed_result, hop_count)
+        # Queue for BFS traversal. We carry the *current* result object so path
+        # construction works for multi-hop expansions.
+        queue = deque([(results_by_id[seed["id"]], 0) for seed in seed_results])  # (current_result, hop_count)
 
         # Track metrics
-        nodes_visited = len(visited_nodes)
+        nodes_visited = len(results_by_id)
         edges_traversed = 0
         total_hops = 0
 
+        termination_reason = "queue_exhausted"
+
         # BFS traversal
         while queue:
-            current_id, seed_result, hop_count = queue.pop(0)
+            current_result, hop_count = queue.popleft()
+            current_id = current_result["id"]
+
+            # Skip stale entries: if a better path to this node was discovered after
+            # this entry was queued, expanding it only adds noise and work.
+            if results_by_id.get(current_id) is not current_result:
+                continue
 
             # Skip if we've reached max hops
             if hop_count >= max_hops:
@@ -1021,62 +1158,78 @@ class HybridVectorGraphSearch:
 
             # Track edges traversed
             edges_traversed += len(neighbors)
+            if edges_traversed >= max_edges_traversed:
+                termination_reason = "max_edges_traversed"
+                break
 
             for neighbor_id, relationship, weight in neighbors:
-                # Skip if already visited
-                if neighbor_id in visited_nodes:
-                    continue
-
-                # Mark as visited
-                visited_nodes.add(neighbor_id)
-                nodes_visited += 1
-
+                if len(results_by_id) >= max_nodes_visited:
+                    termination_reason = "max_nodes_visited"
+                    break
                 # Get node data
                 neighbor_node = self.dataset.get_node(neighbor_id)
 
-                # Calculate graph score
-                # Graph score decreases with distance from seed node
-                graph_score = weight * max(0.0, 1.0 - (hop_count / max_hops))
+                # Graph score decreases with distance from the seed. Use
+                # hop_count+1 so the first hop gets a small penalty.
+                distance_factor = max(0.0, 1.0 - ((hop_count + 1) / max(1, max_hops)))
+                graph_score = weight * distance_factor
 
-                # Calculate combined score
-                # We use seed node's vector score and the graph traversal score
+                seed_vector_score = current_result.get("seed_vector_score", current_result.get("vector_score", 0.0))
                 combined_score = (
-                    seed_result["vector_score"] * self.vector_weight +
+                    seed_vector_score * self.vector_weight +
                     graph_score * self.graph_weight
                 )
 
-                # Create path info
-                hop_path = seed_result.get("path", []).copy()
-                hop_path.append({
-                    "from": current_id,
-                    "to": neighbor_id,
-                    "relationship": relationship,
-                    "weight": weight
-                })
+                hop_path = current_result.get("path", []).copy()
+                hop_path.append(
+                    {
+                        "from": current_id,
+                        "to": neighbor_id,
+                        "relationship": relationship,
+                        "weight": weight,
+                    }
+                )
 
-                # Create result entry
-                result = {
+                candidate = {
                     "id": neighbor_id,
                     "node": neighbor_node,
-                    "vector_score": seed_result["vector_score"],  # Inherit from seed
+                    # Do not inherit the seed node's vector score; allow
+                    # _score_and_rank_results() to optionally compute the true
+                    # similarity for graph-discovered nodes.
+                    "vector_score": 0.0,
+                    "seed_id": current_result.get("seed_id", current_id),
+                    "seed_vector_score": seed_vector_score,
                     "graph_score": graph_score,
                     "combined_score": combined_score,
                     "path": hop_path,
                     "hops": hop_count + 1,
-                    "source": "graph"
+                    "source": "graph",
                 }
 
-                # Add to results
-                all_results.append(result)
-                total_hops += (hop_count + 1)
+                existing = results_by_id.get(neighbor_id)
+                if existing is None or candidate.get("combined_score", 0.0) > existing.get("combined_score", 0.0):
+                    results_by_id[neighbor_id] = candidate
+                    nodes_visited = max(nodes_visited, len(results_by_id))
+                    total_hops += (hop_count + 1)
+                    queue.append((candidate, hop_count + 1))
 
-                # Add to queue for next iteration
-                queue.append((neighbor_id, seed_result, hop_count + 1))
+            if len(results_by_id) >= max_nodes_visited:
+                termination_reason = "max_nodes_visited"
+                break
 
         # Update metrics
         self.metrics["nodes_visited"] += nodes_visited
         self.metrics["edges_traversed"] += edges_traversed
+        all_results = list(results_by_id.values())
         self.metrics["average_hops"] = total_hops / max(1, len(all_results) - len(seed_results))
+
+        # Per-query traversal stats (useful for debugging and budget tuning).
+        self._last_traversal_stats = {
+            "nodes_visited": int(nodes_visited),
+            "edges_traversed": int(edges_traversed),
+            "avg_hops": float(self.metrics["average_hops"]),
+            "termination_reason": termination_reason,
+        }
 
         return all_results
 
@@ -1104,18 +1257,26 @@ class HybridVectorGraphSearch:
 
         neighbors = []
         for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
+            rel_source = rel.get("source")
+            rel_target = rel.get("target")
+            rel_type = rel.get("type")
+            if rel_source is None or rel_target is None or rel_type is None:
+                continue
+
             # Determine target node based on relationship direction
-            if rel["source"] == node_id:
-                target_id = rel["target"]
+            if rel_source == node_id:
+                target_id = rel_target
                 direction = "outgoing"
-            elif rel["target"] == node_id and self.use_bidirectional_traversal:
-                target_id = rel["source"]
+            elif rel_target == node_id and self.use_bidirectional_traversal:
+                target_id = rel_source
                 direction = "incoming"
             else:
                 continue
 
             # Filter by relationship type if specified
-            if relationship_types and rel["type"] not in relationship_types:
+            if relationship_types and rel_type not in relationship_types:
                 continue
 
             # Get target node
@@ -1136,7 +1297,19 @@ class HybridVectorGraphSearch:
             weight *= 0.8 ** hop_count
 
             # Add to neighbors
-            neighbors.append((target_id, rel["type"], weight))
+            neighbors.append((target_id, rel_type, weight))
+
+        if self.max_neighbors_per_node is not None:
+            try:
+                cap = int(self.max_neighbors_per_node)
+            except Exception:
+                cap = 0
+            if cap <= 0:
+                return []
+
+            # Prefer higher-weight edges; keep deterministic tie-breaking.
+            neighbors.sort(key=lambda t: (-float(t[2]), str(t[0]), str(t[1])))
+            neighbors = neighbors[:cap]
 
         return neighbors
 
@@ -1159,24 +1332,67 @@ class HybridVectorGraphSearch:
         # their actual vector similarity with the query
         # This is optional and can be expensive for large result sets
 
-        for result in results:
-            if result["source"] == "graph" and result.get("vector_score", 0) == 0:
-                # Try to get node's embedding
-                node_embedding = self.dataset.get_node_embedding(result["id"])
+        graph_candidates = [
+            r for r in results
+            if r.get("source") == "graph" and r.get("vector_score", 0.0) == 0.0
+        ]
 
-                if node_embedding is not None:
-                    # Compute similarity with query
-                    similarity = self._compute_similarity(query_embedding, node_embedding)
+        rescore_limit = self.max_vector_rescore
+        if rescore_limit is not None:
+            try:
+                rescore_limit_int = int(rescore_limit)
+            except Exception:
+                rescore_limit_int = 0
+            if rescore_limit_int <= 0:
+                self._last_rescore_stats = {
+                    "vector_rescore_limit": int(rescore_limit_int),
+                    "vector_rescore_candidates": int(len(graph_candidates)),
+                    "vector_rescored": 0,
+                    "vector_rescore_skipped": int(len(graph_candidates)),
+                }
+                graph_candidates = []
+            else:
+                # Pick best candidates based on current pre-rescore combined score.
+                graph_candidates = sorted(
+                    graph_candidates,
+                    key=lambda x: (-x.get("combined_score", 0.0), str(x.get("id", "")))
+                )[:rescore_limit_int]
+                self._last_rescore_stats = {
+                    "vector_rescore_limit": int(rescore_limit_int),
+                    "vector_rescore_candidates": int(len(graph_candidates)),
+                    "vector_rescored": 0,
+                }
+        else:
+            self._last_rescore_stats = {
+                "vector_rescore_limit": None,
+                "vector_rescore_candidates": int(len(graph_candidates)),
+                "vector_rescored": 0,
+            }
 
-                    # Update scores
-                    result["vector_score"] = similarity
-                    result["combined_score"] = (
-                        similarity * self.vector_weight +
-                        result["graph_score"] * self.graph_weight
-                    )
+        for result in graph_candidates:
+            node_embedding = self.dataset.get_node_embedding(result["id"])
+            if node_embedding is None:
+                continue
+            similarity = self._compute_similarity(query_embedding, node_embedding)
+            result["vector_score"] = similarity
+            result["combined_score"] = (
+                similarity * self.vector_weight +
+                result.get("graph_score", 0.0) * self.graph_weight
+            )
+            try:
+                self._last_rescore_stats["vector_rescored"] += 1
+            except Exception:
+                pass
 
-        # Sort results by combined score
-        ranked_results = sorted(results, key=lambda x: x.get("combined_score", 0), reverse=True)
+        if rescore_limit is not None:
+            skipped = max(0, int(self._last_rescore_stats.get("vector_rescore_candidates", 0)) - int(self._last_rescore_stats.get("vector_rescored", 0)))
+            self._last_rescore_stats["vector_rescore_skipped"] = skipped
+
+        # Sort results by combined score, with deterministic tie-breaking.
+        ranked_results = sorted(
+            results,
+            key=lambda x: (-x.get("combined_score", 0.0), str(x.get("id", "")))
+        )
 
         return ranked_results
 
@@ -1212,7 +1428,9 @@ class HybridVectorGraphSearch:
         query_embedding: np.ndarray,
         entity_types: List[str],
         top_k: int = 10,
-        max_connecting_entities: int = 5
+        max_connecting_entities: int = 5,
+        max_nodes_visited: Optional[int] = None,
+        max_edges_traversed: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Perform entity-mediated search to find connected documents.
@@ -1229,12 +1447,18 @@ class HybridVectorGraphSearch:
         Returns:
             List of connected document pairs with connecting entities
         """
+        effective_max_nodes = max_nodes_visited
+        effective_max_edges = max_edges_traversed
+
         # First, find the most relevant documents using vector search
         seed_documents = self._perform_vector_search(
             query_embedding,
             top_k=top_k * 2,  # Get more results for expansion
             entity_types=["document"]  # Only consider document nodes
         )
+
+        if effective_max_nodes is not None:
+            seed_documents = seed_documents[: max(0, int(effective_max_nodes))]
 
         # Extract document IDs
         doc_ids = [result["id"] for result in seed_documents]
@@ -1243,7 +1467,8 @@ class HybridVectorGraphSearch:
         connecting_entities = self._find_connecting_entities(
             doc_ids,
             entity_types,
-            max_entities=max_connecting_entities
+            max_entities=max_connecting_entities,
+            max_edges_traversed=effective_max_edges
         )
 
         # Find document pairs connected by these entities
@@ -1254,13 +1479,23 @@ class HybridVectorGraphSearch:
             top_k
         )
 
+        self._last_entity_mediated_stats = {
+            "requested_top_k": top_k,
+            "seed_doc_count": len(seed_documents),
+            "connecting_entities_returned": len(connecting_entities),
+            "returned_pairs": len(connected_pairs),
+            "max_nodes_visited": effective_max_nodes,
+            "max_edges_traversed": effective_max_edges,
+        }
+
         return connected_pairs
 
     def _find_connecting_entities(
         self,
         doc_ids: List[str],
         entity_types: List[str],
-        max_entities: int
+        max_entities: int,
+        max_edges_traversed: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Find entities connected to multiple documents.
@@ -1276,12 +1511,22 @@ class HybridVectorGraphSearch:
         # Map to count connections for each entity
         entity_connections: Dict[str, Set[str]] = {}
 
+        edges_scanned = 0
+
         # Find all entities connected to the documents
         for doc_id in doc_ids:
             # Get document's relationships
             relationships = self.dataset.get_node_relationships(doc_id)
 
+            # Fast cap: stop scanning if we've exceeded the relationship budget.
+            if max_edges_traversed is not None and edges_scanned >= int(max_edges_traversed):
+                break
+
             for rel in relationships:
+                edges_scanned += 1
+                if max_edges_traversed is not None and edges_scanned > int(max_edges_traversed):
+                    break
+
                 # Check if relationship connects to an entity of interest
                 entity_id = None
                 if rel["source"] == doc_id and rel["target"] != doc_id:
@@ -1300,6 +1545,9 @@ class HybridVectorGraphSearch:
                             entity_connections[entity_id] = set()
                         entity_connections[entity_id].add(doc_id)
 
+            if max_edges_traversed is not None and edges_scanned > int(max_edges_traversed):
+                break
+
         # Find entities connected to multiple documents
         connecting_entities = []
         for entity_id, connections in entity_connections.items():
@@ -1314,6 +1562,13 @@ class HybridVectorGraphSearch:
 
         # Sort by connection count and limit
         sorted_entities = sorted(connecting_entities, key=lambda x: x["connection_count"], reverse=True)
+
+        # Attach scan stats for callers (CrossDocumentReasoner uses this).
+        self._last_entity_mediated_stats = {
+            **self._last_entity_mediated_stats,
+            "relationships_scanned": edges_scanned,
+            "connecting_entities_found": len(connecting_entities),
+        }
         return sorted_entities[:max_entities]
 
     def _find_connected_document_pairs(
@@ -1537,13 +1792,17 @@ class CrossDocumentReasoner:
             "entity_count": 0
         }
 
+        self._last_query_stats: Dict[str, Any] = {}
+
     def find_evidence_chains(
         self,
         query_embedding: np.ndarray,
         entity_types: List[str] = ["concept", "entity", "topic"],
         max_docs: int = 10,
         max_entities: int = 5,
-        min_doc_score: float = 0.6
+        min_doc_score: float = 0.6,
+        max_nodes_visited: Optional[int] = None,
+        max_edges_traversed: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Find evidence chains connecting documents.
@@ -1565,7 +1824,9 @@ class CrossDocumentReasoner:
             query_embedding,
             entity_types=entity_types,
             top_k=max_docs,
-            max_connecting_entities=max_entities
+            max_connecting_entities=max_entities,
+            max_nodes_visited=max_nodes_visited,
+            max_edges_traversed=max_edges_traversed
         )
 
         # Filter out pairs with low scores
@@ -1618,6 +1879,17 @@ class CrossDocumentReasoner:
             entities_used.add(chain["entity"]["id"])
         self.metrics["entity_count"] = len(entities_used)
 
+        self._last_query_stats = {
+            "max_docs": max_docs,
+            "max_entities": max_entities,
+            "min_doc_score": min_doc_score,
+            "evidence_chains_returned": len(evidence_chains),
+            "entity_count": len(entities_used),
+            "entity_mediated_stats": self.hybrid_search.get_last_entity_mediated_stats(),
+            "max_nodes_visited": max_nodes_visited,
+            "max_edges_traversed": max_edges_traversed,
+        }
+
         return evidence_chains
 
     def _get_document_context(self, doc_id: str, max_length: int = 500) -> str:
@@ -1660,7 +1932,9 @@ class CrossDocumentReasoner:
         reasoning_depth: str = "moderate",
         entity_types: List[str] = ["concept", "entity", "topic"],
         max_docs: int = 10,
-        max_evidence_chains: int = 5
+        max_evidence_chains: int = 5,
+        max_nodes_visited: Optional[int] = None,
+        max_edges_traversed: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Reason across multiple documents to answer a query.
@@ -1680,7 +1954,10 @@ class CrossDocumentReasoner:
         evidence_chains = self.find_evidence_chains(
             query_embedding,
             entity_types=entity_types,
-            max_docs=max_docs
+            max_docs=max_docs,
+            max_entities=max_evidence_chains,
+            max_nodes_visited=max_nodes_visited,
+            max_edges_traversed=max_edges_traversed
         )
 
         # Limit evidence chains
@@ -1733,6 +2010,10 @@ class CrossDocumentReasoner:
             )
 
         return result
+
+    def get_last_query_stats(self) -> Dict[str, Any]:
+        """Return a shallow copy of last cross-document query stats."""
+        return dict(self._last_query_stats)
 
     def _synthesize_with_llm(
         self,
@@ -2311,6 +2592,8 @@ class GraphRAGQueryEngine:
         relationship_types: Optional[List[str]] = None,
         min_relevance: float = 0.5,
         max_graph_hops: int = 2,
+        max_nodes_visited: Optional[int] = None,
+        max_edges_traversed: Optional[int] = None,
         reasoning_depth: str = "moderate",
         return_trace: bool = False
     ) -> Dict[str, Any]:
@@ -2384,6 +2667,20 @@ class GraphRAGQueryEngine:
             )
             results["budget"] = budget
 
+        effective_max_nodes = max_nodes_visited
+        effective_max_edges = max_edges_traversed
+        if isinstance(budget, dict):
+            if effective_max_nodes is None and "max_nodes" in budget:
+                try:
+                    effective_max_nodes = int(budget["max_nodes"])
+                except Exception:
+                    pass
+            if effective_max_edges is None and "max_edges" in budget:
+                try:
+                    effective_max_edges = int(budget["max_edges"])
+                except Exception:
+                    pass
+
         # Perform search based on enabled components
 
         # 1. Vector search if enabled
@@ -2406,8 +2703,12 @@ class GraphRAGQueryEngine:
                 top_k=top_k,
                 relationship_types=relationship_types,
                 entity_types=entity_types,
-                min_vector_score=min_relevance
+                min_vector_score=min_relevance,
+                max_graph_hops=max_graph_hops,
+                max_nodes_visited=effective_max_nodes,
+                max_edges_traversed=effective_max_edges
             )
+            results["hybrid_stats"] = self.hybrid_search.get_last_query_stats()
             self.metrics["graph_traversals"] += 1
 
         # 3. Cross-document reasoning if enabled
@@ -2420,7 +2721,9 @@ class GraphRAGQueryEngine:
                 query_embedding=default_embedding,
                 entity_types=entity_types or ["concept", "entity", "topic"],
                 max_docs=top_k * 2,
-                max_entities=5
+                max_entities=5,
+                max_nodes_visited=effective_max_nodes,
+                max_edges_traversed=effective_max_edges
             )
 
             reasoning_result = self.cross_document_reasoner.reason_across_documents(
@@ -2429,11 +2732,14 @@ class GraphRAGQueryEngine:
                 reasoning_depth=reasoning_depth,
                 entity_types=entity_types or ["concept", "entity", "topic"],
                 max_docs=top_k * 2,
-                max_evidence_chains=len(evidence_chains)
+                max_evidence_chains=len(evidence_chains),
+                max_nodes_visited=effective_max_nodes,
+                max_edges_traversed=effective_max_edges
             )
 
             results["evidence_chains"] = evidence_chains
             results["reasoning_result"] = reasoning_result
+            results["cross_doc_stats"] = self.cross_document_reasoner.get_last_query_stats()
             self.metrics["cross_document_reasoning_uses"] += 1
 
             # Add trace ID if requested and available
@@ -2441,7 +2747,7 @@ class GraphRAGQueryEngine:
                 results["trace_id"] = reasoning_result["trace_id"]
 
         # Check early stopping if budget management is enabled
-        if budget and self.query_optimizer:
+        if budget and self.query_optimizer and hasattr(self.query_optimizer, "check_early_stopping"):
             should_stop = self.query_optimizer.check_early_stopping(
                 results=results,
                 state={"query_time": time.time() - start_time},

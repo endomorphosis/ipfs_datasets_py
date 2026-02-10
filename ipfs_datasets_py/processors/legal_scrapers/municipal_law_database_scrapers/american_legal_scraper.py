@@ -6,7 +6,6 @@ This module provides functions for scraping municipal codes from American Legal 
 """
 from typing import Any, Dict, Optional
 import anyio
-import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
 import re
@@ -18,9 +17,10 @@ async def _fetch_url(url: str, timeout_seconds: float = 30.0) -> tuple[int, str]
     timeout = aiohttp.ClientTimeout(total=timeout_seconds)
     headers = {"User-Agent": "ipfs_datasets_py/american_legal_scraper"}
 
-    async with aiohttp.ClientSession(timeout=timeout) as session:
-        async with session.get(url, headers=headers) as response:
-            return int(response.status), str(await response.text())
+    async with aiohttp.ClientSession(timeout=timeout, headers=headers) as session:
+        with anyio.fail_after(timeout_seconds):
+            async with session.get(url) as response:
+                return int(response.status), str(await response.text())
 
 
 async def search_jurisdictions(
@@ -123,7 +123,7 @@ async def search_jurisdictions(
             if len(jurisdictions_list) >= limit:
                 break
 
-    except (TimeoutError, asyncio.TimeoutError):
+    except TimeoutError:
         raise TimeoutError("Request timed out")
     except (aiohttp.ClientError, ConnectionError) as e:
         raise ConnectionError(f"Unable to connect to American Legal Publishing: {e}")
@@ -308,7 +308,7 @@ async def scrape_jurisdiction(
             "error": "DNS resolution failed",
             "error_type": "dns"
         }
-    except (TimeoutError, asyncio.TimeoutError):
+    except TimeoutError:
         return {
             "jurisdiction": jurisdiction_name,
             "url": jurisdiction_url,
