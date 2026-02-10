@@ -95,7 +95,7 @@ def test_logic_integration_modules():
     
     try:
         # Test our custom modules
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             SymbolicFOLBridge,
             get_available_engines
         )
@@ -328,7 +328,7 @@ def test_fol_integration_advanced():
     print("=" * 60)
     
     try:
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             SymbolicFOLBridge,
             InteractiveFOLConstructor,
             ModalLogicExtension,
@@ -427,7 +427,7 @@ def test_performance_benchmarks():
     
     try:
         from symai import Symbol
-        from ipfs_datasets_py.logic_integration import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration import SymbolicFOLBridge
         
         # Test 1: Response Time Benchmarks
         print("Test 1: Response Time Benchmarks")
@@ -494,7 +494,7 @@ def test_error_handling():
     
     try:
         from symai import Symbol
-        from ipfs_datasets_py.logic_integration import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration import SymbolicFOLBridge
         
         # Test 1: Invalid Inputs
         print("Test 1: Invalid Input Handling")

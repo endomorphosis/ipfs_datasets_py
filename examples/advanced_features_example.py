@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 # Import all the new features
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     IPFSAcceleratedConverter,
     MetadataExtractor,
     BatchProcessor,

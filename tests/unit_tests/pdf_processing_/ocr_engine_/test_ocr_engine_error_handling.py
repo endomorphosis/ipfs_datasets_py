@@ -9,9 +9,15 @@ from unittest.mock import Mock, patch
 
 import pytest
 from PIL import Image
-from pydantic import BaseModel
-from surya.recognition.schema import BaseChar
 from typing import List
+from pydantic import BaseModel
+
+try:
+    from surya.recognition.schema import BaseChar
+except ModuleNotFoundError:
+    class BaseChar(BaseModel):
+        bbox: List[float] = []
+        text: str = ""
 
 
 # NOTE These are already in the surya module, but we redefine them here for clarity.

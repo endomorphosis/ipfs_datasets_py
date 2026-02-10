@@ -30,7 +30,7 @@ class TestScrapeMunicipalCodesTool:
         WHEN I import and instantiate the tool
         THEN it should be created successfully
         """
-        from ipfs_datasets_py.mcp_tools.tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
         return ScrapeMunicipalCodesTool()
     
     def test_tool_initialization(self, tool_instance):
@@ -232,7 +232,7 @@ class TestScrapeMunicipalCodesTool:
         WHEN I check if ScrapeMunicipalCodesTool is included
         THEN it should be present
         """
-        from ipfs_datasets_py.mcp_tools.tools.legal_dataset_mcp_tools import LEGAL_DATASET_MCP_TOOLS
+        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import LEGAL_DATASET_MCP_TOOLS
         
         tool_names = [tool.name for tool in LEGAL_DATASET_MCP_TOOLS]
         assert "scrape_municipal_codes" in tool_names
@@ -243,7 +243,7 @@ class TestScrapeMunicipalCodesTool:
         WHEN I check its registered tools
         THEN scrape_municipal_codes should be available
         """
-        from ipfs_datasets_py.mcp_tools.temporal_deontic_mcp_server import TemporalDeonticMCPServer
+        from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import TemporalDeonticMCPServer
         
         server = TemporalDeonticMCPServer()
         assert "scrape_municipal_codes" in server.tools

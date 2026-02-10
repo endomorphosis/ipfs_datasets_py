@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional
 GRAPHRAG_AVAILABLE: bool
 
 try:
-    from ipfs_datasets_py.integrations.graphrag_integration import (  # type: ignore
+    from ipfs_datasets_py.graphrag.integrations.graphrag_integration import (  # type: ignore
         GraphRAGIntegration as GraphRAGIntegration,
     )
 

@@ -17,7 +17,7 @@ from typing import Dict, List, Any
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Import components
-from ipfs_datasets_py.logic_integration import (
+from ipfs_datasets_py.logic.integration import (
     DeonticLogicConverter,
     LegalDomainKnowledge,
     ConversionContext,
@@ -30,7 +30,7 @@ from ipfs_datasets_py.logic_integration import (
 
 # Try to import GraphRAG components
 try:
-    from ipfs_datasets_py.integrations.graphrag_integration import GraphRAGIntegration
+    from ipfs_datasets_py.logic.integrations.graphrag_integration import GraphRAGIntegration
     from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
     GRAPHRAG_AVAILABLE = True
 except ImportError:
@@ -483,7 +483,7 @@ def demonstrate_full_pipeline(sample_document_path: str = None):
     # Step 7: Demonstrate IPLD storage with provenance
     print("Step 7: Demonstrating IPLD logic storage with provenance...")
     
-    from ipfs_datasets_py.logic_integration import LogicIPLDStorage, LogicProvenanceTracker
+    from ipfs_datasets_py.logic.integration import LogicIPLDStorage, LogicProvenanceTracker
     
     # Create IPLD storage
     logic_storage = LogicIPLDStorage("./logic_conversion_results/ipld_storage")
@@ -533,7 +533,7 @@ def demonstrate_full_pipeline(sample_document_path: str = None):
     # Step 8: Demonstrate query capabilities
     print("Step 8: Demonstrating deontic logic query capabilities...")
     
-    from ipfs_datasets_py.logic_integration import DeonticQueryEngine, QueryType
+    from ipfs_datasets_py.logic.integration import DeonticQueryEngine, QueryType
     
     # Create query engine
     query_engine = DeonticQueryEngine(conversion_result.rule_set)

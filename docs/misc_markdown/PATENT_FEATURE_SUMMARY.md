@@ -39,7 +39,7 @@ The feature is included in the main package. No additional installation required
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import search_patents_by_keyword
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import search_patents_by_keyword
 
 # Search for patents
 patents = search_patents_by_keyword(["artificial intelligence"], limit=100)
@@ -130,7 +130,7 @@ Available for AI assistant integration:
 ### Advanced Search
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria
 )
@@ -149,7 +149,7 @@ patents = scraper.search_patents(criteria)
 ### Build GraphRAG Dataset
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentDatasetBuilder,
     PatentSearchCriteria

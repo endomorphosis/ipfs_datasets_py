@@ -13,11 +13,15 @@ from typing import Dict, Any
 import requests
 
 
+_RUN_STUBS = os.environ.get("IPFS_DATASETS_PY_RUN_TEST_STUBS") == "1"
+
+
 # Tell pytest to ignore all Python test files in this directory during collection
-# Note: conftest.py is automatically excluded by pytest from collection
+# unless explicitly opted-in.
+# Note: conftest.py is automatically excluded by pytest from collection.
 _all_py_files = glob.glob(os.path.join(os.path.dirname(__file__), "*.py"))
 _conftest_path = os.path.join(os.path.dirname(__file__), "conftest.py")
-collect_ignore = [f for f in _all_py_files if f != _conftest_path]
+collect_ignore = [] if _RUN_STUBS else [f for f in _all_py_files if f != _conftest_path]
 
 
 def pytest_collection_modifyitems(config, items):
@@ -27,6 +31,9 @@ def pytest_collection_modifyitems(config, items):
     These files are stubs/templates for implementing tests with pytest-bdd.
     They are not meant to be run directly.
     """
+    if _RUN_STUBS:
+        return
+
     # Remove only collected items from this stub/template directory.
     # This conftest is imported for the whole run, so we must not clear
     # unrelated tests from other directories.

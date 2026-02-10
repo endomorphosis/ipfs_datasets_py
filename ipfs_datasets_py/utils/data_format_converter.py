@@ -524,7 +524,7 @@ class UniversalDataConverter:
     def _load_ipld(self, path: str, **kwargs) -> List[Dict]:
         """Load IPLD data."""
         try:
-            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
             storage = IPLDStorage()
             # Load CID from file and retrieve data
             with open(path, 'r') as f:
@@ -537,7 +537,7 @@ class UniversalDataConverter:
     def _save_ipld(self, data: Any, path: str, **kwargs) -> str:
         """Save IPLD data."""
         try:
-            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
             storage = IPLDStorage()
             
             # Store data and get CID

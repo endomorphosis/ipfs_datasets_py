@@ -111,7 +111,7 @@ def main():
     print("Phase 2: Checking theorem prover status...")
     
     try:
-        from ipfs_datasets_py.logic_integration import create_proof_engine
+        from ipfs_datasets_py.logic.integration import create_proof_engine
         proof_engine = create_proof_engine(timeout=60)
         prover_status = proof_engine.get_prover_status()
         
@@ -130,7 +130,7 @@ def main():
             print("Testing theorem provers with simple statements...")
             
             # Test with a simple obligation
-            from ipfs_datasets_py.logic_integration import create_obligation, LegalAgent
+            from ipfs_datasets_py.logic.integration import create_obligation, LegalAgent
             test_agent = LegalAgent("test_corporation", "Test Corporation", "organization")
             test_formula = create_obligation(test_agent, "file_annual_report", "Test obligation")
             
@@ -192,7 +192,7 @@ def main():
         print(f"✓ Knowledge graph: {len(knowledge_graph.entities)} entities, {len(knowledge_graph.relationships)} relationships")
         
         # Convert to deontic logic
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             DeonticLogicConverter, LegalDomainKnowledge, ConversionContext, LegalDomain
         )
         

@@ -41,7 +41,7 @@ The Patent Scraper module provides integration with the USPTO PatentsView API to
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     search_patents_by_keyword,
     search_patents_by_inventor,
     search_patents_by_assignee
@@ -69,7 +69,7 @@ patents = search_patents_by_assignee(
 ### Advanced Search
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria
 )
@@ -90,7 +90,7 @@ patents = scraper.search_patents(criteria)
 ### Building Datasets
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria,
     PatentDatasetBuilder
@@ -118,7 +118,7 @@ print(f"Built dataset with {result['metadata']['patent_count']} patents")
 
 ```python
 import asyncio
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria
 )
@@ -249,7 +249,7 @@ The patent scraper is also available as MCP tools for integration with AI assist
 ### Using MCP Tools
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.patent_dataset_mcp_tools import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_dataset_mcp_tools import (
     ScrapeUSPTOPatentsTool
 )
 

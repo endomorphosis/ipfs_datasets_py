@@ -11,7 +11,7 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from pathlib import Path
 
 # Import the vector store tools from their new location
-from ipfs_datasets_py.mcp_tools.tools.vector_store_tools import ( # Updated import
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vector_store_tools import ( # Updated import
     VectorIndexTool, # Class-based tool
     VectorRetrievalTool, # Class-based tool
     VectorMetadataTool, # Class-based tool

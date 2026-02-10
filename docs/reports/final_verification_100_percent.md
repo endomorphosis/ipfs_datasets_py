@@ -60,7 +60,7 @@ All references updated throughout the module.
 @click.version_option(version='0.6.4', prog_name='file-converter')
 
 # After (dynamic):
-from ipfs_datasets_py.file_converter import __version__
+from ipfs_datasets_py.processors.file_converter import __version__
 @click.version_option(prog_name='file-converter')
 ```
 
@@ -206,7 +206,7 @@ Click automatically uses the imported `__version__` variable.
 **Status:** Fully functional with clean imports
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     FileConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,

@@ -133,7 +133,7 @@ def execute_integrated_command(args):
         
         # Import MCP and package components
         from ipfs_datasets_py.mcp_server.simple_server import SimpleIPFSDatasetsMCPServer
-        from ipfs_datasets_py.mcp_tools.tool_registry import ToolRegistry
+        from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
         from ipfs_datasets_py.mcp_dashboard import MCPDashboard
         
         # Initialize integrated CLI handler
@@ -320,7 +320,7 @@ class IntegratedCLIHandler:
             else:
                 # Use tool registry for other tools
                 if self.tool_registry is None:
-                    from ipfs_datasets_py.mcp_tools.tool_registry import ToolRegistry
+                    from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
                     self.tool_registry = ToolRegistry()
                 
                 tool = await self.tool_registry.get_tool(category, tool_name)
@@ -335,8 +335,8 @@ class IntegratedCLIHandler:
         """Execute temporal deontic logic tools directly."""
         try:
             if tool_name == "check_document_consistency":
-                from ipfs_datasets_py.logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from ipfs_datasets_py.logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from ipfs_datasets_py.logic.integration.document_consistency_checker import DocumentConsistencyChecker
                 
                 # Initialize components
                 rag_store = TemporalDeonticRAGStore()
@@ -404,7 +404,7 @@ class IntegratedCLIHandler:
             
             # Add other available tools from registry
             if self.tool_registry is None:
-                from ipfs_datasets_py.mcp_tools.tool_registry import ToolRegistry
+                from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
                 self.tool_registry = ToolRegistry()
             
             registry_tools = await self.tool_registry.list_all_tools()

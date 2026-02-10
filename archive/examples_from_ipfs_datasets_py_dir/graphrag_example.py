@@ -19,7 +19,7 @@ from ipfs_datasets_py.ipld import (
     IPLDStorage, IPLDVectorStore, SearchResult,
     IPLDKnowledgeGraph, Entity, Relationship
 )
-from ipfs_datasets_py.integrations.graphrag_integration import (
+from ipfs_datasets_py.logic.integrations.graphrag_integration import (
     GraphRAGFactory, HybridVectorGraphSearch, GraphRAGQueryEngine,
     CrossDocumentReasoner
 )

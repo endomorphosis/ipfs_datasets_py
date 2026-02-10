@@ -419,7 +419,7 @@ MCP Server:
      # Old
      from submodules.omni_converter_mk2 import convert
      # New
-     from ipfs_datasets_py.file_converter import FileConverter
+   from ipfs_datasets_py.processors.file_converter import FileConverter
      ```
 
 6. **Update documentation:**
@@ -459,7 +459,7 @@ After removing submodules, run:
 
 4. **Import tests:**
    ```python
-   from ipfs_datasets_py.file_converter import (
+   from ipfs_datasets_py.processors.file_converter import (
        FileConverter,
        UniversalKnowledgeGraphPipeline,
        VectorEmbeddingPipeline

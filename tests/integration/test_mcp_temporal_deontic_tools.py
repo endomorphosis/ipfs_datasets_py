@@ -25,7 +25,7 @@ async def test_mcp_tools_direct():
     print("=" * 50)
     
     try:
-        from ipfs_datasets_py.mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+        from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
         
         # Test 1: Add a test theorem
         print("\n1. Testing add_theorem tool...")
@@ -171,7 +171,7 @@ def test_tool_schemas():
     print("=" * 50)
     
     try:
-        from ipfs_datasets_py.mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+        from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
         
         schemas = temporal_deontic_mcp_server.get_tool_schemas()
         

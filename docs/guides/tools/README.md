@@ -45,10 +45,17 @@ Most tools can be accessed via:
 
 ### 1. Python API
 ```python
-from ipfs_datasets_py.mcp_tools import ToolManager
+import anyio
 
-tool_manager = ToolManager()
-result = tool_manager.execute("tool_name", params)
+from ipfs_datasets_py.mcp_server.tool_registry import ToolRegistry
+
+async def main():
+	registry = ToolRegistry()
+	tool = await registry.get_tool("development", "github_cli_status")
+	result = await tool.execute({"install_dir": None})
+	print(result)
+
+anyio.run(main)
 ```
 
 ### 2. MCP Server

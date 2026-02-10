@@ -57,7 +57,7 @@ async def pdf_ingest_to_graphrag(
     try:
         # Import PDF processing components
         from ipfs_datasets_py.pdf_processing import PDFProcessor
-        from ipfs_datasets_py.ipld import IPLDStorage
+        from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
         from ipfs_datasets_py.monitoring import track_operation
         
         # Initialize processor

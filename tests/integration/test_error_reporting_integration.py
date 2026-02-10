@@ -6,11 +6,16 @@ import os
 import sys
 import tempfile
 from pathlib import Path
+import pytest
 
 # Set up test environment
-os.environ['ERROR_REPORTING_ENABLED'] = 'true'
-os.environ['GITHUB_TOKEN'] = 'test-token'  # This won't actually create issues without a real token
-os.environ['GITHUB_REPOSITORY'] = 'test-owner/test-repo'
+@pytest.fixture(autouse=True)
+def _test_env(monkeypatch: pytest.MonkeyPatch):
+    """Isolate env mutations to this module's tests."""
+    monkeypatch.setenv('ERROR_REPORTING_ENABLED', 'true')
+    # This won't actually create issues without a real token.
+    monkeypatch.setenv('GITHUB_TOKEN', 'test-token')
+    monkeypatch.setenv('GITHUB_REPOSITORY', 'test-owner/test-repo')
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))

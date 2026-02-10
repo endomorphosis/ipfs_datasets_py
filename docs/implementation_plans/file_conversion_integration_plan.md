@@ -127,7 +127,7 @@ ipfs_datasets_py/
 ### API Design (Public Interface)
 ```python
 # Simple, clean API that won't change during migration
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Initialize with auto backend selection
 converter = FileConverter()
@@ -562,7 +562,7 @@ class NativeBackend:
 
 ### Example 1: Basic Conversion
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Initialize converter (auto-selects best backend)
 converter = FileConverter()
@@ -575,7 +575,7 @@ print(f"Backend used: {result.backend}")
 
 ### Example 2: GraphRAG Integration
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 from ipfs_datasets_py.rag import GraphRAG
 
 converter = FileConverter()
@@ -592,7 +592,7 @@ if result.success:
 
 ### Example 3: Batch Processing
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 from pathlib import Path
 
 converter = FileConverter()
@@ -612,7 +612,7 @@ print(f"Converted: {len(successful)}/{len(results)}")
 
 ### Example 4: Backend Selection
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Use specific backend for rich metadata
 omni_converter = FileConverter(backend='omni')
@@ -670,7 +670,7 @@ print(result.text)  # Fast conversion
 # test_file_converter.py
 
 import pytest
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 @pytest.mark.asyncio
 async def test_basic_conversion():
@@ -715,7 +715,7 @@ Convert arbitrary file types to text for GraphRAG and knowledge graph processing
 ### Quick Start
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter()
 result = await converter.convert('document.pdf')
@@ -778,7 +778,7 @@ pip install ipfs-datasets-py[file_conversion]
 
 # Use immediately
 python -c "
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 import asyncio
 
 async def test():

@@ -6,7 +6,7 @@ Quick test to verify syntax fixes and basic logic integration without API calls.
 def test_basic_imports():
     """Test that all modules can be imported without syntax errors."""
     try:
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             SymbolicFOLBridge,
             LogicPrimitives,
             ContractedFOLConverter,
@@ -26,7 +26,7 @@ def test_basic_imports():
 def test_basic_objects():
     """Test basic object creation without API calls."""
     try:
-        from ipfs_datasets_py.logic_integration import SymbolicFOLBridge, LogicPrimitives
+        from ipfs_datasets_py.logic.integration import SymbolicFOLBridge, LogicPrimitives
         
         # Test FOL bridge
         bridge = SymbolicFOLBridge()
@@ -53,7 +53,7 @@ def test_basic_objects():
 def test_contract_validator():
     """Test contract validator without API calls."""
     try:
-        from ipfs_datasets_py.logic_integration import ContractedFOLConverter, FOLInput, FOLOutput
+        from ipfs_datasets_py.logic.integration import ContractedFOLConverter, FOLInput, FOLOutput
         
         converter = ContractedFOLConverter()
         print("✅ ContractedFOLConverter created successfully")

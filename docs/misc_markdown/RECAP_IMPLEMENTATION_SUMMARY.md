@@ -359,7 +359,7 @@ This tests:
 
 ### Test Tool Discovery
 ```python
-from ipfs_datasets_py.mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
 
 schemas = temporal_deontic_mcp_server.get_tool_schemas()
 print(f"Available tools: {len(schemas)}")  # Should show 9

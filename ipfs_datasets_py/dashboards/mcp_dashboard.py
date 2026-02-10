@@ -1160,7 +1160,7 @@ class MCPDashboard(AdminDashboard):
         def mcp_caselaw_jsonrpc():
             """MCP JSON-RPC endpoint for temporal deontic logic tools."""
             try:
-                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                from .mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
                 
                 request_data = request.json or {}
                 
@@ -1226,7 +1226,7 @@ class MCPDashboard(AdminDashboard):
         def mcp_caselaw_tools():
             """Get available temporal deontic logic MCP tools."""
             try:
-                from .mcp_tools.temporal_deontic_mcp_server import temporal_deontic_mcp_server
+                from .mcp_server.temporal_deontic_mcp_server import temporal_deontic_mcp_server
                 
                 tool_schemas = temporal_deontic_mcp_server.get_tool_schemas()
                 

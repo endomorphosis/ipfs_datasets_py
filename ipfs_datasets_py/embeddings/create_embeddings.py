@@ -3,8 +3,13 @@ import os
 
 
 from aiohttp import ClientSession
-import datasets
-from datasets import load_dataset, Dataset
+try:
+    import datasets  # type: ignore
+    from datasets import load_dataset, Dataset  # type: ignore
+except ImportError:  # pragma: no cover
+    datasets = None  # type: ignore
+    load_dataset = None  # type: ignore
+    Dataset = object  # type: ignore
 
 
 def _should_enable_ipfs_kit(resources: dict) -> bool:

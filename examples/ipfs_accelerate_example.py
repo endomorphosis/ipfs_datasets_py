@@ -27,7 +27,7 @@ from pathlib import Path
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     IPFSAcceleratedConverter,
     create_converter,
     IPFS_AVAILABLE

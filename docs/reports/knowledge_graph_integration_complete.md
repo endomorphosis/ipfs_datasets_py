@@ -38,7 +38,7 @@ Converts any file format to knowledge graphs with optional IPFS storage.
 
 **Usage:**
 ```python
-from ipfs_datasets_py.file_converter import UniversalKnowledgeGraphPipeline
+from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
 pipeline = UniversalKnowledgeGraphPipeline(
     backend='native',
@@ -69,7 +69,7 @@ Generates intelligent summaries from any file format.
 
 **Usage:**
 ```python
-from ipfs_datasets_py.file_converter import TextSummarizationPipeline
+from ipfs_datasets_py.processors.file_converter import TextSummarizationPipeline
 
 pipeline = TextSummarizationPipeline(
     llm_model='gpt-3.5-turbo',
@@ -97,7 +97,7 @@ Process multiple files concurrently with knowledge graph extraction.
 
 **Usage:**
 ```python
-from ipfs_datasets_py.file_converter import BatchKnowledgeGraphProcessor
+from ipfs_datasets_py.processors.file_converter import BatchKnowledgeGraphProcessor
 
 processor = BatchKnowledgeGraphProcessor(
     enable_ipfs=True,
@@ -212,7 +212,7 @@ ipfs_datasets_py/
 **Scenario:** Analyze a collection of research papers, reports, and documentation.
 
 ```python
-from ipfs_datasets_py.file_converter import BatchKnowledgeGraphProcessor
+from ipfs_datasets_py.processors.file_converter import BatchKnowledgeGraphProcessor
 
 processor = BatchKnowledgeGraphProcessor(
     enable_ipfs=True,
@@ -277,7 +277,7 @@ observer.start()
 **Scenario:** Build a unified knowledge base from diverse file formats.
 
 ```python
-from ipfs_datasets_py.file_converter import UniversalKnowledgeGraphPipeline
+from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
 pipeline = UniversalKnowledgeGraphPipeline(
     enable_ipfs=True,
@@ -325,7 +325,7 @@ print(f"  Relationships: {len(knowledge_base['relationships'])}")
 
 ```python
 from fastapi import FastAPI, UploadFile
-from ipfs_datasets_py.file_converter import TextSummarizationPipeline
+from ipfs_datasets_py.processors.file_converter import TextSummarizationPipeline
 
 app = FastAPI()
 pipeline = TextSummarizationPipeline(
@@ -359,7 +359,7 @@ async def summarize_document(file: UploadFile):
 
 ```python
 from ipfs_datasets_py import DatasetManager
-from ipfs_datasets_py.file_converter import UniversalKnowledgeGraphPipeline
+from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
 # Load dataset
 manager = DatasetManager()
@@ -390,7 +390,7 @@ for item in dataset['train']:
 ### With ipfs_kit_py
 
 ```python
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 # Use IPFS for distributed storage
 converter = IPFSAcceleratedConverter(
@@ -411,7 +411,7 @@ text = await converter.retrieve_from_ipfs(result.ipfs_cid)
 ### With ipfs_accelerate_py
 
 ```python
-from ipfs_datasets_py.file_converter import UniversalKnowledgeGraphPipeline
+from ipfs_datasets_py.processors.file_converter import UniversalKnowledgeGraphPipeline
 
 # Use ML acceleration for faster processing
 pipeline = UniversalKnowledgeGraphPipeline(

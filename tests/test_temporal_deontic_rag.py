@@ -20,13 +20,13 @@ pytest.importorskip(
     reason="beartype is required for temporal deontic RAG tests but is not installed."
 )
 
-from ipfs_datasets_py.logic_integration.deontic_logic_core import (
+from ipfs_datasets_py.logic.integration.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent
 )
-from ipfs_datasets_py.logic_integration.temporal_deontic_rag_store import (
+from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import (
     TemporalDeonticRAGStore, TheoremMetadata, ConsistencyResult
 )
-from ipfs_datasets_py.logic_integration.document_consistency_checker import (
+from ipfs_datasets_py.logic.integration.document_consistency_checker import (
     DocumentConsistencyChecker, DocumentAnalysis, DebugReport
 )
 

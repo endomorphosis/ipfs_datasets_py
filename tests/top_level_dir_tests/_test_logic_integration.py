@@ -10,7 +10,7 @@ def test_components():
     
     # Test modal logic extension
     try:
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import (
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import (
             ModalLogicSymbol, AdvancedLogicConverter
         )
         print("✅ Modal logic extension imported successfully")
@@ -36,7 +36,7 @@ def test_components():
     
     # Test logic verification
     try:
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         print("✅ Logic verification imported successfully")
         
         verifier = LogicVerifier()
@@ -62,9 +62,9 @@ def test_components():
     
     # Test integration
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         
         bridge = SymbolicFOLBridge()
         modal_converter = AdvancedLogicConverter()

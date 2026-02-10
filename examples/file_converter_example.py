@@ -22,7 +22,7 @@ async def example_basic_conversion():
     print("Example 1: Basic File Conversion")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     # Create a test file
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -51,7 +51,7 @@ async def example_backend_selection():
     print("Example 2: Backend Selection")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "data.json"
@@ -82,7 +82,7 @@ async def example_multiple_formats():
     print("Example 3: Multiple File Formats")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     converter = FileConverter()
     
@@ -117,7 +117,7 @@ async def example_batch_processing():
     print("Example 4: Batch Processing")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     converter = FileConverter()
     
@@ -152,7 +152,7 @@ async def example_sync_wrapper():
     print("Example 5: Synchronous Wrapper")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "sync_test.txt"
@@ -178,7 +178,7 @@ async def example_error_handling():
     print("Example 6: Error Handling")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     converter = FileConverter(backend='native')
     
@@ -207,7 +207,7 @@ async def example_graphrag_integration():
     print("=" * 60)
     
     try:
-        from ipfs_datasets_py.file_converter import FileConverter
+        from ipfs_datasets_py.processors.file_converter import FileConverter
         from ipfs_datasets_py.rag import GraphRAG
         
         print("GraphRAG available - demonstrating integration...")
@@ -251,7 +251,7 @@ async def example_backend_info():
     print("Example 8: Backend Information")
     print("=" * 60)
     
-    from ipfs_datasets_py.file_converter import FileConverter
+    from ipfs_datasets_py.processors.file_converter import FileConverter
     
     converter = FileConverter()
     

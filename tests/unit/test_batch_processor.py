@@ -201,7 +201,8 @@ class TestBatchProcessor:
         try:
             # Create files of different sizes
             with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
-                f.write("small")
+                # Make the file large enough to exceed the very small limit below
+                f.write("x" * 2048)
                 files.append(f.name)
             
             converter = FileConverter(backend='native')

@@ -231,7 +231,7 @@ ML Acceleration (optional via ipfs_accelerate_py)
 ### Python API
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     convert_file_sync,
     extract_knowledge_graph_sync,
     generate_summary_sync,

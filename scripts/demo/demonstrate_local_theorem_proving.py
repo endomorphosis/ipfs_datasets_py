@@ -169,7 +169,7 @@ def main():
     print("Step 4: Converting to deontic logic...")
     
     try:
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             DeonticLogicConverter, LegalDomainKnowledge, ConversionContext, LegalDomain
         )
         
@@ -219,7 +219,7 @@ def main():
     print("Step 5: Executing theorem proofs...")
     
     try:
-        from ipfs_datasets_py.logic_integration import create_proof_engine
+        from ipfs_datasets_py.logic.integration import create_proof_engine
         
         proof_engine = create_proof_engine(
             temp_dir=str(output_dir / "proofs"),

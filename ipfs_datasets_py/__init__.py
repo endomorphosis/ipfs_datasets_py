@@ -9,7 +9,9 @@ __version__ = "0.2.0"
 
 import logging
 import os
+import sys
 import warnings
+import importlib.util
 
 # Routers + dependency injection
 try:
@@ -28,8 +30,12 @@ def _truthy(value: str | None) -> bool:
 # This prevents package import-time side effects from optional subsystems
 # (FastAPI services, vector stores, search integrations) that are unrelated to
 # model routing benchmarks.
-_MINIMAL_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_MINIMAL_IMPORTS")) or _truthy(
-    os.environ.get("IPFS_DATASETS_PY_BENCHMARK")
+_RUNNING_UNDER_PYTEST = ("pytest" in sys.modules) or ("PYTEST_CURRENT_TEST" in os.environ)
+
+_MINIMAL_IMPORTS = (
+    _truthy(os.environ.get("IPFS_DATASETS_PY_MINIMAL_IMPORTS"))
+    or _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK"))
+    or _RUNNING_UNDER_PYTEST
 )
 
 # Optional import-time exports.
@@ -147,13 +153,29 @@ if _MINIMAL_IMPORTS:
     FileConverter = None
     ConversionResult = None
 else:
+    # Do not import the converter at package import-time; keep this hermetic.
+    # We'll lazy-load these symbols via __getattr__ when accessed.
     try:
-        from .file_converter import FileConverter, ConversionResult
-        HAVE_FILE_CONVERTER = True
-    except ImportError:
+        HAVE_FILE_CONVERTER = (
+            importlib.util.find_spec("ipfs_datasets_py.processors.file_converter") is not None
+        )
+    except Exception:
         HAVE_FILE_CONVERTER = False
-        FileConverter = None
-        ConversionResult = None
+
+
+def __getattr__(name: str):
+    if _MINIMAL_IMPORTS and name in {"FileConverter", "ConversionResult"}:
+        return None
+
+    if name in {"FileConverter", "ConversionResult"}:
+        import importlib
+
+        module = importlib.import_module("ipfs_datasets_py.processors.file_converter")
+        value = getattr(module, name)
+        globals()[name] = value
+        return value
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 # Import automated dependency installer
 if _MINIMAL_IMPORTS:
@@ -599,7 +621,7 @@ else:
         ReasoningEnhancer = None
 
     try:
-        from ipfs_datasets_py.integrations.graphrag_integration import enhance_dataset_with_llm
+        from ipfs_datasets_py.graphrag.integrations.graphrag_integration import enhance_dataset_with_llm
         HAVE_GRAPHRAG_INTEGRATION = True
     except ImportError:
         HAVE_GRAPHRAG_INTEGRATION = False

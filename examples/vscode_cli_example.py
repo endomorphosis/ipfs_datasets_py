@@ -16,7 +16,7 @@ from pathlib import Path
 # Try to import the package normally first
 try:
     from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
-    from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import VSCodeCLIStatusTool
     PACKAGE_AVAILABLE = True
 except ImportError:
     # If not installed, add parent directory to path
@@ -25,7 +25,7 @@ except ImportError:
         sys.path.insert(0, str(repo_root))
     try:
         from ipfs_datasets_py.utils.vscode_cli import VSCodeCLI
-        from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import VSCodeCLIStatusTool
         PACKAGE_AVAILABLE = True
     except ImportError:
         PACKAGE_AVAILABLE = False

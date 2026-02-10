@@ -101,7 +101,7 @@ def test_github_cli_mcp_tools_import():
     WHEN importing MCP tools
     THEN all tools should import successfully
     """
-    from ipfs_datasets_py.mcp_tools.tools.github_cli_tools import (
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.github_cli_tools import (
         GitHubCLIStatusTool,
         GitHubCLIInstallTool,
         GitHubCLIExecuteTool,
@@ -122,7 +122,7 @@ def test_github_cli_mcp_tool_initialization():
     WHEN initializing them
     THEN they should have correct names and descriptions
     """
-    from ipfs_datasets_py.mcp_tools.tools.github_cli_tools import (
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.github_cli_tools import (
         GitHubCLIStatusTool,
         GitHubCLIInstallTool
     )

@@ -171,10 +171,10 @@ async def demonstrate_bulk_processing():
     
     try:
         # Import components
-        from ipfs_datasets_py.logic_integration.caselaw_bulk_processor import (
+        from ipfs_datasets_py.logic.integration.caselaw_bulk_processor import (
             CaselawBulkProcessor, BulkProcessingConfig, create_bulk_processor
         )
-        from ipfs_datasets_py.logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+        from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
         
         # Step 1: Create sample caselaw corpus
         caselaw_dir = create_sample_caselaw_corpus()
@@ -259,7 +259,7 @@ async def demonstrate_bulk_processing():
         print(f"\n🔍 Sample Theorem Queries from Unified System:")
         print("-" * 50)
         
-        from ipfs_datasets_py.logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+        from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
         
         queries = [
             ("confidentiality violations", DeonticOperator.PROHIBITION),

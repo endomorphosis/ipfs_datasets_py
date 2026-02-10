@@ -20,7 +20,10 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 import psutil
-from datasets import Dataset
+try:
+    from datasets import Dataset  # type: ignore
+except ImportError:  # pragma: no cover
+    Dataset = Any  # type: ignore
 
 
 # Import vector store modules

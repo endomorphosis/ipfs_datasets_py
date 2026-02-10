@@ -14,7 +14,7 @@ Usage:
 import anyio
 from pathlib import Path
 
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria,
     PatentDatasetBuilder,

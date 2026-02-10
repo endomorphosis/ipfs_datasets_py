@@ -118,6 +118,10 @@ import pytest
 
 def test_phase1_status_pytest():
     """Pytest wrapper for phase1 status test."""
+    try:
+        from mcp.server import FastMCP as _FastMCP  # noqa: F401
+    except Exception:
+        pytest.skip("MCP FastMCP dependency not available (mcp.server.FastMCP import failed)")
     success = anyio.run(async_test_phase1_status)
     assert success, "Phase 1 status test failed"
 

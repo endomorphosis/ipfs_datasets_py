@@ -35,7 +35,7 @@ All three core capabilities working together using existing infrastructure!
 Complete pipeline from files to searchable embeddings:
 
 ```python
-from ipfs_datasets_py.file_converter import VectorEmbeddingPipeline
+from ipfs_datasets_py.processors.file_converter import VectorEmbeddingPipeline
 
 # Create pipeline
 pipeline = VectorEmbeddingPipeline(
@@ -148,7 +148,7 @@ Storage     Storage      (FAISS/Qdrant)
 ### 1. Simple Embedding Generation
 
 ```python
-from ipfs_datasets_py.file_converter import create_vector_pipeline
+from ipfs_datasets_py.processors.file_converter import create_vector_pipeline
 
 # Create with defaults
 pipeline = create_vector_pipeline()
@@ -204,7 +204,7 @@ pipeline = VectorEmbeddingPipeline(
 ### 5. Complete Workflow
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     VectorEmbeddingPipeline,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline

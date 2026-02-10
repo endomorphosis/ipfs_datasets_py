@@ -200,7 +200,7 @@ ipfs_datasets_py/
 ### Basic Native Usage (No Optional Dependencies)
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Works natively with core formats
 converter = FileConverter(backend='native')
@@ -219,7 +219,7 @@ result = await converter.convert('spreadsheet.xlsx')
 ### Full Features with IPFS and Acceleration
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     IPFSAcceleratedConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
@@ -274,7 +274,7 @@ for result in results:
 ### Graceful Fallback Behavior
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter(backend='native')
 

@@ -334,7 +334,7 @@ class TestAnalysisToolsIntegration:
         AND results should meet the expected criteria
         """
         try:
-            from ipfs_datasets_py.mcp_tools.tool_registration import register_tools_in_category
+            from ipfs_datasets_py.mcp_server.tools.tool_registration import register_tools_in_category
             
             # Test MCP tool registration for analysis tools
             result = register_tools_in_category("analysis_tools")

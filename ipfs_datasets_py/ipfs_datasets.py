@@ -1,7 +1,27 @@
 import os
-import datasets
 import multiprocessing
-from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk
+
+# HuggingFace `datasets` is an optional dependency in some environments.
+# Keep module import-safe; raise a clear error only when dataset functionality is used.
+try:
+    import datasets  # type: ignore
+    from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover
+    def _missing_datasets(*_args, **_kwargs):
+        raise ModuleNotFoundError(
+            "Optional dependency 'datasets' is required for dataset-loading features. "
+            "Install it with: pip install datasets"
+        )
+
+    class _DatasetsStub:
+        def __getattr__(self, _name):
+            return _missing_datasets
+
+    datasets = _DatasetsStub()  # type: ignore
+    Dataset = object  # type: ignore
+    load_dataset = _missing_datasets  # type: ignore
+    concatenate_datasets = _missing_datasets  # type: ignore
+    load_from_disk = _missing_datasets  # type: ignore
 import random
 import numpy as np
 from typing import Any, Dict, List, Optional, Union, Tuple

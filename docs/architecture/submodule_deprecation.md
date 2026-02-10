@@ -68,7 +68,7 @@ result = convert('document.pdf')
 
 ```python
 # DO THIS - Native approach
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Automatic backend selection (prefers native)
 converter = FileConverter(backend='auto')

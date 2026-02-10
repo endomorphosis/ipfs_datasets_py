@@ -69,7 +69,7 @@ The tool returns a dictionary with the following structure:
 ### Example 1: Scrape a Single Jurisdiction
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
 
 tool = ScrapeMunicipalCodesTool()
 

@@ -10,12 +10,12 @@ sys.path.insert(0, os.path.dirname(__file__))
 def test_imports():
     """Test that all modules can be imported"""
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
-        from ipfs_datasets_py.logic_integration.symbolic_logic_primitives import LogicPrimitives
-        from ipfs_datasets_py.logic_integration.symbolic_contracts import ContractedFOLConverter
-        from ipfs_datasets_py.logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_logic_primitives import LogicPrimitives
+        from ipfs_datasets_py.logic.integration.symbolic_contracts import ContractedFOLConverter
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         print("✓ All core modules imported successfully")
         return True
     except Exception as e:
@@ -26,20 +26,20 @@ def test_basic_functionality():
     """Test basic functionality of key components"""
     try:
         # Test SymbolicFOLBridge
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
         bridge = SymbolicFOLBridge()
         symbol = bridge.create_semantic_symbol("All humans are mortal")
         result = bridge.semantic_to_fol(symbol)
         print(f"✓ FOL Bridge basic test: {result.fol_formula}")
         
         # Test modal logic converter
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
         modal = AdvancedLogicConverter()
         modal_expr = modal.convert_to_modal_logic("It is necessary that P")
         print(f"✓ Modal logic basic test: {modal_expr.formula}")
         
         # Test logic verification
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         verifier = LogicVerifier()
         is_consistent = verifier.check_consistency(["P", "¬P"])
         print(f"✓ Logic verification basic test: consistent={is_consistent.is_consistent}")
@@ -54,9 +54,9 @@ def test_basic_functionality():
 def test_integration():
     """Test integration between components"""
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         
         # Create instances
         bridge = SymbolicFOLBridge()

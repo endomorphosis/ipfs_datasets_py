@@ -4,7 +4,7 @@ MCP Server Tool: Extract Knowledge Graph
 Extract knowledge graph (entities and relationships) from a file using the file_converter package exports.
 """
 
-from ipfs_datasets_py.file_converter.exports import extract_knowledge_graph_sync
+from ipfs_datasets_py.processors.file_converter import extract_knowledge_graph_sync
 
 
 async def extract_knowledge_graph_tool(

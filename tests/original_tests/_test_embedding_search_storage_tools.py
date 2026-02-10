@@ -19,10 +19,10 @@ from pathlib import Path
 TEST_MODEL_NAME = "test-model"  # Example model name for testing
 
 # Import the tools from their new locations
-from ipfs_datasets_py.mcp_tools.tools.embedding_tools import EmbeddingGenerationTool, BatchEmbeddingTool, MultimodalEmbeddingTool
-# Assuming storage tools are also migrated to ipfs_datasets_py.mcp_tools.tools
-# from ipfs_datasets_py.mcp_tools.tools.storage_tools import save_embeddings_tool, load_embeddings_tool # Assuming storage tools are migrated
-from ipfs_datasets_py.mcp_tools.tools.search_tools import SemanticSearchTool # Removed BatchSearchTool as it's not in the migrated code
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.embedding_tools import EmbeddingGenerationTool, BatchEmbeddingTool, MultimodalEmbeddingTool
+# Assuming storage tools are also migrated to ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools
+# from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.storage_tools import save_embeddings_tool, load_embeddings_tool # Assuming storage tools are migrated
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.search_tools import SemanticSearchTool # Removed BatchSearchTool as it's not in the migrated code
 
 # Assuming get_supported_models is available or mocked
 # from ipfs_datasets_py.embeddings.models import get_supported_models # Example updated import

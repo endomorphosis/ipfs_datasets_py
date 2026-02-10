@@ -11,13 +11,13 @@ import os
 from datetime import datetime, timedelta
 sys.path.append(os.path.join(os.path.dirname(__file__), 'ipfs_datasets_py'))
 
-from ipfs_datasets_py.logic_integration.deontic_logic_core import (
+from ipfs_datasets_py.logic.integration.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent
 )
-from ipfs_datasets_py.logic_integration.temporal_deontic_rag_store import (
+from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import (
     TemporalDeonticRAGStore
 )
-from ipfs_datasets_py.logic_integration.document_consistency_checker import (
+from ipfs_datasets_py.logic.integration.document_consistency_checker import (
     DocumentConsistencyChecker
 )
 

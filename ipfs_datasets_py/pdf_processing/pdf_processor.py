@@ -45,7 +45,7 @@ else:
     print("✅ PDF processing dependencies successfully installed and available")
 
 
-from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem, monitor_context
 try:
@@ -279,7 +279,7 @@ class PDFProcessor:
         Advanced configuration with custom storage and monitoring:
         
         >>> # Configure custom storage backend
-        >>> from ipfs_datasets_py.ipld import IPLDStorage
+        >>> from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
         >>> storage = IPLDStorage(config={'node_url': 'http://localhost:5001'})
         >>> 
         >>> # Initialize processor with monitoring enabled

@@ -7,7 +7,7 @@ Shows how to build composable pipelines with Result/Error monads.
 
 import asyncio
 from pathlib import Path
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     Pipeline, FileUnit, Result, Error,
     ok, error, ErrorType,
     validate_file_exists, detect_format, extract_text,

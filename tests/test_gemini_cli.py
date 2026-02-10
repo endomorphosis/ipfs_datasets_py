@@ -107,7 +107,7 @@ def test_gemini_cli_mcp_tools_import():
     WHEN importing MCP tools
     THEN all tools should import successfully
     """
-    from ipfs_datasets_py.mcp_tools.tools.gemini_cli_tools import (
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.gemini_cli_tools import (
         GeminiCLIStatusTool,
         GeminiCLIInstallTool,
         GeminiCLIExecuteTool,
@@ -126,7 +126,7 @@ def test_gemini_cli_mcp_tool_initialization():
     WHEN initializing them
     THEN they should have correct names and descriptions
     """
-    from ipfs_datasets_py.mcp_tools.tools.gemini_cli_tools import (
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.gemini_cli_tools import (
         GeminiCLIStatusTool,
         GeminiCLIInstallTool
     )

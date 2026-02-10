@@ -62,7 +62,7 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
             JSON response with patents data
         """
         try:
-            from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
                 USPTOPatentScraper,
                 PatentSearchCriteria
             )
@@ -126,7 +126,7 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
             JSON response with dataset metadata
         """
         try:
-            from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
                 USPTOPatentScraper,
                 PatentSearchCriteria,
                 PatentDatasetBuilder

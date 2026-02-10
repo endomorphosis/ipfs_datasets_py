@@ -81,7 +81,7 @@ def test_logic_integration_modules():
     
     try:
         # Test SymbolicFOLBridge
-        from ipfs_datasets_py.logic_integration import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration import SymbolicFOLBridge
         bridge = SymbolicFOLBridge()
         print("✓ SymbolicFOLBridge imported and instantiated")
         
@@ -90,19 +90,19 @@ def test_logic_integration_modules():
         print(f"✓ Semantic symbol created: {symbol}")
         
         # Test InteractiveFOLConstructor
-        from ipfs_datasets_py.logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
         constructor = InteractiveFOLConstructor()
         constructor.add_statement("All cats are mammals")
         print(f"✓ Interactive constructor: {len(constructor.session_symbols)} statement(s) added")
         
         # Test Modal Logic
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
         converter = AdvancedLogicConverter()
         logic_type = converter.detect_logic_type("All cats are animals")
         print(f"✓ Modal logic converter: detected {logic_type.logic_type}")
         
         # Test Logic Verification
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         verifier = LogicVerifier()
         proof_rules = verifier._initialize_proof_rules()
         print(f"✓ Logic verifier: {len(proof_rules)} proof rules loaded")
@@ -167,7 +167,7 @@ def test_fol_conversion():
     print("\n=== FOL Conversion Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
         
         bridge = SymbolicFOLBridge()
         test_statements = [
@@ -211,7 +211,7 @@ def test_interactive_session():
     print("\n=== Interactive Session Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
         
         constructor = InteractiveFOLConstructor()
         
@@ -256,7 +256,7 @@ def test_modal_logic():
     print("\n=== Modal Logic Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter, ModalLogicSymbol
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter, ModalLogicSymbol
         
         converter = AdvancedLogicConverter()
         
@@ -297,7 +297,7 @@ def test_logic_verification():
     print("\n=== Logic Verification Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         
         verifier = LogicVerifier()
         
@@ -339,7 +339,7 @@ def test_contract_system():
     print("\n=== Contract System Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_contracts import FOLInput, FOLOutput, ContractedFOLConverter
+        from ipfs_datasets_py.logic.integration.symbolic_contracts import FOLInput, FOLOutput, ContractedFOLConverter
         
         # Test Pydantic models
         input_data = FOLInput(
@@ -384,7 +384,7 @@ def test_performance_and_caching():
     print("\n=== Performance and Caching Test ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
         import time
         
         bridge = SymbolicFOLBridge()

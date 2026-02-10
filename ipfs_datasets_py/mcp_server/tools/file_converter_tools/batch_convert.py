@@ -4,7 +4,7 @@ MCP Server Tool: Batch Convert Files
 Batch convert multiple files or URLs using the file_converter package exports.
 """
 
-from ipfs_datasets_py.file_converter.exports import batch_convert_files_sync
+from ipfs_datasets_py.processors.file_converter import batch_convert_files_sync
 from typing import List
 
 

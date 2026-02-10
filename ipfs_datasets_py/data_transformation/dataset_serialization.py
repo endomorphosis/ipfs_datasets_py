@@ -27,7 +27,7 @@ import numpy as np
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, Generator, TypeVar, Generic, Set, Callable
 
-from ipfs_datasets_py.ipld.storage import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
 
 # Check for dependencies
 try:
@@ -1525,7 +1525,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: The loaded dataset
         """
         # Initialize storage
-        from ipfs_datasets_py.ipld.storage import IPLDStorage
+        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Get the root object
@@ -1758,7 +1758,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: The imported dataset
         """
         # Initialize storage
-        from ipfs_datasets_py.ipld.storage import IPLDStorage
+        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Import from CAR
@@ -1788,7 +1788,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: A new dataset populated with the triples
         """
         # Initialize storage if needed
-        from ipfs_datasets_py.ipld.storage import IPLDStorage
+        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Create a new dataset

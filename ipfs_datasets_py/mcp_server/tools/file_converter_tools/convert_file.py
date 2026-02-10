@@ -4,7 +4,7 @@ MCP Server Tool: Convert File
 Convert a file or URL to text using the file_converter package exports.
 """
 
-from ipfs_datasets_py.file_converter.exports import convert_file_sync
+from ipfs_datasets_py.processors.file_converter import convert_file_sync
 
 
 async def convert_file_tool(

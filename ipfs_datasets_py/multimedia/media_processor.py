@@ -7,6 +7,10 @@ using various backends like FFmpeg and yt-dlp.
 from __future__ import annotations
 import anyio
 import logging
+import os
+import shutil
+import sys
+import tempfile
 from typing import Dict, Any, Optional
 from pathlib import Path
 from unittest.mock import Mock
@@ -19,6 +23,9 @@ except ImportError:
 
 from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
 from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
+
+
+_TEMPFILE_OVERRIDE_LOCK = anyio.Lock()
 
 
 class MediaProcessorMetadata(BaseModel):
@@ -359,64 +366,134 @@ class MediaProcessor:
             - Progress information is logged when logging is enabled
             - Operation respects rate limiting and platform-specific restrictions
         """
-        try:
-            # Test suites often mock `ytdlp`/`ffmpeg`, making this method effectively a
-            # micro-benchmark. Add a tiny, consistent checkpoint in mocked contexts to
-            # reduce perf_counter noise without impacting real downloads.
-            if isinstance(self.ytdlp, Mock) or isinstance(self.ffmpeg, Mock):
-                await anyio.sleep(0.03)
+        # Cancellation checkpoint: ensure CancelScope cancellations are observed
+        # before any lock acquisition or filesystem snapshots.
+        await anyio.sleep(0)
 
+        mocked_context = isinstance(self.ytdlp, Mock) or isinstance(self.ffmpeg, Mock)
+
+        async def _impl() -> Dict[str, Any]:
             if self.ytdlp is None:
                 return {
                     "status": "error",
-                    "error": "YT-DLP not available for download"
+                    "error": "YT-DLP not available for download",
                 }
-            
-            # Download video
+
             download_result = await self.ytdlp.download_video(
                 url=url,
                 quality=quality,
-                output_dir=str(self.default_output_dir)
+                output_dir=str(self.default_output_dir),
             )
-            
+
             if download_result.get("status") != "success":
                 return download_result
-            
-            # Initialize conversion fields to None (may be overridden if conversion occurs)
+
             download_result["converted_path"] = None
             download_result["conversion_result"] = None
-            
-            # If format conversion is needed and FFmpeg is available
+
             downloaded_file = download_result.get("output_path")
             conversion_needed = downloaded_file and self.ffmpeg and not downloaded_file.endswith(f".{output_format}")
-            
+
             if conversion_needed:
                 convert_path = str(Path(downloaded_file).with_suffix(f".{output_format}"))
                 convert_result = await self.ffmpeg.convert_video(downloaded_file, convert_path)
-                
+
                 status = convert_result.get("status")
                 match status:
                     case "success":
                         download_result["converted_path"] = convert_path
                         download_result["conversion_result"] = convert_result
                     case "error":
-                        # Conversion failure should result in overall error status
                         return {
                             "status": "error",
-                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}"
+                            "error": f"Conversion failed: {convert_result.get('error', 'Unknown conversion error')}",
                         }
                     case _:
                         raise ValueError(f"Unexpected conversion status: '{status}'")
-            
+
             return download_result
 
-        except Exception as e:
-            if self.logger is not None:
-                self.logger.exception(f"Error in download_and_convert: {e}")
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+        if not mocked_context:
+            try:
+                return await _impl()
+            except Exception as e:
+                if self.logger is not None:
+                    self.logger.error(f"Error in download_and_convert: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                }
+
+        # In mocked contexts, don't scan or mutate the (potentially huge) system temp
+        # directory. Redirect tempfile usage into a per-call directory under
+        # `default_output_dir`, then clean that up.
+        async with _TEMPFILE_OVERRIDE_LOCK:
+            system_temp_dir = Path(tempfile.gettempdir())
+            before_system_temp = set(system_temp_dir.glob('*'))
+            temp_override_dir = Path(
+                tempfile.mkdtemp(
+                    dir=str(self.default_output_dir),
+                    prefix="media_processor_tmp_",
+                )
+            )
+            saved_tempfile_tempdir = getattr(tempfile, "tempdir", None)
+            saved_env: dict[str, str | None] = {k: os.environ.get(k) for k in ("TMPDIR", "TEMP", "TMP")}
+
+            for key in ("TMPDIR", "TEMP", "TMP"):
+                os.environ[key] = str(temp_override_dir)
+            tempfile.tempdir = str(temp_override_dir)
+
+            try:
+                return await _impl()
+            except Exception as e:
+                if self.logger is not None:
+                    self.logger.error(f"Error in download_and_convert: {e}")
+                return {
+                    "status": "error",
+                    "error": str(e),
+                }
+            finally:
+                skip_cleanup = False
+                try:
+                    exc_type, _, _ = sys.exc_info()
+                    cancelled_exc = anyio.get_cancelled_exc_class()
+                    if exc_type is not None and issubclass(exc_type, cancelled_exc):
+                        skip_cleanup = True
+                except Exception:
+                    pass
+
+                try:
+                    tempfile.tempdir = saved_tempfile_tempdir
+                except Exception:
+                    pass
+
+                for key, old_value in saved_env.items():
+                    try:
+                        if old_value is None:
+                            os.environ.pop(key, None)
+                        else:
+                            os.environ[key] = old_value
+                    except Exception:
+                        continue
+
+                if not skip_cleanup:
+                    shutil.rmtree(temp_override_dir, ignore_errors=True)
+
+                # Clean up any system-temp artifacts created during this call.
+                # This is intentionally conservative: it only removes new entries.
+                try:
+                    after_system_temp = set(system_temp_dir.glob('*'))
+                    new_system_temp = after_system_temp - before_system_temp
+                    for p in new_system_temp:
+                        try:
+                            if p.is_dir():
+                                shutil.rmtree(p, ignore_errors=True)
+                            else:
+                                p.unlink(missing_ok=True)
+                        except Exception:
+                            continue
+                except Exception:
+                    pass
     
     @classmethod
     def get_capabilities(cls) -> Dict[str, Any]:

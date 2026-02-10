@@ -58,7 +58,7 @@ import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 
 
-from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
 from ipfs_datasets_py.pdf_processing.llm_optimizer import (
     LLMDocument, LLMChunk,
     WIKIPEDIA_CLASSIFICATIONS

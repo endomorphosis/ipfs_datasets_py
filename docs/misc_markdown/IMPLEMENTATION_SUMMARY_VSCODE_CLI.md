@@ -150,7 +150,7 @@ ipfs-datasets vscode execute --version
 ### 3. MCP Tool Access
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import VSCodeCLIStatusTool
 
 tool = VSCodeCLIStatusTool()
 result = await tool.execute({})

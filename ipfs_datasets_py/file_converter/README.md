@@ -5,7 +5,7 @@ Unified file conversion for IPFS Datasets Python with gradual migration from ext
 ## Quick Start
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Initialize (auto-selects best available backend)
 converter = FileConverter()
@@ -82,7 +82,7 @@ print(f"Converted {len(successful)}/{len(files)} files")
 
 ### GraphRAG Integration
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 from ipfs_datasets_py.rag import GraphRAG
 
 converter = FileConverter()

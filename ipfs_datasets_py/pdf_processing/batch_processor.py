@@ -63,7 +63,7 @@ from pydantic import (
 )
 
 
-from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem
 from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
@@ -458,10 +458,27 @@ class BatchProcessor:
         
         self.max_workers: int = max_workers or min(mp.cpu_count(), 8)
         self.max_memory_mb: int = max_memory_mb
-        self.storage = storage or IPLDStorage()
+        if storage is not None:
+            self.storage = storage
+        else:
+            import sys as _sys
+            _module = _sys.modules.get(__name__)
+            _storage_cls = getattr(_module, 'IPLDStorage', IPLDStorage) if _module else IPLDStorage
+            try:
+                self.storage = _storage_cls()
+            except RuntimeError:
+                raise
+            except Exception as e:
+                raise RuntimeError(f"Storage initialization failed: {e}") from e
         
         # Initialize monitoring and audit
-        self.audit_logger = AuditLogger() if enable_audit else None
+        if enable_audit:
+            import sys as _sys
+            _module = _sys.modules.get(__name__)
+            _audit_logger_cls = getattr(_module, 'AuditLogger', AuditLogger) if _module else AuditLogger
+            self.audit_logger = _audit_logger_cls()
+        else:
+            self.audit_logger = None
         
         if enable_monitoring:
             try:
@@ -472,7 +489,10 @@ class BatchProcessor:
                     prometheus_export=True
                 )
                 # Create and configure monitoring system
-                self.monitoring = MonitoringSystem()
+                import sys as _sys
+                _module = _sys.modules.get(__name__)
+                _monitoring_cls = getattr(_module, 'MonitoringSystem', MonitoringSystem) if _module else MonitoringSystem
+                self.monitoring = _monitoring_cls()
                 self.monitoring.initialize(config)
             except (ImportError, AttributeError, TypeError) as e:
                 raise ImportError(f"Monitoring dependencies not available: {e}")
@@ -480,9 +500,14 @@ class BatchProcessor:
             self.monitoring = None
 
         # Processing components - use injected dependencies if provided, otherwise create new instances
-        self.pdf_processor = pdf_processor or PDFProcessor(storage=self.storage)
-        self.llm_optimizer = llm_optimizer or LLMOptimizer()
-        self.graphrag_integrator = graphrag_integrator or GraphRAGIntegrator(storage=self.storage)
+        import sys as _sys
+        _module = _sys.modules.get(__name__)
+        _pdf_processor_cls = getattr(_module, 'PDFProcessor', PDFProcessor) if _module else PDFProcessor
+        _llm_optimizer_cls = getattr(_module, 'LLMOptimizer', LLMOptimizer) if _module else LLMOptimizer
+        _graphrag_integrator_cls = getattr(_module, 'GraphRAGIntegrator', GraphRAGIntegrator) if _module else GraphRAGIntegrator
+        self.pdf_processor = pdf_processor or _pdf_processor_cls(storage=self.storage)
+        self.llm_optimizer = llm_optimizer or _llm_optimizer_cls()
+        self.graphrag_integrator = graphrag_integrator or _graphrag_integrator_cls(storage=self.storage)
         
         # Job management
         self.job_queue: Queue = Queue()

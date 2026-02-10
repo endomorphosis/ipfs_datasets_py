@@ -266,7 +266,7 @@ The VSCode CLI is available as MCP tools for AI assistant integration.
 ### Using MCP Tools from Python
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import VSCodeCLIStatusTool
 
 # Initialize tool
 tool = VSCodeCLIStatusTool()

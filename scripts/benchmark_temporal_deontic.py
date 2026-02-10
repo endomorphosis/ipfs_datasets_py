@@ -176,7 +176,7 @@ def _command_for_test(workspace: Path, test_path: Path, *, symai_debug_runpy: bo
     # Historical benchmark behavior: import module to show source location, then run via runpy.
     code = (
         "import importlib, runpy; "
-        "sc = importlib.import_module('ipfs_datasets_py.logic_integration.symbolic_contracts'); "
+        "sc = importlib.import_module('ipfs_datasets_py.logic.integration.symbolic_contracts'); "
         "print(f'SYMAI_DEBUG symbolic_contracts={sc.__file__}'); "
         f"runpy.run_path({rel!r}, run_name='__main__')"
     )
@@ -335,7 +335,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help=(
             "For standalone scripts, run via runpy and print the imported "
-            "ipfs_datasets_py.logic_integration.symbolic_contracts path (historical benchmark style)."
+            "ipfs_datasets_py.logic.integration.symbolic_contracts path (historical benchmark style)."
         ),
     )
     parser.add_argument(

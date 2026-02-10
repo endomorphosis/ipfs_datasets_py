@@ -26,6 +26,8 @@ class TestSQLiteManager:
     @pytest.fixture
     async def temp_db(self):
         """Create temporary SQLite database."""
+        if db_utils.aiosqlite is None:
+            pytest.skip("aiosqlite not installed")
         temp_dir = Path(tempfile.mkdtemp())
         db_path = temp_dir / "test.db"
         manager = SQLiteManager(db_path)
@@ -67,6 +69,8 @@ class TestDuckDBManager:
     @pytest.fixture
     def temp_db(self):
         """Create temporary DuckDB database."""
+        if db_utils.duckdb is None:
+            pytest.skip("duckdb not installed")
         temp_dir = Path(tempfile.mkdtemp())
         db_path = temp_dir / "test.duckdb"
         manager = DuckDBManager(db_path)
@@ -119,6 +123,8 @@ class TestDatabaseIntegration:
     @pytest.fixture
     async def temp_databases(self):
         """Create temporary databases."""
+        if db_utils.aiosqlite is None or db_utils.duckdb is None:
+            pytest.skip("aiosqlite and duckdb must be installed for database integration tests")
         # Create temporary directory
         temp_dir = Path(tempfile.mkdtemp())
         

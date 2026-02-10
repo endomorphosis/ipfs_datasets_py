@@ -183,15 +183,15 @@ class MinimalMCPDashboard:
         def index():
             # Read error reporting configuration
             error_reporting_enabled = 'true' if ERROR_REPORTING_AVAILABLE else 'false'
-            
-            return f'''
+
+            return '''
             <!DOCTYPE html>
             <html>
             <head>
                 <title>IPFS Datasets MCP Dashboard</title>
                 <script>
                     // Set error reporting configuration
-                    window.ERROR_REPORTING_ENABLED = {error_reporting_enabled};
+                    window.ERROR_REPORTING_ENABLED = __ERROR_REPORTING_ENABLED__;
                 </script>
                 <script src="/static/js/error-reporter.js"></script>
                 <style>
@@ -271,7 +271,7 @@ class MinimalMCPDashboard:
                 </script>
             </body>
             </html>
-            '''
+            '''.replace("__ERROR_REPORTING_ENABLED__", error_reporting_enabled)
             
         @self.app.route('/api/health')
         def api_health():

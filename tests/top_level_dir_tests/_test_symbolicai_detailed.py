@@ -25,7 +25,7 @@ def test_fol_conversion_with_api():
     print("=== FOL Conversion with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
         if _codex_routing_enabled():
             from symai import Expression
         
@@ -80,7 +80,7 @@ def test_interactive_constructor_with_api():
     print("\n=== Interactive Constructor with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.interactive_fol_constructor import InteractiveFOLConstructor
+        from ipfs_datasets_py.logic.integration.interactive_fol_constructor import InteractiveFOLConstructor
         
         constructor = InteractiveFOLConstructor()
         
@@ -136,7 +136,7 @@ def test_modal_logic_with_api():
     print("\n=== Modal Logic with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.modal_logic_extension import AdvancedLogicConverter
+        from ipfs_datasets_py.logic.integration.modal_logic_extension import AdvancedLogicConverter
         
         converter = AdvancedLogicConverter()
         
@@ -180,7 +180,7 @@ def test_logic_verification_with_api():
     print("\n=== Logic Verification with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.logic_verification import LogicVerifier
+        from ipfs_datasets_py.logic.integration.logic_verification import LogicVerifier
         
         verifier = LogicVerifier()
         
@@ -229,7 +229,7 @@ def test_contract_system_with_api():
     print("\n=== Contract System with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_contracts import (
+        from ipfs_datasets_py.logic.integration.symbolic_contracts import (
             FOLInput, FOLOutput, ContractedFOLConverter
         )
         
@@ -285,7 +285,7 @@ def test_performance_with_api():
     print("\n=== Performance and Caching with SymbolicAI API ===")
     
     try:
-        from ipfs_datasets_py.logic_integration.symbolic_fol_bridge import SymbolicFOLBridge
+        from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
         import time
         
         bridge = SymbolicFOLBridge()

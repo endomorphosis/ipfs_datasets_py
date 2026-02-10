@@ -100,7 +100,7 @@ def test_mcp_tool_import():
     WHEN importing MCP tools
     THEN they should import successfully
     """
-    from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import (
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import (
         VSCodeCLIStatusTool,
         VSCodeCLIInstallTool,
         VSCodeCLIExecuteTool,
@@ -121,7 +121,7 @@ def test_mcp_tool_initialization():
     WHEN initializing them
     THEN they should have correct attributes
     """
-    from ipfs_datasets_py.mcp_tools.tools.vscode_cli_tools import VSCodeCLIStatusTool
+    from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vscode_cli_tools import VSCodeCLIStatusTool
     
     tool = VSCodeCLIStatusTool()
     

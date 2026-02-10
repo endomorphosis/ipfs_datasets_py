@@ -241,7 +241,7 @@ ipfs_datasets_py/file_converter/  (v0.4.0)
 
 ### Simple Conversion
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter(backend='native')
 result = await converter.convert('document.pdf')
@@ -250,7 +250,7 @@ print(result.text)
 
 ### With IPFS Storage
 ```python
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
 result = await converter.convert('doc.pdf', store_on_ipfs=True, pin=True)
@@ -260,7 +260,7 @@ print(f"Gateway: {result.ipfs_gateway_url}")
 
 ### Batch Processing
 ```python
-from ipfs_datasets_py.file_converter import create_batch_processor
+from ipfs_datasets_py.processors.file_converter import create_batch_processor
 
 processor = create_batch_processor(
     converter,
@@ -272,7 +272,7 @@ results = await processor.process_batch(files)
 
 ### Rich Metadata
 ```python
-from ipfs_datasets_py.file_converter import extract_metadata
+from ipfs_datasets_py.processors.file_converter import extract_metadata
 
 metadata = extract_metadata('document.pdf')
 print(f"Size: {metadata['file']['size_human']}")
@@ -282,7 +282,7 @@ print(f"MIME: {metadata['format']['mime_type']}")
 
 ### Custom Pipeline
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     Pipeline, FileUnit,
     validate_file_exists, detect_format, extract_text
 )
@@ -324,7 +324,7 @@ from omni_converter import convert_file
 
 **After:**
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter(backend='native')
 result = await converter.convert('document.pdf')
 ```
@@ -391,7 +391,7 @@ converter = FileConverter(backend='markitdown')
 
 ### Test Native Backend
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 converter = FileConverter(backend='native')
 result = converter.convert_sync('test.txt')
 print(f"Success: {result.success}")

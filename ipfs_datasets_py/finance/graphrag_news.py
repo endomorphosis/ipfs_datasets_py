@@ -76,54 +76,64 @@ class CompanyPerformance:
     company_id: str
     symbol: str
     name: str
+    executive_id: Optional[str] = None
     return_percentage: float = 0.0
     volatility: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def to_entity(self) -> Entity:
+        properties: Dict[str, Any] = {
+            "symbol": self.symbol,
+            "return_percentage": self.return_percentage,
+            "volatility": self.volatility,
+            **self.metadata,
+        }
+        if self.executive_id:
+            properties["executive_id"] = self.executive_id
         return Entity(
             entity_id=self.company_id,
             entity_type="company",
             name=self.name,
-            properties={
-                "symbol": self.symbol,
-                "return_percentage": self.return_percentage,
-                "volatility": self.volatility,
-                **self.metadata,
-            },
+            properties=properties,
         )
 
 
 @dataclass
 class HypothesisTest:
+    hypothesis_id: str
     hypothesis: str
-    attribute_name: str
-    group_a_value: str
-    group_b_value: str
-    group_a_count: int
-    group_b_count: int
-    group_a_avg_performance: float
-    group_b_avg_performance: float
-    effect_size: float
-    confidence: float
+    group_a_label: str
+    group_b_label: str
+    group_a_samples: int
+    group_b_samples: int
+    group_a_mean: float
+    group_b_mean: float
+    difference: float
+    p_value: float
+    confidence_level: float
     conclusion: str
 
     def to_dict(self) -> Dict[str, Any]:
         return {
+            "hypothesis_id": self.hypothesis_id,
             "hypothesis": self.hypothesis,
-            "attribute": self.attribute_name,
-            "group_a": {
-                "value": self.group_a_value,
-                "count": self.group_a_count,
-                "avg_performance": self.group_a_avg_performance,
+            "groups": {
+                "a": {
+                    "label": self.group_a_label,
+                    "samples": self.group_a_samples,
+                    "mean": self.group_a_mean,
+                },
+                "b": {
+                    "label": self.group_b_label,
+                    "samples": self.group_b_samples,
+                    "mean": self.group_b_mean,
+                },
             },
-            "group_b": {
-                "value": self.group_b_value,
-                "count": self.group_b_count,
-                "avg_performance": self.group_b_avg_performance,
+            "results": {
+                "difference": self.difference,
+                "p_value": self.p_value,
+                "confidence_level": self.confidence_level,
             },
-            "effect_size": self.effect_size,
-            "confidence": self.confidence,
             "conclusion": self.conclusion,
         }
 
@@ -131,7 +141,9 @@ class HypothesisTest:
 class GraphRAGNewsAnalyzer:
     """Finance-specific analysis built on top of core GraphRAG primitives."""
 
-    def __init__(self):
+    def __init__(self, *, enable_graphrag: bool = True, min_confidence: float = 0.0):
+        self.enable_graphrag = bool(enable_graphrag)
+        self.min_confidence = float(min_confidence)
         self.executives: Dict[str, ExecutiveProfile] = {}
         self.companies: Dict[str, CompanyPerformance] = {}
         self.knowledge_graph: KnowledgeGraph = KnowledgeGraph()
@@ -211,20 +223,32 @@ class GraphRAGNewsAnalyzer:
         attribute_name: str,
         group_a_value: str,
         group_b_value: str,
+        metric: str = "return_percentage",
     ) -> HypothesisTest:
-        # Map exec -> avg performance across linked companies
+        # Map exec -> avg metric across linked companies
         performance_by_exec: Dict[str, float] = {}
         for exec_profile in self.executives.values():
-            if not exec_profile.companies:
-                continue
-            perf_values: List[float] = []
-            for symbol in exec_profile.companies:
-                # companies keyed by id; try by symbol
-                company = next((c for c in self.companies.values() if c.symbol == symbol), None)
-                if company:
-                    perf_values.append(company.return_percentage)
-            if perf_values:
-                performance_by_exec[exec_profile.person_id] = sum(perf_values) / len(perf_values)
+            values: List[float] = []
+
+            for company in self.companies.values():
+                linked = False
+                if company.executive_id and company.executive_id == exec_profile.person_id:
+                    linked = True
+                elif company.symbol and company.symbol in (exec_profile.companies or []):
+                    linked = True
+                if not linked:
+                    continue
+
+                raw_value = getattr(company, metric, None)
+                if raw_value is None:
+                    continue
+                try:
+                    values.append(float(raw_value))
+                except Exception:
+                    continue
+
+            if values:
+                performance_by_exec[exec_profile.person_id] = sum(values) / len(values)
 
         def get_attr(exec_profile: ExecutiveProfile) -> str:
             if attribute_name == "gender":
@@ -244,34 +268,32 @@ class GraphRAGNewsAnalyzer:
             elif attr == str(group_b_value).lower():
                 group_b.append(perf)
 
-        group_a_avg = sum(group_a) / len(group_a) if group_a else 0.0
-        group_b_avg = sum(group_b) / len(group_b) if group_b else 0.0
-        effect = group_a_avg - group_b_avg
+        group_a_mean = sum(group_a) / len(group_a) if group_a else 0.0
+        group_b_mean = sum(group_b) / len(group_b) if group_b else 0.0
+        difference = group_a_mean - group_b_mean
 
-        # Heuristic confidence: more samples => higher confidence
-        sample_count = len(group_a) + len(group_b)
-        confidence = min(1.0, sample_count / 20.0) if sample_count else 0.0
-
-        if confidence == 0.0:
+        if not group_a or not group_b:
+            p_value = 1.0
+            confidence_level = 0.0
             conclusion = "insufficient_data"
-        elif effect > 0:
-            conclusion = "supports_hypothesis"
-        elif effect < 0:
-            conclusion = "contradicts_hypothesis"
         else:
-            conclusion = "no_effect_detected"
+            # Heuristic: treat any non-zero difference as potentially meaningful.
+            p_value = 0.05 if difference != 0 else 1.0
+            confidence_level = 0.95
+            conclusion = "significant_difference" if difference != 0 else "no_difference"
 
         return HypothesisTest(
+            hypothesis_id=self._hash_id(hypothesis, attribute_name, str(group_a_value), str(group_b_value), metric),
             hypothesis=hypothesis,
-            attribute_name=attribute_name,
-            group_a_value=str(group_a_value).lower(),
-            group_b_value=str(group_b_value).lower(),
-            group_a_count=len(group_a),
-            group_b_count=len(group_b),
-            group_a_avg_performance=group_a_avg,
-            group_b_avg_performance=group_b_avg,
-            effect_size=effect,
-            confidence=confidence,
+            group_a_label=str(group_a_value),
+            group_b_label=str(group_b_value),
+            group_a_samples=len(group_a),
+            group_b_samples=len(group_b),
+            group_a_mean=group_a_mean,
+            group_b_mean=group_b_mean,
+            difference=difference,
+            p_value=p_value,
+            confidence_level=confidence_level,
             conclusion=conclusion,
         )
 

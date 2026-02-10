@@ -10,6 +10,9 @@ import json
 import pytest
 from unittest.mock import Mock, patch
 
+
+pytest.importorskip("flask")
+
 from ipfs_datasets_py.dashboards.dashboard_error_api import (
     create_dashboard_error_api,
     setup_dashboard_error_routes

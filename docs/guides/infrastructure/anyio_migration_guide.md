@@ -58,7 +58,7 @@ The following backends are now deprecated:
 ### Before (Deprecated)
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Using markitdown backend (now deprecated)
 converter = FileConverter(backend='markitdown')
@@ -85,7 +85,7 @@ Documentation: See docs/FILE_CONVERSION_INTEGRATION_PLAN.md
 ### After (Recommended)
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Use native backend (recommended)
 converter = FileConverter(backend='native')
@@ -96,7 +96,7 @@ converter = FileConverter(backend='auto')
 result = await converter.convert('document.pdf')
 
 # Or use IPFS-accelerated version (includes native)
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 converter = IPFSAcceleratedConverter(backend='native')
 result = await converter.convert('document.pdf')
 ```
@@ -136,7 +136,7 @@ result = await converter.convert('document.pdf')
 ### Using Deprecation Info
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     is_deprecated,
     get_deprecation_info,
     DEPRECATION_TIMELINE

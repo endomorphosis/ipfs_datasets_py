@@ -22,7 +22,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import the integrated pipeline
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
     BatchKnowledgeGraphProcessor

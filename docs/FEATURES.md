@@ -52,7 +52,7 @@ Convert any file type to text for AI processing:
 
 **Example:**
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter()
 result = await converter.convert('document.pdf')

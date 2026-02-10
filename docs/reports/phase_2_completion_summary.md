@@ -192,7 +192,7 @@ ipfs_datasets_py/
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Automatic backend selection
 converter = FileConverter()
@@ -209,7 +209,7 @@ result = converter.convert_sync('document.pdf')
 ### Format Detection
 
 ```python
-from ipfs_datasets_py.file_converter import detect_file_format, FormatDetector
+from ipfs_datasets_py.processors.file_converter import detect_file_format, FormatDetector
 
 # Quick detection
 mime_type = detect_file_format('document.pdf')  # 'application/pdf'
@@ -224,7 +224,7 @@ supported = detector.is_supported('document.pdf')  # True
 ### Text Extraction
 
 ```python
-from ipfs_datasets_py.file_converter import extract_file_text
+from ipfs_datasets_py.processors.file_converter import extract_file_text
 
 # Extract with metadata
 result = extract_file_text('document.pdf')
@@ -237,7 +237,7 @@ if result.success:
 ### Pipeline Processing
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     Pipeline, FileUnit,
     validate_file_exists, detect_format, extract_text
 )
@@ -261,7 +261,7 @@ if result.is_ok():
 ### Error Handling
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     with_fallback, retry_with_backoff, ErrorType
 )
 
@@ -289,7 +289,7 @@ result = await retry_with_backoff(
 The file converter is designed for seamless GraphRAG integration:
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 from ipfs_datasets_py.rag import GraphRAG
 
 # Convert arbitrary files

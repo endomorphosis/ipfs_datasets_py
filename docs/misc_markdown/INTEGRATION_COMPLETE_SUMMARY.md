@@ -56,7 +56,7 @@ The scrape_the_law_mk3 submodule has been fully integrated as an MCP tool with c
 
 ### 1. Via Python Import
 ```python
-from ipfs_datasets_py.mcp_tools.tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.legal_dataset_mcp_tools import ScrapeMunicipalCodesTool
 
 tool = ScrapeMunicipalCodesTool()
 result = await tool.execute({
@@ -68,7 +68,7 @@ result = await tool.execute({
 
 ### 2. Via MCP Server
 ```python
-from ipfs_datasets_py.mcp_tools.temporal_deontic_mcp_server import TemporalDeonticMCPServer
+from ipfs_datasets_py.mcp_server.temporal_deontic_mcp_server import TemporalDeonticMCPServer
 
 server = TemporalDeonticMCPServer()
 # Tool automatically available as 'scrape_municipal_codes'

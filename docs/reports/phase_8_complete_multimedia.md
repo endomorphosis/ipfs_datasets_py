@@ -39,7 +39,7 @@ Successfully completed Phase 8 by adding comprehensive multimedia processing cap
 
 **Usage:**
 ```python
-from ipfs_datasets_py.file_converter import ImageProcessor
+from ipfs_datasets_py.processors.file_converter import ImageProcessor
 
 processor = ImageProcessor(ocr_enabled=True, ocr_lang='eng')
 result = processor.extract_text('diagram.png')
@@ -73,7 +73,7 @@ print(result['metadata'])  # Image metadata
 
 **Usage:**
 ```python
-from ipfs_datasets_py.file_converter import AudioProcessor
+from ipfs_datasets_py.processors.file_converter import AudioProcessor
 
 processor = AudioProcessor(
     transcription_enabled=True,
@@ -179,7 +179,7 @@ print(result['metadata'])  # Audio metadata
 ### Complete Multimedia Workflow
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     FileConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,
@@ -237,7 +237,7 @@ for file in files:
 ### Image-Specific Workflow
 
 ```python
-from ipfs_datasets_py.file_converter import ImageProcessor
+from ipfs_datasets_py.processors.file_converter import ImageProcessor
 
 # Process image with OCR
 processor = ImageProcessor(
@@ -261,7 +261,7 @@ embeddings = await vector_pipeline.process('images/*.png')  # Embed image text
 ### Audio-Specific Workflow
 
 ```python
-from ipfs_datasets_py.file_converter import AudioProcessor
+from ipfs_datasets_py.processors.file_converter import AudioProcessor
 
 # Process audio with Whisper
 processor = AudioProcessor(

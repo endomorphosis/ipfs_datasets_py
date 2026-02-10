@@ -3,7 +3,7 @@
 This module provides comprehensive IPFS storage capabilities for legal datasets,
 including CAR file generation, IPLD DAG structures, metadata tracking, and pin management.
 """
-import asyncio
+import anyio
 import logging
 import json
 import time
@@ -50,16 +50,16 @@ class IPFSStorageManager:
             logger.info("Initialized IPFS storage manager (router backend)")
 
     async def _router_add_bytes(self, data: bytes, *, pin: bool) -> str:
-        return await asyncio.to_thread(ipfs_router.add_bytes, data, pin=pin)
+        return await anyio.to_thread.run_sync(ipfs_router.add_bytes, data, pin=pin)
 
     async def _router_cat(self, cid: str) -> bytes:
-        return await asyncio.to_thread(ipfs_router.cat, cid)
+        return await anyio.to_thread.run_sync(ipfs_router.cat, cid)
 
     async def _router_pin(self, cid: str) -> None:
-        await asyncio.to_thread(ipfs_router.pin, cid)
+        await anyio.to_thread.run_sync(ipfs_router.pin, cid)
 
     async def _router_unpin(self, cid: str) -> None:
-        await asyncio.to_thread(ipfs_router.unpin, cid)
+        await anyio.to_thread.run_sync(ipfs_router.unpin, cid)
     
     async def add_dataset(
         self,

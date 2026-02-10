@@ -23,7 +23,7 @@ def test_imports():
     from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.clinical_trials_scraper import ClinicalTrialsScraper
     
     # Test theorem framework imports
-    from ipfs_datasets_py.logic_integration.medical_theorem_framework import (
+    from ipfs_datasets_py.logic.integration.medical_theorem_framework import (
         MedicalTheorem,
         MedicalTheoremType,
         ConfidenceLevel,
@@ -49,7 +49,7 @@ def test_instantiation():
     
     from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.pubmed_scraper import PubMedScraper
     from ipfs_datasets_py.mcp_server.tools.medical_research_scrapers.clinical_trials_scraper import ClinicalTrialsScraper
-    from ipfs_datasets_py.logic_integration.medical_theorem_framework import (
+    from ipfs_datasets_py.logic.integration.medical_theorem_framework import (
         MedicalTheoremGenerator,
         FuzzyLogicValidator,
         TimeSeriesTheoremValidator
@@ -79,7 +79,7 @@ def test_enum_values():
     """Test that enums are properly defined."""
     print("\nTesting enum values...")
     
-    from ipfs_datasets_py.logic_integration.medical_theorem_framework import (
+    from ipfs_datasets_py.logic.integration.medical_theorem_framework import (
         MedicalTheoremType,
         ConfidenceLevel
     )

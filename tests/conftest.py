@@ -18,6 +18,29 @@ from typing import Optional
 import pytest
 
 
+# ==================== Optional pytest-benchmark Support ====================
+
+try:
+    import pytest_benchmark  # type: ignore[import-not-found]  # noqa: F401
+    _PYTEST_BENCHMARK_AVAILABLE = True
+except Exception:
+    _PYTEST_BENCHMARK_AVAILABLE = False
+
+
+if not _PYTEST_BENCHMARK_AVAILABLE:
+    @pytest.fixture
+    def benchmark():
+        """Fallback `benchmark` fixture when pytest-benchmark isn't installed.
+
+        Behaves like a simple callable wrapper: `benchmark(func, *args, **kwargs)`.
+        """
+
+        def _run(func, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        return _run
+
+
 # ==================== Commit-Hash Based Caching Plugin ====================
 
 def get_git_commit_hash() -> Optional[str]:

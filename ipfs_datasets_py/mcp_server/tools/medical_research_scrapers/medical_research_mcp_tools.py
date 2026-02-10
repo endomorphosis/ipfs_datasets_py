@@ -19,7 +19,7 @@ except ImportError:
     ClinicalTrialsScraper = None
 
 try:
-    from ipfs_datasets_py.logic_integration.medical_theorem_framework import (
+    from ipfs_datasets_py.logic.integration.medical_theorem_framework import (
         MedicalTheoremGenerator,
         FuzzyLogicValidator,
         TimeSeriesTheoremValidator

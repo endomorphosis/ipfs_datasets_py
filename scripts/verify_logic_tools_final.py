@@ -25,8 +25,8 @@ async def main():
     print("-" * 40)
     
     try:
-        from ipfs_datasets_py.logic_tools.text_to_fol import convert_text_to_fol
-        from ipfs_datasets_py.logic_tools.legal_text_to_deontic import convert_legal_text_to_deontic
+        from ipfs_datasets_py.logic.fol.text_to_fol import convert_text_to_fol
+        from ipfs_datasets_py.logic.deontic.legal_text_to_deontic import convert_legal_text_to_deontic
         
         # Test FOL core function
         fol_result = await convert_text_to_fol(
@@ -81,9 +81,9 @@ async def main():
     print("-" * 40)
     
     try:
-        from ipfs_datasets_py.logic_tools.logic_utils.predicate_extractor import extract_predicates
-        from ipfs_datasets_py.logic_tools.logic_utils.fol_parser import parse_quantifiers
-        from ipfs_datasets_py.logic_tools.logic_utils.deontic_parser import extract_normative_elements
+        from ipfs_datasets_py.logic.fol.utils.predicate_extractor import extract_predicates
+        from ipfs_datasets_py.logic.fol.utils.fol_parser import parse_quantifiers
+        from ipfs_datasets_py.logic.fol.utils.deontic_parser import extract_normative_elements
         
         # Test predicate extraction
         predicates = extract_predicates("All cats are curious animals")

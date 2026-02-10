@@ -76,7 +76,7 @@ def test_logic_integration_quick():
     print("\nTesting logic integration modules...")
     
     try:
-        from ipfs_datasets_py.logic_integration import (
+        from ipfs_datasets_py.logic.integration import (
             SymbolicFOLBridge,
             SYMBOLIC_AI_AVAILABLE
         )

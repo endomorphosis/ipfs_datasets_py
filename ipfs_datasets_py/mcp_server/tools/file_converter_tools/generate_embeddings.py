@@ -4,7 +4,7 @@ MCP Server Tool: Generate Embeddings
 Generate vector embeddings from a file using the file_converter package exports.
 """
 
-from ipfs_datasets_py.file_converter.exports import generate_embeddings_sync
+from ipfs_datasets_py.processors.file_converter import generate_embeddings_sync
 
 
 async def generate_embeddings_tool(

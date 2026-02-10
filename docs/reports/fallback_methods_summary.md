@@ -312,7 +312,7 @@ The MCP tool (`ScrapeMunicipalCodesTool`) includes:
 ### MunicipalScraperFallbacks Class
 
 ```python
-from ipfs_datasets_py.mcp_tools.tools.municipal_scraper_fallbacks import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.municipal_scraper_fallbacks import (
     MunicipalScraperFallbacks,
     scrape_with_fallbacks
 )

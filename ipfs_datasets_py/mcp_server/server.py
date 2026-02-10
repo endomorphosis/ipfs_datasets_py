@@ -86,7 +86,12 @@ except ImportError as e:
         TextContent = None  # type: ignore[assignment]
         Tool = None  # type: ignore[assignment]
         CallToolRequest = None  # type: ignore[assignment]
-        print(f"Failed to import mcp.server ({e}). Please ensure the mcp library is installed.")
+        import logging as _logging
+
+        _logging.getLogger(__name__).info(
+            "Failed to import mcp.server (%s). Please ensure the 'mcp' library is installed.",
+            e,
+        )
 
 from .configs import Configs, configs
 from .logger import logger

@@ -110,7 +110,7 @@ Notes:
 
 ```python
 # Convert any file type to text for GraphRAG
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter()  # Auto-selects best backend
 result = await converter.convert('document.pdf')

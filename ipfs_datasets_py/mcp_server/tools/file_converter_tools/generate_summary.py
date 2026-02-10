@@ -4,7 +4,7 @@ MCP Server Tool: Generate Summary
 Generate text summary from a file using the file_converter package exports.
 """
 
-from ipfs_datasets_py.file_converter.exports import generate_summary_sync
+from ipfs_datasets_py.processors.file_converter import generate_summary_sync
 from typing import Optional
 
 

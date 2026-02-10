@@ -3,12 +3,12 @@
 import logging
 import os
 
-from ipfs_datasets_py.logic_integration.deontic_logic_core import (
+from ipfs_datasets_py.logic.integration.deontic_logic_core import (
     DeonticFormula,
     DeonticOperator,
     LegalAgent,
 )
-from ipfs_datasets_py.logic_integration.proof_execution_engine import ProofExecutionEngine
+from ipfs_datasets_py.logic.integration.proof_execution_engine import ProofExecutionEngine
 
 
 def _truthy(value: str | None) -> bool:

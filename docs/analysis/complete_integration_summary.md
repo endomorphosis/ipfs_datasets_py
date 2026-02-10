@@ -222,7 +222,7 @@ ipfs_datasets_py/file_converter/
 ### Basic Usage
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 # Simple conversion
 converter = FileConverter()
@@ -233,7 +233,7 @@ print(result.text)
 ### With IPFS Storage
 
 ```python
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 # IPFS-enabled converter
 converter = IPFSAcceleratedConverter(enable_ipfs=True)
@@ -247,7 +247,7 @@ print(f"URL: {result.ipfs_gateway_url}")
 ### Rich Metadata Extraction
 
 ```python
-from ipfs_datasets_py.file_converter import extract_metadata
+from ipfs_datasets_py.processors.file_converter import extract_metadata
 
 # Extract comprehensive metadata
 metadata = extract_metadata('document.pdf')
@@ -260,7 +260,7 @@ print(f"MIME: {metadata['format']['mime_type']}")
 ### Batch Processing with Progress
 
 ```python
-from ipfs_datasets_py.file_converter import create_batch_processor
+from ipfs_datasets_py.processors.file_converter import create_batch_processor
 
 # Progress callback
 def on_progress(progress):
@@ -282,8 +282,8 @@ results = await processor.process_batch(files)
 ### Custom Pipeline
 
 ```python
-from ipfs_datasets_py.file_converter import Pipeline, FileUnit
-from ipfs_datasets_py.file_converter import validate_file_exists, detect_format, extract_text
+from ipfs_datasets_py.processors.file_converter import Pipeline, FileUnit
+from ipfs_datasets_py.processors.file_converter import validate_file_exists, detect_format, extract_text
 
 # Build custom pipeline
 pipeline = Pipeline()

@@ -180,7 +180,7 @@ async def process_multiple_files(filepaths: List[str]) -> List[Result]:
 Use Result types for explicit error handling:
 
 ```python
-from ipfs_datasets_py.file_converter import FileConverter
+from ipfs_datasets_py.processors.file_converter import FileConverter
 
 converter = FileConverter()
 result = await converter.convert('document.pdf')

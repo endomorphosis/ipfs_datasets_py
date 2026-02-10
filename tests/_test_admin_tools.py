@@ -125,7 +125,7 @@ class TestAdminToolsIntegration:
         AND admin_tools list should have length greater than 0
         """
         try:
-            from ipfs_datasets_py.mcp_tools.tool_registration import get_registered_tools
+            from ipfs_datasets_py.mcp_server.tools.tool_registration import get_registered_tools
             
             # Test MCP tool registration retrieval
             registered_tools = get_registered_tools()

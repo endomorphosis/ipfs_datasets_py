@@ -30,7 +30,7 @@ Complete IPFS integration for distributed storage:
 
 **API Example:**
 ```python
-from ipfs_datasets_py.file_converter import get_ipfs_backend
+from ipfs_datasets_py.processors.file_converter import get_ipfs_backend
 
 backend = get_ipfs_backend()
 cid = await backend.add_file(Path('document.pdf'), pin=True)
@@ -55,7 +55,7 @@ High-level converter combining all Phase 1-3 features:
 
 **API Example:**
 ```python
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(
     backend='native',
@@ -282,7 +282,7 @@ IPFSConversionResult
 ### Pattern 1: Local-Only Conversion
 
 ```python
-from ipfs_datasets_py.file_converter import IPFSAcceleratedConverter
+from ipfs_datasets_py.processors.file_converter import IPFSAcceleratedConverter
 
 converter = IPFSAcceleratedConverter(
     backend='native',
@@ -347,7 +347,7 @@ await converter.unpin_result(result.ipfs_cid)
 text = await converter.retrieve_from_ipfs('QmXxx...')
 
 # Or from any source
-from ipfs_datasets_py.file_converter import get_ipfs_backend
+from ipfs_datasets_py.processors.file_converter import get_ipfs_backend
 
 backend = get_ipfs_backend()
 await backend.get_file('QmXxx...', Path('output.txt'))

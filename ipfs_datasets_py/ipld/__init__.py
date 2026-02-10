@@ -16,9 +16,20 @@ combining vector similarity search with knowledge graph traversal for enhanced r
 and reasoning capabilities.
 """
 
-from ipfs_datasets_py.ipld.storage import IPLDStorage
-from ipfs_datasets_py.ipld.dag_pb import create_dag_node, parse_dag_node
-from ipfs_datasets_py.ipld.optimized_codec import (
+from __future__ import annotations
+
+import warnings
+
+
+warnings.warn(
+    "ipfs_datasets_py.ipld is deprecated; use ipfs_datasets_py.data_transformation.ipld instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld.dag_pb import create_dag_node, parse_dag_node
+from ipfs_datasets_py.data_transformation.ipld.optimized_codec import (
     OptimizedEncoder, OptimizedDecoder, BatchProcessor,
     create_batch_processor, optimize_node_structure
 )
@@ -26,13 +37,13 @@ from ipfs_datasets_py.ipld.optimized_codec import (
 # Optional components: these can pull in heavy deps (e.g., numpy). Keep the
 # package import-safe so modules that only need core storage can still import.
 try:
-    from ipfs_datasets_py.ipld.vector_store import IPLDVectorStore, SearchResult
+    from ipfs_datasets_py.vector_stores.ipld import IPLDVectorStore, SearchResult
 except Exception:  # pragma: no cover
     IPLDVectorStore = None  # type: ignore[assignment]
     SearchResult = None  # type: ignore[assignment]
 
 try:
-    from ipfs_datasets_py.ipld.knowledge_graph import (
+    from ipfs_datasets_py.knowledge_graphs.ipld import (
         IPLDKnowledgeGraph, Entity, Relationship
     )
 except Exception:  # pragma: no cover
@@ -45,7 +56,7 @@ try:
     from ipld_dag_pb import PBNode, PBLink
     HAVE_IPLD_DAG_PB = True
 except ImportError:
-    from ipfs_datasets_py.ipld.dag_pb import PBNode, PBLink
+    from ipfs_datasets_py.data_transformation.ipld.dag_pb import PBNode, PBLink
     HAVE_IPLD_DAG_PB = False
 
 try:

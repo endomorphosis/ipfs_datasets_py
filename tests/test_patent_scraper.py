@@ -11,7 +11,7 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from dataclasses import asdict
 
-from ipfs_datasets_py.mcp_tools.tools.patent_scraper import (
+from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
     USPTOPatentScraper,
     PatentSearchCriteria,
     PatentDatasetBuilder,
@@ -160,7 +160,7 @@ class TestUSPTOPatentScraper:
         
         assert "patent_date" in query or "_and" in query
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.requests.Session.post')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.requests.Session.post')
     def test_search_patents_success(self, mock_post):
         """
         GIVEN: Mock successful API response
@@ -185,7 +185,7 @@ class TestUSPTOPatentScraper:
         assert len(patents[0].inventors) == 1
         assert patents[0].inventors[0]["last_name"] == "Smith"
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.requests.Session.post')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.requests.Session.post')
     def test_search_patents_error(self, mock_post):
         """
         GIVEN: Mock API error
@@ -226,7 +226,7 @@ class TestUSPTOPatentScraper:
 class TestPatentDatasetBuilder:
     """Tests for PatentDatasetBuilder class."""
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.USPTOPatentScraper.search_patents')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.USPTOPatentScraper.search_patents')
     def test_build_dataset_json(self, mock_search):
         """
         GIVEN: Mock patent search results
@@ -254,7 +254,7 @@ class TestPatentDatasetBuilder:
         assert result["metadata"]["source"] == "USPTO PatentsView API"
         assert len(result["patents"]) == 1
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.USPTOPatentScraper.search_patents')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.USPTOPatentScraper.search_patents')
     @patch('builtins.open', create=True)
     def test_build_dataset_with_output_file(self, mock_open, mock_search):
         """
@@ -291,7 +291,7 @@ class TestPatentDatasetBuilder:
 class TestConvenienceFunctions:
     """Tests for convenience functions."""
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.USPTOPatentScraper.search_patents')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.USPTOPatentScraper.search_patents')
     def test_search_by_keyword(self, mock_search):
         """
         GIVEN: Keyword list
@@ -309,7 +309,7 @@ class TestConvenienceFunctions:
         assert len(patents) == 1
         assert patents[0].patent_number == "US1234567"
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.USPTOPatentScraper.search_patents')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.USPTOPatentScraper.search_patents')
     def test_search_by_inventor(self, mock_search):
         """
         GIVEN: Inventor name
@@ -326,7 +326,7 @@ class TestConvenienceFunctions:
         
         assert len(patents) == 1
     
-    @patch('ipfs_datasets_py.mcp_tools.tools.patent_scraper.USPTOPatentScraper.search_patents')
+    @patch('ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper.USPTOPatentScraper.search_patents')
     def test_search_by_assignee(self, mock_search):
         """
         GIVEN: Assignee name

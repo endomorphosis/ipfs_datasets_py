@@ -91,7 +91,7 @@ Target:          100% [███████████████████
 - Integration with FileConverter
 - Usage:
   ```python
-  from ipfs_datasets_py.file_converter import extract_archive
+  from ipfs_datasets_py.processors.file_converter import extract_archive
   
   result = await extract_archive('documents.zip')
   for file in result.extracted_files:
@@ -141,7 +141,7 @@ Target:          100% [███████████████████
 ### Complete Workflow
 
 ```python
-from ipfs_datasets_py.file_converter import (
+from ipfs_datasets_py.processors.file_converter import (
     FileConverter,
     UniversalKnowledgeGraphPipeline,
     TextSummarizationPipeline,

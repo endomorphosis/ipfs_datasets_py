@@ -14,12 +14,24 @@ import anyio
 import logging
 import hashlib
 import json
+import sys
 from typing import Dict, List, Any, Optional
 from types import ModuleType
 from dataclasses import dataclass
 from datetime import datetime
 import re
 import time
+
+# Some tests (and a few script-like modules) can cause this package to be
+# importable under both `ipfs_datasets_py.*` and `ipfs_datasets_py.ipfs_datasets_py.*`.
+# If the module is loaded twice under different names, class identity checks such
+# as `isinstance(x, QueryResponse)` become suite-order dependent.
+if __name__.startswith("ipfs_datasets_py.ipfs_datasets_py."):
+    _canonical = __name__.replace("ipfs_datasets_py.ipfs_datasets_py.", "ipfs_datasets_py.", 1)
+    sys.modules.setdefault(_canonical, sys.modules[__name__])
+elif __name__.startswith("ipfs_datasets_py."):
+    _alias = __name__.replace("ipfs_datasets_py.", "ipfs_datasets_py.ipfs_datasets_py.", 1)
+    sys.modules.setdefault(_alias, sys.modules[__name__])
 
 
 class _FallbackEmbeddingModel:
@@ -136,7 +148,7 @@ except ImportError:
     is_accelerate_available = lambda: False
     get_accelerate_status = lambda: {"available": False}
 
-from ipfs_datasets_py.ipld import IPLDStorage
+from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
 
 try:
     from ipfs_datasets_py.pdf_processing.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship
