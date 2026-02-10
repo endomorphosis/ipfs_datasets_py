@@ -2,14 +2,14 @@
 """MCP tool wrapper for converting legal text to deontic logic.
 
 Core conversion logic lives in the package layer:
-- `ipfs_datasets_py.logic.deontic.legal_text_to_deontic.convert_legal_text_to_deontic`
+- `ipfs_datasets_py.logic.tools.legal_text_to_deontic.convert_legal_text_to_deontic`
 
 This MCP module should only provide the MCP-facing entrypoint.
 """
 
 from typing import Any, Dict, Union
 
-from ipfs_datasets_py.logic.deontic.legal_text_to_deontic import convert_legal_text_to_deontic
+from ipfs_datasets_py.logic.tools.legal_text_to_deontic import convert_legal_text_to_deontic
 
 
 async def legal_text_to_deontic(

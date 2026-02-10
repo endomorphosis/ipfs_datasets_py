@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/search/search_embeddings.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/search/search_embeddings.py'
 
 ## __init__
 
@@ -41,7 +41,7 @@ Attributes Initialized:
     join_column (Optional[str]): Cross-dataset joining column identifier (initially None)
     qdrant_found (bool): Qdrant service availability status after connection testing
     qdrant_kit_py (Optional): Qdrant integration component (conditionally initialized)
-    ipfs_embeddings_py (Optional): Embedding generation component (conditionally initialized)
+    embedding_engine (Optional): Embedding generation component (conditionally initialized)
 
 Raises:
     ConnectionError: If IPFS nodes are unreachable or authentication fails
@@ -191,7 +191,7 @@ Attributes:
     join_column (Optional[str]): Column identifier for cross-dataset joining operations
     qdrant_found (bool): Availability status of Qdrant vector database backend
     qdrant_kit_py (Optional[qdrant_kit_py]): Qdrant database integration component
-    ipfs_embeddings_py (Optional[ipfs_embeddings_py]): Embedding generation component
+    embedding_engine (Optional): Embedding generation component
 
 Public Methods:
     generate_embeddings(query: str, model: Optional[str] = None) -> np.ndarray:

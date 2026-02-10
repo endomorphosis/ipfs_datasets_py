@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/llm_context_tools/get_current_time.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/llm_context_tools/get_current_time.py'
 
 Files last updated: 1748926770.8049743
 

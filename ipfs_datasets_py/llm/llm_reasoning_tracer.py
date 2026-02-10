@@ -29,7 +29,10 @@ import time
 import uuid
 from dataclasses import dataclass, field, asdict
 from enum import Enum
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .llm_interface import LLMInterface
 
 
 # Configure logging
@@ -312,7 +315,8 @@ class LLMReasoningTracer:
         self,
         storage_dir: Optional[str] = None,
         llm_provider: str = "mock",
-        llm_config: Optional[Dict[str, Any]] = None
+        llm_config: Optional[Dict[str, Any]] = None,
+        llm_interface: Optional["LLMInterface"] = None,
     ):
         """
         Initialize the reasoning tracer.
@@ -321,6 +325,9 @@ class LLMReasoningTracer:
             storage_dir: Directory for storing traces
             llm_provider: LLM provider to use ("mock" for now, future: "openai", "anthropic", etc.)
             llm_config: Configuration for the LLM provider
+            llm_interface: Optional `LLMInterface` override. If not provided and
+                `llm_provider != "mock"`, this tracer will route LLM calls via
+                `ipfs_datasets_py.llm_router`.
         """
         self.storage_dir = storage_dir or os.path.join(os.getcwd(), ".reasoning_traces")
         os.makedirs(self.storage_dir, exist_ok=True)
@@ -328,9 +335,24 @@ class LLMReasoningTracer:
         self.llm_provider = llm_provider
         self.llm_config = llm_config or {}
 
-        # This would be replaced with actual LLM clients in the future
-        if llm_provider != "mock":
-            logger.warning(f"LLM provider '{llm_provider}' not supported in mock implementation. Using mock provider.")
+        # Optional LLM integration: prefer llm_router so this module participates
+        # in the same provider selection, caching, and fallbacks.
+        self.llm = llm_interface
+        if self.llm is None and llm_provider != "mock":
+            try:
+                from ipfs_datasets_py import llm_router
+
+                self.llm = llm_router.get_llm_interface(
+                    provider=llm_provider,
+                    model_name=self.llm_config.get("model_name"),
+                )
+            except Exception:
+                try:
+                    from .llm_interface import LLMInterfaceFactory
+
+                    self.llm = LLMInterfaceFactory.create(model_name=self.llm_config.get("model_name", "mock-llm"))
+                except Exception:
+                    self.llm = None
 
         # Store traces in memory for this mock implementation
         self.traces: Dict[str, ReasoningTrace] = {}
@@ -749,7 +771,35 @@ class LLMReasoningTracer:
         Returns:
             str: Natural language explanation
         """
-        # This would use actual LLM to generate explanations in the future
+        # Default behavior: deterministic templated explanation.
+        if self.llm_provider == "mock" or self.llm is None:
+            return trace.get_explanation(detail_level)
+
+        # LLM-backed explanation routed through llm_router.
+        try:
+            trace_payload = {
+                "trace_id": trace.trace_id,
+                "query": trace.query,
+                "node_count": len(trace.nodes),
+                "edge_count": len(trace.edges),
+                "conclusions": [trace.nodes[n].content for n in trace.conclusion_node_ids if n in trace.nodes],
+                "template_explanation": trace.get_explanation(detail_level),
+            }
+
+            prompt = (
+                "You are an assistant explaining a GraphRAG reasoning trace. "
+                "Rewrite the explanation clearly and concisely at the requested detail level.\n\n"
+                f"DETAIL_LEVEL: {detail_level}\n\n"
+                f"TRACE (JSON):\n{json.dumps(trace_payload, ensure_ascii=False, indent=2)}\n\n"
+                "EXPLANATION:"  # anchor
+            )
+            resp = self.llm.generate(prompt, max_tokens=max_tokens)
+            text = resp.get("text") if isinstance(resp, dict) else None
+            if isinstance(text, str) and text.strip():
+                return text.strip()
+        except Exception:
+            pass
+
         return trace.get_explanation(detail_level)
 
     def export_visualization(

@@ -5,11 +5,23 @@ MCP tool for processing datasets.
 This tool handles applying transformations and operations to datasets.
 """
 import anyio
+import json
 from typing import Dict, Any, Optional, Union, List
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
 
 # Try to import Hugging Face datasets with fallback
 try:
@@ -23,7 +35,7 @@ except ImportError as e:
 
 async def process_dataset(
     dataset_source: Union[str, dict, Any], # Changed to accept various input types
-    operations: List[Dict[str, Any]],
+    operations: Optional[List[Dict[str, Any]]] = None,
     output_id: Optional[str] = None # output_id is now just for naming, not for manager
 ) -> Dict[str, Any]:
     """
@@ -59,6 +71,34 @@ async def process_dataset(
         ValueError: If dataset_source is invalid or operations are malformed
         TypeError: If operation parameters are of wrong type
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if isinstance(dataset_source, str) and operations is None:
+        data, error = parse_json_object(dataset_source)
+        if error is not None:
+            return error
+
+        if "dataset_source" not in data:
+            return mcp_error_response("Missing required field: dataset_source", error_type="validation")
+        if "operations" not in data:
+            return mcp_error_response("Missing required field: operations", error_type="validation")
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.process_dataset(
+                data["dataset_source"],
+                data["operations"],
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
         # Check if Hugging Face datasets is available
         if not HF_DATASETS_AVAILABLE:

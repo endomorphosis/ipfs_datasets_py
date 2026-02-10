@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/utils/_run_tool.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/utils/_run_tool.py'
 
 Files last updated: 1749503426.318964
 

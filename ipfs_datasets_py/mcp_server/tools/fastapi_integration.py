@@ -2,7 +2,7 @@
 FastAPI Integration for Migrated MCP Tools
 
 This module provides REST API endpoints for all migrated MCP tools from the
-ipfs_embeddings_py integration, enabling both MCP and HTTP access to functionality.
+embeddings/tooling integration, enabling both MCP and HTTP access to functionality.
 """
 
 from typing import Dict, List, Any, Optional
@@ -66,7 +66,7 @@ class MCPToolsAPI:
     """
     FastAPI application for migrated MCP tools.
     
-    Provides REST API endpoints for all tools migrated from ipfs_embeddings_py.
+    Provides REST API endpoints for all migrated MCP tools.
     """
     
     def __init__(self):
@@ -75,7 +75,7 @@ class MCPToolsAPI:
         
         self.app = FastAPI(
             title="IPFS Datasets MCP Tools API",
-            description="REST API for MCP tools migrated from ipfs_embeddings_py",
+            description="REST API for migrated MCP tools",
             version="1.0.0",
             docs_url="/docs",
             redoc_url="/redoc"

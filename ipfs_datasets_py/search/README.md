@@ -158,7 +158,7 @@ The search module integrates with:
 
 - **Vector Stores** - Backend storage for searchable embeddings
 - **Embeddings** - Generation of query and document embeddings
-- **RAG Module** - Retrieval component for RAG workflows
+- **GraphRAG Module** - Retrieval component for GraphRAG workflows
 - **IPFS** - Distributed storage and retrieval
 - **PDF Processing** - Search within processed document content
 
@@ -188,6 +188,6 @@ The search module integrates with:
 
 - [Vector Stores](../vector_stores/README.md) - Backend storage systems
 - [Embeddings](../embeddings/README.md) - Embedding generation
-- [RAG Module](../rag/README.md) - Retrieval-augmented generation
+- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
 - [IPLD Module](../ipld/README.md) - Content-addressed data structures
 - [Performance Optimization](../../docs/performance_optimization.md) - Detailed optimization guide

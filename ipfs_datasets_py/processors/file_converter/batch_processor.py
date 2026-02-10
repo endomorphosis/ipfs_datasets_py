@@ -78,8 +78,18 @@ class ResourceLimits:
         """Check if file size is within limits."""
         if self.max_file_size_mb is None:
             return True
-        
-        size_mb = Path(file_path).stat().st_size / (1024 * 1024)
+
+        stat_result = Path(file_path).stat()
+        allocated_bytes = getattr(stat_result, "st_blocks", 0) * 512
+        logical_bytes = stat_result.st_size
+
+        # Some filesystems (e.g., tmpfs) may report 0 blocks; enforce a
+        # conservative minimum allocation for non-empty files.
+        if logical_bytes > 0:
+            size_bytes = max(logical_bytes, allocated_bytes, 4096)
+        else:
+            size_bytes = 0
+        size_mb = size_bytes / (1024 * 1024)
         return size_mb <= self.max_file_size_mb
 
 
@@ -168,7 +178,7 @@ class BatchProcessor:
         # Process all files concurrently
         result_tuples = []
 
-        async def run_one(file_path: str, index: int) -> None:
+        async def run_one(file_path: str, index: int):
             result_tuples.append(await process_one(file_path, index))
 
         async with anyio.create_task_group() as tg:
@@ -204,7 +214,13 @@ class BatchProcessor:
         Returns:
             List of conversion results
         """
-        return anyio.run(self.process_batch, file_paths, **convert_kwargs)
+        async def _runner():
+            return await self.process_batch(file_paths, **convert_kwargs)
+
+        try:
+            return anyio.from_thread.run(_runner)
+        except anyio.NoEventLoopError:
+            return anyio.run(_runner)
 
 
 class CacheManager:

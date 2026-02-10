@@ -171,7 +171,7 @@ ipfs_datasets_py/
 │   ├── Phase 1: dashboards/, cli/, caching/, processors/, integrations/
 │   ├── Phase 2: data_transformation/, knowledge_graphs/, web_archiving/,
 │   │           p2p_networking/, reasoning/, ipfs_formats/
-│   └── Existing: utils/, rag/, search/, embeddings/, analytics/,
+│   └── Existing: utils/, search/, embeddings/, analytics/,
 │                 optimizers/, mcp_server/, mcp_tools/, etc.
 │
 └── All files properly organized by function and purpose

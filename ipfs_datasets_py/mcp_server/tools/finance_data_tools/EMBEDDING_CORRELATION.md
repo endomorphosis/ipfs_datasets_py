@@ -493,6 +493,9 @@ for article in articles:
 
 ### With GraphRAG Analyzer
 
+Note: the GraphRAG core implementation is in `ipfs_datasets_py.knowledge_graphs.finance_graphrag`;
+this MCP wrapper re-exports the same analyzer.
+
 ```python
 from ipfs_datasets_py.mcp_server.tools.finance_data_tools.graphrag_news_analyzer import (
     GraphRAGNewsAnalyzer

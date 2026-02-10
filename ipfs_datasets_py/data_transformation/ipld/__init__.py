@@ -1,28 +1,75 @@
-"""Canonical IPLD (InterPlanetary Linked Data) API surface.
+"""
+IPLD (InterPlanetary Linked Data) Module
 
-This package is the canonical import location for IPLD primitives and helpers.
+This module provides tools for working with IPLD data structures,
+which are the foundation of content-addressable storage in IPFS.
 
-Compatibility note:
-Higher-level components (vector store, knowledge graph) are implemented in
-their domain packages and are re-exported here opportunistically to preserve
-older import paths.
+Main components:
+- storage: Core storage functionality for IPLD blocks
+- dag_pb: Implementation of the DAG-PB format
+- optimized_codec: High-performance encoding/decoding for IPLD with batch processing
+- vector_store: IPLD-based vector storage for embeddings with similarity search
+- knowledge_graph: IPLD-based knowledge graph with entity and relationship modeling
+
+These components provide the foundation for GraphRAG (Graph Retrieval Augmented Generation),
+combining vector similarity search with knowledge graph traversal for enhanced retrieval
+and reasoning capabilities.
 """
 
-from __future__ import annotations
+from .storage import IPLDStorage
+from .dag_pb import create_dag_node, parse_dag_node
+from .optimized_codec import (
+    OptimizedEncoder, OptimizedDecoder, BatchProcessor,
+    create_batch_processor, optimize_node_structure
+)
 
-from .storage import *  # noqa: F403
-from .dag_pb import *  # noqa: F403
-from .optimized_codec import *  # noqa: F403
-
-# Optional components: keep package import-safe if heavy deps are missing.
+# Optional components: these can pull in heavy deps (e.g., numpy). Keep the
+# package import-safe so modules that only need core storage can still import.
 try:
-    from .vector_store import *  # noqa: F403
+    from .vector_store import IPLDVectorStore, SearchResult
 except Exception:  # pragma: no cover
-    pass
+    IPLDVectorStore = None  # type: ignore[assignment]
+    SearchResult = None  # type: ignore[assignment]
 
 try:
-    from .knowledge_graph import *  # noqa: F403
+    from .knowledge_graph import (
+        IPLDKnowledgeGraph, Entity, Relationship
+    )
 except Exception:  # pragma: no cover
-    pass
+    IPLDKnowledgeGraph = None  # type: ignore[assignment]
+    Entity = None  # type: ignore[assignment]
+    Relationship = None  # type: ignore[assignment]
 
-__all__ = [name for name in globals().keys() if not name.startswith("_")]
+# Check if official implementations are available
+try:
+    from ipld_dag_pb import PBNode, PBLink
+    HAVE_IPLD_DAG_PB = True
+except ImportError:
+    from .dag_pb import PBNode, PBLink
+    HAVE_IPLD_DAG_PB = False
+
+try:
+    import ipld_car
+    HAVE_IPLD_CAR = True
+except ImportError:
+    HAVE_IPLD_CAR = False
+
+__all__ = [
+    'IPLDStorage',
+    'create_dag_node',
+    'parse_dag_node',
+    'PBNode',
+    'PBLink',
+    'OptimizedEncoder',
+    'OptimizedDecoder',
+    'BatchProcessor',
+    'create_batch_processor',
+    'optimize_node_structure',
+    'IPLDVectorStore',
+    'SearchResult',
+    'IPLDKnowledgeGraph',
+    'Entity',
+    'Relationship',
+    'HAVE_IPLD_DAG_PB',
+    'HAVE_IPLD_CAR'
+]

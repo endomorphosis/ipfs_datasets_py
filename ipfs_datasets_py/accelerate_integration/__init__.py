@@ -33,9 +33,12 @@ Usage:
         result = run_local_inference(model_name, input_data)
 """
 
-import os
+from __future__ import annotations
+
+import importlib
 import logging
-from typing import Dict, Any
+import os
+from typing import Any, Dict
 
 __version__ = "0.1.0"
 
@@ -92,28 +95,71 @@ def get_accelerate_status() -> Dict[str, Any]:
     }
 
 
-# Import core components. These modules provide graceful fallback behavior
-# when the optional `ipfs_accelerate_py` backend is not available.
-if not _ACCELERATE_DISABLED:
-    try:
-        from .manager import AccelerateManager
-        from .compute_backend import ComputeBackend, get_compute_backend
-        from .distributed_coordinator import DistributedComputeCoordinator
+HAVE_ACCELERATE_MANAGER = False
+AccelerateManager = None
+ComputeBackend = None
+get_compute_backend = None
+DistributedComputeCoordinator = None
 
-        HAVE_ACCELERATE_MANAGER = True
-    except Exception as e:
-        logger.warning(f"Failed to import accelerate integration components: {e}")
-        HAVE_ACCELERATE_MANAGER = False
-        AccelerateManager = None
-        ComputeBackend = None
-        get_compute_backend = None
-        DistributedComputeCoordinator = None
-else:
-    HAVE_ACCELERATE_MANAGER = False
-    AccelerateManager = None
-    ComputeBackend = None
-    get_compute_backend = None
-    DistributedComputeCoordinator = None
+
+def __getattr__(name: str):
+    """Lazy-load heavy accelerate integration components.
+
+    Importing the backend (ipfs_accelerate_py) can trigger heavyweight optional
+    initialization (ipfs_kit_py, faiss, transformers patching). Keep those side
+    effects opt-in by only importing on first access.
+    """
+
+    global HAVE_ACCELERATE_MANAGER
+
+    if name in {"AccelerateManager", "HAVE_ACCELERATE_MANAGER"}:
+        if _ACCELERATE_DISABLED:
+            if name == "HAVE_ACCELERATE_MANAGER":
+                return False
+            return None
+        try:
+            mod = importlib.import_module(f"{__name__}.manager")
+            mgr = getattr(mod, "AccelerateManager", None)
+            HAVE_ACCELERATE_MANAGER = bool(mgr)
+            globals()["AccelerateManager"] = mgr
+            globals()["HAVE_ACCELERATE_MANAGER"] = HAVE_ACCELERATE_MANAGER
+            return globals()[name]
+        except Exception as e:
+            logger.debug(f"Failed to lazy-import AccelerateManager: {e}")
+            HAVE_ACCELERATE_MANAGER = False
+            globals()["AccelerateManager"] = None
+            globals()["HAVE_ACCELERATE_MANAGER"] = False
+            if name == "HAVE_ACCELERATE_MANAGER":
+                return False
+            return None
+
+    if name in {"ComputeBackend", "get_compute_backend"}:
+        if _ACCELERATE_DISABLED:
+            return None
+        try:
+            mod = importlib.import_module(f"{__name__}.compute_backend")
+            globals()["ComputeBackend"] = getattr(mod, "ComputeBackend", None)
+            globals()["get_compute_backend"] = getattr(mod, "get_compute_backend", None)
+            return globals()[name]
+        except Exception as e:
+            logger.debug(f"Failed to lazy-import compute backend: {e}")
+            globals()["ComputeBackend"] = None
+            globals()["get_compute_backend"] = None
+            return None
+
+    if name == "DistributedComputeCoordinator":
+        if _ACCELERATE_DISABLED:
+            return None
+        try:
+            mod = importlib.import_module(f"{__name__}.distributed_coordinator")
+            globals()["DistributedComputeCoordinator"] = getattr(mod, "DistributedComputeCoordinator", None)
+            return globals()[name]
+        except Exception as e:
+            logger.debug(f"Failed to lazy-import distributed coordinator: {e}")
+            globals()["DistributedComputeCoordinator"] = None
+            return None
+
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
 __all__ = [

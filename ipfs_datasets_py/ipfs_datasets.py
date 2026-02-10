@@ -1,30 +1,24 @@
 import os
 import multiprocessing
+import random
+import numpy as np
+from typing import Any, Dict, List, Optional, Union, Tuple
 
-# HuggingFace `datasets` is an optional dependency in some environments.
-# Keep module import-safe; raise a clear error only when dataset functionality is used.
 try:
     import datasets  # type: ignore
     from datasets import Dataset, load_dataset, concatenate_datasets, load_from_disk  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover
-    def _missing_datasets(*_args, **_kwargs):
+    datasets = None  # type: ignore
+    Dataset = object  # type: ignore
+
+    def _missing_datasets(*_args: Any, **_kwargs: Any) -> Any:
         raise ModuleNotFoundError(
-            "Optional dependency 'datasets' is required for dataset-loading features. "
-            "Install it with: pip install datasets"
+            "No module named 'datasets'. Install optional dependency 'datasets' to use dataset-loading features."
         )
 
-    class _DatasetsStub:
-        def __getattr__(self, _name):
-            return _missing_datasets
-
-    datasets = _DatasetsStub()  # type: ignore
-    Dataset = object  # type: ignore
     load_dataset = _missing_datasets  # type: ignore
     concatenate_datasets = _missing_datasets  # type: ignore
     load_from_disk = _missing_datasets  # type: ignore
-import random
-import numpy as np
-from typing import Any, Dict, List, Optional, Union, Tuple
 try:
     from .ipfs_parquet_to_car import ipfs_parquet_to_car_py
 except Exception as e:

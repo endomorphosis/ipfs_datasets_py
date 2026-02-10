@@ -37,7 +37,7 @@ except ImportError:
     PSUTIL_AVAILABLE = False
 
 try:
-    import prometheus_client
+    import prometheus_client  # type: ignore[import-not-found]
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -932,7 +932,7 @@ def timed(func=None, *, metric_name=None, registry=None, include_args=False):
                 raise
 
         # Return appropriate wrapper based on function type
-        if asyncio.iscoroutinefunction(fn):
+        if inspect.iscoroutinefunction(fn):
             return async_wrapper
         else:
             return wrapper

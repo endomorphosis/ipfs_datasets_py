@@ -23,7 +23,7 @@ def _lazy_load_ipfs_kit_module():
 
 
 ipfs_kit_module = None
-# from ipfs_embeddings_py import ipfs_embeddings_py, qdrant_kit_py, faiss_kit_py # Commented out for now
+# from ipfs_datasets_py.embeddings import IPFSEmbeddings  # Legacy import placeholder (unused)
 import numpy as np
 import os
 import json
@@ -108,7 +108,7 @@ class search_embeddings:
         join_column (Optional[str]): Column identifier for cross-dataset joining operations
         qdrant_found (bool): Availability status of Qdrant vector database backend
         qdrant_kit_py (Optional[qdrant_kit_py]): Qdrant database integration component
-        ipfs_embeddings_py (Optional[ipfs_embeddings_py]): Embedding generation component
+        embedding_engine (Optional[IPFSEmbeddings]): Embedding generation component
 
     Public Methods:
         generate_embeddings(query: str, model: Optional[str] = None) -> np.ndarray:
@@ -225,7 +225,7 @@ class search_embeddings:
             join_column (Optional[str]): Cross-dataset joining column identifier (initially None)
             qdrant_found (bool): Qdrant service availability status after connection testing
             qdrant_kit_py (Optional): Qdrant integration component (conditionally initialized)
-            ipfs_embeddings_py (Optional): Embedding generation component (conditionally initialized)
+            embedding_engine (Optional): Embedding generation component (conditionally initialized)
 
         Raises:
             ConnectionError: If IPFS nodes are unreachable or authentication fails
@@ -279,7 +279,7 @@ class search_embeddings:
                 self.ipfs_kit = None
         
         # self.qdrant_kit_py = qdrant_kit_py(resources=resources, metadata=metadata) # Commented out for now
-        # self.ipfs_embeddings_py = ipfs_embeddings_py(resources=resources, metadata=metadata) # Commented out for now
+        # self.embedding_engine = IPFSEmbeddings(resources=resources, metadata=metadata)  # Commented out for now
         # Removed calls to self.ipfs_kit.add_endpoint as the method does not exist.
         # Endpoint management might be handled differently now or is not needed here.
         

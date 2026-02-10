@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/prototyping_tools/json_to_pydantic.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/lizardpersons_function_tools/prototyping_tools/json_to_pydantic.py'
 
 Files last updated: 1749503602.2843401
 

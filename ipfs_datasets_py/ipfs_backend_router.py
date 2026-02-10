@@ -132,7 +132,8 @@ class KuboCLIBackend:
     def add_bytes(self, data: bytes, *, pin: bool = True) -> str:
         pin_flag = "true" if pin else "false"
         # `ipfs add` can read from stdin.
-        out = self._run(["add", "-Q", "--pin", pin_flag, "--stdin-name", "data.bin"], input_bytes=data)
+        # Kubo treats `--pin` as a boolean flag; pass as `--pin=true/false`.
+        out = self._run(["add", "-Q", f"--pin={pin_flag}", "--stdin-name", "data.bin"], input_bytes=data)
         return out.decode("utf-8", errors="replace").strip()
 
     def cat(self, cid: str) -> bytes:
@@ -149,7 +150,15 @@ class KuboCLIBackend:
         with tempfile.NamedTemporaryFile(delete=False) as handle:
             handle.write(data)
             handle.flush()
-            out = self._run(["block", "put", "--cid-version", "1", "--format", str(codec), handle.name])
+            try:
+                out = self._run(["block", "put", "--cid-version", "1", "--format", str(codec), handle.name])
+            except RuntimeError as e:
+                # Some IPFS CLIs don't support these flags; retry with a minimal invocation.
+                msg = str(e)
+                if "unknown option" in msg or "flag provided but not defined" in msg:
+                    out = self._run(["block", "put", "--format", str(codec), handle.name])
+                else:
+                    raise
         return out.decode("utf-8", errors="replace").strip()
 
     def block_get(self, cid: str) -> bytes:
@@ -164,7 +173,7 @@ class KuboCLIBackend:
         chunker: Optional[str] = None,
     ) -> str:
         pin_flag = "true" if pin else "false"
-        args: list[str] = ["add", "-Q", "--pin", pin_flag]
+        args: list[str] = ["add", "-Q", f"--pin={pin_flag}"]
         if recursive:
             args.append("-r")
         if chunker:
@@ -525,6 +534,14 @@ def get_ipfs_backend(
 
     ``deps`` can be used to inject/share a backend instance across routers.
     """
+
+    # Allow tests/hosts to inject a process-global backend instance.
+    # This must take precedence over cached resolution, but should not
+    # override explicit backend selection.
+    if preferred is None and _DEFAULT_BACKEND_OVERRIDE is not None:
+        if deps is not None and getattr(deps, "ipfs_backend", None) is None:
+            deps.ipfs_backend = _DEFAULT_BACKEND_OVERRIDE
+        return _DEFAULT_BACKEND_OVERRIDE
 
     if deps is not None and getattr(deps, "ipfs_backend", None) is not None and preferred is None:
         return deps.ipfs_backend

@@ -21,6 +21,7 @@ import time
 import random
 import logging
 import anyio
+import inspect
 import heapq
 import json
 import threading
@@ -1488,8 +1489,7 @@ class resilient(object):
         """
 
         # Handle both async and sync functions
-        if asyncio.iscoroutinefunction(func):
-            @asyncio.coroutine
+        if inspect.iscoroutinefunction(func):
             async def wrapper(*args, **kwargs):
                 return await self._execute_async(func, args, kwargs)
             return wrapper

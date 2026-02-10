@@ -1,7 +1,7 @@
 """
 MCP Tool Registration for Enhanced Embeddings Tools
 
-Registers all the new embedding tools from the ipfs_embeddings_py integration
+Registers all the new embedding tools from the embeddings integration
 with the MCP server for discovery and execution.
 """
 
@@ -513,7 +513,7 @@ def get_tool_manifest() -> Dict[str, Any]:
     return {
         "name": "Enhanced IPFS Embeddings Tools",
         "version": "1.0.0",
-        "description": "Advanced embedding generation, sharding, and search tools integrated from ipfs_embeddings_py",
+        "description": "Advanced embedding generation, sharding, and search tools integrated into ipfs_datasets_py",
         "total_tools": len(tools),
         "categories": categories,
         "capabilities": {

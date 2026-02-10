@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Data structures**: DocumentChunk, EmbeddingResult, SearchResult for structured data handling
 - **Configuration classes**: EmbeddingConfig, VectorStoreConfig with comprehensive parameter support
 - **Enum definitions**: ChunkingStrategy, VectorStoreType for type safety
-- **Compatibility**: Integration with LlamaIndex, Pydantic, and legacy ipfs_embeddings_py APIs
+- **Compatibility**: Integration with LlamaIndex, Pydantic, and legacy embedding APIs
 - **Serialization**: JSON and dictionary conversion methods for all data classes
 
 #### Chunker Module (`chunker.py`)
@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Async support**: Full async/await pattern implementation
 - **Fallback mechanisms**: Graceful degradation when dependencies unavailable
 - **Memory management**: Endpoint cleanup and memory optimization
-- **Legacy compatibility**: Support for existing ipfs_embeddings_py interfaces
+- **Legacy compatibility**: Support for pre-migration interfaces
 
 #### Create Embeddings Module (`create_embeddings.py`)
 - **Dataset processing**: Integration with HuggingFace datasets library
@@ -71,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Adapter Pattern**: Integration with multiple vector store backends
 
 #### Migration Notes
-- **Source**: Migrated from `endomorphosis/ipfs_embeddings_py`
+- **Source**: Migrated from a pre-migration embeddings codebase
 - **Enhancements**: Added comprehensive async support, better error handling
 - **Integration**: Designed for seamless integration with ipfs_datasets_py ecosystem
 - **Backwards compatibility**: Maintains API compatibility with legacy systems
@@ -107,7 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Version History Summary
 
 - **v1.0.0** (2025-07-04): Initial comprehensive implementation with full feature set
-- Migration from ipfs_embeddings_py completed
+- Migration completed
 - All core functionality implemented and tested
 - Ready for production use with comprehensive error handling and performance optimization
 

@@ -38,7 +38,7 @@ except ImportError:
 
 # Try to import RAG modules
 try:
-    from ..rag.rag_query_optimizer import RAGQueryOptimizer
+    from ..optimizers.graphrag.query_optimizer import RAGQueryOptimizer
     HAVE_RAG = True
 except ImportError:
     HAVE_RAG = False

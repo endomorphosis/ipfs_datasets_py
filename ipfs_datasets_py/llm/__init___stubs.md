@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/llm/__init__.py'
+# Function and Class stubs from 'ipfs_datasets_py/llm/__init__.py'
 
 Files last updated: 1751437069.9446728
 

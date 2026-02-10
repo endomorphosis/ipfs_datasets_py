@@ -218,7 +218,7 @@ tracer_config = {
 
 The LLM module integrates seamlessly with:
 
-- **RAG Module** - Enhanced retrieval and generation workflows
+- **GraphRAG Module** - Enhanced retrieval and generation workflows
 - **Knowledge Graphs** - Graph-aware reasoning and context
 - **Vector Stores** - Semantic similarity and context retrieval
 - **PDF Processing** - Document-based reasoning and analysis
@@ -250,7 +250,7 @@ The LLM module integrates seamlessly with:
 
 ## See Also
 
-- [RAG Module](../rag/README.md) - Retrieval-augmented generation workflows
+- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval workflows
 - [MCP Tools](../mcp_tools/README.md) - AI assistant tool integration
 - [Embeddings](../embeddings/README.md) - Embedding generation for LLM context
 - [Vector Stores](../vector_stores/README.md) - Context storage and retrieval

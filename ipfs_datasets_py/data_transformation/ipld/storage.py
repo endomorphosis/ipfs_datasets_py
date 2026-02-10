@@ -57,9 +57,8 @@ except ImportError:
 
 
 # Import optimized codec if needed
-from .optimized_codec import OptimizedEncoder, PBNode
+from .optimized_codec import OptimizedEncoder, PBNode, BatchProcessor
 from .dag_pb import create_dag_node
-from .optimized_codec import BatchProcessor
 
 
 T = TypeVar('T')
@@ -228,39 +227,45 @@ class IPLDStorage:
         Returns:
             str: CID of the stored block
         """
-        stored_bytes = data
+        def _store_local() -> str:
+            # Local-only mode: generate a valid CIDv1 (base32) so downstream
+            # components (e.g., CAR export) can round-trip correctly.
+            if links:
+                stored_bytes = create_dag_node(data, links)
+                codec = "dag-pb"
+            else:
+                stored_bytes = data
+                codec = "raw"
+
+            digest_bytes = hashlib.sha256(stored_bytes).digest()
+
+            if HAVE_MULTIFORMATS:
+                cid_obj = CID("base32", 1, codec, ("sha2-256", digest_bytes))
+                cid_str = str(cid_obj)
+            else:
+                # Fallback for environments without multiformats; not CAR-safe.
+                cid_str = f"bafyrei{digest_bytes.hex()[:32]}"
+
+            self._block_cache[cid_str] = stored_bytes
+            return cid_str
+
         if self._ipfs_ok():
             try:
                 if not links:
-                    # Simple case: store as raw block.
-                    return ipfs_router.block_put(data, codec="raw")
-
-                # Complex case: create a DAG-PB node with links.
+                    cid = ipfs_router.block_put(data, codec="raw")
+                    self._block_cache[cid] = data
+                    return cid
                 node_data = create_dag_node(data, links)
-                stored_bytes = node_data
-                return ipfs_router.block_put(node_data, codec="dag-pb")
+                cid = ipfs_router.block_put(node_data, codec="dag-pb")
+                self._block_cache[cid] = node_data
+                return cid
             except Exception as e:
                 self._ipfs_failed = True
                 print(f"Warning: Could not store to IPFS via backend router: {e}")
                 print("Operating in local-only mode. Use connect() to retry connection.")
+                return _store_local()
 
-        # Local-only mode: calculate CID based on the stored bytes and links
-        # This is a simple approximation; real IPFS CIDs are more complex
-        # TODO : Implement a proper IPFS CID generation based on IPLD specs
-        hasher = hashlib.sha256()
-        hasher.update(stored_bytes)
-
-        # Add links to the hash if provided
-        if links:
-            link_data = str(links).encode('utf-8')
-            hasher.update(link_data)
-
-        digest = hasher.digest()
-
-        # Store in local cache
-        cid = f"bafyrei{digest.hex()[:32]}"
-        self._block_cache[cid] = stored_bytes
-        return cid
+        return _store_local()
 
     def get(self, cid: str) -> bytes:
         """
@@ -275,8 +280,9 @@ class IPLDStorage:
         Raises:
             ValueError: If the block cannot be found
         """
-        if not isinstance(cid, str) or not cid:
-            raise ValueError("CID must be a non-empty string")
+        if cid is None:
+            raise ValueError("CID is None")
+
         # Check cache first
         if cid in self._block_cache:
             return self._block_cache[cid]

@@ -60,20 +60,6 @@ try:
     from sentence_transformers import SentenceTransformer
     HAVE_SENTENCE_TRANSFORMERS = True
     
-    # Try to import accelerate integration for distributed inference
-    try:
-        from .accelerate_integration import (
-            AccelerateManager,
-            is_accelerate_available,
-            get_accelerate_status
-        )
-        HAVE_ACCELERATE = True
-    except ImportError:
-        HAVE_ACCELERATE = False
-        AccelerateManager = None
-        is_accelerate_available = lambda: False
-        get_accelerate_status = lambda: {"available": False}
-    
     class EmbeddingGenerator:
         """Simple embedding generator using sentence transformers with accelerate support"""
         def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", use_accelerate: bool = True):
@@ -81,13 +67,17 @@ try:
             
             # Initialize accelerate manager if available and enabled
             self.accelerate_manager = None
-            if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+            if use_accelerate:
                 try:
-                    self.accelerate_manager = AccelerateManager(
+                    from ipfs_datasets_py.embeddings_router import get_accelerate_manager as _get_accelerate_manager
+
+                    self.accelerate_manager = _get_accelerate_manager(
+                        purpose="multimodal_embeddings",
+                        enable_distributed=True,
                         resources={"model_name": model_name},
-                        enable_distributed=True
                     )
-                    logger.info("✓ Accelerate integration enabled for multimodal embeddings")
+                    if self.accelerate_manager is not None:
+                        logger.info("✓ Accelerate integration enabled for multimodal embeddings")
                 except Exception as e:
                     logger.warning(f"⚠ Failed to initialize accelerate manager: {e}")
                     self.accelerate_manager = None

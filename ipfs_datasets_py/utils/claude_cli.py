@@ -22,19 +22,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 
-# Try to import accelerate integration
 try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False, "reason": "not installed"}
+    from ..llm_router import get_accelerate_manager as _get_accelerate_manager
+except Exception:  # pragma: no cover
+    _get_accelerate_manager = None
 
 logger = logging.getLogger(__name__)
 
@@ -85,15 +76,20 @@ class ClaudeCLI:
         
         # Initialize accelerate integration for distributed LLM inference
         self.accelerate_manager = None
-        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+        if use_accelerate and callable(_get_accelerate_manager):
             try:
-                self.accelerate_manager = AccelerateManager()
-                logger.info("✓ Accelerate enabled for Claude CLI - using distributed LLM inference")
+                self.accelerate_manager = _get_accelerate_manager(
+                    purpose="claude_cli",
+                    enable_distributed=True,
+                    resources={"tool": "claude_cli"},
+                )
+                if self.accelerate_manager is not None:
+                    logger.info("✓ Accelerate enabled for Claude CLI - using distributed LLM inference")
+                else:
+                    logger.debug("Accelerate not available for Claude CLI - using standard API calls")
             except Exception as e:
                 logger.debug(f"Failed to initialize accelerate for Claude CLI: {e}")
                 self.accelerate_manager = None
-        elif HAVE_ACCELERATE and use_accelerate:
-            logger.debug("Accelerate available but disabled or not initialized for Claude CLI")
         else:
             logger.debug("Accelerate not available for Claude CLI - using standard API calls")
     

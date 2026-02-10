@@ -227,7 +227,8 @@ class SchemaValidator:
             llm_interface: LLM interface for validation assistance (creates mock if None)
         """
         self.registry = registry or SchemaRegistry()
-        self.llm = llm_interface or MockLLMInterface()
+        # Prefer the factory so router-backed LLMs work end-to-end.
+        self.llm = llm_interface or LLMInterfaceFactory.create()
 
         # Initialize with default schemas
         self._initialize_default_schemas()
@@ -327,7 +328,7 @@ class SchemaValidator:
                 errors=[f"Validation error: {str(e)}"]
             )
 
-    async def repair_and_validate(
+    def repair_and_validate(
         self,
         data: Any,
         domain: str,
@@ -440,7 +441,7 @@ class SemanticAugmenter:
             llm_interface: LLM interface for semantic augmentation
             domain_processor: Domain-specific processor for context
         """
-        self.llm = llm_interface or MockLLMInterface()
+        self.llm = llm_interface or LLMInterfaceFactory.create()
         self.domain_processor = domain_processor
 
     def augment(
@@ -771,7 +772,7 @@ class SPARQLValidator:
         """
         self.endpoint_url = endpoint_url
         self.tracer = tracer
-        self.llm = llm_interface or MockLLMInterface()
+        self.llm = llm_interface or LLMInterfaceFactory.create()
         self.cache_results = cache_results
         self.cache_ttl = cache_ttl
         self.cache = {}

@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import json
 
-from .deontic_logic_core import DeonticOperator, LegalAgent, LegalContext
+from ..tools.deontic_logic_core import DeonticOperator, LegalAgent, LegalContext
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -67,6 +67,7 @@ class MCPServerTester:
         self.ipfs_kit_mcp_url = ipfs_kit_mcp_url
         self.server = None
         self.server_task = None
+        self._server_task_group = None
         self.client = None
         self.temp_dir = tempfile.TemporaryDirectory()
         self.temp_path = Path(self.temp_dir.name)
@@ -89,7 +90,10 @@ class MCPServerTester:
 
         # Create and start server
         self.server = IPFSDatasetsMCPServer()
-        self.server_task = asyncio.create_task(self.server.start(self.host, self.port))
+        self._server_task_group = anyio.create_task_group()
+        await self._server_task_group.__aenter__()
+        self._server_task_group.start_soon(self.server.start, self.host, self.port)
+        self.server_task = True
 
         # Wait for server to start
         await anyio.sleep(2)
@@ -100,13 +104,12 @@ class MCPServerTester:
 
     async def stop_server(self):
         """Stop the MCP server."""
-        if self.server_task:
+        if self._server_task_group is not None:
             logger.info("Stopping MCP server")
-            self.server_task.cancel()
-            try:
-                await self.server_task
-            except anyio.get_cancelled_exc_class()():
-                pass
+            self._server_task_group.cancel_scope.cancel()
+            await self._server_task_group.__aexit__(None, None, None)
+            self._server_task_group = None
+            self.server_task = None
 
         # Cleanup temp directory
         self.temp_dir.cleanup()

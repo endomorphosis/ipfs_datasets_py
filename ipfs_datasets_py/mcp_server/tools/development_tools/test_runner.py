@@ -665,7 +665,16 @@ class TestRunner(BaseDevelopmentTool):
 
             # Execute all test suites
             if tasks:
-                suites = await asyncio.gather(*tasks)
+                suites = [None] * len(tasks)
+
+                async def _run_one(idx: int, awaitable) -> None:
+                    suites[idx] = await awaitable
+
+                async with anyio.create_task_group() as tg:
+                    for idx, awaitable in enumerate(tasks):
+                        tg.start_soon(_run_one, idx, awaitable)
+
+                suites = [s for s in suites if s is not None]
 
             total_duration = time.time() - start_time
 
@@ -714,8 +723,6 @@ class TestRunner(BaseDevelopmentTool):
     async def _run_test_suite_async(self, suite_type: str, path: Path,
                                    coverage: bool = False, verbose: bool = False) -> TestSuiteResult:
         """Run a test suite asynchronously."""
-        loop = asyncio.get_event_loop()
-
         def run_suite():
             if suite_type == "pytest":
                 return self.executor.run_pytest(path, coverage, verbose)
@@ -730,7 +737,7 @@ class TestRunner(BaseDevelopmentTool):
             else:
                 raise ValueError(f"Unknown test suite type: {suite_type}")
 
-        return await loop.run_in_executor(None, run_suite)
+        return await anyio.to_thread.run_sync(run_suite)
 
     async def _save_test_results(self, summary: TestRunSummary,
                                path: Path, formats: List[str]) -> List[str]:
@@ -883,28 +890,25 @@ def run_comprehensive_tests(path: str = ".",
     
     # Execute the test runner and return results
     try:
-        # Check if there's already an event loop running
         try:
-            loop = asyncio.get_running_loop()
-            # If we get here, there's a running loop, so we need to use a different approach
-            import concurrent.futures
-            import threading
+            import sniffio
+
+            sniffio.current_async_library()
+            in_async = True
+        except Exception:
+            in_async = False
+
+        if in_async:
+            from concurrent.futures import ThreadPoolExecutor
 
             def run_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(test_runner.execute())
-                finally:
-                    new_loop.close()
+                return anyio.run(test_runner.execute)
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor() as executor:
                 future = executor.submit(run_in_thread)
                 return future.result()
 
-        except RuntimeError:
-            # No running loop, we can use asyncio.run
-            return anyio.run(test_runner.execute())
+        return anyio.run(test_runner.execute)
     except Exception as e:
         # Fallback to error result if execution fails
         return {

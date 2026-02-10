@@ -17,7 +17,7 @@ from typing import Dict, List, Any, Optional, Union, Callable
 
 # Import visualization and monitoring components
 from ipfs_datasets_py.audit.audit_visualization import OptimizerLearningMetricsVisualizer
-from ipfs_datasets_py.rag.rag_query_visualization import create_learning_metrics_visualizations
+from ipfs_datasets_py.dashboards.rag.query_visualization import create_learning_metrics_visualizations
 from ipfs_datasets_py.optimizers.optimizer_alert_system import LearningAlertSystem, LearningAnomaly
 from ipfs_datasets_py.monitoring import MetricsCollector
 

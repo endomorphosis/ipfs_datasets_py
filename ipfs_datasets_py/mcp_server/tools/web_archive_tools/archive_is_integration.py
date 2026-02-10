@@ -410,8 +410,17 @@ async def batch_archive_to_archive_is(
                 return url, result
         
         # Process URLs concurrently with rate limiting
-        tasks = [archive_single_url(url) for url in urls]
-        completed_tasks = await asyncio.gather(*tasks, return_exceptions=True)
+        completed_tasks = [None] * len(urls)
+
+        async def _run_one(idx: int, url: str) -> None:
+            try:
+                completed_tasks[idx] = await archive_single_url(url)
+            except Exception as e:
+                completed_tasks[idx] = e
+
+        async with anyio.create_task_group() as tg:
+            for idx, url in enumerate(urls):
+                tg.start_soon(_run_one, idx, url)
         
         for result in completed_tasks:
             if isinstance(result, Exception):

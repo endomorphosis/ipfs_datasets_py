@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/llm/llm_interface.py'
+# Function and Class stubs from 'ipfs_datasets_py/llm/llm_interface.py'
 
 Files last updated: 1751428728.5398443
 

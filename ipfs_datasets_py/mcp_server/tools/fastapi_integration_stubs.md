@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/fastapi_integration.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/fastapi_integration.py'
 
 Files last updated: 1751408933.6964564
 
@@ -41,7 +41,8 @@ class MCPToolsAPI:
     """
     FastAPI application for migrated MCP tools.
 
-Provides REST API endpoints for all tools migrated from ipfs_embeddings_py.
+Provides REST API endpoints for tools migrated into the integrated
+`ipfs_datasets_py` stack (router-based embeddings and `vector_stores`).
     """
 ```
 * **Async:** False

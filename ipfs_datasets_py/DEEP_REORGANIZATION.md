@@ -138,13 +138,13 @@ The `ipfs_datasets_py` package has undergone a comprehensive 3-phase reorganizat
 - `resilient_operations.py` - Retry/resilience patterns
 - `s3_kit.py` - S3 integration
 
-#### `rag/` (+6 files)
-- `enhanced_rag_visualization.py` - RAG visualization
-- `wikipedia_rag_optimizer.py` - Wikipedia RAG
-- `website_graphrag_system.py` - Website GraphRAG
-- `complete_advanced_graphrag.py` - Complete GraphRAG
-- `graphrag_website_example.py` - GraphRAG examples
-- `intelligent_recommendation_engine.py` - Recommendations
+#### GraphRAG Modules (+6 files)
+- `dashboards/rag/enhanced_visualization.py` - GraphRAG visualization
+- `optimizers/graphrag/wikipedia_optimizer.py` - Wikipedia GraphRAG
+- `processors/graphrag/website_system.py` - Website GraphRAG
+- `processors/graphrag/complete_advanced_graphrag.py` - Complete GraphRAG
+- `examples/graphrag_website_example.py` - GraphRAG examples
+- `search/recommendations/intelligent_recommendation_engine.py` - Recommendations
 
 #### `search/` (+4 files)
 - `query_optimizer.py` - Query optimization
@@ -227,7 +227,7 @@ ipfs_datasets_py/
 │
 ├── Existing Modules (Enhanced)
 │   ├── utils/ (now 12+ files)
-│   ├── rag/ (now 15+ files)
+│   ├── dashboards/rag/ (now 4+ files)
 │   ├── search/ (now 8+ files)
 │   ├── embeddings/ (now 5+ files)
 │   ├── analytics/ (now 8+ files)
@@ -236,7 +236,7 @@ ipfs_datasets_py/
 │
 └── Other Existing Modules
     ├── mcp_tools/
-    ├── pdf_processing/
+    ├── processors/
     ├── ipld/
     ├── llm/
     ├── logic_integration/
@@ -253,8 +253,8 @@ ipfs_datasets_py/
     ├── static/
     ├── templates/
     ├── accelerate_integration/
-    ├── wikipedia_x/
-    └── ipfs_embeddings_py/
+    ├── processors/wikipedia_x/
+    └── (pre-migration embeddings module removed)
 ```
 
 ---
@@ -402,7 +402,7 @@ All new module structures have been tested:
 ✓ from ipfs_datasets_py.web_archiving import web_archive
 ✓ from ipfs_datasets_py.p2p_networking import p2p_workflow_scheduler
 ✓ from ipfs_datasets_py.reasoning import deontological_reasoning
-✓ from ipfs_datasets_py.ipfs_formats import ipfs_multiformats
+✓ from ipfs_datasets_py.data_transformation.ipfs_formats import ipfs_multiformats
 ```
 
 ### Module Exposure

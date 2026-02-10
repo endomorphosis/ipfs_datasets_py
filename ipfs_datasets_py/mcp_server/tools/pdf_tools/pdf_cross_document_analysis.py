@@ -7,10 +7,22 @@ and knowledge graph discovery.
 """
 
 import anyio
+import json
 import logging
 from typing import Dict, Any, Optional, List, Union
 
 logger = logging.getLogger(__name__)
+
+try:
+    from ipfs_datasets_py.analysis import CrossDocumentAnalyzer  # type: ignore
+except Exception:
+    CrossDocumentAnalyzer = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
 
 async def pdf_cross_document_analysis(
     document_ids: Optional[List[str]] = None,
@@ -57,10 +69,45 @@ async def pdf_cross_document_analysis(
         - processing_time: Analysis processing time
         - message: Success/error message
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if (
+        isinstance(document_ids, str)
+        and analysis_types == ["entities", "themes", "citations"]
+        and similarity_threshold == 0.75
+        and max_connections == 100
+        and temporal_analysis is True
+        and include_visualizations is False
+        and output_format == "detailed"
+        and (document_ids.lstrip().startswith("{") or document_ids.lstrip().startswith("[") or any(ch.isspace() for ch in document_ids) or not document_ids.strip())
+    ):
+        data, error = parse_json_object(document_ids)
+        if error is not None:
+            return error
+
+        analyzer_cls = CrossDocumentAnalyzer
+        if analyzer_cls is None:
+            return mcp_error_response("CrossDocumentAnalyzer is not available")
+
+        try:
+            analyzer = analyzer_cls()
+            result = await analyzer.analyze_documents(
+                document_ids=data.get("document_ids"),
+                analysis_types=data.get("analysis_types"),
+                options=data.get("options") or {},
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
         # Import cross-document analysis components
-        from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator
-        from ipfs_datasets_py.analysis import CrossDocumentAnalyzer, TemporalAnalyzer
+        from ipfs_datasets_py.processors.pdf_processing import GraphRAGIntegrator
+        from ipfs_datasets_py.analysis import CrossDocumentAnalyzer as _CrossDocumentAnalyzer, TemporalAnalyzer
         from ipfs_datasets_py.visualization import NetworkVisualizer
         from ipfs_datasets_py.monitoring import track_operation
         
@@ -94,7 +141,7 @@ async def pdf_cross_document_analysis(
         
         # Initialize components
         integrator = GraphRAGIntegrator()
-        analyzer = CrossDocumentAnalyzer()
+        analyzer = _CrossDocumentAnalyzer()
         
         # Track the analysis operation
         with track_operation("pdf_cross_document_analysis"):

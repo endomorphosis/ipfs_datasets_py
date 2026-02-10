@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/optimizers/optimizer_learning_metrics.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/optimizers/optimizer_learning_metrics.py'
 
 Files last updated: 1748635923.4613795
 
@@ -30,7 +30,7 @@ class NumpyEncoder(json.JSONEncoder):
 ```python
 class OptimizerLearningMetricsCollector:
     """
-    Collects and aggregates metrics for statistical learning in the RAG query optimizer.
+    Collects and aggregates metrics for statistical learning in the GraphRAG query optimizer.
 
 This class tracks metrics related to the optimizer's learning process, including:
 - Learning cycles completion

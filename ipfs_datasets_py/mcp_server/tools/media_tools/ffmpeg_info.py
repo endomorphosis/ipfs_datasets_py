@@ -9,6 +9,7 @@ import anyio
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 import json
+import subprocess
 
 import logging
 
@@ -96,29 +97,29 @@ async def ffmpeg_probe(
         cmd.append(input_path)
         
         # Execute probe
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+        proc = await anyio.run_process(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
         )
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode != 0:
+
+        if proc.returncode != 0:
             return {
                 "status": "error",
                 "error": "FFprobe failed",
-                "stderr": stderr.decode('utf-8', errors='replace'),
+                "stderr": (proc.stderr or b"").decode('utf-8', errors='replace'),
                 "command": ' '.join(cmd)
             }
         
         # Parse JSON output
         try:
-            probe_data = json.loads(stdout.decode('utf-8'))
+            probe_data = json.loads((proc.stdout or b"").decode('utf-8'))
         except json.JSONDecodeError as e:
             return {
                 "status": "error",
                 "error": f"Failed to parse FFprobe output: {e}",
-                "raw_output": stdout.decode('utf-8', errors='replace')[:1000]
+                "raw_output": (proc.stdout or b"").decode('utf-8', errors='replace')[:1000]
             }
         
         # Enhanced analysis

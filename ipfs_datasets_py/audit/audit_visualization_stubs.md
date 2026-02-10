@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/audit/audit_visualization.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/audit/audit_visualization.py'
 
 Files last updated: 1748635923.4213796
 
@@ -72,10 +72,10 @@ for later analysis and visualization.
 ```python
 class OptimizerLearningMetricsVisualizer:
     """
-    Visualizes metrics related to RAG query optimizer's statistical learning process.
+    Visualizes metrics related to GraphRAG query optimizer's statistical learning process.
 
 This class provides methods to create visualizations for various aspects of the
-statistical learning process in the RAG query optimizer, including learning cycles,
+statistical learning process in the GraphRAG query optimizer, including learning cycles,
 parameter adaptations, strategy effectiveness, query patterns, and learning performance.
     """
 ```
@@ -415,7 +415,7 @@ Returns:
 ```python
 def create_query_audit_timeline(query_metrics_collector, audit_metrics, hours_back: int = 24, interval_minutes: int = 30, theme: str = "light", figsize: Tuple[int, int] = (12, 8), output_file: Optional[str] = None, show_plot: bool = False) -> Optional[Any]:
     """
-    Create a comprehensive visualization showing both RAG query performance and audit events.
+    Create a comprehensive visualization showing both GraphRAG query performance and audit events.
 
 This function creates a timeline visualization with three subplots:
 1. Query durations and counts
@@ -445,7 +445,7 @@ Returns:
 ```python
 def create_query_audit_timeline(self, query_metrics_collector, hours_back: int = 24, interval_minutes: int = 30, theme: str = "light", figsize: Tuple[int, int] = (12, 8), output_file: Optional[str] = None, show_plot: bool = False) -> Optional[Any]:
     """
-    Create a timeline visualization showing both audit events and RAG queries.
+    Create a timeline visualization showing both audit events and GraphRAG queries.
 
 Args:
     query_metrics_collector: QueryMetricsCollector containing query metrics
@@ -469,9 +469,9 @@ Returns:
 ```python
 def create_query_audit_timeline(query_metrics_collector, audit_metrics: "AuditMetricsAggregator", output_file: Optional[str] = None, hours_back: int = 24, theme: str = "light", figsize: Tuple[int, int] = (14, 8)) -> Optional[Any]:
     """
-    Create a visualization showing the relationship between RAG queries and audit events.
+    Create a visualization showing the relationship between GraphRAG queries and audit events.
 
-This function generates a timeline visualization that shows RAG query executions
+This function generates a timeline visualization that shows GraphRAG query executions
 alongside audit events, making it easier to correlate performance issues with
 system events or security incidents.
 
@@ -496,7 +496,7 @@ Returns:
 ```python
 def create_query_audit_timeline(query_metrics_collector, audit_metrics, hours_back: int = 24, interval_minutes: int = 30, theme: str = "light", figsize: Tuple[int, int] = (12, 8), output_file: Optional[str] = None, show_plot: bool = False) -> Optional[Any]:
     """
-    Create a comprehensive visualization showing both RAG query performance and audit events.
+    Create a comprehensive visualization showing both GraphRAG query performance and audit events.
 
 This function creates a timeline visualization with three subplots:
 1. Query durations and counts

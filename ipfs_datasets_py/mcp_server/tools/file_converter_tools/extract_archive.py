@@ -4,7 +4,7 @@ MCP Server Tool: Extract Archive
 Extract contents from an archive file using the file_converter package exports.
 """
 
-from ipfs_datasets_py.processors.file_converter import extract_archive_contents_sync
+from ipfs_datasets_py.processors.file_converter.exports import extract_archive_contents_sync
 
 
 async def extract_archive_tool(

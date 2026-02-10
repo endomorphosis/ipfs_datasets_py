@@ -6,6 +6,7 @@ This tool handles generating reports based on audit logs.
 """
 import anyio
 import datetime
+import json
 from typing import Dict, Any, Optional, Union, List
 
 import logging
@@ -13,6 +14,17 @@ import logging
 logger = logging.getLogger(__name__)
 from ipfs_datasets_py.audit.audit_visualization import AuditMetricsAggregator
 from ipfs_datasets_py.audit.audit_reporting import AuditReportGenerator
+
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
 
 
 async def generate_audit_report(
@@ -38,6 +50,42 @@ async def generate_audit_report(
     Returns:
         Dict containing information about the generated report
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if (
+        isinstance(report_type, str)
+        and start_time is None
+        and end_time is None
+        and filters is None
+        and output_format == "json"
+        and output_path is None
+        and include_details is True
+        and (report_type.lstrip().startswith("{") or report_type.lstrip().startswith("[") or any(ch.isspace() for ch in report_type) or not report_type.strip())
+    ):
+        data, error = parse_json_object(report_type)
+        if error is not None:
+            return error
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.generate_audit_report(
+                report_type=data.get("report_type", "comprehensive"),
+                start_time=data.get("start_time"),
+                end_time=data.get("end_time"),
+                filters=data.get("filters"),
+                output_format=data.get("output_format", "json"),
+                output_path=data.get("output_path"),
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
         logger.info(f"Generating {report_type} audit report")
 

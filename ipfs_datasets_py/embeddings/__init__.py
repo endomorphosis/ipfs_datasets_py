@@ -2,7 +2,7 @@
 IPFS Datasets Embeddings Module
 
 Provides comprehensive embedding generation, chunking, and schema functionality
-migrated from the ipfs_embeddings_py project.
+migrated from a pre-migration embeddings codebase.
 
 This module includes:
 - Core embedding generation and management
@@ -18,7 +18,6 @@ from .core import (
     PerformanceMetrics,
     MemoryMonitor,
     AdaptiveBatchProcessor,
-    ipfs_embeddings_py
 )
 
 # Import from schema module  
@@ -64,7 +63,6 @@ __all__ = [
     'PerformanceMetrics',
     'MemoryMonitor', 
     'AdaptiveBatchProcessor',
-    'ipfs_embeddings_py',
     
     # Schema classes
     'BaseComponent',

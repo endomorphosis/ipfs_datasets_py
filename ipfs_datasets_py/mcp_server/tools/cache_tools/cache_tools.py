@@ -1,7 +1,7 @@
 # ipfs_datasets_py/mcp_server/tools/cache_tools/cache_tools.py
 """
 Cache management and optimization tools.
-Migrated from ipfs_embeddings_py project.
+Migrated from a legacy tooling codebase.
 """
 
 import logging

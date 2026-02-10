@@ -15,22 +15,14 @@ import sys
 from pathlib import Path
 from typing import Optional, List
 
-# Prefer canonical import path; fall back to local modules for dev.
-try:
-    from ipfs_datasets_py.processors.file_converter import FileConverter
-    from ipfs_datasets_py.processors.file_converter.knowledge_graph_integration import (
-        UniversalKnowledgeGraphPipeline,
-        TextSummarizationPipeline,
-    )
-    from ipfs_datasets_py.processors.file_converter.vector_embedding_integration import VectorEmbeddingPipeline
-    from ipfs_datasets_py.processors.file_converter.url_handler import is_url
-    from ipfs_datasets_py.processors.file_converter import __version__
-except Exception:
-    from .converter import FileConverter
-    from .knowledge_graph_integration import UniversalKnowledgeGraphPipeline, TextSummarizationPipeline
-    from .vector_embedding_integration import VectorEmbeddingPipeline
-    from .url_handler import is_url
-    from . import __version__
+from .converter import FileConverter
+from .knowledge_graph_integration import (
+    TextSummarizationPipeline,
+    UniversalKnowledgeGraphPipeline,
+)
+from .url_handler import is_url
+from .vector_embedding_integration import VectorEmbeddingPipeline
+from .version import __version__
 
 
 # ============================================================================

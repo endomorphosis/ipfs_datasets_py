@@ -2,7 +2,7 @@
 MCP Tools Registration System
 
 This module provides a comprehensive registration system for all migrated MCP tools
-from the ipfs_embeddings_py project integration.
+from the embeddings/tooling integration.
 """
 
 import logging
@@ -528,7 +528,7 @@ TOOL_MAPPINGS = {
 
 def register_all_migrated_tools(registry: MCPToolRegistry) -> Dict[str, Any]:
     """
-    Register all migrated tools from the ipfs_embeddings_py integration.
+    Register all migrated tools from the embeddings/tooling integration.
     
     Args:
         registry: The tool registry to register tools with

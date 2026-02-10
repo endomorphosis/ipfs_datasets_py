@@ -1,21 +1,9 @@
-"""Legacy shim for UnixFS integration.
+"""DEPRECATED compatibility shim.
 
-Canonical module (current step):
-- `ipfs_datasets_py.graphrag.integrations.unixfs_integration`
+Canonical location:
+  ipfs_datasets_py.data_transformation.unixfs
 
-Note: a later consolidation step may move UnixFS primitives closer to IPLD.
+This module remains to preserve older import paths.
 """
 
-from __future__ import annotations
-
-import warnings
-
-
-warnings.warn(
-    "ipfs_datasets_py.logic.integrations.unixfs_integration is deprecated; "
-    "use ipfs_datasets_py.graphrag.integrations.unixfs_integration",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
-from ipfs_datasets_py.graphrag.integrations.unixfs_integration import *  # noqa: F403
+from ipfs_datasets_py.data_transformation.unixfs import *  # noqa: F403

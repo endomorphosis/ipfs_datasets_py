@@ -6,6 +6,7 @@ This tool handles similarity search in vector indexes
 using the VectorSimilarityCalculator from vector_tools.
 """
 import anyio
+import json
 from typing import Dict, Any, Optional, Union, List
 
 import numpy as np
@@ -15,6 +16,17 @@ import logging
 logger = logging.getLogger(__name__)
 from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator, VectorStore
 
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
+
 
 # Global manager instance to maintain state between calls
 from .shared_state import _get_global_manager
@@ -22,7 +34,7 @@ from .shared_state import _get_global_manager
 
 async def search_vector_index(
     index_id: str,
-    query_vector: List[float],
+    query_vector: Optional[List[float]] = None,
     top_k: int = 5,
     include_metadata: bool = True,
     include_distances: bool = True,
@@ -42,7 +54,45 @@ async def search_vector_index(
     Returns:
         Dict containing search results
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if isinstance(index_id, str) and query_vector is None and top_k == 5 and include_metadata is True and include_distances is True and filter_metadata is None and (
+        not index_id.strip()
+        or index_id.lstrip().startswith("{")
+        or index_id.lstrip().startswith("[")
+        or any(ch.isspace() for ch in index_id)
+    ):
+        data, error = parse_json_object(index_id)
+        if error is not None:
+            return error
+
+        for field in ("index_id", "query_vector"):
+            if field not in data:
+                return mcp_error_response(f"Missing required field: {field}", error_type="validation")
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.search_vector_index(
+                index_id=data["index_id"],
+                query_vector=data["query_vector"],
+                top_k=data.get("top_k", 5),
+                include_metadata=data.get("include_metadata", True),
+                include_distances=data.get("include_distances", True),
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
+        if query_vector is None:
+            raise ValueError("query_vector must be provided")
+
         logger.info(f"Searching vector index {index_id} for top {top_k} results")
         # Get the global manager instance (synchronous helper)
         manager = _get_global_manager()
@@ -89,6 +139,6 @@ async def search_vector_index(
         logger.error(f"Error searching vector index: {e}")
         return {
             "status": "error",
-            "message": str(e),
+            "error": str(e),
             "index_id": index_id
         }

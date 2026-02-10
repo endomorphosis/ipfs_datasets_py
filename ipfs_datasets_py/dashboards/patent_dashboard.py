@@ -32,8 +32,7 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
     if not FLASK_AVAILABLE:
         logger.warning("Flask not available, patent dashboard cannot be created")
         return None
-    
-    # Create blueprint
+
     patent_bp = Blueprint('patents', __name__, url_prefix='/mcp/patents')
     
     @patent_bp.route('/')
@@ -62,9 +61,9 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
             JSON response with patents data
         """
         try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
+            from ipfs_datasets_py.processors.patent_scraper import (
                 USPTOPatentScraper,
-                PatentSearchCriteria
+                PatentSearchCriteria,
             )
             from dataclasses import asdict
             
@@ -97,7 +96,6 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
                 "count": len(patents_data),
                 "query": asdict(criteria)
             })
-            
         except Exception as e:
             logger.error(f"Patent search API error: {e}", exc_info=True)
             return jsonify({
@@ -126,10 +124,10 @@ def create_patent_dashboard_blueprint() -> Optional[Blueprint]:
             JSON response with dataset metadata
         """
         try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.patent_scraper import (
+            from ipfs_datasets_py.processors.patent_scraper import (
                 USPTOPatentScraper,
                 PatentSearchCriteria,
-                PatentDatasetBuilder
+                PatentDatasetBuilder,
             )
             
             # Get request data

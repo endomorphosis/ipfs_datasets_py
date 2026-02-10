@@ -17,11 +17,11 @@ from pathlib import Path
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
+# Add package root to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 try:
-    from ipfs_datasets_py.legal_scrapers import (
+    from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
         scrape_us_code,
         get_us_code_titles,
         search_us_code

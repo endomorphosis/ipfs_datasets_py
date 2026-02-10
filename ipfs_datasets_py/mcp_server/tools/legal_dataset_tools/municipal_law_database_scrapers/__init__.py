@@ -6,5 +6,14 @@ downstream integrations:
 `ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers.*`
 
 The actual implementations live under
-`ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers`.
+`ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers`.
 """
+
+import warnings
+
+warnings.warn(
+	"ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers is deprecated; "
+	"import ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers instead.",
+	DeprecationWarning,
+	stacklevel=2,
+)

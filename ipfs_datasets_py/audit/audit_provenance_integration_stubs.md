@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/audit/audit_provenance_integration.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/audit/audit_provenance_integration.py'
 
 Files last updated: 1748635923.4113796
 
@@ -30,7 +30,7 @@ Args:
     audit_metrics: Optional AuditMetricsAggregator for audit visualization
     provenance_dashboard: Optional ProvenanceDashboard for provenance tracking
     audit_logger: Optional AuditLogger for capturing new audit events
-    query_visualizer: Optional RAGQueryVisualizer for RAG query metrics
+    query_visualizer: Optional RAGQueryVisualizer for GraphRAG query metrics
     """
 ```
 * **Async:** False

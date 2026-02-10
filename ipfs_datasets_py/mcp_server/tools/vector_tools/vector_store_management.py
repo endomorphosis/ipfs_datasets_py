@@ -38,11 +38,12 @@ except ImportError:
 
 # Import embeddings engine
 try:
-    from ipfs_embeddings_py.embeddings_engine import AdvancedIPFSEmbeddings
+    from ipfs_datasets_py.embeddings.embeddings_engine import AdvancedIPFSEmbeddings
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
     AdvancedIPFSEmbeddings = None
+
 
 async def create_vector_index(
     index_name: str,

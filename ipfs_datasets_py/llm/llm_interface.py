@@ -23,7 +23,14 @@ import re
 import time
 import uuid
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    import numpy as _np
+
+    NDArray = _np.ndarray
+else:
+    NDArray = Any
 
 try:
     from ..utils.embedding_adapter import embed_text as adapter_embed_text
@@ -57,19 +64,10 @@ except ImportError:
         ndarray = list
     np = MockNumpy()
 
-# Try to import accelerate integration for distributed LLM inference
 try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
+    from ..llm_router import get_accelerate_manager as _router_get_accelerate_manager
+except Exception:
+    _router_get_accelerate_manager = None
 
 
 class LLMConfig:
@@ -239,7 +237,7 @@ class LLMInterface:
         """
         raise NotImplementedError("Subclasses must implement generate_with_structured_output()")
 
-    def embed_text(self, text: str) -> np.ndarray:
+    def embed_text(self, text: str) -> NDArray:
         """
         Generate embedding vector for text.
 
@@ -254,7 +252,7 @@ class LLMInterface:
         """
         raise NotImplementedError("Subclasses must implement embed_text()")
 
-    def embed_batch(self, texts: List[str]) -> np.ndarray:
+    def embed_batch(self, texts: List[str]) -> NDArray:
         """
         Generate embedding vectors for a batch of texts.
 
@@ -334,19 +332,18 @@ class MockLLMInterface(LLMInterface):
             "IPFS_DATASETS_PY_USE_EMBEDDING_ADAPTER", ""
         ).strip().lower() in {"1", "true", "yes", "on"}
         
-        # Initialize accelerate manager if available and enabled
+        # Initialize accelerate manager (router-mediated, best-effort)
         self.accelerate_manager = None
-        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
-            try:
-                self.accelerate_manager = AccelerateManager(
-                    resources={"model_name": self.config.model_name},
-                    enable_distributed=True
-                )
-                print("✓ Accelerate integration enabled for LLM inference")
-            except Exception as e:
-                print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
-                self.accelerate_manager = None
-        elif not HAVE_ACCELERATE or not is_accelerate_available():
+        if use_accelerate and callable(_router_get_accelerate_manager):
+            self.accelerate_manager = _router_get_accelerate_manager(
+                purpose="llm_interface",
+                resources={"model_name": self.config.model_name},
+                enable_distributed=True,
+            )
+
+        if use_accelerate and self.accelerate_manager is not None:
+            print("✓ Accelerate integration enabled for LLM inference")
+        elif use_accelerate:
             print("⚠ Accelerate integration not available, using mock LLM only")
 
     def generate(self,
@@ -420,7 +417,7 @@ class MockLLMInterface(LLMInterface):
 
         return result
 
-    def embed_text(self, text: str) -> np.ndarray:
+    def embed_text(self, text: str) -> NDArray:
         """
         Generate mock embedding vector for text.
 
@@ -448,7 +445,7 @@ class MockLLMInterface(LLMInterface):
         # Normalize to unit length
         return vector / np.linalg.norm(vector)
 
-    def embed_batch(self, texts: List[str]) -> np.ndarray:
+    def embed_batch(self, texts: List[str]) -> NDArray:
         """
         Generate mock embedding vectors for a batch of texts.
 
@@ -660,20 +657,39 @@ class LLMInterfaceFactory:
         Raises:
             ValueError: If model is not supported
         """
+        # Allow env var override for the default factory call sites.
+        # This lets GraphRAG/validation switch to the router without having to
+        # thread a model name everywhere.
+        env_model = (os.getenv("IPFS_DATASETS_PY_LLM_MODEL") or "").strip()
+        if model_name == "mock-llm" and env_model:
+            model_name = env_model
+
         # Create config
         config = LLMConfig(model_name=model_name, **kwargs)
 
         # Create appropriate interface
         if model_name.startswith("mock-"):
+            # Even for mock configs, allow opting into the router explicitly.
+            if os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER") or os.getenv("OPENROUTER_API_KEY") or os.getenv("IPFS_DATASETS_PY_OPENROUTER_API_KEY"):
+                try:
+                    from .llm_router_interface import RoutedLLMInterface
+
+                    return RoutedLLMInterface(config)
+                except Exception:
+                    pass
             return MockLLMInterface(config)
-        else:
-            try:
-                # Try to import real implementation from ipfs_accelerate_py
-                from ipfs_accelerate_py.llm_integration import RealLLMInterface
-                return RealLLMInterface(config)
-            except ImportError:
-                print("Warning: ipfs_accelerate_py not available. Using mock implementation.")
-                return MockLLMInterface(config)
+
+        # Non-mock model name: prefer router (it can route to accelerate/CLI/API/local HF).
+        try:
+            from .llm_router_interface import RoutedLLMInterface
+
+            return RoutedLLMInterface(config)
+        except Exception:
+            pass
+
+        # If the router-backed interface can't be created for any reason,
+        # fall back to the in-process mock implementation.
+        return MockLLMInterface(config)
 
 
 class PromptMetadata:

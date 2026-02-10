@@ -45,7 +45,7 @@ __version__ = "0.2.0"
 __author__ = "IPFS Datasets Python Team"
 
 # Core deontic logic exports
-from .deontic_logic_core import (
+from ..tools.deontic_logic_core import (
     DeonticOperator,
     DeonticFormula,
     DeonticRuleSet,
@@ -69,7 +69,7 @@ from .legal_domain_knowledge import (
 )
 
 # Logic translation exports
-from .logic_translation_core import (
+from ..tools.logic_translation_core import (
     LogicTranslationTarget,
     TranslationResult,
     AbstractLogicFormula,
@@ -117,6 +117,18 @@ from .deontic_query_engine import (
     query_legal_rules
 )
 
+# Deontological reasoning exports
+from .deontological_reasoning import (
+    DeontologicalReasoningEngine,
+    DeonticModality,
+    ConflictType,
+    DeonticStatement,
+    DeonticConflict,
+    DeonticExtractor,
+    ConflictDetector,
+    DeonticPatterns,
+)
+
 # Proof execution engine exports
 from .proof_execution_engine import (
     ProofExecutionEngine,
@@ -143,8 +155,8 @@ from .document_consistency_checker import (
 )
 
 # Legacy SymbolicAI exports
-from .symbolic_fol_bridge import SymbolicFOLBridge
-from .symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
+from ..tools.symbolic_fol_bridge import SymbolicFOLBridge
+from ..tools.symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
 from .symbolic_contracts import (
     ContractedFOLConverter,
     FOLInput,
@@ -164,7 +176,7 @@ try:
     
     # Export advanced components only if SymbolicAI is available
     from .interactive_fol_constructor import InteractiveFOLConstructor
-    from .modal_logic_extension import ModalLogicSymbol, AdvancedLogicConverter, ModalFormula, LogicClassification
+    from ..tools.modal_logic_extension import ModalLogicSymbol, AdvancedLogicConverter, ModalFormula, LogicClassification
     from .logic_verification import LogicVerifier, LogicAxiom, ProofResult, ConsistencyCheck, EntailmentResult
     
     __all__ = [

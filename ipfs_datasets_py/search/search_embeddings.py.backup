@@ -1,7 +1,6 @@
 import datasets
 import sys
 from ipfs_kit_py.ipfs_kit import ipfs_kit
-# from ipfs_embeddings_py import ipfs_embeddings_py, qdrant_kit_py, faiss_kit_py # Commented out for now
 import numpy as np
 import os
 import json
@@ -26,7 +25,6 @@ class search_embeddings:
         self.ipfs_kit = ipfs_kit.ipfs_kit(resources=resources, metadata=metadata) # Instantiate ipfs_kit
         
         # self.qdrant_kit_py = qdrant_kit_py(resources=resources, metadata=metadata) # Commented out for now
-        # self.ipfs_embeddings_py = ipfs_embeddings_py(resources=resources, metadata=metadata) # Commented out for now
         # Removed calls to self.ipfs_kit.add_endpoint as the method does not exist.
         # Endpoint management might be handled differently now or is not needed here.
         

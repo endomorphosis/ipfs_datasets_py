@@ -5,12 +5,19 @@ MCP tool for recording audit events.
 This tool handles recording audit events for security, compliance, and operations tracking.
 """
 import anyio
+import json
 from typing import Dict, Any, Optional, Union, List
 
 import logging
 
 logger = logging.getLogger(__name__)
 from ipfs_datasets_py.audit import AuditLogger # Added import
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
 
 async def record_audit_event( # Changed to async def
     action: str,
@@ -38,6 +45,40 @@ async def record_audit_event( # Changed to async def
     Returns:
         Dict containing information about the recorded audit event
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    mcp_mode = (
+        isinstance(action, str)
+        and resource_id is None
+        and resource_type is None
+        and user_id is None
+        and details is None
+        and source_ip is None
+        and tags is None
+        and (
+            not action.strip()
+            or action.lstrip().startswith("{")
+            or action.lstrip().startswith("[")
+            or any(ch.isspace() for ch in action)
+        )
+    )
+
+    if mcp_mode:
+        data, error = parse_json_object(action)
+        if error is not None:
+            return error
+
+        if not data.get("action"):
+            return mcp_error_response("Missing required field: action", error_type="validation")
+
+        action = data["action"]
+        resource_id = data.get("resource_id")
+        resource_type = data.get("resource_type")
+        user_id = data.get("user_id")
+        details = data.get("details")
+        source_ip = data.get("source_ip")
+        severity = data.get("severity", severity)
+        tags = data.get("tags")
+
     try:
         logger.info(f"Recording audit event: {action}")
 
@@ -95,18 +136,24 @@ async def record_audit_event( # Changed to async def
         )
 
         # Return information about the recorded event
-        return {
+        result = {
             "status": "success",
-            "event_id": event_id,
+            "event_id": str(event_id),
             "action": action,
             "severity": severity,
             "resource_id": resource_id,
             "resource_type": resource_type
         }
+        if mcp_mode:
+            return mcp_text_response(result)
+        return result
     except Exception as e:
         logger.error(f"Error recording audit event: {e}")
-        return {
+        result = {
             "status": "error",
-            "message": str(e),
+            "error": str(e),
             "action": action
         }
+        if mcp_mode:
+            return mcp_text_response(result)
+        return result

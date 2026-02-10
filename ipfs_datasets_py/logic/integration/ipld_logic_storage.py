@@ -13,8 +13,8 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
-from .deontic_logic_core import DeonticFormula, DeonticRuleSet
-from .logic_translation_core import TranslationResult, LogicTranslationTarget
+from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from ..tools.logic_translation_core import TranslationResult, LogicTranslationTarget
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Try to import IPLD components
 try:
-    from ..ipld.storage import IPLDStorage
-    from ..ipld.vector_store import IPLDVectorStore
+    from ..data_transformation.ipld.storage import IPLDStorage
+    from ..data_transformation.ipld.vector_store import IPLDVectorStore
     IPLD_AVAILABLE = True
 except ImportError:
     IPLD_AVAILABLE = False

@@ -6,6 +6,7 @@ This tool handles creating vector indexes for similarity search
 using the VectorStore from vector_tools.
 """
 import anyio
+import json
 import uuid
 from typing import Dict, Any, Optional, Union, List
 
@@ -14,7 +15,17 @@ import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
-from ipfs_datasets_py.vector_tools import VectorStore, create_vector_store
+
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
 
 
 # Global manager instance to maintain state between calls
@@ -22,7 +33,7 @@ from .shared_state import _get_global_manager
 
 
 async def create_vector_index(
-    vectors: List[List[float]],
+    vectors: List[List[float]] | str,
     dimension: Optional[int] = None,
     metric: str = "cosine",
     metadata: Optional[List[Dict[str, Any]]] = None,
@@ -43,7 +54,39 @@ async def create_vector_index(
     Returns:
         Dict containing information about the created index
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if isinstance(vectors, str) and dimension is None and metric == "cosine" and metadata is None and index_id is None and index_name is None:
+        data, error = parse_json_object(vectors)
+        if error is not None:
+            return error
+
+        if "vectors" not in data:
+            return mcp_error_response("Missing required field: vectors", error_type="validation")
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.create_vector_index(
+                vectors=data["vectors"],
+                dimension=data.get("dimension"),
+                metric=data.get("metric", "cosine"),
+                metadata=data.get("metadata"),
+                index_name=data.get("index_name"),
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
+        if isinstance(vectors, str):
+            return {"status": "error", "message": "Invalid vectors input"}
+
         logger.info(f"Creating vector index with {len(vectors)} vectors")
         # Get the global manager (synchronous internal helper)
         manager = _get_global_manager()

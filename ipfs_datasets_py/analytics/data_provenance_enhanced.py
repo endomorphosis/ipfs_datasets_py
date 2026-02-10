@@ -73,7 +73,7 @@ except ImportError:
 # IPLD storage integration
 try:
     from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-    from ipfs_datasets_py.data_transformation.ipld.dag_pb import PBNode as DAGNode, PBLink as DAGLink
+    from ipfs_datasets_py.data_transformation.ipld.dag_pb import DAGNode, DAGLink
     IPLD_AVAILABLE = True
     DAGPB_AVAILABLE = True
 except ImportError:
@@ -3193,7 +3193,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
                 # Register schemas for provenance records
                 self._register_ipld_schemas()
             else:
-                self.logger.warning("IPLD storage requested but ipfs_datasets_py.ipld.storage not available")
+                self.logger.warning("IPLD storage requested but ipfs_datasets_py.data_transformation.ipld.storage not available")
                 self.enable_ipld_storage = False
 
         # Set up logging

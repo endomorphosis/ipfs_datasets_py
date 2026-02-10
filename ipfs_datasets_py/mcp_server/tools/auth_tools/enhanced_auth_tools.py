@@ -2,7 +2,7 @@
 Enhanced Authentication Tools for IPFS Datasets MCP Server
 
 This module provides comprehensive authentication, authorization, and user management tools
-migrated and enhanced from the ipfs_embeddings_py project with production-ready features.
+migrated and enhanced from a legacy tooling codebase with production-ready features.
 """
 
 import logging

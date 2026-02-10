@@ -623,9 +623,9 @@ class MCPDashboard(AdminDashboard):
             """Render the caselaw analysis dashboard for temporal deontic logic RAG system."""
             # Import temporal deontic logic components
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic_integration.deontic_logic_core import DeonticOperator
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.tools.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -667,9 +667,9 @@ class MCPDashboard(AdminDashboard):
             """Render the REST-based caselaw analysis dashboard (legacy)."""
             # Import temporal deontic logic components
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic_integration.deontic_logic_core import DeonticOperator
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.tools.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -704,8 +704,8 @@ class MCPDashboard(AdminDashboard):
         def api_add_theorem():
             """Add a new temporal deontic logic theorem from caselaw."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -771,8 +771,8 @@ class MCPDashboard(AdminDashboard):
         def api_check_document_consistency():
             """Check document consistency against temporal deontic logic theorems."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -848,7 +848,7 @@ class MCPDashboard(AdminDashboard):
         def api_bulk_process_caselaw():
             """Start bulk processing of caselaw corpus to build unified deontic logic system."""
             try:
-                from .logic_integration.caselaw_bulk_processor import (
+                from .logic.integration.caselaw_bulk_processor import (
                     CaselawBulkProcessor, BulkProcessingConfig
                 )
                 from datetime import datetime
@@ -1047,8 +1047,8 @@ class MCPDashboard(AdminDashboard):
         def api_query_theorems():
             """Query relevant theorems using RAG retrieval."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1191,24 +1191,17 @@ class MCPDashboard(AdminDashboard):
                         "id": request_id
                     }), 404
                 
-                # Execute MCP tool
-                import anyio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
+                from ipfs_datasets_py.utils.anyio_compat import run as anyio_run
+
+                result = anyio_run(
+                    temporal_deontic_mcp_server.call_tool_direct(tool_mapping[method], params)
+                )
                 
-                try:
-                    result = loop.run_until_complete(
-                        temporal_deontic_mcp_server.call_tool_direct(tool_mapping[method], params)
-                    )
-                    
-                    return jsonify({
-                        "jsonrpc": "2.0",
-                        "result": result,
-                        "id": request_id
-                    })
-                    
-                finally:
-                    loop.close()
+                return jsonify({
+                    "jsonrpc": "2.0",
+                    "result": result,
+                    "id": request_id
+                })
                 
             except Exception as e:
                 self.logger.error(f"MCP JSON-RPC call failed: {e}")
@@ -1256,9 +1249,9 @@ class MCPDashboard(AdminDashboard):
             """Render the finance analysis dashboard using temporal deontic logic."""
             # Import temporal deontic logic components (same backend as caselaw)
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic_integration.deontic_logic_core import DeonticOperator
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.tools.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -1312,8 +1305,8 @@ class MCPDashboard(AdminDashboard):
         def api_check_finance_document():
             """Check financial document consistency."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1388,8 +1381,8 @@ class MCPDashboard(AdminDashboard):
         def api_query_finance_rules():
             """Query relevant financial rules using RAG retrieval."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1469,9 +1462,9 @@ class MCPDashboard(AdminDashboard):
             """Render the medicine analysis dashboard using temporal deontic logic."""
             # Import temporal deontic logic components (same backend as caselaw)
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic_integration.deontic_logic_core import DeonticOperator
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.tools.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -1513,8 +1506,8 @@ class MCPDashboard(AdminDashboard):
         def api_check_medicine_document():
             """Check medical document consistency."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.document_consistency_checker import DocumentConsistencyChecker
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1589,8 +1582,8 @@ class MCPDashboard(AdminDashboard):
         def api_query_medicine_guidelines():
             """Query relevant medical guidelines using RAG retrieval."""
             try:
-                from .logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic_integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
+                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -3342,14 +3335,8 @@ class MCPDashboard(AdminDashboard):
 
             # Execute, awaiting if coroutine
             if inspect.iscoroutinefunction(fn):
-                # Run in a fresh event loop to avoid conflicts
-                import anyio
-                loop = asyncio.new_event_loop()
-                try:
-                    asyncio.set_event_loop(loop)
-                    result = loop.run_until_complete(fn(**params))
-                finally:
-                    loop.close()
+                from ipfs_datasets_py.utils.anyio_compat import run as anyio_run
+                result = anyio_run(fn(**params))
             else:
                 result = fn(**params)
 

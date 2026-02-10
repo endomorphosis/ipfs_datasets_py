@@ -29,6 +29,30 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def _serialize_exception(e: Exception) -> Dict[str, Any]:
+    """Best-effort conversion of exceptions into a structured payload.
+
+    Keep this dependency-light so the optimizer remains usable in minimal
+    environments.
+    """
+
+    details: Dict[str, Any] = {"type": e.__class__.__name__}
+
+    if hasattr(e, "to_dict") and callable(getattr(e, "to_dict")):
+        try:
+            payload = e.to_dict()  # type: ignore[attr-defined]
+            if isinstance(payload, dict):
+                details.update(payload)
+        except Exception:
+            pass
+    else:
+        for key in ("budget", "actual", "limit", "detail"):
+            if hasattr(e, key):
+                details[key] = getattr(e, key)
+
+    return details
+
+
 @dataclass
 class QueryMetrics:
     """Metrics for a single query execution."""
@@ -45,9 +69,17 @@ class QueryMetrics:
     filter_count: int = 0
     execution_plan: Dict[str, Any] = field(default_factory=dict)
     error: Optional[str] = None
+    error_details: Optional[Dict[str, Any]] = None
 
-    def complete(self, result_count: int, scan_count: int, index_used: bool = False,
-                index_name: Optional[str] = None, error: Optional[str] = None) -> None:
+    def complete(
+        self,
+        result_count: int,
+        scan_count: int,
+        index_used: bool = False,
+        index_name: Optional[str] = None,
+        error: Optional[str] = None,
+        error_details: Optional[Dict[str, Any]] = None,
+    ) -> None:
         """Complete the metrics after query execution."""
         self.end_time = time.time()
         self.duration_ms = (self.end_time - self.start_time) * 1000
@@ -56,6 +88,7 @@ class QueryMetrics:
         self.index_used = index_used
         self.index_name = index_name
         self.error = error
+        self.error_details = error_details
 
 
 class QueryStatsCollector:
@@ -691,7 +724,8 @@ class QueryOptimizer:
             metrics.complete(
                 result_count=0,
                 scan_count=0,
-                error=str(e)
+                error=str(e),
+                error_details=_serialize_exception(e)
             )
             raise
         finally:
@@ -1053,6 +1087,33 @@ class KnowledgeGraphQueryOptimizer:
             self.pattern_cache.put("graph_pattern", query_params, result)
 
         return result, metrics
+
+    def execute_graph_ir(
+        self,
+        ir: "Any",
+        *,
+        executor: "Any",
+        budgets: "Any" = None,
+        optimizations: Optional[Dict[str, Any]] = None,
+    ) -> Tuple[Any, QueryMetrics]:
+        """Execute a compiled graph QueryIR via the existing optimizer plumbing.
+
+        This keeps metrics/caching behavior consistent with other graph_traversal
+        queries while allowing the graph-query subsystem to own execution.
+        """
+
+        query_params = {
+            "query_type": "ir",
+            "ir_ops": [type(op).__name__ for op in getattr(ir, "ops", [])],
+        }
+
+        def _run(_params: Dict[str, Any]):
+            # executor is expected to be a GraphQueryExecutor-like object
+            # that returns an ExecutionResult or list.
+            res = executor.execute(ir, budgets=budgets)
+            return getattr(res, "items", res)
+
+        return self.execute_graph_query(query_params, _run, optimizations=optimizations)
 
     def update_relationship_costs(self, costs: Dict[str, float]) -> None:
         """

@@ -122,6 +122,7 @@ class RouterDeps:
         purpose: str,
         enable_distributed: bool = True,
         resources: Optional[dict[str, Any]] = None,
+        ipfs_gateway: Optional[str] = None,
     ) -> Any | None:
         """Return a cached AccelerateManager for ``purpose`` if available.
 
@@ -153,6 +154,7 @@ class RouterDeps:
 
             manager = AccelerateManager(
                 resources=resources or {"purpose": str(purpose)},
+                ipfs_gateway=ipfs_gateway,
                 enable_distributed=bool(enable_distributed),
             )
             self.accelerate_managers[purpose] = manager

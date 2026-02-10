@@ -18,9 +18,9 @@ from enum import Enum
 import json
 import time
 
-from .deontic_logic_core import DeonticFormula, DeonticRuleSet
-from .logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
-from .logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
+from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from ..tools.logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
+from ..tools.logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
 
 logger = logging.getLogger(__name__)
 
@@ -859,7 +859,7 @@ Qed.
         for prover, available in self.available_provers.items():
             if available:
                 # Create a simple test formula
-                from .deontic_logic_core import create_obligation, LegalAgent
+                from ..tools.deontic_logic_core import create_obligation, LegalAgent
                 test_agent = LegalAgent("test_agent", "Test Agent", "organization")
                 test_formula = create_obligation(test_agent, "test_proposition", "Test proposition")
                 

@@ -19,6 +19,7 @@ import base64
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+import threading
 from threading import Lock
 
 # Try to import cryptography for message encryption
@@ -165,7 +166,8 @@ class GitHubAPICache:
         self._p2p_listen_port = p2p_listen_port
         self._p2p_bootstrap_peers = p2p_bootstrap_peers or []
         self._p2p_connected_peers: Dict[str, Any] = {}
-        self._event_loop = None
+        self._p2p_thread: Optional[threading.Thread] = None
+        self._p2p_stop_event = threading.Event()
         self._universal_connectivity = None
         
         # Peer discovery
@@ -709,16 +711,35 @@ class GitHubAPICache:
         """Initialize P2P networking for cache sharing."""
         if not HAVE_LIBP2P:
             raise RuntimeError("libp2p not available, install with: pip install libp2p")
-        
-        # Get or create event loop
-        try:
-            self._event_loop = asyncio.get_event_loop()
-        except RuntimeError:
-            self._event_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self._event_loop)
-        
-        # Start P2P host in background
-        self._event_loop.run_until_complete(self._start_p2p_host())
+
+        if self._p2p_thread is not None and self._p2p_thread.is_alive():
+            return
+
+        self._p2p_stop_event.clear()
+
+        def _thread_main() -> None:
+            async def _serve() -> None:
+                await self._start_p2p_host()
+                # Keep the background async runtime alive until stop requested.
+                await anyio.to_thread.run_sync(self._p2p_stop_event.wait)
+
+                try:
+                    if self._p2p_host:
+                        await self._p2p_host.close()
+                except Exception:
+                    pass
+
+            try:
+                anyio.run(_serve)
+            except Exception as e:
+                logger.warning(f"P2P background runner exited: {e}")
+
+        self._p2p_thread = threading.Thread(
+            target=_thread_main,
+            name="GitHubAPICacheP2P",
+            daemon=True,
+        )
+        self._p2p_thread.start()
     
     async def _start_p2p_host(self) -> None:
         """Start libp2p host for P2P cache sharing."""
@@ -927,14 +948,25 @@ class GitHubAPICache:
     
     def _broadcast_in_background(self, cache_key: str, entry: CacheEntry) -> None:
         """Broadcast cache entry in background (non-blocking)."""
-        if not self.enable_p2p or not self._event_loop:
+        if not self.enable_p2p or not self._p2p_host:
             return
-        
-        # Schedule broadcast as background task
-        asyncio.run_coroutine_threadsafe(
-            self._broadcast_cache_entry(cache_key, entry),
-            self._event_loop
-        )
+
+        try:
+            from ipfs_datasets_py.utils.anyio_compat import in_async_context
+
+            if in_async_context():
+                anyio.lowlevel.spawn_system_task(self._broadcast_cache_entry, cache_key, entry)
+                return
+        except Exception:
+            pass
+
+        def _runner() -> None:
+            try:
+                anyio.run(self._broadcast_cache_entry, cache_key, entry)
+            except Exception:
+                pass
+
+        threading.Thread(target=_runner, name="GitHubAPICacheBroadcast", daemon=True).start()
 
 
 # Global cache instance (can be configured at module level)

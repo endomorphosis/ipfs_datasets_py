@@ -45,7 +45,7 @@ from sklearn.preprocessing import StandardScaler
 
 # Import GraphRAG and ML components
 try:
-    from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+    from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
     from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
     from ipfs_datasets_py.ml.content_classification import ContentAnalysisReport, ContentAnalysis
     from ipfs_datasets_py.enhanced_multimodal_processor import ProcessedContent

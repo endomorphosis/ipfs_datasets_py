@@ -15,5 +15,7 @@ __all__ = [
     'cross_document_lineage',
     'cross_document_lineage_enhanced',
     'cross_document_reasoning',
+    'finance_graphrag',
+    'query_knowledge_graph',
     'sparql_query_templates',
 ]

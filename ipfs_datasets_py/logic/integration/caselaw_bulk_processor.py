@@ -18,7 +18,7 @@ import hashlib
 import concurrent.futures
 from collections import defaultdict
 
-from .deontic_logic_core import (
+from ..tools.deontic_logic_core import (
     DeonticFormula, DeonticOperator, DeonticRuleSet, TemporalCondition, 
     TemporalOperator, LegalAgent, LegalContext
 )

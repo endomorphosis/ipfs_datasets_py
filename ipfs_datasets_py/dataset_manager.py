@@ -14,19 +14,10 @@ except Exception:  # pragma: no cover
     Dataset = None  # type: ignore
     load_dataset = None  # type: ignore
 
-# Try to import accelerate integration for distributed inference
 try:
-    from .accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
+    from .llm_router import get_accelerate_manager as _get_accelerate_manager
+except Exception:  # pragma: no cover
+    _get_accelerate_manager = None
 
 
 @runtime_checkable
@@ -46,17 +37,21 @@ class DatasetManager:
         
         # Initialize accelerate manager if available and enabled
         self.accelerate_manager = None
-        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+        if use_accelerate and callable(_get_accelerate_manager):
             try:
-                self.accelerate_manager = AccelerateManager(
+                self.accelerate_manager = _get_accelerate_manager(
+                    purpose="dataset_manager",
+                    enable_distributed=True,
                     resources={},
-                    enable_distributed=True
                 )
-                print("✓ Accelerate integration enabled for dataset processing")
+                if self.accelerate_manager is not None:
+                    print("✓ Accelerate integration enabled for dataset processing")
+                else:
+                    print("⚠ Accelerate integration not available, using local processing only")
             except Exception as e:
                 print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
                 self.accelerate_manager = None
-        elif not HAVE_ACCELERATE or not is_accelerate_available():
+        else:
             print("⚠ Accelerate integration not available, using local processing only")
 
     def get_dataset(self, dataset_id: str) -> 'ManagedDataset':

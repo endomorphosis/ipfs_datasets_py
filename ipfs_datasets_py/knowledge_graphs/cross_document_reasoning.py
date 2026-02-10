@@ -14,7 +14,8 @@ Key features:
 - Answer synthesis with confidence scoring
 - Detailed reasoning traces
 
-The cross-document reasoning leverages the query optimization from rag_query_optimizer
+The cross-document reasoning leverages the query optimization from
+optimizers/graphrag/query_optimizer
 to efficiently traverse entity relationships and find relevant connections.
 """
 import logging
@@ -28,7 +29,7 @@ from ipfs_datasets_py.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
 )
-from ipfs_datasets_py.rag.rag_query_optimizer import (
+from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
 )
 
@@ -735,7 +736,7 @@ class CrossDocumentReasoner:
 def example_usage():
     """Example usage of the cross-document reasoner."""
     from ipfs_datasets_py.llm.llm_reasoning_tracer import LLMReasoningTracer
-    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
 
     # Initialize components
     reasoning_tracer = LLMReasoningTracer()

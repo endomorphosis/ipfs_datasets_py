@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/ipfs_embeddings_integration.py'
+# Function and Class stubs from 'ipfs_datasets_py/mcp_server/tools/ipfs_embeddings_integration.py'
 
 Files last updated: 1751577650.7343042
 
@@ -90,7 +90,7 @@ async def get_distributed_vector(self, cid: str) -> Dict[str, Any]:
 ```python
 async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[str, Any]):
     """
-    Registers tools from the ipfs_embeddings_py integration with the main MCP server.
+    Registers tools from the pre-migration embeddings integration with the main MCP server.
 
 Uses the migrated tools that are now part of ipfs_datasets_py.
 

@@ -21,11 +21,11 @@ from dataclasses import dataclass
 
 # Import existing components
 from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
-from ipfs_datasets_py.graphrag.integrations.graphrag_integration import GraphRAGFactory
+from ipfs_datasets_py.processors.graphrag.integration import GraphRAGFactory
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.content_discovery import ContentDiscoveryEngine, ContentManifest
 from ipfs_datasets_py.multimodal_processor import MultiModalContentProcessor, ProcessedContentBatch
-from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
 
 # Set up logging
 logger = logging.getLogger(__name__)

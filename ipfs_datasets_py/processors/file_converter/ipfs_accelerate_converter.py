@@ -18,7 +18,6 @@ Environment Variables:
 """
 
 import logging
-import os
 from pathlib import Path
 from typing import Optional, Dict, Any, List, Union
 import anyio
@@ -26,7 +25,10 @@ from dataclasses import dataclass, field
 
 from .converter import FileConverter, ConversionResult
 from .backends.ipfs_backend import IPFSBackend, get_ipfs_backend
-from ipfs_datasets_py.accelerate_integration import AccelerateManager, is_accelerate_available
+try:
+    from ..llm_router import get_accelerate_manager as _router_get_accelerate_manager
+except Exception:
+    _router_get_accelerate_manager = None
 
 logger = logging.getLogger(__name__)
 
@@ -104,16 +106,10 @@ class IPFSAcceleratedConverter:
         """
         # Initialize base converter
         self.converter = FileConverter(backend=backend)
-
-        # Apply environment-based disable flags
-        env_ipfs_enabled = os.environ.get('IPFS_STORAGE_ENABLED', '1')
-        env_accel_enabled = os.environ.get('IPFS_ACCELERATE_ENABLED', '1')
-        effective_enable_ipfs = enable_ipfs and env_ipfs_enabled not in {'0', 'false', 'False'}
-        effective_enable_acceleration = enable_acceleration and env_accel_enabled not in {'0', 'false', 'False'}
         
         # Initialize IPFS backend
         self.ipfs_backend = None
-        if effective_enable_ipfs:
+        if enable_ipfs:
             self.ipfs_backend = get_ipfs_backend(
                 gateway_url=ipfs_gateway,
                 auto_pin_on_add=auto_pin
@@ -121,17 +117,19 @@ class IPFSAcceleratedConverter:
         
         # Initialize acceleration manager
         self.accel_manager = None
-        if effective_enable_acceleration and is_accelerate_available():
-            try:
-                self.accel_manager = AccelerateManager(
-                    ipfs_gateway=ipfs_gateway,
-                    enable_distributed=True
-                )
-            except Exception as e:
-                logger.warning(f"Failed to initialize acceleration: {e}")
+        if enable_acceleration and callable(_router_get_accelerate_manager):
+            self.accel_manager = _router_get_accelerate_manager(
+                purpose="file_converter",
+                ipfs_gateway=ipfs_gateway,
+                enable_distributed=True,
+                resources={"purpose": "file_converter"},
+            )
+
+        if enable_acceleration and self.accel_manager is None:
+            logger.info("Acceleration unavailable; using local mode")
         
-        self.enable_ipfs = effective_enable_ipfs
-        self.enable_acceleration = effective_enable_acceleration
+        self.enable_ipfs = enable_ipfs
+        self.enable_acceleration = enable_acceleration
         self.auto_pin = auto_pin
         self.cache_dir = cache_dir or Path.home() / '.cache' / 'ipfs_file_converter'
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -157,26 +155,16 @@ class IPFSAcceleratedConverter:
         """
         import time
         start_time = time.time()
-
-        # Keep URLs as strings so the underlying FileConverter can detect and
-        # handle them. For local paths, enforce existence and raise a clear
-        # error instead of returning an empty/unsuccessful result.
-        file_path_str = str(file_path)
-        is_http_url = file_path_str.startswith("http://") or file_path_str.startswith("https://")
-        if is_http_url:
-            local_path: Optional[Path] = None
-        else:
-            local_path = Path(file_path)
-            if not local_path.exists():
-                raise FileNotFoundError(f"File not found: {local_path}")
-
-        effective_input = file_path_str if is_http_url else local_path
+        
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(str(file_path))
         should_store = store_on_ipfs if store_on_ipfs is not None else self.enable_ipfs
         should_pin = pin if pin is not None else self.auto_pin
         should_accelerate = use_acceleration if use_acceleration is not None else self.enable_acceleration
         
         # Convert file
-        result = await self.converter.convert(effective_input)
+        result = await self.converter.convert(file_path)
         
         # Prepare result
         ipfs_result = IPFSConversionResult(
@@ -187,10 +175,10 @@ class IPFSAcceleratedConverter:
         )
         
         # Store on IPFS if requested
-        if should_store and self.ipfs_backend and self.ipfs_backend.is_available() and local_path is not None:
+        if should_store and self.ipfs_backend and self.ipfs_backend.is_available():
             try:
                 # Save converted text to temp file
-                temp_file = self.cache_dir / f"{local_path.stem}_converted.txt"
+                temp_file = self.cache_dir / f"{file_path.stem}_converted.txt"
                 temp_file.write_text(ipfs_result.text)
                 
                 # Add to IPFS
@@ -233,8 +221,14 @@ class IPFSAcceleratedConverter:
         Returns:
             IPFSConversionResult: Conversion result
         """
-        return anyio.run(self.convert, file_path, **kwargs)
+        async def _runner():
+            return await self.convert(file_path, **kwargs)
 
+        try:
+            return anyio.from_thread.run(_runner)
+        except anyio.NoEventLoopError:
+            return anyio.run(_runner)
+    
     async def convert_batch(
         self,
         file_paths: List[Union[str, Path]],
@@ -360,13 +354,7 @@ class IPFSAcceleratedConverter:
         
         # Add acceleration status
         if self.accel_manager:
-            accel_status = self.accel_manager.get_status()
-            # Backward-compatible key expected by tests and callers.
-            accel_status.setdefault(
-                "available",
-                bool(self.enable_acceleration and accel_status.get("accelerate_available"))
-            )
-            status["acceleration"] = accel_status
+            status["acceleration"] = self.accel_manager.get_status()
         else:
             status["acceleration"] = {"available": False}
         

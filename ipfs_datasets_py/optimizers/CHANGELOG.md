@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Worker Assignment**: Worker 65 - Testing existing optimizer implementations
 
 #### Optimizer Learning Metrics (`optimizer_learning_metrics.py`)
-- **OptimizerLearningMetricsCollector**: Comprehensive metrics collection for RAG query optimizer learning
+- **OptimizerLearningMetricsCollector**: Comprehensive metrics collection for GraphRAG query optimizer learning
 - **LearningMetrics**: Container class for aggregated learning metrics
 - **Learning cycle tracking**: Complete monitoring of learning cycles with timestamp and performance data
 - **Parameter adaptation recording**: Detailed tracking of parameter changes with confidence levels
@@ -111,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modular architecture for easy extension and customization
 
 ### Integration Points
-- **RAG Module**: Direct integration with RAG query optimization
+- **GraphRAG Module**: Direct integration with GraphRAG query optimization
 - **Monitoring Systems**: External monitoring and alerting infrastructure
 - **Visualization Platforms**: Support for multiple visualization backends
 - **Storage Systems**: Flexible persistence layer for metrics data
@@ -148,4 +148,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Testing Status**: Requires comprehensive testing by Worker 65
 **Documentation**: Complete with detailed API documentation and usage examples
 **Performance**: Optimized for low-overhead metrics collection
-**Integration**: Ready for integration with RAG optimization workflows
+**Integration**: Ready for integration with GraphRAG optimization workflows

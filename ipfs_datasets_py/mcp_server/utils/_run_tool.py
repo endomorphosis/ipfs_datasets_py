@@ -42,15 +42,6 @@ class _RunTool:
             The result of the function execution wrapped in a CallToolResultType.
         """
         try:
-            if asyncio.iscoroutinefunction(func):
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    # If the event loop is already running, use asyncio.run_coroutine_threadsafe
-                    future = asyncio.run_coroutine_threadsafe(func(*args, **kwargs), loop)
-                    result = future.result()
-                else:
-                    # If the event loop is not running, use asyncio.run
-                    result = anyio.run(func(*args, **kwargs))
             if inspect.iscoroutinefunction(func):
                 try:
                     result = run_anyio(func(*args, **kwargs))
@@ -58,8 +49,8 @@ class _RunTool:
                     return self.result(e)
             else:
                 result = func(*args, **kwargs)
-                # Support functions that return awaitables without being declared async
-                if hasattr(result, "__await__"):
+                # Support sync functions that return awaitables
+                if inspect.isawaitable(result):
                     try:
                         result = run_anyio(result)
                     except AsyncContextError as e:

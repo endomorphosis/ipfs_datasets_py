@@ -24,6 +24,7 @@ Usage:
 import os
 import json
 import anyio
+import anyio.from_thread
 import logging
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -35,7 +36,7 @@ from collections import defaultdict, deque
 import statistics
 
 # Import GraphRAG components
-from ipfs_datasets_py.complete_advanced_graphrag import (
+from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
     CompleteGraphRAGSystem, CompleteProcessingResult
 )
 
@@ -130,6 +131,9 @@ class RealTimeMonitor:
         self.system_metrics = deque(maxlen=1000)
         self.alerts = deque(maxlen=100)
         self.is_monitoring = False
+        self._portal_cm = None
+        self._portal = None
+        self._monitor_future = None
     
     async def start_monitoring(self):
         """Start real-time monitoring
@@ -143,14 +147,29 @@ class RealTimeMonitor:
                 tg.start_soon(self._monitoring_loop)
         """
         self.is_monitoring = True
-        # FIXME: Background task pattern - caller should manage via task group
-        import asyncio
-        asyncio.create_task(self._monitoring_loop())
+        if self._portal is None:
+            # Use AnyIO's portal to manage a long-running background task
+            # without relying on asyncio primitives in this module.
+            self._portal_cm = anyio.from_thread.start_blocking_portal(backend="asyncio")
+            self._portal = self._portal_cm.__enter__()
+
+        if self._monitor_future is None:
+            self._monitor_future = self._portal.start_task_soon(self._monitoring_loop)
         logger.info("Real-time monitoring started")
     
     async def stop_monitoring(self):
         """Stop real-time monitoring"""
         self.is_monitoring = False
+        if self._portal is not None:
+            try:
+                self._portal.stop()
+            finally:
+                self._portal = None
+                self._monitor_future = None
+
+        if self._portal_cm is not None:
+            self._portal_cm.__exit__(None, None, None)
+            self._portal_cm = None
         logger.info("Real-time monitoring stopped")
     
     async def _monitoring_loop(self):
@@ -962,7 +981,7 @@ async def demo_analytics_dashboard():
     # Simulate some processing history
     mock_results = []
     for i in range(5):
-        from ipfs_datasets_py.complete_advanced_graphrag import CompleteProcessingResult
+        from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import CompleteProcessingResult
         
         result = CompleteProcessingResult(
             website_url=f"https://example{i}.com",

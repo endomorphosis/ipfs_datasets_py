@@ -234,8 +234,9 @@ class BaseVectorStore(ABC):
         """Context manager exit."""
         # Note: This is sync, but close() is async
         # Subclasses should override if they need proper async cleanup
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(self.close())
+        from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
+
+        run_anyio(self.close())
 
     async def __aenter__(self):
         """Async context manager entry."""

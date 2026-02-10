@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/llm/llm_graphrag.py'
+# Function and Class stubs from 'ipfs_datasets_py/llm/llm_graphrag.py'
 
 Files last updated: 1751437214.7733295
 

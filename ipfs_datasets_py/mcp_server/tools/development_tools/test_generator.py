@@ -467,40 +467,39 @@ def test_generator(
 
     # Handle async execution - try to use existing loop, or create a new one
     try:
-        # Check if there's already an event loop running
         try:
-            loop = asyncio.get_running_loop()
-            # If we get here, there's a running loop, so we need to use a different approach
-            import concurrent.futures
-            import threading
+            import sniffio
+
+            sniffio.current_async_library()
+            in_async = True
+        except Exception:
+            in_async = False
+
+        if in_async:
+            from concurrent.futures import ThreadPoolExecutor
 
             def run_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(tool.execute(
-                        name=name,
-                        description=description,
-                        test_specification=test_specification,
-                        output_dir=output_dir,
-                        harness=harness
-                    ))
-                finally:
-                    new_loop.close()
+                return anyio.run(
+                    tool.execute,
+                    name=name,
+                    description=description,
+                    test_specification=test_specification,
+                    output_dir=output_dir,
+                    harness=harness,
+                )
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor() as executor:
                 future = executor.submit(run_in_thread)
                 return future.result()
 
-        except RuntimeError:
-            # No running loop, we can use asyncio.run
-            return anyio.run(tool.execute(
-                name=name,
-                description=description,
-                test_specification=test_specification,
-                output_dir=output_dir,
-                harness=harness
-            ))
+        return anyio.run(
+            tool.execute,
+            name=name,
+            description=description,
+            test_specification=test_specification,
+            output_dir=output_dir,
+            harness=harness,
+        )
     except Exception as e:
         # Fallback to synchronous execution if async fails
         return {

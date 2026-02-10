@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/vector_store_tools/enhanced_vector_store_tools.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/vector_store_tools/enhanced_vector_store_tools.py'
 
 Files last updated: 1751408933.7664564
 

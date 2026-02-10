@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, field
 try:
     from beartype import beartype  # type: ignore
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
 from pydantic import BaseModel, Field, field_validator, ConfigDict
@@ -234,6 +234,11 @@ class FOLSyntaxValidator:
             "suggestions": [],
             "structure_analysis": {}
         }
+
+        if not formula or not str(formula).strip():
+            result["valid"] = False
+            result["errors"].append("Formula is empty")
+            return result
         
         try:
             # 1. Basic syntax validation
@@ -264,6 +269,10 @@ class FOLSyntaxValidator:
     def _check_syntax(self, formula: str) -> List[str]:
         """Check basic syntax errors."""
         errors = []
+
+        if not formula or not str(formula).strip():
+            errors.append("Empty formula")
+            return errors
         
         # Check balanced parentheses
         if formula.count('(') != formula.count(')'):
@@ -579,7 +588,7 @@ if SYMBOLIC_AI_AVAILABLE:
         def forward(self, input_data: FOLInput) -> FOLOutput:
             """Main conversion logic."""
             try:
-                from .symbolic_fol_bridge import SymbolicFOLBridge
+                from ..tools.symbolic_fol_bridge import SymbolicFOLBridge
 
                 input_data = self._coerce_input(input_data)
                 

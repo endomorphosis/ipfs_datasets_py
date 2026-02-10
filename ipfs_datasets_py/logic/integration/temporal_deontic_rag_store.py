@@ -14,7 +14,7 @@ import numpy as np
 import hashlib
 import json
 
-from .deontic_logic_core import (
+from ..tools.deontic_logic_core import (
     DeonticFormula, DeonticOperator, DeonticRuleSet, TemporalCondition, 
     TemporalOperator, LegalAgent, LegalContext
 )

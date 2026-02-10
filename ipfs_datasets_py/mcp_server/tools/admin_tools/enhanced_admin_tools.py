@@ -1,7 +1,7 @@
 # ipfs_datasets_py/mcp_server/tools/admin_tools/enhanced_admin_tools.py
 """
 Enhanced administrative operations and system management tools.
-Migrated and enhanced from ipfs_embeddings_py project with production features.
+Migrated and enhanced from a legacy tooling codebase with production features.
 """
 
 import anyio

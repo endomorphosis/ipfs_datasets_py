@@ -14,13 +14,14 @@ Features:
 
 import logging
 import re
-from typing import Dict, List, Optional, Union, Any, Tuple, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Union, Any, Tuple, Set
 from dataclasses import dataclass, field
 try:
     from beartype import beartype  # type: ignore
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
+from typing import TYPE_CHECKING
 from enum import Enum
 
 if TYPE_CHECKING:
@@ -118,14 +119,16 @@ class EntailmentResult:
 class LogicVerifier:
     """Verify and reason about logical formulas using SymbolicAI."""
     
-    def __init__(self, use_symbolic_ai: bool = True):
+    def __init__(self, use_symbolic_ai: bool = True, fallback_enabled: bool = True):
         """
         Initialize the logic verifier.
         
         Args:
             use_symbolic_ai: Whether to use SymbolicAI for enhanced verification
+            fallback_enabled: Whether to allow fallback methods when SymbolicAI fails
         """
         self.use_symbolic_ai = use_symbolic_ai and SYMBOLIC_AI_AVAILABLE
+        self.fallback_enabled = bool(fallback_enabled)
         self.known_axioms: List[LogicAxiom] = []
         self.proof_cache: Dict[str, ProofResult] = {}
         
@@ -254,6 +257,9 @@ class LogicVerifier:
                 # Try to find conflicting pairs
                 conflicting = self._find_conflicting_pairs_symbolic(formulas)
             else:
+                # Non-committal model response: fall back to local checks.
+                if self.fallback_enabled:
+                    return self._check_consistency_fallback(formulas)
                 is_consistent = False
                 confidence = 0.5
                 explanation = "SymbolicAI could not determine consistency"
@@ -369,6 +375,8 @@ class LogicVerifier:
                 confidence = 0.8
                 explanation = "SymbolicAI analysis rejects the entailment"
             else:
+                if self.fallback_enabled:
+                    return self._check_entailment_fallback(premises, conclusion)
                 entails = False
                 confidence = 0.5
                 explanation = "SymbolicAI could not determine entailment"
@@ -469,6 +477,11 @@ class LogicVerifier:
             
             # Parse the proof steps
             steps = self._parse_proof_steps(proof_text)
+
+            # If we couldn't parse any steps (common for non-committal LLM responses),
+            # fall back to local proof heuristics.
+            if not steps and self.fallback_enabled:
+                return self._generate_proof_fallback(premises, conclusion)
             
             # Validate the proof
             is_valid = len(steps) > 0 and steps[-1].formula == conclusion

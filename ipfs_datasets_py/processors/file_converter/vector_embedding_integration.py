@@ -72,15 +72,6 @@ except ImportError:
     HAVE_ELASTICSEARCH = False
     ElasticsearchVectorStore = None
 
-# Accelerate integration
-try:
-    from ipfs_datasets_py.accelerate_integration import AccelerateManager, is_accelerate_available
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-
 logger = logging.getLogger(__name__)
 
 
@@ -526,6 +517,14 @@ class VectorEmbeddingPipeline:
     
     def get_status(self) -> Dict[str, Any]:
         """Get pipeline status."""
+        accelerate_status = {"available": False, "enabled": False}
+        try:
+            from ..embeddings_router import get_accelerate_status as _get_accelerate_status
+
+            accelerate_status = _get_accelerate_status() or accelerate_status
+        except Exception:
+            pass
+
         return {
             "backend": self.backend,
             "embedding_model": self.embedding_model,
@@ -536,7 +535,7 @@ class VectorEmbeddingPipeline:
             "num_documents": len(self.document_registry),
             "embeddings_available": HAVE_EMBEDDINGS,
             "vector_store_available": self.vector_store is not None,
-            "accelerate_available": HAVE_ACCELERATE and is_accelerate_available() if HAVE_ACCELERATE else False
+            "accelerate_available": bool(accelerate_status.get("available")) and bool(accelerate_status.get("enabled", True)),
         }
 
 

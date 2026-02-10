@@ -234,12 +234,17 @@ class StateLawsTester:
                 return await self.test_state_scraper(state_code, state_name)
         
         # Test all states concurrently (but limited)
-        tasks = [
-            test_with_semaphore(state_code)
-            for state_code in all_states
-        ]
-        
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        results = [None] * len(all_states)
+
+        async def _run_one(idx: int, state_code: str) -> None:
+            try:
+                results[idx] = await test_with_semaphore(state_code)
+            except Exception as e:
+                results[idx] = e
+
+        async with anyio.create_task_group() as tg:
+            for idx, state_code in enumerate(all_states):
+                tg.start_soon(_run_one, idx, state_code)
         
         # Process results
         for result in results:

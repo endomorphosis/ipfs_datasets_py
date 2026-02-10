@@ -1,7 +1,7 @@
 # ipfs_datasets_py/mcp_server/tools/cache_tools/enhanced_cache_tools.py
 """
 Enhanced cache management and optimization tools.
-Migrated and enhanced from ipfs_embeddings_py project with production features.
+Migrated and enhanced from a legacy tooling codebase with production features.
 """
 
 import anyio

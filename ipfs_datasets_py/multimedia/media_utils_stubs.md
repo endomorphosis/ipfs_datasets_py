@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/multimedia/media_utils.py'
+# Function and Class stubs from 'ipfs_datasets_py/multimedia/media_utils.py'
 
 Files last updated: 1752452505.9238148
 

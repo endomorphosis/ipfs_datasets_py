@@ -1,7 +1,7 @@
 """Vector store implementations for embeddings.
 
 This module provides interfaces and implementations for various vector databases,
-migrated and adapted from ipfs_embeddings_py.
+migrated and adapted from a pre-migration embeddings codebase.
 """
 
 from .base import BaseVectorStore

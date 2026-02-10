@@ -137,7 +137,7 @@ The vector stores integrate with other IPFS Datasets components:
 
 - **Embeddings module** - Stores generated embeddings
 - **Search module** - Provides search backend capabilities  
-- **RAG module** - Supports retrieval operations
+- **GraphRAG module** - Supports retrieval operations
 - **IPLD module** - Content-addressed vector storage
 
 ## Dependencies
@@ -152,5 +152,5 @@ The vector stores integrate with other IPFS Datasets components:
 
 - [Embeddings Module](../embeddings/README.md) - Generate embeddings for storage
 - [Search Module](../search/README.md) - Search and retrieval operations
-- [RAG Module](../rag/README.md) - Retrieval-augmented generation
+- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
 - [Performance Optimization Guide](../../docs/performance_optimization.md) - Detailed optimization strategies

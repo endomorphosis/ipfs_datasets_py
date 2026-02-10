@@ -1,7 +1,7 @@
 """Schema definitions for embeddings and vector operations.
 
 This module provides base classes and data structures for embedding operations,
-migrated and adapted from ipfs_embeddings_py.
+migrated and adapted from a pre-migration embeddings codebase.
 """
 
 import json
@@ -353,7 +353,7 @@ class EmbeddingModel:
         }
 
 
-# Compatibility aliases for integration with existing ipfs_embeddings_py code
+# Compatibility aliases for integration with existing code
 Document = DocumentChunk  # Alias for backward compatibility
 
 # Export all public classes and functions

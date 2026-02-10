@@ -225,7 +225,7 @@ class YtDlpWrapper:
             
             >>> # Custom output directory with quiet logging
             >>> wrapper = YtDlpWrapper(
-            ...     default_output_dir="/home/user/downloads",
+            ...     default_output_dir=str(Path.home() / "downloads"),
             ...     enable_logging=False,
             ...     default_quality="best"
             ... )

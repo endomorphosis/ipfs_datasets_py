@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Import the enhanced embeddings engine
 try:
-    from ...ipfs_embeddings_py.embeddings_engine import AdvancedIPFSEmbeddings, EmbeddingConfig, ChunkingConfig
+    from ....embeddings.embeddings_engine import AdvancedIPFSEmbeddings, EmbeddingConfig, ChunkingConfig
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False

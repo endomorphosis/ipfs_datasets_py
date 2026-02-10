@@ -1,7 +1,7 @@
 """
 IPFS Embeddings Core Module
 
-Migrated from endomorphosis/ipfs_embeddings_py
+Migrated from a pre-migration embeddings codebase
 Provides advanced embedding generation, vector search, and IPFS integration capabilities.
 Supports accelerate integration for distributed inference.
 """
@@ -20,10 +20,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import torch
 import psutil
-try:
-    from datasets import Dataset  # type: ignore
-except ImportError:  # pragma: no cover
-    Dataset = Any  # type: ignore
+from datasets import Dataset
 
 
 # Import vector store modules
@@ -42,24 +39,27 @@ try:
 except ImportError:
     FAISSVectorStore = None
 
-# Try to import accelerate integration for distributed inference
-try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
-
 try:
     from ipfs_datasets_py.embeddings_router import embed_texts
 except Exception:
     embed_texts = None
+
+
+def _truthy(value: Optional[str]) -> bool:
+    return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _use_embedding_router() -> bool:
+    return not _truthy(os.getenv("IPFS_DATASETS_PY_DISABLE_EMBEDDINGS_ROUTER"))
+
+
+def _lazy_router_embed_texts():
+    try:
+        from ipfs_datasets_py.embeddings_router import embed_texts as router_embed_texts
+
+        return router_embed_texts
+    except Exception:
+        return None
 
 
 def _use_embedding_adapter() -> bool:
@@ -170,7 +170,7 @@ class IPFSEmbeddings:
     Core IPFS Embeddings class providing advanced embedding generation,
     vector search, and IPFS integration capabilities.
     
-    Migrated from endomorphosis/ipfs_embeddings_py with enhancements for
+    Migrated from a pre-migration embeddings codebase with enhancements for
     integration with ipfs_datasets_py.
     """
     
@@ -338,14 +338,28 @@ class IPFSEmbeddings:
     async def _generate_batch_embeddings(self, texts: List[str], config: EmbeddingConfig) -> List[np.ndarray]:
         """Generate embeddings for a batch of texts"""
         try:
-            if _use_embedding_adapter() and embed_texts is not None:
-                adapter_embeddings = await anyio.to_thread.run_sync(
-                    lambda: embed_texts(texts, model_name=config.model_name, device=config.device)
-                )
-                embeddings = [np.array(vec, dtype=np.float32) for vec in adapter_embeddings]
-                if config.normalize_embeddings:
-                    embeddings = [vec / np.linalg.norm(vec) for vec in embeddings]
-                return embeddings
+            if _use_embedding_router():
+                router_fn = _lazy_router_embed_texts() or embed_texts
+                if callable(router_fn):
+                    adapter_embeddings = await anyio.to_thread.run_sync(
+                        lambda: router_fn(texts, model_name=config.model_name, device=config.device)
+                    )
+                    embeddings = [np.array(vec, dtype=np.float32) for vec in adapter_embeddings]
+                    if config.normalize_embeddings:
+                        embeddings = [vec / np.linalg.norm(vec) for vec in embeddings]
+                    return embeddings
+
+            # Back-compat env var: if set, attempt router even if globally disabled.
+            if _use_embedding_adapter():
+                router_fn = _lazy_router_embed_texts() or embed_texts
+                if callable(router_fn):
+                    adapter_embeddings = await anyio.to_thread.run_sync(
+                        lambda: router_fn(texts, model_name=config.model_name, device=config.device)
+                    )
+                    embeddings = [np.array(vec, dtype=np.float32) for vec in adapter_embeddings]
+                    if config.normalize_embeddings:
+                        embeddings = [vec / np.linalg.norm(vec) for vec in embeddings]
+                    return embeddings
 
             # For now, use a simple implementation
             # This would be replaced with actual embedding model inference
@@ -440,17 +454,3 @@ class IPFSEmbeddings:
             "available_memory_mb": self.memory_monitor.get_available_memory_mb()
         }
 
-
-# Backwards compatibility function
-def ipfs_embeddings_py(resources: Dict[str, Any], metadata: Dict[str, Any]) -> IPFSEmbeddings:
-    """
-    Create an IPFSEmbeddings instance (backwards compatibility)
-    
-    Args:
-        resources: Dictionary containing endpoint configurations
-        metadata: Dictionary containing metadata configuration
-        
-    Returns:
-        IPFSEmbeddings instance
-    """
-    return IPFSEmbeddings(resources, metadata)

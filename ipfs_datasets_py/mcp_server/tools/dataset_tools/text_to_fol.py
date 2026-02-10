@@ -2,14 +2,14 @@
 """MCP tool wrapper for converting text to First-Order Logic (FOL).
 
 Core conversion logic lives in the package layer:
-- `ipfs_datasets_py.logic.fol.text_to_fol.convert_text_to_fol`
+- `ipfs_datasets_py.logic.tools.text_to_fol.convert_text_to_fol`
 
 This MCP module should only provide the MCP-facing entrypoint.
 """
 
 from typing import Any, Dict, List, Optional, Union
 
-from ipfs_datasets_py.logic.fol.text_to_fol import convert_text_to_fol
+from ipfs_datasets_py.logic.tools.text_to_fol import convert_text_to_fol
 
 
 async def text_to_fol(

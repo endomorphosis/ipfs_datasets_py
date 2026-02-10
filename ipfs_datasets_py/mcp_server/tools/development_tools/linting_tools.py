@@ -556,8 +556,6 @@ class LintingTools(BaseDevelopmentTool):
 
             return result
 
-        loop = asyncio.get_event_loop()
-
         # Process files in smaller batches to avoid overwhelming the system
         batch_size = 10
         all_results = []
@@ -565,14 +563,15 @@ class LintingTools(BaseDevelopmentTool):
         for i in range(0, len(python_files), batch_size):
             batch = python_files[i:i + batch_size]
 
-            with ThreadPoolExecutor(max_workers=4) as executor:
-                tasks = [
-                    loop.run_in_executor(executor, lint_file_sync, file_path)
-                    for file_path in batch
-                ]
+            batch_results: List[Optional[LintResult]] = [None] * len(batch)
+            async with anyio.create_task_group() as tg:
+                for idx, file_path in enumerate(batch):
+                    async def _runner(i: int = idx, fp: Path = file_path) -> None:
+                        batch_results[i] = await anyio.to_thread.run_sync(lint_file_sync, fp)
 
-                batch_results = await asyncio.gather(*tasks)
-                all_results.extend(batch_results)
+                    tg.start_soon(_runner)
+
+            all_results.extend([r for r in batch_results if r is not None])
 
         return all_results
 
@@ -645,44 +644,42 @@ def lint_python_codebase(path: str = ".",
     
     # Execute the tool and return results
     try:
-        # Check if there's already an event loop running
+        # If called from within an async context, run in a worker thread.
         try:
-            loop = asyncio.get_running_loop()
-            # If we get here, there's a running loop, so we need to use a different approach
-            import concurrent.futures
-            import threading
+            import sniffio
 
+            sniffio.current_async_library()
+            in_async = True
+        except Exception:
+            in_async = False
+
+        if in_async:
             def run_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(tool.execute(
-                        path=path,
-                        patterns=patterns,
-                        exclude_patterns=exclude_patterns,
-                        fix_issues=fix_issues,
-                        include_dataset_rules=include_dataset_rules,
-                        dry_run=dry_run,
-                        verbose=verbose
-                    ))
-                finally:
-                    new_loop.close()
+                return anyio.run(
+                    tool.execute,
+                    path=path,
+                    patterns=patterns,
+                    exclude_patterns=exclude_patterns,
+                    fix_issues=fix_issues,
+                    include_dataset_rules=include_dataset_rules,
+                    dry_run=dry_run,
+                    verbose=verbose,
+                )
 
-            with concurrent.futures.ThreadPoolExecutor() as executor:
+            with ThreadPoolExecutor() as executor:
                 future = executor.submit(run_in_thread)
                 return future.result()
 
-        except RuntimeError:
-            # No running loop, we can use asyncio.run
-            return anyio.run(tool.execute(
-                path=path,
-                patterns=patterns,
-                exclude_patterns=exclude_patterns,
-                fix_issues=fix_issues,
-                include_dataset_rules=include_dataset_rules,
-                dry_run=dry_run,
-                verbose=verbose
-            ))
+        return anyio.run(
+            tool.execute,
+            path=path,
+            patterns=patterns,
+            exclude_patterns=exclude_patterns,
+            fix_issues=fix_issues,
+            include_dataset_rules=include_dataset_rules,
+            dry_run=dry_run,
+            verbose=verbose,
+        )
     except Exception as e:
         # Fallback to error result if execution fails
         return {

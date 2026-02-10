@@ -7,6 +7,7 @@ Reports on service states, configuration status, and operational metrics.
 
 import anyio
 import os
+from pathlib import Path
 import sys
 import json
 from datetime import datetime
@@ -79,7 +80,7 @@ async def system_status() -> Dict[str, Any]:
                 }
             },
             "environment": {
-                "IPFS_PATH": os.environ.get("IPFS_PATH", "/home/user/.ipfs"),
+                "IPFS_PATH": os.environ.get("IPFS_PATH", str(Path.home() / ".ipfs")),
                 "PYTHONPATH": os.environ.get("PYTHONPATH", ""),
                 "virtual_env": os.environ.get("VIRTUAL_ENV", "")
             }

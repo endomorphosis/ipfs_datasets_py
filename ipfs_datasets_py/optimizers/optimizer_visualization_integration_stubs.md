@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/optimizers/optimizer_visualization_integration.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/optimizers/optimizer_visualization_integration.py'
 
 Files last updated: 1751436474.4466398
 
@@ -9,7 +9,7 @@ Stub file last updated: 2025-07-07 02:00:12
 ```python
 class LiveOptimizerVisualization:
     """
-    Integrates metrics collection with real-time visualization for the RAG query optimizer.
+    Integrates metrics collection with real-time visualization for the GraphRAG query optimizer.
 
 This class connects the learning metrics collector to the visualization system,
 enabling real-time monitoring and analysis of the optimizer's learning process.
@@ -22,12 +22,12 @@ enabling real-time monitoring and analysis of the optimizer's learning process.
 ## __init__
 
 ```python
-def __init__(self, optimizer = None, metrics_dir: Optional[str] = None, visualization_dir: Optional[str] = None, visualization_interval: int = 3600, dashboard_filename: str = "rag_optimizer_dashboard.html", metrics_source = None):
+def __init__(self, optimizer = None, metrics_dir: Optional[str] = None, visualization_dir: Optional[str] = None, visualization_interval: int = 3600, dashboard_filename: str = "graphrag_optimizer_dashboard.html", metrics_source = None):
     """
     Initialize the live visualization integration.
 
 Args:
-    optimizer: The RAG query optimizer instance to monitor
+    optimizer: The GraphRAG query optimizer instance to monitor
     metrics_dir: Directory for storing metrics data
     visualization_dir: Directory for storing visualization outputs
     visualization_interval: Interval in seconds for automatic visualization updates
@@ -115,12 +115,12 @@ def setup_metrics_collector(self):
 ## setup_optimizer_visualization
 
 ```python
-def setup_optimizer_visualization(optimizer = None, metrics_dir = None, visualization_dir = None, auto_update = True, visualization_interval = 3600, dashboard_filename = "rag_optimizer_dashboard.html") -> LiveOptimizerVisualization:
+def setup_optimizer_visualization(optimizer = None, metrics_dir = None, visualization_dir = None, auto_update = True, visualization_interval = 3600, dashboard_filename = "graphrag_optimizer_dashboard.html") -> LiveOptimizerVisualization:
     """
-    Set up live visualization for a RAG query optimizer.
+    Set up live visualization for a GraphRAG query optimizer.
 
 Args:
-    optimizer: RAG query optimizer instance to visualize
+    optimizer: GraphRAG query optimizer instance to visualize
     metrics_dir: Directory for storing metrics data
     visualization_dir: Directory for storing visualization outputs
     auto_update: Whether to enable automatic visualization updates

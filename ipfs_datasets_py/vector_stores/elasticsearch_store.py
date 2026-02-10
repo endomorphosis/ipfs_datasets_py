@@ -1,7 +1,7 @@
 """Elasticsearch vector store implementation.
 
 This module provides an Elasticsearch-based vector store for embedding operations,
-migrated and adapted from ipfs_embeddings_py.
+migrated and adapted from a pre-migration embeddings codebase.
 """
 from __future__ import annotations
 import logging

@@ -74,8 +74,10 @@ class MockSparseEmbeddingService:
         
         self.stats["embeddings_generated"] += 1
         
+        indices_list = indices.tolist() if hasattr(indices, "tolist") else list(indices)
+
         return SparseEmbedding(
-            indices=indices.tolist(),
+            indices=indices_list,
             values=values.tolist(),
             dimension=dimension,
             sparsity=sparsity,

@@ -10,7 +10,6 @@ import json
 from typing import Dict, Any, Optional, Union, List
 from pathlib import Path
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import logging
 
@@ -209,10 +208,21 @@ async def ffmpeg_batch_process(
         logger.info(f"Starting batch processing of {len(files_to_process)} files with {max_parallel} parallel workers")
         
         tasks = [bounded_process(file_path) for file_path in files_to_process]
-        
-        # Process with progress tracking
-        for i, task in enumerate(asyncio.as_completed(tasks)):
-            result = await task
+
+        # Process with progress tracking (completion-order)
+        send_stream, receive_stream = anyio.create_memory_object_stream(max(1, len(tasks)))
+
+        async def _run_one(awaitable):
+            result = await awaitable
+            await send_stream.send(result)
+
+        async with send_stream, receive_stream:
+            async with anyio.create_task_group() as tg:
+                for awaitable in tasks:
+                    tg.start_soon(_run_one, awaitable)
+
+                for i in range(len(tasks)):
+                    result = await receive_stream.receive()
             results.append(result)
             
             if result["status"] == "success":

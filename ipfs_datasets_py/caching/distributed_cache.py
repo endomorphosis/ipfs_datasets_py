@@ -12,6 +12,7 @@ Key features:
 """
 
 import anyio
+import inspect
 import json
 import logging
 import time
@@ -324,7 +325,7 @@ class DistributedGitHubCache:
         except Exception as e:
             logger.warning(f"Failed to connect to {peer_addr}: {e}")
     
-    async def _handle_cache_stream(self, stream: INetStream):
+    async def _handle_cache_stream(self, stream: Any):
         """Handle incoming cache synchronization stream"""
         try:
             peer_id = str(stream.muxed_conn.peer_id)
@@ -359,7 +360,7 @@ class DistributedGitHubCache:
         except Exception as e:
             logger.error(f"Error handling cache stream: {e}")
     
-    async def _send_cache_entry(self, stream: INetStream, entry: CacheEntry):
+    async def _send_cache_entry(self, stream: Any, entry: CacheEntry):
         """Send a cache entry to a peer"""
         try:
             message = {
@@ -474,7 +475,7 @@ class DistributedGitHubCache:
             return cached
         
         # Cache miss - fetch from source
-        if asyncio.iscoroutinefunction(fetch_fn):
+        if inspect.iscoroutinefunction(fetch_fn):
             data = await fetch_fn(*args, **kwargs)
         else:
             data = fetch_fn(*args, **kwargs)

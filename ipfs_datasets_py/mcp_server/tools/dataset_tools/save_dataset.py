@@ -5,16 +5,28 @@ MCP tool for saving datasets.
 This tool handles saving datasets to various destinations and formats.
 """
 import anyio
+import json
 from typing import Dict, Any, Optional, Union
 
 import logging
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
+
 
 async def save_dataset(
     dataset_data: str | Dict[str, Any],
-    destination: str,
+    destination: Optional[str] = None,
     format: Optional[str] = None,
     options: Optional[Dict[str, Any]] = None
 ) -> Dict[str, Any]:
@@ -54,8 +66,41 @@ async def save_dataset(
     Raises:
         ValueError: If destination is invalid or dataset_data is malformed
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if isinstance(dataset_data, str) and destination is None and format is None and options is None:
+        data, error = parse_json_object(dataset_data)
+        if error is not None:
+            return error
+
+        if "destination" not in data:
+            return mcp_error_response("Missing required field: destination", error_type="validation")
+        if "dataset_data" not in data:
+            return mcp_error_response("Missing required field: dataset_data", error_type="validation")
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.save_dataset(
+                data["dataset_data"],
+                data["destination"],
+                format=data.get("format"),
+                options=data.get("options"),
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
         logger.info(f"Saving dataset {dataset_data} to {destination} with format {format if format else 'default'}")
+
+        if destination is None:
+            raise ValueError("Destination must be provided")
 
         # Input validation - prevent saving as executable files
         if not destination or not isinstance(destination, str) or len(destination.strip()) == 0:

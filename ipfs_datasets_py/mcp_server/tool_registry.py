@@ -1,9 +1,11 @@
 # src/mcp_server/tool_registry.py
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
 from datetime import datetime, timezone
 from abc import ABC, abstractmethod
+
+from ipfs_datasets_py.mcp_server.tools.tool_wrapper import BaseMCPTool, wrap_function_as_tool
 
 
 logger = logging.getLogger(__name__)
@@ -255,7 +257,7 @@ class ToolRegistry:
         self.total_executions = 0
         logger.info("Tool registry initialized")
     
-    def register_tool(self, tool: ClaudeMCPTool) -> None:
+    def register_tool(self, tool: Union[ClaudeMCPTool, BaseMCPTool]) -> None:
         """Register a tool with the registry.
 
         This method adds a ClaudeMCPTool instance to the registry, making it available
@@ -291,8 +293,8 @@ class ToolRegistry:
             >>> registry.register_tool(my_tool)
             # Tool is now available for lookup and execution
         """
-        if not isinstance(tool, ClaudeMCPTool):
-            raise ValueError("Tool must inherit from ClaudeMCPTool")
+        if not isinstance(tool, (ClaudeMCPTool, BaseMCPTool)):
+            raise ValueError("Tool must inherit from ClaudeMCPTool or BaseMCPTool")
         
         if tool.name in self._tools:
             logger.warning(f"Tool '{tool.name}' already registered, overwriting")
@@ -695,218 +697,238 @@ def initialize_laion_tools(registry: ToolRegistry = None, embedding_service=None
         >>> initialize_laion_tools(registry, embedding_svc)
     """
     logger.info("Initializing LAION embedding tools...")
-    
+
     # Create registry if none provided
     if registry is None:
         registry = ToolRegistry()
         return_tools = True
     else:
         return_tools = False
-    
+
+    # Each tool group is registered defensively so partial registration works.
     try:
-        # Import and register embedding tools
-        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.embedding_tools import EmbeddingGenerationTool, BatchEmbeddingTool, MultimodalEmbeddingTool
+        from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_tools import (
+            BatchEmbeddingTool,
+            EmbeddingGenerationTool,
+            MultimodalEmbeddingTool,
+        )
+
         registry.register_tool(EmbeddingGenerationTool(embedding_service))
         registry.register_tool(BatchEmbeddingTool(embedding_service))
         registry.register_tool(MultimodalEmbeddingTool(embedding_service))
     except Exception as e:
-        logger.error(f"Error importing or registering embedding tools: {e}")
-        # Continue with other tools even if some fail
-        
-        # Import and register search tools
-        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.search_tools import SemanticSearchTool
+        logger.warning(f"Could not register embedding tools: {e}")
+
+        # Compatibility fallback: register function-based embedding tools.
+        try:
+            from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_generation import (
+                generate_batch_embeddings,
+                generate_embedding,
+            )
+
+            registry.register_tool(
+                wrap_function_as_tool(generate_embedding, "generate_embedding", "embedding")
+            )
+            registry.register_tool(
+                wrap_function_as_tool(generate_batch_embeddings, "generate_batch_embeddings", "embedding")
+            )
+        except Exception as e2:
+            logger.warning(f"Could not register embedding function fallbacks: {e2}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.search_tools.search_tools import (
+            FacetedSearchTool,
+            SemanticSearchTool,
+            SimilaritySearchTool,
+        )
+
         registry.register_tool(SemanticSearchTool(embedding_service))
-        
-        # Import and register analysis tools
-        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.analysis_tools import ClusterAnalysisTool, QualityAssessmentTool, DimensionalityReductionTool
-        registry.register_tool(ClusterAnalysisTool())
-        registry.register_tool(QualityAssessmentTool())
-        registry.register_tool(DimensionalityReductionTool())
-        
-        # Import and register storage tools
-        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.storage_tools import StorageManagementTool, CollectionManagementTool
+        registry.register_tool(SimilaritySearchTool(embedding_service))
+        registry.register_tool(FacetedSearchTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register search tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.analysis_tools.analysis_tools import (
+            cluster_analysis,
+            dimensionality_reduction,
+            quality_assessment,
+        )
+
+        registry.register_tool(wrap_function_as_tool(cluster_analysis, "cluster_analysis", "analysis"))
+        registry.register_tool(wrap_function_as_tool(quality_assessment, "quality_assessment", "analysis"))
+        registry.register_tool(wrap_function_as_tool(dimensionality_reduction, "dimensionality_reduction", "analysis"))
+    except Exception as e:
+        logger.warning(f"Could not register analysis tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.storage_tools.storage_tools import CollectionManagementTool, StorageManagementTool
+
         registry.register_tool(StorageManagementTool(embedding_service))
         registry.register_tool(CollectionManagementTool(embedding_service))
-        
-        # Import and register data processing tools (only if embedding service is available)
-        if embedding_service is not None:
-            try:
-                from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.data_processing_tools import ChunkingTool, DatasetLoadingTool, ParquetToCarTool
-                registry.register_tool(ChunkingTool(embedding_service))
-                registry.register_tool(DatasetLoadingTool(embedding_service))
-                registry.register_tool(ParquetToCarTool(embedding_service))
-            except Exception as e:
-                logger.warning(f"Could not register data processing tools (embedding service required): {e}")
-        else:
-            logger.info("Skipping data processing tools registration (no embedding service provided)")
-        
-        # Import and register authentication tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.authentication_tools import AuthenticationTool, UserInfoTool, TokenValidationTool
-            registry.register_tool(AuthenticationTool(embedding_service))
-            registry.register_tool(UserInfoTool(embedding_service))
-            registry.register_tool(TokenValidationTool(embedding_service))
-            logger.info("Successfully registered authentication tools")
-        except Exception as e:
-            logger.warning(f"Could not register authentication tools: {e}")
-        
-        # Import and register admin tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.admin_tools import EndpointManagementTool, UserManagementTool, SystemConfigurationTool
-            registry.register_tool(EndpointManagementTool(embedding_service))
-            registry.register_tool(UserManagementTool(embedding_service))
-            registry.register_tool(SystemConfigurationTool(embedding_service))
-            logger.info("Successfully registered admin tools")
-        except Exception as e:
-            logger.warning(f"Could not register admin tools: {e}")
-        
-        # Import and register cache tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.cache_tools import CacheStatsTool, CacheManagementTool, CacheMonitoringTool
-            registry.register_tool(CacheStatsTool(embedding_service))
-            registry.register_tool(CacheManagementTool(embedding_service))
-            registry.register_tool(CacheMonitoringTool(embedding_service))
-            logger.info("Successfully registered cache tools")
-        except Exception as e:
-            logger.warning(f"Could not register cache tools: {e}")
-        
-        # Import and register monitoring tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.monitoring_tools import HealthCheckTool, MetricsCollectionTool, SystemMonitoringTool, AlertManagementTool
-            registry.register_tool(HealthCheckTool(embedding_service))
-            registry.register_tool(MetricsCollectionTool(embedding_service))
-            registry.register_tool(SystemMonitoringTool(embedding_service))
-            registry.register_tool(AlertManagementTool(embedding_service))
-            logger.info("Successfully registered monitoring tools")
-        except Exception as e:
-            logger.warning(f"Could not register monitoring tools: {e}")
-        
-        # Import and register background task tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.background_task_tools import BackgroundTaskStatusTool, BackgroundTaskManagementTool, TaskQueueManagementTool
-            registry.register_tool(BackgroundTaskStatusTool(embedding_service))
-            registry.register_tool(BackgroundTaskManagementTool(embedding_service))
-            registry.register_tool(TaskQueueManagementTool(embedding_service))
-            logger.info("Successfully registered background task tools")
-        except Exception as e:
-            logger.warning(f"Could not register background task tools: {e}")
-        
-        # Import and register rate limiting tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.rate_limiting_tools import RateLimitConfigurationTool, RateLimitMonitoringTool, RateLimitManagementTool
-            registry.register_tool(RateLimitConfigurationTool(embedding_service))
-            registry.register_tool(RateLimitMonitoringTool(embedding_service))
-            registry.register_tool(RateLimitManagementTool(embedding_service))
-            logger.info("Successfully registered rate limiting tools")
-        except Exception as e:
-            logger.warning(f"Could not register rate limiting tools: {e}")
-        
-        # Import and register index management tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.index_management_tools import IndexLoadingTool, ShardManagementTool, IndexStatusTool
-            registry.register_tool(IndexLoadingTool(embedding_service))
-            registry.register_tool(ShardManagementTool(embedding_service))
-            registry.register_tool(IndexStatusTool(embedding_service))
-            logger.info("Successfully registered index management tools")
-        except Exception as e:
-            logger.warning(f"Could not register index management tools: {e}")
-        
-        # Import and register sparse embedding tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.sparse_embedding_tools import SparseEmbeddingGenerationTool, SparseIndexingTool, SparseSearchTool
-            registry.register_tool(SparseEmbeddingGenerationTool(embedding_service))
-            registry.register_tool(SparseIndexingTool(embedding_service))
-            registry.register_tool(SparseSearchTool(embedding_service))
-            logger.info("Successfully registered sparse embedding tools")
-        except Exception as e:
-            logger.warning(f"Could not register sparse embedding tools: {e}")
-        
-        # Import and register IPFS cluster tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.ipfs_cluster_tools import IPFSClusterManagementTool, StorachaIntegrationTool, IPFSPinningTool
-            registry.register_tool(IPFSClusterManagementTool(embedding_service))
-            registry.register_tool(StorachaIntegrationTool(embedding_service))
-            registry.register_tool(IPFSPinningTool(embedding_service))
-            logger.info("Successfully registered IPFS cluster tools")
-        except Exception as e:
-            logger.warning(f"Could not register IPFS cluster tools: {e}")
-        
-        # Import and register session management tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.session_management_tools import SessionCreationTool, SessionMonitoringTool, SessionCleanupTool
-            registry.register_tool(SessionCreationTool(embedding_service))
-            registry.register_tool(SessionMonitoringTool(embedding_service))
-            registry.register_tool(SessionCleanupTool(embedding_service))
-            logger.info("Successfully registered session management tools")
-        except Exception as e:
-            logger.warning(f"Could not register session management tools: {e}")
-        
-        from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.tool_wrapper import wrap_function_as_tool
-
-        # Import and register create embeddings tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.create_embeddings_tool import create_embeddings_tool, batch_create_embeddings_tool
-            registry.register_tool(wrap_function_as_tool(create_embeddings_tool, "create_embeddings", "embedding"))
-            registry.register_tool(wrap_function_as_tool(batch_create_embeddings_tool, "batch_create_embeddings", "embedding"))
-            logger.info("Successfully registered create embeddings tools")
-        except Exception as e:
-            logger.warning(f"Could not register create embeddings tools: {e}")
-        
-        # Import and register shard embeddings tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.shard_embeddings_tool import shard_embeddings_tool, merge_shards_tool, shard_info_tool
-
-            registry.register_tool(wrap_function_as_tool(shard_embeddings_tool, "shard_embeddings", "processing"))
-            registry.register_tool(wrap_function_as_tool(merge_shards_tool, "merge_shards", "processing"))
-            registry.register_tool(wrap_function_as_tool(shard_info_tool, "shard_info", "analysis"))
-            logger.info("Successfully registered shard embeddings tools")
-        except Exception as e:
-            logger.warning(f"Could not register shard embeddings tools: {e}")
-        
-        # Import and register vector store tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.vector_store_tools import (
-                create_vector_store_tool, add_embeddings_to_store_tool, search_vector_store_tool,
-                get_vector_store_stats_tool, delete_from_vector_store_tool, optimize_vector_store_tool
-            )
-
-            registry.register_tool(wrap_function_as_tool(create_vector_store_tool, "create_vector_store", "storage"))
-            registry.register_tool(wrap_function_as_tool(add_embeddings_to_store_tool, "add_embeddings_to_store", "storage"))
-            registry.register_tool(wrap_function_as_tool(search_vector_store_tool, "search_vector_store", "search"))
-            registry.register_tool(wrap_function_as_tool(get_vector_store_stats_tool, "get_vector_store_stats", "analysis"))
-            registry.register_tool(wrap_function_as_tool(delete_from_vector_store_tool, "delete_from_vector_store", "storage"))
-            registry.register_tool(wrap_function_as_tool(optimize_vector_store_tool, "optimize_vector_store", "optimization"))
-            logger.info("Successfully registered vector store tools")
-        except Exception as e:
-            logger.warning(f"Could not register vector store tools: {e}")
-
-        # Import and register workflow orchestration tools
-        try:
-            from ipfs_datasets_py.mcp_server.tools.legacy_mcp_tools.workflow_tools import (
-                execute_workflow_tool, create_embedding_pipeline_tool, 
-                get_workflow_status_tool, list_workflows_tool
-            )
-            registry.register_tool(wrap_function_as_tool(execute_workflow_tool, "execute_workflow", "orchestration"))
-            registry.register_tool(wrap_function_as_tool(create_embedding_pipeline_tool, "create_embedding_pipeline", "orchestration"))
-            registry.register_tool(wrap_function_as_tool(get_workflow_status_tool, "get_workflow_status", "monitoring"))
-            registry.register_tool(wrap_function_as_tool(list_workflows_tool, "list_workflows", "monitoring"))
-            logger.info("Successfully registered workflow orchestration tools")
-        except Exception as e:
-            logger.warning(f"Could not register workflow orchestration tools: {e}")
-        
-        logger.info(f"Successfully registered {len(registry.get_all_tools())} tools total")
-        
-        # Return tools if registry was created internally
-        if return_tools:
-            return registry.get_all_tools()
-        
-    except ImportError as e:
-        logger.error(f"Failed to import tool classes: {e}")
-        # Continue with basic functionality
-        if return_tools:
-            return registry.get_all_tools()
     except Exception as e:
-        logger.error(f"Error registering tools: {e}")
-        # Continue with basic functionality
-        if return_tools:
-            return registry.get_all_tools()
+        logger.warning(f"Could not register storage tools: {e}")
+
+    if embedding_service is not None:
+        try:
+            from ipfs_datasets_py.mcp_server.tools.data_processing_tools.data_processing_tools import ChunkingTool, DatasetLoadingTool, ParquetToCarTool
+
+            registry.register_tool(ChunkingTool(embedding_service))
+            registry.register_tool(DatasetLoadingTool(embedding_service))
+            registry.register_tool(ParquetToCarTool(embedding_service))
+        except Exception as e:
+            logger.warning(f"Could not register data processing tools (embedding service required): {e}")
+    else:
+        logger.info("Skipping data processing tools registration (no embedding service provided)")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import AuthenticationTool, TokenValidationTool, UserInfoTool
+
+        registry.register_tool(AuthenticationTool(embedding_service))
+        registry.register_tool(UserInfoTool(embedding_service))
+        registry.register_tool(TokenValidationTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register authentication tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.admin_tools.admin_tools import EndpointManagementTool, SystemConfigurationTool, UserManagementTool
+
+        registry.register_tool(EndpointManagementTool(embedding_service))
+        registry.register_tool(UserManagementTool(embedding_service))
+        registry.register_tool(SystemConfigurationTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register admin tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.cache_tools.cache_tools import CacheManagementTool, CacheMonitoringTool, CacheStatsTool
+
+        registry.register_tool(CacheStatsTool(embedding_service))
+        registry.register_tool(CacheManagementTool(embedding_service))
+        registry.register_tool(CacheMonitoringTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register cache tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.monitoring_tools.monitoring_tools import AlertManagementTool, HealthCheckTool, MetricsCollectionTool, SystemMonitoringTool
+
+        registry.register_tool(HealthCheckTool(embedding_service))
+        registry.register_tool(MetricsCollectionTool(embedding_service))
+        registry.register_tool(SystemMonitoringTool(embedding_service))
+        registry.register_tool(AlertManagementTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register monitoring tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.background_task_tools.background_task_tools import BackgroundTaskManagementTool, BackgroundTaskStatusTool, TaskQueueManagementTool
+
+        registry.register_tool(BackgroundTaskStatusTool(embedding_service))
+        registry.register_tool(BackgroundTaskManagementTool(embedding_service))
+        registry.register_tool(TaskQueueManagementTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register background task tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.rate_limiting_tools.rate_limiting_tools import RateLimitConfigurationTool, RateLimitManagementTool, RateLimitMonitoringTool
+
+        registry.register_tool(RateLimitConfigurationTool(embedding_service))
+        registry.register_tool(RateLimitMonitoringTool(embedding_service))
+        registry.register_tool(RateLimitManagementTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register rate limiting tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.index_management_tools.index_management_tools import IndexLoadingTool, IndexStatusTool, ShardManagementTool
+
+        registry.register_tool(IndexLoadingTool(embedding_service))
+        registry.register_tool(ShardManagementTool(embedding_service))
+        registry.register_tool(IndexStatusTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register index management tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.sparse_embedding_tools.sparse_embedding_tools import SparseEmbeddingGenerationTool, SparseIndexingTool, SparseSearchTool
+
+        registry.register_tool(SparseEmbeddingGenerationTool(embedding_service))
+        registry.register_tool(SparseIndexingTool(embedding_service))
+        registry.register_tool(SparseSearchTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register sparse embedding tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.ipfs_cluster_tools.enhanced_ipfs_cluster_tools import IPFSClusterManagementTool, IPFSPinningTool, StorachaIntegrationTool
+
+        registry.register_tool(IPFSClusterManagementTool(embedding_service))
+        registry.register_tool(StorachaIntegrationTool(embedding_service))
+        registry.register_tool(IPFSPinningTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register IPFS cluster tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.session_tools.session_tools import SessionCleanupTool, SessionCreationTool, SessionMonitoringTool
+
+        registry.register_tool(SessionCreationTool(embedding_service))
+        registry.register_tool(SessionMonitoringTool(embedding_service))
+        registry.register_tool(SessionCleanupTool(embedding_service))
+    except Exception as e:
+        logger.warning(f"Could not register session management tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.embedding_tools.embedding_generation import (
+            generate_embedding,
+            generate_batch_embeddings,
+        )
+
+        registry.register_tool(wrap_function_as_tool(generate_embedding, "create_embeddings", "embedding"))
+        registry.register_tool(wrap_function_as_tool(generate_batch_embeddings, "batch_create_embeddings", "embedding"))
+    except Exception as e:
+        logger.warning(f"Could not register create embeddings tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.embedding_tools.shard_embeddings_tool import merge_shards_tool, shard_embeddings_tool, shard_info_tool
+
+        registry.register_tool(wrap_function_as_tool(shard_embeddings_tool, "shard_embeddings", "processing"))
+        registry.register_tool(wrap_function_as_tool(merge_shards_tool, "merge_shards", "processing"))
+        registry.register_tool(wrap_function_as_tool(shard_info_tool, "shard_info", "analysis"))
+    except Exception as e:
+        logger.warning(f"Could not register shard embeddings tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.vector_store_tools.vector_store_tools import (
+            add_embeddings_to_store_tool,
+            create_vector_store_tool,
+            delete_from_vector_store_tool,
+            get_vector_store_stats_tool,
+            optimize_vector_store_tool,
+            search_vector_store_tool,
+        )
+
+        registry.register_tool(wrap_function_as_tool(create_vector_store_tool, "create_vector_store", "storage"))
+        registry.register_tool(wrap_function_as_tool(add_embeddings_to_store_tool, "add_embeddings_to_store", "storage"))
+        registry.register_tool(wrap_function_as_tool(search_vector_store_tool, "search_vector_store", "search"))
+        registry.register_tool(wrap_function_as_tool(get_vector_store_stats_tool, "get_vector_store_stats", "analysis"))
+        registry.register_tool(wrap_function_as_tool(delete_from_vector_store_tool, "delete_from_vector_store", "storage"))
+        registry.register_tool(wrap_function_as_tool(optimize_vector_store_tool, "optimize_vector_store", "optimization"))
+    except Exception as e:
+        logger.warning(f"Could not register vector store tools: {e}")
+
+    try:
+        from ipfs_datasets_py.mcp_server.tools.workflow_tools.workflow_tools import (
+            create_embedding_pipeline_tool,
+            execute_workflow_tool,
+            get_workflow_status_tool,
+            list_workflows_tool,
+        )
+
+        registry.register_tool(wrap_function_as_tool(execute_workflow_tool, "execute_workflow", "orchestration"))
+        registry.register_tool(wrap_function_as_tool(create_embedding_pipeline_tool, "create_embedding_pipeline", "orchestration"))
+        registry.register_tool(wrap_function_as_tool(get_workflow_status_tool, "get_workflow_status", "monitoring"))
+        registry.register_tool(wrap_function_as_tool(list_workflows_tool, "list_workflows", "monitoring"))
+    except Exception as e:
+        logger.warning(f"Could not register workflow orchestration tools: {e}")
+
+    logger.info(f"Successfully registered {len(registry.get_all_tools())} tools total")
+
+    if return_tools:
+        return registry.get_all_tools()
+
+    return None

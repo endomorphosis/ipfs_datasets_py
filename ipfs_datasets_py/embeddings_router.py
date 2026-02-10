@@ -9,7 +9,10 @@ Design goals:
   `ipfs_datasets_py.utils.embedding_adapter`.
 
 Environment variables:
-- `IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE`: enable ipfs_accelerate_py provider (best-effort)
+- `IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE`: control ipfs_accelerate_py provider (best-effort)
+    - unset: prefer accelerate when available
+    - truthy: force-enable accelerate attempt
+    - falsy (0/false/no): disable accelerate provider
 - `IPFS_DATASETS_PY_EMBEDDINGS_BACKEND`: force backend for local adapter (e.g. "gemini" or "hf")
 - `IPFS_DATASETS_PY_EMBEDDINGS_MODEL`: HF model name for local adapter
 - `IPFS_DATASETS_PY_EMBEDDINGS_DEVICE`: device for local adapter (cpu/cuda)
@@ -38,6 +41,54 @@ import hashlib
 from typing import Callable, Dict, Iterable, List, Optional, Protocol, runtime_checkable
 
 from .router_deps import RouterDeps, get_default_router_deps
+
+
+def get_accelerate_manager(
+    *,
+    deps: Optional[RouterDeps] = None,
+    purpose: str = "embeddings",
+    enable_distributed: bool = True,
+    resources: Optional[dict[str, object]] = None,
+    ipfs_gateway: Optional[str] = None,
+) -> object | None:
+    """Return a cached AccelerateManager via RouterDeps.
+
+    This is the preferred access path for accelerate integration from embeddings
+    code. It keeps accelerate opt-in and router-mediated.
+    """
+
+    resolved = deps or get_default_router_deps()
+    try:
+        return resolved.get_accelerate_manager(
+            purpose=purpose,
+            enable_distributed=enable_distributed,
+            resources=resources,
+            ipfs_gateway=ipfs_gateway,
+        )
+    except Exception:
+        return None
+
+
+def get_accelerate_status() -> dict:
+    """Best-effort accelerate status without forcing heavy imports.
+
+    This mirrors `llm_router.get_accelerate_status` so embeddings call sites can
+    avoid importing `accelerate_integration` directly.
+    """
+
+    env_value = os.environ.get("IPFS_ACCELERATE_ENABLED", "1").lower()
+    env_disabled = env_value in {"0", "false", "no", "disabled"}
+    if env_disabled:
+        return {"available": False, "enabled": False, "env_disabled": True, "env_var": env_value}
+
+    try:
+        import importlib.util
+
+        backend_available = importlib.util.find_spec("ipfs_accelerate_py") is not None
+    except Exception:
+        backend_available = False
+
+    return {"available": backend_available, "enabled": True, "env_disabled": False, "env_var": env_value}
 
 
 def _truthy(value: Optional[str]) -> bool:
@@ -326,7 +377,17 @@ def _builtin_provider_by_name(name: str, *, deps: RouterDeps) -> Optional[Embedd
 
 
 def _get_accelerate_provider(deps: RouterDeps) -> Optional[EmbeddingsProvider]:
-    if not _truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")):
+    enable_value = os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE")
+    if enable_value is not None and enable_value.strip() and not _truthy(enable_value):
+        return None
+
+    # If ipfs_accelerate_py isn't installed, skip without initializing anything.
+    try:
+        import importlib.util
+
+        if importlib.util.find_spec("ipfs_accelerate_py") is None:
+            return None
+    except Exception:
         return None
 
     try:
@@ -579,6 +640,51 @@ def embed_texts(
                         pass
             return result
         raise
+
+
+def embed_texts_batched(
+    texts: Iterable[str],
+    *,
+    batch_size: int = 128,
+    model_name: Optional[str] = None,
+    device: Optional[str] = None,
+    provider: Optional[str] = None,
+    provider_instance: Optional[EmbeddingsProvider] = None,
+    deps: Optional[RouterDeps] = None,
+    **kwargs: object,
+) -> List[List[float]]:
+    """Generate embeddings for many texts in bounded-size batches.
+
+    This is a convenience API for large workloads (e.g., scraper pipelines) that
+    want router-level caching/provider selection without relying on vendor-specific
+    file/batch job APIs.
+    """
+
+    if batch_size <= 0:
+        raise ValueError("batch_size must be positive")
+
+    items = list(texts)
+    if not items:
+        return []
+
+    resolved_deps = deps or get_default_router_deps()
+    backend = provider_instance or get_embeddings_provider(provider, deps=resolved_deps)
+
+    out: List[List[float]] = []
+    for start in range(0, len(items), int(batch_size)):
+        batch = items[start : start + int(batch_size)]
+        out.extend(
+            embed_texts(
+                batch,
+                model_name=model_name,
+                device=device,
+                provider=provider,
+                provider_instance=backend,
+                deps=resolved_deps,
+                **kwargs,
+            )
+        )
+    return out
 
 
 def clear_embeddings_router_caches() -> None:

@@ -1,7 +1,7 @@
 """
 Enhanced Embedding Generation Tools with IPFS Embeddings Integration
 
-Migrated and enhanced from endomorphosis/ipfs_embeddings_py to provide
+Migrated and enhanced from a pre-migration embeddings codebase to provide
 production-ready embedding generation capabilities.
 Supports accelerate integration for distributed embedding generation.
 """

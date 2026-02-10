@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/tool_registration.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/tool_registration.py'
 
 ## MCPToolRegistry
 
@@ -89,7 +89,7 @@ def list_all_tools(self) -> List[Dict[str, Any]]:
 ```python
 def register_all_migrated_tools(registry: MCPToolRegistry) -> Dict[str, Any]:
     """
-    Register all migrated tools from the ipfs_embeddings_py integration.
+    Register all migrated tools from the pre-migration embeddings integration.
 
 Args:
     registry: The tool registry to register tools with

@@ -426,12 +426,12 @@ def _copilot_sdk_generate(prompt: str) -> str:
         else:
             session = await client.create_session()
         try:
+            from ipfs_datasets_py.utils.anyio_compat import fail_after
+
             try:
-                event = await asyncio.wait_for(
-                    session.send_and_wait({"prompt": prompt}),
-                    timeout=timeout_seconds,
-                )
-            except asyncio.TimeoutError as exc:
+                with fail_after(timeout_seconds):
+                    event = await session.send_and_wait({"prompt": prompt})
+            except TimeoutError as exc:
                 raise RuntimeError(
                     f"copilot_sdk timeout after {timeout_seconds:.1f}s waiting for session.idle"
                 ) from exc
@@ -445,170 +445,46 @@ def _copilot_sdk_generate(prompt: str) -> str:
             await client.stop()
 
     try:
-        import asyncio
+        from ipfs_datasets_py.utils.anyio_compat import AsyncContextError, run as run_anyio
 
-        asyncio.get_running_loop()
-    except RuntimeError:
-        return asyncio.run(_run())
-
-    raise RuntimeError("copilot-sdk requires a non-running event loop context")
+        return run_anyio(_run())
+    except AsyncContextError:
+        raise RuntimeError("copilot-sdk requires a non-running event loop context")
 
 
 def _generate_text(prompt: str, model_name: str) -> Tuple[str, Dict[str, Any]]:
-    metadata: Dict[str, Any] = {"backend": "", "errors": []}
+    metadata: Dict[str, Any] = {"backend": "llm_router", "errors": []}
 
-    preferred = _preferred_backends()
-    if preferred:
-        for backend in preferred:
-            try:
-                if backend == "ipfs_accelerate_py":
-                    from ipfs_accelerate_py.llm_integration import RealLLMInterface
-                    from ipfs_datasets_py.llm.llm_interface import LLMConfig
+    # NOTE:
+    # Historically this router cascaded across multiple CLIs/SDKs (Copilot SDK, Gemini CLI,
+    # Claude Code, HuggingFace local) which can be expensive and can explode memory when
+    # SymbolicAI issues many `.query()` calls in tight loops (as in integration tests).
+    #
+    # We now route ALL SyMAI generation through the single top-level
+    # `ipfs_datasets_py.llm_router.generate_text` path so provider selection, caching,
+    # and dependency injection are centralized.
 
-                    llm = RealLLMInterface(LLMConfig(model_name=model_name or "router"))
-                    if hasattr(llm, "generate_text"):
-                        text = llm.generate_text(prompt)
-                    elif hasattr(llm, "generate"):
-                        text = llm.generate(prompt)
-                    elif callable(llm):
-                        text = llm(prompt)
-                    else:
-                        raise RuntimeError("ipfs_accelerate_py LLM interface has no generate method")
-                    metadata["backend"] = "ipfs_accelerate_py"
-                    return str(text), metadata
-
-                if backend == "copilot_sdk":
-                    text = _copilot_sdk_generate(prompt)
-                    metadata["backend"] = "copilot_sdk"
-                    return text, metadata
-
-                if backend == "gemini_cli":
-                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")):
-                        raise RuntimeError("Gemini CLI not available")
-                    text = _gemini_cli_generate(prompt)
-                    metadata["backend"] = "gemini_cli"
-                    return text, metadata
-
-                if backend == "claude_code":
-                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")):
-                        raise RuntimeError("Claude Code CLI not available")
-                    text = _claude_code_generate(prompt)
-                    metadata["backend"] = "claude_code"
-                    return text, metadata
-
-                if backend == "copilot_cli":
-                    if not _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")):
-                        raise RuntimeError("Copilot CLI not available")
-                    text = _copilot_cli_generate(prompt)
-                    metadata["backend"] = "copilot_cli"
-                    return text, metadata
-
-                if backend == "gemini_py":
-                    if not (GeminiCLI and GeminiCLI().is_installed()):
-                        raise RuntimeError("Gemini CLI wrapper not available")
-                    text = _gemini_generate(prompt)
-                    metadata["backend"] = "gemini_py"
-                    return text, metadata
-
-                if backend == "claude_py":
-                    if not (ClaudeCLI and ClaudeCLI().is_installed()):
-                        raise RuntimeError("Claude CLI wrapper not available")
-                    text = _claude_generate(prompt)
-                    metadata["backend"] = "claude_py"
-                    return text, metadata
-
-                if backend == "huggingface":
-                    hf_model = model_name
-                    if not hf_model or hf_model == "default":
-                        hf_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", "Qwen/Qwen3-1.7B-Thinker")
-                    text = _hf_generate(prompt, hf_model)
-                    metadata["backend"] = "huggingface"
-                    metadata["model"] = hf_model
-                    return text, metadata
-
-                raise RuntimeError(f"Unknown backend '{backend}'")
-            except Exception as exc:
-                metadata["errors"].append(f"{backend}: {exc}")
-
-        raise RuntimeError("No available backend for SyMAI router: " + "; ".join(metadata["errors"]))
+    if _dry_run_enabled():
+        # Preserve existing dry-run behavior for deterministic/offline operation.
+        if _wants_json_response(None, str(prompt)):
+            return [_dry_run_json_object(str(prompt))][0], {"backend": "dry_run", "format": "json"}
+        return "OK", {"backend": "dry_run"}
 
     try:
-        from ipfs_accelerate_py.llm_integration import RealLLMInterface
-        from ipfs_datasets_py.llm.llm_interface import LLMConfig
+        from ipfs_datasets_py import llm_router
 
-        llm = RealLLMInterface(LLMConfig(model_name=model_name or "router"))
-        if hasattr(llm, "generate_text"):
-            text = llm.generate_text(prompt)
-        elif hasattr(llm, "generate"):
-            text = llm.generate(prompt)
-        elif callable(llm):
-            text = llm(prompt)
-        else:
-            raise RuntimeError("ipfs_accelerate_py LLM interface has no generate method")
-        metadata["backend"] = "ipfs_accelerate_py"
+        deps = _get_symai_router_deps()
+        provider = os.environ.get("IPFS_DATASETS_PY_LLM_PROVIDER") or None
+        text = llm_router.generate_text(
+            str(prompt),
+            model_name=model_name or None,
+            provider=provider,
+            deps=deps,
+        )
         return str(text), metadata
     except Exception as exc:
-        metadata["errors"].append(f"ipfs_accelerate_py: {exc}")
-
-    try:
-        text = _copilot_sdk_generate(prompt)
-        metadata["backend"] = "copilot_sdk"
-        return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"copilot_sdk: {exc}")
-
-    try:
-        if _cli_available(os.environ.get("IPFS_DATASETS_PY_GEMINI_CLI_CMD", "npx @google/gemini-cli")):
-            text = _gemini_cli_generate(prompt)
-            metadata["backend"] = "gemini_cli"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"gemini_cli: {exc}")
-
-    try:
-        if _cli_available(os.environ.get("IPFS_DATASETS_PY_CLAUDE_CODE_CLI_CMD", "claude")):
-            text = _claude_code_generate(prompt)
-            metadata["backend"] = "claude_code"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"claude_code: {exc}")
-
-    try:
-        if _cli_available(os.environ.get("IPFS_DATASETS_PY_COPILOT_CLI_CMD", "copilot")):
-            text = _copilot_cli_generate(prompt)
-            metadata["backend"] = "copilot_cli"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"copilot_cli: {exc}")
-
-    try:
-        if GeminiCLI and GeminiCLI().is_installed():
-            text = _gemini_generate(prompt)
-            metadata["backend"] = "gemini_py"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"gemini_py: {exc}")
-
-    try:
-        if ClaudeCLI and ClaudeCLI().is_installed():
-            text = _claude_generate(prompt)
-            metadata["backend"] = "claude_py"
-            return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"claude_py: {exc}")
-
-    hf_model = model_name
-    if not hf_model or hf_model == "default":
-        hf_model = os.environ.get("IPFS_DATASETS_PY_SYMAI_HF_MODEL", "Qwen/Qwen3-1.7B-Thinker")
-    try:
-        text = _hf_generate(prompt, hf_model)
-        metadata["backend"] = "huggingface"
-        metadata["model"] = hf_model
-        return text, metadata
-    except Exception as exc:
-        metadata["errors"].append(f"huggingface: {exc}")
-
-    raise RuntimeError("No available backend for SyMAI router: " + "; ".join(metadata["errors"]))
+        metadata["errors"].append(str(exc))
+        raise RuntimeError("SyMAI llm_router generation failed: " + "; ".join(metadata["errors"]))
 
 
 class IPFSSyMAIEngine(Engine):

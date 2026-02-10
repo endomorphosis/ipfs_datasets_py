@@ -3,13 +3,14 @@ import os
 
 
 from aiohttp import ClientSession
+import datasets
+from datasets import load_dataset, Dataset
+
+
 try:
-    import datasets  # type: ignore
-    from datasets import load_dataset, Dataset  # type: ignore
-except ImportError:  # pragma: no cover
-    datasets = None  # type: ignore
-    load_dataset = None  # type: ignore
-    Dataset = object  # type: ignore
+    from ..embeddings_router import get_accelerate_manager as _get_accelerate_manager
+except Exception:  # pragma: no cover
+    _get_accelerate_manager = None
 
 
 def _should_enable_ipfs_kit(resources: dict) -> bool:
@@ -29,21 +30,6 @@ def _lazy_load_ipfs_kit():
         return ipfs_kit
     except Exception:
         return None
-
-# Try to import accelerate integration for distributed inference
-try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
-
 
 class create_embeddings:
     def __init__(self, resources, metadata):
@@ -75,17 +61,21 @@ class create_embeddings:
         # Initialize accelerate manager if available and enabled
         self.accelerate_manager = None
         use_accelerate = resources.get("use_accelerate", True)
-        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+        if use_accelerate and callable(_get_accelerate_manager):
             try:
-                self.accelerate_manager = AccelerateManager(
+                self.accelerate_manager = _get_accelerate_manager(
+                    purpose="create_embeddings",
+                    enable_distributed=resources.get("enable_distributed", True),
                     resources=resources,
-                    enable_distributed=resources.get("enable_distributed", True)
                 )
-                print("✓ Accelerate integration enabled for distributed inference")
+                if self.accelerate_manager is not None:
+                    print("✓ Accelerate integration enabled for distributed inference")
+                else:
+                    print("⚠ Accelerate integration not available, using local inference only")
             except Exception as e:
                 print(f"⚠ Warning: Failed to initialize accelerate manager: {e}")
                 self.accelerate_manager = None
-        elif not HAVE_ACCELERATE or not is_accelerate_available():
+        else:
             print("⚠ Accelerate integration not available, using local inference only")
 
     def add_https_endpoint(self, model, endpoint, ctx_length):

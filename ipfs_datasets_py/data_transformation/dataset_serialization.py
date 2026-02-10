@@ -27,7 +27,7 @@ import numpy as np
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, Generator, TypeVar, Generic, Set, Callable
 
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+from .ipld.storage import IPLDStorage
 
 # Check for dependencies
 try:
@@ -48,20 +48,6 @@ try:
     HAVE_JSONNET = True
 except ImportError:
     HAVE_JSONNET = False
-
-# Try to import accelerate integration for distributed inference
-try:
-    from .accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
 
 
 T = TypeVar('T')
@@ -925,7 +911,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             cache_enabled (bool): Whether to enable query caching
             cache_ttl (float): Time-to-live for cached results in seconds
         """
-        from ipfs_datasets_py.rag.rag_query_optimizer import GraphRAGQueryOptimizer
+        from ipfs_datasets_py.optimizers.graphrag.query_optimizer import GraphRAGQueryOptimizer
         self.query_optimizer = GraphRAGQueryOptimizer(
             vector_weight=vector_weight,
             graph_weight=graph_weight,
@@ -940,7 +926,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         Args:
             num_partitions (int): Number of partitions to create
         """
-        from ipfs_datasets_py.rag.rag_query_optimizer import VectorIndexPartitioner
+        from ipfs_datasets_py.optimizers.graphrag.query_optimizer import VectorIndexPartitioner
         self.vector_partitioner = VectorIndexPartitioner(
             dimension=self.vector_index.dimension,
             num_partitions=num_partitions
@@ -1525,7 +1511,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: The loaded dataset
         """
         # Initialize storage
-        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+        from .ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Get the root object
@@ -1758,7 +1744,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: The imported dataset
         """
         # Initialize storage
-        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+        from .ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Import from CAR
@@ -1788,7 +1774,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             VectorAugmentedGraphDataset: A new dataset populated with the triples
         """
         # Initialize storage if needed
-        from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+        from .ipld.storage import IPLDStorage
         storage = storage or IPLDStorage()
 
         # Create a new dataset

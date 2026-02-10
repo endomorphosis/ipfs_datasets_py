@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/multimedia/ffmpeg_wrapper.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/multimedia/ffmpeg_wrapper.py'
 
 Files last updated: 1752446187.6843226
 

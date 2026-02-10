@@ -4,8 +4,8 @@ from typing import Any, Dict
 
 from mcp.server import FastMCP
 
-# Placeholder for ipfs_embeddings_py services
-# FIXME THIS IS A REAL MIGRATION FUCKER!!! 
+# Placeholder for pre-migration embeddings services
+# TODO: Replace these placeholders with actual service instances.
 # In a real migration, these would be actual service instances
 # or a simplified ServiceFactory that provides them.
 class PlaceholderEmbeddingService:
@@ -36,7 +36,7 @@ class PlaceholderDistributedVectorService:
 
 async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[str, Any]):
     """
-    Registers tools from the ipfs_embeddings_py integration with the main MCP server.
+    Registers migrated embeddings-related tools with the main MCP server.
     
     Uses the migrated tools that are now part of ipfs_datasets_py.
 
@@ -45,7 +45,7 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
         tools_dict: The dictionary to store registered tool functions.
     """
     logger = logging.getLogger(__name__)
-    logger.info("🚀 Registering migrated ipfs_embeddings_py tools...")
+    logger.info("🚀 Registering migrated embedding tools...")
 
     try:
         # Import the migrated tools from our new structure
@@ -167,16 +167,16 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
             logger.debug(f"Registered sparse embedding tool: {tool_name}")
 
         total_tools = len(embedding_tools) + len(analysis_tools) + len(workflow_tools) + len(monitoring_tools) + len(admin_tools) + len(cache_tools) + len(sparse_tools)
-        logger.info(f"✅ Successfully registered {total_tools} ipfs_embeddings_py tools")
+        logger.info(f"✅ Successfully registered {total_tools} embedding tools")
 
     except ImportError as e:
-        logger.warning(f"⚠️  Some ipfs_embeddings_py tools are not available: {e}")
+        logger.warning(f"⚠️  Some embedding tools are not available: {e}")
         
         # Register fallback tools for basic functionality
         async def fallback_embedding_tool(**kwargs):
             return {
                 "status": "fallback",
-                "message": "ipfs_embeddings_py tools not fully available",
+                "message": "Embedding tools not fully available",
                 "requested_parameters": kwargs
             }
         
@@ -185,5 +185,5 @@ async def register_ipfs_embeddings_tools(mcp_server: FastMCP, tools_dict: Dict[s
         logger.info("Registered fallback embedding tool")
         
     except Exception as e:
-        logger.error(f"❌ Error registering ipfs_embeddings_py tools: {e}")
+        logger.error(f"❌ Error registering embedding tools: {e}")
         logger.debug(traceback.format_exc())

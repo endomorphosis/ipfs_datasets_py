@@ -53,7 +53,7 @@ async def pdf_query_knowledge_graph(
     """
     try:
         # Import graph processing components
-        from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator, QueryEngine
+        from ipfs_datasets_py.processors.pdf_processing import GraphRAGIntegrator, QueryEngine
         from ipfs_datasets_py.monitoring import track_operation
         
         # Validate query type

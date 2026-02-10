@@ -1,19 +1,9 @@
-"""Legacy shim for GraphRAG integration.
+"""DEPRECATED compatibility shim.
 
-Canonical module:
-- `ipfs_datasets_py.graphrag.integrations.graphrag_integration`
+Canonical location:
+  ipfs_datasets_py.processors.graphrag.integration
+
+This module remains to preserve older import paths.
 """
 
-from __future__ import annotations
-
-import warnings
-
-
-warnings.warn(
-    "ipfs_datasets_py.logic.integrations.graphrag_integration is deprecated; "
-    "use ipfs_datasets_py.graphrag.integrations.graphrag_integration",
-    DeprecationWarning,
-    stacklevel=2,
-)
-
-from ipfs_datasets_py.graphrag.integrations.graphrag_integration import *  # noqa: F403
+from ipfs_datasets_py.processors.graphrag.integration import *  # noqa: F403

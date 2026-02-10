@@ -25,8 +25,10 @@ from pathlib import Path
 
 # Add repository root to path if not already there
 repo_root = Path(__file__).parent.parent.parent.parent.parent
-if str(repo_root) not in sys.path:
-    sys.path.insert(0, str(repo_root))
+ipfs_repo_root = repo_root / "ipfs_datasets_py"
+for path in (ipfs_repo_root, repo_root):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
 
 def test_imports():
@@ -34,7 +36,7 @@ def test_imports():
     print("Testing imports...")
     
     try:
-        from ipfs_datasets_py.legal_scrapers import (
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
             scrape_state_laws,
             list_state_jurisdictions,
             create_schedule,
@@ -56,7 +58,7 @@ async def test_jurisdictions():
     print("\nTesting list_state_jurisdictions...")
     
     try:
-        from ipfs_datasets_py.legal_scrapers import list_state_jurisdictions
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import list_state_jurisdictions
         
         result = await list_state_jurisdictions()
         
@@ -76,7 +78,7 @@ async def test_scraper_with_mock():
     print("\nTesting scrape_state_laws...")
     
     try:
-        from ipfs_datasets_py.legal_scrapers import scrape_state_laws
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import scrape_state_laws
         
         # Test with limited states
         result = await scrape_state_laws(
@@ -159,7 +161,7 @@ async def test_async_api():
     print("\nTesting async API functions...")
     
     try:
-        from ipfs_datasets_py.legal_scrapers import (
+        from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools import (
             create_schedule,
             list_schedules,
             enable_disable_schedule,

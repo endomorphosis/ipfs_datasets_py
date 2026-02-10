@@ -143,7 +143,7 @@ class IPFSKnnIndex:
     Dependencies:
         Required:
         - numpy: Numerical computing for vector operations and similarity calculations
-        - ipfs_datasets_py.ipld.storage: IPLD storage backend for IPFS integration
+        - ipfs_datasets_py.data_transformation.ipld.storage: IPLD storage backend for IPFS integration
         - ipfs_datasets_py.dataset_serialization: Serialization utilities for data conversion
         
         Optional:
@@ -245,7 +245,7 @@ class IPFSKnnIndex:
             )
             
             # Custom storage configuration for distributed deployment
-            from ipfs_datasets_py.ipld.storage import IPLDStorage
+            from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
             
             custom_storage = IPLDStorage(
                 ipfs_gateway="http://production-ipfs:8080",

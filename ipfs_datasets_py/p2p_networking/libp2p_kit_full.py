@@ -197,8 +197,9 @@ class LibP2PNode:
         # Register default protocol handlers
         self._register_default_handlers()
 
-        # Event loop for async operations
-        self.loop = asyncio.new_event_loop()
+        # Optional AnyIO portal used when this node is managed from sync code
+        # (e.g. via DistributedDatasetManager.start/stop)
+        self._portal = None
 
     def _register_default_handlers(self):
         """Register default protocol handlers."""
@@ -411,7 +412,21 @@ class LibP2PNode:
         Args:
             target: The async function to run
         """
-        asyncio.run_coroutine_threadsafe(target, self.loop)
+        """Schedule an awaitable/callable on the node's AnyIO portal.
+
+        This is a best-effort compatibility helper for older call sites.
+        """
+        if self._portal is None:
+            raise RuntimeError("Node portal is not initialized; start the manager first")
+
+        if callable(target):
+            self._portal.start_task_soon(target)
+            return
+
+        async def _runner():
+            return await target
+
+        self._portal.start_task_soon(_runner)
 
 
 class DatasetShardManager:
@@ -1424,33 +1439,28 @@ class DistributedDatasetManager:
     def start(self):
         """Start the distributed dataset manager."""
         if not self.node.running:
-            # Start event loop in a separate thread
-            import threading
-
-            def run_event_loop():
-                asyncio.set_event_loop(self.node.loop)
-                self.node.loop.run_until_complete(self.node.start())
-                self.node.loop.run_forever()
-
-            self._loop_thread = threading.Thread(target=run_event_loop, daemon=True)
-            self._loop_thread.start()
-
-            # Wait for node to start
-            while not self.node.running:
-                time.sleep(0.1)
+            # Start an AnyIO portal in a background thread and run node.start() on it.
+            # This avoids direct asyncio loop management while remaining compatible with
+            # asyncio-based dependencies under AnyIO's asyncio backend.
+            self._portal_cm = anyio.from_thread.start_blocking_portal(backend="asyncio")
+            self._portal = self._portal_cm.__enter__()
+            self.node._portal = self._portal
+            self._portal.call(self.node.start)
 
     def stop(self):
         """Stop the distributed dataset manager."""
         if self.node.running:
-            # Stop the node
-            self.node.loop.create_task(self.node.stop())
+            if self._portal is not None:
+                self._portal.call(self.node.stop)
 
-            # Stop the event loop
-            self.node.loop.call_soon_threadsafe(self.node.loop.stop)
+            if self._portal is not None:
+                self._portal.stop()
+                self._portal = None
+                self.node._portal = None
 
-            # Wait for thread to finish
-            if self._loop_thread:
-                self._loop_thread.join(timeout=5)
+            if self._portal_cm is not None:
+                self._portal_cm.__exit__(None, None, None)
+                self._portal_cm = None
 
     def create_dataset(
         self,

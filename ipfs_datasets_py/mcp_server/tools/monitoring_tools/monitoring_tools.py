@@ -1,7 +1,7 @@
 # ipfs_datasets_py/mcp_server/tools/monitoring_tools/monitoring_tools.py
 """
 System monitoring and health check tools.
-Migrated from ipfs_embeddings_py project.
+Migrated from a legacy tooling codebase.
 """
 
 import logging

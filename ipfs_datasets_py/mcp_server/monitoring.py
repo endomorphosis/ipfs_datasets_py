@@ -1,6 +1,7 @@
 # ipfs_datasets_py/mcp_server/monitoring.py
 
 import anyio
+import inspect
 import time
 import logging
 import psutil
@@ -104,8 +105,7 @@ class EnhancedMetricsCollector:
         self.alerts: deque = deque(maxlen=100)
         
         # Background tasks
-        self.monitoring_task: Optional[asyncio.Task] = None
-        self.cleanup_task: Optional[asyncio.Task] = None
+        self._monitoring_started = False
         self._lock = threading.Lock()
         
         # Don't start monitoring automatically during import
@@ -113,16 +113,20 @@ class EnhancedMetricsCollector:
     
     def _start_monitoring(self):
         """Start background monitoring tasks."""
-        try:
-            loop = asyncio.get_running_loop()
-            if self.monitoring_task is None or self.monitoring_task.done():
-                self.monitoring_task = asyncio.create_task(self._monitoring_loop())
-            
-            if self.cleanup_task is None or self.cleanup_task.done():
-                self.cleanup_task = asyncio.create_task(self._cleanup_loop())
-        except RuntimeError:
-            # No event loop running - monitoring will start when needed
-            pass
+        if self._monitoring_started:
+            return
+
+        # Only start when called from within an async context.
+        from ipfs_datasets_py.utils.anyio_compat import in_async_context
+
+        if not in_async_context():
+            return
+
+        from anyio.lowlevel import spawn_system_task
+
+        spawn_system_task(self._monitoring_loop)
+        spawn_system_task(self._cleanup_loop)
+        self._monitoring_started = True
     
     def start_monitoring(self):
         """Public method to start monitoring when an event loop is available."""
@@ -253,7 +257,11 @@ class EnhancedMetricsCollector:
     @asynccontextmanager
     async def track_request(self, endpoint: str):
         """Context manager to track request duration and count."""
-        request_id = f"{endpoint}_{id(asyncio.current_task())}"
+        try:
+            task_id = str(id(anyio.get_current_task()))
+        except Exception:
+            task_id = "sync"
+        request_id = f"{endpoint}_{task_id}"
         start_time = time.time()
         
         try:
@@ -312,10 +320,12 @@ class EnhancedMetricsCollector:
             try:
                 start_time = time.time()
                 
-                if asyncio.iscoroutinefunction(check_func):
+                if inspect.iscoroutinefunction(check_func):
                     result = await check_func()
                 else:
                     result = check_func()
+                    if inspect.isawaitable(result):
+                        result = await result
                 
                 response_time_ms = (time.time() - start_time) * 1000
                 

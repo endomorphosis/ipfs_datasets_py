@@ -22,12 +22,8 @@ import logging
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
+import sqlite3
 import anyio
-
-try:
-    import aiosqlite
-except ImportError:
-    aiosqlite = None
 
 try:
     import duckdb
@@ -35,6 +31,51 @@ except ImportError:
     duckdb = None
 
 logger = logging.getLogger(__name__)
+
+
+class AsyncSQLiteCursor:
+    def __init__(self, cursor: sqlite3.Cursor, lock: anyio.Lock):
+        self._cursor = cursor
+        self._lock = lock
+
+    async def fetchone(self):
+        async with self._lock:
+            return await anyio.to_thread.run_sync(self._cursor.fetchone)
+
+    async def fetchall(self):
+        async with self._lock:
+            return await anyio.to_thread.run_sync(self._cursor.fetchall)
+
+
+class AsyncSQLiteConnection:
+    def __init__(self, conn: sqlite3.Connection):
+        self._conn = conn
+        self._lock = anyio.Lock()
+
+    async def execute(self, sql: str, parameters: Optional[tuple] = None) -> AsyncSQLiteCursor:
+        def _exec() -> sqlite3.Cursor:
+            cur = self._conn.cursor()
+            if parameters is None:
+                cur.execute(sql)
+            else:
+                cur.execute(sql, parameters)
+            return cur
+
+        async with self._lock:
+            cursor = await anyio.to_thread.run_sync(_exec)
+        return AsyncSQLiteCursor(cursor, self._lock)
+
+    async def executescript(self, sql_script: str) -> None:
+        async with self._lock:
+            await anyio.to_thread.run_sync(self._conn.executescript, sql_script)
+
+    async def commit(self) -> None:
+        async with self._lock:
+            await anyio.to_thread.run_sync(self._conn.commit)
+
+    async def close(self) -> None:
+        async with self._lock:
+            await anyio.to_thread.run_sync(self._conn.close)
 
 
 class DatabaseConfig:
@@ -100,9 +141,6 @@ class SQLiteManager:
     """
     
     def __init__(self, db_path: Optional[Path] = None):
-        if aiosqlite is None:
-            raise ImportError("aiosqlite is required. Install with: pip install aiosqlite")
-        
         # Ensure data directory exists on first use
         _db_config.ensure_data_dir()
         
@@ -112,15 +150,23 @@ class SQLiteManager:
     @asynccontextmanager
     async def get_connection(self):
         """Get async database connection"""
-        conn = await aiosqlite.connect(str(self.db_path))
+        def _connect() -> sqlite3.Connection:
+            return sqlite3.connect(
+                str(self.db_path),
+                timeout=5.0,
+                check_same_thread=False,
+            )
+
+        conn = await anyio.to_thread.run_sync(_connect)
+        async_conn = AsyncSQLiteConnection(conn)
         try:
             # Enable foreign keys
-            await conn.execute("PRAGMA foreign_keys = ON")
+            await async_conn.execute("PRAGMA foreign_keys = ON")
             # Set reasonable timeout
-            await conn.execute("PRAGMA busy_timeout = 5000")
-            yield conn
+            await async_conn.execute("PRAGMA busy_timeout = 5000")
+            yield async_conn
         finally:
-            await conn.close()
+            await async_conn.close()
     
     async def initialize_schema(self, create_default_users: bool = False):
         """

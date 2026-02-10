@@ -2,7 +2,7 @@
 Session Management Tools for IPFS Datasets MCP Server
 
 This module provides comprehensive session management tools migrated
-from the ipfs_embeddings_py project with enhanced features.
+from a legacy tooling codebase with enhanced features.
 """
 
 import logging

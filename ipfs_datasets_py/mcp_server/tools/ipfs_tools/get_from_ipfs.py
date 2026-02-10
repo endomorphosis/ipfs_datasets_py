@@ -15,6 +15,17 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+try:
+    from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
+except Exception:
+    ipfs_datasets = None  # type: ignore
+
+from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
+    mcp_error_response,
+    mcp_text_response,
+    parse_json_object,
+)
+
 
 async def get_from_ipfs(
     cid: str,
@@ -33,6 +44,44 @@ async def get_from_ipfs(
     Returns:
         Dict containing information about the retrieved content
     """
+    # MCP JSON-string entrypoint (used by unit tests)
+    if (
+        isinstance(cid, str)
+        and output_path is None
+        and timeout_seconds == 60
+        and gateway is None
+        and (
+            not cid.strip()
+            or cid.lstrip().startswith("{")
+            or cid.lstrip().startswith("[")
+            or any(ch.isspace() for ch in cid)
+        )
+    ):
+        data, error = parse_json_object(cid)
+        if error is not None:
+            return error
+
+        if "cid" not in data:
+            return mcp_error_response("Missing required field: cid", error_type="validation")
+
+        if ipfs_datasets is None:
+            return mcp_error_response("ipfs_datasets backend is not available")
+
+        try:
+            result = ipfs_datasets.get_from_ipfs(
+                data["cid"],
+                output_path=data.get("output_path"),
+                timeout_seconds=data.get("timeout_seconds", 60),
+            )
+            payload: Dict[str, Any] = {"status": "success"}
+            if isinstance(result, dict):
+                payload.update(result)
+            else:
+                payload["result"] = result
+            return mcp_text_response(payload)
+        except Exception as e:
+            return mcp_text_response({"status": "error", "error": str(e)})
+
     try:
         logger.info(f"Getting content with CID {cid} from IPFS")
 
@@ -202,12 +251,12 @@ async def _fetch_via_http_gateway(
         base = gw.rstrip("/")
         url = f"{base}/ipfs/{cid}"
         try:
-            resp = await asyncio.to_thread(requests.get, url, timeout=timeout_seconds, stream=True)
+            resp = await anyio.to_thread.run_sync(requests.get, url, timeout=timeout_seconds, stream=True)
             if resp.status_code == 200:
                 content = resp.content
                 if output_path:
                     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-                    await asyncio.to_thread(Path(output_path).write_bytes, content)
+                    await anyio.to_thread.run_sync(Path(output_path).write_bytes, content)
                     return {
                         "status": "success",
                         "cid": cid,

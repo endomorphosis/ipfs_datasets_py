@@ -12,7 +12,7 @@
       "final_url": "https://www.wyoleg.gov/statutes/statutesintro.aspx",
       "redirected": false
     },
-    "test_error": "Traceback (most recent call last):\n  File \"/home/devel/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/diagnostic_test_states.py\", line 139, in test_state\n    print(f\"\\n--- Test 2: HTML Analysis ---\")\nBrokenPipeError: [Errno 32] Broken pipe\n"
+    "test_error": "Traceback (most recent call last):\n  File \"<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/diagnostic_test_states.py\", line 139, in test_state\n    print(f\"\\n--- Test 2: HTML Analysis ---\")\nBrokenPipeError: [Errno 32] Broken pipe\n"
   },
   "recommendations": [],
   "html_sample": null,

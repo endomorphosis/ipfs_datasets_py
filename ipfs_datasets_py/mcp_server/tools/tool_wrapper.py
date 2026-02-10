@@ -2,7 +2,7 @@
 Enhanced Tool wrapper system for converting functions to MCP tools.
 
 This module provides utilities to wrap standalone functions as MCP tools,
-enabling easy integration of the migrated ipfs_embeddings_py functionality.
+enabling easy integration of migrated functionality.
 Enhanced with production features including monitoring, validation, and caching.
 """
 

@@ -1,7 +1,7 @@
 """FAISS vector store implementation.
 
 This module provides a FAISS-based vector store for embedding operations,
-migrated and adapted from ipfs_embeddings_py.
+migrated and adapted from a pre-migration embeddings codebase.
 """
 
 import logging

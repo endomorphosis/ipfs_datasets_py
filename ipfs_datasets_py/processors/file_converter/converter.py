@@ -239,12 +239,13 @@ class FileConverter:
             result = converter.convert_sync('document.pdf')
             print(result.text)
         """
-        # Use asyncio.run() directly instead of anyio.run().
-        # This avoids issues in environments where anyio.run may be monkeypatched
-        # (e.g. during certain test harness setups).
-        import asyncio
+        async def _runner():
+            return await self.convert(file_path, **kwargs)
 
-        return asyncio.run(self.convert(file_path, **kwargs))
+        try:
+            return anyio.from_thread.run(_runner)
+        except anyio.NoEventLoopError:
+            return anyio.run(_runner)
     
     async def convert_batch(
         self,

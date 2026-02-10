@@ -32,8 +32,12 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
-from .tools.legacy_mcp_tools.temporal_deontic_logic_tools import TEMPORAL_DEONTIC_LOGIC_TOOLS
-from .tools.legacy_mcp_tools.legal_dataset_mcp_tools import LEGAL_DATASET_MCP_TOOLS
+from ipfs_datasets_py.mcp_server.tools.logic_tools.temporal_deontic_logic_tools import (
+    TEMPORAL_DEONTIC_LOGIC_TOOLS,
+)
+from ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.mcp_tools import (
+    LEGAL_DATASET_MCP_TOOLS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -118,9 +122,25 @@ class TemporalDeonticMCPServer:
                 
             except Exception as e:
                 logger.error(f"Tool execution failed for {name}: {e}")
+                error_details: Dict[str, Any] = {"type": e.__class__.__name__}
+
+                if hasattr(e, "to_dict") and callable(getattr(e, "to_dict")):
+                    try:
+                        payload = e.to_dict()  # type: ignore[attr-defined]
+                        if isinstance(payload, dict):
+                            error_details.update(payload)
+                    except Exception:
+                        pass
+                else:
+                    for key in ("budget", "actual", "limit", "detail"):
+                        if hasattr(e, key):
+                            error_details[key] = getattr(e, key)
+
                 error_result = {
                     "success": False,
                     "error": str(e),
+                    "error_type": e.__class__.__name__,
+                    "error_details": error_details,
                     "tool": name,
                     "error_code": "TOOL_EXECUTION_ERROR"
                 }

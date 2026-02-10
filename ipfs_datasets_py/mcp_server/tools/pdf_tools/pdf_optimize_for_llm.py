@@ -56,7 +56,7 @@ async def pdf_optimize_for_llm(
     """
     try:
         # Import LLM optimization components
-        from ipfs_datasets_py.pdf_processing import LLMOptimizer
+        from ipfs_datasets_py.processors.pdf_processing import LLMOptimizer
         from ipfs_datasets_py.utils.chunk_optimizer import ChunkOptimizer, make_chunk_optimizer
         from ipfs_datasets_py.monitoring import monitor_context
         
@@ -129,7 +129,7 @@ async def pdf_optimize_for_llm(
             # Get or process document content
             if document_id:
                 # Optimize already processed document
-                from ipfs_datasets_py.pdf_processing import GraphRAGIntegrator
+                from ipfs_datasets_py.processors.pdf_processing import GraphRAGIntegrator
                 integrator = GraphRAGIntegrator()
                 
                 document_content = await integrator.get_document_content(document_id)
@@ -141,7 +141,7 @@ async def pdf_optimize_for_llm(
                 document_info = await integrator.get_document_info(document_id)
             else:
                 # Process PDF file and extract content
-                from ipfs_datasets_py.pdf_processing import PDFProcessor
+                from ipfs_datasets_py.processors.pdf_processing import PDFProcessor
                 processor = PDFProcessor()
                 
                 # Extract structured content from PDF

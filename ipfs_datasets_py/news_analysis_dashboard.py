@@ -28,12 +28,12 @@ except Exception:  # pragma: no cover
 
 # Import existing dashboard functionality
 from .mcp_dashboard import MCPDashboard, MCPDashboardConfig
-from .deontological_reasoning import (
-    DeontologicalReasoningEngine, 
-    DeonticModality, 
+from .logic.integration.deontological_reasoning import (
+    DeontologicalReasoningEngine,
+    DeonticModality,
     ConflictType,
     DeonticStatement,
-    DeonticConflict
+    DeonticConflict,
 )
 
 logger = logging.getLogger(__name__)
@@ -172,7 +172,7 @@ class InvestigationWorkflowManager:
                                for i, doc in enumerate(content)]
                 
                 # Import the deontological engine here to avoid circular imports
-                from .deontological_reasoning import DeontologicalReasoningEngine
+                from .logic.integration.deontological_reasoning import DeontologicalReasoningEngine
                 deontological_engine = DeontologicalReasoningEngine(self.dashboard)
                 
                 deontological_result = await deontological_engine.analyze_corpus_for_deontic_conflicts(documents)

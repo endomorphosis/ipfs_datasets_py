@@ -160,7 +160,7 @@ class MediaUtils:
                 - None: If the file extension is not recognized or an error occurs
 
         Examples:
-            >>> MediaUtils.get_file_type("/home/user/video.mp4")
+            >>> MediaUtils.get_file_type(str(Path.home() / "video.mp4"))
             'video'
             >>> MediaUtils.get_file_type("audio_file.mp3")
             'audio'

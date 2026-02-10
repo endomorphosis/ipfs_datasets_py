@@ -3,6 +3,7 @@
 ## Overview
 
 The GraphRAG News Analyzer enables hypothesis testing and correlation analysis between executive characteristics and company performance using knowledge graphs built from financial news archives.
+Core implementations live in `ipfs_datasets_py.knowledge_graphs.finance_graphrag`; this MCP module wraps those classes for tool exposure.
 
 ## Key Features
 
@@ -139,6 +140,8 @@ print(json.dumps(analysis, indent=2))
 ```
 
 ## Data Structures
+
+The canonical dataclasses are defined in `ipfs_datasets_py.knowledge_graphs.finance_graphrag`.
 
 ### ExecutiveProfile
 

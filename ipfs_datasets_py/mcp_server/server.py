@@ -82,14 +82,21 @@ except ImportError as e:
     except Exception:
         # Final fallback: leave MCP symbols undefined-but-present.
         FastMCP = None  # type: ignore[assignment]
-        CallToolResult = None  # type: ignore[assignment]
-        TextContent = None  # type: ignore[assignment]
-        Tool = None  # type: ignore[assignment]
-        CallToolRequest = None  # type: ignore[assignment]
+
+        class TextContent:  # type: ignore[no-redef]
+            def __init__(self, *args, **kwargs):
+                raise ImportError("mcp is required to construct TextContent")
+
+        class CallToolResult:  # type: ignore[no-redef]
+            def __init__(self, *args, **kwargs):
+                raise ImportError("mcp is required to construct CallToolResult")
+
+        Tool = Any  # type: ignore[assignment]
+        CallToolRequest = Any  # type: ignore[assignment]
         import logging as _logging
 
         _logging.getLogger(__name__).info(
-            "Failed to import mcp.server (%s). Please ensure the 'mcp' library is installed.",
+            "Failed to import mcp.server (%s). MCP features will be unavailable; install the 'mcp' library to enable them.",
             e,
         )
 
@@ -292,7 +299,7 @@ class IPFSDatasetsMCPServer:
         Required:
         - mcp: Model Context Protocol implementation library
         - pydantic: Data validation and configuration management
-        - asyncio: Asynchronous programming support for concurrent operations
+        - anyio: Asynchronous programming support for concurrent operations
         
         Optional:
         - Various tool-specific dependencies loaded dynamically based on usage
@@ -481,7 +488,7 @@ class IPFSDatasetsMCPServer:
         # Register software engineering tools
         self._register_tools_from_subdir(tools_path / "software_engineering_tools")
 
-        # Register ipfs_embeddings_py tools (legacy integration)
+        # Register embeddings tools (legacy integration)
         from .tools.ipfs_embeddings_integration import register_ipfs_embeddings_tools
         await register_ipfs_embeddings_tools(self.mcp, self.tools)
 

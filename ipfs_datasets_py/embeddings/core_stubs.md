@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/embeddings/core.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/embeddings/core.py'
 
 ## AdaptiveBatchProcessor
 
@@ -25,7 +25,7 @@ class IPFSEmbeddings:
     Core IPFS Embeddings class providing advanced embedding generation,
 vector search, and IPFS integration capabilities.
 
-Migrated from endomorphosis/ipfs_embeddings_py with enhancements for
+Migrated from a pre-migration embeddings codebase with enhancements for
 integration with ipfs_datasets_py.
     """
 ```
@@ -251,25 +251,6 @@ def get_status(self) -> Dict[str, Any]:
 * **Async:** False
 * **Method:** True
 * **Class:** IPFSEmbeddings
-
-## ipfs_embeddings_py
-
-```python
-def ipfs_embeddings_py(resources: Dict[str, Any], metadata: Dict[str, Any]) -> IPFSEmbeddings:
-    """
-    Create an IPFSEmbeddings instance (backwards compatibility)
-
-Args:
-    resources: Dictionary containing endpoint configurations
-    metadata: Dictionary containing metadata configuration
-    
-Returns:
-    IPFSEmbeddings instance
-    """
-```
-* **Async:** False
-* **Method:** False
-* **Class:** N/A
 
 ## search_similar
 

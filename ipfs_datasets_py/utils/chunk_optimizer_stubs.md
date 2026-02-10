@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/utils/chunk_optimizer.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/utils/chunk_optimizer.py'
 
 Files last updated: 1753049696.2461429
 

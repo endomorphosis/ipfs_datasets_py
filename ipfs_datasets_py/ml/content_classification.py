@@ -47,7 +47,7 @@ import pickle
 # Import GraphRAG components
 try:
     from ipfs_datasets_py.enhanced_multimodal_processor import ProcessedContentBatch, ProcessedContent
-    from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+    from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
     from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 except ImportError:
     # Fallback for testing
@@ -55,20 +55,6 @@ except ImportError:
     ProcessedContent = Any
     WebsiteGraphRAGSystem = Any
     KnowledgeGraph = Any
-
-# Try to import accelerate integration for distributed ML inference
-try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
 
 logger = logging.getLogger(__name__)
 
@@ -778,23 +764,17 @@ class ContentClassificationPipeline:
     
     async def _process_content_batch(self, content_batch: List[ProcessedContent]) -> Dict[str, ContentAnalysis]:
         """Process a batch of content items"""
-        batch_results = {}
-        
-        # Process items concurrently within batch
-        tasks = []
-        for item in content_batch:
-            task = asyncio.create_task(self._analyze_single_content(item))
-            tasks.append((item.source_url, task))
-        
-        # Wait for all tasks to complete
-        for source_url, task in tasks:
+        batch_results: Dict[str, ContentAnalysis] = {}
+
+        lock = anyio.Lock()
+
+        async def _analyze_and_store(item: ProcessedContent) -> None:
+            source_url = getattr(item, 'source_url', 'unknown')
             try:
-                analysis = await task
-                batch_results[source_url] = analysis
+                analysis = await self._analyze_single_content(item)
             except Exception as e:
                 logger.error(f"Failed to analyze {source_url}: {e}")
-                # Add placeholder result for failed analysis
-                batch_results[source_url] = ContentAnalysis(
+                analysis = ContentAnalysis(
                     quality_score=0.3,
                     topics=['error'],
                     sentiment={'positive': 0.0, 'negative': 0.0, 'neutral': 1.0},
@@ -802,23 +782,43 @@ class ContentClassificationPipeline:
                     content_type='unknown',
                     confidence=0.1
                 )
-        
+
+            async with lock:
+                batch_results[source_url] = analysis
+
+        async with anyio.create_task_group() as tg:
+            for item in content_batch:
+                tg.start_soon(_analyze_and_store, item)
+
         return batch_results
     
     async def _analyze_single_content(self, content: ProcessedContent) -> ContentAnalysis:
         """Analyze a single content item"""
-        
-        # Run all analysis components concurrently
-        quality_task = asyncio.create_task(self.quality_classifier.assess_quality(content))
-        topic_task = asyncio.create_task(self.topic_classifier.classify_topics(content.text_content))
-        sentiment_task = asyncio.create_task(self.sentiment_analyzer.analyze_sentiment(content.text_content))
-        anomaly_task = asyncio.create_task(self.anomaly_detector.detect_anomalies(content))
-        
-        # Wait for all analyses to complete
-        quality_result = await quality_task
-        topic_result = await topic_task
-        sentiment_result = await sentiment_task
-        anomaly_score = await anomaly_task
+
+        results: Dict[str, Any] = {}
+
+        async def _run_quality() -> None:
+            results['quality'] = await self.quality_classifier.assess_quality(content)
+
+        async def _run_topic() -> None:
+            results['topic'] = await self.topic_classifier.classify_topics(content.text_content)
+
+        async def _run_sentiment() -> None:
+            results['sentiment'] = await self.sentiment_analyzer.analyze_sentiment(content.text_content)
+
+        async def _run_anomaly() -> None:
+            results['anomaly'] = await self.anomaly_detector.detect_anomalies(content)
+
+        async with anyio.create_task_group() as tg:
+            tg.start_soon(_run_quality)
+            tg.start_soon(_run_topic)
+            tg.start_soon(_run_sentiment)
+            tg.start_soon(_run_anomaly)
+
+        quality_result = results['quality']
+        topic_result = results['topic']
+        sentiment_result = results['sentiment']
+        anomaly_score = results['anomaly']
         
         # Calculate overall confidence
         confidence = statistics.mean([
@@ -1031,24 +1031,29 @@ class ContentClassificationPipeline:
         website_systems: List[WebsiteGraphRAGSystem]
     ) -> Dict[str, ContentAnalysisReport]:
         """Analyze multiple websites in parallel"""
-        
-        # Process websites concurrently
-        tasks = []
-        for system in website_systems:
+
+        batch_results: Dict[str, ContentAnalysisReport] = {}
+        lock = anyio.Lock()
+
+        async def _analyze_one(system: WebsiteGraphRAGSystem) -> None:
+            url = getattr(system, 'url', 'unknown')
             content_batch = getattr(system, 'processed_content', None)
-            if content_batch:
-                task = asyncio.create_task(self.analyze_processed_content(content_batch))
-                tasks.append((system.url, task))
-        
-        # Collect results
-        batch_results = {}
-        for url, task in tasks:
+            if not content_batch:
+                return
+
             try:
-                result = await task
-                batch_results[url] = result
+                result = await self.analyze_processed_content(content_batch)
             except Exception as e:
                 logger.error(f"Failed to analyze website {url}: {e}")
-        
+                return
+
+            async with lock:
+                batch_results[url] = result
+
+        async with anyio.create_task_group() as tg:
+            for system in website_systems:
+                tg.start_soon(_analyze_one, system)
+
         return batch_results
     
     def get_analytics_summary(self) -> Dict[str, Any]:

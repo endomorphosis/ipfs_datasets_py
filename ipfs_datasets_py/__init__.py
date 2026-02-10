@@ -9,9 +9,7 @@ __version__ = "0.2.0"
 
 import logging
 import os
-import sys
 import warnings
-import importlib.util
 
 # Routers + dependency injection
 try:
@@ -30,18 +28,14 @@ def _truthy(value: str | None) -> bool:
 # This prevents package import-time side effects from optional subsystems
 # (FastAPI services, vector stores, search integrations) that are unrelated to
 # model routing benchmarks.
-_RUNNING_UNDER_PYTEST = ("pytest" in sys.modules) or ("PYTEST_CURRENT_TEST" in os.environ)
-
-_MINIMAL_IMPORTS = (
-    _truthy(os.environ.get("IPFS_DATASETS_PY_MINIMAL_IMPORTS"))
-    or _truthy(os.environ.get("IPFS_DATASETS_PY_BENCHMARK"))
-    or _RUNNING_UNDER_PYTEST
+_MINIMAL_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_MINIMAL_IMPORTS")) or _truthy(
+    os.environ.get("IPFS_DATASETS_PY_BENCHMARK")
 )
 
 # Optional import-time exports.
 #
 # IMPORTANT: The package core should not import MCP/FastAPI/tooling layers unless
-# explicitly requested. Importing submodules like `ipfs_datasets_py.logic_tools`
+# explicitly requested. Importing submodules like `ipfs_datasets_py.logic.tools`
 # necessarily executes this __init__, so keep default imports as hermetic as
 # possible.
 _ENABLE_MCP_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_ENABLE_MCP_IMPORTS"))
@@ -148,34 +142,9 @@ def initialize(
     return resolved_deps
 
 # File conversion (Phase 1: Import & Wrap existing libraries)
-if _MINIMAL_IMPORTS:
-    HAVE_FILE_CONVERTER = False
-    FileConverter = None
-    ConversionResult = None
-else:
-    # Do not import the converter at package import-time; keep this hermetic.
-    # We'll lazy-load these symbols via __getattr__ when accessed.
-    try:
-        HAVE_FILE_CONVERTER = (
-            importlib.util.find_spec("ipfs_datasets_py.processors.file_converter") is not None
-        )
-    except Exception:
-        HAVE_FILE_CONVERTER = False
-
-
-def __getattr__(name: str):
-    if _MINIMAL_IMPORTS and name in {"FileConverter", "ConversionResult"}:
-        return None
-
-    if name in {"FileConverter", "ConversionResult"}:
-        import importlib
-
-        module = importlib.import_module("ipfs_datasets_py.processors.file_converter")
-        value = getattr(module, name)
-        globals()[name] = value
-        return value
-
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+# NOTE: this is intentionally lazy to avoid import-time side effects from optional
+# subsystems (PDF pipelines, auto-installers, accelerate patching, etc.).
+HAVE_FILE_CONVERTER = False
 
 # Import automated dependency installer
 if _MINIMAL_IMPORTS:
@@ -213,36 +182,19 @@ class _FallbackIPFSDatasets:
 
 
 # Main entry points with automated installation
-if _MINIMAL_IMPORTS:
-    HAVE_IPFS_DATASETS = False
-    ipfs_datasets_py = _FallbackIPFSDatasets
-    IPFSDatasets = _FallbackIPFSDatasets
-else:
-    try:
-        from .ipfs_datasets import ipfs_datasets_py
-        # Provide alias for backward compatibility and clearer naming
-        IPFSDatasets = ipfs_datasets_py
-        HAVE_IPFS_DATASETS = True
-    except ImportError:
-        HAVE_IPFS_DATASETS = False
-        ipfs_datasets_py = _FallbackIPFSDatasets
-        IPFSDatasets = _FallbackIPFSDatasets
+# NOTE: intentionally lazy; see `__getattr__`.
+HAVE_IPFS_DATASETS = False
 
-# Re-export key functions with automated installation
-datasets_module = ensure_module('datasets', 'datasets', required=False)
-if datasets_module:
-    from datasets import load_dataset
-    HAVE_LOAD_DATASET = True
-else:
-    HAVE_LOAD_DATASET = False
-    load_dataset = None
+# Re-export key functions with automated installation (lazy; see __getattr__)
+HAVE_LOAD_DATASET = False
+load_dataset = None
 
 
 # Use conditional imports to handle missing modules gracefully
 try:
     # Core components for Phase 1
-    from .ipld.storage import IPLDStorage, IPLDSchema
-    from .ipld.optimized_codec import (
+    from .data_transformation.ipld.storage import IPLDStorage, IPLDSchema
+    from .data_transformation.ipld.optimized_codec import (
         OptimizedEncoder, OptimizedDecoder, BatchProcessor,
         create_batch_processor, optimize_node_structure
     )
@@ -258,20 +210,14 @@ if _MINIMAL_IMPORTS:
     AccelerateManager = None
     HAVE_ACCELERATE_MANAGER = False
 else:
-    try:
-        from .accelerate_integration import (
-            is_accelerate_available,
-            get_accelerate_status,
-            AccelerateManager,
-            HAVE_ACCELERATE_MANAGER,
-        )
-        HAVE_ACCELERATE_INTEGRATION = True
-    except ImportError:
-        HAVE_ACCELERATE_INTEGRATION = False
-        is_accelerate_available = None
-        get_accelerate_status = None
-        AccelerateManager = None
-        HAVE_ACCELERATE_MANAGER = False
+    # Avoid importing accelerate integration at package import time.
+    # The accelerate subsystem pulls in ipfs_accelerate_py / ipfs_kit_py and can
+    # trigger transformers patching and heavy optional deps.
+    HAVE_ACCELERATE_INTEGRATION = False
+    is_accelerate_available = None
+    get_accelerate_status = None
+    AccelerateManager = None
+    HAVE_ACCELERATE_MANAGER = False
 
 # Optional SyMAI engine router registration
 try:
@@ -421,47 +367,42 @@ if _MINIMAL_IMPORTS:
     HAVE_VECTOR_TOOLS = False
     VectorSimilarityCalculator = None
 else:
-    try:
-        from .search.vector_tools import VectorSimilarityCalculator
-        HAVE_VECTOR_TOOLS = True
-    except ImportError:
-        HAVE_VECTOR_TOOLS = False
-        VectorSimilarityCalculator = None
+    # Keep package import hermetic: avoid importing search tooling at import time.
+    # These symbols remain available via `ipfs_datasets_py.search` and lazy exports.
+    HAVE_VECTOR_TOOLS = False
+    VectorSimilarityCalculator = None
 
 if _MINIMAL_IMPORTS:
     HAVE_SEARCH = False
 else:
-    try:
-        from . import search
-        HAVE_SEARCH = True
-    except ImportError:
-        HAVE_SEARCH = False
+    # Avoid importing the search subpackage at import time.
+    # Users can still `import ipfs_datasets_py.search` explicitly.
+    HAVE_SEARCH = False
 
 if _MINIMAL_IMPORTS:
     HAVE_EMBEDDINGS = False
 else:
-    try:
-        # Import new embeddings and vector store capabilities
-        from .embeddings.core import IPFSEmbeddings, PerformanceMetrics
-        # FIXME All the embeddings models in schema are hallucinated
-        from .embeddings.schema import EmbeddingModel, EmbeddingRequest, EmbeddingResponse
-        from .embeddings.chunker import Chunker, ChunkingStrategy
-        HAVE_EMBEDDINGS = True
-    except ImportError:
-        HAVE_EMBEDDINGS = False
+    # Avoid importing embeddings at import time.
+    # Access via `ipfs_datasets_py.embeddings` package or lazy exports.
+    HAVE_EMBEDDINGS = False
+    IPFSEmbeddings = None
+    PerformanceMetrics = None
+    EmbeddingModel = None
+    EmbeddingRequest = None
+    EmbeddingResponse = None
+    Chunker = None
+    ChunkingStrategy = None
 
 if _MINIMAL_IMPORTS:
     HAVE_VECTOR_STORES = False
 else:
-    try:
-        # Import vector store implementations
-        from .vector_stores.base import BaseVectorStore
-        from .vector_stores.qdrant_store import QdrantVectorStore
-        from .vector_stores.elasticsearch_store import ElasticsearchVectorStore
-        from .vector_stores.faiss_store import FAISSVectorStore
-        HAVE_VECTOR_STORES = True
-    except ImportError:
-        HAVE_VECTOR_STORES = False
+    # Avoid importing vector stores at import time (FAISS import is heavy).
+    # Users can import `ipfs_datasets_py.vector_stores.*` explicitly.
+    HAVE_VECTOR_STORES = False
+    BaseVectorStore = None
+    QdrantVectorStore = None
+    ElasticsearchVectorStore = None
+    FAISSVectorStore = None
 
 # MCP Tools availability
 if _MINIMAL_IMPORTS:
@@ -528,10 +469,13 @@ if _MINIMAL_IMPORTS:
     QueryBudgetManager = None
     UnifiedGraphRAGQueryOptimizer = None
 else:
-    from .rag.rag_query_optimizer_minimal import GraphRAGQueryOptimizer, GraphRAGQueryStats
+    from .optimizers.graphrag.query_optimizer_minimal import (
+        GraphRAGQueryOptimizer,
+        GraphRAGQueryStats,
+    )
 
     try:
-        from .rag.rag_query_optimizer import (
+        from .optimizers.graphrag.query_optimizer import (
             QueryRewriter,
             QueryBudgetManager,
             UnifiedGraphRAGQueryOptimizer,
@@ -621,7 +565,7 @@ else:
         ReasoningEnhancer = None
 
     try:
-        from ipfs_datasets_py.graphrag.integrations.graphrag_integration import enhance_dataset_with_llm
+        from ipfs_datasets_py.logic.integrations.graphrag_integration import enhance_dataset_with_llm
         HAVE_GRAPHRAG_INTEGRATION = True
     except ImportError:
         HAVE_GRAPHRAG_INTEGRATION = False
@@ -746,119 +690,273 @@ else:
     except ImportError:
         HAVE_IPWB = False
 
-# PDF Processing Components with conditional automated dependency installation
+# PDF Processing Components
+#
+# IMPORTANT: Do not eagerly import `.pdf_processing` here.
+# Importing it can trigger heavyweight optional dependency checks/installers at import-time,
+# which makes unrelated imports (and pytest collection) slow and side-effectful.
+#
+# Instead, expose these symbols via module-level lazy import.
 import os
-if _MINIMAL_IMPORTS:
-    PDFProcessor = None
-    MultiEngineOCR = None
-    LLMOptimizer = None
-    GraphRAGIntegrator = None
-    QueryEngine = None
-    BatchProcessor = None
-    HAVE_PDF_PROCESSOR = False
-    HAVE_MULTI_ENGINE_OCR = False
-    HAVE_LLM_OPTIMIZER = False
-    HAVE_GRAPHRAG_INTEGRATOR = False
-    HAVE_QUERY_ENGINE = False
-    HAVE_BATCH_PROCESSOR = False
-    HAVE_PDF_PROCESSING = False
-else:
+
+HAVE_PDF_PROCESSOR = False
+HAVE_MULTI_ENGINE_OCR = False
+HAVE_LLM_OPTIMIZER = False
+HAVE_GRAPHRAG_INTEGRATOR = False
+HAVE_QUERY_ENGINE = False
+HAVE_PDF_PROCESSING = False
+
+_PDF_LAZY_EXPORTS = {
+    'PDFProcessor': 'HAVE_PDF_PROCESSOR',
+    'MultiEngineOCR': 'HAVE_MULTI_ENGINE_OCR',
+    'LLMOptimizer': 'HAVE_LLM_OPTIMIZER',
+    'GraphRAGIntegrator': 'HAVE_GRAPHRAG_INTEGRATOR',
+    'QueryEngine': 'HAVE_QUERY_ENGINE',
+}
+
+
+def _lazy_import_pdf_symbol(name: str):
+    global HAVE_PDF_PROCESSOR
+    global HAVE_MULTI_ENGINE_OCR
+    global HAVE_LLM_OPTIMIZER
+    global HAVE_GRAPHRAG_INTEGRATOR
+    global HAVE_QUERY_ENGINE
+    global HAVE_PDF_PROCESSING
+
+    if name not in _PDF_LAZY_EXPORTS:
+        raise AttributeError(name)
+
+    # Optional import-time installation remains opt-in.
     if (
-        installer.auto_install
+        (not _MINIMAL_IMPORTS)
+        and installer.auto_install
         and os.environ.get('IPFS_DATASETS_AUTO_INSTALL', 'false').lower() == 'true'
         and os.environ.get('IPFS_DATASETS_INSTALL_ON_IMPORT', 'false').lower() == 'true'
     ):
-        # Import-time installation is opt-in because it can trigger heavyweight optional
-        # dependencies (e.g., OCR/ML stacks) and should not break basic imports.
-        from .auto_installer import install_for_component
-        for _component in ('pdf', 'ocr'):
-            try:
+        try:
+            from .auto_installer import install_for_component
+
+            for _component in ('pdf', 'ocr'):
                 install_for_component(_component)
-            except Exception as e:
-                import warnings
-                warnings.warn(f"Auto-install for component '{_component}' failed during import: {e}")
 
-        if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
-            try:
+            if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
                 install_for_component('symai_router')
-            except Exception as e:
+        except Exception as e:
+            import warnings
+
+            warnings.warn(f"Auto-install for PDF components failed during lazy import: {e}")
+
+    try:
+        from .processors import pdf_processing as _pdf_processing
+
+        value = getattr(_pdf_processing, name)
+        globals()[name] = value
+        globals()[_PDF_LAZY_EXPORTS[name]] = True
+        HAVE_PDF_PROCESSING = True
+        return value
+    except Exception as e:
+        # Match previous behavior: if unavailable, expose as `None`.
+        globals()[name] = None
+        if installer.verbose:
+            try:
                 import warnings
-                warnings.warn(f"Auto-install for component 'symai_router' failed during import: {e}")
 
-    try:
-        from .pdf_processing import PDFProcessor
-        HAVE_PDF_PROCESSOR = True
-        if installer.verbose:
-            print("✅ PDFProcessor successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ PDFProcessor installation failed: {e}")
-        PDFProcessor = None
-        HAVE_PDF_PROCESSOR = False
+                warnings.warn(f"⚠️ {name} unavailable: {e}")
+            except Exception:
+                pass
+        return None
 
-    try:
-        from .pdf_processing import MultiEngineOCR
-        HAVE_MULTI_ENGINE_OCR = True
-        if installer.verbose:
-            print("✅ MultiEngineOCR successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ MultiEngineOCR installation failed: {e}")
-        MultiEngineOCR = None
-        HAVE_MULTI_ENGINE_OCR = False
 
-    try:
-        from .pdf_processing import LLMOptimizer
-        HAVE_LLM_OPTIMIZER = True
-        if installer.verbose:
-            print("✅ LLMOptimizer successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ LLMOptimizer installation failed: {e}")
-        LLMOptimizer = None
-        HAVE_LLM_OPTIMIZER = False
+def __getattr__(name: str):
+    # Heavy optional subsystems: keep import-time hermetic; lazy-load on access.
+    if name == "search":
+        if _MINIMAL_IMPORTS:
+            globals()["search"] = None
+            return None
+        try:
+            import importlib
 
-    try:
-        from .pdf_processing import GraphRAGIntegrator
-        HAVE_GRAPHRAG_INTEGRATOR = True
-        if installer.verbose:
-            print("✅ GraphRAGIntegrator successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ GraphRAGIntegrator installation failed: {e}")
-        GraphRAGIntegrator = None
-        HAVE_GRAPHRAG_INTEGRATOR = False
+            mod = importlib.import_module(f"{__name__}.search")
+            globals()["search"] = mod
+            globals()["HAVE_SEARCH"] = True
+            return mod
+        except Exception:
+            globals()["search"] = None
+            globals()["HAVE_SEARCH"] = False
+            return None
 
-    try:
-        from .pdf_processing import QueryEngine
-        HAVE_QUERY_ENGINE = True
-        if installer.verbose:
-            print("✅ QueryEngine successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ QueryEngine installation failed: {e}")
-        QueryEngine = None
-        HAVE_QUERY_ENGINE = False
+    if name == "VectorSimilarityCalculator":
+        if _MINIMAL_IMPORTS:
+            globals()["VectorSimilarityCalculator"] = None
+            globals()["HAVE_VECTOR_TOOLS"] = False
+            return None
+        try:
+            from .search.vector_tools import VectorSimilarityCalculator as _VectorSimilarityCalculator
 
-    try:
-        from .pdf_processing import BatchProcessor
-        HAVE_BATCH_PROCESSOR = True
-        if installer.verbose:
-            print("✅ BatchProcessor successfully installed and available")
-    except ImportError as e:
-        if installer.verbose:
-            print(f"⚠️ BatchProcessor installation failed: {e}")
-        BatchProcessor = None
-        HAVE_BATCH_PROCESSOR = False
+            globals()["VectorSimilarityCalculator"] = _VectorSimilarityCalculator
+            globals()["HAVE_VECTOR_TOOLS"] = True
+            return _VectorSimilarityCalculator
+        except Exception:
+            globals()["VectorSimilarityCalculator"] = None
+            globals()["HAVE_VECTOR_TOOLS"] = False
+            return None
 
-    HAVE_PDF_PROCESSING = (
-        HAVE_PDF_PROCESSOR
-        or HAVE_MULTI_ENGINE_OCR
-        or HAVE_LLM_OPTIMIZER
-        or HAVE_GRAPHRAG_INTEGRATOR
-        or HAVE_QUERY_ENGINE
-        or HAVE_BATCH_PROCESSOR
-    )
+    if name in {
+        "IPFSEmbeddings",
+        "PerformanceMetrics",
+        "EmbeddingModel",
+        "EmbeddingRequest",
+        "EmbeddingResponse",
+        "Chunker",
+        "ChunkingStrategy",
+    }:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            globals()["HAVE_EMBEDDINGS"] = False
+            return None
+        try:
+            from .embeddings.core import IPFSEmbeddings as _IPFSEmbeddings, PerformanceMetrics as _PerformanceMetrics
+            from .embeddings.schema import (
+                EmbeddingModel as _EmbeddingModel,
+                EmbeddingRequest as _EmbeddingRequest,
+                EmbeddingResponse as _EmbeddingResponse,
+            )
+            from .embeddings.chunker import Chunker as _Chunker, ChunkingStrategy as _ChunkingStrategy
+
+            globals()["IPFSEmbeddings"] = _IPFSEmbeddings
+            globals()["PerformanceMetrics"] = _PerformanceMetrics
+            globals()["EmbeddingModel"] = _EmbeddingModel
+            globals()["EmbeddingRequest"] = _EmbeddingRequest
+            globals()["EmbeddingResponse"] = _EmbeddingResponse
+            globals()["Chunker"] = _Chunker
+            globals()["ChunkingStrategy"] = _ChunkingStrategy
+            globals()["HAVE_EMBEDDINGS"] = True
+            return globals()[name]
+        except Exception:
+            globals()[name] = None
+            globals()["HAVE_EMBEDDINGS"] = False
+            return None
+
+    if name in {"BaseVectorStore", "QdrantVectorStore", "ElasticsearchVectorStore", "FAISSVectorStore"}:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            globals()["HAVE_VECTOR_STORES"] = False
+            return None
+        try:
+            from .vector_stores.base import BaseVectorStore as _BaseVectorStore
+            from .vector_stores.qdrant_store import QdrantVectorStore as _QdrantVectorStore
+            from .vector_stores.elasticsearch_store import ElasticsearchVectorStore as _ElasticsearchVectorStore
+            from .vector_stores.faiss_store import FAISSVectorStore as _FAISSVectorStore
+
+            globals()["BaseVectorStore"] = _BaseVectorStore
+            globals()["QdrantVectorStore"] = _QdrantVectorStore
+            globals()["ElasticsearchVectorStore"] = _ElasticsearchVectorStore
+            globals()["FAISSVectorStore"] = _FAISSVectorStore
+            globals()["HAVE_VECTOR_STORES"] = True
+            return globals()[name]
+        except Exception:
+            globals()[name] = None
+            globals()["HAVE_VECTOR_STORES"] = False
+            return None
+
+    if name in {"is_accelerate_available", "get_accelerate_status", "AccelerateManager", "HAVE_ACCELERATE_MANAGER"}:
+        if _MINIMAL_IMPORTS:
+            if name == "HAVE_ACCELERATE_MANAGER":
+                globals()[name] = False
+                return False
+            globals()[name] = None
+            globals()["HAVE_ACCELERATE_INTEGRATION"] = False
+            globals()["HAVE_ACCELERATE_MANAGER"] = False
+            return None
+        try:
+            from .accelerate_integration import (
+                is_accelerate_available as _is_accelerate_available,
+                get_accelerate_status as _get_accelerate_status,
+                AccelerateManager as _AccelerateManager,
+                HAVE_ACCELERATE_MANAGER as _HAVE_ACCELERATE_MANAGER,
+            )
+
+            globals()["is_accelerate_available"] = _is_accelerate_available
+            globals()["get_accelerate_status"] = _get_accelerate_status
+            globals()["AccelerateManager"] = _AccelerateManager
+            globals()["HAVE_ACCELERATE_MANAGER"] = _HAVE_ACCELERATE_MANAGER
+            globals()["HAVE_ACCELERATE_INTEGRATION"] = True
+            return globals()[name]
+        except Exception:
+            if name == "HAVE_ACCELERATE_MANAGER":
+                globals()[name] = False
+                globals()["HAVE_ACCELERATE_MANAGER"] = False
+                globals()["HAVE_ACCELERATE_INTEGRATION"] = False
+                return False
+            globals()[name] = None
+            globals()["HAVE_ACCELERATE_MANAGER"] = False
+            globals()["HAVE_ACCELERATE_INTEGRATION"] = False
+            return None
+
+    if name in _PDF_LAZY_EXPORTS:
+        return _lazy_import_pdf_symbol(name)
+
+    if name in {"FileConverter", "ConversionResult"}:
+        global HAVE_FILE_CONVERTER
+        if _MINIMAL_IMPORTS:
+            globals()["FileConverter"] = None
+            globals()["ConversionResult"] = None
+            HAVE_FILE_CONVERTER = False
+            return globals()[name]
+        try:
+            from .file_converter import FileConverter as _FileConverter, ConversionResult as _ConversionResult
+
+            globals()["FileConverter"] = _FileConverter
+            globals()["ConversionResult"] = _ConversionResult
+            HAVE_FILE_CONVERTER = True
+        except Exception:
+            globals()["FileConverter"] = None
+            globals()["ConversionResult"] = None
+            HAVE_FILE_CONVERTER = False
+        return globals()[name]
+
+    if name in {"ipfs_datasets_py", "IPFSDatasets"}:
+        global HAVE_IPFS_DATASETS
+        if _MINIMAL_IMPORTS:
+            globals()["ipfs_datasets_py"] = _FallbackIPFSDatasets
+            globals()["IPFSDatasets"] = _FallbackIPFSDatasets
+            HAVE_IPFS_DATASETS = False
+            return globals()[name]
+        try:
+            from .ipfs_datasets import ipfs_datasets_py as _ipfs_datasets_py
+
+            globals()["ipfs_datasets_py"] = _ipfs_datasets_py
+            globals()["IPFSDatasets"] = _ipfs_datasets_py
+            HAVE_IPFS_DATASETS = True
+        except Exception:
+            globals()["ipfs_datasets_py"] = _FallbackIPFSDatasets
+            globals()["IPFSDatasets"] = _FallbackIPFSDatasets
+            HAVE_IPFS_DATASETS = False
+        return globals()[name]
+
+    if name == "load_dataset":
+        global HAVE_LOAD_DATASET
+        if _MINIMAL_IMPORTS:
+            globals()["load_dataset"] = None
+            HAVE_LOAD_DATASET = False
+            return None
+        try:
+            # Best-effort: only attempt optional dependency resolution when requested.
+            ok = ensure_module("datasets", "datasets", required=False)
+            if ok:
+                from datasets import load_dataset as _load_dataset
+
+                globals()["load_dataset"] = _load_dataset
+                HAVE_LOAD_DATASET = True
+                return _load_dataset
+        except Exception:
+            pass
+
+        globals()["load_dataset"] = None
+        HAVE_LOAD_DATASET = False
+        return None
+
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 # Define base exports that should always be available
 __all__ = [
@@ -866,14 +964,13 @@ __all__ = [
     's3_kit',
     'test_fio', 
     'config',
+    # Lazy core exports (safe even if unavailable)
+    'ipfs_datasets_py',
+    'IPFSDatasets',
+    'FileConverter',
+    'ConversionResult',
+    'load_dataset',
 ]
-
-# Add core ipfs_datasets class if available
-if HAVE_IPFS_DATASETS:
-    __all__.extend([
-        'ipfs_datasets_py',
-        'IPFSDatasets',  # Alias for backward compatibility
-    ])
 
 # Conditionally add exports based on available components
 if HAVE_IPLD:
@@ -1037,7 +1134,6 @@ if _MINIMAL_IMPORTS:
     rag = None  # type: ignore
 else:
     from . import llm
-    from . import rag
 
 # Direct aliases without polluting sys.modules
 try:
@@ -1050,16 +1146,11 @@ try:
 except AttributeError:
     llm_graphrag = None
 
-try:
-    rag_query_optimizer = rag.rag_query_optimizer
-except AttributeError:
-    rag_query_optimizer = None
-
 # Finance Dashboard Tools - Phase 7 Enhancement
 try:
     if (not _MINIMAL_IMPORTS) and _ENABLE_FINANCE_DASHBOARD_IMPORTS:
         # Core package modules (MCP/CLI wrappers should depend on these)
-        from .finance import graphrag_news as graphrag_news_analyzer
+        from .knowledge_graphs import finance_graphrag as graphrag_news_analyzer
         from .mcp_server.tools.finance_data_tools import stock_scrapers
         from .mcp_server.tools.finance_data_tools import news_scrapers
         from .mcp_server.tools.finance_data_tools import finance_theorems
@@ -1137,7 +1228,7 @@ try:
         coordinate_auto_healing = None
         list_software_theorems = None
         validate_against_theorem = None
-except ImportError as e:
+except (ImportError, AttributeError) as e:
     HAVE_SOFTWARE_ENGINEERING_TOOLS = False
     HAVE_FINANCE_TOOLS = False
     
@@ -1170,6 +1261,3 @@ except ImportError as e:
     if installer.verbose:
         import warnings
         warnings.warn(f"Finance/Software engineering tools unavailable due to missing dependencies: {e}")
-
-except AttributeError:
-    rag_query_optimizer = None

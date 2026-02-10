@@ -22,18 +22,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any
 import logging
 
-# Try to import accelerate integration
 try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
+    from ..llm_router import get_accelerate_manager as _get_accelerate_manager
+except Exception:  # pragma: no cover
+    _get_accelerate_manager = None
 
 logger = logging.getLogger(__name__)
 
@@ -84,10 +76,17 @@ class GeminiCLI:
         
         # Initialize accelerate manager
         self.accelerate_manager = None
-        if HAVE_ACCELERATE and use_accelerate and is_accelerate_available():
+        if use_accelerate and callable(_get_accelerate_manager):
             try:
-                self.accelerate_manager = AccelerateManager()
-                logger.info("✓ Gemini CLI: Accelerate enabled for distributed inference")
+                self.accelerate_manager = _get_accelerate_manager(
+                    purpose="gemini_cli",
+                    enable_distributed=True,
+                    resources={"tool": "gemini_cli"},
+                )
+                if self.accelerate_manager is not None:
+                    logger.info("✓ Gemini CLI: Accelerate enabled for distributed inference")
+                else:
+                    logger.info("✓ Gemini CLI: Using local Gemini API (accelerate disabled)")
             except Exception as e:
                 logger.warning(f"⚠ Gemini CLI: Failed to initialize accelerate: {e}")
                 self.accelerate_manager = None

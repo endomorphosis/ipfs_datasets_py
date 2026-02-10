@@ -1,5 +1,5 @@
 """
-Shard Embeddings Tool - Migrated from ipfs_embeddings_py
+Shard Embeddings Tool - Migrated embeddings functionality
 
 This tool provides advanced embedding sharding capabilities for large-scale
 vector processing and distributed storage in IPFS.
@@ -12,6 +12,7 @@ import json
 import logging
 import hashlib
 import math
+import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -177,7 +178,7 @@ async def shard_embeddings_by_dimension(
         manifest = {
             "metadata": shard_metadata,
             "shards": shards_info,
-            "created_at": str(asyncio.get_event_loop().time()),
+            "created_at": str(time.time()),
             "output_directory": str(output_path)
         }
         

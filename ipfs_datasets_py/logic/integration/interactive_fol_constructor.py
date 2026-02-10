@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 try:
     from beartype import beartype  # type: ignore
-except ImportError:  # pragma: no cover
+except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
 
@@ -34,8 +34,8 @@ except ImportError:
             self._semantic = semantic
 
 # Local imports
-from .symbolic_fol_bridge import SymbolicFOLBridge, LogicalComponents, FOLConversionResult
-from .symbolic_logic_primitives import create_logic_symbol, LogicPrimitives
+from ..tools.symbolic_fol_bridge import SymbolicFOLBridge, LogicalComponents, FOLConversionResult
+from ..tools.symbolic_logic_primitives import create_logic_symbol, LogicPrimitives
 
 
 @dataclass

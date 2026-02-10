@@ -55,20 +55,6 @@ except ImportError:
     ContentAnalysis = Any
     QualityAssessmentResult = Any
 
-# Try to import accelerate integration for distributed ML inference
-try:
-    from ..accelerate_integration import (
-        AccelerateManager,
-        is_accelerate_available,
-        get_accelerate_status
-    )
-    HAVE_ACCELERATE = True
-except ImportError:
-    HAVE_ACCELERATE = False
-    AccelerateManager = None
-    is_accelerate_available = lambda: False
-    get_accelerate_status = lambda: {"available": False}
-
 logger = logging.getLogger(__name__)
 
 
@@ -551,7 +537,9 @@ class ProductionMLModelServer:
         
         # Initialize caches and monitoring
         self.prediction_cache = {}
-        self.batch_processing_queue = asyncio.Queue()
+        # NOTE: previously an asyncio.Queue; kept as placeholder for future batching work.
+        # This module is AnyIO-only, so avoid asyncio primitives here.
+        self.batch_processing_queue = None
         self.performance_metrics = {
             'total_predictions': 0,
             'cache_hits': 0,
@@ -725,18 +713,21 @@ class ProductionMLModelServer:
                 return item_predictions
         
         # Create tasks for all items
-        tasks = [analyze_single_item(content) for content in content_items]
-        
-        # Execute all tasks
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        # Collect results
-        for result in results:
-            if isinstance(result, Exception):
-                logger.error(f"Batch analysis task failed: {result}")
-            elif isinstance(result, list):
-                predictions.extend(result)
-                successful_predictions += len(result)
+        lock = anyio.Lock()
+
+        async def _run_one(content: ProcessedContent) -> None:
+            nonlocal successful_predictions
+            try:
+                result = await analyze_single_item(content)
+                async with lock:
+                    predictions.extend(result)
+                    successful_predictions += len(result)
+            except Exception as e:
+                logger.error(f"Batch analysis task failed: {e}")
+
+        async with anyio.create_task_group() as tg:
+            for content in content_items:
+                tg.start_soon(_run_one, content)
         
         # Calculate metrics
         total_processing_time = (datetime.now() - start_time).total_seconds() * 1000

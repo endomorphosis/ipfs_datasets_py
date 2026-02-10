@@ -1,4 +1,4 @@
-# Function and Class stubs from '/home/kylerose1946/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/web_archive_tools/extract_metadata_from_warc.py'
+# Function and Class stubs from '<repo-root>/ipfs_datasets_py/ipfs_datasets_py/mcp_server/tools/web_archive_tools/extract_metadata_from_warc.py'
 
 Files last updated: 1751408933.7764564
 

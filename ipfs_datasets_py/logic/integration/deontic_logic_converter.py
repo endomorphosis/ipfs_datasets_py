@@ -13,13 +13,13 @@ import re
 import json
 from datetime import datetime
 
-from .deontic_logic_core import (
+from ..tools.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent, LegalContext, 
     TemporalCondition, TemporalOperator, DeonticRuleSet,
     create_obligation, create_permission, create_prohibition
 )
 from .legal_domain_knowledge import LegalDomainKnowledge, LegalDomain
-from .logic_translation_core import LogicTranslationTarget, LogicTranslator
+from ..tools.logic_translation_core import LogicTranslationTarget, LogicTranslator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

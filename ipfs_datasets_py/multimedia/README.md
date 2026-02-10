@@ -272,7 +272,7 @@ from ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type import (
     FileUnit,
     file_converter
 )
-from ipfs_datasets_py.rag import GraphRAG
+from ipfs_kit_py.ipld_knowledge_graph import GraphRAG
 import asyncio
 
 async def convert_files_for_graphrag():
@@ -479,7 +479,7 @@ The multimedia module integrates with:
 - **IPFS Storage** - Decentralized media storage and distribution
 - **Embeddings** - Generate embeddings from media content
 - **Search Module** - Media content search and discovery
-- **RAG Module** - Multimedia content in RAG workflows (including arbitrary file conversion for GraphRAG)
+- **GraphRAG Module** - Multimedia content in GraphRAG workflows (including arbitrary file conversion)
 - **Knowledge Graphs** - Extract entities and relationships from any file type
 - **MCP Tools** - AI assistant access to media processing
 - **Audit Module** - Media processing operation logging
@@ -554,10 +554,10 @@ pip install ipfs-datasets-py[multimedia]
 
 - **[File Conversion Systems Analysis](../../docs/FILE_CONVERSION_SYSTEMS_ANALYSIS.md)** - Comprehensive comparison of conversion systems
 - [Discord Usage Examples](../../docs/discord_usage_examples.md) - Comprehensive Discord integration guide
-- [PDF Processing](../pdf_processing/README.md) - Document processing capabilities
+- [PDF Processing](../processors/pdf_processing.py) - Document processing capabilities
 - [Utils](../utils/README.md) - Text processing utilities
 - [Embeddings](../embeddings/README.md) - Generate embeddings from media content
-- [RAG Module](../rag/README.md) - GraphRAG and knowledge graph capabilities
+- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - GraphRAG and knowledge graph capabilities
 - [IPFS Integration Guide](../../docs/distributed_features.md) - Decentralized storage
 - [Performance Guide](../../docs/performance_optimization.md) - Media processing optimization
 - [DiscordChatExporter Repository](https://github.com/Tyrrrz/DiscordChatExporter) - Upstream project

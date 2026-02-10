@@ -155,7 +155,7 @@ The embeddings module integrates with:
 
 - **Vector Stores** - Direct storage of generated embeddings
 - **Search Module** - Embedding-based search capabilities
-- **RAG Module** - Retrieval-augmented generation workflows
+- **GraphRAG Module** - Retrieval-augmented generation workflows
 - **PDF Processing** - Embedding of extracted document content
 - **IPLD Module** - Content-addressed embedding storage
 
@@ -171,6 +171,6 @@ The embeddings module integrates with:
 
 - [Vector Stores](../vector_stores/README.md) - Storage backends for embeddings
 - [Search Module](../search/README.md) - Search and retrieval using embeddings
-- [RAG Module](../rag/README.md) - Retrieval-augmented generation
+- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
 - [Utils Module](../utils/README.md) - Text processing utilities
 - [Performance Guide](../../docs/performance_optimization.md) - Optimization strategies

@@ -12,6 +12,8 @@ from typing import Optional, List, Dict, Any
 from functools import wraps
 
 from .distributed_cache import get_cache, DistributedGitHubCache
+from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
+from ipfs_datasets_py.utils.anyio_compat import in_async_context
 
 logger = logging.getLogger(__name__)
 
@@ -31,26 +33,46 @@ class CachedGitHubCLI:
         """
         self.gh = gh_cli
         self.cache = cache or get_cache()
-        self._loop = None
-    
-    def _get_loop(self):
-        """Get or create event loop"""
-        if self._loop is None:
-            try:
-                self._loop = asyncio.get_event_loop()
-            except RuntimeError:
-                self._loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(self._loop)
-        return self._loop
-    
-    def _run_async(self, coro):
-        """Run async coroutine in sync context"""
-        loop = self._get_loop()
-        if loop.is_running():
-            # Already in async context
-            return asyncio.ensure_future(coro)
-        else:
-            return loop.run_until_complete(coro)
+
+    def _run_async_from_sync(self, awaitable):
+        """Run an awaitable from synchronous code.
+
+        If you're already in an async context, use the explicit async APIs
+        (e.g. `await list_repos_async(...)`).
+        """
+
+        if in_async_context():
+            raise RuntimeError(
+                "CachedGitHubCLI sync methods cannot be called from an async context. "
+                "Use the corresponding async methods (e.g. await list_repos_async(...))."
+            )
+
+        return run_anyio(awaitable)
+
+    async def list_repos_async(
+        self,
+        owner: Optional[str] = None,
+        since_days: int = 1,
+        use_cache: bool = True,
+    ) -> List[str]:
+        """Async version of list_repos()."""
+
+        cache_key = f"repos:{owner}:{since_days}"
+
+        if not use_cache:
+            return self.gh.list_repos(owner, since_days)
+
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            logger.info(f"Cache hit: {cache_key} (saved API call)")
+            return cached
+
+        logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
+        repos = self.gh.list_repos(owner, since_days)
+
+        # Store in cache with 10 minute TTL
+        await self.cache.set(cache_key, repos, ttl=600)
+        return repos
     
     def list_repos(
         self,
@@ -66,28 +88,34 @@ class CachedGitHubCLI:
             since_days: Filter repos updated in last N days
             use_cache: Whether to use cache (default: True)
         """
-        cache_key = f"repos:{owner}:{since_days}"
-        
+        return self._run_async_from_sync(self.list_repos_async(owner, since_days, use_cache))
+
+    async def get_workflow_runs_async(
+        self,
+        repo: str,
+        owner: Optional[str] = None,
+        status: str = "queued",
+        limit: int = 10,
+        use_cache: bool = True,
+    ) -> List[Dict]:
+        """Async version of get_workflow_runs()."""
+
+        cache_key = f"runs:{owner}/{repo}:{status}:{limit}"
+
         if not use_cache:
-            return self.gh.list_repos(owner, since_days)
-        
-        async def fetch():
-            # Check cache first
-            cached = self.cache.get(cache_key)
-            if cached is not None:
-                logger.info(f"Cache hit: {cache_key} (saved API call)")
-                return cached
-            
-            # Cache miss - fetch from GitHub
-            logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
-            repos = self.gh.list_repos(owner, since_days)
-            
-            # Store in cache with 10 minute TTL
-            await self.cache.set(cache_key, repos, ttl=600)
-            
-            return repos
-        
-        return self._run_async(fetch())
+            return self.gh.get_workflow_runs(repo, owner, status, limit)
+
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            logger.info(f"Cache hit: {cache_key} (saved API call)")
+            return cached
+
+        logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
+        runs = self.gh.get_workflow_runs(repo, owner, status, limit)
+
+        # Cache for 2 minutes (workflow status changes frequently)
+        await self.cache.set(cache_key, runs, ttl=120)
+        return runs
     
     def get_workflow_runs(
         self,
@@ -107,26 +135,9 @@ class CachedGitHubCLI:
             limit: Maximum runs to return
             use_cache: Whether to use cache
         """
-        cache_key = f"runs:{owner}/{repo}:{status}:{limit}"
-        
-        if not use_cache:
-            return self.gh.get_workflow_runs(repo, owner, status, limit)
-        
-        async def fetch():
-            cached = self.cache.get(cache_key)
-            if cached is not None:
-                logger.info(f"Cache hit: {cache_key} (saved API call)")
-                return cached
-            
-            logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
-            runs = self.gh.get_workflow_runs(repo, owner, status, limit)
-            
-            # Cache for 2 minutes (workflow status changes frequently)
-            await self.cache.set(cache_key, runs, ttl=120)
-            
-            return runs
-        
-        return self._run_async(fetch())
+        return self._run_async_from_sync(
+            self.get_workflow_runs_async(repo, owner, status, limit, use_cache)
+        )
     
     def get_workflow_queue_depth(
         self,
@@ -142,28 +153,34 @@ class CachedGitHubCLI:
             owner: Repository owner
             use_cache: Whether to use cache
         """
+        return self._run_async_from_sync(self.get_workflow_queue_depth_async(repo, owner, use_cache))
+
+    async def get_workflow_queue_depth_async(
+        self,
+        repo: str,
+        owner: Optional[str] = None,
+        use_cache: bool = True,
+    ) -> int:
+        """Async version of get_workflow_queue_depth()."""
+
         cache_key = f"queue_depth:{owner}/{repo}"
-        
+
         if not use_cache:
             runs = self.gh.get_workflow_runs(repo, owner, "queued")
             return len(runs)
-        
-        async def fetch():
-            cached = self.cache.get(cache_key)
-            if cached is not None:
-                logger.info(f"Cache hit: {cache_key} (saved API call)")
-                return cached
-            
-            logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
-            runs = self.gh.get_workflow_runs(repo, owner, "queued")
-            depth = len(runs)
-            
-            # Cache for 1 minute
-            await self.cache.set(cache_key, depth, ttl=60)
-            
-            return depth
-        
-        return self._run_async(fetch())
+
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            logger.info(f"Cache hit: {cache_key} (saved API call)")
+            return cached
+
+        logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
+        runs = self.gh.get_workflow_runs(repo, owner, "queued")
+        depth = len(runs)
+
+        # Cache for 1 minute
+        await self.cache.set(cache_key, depth, ttl=60)
+        return depth
     
     def list_runners(
         self,
@@ -179,26 +196,32 @@ class CachedGitHubCLI:
             owner: Repository owner
             use_cache: Whether to use cache
         """
+        return self._run_async_from_sync(self.list_runners_async(repo, owner, use_cache))
+
+    async def list_runners_async(
+        self,
+        repo: Optional[str] = None,
+        owner: Optional[str] = None,
+        use_cache: bool = True,
+    ) -> List[Dict]:
+        """Async version of list_runners()."""
+
         cache_key = f"runners:{owner}/{repo}" if repo else f"runners:{owner}"
-        
+
         if not use_cache:
             return self.gh.list_runners(repo, owner)
-        
-        async def fetch():
-            cached = self.cache.get(cache_key)
-            if cached is not None:
-                logger.info(f"Cache hit: {cache_key} (saved API call)")
-                return cached
-            
-            logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
-            runners = self.gh.list_runners(repo, owner)
-            
-            # Cache for 5 minutes
-            await self.cache.set(cache_key, runners, ttl=300)
-            
-            return runners
-        
-        return self._run_async(fetch())
+
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            logger.info(f"Cache hit: {cache_key} (saved API call)")
+            return cached
+
+        logger.info(f"Cache miss: {cache_key} (calling GitHub API)")
+        runners = self.gh.list_runners(repo, owner)
+
+        # Cache for 5 minutes
+        await self.cache.set(cache_key, runners, ttl=300)
+        return runners
     
     def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""

@@ -11,7 +11,7 @@ Main components:
 - DomainSpecificProcessor: Tailors reasoning for specific knowledge domains
 - GraphRAGPerformanceMonitor: Tracks and optimizes LLM performance in GraphRAG tasks
 
-This module integrates with the rag_query_optimizer module to provide optimized
+This module integrates with the optimizers/graphrag/query_optimizer module to provide optimized
 graph traversal strategies for different knowledge graph types (Wikipedia-derived
 and IPLD-based), improving the quality and performance of cross-document reasoning.
 """
@@ -33,11 +33,11 @@ from ipfs_datasets_py.llm.llm_interface import (
     AdaptivePrompting, 
 )
 from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex # Added import
-from ipfs_datasets_py.knowledge_graphs.ipld import IPLDKnowledgeGraph # Added import
+from ipfs_datasets_py.data_transformation.ipld.knowledge_graph import IPLDKnowledgeGraph # Added import
 
 # Import UnifiedGraphRAGQueryOptimizer conditionally to avoid circular imports
 if TYPE_CHECKING:
-    from ipfs_datasets_py.rag.rag_query_optimizer import UnifiedGraphRAGQueryOptimizer
+    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
 
 
 class GraphRAGPerformanceMonitor:
@@ -693,24 +693,14 @@ class GraphRAGLLMProcessor:
         try:
             # Assuming graph_store has a method like traverse_from_entities
             # Need to adapt input/output based on actual graph store implementation
-            seed_entity_ids = [e["id"] for e in entities if "id" in e]
+            seed_entities_info = [{"id": e["id"], "metadata": e.get("metadata", {})} for e in entities if "id" in e]
 
-            # Call graph traversal. Prefer a depth-aware traversal if available.
-            if hasattr(self.graph_store, "traverse_from_entities_with_depths"):
-                traversed_with_depths = self.graph_store.traverse_from_entities_with_depths(
-                    entities=seed_entity_ids,
-                    relationship_types=edge_types,
-                    max_depth=max_depth,
-                )
-                traversed_entities = [e for e, _d in traversed_with_depths]
-                depths_by_id = {getattr(e, "id", None): d for e, d in traversed_with_depths}
-            else:
-                traversed_entities = self.graph_store.traverse_from_entities(
-                    entities=seed_entity_ids,
-                    relationship_types=edge_types,
-                    max_depth=max_depth,
-                )
-                depths_by_id = {}
+            # Call graph traversal (adjust parameters as needed for the actual method)
+            traversed_entities = self.graph_store.traverse_from_entities(
+                entities=seed_entities_info, # Pass necessary info
+                relationship_types=edge_types,
+                max_depth=max_depth
+            )
 
             # Combine original entities with traversed ones, marking source
             # Need a strategy to handle duplicates and combine info/scores
@@ -718,23 +708,16 @@ class GraphRAGLLMProcessor:
             existing_ids = {e["id"] for e in entities}
 
             for trav_entity in traversed_entities:
-                # IPLDKnowledgeGraph returns Entity objects.
-                entity_id = getattr(trav_entity, "id", None)
-                if entity_id and entity_id not in existing_ids:
-                    depth = depths_by_id.get(entity_id, 1)
-                    # Distance-aware score: closer nodes should rank higher.
-                    # Keep it bounded in [0.1, 0.5] to remain comparable with
-                    # upstream vector scoring.
-                    score = max(0.1, 0.5 * (1.0 - (depth / max(1, max_depth + 1))))
-                    combined_results.append(
-                        {
-                            "id": entity_id,
-                            "score": float(score),
-                            "metadata": getattr(trav_entity, "properties", {}) or {},
-                            "source": "graph",
-                        }
-                    )
-                    existing_ids.add(entity_id)
+                 # Assuming traversed_entity is a dict with 'id', 'properties', etc.
+                 entity_id = trav_entity.get("id")
+                 if entity_id and entity_id not in existing_ids:
+                     combined_results.append({
+                         "id": entity_id,
+                         "score": 0.5, # Assign a default graph score or derive one
+                         "metadata": trav_entity.get("properties", {}),
+                         "source": "graph" # Mark source
+                     })
+                     existing_ids.add(entity_id)
                  # TODO: Add logic to potentially update existing entities if found via graph
 
             return combined_results

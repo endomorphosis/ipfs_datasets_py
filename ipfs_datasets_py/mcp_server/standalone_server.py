@@ -183,15 +183,15 @@ class MinimalMCPDashboard:
         def index():
             # Read error reporting configuration
             error_reporting_enabled = 'true' if ERROR_REPORTING_AVAILABLE else 'false'
-
-            return '''
+            
+            return f'''
             <!DOCTYPE html>
             <html>
             <head>
                 <title>IPFS Datasets MCP Dashboard</title>
                 <script>
                     // Set error reporting configuration
-                    window.ERROR_REPORTING_ENABLED = __ERROR_REPORTING_ENABLED__;
+                    window.ERROR_REPORTING_ENABLED = {error_reporting_enabled};
                 </script>
                 <script src="/static/js/error-reporter.js"></script>
                 <style>
@@ -219,59 +219,59 @@ class MinimalMCPDashboard:
                 </div>
                 
                 <script>
-                async function checkHealth() {
-                    try {
+                async function checkHealth() {{
+                    try {{
                         const response = await fetch('/api/health');
                         const data = await response.json();
                         document.getElementById('status').className = 'status healthy';
                         document.getElementById('status').textContent = 'Dashboard: ' + data.status;
                         document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-                    } catch (error) {
+                    }} catch (error) {{
                         document.getElementById('status').className = 'status error';
                         document.getElementById('status').textContent = 'Error: ' + error.message;
-                    }
-                }
+                    }}
+                }}
                 
-                async function testEcho() {
-                    try {
-                        const response = await fetch('/api/execute', {
+                async function testEcho() {{
+                    try {{
+                        const response = await fetch('/api/execute', {{
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
+                            headers: {{ 'Content-Type': 'application/json' }},
+                            body: JSON.stringify({{
                                 tool_name: 'echo',
-                                parameters: { text: 'Hello from MCP Dashboard!' }
-                            })
-                        });
+                                parameters: {{ text: 'Hello from MCP Dashboard!' }}
+                            }})
+                        }});
                         const data = await response.json();
                         document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-                    } catch (error) {
+                    }} catch (error) {{
                         document.getElementById('output').textContent = 'Error: ' + error.message;
-                    }
-                }
+                    }}
+                }}
                 
-                async function testStatus() {
-                    try {
-                        const response = await fetch('/api/execute', {
+                async function testStatus() {{
+                    try {{
+                        const response = await fetch('/api/execute', {{
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
+                            headers: {{ 'Content-Type': 'application/json' }},
+                            body: JSON.stringify({{
                                 tool_name: 'status',
-                                parameters: {}
-                            })
-                        });
+                                parameters: {{}}
+                            }})
+                        }});
                         const data = await response.json();
                         document.getElementById('output').textContent = JSON.stringify(data, null, 2);
-                    } catch (error) {
+                    }} catch (error) {{
                         document.getElementById('output').textContent = 'Error: ' + error.message;
-                    }
-                }
+                    }}
+                }}
                 
                 // Check status on load
                 checkHealth();
                 </script>
             </body>
             </html>
-            '''.replace("__ERROR_REPORTING_ENABLED__", error_reporting_enabled)
+            '''
             
         @self.app.route('/api/health')
         def api_health():

@@ -2,7 +2,7 @@
 Background Task Management Tools for IPFS Datasets MCP Server
 
 This module provides comprehensive background task management tools migrated
-from the ipfs_embeddings_py project with enhanced monitoring and control features.
+from a legacy tooling codebase with enhanced monitoring and control features.
 """
 
 import logging

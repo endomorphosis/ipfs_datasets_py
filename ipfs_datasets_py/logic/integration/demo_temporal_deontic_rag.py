@@ -11,13 +11,14 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from logic_integration.temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
-from logic_integration.document_consistency_checker import DocumentConsistencyChecker
-from logic_integration.deontic_logic_core import (
-    DeonticFormula, DeonticOperator, LegalAgent, LegalContext, TemporalCondition
+from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
+from .document_consistency_checker import DocumentConsistencyChecker
+from ..tools.deontic_logic_core import (
+    DeonticFormula,
+    DeonticOperator,
+    LegalAgent,
+    LegalContext,
+    TemporalCondition,
 )
 
 

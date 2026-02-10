@@ -39,7 +39,7 @@ import time
 from collections import defaultdict, deque
 
 # Import GraphRAG components
-from ipfs_datasets_py.complete_advanced_graphrag import (
+from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
     CompleteGraphRAGSystem, CompleteProcessingConfiguration, CompleteProcessingResult
 )
 
