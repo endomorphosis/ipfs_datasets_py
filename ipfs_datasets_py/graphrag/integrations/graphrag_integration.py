@@ -867,13 +867,8 @@ class HybridVectorGraphSearch:
 
         # Normalize weights
         total_weight = self.vector_weight + self.graph_weight
-        if total_weight <= 0:
-            # Defensive: avoid divide-by-zero and nonsensical negative totals.
-            self.vector_weight = 0.5
-            self.graph_weight = 0.5
-        else:
-            self.vector_weight = self.vector_weight / total_weight
-            self.graph_weight = self.graph_weight / total_weight
+        self.vector_weight = self.vector_weight / total_weight
+        self.graph_weight = self.graph_weight / total_weight
 
         # Initialize metrics
         self.metrics = {
@@ -916,38 +911,13 @@ class HybridVectorGraphSearch:
         Returns:
             List of search results with scores and traversal paths
         """
-        if top_k <= 0:
-            self._last_query_stats = {
-                "top_k": int(top_k),
-                "seed_count": 0,
-                "expanded_count": 0,
-                "returned_count": 0,
-                "max_hops": 0,
-                "max_nodes_visited": 0,
-                "max_edges_traversed": 0,
-            }
-            return []
-
         effective_max_hops = self.max_graph_hops if max_graph_hops is None else max_graph_hops
-        if effective_max_hops < 0:
-            effective_max_hops = 0
-        effective_max_nodes = self.max_nodes_visited if max_nodes_visited is None else max_nodes_visited
-        effective_max_edges = self.max_edges_traversed if max_edges_traversed is None else max_edges_traversed
-
-        def _canon_list(values: Optional[List[str]]) -> Optional[Tuple[str, ...]]:
-            if not values:
-                return None
-            return tuple(sorted(str(v) for v in values))
-
-        rel_types_key = _canon_list(relationship_types)
-        ent_types_key = _canon_list(entity_types)
 
         # Create cache key (stable within-process and low collision risk)
-        emb_bytes = np.ascontiguousarray(query_embedding).tobytes()
-        emb_digest = hashlib.sha256(emb_bytes).hexdigest()[:16]
+        emb_digest = hashlib.sha256(query_embedding.tobytes()).hexdigest()[:16]
         cache_key = (
-            f"hybrid:{emb_digest}:topk={int(top_k)}:rels={rel_types_key}:ents={ent_types_key}:minv={float(min_vector_score)}:"
-            f"hops={int(effective_max_hops)}:nodes={int(effective_max_nodes)}:edges={int(effective_max_edges)}"
+            f"hybrid:{emb_digest}:{top_k}:{relationship_types}:{entity_types}:{min_vector_score}:"
+            f"hops={effective_max_hops}:nodes={max_nodes_visited}:edges={max_edges_traversed}"
         )
 
         # Check cache
@@ -956,6 +926,9 @@ class HybridVectorGraphSearch:
             return self._search_cache[cache_key]
 
         self.metrics["queries_processed"] += 1
+
+        effective_max_nodes = self.max_nodes_visited if max_nodes_visited is None else max_nodes_visited
+        effective_max_edges = self.max_edges_traversed if max_edges_traversed is None else max_edges_traversed
 
         # Phase 1: Vector search to find seed nodes
         vector_results = self._perform_vector_search(
@@ -966,23 +939,14 @@ class HybridVectorGraphSearch:
         )
 
         # Phase 2: Graph traversal to expand results
-        if effective_max_hops == 0:
-            expanded_results = list(vector_results)
-            self._last_traversal_stats = {
-                "nodes_visited": int(len(vector_results)),
-                "edges_traversed": 0,
-                "avg_hops": 0.0,
-                "termination_reason": "max_hops=0",
-            }
-        else:
-            expanded_results = self._expand_through_graph(
-                vector_results,
-                max_hops=effective_max_hops,
-                relationship_types=relationship_types,
-                entity_types=entity_types,
-                max_nodes_visited=effective_max_nodes,
-                max_edges_traversed=effective_max_edges
-            )
+        expanded_results = self._expand_through_graph(
+            vector_results,
+            max_hops=effective_max_hops,
+            relationship_types=relationship_types,
+            entity_types=entity_types,
+            max_nodes_visited=effective_max_nodes,
+            max_edges_traversed=effective_max_edges
+        )
 
         # Phase 3: Score and rank combined results
         ranked_results = self._score_and_rank_results(
@@ -1010,9 +974,6 @@ class HybridVectorGraphSearch:
             "max_hops": effective_max_hops,
             "max_nodes_visited": effective_max_nodes,
             "max_edges_traversed": effective_max_edges,
-            "relationship_types": list(rel_types_key) if rel_types_key else None,
-            "entity_types": list(ent_types_key) if ent_types_key else None,
-            **getattr(self, "_last_traversal_stats", {}),
         }
 
         # Update cache
@@ -1125,17 +1086,10 @@ class HybridVectorGraphSearch:
         edges_traversed = 0
         total_hops = 0
 
-        termination_reason = "queue_exhausted"
-
         # BFS traversal
         while queue:
             current_result, hop_count = queue.popleft()
             current_id = current_result["id"]
-
-            # Skip stale entries: if a better path to this node was discovered after
-            # this entry was queued, expanding it only adds noise and work.
-            if results_by_id.get(current_id) is not current_result:
-                continue
 
             # Skip if we've reached max hops
             if hop_count >= max_hops:
@@ -1152,12 +1106,10 @@ class HybridVectorGraphSearch:
             # Track edges traversed
             edges_traversed += len(neighbors)
             if edges_traversed >= max_edges_traversed:
-                termination_reason = "max_edges_traversed"
                 break
 
             for neighbor_id, relationship, weight in neighbors:
                 if len(results_by_id) >= max_nodes_visited:
-                    termination_reason = "max_nodes_visited"
                     break
                 # Get node data
                 neighbor_node = self.dataset.get_node(neighbor_id)
@@ -1207,7 +1159,6 @@ class HybridVectorGraphSearch:
                     queue.append((candidate, hop_count + 1))
 
             if len(results_by_id) >= max_nodes_visited:
-                termination_reason = "max_nodes_visited"
                 break
 
         # Update metrics
@@ -1215,14 +1166,6 @@ class HybridVectorGraphSearch:
         self.metrics["edges_traversed"] += edges_traversed
         all_results = list(results_by_id.values())
         self.metrics["average_hops"] = total_hops / max(1, len(all_results) - len(seed_results))
-
-        # Per-query traversal stats (useful for debugging and budget tuning).
-        self._last_traversal_stats = {
-            "nodes_visited": int(nodes_visited),
-            "edges_traversed": int(edges_traversed),
-            "avg_hops": float(self.metrics["average_hops"]),
-            "termination_reason": termination_reason,
-        }
 
         return all_results
 
@@ -1250,26 +1193,18 @@ class HybridVectorGraphSearch:
 
         neighbors = []
         for rel in relationships:
-            if not isinstance(rel, dict):
-                continue
-            rel_source = rel.get("source")
-            rel_target = rel.get("target")
-            rel_type = rel.get("type")
-            if rel_source is None or rel_target is None or rel_type is None:
-                continue
-
             # Determine target node based on relationship direction
-            if rel_source == node_id:
-                target_id = rel_target
+            if rel["source"] == node_id:
+                target_id = rel["target"]
                 direction = "outgoing"
-            elif rel_target == node_id and self.use_bidirectional_traversal:
-                target_id = rel_source
+            elif rel["target"] == node_id and self.use_bidirectional_traversal:
+                target_id = rel["source"]
                 direction = "incoming"
             else:
                 continue
 
             # Filter by relationship type if specified
-            if relationship_types and rel_type not in relationship_types:
+            if relationship_types and rel["type"] not in relationship_types:
                 continue
 
             # Get target node
@@ -1290,7 +1225,7 @@ class HybridVectorGraphSearch:
             weight *= 0.8 ** hop_count
 
             # Add to neighbors
-            neighbors.append((target_id, rel_type, weight))
+            neighbors.append((target_id, rel["type"], weight))
 
         return neighbors
 

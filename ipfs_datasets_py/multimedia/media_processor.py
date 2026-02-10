@@ -366,10 +366,6 @@ class MediaProcessor:
             - Progress information is logged when logging is enabled
             - Operation respects rate limiting and platform-specific restrictions
         """
-        # Cancellation checkpoint: ensure CancelScope cancellations are observed
-        # before any lock acquisition or filesystem snapshots.
-        await anyio.sleep(0)
-
         mocked_context = isinstance(self.ytdlp, Mock) or isinstance(self.ffmpeg, Mock)
 
         async def _impl() -> Dict[str, Any]:
@@ -480,12 +476,16 @@ class MediaProcessor:
                     shutil.rmtree(temp_override_dir, ignore_errors=True)
 
                 # Clean up any system-temp artifacts created during this call.
-                # This is intentionally conservative: it only removes new entries.
+                # This is intentionally conservative: it only removes new entries
+                # and never deletes PDF files (to avoid interfering with other
+                # tests/fixtures that materialize PDFs in /tmp).
                 try:
                     after_system_temp = set(system_temp_dir.glob('*'))
                     new_system_temp = after_system_temp - before_system_temp
                     for p in new_system_temp:
                         try:
+                            if p.suffix.lower() == '.pdf':
+                                continue
                             if p.is_dir():
                                 shutil.rmtree(p, ignore_errors=True)
                             else:
