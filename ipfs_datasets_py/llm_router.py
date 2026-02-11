@@ -253,6 +253,164 @@ def wait_task(
     return task if isinstance(task, dict) else None
 
 
+def get_remote_capabilities(*, timeout_s: float = 10.0, detail: bool = False) -> Dict[str, object]:
+    """Get remote peer capabilities via libp2p.
+
+    Uses:
+    - IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR / IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR
+    - IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID / IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID
+
+    If multiaddr is not set, the client will attempt bootstrap+LAN mDNS discovery.
+    """
+
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    try:
+        import anyio
+
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import get_capabilities as get_capabilities_p2p
+
+        remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
+
+        async def _run() -> Dict[str, object]:
+            caps = await get_capabilities_p2p(remote=remote, timeout_s=float(timeout_s), detail=bool(detail))
+            return caps if isinstance(caps, dict) else {}
+
+        return anyio.run(_run, backend="trio")
+    except Exception as exc:
+        raise LLMRouterError(f"P2P get_remote_capabilities failed: {exc}") from exc
+
+
+def call_remote_tool(
+    *,
+    tool_name: str,
+    args: Optional[Dict[str, object]] = None,
+    timeout_s: float = 30.0,
+) -> Dict[str, object]:
+    """Call a remote MCP tool via libp2p.
+
+    Requires the remote peer to set `IPFS_ACCELERATE_PY_TASK_P2P_ENABLE_TOOLS=1`.
+    """
+
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    try:
+        import anyio
+
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import call_tool as call_tool_p2p
+
+        remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
+        safe_args: Dict[str, object] = args if isinstance(args, dict) else {}
+
+        async def _run() -> Dict[str, object]:
+            resp = await call_tool_p2p(remote=remote, tool_name=str(tool_name), args=safe_args, timeout_s=float(timeout_s))
+            return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
+
+        return anyio.run(_run, backend="trio")
+    except Exception as exc:
+        raise LLMRouterError(f"P2P call_remote_tool failed: {exc}") from exc
+
+
+def get_remote_cache_value(*, key: str, timeout_s: float = 10.0) -> Dict[str, object]:
+    """Get a remote cache entry via libp2p.
+
+    Requires the remote peer to set `IPFS_ACCELERATE_PY_TASK_P2P_ENABLE_CACHE=1`.
+    """
+
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    try:
+        import anyio
+
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_get as cache_get_p2p
+
+        remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
+
+        async def _run() -> Dict[str, object]:
+            resp = await cache_get_p2p(remote=remote, key=str(key), timeout_s=float(timeout_s))
+            return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
+
+        return anyio.run(_run, backend="trio")
+    except Exception as exc:
+        raise LLMRouterError(f"P2P get_remote_cache_value failed: {exc}") from exc
+
+
+def set_remote_cache_value(
+    *,
+    key: str,
+    value: object,
+    ttl_s: float | None = None,
+    timeout_s: float = 10.0,
+) -> Dict[str, object]:
+    """Set a remote cache entry via libp2p.
+
+    Requires the remote peer to set `IPFS_ACCELERATE_PY_TASK_P2P_ENABLE_CACHE=1`.
+    """
+
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    try:
+        import anyio
+
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_set as cache_set_p2p
+
+        remote = RemoteQueue(peer_id=remote_peer_id, multiaddr=remote_multiaddr)
+
+        async def _run() -> Dict[str, object]:
+            resp = await cache_set_p2p(
+                remote=remote,
+                key=str(key),
+                value=value,
+                ttl_s=ttl_s,
+                timeout_s=float(timeout_s),
+            )
+            return resp if isinstance(resp, dict) else {"ok": False, "error": "invalid_response"}
+
+        return anyio.run(_run, backend="trio")
+    except Exception as exc:
+        raise LLMRouterError(f"P2P set_remote_cache_value failed: {exc}") from exc
+
+
 def _find_int_by_key(obj: object, key: str) -> Optional[int]:
     """Best-effort: find the first int-like value for a key anywhere in nested JSON."""
 

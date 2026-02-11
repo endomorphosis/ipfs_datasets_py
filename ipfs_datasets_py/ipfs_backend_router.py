@@ -201,6 +201,36 @@ class KuboCLIBackend:
     def dag_export(self, cid: str) -> bytes:
         return self._run(["dag", "export", cid])
 
+    # ---- Optional: IPNS + pubsub (best-effort) ----
+
+    def name_publish(self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True) -> str:
+        args: list[str] = ["name", "publish"]
+        if allow_offline:
+            args.append("--allow-offline")
+        if key:
+            args.extend(["--key", str(key)])
+        args.append(f"/ipfs/{cid}")
+        out = self._run(args)
+        return out.decode("utf-8", errors="replace").strip()
+
+    def name_resolve(self, name: str, *, timeout_s: float = 10.0) -> str:
+        # Kubo expects durations like "10s".
+        timeout_s = float(timeout_s)
+        out = self._run(["name", "resolve", f"--timeout={timeout_s:.3f}s", str(name)])
+        return out.decode("utf-8", errors="replace").strip()
+
+    def pubsub_pub(self, topic: str, data: str) -> None:
+        _ = self._run(["pubsub", "pub", str(topic), str(data)])
+
+    def pubsub_sub_process(self, topic: str) -> subprocess.Popen:
+        return subprocess.Popen(
+            [self._cmd, "pubsub", "sub", str(topic)],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
 
 def _get_httpapi_backend() -> Optional[IPFSBackend]:
     if not _truthy(os.getenv("IPFS_DATASETS_PY_ENABLE_IPFS_HTTPAPI")):
@@ -281,6 +311,31 @@ def _get_httpapi_backend() -> Optional[IPFSBackend]:
 
             def dag_export(self, cid: str) -> bytes:
                 return client.dag.export(cid)
+
+            # Optional: IPNS + pubsub (best-effort)
+
+            def name_publish(self, cid: str, *, key: Optional[str] = None, allow_offline: bool = True) -> str:
+                kwargs: dict = {"allow_offline": bool(allow_offline)}
+                if key:
+                    kwargs["key"] = str(key)
+                res = client.name.publish(f"/ipfs/{cid}", **kwargs)
+                if isinstance(res, dict):
+                    return str(res.get("Name") or res.get("name") or res)
+                return str(res)
+
+            def name_resolve(self, name: str, *, timeout_s: float = 10.0) -> str:
+                _ = timeout_s
+                res = client.name.resolve(str(name))
+                if isinstance(res, dict):
+                    return str(res.get("Path") or res.get("path") or res)
+                return str(res)
+
+            def pubsub_pub(self, topic: str, data: str) -> None:
+                client.pubsub.pub(str(topic), str(data))
+
+            def pubsub_sub_process(self, topic: str):
+                # ipfshttpclient returns an iterator-like subscription in some versions.
+                return client.pubsub.sub(str(topic))
 
         return _HTTPAPIBackend()
     except Exception:
@@ -678,3 +733,89 @@ def dag_export(
 
 def clear_ipfs_backend_router_caches() -> None:
     _resolve_backend_cached.cache_clear()
+
+
+def name_publish(
+    cid: str,
+    *,
+    key: Optional[str] = None,
+    allow_offline: bool = True,
+    backend: Optional[str] = None,
+    backend_instance: Optional[IPFSBackend] = None,
+    deps: Optional[RouterDeps] = None,
+) -> str:
+    b = backend_instance or get_ipfs_backend(backend, deps=deps)
+    fn = getattr(b, "name_publish", None)
+    if callable(fn):
+        return str(fn(cid, key=key, allow_offline=allow_offline))
+
+    # Fallback: attempt using local Kubo CLI even if the chosen backend lacks IPNS.
+    cmd = os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")
+    args: list[str] = [cmd, "name", "publish"]
+    if allow_offline:
+        args.append("--allow-offline")
+    if key:
+        args.extend(["--key", str(key)])
+    args.append(f"/ipfs/{cid}")
+    out = subprocess.check_output(args, stderr=subprocess.STDOUT)
+    return out.decode("utf-8", errors="replace").strip()
+
+
+def name_resolve(
+    name: str,
+    *,
+    timeout_s: float = 10.0,
+    backend: Optional[str] = None,
+    backend_instance: Optional[IPFSBackend] = None,
+    deps: Optional[RouterDeps] = None,
+) -> str:
+    b = backend_instance or get_ipfs_backend(backend, deps=deps)
+    fn = getattr(b, "name_resolve", None)
+    if callable(fn):
+        return str(fn(name, timeout_s=timeout_s))
+
+    cmd = os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")
+    out = subprocess.check_output(
+        [cmd, "name", "resolve", f"--timeout={float(timeout_s):.3f}s", str(name)],
+        stderr=subprocess.STDOUT,
+    )
+    return out.decode("utf-8", errors="replace").strip()
+
+
+def pubsub_pub(
+    topic: str,
+    data: str,
+    *,
+    backend: Optional[str] = None,
+    backend_instance: Optional[IPFSBackend] = None,
+    deps: Optional[RouterDeps] = None,
+) -> None:
+    b = backend_instance or get_ipfs_backend(backend, deps=deps)
+    fn = getattr(b, "pubsub_pub", None)
+    if callable(fn):
+        fn(topic, data)
+        return
+
+    cmd = os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")
+    subprocess.check_output([cmd, "pubsub", "pub", str(topic), str(data)], stderr=subprocess.STDOUT)
+
+
+def pubsub_sub_process(
+    topic: str,
+    *,
+    backend: Optional[str] = None,
+    backend_instance: Optional[IPFSBackend] = None,
+    deps: Optional[RouterDeps] = None,
+):
+    b = backend_instance or get_ipfs_backend(backend, deps=deps)
+    fn = getattr(b, "pubsub_sub_process", None)
+    if callable(fn):
+        return fn(topic)
+    cmd = os.getenv("IPFS_DATASETS_PY_KUBO_CMD", "ipfs")
+    return subprocess.Popen(
+        [cmd, "pubsub", "sub", str(topic)],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )

@@ -195,6 +195,17 @@ def _get_symai_router_deps():
     try:
         from ipfs_datasets_py.caching.router_remote_cache import make_ipfs_remote_cache
 
+        # If opted in, prefer the libp2p task-service remote cache.
+        try:
+            from ipfs_datasets_py.caching.router_remote_cache import make_p2p_task_remote_cache
+
+            p2p_remote = make_p2p_task_remote_cache()
+            if p2p_remote is not None:
+                deps.remote_cache = p2p_remote
+                return deps
+        except Exception:
+            pass
+
         deps.remote_cache = make_ipfs_remote_cache(deps=deps)
     except Exception:
         deps.remote_cache = None

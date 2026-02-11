@@ -14,6 +14,10 @@ from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
 from ipfs_datasets_py.router_deps import RouterDeps
 
 
+def _p2p_cache_enabled() -> bool:
+    return _truthy(os.environ.get("IPFS_DATASETS_PY_REMOTE_CACHE_P2P_TASKS"))
+
+
 def _truthy(value: str | None) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "yes", "on"}
 
@@ -267,6 +271,67 @@ class IPFSBackedRemoteCache:
         return value
 
 
+class P2PTaskRemoteCache:
+    """A RouterDeps-compatible remote cache backed by accelerate's libp2p task service.
+
+    This is a simple JSON key/value cache accessed over libp2p RPC ops:
+    - cache.get
+    - cache.set
+
+    It is best-effort and safe to use in CI/minimal contexts.
+    """
+
+    def __init__(
+        self,
+        *,
+        remote_peer_id: str = "",
+        remote_multiaddr: str = "",
+        timeout_s: float = 10.0,
+        default_ttl_s: float | None = None,
+    ) -> None:
+        self.remote_peer_id = str(remote_peer_id or "").strip()
+        self.remote_multiaddr = str(remote_multiaddr or "").strip()
+        self.timeout_s = float(timeout_s)
+        self.default_ttl_s = float(default_ttl_s) if default_ttl_s is not None else None
+
+    def _remote(self):
+        from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+
+        return RemoteQueue(peer_id=self.remote_peer_id, multiaddr=self.remote_multiaddr)
+
+    def get(self, key: str) -> Any | None:
+        if not key:
+            return None
+        try:
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_get_sync
+
+            resp = cache_get_sync(remote=self._remote(), key=str(key), timeout_s=float(self.timeout_s))
+            if not isinstance(resp, dict) or not resp.get("ok"):
+                return None
+            if not resp.get("hit"):
+                return None
+            return resp.get("value")
+        except Exception:
+            return None
+
+    def set(self, key: str, value: Any) -> Any:
+        if not key:
+            return value
+        try:
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import cache_set_sync
+
+            cache_set_sync(
+                remote=self._remote(),
+                key=str(key),
+                value=value,
+                ttl_s=self.default_ttl_s,
+                timeout_s=float(self.timeout_s),
+            )
+        except Exception:
+            pass
+        return value
+
+
 class DistributedMappingCache:
     """Small adapter around DistributedGitHubCache for use as a mapping cache.
 
@@ -368,4 +433,43 @@ def make_ipfs_remote_cache(
         pin=pin,
         ttl_seconds=ttl_seconds,
         broadcast=broadcast,
+    )
+
+
+def make_p2p_task_remote_cache(
+    *,
+    timeout_s: float = 10.0,
+    default_ttl_s: float | None = None,
+) -> P2PTaskRemoteCache | None:
+    """Create a libp2p task-service-backed remote cache (env-configured).
+
+    Uses the same remote peer env vars as `llm_router`:
+    - IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR / IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR
+    - IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID / IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID
+
+    Opt-in via `IPFS_DATASETS_PY_REMOTE_CACHE_P2P_TASKS=1`.
+    """
+
+    if not _p2p_cache_enabled():
+        return None
+
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    if not remote_peer_id and not remote_multiaddr:
+        return None
+
+    return P2PTaskRemoteCache(
+        remote_peer_id=remote_peer_id,
+        remote_multiaddr=remote_multiaddr,
+        timeout_s=float(timeout_s),
+        default_ttl_s=default_ttl_s,
     )
