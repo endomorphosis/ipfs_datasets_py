@@ -64,6 +64,40 @@ class LLMRouterError(RuntimeError):
     """
 
 
+_P2P_TASK_PREFIX = "p2p://"
+
+
+def _encode_p2p_task_id(*, peer_id: str, task_id: str) -> str:
+    pid = (peer_id or "").strip()
+    tid = (task_id or "").strip()
+    if not pid or not tid:
+        return tid
+    return f"{_P2P_TASK_PREFIX}{pid}/{tid}"
+
+
+def _decode_p2p_task_id(task_id: str) -> tuple[str, str] | None:
+    text = str(task_id or "").strip()
+    if not text.startswith(_P2P_TASK_PREFIX):
+        return None
+    rest = text[len(_P2P_TASK_PREFIX) :]
+    if "/" not in rest:
+        return None
+    pid, tid = rest.split("/", 1)
+    pid = pid.strip()
+    tid = tid.strip()
+    if not pid or not tid:
+        return None
+    return pid, tid
+
+
+def _extract_peer_id_from_multiaddr(multiaddr: str) -> str:
+    text = str(multiaddr or "").strip()
+    if not text:
+        return ""
+    m = re.search(r"/p2p/([^/]+)$", text)
+    return (m.group(1) if m else "").strip()
+
+
 def submit_task(
     *,
     prompt: str,
@@ -80,6 +114,7 @@ def submit_task(
 
     remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
     remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
 
     try:
         from ipfs_datasets_py.ml.accelerate_integration.task_queue import TaskQueue
@@ -91,26 +126,38 @@ def submit_task(
         if k in kwargs:
             payload[k] = kwargs[k]
 
-    if remote_multiaddr:
+    if remote_multiaddr or auto_discovery:
         try:
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
-            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import submit_task as submit_task_p2p
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import submit_task_with_info
 
             remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
 
-            async def _run() -> str:
-                return await submit_task_p2p(
+            async def _run() -> dict:
+                return await submit_task_with_info(
                     remote=remote,
                     task_type=str(task_type),
                     model_name=str(model_name or ""),
                     payload=payload,  # type: ignore[arg-type]
                 )
 
-            return anyio.run(_run, backend="trio")
+            info = anyio.run(_run, backend="trio")
+            if isinstance(info, dict):
+                tid = str(info.get("task_id") or "").strip()
+                pid = str(info.get("peer_id") or "").strip() or remote_peer_id or _extract_peer_id_from_multiaddr(remote_multiaddr)
+                if pid and tid:
+                    return _encode_p2p_task_id(peer_id=pid, task_id=tid)
+                if tid:
+                    return tid
+            raise RuntimeError(f"invalid_submit_response: {info}")
         except Exception as exc:
-            raise LLMRouterError(f"P2P submit_task failed: {exc}") from exc
+            # If the caller explicitly configured a remote multiaddr, fail loudly.
+            if remote_multiaddr:
+                raise LLMRouterError(f"P2P submit_task failed: {exc}") from exc
+            # Auto-discovery is best-effort: fall back to local queue.
+            pass
 
     q = TaskQueue(queue_path)
     return q.submit(task_type=str(task_type), model_name=str(model_name or ""), payload=payload)
@@ -119,20 +166,26 @@ def submit_task(
 def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict]:
     """Get task status/result from the local task queue, or from a remote peer via libp2p."""
 
+    parsed = _decode_p2p_task_id(str(task_id))
+
     remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
     remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
 
-    if remote_multiaddr:
+    effective_peer_id = parsed[0] if parsed else remote_peer_id
+    effective_task_id = parsed[1] if parsed else str(task_id)
+
+    if parsed is not None or remote_multiaddr or (auto_discovery and effective_peer_id):
         try:
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import get_task as get_task_p2p
 
-            remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
+            remote = RemoteQueue(peer_id=effective_peer_id or "", multiaddr=remote_multiaddr)
 
             async def _run() -> Optional[dict]:
-                task = await get_task_p2p(remote=remote, task_id=str(task_id))
+                task = await get_task_p2p(remote=remote, task_id=str(effective_task_id))
                 return task if isinstance(task, dict) else None
 
             return anyio.run(_run, backend="trio")
@@ -158,20 +211,26 @@ def wait_task(
     - P2P: uses remote peer's wait RPC.
     """
 
+    parsed = _decode_p2p_task_id(str(task_id))
+
     remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
     remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
 
-    if remote_multiaddr:
+    effective_peer_id = parsed[0] if parsed else remote_peer_id
+    effective_task_id = parsed[1] if parsed else str(task_id)
+
+    if parsed is not None or remote_multiaddr or (auto_discovery and effective_peer_id):
         try:
             import anyio
 
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
             from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import wait_task as wait_task_p2p
 
-            remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
+            remote = RemoteQueue(peer_id=effective_peer_id or "", multiaddr=remote_multiaddr)
 
             async def _run() -> Optional[dict]:
-                task = await wait_task_p2p(remote=remote, task_id=str(task_id), timeout_s=float(timeout_s))
+                task = await wait_task_p2p(remote=remote, task_id=str(effective_task_id), timeout_s=float(timeout_s))
                 return task if isinstance(task, dict) else None
 
             return anyio.run(_run, backend="trio")

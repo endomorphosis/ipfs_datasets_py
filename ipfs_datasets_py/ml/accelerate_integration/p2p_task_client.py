@@ -1,18 +1,14 @@
-"""libp2p client for the TaskQueue RPC service."""
+"""Compatibility wrapper for the libp2p TaskQueue RPC client.
+
+The canonical implementation now lives in ``ipfs_accelerate_py.p2p_tasks`` so
+systemd-deployed MCP services can reuse the same code.
+"""
 
 from __future__ import annotations
 
-import json
+import importlib
 from dataclasses import dataclass
 from typing import Any, Dict, Optional
-
-
-def _have_libp2p() -> bool:
-    try:
-        import libp2p  # noqa: F401
-        return True
-    except Exception:
-        return False
 
 
 @dataclass
@@ -21,89 +17,57 @@ class RemoteQueue:
     multiaddr: str
 
 
-async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> Dict[str, Any]:
-    if not _have_libp2p():
-        raise RuntimeError("libp2p is not installed; install ipfs_datasets_py[p2p]")
-
-    import anyio
-    import inspect
-    from libp2p import new_host
-    from multiaddr import Multiaddr
-    from libp2p.peer.peerinfo import info_from_p2p_addr
-    from libp2p.tools.async_service import background_trio_service
-
-    from .p2p_task_protocol import PROTOCOL_V1, get_shared_token
-
-    host_obj = new_host()
-    host = await host_obj if inspect.isawaitable(host_obj) else host_obj
-
-    token = get_shared_token()
-    if token and "token" not in message:
-        message = dict(message)
-        message["token"] = token
-
-    peer_info = info_from_p2p_addr(Multiaddr(remote.multiaddr))
-
-    # Swarm.listen()/connect() require the swarm service to be running.
-    async with background_trio_service(host.get_network()):
-        # Bind an ephemeral listener; this also ensures transport is ready.
-        await host.get_network().listen(Multiaddr("/ip4/0.0.0.0/tcp/0"))
-
-        with anyio.fail_after(20.0):
-            await host.connect(peer_info)
-            stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_V1])
-            await stream.write(json.dumps(message).encode("utf-8") + b"\n")
-
-            raw = bytearray()
-            max_bytes = 1024 * 1024
-            while len(raw) < max_bytes:
-                chunk = await stream.read(1024)
-                if not chunk:
-                    break
-                raw.extend(chunk)
-                if b"\n" in chunk:
-                    break
-            raw = bytes(raw)
-            await stream.close()
-
-    try:
-        await host.close()
-    except Exception:
-        pass
-
-    try:
-        return json.loads((raw or b"{}").rstrip(b"\n").decode("utf-8"))
-    except Exception:
-        return {"ok": False, "error": "invalid_json_response"}
-
-
 async def submit_task(*, remote: RemoteQueue, task_type: str, model_name: str, payload: Dict[str, Any]) -> str:
-    resp = await _dial_and_request(
-        remote=remote,
-        message={
-            "op": "submit",
-            "task_type": task_type,
-            "model_name": model_name,
-            "payload": payload,
-        },
+    module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
+    ARemoteQueue = getattr(module, "RemoteQueue")
+    a_submit_task = getattr(module, "submit_task")
+
+    return await a_submit_task(
+        remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr),
+        task_type=task_type,
+        model_name=model_name,
+        payload=payload,
     )
-    if not resp.get("ok"):
-        raise RuntimeError(f"submit failed: {resp}")
-    return str(resp.get("task_id"))
+
+
+async def submit_task_with_info(
+    *, remote: RemoteQueue, task_type: str, model_name: str, payload: Dict[str, Any]
+) -> Dict[str, str]:
+    module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
+    ARemoteQueue = getattr(module, "RemoteQueue")
+    a_submit_task_with_info = getattr(module, "submit_task_with_info")
+
+    return await a_submit_task_with_info(
+        remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr),
+        task_type=task_type,
+        model_name=model_name,
+        payload=payload,
+    )
 
 
 async def get_task(*, remote: RemoteQueue, task_id: str) -> Optional[Dict[str, Any]]:
-    resp = await _dial_and_request(remote=remote, message={"op": "get", "task_id": task_id})
-    if not resp.get("ok"):
-        raise RuntimeError(f"get failed: {resp}")
-    return resp.get("task")
+    module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
+    ARemoteQueue = getattr(module, "RemoteQueue")
+    a_get_task = getattr(module, "get_task")
+
+    return await a_get_task(remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr), task_id=task_id)
 
 
 async def wait_task(*, remote: RemoteQueue, task_id: str, timeout_s: float = 60.0) -> Optional[Dict[str, Any]]:
-    resp = await _dial_and_request(
-        remote=remote,
-        message={"op": "wait", "task_id": task_id, "timeout_s": float(timeout_s)},
+    module = importlib.import_module("ipfs_accelerate_py.p2p_tasks.client")
+    ARemoteQueue = getattr(module, "RemoteQueue")
+    a_wait_task = getattr(module, "wait_task")
+
+    return await a_wait_task(
+        remote=ARemoteQueue(peer_id=remote.peer_id, multiaddr=remote.multiaddr),
+        task_id=task_id,
+        timeout_s=timeout_s,
     )
-    if not resp.get("ok"):
-        raise RuntimeError(f"wait failed: {resp}")
-    return resp.get("task")
+
+__all__ = [
+    "RemoteQueue",
+    "submit_task",
+    "submit_task_with_info",
+    "get_task",
+    "wait_task",
+]
