@@ -64,6 +64,136 @@ class LLMRouterError(RuntimeError):
     """
 
 
+def submit_task(
+    *,
+    prompt: str,
+    model_name: str = "gpt2",
+    task_type: str = "text-generation",
+    queue_path: Optional[str] = None,
+    **kwargs: object,
+) -> str:
+    """Submit an LLM task to a local task queue, or to a remote peer via libp2p.
+
+    This provides a simple multi-worker delegation mechanism.
+    Workers can be run via `python -m ipfs_datasets_py.ml.accelerate_integration.worker`.
+    """
+
+    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
+    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+
+    try:
+        from ipfs_datasets_py.ml.accelerate_integration.task_queue import TaskQueue
+    except Exception as exc:
+        raise LLMRouterError("Task delegation helpers not available") from exc
+
+    payload: Dict[str, object] = {"prompt": str(prompt or "")}
+    for k in ("max_new_tokens", "max_tokens", "temperature"):
+        if k in kwargs:
+            payload[k] = kwargs[k]
+
+    if remote_multiaddr:
+        try:
+            import anyio
+
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import submit_task as submit_task_p2p
+
+            remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
+
+            async def _run() -> str:
+                return await submit_task_p2p(
+                    remote=remote,
+                    task_type=str(task_type),
+                    model_name=str(model_name or ""),
+                    payload=payload,  # type: ignore[arg-type]
+                )
+
+            return anyio.run(_run)
+        except Exception as exc:
+            raise LLMRouterError(f"P2P submit_task failed: {exc}") from exc
+
+    q = TaskQueue(queue_path)
+    return q.submit(task_type=str(task_type), model_name=str(model_name or ""), payload=payload)
+
+
+def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict]:
+    """Get task status/result from the local task queue, or from a remote peer via libp2p."""
+
+    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
+    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+
+    if remote_multiaddr:
+        try:
+            import anyio
+
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import get_task as get_task_p2p
+
+            remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
+
+            async def _run() -> Optional[dict]:
+                task = await get_task_p2p(remote=remote, task_id=str(task_id))
+                return task if isinstance(task, dict) else None
+
+            return anyio.run(_run)
+        except Exception:
+            return None
+
+    try:
+        from ipfs_datasets_py.ml.accelerate_integration.task_queue import TaskQueue
+    except Exception:
+        return None
+    return TaskQueue(queue_path).get(task_id)
+
+
+def wait_task(
+    task_id: str,
+    *,
+    queue_path: Optional[str] = None,
+    timeout_s: float = 60.0,
+) -> Optional[dict]:
+    """Wait for a task to complete.
+
+    - Local: polls SQLite queue.
+    - P2P: uses remote peer's wait RPC.
+    """
+
+    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
+    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
+
+    if remote_multiaddr:
+        try:
+            import anyio
+
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import RemoteQueue
+            from ipfs_datasets_py.ml.accelerate_integration.p2p_task_client import wait_task as wait_task_p2p
+
+            remote = RemoteQueue(peer_id=remote_peer_id or "", multiaddr=remote_multiaddr)
+
+            async def _run() -> Optional[dict]:
+                task = await wait_task_p2p(remote=remote, task_id=str(task_id), timeout_s=float(timeout_s))
+                return task if isinstance(task, dict) else None
+
+            return anyio.run(_run)
+        except Exception:
+            return None
+
+    try:
+        from ipfs_datasets_py.ml.accelerate_integration.task_queue import TaskQueue
+    except Exception:
+        return None
+
+    import time
+
+    q = TaskQueue(queue_path)
+    deadline = time.time() + max(0.0, float(timeout_s))
+    task = q.get(str(task_id))
+    while task is not None and task.get("status") in {"queued", "running"} and time.time() < deadline:
+        time.sleep(0.1)
+        task = q.get(str(task_id))
+    return task if isinstance(task, dict) else None
+
+
 def _find_int_by_key(obj: object, key: str) -> Optional[int]:
     """Best-effort: find the first int-like value for a key anywhere in nested JSON."""
 
@@ -714,7 +844,10 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             cmd: list[str] = ["codex", "exec"]
             if skip_git_repo_check:
                 cmd.append("--skip-git-repo-check")
-            if sandbox:
+            # Some Codex CLI builds do not accept '--sandbox auto'.
+            # Treat 'auto' (the default) as "don't pass the flag" so the CLI can
+            # pick its own default sandbox mode.
+            if sandbox and sandbox.lower() != "auto":
                 cmd.extend(["--sandbox", sandbox])
             if model:
                 cmd.extend(["-m", model])
@@ -1090,6 +1223,20 @@ def _get_accelerate_provider(deps: RouterDeps) -> Optional[LLMProvider]:
 
     # If ipfs_accelerate_py isn't installed, skip without initializing anything.
     try:
+        # Best-effort support for vendored submodule layouts.
+        # In this repo, ipfs_accelerate_py lives at:
+        #   <submodule_root>/ipfs_accelerate_py/ipfs_accelerate_py/
+        # so we need to add <submodule_root>/ipfs_accelerate_py to sys.path.
+        from pathlib import Path
+        import sys
+
+        submodule_root = Path(__file__).resolve().parents[1]
+        candidate = submodule_root / "ipfs_accelerate_py"
+        if candidate.is_dir():
+            candidate_str = str(candidate)
+            if candidate_str not in sys.path:
+                sys.path.insert(0, candidate_str)
+
         import importlib.util
 
         if importlib.util.find_spec("ipfs_accelerate_py") is None:

@@ -59,7 +59,7 @@ except ImportError:
 
 # Import accelerate integration with fallback
 try:
-    from ipfs_datasets_py.accelerate_integration import (
+    from ipfs_datasets_py.ml.accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
         get_accelerate_status

@@ -190,6 +190,12 @@ setup(
             'aiohttp>=3.8.0',
             'PyYAML>=6.0',
         ],
+        'p2p': [
+            # libp2p networking for distributed inference / cache sharing.
+            # Keep this as an extra because py-libp2p is typically installed from git.
+            'libp2p @ git+https://github.com/libp2p/py-libp2p.git@main',
+            'pymultihash>=0.8.2',
+        ],
         'email': [
             # Email processing - all stdlib except optional HTML parsing
             'beautifulsoup4>=4.12.0',  # For HTML email parsing (optional)

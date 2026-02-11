@@ -26,7 +26,7 @@ def test_router_deps_reuse_and_caching(monkeypatch):
     ipfs_backend_router = importlib.import_module("ipfs_datasets_py.ipfs_backend_router")
 
     # Stub accelerate integration to avoid heavy optional dependencies.
-    fake_mod = types.ModuleType("ipfs_datasets_py.accelerate_integration")
+    fake_mod = types.ModuleType("ipfs_datasets_py.ml.accelerate_integration")
 
     class FakeManager:
         instances = 0
@@ -48,7 +48,7 @@ def test_router_deps_reuse_and_caching(monkeypatch):
     fake_mod.AccelerateManager = FakeManager
     fake_mod.is_accelerate_available = is_accelerate_available
 
-    sys.modules["ipfs_datasets_py.accelerate_integration"] = fake_mod
+    sys.modules["ipfs_datasets_py.ml.accelerate_integration"] = fake_mod
 
     deps = router_deps.RouterDeps()
 

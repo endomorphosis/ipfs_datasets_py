@@ -869,7 +869,7 @@ def __getattr__(name: str):
             globals()["HAVE_ACCELERATE_MANAGER"] = False
             return None
         try:
-            from .accelerate_integration import (
+            from .ml.accelerate_integration import (
                 is_accelerate_available as _is_accelerate_available,
                 get_accelerate_status as _get_accelerate_status,
                 AccelerateManager as _AccelerateManager,

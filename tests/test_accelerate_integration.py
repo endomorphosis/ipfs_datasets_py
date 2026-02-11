@@ -7,7 +7,7 @@ enabled and disabled states to ensure proper fallback behavior.
 
 import os
 import pytest
-from ipfs_datasets_py.accelerate_integration import (
+from ipfs_datasets_py.ml.accelerate_integration import (
     is_accelerate_available,
     get_accelerate_status,
     AccelerateManager,
@@ -115,7 +115,7 @@ class TestAccelerateIntegration:
         if ComputeBackend is None:
             pytest.skip("ComputeBackend not available (accelerate disabled or not installed)")
         
-        from ipfs_datasets_py.accelerate_integration.compute_backend import HardwareType
+        from ipfs_datasets_py.ml.accelerate_integration.compute_backend import HardwareType
         
         backend = ComputeBackend(HardwareType.CPU, device_id=0)
         assert backend is not None
@@ -240,7 +240,7 @@ class TestHardwareDetection:
         if get_compute_backend is None:
             pytest.skip("Hardware detection not available")
         
-        from ipfs_datasets_py.accelerate_integration.compute_backend import detect_available_hardware
+        from ipfs_datasets_py.ml.accelerate_integration.compute_backend import detect_available_hardware
         
         hardware = detect_available_hardware()
         assert isinstance(hardware, list)
@@ -255,7 +255,7 @@ class TestHardwareDetection:
         if get_compute_backend is None:
             pytest.skip("Hardware detection not available")
         
-        from ipfs_datasets_py.accelerate_integration.compute_backend import (
+        from ipfs_datasets_py.ml.accelerate_integration.compute_backend import (
             detect_available_hardware,
             HardwareType
         )

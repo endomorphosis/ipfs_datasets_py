@@ -96,10 +96,6 @@ def get_accelerate_status() -> Dict[str, Any]:
 
 
 HAVE_ACCELERATE_MANAGER = False
-AccelerateManager = None
-ComputeBackend = None
-get_compute_backend = None
-DistributedComputeCoordinator = None
 
 
 def __getattr__(name: str):
@@ -159,6 +155,25 @@ def __getattr__(name: str):
             globals()["DistributedComputeCoordinator"] = None
             return None
 
+    if name in {"TaskQueue", "QueuedTask", "run_worker"}:
+        if _ACCELERATE_DISABLED:
+            return None
+        try:
+            if name in {"TaskQueue", "QueuedTask"}:
+                mod = importlib.import_module(f"{__name__}.task_queue")
+                globals()["TaskQueue"] = getattr(mod, "TaskQueue", None)
+                globals()["QueuedTask"] = getattr(mod, "QueuedTask", None)
+            else:
+                mod = importlib.import_module(f"{__name__}.worker")
+                globals()["run_worker"] = getattr(mod, "run_worker", None)
+            return globals()[name]
+        except Exception as e:
+            logger.debug(f"Failed to lazy-import task delegation helpers: {e}")
+            globals()["TaskQueue"] = None
+            globals()["QueuedTask"] = None
+            globals()["run_worker"] = None
+            return None
+
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
@@ -172,6 +187,11 @@ __all__ = [
     'ComputeBackend',
     'get_compute_backend',
     'DistributedComputeCoordinator',
+
+    # Task delegation helpers
+    'TaskQueue',
+    'QueuedTask',
+    'run_worker',
     
     # Status flags
     'HAVE_ACCELERATE_MANAGER',

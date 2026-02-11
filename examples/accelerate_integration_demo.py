@@ -26,7 +26,7 @@ def demo_status_check():
     print("Demo 1: Checking Accelerate Status")
     print("=" * 70)
     
-    from ipfs_datasets_py.accelerate_integration import (
+    from ipfs_datasets_py.ml.accelerate_integration import (
         is_accelerate_available,
         get_accelerate_status
     )
@@ -45,7 +45,7 @@ def demo_manager_initialization():
     print("Demo 2: Initializing AccelerateManager")
     print("=" * 70)
     
-    from ipfs_datasets_py.accelerate_integration import AccelerateManager
+    from ipfs_datasets_py.ml.accelerate_integration import AccelerateManager
     
     if AccelerateManager is None:
         print("AccelerateManager not available (accelerate disabled or not installed)")
@@ -68,7 +68,7 @@ def demo_inference_with_fallback():
     print("Demo 3: Running Inference with Fallback")
     print("=" * 70)
     
-    from ipfs_datasets_py.accelerate_integration import AccelerateManager
+    from ipfs_datasets_py.ml.accelerate_integration import AccelerateManager
     
     if AccelerateManager is None:
         print("AccelerateManager not available - skipping inference demo")
@@ -98,13 +98,13 @@ def demo_hardware_detection():
     print("Demo 4: Hardware Detection")
     print("=" * 70)
     
-    from ipfs_datasets_py.accelerate_integration import get_compute_backend
+    from ipfs_datasets_py.ml.accelerate_integration import get_compute_backend
     
     if get_compute_backend is None:
         print("Hardware detection not available (accelerate disabled or not installed)")
         return
     
-    from ipfs_datasets_py.accelerate_integration.compute_backend import (
+    from ipfs_datasets_py.ml.accelerate_integration.compute_backend import (
         detect_available_hardware,
         HardwareType
     )
@@ -125,7 +125,7 @@ def demo_distributed_coordinator():
     print("Demo 5: Distributed Compute Coordinator")
     print("=" * 70)
     
-    from ipfs_datasets_py.accelerate_integration import DistributedComputeCoordinator
+    from ipfs_datasets_py.ml.accelerate_integration import DistributedComputeCoordinator
     
     if DistributedComputeCoordinator is None:
         print("DistributedComputeCoordinator not available")

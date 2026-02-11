@@ -24,7 +24,7 @@ except ImportError as e:
 
 # Try to import accelerate integration for distributed inference
 try:
-    from ipfs_datasets_py.accelerate_integration import (
+    from ipfs_datasets_py.ml.accelerate_integration import (
         AccelerateManager,
         is_accelerate_available,
         get_accelerate_status
