@@ -42,7 +42,7 @@ tests/unit_tests/test_anyio_migration.py::TestAnyioTrioBackend::test_trio_task_g
 ### 3. Module Imports ✅
 - **test_migrated_modules_import**: All critical migrated modules import successfully
   - `ipfs_datasets_py.alerts.alert_manager`
-  - `ipfs_datasets_py.multimedia.ytdlp_wrapper`
+  - `ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper`
   - `ipfs_datasets_py.unified_web_scraper`
 
 ### 4. Migration Verification ✅

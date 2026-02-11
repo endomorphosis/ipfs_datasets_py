@@ -4,7 +4,7 @@ FFmpeg Utils - Compatibility Shim
 This module provides backward compatibility for existing code that imports
 from ffmpeg_utils. All functionality now delegates to the core multimedia module.
 
-The core implementation is in ipfs_datasets_py.multimedia.ffmpeg_wrapper
+The core implementation is in ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper
 """
 
 import logging
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 # Import from core multimedia module
-from ipfs_datasets_py.multimedia import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
 
 logger = logging.getLogger(__name__)
 

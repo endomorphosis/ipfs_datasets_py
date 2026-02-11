@@ -13,7 +13,7 @@ from email.message import EmailMessage
 import json
 
 # Test the email processor module
-from ipfs_datasets_py.multimedia.email_processor import (
+from ipfs_datasets_py.data_transformation.multimedia.email_processor import (
     EmailProcessor,
     create_email_processor
 )

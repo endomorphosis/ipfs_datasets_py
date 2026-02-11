@@ -50,7 +50,7 @@ async def discord_analyze_channel(
     """
     try:
         # Import here to avoid circular dependency
-        from ipfs_datasets_py.multimedia.discord_wrapper import create_discord_wrapper
+        from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import create_discord_wrapper
         
         # Use environment variable if token not provided
         token = token or os.environ.get('DISCORD_TOKEN')
@@ -156,7 +156,7 @@ async def discord_analyze_guild(
         Token can be provided via parameter or DISCORD_TOKEN environment variable
     """
     try:
-        from ipfs_datasets_py.multimedia.discord_wrapper import create_discord_wrapper
+        from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import create_discord_wrapper
         
         # Use environment variable if token not provided
         token = token or os.environ.get('DISCORD_TOKEN')

@@ -15,9 +15,9 @@ The Discord integration follows the **correct integration pattern** where all in
 ```
 
 The Discord integration provides three main components:
-1. **Discord Wrapper** (`ipfs_datasets_py.multimedia.discord_wrapper`) - Core Python interface ⭐
-2. **Discord CLI** (`discord_cli.py`) - Command-line interface (imports from multimedia)
-3. **MCP Tools** (`ipfs_datasets_py.mcp_server.tools.discord_tools`) - Model Context Protocol integration (imports from multimedia)
+1. **Discord Wrapper** (`ipfs_datasets_py.data_transformation.multimedia.discord_wrapper`) - Core Python interface ⭐
+2. **Discord CLI** (`discord_cli.py`) - Command-line interface (imports from canonical multimedia package)
+3. **MCP Tools** (`ipfs_datasets_py.mcp_server.tools.discord_tools`) - Model Context Protocol integration (imports from canonical multimedia package)
 4. **Discord Dashboard** (`ipfs_datasets_py.discord_dashboard`) - Web-based management UI
 5. **Discord Chat Exporter Utility** (`ipfs_datasets_py.utils.discord_chat_exporter`) - Low-level CLI tool management
 
@@ -50,7 +50,7 @@ set DISCORD_TOKEN=your_discord_token_here
 With this configured, all Discord tools will automatically use the token:
 
 ```python
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 # Token automatically loaded from environment
 wrapper = DiscordWrapper()
@@ -223,7 +223,7 @@ ipfs-datasets discord export --help
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def main():
     # Initialize wrapper with your token
@@ -259,7 +259,7 @@ asyncio.run(main())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def export_server():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
@@ -283,7 +283,7 @@ asyncio.run(export_server())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def filtered_export():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
@@ -308,7 +308,7 @@ asyncio.run(filtered_export())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def export_all_dms():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
@@ -329,7 +329,7 @@ asyncio.run(export_all_dms())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def export_dms():
     wrapper = DiscordWrapper(token="YOUR_DISCORD_TOKEN")
@@ -515,7 +515,7 @@ print(f"Output: {result.stdout}")
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def batch_export_servers():
     wrapper = DiscordWrapper(token="YOUR_TOKEN", default_format="Json")
@@ -544,7 +544,7 @@ asyncio.run(batch_export_servers())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def multiple_formats():
     wrapper = DiscordWrapper(token="YOUR_TOKEN")
@@ -569,7 +569,7 @@ asyncio.run(multiple_formats())
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 
 async def safe_export():
     try:
@@ -598,7 +598,7 @@ Combine Discord exports with IPFS storage:
 
 ```python
 import asyncio
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 # Assuming you have IPFS integration available
 
 async def export_to_ipfs():
@@ -801,7 +801,7 @@ jsonld_data = converter.convert(data, "list", "jsonld")
 #### Using Discord Wrapper
 
 ```python
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 import asyncio
 
 async def convert_exports():
@@ -978,7 +978,7 @@ converter.convert_file(
 ### Complete Workflow Example
 
 ```python
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 from ipfs_datasets_py.utils.data_format_converter import get_converter
 import asyncio
 
@@ -1054,7 +1054,7 @@ result = asyncio.run(complete_workflow())
 ### Integration with IPFS Workflows
 
 ```python
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 from ipfs_datasets_py.utils.data_format_converter import get_converter
 import subprocess
 

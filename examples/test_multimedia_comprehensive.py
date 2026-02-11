@@ -57,7 +57,7 @@ def check_dependencies():
                         "Checking yt-dlp installation")
     
     # Check multimedia module
-    result = run_command("python -c 'from ipfs_datasets_py.multimedia import HAVE_YTDLP; print(f\"HAVE_YTDLP: {HAVE_YTDLP}\")'",
+    result = run_command("python -c 'from ipfs_datasets_py.data_transformation.multimedia import HAVE_YTDLP; print(f\"HAVE_YTDLP: {HAVE_YTDLP}\")'",
                         "Checking multimedia module")
     
     # Check MCP tools
@@ -96,7 +96,7 @@ def run_integration_tests():
     # Test multimedia library integration
     test_code = '''
 import anyio
-from ipfs_datasets_py.multimedia import YtDlpWrapper, HAVE_YTDLP
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, HAVE_YTDLP
 
 async def test_integration():
     print(f"YT-DLP Available: {HAVE_YTDLP}")
@@ -189,7 +189,7 @@ from pathlib import Path
 
 # Test imports
 try:
-    from ipfs_datasets_py.multimedia import YtDlpWrapper, HAVE_YTDLP
+    from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, HAVE_YTDLP
     from ipfs_datasets_py.mcp_server.tools.media_tools import (
         ytdlp_download_video, ytdlp_download_playlist, 
         ytdlp_extract_info, ytdlp_search_videos, ytdlp_batch_download

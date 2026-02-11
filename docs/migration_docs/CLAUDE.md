@@ -2113,7 +2113,7 @@ IPFS Datasets Python integrates YT-DLP for downloading content from 1000+ platfo
 #### Core YT-DLP Integration
 
 ```python
-from ipfs_datasets_py.multimedia import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
     ytdlp_download_video, ytdlp_download_playlist, 
     ytdlp_extract_info, ytdlp_search_videos, ytdlp_batch_download

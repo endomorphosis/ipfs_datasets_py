@@ -18,7 +18,7 @@ from ipfs_datasets_py.utils.discord_chat_exporter import (
 )
 
 # Test the wrapper module
-from ipfs_datasets_py.multimedia.discord_wrapper import (
+from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import (
     DiscordWrapper,
     create_discord_wrapper,
     DISCORD_AVAILABLE

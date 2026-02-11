@@ -70,11 +70,15 @@ Download and process media from 1000+ platforms:
 
 **Example:**
 ```python
-from ipfs_datasets_py.multimedia import MediaToolManager
+import asyncio
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
-media = MediaToolManager()
-result = media.download("https://youtube.com/watch?v=...")
-metadata = result.metadata
+async def main():
+	dl = YtDlpWrapper()
+	result = await dl.download_video("https://youtube.com/watch?v=...")
+	print(result.get("title"))
+
+asyncio.run(main())
 ```
 
 ### Knowledge Graph Intelligence

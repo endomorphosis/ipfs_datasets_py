@@ -20,7 +20,7 @@ async def demo_multimedia_library():
     print("="*40)
     
     try:
-        from ipfs_datasets_py.multimedia import YtDlpWrapper, MediaUtils, HAVE_YTDLP
+        from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, MediaUtils, HAVE_YTDLP
         
         print(f"YT-DLP Available: {HAVE_YTDLP}")
         
@@ -130,7 +130,7 @@ def demo_module_structure():
     
     try:
         # Test multimedia module
-        from ipfs_datasets_py.multimedia import __all__ as multimedia_all
+        from ipfs_datasets_py.data_transformation.multimedia import __all__ as multimedia_all
         print(f"Multimedia exports: {multimedia_all}")
         
         # Test media_tools module  

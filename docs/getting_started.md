@@ -54,7 +54,7 @@ python examples/demo_multimedia_final.py
 
 # 3. Download your first video
 python -c "
-from ipfs_datasets_py.multimedia import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 import asyncio
 async def demo():
     dl = YtDlpWrapper()
@@ -62,6 +62,7 @@ async def demo():
     print(f'Downloaded: {result[\"title\"]}')
 asyncio.run(demo())
 "
+
 ```
 
 **What you get**: Universal media downloading → Format conversion → Metadata extraction → IPFS storage

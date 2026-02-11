@@ -148,7 +148,7 @@ Discord chat history export and analysis with DiscordChatExporter integration.
 
 ### Video Processing
 ```python
-from ipfs_datasets_py.multimedia import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
 
 ffmpeg = FFmpegWrapper()
 
@@ -170,7 +170,7 @@ frames = await ffmpeg.extract_frames(
 
 ### Content Downloading
 ```python
-from ipfs_datasets_py.multimedia import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
 downloader = YtDlpWrapper()
 
@@ -190,7 +190,7 @@ playlist_results = await downloader.download_playlist(
 
 ### Batch Media Processing
 ```python
-from ipfs_datasets_py.multimedia import MediaProcessor
+from ipfs_datasets_py.data_transformation.multimedia import MediaProcessor
 
 processor = MediaProcessor(
     max_workers=4,
@@ -210,7 +210,7 @@ results = await processor.process_batch(
 
 ### Media Analysis
 ```python
-from ipfs_datasets_py.multimedia import MediaUtils
+from ipfs_datasets_py.data_transformation.multimedia import MediaUtils
 
 utils = MediaUtils()
 
@@ -228,7 +228,7 @@ print(f"Quality score: {info.quality_score}")
 
 ### Discord Chat Export
 ```python
-from ipfs_datasets_py.multimedia import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
 import asyncio
 
 async def export_discord_data():
@@ -268,7 +268,7 @@ asyncio.run(export_discord_data())
 
 ### File Conversion for GraphRAG
 ```python
-from ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type import (
+from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import (
     FileUnit,
     file_converter
 )

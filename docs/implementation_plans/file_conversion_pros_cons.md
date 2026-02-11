@@ -220,7 +220,7 @@ Need 96+ formats? → convert_to_txt_based_on_mime_type
 
 **Code Example:**
 ```python
-from ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type import FileUnit, file_converter
+from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import FileUnit, file_converter
 from ipfs_datasets_py.rag import GraphRAG
 
 async def convert_for_graphrag(file_path: str):

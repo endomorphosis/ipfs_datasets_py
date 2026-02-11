@@ -21,7 +21,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch, MagicMock
 
 from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
-from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper, DISCORD_AVAILABLE
+from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import DiscordWrapper, DISCORD_AVAILABLE
 from ipfs_datasets_py.cli.discord_cli import main as discord_cli_main
 
 

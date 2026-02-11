@@ -44,7 +44,7 @@ IPFS Datasets Python provides comprehensive multimedia scraping and processing c
 ## Setting Up
 
 ```python
-from ipfs_datasets_py.multimedia import YtDlpWrapper, FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, FFmpegWrapper
 from ipfs_datasets_py.mcp_server.tools.media_tools import (
     ytdlp_download_video, ytdlp_download_playlist, ytdlp_extract_info,
     ffmpeg_convert, ffmpeg_probe, ffmpeg_batch_process
@@ -648,7 +648,7 @@ import json
 import time
 import os
 from pathlib import Path
-from ipfs_datasets_py.multimedia import YtDlpWrapper, FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, FFmpegWrapper
 from ipfs_datasets_py.mcp_server.tools.media_tools import *
 
 async def complete_media_pipeline():

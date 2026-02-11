@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch, MagicMock
 import anyio
 
 from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
-from ipfs_datasets_py.multimedia.discord_wrapper import DiscordWrapper
+from ipfs_datasets_py.data_transformation.multimedia.discord_wrapper import DiscordWrapper
 
 
 class TestInputValidationEdgeCases:

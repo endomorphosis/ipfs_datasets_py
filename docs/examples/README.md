@@ -51,10 +51,15 @@ graph.add_document(content)
 ### Multimedia
 ```python
 # Download and process media
-from ipfs_datasets_py.multimedia import MediaToolManager
+import asyncio
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
-media = MediaToolManager()
-result = media.download("https://youtube.com/watch?v=...")
+async def main():
+	dl = YtDlpWrapper()
+	result = await dl.download_video("https://youtube.com/watch?v=...")
+	print(result.get("title"))
+
+asyncio.run(main())
 ```
 
 ## Running Examples

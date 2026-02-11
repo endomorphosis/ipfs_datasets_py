@@ -355,7 +355,7 @@ from ipfs_datasets_py.pdf_processing import PDFProcessor
 from ipfs_datasets_py.rag import GraphRAG
 
 # Multimedia processing
-from ipfs_datasets_py.multimedia import FFmpegVideoProcessor, MediaToolManager
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper, YtDlpWrapper, MediaProcessor
 
 # Logic and theorem proving
 from ipfs_datasets_py.logic_integration import LogicProcessor, ReasoningCoordinator

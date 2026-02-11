@@ -2,7 +2,7 @@
 FFmpeg Media Conversion Tool - MCP Wrapper
 
 This module provides MCP tool interfaces for FFmpeg media conversion.
-The core implementation is in ipfs_datasets_py.multimedia.ffmpeg_wrapper
+The core implementation is in ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper
 
 All business logic should reside in the core module, and this file serves
 as a thin wrapper to expose that functionality through the MCP interface.
@@ -14,7 +14,7 @@ from pathlib import Path
 import logging
 
 # Import from core multimedia module
-from ipfs_datasets_py.multimedia import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
 
 logger = logging.getLogger(__name__)
 

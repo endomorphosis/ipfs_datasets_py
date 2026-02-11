@@ -319,7 +319,7 @@ For integration with `ipfs_datasets_py` and the IPFS accelerate AI system, **con
 
 ```python
 # Example integration pattern
-from ipfs_datasets_py.multimedia.convert_to_txt_based_on_mime_type import (
+from ipfs_datasets_py.data_transformation.multimedia.convert_to_txt_based_on_mime_type import (
     file_converter,
     FileUnit
 )

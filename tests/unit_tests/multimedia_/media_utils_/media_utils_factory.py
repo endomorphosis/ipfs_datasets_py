@@ -9,7 +9,7 @@ for comprehensive testing of the MediaUtils class validation logic.
 from typing import Dict, Any, List, Set, Union
 from pathlib import Path
 
-from ipfs_datasets_py.multimedia.media_utils import MediaUtils
+from ipfs_datasets_py.data_transformation.multimedia.media_utils import MediaUtils
 
 
 class MediaUtilsTestDataFactory:

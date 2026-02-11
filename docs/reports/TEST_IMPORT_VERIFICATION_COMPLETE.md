@@ -90,7 +90,7 @@ from ipfs_datasets_py.vector_stores.faiss_store import FAISSVectorStore
 from ipfs_datasets_py.mcp_server.tools.media_tools import ytdlp_download
 
 # Core Module
-from ipfs_datasets_py.multimedia import FFmpegWrapper, YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper, YtDlpWrapper
 ```
 
 **Status:** ✅ **Correct**

@@ -113,7 +113,7 @@ def create_parser() -> argparse.ArgumentParser:
 
 async def cmd_test(args):
     """Test email server connection."""
-    from ipfs_datasets_py.multimedia import EmailProcessor
+    from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
     
     try:
         processor = EmailProcessor(
@@ -145,7 +145,7 @@ async def cmd_test(args):
 
 async def cmd_folders(args):
     """List IMAP mailbox folders."""
-    from ipfs_datasets_py.multimedia import EmailProcessor
+    from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
     
     try:
         processor = EmailProcessor(
@@ -183,7 +183,7 @@ async def cmd_folders(args):
 
 async def cmd_export(args):
     """Export emails from a folder."""
-    from ipfs_datasets_py.multimedia import EmailProcessor
+    from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
     
     try:
         processor = EmailProcessor(
@@ -222,7 +222,7 @@ async def cmd_export(args):
 
 async def cmd_parse(args):
     """Parse an .eml file."""
-    from ipfs_datasets_py.multimedia import EmailProcessor
+    from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
     
     try:
         processor = EmailProcessor(protocol='eml')
@@ -252,7 +252,7 @@ async def cmd_parse(args):
 
 async def cmd_fetch(args):
     """Fetch emails."""
-    from ipfs_datasets_py.multimedia import EmailProcessor
+    from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
     
     try:
         processor = EmailProcessor(

@@ -223,7 +223,7 @@ ipfs-datasets email search inbox_export.json "urgent" --output results.json
 
 ```python
 import anyio
-from ipfs_datasets_py.multimedia import EmailProcessor, create_email_processor
+from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor, create_email_processor
 
 async def main():
     # Create IMAP processor
@@ -273,7 +273,7 @@ anyio.run(main)
 
 ```python
 import anyio
-from ipfs_datasets_py.multimedia import EmailProcessor
+from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
 async def parse_eml():
     processor = EmailProcessor(protocol='eml')
@@ -297,7 +297,7 @@ anyio.run(parse_eml)
 ```python
 import os
 import anyio
-from ipfs_datasets_py.multimedia import EmailProcessor
+from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
 # Set environment variables
 os.environ['EMAIL_USER'] = 'your.email@gmail.com'
@@ -527,7 +527,7 @@ Plain text format with:
 
 ```python
 import anyio
-from ipfs_datasets_py.multimedia import EmailProcessor
+from ipfs_datasets_py.data_transformation.multimedia import EmailProcessor
 
 async def export_all_folders():
     processor = EmailProcessor(

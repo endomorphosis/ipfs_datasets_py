@@ -20,7 +20,7 @@ def test_basic_imports():
     
     try:
         # Test multimedia library imports
-        from ipfs_datasets_py.multimedia import YtDlpWrapper, HAVE_YTDLP
+        from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, HAVE_YTDLP
         print(f"✅ YtDlpWrapper imported, HAVE_YTDLP: {HAVE_YTDLP}")
         
         # Test MCP tool imports
@@ -46,8 +46,8 @@ def test_wrapper_functionality():
     print("\n🔄 Testing YtDlpWrapper functionality...")
     
     try:
-        from ipfs_datasets_py.multimedia import YtDlpWrapper
-        from ipfs_datasets_py.multimedia.media_utils import MediaUtils
+        from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.media_utils import MediaUtils
         
         # Create wrapper instance
         wrapper = YtDlpWrapper()
@@ -127,7 +127,7 @@ def test_module_structure():
     
     try:
         # Test multimedia module structure
-        from ipfs_datasets_py.multimedia import __all__
+        from ipfs_datasets_py.data_transformation.multimedia import __all__
         print(f"✅ Multimedia module exports: {__all__}")
         
         # Test media_tools module structure
