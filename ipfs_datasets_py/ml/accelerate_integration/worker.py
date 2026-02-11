@@ -44,6 +44,10 @@ def run_worker(
     once: bool = False,
     p2p_service: bool = False,
     p2p_listen_port: Optional[int] = None,
+    p2p_dht: Optional[bool] = None,
+    p2p_rendezvous: Optional[bool] = None,
+    p2p_rendezvous_ns: Optional[str] = None,
+    p2p_autonat: Optional[bool] = None,
 ) -> int:
     if p2p_service:
         # Run the libp2p service in a background thread so the worker loop can
@@ -54,7 +58,14 @@ def run_worker(
                 from .p2p_task_service import serve_task_queue
 
                 async def _main() -> None:
-                    await serve_task_queue(queue_path=queue_path, listen_port=p2p_listen_port)
+                    await serve_task_queue(
+                        queue_path=queue_path,
+                        listen_port=p2p_listen_port,
+                        p2p_dht=p2p_dht,
+                        p2p_rendezvous=p2p_rendezvous,
+                        p2p_rendezvous_ns=p2p_rendezvous_ns,
+                        p2p_autonat=p2p_autonat,
+                    )
 
                 anyio.run(_main, backend="trio")
             except Exception as exc:
@@ -106,6 +117,41 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--once", action="store_true", help="Process at most one task")
     parser.add_argument("--p2p-service", action="store_true", help="Also start a local libp2p TaskQueue RPC service")
     parser.add_argument("--p2p-listen-port", type=int, default=None, help="TCP port for libp2p service (default: env or 9710)")
+    parser.add_argument(
+        "--p2p-dht",
+        dest="p2p_dht",
+        action="store_true",
+        help="Enable libp2p DHT discovery (default: enabled; flag is optional)",
+    )
+    parser.add_argument(
+        "--no-p2p-dht",
+        dest="p2p_dht",
+        action="store_false",
+        help="Disable libp2p DHT discovery",
+    )
+    parser.set_defaults(p2p_dht=None)
+    parser.add_argument(
+        "--p2p-rendezvous",
+        dest="p2p_rendezvous",
+        action="store_true",
+        help="Enable rendezvous discovery (default: enabled; flag is optional)",
+    )
+    parser.add_argument("--no-p2p-rendezvous", dest="p2p_rendezvous", action="store_false", help="Disable rendezvous discovery")
+    parser.set_defaults(p2p_rendezvous=None)
+    parser.add_argument(
+        "--p2p-rendezvous-ns",
+        dest="p2p_rendezvous_ns",
+        default=None,
+        help="Rendezvous namespace (default: ipfs-accelerate-task-queue)",
+    )
+    parser.add_argument(
+        "--p2p-autonat",
+        dest="p2p_autonat",
+        action="store_true",
+        help="Enable AutoNAT (default: enabled; flag is optional)",
+    )
+    parser.add_argument("--no-p2p-autonat", dest="p2p_autonat", action="store_false", help="Disable AutoNAT")
+    parser.set_defaults(p2p_autonat=None)
 
     args = parser.parse_args(argv)
     return run_worker(
@@ -115,6 +161,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         once=bool(args.once),
         p2p_service=bool(args.p2p_service),
         p2p_listen_port=args.p2p_listen_port,
+        p2p_dht=args.p2p_dht,
+        p2p_rendezvous=args.p2p_rendezvous,
+        p2p_rendezvous_ns=args.p2p_rendezvous_ns,
+        p2p_autonat=args.p2p_autonat,
     )
 
 

@@ -51,6 +51,7 @@ from functools import lru_cache
 from html import unescape
 import hashlib
 import importlib
+import importlib.util
 from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict, runtime_checkable
 
 from .router_deps import RouterDeps, get_default_router_deps
@@ -65,6 +66,68 @@ class LLMRouterError(RuntimeError):
 
 
 _P2P_TASK_PREFIX = "p2p://"
+
+
+def _truthy_env(name: str, *, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return bool(default)
+    return str(raw).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _p2p_auto_discovery_enabled() -> bool:
+    # Default to enabled when libp2p is installed, but keep the attempt cheap:
+    # we only auto-dial when we have a concrete hint (announce file / bootstrap)
+    # or when the user explicitly requests it.
+    explicit = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY")
+    if explicit is None:
+        explicit = os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY")
+    if explicit is None:
+        return True
+    return str(explicit).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _have_libp2p() -> bool:
+    return importlib.util.find_spec("libp2p") is not None
+
+
+def _default_task_p2p_announce_files() -> list[str]:
+    cache_root = os.environ.get("XDG_CACHE_HOME") or os.path.join(os.path.expanduser("~"), ".cache")
+    return [
+        os.path.join(cache_root, "ipfs_accelerate_py", "task_p2p_announce.json"),
+        os.path.join(cache_root, "ipfs_datasets_py", "task_p2p_announce.json"),
+    ]
+
+
+def _read_task_p2p_announce() -> dict | None:
+    # Optional env override.
+    raw = (
+        os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_ANNOUNCE_FILE")
+        or os.environ.get("IPFS_DATASETS_PY_TASK_P2P_ANNOUNCE_FILE")
+    )
+    if raw is not None and str(raw).strip().lower() in {"0", "false", "no", "off"}:
+        return None
+
+    candidates: list[str] = []
+    if raw is not None and str(raw).strip():
+        candidates.append(str(raw).strip())
+    candidates.extend(_default_task_p2p_announce_files())
+
+    for path in candidates:
+        try:
+            if not path:
+                continue
+            if not os.path.exists(path):
+                continue
+            text = open(path, "r", encoding="utf-8").read().strip()
+            if not text:
+                continue
+            info = json.loads(text)
+            if isinstance(info, dict) and isinstance(info.get("multiaddr"), str) and "/p2p/" in str(info.get("multiaddr")):
+                return info
+        except Exception:
+            continue
+    return None
 
 
 def _encode_p2p_task_id(*, peer_id: str, task_id: str) -> str:
@@ -112,9 +175,23 @@ def submit_task(
     Workers can be run via `python -m ipfs_datasets_py.ml.accelerate_integration.worker`.
     """
 
-    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
-    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
-    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+
+    announce = _read_task_p2p_announce() if not remote_multiaddr else None
+    if announce and not remote_multiaddr:
+        remote_multiaddr = str(announce.get("multiaddr") or "").strip()
+        remote_peer_id = str(announce.get("peer_id") or "").strip() or remote_peer_id
+
+    auto_discovery = _p2p_auto_discovery_enabled()
 
     try:
         from ipfs_datasets_py.ml.accelerate_integration.task_queue import TaskQueue
@@ -126,7 +203,20 @@ def submit_task(
         if k in kwargs:
             payload[k] = kwargs[k]
 
-    if remote_multiaddr or auto_discovery:
+    # Avoid slow discovery attempts by default: only try when
+    # - caller explicitly configured a multiaddr, OR
+    # - we have an announce hint (local service), OR
+    # - user explicitly enables auto-discovery, AND libp2p is installed.
+    have_hint = bool(remote_multiaddr)
+    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
+        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
+    ) is not None
+
+    should_try_p2p = bool(remote_multiaddr) or (explicit_discovery and auto_discovery)
+    if not should_try_p2p and announce is not None:
+        should_try_p2p = True
+
+    if should_try_p2p and _have_libp2p():
         try:
             import anyio
 
@@ -168,14 +258,36 @@ def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict
 
     parsed = _decode_p2p_task_id(str(task_id))
 
-    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
-    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
-    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+    auto_discovery = _p2p_auto_discovery_enabled()
 
     effective_peer_id = parsed[0] if parsed else remote_peer_id
     effective_task_id = parsed[1] if parsed else str(task_id)
 
-    if parsed is not None or remote_multiaddr or (auto_discovery and effective_peer_id):
+    announce = _read_task_p2p_announce() if not remote_multiaddr else None
+    if announce and not remote_multiaddr:
+        remote_multiaddr = str(announce.get("multiaddr") or "").strip()
+        remote_peer_id = str(announce.get("peer_id") or "").strip() or remote_peer_id
+
+    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
+        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
+    ) is not None
+    should_try_p2p = bool(parsed is not None or remote_multiaddr)
+    if not should_try_p2p and announce is not None:
+        should_try_p2p = True
+    if not should_try_p2p and explicit_discovery and auto_discovery and effective_peer_id:
+        should_try_p2p = True
+
+    if should_try_p2p and _have_libp2p():
         try:
             import anyio
 
@@ -213,14 +325,36 @@ def wait_task(
 
     parsed = _decode_p2p_task_id(str(task_id))
 
-    remote_peer_id = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID", "").strip()
-    remote_multiaddr = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR", "").strip()
-    auto_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY", "0").strip().lower() in {"1", "true", "yes", "on"}
+    remote_peer_id = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_PEER_ID")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_PEER_ID")
+        or ""
+    ).strip()
+    remote_multiaddr = (
+        os.environ.get("IPFS_DATASETS_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or os.environ.get("IPFS_ACCELERATE_PY_TASK_P2P_REMOTE_MULTIADDR")
+        or ""
+    ).strip()
+    auto_discovery = _p2p_auto_discovery_enabled()
 
     effective_peer_id = parsed[0] if parsed else remote_peer_id
     effective_task_id = parsed[1] if parsed else str(task_id)
 
-    if parsed is not None or remote_multiaddr or (auto_discovery and effective_peer_id):
+    announce = _read_task_p2p_announce() if not remote_multiaddr else None
+    if announce and not remote_multiaddr:
+        remote_multiaddr = str(announce.get("multiaddr") or "").strip()
+        remote_peer_id = str(announce.get("peer_id") or "").strip() or remote_peer_id
+
+    explicit_discovery = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_AUTO_DISCOVERY") is not None or os.environ.get(
+        "IPFS_ACCELERATE_PY_TASK_P2P_AUTO_DISCOVERY"
+    ) is not None
+    should_try_p2p = bool(parsed is not None or remote_multiaddr)
+    if not should_try_p2p and announce is not None:
+        should_try_p2p = True
+    if not should_try_p2p and explicit_discovery and auto_discovery and effective_peer_id:
+        should_try_p2p = True
+
+    if should_try_p2p and _have_libp2p():
         try:
             import anyio
 
