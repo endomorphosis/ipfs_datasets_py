@@ -25,13 +25,16 @@ async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> 
     if not _have_libp2p():
         raise RuntimeError("libp2p is not installed; install ipfs_datasets_py[p2p]")
 
+    import anyio
+    import inspect
     from libp2p import new_host
     from multiaddr import Multiaddr
     from libp2p.peer.peerinfo import info_from_p2p_addr
 
     from .p2p_task_protocol import PROTOCOL_V1, get_shared_token
 
-    host = await new_host()
+    host_obj = new_host()
+    host = await host_obj if inspect.isawaitable(host_obj) else host_obj
 
     token = get_shared_token()
     if token and "token" not in message:
@@ -39,12 +42,21 @@ async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> 
         message["token"] = token
 
     peer_info = info_from_p2p_addr(Multiaddr(remote.multiaddr))
-    await host.connect(peer_info)
 
-    stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_V1])
-    await stream.write(json.dumps(message).encode("utf-8"))
-    raw = await stream.read()
-    await stream.close()
+    # In py-libp2p, Swarm.listen() is a long-running coroutine and is required
+    # to start the internal swarm tasks, even for outbound dials.
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(host.get_network().listen, Multiaddr("/ip4/0.0.0.0/tcp/0"))
+        await anyio.sleep(0)
+
+        with anyio.fail_after(20.0):
+            await host.connect(peer_info)
+            stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_V1])
+            await stream.write(json.dumps(message).encode("utf-8"))
+            raw = await stream.read()
+            await stream.close()
+
+        tg.cancel_scope.cancel()
 
     try:
         await host.close()

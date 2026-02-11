@@ -108,7 +108,7 @@ def submit_task(
                     payload=payload,  # type: ignore[arg-type]
                 )
 
-            return anyio.run(_run)
+            return anyio.run(_run, backend="trio")
         except Exception as exc:
             raise LLMRouterError(f"P2P submit_task failed: {exc}") from exc
 
@@ -135,7 +135,7 @@ def get_task(task_id: str, *, queue_path: Optional[str] = None) -> Optional[dict
                 task = await get_task_p2p(remote=remote, task_id=str(task_id))
                 return task if isinstance(task, dict) else None
 
-            return anyio.run(_run)
+            return anyio.run(_run, backend="trio")
         except Exception:
             return None
 
@@ -174,7 +174,7 @@ def wait_task(
                 task = await wait_task_p2p(remote=remote, task_id=str(task_id), timeout_s=float(timeout_s))
                 return task if isinstance(task, dict) else None
 
-            return anyio.run(_run)
+            return anyio.run(_run, backend="trio")
         except Exception:
             return None
 

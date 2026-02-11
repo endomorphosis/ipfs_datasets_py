@@ -26,7 +26,9 @@ def _run_text_generation(task: Dict[str, Any]) -> Dict[str, Any]:
 
     text = llm_router.generate_text(
         str(prompt or ""),
-        provider="accelerate",
+        # Let the router pick the best provider (prefer accelerate when available)
+        # and fall back if it fails.
+        provider=None,
         model_name=model_name or None,
         max_new_tokens=int(payload.get("max_new_tokens") or payload.get("max_tokens") or 128),
         temperature=float(payload.get("temperature") or 0.2),
@@ -51,9 +53,18 @@ def run_worker(
                 import anyio
                 from .p2p_task_service import serve_task_queue
 
-                anyio.run(serve_task_queue, queue_path=queue_path, listen_port=p2p_listen_port)
-            except Exception:
-                # Best-effort: if libp2p isn't installed or fails, keep the local worker alive.
+                async def _main() -> None:
+                    await serve_task_queue(queue_path=queue_path, listen_port=p2p_listen_port)
+
+                anyio.run(_main, backend="trio")
+            except Exception as exc:
+                # Best-effort: keep the local worker alive, but don't hide why the
+                # libp2p service failed to start.
+                import sys
+                import traceback
+
+                print(f"ipfs_datasets_py worker: failed to start p2p task service: {exc}", file=sys.stderr)
+                traceback.print_exc()
                 return
 
         t = threading.Thread(target=_run_service, name=f"ipfs_datasets_p2p_task_service[{worker_id}]", daemon=True)
