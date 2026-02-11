@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperAnalyzeMediaEdgeCases:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN returns dict with status 'error' and message indicating file corruption or invalid structure
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -52,7 +52,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN returns dict with status 'error' and message indicating no media streams found
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -74,7 +74,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN returns dict with status 'success' and partial analysis results with warning messages
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -96,7 +96,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN returns dict with status 'success' and partial analysis results with timeout warning
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -120,7 +120,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN either completes checksum calculation efficiently or returns analysis without checksums
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -144,7 +144,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN continues analysis successfully and returns results without thumbnail information
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -168,7 +168,7 @@ class TestFFmpegWrapperAnalyzeMediaEdgeCases:
         THEN analyzes compatible streams and returns results with warnings about incompatible streams
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

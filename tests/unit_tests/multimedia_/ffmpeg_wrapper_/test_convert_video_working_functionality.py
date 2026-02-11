@@ -7,7 +7,7 @@ This module tests the actual working convert_video method in FFmpegWrapper
 with proper validation of the real implementation.
 """
 import pytest
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperWorkingFunctionality:

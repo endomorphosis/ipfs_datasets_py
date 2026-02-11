@@ -11,7 +11,7 @@ Terminology:
 """
 import pytest
 from unittest.mock import patch
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperIsAvailableEdgeCases:
@@ -29,7 +29,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns False indicating FFmpeg functionality is not available
         """
         # GIVEN: FFmpegWrapper instance
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -50,7 +50,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns availability status based on practical usability of FFmpeg functionality
         """
         # GIVEN: FFmpegWrapper instance that can detect both library and executable availability
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -70,7 +70,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns False indicating FFmpeg functionality cannot be accessed
         """
         # Since is_available() has a working implementation, test actual functionality
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -91,7 +91,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns consistent availability status without raising exceptions
         """
         # Since is_available() has a working implementation, test stability
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -113,7 +113,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns availability status reflecting current system state rather than initialization state
         """
         # Since is_available() has a working implementation, test its behavior
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         # Create wrapper instance
         wrapper = FFmpegWrapper()
@@ -136,7 +136,7 @@ class TestFFmpegWrapperIsAvailableEdgeCases:
         THEN returns appropriate availability status without causing security or permission errors
         """
         # Since is_available() has a working implementation, test execution safety
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         # Test that the method executes safely in various contexts
         wrapper = FFmpegWrapper()

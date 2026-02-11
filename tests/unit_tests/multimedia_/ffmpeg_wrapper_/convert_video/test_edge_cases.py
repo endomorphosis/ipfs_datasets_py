@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperConvertVideoEdgeCases:
@@ -31,7 +31,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN input_path parameter pointing to corrupted video file
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -61,7 +61,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN input_path parameter pointing to zero-byte file
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -90,7 +90,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         THEN returns dict with status 'error' and PermissionError message
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             import tempfile
             
             wrapper = FFmpegWrapper()
@@ -119,7 +119,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN input_path and output_path parameters with identical file paths
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -150,7 +150,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN - unsupported output extension
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -179,7 +179,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN - extremely long file paths
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -213,7 +213,7 @@ class TestFFmpegWrapperConvertVideoEdgeCases:
         """
         # GIVEN - audio-only file path
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             

@@ -12,7 +12,7 @@ Terminology:
 import pytest
 import anyio
 from pathlib import Path
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperConvertVideoIntegration:
@@ -74,7 +74,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         """
         # GIVEN system environment with FFmpeg unavailable
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             wrapper = FFmpegWrapper()
         except ImportError:
             # If import fails, create mock wrapper for testing
@@ -103,7 +103,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         """
         # GIVEN large input video file and logging enabled
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             wrapper = FFmpegWrapper()
         except ImportError:
             # Mock implementation for testing
@@ -133,7 +133,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         THEN all conversions complete successfully without interference
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             import anyio
             
             wrapper = FFmpegWrapper()
@@ -173,7 +173,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         THEN applies custom parameters to conversion and returns success response with parameter metadata
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -211,7 +211,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         THEN creates necessary parent directories and completes conversion successfully
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             import os
             
             wrapper = FFmpegWrapper()
@@ -244,7 +244,7 @@ class TestFFmpegWrapperConvertVideoIntegration:
         THEN handles cleanup of partial files and returns dict with status 'error' and interruption message
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             

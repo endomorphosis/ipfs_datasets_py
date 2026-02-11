@@ -2,9 +2,9 @@ from unittest.mock import MagicMock, AsyncMock
 
 
 # Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.multimedia.media_processor import make_media_processor
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 def create_mock_ytdlp(tmp_path, **kwargs):

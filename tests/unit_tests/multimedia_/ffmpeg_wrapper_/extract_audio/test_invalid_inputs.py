@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperExtractAudioInvalidInputs:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises TypeError with message indicating input_path must be string
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -51,7 +51,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises TypeError with message indicating input_path must be string
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -72,7 +72,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises TypeError with message indicating output_path must be string
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -93,7 +93,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises TypeError with message indicating output_path must be string
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -114,7 +114,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises ValueError with message indicating input_path cannot be empty
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -135,7 +135,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN raises ValueError with message indicating output_path cannot be empty
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -156,7 +156,7 @@ class TestFFmpegWrapperExtractAudioInvalidInputs:
         THEN returns dict with status 'error' and FileNotFoundError message
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

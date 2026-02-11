@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperConvertVideoValidInputs:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperConvertVideoValidInputs:
         THEN returns dict with status 'success' and conversion metadata
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -69,7 +69,7 @@ class TestFFmpegWrapperConvertVideoValidInputs:
         THEN returns dict with status 'success' and codec information in metadata
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -108,7 +108,7 @@ class TestFFmpegWrapperConvertVideoValidInputs:
         """
         # GIVEN valid input video file and video_bitrate parameter
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             
@@ -144,7 +144,7 @@ class TestFFmpegWrapperConvertVideoValidInputs:
         """
         # GIVEN valid input video file and resolution parameter
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             wrapper = FFmpegWrapper()
             

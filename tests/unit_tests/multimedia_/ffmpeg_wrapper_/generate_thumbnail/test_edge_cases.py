@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperGenerateThumbnailEdgeCases:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'success' and generates thumbnail from available frames
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -53,7 +53,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'error' and message indicating timestamp exceeds duration
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -77,7 +77,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'success' and generates thumbnail from available frames
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -101,7 +101,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'error' and message indicating no video streams found
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -124,7 +124,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'success' and selects visually optimal frame avoiding transitions
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -148,7 +148,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN returns dict with status 'success' and generates specified number of thumbnail files
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -172,7 +172,7 @@ class TestFFmpegWrapperGenerateThumbnailEdgeCases:
         THEN overwrites existing file and returns dict with status 'success'
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

@@ -10,7 +10,7 @@ Terminology:
 - invalid_path_characters: A string containing characters invalid for the operating system
 """
 import pytest
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperInitInvalidInputs:

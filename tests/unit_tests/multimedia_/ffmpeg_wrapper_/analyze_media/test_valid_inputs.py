@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperAnalyzeMediaValidInputs:
@@ -64,7 +64,7 @@ class TestFFmpegWrapperAnalyzeMediaValidInputs:
         THEN returns dict with status 'success' and basic analysis information in metadata
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -87,7 +87,7 @@ class TestFFmpegWrapperAnalyzeMediaValidInputs:
         THEN returns dict with status 'success' and quality metrics in analysis results
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -110,7 +110,7 @@ class TestFFmpegWrapperAnalyzeMediaValidInputs:
         THEN returns dict with status 'success' and content characteristic analysis in results
         """
         # NOTE: analyze_media is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

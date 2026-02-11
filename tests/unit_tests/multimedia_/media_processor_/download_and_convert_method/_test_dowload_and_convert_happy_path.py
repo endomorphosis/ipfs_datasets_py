@@ -19,7 +19,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         THEN expect it to be a coroutine function
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import inspect
             
             # Test that download_and_convert is a coroutine
@@ -52,7 +52,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         THEN returns a dictionary
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             async def test_download():
@@ -105,7 +105,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         ]
         
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             async def test_keys():
@@ -157,7 +157,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
             - 'conversion_result': dict
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             processor = MediaProcessor()
@@ -205,7 +205,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
             - 'conversion_result' should contain expected keys and values
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             processor = MediaProcessor()
@@ -251,7 +251,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
         THEN expect the 'status' key in the returned dictionary to be "success"
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             async def test_status():
@@ -286,7 +286,7 @@ class TestDownloadAndConvertHappyPathArgsOnly:
             - 'converted_path' to be a valid file path.
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import os
             
             processor = MediaProcessor()
@@ -326,7 +326,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         THEN returns a dictionary
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             processor = MediaProcessor()
@@ -360,7 +360,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         THEN expect the return dictionary to contain all expected keys
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, ALL_METADATA_FIELDS
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, ALL_METADATA_FIELDS
             
             processor = MediaProcessor()
             expected_keys = ALL_METADATA_FIELDS
@@ -402,7 +402,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
             - 'conversion_result': dict
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             processor = MediaProcessor()
             
@@ -448,7 +448,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
             - 'conversion_result' should contain expected keys and values
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             processor = MediaProcessor()
             
@@ -486,7 +486,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         THEN expect the 'status' key in the returned dictionary to be "success"
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             processor = MediaProcessor()
             
@@ -514,7 +514,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
             - 'converted_path' to be a valid file path.
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import os
             
             processor = MediaProcessor()
@@ -549,7 +549,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         THEN expect the custom directory to be used for output
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             import tempfile
             import os
@@ -590,7 +590,7 @@ class TestDownloadAndConvertHappyPathArgsAndKwargs:
         """
         # GIVEN - valid URL and format kwargs
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             import anyio
             
             async def test_format_kwargs():

@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
@@ -29,7 +29,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with None as input_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -51,7 +51,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with integer as input_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -73,7 +73,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with None as output_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -95,7 +95,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with list as output_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -117,7 +117,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with empty string as input_path
         THEN returns error response indicating input_path cannot be empty
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -135,7 +135,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with empty string as output_path
         THEN returns error response indicating output_path cannot be empty
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -153,7 +153,7 @@ class TestFFmpegWrapperGenerateThumbnailInvalidInputs:
         WHEN generate_thumbnail is called with nonexistent input file
         THEN returns dict with status 'error' and FileNotFoundError message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

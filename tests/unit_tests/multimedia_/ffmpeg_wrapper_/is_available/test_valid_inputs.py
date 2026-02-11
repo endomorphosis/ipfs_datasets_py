@@ -10,7 +10,7 @@ Terminology:
 - ffmpeg_executable_accessible: System state where FFmpeg executable is available in PATH
 """
 import pytest
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperIsAvailableValidInputs:

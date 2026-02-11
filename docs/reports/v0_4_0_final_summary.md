@@ -318,7 +318,7 @@ converter = FileConverter(backend='native')       # Recommended
 **Before:**
 ```python
 import sys
-sys.path.insert(0, 'ipfs_datasets_py/multimedia/omni_converter_mk2')
+sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2')
 from omni_converter import convert_file
 ```
 

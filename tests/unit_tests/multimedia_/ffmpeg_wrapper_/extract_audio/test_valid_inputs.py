@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperExtractAudioValidInputs:
@@ -55,7 +55,7 @@ class TestFFmpegWrapperExtractAudioValidInputs:
         THEN returns dict with status 'success' and codec information in metadata
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -79,7 +79,7 @@ class TestFFmpegWrapperExtractAudioValidInputs:
         THEN returns dict with status 'success' and bitrate information in metadata
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -103,7 +103,7 @@ class TestFFmpegWrapperExtractAudioValidInputs:
         THEN returns dict with status 'success' and sample rate information in metadata
         """
         # NOTE: extract_audio is documented but not yet implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

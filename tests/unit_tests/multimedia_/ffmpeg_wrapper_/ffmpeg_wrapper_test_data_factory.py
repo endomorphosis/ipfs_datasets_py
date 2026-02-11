@@ -10,7 +10,7 @@ from typing import Dict, Any, Optional, Callable
 from pathlib import Path
 import tempfile
 
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class FFmpegWrapperTestDataFactory:

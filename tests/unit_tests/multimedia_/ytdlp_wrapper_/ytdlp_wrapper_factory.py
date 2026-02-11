@@ -11,7 +11,7 @@ from pathlib import Path
 import tempfile
 import uuid
 
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
 
 
 class YtDlpWrapperTestDataFactory:

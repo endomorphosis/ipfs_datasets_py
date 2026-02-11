@@ -72,7 +72,7 @@ Two comprehensive file conversion systems are available as git submodules for co
 #### omni_converter_mk2 (Submodule)
 Advanced multi-format file converter with comprehensive format support.
 
-**Location:** `ipfs_datasets_py/multimedia/omni_converter_mk2/`  
+**Location:** `ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2/`  
 **Repository:** https://github.com/endomorphosis/omni_converter_mk2
 
 **Key Features:**
@@ -94,7 +94,7 @@ Advanced multi-format file converter with comprehensive format support.
 #### convert_to_txt_based_on_mime_type (Submodule)
 Lightweight, production-ready MIME-based file converter with async support.
 
-**Location:** `ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/`  
+**Location:** `ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type/`  
 **Repository:** https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
 
 **Key Features:**

@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperCompressMediaEdgeCases:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN returns dict with status 'success' and reports minimal or no size reduction
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -55,7 +55,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN returns dict with status 'error' and message indicating target size cannot be achieved
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -79,7 +79,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN returns dict with status 'success' and prioritizes achieving size target over quality preference
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -104,7 +104,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN either completes compression successfully or returns error response with memory limitation message
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -130,7 +130,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN returns dict with status 'success' and uses fallback codec with codec selection metadata
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -155,7 +155,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN falls back to single-pass encoding and returns success response with encoding method metadata
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -182,7 +182,7 @@ class TestFFmpegWrapperCompressMediaEdgeCases:
         THEN overwrites existing file and returns dict with status 'success'
         """
         # NOTE: compress_media is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

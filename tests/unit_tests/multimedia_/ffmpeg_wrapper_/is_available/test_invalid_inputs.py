@@ -12,7 +12,7 @@ Terminology:
 - invalid_calling_context: Calling method in inappropriate context or state
 """
 import pytest
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperIsAvailableInvalidInputs:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         THEN raises TypeError indicating method takes no arguments
         """
         # Since is_available() has a working implementation, test parameter validation
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -45,7 +45,7 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         THEN raises TypeError indicating method takes no arguments
         """
         # Since is_available() has a working implementation, test keyword argument validation
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -60,7 +60,7 @@ class TestFFmpegWrapperIsAvailableInvalidInputs:
         THEN raises AttributeError or TypeError indicating method requires instance
         """
         # Since is_available() has a working implementation, test class vs instance access
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         # Test that method requires instance, not class access
         with pytest.raises((AttributeError, TypeError)):

@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, AsyncMock
 from pathlib import Path
 from typing import Dict, Any
 
-from ipfs_datasets_py.multimedia.media_processor import make_media_processor, MediaProcessor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import make_media_processor, MediaProcessor
 
 
 class _TestImplementationDetailError(Exception):

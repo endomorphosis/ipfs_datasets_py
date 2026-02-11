@@ -14,7 +14,7 @@ from typing import Dict, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 # Import modules under test
-from ipfs_datasets_py.multimedia import (
+from ipfs_datasets_py.data_transformation.multimedia import (
     YtDlpWrapper, FFmpegWrapper, MediaProcessor, MediaUtils,
     HAVE_YTDLP, HAVE_FFMPEG
 )
@@ -94,7 +94,7 @@ class TestMcpToolsIntegration:
     @pytest.fixture
     def mock_multimedia_components(self):
         """Mock multimedia components for testing."""
-        with patch('ipfs_datasets_py.multimedia.ytdlp_wrapper.YTDLP_AVAILABLE', True), \
+        with patch('ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper.YTDLP_AVAILABLE', True), \
              patch('ipfs_datasets_py.mcp_server.tools.media_tools.ytdlp_download.HAVE_YTDLP', True):
             yield
     

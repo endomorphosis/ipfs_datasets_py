@@ -12,8 +12,8 @@ As of version 0.4.0, the external submodules for file conversion (`omni_converte
 
 | Submodule | Location | Status | Replacement |
 |-----------|----------|--------|-------------|
-| omni_converter_mk2 | `ipfs_datasets_py/multimedia/omni_converter_mk2/` | ⚠️ Deprecated | Native backend |
-| convert_to_txt_based_on_mime_type | `ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type/` | ⚠️ Deprecated | Native backend |
+| omni_converter_mk2 | `ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2/` | ⚠️ Deprecated | Native backend |
+| convert_to_txt_based_on_mime_type | `ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type/` | ⚠️ Deprecated | Native backend |
 
 ## Why Were They Deprecated?
 
@@ -54,11 +54,11 @@ Using native implementation:
 ```python
 # DON'T DO THIS - Deprecated approach
 import sys
-sys.path.insert(0, 'ipfs_datasets_py/multimedia/omni_converter_mk2')
+sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2')
 from omni_converter import convert_file
 
 # or
-sys.path.insert(0, 'ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type')
+sys.path.insert(0, 'ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type')
 from convert_to_txt import convert
 
 result = convert('document.pdf')

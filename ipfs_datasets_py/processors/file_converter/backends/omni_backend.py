@@ -46,7 +46,8 @@ class OmniBackend:
         
         try:
             import sys
-            omni_path = Path(__file__).parent.parent.parent / 'multimedia' / 'omni_converter_mk2'
+            package_root = Path(__file__).resolve().parents[3]
+            omni_path = package_root / 'data_transformation' / 'multimedia' / 'omni_converter_mk2'
             
             if not omni_path.exists():
                 raise ImportError(f"omni_converter_mk2 submodule not found at {omni_path}")
@@ -64,7 +65,7 @@ class OmniBackend:
             raise ImportError(
                 f"omni_converter_mk2 not available: {e}\n"
                 "Make sure the submodule is initialized: "
-                "git submodule update --init ipfs_datasets_py/multimedia/omni_converter_mk2"
+                "git submodule update --init ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2"
             )
     
     async def convert(self, file_path: Union[str, Path], **kwargs):

@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock
 from pathlib import Path
 from pyfakefs.fake_filesystem_unittest import Patcher
 
-from ipfs_datasets_py.multimedia.media_processor import make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import make_media_processor
 
 from tests._test_utils import (
     has_good_callable_metadata,

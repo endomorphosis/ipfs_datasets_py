@@ -10,9 +10,9 @@ from typing import Dict, Any, Optional
 from pathlib import Path
 import tempfile
 
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 from tests.unit_tests.multimedia_.ytdlp_wrapper_.ytdlp_wrapper_factory import YtDlpWrapperTestDataFactory
 from tests.unit_tests.multimedia_.ffmpeg_wrapper_.ffmpeg_wrapper_test_data_factory import FFmpegWrapperTestDataFactory

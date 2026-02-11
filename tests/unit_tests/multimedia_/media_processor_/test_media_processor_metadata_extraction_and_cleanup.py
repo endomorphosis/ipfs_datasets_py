@@ -6,9 +6,9 @@ import os
 from unittest.mock import Mock, patch, MagicMock
 
 # Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 import anyio
 from tests._test_utils import (

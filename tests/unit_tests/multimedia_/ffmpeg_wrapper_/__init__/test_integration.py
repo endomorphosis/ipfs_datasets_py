@@ -11,7 +11,7 @@ Terminology:
 """
 import pytest
 from unittest.mock import patch
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperInitIntegration:

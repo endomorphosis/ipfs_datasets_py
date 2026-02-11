@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, AsyncMock
 import pytest
 
 
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
 from ipfs_datasets_py.multimedia import YtDlpWrapper
 from ipfs_datasets_py.multimedia import FFmpegWrapper
 
@@ -116,7 +116,7 @@ class MediaProcessorInitDefaultArgs:
             - 'enable_logging': True
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             from pathlib import Path
             
             # Test default initialization
@@ -191,7 +191,7 @@ class MediaProcessorInitProvidedArgs:
         THEN expect an instance of MediaProcessor to be returned
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             from pathlib import Path
             
             # Test initialization with provided arguments
@@ -221,7 +221,7 @@ class MediaProcessorInitProvidedArgs:
             - 'ffmpeg'
         """
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # Test initialization with provided arguments
             custom_output_dir = "/tmp/custom_output"

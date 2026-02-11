@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock
 from urllib.parse import urlparse
 
 # Import the MediaProcessor class
-from ipfs_datasets_py.multimedia.media_processor import make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import make_media_processor
 
 # Test data constants - Using stable, public test videos
 PLATFORM_TEST_URLS = {

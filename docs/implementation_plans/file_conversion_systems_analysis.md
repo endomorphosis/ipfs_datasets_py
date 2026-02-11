@@ -53,7 +53,7 @@ Both repositories have been added as git submodules to `ipfs_datasets_py/multime
 
 ### 1. omni_converter_mk2
 
-**Location:** `ipfs_datasets_py/multimedia/omni_converter_mk2`  
+**Location:** `ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2`  
 **Repository:** https://github.com/endomorphosis/omni_converter_mk2  
 **Version:** 1.7.0  
 **Authors:** Kyle Rose, Claude 3.7 Sonnet, Claude 4 Sonnet, Claude 4 Opus
@@ -113,7 +113,7 @@ beautifulsoup4, python-pptx, python-magic, pytest
 
 ### 2. convert_to_txt_based_on_mime_type
 
-**Location:** `ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type`  
+**Location:** `ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type`  
 **Repository:** https://github.com/endomorphosis/convert_to_txt_based_on_mime_type  
 **Version:** 0.1.0 (Mark 1)  
 **Authors:** Kyle Rose, Claude 3.5 Sonnet, Codestral
@@ -547,12 +547,12 @@ ipfs_datasets_py/multimedia/
 ### .gitmodules Entry
 
 ```ini
-[submodule "ipfs_datasets_py/multimedia/omni_converter_mk2"]
-    path = ipfs_datasets_py/multimedia/omni_converter_mk2
+[submodule "ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2"]
+   path = ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2
     url = https://github.com/endomorphosis/omni_converter_mk2
 
-[submodule "ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type"]
-    path = ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type
+[submodule "ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type"]
+   path = ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type
     url = https://github.com/endomorphosis/convert_to_txt_based_on_mime_type
 ```
 

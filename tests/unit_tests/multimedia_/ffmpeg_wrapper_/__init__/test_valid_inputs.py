@@ -10,7 +10,7 @@ Terminology:
 """
 import pytest
 from pathlib import Path
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperInitValidInputs:
@@ -28,7 +28,7 @@ class TestFFmpegWrapperInitValidInputs:
         THEN creates FFmpegWrapper instance with default_output_dir set to current working directory
         """
         # Since FFmpegWrapper.__init__ has a working implementation, test actual behavior
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         import os
         
         # Create wrapper with default parameters
@@ -48,7 +48,7 @@ class TestFFmpegWrapperInitValidInputs:
         THEN creates FFmpegWrapper instance with default_output_dir set to specified absolute path
         """
         # Since FFmpegWrapper.__init__ has a working implementation, test with absolute path
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         import os
         
         # Use a valid absolute path
@@ -71,7 +71,7 @@ class TestFFmpegWrapperInitValidInputs:
         THEN creates FFmpegWrapper instance with default_output_dir resolved to absolute path
         """
         # Since FFmpegWrapper.__init__ has a working implementation, test with relative path
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         import os
         
         # Use a relative path
@@ -95,7 +95,7 @@ class TestFFmpegWrapperInitValidInputs:
         THEN creates FFmpegWrapper instance with enable_logging attribute set to True
         """
         # Since FFmpegWrapper.__init__ has a working implementation, test logging parameter
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         # Create wrapper with logging enabled
         wrapper = FFmpegWrapper(enable_logging=True)
@@ -114,7 +114,7 @@ class TestFFmpegWrapperInitValidInputs:
         THEN creates FFmpegWrapper instance with enable_logging attribute set to False
         """
         # Since FFmpegWrapper.__init__ has a working implementation, test logging disabled
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         # Create wrapper with logging disabled
         wrapper = FFmpegWrapper(enable_logging=False)

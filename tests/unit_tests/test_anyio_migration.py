@@ -128,8 +128,8 @@ class TestAnyioMigration:
         # (these are maintained upstream and not part of the anyio migration work).
         excluded_dirs = [
             'ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/scrape_the_law_mk3',
-            'ipfs_datasets_py/multimedia/omni_converter_mk2',
-            'ipfs_datasets_py/multimedia/convert_to_txt_based_on_mime_type',
+            'ipfs_datasets_py/data_transformation/multimedia/omni_converter_mk2',
+            'ipfs_datasets_py/data_transformation/multimedia/convert_to_txt_based_on_mime_type',
         ]
 
         grep_cmd = ['grep', '-r', '^import asyncio$', '--include=*.py']

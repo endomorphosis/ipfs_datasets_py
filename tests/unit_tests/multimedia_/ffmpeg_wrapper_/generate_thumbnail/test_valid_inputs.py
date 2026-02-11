@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperGenerateThumbnailValidInputs:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperGenerateThumbnailValidInputs:
         THEN returns dict with status 'success' and thumbnail generation metadata
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -53,7 +53,7 @@ class TestFFmpegWrapperGenerateThumbnailValidInputs:
         THEN returns dict with status 'success' and timestamp information in metadata
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -77,7 +77,7 @@ class TestFFmpegWrapperGenerateThumbnailValidInputs:
         THEN returns dict with status 'success' and resolution information in metadata
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -101,7 +101,7 @@ class TestFFmpegWrapperGenerateThumbnailValidInputs:
         THEN returns dict with status 'success' and quality information in metadata
         """
         # NOTE: generate_thumbnail is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

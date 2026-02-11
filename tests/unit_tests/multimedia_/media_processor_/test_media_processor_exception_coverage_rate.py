@@ -18,13 +18,13 @@ while not os.path.exists(os.path.join(work_dir, "__pyproject.toml")):
     if parent == work_dir:
         break
     work_dir = parent
-file_path = os.path.join(work_dir, "ipfs_datasets_py/multimedia/media_processor.py")
-md_path = os.path.join(work_dir, "ipfs_datasets_py/multimedia/media_processor_stubs.md")
+file_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor.py")
+md_path = os.path.join(work_dir, "ipfs_datasets_py/data_transformation/multimedia/media_processor_stubs.md")
 
 # Import the MediaProcessor class and its class dependencies
-from ipfs_datasets_py.multimedia.media_processor import MediaProcessor, make_media_processor
-from ipfs_datasets_py.multimedia.ytdlp_wrapper import YtDlpWrapper
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor, make_media_processor
+from ipfs_datasets_py.data_transformation.multimedia.ytdlp_wrapper import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 from subprocess import CalledProcessError
 

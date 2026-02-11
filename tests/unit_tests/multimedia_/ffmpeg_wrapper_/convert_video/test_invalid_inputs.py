@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperConvertVideoInvalidInputs:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises TypeError with message indicating input_path must be string
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN input_path as None
             wrapper = FFmpegWrapper()
@@ -56,7 +56,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises TypeError with message indicating input_path must be string
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN input_path as integer
             wrapper = FFmpegWrapper()
@@ -82,7 +82,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises TypeError with message indicating output_path must be string
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN output_path as None
             wrapper = FFmpegWrapper()
@@ -108,7 +108,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises TypeError with message indicating output_path must be string
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN output_path as list
             wrapper = FFmpegWrapper()
@@ -134,7 +134,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises ValueError with message indicating input_path cannot be empty
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN empty input_path
             wrapper = FFmpegWrapper()
@@ -160,7 +160,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN raises ValueError with message indicating output_path cannot be empty
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN empty output_path
             wrapper = FFmpegWrapper()
@@ -186,7 +186,7 @@ class TestFFmpegWrapperConvertVideoInvalidInputs:
         THEN returns dict with status 'error' and FileNotFoundError message
         """
         try:
-            from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+            from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
             
             # GIVEN nonexistent input file
             wrapper = FFmpegWrapper()

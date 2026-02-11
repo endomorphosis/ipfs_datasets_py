@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
@@ -29,7 +29,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with None as input_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -48,7 +48,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with integer as input_path
         THEN returns error response with appropriate message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -67,7 +67,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with empty string as input_path
         THEN returns error response indicating input_path cannot be empty
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -82,7 +82,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with invalid analysis depth
         THEN returns error response indicating unsupported analysis depth
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -100,7 +100,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with invalid export format
         THEN returns error response indicating unsupported export format
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -118,7 +118,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with non-boolean quality_assessment
         THEN returns error response indicating quality_assessment must be boolean
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -136,7 +136,7 @@ class TestFFmpegWrapperAnalyzeMediaInvalidInputs:
         WHEN analyze_media is called with nonexistent input file
         THEN returns dict with status 'error' and FileNotFoundError message
         """
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         

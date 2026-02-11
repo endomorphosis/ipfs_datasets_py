@@ -16,7 +16,7 @@ class TestMediaProcessorInitErrorHandling:
         """
         # GIVEN - invalid type for default_output_dir
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # WHEN - MediaProcessor with invalid default_output_dir
             with pytest.raises((TypeError, ValueError)):
@@ -36,7 +36,7 @@ class TestMediaProcessorInitErrorHandling:
         """
         # GIVEN - invalid type for enable_logging
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # WHEN - MediaProcessor with invalid enable_logging
             with pytest.raises((TypeError, ValueError)):
@@ -55,7 +55,7 @@ class TestMediaProcessorInitErrorHandling:
         """
         # GIVEN - invalid type for logger
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # WHEN - MediaProcessor with invalid logger
             with pytest.raises((TypeError, ValueError)):
@@ -74,7 +74,7 @@ class TestMediaProcessorInitErrorHandling:
         """
         # GIVEN - invalid type for ytdlp
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # WHEN - MediaProcessor with invalid ytdlp
             with pytest.raises((TypeError, ValueError)):
@@ -93,7 +93,7 @@ class TestMediaProcessorInitErrorHandling:
         """
         # GIVEN - invalid type for ffmpeg
         try:
-            from ipfs_datasets_py.multimedia.media_processor import MediaProcessor
+            from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
             
             # WHEN - MediaProcessor with invalid ffmpeg
             with pytest.raises((TypeError, ValueError)):

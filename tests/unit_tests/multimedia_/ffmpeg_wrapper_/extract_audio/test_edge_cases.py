@@ -12,7 +12,7 @@ Terminology:
 """
 import pytest
 import anyio
-from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
 
 
 class TestFFmpegWrapperExtractAudioEdgeCases:
@@ -30,7 +30,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'error' and message indicating no audio streams found
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -53,7 +53,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'success' and extracts first available audio track
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -76,7 +76,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'success' and extracts specified audio track
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -101,7 +101,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'success' and extracts complete short audio
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -126,7 +126,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN overwrites existing file and returns dict with status 'success'
         """
         # NOTE: extract_audio is not yet implemented in FFmpegWrapper - this is a legitimate development gap
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -154,7 +154,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'error' and message indicating time range exceeds video duration
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper 
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
@@ -179,7 +179,7 @@ class TestFFmpegWrapperExtractAudioEdgeCases:
         THEN returns dict with status 'error' and message indicating audio stream corruption
         """
         # NOTE: extract_audio is documented but not implemented in FFmpegWrapper
-        from ipfs_datasets_py.multimedia.ffmpeg_wrapper import FFmpegWrapper
+        from ipfs_datasets_py.data_transformation.multimedia.ffmpeg_wrapper import FFmpegWrapper
         
         wrapper = FFmpegWrapper()
         
