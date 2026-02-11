@@ -30,6 +30,7 @@ async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> 
     from libp2p import new_host
     from multiaddr import Multiaddr
     from libp2p.peer.peerinfo import info_from_p2p_addr
+    from libp2p.tools.async_service import background_trio_service
 
     from .p2p_task_protocol import PROTOCOL_V1, get_shared_token
 
@@ -43,20 +44,27 @@ async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> 
 
     peer_info = info_from_p2p_addr(Multiaddr(remote.multiaddr))
 
-    # In py-libp2p, Swarm.listen() is a long-running coroutine and is required
-    # to start the internal swarm tasks, even for outbound dials.
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(host.get_network().listen, Multiaddr("/ip4/0.0.0.0/tcp/0"))
-        await anyio.sleep(0)
+    # Swarm.listen()/connect() require the swarm service to be running.
+    async with background_trio_service(host.get_network()):
+        # Bind an ephemeral listener; this also ensures transport is ready.
+        await host.get_network().listen(Multiaddr("/ip4/0.0.0.0/tcp/0"))
 
         with anyio.fail_after(20.0):
             await host.connect(peer_info)
             stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_V1])
-            await stream.write(json.dumps(message).encode("utf-8"))
-            raw = await stream.read()
-            await stream.close()
+            await stream.write(json.dumps(message).encode("utf-8") + b"\n")
 
-        tg.cancel_scope.cancel()
+            raw = bytearray()
+            max_bytes = 1024 * 1024
+            while len(raw) < max_bytes:
+                chunk = await stream.read(1024)
+                if not chunk:
+                    break
+                raw.extend(chunk)
+                if b"\n" in chunk:
+                    break
+            raw = bytes(raw)
+            await stream.close()
 
     try:
         await host.close()
@@ -64,7 +72,7 @@ async def _dial_and_request(*, remote: RemoteQueue, message: Dict[str, Any]) -> 
         pass
 
     try:
-        return json.loads((raw or b"{}").decode("utf-8"))
+        return json.loads((raw or b"{}").rstrip(b"\n").decode("utf-8"))
     except Exception:
         return {"ok": False, "error": "invalid_json_response"}
 

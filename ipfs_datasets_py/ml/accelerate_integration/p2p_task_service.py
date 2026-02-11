@@ -58,6 +58,7 @@ async def serve_task_queue(*, queue_path: str, listen_port: Optional[int] = None
     import inspect
     from libp2p import new_host
     from multiaddr import Multiaddr
+    from libp2p.tools.async_service import background_trio_service
 
     from .p2p_task_protocol import PROTOCOL_V1, auth_ok
     from .task_queue import TaskQueue
@@ -75,21 +76,32 @@ async def serve_task_queue(*, queue_path: str, listen_port: Optional[int] = None
 
     async def _handle(stream) -> None:
         try:
-            raw = await stream.read()
+            # Message framing: newline-delimited JSON.
+            # Avoid `stream.read()` with no length: it may wait for EOF.
+            raw = bytearray()
+            max_bytes = 1024 * 1024
+            while len(raw) < max_bytes:
+                chunk = await stream.read(1024)
+                if not chunk:
+                    break
+                raw.extend(chunk)
+                if b"\n" in chunk:
+                    break
+            raw = bytes(raw)
             if not raw:
                 return
             try:
-                msg = json.loads(raw.decode("utf-8"))
+                msg = json.loads(raw.rstrip(b"\n").decode("utf-8"))
             except Exception:
-                await stream.write(json.dumps({"ok": False, "error": "invalid_json"}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": False, "error": "invalid_json"}).encode("utf-8") + b"\n")
                 return
 
             if not isinstance(msg, dict):
-                await stream.write(json.dumps({"ok": False, "error": "invalid_message"}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": False, "error": "invalid_message"}).encode("utf-8") + b"\n")
                 return
 
             if not auth_ok(msg):
-                await stream.write(json.dumps({"ok": False, "error": "unauthorized"}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": False, "error": "unauthorized"}).encode("utf-8") + b"\n")
                 return
 
             op = (msg.get("op") or "").strip().lower()
@@ -101,13 +113,13 @@ async def serve_task_queue(*, queue_path: str, listen_port: Optional[int] = None
                 if not isinstance(payload, dict):
                     payload = {"payload": payload}
                 task_id = queue.submit(task_type=task_type, model_name=model_name, payload=payload)
-                await stream.write(json.dumps({"ok": True, "task_id": task_id}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": True, "task_id": task_id}).encode("utf-8") + b"\n")
                 return
 
             if op == "get":
                 task_id = str(msg.get("task_id") or "")
                 task = queue.get(task_id)
-                await stream.write(json.dumps({"ok": True, "task": task}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": True, "task": task}).encode("utf-8") + b"\n")
                 return
 
             if op == "wait":
@@ -120,10 +132,10 @@ async def serve_task_queue(*, queue_path: str, listen_port: Optional[int] = None
                     await anyio.sleep(0.1)
                     task = queue.get(task_id)
 
-                await stream.write(json.dumps({"ok": True, "task": task}).encode("utf-8"))
+                await stream.write(json.dumps({"ok": True, "task": task}).encode("utf-8") + b"\n")
                 return
 
-            await stream.write(json.dumps({"ok": False, "error": "unknown_op"}).encode("utf-8"))
+            await stream.write(json.dumps({"ok": False, "error": "unknown_op"}).encode("utf-8") + b"\n")
         finally:
             try:
                 await stream.close()
@@ -135,12 +147,11 @@ async def serve_task_queue(*, queue_path: str, listen_port: Optional[int] = None
     listen_addr = Multiaddr(f"/ip4/0.0.0.0/tcp/{cfg.listen_port}")
     print(f"ipfs_datasets_py task queue p2p service: listening on {listen_addr}", file=sys.stderr, flush=True)
 
-    # NOTE: In py-libp2p, Swarm.listen() is a long-running coroutine (it does
-    # not return). Run it in the background so we can still announce our
-    # multiaddr and write the announce file.
-    async with anyio.create_task_group() as tg:
-        tg.start_soon(host.get_network().listen, listen_addr)
-        await anyio.sleep(0)
+    # Swarm.listen() requires the swarm service to be running (it waits for
+    # an internal nursery). Run the swarm in the background for the lifetime
+    # of this service.
+    async with background_trio_service(host.get_network()):
+        await host.get_network().listen(listen_addr)
 
         peer_id = host.get_id().pretty()
         public_ip = os.environ.get("IPFS_DATASETS_PY_TASK_P2P_PUBLIC_IP", "127.0.0.1").strip() or "127.0.0.1"
