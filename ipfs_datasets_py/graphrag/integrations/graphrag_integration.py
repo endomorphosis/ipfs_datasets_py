@@ -72,46 +72,63 @@ try:
     from ipfs_datasets_py.ml.llm.llm_graphrag import (
         ReasoningEnhancer, GraphRAGLLMProcessor, GraphRAGPerformanceMonitor
     )
+    HAVE_LLM_GRAPHRAG = True
 except Exception as e:  # pragma: no cover
     logging.getLogger(__name__).warning("LLM GraphRAG modules unavailable: %s", e)
 
+    HAVE_LLM_GRAPHRAG = False
+
     class ReasoningEnhancer:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM GraphRAG modules are unavailable")
 
     class GraphRAGLLMProcessor:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM GraphRAG modules are unavailable")
 
     class GraphRAGPerformanceMonitor:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM GraphRAG modules are unavailable")
 
 try:
     from ipfs_datasets_py.ml.llm.llm_semantic_validation import (
         SchemaValidator, SemanticAugmenter, SemanticValidator
     )
+    HAVE_LLM_SEMANTIC_VALIDATION = True
 except Exception as e:  # pragma: no cover
     logging.getLogger(__name__).warning("LLM semantic validation modules unavailable: %s", e)
 
+    HAVE_LLM_SEMANTIC_VALIDATION = False
+
     class SchemaValidator:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM semantic validation modules are unavailable")
 
     class SemanticAugmenter:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM semantic validation modules are unavailable")
 
     class SemanticValidator:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM semantic validation modules are unavailable")
 
 try:
     from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
         ReasoningTrace, ReasoningNodeType
     )
+    HAVE_LLM_REASONING_TRACER = True
 except Exception as e:  # pragma: no cover
     logging.getLogger(__name__).warning("LLM reasoning tracer modules unavailable: %s", e)
 
+    HAVE_LLM_REASONING_TRACER = False
+
     class ReasoningTrace:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM reasoning tracer modules are unavailable")
 
     class ReasoningNodeType:  # type: ignore
-        pass
+        def __init__(self, *args, **kwargs):
+            raise ImportError("LLM reasoning tracer modules are unavailable")
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
     Entity, Relationship, KnowledgeGraph
 )
@@ -1673,7 +1690,9 @@ def enhance_dataset_with_hybrid_search(
     graph_weight: float = 0.4,
     max_graph_hops: int = 2,
     min_score_threshold: float = 0.5,
-    use_bidirectional_traversal: bool = True
+    use_bidirectional_traversal: bool = True,
+    max_vector_rescore: Optional[int] = None,
+    max_neighbors_per_node: Optional[int] = None
 ) -> HybridVectorGraphSearch:
     """
     Enhance a dataset with hybrid vector + graph search capabilities.
@@ -1695,7 +1714,9 @@ def enhance_dataset_with_hybrid_search(
         graph_weight=graph_weight,
         max_graph_hops=max_graph_hops,
         min_score_threshold=min_score_threshold,
-        use_bidirectional_traversal=use_bidirectional_traversal
+        use_bidirectional_traversal=use_bidirectional_traversal,
+        max_vector_rescore=max_vector_rescore,
+        max_neighbors_per_node=max_neighbors_per_node
     )
 
     # For convenience, we can also attach it to the dataset as an attribute
@@ -2200,7 +2221,9 @@ class GraphRAGFactory:
         graph_weight: float = 0.4,
         max_graph_hops: int = 2,
         min_score_threshold: float = 0.5,
-        use_bidirectional_traversal: bool = True
+        use_bidirectional_traversal: bool = True,
+        max_vector_rescore: Optional[int] = None,
+        max_neighbors_per_node: Optional[int] = None
     ) -> HybridVectorGraphSearch:
         """
         Create a hybrid vector + graph search for a dataset.
@@ -2222,7 +2245,9 @@ class GraphRAGFactory:
             graph_weight=graph_weight,
             max_graph_hops=max_graph_hops,
             min_score_threshold=min_score_threshold,
-            use_bidirectional_traversal=use_bidirectional_traversal
+            use_bidirectional_traversal=use_bidirectional_traversal,
+            max_vector_rescore=max_vector_rescore,
+            max_neighbors_per_node=max_neighbors_per_node
         )
 
     @staticmethod
@@ -2354,6 +2379,10 @@ class GraphRAGFactory:
         vector_weight: float = 0.6,
         graph_weight: float = 0.4,
         max_graph_hops: int = 2,
+        min_score_threshold: float = 0.5,
+        use_bidirectional_traversal: bool = True,
+        max_vector_rescore: Optional[int] = None,
+        max_neighbors_per_node: Optional[int] = None,
         validate_outputs: bool = True,
         enable_tracing: bool = True
     ) -> Tuple[HybridVectorGraphSearch, GraphRAGIntegration, CrossDocumentReasoner]:
@@ -2372,6 +2401,17 @@ class GraphRAGFactory:
         Returns:
             Tuple of (HybridVectorGraphSearch, GraphRAGIntegration, CrossDocumentReasoner)
         """
+        if not HAVE_LLM_GRAPHRAG:
+            raise ImportError(
+                "LLM GraphRAG components are unavailable; cannot create a complete integration. "
+                "Install/enable the optional LLM dependencies or use create_hybrid_search() instead."
+            )
+        if not HAVE_LLM_SEMANTIC_VALIDATION:
+            raise ImportError(
+                "LLM semantic validation components are unavailable; cannot create a complete integration. "
+                "Install/enable the optional LLM dependencies or use create_hybrid_search() instead."
+            )
+
         # Create performance monitor to share between components
         performance_monitor = GraphRAGPerformanceMonitor()
 
@@ -2387,7 +2427,11 @@ class GraphRAGFactory:
             dataset,
             vector_weight=vector_weight,
             graph_weight=graph_weight,
-            max_graph_hops=max_graph_hops
+            max_graph_hops=max_graph_hops,
+            min_score_threshold=min_score_threshold,
+            use_bidirectional_traversal=use_bidirectional_traversal,
+            max_vector_rescore=max_vector_rescore,
+            max_neighbors_per_node=max_neighbors_per_node
         )
 
         # Create LLM integration
@@ -2438,6 +2482,8 @@ class GraphRAGFactory:
         max_graph_hops = config.get("max_graph_hops", 2)
         min_score_threshold = config.get("min_score_threshold", 0.5)
         use_bidirectional_traversal = config.get("use_bidirectional_traversal", True)
+        max_vector_rescore = config.get("max_vector_rescore")
+        max_neighbors_per_node = config.get("max_neighbors_per_node")
         validate_outputs = config.get("validate_outputs", True)
         enable_tracing = config.get("enable_tracing", True)
         enable_query_rewriting = config.get("enable_query_rewriting", True)
@@ -2449,6 +2495,10 @@ class GraphRAGFactory:
             vector_weight=vector_weight,
             graph_weight=graph_weight,
             max_graph_hops=max_graph_hops,
+            min_score_threshold=min_score_threshold,
+            use_bidirectional_traversal=use_bidirectional_traversal,
+            max_vector_rescore=max_vector_rescore,
+            max_neighbors_per_node=max_neighbors_per_node,
             validate_outputs=validate_outputs,
             enable_tracing=enable_tracing
         )

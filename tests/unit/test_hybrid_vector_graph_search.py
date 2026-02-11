@@ -1,6 +1,6 @@
 import numpy as np
 
-from ipfs_datasets_py.logic.integrations.graphrag_integration import HybridVectorGraphSearch
+from ipfs_datasets_py.logic.integrations.graphrag_integration import HybridVectorGraphSearch, GraphRAGFactory
 
 
 class _ToyDataset:
@@ -108,3 +108,102 @@ def test_hybrid_search_rescore_limit_caps_graph_vector_scoring():
     stats = search.get_last_query_stats()
     assert stats.get("vector_rescore_limit") == 1
     assert stats.get("vector_rescored") == 1
+
+
+def test_factory_wires_rescore_limit_to_hybrid_search():
+    class _CountingDataset(_ToyDataset):
+        def __init__(self):
+            super().__init__()
+            # Make a slightly larger chain: A -> B -> C -> D
+            self._nodes["D"] = {"id": "D", "type": "entity"}
+            self._rels["C"] = [{"source": "C", "target": "D", "type": "rel", "weight": 1.0}]
+            self._rels["D"] = []
+            self._emb["B"] = np.array([0.9, 0.1], dtype=float)
+            self._emb["C"] = np.array([0.8, 0.2], dtype=float)
+            self._emb["D"] = np.array([0.7, 0.3], dtype=float)
+
+        def get_node_embedding(self, node_id):
+            return super().get_node_embedding(node_id)
+
+    dataset = _CountingDataset()
+    search = GraphRAGFactory.create_hybrid_search(
+        dataset,
+        max_graph_hops=3,
+        min_score_threshold=0.0,
+        max_vector_rescore=1,
+    )
+
+    query = np.array([1.0, 0.0], dtype=float)
+    results = search.hybrid_search(query_embedding=query, top_k=10)
+    by_id = {r["id"]: r for r in results}
+    assert "B" in by_id and "C" in by_id and "D" in by_id
+
+    rescored = [nid for nid in ["B", "C", "D"] if by_id[nid].get("vector_score", 0.0) > 0.0]
+    assert len(rescored) == 1
+
+    stats = search.get_last_query_stats()
+    assert stats.get("vector_rescore_limit") == 1
+    assert stats.get("vector_rescored") == 1
+
+
+def test_max_neighbors_per_node_caps_and_tiebreaks_deterministically():
+    class _FanoutDataset(_ToyDataset):
+        def __init__(self):
+            super().__init__()
+            # Fan-out from A to multiple neighbors with a tie on weight.
+            self._nodes.update(
+                {
+                    "D": {"id": "D", "type": "entity"},
+                    "E": {"id": "E", "type": "entity"},
+                }
+            )
+            self._rels["A"] = [
+                {"source": "A", "target": "B", "type": "rel", "weight": 1.0},
+                {"source": "A", "target": "C", "type": "rel", "weight": 1.0},
+                {"source": "A", "target": "D", "type": "rel", "weight": 0.9},
+                {"source": "A", "target": "E", "type": "rel", "weight": 0.8},
+            ]
+            self._rels["B"] = []
+            self._rels["C"] = []
+            self._rels["D"] = []
+            self._rels["E"] = []
+
+            # Provide embeddings for rescoring; values don't matter for this test.
+            self._emb.update(
+                {
+                    "D": np.array([0.0, 1.0], dtype=float),
+                    "E": np.array([0.0, 1.0], dtype=float),
+                }
+            )
+
+        def search_vectors(self, query_embedding, top_k=10, min_score=0.0):
+            return [{"id": "A", "score": 0.9}]
+
+    dataset = _FanoutDataset()
+
+    # With cap=1, only one neighbor should be expanded from A. Since B and C tie
+    # on weight, deterministic tie-break picks the lower id ("B").
+    search1 = GraphRAGFactory.create_hybrid_search(
+        dataset,
+        max_graph_hops=1,
+        min_score_threshold=0.0,
+        use_bidirectional_traversal=False,
+        max_neighbors_per_node=1,
+    )
+    query = np.array([1.0, 0.0], dtype=float)
+    results1 = search1.hybrid_search(query_embedding=query, top_k=10)
+    ids1 = {r["id"] for r in results1}
+    assert ids1 == {"A", "B"}
+
+    # With cap=2, both tied top neighbors (B, C) are included.
+    search2 = GraphRAGFactory.create_hybrid_search(
+        dataset,
+        max_graph_hops=1,
+        min_score_threshold=0.0,
+        use_bidirectional_traversal=False,
+        max_neighbors_per_node=2,
+    )
+    results2 = search2.hybrid_search(query_embedding=query, top_k=10)
+    ids2 = {r["id"] for r in results2}
+    assert {"A", "B", "C"}.issubset(ids2)
+    assert "D" not in ids2 and "E" not in ids2
