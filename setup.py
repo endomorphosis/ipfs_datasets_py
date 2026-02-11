@@ -145,6 +145,10 @@ setup(
         "anyio>=4.0.0",
         "trio>=0.27.0",
         'pydantic-settings>=2.0.0',
+
+        # Core utilities imported by default modules
+        "PyJWT>=2.8.0,<3.0.0",
+        "beautifulsoup4>=4.12.0,<5.0.0",
         
         # CLI framework
         'click>=8.0.0',
