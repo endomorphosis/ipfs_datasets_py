@@ -56,6 +56,195 @@ from typing import Callable, Dict, List, Optional, Protocol, Sequence, TypedDict
 from .router_deps import RouterDeps, get_default_router_deps
 
 
+class LLMRouterError(RuntimeError):
+    """Errors raised by lightweight router helpers/providers.
+
+    This is intentionally a RuntimeError subclass so existing call sites that
+    catch RuntimeError continue to work.
+    """
+
+
+def _find_int_by_key(obj: object, key: str) -> Optional[int]:
+    """Best-effort: find the first int-like value for a key anywhere in nested JSON."""
+
+    try:
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                if k == key:
+                    if isinstance(v, bool):
+                        return None
+                    if isinstance(v, int):
+                        return v
+                    if isinstance(v, str) and v.strip().isdigit():
+                        return int(v.strip())
+                found = _find_int_by_key(v, key)
+                if isinstance(found, int):
+                    return found
+        elif isinstance(obj, list):
+            for item in obj:
+                found = _find_int_by_key(item, key)
+                if isinstance(found, int):
+                    return found
+    except Exception:
+        return None
+    return None
+
+
+def _extract_resets_in_seconds_from_codex_jsonl(text: str) -> Optional[int]:
+    """Parse Codex --json output (JSONL) for a resets_in_seconds-like field."""
+
+    if not isinstance(text, str) or not text.strip():
+        return None
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or not (line.startswith("{") and line.endswith("}")):
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        for candidate_key in (
+            "resets_in_seconds",
+            "reset_in_seconds",
+            "retry_after_seconds",
+            "retry_after",
+        ):
+            found = _find_int_by_key(obj, candidate_key)
+            if isinstance(found, int) and found > 0:
+                return found
+    return None
+
+
+def _extract_first_error_message_from_codex_jsonl(text: str) -> Optional[str]:
+    """Best-effort: extract the first error message from Codex --json (JSONL) stdout."""
+
+    if not isinstance(text, str) or not text.strip():
+        return None
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or not (line.startswith("{") and line.endswith("}")):
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+        if not isinstance(obj, dict):
+            continue
+        if obj.get("type") == "error":
+            msg = obj.get("message")
+            if isinstance(msg, str) and msg.strip():
+                return msg.strip()
+            err = obj.get("error")
+            if isinstance(err, dict):
+                msg2 = err.get("message")
+                if isinstance(msg2, str) and msg2.strip():
+                    return msg2.strip()
+    return None
+
+
+def _is_codex_quota_exceeded_message(msg: str) -> bool:
+    """Detect errors that indicate a billing/quota hard-stop (waiting won't help)."""
+
+    if not isinstance(msg, str) or not msg.strip():
+        return False
+    low = msg.lower()
+    quota_markers = (
+        "insufficient_quota",
+        "exceeded your current quota",
+        "quota has been exceeded",
+        "billing",
+        "hard limit",
+        "billing limit",
+        "check your plan and billing",
+        "add a payment method",
+        "your account is not active",
+    )
+    return any(m in low for m in quota_markers) and ("usage limit" not in low)
+
+
+def _classify_codex_error_kind(*, stdout: str, stderr: str) -> Optional[str]:
+    """Classify Codex failures into coarse kinds to guide retry vs fail-fast."""
+
+    provider_msg = _extract_first_error_message_from_codex_jsonl(stdout or "")
+    if provider_msg and _is_codex_quota_exceeded_message(provider_msg):
+        return "quota_exceeded"
+
+    combined = "\n".join([p for p in [provider_msg, stdout, stderr] if isinstance(p, str) and p.strip()])
+    if _is_codex_quota_exceeded_message(combined):
+        return "quota_exceeded"
+
+    low = combined.lower() if isinstance(combined, str) else ""
+    if "usage_limit" in low or "usage limit" in low:
+        return "usage_limit"
+    return None
+
+
+def _extract_last_agent_message_from_codex_jsonl(text: str) -> Optional[str]:
+    """Extract the most recent agent message from Codex --json (JSONL) stdout."""
+
+    if not isinstance(text, str) or not text.strip():
+        return None
+
+    def _extract_text_from_message_like(obj: object) -> Optional[str]:
+        if not isinstance(obj, dict):
+            return None
+
+        obj_type = obj.get("type")
+
+        if obj_type in ("agent_message", "assistant_message"):
+            txt = obj.get("text")
+            if isinstance(txt, str) and txt.strip():
+                return txt
+
+        if obj_type == "message" and obj.get("role") == "assistant":
+            content = obj.get("content")
+            if isinstance(content, list):
+                parts: list[str] = []
+                for chunk in content:
+                    if not isinstance(chunk, dict):
+                        continue
+                    if chunk.get("type") in ("output_text", "text"):
+                        chunk_text = chunk.get("text")
+                        if isinstance(chunk_text, str) and chunk_text.strip():
+                            parts.append(chunk_text)
+                joined = "".join(parts).strip()
+                return joined if joined else None
+
+            txt = obj.get("text")
+            if isinstance(txt, str) and txt.strip():
+                return txt
+
+        return None
+
+    last: Optional[str] = None
+    for line in (text or "").splitlines():
+        line = line.strip()
+        if not line or not (line.startswith("{") and line.endswith("}")):
+            continue
+        try:
+            obj = json.loads(line)
+        except Exception:
+            continue
+
+        if isinstance(obj, dict) and obj.get("type") == "item.completed":
+            item = obj.get("item")
+            extracted = _extract_text_from_message_like(item)
+            if isinstance(extracted, str) and extracted.strip():
+                last = extracted
+            continue
+
+        if isinstance(obj, dict):
+            extracted = _extract_text_from_message_like(obj.get("item"))
+            if not extracted:
+                extracted = _extract_text_from_message_like(obj.get("message"))
+            if not extracted:
+                extracted = _extract_text_from_message_like(obj)
+            if isinstance(extracted, str) and extracted.strip():
+                last = extracted
+
+    return last.strip() if isinstance(last, str) and last.strip() else None
+
+
 def get_accelerate_manager(
     *,
     deps: Optional[RouterDeps] = None,
@@ -320,11 +509,33 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 def _clean_copilot_output(text: str) -> str:
     cleaned = (text or "").strip()
+    # Do not strip patch markers; they are semantically meaningful.
+    if cleaned.lstrip().startswith("*** Begin Patch"):
+        return cleaned.strip()
     cleaned = _LEADING_MARKER_RE.sub("", cleaned).strip()
     cleaned = unescape(cleaned)
     if "<" in cleaned and ">" in cleaned:
         cleaned = _HTML_TAG_RE.sub("", cleaned)
     return cleaned.strip()
+
+
+def _clean_codex_output(text: str) -> str:
+    cleaned = (text or "").strip()
+    if cleaned.lstrip().startswith("*** Begin Patch"):
+        return cleaned.strip()
+    cleaned = _LEADING_MARKER_RE.sub("", cleaned).strip()
+    cleaned = unescape(cleaned)
+    if "<" in cleaned and ">" in cleaned:
+        cleaned = _HTML_TAG_RE.sub("", cleaned)
+    return cleaned.strip()
+
+
+def _clean_claude_output(text: str) -> str:
+    return _clean_codex_output(text)
+
+
+def _clean_gemini_output(text: str) -> str:
+    return _clean_codex_output(text)
 
 
 def _cli_available(command: str) -> bool:
@@ -344,6 +555,7 @@ def _run_cli_command(
     *,
     timeout_seconds: float = 120.0,
     template_vars: Optional[Dict[str, str]] = None,
+    label: Optional[str] = None,
 ) -> str:
     if not command:
         raise RuntimeError("CLI command not configured")
@@ -361,17 +573,22 @@ def _run_cli_command(
         cmd = shlex.split(rendered)
         input_text = prompt
 
-    proc = subprocess.run(
-        cmd,
-        input=input_text,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=timeout_seconds,
-        env=os.environ.copy(),
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            input=input_text,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+            env=os.environ.copy(),
+        )
+    except FileNotFoundError as exc:
+        name = (label or "CLI").strip() or "CLI"
+        raise LLMRouterError(f"{name} not found on PATH") from exc
     if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or "CLI command failed")
+        name = (label or "CLI").strip() or "CLI"
+        raise LLMRouterError(proc.stderr.strip() or f"{name} command failed")
     return (proc.stdout or "").strip()
 
 
@@ -485,6 +702,12 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             skip_git_repo_check = os.getenv("IPFS_DATASETS_PY_CODEX_SKIP_GIT_REPO_CHECK", "1") != "0"
             timeout = float(kwargs.get("timeout", 180))
 
+            trace_jsonl_path = kwargs.pop("trace_jsonl_path", None)
+            trace_dir = kwargs.pop("trace_dir", None)
+            trace_enabled = bool(kwargs.pop("trace", False) or trace_jsonl_path or trace_dir)
+
+            json_mode = bool(trace_enabled or kwargs.pop("json", False))
+
             with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as last_msg:
                 last_msg_path = last_msg.name
 
@@ -496,6 +719,8 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
             if model:
                 cmd.extend(["-m", model])
             cmd.extend(["--output-last-message", last_msg_path])
+            if json_mode:
+                cmd.append("--json")
             cmd.append("-")
 
             try:
@@ -508,7 +733,7 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     timeout=timeout,
                 )
             except FileNotFoundError as exc:
-                raise RuntimeError("codex CLI not found on PATH") from exc
+                raise LLMRouterError("codex CLI not found on PATH") from exc
 
             try:
                 with open(last_msg_path, "r", encoding="utf-8", errors="replace") as handle:
@@ -522,8 +747,30 @@ def _get_codex_cli_provider() -> Optional[LLMProvider]:
                     pass
 
             if proc.returncode == 0 or text_out:
-                return text_out
-            raise RuntimeError(proc.stderr.strip() or "codex exec failed")
+                if json_mode and proc.stdout:
+                    extracted = _extract_last_agent_message_from_codex_jsonl(proc.stdout)
+                    if extracted:
+                        return _clean_codex_output(extracted)
+                return _clean_codex_output(text_out)
+
+            if trace_enabled and proc.stdout and isinstance(trace_jsonl_path, str) and trace_jsonl_path.strip():
+                try:
+                    os.makedirs(os.path.dirname(trace_jsonl_path.strip()) or ".", exist_ok=True)
+                    with open(trace_jsonl_path.strip(), "a", encoding="utf-8") as handle:
+                        handle.write(proc.stdout)
+                        if not proc.stdout.endswith("\n"):
+                            handle.write("\n")
+                except OSError:
+                    pass
+
+            kind = _classify_codex_error_kind(stdout=proc.stdout or "", stderr=proc.stderr or "")
+            resets = _extract_resets_in_seconds_from_codex_jsonl(proc.stdout or "")
+            if kind == "quota_exceeded":
+                raise LLMRouterError("Codex quota exceeded (billing/plan hard limit)")
+            if kind == "usage_limit":
+                suffix = f" (resets in ~{resets}s)" if isinstance(resets, int) else ""
+                raise LLMRouterError(f"Codex usage limit reached{suffix}")
+            raise LLMRouterError(proc.stderr.strip() or "codex exec failed")
 
     return _CodexCLIProvider()
 
@@ -568,6 +815,7 @@ def _get_copilot_cli_provider() -> Optional[LLMProvider]:
                         prompt,
                         timeout_seconds=timeout,
                         template_vars={"model": model},
+                        label="Copilot CLI",
                     )
                 )
 
@@ -736,7 +984,49 @@ def _get_gemini_cli_provider() -> Optional[LLMProvider]:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             _ = model_name
             timeout = float(kwargs.get("timeout", 180))
-            return _run_cli_command(command, prompt, timeout_seconds=timeout)
+
+            gemini_cmd = kwargs.pop("gemini_cmd", None)
+            if isinstance(gemini_cmd, list) and gemini_cmd:
+                base_cmd = [str(x) for x in gemini_cmd]
+                rendered = None
+            elif isinstance(gemini_cmd, str) and gemini_cmd.strip():
+                rendered = gemini_cmd.strip()
+                base_cmd = shlex.split(rendered)
+            else:
+                rendered = command
+                base_cmd = shlex.split(rendered)
+
+            def _run(cmd_list: list[str]) -> subprocess.CompletedProcess[str]:
+                return subprocess.run(
+                    cmd_list,
+                    input=str(prompt),
+                    text=True,
+                    capture_output=True,
+                    check=False,
+                    timeout=timeout,
+                    env=os.environ.copy(),
+                )
+
+            try:
+                proc = _run(base_cmd)
+            except FileNotFoundError as exc:
+                raise LLMRouterError("Gemini CLI not found on PATH") from exc
+
+            if proc.returncode == 0:
+                return _clean_gemini_output(proc.stdout or "")
+
+            stderr = (proc.stderr or "")
+            # Known failure mode when running on Node.js v18.
+            node18_regex_error = ("invalid regular expression flags" in stderr.lower()) and ("node.js v18" in stderr.lower())
+            if node18_regex_error:
+                try:
+                    proc2 = _run(base_cmd)
+                except FileNotFoundError as exc:
+                    raise LLMRouterError("Gemini CLI not found on PATH") from exc
+                if proc2.returncode == 0:
+                    return _clean_gemini_output(proc2.stdout or "")
+
+            raise LLMRouterError(stderr.strip() or "Gemini CLI failed")
 
     return _GeminiCLIProvider()
 
@@ -769,7 +1059,7 @@ def _get_claude_code_provider() -> Optional[LLMProvider]:
         def generate(self, prompt: str, *, model_name: Optional[str] = None, **kwargs: object) -> str:
             _ = model_name
             timeout = float(kwargs.get("timeout", 180))
-            return _run_cli_command(command, prompt, timeout_seconds=timeout)
+            return _clean_claude_output(_run_cli_command(command, prompt, timeout_seconds=timeout, label="Claude Code CLI"))
 
     return _ClaudeCodeProvider()
 
@@ -1061,39 +1351,57 @@ def _get_mock_provider() -> LLMProvider:
 
 
 def _resolve_provider_uncached(preferred: Optional[str], *, deps: RouterDeps) -> LLMProvider:
-    if preferred:
-        if preferred in {"ipfs_accelerate_py", "accelerate"}:
+    preferred_value = (preferred or "").strip()
+    if preferred_value:
+        name = preferred_value.lower()
+        if name in {"ipfs_accelerate_py", "accelerate"}:
             accelerate_provider = _get_accelerate_provider(deps)
             if accelerate_provider is None:
-                raise RuntimeError(
+                raise LLMRouterError(
                     "Accelerate provider not available. Set IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE=1 and ensure ipfs_accelerate_py is installed/configured."
                 )
             return accelerate_provider
-        info = _PROVIDER_REGISTRY.get(preferred)
+
+        info = _PROVIDER_REGISTRY.get(name)
         if info is not None:
             return info.factory()
-        builtin = _builtin_provider_by_name(preferred)
+
+        if name == "copilot_sdk":
+            builtin = _get_copilot_sdk_provider()
+            if builtin is None:
+                raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
+            return builtin
+
+        builtin = _builtin_provider_by_name(name)
         if builtin is not None:
             return builtin
-        raise ValueError(f"Unknown LLM provider: {preferred}")
+        raise ValueError(f"Unknown LLM provider: {preferred_value}")
 
     forced = os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER", "").strip()
     if forced:
-        if forced in {"ipfs_accelerate_py", "accelerate"}:
+        forced_name = forced.strip().lower()
+        if forced_name in {"ipfs_accelerate_py", "accelerate"}:
             accelerate_provider = _get_accelerate_provider(deps)
             if accelerate_provider is None:
-                raise RuntimeError(
+                raise LLMRouterError(
                     "Accelerate provider not available. Set IPFS_DATASETS_PY_ENABLE_IPFS_ACCELERATE=1 and ensure ipfs_accelerate_py is installed/configured."
                 )
             return accelerate_provider
-        info = _PROVIDER_REGISTRY.get(forced)
+
+        info = _PROVIDER_REGISTRY.get(forced_name)
         if info is not None:
             return info.factory()
-        builtin = _builtin_provider_by_name(forced)
+
+        if forced_name == "copilot_sdk":
+            builtin = _get_copilot_sdk_provider()
+            if builtin is None:
+                raise LLMRouterError("Copilot Python SDK not installed (optional dependency).")
+            return builtin
+
+        builtin = _builtin_provider_by_name(forced_name)
         if builtin is not None:
             return builtin
         raise ValueError(f"Unknown LLM provider: {forced}")
-
     accelerate_provider = _get_accelerate_provider(deps)
     if accelerate_provider is not None:
         return accelerate_provider
