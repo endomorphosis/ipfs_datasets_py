@@ -29,7 +29,7 @@ The functionality is exposed through multiple interfaces:
 
 ```bash
 cd /path/to/ipfs_datasets_py
-git submodule update --init --recursive
+git submodule update --init
 ```
 
 The submodule is located at:
@@ -328,7 +328,7 @@ The tests verify:
 
 **Solution:**
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 cd ipfs_datasets_py/web_archiving/common_crawl_search_engine
 pip install -e .
 ```

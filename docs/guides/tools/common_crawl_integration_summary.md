@@ -263,7 +263,7 @@ register_dashboard_routes(app, prefix="/subdashboard/common-crawl")
 
 **Setup**:
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 cd ipfs_datasets_py/web_archiving/common_crawl_search_engine
 pip install -e .
 ```
@@ -405,7 +405,7 @@ All modules include comprehensive docstrings:
 
 ## Next Steps
 
-1. **Initialize Submodule**: `git submodule update --init --recursive`
+1. **Initialize Submodule**: `git submodule update --init`
 2. **Install Dependencies**: `cd ipfs_datasets_py/web_archiving/common_crawl_search_engine && pip install -e .`
 3. **Run Demo**: `python scripts/demo/demonstrate_common_crawl_integration.py`
 4. **Read Documentation**: `docs/common_crawl_integration.md`

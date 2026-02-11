@@ -47,7 +47,7 @@ async def search_common_crawl_advanced(
             return {
                 "status": "error",
                 "error": "Common Crawl Search Engine submodule not available. "
-                        "Run: git submodule update --init --recursive",
+                        "Run: git submodule update --init",
                 "fallback_available": True,
                 "fallback_tool": "search_common_crawl"
             }

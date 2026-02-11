@@ -135,7 +135,7 @@ class CommonCrawlSearchEngine:
             logger.info("Common Crawl Search Engine initialized in local mode")
         except ImportError as e:
             logger.warning(f"Common Crawl Search Engine not available in local mode: {e}")
-            logger.info("Make sure to initialize the submodule: git submodule update --init --recursive")
+            logger.info("Make sure to initialize the submodule: git submodule update --init")
             self.api = None
             self._available = False
     

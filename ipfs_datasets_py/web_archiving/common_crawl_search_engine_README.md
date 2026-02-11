@@ -9,7 +9,7 @@ This directory contains the `common_crawl_search_engine` submodule, which provid
 If you just cloned this repository, initialize the submodule:
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 ```
 
 ### 2. Install Dependencies

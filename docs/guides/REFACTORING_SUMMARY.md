@@ -418,7 +418,7 @@ git pull origin main
 
 2. **Update submodules:**
    ```bash
-   git submodule update --init --recursive --remote
+   git submodule update --init --remote
    ```
 
 3. **Run tests:**

@@ -86,10 +86,10 @@ $ pip install -e ./ipfs_kit_py --dry-run
 ### Development Installation
 ```bash
 # Clone repository with submodules
-git clone --recursive https://github.com/endomorphosis/ipfs_datasets_py.git
+git clone https://github.com/endomorphosis/ipfs_datasets_py.git
 
 # Or if already cloned, initialize submodules
-git submodule update --init --recursive
+git submodule update --init
 
 # Install with local submodule
 pip install -e .

@@ -135,7 +135,7 @@ A: Possibly in v0.5.0 or later. We'll provide advance notice if/when this happen
 
 A: While not recommended, you can initialize them with:
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 ```
 
 However, we **strongly recommend** using the native backend instead.

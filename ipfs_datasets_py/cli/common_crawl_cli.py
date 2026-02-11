@@ -98,7 +98,7 @@ def handle_search_command(args):
             else:
                 print(f"Error: Common Crawl Search Engine not available in {mode} mode")
                 if mode == "local":
-                    print("Hint: Initialize the submodule with: git submodule update --init --recursive")
+                    print("Hint: Initialize the submodule with: git submodule update --init")
                 elif mode == "remote":
                     print(f"Hint: Ensure MCP server is running at: {endpoint}")
             sys.exit(1)

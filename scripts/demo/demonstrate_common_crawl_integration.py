@@ -28,7 +28,7 @@ def demo_local_mode():
         
         if not engine.is_available():
             print("\n   ⚠ Submodule not initialized. Run:")
-            print("   git submodule update --init --recursive")
+            print("   git submodule update --init")
             return
         
         # Example: Search for a domain
