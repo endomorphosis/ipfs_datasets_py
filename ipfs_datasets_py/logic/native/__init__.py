@@ -242,3 +242,27 @@ except ImportError:
 
 # Update version to 0.7.0 for Phase 4D
 __version__ = "0.7.0"
+
+# Phase 4D: Problem file parser
+try:
+    from .problem_parser import (
+        TPTPParser,
+        CustomProblemParser,
+        ProblemParser,
+        TPTPFormula,
+        parse_problem_file,
+        parse_problem_string,
+    )
+    
+    __all__.extend([
+        "TPTPParser",
+        "CustomProblemParser",
+        "ProblemParser",
+        "TPTPFormula",
+        "parse_problem_file",
+        "parse_problem_string",
+    ])
+    
+    PROBLEM_PARSER_AVAILABLE = True
+except ImportError:
+    PROBLEM_PARSER_AVAILABLE = False
