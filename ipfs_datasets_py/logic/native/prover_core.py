@@ -1089,3 +1089,255 @@ class Idempotence(InferenceRule):
                         # P∨P... or P∧P... becomes P
                         results.append(f.formulas[0])
         return results
+
+
+class BiconditionalIntroduction(InferenceRule):
+    """Biconditional Introduction: From (P→Q) and (Q→P), derive (P↔Q)."""
+    
+    def name(self) -> str:
+        return "Biconditional Introduction"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for two implications that are converses
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
+                        if len(f1.formulas) == 2 and len(f2.formulas) == 2:
+                            # Check if f1 is P→Q and f2 is Q→P
+                            if (self._formulas_equal(f1.formulas[0], f2.formulas[1]) and
+                                self._formulas_equal(f1.formulas[1], f2.formulas[0])):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
+                        if len(f1.formulas) == 2 and len(f2.formulas) == 2:
+                            if (self._formulas_equal(f1.formulas[0], f2.formulas[1]) and
+                                self._formulas_equal(f1.formulas[1], f2.formulas[0])):
+                                # (P→Q) and (Q→P) gives (P↔Q)
+                                result = ConnectiveFormula(LogicalConnective.BICONDITIONAL, 
+                                                          [f1.formulas[0], f1.formulas[1]])
+                                results.append(result)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class BiconditionalElimination(InferenceRule):
+    """Biconditional Elimination: From (P↔Q), derive (P→Q) and (Q→P)."""
+    
+    def name(self) -> str:
+        return "Biconditional Elimination"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.BICONDITIONAL
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.BICONDITIONAL:
+                if len(f.formulas) == 2:
+                    # (P↔Q) gives (P→Q) and (Q→P)
+                    impl1 = ConnectiveFormula(LogicalConnective.IMPLIES, [f.formulas[0], f.formulas[1]])
+                    impl2 = ConnectiveFormula(LogicalConnective.IMPLIES, [f.formulas[1], f.formulas[0]])
+                    results.extend([impl1, impl2])
+        return results
+
+
+class ConstructiveDilemma(InferenceRule):
+    """Constructive Dilemma: From (P→Q), (R→S), and (P∨R), derive (Q∨S)."""
+    
+    def name(self) -> str:
+        return "Constructive Dilemma"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if we have two implications and a disjunction matching their antecedents
+        has_disjunction = False
+        has_implications = 0
+        
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
+                has_disjunction = True
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                has_implications += 1
+        
+        return has_disjunction and has_implications >= 2
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        
+        # Find implications and disjunctions
+        implications = [f for f in formulas 
+                       if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        disjunctions = [f for f in formulas
+                       if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR]
+        
+        for disj in disjunctions:
+            if len(disj.formulas) == 2:
+                p_or_r = disj.formulas
+                
+                # Find matching implications
+                for i, impl1 in enumerate(implications):
+                    for impl2 in implications[i+1:]:
+                        if len(impl1.formulas) == 2 and len(impl2.formulas) == 2:
+                            # Check if antecedents match the disjunction
+                            if ((self._formulas_equal(impl1.formulas[0], p_or_r[0]) and
+                                 self._formulas_equal(impl2.formulas[0], p_or_r[1])) or
+                                (self._formulas_equal(impl1.formulas[0], p_or_r[1]) and
+                                 self._formulas_equal(impl2.formulas[0], p_or_r[0]))):
+                                # Create Q∨S
+                                result = ConnectiveFormula(LogicalConnective.OR,
+                                                          [impl1.formulas[1], impl2.formulas[1]])
+                                results.append(result)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class DestructiveDilemma(InferenceRule):
+    """Destructive Dilemma: From (P→Q), (R→S), and (¬Q∨¬S), derive (¬P∨¬R)."""
+    
+    def name(self) -> str:
+        return "Destructive Dilemma"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if we have two implications and a disjunction of negations
+        has_neg_disjunction = False
+        has_implications = 0
+        
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
+                # Check if disjuncts are negations
+                if len(f.formulas) == 2:
+                    if (isinstance(f.formulas[0], ConnectiveFormula) and f.formulas[0].connective == LogicalConnective.NOT and
+                        isinstance(f.formulas[1], ConnectiveFormula) and f.formulas[1].connective == LogicalConnective.NOT):
+                        has_neg_disjunction = True
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                has_implications += 1
+        
+        return has_neg_disjunction and has_implications >= 2
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        
+        implications = [f for f in formulas
+                       if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for disj in formulas:
+            if isinstance(disj, ConnectiveFormula) and disj.connective == LogicalConnective.OR:
+                if len(disj.formulas) == 2:
+                    if (isinstance(disj.formulas[0], ConnectiveFormula) and disj.formulas[0].connective == LogicalConnective.NOT and
+                        isinstance(disj.formulas[1], ConnectiveFormula) and disj.formulas[1].connective == LogicalConnective.NOT):
+                        
+                        neg_q = disj.formulas[0]
+                        neg_s = disj.formulas[1]
+                        
+                        if len(neg_q.formulas) == 1 and len(neg_s.formulas) == 1:
+                            q = neg_q.formulas[0]
+                            s = neg_s.formulas[0]
+                            
+                            # Find matching implications
+                            for i, impl1 in enumerate(implications):
+                                for impl2 in implications[i+1:]:
+                                    if len(impl1.formulas) == 2 and len(impl2.formulas) == 2:
+                                        if ((self._formulas_equal(impl1.formulas[1], q) and
+                                             self._formulas_equal(impl2.formulas[1], s)) or
+                                            (self._formulas_equal(impl1.formulas[1], s) and
+                                             self._formulas_equal(impl2.formulas[1], q))):
+                                            # Create ¬P∨¬R
+                                            not_p = ConnectiveFormula(LogicalConnective.NOT, [impl1.formulas[0]])
+                                            not_r = ConnectiveFormula(LogicalConnective.NOT, [impl2.formulas[0]])
+                                            result = ConnectiveFormula(LogicalConnective.OR, [not_p, not_r])
+                                            results.append(result)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class TautologyIntroduction(InferenceRule):
+    """Tautology Introduction: From P, derive P∨¬P (law of excluded middle)."""
+    
+    def name(self) -> str:
+        return "Tautology Introduction"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Can always introduce a tautology
+        return len(formulas) > 0
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            # For any P, add P∨¬P
+            not_f = ConnectiveFormula(LogicalConnective.NOT, [f])
+            tautology = ConnectiveFormula(LogicalConnective.OR, [f, not_f])
+            results.append(tautology)
+        return results[:1]  # Just return one tautology to avoid explosion
+
+
+class ContradictionElimination(InferenceRule):
+    """Contradiction Elimination (Ex Falso Quodlibet): From P∧¬P, derive any Q."""
+    
+    def name(self) -> str:
+        return "Contradiction Elimination"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for contradictions P and ¬P
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.NOT:
+                    if len(f2.formulas) == 1:
+                        if self._formulas_equal(f1, f2.formulas[0]):
+                            return True
+        
+        # Also check for explicit P∧¬P
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
+                for i, sub1 in enumerate(f.formulas):
+                    for sub2 in f.formulas[i+1:]:
+                        if isinstance(sub2, ConnectiveFormula) and sub2.connective == LogicalConnective.NOT:
+                            if len(sub2.formulas) == 1:
+                                if self._formulas_equal(sub1, sub2.formulas[0]):
+                                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # If we have a contradiction, we could derive anything
+        # For practical purposes, just return an empty list or a marker
+        # In a real system, this would be handled by the proof strategy
+        return []
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class ConjunctionElimination(InferenceRule):
+    """Conjunction Elimination: From P∧Q, derive both P and Q separately.
+    This is similar to Simplification but explicitly derives both."""
+    
+    def name(self) -> str:
+        return "Conjunction Elimination"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
+                # Return all conjuncts
+                results.extend(f.formulas)
+        return results
