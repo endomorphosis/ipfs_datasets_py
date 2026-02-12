@@ -169,7 +169,7 @@ class EngDCECWrapper:
                 
                 result = ConversionResult(
                     english_text=english_text,
-                    dcec_formula=native_result.dcec_formula,
+                    dcec_formula=native_result.dcec_formula.to_string() if native_result.dcec_formula else None,
                     parse_trees=[str(native_result.dcec_formula)] if native_result.dcec_formula else None,
                     success=native_result.success,
                     error_message=native_result.error_message,

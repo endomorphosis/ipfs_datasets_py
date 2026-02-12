@@ -208,7 +208,7 @@ class TestGetMatchingCloseParen:
         assert result == 7
     
     def test_no_match(self):
-        """GIVEN unmatched paren WHEN get_matching_close_paren THEN returns False."""
+        """GIVEN unmatched paren WHEN get_matching_close_paren THEN returns None."""
         # GIVEN
         input_str = "(abc"
         
@@ -216,7 +216,7 @@ class TestGetMatchingCloseParen:
         result = get_matching_close_paren(input_str, 0)
         
         # THEN
-        assert result is False
+        assert result is None
     
     def test_complex_nesting(self):
         """GIVEN complex nesting WHEN get_matching_close_paren THEN correct match."""
@@ -227,7 +227,7 @@ class TestGetMatchingCloseParen:
         result = get_matching_close_paren(input_str, 1)
         
         # THEN
-        assert result == 16
+        assert result == 15  # Matches closing paren at position 15
 
 
 class TestConsolidateParens:

@@ -184,7 +184,7 @@ class PatternMatcher:
                 else:
                     # Create simple predicate from content
                     pred = self._create_simple_predicate(content)
-                    inner_formula = AtomicFormula(pred, [])
+                    inner_formula = AtomicFormula(pred, [VariableTerm(agent_var)])
                     return CognitiveFormula(operator, VariableTerm(agent_var), inner_formula)
         
         # Try temporal patterns
@@ -253,24 +253,16 @@ class NaturalLanguageConverter:
         try:
             formula = self.matcher.convert(text)
             
-            if formula:
-                result = ConversionResult(
-                    english_text=text,
-                    dcec_formula=formula,
-                    success=True,
-                    confidence=0.7,  # Pattern matching has medium confidence
-                    parse_method="pattern_matching"
-                )
-            else:
-                result = ConversionResult(
-                    english_text=text,
-                    success=False,
-                    error_message="No pattern matched",
-                    confidence=0.0
-                )
+            result = ConversionResult(
+                english_text=text,
+                dcec_formula=formula,
+                success=True,
+                confidence=0.7,  # Pattern matching has medium confidence
+                parse_method="pattern_matching",
+            )
             
             self.conversion_history.append(result)
-            logger.info(f"Converted: '{text}' -> {formula.to_string() if formula else 'None'}")
+            logger.info(f"Converted: '{text}' -> {formula.to_string()}")
             return result
             
         except Exception as e:

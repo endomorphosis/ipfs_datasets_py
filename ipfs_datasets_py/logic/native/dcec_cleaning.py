@@ -129,7 +129,7 @@ def consolidate_parens(expression: str) -> str:
         second_paren_b = get_matching_close_paren(temp, first_paren_b)
         
         # If both the open parens and the close parens match, one set is unnecessary
-        if second_paren_a is not False and second_paren_b is not False:
+        if second_paren_a is not None and second_paren_b is not None:
             if second_paren_a == second_paren_b + 1:
                 delete_list.append(first_paren_a)
                 delete_list.append(second_paren_a)
@@ -191,7 +191,7 @@ def get_matching_close_paren(input_str: str, open_paren_index: int = 0) -> Optio
     current_index = open_paren_index
     
     if current_index == -1:
-        return False
+        return None
     
     while paren_counter > 0:
         close_index = input_str.find(")", current_index + 1)
@@ -204,7 +204,7 @@ def get_matching_close_paren(input_str: str, open_paren_index: int = 0) -> Optio
             current_index = close_index
             paren_counter -= 1
         else:
-            return False
+            return None
     
     return current_index
 
@@ -257,7 +257,7 @@ def tuck_functions(expression: str) -> str:
                 close_paren_place = get_matching_close_paren(
                     expression, func_start + len(funcname)
                 )
-                if close_paren_place is not False:
+                if close_paren_place is not None:
                     expression = (
                         expression[:func_start]
                         + expression[func_start:close_paren_place]

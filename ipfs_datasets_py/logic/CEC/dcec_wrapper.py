@@ -130,7 +130,7 @@ class DCECLibraryWrapper:
             return False
     
     @beartype
-    def add_statement(self, statement: str, label: Optional[str] = None, is_axiom: bool = False) -> DCECStatement:
+    def add_statement(self, statement: Union[str, Any], label: Optional[str] = None, is_axiom: bool = False) -> DCECStatement:
         """
         Add a DCEC statement to the container.
         
