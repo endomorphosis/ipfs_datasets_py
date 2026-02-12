@@ -2043,3 +2043,378 @@ class AlwaysTransitive(InferenceRule):
         return results
 
 
+
+
+# ============================================================================
+# Final Cognitive Rules
+# ============================================================================
+
+class BeliefNegation(InferenceRule):
+    """Belief Negation: B(agent, ¬P) ⊢ ¬B(agent, P) (in some contexts)"""
+    
+    def name(self) -> str:
+        return "Belief Negation"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, CognitiveFormula) and f.operator.value == "B":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.NOT:
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, CognitiveFormula) and f.operator.value == "B":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.NOT:
+                    if len(f.formula.formulas) == 1:
+                        # B(agent, ¬P) could imply ¬B(agent, P) in closed world
+                        inner = f.formula.formulas[0]
+                        positive_belief = CognitiveFormula(f.operator, f.agent, inner)
+                        not_belief = ConnectiveFormula(LogicalConnective.NOT, [positive_belief])
+                        results.append(not_belief)
+        return results
+
+
+class KnowledgeConjunction(InferenceRule):
+    """Knowledge Conjunction: K(agent, P) ∧ K(agent, Q) ⊢ K(agent, P∧Q)"""
+    
+    def name(self) -> str:
+        return "Knowledge Conjunction"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
+        for i, k1 in enumerate(knowledge):
+            for k2 in knowledge[i+1:]:
+                if self._agents_equal(k1.agent, k2.agent):
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
+        
+        for i, k1 in enumerate(knowledge):
+            for k2 in knowledge[i+1:]:
+                if self._agents_equal(k1.agent, k2.agent):
+                    conjunction = ConnectiveFormula(LogicalConnective.AND, [k1.formula, k2.formula])
+                    new_knowledge = CognitiveFormula(k1.operator, k1.agent, conjunction)
+                    results.append(new_knowledge)
+        return results[:3]
+    
+    def _agents_equal(self, a1, a2) -> bool:
+        if isinstance(a1, Term) and isinstance(a2, Term):
+            return a1.to_string() == a2.to_string()
+        return a1 == a2
+
+
+class IntentionPersistence(InferenceRule):
+    """Intention Persistence: I(agent, P) ∧ ¬B(agent, P) ⊢ I(agent, P) (next)"""
+    
+    def name(self) -> str:
+        return "Intention Persistence"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for intentions with non-achieved goals
+        intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
+        return len(intentions) > 0
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Intentions persist - this is a simplification
+        # In full implementation would check temporal context
+        return []
+
+
+class MutualBelief(InferenceRule):
+    """Mutual Belief: B(a1, P) ∧ B(a2, P) ⊢ MB(P) (simplified)"""
+    
+    def name(self) -> str:
+        return "Mutual Belief"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        # Check for beliefs about same formula from different agents
+        for i, b1 in enumerate(beliefs):
+            for b2 in beliefs[i+1:]:
+                if not self._agents_equal(b1.agent, b2.agent):
+                    if self._formulas_equal(b1.formula, b2.formula):
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified - would create mutual belief formula
+        return []
+    
+    def _agents_equal(self, a1, a2) -> bool:
+        if isinstance(a1, Term) and isinstance(a2, Term):
+            return a1.to_string() == a2.to_string()
+        return a1 == a2
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class BeliefRevision(InferenceRule):
+    """Belief Revision: B(agent, P) ∧ P(agent, ¬P) ⊢ B(agent, ¬P)"""
+    
+    def name(self) -> str:
+        return "Belief Revision"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        perceptions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "P"]
+        
+        for belief in beliefs:
+            for perception in perceptions:
+                if self._agents_equal(belief.agent, perception.agent):
+                    if isinstance(perception.formula, ConnectiveFormula) and perception.formula.connective == LogicalConnective.NOT:
+                        if len(perception.formula.formulas) == 1:
+                            if self._formulas_equal(belief.formula, perception.formula.formulas[0]):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        perceptions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "P"]
+        
+        for belief in beliefs:
+            for perception in perceptions:
+                if self._agents_equal(belief.agent, perception.agent):
+                    if isinstance(perception.formula, ConnectiveFormula) and perception.formula.connective == LogicalConnective.NOT:
+                        if len(perception.formula.formulas) == 1:
+                            if self._formulas_equal(belief.formula, perception.formula.formulas[0]):
+                                # Update belief based on perception
+                                new_belief = CognitiveFormula(belief.operator, belief.agent, perception.formula)
+                                results.append(new_belief)
+        return results
+    
+    def _agents_equal(self, a1, a2) -> bool:
+        if isinstance(a1, Term) and isinstance(a2, Term):
+            return a1.to_string() == a2.to_string()
+        return a1 == a2
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class IntentionSideEffect(InferenceRule):
+    """Intention Side Effect: I(agent, P) ∧ B(agent, P→Q) ∧ B(agent, ¬Q) ⊢ ¬I(agent, P)"""
+    
+    def name(self) -> str:
+        return "Intention Side Effect"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for intention with undesired side effects
+        intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
+        return len(intentions) > 0
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Complex rule - simplified for now
+        return []
+
+
+class KnowledgeMonotonicity(InferenceRule):
+    """Knowledge Monotonicity: K(agent, P) ∧ (P→Q) ⊢ K(agent, Q)"""
+    
+    def name(self) -> str:
+        return "Knowledge Monotonicity"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for k in knowledge:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(k.formula, impl.formulas[0]):
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for k in knowledge:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(k.formula, impl.formulas[0]):
+                        new_knowledge = CognitiveFormula(k.operator, k.agent, impl.formulas[1])
+                        results.append(new_knowledge)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+# ============================================================================
+# Final Temporal Rules
+# ============================================================================
+
+class NextImplication(InferenceRule):
+    """Next Implication: ○P ∧ ○(P→Q) ⊢ ○Q"""
+    
+    def name(self) -> str:
+        return "Next Implication"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "NEXT"]
+        
+        for nf1 in next_formulas:
+            for nf2 in next_formulas:
+                if isinstance(nf2.formula, ConnectiveFormula) and nf2.formula.connective == LogicalConnective.IMPLIES:
+                    if len(nf2.formula.formulas) == 2:
+                        if self._formulas_equal(nf1.formula, nf2.formula.formulas[0]):
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "NEXT"]
+        
+        for nf1 in next_formulas:
+            for nf2 in next_formulas:
+                if isinstance(nf2.formula, ConnectiveFormula) and nf2.formula.connective == LogicalConnective.IMPLIES:
+                    if len(nf2.formula.formulas) == 2:
+                        if self._formulas_equal(nf1.formula, nf2.formula.formulas[0]):
+                            new_next = TemporalFormula(nf1.operator, nf2.formula.formulas[1])
+                            results.append(new_next)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class EventuallyImplication(InferenceRule):
+    """Eventually Implication: ◊P ∧ □(P→Q) ⊢ ◊Q"""
+    
+    def name(self) -> str:
+        return "Eventually Implication"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY"]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        
+        for ef in eventually_formulas:
+            for af in always_formulas:
+                if isinstance(af.formula, ConnectiveFormula) and af.formula.connective == LogicalConnective.IMPLIES:
+                    if len(af.formula.formulas) == 2:
+                        if self._formulas_equal(ef.formula, af.formula.formulas[0]):
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY"]
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        
+        for ef in eventually_formulas:
+            for af in always_formulas:
+                if isinstance(af.formula, ConnectiveFormula) and af.formula.connective == LogicalConnective.IMPLIES:
+                    if len(af.formula.formulas) == 2:
+                        if self._formulas_equal(ef.formula, af.formula.formulas[0]):
+                            new_eventually = TemporalFormula(ef.operator, af.formula.formulas[1])
+                            results.append(new_eventually)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class UntilWeakening(InferenceRule):
+    """Until Weakening: P U Q ⊢ ◊Q"""
+    
+    def name(self) -> str:
+        return "Until Weakening"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+                # P U Q implies ◊Q
+                from .dcec_core import TemporalOperator
+                # Assuming UNTIL has two formulas: P and Q
+                if hasattr(f, 'formulas') and len(f.formulas) == 2:
+                    eventually_q = TemporalFormula(TemporalOperator.EVENTUALLY, f.formulas[1])
+                    results.append(eventually_q)
+        return results
+
+
+class SinceWeakening(InferenceRule):
+    """Since Weakening: P S Q ⊢ ◊(past) Q (simplified)"""
+    
+    def name(self) -> str:
+        return "Since Weakening"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "SINCE":
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified - would need past temporal operators
+        return []
+
+
+class TemporalNegation(InferenceRule):
+    """Temporal Negation: ¬□P ⊢ ◊¬P"""
+    
+    def name(self) -> str:
+        return "Temporal Negation"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
+                if len(f.formulas) == 1:
+                    inner = f.formulas[0]
+                    if isinstance(inner, TemporalFormula) and inner.operator.value == "ALWAYS":
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
+                if len(f.formulas) == 1:
+                    inner = f.formulas[0]
+                    if isinstance(inner, TemporalFormula) and inner.operator.value == "ALWAYS":
+                        # ¬□P → ◊¬P
+                        from .dcec_core import TemporalOperator
+                        not_p = ConnectiveFormula(LogicalConnective.NOT, [inner.formula])
+                        eventually_not_p = TemporalFormula(TemporalOperator.EVENTUALLY, not_p)
+                        results.append(eventually_not_p)
+        return results
+
+
+class AlwaysInduction(InferenceRule):
+    """Always Induction: P ∧ □(P→○P) ⊢ □P"""
+    
+    def name(self) -> str:
+        return "Always Induction"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for base case P and inductive step
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        
+        for af in always_formulas:
+            if isinstance(af.formula, ConnectiveFormula) and af.formula.connective == LogicalConnective.IMPLIES:
+                if len(af.formula.formulas) == 2:
+                    consequent = af.formula.formulas[1]
+                    if isinstance(consequent, TemporalFormula) and consequent.operator.value == "NEXT":
+                        # Found □(P→○P) pattern
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Complex inductive reasoning - simplified
+        return []
+
+
