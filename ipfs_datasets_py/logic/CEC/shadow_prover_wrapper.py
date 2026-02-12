@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
 
 # Try to import native implementation
 try:
-    from ..native import (
+    from .native import (
         create_prover,
         create_cognitive_prover,
         ModalLogic,

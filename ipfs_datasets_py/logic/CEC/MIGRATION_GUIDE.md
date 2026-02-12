@@ -44,7 +44,7 @@ result = container.parse("P AND Q")
 
 #### After (Native Python 3):
 ```python
-from ipfs_datasets_py.logic.native import parse_dcec_string
+from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
 
 # Pure Python 3, type-safe
 formula = parse_dcec_string("P AND Q")
@@ -64,7 +64,7 @@ result = prover.prove(goal, assumptions)
 
 #### After (Native Python 3):
 ```python
-from ipfs_datasets_py.logic.native import Prover, ProofAttempt
+from ipfs_datasets_py.logic.CEC.native import Prover, ProofAttempt
 
 # Pure Python, 87 inference rules
 prover = Prover()
@@ -88,7 +88,7 @@ formula = eng_dcec.parse_Simple("The agent must work")
 
 #### After (Native Python 3):
 ```python
-from ipfs_datasets_py.logic.native import create_dcec_grammar
+from ipfs_datasets_py.logic.CEC.native import create_dcec_grammar
 
 # Pure Python, grammar-based
 grammar = create_dcec_grammar()
@@ -108,7 +108,7 @@ result = prover.prove_k(formula)
 
 #### After (Native Python 3):
 ```python
-from ipfs_datasets_py.logic.native import create_prover, ModalLogic
+from ipfs_datasets_py.logic.CEC.native import create_prover, ModalLogic
 
 # Pure Python
 prover = create_prover(ModalLogic.K)
@@ -132,7 +132,7 @@ from ipfs_datasets_py.logic.CEC import EngDCEC
 With new imports:
 ```python
 # New
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     Prover,
     create_dcec_grammar,
@@ -281,7 +281,7 @@ ImportError: No module named 'DCEC_Library'
 **Solution:**
 ```python
 # Use native implementation
-from ipfs_datasets_py.logic.native import parse_dcec_string
+from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
 ```
 
 ### Issue 2: Type Mismatches
@@ -309,7 +309,7 @@ RuntimeError: SPASS binary not found
 **Solution:**
 ```python
 # Use native prover (no binary needed)
-from ipfs_datasets_py.logic.native import Prover
+from ipfs_datasets_py.logic.CEC.native import Prover
 prover = Prover()  # Pure Python
 ```
 
@@ -405,19 +405,19 @@ framework = CECFramework(prefer_native=False)
 Start with non-critical components:
 ```python
 # Phase 1: Migrate parsing
-from ipfs_datasets_py.logic.native import parse_dcec_string
+from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
 
 # Phase 2: Keep proving on old system temporarily
 from ipfs_datasets_py.logic.CEC.Talos import talos
 
 # Phase 3: Migrate proving when ready
-from ipfs_datasets_py.logic.native import Prover
+from ipfs_datasets_py.logic.CEC.native import Prover
 ```
 
 ### 2. Use Type Hints
 
 ```python
-from ipfs_datasets_py.logic.native import Formula
+from ipfs_datasets_py.logic.CEC.native import Formula
 
 def process_formula(formula: Formula) -> str:
     """Type hints help catch migration issues."""
@@ -445,9 +445,9 @@ def test_compatibility():
 ## Support & Resources
 
 ### Documentation
-- **API Reference:** See docstrings in `ipfs_datasets_py/logic/native/`
+- **API Reference:** See docstrings in `ipfs_datasets_py/logic/CEC/native/`
 - **Examples:** See `scripts/demo/`
-- **Tests:** See `tests/unit_tests/logic/native/`
+- **Tests:** See `tests/unit_tests/logic/CEC/native/`
 
 ### Getting Help
 - Check Phase 4 documentation in `ipfs_datasets_py/logic/CEC/`

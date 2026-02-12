@@ -7,11 +7,11 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 import pytest
 import tempfile
 import os
-from ipfs_datasets_py.logic.native.problem_parser import (
+from ipfs_datasets_py.logic.CEC.native.problem_parser import (
     TPTPParser, CustomProblemParser, ProblemParser, TPTPFormula,
     parse_problem_file, parse_problem_string
 )
-from ipfs_datasets_py.logic.native.shadow_prover import ModalLogic
+from ipfs_datasets_py.logic.CEC.native.shadow_prover import ModalLogic
 
 
 class TestTPTPFormula:

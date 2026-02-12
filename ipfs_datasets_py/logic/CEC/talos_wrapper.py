@@ -8,7 +8,7 @@ Talos manages proof generation, proof trees, and interaction with
 the SPASS automated theorem prover.
 
 This wrapper now supports both:
-1. Native Python 3 theorem prover (preferred, from ipfs_datasets_py.logic.native)
+1. Native Python 3 theorem prover (preferred, from ipfs_datasets_py.logic.CEC.native)
 2. Python 2 submodule fallback (Talos/SPASS)
 """
 
@@ -107,7 +107,7 @@ class TalosWrapper:
         # Try native implementation first if requested
         if self.use_native:
             try:
-                from ipfs_datasets_py.logic.native import TheoremProver
+                from ipfs_datasets_py.logic.CEC.native import TheoremProver
                 
                 self.prover = TheoremProver()
                 self._initialized = True

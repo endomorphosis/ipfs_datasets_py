@@ -160,7 +160,7 @@ Phase 4D (ShadowProver Port) has been successfully completed with **3,050+ LOC**
 ### Modal Logic Proving
 
 ```python
-from ipfs_datasets_py.logic.native import create_prover, ModalLogic
+from ipfs_datasets_py.logic.CEC.native import create_prover, ModalLogic
 
 # K logic
 prover = create_prover(ModalLogic.K)
@@ -180,7 +180,7 @@ result = prover.prove("◇P→□◇P")  # 5 axiom
 ### Cognitive Calculus
 
 ```python
-from ipfs_datasets_py.logic.native import create_cognitive_prover
+from ipfs_datasets_py.logic.CEC.native import create_cognitive_prover
 
 prover = create_cognitive_prover()
 result = prover.prove("K(P)→P")  # K_truth axiom
@@ -192,7 +192,7 @@ print(f"Result: {result.status}")
 ### Problem File Parsing
 
 ```python
-from ipfs_datasets_py.logic.native import parse_problem_string
+from ipfs_datasets_py.logic.CEC.native import parse_problem_string
 
 # TPTP format
 problem = parse_problem_string("""
@@ -294,15 +294,15 @@ print(f"Execution time: {task.execution_time:.2f}s")
 ## Files Modified/Created
 
 ### New Files
-1. `ipfs_datasets_py/logic/native/shadow_prover.py` (706 LOC)
-2. `ipfs_datasets_py/logic/native/modal_tableaux.py` (583 LOC)
-3. `ipfs_datasets_py/logic/native/problem_parser.py` (330 LOC)
-4. `tests/unit_tests/logic/native/test_shadow_prover.py` (451 LOC)
-5. `tests/unit_tests/logic/native/test_modal_tableaux.py` (505 LOC)
-6. `tests/unit_tests/logic/native/test_problem_parser.py` (431 LOC)
+1. `ipfs_datasets_py/logic/CEC/native/shadow_prover.py` (706 LOC)
+2. `ipfs_datasets_py/logic/CEC/native/modal_tableaux.py` (583 LOC)
+3. `ipfs_datasets_py/logic/CEC/native/problem_parser.py` (330 LOC)
+4. `tests/unit_tests/logic/CEC/native/test_shadow_prover.py` (451 LOC)
+5. `tests/unit_tests/logic/CEC/native/test_modal_tableaux.py` (505 LOC)
+6. `tests/unit_tests/logic/CEC/native/test_problem_parser.py` (431 LOC)
 
 ### Modified Files
-1. `ipfs_datasets_py/logic/native/__init__.py` - Added exports
+1. `ipfs_datasets_py/logic/CEC/native/__init__.py` - Added exports
 2. `ipfs_datasets_py/logic/CEC/shadow_prover_wrapper.py` - Integration (543 LOC)
 
 ---

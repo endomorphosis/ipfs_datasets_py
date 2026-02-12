@@ -8,7 +8,7 @@ DCEC extends Event Calculus with deontic operators for reasoning about
 obligations, permissions, beliefs, knowledge, and intentions of agents.
 
 This wrapper now supports both:
-1. Native Python 3 implementation (preferred, from ipfs_datasets_py.logic.native)
+1. Native Python 3 implementation (preferred, from ipfs_datasets_py.logic.CEC.native)
 2. Python 2 submodule fallback (DCEC_Library)
 """
 
@@ -89,7 +89,7 @@ class DCECLibraryWrapper:
         # Try native implementation first if requested
         if self.use_native:
             try:
-                from ipfs_datasets_py.logic.native import DCECContainer as NativeDCECContainer
+                from ipfs_datasets_py.logic.CEC.native import DCECContainer as NativeDCECContainer
                 
                 self.container = NativeDCECContainer()
                 self.namespace = self.container.namespace

@@ -11,7 +11,7 @@ from pathlib import Path
 # Add the project root to the path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent.parent))
 
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     NaturalLanguageConverter,
     ConversionResult,
     DeonticOperator,

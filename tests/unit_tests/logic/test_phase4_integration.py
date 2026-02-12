@@ -14,7 +14,7 @@ import pytest
 import time
 
 # Import all Phase 4 components
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     # Phase 4A: Parsing
     parse_dcec_string,
     clean_dcec_expression,
@@ -381,7 +381,7 @@ class TestComponentAvailability:
     
     def test_phase_4a_available(self):
         """Verify Phase 4A components are available."""
-        from ipfs_datasets_py.logic.native import (
+        from ipfs_datasets_py.logic.CEC.native import (
             parse_dcec_string,
             clean_dcec_expression,
             tokenize_dcec,
@@ -393,7 +393,7 @@ class TestComponentAvailability:
     
     def test_phase_4b_available(self):
         """Verify Phase 4B components are available."""
-        from ipfs_datasets_py.logic.native import (
+        from ipfs_datasets_py.logic.CEC.native import (
             InferenceEngine,
             InferenceRule,
         )
@@ -403,7 +403,7 @@ class TestComponentAvailability:
     
     def test_phase_4c_available(self):
         """Verify Phase 4C components are available."""
-        from ipfs_datasets_py.logic.native import (
+        from ipfs_datasets_py.logic.CEC.native import (
             GrammarEngine,
             DCECEnglishGrammar,
         )
@@ -413,7 +413,7 @@ class TestComponentAvailability:
     
     def test_phase_4d_available(self):
         """Verify Phase 4D components are available."""
-        from ipfs_datasets_py.logic.native import (
+        from ipfs_datasets_py.logic.CEC.native import (
             create_prover,
             create_cognitive_prover,
             ModalLogic,
@@ -435,7 +435,7 @@ class TestVersioning:
         WHEN: Checking version
         THEN: Should have version 0.8.0+
         """
-        from ipfs_datasets_py.logic.native import __version__
+        from ipfs_datasets_py.logic.CEC.native import __version__
         
         assert __version__ is not None
         # Should be 0.8.0 or higher

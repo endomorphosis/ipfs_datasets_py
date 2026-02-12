@@ -16,8 +16,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ipfs_datasets_py.logic.native.dcec_english_grammar import create_dcec_grammar
-from ipfs_datasets_py.logic.native.nl_converter import create_enhanced_nl_converter
+from ipfs_datasets_py.logic.CEC.native.dcec_english_grammar import create_dcec_grammar
+from ipfs_datasets_py.logic.CEC.native.nl_converter import create_enhanced_nl_converter
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')

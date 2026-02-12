@@ -466,8 +466,8 @@
 **Version:** 0.7.0 (Phase 4D in progress)  
 **Status:** 65% Complete
 
-**Native Implementation Location:** `ipfs_datasets_py/logic/native/`  
-**Tests Location:** `tests/unit_tests/logic/native/`  
+**Native Implementation Location:** `ipfs_datasets_py/logic/CEC/native/`  
+**Tests Location:** `tests/unit_tests/logic/CEC/native/`  
 **Demos Location:** `scripts/demo/`
 
 ---

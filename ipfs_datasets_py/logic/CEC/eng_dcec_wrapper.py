@@ -8,7 +8,7 @@ Eng-DCEC uses Grammatical Framework (GF) to parse natural language
 and generate corresponding formal logic representations.
 
 This wrapper now supports both:
-1. Native Python 3 NL converter (preferred, from ipfs_datasets_py.logic.native)
+1. Native Python 3 NL converter (preferred, from ipfs_datasets_py.logic.CEC.native)
 2. Python 2 submodule fallback (Eng-DCEC/GF)
 """
 
@@ -97,7 +97,7 @@ class EngDCECWrapper:
         # Try native implementation first if requested
         if self.use_native:
             try:
-                from ipfs_datasets_py.logic.native import NaturalLanguageConverter
+                from ipfs_datasets_py.logic.CEC.native import NaturalLanguageConverter
                 
                 self.converter = NaturalLanguageConverter()
                 self._initialized = True

@@ -110,7 +110,7 @@ ipfs_datasets_py/logic/CEC/
 ### Native Implementation (Target)
 
 ```
-ipfs_datasets_py/logic/native/
+ipfs_datasets_py/logic/CEC/native/
 ├── __init__.py             ✅ (v0.2.0)
 ├── dcec_core.py            ✅ (430 LOC)
 ├── dcec_namespace.py       ✅ (350 LOC)
@@ -128,7 +128,7 @@ ipfs_datasets_py/logic/native/
 ### Tests
 
 ```
-tests/unit_tests/logic/native/
+tests/unit_tests/logic/CEC/native/
 ├── __init__.py
 ├── test_dcec_core.py           ✅ (29 tests)
 ├── test_dcec_namespace.py      ✅ (22 tests)
@@ -456,8 +456,8 @@ cat ipfs_datasets_py/logic/CEC/NEXT_SESSION_GUIDE.md
 - ShadowProver: `ipfs_datasets_py/logic/CEC/ShadowProver/`
 
 ### Native Code:
-- Implementation: `ipfs_datasets_py/logic/native/`
-- Tests: `tests/unit_tests/logic/native/`
+- Implementation: `ipfs_datasets_py/logic/CEC/native/`
+- Tests: `tests/unit_tests/logic/CEC/native/`
 - Demos: `scripts/demo/`
 
 ### Documentation:
