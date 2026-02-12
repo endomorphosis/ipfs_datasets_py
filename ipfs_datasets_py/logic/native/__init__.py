@@ -75,6 +75,14 @@ from .dcec_prototypes import (
     DCECPrototypeNamespace,
 )
 
+from .dcec_integration import (
+    parse_expression_to_token,
+    token_to_formula,
+    parse_dcec_string,
+    validate_formula,
+    DCECParsingError,
+)
+
 __all__ = [
     # Operators
     "DeonticOperator",
@@ -127,6 +135,12 @@ __all__ = [
     "prefix_emdas",
     # Prototypes
     "DCECPrototypeNamespace",
+    # Integration
+    "parse_expression_to_token",
+    "token_to_formula",
+    "parse_dcec_string",
+    "validate_formula",
+    "DCECParsingError",
 ]
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
