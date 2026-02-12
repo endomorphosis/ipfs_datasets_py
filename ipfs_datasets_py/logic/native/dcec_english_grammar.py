@@ -5,18 +5,16 @@ This module defines the grammar rules and lexicon for English→DCEC and DCEC→
 conversion. It provides a native Python implementation replacing the GF-based Eng-DCEC.
 """
 
-from typing import Any, Dict, List, Optional
-from dataclasses import dataclass
+from typing import Any, Dict, Optional
 import logging
 
 from .grammar_engine import (
-    GrammarEngine, Category, GrammarRule, LexicalEntry,
+    GrammarEngine, Category, LexicalEntry,
     make_binary_rule, make_unary_rule
 )
 from .dcec_core import (
-    Formula, AtomicFormula, ConnectiveFormula, DeonticFormula,
-    CognitiveFormula, TemporalFormula, QuantifiedFormula,
-    LogicalConnective, Variable, Term, Function
+    Formula, AtomicFormula, ConnectiveFormula,
+    LogicalConnective
 )
 
 try:

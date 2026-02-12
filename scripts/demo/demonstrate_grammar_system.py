@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from ipfs_datasets_py.logic.native.dcec_english_grammar import create_dcec_grammar
 from ipfs_datasets_py.logic.native.nl_converter import create_enhanced_nl_converter
-from ipfs_datasets_py.logic.native.dcec_core import AtomicFormula
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -165,8 +164,6 @@ def demo_compositional_semantics():
     
     print("Building complex meanings from simple parts:\n")
     
-    grammar = create_dcec_grammar()
-    
     examples = [
         ("Logical AND", "P and Q", "Combines two propositions"),
         ("Deontic modal", "jack must run", "Agent + obligation + action"),
@@ -235,7 +232,7 @@ def demo_performance_comparison():
     
     # Grammar-based
     print("🔹 Grammar-based parsing:")
-    result_grammar = converter.convert_to_dcec(test_sentence, prefer_grammar=True)
+    result_grammar = converter.convert_to_dcec(test_sentence)
     print(f"   Method: {result_grammar.parse_method}")
     print(f"   Success: {result_grammar.success}")
     print(f"   Confidence: {result_grammar.confidence:.2f}")
@@ -244,7 +241,7 @@ def demo_performance_comparison():
     
     # Pattern-based
     print("🔹 Pattern-based parsing:")
-    result_pattern = converter.convert_to_dcec(test_sentence, prefer_grammar=False)
+    result_pattern = converter.convert_to_dcec(test_sentence)
     print(f"   Method: {result_pattern.parse_method}")
     print(f"   Success: {result_pattern.success}")
     print(f"   Confidence: {result_pattern.confidence:.2f}")

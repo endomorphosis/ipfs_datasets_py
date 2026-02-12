@@ -75,15 +75,14 @@ print(f"Type: {type(formula)}")
 ### Natural Language
 
 ```python
-from ipfs_datasets_py.logic.native import DCECEnglishGrammar, GrammarEngine
+from ipfs_datasets_py.logic.native import DCECEnglishGrammar
 
-# Create grammar and engine
+# Create grammar (includes its own engine)
 grammar = DCECEnglishGrammar()
-engine = GrammarEngine()
 
 # Parse natural language
 text = "Alice believes that it is raining"
-parse_trees = engine.parse(text, grammar)
+parse_trees = grammar.engine.parse(text)
 
 if parse_trees:
     print(f"DCEC: {parse_trees[0].semantics}")

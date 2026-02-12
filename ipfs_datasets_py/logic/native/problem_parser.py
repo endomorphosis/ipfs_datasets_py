@@ -8,7 +8,7 @@ This module provides parsers for various theorem proving problem file formats:
 TPTP format is the standard format used in automated theorem proving.
 """
 
-from typing import List, Dict, Optional, Tuple, Any
+from typing import List, Optional
 from dataclasses import dataclass
 import re
 import logging

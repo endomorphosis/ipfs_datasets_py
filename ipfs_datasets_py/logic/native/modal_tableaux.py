@@ -6,13 +6,13 @@ Tableaux are a refutation-based proof method that attempts to
 construct a model for the negation of the formula.
 """
 
-from typing import List, Set, Dict, Optional, Any, Tuple
+from typing import List, Set, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import logging
 
 from .shadow_prover import (
-    ProofStep, ProofStatus, ModalLogic, ModalOperator
+    ProofStep, ModalLogic
 )
 
 try:

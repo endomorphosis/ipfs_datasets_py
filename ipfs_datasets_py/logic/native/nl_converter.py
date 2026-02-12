@@ -30,6 +30,9 @@ from .dcec_core import (
 )
 from .dcec_namespace import DCECNamespace
 
+# Define logger before optional imports that might use it
+logger = logging.getLogger(__name__)
+
 try:
     from .dcec_english_grammar import DCECEnglishGrammar
     GRAMMAR_AVAILABLE = True

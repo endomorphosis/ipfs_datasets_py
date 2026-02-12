@@ -10,7 +10,7 @@ from ipfs_datasets_py.logic.native.dcec_english_grammar import (
 )
 from ipfs_datasets_py.logic.native.grammar_engine import Category
 from ipfs_datasets_py.logic.native.dcec_core import (
-    Formula, ConnectiveFormula, LogicalConnective
+    Formula, LogicalConnective
 )
 
 

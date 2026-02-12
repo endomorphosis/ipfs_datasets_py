@@ -6,7 +6,7 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 
 import pytest
 from ipfs_datasets_py.logic.native.shadow_prover import (
-    ShadowProver, KProver, S4Prover, S5Prover, CognitiveCalculusProver,
+    KProver, S4Prover, S5Prover, CognitiveCalculusProver,
     ModalLogic, ProofStatus, ProofStep, ProofTree, ProblemFile,
     ModalOperator, ProblemReader, create_prover, create_cognitive_prover
 )

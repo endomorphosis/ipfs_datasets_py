@@ -15,7 +15,7 @@ ShadowProver supports:
 This is Phase 4D of the native implementation project.
 """
 
-from typing import List, Set, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod

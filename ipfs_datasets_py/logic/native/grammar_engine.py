@@ -6,10 +6,9 @@ This module provides a Python-native grammar system that replaces the GF
 semantics, parse tree construction, and bidirectional NL↔DCEC conversion.
 """
 
-from typing import List, Dict, Optional, Any, Tuple, Set, Callable
+from typing import List, Dict, Optional, Any, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-from abc import ABC, abstractmethod
 import logging
 
 try:
@@ -309,10 +308,10 @@ class GrammarEngine:
             return parses[0]
         elif strategy == "shortest":
             # Prefer parse with fewest nodes
-            return min(parses, key=lambda p: self._count_nodes(p))
+            return min(parses, key=self._count_nodes)
         elif strategy == "most_specific":
             # Prefer parse with most lexical specificity
-            return max(parses, key=lambda p: self._specificity_score(p))
+            return max(parses, key=self._specificity_score)
         else:
             return parses[0]
     

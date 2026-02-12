@@ -14,7 +14,7 @@ The native implementation provides:
 import sys
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -35,12 +35,10 @@ try:
         create_prover,
         create_cognitive_prover,
         ModalLogic,
-        ProofTree,
         ProofStatus as NativeProofStatus,
         parse_problem_file,
         SHADOWPROVER_AVAILABLE as NATIVE_AVAILABLE
     )
-    NATIVE_AVAILABLE = True
 except ImportError:
     NATIVE_AVAILABLE = False
 

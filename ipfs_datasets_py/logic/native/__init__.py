@@ -143,8 +143,6 @@ __all__ = [
     "DCECParsingError",
 ]
 
-__version__ = "0.5.0"
-
 # Phase 4C: Grammar-based NL processing
 try:
     from .grammar_engine import (
@@ -179,9 +177,6 @@ try:
     GRAMMAR_AVAILABLE = True
 except ImportError:
     GRAMMAR_AVAILABLE = False
-
-# Update version to 0.6.0 for Phase 4C
-__version__ = "0.6.0"
 
 # Phase 4D: ShadowProver modal logic theorem prover
 try:
@@ -240,9 +235,6 @@ try:
 except ImportError:
     SHADOWPROVER_AVAILABLE = False
 
-# Update version to 0.7.0 for Phase 4D
-__version__ = "1.0.0"
-
 # Phase 4D: Problem file parser
 try:
     from .problem_parser import (
@@ -266,3 +258,6 @@ try:
     PROBLEM_PARSER_AVAILABLE = True
 except ImportError:
     PROBLEM_PARSER_AVAILABLE = False
+
+# Version reflects completion of all Phase 4 components
+__version__ = "1.0.0"
