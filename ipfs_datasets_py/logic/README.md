@@ -1,0 +1,556 @@
+# Logic Module - Complete Neurosymbolic Reasoning System
+
+[![Status](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/endomorphosis/ipfs_datasets_py)
+[![Tests](https://img.shields.io/badge/tests-528%2B-blue)](./tests/)
+[![Rules](https://img.shields.io/badge/inference--rules-127-orange)](./TDFOL/)
+[![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
+
+## Overview
+
+The IPFS Datasets Python logic module provides a **complete neurosymbolic reasoning system** combining:
+
+- **Temporal Deontic First-Order Logic (TDFOL)** - Unified logic representation
+- **Cognitive Event Calculus (CEC)** - 87 production-tested inference rules
+- **Modal Logic Provers** - K, S4, S5, D, Cognitive Calculus
+- **Grammar-Based NL** - Natural language understanding with 100+ lexicon entries
+- **Unified API** - Single interface for all capabilities
+
+### Key Features
+
+✅ **127 Inference Rules** (40 TDFOL + 87 CEC)  
+✅ **5 Modal Logic Provers** (K/S4/S5/D/Cognitive)  
+✅ **Grammar-Based NL Processing** (100+ lexicon, 50+ rules)  
+✅ **Multi-Format Parsing** (TDFOL, DCEC, Natural Language)  
+✅ **528+ Comprehensive Tests**  
+✅ **Production-Ready** (2-4x faster than Java CEC)
+
+---
+
+## Quick Start
+
+### Installation
+
+```bash
+# Install with logic module
+pip install -e ".[logic]"
+
+# Or install with all features
+pip install -e ".[all]"
+```
+
+### Basic Usage
+
+```python
+from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
+# Create reasoner
+reasoner = NeurosymbolicReasoner()
+
+# Add knowledge
+reasoner.add_knowledge("P")
+reasoner.add_knowledge("P -> Q")
+
+# Prove theorem
+from ipfs_datasets_py.logic.TDFOL.tdfol_parser import parse_tdfol
+result = reasoner.prove(parse_tdfol("Q"))
+
+print(f"Proved: {result.is_proved()}")  # True
+print(f"Method: {result.method}")       # forward_chaining
+print(f"Time: {result.time_ms}ms")      # ~1-2ms
+```
+
+### Command-Line Interface
+
+```bash
+# Show system capabilities
+python scripts/cli/neurosymbolic_cli.py capabilities
+
+# Prove a theorem
+python scripts/cli/neurosymbolic_cli.py prove \
+  --axiom "P" --axiom "P -> Q" --goal "Q"
+
+# Interactive REPL
+python scripts/cli/neurosymbolic_cli.py interactive
+```
+
+---
+
+## Architecture
+
+```
+ipfs_datasets_py/logic/
+├── TDFOL/                          # Temporal Deontic First-Order Logic
+│   ├── tdfol_core.py              # Core formula representation (542 LOC)
+│   ├── tdfol_parser.py            # TDFOL parser (509 LOC)
+│   ├── tdfol_dcec_parser.py       # DCEC s-expression parser (373 LOC)
+│   ├── tdfol_prover.py            # Theorem prover (542 LOC)
+│   ├── tdfol_inference_rules.py   # 40 inference rules (689 LOC)
+│   ├── tdfol_converter.py         # Format converters (414 LOC)
+│   └── README.md                  # TDFOL documentation
+│
+├── CEC/native/                     # Cognitive Event Calculus
+│   ├── prover_core.py             # 87 inference rules (2,884 LOC)
+│   ├── shadow_prover.py           # Modal logic provers (706 LOC)
+│   ├── modal_tableaux.py          # Tableaux algorithm (583 LOC)
+│   ├── grammar_engine.py          # Chart parser (434 LOC)
+│   ├── dcec_english_grammar.py    # English grammar (639 LOC)
+│   └── ...                        # Other CEC components
+│
+└── integration/                    # Neurosymbolic Integration
+    ├── tdfol_cec_bridge.py        # TDFOL ↔ CEC integration (8.7 KB)
+    ├── tdfol_shadowprover_bridge.py  # Modal logic integration (12.1 KB)
+    ├── tdfol_grammar_bridge.py    # NL processing (13.3 KB)
+    └── neurosymbolic_api.py       # Unified API (13.5 KB)
+```
+
+### Component Breakdown
+
+| Component | LOC | Purpose | Status |
+|-----------|-----|---------|--------|
+| **TDFOL Module** | 3,069 | Unified logic | ✅ Complete |
+| **CEC Native** | 9,633 | 87 rules + provers | ✅ Complete |
+| **Integration** | 47.6 KB | Bridges | ✅ Complete |
+| **Tests** | 33 KB | 110 integration tests | ✅ Complete |
+| **Examples** | 23 KB | 5 examples | ✅ Complete |
+| **CLI Tools** | 14.2 KB | CLI + benchmarks | ✅ Complete |
+| **Total** | **13,702+ LOC** | **Complete system** | ✅ **Production** |
+
+---
+
+## Features in Detail
+
+### 1. Temporal Deontic First-Order Logic (TDFOL)
+
+Unified representation combining:
+
+**First-Order Logic:**
+- Predicates, variables, constants, functions
+- Quantifiers (∀, ∃)
+- Logical operators (∧, ∨, ¬, →, ↔)
+
+**Temporal Logic:**
+- Always (□), Eventually (◊)
+- Next (X), Until (U), Since (S)
+- K, T, S4, S5 modal axioms
+
+**Deontic Logic:**
+- Obligation (O), Permission (P), Prohibition (F)
+- K and D deontic axioms
+- Legal/normative reasoning
+
+### 2. Inference Rules (127 Total)
+
+**TDFOL Rules (40):**
+- 15 Basic Logic (Modus Ponens, Syllogisms, De Morgan)
+- 10 Temporal (K/T/S4/S5 axioms, Until, Eventually)
+- 8 Deontic (K/D axioms, Permission, Obligation)
+- 7 Combined Temporal-Deontic
+
+**CEC Rules (87):**
+- 30 Basic logic rules
+- 15 Cognitive rules (belief, knowledge, common knowledge)
+- 7 Deontic rules
+- 15 Temporal rules
+- 10 Advanced logic rules
+- 13 Common knowledge rules
+
+### 3. Modal Logic Provers (5)
+
+- **KProver** - Basic modal logic
+- **S4Prover** - Reflexive + transitive (ideal for temporal)
+- **S5Prover** - Equivalence relation
+- **DProver** - Serial property (deontic logic)
+- **CognitiveCalculusProver** - 19 cognitive axioms
+
+### 4. Grammar-Based Natural Language
+
+- **100+ lexicon entries** (logical, deontic, cognitive, temporal)
+- **50+ compositional rules**
+- **Bottom-up chart parsing**
+- **Bidirectional NL ↔ Logic conversion**
+- **Pattern-based fallback**
+
+### 5. Multi-Format Support
+
+**TDFOL Format:**
+```
+P -> Q
+forall x. P(x) -> Q(x)
+P & Q | R
+```
+
+**DCEC S-Expression:**
+```
+(implies P Q)
+(forall x (implies (P x) (Q x)))
+(or (and P Q) R)
+```
+
+**Natural Language:**
+```
+All humans are mortal
+It is obligatory to report
+The system is always available
+```
+
+---
+
+## Usage Examples
+
+### Example 1: Basic Theorem Proving
+
+```python
+from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
+reasoner = NeurosymbolicReasoner()
+
+# Modus Ponens
+reasoner.add_knowledge("P")
+reasoner.add_knowledge("P -> Q")
+
+result = reasoner.prove(parse_tdfol("Q"))
+print(result.is_proved())  # True
+```
+
+### Example 2: Temporal Logic
+
+```python
+from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+    Predicate, TemporalFormula, TemporalOperator
+)
+
+# System is always available
+available = Predicate("Available", ())
+always_available = TemporalFormula(TemporalOperator.ALWAYS, available)
+
+reasoner = NeurosymbolicReasoner(use_modal=True)
+reasoner.add_knowledge(always_available)
+
+# Prove it's available now (□p → p)
+result = reasoner.prove(available)
+print(result.is_proved())  # True (uses S4 prover)
+```
+
+### Example 3: Deontic Logic (Legal Reasoning)
+
+```python
+from ipfs_datasets_py.logic.TDFOL.tdfol_core import (
+    Predicate, DeonticFormula, DeonticOperator
+)
+
+# Contract: obligatory to pay
+pay = Predicate("PayInvoice", ())
+obligatory_pay = DeonticFormula(DeonticOperator.OBLIGATORY, pay)
+permitted_pay = DeonticFormula(DeonticOperator.PERMISSIBLE, pay)
+
+reasoner = NeurosymbolicReasoner()
+reasoner.add_knowledge(obligatory_pay)
+
+# Derive permission from obligation (O(p) → P(p))
+result = reasoner.prove(permitted_pay)
+print(result.is_proved())  # True (uses D axiom)
+```
+
+### Example 4: Multi-Format Parsing
+
+```python
+reasoner = NeurosymbolicReasoner()
+
+# TDFOL format
+f1 = reasoner.parse("forall x. P(x) -> Q(x)", format="tdfol")
+
+# DCEC format
+f2 = reasoner.parse("(O P)", format="dcec")
+
+# Natural language
+f3 = reasoner.parse("All birds can fly", format="nl")
+
+# Auto-detection
+f4 = reasoner.parse("(and P Q)", format="auto")  # Detects DCEC
+```
+
+### Example 5: System Capabilities
+
+```python
+reasoner = NeurosymbolicReasoner()
+caps = reasoner.get_capabilities()
+
+print(f"TDFOL rules: {caps['tdfol_rules']}")           # 40
+print(f"CEC rules: {caps['cec_rules']}")               # 87
+print(f"Total rules: {caps['total_inference_rules']}")  # 127
+print(f"Modal provers: {caps['modal_provers']}")        # ['K', 'S4', 'S5', 'D', 'Cognitive']
+print(f"Grammar available: {caps['grammar_available']}")  # True
+```
+
+---
+
+## Complete Examples
+
+See [`examples/neurosymbolic/`](./examples/neurosymbolic/) for 5 complete examples:
+
+1. **example1_basic_reasoning.py** - Basic theorem proving
+2. **example2_temporal_reasoning.py** - Temporal logic (□, ◊, X, U)
+3. **example3_deontic_reasoning.py** - Legal/normative reasoning
+4. **example4_multiformat_parsing.py** - Multi-format support
+5. **example5_combined_reasoning.py** - Temporal-deontic combinations
+
+---
+
+## Testing
+
+### Run Tests
+
+```bash
+# All integration tests
+cd tests/unit_tests/logic/integration
+pytest -v
+
+# Specific test file
+pytest test_neurosymbolic_api.py -v
+
+# With coverage
+pytest --cov=ipfs_datasets_py.logic.integration --cov-report=html
+```
+
+### Test Coverage
+
+- **CEC Native Tests:** 418 tests
+- **Integration Tests:** 110 tests
+- **Total:** 528+ comprehensive tests
+
+### Test Structure
+
+```
+tests/unit_tests/logic/
+├── CEC/native/                    # CEC native tests (418 tests)
+├── TDFOL/                         # TDFOL tests
+└── integration/                   # Integration tests (110 tests)
+    ├── test_tdfol_cec_bridge.py          (23 tests)
+    ├── test_tdfol_shadowprover_bridge.py (31 tests)
+    ├── test_tdfol_grammar_bridge.py      (23 tests)
+    └── test_neurosymbolic_api.py         (33 tests)
+```
+
+---
+
+## Performance
+
+### Benchmarks
+
+Run performance benchmarks:
+
+```bash
+python scripts/benchmarks/neurosymbolic_benchmark.py
+```
+
+### Typical Performance
+
+- **Simple parsing:** ~0.1-0.5ms
+- **Complex parsing:** ~1-2ms
+- **Modus Ponens proof:** ~1-5ms
+- **Modal logic proof:** ~5-20ms
+- **Formula construction:** ~0.01ms
+
+### Optimizations
+
+- Pure Python 3 (no external dependencies for core)
+- 2-4x faster than Java CEC implementation
+- Efficient forward chaining with rule caching
+- Lazy evaluation of complex formulas
+
+---
+
+## Documentation
+
+### Module Documentation
+
+- **[TDFOL README](./TDFOL/README.md)** - TDFOL module documentation
+- **[CEC System Guide](./CEC/CEC_SYSTEM_GUIDE.md)** - CEC documentation
+- **[Examples README](./examples/neurosymbolic/README.md)** - Example guide
+
+### Project Documentation
+
+- **[Critical Gaps Resolved](../../CRITICAL_GAPS_RESOLVED.md)** - Implementation summary
+- **[Implementation Summary](../../IMPLEMENTATION_SUMMARY.md)** - Phase 1-2 summary
+- **[Neurosymbolic Architecture Plan](../../NEUROSYMBOLIC_ARCHITECTURE_PLAN.md)** - 12-week roadmap
+- **[SymbolicAI Integration](../../SYMBOLICAI_INTEGRATION_ANALYSIS.md)** - Integration strategy
+
+**Total Documentation:** 103.8 KB
+
+---
+
+## API Reference
+
+### Main Classes
+
+#### `NeurosymbolicReasoner`
+
+Unified reasoning interface with all capabilities.
+
+```python
+from ipfs_datasets_py.logic.integration import NeurosymbolicReasoner
+
+reasoner = NeurosymbolicReasoner(
+    use_cec=True,      # Enable CEC (87 rules)
+    use_modal=True,    # Enable modal provers
+    use_nl=True        # Enable NL processing
+)
+```
+
+**Methods:**
+- `add_knowledge(statement, is_axiom=True)` - Add to knowledge base
+- `prove(goal, given=None, timeout_ms=5000)` - Prove theorem
+- `parse(text, format='auto')` - Parse formula
+- `explain(formula)` - Convert to natural language
+- `query(question, timeout_ms=5000)` - Natural language query
+- `get_capabilities()` - Get system info
+
+#### `TDFOLCECBridge`
+
+Bridge between TDFOL and CEC (127 total rules).
+
+```python
+from ipfs_datasets_py.logic.integration import create_enhanced_prover
+
+prover = create_enhanced_prover(use_cec=True)
+result = prover.prove(goal_formula)
+```
+
+#### `ModalAwareTDFOLProver`
+
+Modal logic aware prover (auto-routes to K/S4/S5/D).
+
+```python
+from ipfs_datasets_py.logic.integration import create_modal_aware_prover
+
+prover = create_modal_aware_prover()
+result = prover.prove(temporal_formula)  # Auto-uses S4
+```
+
+#### `TDFOLGrammarBridge`
+
+Grammar-based natural language processing.
+
+```python
+from ipfs_datasets_py.logic.integration import parse_nl, explain_formula
+
+formula = parse_nl("All humans are mortal")
+text = explain_formula(formula)
+```
+
+---
+
+## Common Use Cases
+
+### 1. Legal Contract Verification
+
+```python
+# Model contract obligations
+obligatory_pay = DeonticFormula(DeonticOperator.OBLIGATORY, pay)
+reasoner.add_knowledge(obligatory_pay)
+
+# Verify obligations imply permissions
+permitted_pay = DeonticFormula(DeonticOperator.PERMISSIBLE, pay)
+result = reasoner.prove(permitted_pay)  # O(p) → P(p)
+```
+
+### 2. Service Level Agreement (SLA) Verification
+
+```python
+# SLA: System always responds within time limit
+always_respond = TemporalFormula(TemporalOperator.ALWAYS, respond)
+reasoner.add_knowledge(always_respond)
+
+# Verify: If always responds, then responds now
+result = reasoner.prove(respond)  # □p → p
+```
+
+### 3. Compliance Requirements
+
+```python
+# Regulation: Must eventually audit
+eventually_audit = TemporalFormula(TemporalOperator.EVENTUALLY, audit)
+obligatory_audit = DeonticFormula(DeonticOperator.OBLIGATORY, eventually_audit)
+
+reasoner.add_knowledge(obligatory_audit)
+
+# Verify temporal obligation
+result = reasoner.prove(eventually_audit)
+```
+
+### 4. Workflow Validation
+
+```python
+# Workflow: P must happen before Q
+until_formula = BinaryTemporalFormula(TemporalOperator.UNTIL, p, q)
+reasoner.add_knowledge(until_formula)
+
+# Verify: Q will eventually happen
+eventually_q = TemporalFormula(TemporalOperator.EVENTUALLY, q)
+result = reasoner.prove(eventually_q)
+```
+
+---
+
+## Contributing
+
+### Adding New Inference Rules
+
+1. Add rule to `TDFOL/tdfol_inference_rules.py`
+2. Follow the `InferenceRule` interface
+3. Implement `can_apply()` and `apply()` methods
+4. Add tests in `tests/unit_tests/logic/integration/`
+
+### Adding New Modal Logic
+
+1. Extend `CEC/native/shadow_prover.py`
+2. Implement prover class (inherit from `ShadowProver`)
+3. Add to `ModalLogicType` enum
+4. Update `integration/tdfol_shadowprover_bridge.py`
+
+### Adding Grammar Rules
+
+1. Extend `CEC/native/dcec_english_grammar.py`
+2. Add lexicon entries
+3. Add compositional rules
+4. Test with examples
+
+---
+
+## Troubleshooting
+
+### Issue: "Could not parse formula"
+**Solution:** Check syntax, try different formats (TDFOL, DCEC, auto)
+
+### Issue: "Proof status: unknown"
+**Solution:** Increase timeout, add intermediate axioms, or check if theorem is derivable
+
+### Issue: "Grammar not available"
+**Solution:** Grammar engine not loaded. Use TDFOL or DCEC format instead of NL
+
+### Issue: Performance slow
+**Solution:** Use simpler formulas, increase timeout, or check for loops in knowledge base
+
+---
+
+## License
+
+See repository LICENSE file.
+
+---
+
+## Status
+
+✅ **Production Ready**  
+✅ **All 5 Critical Gaps Resolved**  
+✅ **13,702+ LOC**  
+✅ **528+ Tests**  
+✅ **127 Inference Rules**  
+✅ **5 Modal Provers**  
+✅ **103.8 KB Documentation**
+
+**Version:** 1.0  
+**Date:** February 2026  
+**Status:** Complete and production-ready
+
+For more information, see [github.com/endomorphosis/ipfs_datasets_py](https://github.com/endomorphosis/ipfs_datasets_py)

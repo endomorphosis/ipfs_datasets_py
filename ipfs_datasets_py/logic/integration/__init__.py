@@ -140,30 +140,51 @@ from .proof_execution_engine import (
     check_consistency
 )
 
-# Temporal deontic RAG system exports
-from .temporal_deontic_rag_store import (
-    TemporalDeonticRAGStore,
-    TheoremMetadata,
-    ConsistencyResult
-)
+# Temporal deontic RAG system exports (optional - requires numpy)
+try:
+    from .temporal_deontic_rag_store import (
+        TemporalDeonticRAGStore,
+        TheoremMetadata,
+        ConsistencyResult
+    )
+except ImportError:
+    TemporalDeonticRAGStore = None
+    TheoremMetadata = None
+    ConsistencyResult = None
 
-# Document consistency checker exports
-from .document_consistency_checker import (
-    DocumentConsistencyChecker,
-    DocumentAnalysis,
-    DebugReport
-)
+# Document consistency checker exports (optional - requires numpy)
+try:
+    from .document_consistency_checker import (
+        DocumentConsistencyChecker,
+        DocumentAnalysis,
+        DebugReport
+    )
+except ImportError:
+    DocumentConsistencyChecker = None
+    DocumentAnalysis = None
+    DebugReport = None
 
 # Legacy SymbolicAI exports
 from ..tools.symbolic_fol_bridge import SymbolicFOLBridge
 from ..tools.symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
-from .symbolic_contracts import (
-    ContractedFOLConverter,
-    FOLInput,
-    FOLOutput,
-    create_fol_converter,
-    validate_fol_input,
-)
+
+# Symbolic contracts (optional - requires pydantic)
+try:
+    from .symbolic_contracts import (
+        ContractedFOLConverter,
+        FOLInput,
+        FOLOutput,
+        create_fol_converter,
+        validate_fol_input,
+    )
+    SYMBOLIC_CONTRACTS_AVAILABLE = True
+except ImportError:
+    ContractedFOLConverter = None
+    FOLInput = None
+    FOLOutput = None
+    create_fol_converter = None
+    validate_fol_input = None
+    SYMBOLIC_CONTRACTS_AVAILABLE = False
 
 # Optional imports (only available if SymbolicAI is installed)
 try:
@@ -236,3 +257,98 @@ DEFAULT_CONFIG = {
     "max_reasoning_steps": 10,
     "validation_strict": True
 }
+
+# ============================================================================
+# TDFOL-CEC-ShadowProver Integration (Neurosymbolic Architecture)
+# ============================================================================
+
+# TDFOL-CEC Bridge exports
+try:
+    from .tdfol_cec_bridge import (
+        TDFOLCECBridge,
+        EnhancedTDFOLProver,
+        create_enhanced_prover,
+    )
+    TDFOL_CEC_AVAILABLE = True
+except ImportError as e:
+    TDFOL_CEC_AVAILABLE = False
+    TDFOLCECBridge = None
+    EnhancedTDFOLProver = None
+    create_enhanced_prover = None
+
+# TDFOL-ShadowProver Bridge exports
+try:
+    from .tdfol_shadowprover_bridge import (
+        TDFOLShadowProverBridge,
+        ModalAwareTDFOLProver,
+        ModalLogicType,
+        create_modal_aware_prover,
+    )
+    TDFOL_SHADOWPROVER_AVAILABLE = True
+except ImportError as e:
+    TDFOL_SHADOWPROVER_AVAILABLE = False
+    TDFOLShadowProverBridge = None
+    ModalAwareTDFOLProver = None
+    ModalLogicType = None
+    create_modal_aware_prover = None
+
+# TDFOL-Grammar Bridge exports
+try:
+    from .tdfol_grammar_bridge import (
+        TDFOLGrammarBridge,
+        NaturalLanguageTDFOLInterface,
+        parse_nl,
+        explain_formula,
+    )
+    TDFOL_GRAMMAR_AVAILABLE = True
+except ImportError as e:
+    TDFOL_GRAMMAR_AVAILABLE = False
+    TDFOLGrammarBridge = None
+    NaturalLanguageTDFOLInterface = None
+    parse_nl = None
+    explain_formula = None
+
+# Unified Neurosymbolic API
+try:
+    from .neurosymbolic_api import (
+        NeurosymbolicReasoner,
+        ReasoningCapabilities,
+        get_reasoner,
+    )
+    NEUROSYMBOLIC_API_AVAILABLE = True
+except ImportError as e:
+    NEUROSYMBOLIC_API_AVAILABLE = False
+    NeurosymbolicReasoner = None
+    ReasoningCapabilities = None
+    get_reasoner = None
+
+# Update __all__ to include neurosymbolic exports
+if NEUROSYMBOLIC_API_AVAILABLE:
+    __all__.extend([
+        # TDFOL-CEC Bridge
+        "TDFOLCECBridge",
+        "EnhancedTDFOLProver",
+        "create_enhanced_prover",
+        "TDFOL_CEC_AVAILABLE",
+        
+        # TDFOL-ShadowProver Bridge
+        "TDFOLShadowProverBridge",
+        "ModalAwareTDFOLProver",
+        "ModalLogicType",
+        "create_modal_aware_prover",
+        "TDFOL_SHADOWPROVER_AVAILABLE",
+        
+        # TDFOL-Grammar Bridge
+        "TDFOLGrammarBridge",
+        "NaturalLanguageTDFOLInterface",
+        "parse_nl",
+        "explain_formula",
+        "TDFOL_GRAMMAR_AVAILABLE",
+        
+        # Unified API
+        "NeurosymbolicReasoner",
+        "ReasoningCapabilities",
+        "get_reasoner",
+        "NEUROSYMBOLIC_API_AVAILABLE",
+    ])
+
