@@ -1341,3 +1341,352 @@ class ConjunctionElimination(InferenceRule):
                 # Return all conjuncts
                 results.extend(f.formulas)
         return results
+
+
+# ============================================================================
+# DCEC-Specific Cognitive Inference Rules
+# ============================================================================
+
+class BeliefDistribution(InferenceRule):
+    """Belief Distribution: B(agent, P∧Q) ⊢ B(agent, P)∧B(agent, Q)"""
+    
+    def name(self) -> str:
+        return "Belief Distribution"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, CognitiveFormula) and f.operator.value == "B":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, CognitiveFormula) and f.operator.value == "B":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    # B(agent, P∧Q) → B(agent, P)∧B(agent, Q)
+                    beliefs = []
+                    for subformula in f.formula.formulas:
+                        belief = CognitiveFormula(f.operator, f.agent, subformula)
+                        beliefs.append(belief)
+                    result = ConnectiveFormula(LogicalConnective.AND, beliefs)
+                    results.append(result)
+        return results
+
+
+class KnowledgeImpliesBelief(InferenceRule):
+    """Knowledge Implies Belief: K(agent, P) ⊢ B(agent, P)"""
+    
+    def name(self) -> str:
+        return "Knowledge Implies Belief"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, CognitiveFormula) and f.operator.value == "K"
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, CognitiveFormula) and f.operator.value == "K":
+                # K(agent, P) → B(agent, P)
+                from .dcec_core import CognitiveOperator
+                belief = CognitiveFormula(CognitiveOperator.BELIEF, f.agent, f.formula)
+                results.append(belief)
+        return results
+
+
+class BeliefMonotonicity(InferenceRule):
+    """Belief Monotonicity: B(agent, P) ∧ (P→Q) ⊢ B(agent, Q)"""
+    
+    def name(self) -> str:
+        return "Belief Monotonicity"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if we have B(agent, P) and P→Q
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for belief in beliefs:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(belief.formula, impl.formulas[0]):
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for belief in beliefs:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(belief.formula, impl.formulas[0]):
+                        # B(agent, P) and P→Q, derive B(agent, Q)
+                        new_belief = CognitiveFormula(belief.operator, belief.agent, impl.formulas[1])
+                        results.append(new_belief)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class IntentionCommitment(InferenceRule):
+    """Intention Commitment: I(agent, P) ∧ B(agent, P→Q) ⊢ I(agent, Q)"""
+    
+    def name(self) -> str:
+        return "Intention Commitment"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check for intentions and beliefs about implications
+        intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        
+        for intention in intentions:
+            for belief in beliefs:
+                if isinstance(belief.formula, ConnectiveFormula) and belief.formula.connective == LogicalConnective.IMPLIES:
+                    if len(belief.formula.formulas) == 2:
+                        if self._formulas_equal(intention.formula, belief.formula.formulas[0]):
+                            if self._formulas_equal(intention.agent, belief.agent):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
+        beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
+        
+        for intention in intentions:
+            for belief in beliefs:
+                if isinstance(belief.formula, ConnectiveFormula) and belief.formula.connective == LogicalConnective.IMPLIES:
+                    if len(belief.formula.formulas) == 2:
+                        if self._formulas_equal(intention.formula, belief.formula.formulas[0]):
+                            if self._formulas_equal(intention.agent, belief.agent):
+                                # I(agent, P) and B(agent, P→Q), derive I(agent, Q)
+                                from .dcec_core import CognitiveOperator
+                                new_intention = CognitiveFormula(CognitiveOperator.INTENTION, intention.agent, belief.formula.formulas[1])
+                                results.append(new_intention)
+        return results
+    
+    def _formulas_equal(self, f1, f2) -> bool:
+        if isinstance(f1, Formula) and isinstance(f2, Formula):
+            return f1.to_string() == f2.to_string()
+        return f1 == f2
+
+
+# ============================================================================
+# DCEC-Specific Deontic Inference Rules
+# ============================================================================
+
+class ObligationDistribution(InferenceRule):
+    """Obligation Distribution: O(P∧Q) ⊢ O(P)∧O(Q)"""
+    
+    def name(self) -> str:
+        return "Obligation Distribution"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, DeonticFormula) and f.operator.value == "O":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, DeonticFormula) and f.operator.value == "O":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    # O(P∧Q) → O(P)∧O(Q)
+                    obligations = []
+                    for subformula in f.formula.formulas:
+                        obligation = DeonticFormula(f.operator, subformula)
+                        obligations.append(obligation)
+                    result = ConnectiveFormula(LogicalConnective.AND, obligations)
+                    results.append(result)
+        return results
+
+
+class ObligationImplication(InferenceRule):
+    """Obligation Implication: O(P) ∧ (P→Q) ⊢ O(Q)"""
+    
+    def name(self) -> str:
+        return "Obligation Implication"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        obligations = [f for f in formulas if isinstance(f, DeonticFormula) and f.operator.value == "O"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for obligation in obligations:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(obligation.formula, impl.formulas[0]):
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        obligations = [f for f in formulas if isinstance(f, DeonticFormula) and f.operator.value == "O"]
+        implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
+        
+        for obligation in obligations:
+            for impl in implications:
+                if len(impl.formulas) == 2:
+                    if self._formulas_equal(obligation.formula, impl.formulas[0]):
+                        # O(P) and P→Q, derive O(Q)
+                        new_obligation = DeonticFormula(obligation.operator, impl.formulas[1])
+                        results.append(new_obligation)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class PermissionFromNonObligation(InferenceRule):
+    """Permission from Non-Obligation: ¬O(¬P) ⊢ P(P)"""
+    
+    def name(self) -> str:
+        return "Permission from Non-Obligation"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
+                if len(f.formulas) == 1:
+                    inner = f.formulas[0]
+                    if isinstance(inner, DeonticFormula) and inner.operator.value == "O":
+                        if isinstance(inner.formula, ConnectiveFormula) and inner.formula.connective == LogicalConnective.NOT:
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
+                if len(f.formulas) == 1:
+                    inner = f.formulas[0]
+                    if isinstance(inner, DeonticFormula) and inner.operator.value == "O":
+                        if isinstance(inner.formula, ConnectiveFormula) and inner.formula.connective == LogicalConnective.NOT:
+                            if len(inner.formula.formulas) == 1:
+                                # ¬O(¬P) → P(P)
+                                from .dcec_core import DeonticOperator
+                                permission = DeonticFormula(DeonticOperator.PERMISSION, inner.formula.formulas[0])
+                                results.append(permission)
+        return results
+
+
+class ForbiddenToNotObligatory(InferenceRule):
+    """Forbidden to Not Obligatory: F(P) ⊢ ¬O(P)"""
+    
+    def name(self) -> str:
+        return "Forbidden to Not Obligatory"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, DeonticFormula) and f.operator.value == "F"
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, DeonticFormula) and f.operator.value == "F":
+                # F(P) → ¬O(P)
+                from .dcec_core import DeonticOperator
+                obligation = DeonticFormula(DeonticOperator.OBLIGATION, f.formula)
+                not_obligation = ConnectiveFormula(LogicalConnective.NOT, [obligation])
+                results.append(not_obligation)
+        return results
+
+
+# ============================================================================
+# Temporal Inference Rules
+# ============================================================================
+
+class AlwaysDistribution(InferenceRule):
+    """Always Distribution: □(P∧Q) ⊢ □P ∧ □Q"""
+    
+    def name(self) -> str:
+        return "Always Distribution"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+                if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
+                    # □(P∧Q) → □P ∧ □Q
+                    always_formulas = []
+                    for subformula in f.formula.formulas:
+                        always_f = TemporalFormula(f.operator, subformula)
+                        always_formulas.append(always_f)
+                    result = ConnectiveFormula(LogicalConnective.AND, always_formulas)
+                    results.append(result)
+        return results
+
+
+class AlwaysImplication(InferenceRule):
+    """Always Implication: □P ∧ □(P→Q) ⊢ □Q"""
+    
+    def name(self) -> str:
+        return "Always Implication"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        
+        for af1 in always_formulas:
+            for af2 in always_formulas:
+                if isinstance(af2.formula, ConnectiveFormula) and af2.formula.connective == LogicalConnective.IMPLIES:
+                    if len(af2.formula.formulas) == 2:
+                        if self._formulas_equal(af1.formula, af2.formula.formulas[0]):
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
+        
+        for af1 in always_formulas:
+            for af2 in always_formulas:
+                if isinstance(af2.formula, ConnectiveFormula) and af2.formula.connective == LogicalConnective.IMPLIES:
+                    if len(af2.formula.formulas) == 2:
+                        if self._formulas_equal(af1.formula, af2.formula.formulas[0]):
+                            # □P and □(P→Q), derive □Q
+                            new_always = TemporalFormula(af1.operator, af2.formula.formulas[1])
+                            results.append(new_always)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class EventuallyFromAlways(InferenceRule):
+    """Eventually from Always: □P ⊢ ◊P"""
+    
+    def name(self) -> str:
+        return "Eventually from Always"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+                # □P → ◊P
+                from .dcec_core import TemporalOperator
+                eventually = TemporalFormula(TemporalOperator.EVENTUALLY, f.formula)
+                results.append(eventually)
+        return results
+
+
