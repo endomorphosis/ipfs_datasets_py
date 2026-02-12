@@ -238,15 +238,20 @@ class LogicAwareKnowledgeGraph:
         text1 = node1.entity.text.lower()
         text2 = node2.entity.text.lower()
         
+        # Remove modal words to get core actions
+        for word in ['must', 'shall', 'has to', 'required to']:
+            text1 = text1.replace(word, '').strip()
+            text2 = text2.replace(word, '').strip()
+        
         # Check for negation patterns
         if "not" in text1:
             text1_without_not = text1.replace("not", "").strip()
-            if text1_without_not == text2:
+            if text1_without_not == text2 or text1_without_not in text2 or text2 in text1_without_not:
                 return True
         
         if "not" in text2:
             text2_without_not = text2.replace("not", "").strip()
-            if text2_without_not == text1:
+            if text2_without_not == text1 or text2_without_not in text1 or text1 in text2_without_not:
                 return True
         
         return False
