@@ -1,17 +1,20 @@
 """
 ShadowProver Wrapper
 
-This module provides a Python wrapper for the ShadowProver submodule,
-which is a theorem prover that can work alongside other provers.
+This module provides a unified wrapper for ShadowProver that prefers the native
+Python 3 implementation and falls back to the Java submodule if needed.
 
-ShadowProver provides automated theorem proving capabilities with
-support for various logical systems and proof strategies.
+The native implementation provides:
+- Modal logic proving (K, S4, S5)
+- Cognitive calculus
+- Tableau-based algorithms
+- Problem file parsing (TPTP, custom formats)
 """
 
 import sys
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -26,6 +29,21 @@ except ImportError:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
 
+# Try to import native implementation
+try:
+    from ..native import (
+        create_prover,
+        create_cognitive_prover,
+        ModalLogic,
+        ProofTree,
+        ProofStatus as NativeProofStatus,
+        parse_problem_file,
+        SHADOWPROVER_AVAILABLE as NATIVE_AVAILABLE
+    )
+    NATIVE_AVAILABLE = True
+except ImportError:
+    NATIVE_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,6 +53,7 @@ class ProverStatus(Enum):
     FAILURE = "failure"
     TIMEOUT = "timeout"
     ERROR = "error"
+    UNKNOWN = "unknown"
 
 
 @dataclass
@@ -45,26 +64,36 @@ class ProofTask:
     output: Optional[str] = None
     execution_time: float = 0.0
     error_message: Optional[str] = None
+    native_used: bool = False
 
 
 class ShadowProverWrapper:
     """
-    Wrapper for ShadowProver providing a clean Python API.
+    Unified wrapper for ShadowProver with native and Java implementations.
     
-    ShadowProver is a Java-based theorem prover. This wrapper
-    manages the interaction with the prover through its command-line
-    interface or Docker container.
+    This wrapper prefers the native Python 3 implementation for:
+    - Better performance
+    - No external dependencies
+    - Easier debugging
+    - Type safety
+    
+    Falls back to Java implementation if:
+    - Native is not available
+    - Specific features are needed
+    - User explicitly requests Java
     
     Attributes:
         prover_path: Path to ShadowProver installation
         proof_tasks: List of proof tasks
         use_docker: Whether to use Docker for running the prover
+        prefer_native: Whether to prefer native implementation (default: True)
     """
     
     def __init__(
         self,
         prover_path: Optional[Path] = None,
-        use_docker: bool = False
+        use_docker: bool = False,
+        prefer_native: bool = True
     ):
         """
         Initialize the ShadowProver wrapper.
@@ -72,22 +101,36 @@ class ShadowProverWrapper:
         Args:
             prover_path: Optional path to ShadowProver directory
             use_docker: If True, use Docker to run ShadowProver
+            prefer_native: If True, prefer native implementation (default: True)
         """
         self.prover_path = prover_path or SHADOW_PROVER_PATH
         self.use_docker = use_docker
+        self.prefer_native = prefer_native and NATIVE_AVAILABLE
         self.proof_tasks: List[ProofTask] = []
         self._initialized = False
+        self._native_prover = None
+        
+        if self.prefer_native and NATIVE_AVAILABLE:
+            logger.info("Native ShadowProver implementation will be preferred")
+        else:
+            logger.info("Java ShadowProver implementation will be used")
         
     @beartype
     def initialize(self) -> bool:
         """
         Initialize the ShadowProver.
         
-        Checks that ShadowProver is available and can be executed.
+        For native implementation, this always succeeds.
+        For Java implementation, checks that ShadowProver is available.
         
         Returns:
             bool: True if initialization succeeded, False otherwise
         """
+        if self.prefer_native and NATIVE_AVAILABLE:
+            self._initialized = True
+            logger.info("Native ShadowProver initialized")
+            return True
+            
         try:
             # Check if ShadowProver directory exists
             if not self.prover_path.exists():
@@ -121,14 +164,19 @@ class ShadowProverWrapper:
     def prove_problem(
         self,
         problem_file: str,
-        timeout: int = 60
+        timeout: int = 60,
+        logic: Optional[str] = None
     ) -> ProofTask:
         """
         Attempt to prove a problem using ShadowProver.
         
+        Uses native implementation if available and preferred,
+        otherwise falls back to Java implementation.
+        
         Args:
-            problem_file: Path to the problem file (TPTP format)
+            problem_file: Path to the problem file (TPTP or custom format)
             timeout: Timeout in seconds
+            logic: Optional logic system ('K', 'S4', 'S5', 'cognitive')
             
         Returns:
             ProofTask object with results
@@ -141,6 +189,14 @@ class ShadowProverWrapper:
                 error_message="Prover not initialized"
             )
         
+        # Try native implementation first if preferred
+        if self.prefer_native and NATIVE_AVAILABLE:
+            try:
+                return self._prove_with_native(problem_file, logic)
+            except Exception as e:
+                logger.warning(f"Native proving failed: {e}, falling back to Java")
+        
+        # Fall back to Java implementation
         task = ProofTask(problem_file=problem_file)
         
         try:
@@ -324,3 +380,164 @@ class ShadowProverWrapper:
         status = "initialized" if self._initialized else "not initialized"
         mode = "docker" if self.use_docker else "direct"
         return f"ShadowProverWrapper(status={status}, mode={mode}, tasks={len(self.proof_tasks)})"
+    
+    def _prove_with_native(
+        self,
+        problem_file: str,
+        logic: Optional[str] = None
+    ) -> ProofTask:
+        """Prove using native Python 3 implementation.
+        
+        Args:
+            problem_file: Path to problem file
+            logic: Optional logic system
+            
+        Returns:
+            ProofTask with results
+        """
+        import time
+        
+        task = ProofTask(problem_file=problem_file, native_used=True)
+        
+        try:
+            # Parse problem file
+            problem = parse_problem_file(problem_file)
+            
+            # Determine logic
+            if logic:
+                logic_map = {
+                    'K': ModalLogic.K,
+                    'S4': ModalLogic.S4,
+                    'S5': ModalLogic.S5,
+                    'cognitive': ModalLogic.S5,  # Use S5 as base
+                }
+                modal_logic = logic_map.get(logic.upper(), problem.logic)
+            else:
+                modal_logic = problem.logic
+            
+            # Create prover
+            if logic and logic.lower() == 'cognitive':
+                prover = create_cognitive_prover()
+            else:
+                prover = create_prover(modal_logic)
+            
+            # Prove all goals
+            start_time = time.time()
+            results = []
+            
+            for goal in problem.goals:
+                proof = prover.prove(goal, problem.assumptions)
+                results.append(proof)
+            
+            end_time = time.time()
+            
+            # Determine overall status
+            all_success = all(r.status == NativeProofStatus.SUCCESS for r in results)
+            any_failure = any(r.status == NativeProofStatus.FAILURE for r in results)
+            
+            if all_success:
+                task.result = ProverStatus.SUCCESS
+            elif any_failure:
+                task.result = ProverStatus.FAILURE
+            else:
+                task.result = ProverStatus.UNKNOWN
+            
+            task.execution_time = end_time - start_time
+            task.output = f"Proved {len(results)} goals using native {modal_logic.value} prover"
+            
+            logger.info(f"Native prover completed: {task.result.value} in {task.execution_time:.2f}s")
+            
+        except Exception as e:
+            task.result = ProverStatus.ERROR
+            task.error_message = str(e)
+            logger.error(f"Native proving error: {e}")
+        
+        self.proof_tasks.append(task)
+        return task
+    
+    @beartype
+    def prove_formula(
+        self,
+        formula: str,
+        assumptions: Optional[List[str]] = None,
+        logic: str = "K"
+    ) -> ProofTask:
+        """Prove a single formula using native implementation.
+        
+        Args:
+            formula: Formula to prove
+            assumptions: Optional list of assumptions
+            logic: Logic system ('K', 'S4', 'S5', 'cognitive')
+            
+        Returns:
+            ProofTask with results
+        """
+        import time
+        
+        task = ProofTask(problem_file="inline_formula", native_used=True)
+        
+        if not NATIVE_AVAILABLE or not self.prefer_native:
+            task.result = ProverStatus.ERROR
+            task.error_message = "Native implementation not available"
+            return task
+        
+        try:
+            # Determine logic
+            logic_map = {
+                'K': ModalLogic.K,
+                'S4': ModalLogic.S4,
+                'S5': ModalLogic.S5,
+                'cognitive': ModalLogic.S5,
+            }
+            modal_logic = logic_map.get(logic.upper(), ModalLogic.K)
+            
+            # Create prover
+            if logic.lower() == 'cognitive':
+                prover = create_cognitive_prover()
+            else:
+                prover = create_prover(modal_logic)
+            
+            # Prove
+            start_time = time.time()
+            proof = prover.prove(formula, assumptions)
+            end_time = time.time()
+            
+            # Convert status
+            if proof.status == NativeProofStatus.SUCCESS:
+                task.result = ProverStatus.SUCCESS
+            elif proof.status == NativeProofStatus.FAILURE:
+                task.result = ProverStatus.FAILURE
+            else:
+                task.result = ProverStatus.UNKNOWN
+            
+            task.execution_time = end_time - start_time
+            task.output = f"Formula: {formula}, Status: {task.result.value}"
+            
+            logger.info(f"Proved formula: {task.result.value} in {task.execution_time:.2f}s")
+            
+        except Exception as e:
+            task.result = ProverStatus.ERROR
+            task.error_message = str(e)
+            logger.error(f"Formula proving error: {e}")
+        
+        self.proof_tasks.append(task)
+        return task
+    
+    def get_native_status(self) -> Dict[str, Any]:
+        """Get status of native implementation.
+        
+        Returns:
+            Dictionary with native implementation status
+        """
+        return {
+            "available": NATIVE_AVAILABLE,
+            "preferred": self.prefer_native,
+            "active": self.prefer_native and NATIVE_AVAILABLE,
+            "version": "0.8.0" if NATIVE_AVAILABLE else None,
+            "features": [
+                "Modal logic (K, S4, S5)",
+                "Cognitive calculus",
+                "Tableau proving",
+                "Problem file parsing (TPTP, custom)"
+            ] if NATIVE_AVAILABLE else []
+        }

@@ -241,7 +241,7 @@ except ImportError:
     SHADOWPROVER_AVAILABLE = False
 
 # Update version to 0.7.0 for Phase 4D
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 # Phase 4D: Problem file parser
 try:
