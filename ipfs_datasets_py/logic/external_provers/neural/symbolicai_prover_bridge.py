@@ -109,7 +109,8 @@ class SymbolicAIProverBridge:
         use_symbolic_fallback: bool = True,
         enable_explanation: bool = True,
         llm_engine: Optional[str] = None,
-        timeout: Optional[float] = 30.0
+        timeout: Optional[float] = 30.0,
+        enable_cache: bool = True
     ):
         """Initialize SymbolicAI prover bridge.
         
@@ -119,6 +120,7 @@ class SymbolicAIProverBridge:
             enable_explanation: Generate explanations
             llm_engine: LLM engine name (None = auto)
             timeout: Timeout in seconds
+            enable_cache: Whether to enable proof caching
         """
         if not SYMBOLICAI_AVAILABLE:
             raise ImportError(
@@ -130,6 +132,17 @@ class SymbolicAIProverBridge:
         self.enable_explanation = enable_explanation
         self.llm_engine = llm_engine
         self.timeout = timeout
+        self.enable_cache = enable_cache
+        
+        # Initialize cache if enabled
+        self._cache = None
+        if self.enable_cache:
+            try:
+                from ..proof_cache import get_global_cache
+                self._cache = get_global_cache()
+            except ImportError:
+                self.enable_cache = False
+                logger.warning("Proof cache not available")
         
         # Initialize SymbolicFOL bridge if available (code reuse!)
         self.fol_bridge = None
@@ -158,6 +171,19 @@ class SymbolicAIProverBridge:
         Returns:
             NeuralProofResult with proof status and reasoning
         """
+        # Check cache first (O(1) lookup via CID)
+        # This is especially important for LLM-based proving to avoid expensive API calls!
+        if self.enable_cache and self._cache is not None:
+            cached_result = self._cache.get(
+                formula,
+                axioms=axioms,
+                prover_name="SymbolicAI",
+                prover_config={'strategy': strategy, 'timeout': timeout}
+            )
+            if cached_result is not None:
+                logger.info("SymbolicAI cache HIT - avoiding expensive LLM call")
+                return cached_result
+        
         start_time = time.time()
         timeout = timeout or self.timeout
         
@@ -179,6 +205,17 @@ class SymbolicAIProverBridge:
                 raise ValueError(f"Unknown strategy: {strategy}")
             
             result.proof_time = time.time() - start_time
+            
+            # Cache the result (especially important for expensive LLM calls!)
+            if self.enable_cache and self._cache is not None:
+                self._cache.set(
+                    formula,
+                    result,
+                    axioms=axioms,
+                    prover_name="SymbolicAI",
+                    prover_config={'strategy': strategy, 'timeout': timeout}
+                )
+            
             return result
         
         except Exception as e:

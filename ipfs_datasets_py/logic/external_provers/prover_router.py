@@ -81,8 +81,10 @@ class ProverRouter:
         enable_lean: bool = False,
         enable_coq: bool = False,
         enable_native: bool = True,
+        enable_symbolicai: bool = False,
         default_strategy: ProverStrategy = ProverStrategy.AUTO,
-        default_timeout: float = 5.0
+        default_timeout: float = 5.0,
+        enable_cache: bool = True
     ):
         """Initialize prover router.
         
@@ -92,16 +94,29 @@ class ProverRouter:
             enable_lean: Whether to enable Lean
             enable_coq: Whether to enable Coq
             enable_native: Whether to enable native provers
+            enable_symbolicai: Whether to enable SymbolicAI
             default_strategy: Default proving strategy
             default_timeout: Default timeout per prover
+            enable_cache: Whether to enable proof caching
         """
         self.enable_z3 = enable_z3
         self.enable_cvc5 = enable_cvc5
         self.enable_lean = enable_lean
         self.enable_coq = enable_coq
         self.enable_native = enable_native
+        self.enable_symbolicai = enable_symbolicai
         self.default_strategy = default_strategy
         self.default_timeout = default_timeout
+        self.enable_cache = enable_cache
+        
+        # Initialize cache if enabled
+        self._cache = None
+        if self.enable_cache:
+            try:
+                from .proof_cache import get_global_cache
+                self._cache = get_global_cache()
+            except ImportError:
+                self.enable_cache = False
         
         # Initialize provers
         self.provers = {}
@@ -114,7 +129,10 @@ class ProverRouter:
             try:
                 from .smt.z3_prover_bridge import Z3ProverBridge, Z3_AVAILABLE
                 if Z3_AVAILABLE:
-                    self.provers['z3'] = Z3ProverBridge(timeout=self.default_timeout)
+                    self.provers['z3'] = Z3ProverBridge(
+                        timeout=self.default_timeout,
+                        enable_cache=self.enable_cache
+                    )
             except ImportError:
                 pass
         
@@ -142,6 +160,18 @@ class ProverRouter:
                 from .interactive.coq_prover_bridge import CoqProverBridge, COQ_AVAILABLE
                 if COQ_AVAILABLE:
                     self.provers['coq'] = CoqProverBridge(timeout=self.default_timeout)
+            except ImportError:
+                pass
+        
+        # SymbolicAI
+        if self.enable_symbolicai:
+            try:
+                from .neural.symbolicai_prover_bridge import SymbolicAIProverBridge, SYMBOLICAI_AVAILABLE
+                if SYMBOLICAI_AVAILABLE:
+                    self.provers['symbolicai'] = SymbolicAIProverBridge(
+                        timeout=self.default_timeout,
+                        enable_cache=self.enable_cache
+                    )
             except ImportError:
                 pass
         
