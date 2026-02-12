@@ -305,8 +305,18 @@ class TDFOLProver:
     def __init__(self, kb: Optional[TDFOLKnowledgeBase] = None):
         """Initialize the prover with a knowledge base."""
         self.kb = kb or TDFOLKnowledgeBase()
-        self.temporal_rules = self._initialize_temporal_rules()
-        self.deontic_rules = self._initialize_deontic_rules()
+        
+        # Import and initialize all TDFOL rules (40 rules)
+        try:
+            from .tdfol_inference_rules import get_all_tdfol_rules
+            self.tdfol_rules = get_all_tdfol_rules()
+            logger.info(f"Loaded {len(self.tdfol_rules)} TDFOL inference rules")
+        except Exception as e:
+            logger.warning(f"Failed to load TDFOL rules: {e}")
+            self.tdfol_rules = []
+        
+        self.temporal_rules = [r for r in self.tdfol_rules if 'Temporal' in r.name]
+        self.deontic_rules = [r for r in self.tdfol_rules if 'Deontic' in r.name or 'Permission' in r.name or 'Obligation' in r.name or 'Prohibition' in r.name]
         
         # Try to use CEC prover if available
         self.cec_engine = None
@@ -425,12 +435,14 @@ class TDFOLProver:
                     method="forward_chaining"
                 )
             
-            # Apply temporal rules
+            # Apply all TDFOL rules
             new_formulas = set()
-            for formula in derived:
-                for rule in self.temporal_rules:
-                    if hasattr(rule, 'can_apply') and rule.can_apply(formula):
-                        try:
+            for formula in list(derived):
+                # Try each rule
+                for rule in self.tdfol_rules:
+                    try:
+                        # Single-formula rules
+                        if rule.can_apply(formula):
                             new_formula = rule.apply(formula)
                             if new_formula not in derived:
                                 new_formulas.add(new_formula)
@@ -440,25 +452,27 @@ class TDFOLProver:
                                     rule.name,
                                     [formula]
                                 ))
-                        except Exception as e:
-                            logger.debug(f"Rule {rule.name} failed: {e}")
-            
-            # Apply deontic rules
-            for formula in derived:
-                for rule in self.deontic_rules:
-                    if hasattr(rule, 'can_apply') and rule.can_apply(formula):
-                        try:
-                            new_formula = rule.apply(formula)
-                            if new_formula not in derived:
-                                new_formulas.add(new_formula)
-                                proof_steps.append(ProofStep(
-                                    new_formula,
-                                    f"Applied {rule.name}",
-                                    rule.name,
-                                    [formula]
-                                ))
-                        except Exception as e:
-                            logger.debug(f"Rule {rule.name} failed: {e}")
+                        
+                        # Two-formula rules (try with other derived formulas)
+                        for formula2 in list(derived):
+                            if formula == formula2:
+                                continue
+                            try:
+                                if rule.can_apply(formula, formula2):
+                                    new_formula = rule.apply(formula, formula2)
+                                    if new_formula not in derived:
+                                        new_formulas.add(new_formula)
+                                        proof_steps.append(ProofStep(
+                                            new_formula,
+                                            f"Applied {rule.name}",
+                                            rule.name,
+                                            [formula, formula2]
+                                        ))
+                            except:
+                                pass
+                    except Exception as e:
+                        logger.debug(f"Rule {rule.name} failed: {e}")
+                        continue
             
             # No progress made
             if not new_formulas:
