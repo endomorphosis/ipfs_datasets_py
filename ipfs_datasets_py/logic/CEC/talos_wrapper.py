@@ -6,6 +6,10 @@ which interfaces with the SPASS theorem prover for DCEC formulas.
 
 Talos manages proof generation, proof trees, and interaction with
 the SPASS automated theorem prover.
+
+This wrapper now supports both:
+1. Native Python 3 theorem prover (preferred, from ipfs_datasets_py.logic.native)
+2. Python 2 submodule fallback (Talos/SPASS)
 """
 
 import sys
@@ -58,35 +62,67 @@ class TalosWrapper:
     This wrapper manages theorem proving tasks using SPASS,
     handles proof trees, and provides methods for automated reasoning.
     
+    Supports both native Python 3 theorem prover and Python 2 submodule fallback.
+    
     Attributes:
-        spass_container: The underlying spassContainer instance
+        spass_container: The underlying spassContainer instance (if using submodule)
+        prover: The native TheoremProver instance (if using native)
         proof_attempts: List of proof attempts
         simultaneous_rules: Dictionary of simultaneous reasoning rules
         temporal_rules: Dictionary of temporal reasoning rules
+        use_native: Whether to prefer native Python 3 implementation
+        is_native: Whether currently using native implementation
     """
     
-    def __init__(self, spass_path: Optional[str] = None):
+    def __init__(self, spass_path: Optional[str] = None, use_native: bool = True):
         """
         Initialize the Talos wrapper.
         
         Args:
-            spass_path: Optional path to SPASS executable
+            spass_path: Optional path to SPASS executable (for submodule)
+            use_native: If True (default), prefer native Python 3 implementation
+                       with fallback to submodule. If False, use submodule only.
         """
         self.spass_container = None
+        self.prover = None
         self.spass_path = spass_path
         self.proof_attempts: List[ProofAttempt] = []
         self.simultaneous_rules: Dict[str, Tuple[str, List[str]]] = {}
         self.temporal_rules: Dict[str, Tuple[str, List[str]]] = {}
         self._initialized = False
+        self.use_native = use_native
+        self.is_native = False
         
     @beartype
     def initialize(self) -> bool:
         """
         Initialize the Talos prover and SPASS container.
         
+        Attempts to use native Python 3 theorem prover first (if use_native=True),
+        then falls back to Python 2 Talos/SPASS if native is unavailable.
+        
         Returns:
             bool: True if initialization succeeded, False otherwise
         """
+        # Try native implementation first if requested
+        if self.use_native:
+            try:
+                from ipfs_datasets_py.logic.native import TheoremProver
+                
+                self.prover = TheoremProver()
+                self._initialized = True
+                self.is_native = True
+                logger.info("Talos wrapper initialized successfully (using native Python 3 prover)")
+                return True
+                
+            except ImportError as e:
+                logger.debug(f"Native theorem prover not available: {e}")
+                logger.info("Falling back to Talos/SPASS submodule")
+            except Exception as e:
+                logger.warning(f"Failed to initialize native theorem prover: {e}")
+                logger.info("Falling back to Talos/SPASS submodule")
+        
+        # Fall back to Python 2 submodule
         try:
             # Import Talos modules
             from talos import spassContainer
@@ -100,33 +136,36 @@ class TalosWrapper:
                 self.temporal_rules = self.spass_container.temporalRules
                 
             self._initialized = True
-            logger.info("Talos theorem prover initialized successfully")
+            self.is_native = False
+            logger.info("Talos theorem prover initialized successfully (using Python 2 submodule)")
             return True
             
         except ImportError as e:
             logger.error(f"Failed to import Talos: {e}")
-            logger.warning("Talos not available. Using fallback mode.")
+            logger.warning("Talos not available. No theorem prover backend available.")
             self._initialized = False
+            self.is_native = False
             return False
         except Exception as e:
             logger.error(f"Failed to initialize Talos: {e}")
             self._initialized = False
+            self.is_native = False
             return False
     
     @beartype
     def prove_theorem(
         self,
-        conjecture: str,
-        axioms: Optional[List[str]] = None,
+        conjecture: Any,  # Can be str or Formula object
+        axioms: Optional[List[Any]] = None,
         timeout: int = 30,
         use_temporal_rules: bool = False
     ) -> ProofAttempt:
         """
-        Attempt to prove a theorem using SPASS.
+        Attempt to prove a theorem.
         
         Args:
-            conjecture: The theorem to prove
-            axioms: List of axioms to use in the proof
+            conjecture: The theorem to prove (string or Formula object)
+            axioms: List of axioms to use in the proof (strings or Formula objects)
             timeout: Timeout in seconds for the proof attempt
             use_temporal_rules: Whether to use temporal reasoning rules
             
@@ -136,8 +175,8 @@ class TalosWrapper:
         if not self._initialized:
             logger.error("Talos not initialized. Call initialize() first.")
             return ProofAttempt(
-                conjecture=conjecture,
-                axioms=axioms or [],
+                conjecture=str(conjecture),
+                axioms=[str(a) for a in (axioms or [])],
                 result=ProofResult.ERROR,
                 error_message="Prover not initialized"
             )
@@ -145,26 +184,52 @@ class TalosWrapper:
         axioms = axioms or []
         
         try:
-            # Add appropriate rules
-            rules = self.temporal_rules if use_temporal_rules else self.simultaneous_rules
-            
-            # Set up the proof problem
-            # Note: Actual implementation depends on Talos API
-            logger.info(f"Attempting to prove: {conjecture[:50]}...")
-            
-            # Placeholder for actual proof execution
-            # The real implementation would call SPASS through Talos
-            result = ProofResult.UNKNOWN
-            proof_tree = None
-            output = ""
-            
-            attempt = ProofAttempt(
-                conjecture=conjecture,
-                axioms=axioms,
-                result=result,
-                proof_tree=proof_tree,
-                output=output
-            )
+            if self.is_native:
+                # Use native theorem prover
+                logger.info(f"Attempting to prove (native): {str(conjecture)[:50]}...")
+                
+                # Convert to native format if needed
+                native_attempt = self.prover.prove_theorem(
+                    goal=conjecture,
+                    axioms=axioms
+                )
+                
+                # Convert native ProofResult to wrapper ProofResult
+                if native_attempt.result.name == "PROVED":
+                    result = ProofResult.PROVED
+                elif native_attempt.result.name == "DISPROVED":
+                    result = ProofResult.DISPROVED
+                else:
+                    result = ProofResult.UNKNOWN
+                
+                attempt = ProofAttempt(
+                    conjecture=str(conjecture),
+                    axioms=[str(a) for a in axioms],
+                    result=result,
+                    proof_tree=native_attempt.proof_tree,
+                    output=str(native_attempt),
+                    execution_time=0.0
+                )
+                
+            else:
+                # Use Talos/SPASS submodule
+                rules = self.temporal_rules if use_temporal_rules else self.simultaneous_rules
+                
+                logger.info(f"Attempting to prove (submodule): {str(conjecture)[:50]}...")
+                
+                # Placeholder for actual proof execution
+                # The real implementation would call SPASS through Talos
+                result = ProofResult.UNKNOWN
+                proof_tree = None
+                output = ""
+                
+                attempt = ProofAttempt(
+                    conjecture=str(conjecture),
+                    axioms=[str(a) for a in axioms],
+                    result=result,
+                    proof_tree=proof_tree,
+                    output=output
+                )
             
             self.proof_attempts.append(attempt)
             return attempt
@@ -172,8 +237,8 @@ class TalosWrapper:
         except Exception as e:
             logger.error(f"Error during proof attempt: {e}")
             return ProofAttempt(
-                conjecture=conjecture,
-                axioms=axioms,
+                conjecture=str(conjecture),
+                axioms=[str(a) for a in axioms],
                 result=ProofResult.ERROR,
                 error_message=str(e)
             )
@@ -291,7 +356,24 @@ class TalosWrapper:
             "temporal_rules": len(self.temporal_rules)
         }
     
+    @beartype
+    def get_backend_info(self) -> Dict[str, Any]:
+        """
+        Get information about the currently active backend.
+        
+        Returns:
+            Dictionary with backend information
+        """
+        return {
+            "initialized": self._initialized,
+            "is_native": self.is_native,
+            "backend": "native_python3" if self.is_native else "python2_submodule",
+            "use_native_preference": self.use_native,
+            "proof_attempts": len(self.proof_attempts)
+        }
+    
     def __repr__(self) -> str:
         """String representation of the wrapper."""
         status = "initialized" if self._initialized else "not initialized"
-        return f"TalosWrapper(status={status}, attempts={len(self.proof_attempts)})"
+        backend = " (native)" if self.is_native else " (submodule)"
+        return f"TalosWrapper(status={status}{backend if self._initialized else ''}, attempts={len(self.proof_attempts)})"
