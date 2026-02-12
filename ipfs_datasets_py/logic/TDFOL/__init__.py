@@ -64,6 +64,12 @@ from .tdfol_parser import (
     parse_tdfol_safe,
 )
 
+from .tdfol_dcec_parser import (
+    DCECStringParser,
+    parse_dcec,
+    parse_dcec_safe,
+)
+
 from .tdfol_prover import (
     ProofResult,
     ProofStatus,
@@ -103,6 +109,11 @@ __all__ = [
     "TDFOLParser",
     "parse_tdfol",
     "parse_tdfol_safe",
+    
+    # DCEC Parser
+    "DCECStringParser",
+    "parse_dcec",
+    "parse_dcec_safe",
     
     # Prover
     "ProofResult",
