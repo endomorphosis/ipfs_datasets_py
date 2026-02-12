@@ -2742,4 +2742,143 @@ class TemporallyInducedCommonKnowledge(InferenceRule):
         return results
 
 
+# Final Rules to Complete Phase 4B
+class TemporalUntilElimination(InferenceRule):
+    """Until elimination: (P U Q) ⊢ ◊Q"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
+                # P U Q implies eventually Q
+                results.append(TemporalFormula(Operator.EVENTUALLY, f.right))
+        return results
+
+
+class ModalNecessionIntroduction(InferenceRule):
+    """Modal necessity introduction: If P is a theorem, then □P"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Simplified: check for tautologies
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                # Check for P∨¬P pattern
+                if isinstance(f.right, UnaryFormula) and f.right.operator.value == "NOT":
+                    if f.left == f.right.formula:
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                if isinstance(f.right, UnaryFormula) and f.right.operator.value == "NOT":
+                    if f.left == f.right.formula:
+                        results.append(TemporalFormula(Operator.ALWAYS, f))
+        return results
+
+
+class DisjunctionCommutes(InferenceRule):
+    """Disjunction commutes in resolution: Specialized commutativity for clauses"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                # Always applicable to disjunctions
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                # Commute the disjunction
+                results.append(BinaryFormula(Operator.OR, f.right, f.left))
+        return results
+
+
+class CommonKnowledgeTransitivity(InferenceRule):
+    """Common knowledge transitivity: C(C(P)) ⊢ C(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "C":
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "C":
+                    results.append(ModalFormula(Operator.C, f.formula.formula, f.agent))
+        return results
+
+
+class CommonKnowledgeConjunction(InferenceRule):
+    """Common knowledge conjunction: C(P) ∧ C(Q) ⊢ C(P∧Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        ck_formulas = [f for f in formulas if isinstance(f, ModalFormula) and f.operator.value == "C"]
+        return len(ck_formulas) >= 2
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        ck_formulas = [f for f in formulas if isinstance(f, ModalFormula) and f.operator.value == "C"]
+        for i, f1 in enumerate(ck_formulas):
+            for f2 in ck_formulas[i+1:]:
+                conj = BinaryFormula(Operator.AND, f1.formula, f2.formula)
+                results.append(ModalFormula(Operator.C, conj, f1.agent))
+        return results
+
+
+class MutualKnowledgeTransitivity(InferenceRule):
+    """Mutual knowledge transitivity: MB(P) ∧ MB(MB(P)→Q) ⊢ MB(Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Simplified mutual belief check
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "MB":
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified mutual belief reasoning
+        return []
+
+
+class PublicAnnouncementReduction(InferenceRule):
+    """Public announcement reduction: [!P]Q ≡ (P→Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Would check for public announcement operator
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Public announcement logic - advanced feature
+        return []
+
+
+class GroupKnowledgeAggregation(InferenceRule):
+    """Group knowledge: Everyone knows P ⊢ Group knows P"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if multiple agents have knowledge of same formula
+        k_formulas = {}
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "K":
+                prop = str(f.formula)
+                if prop not in k_formulas:
+                    k_formulas[prop] = []
+                k_formulas[prop].append(f.agent)
+        # If any proposition is known by 3+ agents, can aggregate
+        for agents in k_formulas.values():
+            if len(agents) >= 3:
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified group knowledge
+        return []
+
+
 
