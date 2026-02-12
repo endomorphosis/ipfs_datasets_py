@@ -10,3 +10,15 @@
 	path = ipfs_datasets_py/web_archiving/common_crawl_search_engine
 	url = https://github.com/endomorphosis/common_crawl_search_engine
 	branch = main
+[submodule "ipfs_datasets_py/logic/CEC/DCEC_Library"]
+	path = ipfs_datasets_py/logic/CEC/DCEC_Library
+	url = https://github.com/endomorphosis/DCEC_Library.git
+[submodule "ipfs_datasets_py/logic/CEC/Talos"]
+	path = ipfs_datasets_py/logic/CEC/Talos
+	url = https://github.com/endomorphosis/Talos.git
+[submodule "ipfs_datasets_py/logic/CEC/Eng-DCEC"]
+	path = ipfs_datasets_py/logic/CEC/Eng-DCEC
+	url = https://github.com/endomorphosis/Eng-DCEC.git
+[submodule "ipfs_datasets_py/logic/CEC/ShadowProver"]
+	path = ipfs_datasets_py/logic/CEC/ShadowProver
+	url = https://github.com/endomorphosis/ShadowProver.git
