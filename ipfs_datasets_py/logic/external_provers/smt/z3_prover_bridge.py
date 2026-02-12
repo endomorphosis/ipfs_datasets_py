@@ -256,13 +256,15 @@ class Z3ProverBridge:
         timeout: Default timeout in seconds (None = no timeout)
         use_unsat_core: Whether to extract unsat cores
         use_model: Whether to generate models for satisfiable formulas
+        enable_cache: Whether to cache proof results
     """
     
     def __init__(
         self,
         timeout: Optional[float] = None,
         use_unsat_core: bool = False,
-        use_model: bool = True
+        use_model: bool = True,
+        enable_cache: bool = True
     ):
         """Initialize Z3 prover bridge.
         
@@ -270,6 +272,7 @@ class Z3ProverBridge:
             timeout: Default timeout in seconds (None = no timeout)
             use_unsat_core: Whether to extract unsat cores
             use_model: Whether to generate models for satisfiable formulas
+            enable_cache: Whether to enable proof caching
         """
         if not Z3_AVAILABLE:
             raise ImportError("Z3 is not available. Install with: pip install z3-solver")
@@ -277,7 +280,17 @@ class Z3ProverBridge:
         self.timeout = timeout
         self.use_unsat_core = use_unsat_core
         self.use_model = use_model
+        self.enable_cache = enable_cache
         self.converter = TDFOLToZ3Converter()
+        
+        # Initialize cache if enabled
+        self._cache = None
+        if self.enable_cache:
+            try:
+                from ..proof_cache import get_global_cache
+                self._cache = get_global_cache()
+            except ImportError:
+                self.enable_cache = False
     
     def prove(
         self,
@@ -295,6 +308,17 @@ class Z3ProverBridge:
         Returns:
             Z3ProofResult with proof status and details
         """
+        # Check cache first (O(1) lookup via CID)
+        if self.enable_cache and self._cache is not None:
+            cached_result = self._cache.get(
+                formula,
+                axioms=axioms,
+                prover_name="Z3",
+                prover_config={'timeout': timeout, 'use_unsat_core': self.use_unsat_core}
+            )
+            if cached_result is not None:
+                return cached_result
+        
         start_time = time.time()
         
         try:
@@ -327,7 +351,7 @@ class Z3ProverBridge:
                 if self.use_unsat_core:
                     unsat_core = [str(c) for c in solver.unsat_core()]
                 
-                return Z3ProofResult(
+                proof_result = Z3ProofResult(
                     is_valid=True,
                     is_sat=False,
                     is_unsat=True,
@@ -337,6 +361,12 @@ class Z3ProverBridge:
                     proof_time=proof_time,
                     z3_result=result
                 )
+                
+                # Cache the result
+                if self.enable_cache and self._cache is not None:
+                    self._cache.set(formula, proof_result, axioms=axioms, prover_name="Z3", prover_config={'timeout': timeout})
+                
+                return proof_result
             
             elif result == z3.sat:
                 # Formula is not valid (negation is sat = counterexample exists)
@@ -344,7 +374,7 @@ class Z3ProverBridge:
                 if self.use_model:
                     model = solver.model()
                 
-                return Z3ProofResult(
+                proof_result = Z3ProofResult(
                     is_valid=False,
                     is_sat=True,
                     is_unsat=False,
@@ -354,9 +384,15 @@ class Z3ProverBridge:
                     proof_time=proof_time,
                     z3_result=result
                 )
+                
+                # Cache the result (even for sat - useful for repeated queries)
+                if self.enable_cache and self._cache is not None:
+                    self._cache.set(formula, proof_result, axioms=axioms, prover_name="Z3", prover_config={'timeout': timeout})
+                
+                return proof_result
             
             else:  # z3.unknown
-                return Z3ProofResult(
+                proof_result = Z3ProofResult(
                     is_valid=False,
                     is_sat=False,
                     is_unsat=False,
