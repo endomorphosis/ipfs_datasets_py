@@ -71,6 +71,10 @@ from .dcec_parsing import (
     prefix_emdas,
 )
 
+from .dcec_prototypes import (
+    DCECPrototypeNamespace,
+)
+
 __all__ = [
     # Operators
     "DeonticOperator",
@@ -121,6 +125,8 @@ __all__ = [
     "replace_synonyms",
     "prefix_logical_functions",
     "prefix_emdas",
+    # Prototypes
+    "DCECPrototypeNamespace",
 ]
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
