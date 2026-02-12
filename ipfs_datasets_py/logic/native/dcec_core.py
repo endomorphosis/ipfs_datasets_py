@@ -61,7 +61,7 @@ class TemporalOperator(Enum):
     SINCE = "S"              # Since
 
 
-@dataclass
+@dataclass(frozen=True)
 class Sort:
     """Represents a type/sort in the logic system."""
     name: str
@@ -76,7 +76,7 @@ class Sort:
         return self.parent.is_subtype_of(other)
 
 
-@dataclass
+@dataclass(frozen=True)
 class Variable:
     """Represents a logical variable."""
     name: str
