@@ -1,8 +1,9 @@
 """
 Native Python 3 natural language converter for DCEC formulas.
 
-This module provides a pure Python 3 implementation of basic
-natural language to DCEC conversion, replacing the Eng-DCEC/GF approach.
+This module provides a pure Python 3 implementation of natural language
+to DCEC conversion. It supports both grammar-based parsing (Phase 4C)
+and pattern-based fallback for robustness.
 """
 
 from typing import List, Dict, Optional, Tuple, Pattern, Any
@@ -28,6 +29,13 @@ from .dcec_core import (
     Sort,
 )
 from .dcec_namespace import DCECNamespace
+
+try:
+    from .dcec_english_grammar import DCECEnglishGrammar
+    GRAMMAR_AVAILABLE = True
+except ImportError:
+    GRAMMAR_AVAILABLE = False
+    logger.warning("Grammar-based parsing not available, using pattern-based fallback only")
 
 try:
     from beartype import beartype
@@ -363,3 +371,78 @@ class NaturalLanguageConverter:
     
     def __repr__(self) -> str:
         return f"NaturalLanguageConverter(conversions={len(self.conversion_history)})"
+
+
+# === Phase 4C: Grammar-Based Enhancement ===
+
+def create_enhanced_nl_converter(use_grammar: bool = True) -> 'NaturalLanguageConverter':
+    """Factory function to create an enhanced NL converter with grammar support.
+    
+    Args:
+        use_grammar: Whether to enable grammar-based parsing (default: True)
+        
+    Returns:
+        Enhanced NaturalLanguageConverter with grammar support
+    """
+    converter = NaturalLanguageConverter()
+    
+    # Add grammar-based parsing if available
+    if use_grammar and GRAMMAR_AVAILABLE:
+        try:
+            from .dcec_english_grammar import create_dcec_grammar
+            converter.grammar = create_dcec_grammar()
+            converter.use_grammar = True
+            logger.info("Enhanced NL converter created with grammar support")
+        except Exception as e:
+            logger.warning(f"Failed to add grammar support: {e}")
+            converter.use_grammar = False
+            converter.grammar = None
+    else:
+        converter.use_grammar = False
+        converter.grammar = None
+    
+    return converter
+
+
+def parse_with_grammar(text: str) -> Optional[Formula]:
+    """Parse English text using grammar-based parsing.
+    
+    Args:
+        text: English text to parse
+        
+    Returns:
+        DCEC Formula or None if parsing fails
+    """
+    if not GRAMMAR_AVAILABLE:
+        logger.warning("Grammar-based parsing not available")
+        return None
+    
+    try:
+        from .dcec_english_grammar import create_dcec_grammar
+        grammar = create_dcec_grammar()
+        return grammar.parse_to_dcec(text)
+    except Exception as e:
+        logger.error(f"Grammar parsing failed: {e}")
+        return None
+
+
+def linearize_with_grammar(formula: Formula) -> Optional[str]:
+    """Convert DCEC formula to English using grammar-based linearization.
+    
+    Args:
+        formula: DCEC Formula to convert
+        
+    Returns:
+        English text or None if linearization fails
+    """
+    if not GRAMMAR_AVAILABLE:
+        logger.warning("Grammar-based linearization not available")
+        return None
+    
+    try:
+        from .dcec_english_grammar import create_dcec_grammar
+        grammar = create_dcec_grammar()
+        return grammar.formula_to_english(formula)
+    except Exception as e:
+        logger.error(f"Grammar linearization failed: {e}")
+        return None

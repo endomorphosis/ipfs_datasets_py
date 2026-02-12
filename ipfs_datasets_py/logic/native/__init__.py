@@ -144,3 +144,41 @@ __all__ = [
 ]
 
 __version__ = "0.5.0"
+
+# Phase 4C: Grammar-based NL processing
+try:
+    from .grammar_engine import (
+        GrammarEngine,
+        Category,
+        GrammarRule,
+        LexicalEntry,
+        ParseNode,
+        CompositeGrammar,
+        make_binary_rule,
+        make_unary_rule,
+    )
+    
+    from .dcec_english_grammar import (
+        DCECEnglishGrammar,
+        create_dcec_grammar,
+    )
+    
+    __all__.extend([
+        "GrammarEngine",
+        "Category",
+        "GrammarRule",
+        "LexicalEntry",
+        "ParseNode",
+        "CompositeGrammar",
+        "make_binary_rule",
+        "make_unary_rule",
+        "DCECEnglishGrammar",
+        "create_dcec_grammar",
+    ])
+    
+    GRAMMAR_AVAILABLE = True
+except ImportError:
+    GRAMMAR_AVAILABLE = False
+
+# Update version to 0.6.0 for Phase 4C
+__version__ = "0.6.0"
