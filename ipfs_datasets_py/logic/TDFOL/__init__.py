@@ -77,6 +77,17 @@ from .tdfol_prover import (
     TDFOLProver,
 )
 
+from .tdfol_proof_cache import (
+    TDFOLProofCache,
+    get_global_proof_cache,
+    clear_global_proof_cache,
+)
+
+from .tdfol_inference_rules import (
+    TDFOLInferenceRule,
+    get_all_tdfol_rules,
+)
+
 __all__ = [
     # Enumerations
     "DeonticOperator",
@@ -120,6 +131,15 @@ __all__ = [
     "ProofStatus",
     "ProofStep",
     "TDFOLProver",
+    
+    # Proof Cache
+    "TDFOLProofCache",
+    "get_global_proof_cache",
+    "clear_global_proof_cache",
+    
+    # Inference Rules
+    "TDFOLInferenceRule",
+    "get_all_tdfol_rules",
     
     # Utility Functions
     "create_always",
