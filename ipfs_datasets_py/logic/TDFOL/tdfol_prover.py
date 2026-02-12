@@ -302,9 +302,28 @@ class UntilUnfoldingRule:
 class TDFOLProver:
     """Theorem prover for TDFOL formulas."""
     
-    def __init__(self, kb: Optional[TDFOLKnowledgeBase] = None):
-        """Initialize the prover with a knowledge base."""
+    def __init__(self, kb: Optional[TDFOLKnowledgeBase] = None, enable_cache: bool = True):
+        """
+        Initialize the prover with a knowledge base.
+        
+        Args:
+            kb: Knowledge base with axioms and theorems
+            enable_cache: Whether to enable proof caching for performance
+        """
         self.kb = kb or TDFOLKnowledgeBase()
+        self.enable_cache = enable_cache
+        
+        # Initialize proof cache if enabled
+        if self.enable_cache:
+            try:
+                from .tdfol_proof_cache import get_global_proof_cache
+                self.proof_cache = get_global_proof_cache()
+                logger.info("TDFOL proof cache enabled")
+            except Exception as e:
+                logger.warning(f"Failed to initialize proof cache: {e}")
+                self.proof_cache = None
+        else:
+            self.proof_cache = None
         
         # Import and initialize all TDFOL rules (40 rules)
         try:
@@ -361,40 +380,64 @@ class TDFOLProver:
         import time
         start_time = time.time()
         
+        # Check cache first (O(1) lookup)
+        if self.proof_cache is not None:
+            cached_result = self.proof_cache.get(goal, list(self.kb.axioms))
+            if cached_result is not None:
+                logger.debug(f"Cache hit for formula: {goal}")
+                return cached_result
+        
         # Try direct lookup in KB
         if goal in self.kb.axioms:
-            return ProofResult(
+            result = ProofResult(
                 status=ProofStatus.PROVED,
                 formula=goal,
                 proof_steps=[ProofStep(goal, "Axiom in knowledge base")],
                 time_ms=(time.time() - start_time) * 1000,
                 method="axiom_lookup"
             )
+            # Cache the result
+            if self.proof_cache is not None:
+                self.proof_cache.set(goal, result, list(self.kb.axioms))
+            return result
         
         if goal in self.kb.theorems:
-            return ProofResult(
+            result = ProofResult(
                 status=ProofStatus.PROVED,
                 formula=goal,
                 proof_steps=[ProofStep(goal, "Theorem in knowledge base")],
                 time_ms=(time.time() - start_time) * 1000,
                 method="theorem_lookup"
             )
+            # Cache the result
+            if self.proof_cache is not None:
+                self.proof_cache.set(goal, result, list(self.kb.axioms))
+            return result
         
         # Try forward chaining with TDFOL rules
         result = self._forward_chaining(goal, timeout_ms)
         if result.is_proved():
+            # Cache successful proof
+            if self.proof_cache is not None:
+                self.proof_cache.set(goal, result, list(self.kb.axioms))
             return result
         
         # Try modal tableaux for modal formulas
         if self._is_modal_formula(goal) and HAVE_MODAL_TABLEAUX:
             result = self._modal_tableaux_prove(goal, timeout_ms)
             if result.is_proved():
+                # Cache successful proof
+                if self.proof_cache is not None:
+                    self.proof_cache.set(goal, result, list(self.kb.axioms))
                 return result
         
         # Try CEC prover for compatible formulas
         if self.cec_engine:
             result = self._cec_prove(goal, timeout_ms)
             if result.is_proved():
+                # Cache successful proof
+                if self.proof_cache is not None:
+                    self.proof_cache.set(goal, result, list(self.kb.axioms))
                 return result
         
         # Could not prove
