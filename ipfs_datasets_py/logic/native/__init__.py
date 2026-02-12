@@ -53,6 +53,24 @@ from .nl_converter import (
     NaturalLanguageConverter,
 )
 
+from .dcec_cleaning import (
+    strip_whitespace,
+    strip_comments,
+    consolidate_parens,
+    check_parens,
+    get_matching_close_paren,
+    tuck_functions,
+)
+
+from .dcec_parsing import (
+    ParseToken,
+    remove_comments,
+    functorize_symbols,
+    replace_synonyms,
+    prefix_logical_functions,
+    prefix_emdas,
+)
+
 __all__ = [
     # Operators
     "DeonticOperator",
@@ -89,6 +107,20 @@ __all__ = [
     # NL Converter
     "ConversionResult",
     "NaturalLanguageConverter",
+    # Cleaning utilities
+    "strip_whitespace",
+    "strip_comments",
+    "consolidate_parens",
+    "check_parens",
+    "get_matching_close_paren",
+    "tuck_functions",
+    # Parsing
+    "ParseToken",
+    "remove_comments",
+    "functorize_symbols",
+    "replace_synonyms",
+    "prefix_logical_functions",
+    "prefix_emdas",
 ]
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
