@@ -688,3 +688,404 @@ class DoubleNegation(InferenceRule):
                             results.append(inner.formulas[0])
         return results
 
+
+
+class Contraposition(InferenceRule):
+    """Contraposition: P→Q is equivalent to ¬Q→¬P."""
+    
+    def name(self) -> str:
+        return "Contraposition"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    # P→Q becomes ¬Q→¬P
+                    not_q = ConnectiveFormula(LogicalConnective.NOT, [f.formulas[1]])
+                    not_p = ConnectiveFormula(LogicalConnective.NOT, [f.formulas[0]])
+                    result = ConnectiveFormula(LogicalConnective.IMPLIES, [not_q, not_p])
+                    results.append(result)
+        return results
+
+
+class HypotheticalSyllogism(InferenceRule):
+    """Hypothetical Syllogism: From (P→Q) and (Q→R), derive (P→R).
+    This is similar to Cut Elimination but treated as a separate rule."""
+    
+    def name(self) -> str:
+        return "Hypothetical Syllogism"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if we have two implications where consequent of first matches antecedent of second
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
+                        if len(f1.formulas) == 2 and len(f2.formulas) == 2:
+                            if self._formulas_equal(f1.formulas[1], f2.formulas[0]):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
+                        if len(f1.formulas) == 2 and len(f2.formulas) == 2:
+                            if self._formulas_equal(f1.formulas[1], f2.formulas[0]):
+                                # (P→Q) and (Q→R) gives (P→R)
+                                result = ConnectiveFormula(LogicalConnective.IMPLIES, [f1.formulas[0], f2.formulas[1]])
+                                results.append(result)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class Exportation(InferenceRule):
+    """Exportation: (P∧Q)→R is equivalent to P→(Q→R)."""
+    
+    def name(self) -> str:
+        return "Exportation"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    # Check if antecedent is conjunction
+                    if isinstance(f.formulas[0], ConnectiveFormula) and f.formulas[0].connective == LogicalConnective.AND:
+                        return True
+            # Also handle reverse: P→(Q→R) to (P∧Q)→R
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    if isinstance(f.formulas[1], ConnectiveFormula) and f.formulas[1].connective == LogicalConnective.IMPLIES:
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    # Case 1: (P∧Q)→R becomes P→(Q→R)
+                    if isinstance(f.formulas[0], ConnectiveFormula) and f.formulas[0].connective == LogicalConnective.AND:
+                        if len(f.formulas[0].formulas) == 2:
+                            p = f.formulas[0].formulas[0]
+                            q = f.formulas[0].formulas[1]
+                            r = f.formulas[1]
+                            inner = ConnectiveFormula(LogicalConnective.IMPLIES, [q, r])
+                            result = ConnectiveFormula(LogicalConnective.IMPLIES, [p, inner])
+                            results.append(result)
+                    
+                    # Case 2: P→(Q→R) becomes (P∧Q)→R
+                    if isinstance(f.formulas[1], ConnectiveFormula) and f.formulas[1].connective == LogicalConnective.IMPLIES:
+                        if len(f.formulas[1].formulas) == 2:
+                            p = f.formulas[0]
+                            q = f.formulas[1].formulas[0]
+                            r = f.formulas[1].formulas[1]
+                            conjunction = ConnectiveFormula(LogicalConnective.AND, [p, q])
+                            result = ConnectiveFormula(LogicalConnective.IMPLIES, [conjunction, r])
+                            results.append(result)
+        return results
+
+
+class Absorption(InferenceRule):
+    """Absorption: P→Q is equivalent to P→(P∧Q).
+    Also: P∨(P∧Q) ≡ P and P∧(P∨Q) ≡ P."""
+    
+    def name(self) -> str:
+        return "Absorption"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            # Implication form
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                return True
+            # Disjunction/conjunction forms
+            if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
+                if len(f.formulas) == 2:
+                    # Check if one side is simpler version of the other
+                    for i in range(2):
+                        other = f.formulas[1-i]
+                        if isinstance(other, ConnectiveFormula):
+                            if any(self._formulas_equal(f.formulas[i], sub) for sub in other.formulas):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            # P→Q becomes P→(P∧Q)
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    p = f.formulas[0]
+                    q = f.formulas[1]
+                    conjunction = ConnectiveFormula(LogicalConnective.AND, [p, q])
+                    result = ConnectiveFormula(LogicalConnective.IMPLIES, [p, conjunction])
+                    results.append(result)
+            
+            # P∨(P∧Q) becomes P
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
+                if len(f.formulas) == 2:
+                    for i in range(2):
+                        p = f.formulas[i]
+                        other = f.formulas[1-i]
+                        if isinstance(other, ConnectiveFormula) and other.connective == LogicalConnective.AND:
+                            if any(self._formulas_equal(p, sub) for sub in other.formulas):
+                                results.append(p)
+            
+            # P∧(P∨Q) becomes P
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
+                if len(f.formulas) == 2:
+                    for i in range(2):
+                        p = f.formulas[i]
+                        other = f.formulas[1-i]
+                        if isinstance(other, ConnectiveFormula) and other.connective == LogicalConnective.OR:
+                            if any(self._formulas_equal(p, sub) for sub in other.formulas):
+                                results.append(p)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class Association(InferenceRule):
+    """Association: (P∨Q)∨R ≡ P∨(Q∨R) and (P∧Q)∧R ≡ P∧(Q∧R)."""
+    
+    def name(self) -> str:
+        return "Association"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
+                # Check if we have nested same operator
+                for sub in f.formulas:
+                    if isinstance(sub, ConnectiveFormula) and sub.connective == f.connective:
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
+                # Re-associate: flatten and rebuild differently
+                if len(f.formulas) >= 2:
+                    # Collect all formulas at this level
+                    collected = []
+                    for sub in f.formulas:
+                        if isinstance(sub, ConnectiveFormula) and sub.connective == f.connective:
+                            collected.extend(sub.formulas)
+                        else:
+                            collected.append(sub)
+                    
+                    # Rebuild with different grouping
+                    if len(collected) >= 3:
+                        # Create (first, (rest...))
+                        if len(collected[1:]) == 1:
+                            inner = collected[1]
+                        else:
+                            inner = ConnectiveFormula(f.connective, collected[1:])
+                        result = ConnectiveFormula(f.connective, [collected[0], inner])
+                        results.append(result)
+        return results
+
+
+class Resolution(InferenceRule):
+    """Resolution: From (P∨Q) and (¬P∨R), derive (Q∨R)."""
+    
+    def name(self) -> str:
+        return "Resolution"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if we have two disjunctions where one literal is negated in the other
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.OR:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.OR:
+                        # Check for complementary literals
+                        for lit1 in f1.formulas:
+                            for lit2 in f2.formulas:
+                                if self._are_complementary(lit1, lit2):
+                                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.OR:
+                    if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.OR:
+                        # Find complementary literals
+                        for i, lit1 in enumerate(f1.formulas):
+                            for j, lit2 in enumerate(f2.formulas):
+                                if self._are_complementary(lit1, lit2):
+                                    # Resolve
+                                    remaining1 = [f1.formulas[k] for k in range(len(f1.formulas)) if k != i]
+                                    remaining2 = [f2.formulas[k] for k in range(len(f2.formulas)) if k != j]
+                                    all_remaining = remaining1 + remaining2
+                                    
+                                    if len(all_remaining) == 0:
+                                        # Contradiction resolved to empty clause (skip)
+                                        continue
+                                    elif len(all_remaining) == 1:
+                                        results.append(all_remaining[0])
+                                    else:
+                                        result = ConnectiveFormula(LogicalConnective.OR, all_remaining)
+                                        results.append(result)
+        return results
+    
+    def _are_complementary(self, f1: Formula, f2: Formula) -> bool:
+        """Check if two formulas are complementary (P and ¬P)."""
+        # Check if f1 is ¬f2
+        if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.NOT:
+            if len(f1.formulas) == 1:
+                return self._formulas_equal(f1.formulas[0], f2)
+        # Check if f2 is ¬f1
+        if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.NOT:
+            if len(f2.formulas) == 1:
+                return self._formulas_equal(f2.formulas[0], f1)
+        return False
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class Transposition(InferenceRule):
+    """Transposition: (P→Q) is equivalent to (¬Q→¬P).
+    This is the same as Contraposition but named differently in some systems."""
+    
+    def name(self) -> str:
+        return "Transposition"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        return any(
+            isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES
+            for f in formulas
+        )
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    # P→Q becomes ¬Q→¬P
+                    not_q = ConnectiveFormula(LogicalConnective.NOT, [f.formulas[1]])
+                    not_p = ConnectiveFormula(LogicalConnective.NOT, [f.formulas[0]])
+                    result = ConnectiveFormula(LogicalConnective.IMPLIES, [not_q, not_p])
+                    results.append(result)
+        return results
+
+
+class MaterialImplication(InferenceRule):
+    """Material Implication: P→Q is equivalent to ¬P∨Q.
+    This is the same as Implication Elimination."""
+    
+    def name(self) -> str:
+        return "Material Implication"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            # Forward: P→Q
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                return True
+            # Reverse: ¬P∨Q
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
+                if len(f.formulas) == 2:
+                    if isinstance(f.formulas[0], ConnectiveFormula) and f.formulas[0].connective == LogicalConnective.NOT:
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            # P→Q becomes ¬P∨Q
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    not_p = ConnectiveFormula(LogicalConnective.NOT, [f.formulas[0]])
+                    q = f.formulas[1]
+                    result = ConnectiveFormula(LogicalConnective.OR, [not_p, q])
+                    results.append(result)
+            
+            # ¬P∨Q becomes P→Q
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
+                if len(f.formulas) == 2:
+                    if isinstance(f.formulas[0], ConnectiveFormula) and f.formulas[0].connective == LogicalConnective.NOT:
+                        if len(f.formulas[0].formulas) == 1:
+                            p = f.formulas[0].formulas[0]
+                            q = f.formulas[1]
+                            result = ConnectiveFormula(LogicalConnective.IMPLIES, [p, q])
+                            results.append(result)
+        return results
+
+
+class ClaviusLaw(InferenceRule):
+    """Clavius Law: (¬P→P) → P (if not-P implies P, then P must be true)."""
+    
+    def name(self) -> str:
+        return "Clavius Law"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    # Check if antecedent is ¬P and consequent is P
+                    ant = f.formulas[0]
+                    cons = f.formulas[1]
+                    if isinstance(ant, ConnectiveFormula) and ant.connective == LogicalConnective.NOT:
+                        if len(ant.formulas) == 1:
+                            if self._formulas_equal(ant.formulas[0], cons):
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
+                if len(f.formulas) == 2:
+                    ant = f.formulas[0]
+                    cons = f.formulas[1]
+                    if isinstance(ant, ConnectiveFormula) and ant.connective == LogicalConnective.NOT:
+                        if len(ant.formulas) == 1:
+                            if self._formulas_equal(ant.formulas[0], cons):
+                                # (¬P→P) gives P
+                                results.append(cons)
+        return results
+    
+    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
+        return f1.to_string() == f2.to_string()
+
+
+class Idempotence(InferenceRule):
+    """Idempotence: P∨P ≡ P and P∧P ≡ P."""
+    
+    def name(self) -> str:
+        return "Idempotence"
+    
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
+                if len(f.formulas) >= 2:
+                    # Check if all subformulas are the same
+                    first = f.formulas[0].to_string()
+                    if all(sub.to_string() == first for sub in f.formulas[1:]):
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
+                if len(f.formulas) >= 2:
+                    first = f.formulas[0].to_string()
+                    if all(sub.to_string() == first for sub in f.formulas[1:]):
+                        # P∨P... or P∧P... becomes P
+                        results.append(f.formulas[0])
+        return results
