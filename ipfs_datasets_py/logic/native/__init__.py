@@ -143,4 +143,121 @@ __all__ = [
     "DCECParsingError",
 ]
 
-__version__ = "0.5.0"
+# Phase 4C: Grammar-based NL processing
+try:
+    from .grammar_engine import (
+        GrammarEngine,
+        Category,
+        GrammarRule,
+        LexicalEntry,
+        ParseNode,
+        CompositeGrammar,
+        make_binary_rule,
+        make_unary_rule,
+    )
+    
+    from .dcec_english_grammar import (
+        DCECEnglishGrammar,
+        create_dcec_grammar,
+    )
+    
+    __all__.extend([
+        "GrammarEngine",
+        "Category",
+        "GrammarRule",
+        "LexicalEntry",
+        "ParseNode",
+        "CompositeGrammar",
+        "make_binary_rule",
+        "make_unary_rule",
+        "DCECEnglishGrammar",
+        "create_dcec_grammar",
+    ])
+    
+    GRAMMAR_AVAILABLE = True
+except ImportError:
+    GRAMMAR_AVAILABLE = False
+
+# Phase 4D: ShadowProver modal logic theorem prover
+try:
+    from .shadow_prover import (
+        ShadowProver,
+        KProver,
+        S4Prover,
+        S5Prover,
+        CognitiveCalculusProver,
+        ModalLogic,
+        ProofStatus,
+        ProofStep,
+        ProofTree,
+        ProblemFile,
+        ModalOperator,
+        ProblemReader,
+        create_prover,
+        create_cognitive_prover,
+    )
+    
+    from .modal_tableaux import (
+        TableauNode,
+        ModalTableau,
+        TableauProver,
+        ResolutionProver,
+        NodeStatus,
+        create_tableau_prover,
+        create_resolution_prover,
+    )
+    
+    __all__.extend([
+        "ShadowProver",
+        "KProver",
+        "S4Prover",
+        "S5Prover",
+        "CognitiveCalculusProver",
+        "ModalLogic",
+        "ProofStatus",
+        "ProofStep",
+        "ProofTree",
+        "ProblemFile",
+        "ModalOperator",
+        "ProblemReader",
+        "create_prover",
+        "create_cognitive_prover",
+        "TableauNode",
+        "ModalTableau",
+        "TableauProver",
+        "ResolutionProver",
+        "NodeStatus",
+        "create_tableau_prover",
+        "create_resolution_prover",
+    ])
+    
+    SHADOWPROVER_AVAILABLE = True
+except ImportError:
+    SHADOWPROVER_AVAILABLE = False
+
+# Phase 4D: Problem file parser
+try:
+    from .problem_parser import (
+        TPTPParser,
+        CustomProblemParser,
+        ProblemParser,
+        TPTPFormula,
+        parse_problem_file,
+        parse_problem_string,
+    )
+    
+    __all__.extend([
+        "TPTPParser",
+        "CustomProblemParser",
+        "ProblemParser",
+        "TPTPFormula",
+        "parse_problem_file",
+        "parse_problem_string",
+    ])
+    
+    PROBLEM_PARSER_AVAILABLE = True
+except ImportError:
+    PROBLEM_PARSER_AVAILABLE = False
+
+# Version reflects completion of all Phase 4 components
+__version__ = "1.0.0"
