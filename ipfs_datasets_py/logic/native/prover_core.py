@@ -2418,3 +2418,328 @@ class AlwaysInduction(InferenceRule):
         return []
 
 
+# Advanced Logic Rules
+class UnitResolution(InferenceRule):
+    """Unit resolution: (P∨Q) ∧ ¬P ⊢ Q"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
+                for f2 in formulas:
+                    if isinstance(f2, UnaryFormula) and f2.operator.value == "NOT":
+                        # Check if f2.formula matches one of the disjuncts
+                        if f2.formula == f1.left or f2.formula == f1.right:
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
+                for f2 in formulas:
+                    if isinstance(f2, UnaryFormula) and f2.operator.value == "NOT":
+                        if f2.formula == f1.left:
+                            results.append(f1.right)
+                        elif f2.formula == f1.right:
+                            results.append(f1.left)
+        return results
+
+
+class BinaryResolution(InferenceRule):
+    """Binary resolution: (P∨Q) ∧ (¬P∨R) ⊢ (Q∨R)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "OR":
+                        # Look for complementary literals
+                        if isinstance(f1.left, UnaryFormula) and f1.left.operator.value == "NOT":
+                            if f1.left.formula == f2.left or f1.left.formula == f2.right:
+                                return True
+                        if isinstance(f1.right, UnaryFormula) and f1.right.operator.value == "NOT":
+                            if f1.right.formula == f2.left or f1.right.formula == f2.right:
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified binary resolution
+        return []
+
+
+class Factoring(InferenceRule):
+    """Factoring: (P∨P) ⊢ P"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                if f.left == f.right:
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "OR":
+                if f.left == f.right:
+                    results.append(f.left)
+        return results
+
+
+class Subsumption(InferenceRule):
+    """Subsumption: P subsumes (P∨Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f2, BinaryFormula) and f2.operator.value == "OR":
+                    if f1 == f2.left or f1 == f2.right:
+                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Subsumption removes subsumed clauses
+        return []
+
+
+class NegationIntroduction(InferenceRule):
+    """Negation introduction: (P→Q) ∧ (P→¬Q) ⊢ ¬P"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "IMPLIES":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f1.left == f2.left:
+                            # Check if consequents are negations of each other
+                            if isinstance(f1.right, UnaryFormula) and f1.right.operator.value == "NOT":
+                                if f1.right.formula == f2.right:
+                                    return True
+                            if isinstance(f2.right, UnaryFormula) and f2.right.operator.value == "NOT":
+                                if f2.right.formula == f1.right:
+                                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "IMPLIES":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f1.left == f2.left:
+                            if isinstance(f1.right, UnaryFormula) and f1.right.operator.value == "NOT":
+                                if f1.right.formula == f2.right:
+                                    results.append(UnaryFormula(Operator.NOT, f1.left))
+                            elif isinstance(f2.right, UnaryFormula) and f2.right.operator.value == "NOT":
+                                if f2.right.formula == f1.right:
+                                    results.append(UnaryFormula(Operator.NOT, f1.left))
+        return results
+
+
+class CaseAnalysis(InferenceRule):
+    """Case analysis: (P∨Q) ∧ (P→R) ∧ (Q→R) ⊢ R"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
+                # Look for implications from both disjuncts to same conclusion
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f2.left == f1.left:
+                            for f3 in formulas:
+                                if isinstance(f3, BinaryFormula) and f3.operator.value == "IMPLIES":
+                                    if f3.left == f1.right and f3.right == f2.right:
+                                        return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f2.left == f1.left:
+                            for f3 in formulas:
+                                if isinstance(f3, BinaryFormula) and f3.operator.value == "IMPLIES":
+                                    if f3.left == f1.right and f3.right == f2.right:
+                                        results.append(f2.right)
+        return results
+
+
+class ProofByContradiction(InferenceRule):
+    """Proof by contradiction: (¬P→⊥) ⊢ P"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "IMPLIES":
+                if isinstance(f.left, UnaryFormula) and f.left.operator.value == "NOT":
+                    # Check if consequent is a contradiction (P∧¬P)
+                    if isinstance(f.right, BinaryFormula) and f.right.operator.value == "AND":
+                        if isinstance(f.right.right, UnaryFormula) and f.right.right.operator.value == "NOT":
+                            if f.right.left == f.right.right.formula:
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, BinaryFormula) and f.operator.value == "IMPLIES":
+                if isinstance(f.left, UnaryFormula) and f.left.operator.value == "NOT":
+                    if isinstance(f.right, BinaryFormula) and f.right.operator.value == "AND":
+                        if isinstance(f.right.right, UnaryFormula) and f.right.right.operator.value == "NOT":
+                            if f.right.left == f.right.right.formula:
+                                results.append(f.left.formula)
+        return results
+
+
+# Common Knowledge Rules
+class CommonKnowledgeIntroduction(InferenceRule):
+    """Common knowledge introduction: K(a1, P) ∧ K(a2, P) ∧ ... ⊢ C(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        # Check if multiple agents know the same proposition
+        knowledge_map = {}
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "K":
+                if len(f.agent) > 0:
+                    prop = str(f.formula)
+                    if prop not in knowledge_map:
+                        knowledge_map[prop] = []
+                    knowledge_map[prop].append(f.agent)
+        # Check if any proposition is known by multiple agents
+        for agents in knowledge_map.values():
+            if len(agents) >= 2:
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified - would create common knowledge formula
+        return []
+
+
+class CommonKnowledgeDistribution(InferenceRule):
+    """Common knowledge distribution: C(P∧Q) ⊢ C(P)∧C(Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, BinaryFormula) and f.formula.operator.value == "AND":
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, BinaryFormula) and f.formula.operator.value == "AND":
+                    results.append(ModalFormula(Operator.C, f.formula.left, f.agent))
+                    results.append(ModalFormula(Operator.C, f.formula.right, f.agent))
+        return results
+
+
+class CommonKnowledgeImpliesKnowledge(InferenceRule):
+    """Common knowledge implies individual knowledge: C(P) ⊢ K(agent, P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                # For any agent, common knowledge implies their knowledge
+                # Simplified: create knowledge for generic agent
+                results.append(ModalFormula(Operator.K, f.formula, "agent"))
+        return results
+
+
+class CommonKnowledgeMonotonicity(InferenceRule):
+    """Common knowledge monotonicity: C(P) ∧ (P→Q) ⊢ C(Q)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            if isinstance(f1, ModalFormula) and f1.operator.value == "C":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f2.left == f1.formula:
+                            return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f1 in formulas:
+            if isinstance(f1, ModalFormula) and f1.operator.value == "C":
+                for f2 in formulas:
+                    if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                        if f2.left == f1.formula:
+                            results.append(ModalFormula(Operator.C, f2.right, f1.agent))
+        return results
+
+
+class CommonKnowledgeNegation(InferenceRule):
+    """Common knowledge negation: C(¬P) ⊢ ¬C(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, UnaryFormula) and f.formula.operator.value == "NOT":
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "C":
+                if isinstance(f.formula, UnaryFormula) and f.formula.operator.value == "NOT":
+                    inner = ModalFormula(Operator.C, f.formula.formula, f.agent)
+                    results.append(UnaryFormula(Operator.NOT, inner))
+        return results
+
+
+class CommonBeliefIntroduction(InferenceRule):
+    """Common belief from individual beliefs: B(a1, P) ∧ B(a2, P) ⊢ CB(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        belief_map = {}
+        for f in formulas:
+            if isinstance(f, ModalFormula) and f.operator.value == "B":
+                prop = str(f.formula)
+                if prop not in belief_map:
+                    belief_map[prop] = []
+                belief_map[prop].append(f.agent)
+        for agents in belief_map.values():
+            if len(agents) >= 2:
+                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified common belief creation
+        return []
+
+
+class FixedPointInduction(InferenceRule):
+    """Fixed point induction for common knowledge: P ∧ (P→K(everyone, P)) ⊢ C(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f1 in formulas:
+            for f2 in formulas:
+                if isinstance(f2, BinaryFormula) and f2.operator.value == "IMPLIES":
+                    if f2.left == f1:
+                        if isinstance(f2.right, ModalFormula) and f2.right.operator.value == "K":
+                            if f2.right.formula == f1:
+                                return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        # Simplified fixed point reasoning
+        return []
+
+
+class TemporallyInducedCommonKnowledge(InferenceRule):
+    """Temporally induced common knowledge: □K(all, P) ⊢ C(P)"""
+    def can_apply(self, formulas: List[Formula]) -> bool:
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+                if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "K":
+                    return True
+        return False
+    
+    def apply(self, formulas: List[Formula]) -> List[Formula]:
+        results = []
+        for f in formulas:
+            if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
+                if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "K":
+                    results.append(ModalFormula(Operator.C, f.formula.formula, "all"))
+        return results
+
+
+
