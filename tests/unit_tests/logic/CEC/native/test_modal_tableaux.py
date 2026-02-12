@@ -5,11 +5,11 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.modal_tableaux import (
+from ipfs_datasets_py.logic.CEC.native.modal_tableaux import (
     TableauNode, ModalTableau, TableauProver, ResolutionProver,
     NodeStatus, create_tableau_prover, create_resolution_prover
 )
-from ipfs_datasets_py.logic.native.shadow_prover import ModalLogic
+from ipfs_datasets_py.logic.CEC.native.shadow_prover import ModalLogic
 
 
 class TestTableauNode:

@@ -5,7 +5,7 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.grammar_engine import (
+from ipfs_datasets_py.logic.CEC.native.grammar_engine import (
     GrammarEngine, Category, GrammarRule, LexicalEntry, ParseNode,
     make_binary_rule, make_unary_rule, CompositeGrammar
 )

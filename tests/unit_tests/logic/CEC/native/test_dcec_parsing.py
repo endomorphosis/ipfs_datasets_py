@@ -5,7 +5,7 @@ Tests the core parsing functions ported from DCEC_Library/highLevelParsing.py
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.dcec_parsing import (
+from ipfs_datasets_py.logic.CEC.native.dcec_parsing import (
     ParseToken,
     remove_comments,
     functorize_symbols,

@@ -5,20 +5,20 @@ Tests the complete pipeline from string expressions to Formula objects.
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.dcec_integration import (
+from ipfs_datasets_py.logic.CEC.native.dcec_integration import (
     parse_expression_to_token,
     token_to_formula,
     parse_dcec_string,
     validate_formula,
     DCECParsingError,
 )
-from ipfs_datasets_py.logic.native.dcec_core import (
+from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     ConnectiveFormula, LogicalConnective,
     DeonticFormula, DeonticOperator,
     CognitiveFormula, CognitiveOperator,
     TemporalFormula, TemporalOperator,
 )
-from ipfs_datasets_py.logic.native.dcec_parsing import ParseToken
+from ipfs_datasets_py.logic.CEC.native.dcec_parsing import ParseToken
 
 
 class TestParseExpressionToToken:

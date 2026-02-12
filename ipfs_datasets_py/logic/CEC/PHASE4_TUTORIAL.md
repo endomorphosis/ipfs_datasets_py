@@ -48,7 +48,7 @@ No additional dependencies required!
 ### Simple Proof
 
 ```python
-from ipfs_datasets_py.logic.native import create_prover, ModalLogic
+from ipfs_datasets_py.logic.CEC.native import create_prover, ModalLogic
 
 # Create a prover
 prover = create_prover(ModalLogic.K)
@@ -63,7 +63,7 @@ print(f"Steps: {len(proof.steps)}")
 ### Parse DCEC
 
 ```python
-from ipfs_datasets_py.logic.native import parse_dcec_string
+from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
 
 # Parse a DCEC expression
 formula = parse_dcec_string("P & (Q -> R)")
@@ -75,7 +75,7 @@ print(f"Type: {type(formula)}")
 ### Natural Language
 
 ```python
-from ipfs_datasets_py.logic.native import DCECEnglishGrammar
+from ipfs_datasets_py.logic.CEC.native import DCECEnglishGrammar
 
 # Create grammar (includes its own engine)
 grammar = DCECEnglishGrammar()
@@ -95,7 +95,7 @@ if parse_trees:
 ### Basic Parsing
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     clean_dcec_expression,
     tokenize_dcec
@@ -118,7 +118,7 @@ print(f"Parsed: {formula}")
 ### Advanced Parsing
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     DCECPrototypeNamespace,
     parse_dcec_string
 )
@@ -169,7 +169,7 @@ parse_dcec_string("◇P")             # Possible
 ### Using the Inference Engine
 
 ```python
-from ipfs_datasets_py.logic.native import InferenceEngine
+from ipfs_datasets_py.logic.CEC.native import InferenceEngine
 
 # Create engine
 engine = InferenceEngine()
@@ -238,7 +238,7 @@ engine.apply_rule("DeMorgan")
 ### Custom Rules
 
 ```python
-from ipfs_datasets_py.logic.native import InferenceRule
+from ipfs_datasets_py.logic.CEC.native import InferenceRule
 
 class MyCustomRule(InferenceRule):
     def __init__(self):
@@ -264,7 +264,7 @@ engine.add_rule(MyCustomRule())
 ### Grammar-Based NL Processing
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     DCECEnglishGrammar,
     GrammarEngine
 )
@@ -294,7 +294,7 @@ for sentence in sentences:
 ### Linearization (DCEC to NL)
 
 ```python
-from ipfs_datasets_py.logic.native import parse_dcec_string
+from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
 
 # Parse DCEC
 formula = parse_dcec_string("B(alice, raining)")
@@ -307,7 +307,7 @@ formula = parse_dcec_string("B(alice, raining)")
 ### Custom Grammar Rules
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     GrammarRule,
     Category,
     LexicalEntry
@@ -335,7 +335,7 @@ rule = GrammarRule(
 ### Modal Logic Proving
 
 ```python
-from ipfs_datasets_py.logic.native import create_prover, ModalLogic
+from ipfs_datasets_py.logic.CEC.native import create_prover, ModalLogic
 
 # K logic (basic modal)
 k_prover = create_prover(ModalLogic.K)
@@ -357,7 +357,7 @@ print(f"Worlds created: {proof.metadata.get('worlds', 0)}")
 ### Cognitive Calculus
 
 ```python
-from ipfs_datasets_py.logic.native import create_cognitive_prover
+from ipfs_datasets_py.logic.CEC.native import create_cognitive_prover
 
 # Create cognitive prover
 prover = create_cognitive_prover()
@@ -381,7 +381,7 @@ for axiom in prover.cognitive_axioms:
 ### Problem File Parsing
 
 ```python
-from ipfs_datasets_py.logic.native import parse_problem_string
+from ipfs_datasets_py.logic.CEC.native import parse_problem_string
 
 # TPTP format
 tptp_problem = """
@@ -448,7 +448,7 @@ print(f"Execution time: {task.execution_time:.2f}s")
 ### Complete Pipeline
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     InferenceEngine,
     create_prover,
@@ -475,7 +475,7 @@ print(f"Derived Q: {proof.status}")
 ### NL to Proof Pipeline
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     DCECEnglishGrammar,
     GrammarEngine,
     create_cognitive_prover
@@ -505,7 +505,7 @@ if parse_trees:
 ### Batch Proving
 
 ```python
-from ipfs_datasets_py.logic.native import create_prover, ModalLogic
+from ipfs_datasets_py.logic.CEC.native import create_prover, ModalLogic
 import time
 
 # Create prover
@@ -606,7 +606,7 @@ def cached_prove(formula_str, logic_str):
 pip install -e .
 
 # Verify installation
-python -c "from ipfs_datasets_py.logic.native import create_prover; print('OK')"
+python -c "from ipfs_datasets_py.logic.CEC.native import create_prover; print('OK')"
 ```
 
 ### Parse Errors
@@ -615,7 +615,7 @@ python -c "from ipfs_datasets_py.logic.native import create_prover; print('OK')"
 # Problem: parse_dcec_string returns None
 # Solution: Check expression syntax
 
-from ipfs_datasets_py.logic.native import clean_dcec_expression
+from ipfs_datasets_py.logic.CEC.native import clean_dcec_expression
 
 dirty = "P && Q"  # Invalid: should be & not &&
 clean = clean_dcec_expression(dirty)

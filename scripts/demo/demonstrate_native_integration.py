@@ -106,7 +106,7 @@ def demonstrate_talos_wrapper():
             print(f"  Goal: Q")
             print(f"  Axioms: P, P→Q")
             
-            from ipfs_datasets_py.logic.native import (
+            from ipfs_datasets_py.logic.CEC.native import (
                 AtomicFormula, Predicate, ConnectiveFormula, LogicalConnective
             )
             

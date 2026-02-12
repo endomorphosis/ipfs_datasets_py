@@ -5,7 +5,7 @@ This document describes how the CEC framework integrates native Python 3 impleme
 ## Overview
 
 The CEC framework now supports **dual backends**:
-1. **Native Python 3** (preferred) - Pure Python 3 implementations from `ipfs_datasets_py.logic.native`
+1. **Native Python 3** (preferred) - Pure Python 3 implementations from `ipfs_datasets_py.logic.CEC.native`
 2. **Python 2 Submodules** (fallback) - Original DCEC_Library, Talos, and Eng-DCEC
 
 The integration is **transparent** - existing code works without changes, automatically using native implementations when available.
@@ -177,7 +177,7 @@ Take advantage of native features:
 
 ```python
 from ipfs_datasets_py.logic.CEC import DCECLibraryWrapper
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     AtomicFormula, Predicate, DeonticFormula, DeonticOperator
 )
 
@@ -361,7 +361,7 @@ with mock.patch('ipfs_datasets_py.logic.CEC.dcec_wrapper.importlib'):
 **Solution:** Check native installation:
 ```python
 try:
-    from ipfs_datasets_py.logic.native import DCECContainer
+    from ipfs_datasets_py.logic.CEC.native import DCECContainer
     print("Native available!")
 except ImportError as e:
     print(f"Native not available: {e}")

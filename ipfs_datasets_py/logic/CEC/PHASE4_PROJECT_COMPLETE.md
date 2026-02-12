@@ -246,7 +246,7 @@ The **Phase 4 Native Implementation Project** has been successfully completed wi
 ### Complete Pipeline
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     parse_dcec_string,
     InferenceEngine,
     create_prover,
@@ -273,7 +273,7 @@ print(f"Derived Q: {proof.status}")
 ### Cognitive Reasoning
 
 ```python
-from ipfs_datasets_py.logic.native import create_cognitive_prover
+from ipfs_datasets_py.logic.CEC.native import create_cognitive_prover
 
 prover = create_cognitive_prover()
 
@@ -289,7 +289,7 @@ print(f"Cognitive axioms: {len(prover.cognitive_axioms)}")
 ### Natural Language
 
 ```python
-from ipfs_datasets_py.logic.native import (
+from ipfs_datasets_py.logic.CEC.native import (
     DCECEnglishGrammar,
     GrammarEngine
 )
@@ -411,13 +411,13 @@ pip install -e .
 
 ```bash
 # Test imports
-python -c "from ipfs_datasets_py.logic.native import create_prover; print('OK')"
+python -c "from ipfs_datasets_py.logic.CEC.native import create_prover; print('OK')"
 
 # Run tests
-pytest tests/unit_tests/logic/native/
+pytest tests/unit_tests/logic/CEC/native/
 
 # Check version
-python -c "from ipfs_datasets_py.logic.native import __version__; print(__version__)"
+python -c "from ipfs_datasets_py.logic.CEC.native import __version__; print(__version__)"
 ```
 
 ---

@@ -5,7 +5,7 @@ Tests the advanced namespace functionality ported from DCEC_Library/prototypes.p
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.dcec_prototypes import DCECPrototypeNamespace
+from ipfs_datasets_py.logic.CEC.native.dcec_prototypes import DCECPrototypeNamespace
 
 
 class TestDCECPrototypeNamespace:

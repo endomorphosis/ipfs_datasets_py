@@ -240,7 +240,7 @@ This document tracks progress across multiple work sessions for the Phase 4 Full
 
 ### Native Implementation
 
-**Current Location:** `/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/ipfs_datasets_py/logic/native/`
+**Current Location:** `/home/runner/work/ipfs_datasets_py/ipfs_datasets_py/ipfs_datasets_py/logic/CEC/native/`
 - dcec_core.py (430 lines)
 - dcec_namespace.py (350 lines)
 - prover_core.py (430 lines)
@@ -333,11 +333,11 @@ This document tracks progress across multiple work sessions for the Phase 4 Full
 ### Deliverables
 
 **Files Created:**
-- `ipfs_datasets_py/logic/native/dcec_cleaning.py` (289 LOC)
-- `ipfs_datasets_py/logic/native/dcec_parsing.py` (456 LOC)
-- `tests/unit_tests/logic/native/test_dcec_cleaning.py` (250 LOC)
-- `tests/unit_tests/logic/native/test_dcec_parsing.py` (352 LOC)
-- Updated `ipfs_datasets_py/logic/native/__init__.py`
+- `ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py` (289 LOC)
+- `ipfs_datasets_py/logic/CEC/native/dcec_parsing.py` (456 LOC)
+- `tests/unit_tests/logic/CEC/native/test_dcec_cleaning.py` (250 LOC)
+- `tests/unit_tests/logic/CEC/native/test_dcec_parsing.py` (352 LOC)
+- Updated `ipfs_datasets_py/logic/CEC/native/__init__.py`
 
 **Statistics:**
 - Implementation: 768 LOC

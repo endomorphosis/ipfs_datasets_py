@@ -33,7 +33,7 @@ ls ipfs_datasets_py/logic/CEC/DCEC_Library/prototypes.py
 ```
 
 #### Step 2: Create dcec_cleaning.py (45 min)
-**Location:** `ipfs_datasets_py/logic/native/dcec_cleaning.py`
+**Location:** `ipfs_datasets_py/logic/CEC/native/dcec_cleaning.py`
 
 **Port these functions from DCEC_Library/cleaning.py:**
 
@@ -70,7 +70,7 @@ def tuck_functions(text: str) -> str:
 - Error handling with clear messages
 
 #### Step 3: Test dcec_cleaning.py (30 min)
-**Location:** `tests/unit_tests/logic/native/test_dcec_cleaning.py`
+**Location:** `tests/unit_tests/logic/CEC/native/test_dcec_cleaning.py`
 
 **Create tests for:**
 - ✅ Whitespace normalization
@@ -84,7 +84,7 @@ def tuck_functions(text: str) -> str:
 **Minimum:** 20 test cases using GIVEN-WHEN-THEN format
 
 #### Step 4: Create dcec_parsing.py (90 min)
-**Location:** `ipfs_datasets_py/logic/native/dcec_parsing.py`
+**Location:** `ipfs_datasets_py/logic/CEC/native/dcec_parsing.py`
 
 **Port from DCEC_Library/highLevelParsing.py:**
 
@@ -137,7 +137,7 @@ def tokenize(text: str) -> ParseToken:
 ```
 
 #### Step 5: Test dcec_parsing.py (60 min)
-**Location:** `tests/unit_tests/logic/native/test_dcec_parsing.py`
+**Location:** `tests/unit_tests/logic/CEC/native/test_dcec_parsing.py`
 
 **Create tests for:**
 - ✅ ParseToken creation and methods
@@ -153,7 +153,7 @@ def tokenize(text: str) -> ParseToken:
 **Minimum:** 25 test cases
 
 #### Step 6: Integration (30 min)
-- Update `ipfs_datasets_py/logic/native/__init__.py`
+- Update `ipfs_datasets_py/logic/CEC/native/__init__.py`
 - Add exports for new functions
 - Version bump: 0.2.0 → 0.3.0
 - Add usage examples in docstrings
@@ -282,10 +282,10 @@ def test_strip_whitespace():
 - `/ipfs_datasets_py/logic/CEC/DCEC_Library/prototypes.py`
 
 **Target Location:**
-- `/ipfs_datasets_py/logic/native/` (new files go here)
+- `/ipfs_datasets_py/logic/CEC/native/` (new files go here)
 
 **Test Location:**
-- `/tests/unit_tests/logic/native/` (test files go here)
+- `/tests/unit_tests/logic/CEC/native/` (test files go here)
 
 **Documentation:**
 - `GAPS_ANALYSIS.md` - What needs porting

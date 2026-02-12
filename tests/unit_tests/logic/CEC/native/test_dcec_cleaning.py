@@ -5,7 +5,7 @@ Tests the expression cleaning functions ported from DCEC_Library/cleaning.py
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.dcec_cleaning import (
+from ipfs_datasets_py.logic.CEC.native.dcec_cleaning import (
     strip_whitespace,
     strip_comments,
     consolidate_parens,

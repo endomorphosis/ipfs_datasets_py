@@ -203,7 +203,7 @@ All implemented code meets these standards:
 
 ### Implementation
 ```
-ipfs_datasets_py/logic/native/
+ipfs_datasets_py/logic/CEC/native/
 ├── dcec_core.py (430 LOC) ✅
 ├── dcec_namespace.py (350 LOC) ✅
 ├── prover_core.py (1,343 LOC) ✅
@@ -217,7 +217,7 @@ ipfs_datasets_py/logic/native/
 
 ### Tests
 ```
-tests/unit_tests/logic/native/
+tests/unit_tests/logic/CEC/native/
 ├── test_dcec_core.py (29 tests) ✅
 ├── test_dcec_namespace.py (22 tests) ✅
 ├── test_prover.py (10 tests) ✅

@@ -757,7 +757,7 @@ except FileNotFoundError as e:
 Raised when components unavailable:
 ```python
 try:
-    from ipfs_datasets_py.logic.native import TableauProver
+    from ipfs_datasets_py.logic.CEC.native import TableauProver
 except ImportError:
     print("Tableau prover not available")
 ```
@@ -767,7 +767,7 @@ except ImportError:
 ## Version Information
 
 ```python
-from ipfs_datasets_py.logic.native import __version__
+from ipfs_datasets_py.logic.CEC.native import __version__
 
 print(f"Version: {__version__}")
 # Version: 0.8.0

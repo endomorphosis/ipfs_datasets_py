@@ -5,11 +5,11 @@ Following GIVEN-WHEN-THEN format for clear test structure.
 """
 
 import pytest
-from ipfs_datasets_py.logic.native.dcec_english_grammar import (
+from ipfs_datasets_py.logic.CEC.native.dcec_english_grammar import (
     DCECEnglishGrammar, create_dcec_grammar
 )
-from ipfs_datasets_py.logic.native.grammar_engine import Category
-from ipfs_datasets_py.logic.native.dcec_core import (
+from ipfs_datasets_py.logic.CEC.native.grammar_engine import Category
+from ipfs_datasets_py.logic.CEC.native.dcec_core import (
     Formula, LogicalConnective
 )
 
@@ -422,7 +422,7 @@ class TestSemanticConversion:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        from ipfs_datasets_py.logic.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
         formula = AtomicFormula("happy", [])
         
         # WHEN
@@ -462,7 +462,7 @@ class TestEndToEnd:
         """
         # GIVEN
         grammar = DCECEnglishGrammar()
-        from ipfs_datasets_py.logic.native.dcec_core import AtomicFormula
+        from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula
         original_formula = AtomicFormula("happy", [])
         
         # WHEN
