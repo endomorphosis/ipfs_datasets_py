@@ -61,6 +61,14 @@ except ImportError:
     CoqProverBridge = None
     COQ_AVAILABLE = False
 
+# Try to import neural provers (require LLM access)
+try:
+    from .neural.symbolicai_prover_bridge import SymbolicAIProverBridge, SYMBOLICAI_AVAILABLE, NeuralProofResult
+except ImportError:
+    SymbolicAIProverBridge = None
+    SYMBOLICAI_AVAILABLE = False
+    NeuralProofResult = None
+
 # Prover router
 try:
     from .prover_router import ProverRouter
@@ -83,6 +91,8 @@ def get_available_provers() -> List[str]:
         provers.append("Lean")
     if COQ_AVAILABLE:
         provers.append("Coq")
+    if SYMBOLICAI_AVAILABLE:
+        provers.append("SymbolicAI")
     return provers
 
 
@@ -90,7 +100,7 @@ def check_prover_availability(prover_name: str) -> bool:
     """Check if a specific prover is available.
     
     Args:
-        prover_name: Name of the prover ("Z3", "CVC5", "Lean", "Coq")
+        prover_name: Name of the prover ("Z3", "CVC5", "Lean", "Coq", "SymbolicAI")
         
     Returns:
         True if the prover is available, False otherwise.
@@ -104,6 +114,8 @@ def check_prover_availability(prover_name: str) -> bool:
         return LEAN_AVAILABLE
     elif prover_name == "COQ":
         return COQ_AVAILABLE
+    elif prover_name == "SYMBOLICAI":
+        return SYMBOLICAI_AVAILABLE
     return False
 
 
@@ -114,12 +126,16 @@ __all__ = [
     "SMTProverInterface",
     "LeanProverBridge",
     "CoqProverBridge",
+    "SymbolicAIProverBridge",
     "ProverRouter",
+    # Result types
+    "NeuralProofResult",
     # Availability flags
     "Z3_AVAILABLE",
     "CVC5_AVAILABLE",
     "LEAN_AVAILABLE",
     "COQ_AVAILABLE",
+    "SYMBOLICAI_AVAILABLE",
     # Utility functions
     "get_available_provers",
     "check_prover_availability",
