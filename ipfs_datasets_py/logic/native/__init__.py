@@ -182,3 +182,63 @@ except ImportError:
 
 # Update version to 0.6.0 for Phase 4C
 __version__ = "0.6.0"
+
+# Phase 4D: ShadowProver modal logic theorem prover
+try:
+    from .shadow_prover import (
+        ShadowProver,
+        KProver,
+        S4Prover,
+        S5Prover,
+        CognitiveCalculusProver,
+        ModalLogic,
+        ProofStatus,
+        ProofStep,
+        ProofTree,
+        ProblemFile,
+        ModalOperator,
+        ProblemReader,
+        create_prover,
+        create_cognitive_prover,
+    )
+    
+    from .modal_tableaux import (
+        TableauNode,
+        ModalTableau,
+        TableauProver,
+        ResolutionProver,
+        NodeStatus,
+        create_tableau_prover,
+        create_resolution_prover,
+    )
+    
+    __all__.extend([
+        "ShadowProver",
+        "KProver",
+        "S4Prover",
+        "S5Prover",
+        "CognitiveCalculusProver",
+        "ModalLogic",
+        "ProofStatus",
+        "ProofStep",
+        "ProofTree",
+        "ProblemFile",
+        "ModalOperator",
+        "ProblemReader",
+        "create_prover",
+        "create_cognitive_prover",
+        "TableauNode",
+        "ModalTableau",
+        "TableauProver",
+        "ResolutionProver",
+        "NodeStatus",
+        "create_tableau_prover",
+        "create_resolution_prover",
+    ])
+    
+    SHADOWPROVER_AVAILABLE = True
+except ImportError:
+    SHADOWPROVER_AVAILABLE = False
+
+# Update version to 0.7.0 for Phase 4D
+__version__ = "0.7.0"
