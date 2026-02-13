@@ -47,6 +47,10 @@ __all__ = [
     # Ontology
     'KnowledgeGraphStabilizer',
     'OntologyConsistencyChecker',
+    # Phase 2: Prover Integration
+    'ProverIntegrationAdapter',
+    'ProverVerificationResult',
+    'AggregatedProverResult',
 ]
 
 __version__ = '0.1.0'
@@ -112,4 +116,14 @@ def __getattr__(name):
             return KnowledgeGraphStabilizer
         else:
             return OntologyConsistencyChecker
+    elif name == 'ProverIntegrationAdapter' or name == 'ProverVerificationResult' or name == 'AggregatedProverResult':
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import (
+            ProverIntegrationAdapter, ProverVerificationResult, AggregatedProverResult
+        )
+        if name == 'ProverIntegrationAdapter':
+            return ProverIntegrationAdapter
+        elif name == 'ProverVerificationResult':
+            return ProverVerificationResult
+        else:
+            return AggregatedProverResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

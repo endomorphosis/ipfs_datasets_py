@@ -105,20 +105,48 @@ class LogicCritic:
     def __init__(
         self,
         use_provers: Optional[List[str]] = None,
-        strict_mode: bool = False
+        strict_mode: bool = False,
+        enable_prover_integration: bool = True
     ):
         """Initialize the logic critic.
         
         Args:
             use_provers: List of theorem provers to use ('z3', 'cvc5', 'lean', etc.)
             strict_mode: Whether to use strict evaluation criteria
+            enable_prover_integration: Use real prover integration (Phase 2 feature)
         """
         self.use_provers = use_provers or ['z3']
         self.strict_mode = strict_mode
-        self._init_provers()
+        self.enable_prover_integration = enable_prover_integration
+        
+        # Initialize prover integration adapter (Phase 2)
+        self.prover_adapter = None
+        if enable_prover_integration:
+            self._init_prover_adapter()
+        else:
+            # Legacy: direct prover initialization (Phase 1)
+            self.provers = {}
+            self._init_provers()
+    
+    def _init_prover_adapter(self) -> None:
+        """Initialize prover integration adapter (Phase 2)."""
+        try:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prover_integration import ProverIntegrationAdapter
+            self.prover_adapter = ProverIntegrationAdapter(
+                use_provers=self.use_provers,
+                enable_cache=True,
+                default_timeout=5.0
+            )
+            logger.info(f"Initialized prover integration adapter with {len(self.prover_adapter.provers)} provers")
+        except Exception as e:
+            logger.warning(f"Could not initialize prover adapter: {e}")
+            self.prover_adapter = None
+            # Fallback to legacy
+            self.provers = {}
+            self._init_provers()
         
     def _init_provers(self) -> None:
-        """Initialize theorem provers."""
+        """Initialize theorem provers (legacy Phase 1 method)."""
         self.provers = {}
         
         for prover_name in self.use_provers:
@@ -200,7 +228,11 @@ class LogicCritic:
                 details=details
             )
         
-        # Check each statement with available provers
+        # Phase 2: Use prover integration adapter if available
+        if self.prover_adapter:
+            return self._evaluate_soundness_with_adapter(statements, feedback, details)
+        
+        # Phase 1: Legacy evaluation method
         valid_count = 0
         for stmt in statements:
             is_valid = False
@@ -228,6 +260,70 @@ class LogicCritic:
             feedback.append("Moderate logical validity, some statements questionable")
         else:
             feedback.append("Many statements lack logical soundness")
+        
+        return DimensionScore(
+            dimension=CriticDimensions.SOUNDNESS,
+            score=score,
+            feedback="; ".join(feedback),
+            details=details
+        )
+    
+    def _evaluate_soundness_with_adapter(
+        self,
+        statements: List[Any],
+        feedback: List[str],
+        details: Dict[str, Any]
+    ) -> DimensionScore:
+        """Evaluate soundness using prover integration adapter (Phase 2).
+        
+        Args:
+            statements: List of statements to evaluate
+            feedback: Feedback list to append to
+            details: Details dict to update
+            
+        Returns:
+            DimensionScore for soundness
+        """
+        valid_count = 0
+        total_confidence = 0.0
+        
+        for stmt in statements:
+            try:
+                # Verify with integrated provers
+                result = self.prover_adapter.verify_statement(stmt)
+                
+                if result.overall_valid:
+                    valid_count += 1
+                
+                total_confidence += result.confidence
+                
+                # Store detailed results
+                details['prover_results'][stmt.formula] = {
+                    'valid': result.overall_valid,
+                    'confidence': result.confidence,
+                    'verified_by': result.verified_by,
+                    'agreement_rate': result.agreement_rate
+                }
+                
+            except Exception as e:
+                logger.debug(f"Error verifying statement: {e}")
+        
+        score = valid_count / len(statements) if statements else 0.0
+        avg_confidence = total_confidence / len(statements) if statements else 0.0
+        
+        # Generate feedback based on results
+        if score > 0.8:
+            feedback.append(f"Strong logical validity ({score:.1%} valid, {avg_confidence:.2f} avg confidence)")
+        elif score > 0.5:
+            feedback.append(f"Moderate logical validity ({score:.1%} valid)")
+        else:
+            feedback.append(f"Many statements lack logical soundness ({score:.1%} valid)")
+        
+        # Add prover statistics
+        if self.prover_adapter:
+            stats = self.prover_adapter.get_statistics()
+            if stats['cache_hits'] > 0:
+                feedback.append(f"Cache hit rate: {stats['cache_hit_rate']:.1%}")
         
         return DimensionScore(
             dimension=CriticDimensions.SOUNDNESS,
