@@ -20,6 +20,11 @@ from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 import concurrent.futures
 import time
+import logging
+
+from .formula_analyzer import FormulaAnalyzer, FormulaAnalysis
+
+logger = logging.getLogger(__name__)
 
 
 class ProverStrategy(Enum):
@@ -109,6 +114,9 @@ class ProverRouter:
         self.default_timeout = default_timeout
         self.enable_cache = enable_cache
         
+        # Initialize formula analyzer for intelligent selection
+        self.analyzer = FormulaAnalyzer()
+        
         # Initialize cache if enabled
         self._cache = None
         if self.enable_cache:
@@ -196,20 +204,34 @@ class ProverRouter:
         Returns:
             Name of selected prover
         """
-        # Simple heuristic for now
-        # TODO: Add formula analysis
+        # Analyze formula to get recommendations
+        analysis = self.analyzer.analyze(formula)
         
-        # Prefer Z3 for FOL
+        logger.debug(f"Formula analysis: type={analysis.formula_type.value}, "
+                    f"complexity={analysis.complexity.value}, score={analysis.complexity_score:.1f}")
+        logger.debug(f"Recommended provers: {analysis.recommended_provers}")
+        
+        # Try recommended provers in order
+        for prover_name in analysis.recommended_provers:
+            if prover_name in self.provers:
+                logger.info(f"Selected {prover_name} based on formula analysis")
+                return prover_name
+        
+        # Fallback: prefer Z3 for FOL
         if 'z3' in self.provers:
+            logger.info("Fallback to Z3")
             return 'z3'
         
         # Fall back to native
         if 'native' in self.provers:
+            logger.info("Fallback to native prover")
             return 'native'
         
         # Use first available
         if self.provers:
-            return list(self.provers.keys())[0]
+            prover_name = list(self.provers.keys())[0]
+            logger.info(f"Using first available prover: {prover_name}")
+            return prover_name
         
         raise RuntimeError("No provers available")
     
