@@ -435,13 +435,125 @@ for data in data_samples:
 
 ## Future Enhancements
 
-- [ ] Neural-symbolic hybrid provers
-- [ ] Advanced prompt optimization strategies
+- [x] ~~Neural-symbolic hybrid provers~~ **IMPLEMENTED** ✅
+- [x] ~~Advanced prompt optimization strategies~~ **IMPLEMENTED** ✅
 - [ ] Real-time ontology evolution
 - [ ] Distributed processing support
 - [ ] Integration with more theorem provers
 - [ ] Advanced conflict resolution
 - [ ] Automated prompt engineering
+
+### Completed Enhancements
+
+#### 1. Neural-Symbolic Hybrid Prover (Phase 1) ✅
+
+Combines neural LLM-based reasoning with symbolic theorem proving for robust verification.
+
+**Module**: `neural_symbolic_prover.py` (693 LOC)
+
+**Features**:
+- 5 combination strategies: NEURAL_FIRST, SYMBOLIC_FIRST, PARALLEL, ENSEMBLE, ADAPTIVE
+- Intelligent fallback when one approach fails
+- Confidence score combination from both paradigms
+- Natural language explanations from neural component
+- Formal verification from symbolic component
+
+**Usage**:
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    NeuralSymbolicHybridProver,
+    HybridStrategy
+)
+
+# Initialize with parallel strategy
+prover = NeuralSymbolicHybridProver(
+    strategy=HybridStrategy.PARALLEL,
+    neural_provers=['symbolicai'],
+    symbolic_provers=['z3', 'cvc5'],
+    neural_weight=0.4,
+    symbolic_weight=0.6
+)
+
+# Prove a formula
+result = prover.prove("∀x (P(x) → Q(x))")
+
+print(f"Valid: {result.is_valid}")
+print(f"Confidence: {result.confidence:.2f}")
+print(f"Agreement: {result.agreement}")
+print(f"Explanation: {result.explanation}")
+
+# Get statistics
+stats = prover.get_statistics()
+print(f"Cache size: {stats['cache_size']}")
+```
+
+**Tests**: 30 comprehensive tests covering all strategies and edge cases
+
+#### 2. Advanced Prompt Optimization (Phase 2) ✅
+
+Optimizes prompts for logic extraction using multiple strategies and metrics.
+
+**Module**: `prompt_optimizer.py` (622 LOC)
+
+**Features**:
+- 6 optimization strategies: A/B testing, multi-armed bandit, genetic algorithm, hill climbing, simulated annealing, reinforcement learning
+- Comprehensive metrics: success rate, confidence, critic score, extraction time
+- Domain and formalism-specific performance tracking
+- Prompt library with versioning
+- Export/import for sharing prompt libraries
+
+**Usage**:
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    PromptOptimizer,
+    OptimizationStrategy
+)
+
+# Initialize optimizer
+optimizer = PromptOptimizer(
+    strategy=OptimizationStrategy.MULTI_ARMED_BANDIT,
+    exploration_rate=0.1
+)
+
+# Add baseline prompt
+optimizer.add_baseline_prompt("Extract logic from: {data}")
+
+# Add alternative prompts
+optimizer.add_prompt(
+    "Analyze {data} and extract {formalism} logical statements",
+    parameters={"formalism": "TDFOL"}
+)
+
+optimizer.add_prompt(
+    "Convert the following to formal logic: {data}"
+)
+
+# Record usage
+optimizer.record_usage(
+    prompt_id="prompt1",
+    success=True,
+    confidence=0.9,
+    critic_score=0.85,
+    extraction_time=1.5,
+    domain="legal",
+    formalism="tdfol"
+)
+
+# Get best prompt for a domain
+best_prompt = optimizer.get_best_prompt(domain="legal")
+print(f"Best prompt: {best_prompt.template}")
+
+# Optimize prompts
+result = optimizer.optimize(training_data, max_iterations=20)
+print(f"Best score: {result.best_score:.2f}")
+print(f"Improvement: {result.improvement_over_baseline:.2f}")
+
+# Export library
+optimizer.export_library("prompts.json")
+```
+
+**Tests**: 31 comprehensive tests covering all strategies and metrics
+
 
 ## See Also
 
