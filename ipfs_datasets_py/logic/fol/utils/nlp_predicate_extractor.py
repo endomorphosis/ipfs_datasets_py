@@ -12,15 +12,14 @@ Falls back to regex-based extraction if spaCy is not available.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
-from collections import defaultdict
+from typing import Any, Dict, List, Optional
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
 # Try to import spaCy
 try:
     import spacy
-    from spacy.language import Language
     SPACY_AVAILABLE = True
 except ImportError:
     SPACY_AVAILABLE = False

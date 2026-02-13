@@ -8,7 +8,7 @@ Extracted from logic_verification.py to improve modularity.
 """
 
 import re
-from typing import List, Dict, Any, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 try:
     from beartype import beartype  # type: ignore
 except Exception:  # pragma: no cover

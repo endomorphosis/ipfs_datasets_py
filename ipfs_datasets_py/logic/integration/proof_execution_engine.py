@@ -30,13 +30,9 @@ from .proof_execution_engine_types import (
     ProofStatus,
     ProofResult,
 )
-from .proof_execution_engine_utils import (
-    get_lean_template,
-    get_coq_template,
-)
 
 # Import proof cache
-from .proof_cache import ProofCache, get_global_cache
+from .proof_cache import get_global_cache
 
 logger = logging.getLogger(__name__)
 
