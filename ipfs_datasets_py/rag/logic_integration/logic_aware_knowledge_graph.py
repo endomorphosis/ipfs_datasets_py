@@ -213,7 +213,8 @@ class LogicAwareKnowledgeGraph:
         
         for obl in obligations:
             for proh in prohibitions:
-                if self._conflict(obl, proh):
+                # Don't compare same node with itself
+                if obl.id != proh.id and self._conflict(obl, proh):
                     inconsistencies.append(
                         f"Obligation conflicts with prohibition: '{obl.entity.text}' vs '{proh.entity.text}'"
                     )
