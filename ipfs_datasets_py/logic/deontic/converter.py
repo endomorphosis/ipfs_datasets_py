@@ -391,7 +391,8 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         """
         # Run synchronous convert in thread pool to avoid blocking
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.convert, text, kwargs.get("use_cache", True))
+        use_cache = kwargs.get("use_cache", True)
+        return await loop.run_in_executor(None, lambda: self.convert(text, use_cache=use_cache))
     
     def get_stats(self) -> Dict[str, Any]:
         """Get conversion statistics."""
