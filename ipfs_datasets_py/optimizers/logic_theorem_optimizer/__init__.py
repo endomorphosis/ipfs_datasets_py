@@ -93,6 +93,19 @@ __all__ = [
     'ProverResult',
     'ProverType',
     'ProofFormat',
+    # Future Enhancement 6: Conflict Resolution
+    'ConflictResolver',
+    'ResolutionStrategy',
+    'ConflictType',
+    'Conflict',
+    'Resolution',
+    'ResolutionMetrics',
+    # Future Enhancement 7: Automated Prompt Engineering
+    'PromptEngineer',
+    'SelectionMethod',
+    'CrossoverMethod',
+    'MutationMethod',
+    'EvolutionResult',
 ]
 
 __version__ = '0.1.0'
@@ -266,4 +279,34 @@ def __getattr__(name):
             return ProverType
         else:
             return ProofFormat
+    elif name in ('ConflictResolver', 'ResolutionStrategy', 'ConflictType', 'Conflict', 'Resolution', 'ResolutionMetrics'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.conflict_resolver import (
+            ConflictResolver, ResolutionStrategy, ConflictType, Conflict, Resolution, ResolutionMetrics
+        )
+        if name == 'ConflictResolver':
+            return ConflictResolver
+        elif name == 'ResolutionStrategy':
+            return ResolutionStrategy
+        elif name == 'ConflictType':
+            return ConflictType
+        elif name == 'Conflict':
+            return Conflict
+        elif name == 'Resolution':
+            return Resolution
+        else:
+            return ResolutionMetrics
+    elif name in ('PromptEngineer', 'SelectionMethod', 'CrossoverMethod', 'MutationMethod', 'EvolutionResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_engineer import (
+            PromptEngineer, SelectionMethod, CrossoverMethod, MutationMethod, EvolutionResult
+        )
+        if name == 'PromptEngineer':
+            return PromptEngineer
+        elif name == 'SelectionMethod':
+            return SelectionMethod
+        elif name == 'CrossoverMethod':
+            return CrossoverMethod
+        elif name == 'MutationMethod':
+            return MutationMethod
+        else:
+            return EvolutionResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
