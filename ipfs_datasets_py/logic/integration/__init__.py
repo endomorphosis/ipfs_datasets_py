@@ -197,6 +197,8 @@ try:
     
     # Export advanced components only if SymbolicAI is available
     from .interactive_fol_constructor import InteractiveFOLConstructor
+    from .interactive_fol_types import StatementRecord, SessionMetadata
+    from .interactive_fol_utils import create_interactive_session, demo_interactive_session
     from ..tools.modal_logic_extension import ModalLogicSymbol, AdvancedLogicConverter, ModalFormula, LogicClassification
     from .logic_verification import LogicVerifier, LogicAxiom, ProofResult, ConsistencyCheck, EntailmentResult
     
@@ -209,6 +211,10 @@ try:
         "create_fol_converter",
         "validate_fol_input",
         "InteractiveFOLConstructor",
+        "StatementRecord",
+        "SessionMetadata",
+        "create_interactive_session",
+        "demo_interactive_session",
         "ModalLogicSymbol",
         "AdvancedLogicConverter",
         "ModalFormula",

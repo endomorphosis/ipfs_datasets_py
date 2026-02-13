@@ -3,6 +3,8 @@ Interactive FOL Constructor Module
 
 This module provides an interactive interface for constructing First-Order Logic
 formulas step by step, with real-time analysis and validation using SymbolicAI.
+
+Refactored to improve modularity - types and utilities extracted to separate modules.
 """
 
 import logging
@@ -10,7 +12,6 @@ import json
 import uuid
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, field
 try:
     from beartype import beartype  # type: ignore
 except Exception:  # pragma: no cover
@@ -37,34 +38,8 @@ except ImportError:
 from ..tools.symbolic_fol_bridge import SymbolicFOLBridge, LogicalComponents, FOLConversionResult
 from ..tools.symbolic_logic_primitives import create_logic_symbol, LogicPrimitives
 
-
-@dataclass
-class StatementRecord:
-    """Record of a single statement in the interactive session."""
-    id: str
-    text: str
-    timestamp: datetime
-    logical_components: Optional[LogicalComponents] = None
-    fol_formula: Optional[str] = None
-    confidence: float = 0.0
-    is_consistent: Optional[bool] = None
-    dependencies: List[str] = field(default_factory=list)
-    tags: List[str] = field(default_factory=list)
-
-
-@dataclass
-class SessionMetadata:
-    """Metadata for an interactive FOL construction session."""
-    session_id: str
-    created_at: datetime
-    last_modified: datetime
-    total_statements: int
-    consistent_statements: int
-    inconsistent_statements: int
-    average_confidence: float
-    domain: str = "general"
-    description: str = ""
-    tags: List[str] = field(default_factory=list)
+# Import types from separate module (refactored for modularity)
+from .interactive_fol_types import StatementRecord, SessionMetadata
 
 
 class InteractiveFOLConstructor:
@@ -794,64 +769,18 @@ class InteractiveFOLConstructor:
         }
 
 
-def create_interactive_session(domain: str = "general", **kwargs) -> InteractiveFOLConstructor:
-    """
-    Factory function to create an interactive FOL constructor session.
-    
-    Args:
-        domain: Domain of knowledge
-        **kwargs: Additional parameters for InteractiveFOLConstructor
-        
-    Returns:
-        InteractiveFOLConstructor instance
-    """
-    return InteractiveFOLConstructor(domain=domain, **kwargs)
+# Backward compatibility: Import utilities for existing code
+from .interactive_fol_utils import create_interactive_session, demo_interactive_session
 
-
-# Example usage and testing
-def demo_interactive_session():
-    """Demonstrate the interactive FOL constructor."""
-    print("Interactive FOL Constructor Demo")
-    print("=" * 40)
-    
-    # Create session
-    constructor = create_interactive_session(domain="animals")
-    
-    # Add some statements
-    statements = [
-        "All cats are animals",
-        "Some cats are black",
-        "Fluffy is a cat",
-        "All animals need food"
-    ]
-    
-    for statement in statements:
-        result = constructor.add_statement(statement)
-        print(f"Added: {statement}")
-        print(f"FOL: {result.get('fol_formula', 'N/A')}")
-        print(f"Confidence: {result.get('confidence', 0.0):.2f}")
-        print("-" * 30)
-    
-    # Analyze structure
-    analysis = constructor.analyze_logical_structure()
-    print("\nLogical Structure Analysis:")
-    if analysis["status"] == "success":
-        logical_elements = analysis["analysis"]["logical_elements"]
-        print(f"Quantifiers: {logical_elements['quantifiers']}")
-        print(f"Predicates: {logical_elements['predicates']}")
-        print(f"Entities: {logical_elements['entities']}")
-    
-    # Check consistency
-    consistency = constructor.validate_consistency()
-    print(f"\nConsistency: {consistency.get('consistency_report', {}).get('overall_consistent', 'Unknown')}")
-    
-    # Get statistics
-    stats = constructor.get_session_statistics()
-    print(f"\nSession Statistics:")
-    print(f"Total statements: {stats['metadata']['total_statements']}")
-    print(f"Average confidence: {stats['metadata']['average_confidence']:.2f}")
-    
-    return constructor
+# Export for external use
+__all__ = [
+    'InteractiveFOLConstructor',
+    'create_interactive_session',
+    'demo_interactive_session',
+    'StatementRecord',
+    'SessionMetadata',
+    'SYMBOLIC_AI_AVAILABLE'
+]
 
 
 if __name__ == "__main__":
