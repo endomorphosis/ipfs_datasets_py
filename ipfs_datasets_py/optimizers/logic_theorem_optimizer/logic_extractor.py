@@ -124,7 +124,8 @@ class LogicExtractor:
         model: Optional[str] = None,
         backend: Optional[Any] = None,
         use_ipfs_accelerate: bool = True,
-        enable_formula_translation: bool = True
+        enable_formula_translation: bool = True,
+        enable_kg_integration: bool = True
     ):
         """Initialize the logic extractor.
         
@@ -133,20 +134,37 @@ class LogicExtractor:
             backend: Backend for LLM inference
             use_ipfs_accelerate: Use ipfs_accelerate_py for model inference
             enable_formula_translation: Use TDFOL/CEC translation (Phase 2 feature)
+            enable_kg_integration: Use knowledge graph integration (Phase 2.4 feature)
         """
         self.model = model or "gpt-4"
         self.backend = backend
         self.use_ipfs_accelerate = use_ipfs_accelerate
         self.enable_formula_translation = enable_formula_translation
+        self.enable_kg_integration = enable_kg_integration
         self._init_backend()
         
         # Track extraction history for improvement
         self.extraction_history: List[ExtractionResult] = []
         
-        # Phase 2: Initialize formula translator
+        # Phase 2.2: Initialize formula translator
         self.formula_translator = None
         if enable_formula_translation:
             self._init_formula_translator()
+        
+        # Phase 2.4: Initialize KG integration
+        self.kg_integration = None
+        if enable_kg_integration:
+            self._init_kg_integration()
+    
+    def _init_kg_integration(self) -> None:
+        """Initialize knowledge graph integration (Phase 2.4)."""
+        try:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.kg_integration import get_default_kg_integration
+            self.kg_integration = get_default_kg_integration()
+            logger.info("Knowledge graph integration initialized")
+        except Exception as e:
+            logger.warning(f"Could not initialize KG integration: {e}")
+            self.kg_integration = None
     
     def _init_formula_translator(self) -> None:
         """Initialize formula translator (Phase 2)."""
@@ -184,7 +202,16 @@ class LogicExtractor:
             if context.extraction_mode == ExtractionMode.AUTO:
                 context.extraction_mode = self._determine_mode(context)
             
-            # Phase 2: Use formula translation if available
+            # Phase 2.4: Enrich context with KG information
+            if self.kg_integration:
+                kg_context = self.kg_integration.get_context_for_extraction(str(context.data))
+                # Update context with KG information
+                if not context.ontology and kg_context.ontology:
+                    context.ontology = kg_context.ontology
+                # Store KG context for later use
+                context.metadata['kg_context'] = kg_context
+            
+            # Phase 2.2: Use formula translation if available
             if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
                 return self._extract_with_translation(context)
             
@@ -207,6 +234,11 @@ class LogicExtractor:
                 success=True,
                 ontology_alignment=alignment
             )
+            
+            # Phase 2.4: Add statements to KG
+            if self.kg_integration:
+                for stmt in statements:
+                    self.kg_integration.add_statement_to_kg(stmt, proven=False)
             
             # Track for improvement
             self.extraction_history.append(result)
