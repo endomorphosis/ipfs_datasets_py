@@ -76,7 +76,7 @@ from .logic_validator import (
     ValidationResult,
 )
 
-# Phase 2 components (scaffolding complete)
+# Phase 2 components (complete)
 from .ontology_mediator import (
     OntologyMediator,
     MediatorState,
@@ -87,9 +87,31 @@ from .ontology_optimizer import (
     OptimizationReport,
 )
 
-# Future components (placeholders for Phase 3)
-# from .ontology_session import OntologySession, SessionResult
-# from .ontology_harness import OntologyHarness, BatchResult
+from .ontology_session import (
+    OntologySession,
+    SessionResult,
+)
+
+from .ontology_harness import (
+    OntologyHarness,
+    BatchResult,
+)
+
+from .prompt_generator import (
+    PromptGenerator,
+    PromptTemplate,
+)
+
+# Phase 3 components (in progress)
+from .ontology_templates import (
+    OntologyTemplate,
+    OntologyTemplateLibrary,
+)
+
+from .metrics_collector import (
+    MetricsCollector,
+    SessionMetrics,
+)
 
 # Export public API
 __all__ = [
@@ -114,11 +136,21 @@ __all__ = [
     # Optimizer (Phase 2)
     'OntologyOptimizer',
     'OptimizationReport',
-    # Future (Phase 3)
-    # 'OntologySession',
-    # 'SessionResult',
-    # 'OntologyHarness',
-    # 'BatchResult',
+    # Session (Phase 2)
+    'OntologySession',
+    'SessionResult',
+    # Harness (Phase 2)
+    'OntologyHarness',
+    'BatchResult',
+    # Prompt Generator (Phase 2)
+    'PromptGenerator',
+    'PromptTemplate',
+    # Templates (Phase 3)
+    'OntologyTemplate',
+    'OntologyTemplateLibrary',
+    # Metrics (Phase 3)
+    'MetricsCollector',
+    'SessionMetrics',
 ]
 
 __version__ = '0.1.0'
