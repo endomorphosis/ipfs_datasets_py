@@ -85,6 +85,14 @@ __all__ = [
     'Task',
     'WorkerInfo',
     'DistributedResult',
+    # Future Enhancement 5: Additional Theorem Provers
+    'IsabelleProver',
+    'VampireProver',
+    'EProver',
+    'AdditionalProversRegistry',
+    'ProverResult',
+    'ProverType',
+    'ProofFormat',
 ]
 
 __version__ = '0.1.0'
@@ -240,4 +248,22 @@ def __getattr__(name):
             return WorkerInfo
         else:
             return DistributedResult
+    elif name in ('IsabelleProver', 'VampireProver', 'EProver', 'AdditionalProversRegistry', 'ProverResult', 'ProverType', 'ProofFormat'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.additional_provers import (
+            IsabelleProver, VampireProver, EProver, AdditionalProversRegistry, ProverResult, ProverType, ProofFormat
+        )
+        if name == 'IsabelleProver':
+            return IsabelleProver
+        elif name == 'VampireProver':
+            return VampireProver
+        elif name == 'EProver':
+            return EProver
+        elif name == 'AdditionalProversRegistry':
+            return AdditionalProversRegistry
+        elif name == 'ProverResult':
+            return ProverResult
+        elif name == 'ProverType':
+            return ProverType
+        else:
+            return ProofFormat
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
