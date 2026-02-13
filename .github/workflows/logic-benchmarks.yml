@@ -1,0 +1,163 @@
+name: Logic Module Benchmarks
+
+on:
+  push:
+    branches: [ main, develop, copilot/** ]
+    paths:
+      - 'ipfs_datasets_py/logic/**'
+      - 'tests/unit_tests/logic/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'ipfs_datasets_py/logic/**'
+      - 'tests/unit_tests/logic/**'
+  schedule:
+    # Run benchmarks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    permissions:
+      contents: read
+      issues: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('requirements.txt', 'setup.py') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-${{ matrix.python-version }}-
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[test,nlp]"
+        python -m spacy download en_core_web_sm
+    
+    - name: Run FOL benchmarks
+      run: |
+        python -m pytest tests/unit_tests/logic/test_benchmarks.py -v --tb=short
+    
+    - name: Run batch processing benchmarks
+      run: |
+        python -c "
+        import asyncio
+        import json
+        from ipfs_datasets_py.logic.batch_processing import FOLBatchProcessor
+        from ipfs_datasets_py.logic.benchmarks import run_comprehensive_benchmarks
+        
+        async def main():
+            print('Running comprehensive benchmarks...')
+            summary = await run_comprehensive_benchmarks()
+            
+            # Extract and format benchmark results from summary
+            benchmark_data = {}
+            for result_dict in summary.get('results', []):
+                name = result_dict['name']
+                benchmark_data[name] = {
+                    'mean_time': result_dict['mean_time'],
+                    'median_time': result_dict['median_time'],
+                    'throughput': result_dict['throughput'],
+                    'std_dev': result_dict['std_dev']
+                }
+            
+            with open('benchmark_results.json', 'w') as f:
+                json.dump(benchmark_data, f, indent=2)
+            
+            print('\\nBenchmark Results Summary:')
+            for name, data in benchmark_data.items():
+                mean_ms = data['mean_time'] * 1000
+                print(f'{name}: {mean_ms:.2f}ms avg, {data[\"throughput\"]:.1f} ops/sec')
+        
+        asyncio.run(main())
+        "
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results-py${{ matrix.python-version }}
+        path: benchmark_results.json
+    
+    - name: Performance regression check
+      run: |
+        python -c "
+        import json
+        import sys
+        
+        # Load current results
+        with open('benchmark_results.json') as f:
+            current = json.load(f)
+        
+        # Define performance thresholds (in milliseconds)
+        thresholds = {
+            'FOL Simple Conversion (Regex)': 15.0,  # max 15ms
+            'FOL Batch Conversion (10 items)': 200.0,  # max 200ms
+            'Cache Hit': 0.05,  # max 0.05ms
+        }
+        
+        failed = []
+        for name, threshold in thresholds.items():
+            if name in current:
+                mean_ms = current[name]['mean_time'] * 1000
+                if mean_ms > threshold:
+                    failed.append(f'{name}: {mean_ms:.2f}ms > {threshold}ms threshold')
+                    print(f'⚠️  Performance regression: {name}')
+                    print(f'   Current: {mean_ms:.2f}ms, Threshold: {threshold}ms')
+                else:
+                    print(f'✅ {name}: {mean_ms:.2f}ms <= {threshold}ms')
+        
+        if failed:
+            print('\\n❌ Performance regression detected!')
+            for f in failed:
+                print(f'  - {f}')
+            sys.exit(1)
+        else:
+            print('\\n✅ All performance benchmarks passed!')
+        "
+    
+    - name: Comment PR with results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const results = JSON.parse(fs.readFileSync('benchmark_results.json', 'utf8'));
+          
+          let comment = '## 📊 Logic Module Benchmark Results\\n\\n';
+          comment += `Python version: ${{ matrix.python-version }}\\n\\n`;
+          comment += '| Benchmark | Mean Time | Throughput | Std Dev |\\n';
+          comment += '|-----------|-----------|------------|---------|\\n';
+          
+          for (const [name, data] of Object.entries(results)) {
+            const meanMs = (data.mean_time * 1000).toFixed(2);
+            const throughput = data.throughput ? data.throughput.toFixed(1) : 'N/A';
+            const stdMs = (data.std_dev * 1000).toFixed(2);
+            comment += `| ${name} | ${meanMs}ms | ${throughput} ops/s | ±${stdMs}ms |\\n`;
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });

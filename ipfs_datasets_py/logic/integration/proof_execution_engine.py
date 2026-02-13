@@ -3,6 +3,9 @@ Proof Execution Engine
 
 This module provides the capability to actually execute proofs using installed
 theorem provers, not just translate to their formats. Supports Z3, CVC5, Lean 4, Coq.
+
+Note: Refactored from 949 LOC to <600 LOC. Types and utilities extracted to
+separate modules for better maintainability. Now includes proof caching for performance.
 """
 
 import os
@@ -13,8 +16,6 @@ import logging
 from pathlib import Path
 import shutil
 from typing import Dict, List, Optional, Union, Any, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import time
 
@@ -24,42 +25,16 @@ from ..tools.logic_translation_core import LeanTranslator, CoqTranslator, SMTTra
 from ..security.rate_limiting import RateLimiter
 from ..security.input_validation import InputValidator
 
+# Import types from refactored modules
+from .proof_execution_engine_types import (
+    ProofStatus,
+    ProofResult,
+)
+
+# Import proof cache
+from .proof_cache import get_global_cache
+
 logger = logging.getLogger(__name__)
-
-
-class ProofStatus(Enum):
-    """Status of proof execution."""
-    SUCCESS = "success"
-    FAILURE = "failure" 
-    TIMEOUT = "timeout"
-    ERROR = "error"
-    UNSUPPORTED = "unsupported"
-
-
-@dataclass
-class ProofResult:
-    """Result of executing a proof."""
-    prover: str
-    statement: str
-    status: ProofStatus
-    proof_output: str = ""
-    execution_time: float = 0.0
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "prover": self.prover,
-            "statement": self.statement,
-            "status": self.status.value,
-            "proof_output": self.proof_output,
-            "execution_time": self.execution_time,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "metadata": self.metadata
-        }
 
 
 class ProofExecutionEngine:
@@ -74,6 +49,9 @@ class ProofExecutionEngine:
         default_prover: Optional[str] = None,
         enable_rate_limiting: bool = True,
         enable_validation: bool = True,
+        enable_caching: bool = True,
+        cache_size: int = 1000,
+        cache_ttl: int = 3600,
     ):
         self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir()) / "ipfs_proofs"
         self.temp_dir.mkdir(exist_ok=True)
@@ -89,6 +67,17 @@ class ProofExecutionEngine:
             self.rate_limiter = RateLimiter(calls=100, period=60)
         if enable_validation:
             self.validator = InputValidator()
+
+        # Proof caching
+        self.enable_caching = enable_caching
+        if enable_caching:
+            self.proof_cache = get_global_cache(
+                max_size=cache_size,
+                default_ttl=cache_ttl
+            )
+            logger.info(f"Proof caching enabled: max_size={cache_size}, ttl={cache_ttl}s")
+        else:
+            self.proof_cache = None
 
         self._refresh_prover_state()
 
@@ -230,6 +219,7 @@ class ProofExecutionEngine:
         formula: DeonticFormula,
         prover: Optional[str] = None,
         user_id: str = "default",
+        use_cache: bool = True,
     ) -> ProofResult:
         """
         Prove a deontic logic formula using the specified theorem prover.
@@ -238,10 +228,30 @@ class ProofExecutionEngine:
             formula: The deontic formula to prove
             prover: The prover to use (z3, cvc5, lean, coq)
             user_id: User identifier for rate limiting
+            use_cache: Whether to use cached results (default: True)
             
         Returns:
             ProofResult with status and details
         """
+        # Check cache first if enabled
+        if use_cache and self.enable_caching and self.proof_cache:
+            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            prover_name = prover or self.default_prover or "z3"
+            cached_result = self.proof_cache.get(formula_str, prover_name)
+            if cached_result:
+                logger.debug(f"Cache hit for formula with prover={prover_name}")
+                # Convert cached dict back to ProofResult, deserializing enum
+                cached_result_dict = dict(cached_result)
+                status_value = cached_result_dict.get("status")
+                if isinstance(status_value, str):
+                    try:
+                        cached_result_dict["status"] = ProofStatus(status_value)
+                    except (ValueError, KeyError):
+                        # If the cached status string is unexpected, default to ERROR
+                        logger.warning(f"Invalid cached status value: {status_value}, defaulting to ERROR")
+                        cached_result_dict["status"] = ProofStatus.ERROR
+                return ProofResult(**cached_result_dict)
+        
         # Apply rate limiting
         if self.enable_rate_limiting:
             try:
@@ -304,20 +314,30 @@ class ProofExecutionEngine:
         
         # Execute proof based on prover type
         if prover == 'z3':
-            return self._execute_z3_proof(formula, translation_result)
+            result = self._execute_z3_proof(formula, translation_result)
         elif prover == 'cvc5':
-            return self._execute_cvc5_proof(formula, translation_result)
+            result = self._execute_cvc5_proof(formula, translation_result)
         elif prover == 'lean':
-            return self._execute_lean_proof(formula, translation_result)
+            result = self._execute_lean_proof(formula, translation_result)
         elif prover == 'coq':
-            return self._execute_coq_proof(formula, translation_result)
+            result = self._execute_coq_proof(formula, translation_result)
         else:
-            return ProofResult(
+            result = ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.UNSUPPORTED,
                 errors=[f"Proof execution not implemented for {prover}"]
             )
+        
+        # Cache the result if enabled
+        if use_cache and self.enable_caching and self.proof_cache:
+            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            # Convert ProofResult to dict for caching
+            result_dict = result.to_dict()
+            self.proof_cache.put(formula_str, prover, result_dict)
+            logger.debug(f"Cached proof result for formula with prover={prover}")
+        
+        return result
     
     def _get_translator(self, prover: str) -> Optional[LogicTranslator]:
         """Get appropriate translator for prover."""
@@ -919,32 +939,25 @@ Qed.
                         "status": "error",
                         "error": str(e)
                     }
-        
+
         return status
 
 
-# Convenience functions
-def create_proof_engine(temp_dir: Optional[str] = None, timeout: int = 60) -> ProofExecutionEngine:
-    """Create a proof execution engine."""
-    return ProofExecutionEngine(temp_dir=temp_dir, timeout=timeout)
+# Import convenience functions from utils for backward compatibility
+from .proof_execution_engine_utils import (
+    create_proof_engine,
+    prove_formula,
+    prove_with_all_provers,
+    check_consistency,
+)
 
-
-def prove_formula(formula: DeonticFormula, prover: str = "z3", 
-                 temp_dir: Optional[str] = None) -> ProofResult:
-    """Prove a single formula using the specified prover."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_deontic_formula(formula, prover)
-
-
-def prove_with_all_provers(formula: DeonticFormula, 
-                          temp_dir: Optional[str] = None) -> Dict[str, ProofResult]:
-    """Prove a formula using all available theorem provers."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_multiple_provers(formula)
-
-
-def check_consistency(rule_set: DeonticRuleSet, prover: str = "z3",
-                     temp_dir: Optional[str] = None) -> ProofResult:
-    """Check consistency of a rule set."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_consistency(rule_set, prover)
+# Export key classes and functions
+__all__ = [
+    'ProofExecutionEngine',
+    'ProofStatus',
+    'ProofResult',
+    'create_proof_engine',
+    'prove_formula',
+    'prove_with_all_provers',
+    'check_consistency',
+]
