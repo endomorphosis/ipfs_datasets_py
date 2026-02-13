@@ -59,6 +59,53 @@ __all__ = [
     'RAGIntegration',
     'RAGContext',
     'RAGStatistics',
+    # Future Enhancement 1: Neural-Symbolic Hybrid Prover
+    'NeuralSymbolicHybridProver',
+    'HybridStrategy',
+    'NeuralResult',
+    'SymbolicResult',
+    'HybridProverResult',
+    # Future Enhancement 2: Prompt Optimization
+    'PromptOptimizer',
+    'OptimizationStrategy',
+    'PromptMetrics',
+    'PromptTemplate',
+    'OptimizationResult',
+    # Future Enhancement 3: Real-time Ontology Evolution
+    'OntologyEvolution',
+    'UpdateStrategy',
+    'EvolutionEvent',
+    'OntologyVersion',
+    'EvolutionMetrics',
+    'UpdateCandidate',
+    # Future Enhancement 4: Distributed Processing
+    'DistributedProcessor',
+    'TaskStatus',
+    'WorkerStatus',
+    'Task',
+    'WorkerInfo',
+    'DistributedResult',
+    # Future Enhancement 5: Additional Theorem Provers
+    'IsabelleProver',
+    'VampireProver',
+    'EProver',
+    'AdditionalProversRegistry',
+    'ProverResult',
+    'ProverType',
+    'ProofFormat',
+    # Future Enhancement 6: Conflict Resolution
+    'ConflictResolver',
+    'ResolutionStrategy',
+    'ConflictType',
+    'Conflict',
+    'Resolution',
+    'ResolutionMetrics',
+    # Future Enhancement 7: Automated Prompt Engineering
+    'PromptEngineer',
+    'SelectionMethod',
+    'CrossoverMethod',
+    'MutationMethod',
+    'EvolutionResult',
 ]
 
 __version__ = '0.1.0'
@@ -154,4 +201,112 @@ def __getattr__(name):
             return RAGContext
         else:
             return RAGStatistics
+    elif name in ('NeuralSymbolicHybridProver', 'HybridStrategy', 'NeuralResult', 'SymbolicResult', 'HybridProverResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.neural_symbolic_prover import (
+            NeuralSymbolicHybridProver, HybridStrategy, NeuralResult, SymbolicResult, HybridProverResult
+        )
+        if name == 'NeuralSymbolicHybridProver':
+            return NeuralSymbolicHybridProver
+        elif name == 'HybridStrategy':
+            return HybridStrategy
+        elif name == 'NeuralResult':
+            return NeuralResult
+        elif name == 'SymbolicResult':
+            return SymbolicResult
+        else:
+            return HybridProverResult
+    elif name in ('PromptOptimizer', 'OptimizationStrategy', 'PromptMetrics', 'PromptTemplate', 'OptimizationResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_optimizer import (
+            PromptOptimizer, OptimizationStrategy, PromptMetrics, PromptTemplate, OptimizationResult
+        )
+        if name == 'PromptOptimizer':
+            return PromptOptimizer
+        elif name == 'OptimizationStrategy':
+            return OptimizationStrategy
+        elif name == 'PromptMetrics':
+            return PromptMetrics
+        elif name == 'PromptTemplate':
+            return PromptTemplate
+        else:
+            return OptimizationResult
+    elif name in ('OntologyEvolution', 'UpdateStrategy', 'EvolutionEvent', 'OntologyVersion', 'EvolutionMetrics', 'UpdateCandidate'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.ontology_evolution import (
+            OntologyEvolution, UpdateStrategy, EvolutionEvent, OntologyVersion, EvolutionMetrics, UpdateCandidate
+        )
+        if name == 'OntologyEvolution':
+            return OntologyEvolution
+        elif name == 'UpdateStrategy':
+            return UpdateStrategy
+        elif name == 'EvolutionEvent':
+            return EvolutionEvent
+        elif name == 'OntologyVersion':
+            return OntologyVersion
+        elif name == 'EvolutionMetrics':
+            return EvolutionMetrics
+        else:
+            return UpdateCandidate
+    elif name in ('DistributedProcessor', 'TaskStatus', 'WorkerStatus', 'Task', 'WorkerInfo', 'DistributedResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.distributed_processor import (
+            DistributedProcessor, TaskStatus, WorkerStatus, Task, WorkerInfo, DistributedResult
+        )
+        if name == 'DistributedProcessor':
+            return DistributedProcessor
+        elif name == 'TaskStatus':
+            return TaskStatus
+        elif name == 'WorkerStatus':
+            return WorkerStatus
+        elif name == 'Task':
+            return Task
+        elif name == 'WorkerInfo':
+            return WorkerInfo
+        else:
+            return DistributedResult
+    elif name in ('IsabelleProver', 'VampireProver', 'EProver', 'AdditionalProversRegistry', 'ProverResult', 'ProverType', 'ProofFormat'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.additional_provers import (
+            IsabelleProver, VampireProver, EProver, AdditionalProversRegistry, ProverResult, ProverType, ProofFormat
+        )
+        if name == 'IsabelleProver':
+            return IsabelleProver
+        elif name == 'VampireProver':
+            return VampireProver
+        elif name == 'EProver':
+            return EProver
+        elif name == 'AdditionalProversRegistry':
+            return AdditionalProversRegistry
+        elif name == 'ProverResult':
+            return ProverResult
+        elif name == 'ProverType':
+            return ProverType
+        else:
+            return ProofFormat
+    elif name in ('ConflictResolver', 'ResolutionStrategy', 'ConflictType', 'Conflict', 'Resolution', 'ResolutionMetrics'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.conflict_resolver import (
+            ConflictResolver, ResolutionStrategy, ConflictType, Conflict, Resolution, ResolutionMetrics
+        )
+        if name == 'ConflictResolver':
+            return ConflictResolver
+        elif name == 'ResolutionStrategy':
+            return ResolutionStrategy
+        elif name == 'ConflictType':
+            return ConflictType
+        elif name == 'Conflict':
+            return Conflict
+        elif name == 'Resolution':
+            return Resolution
+        else:
+            return ResolutionMetrics
+    elif name in ('PromptEngineer', 'SelectionMethod', 'CrossoverMethod', 'MutationMethod', 'EvolutionResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_engineer import (
+            PromptEngineer, SelectionMethod, CrossoverMethod, MutationMethod, EvolutionResult
+        )
+        if name == 'PromptEngineer':
+            return PromptEngineer
+        elif name == 'SelectionMethod':
+            return SelectionMethod
+        elif name == 'CrossoverMethod':
+            return CrossoverMethod
+        elif name == 'MutationMethod':
+            return MutationMethod
+        else:
+            return EvolutionResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
