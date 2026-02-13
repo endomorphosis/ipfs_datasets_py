@@ -102,7 +102,7 @@ from .prompt_generator import (
     PromptTemplate,
 )
 
-# Phase 3 components (in progress)
+# Phase 3 components (complete)
 from .ontology_templates import (
     OntologyTemplate,
     OntologyTemplateLibrary,
@@ -111,6 +111,12 @@ from .ontology_templates import (
 from .metrics_collector import (
     MetricsCollector,
     SessionMetrics,
+)
+
+from .visualization import (
+    OntologyVisualizer,
+    MetricsVisualizer,
+    GraphVisualization,
 )
 
 # Export public API
@@ -151,6 +157,10 @@ __all__ = [
     # Metrics (Phase 3)
     'MetricsCollector',
     'SessionMetrics',
+    # Visualization (Phase 3)
+    'OntologyVisualizer',
+    'MetricsVisualizer',
+    'GraphVisualization',
 ]
 
 __version__ = '0.1.0'
