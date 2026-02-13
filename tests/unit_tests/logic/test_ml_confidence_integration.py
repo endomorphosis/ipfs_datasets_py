@@ -137,9 +137,9 @@ class TestMLConfidenceScorerIntegration:
         # Train with synthetic data
         np.random.seed(42)
         X = np.random.rand(100, 22).astype(np.float32)
-        y = np.random.rand(100)  # Random confidence scores
+        y = np.random.rand(100)  # Random confidence scores [0, 1]
         
-        scorer.train(X, y, validation_split=0.2)
+        scorer.train(X, y, validation_split=0.2, task_type="regression")
         
         # Predict
         confidence = scorer.predict_confidence(

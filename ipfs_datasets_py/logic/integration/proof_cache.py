@@ -3,12 +3,14 @@ Proof Cache System for Logic Module
 
 Implements LRU cache for proof results with optional IPFS backing.
 Provides significant performance improvements for repeated proofs.
+Thread-safe for concurrent access.
 """
 
 import hashlib
 import json
 import time
 import logging
+import threading
 from collections import OrderedDict
 from dataclasses import dataclass, field, asdict
 from typing import Dict, Optional, Any, List
@@ -90,6 +92,9 @@ class ProofCache:
         # LRU cache: OrderedDict maintains insertion order
         self._cache: OrderedDict[str, CachedProof] = OrderedDict()
         
+        # Thread safety
+        self._lock = threading.RLock()
+        
         # Statistics
         self._stats = {
             "hits": 0,
@@ -133,29 +138,30 @@ class ProofCache:
         """
         key = self._make_key(formula, prover)
         
-        if key in self._cache:
-            cached = self._cache[key]
+        with self._lock:
+            if key in self._cache:
+                cached = self._cache[key]
+                
+                # Check if expired
+                if cached.is_expired():
+                    self._stats["expirations"] += 1
+                    del self._cache[key]
+                    logger.debug(f"Cache expired: {key[:16]}...")
+                    return None
+                
+                # Move to end (most recently used)
+                self._cache.move_to_end(key)
+                
+                # Update statistics
+                cached.hit_count += 1
+                self._stats["hits"] += 1
+                
+                logger.debug(f"Cache hit: {key[:16]}... (hit_count={cached.hit_count})")
+                return cached.result_data
             
-            # Check if expired
-            if cached.is_expired():
-                self._stats["expirations"] += 1
-                del self._cache[key]
-                logger.debug(f"Cache expired: {key[:16]}...")
-                return None
-            
-            # Move to end (most recently used)
-            self._cache.move_to_end(key)
-            
-            # Update statistics
-            cached.hit_count += 1
-            self._stats["hits"] += 1
-            
-            logger.debug(f"Cache hit: {key[:16]}... (hit_count={cached.hit_count})")
-            return cached.result_data
-        
-        self._stats["misses"] += 1
-        logger.debug(f"Cache miss: {key[:16]}...")
-        return None
+            self._stats["misses"] += 1
+            logger.debug(f"Cache miss: {key[:16]}...")
+            return None
     
     def put(
         self,
@@ -175,32 +181,33 @@ class ProofCache:
         """
         key = self._make_key(formula, prover)
         
-        # Evict oldest if at capacity
-        if key not in self._cache and len(self._cache) >= self.max_size:
-            oldest_key, _ = self._cache.popitem(last=False)
-            self._stats["evictions"] += 1
-            logger.debug(f"Evicted: {oldest_key[:16]}...")
+        with self._lock:
+            # Evict oldest if at capacity
+            if key not in self._cache and len(self._cache) >= self.max_size:
+                oldest_key, _ = self._cache.popitem(last=False)
+                self._stats["evictions"] += 1
+                logger.debug(f"Evicted: {oldest_key[:16]}...")
+            
+            # Create cached proof
+            cached = CachedProof(
+                formula_hash=key,
+                prover=prover,
+                result_data=result,
+                timestamp=time.time(),
+                ttl=ttl if ttl is not None else self.default_ttl
+            )
+            
+            # Add to cache
+            self._cache[key] = cached
+            self._stats["total_puts"] += 1
+            
+            logger.debug(f"Cached: {key[:16]}... (size={len(self._cache)}/{self.max_size})")
         
-        # Create cached proof
-        cached = CachedProof(
-            formula_hash=key,
-            prover=prover,
-            result_data=result,
-            timestamp=time.time(),
-            ttl=ttl if ttl is not None else self.default_ttl
-        )
-        
-        # Add to cache
-        self._cache[key] = cached
-        self._stats["total_puts"] += 1
-        
-        # Optionally persist to file/IPFS
+        # Persist outside lock to avoid blocking
         if self.ipfs_backed:
             self._persist_to_ipfs(key, cached)
         else:
             self._persist_to_file(key, cached)
-        
-        logger.debug(f"Cached: {key[:16]}... (size={len(self._cache)}/{self.max_size})")
     
     def _persist_to_file(self, key: str, cached: CachedProof) -> None:
         """Persist cached proof to file."""
@@ -230,11 +237,12 @@ class ProofCache:
             True if entry was removed, False if not found
         """
         key = self._make_key(formula, prover)
-        if key in self._cache:
-            del self._cache[key]
-            logger.debug(f"Invalidated: {key[:16]}...")
-            return True
-        return False
+        with self._lock:
+            if key in self._cache:
+                del self._cache[key]
+                logger.debug(f"Invalidated: {key[:16]}...")
+                return True
+            return False
     
     def clear(self) -> int:
         """
@@ -243,10 +251,11 @@ class ProofCache:
         Returns:
             Number of entries cleared
         """
-        count = len(self._cache)
-        self._cache.clear()
-        logger.info(f"Cache cleared: {count} entries removed")
-        return count
+        with self._lock:
+            count = len(self._cache)
+            self._cache.clear()
+            logger.info(f"Cache cleared: {count} entries removed")
+            return count
     
     def get_statistics(self) -> Dict[str, Any]:
         """
@@ -255,24 +264,25 @@ class ProofCache:
         Returns:
             Dictionary with cache statistics including hit rate
         """
-        total_requests = self._stats["hits"] + self._stats["misses"]
-        hit_rate = (
-            self._stats["hits"] / total_requests
-            if total_requests > 0
-            else 0.0
-        )
-        
-        return {
-            "size": len(self._cache),
-            "max_size": self.max_size,
-            "hits": self._stats["hits"],
-            "misses": self._stats["misses"],
-            "hit_rate": hit_rate,
-            "evictions": self._stats["evictions"],
-            "expirations": self._stats["expirations"],
-            "total_puts": self._stats["total_puts"],
-            "ipfs_backed": self.ipfs_backed,
-        }
+        with self._lock:
+            total_requests = self._stats["hits"] + self._stats["misses"]
+            hit_rate = (
+                self._stats["hits"] / total_requests
+                if total_requests > 0
+                else 0.0
+            )
+            
+            return {
+                "size": len(self._cache),
+                "max_size": self.max_size,
+                "hits": self._stats["hits"],
+                "misses": self._stats["misses"],
+                "hit_rate": hit_rate,
+                "evictions": self._stats["evictions"],
+                "expirations": self._stats["expirations"],
+                "total_puts": self._stats["total_puts"],
+                "ipfs_backed": self.ipfs_backed,
+            }
     
     def get_cached_entries(self) -> List[Dict[str, Any]]:
         """
@@ -301,19 +311,20 @@ class ProofCache:
         Returns:
             Number of entries removed
         """
-        expired_keys = [
-            key for key, cached in self._cache.items()
-            if cached.is_expired()
-        ]
-        
-        for key in expired_keys:
-            del self._cache[key]
-            self._stats["expirations"] += 1
-        
-        if expired_keys:
-            logger.info(f"Cleaned up {len(expired_keys)} expired entries")
-        
-        return len(expired_keys)
+        with self._lock:
+            expired_keys = [
+                key for key, cached in self._cache.items()
+                if cached.is_expired()
+            ]
+            
+            for key in expired_keys:
+                del self._cache[key]
+                self._stats["expirations"] += 1
+            
+            if expired_keys:
+                logger.info(f"Cleaned up {len(expired_keys)} expired entries")
+            
+            return len(expired_keys)
     
     def resize(self, new_max_size: int) -> None:
         """
@@ -322,15 +333,16 @@ class ProofCache:
         Args:
             new_max_size: New maximum cache size
         """
-        old_size = self.max_size
-        self.max_size = new_max_size
-        
-        # Evict oldest entries if needed
-        while len(self._cache) > new_max_size:
-            self._cache.popitem(last=False)
-            self._stats["evictions"] += 1
-        
-        logger.info(f"Cache resized: {old_size} -> {new_max_size}")
+        with self._lock:
+            old_size = self.max_size
+            self.max_size = new_max_size
+            
+            # Evict oldest entries if needed
+            while len(self._cache) > new_max_size:
+                self._cache.popitem(last=False)
+                self._stats["evictions"] += 1
+            
+            logger.info(f"Cache resized: {old_size} -> {new_max_size}")
 
 
 # Global cache instance (singleton pattern)
@@ -345,10 +357,14 @@ def get_global_cache(
     """
     Get or create global proof cache instance.
     
+    Note: If cache already exists, this will update its configuration
+    (max_size and default_ttl) to match the requested values. IPFS
+    backing cannot be changed after initialization.
+    
     Args:
-        max_size: Maximum cache size (only used if creating new cache)
-        default_ttl: Default TTL (only used if creating new cache)
-        ipfs_backed: Whether to use IPFS backing
+        max_size: Maximum cache size
+        default_ttl: Default TTL in seconds
+        ipfs_backed: Whether to use IPFS backing (only on first call)
         
     Returns:
         Global ProofCache instance
@@ -361,6 +377,26 @@ def get_global_cache(
             default_ttl=default_ttl,
             ipfs_backed=ipfs_backed
         )
+    else:
+        # Update configuration if different
+        if _global_cache.max_size != max_size:
+            logger.info(
+                f"Updating global ProofCache max_size from {_global_cache.max_size} to {max_size}"
+            )
+            _global_cache.resize(max_size)
+        
+        if _global_cache.default_ttl != default_ttl:
+            logger.info(
+                f"Updating global ProofCache default_ttl from {_global_cache.default_ttl} to {default_ttl}"
+            )
+            _global_cache.default_ttl = default_ttl
+        
+        # Warn if trying to change IPFS backing
+        if _global_cache.ipfs_backed != ipfs_backed:
+            logger.warning(
+                f"Cannot change IPFS backing on existing cache "
+                f"(current: {_global_cache.ipfs_backed}, requested: {ipfs_backed})"
+            )
     
     return _global_cache
 

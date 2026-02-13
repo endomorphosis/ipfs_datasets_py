@@ -248,14 +248,16 @@ class MLConfidenceScorer:
         X: np.ndarray,
         y: np.ndarray,
         validation_split: float = 0.2,
+        task_type: str = "regression",
     ) -> Dict[str, float]:
         """
         Train ML model on labeled data.
         
         Args:
             X: Feature matrix (n_samples, n_features)
-            y: Target labels (n_samples,) - binary or continuous [0, 1]
+            y: Target labels (n_samples,) - continuous [0, 1] for regression or binary {0, 1} for classification
             validation_split: Fraction for validation set
+            task_type: Either "regression" (continuous) or "classification" (binary)
             
         Returns:
             Training metrics dictionary
@@ -266,22 +268,35 @@ class MLConfidenceScorer:
                 "Install with: pip install xgboost lightgbm"
             )
         
+        # Validate task_type
+        if task_type not in ["regression", "classification"]:
+            raise ValueError(f"task_type must be 'regression' or 'classification', got {task_type}")
+        
         # Split data
         n_train = int(len(X) * (1 - validation_split))
         X_train, X_val = X[:n_train], X[n_train:]
         y_train, y_val = y[:n_train], y[n_train:]
         
-        logger.info(f"Training on {len(X_train)} samples, validating on {len(X_val)}")
+        logger.info(f"Training {task_type} model on {len(X_train)} samples, validating on {len(X_val)}")
         
         if self.config.use_xgboost and XGBOOST_AVAILABLE:
             # XGBoost training
-            self.model = xgb.XGBClassifier(
-                n_estimators=self.config.n_estimators,
-                max_depth=self.config.max_depth,
-                learning_rate=self.config.learning_rate,
-                objective='binary:logistic',
-                eval_metric='logloss',
-            )
+            if task_type == "classification":
+                self.model = xgb.XGBClassifier(
+                    n_estimators=self.config.n_estimators,
+                    max_depth=self.config.max_depth,
+                    learning_rate=self.config.learning_rate,
+                    objective='binary:logistic',
+                    eval_metric='logloss',
+                )
+            else:  # regression
+                self.model = xgb.XGBRegressor(
+                    n_estimators=self.config.n_estimators,
+                    max_depth=self.config.max_depth,
+                    learning_rate=self.config.learning_rate,
+                    objective='reg:squarederror',
+                    eval_metric='rmse',
+                )
             
             self.model.fit(
                 X_train, y_train,
@@ -289,21 +304,36 @@ class MLConfidenceScorer:
                 verbose=False,
             )
             
-            train_score = self.model.score(X_train, y_train)
-            val_score = self.model.score(X_val, y_val)
+            if task_type == "classification":
+                train_score = self.model.score(X_train, y_train)
+                val_score = self.model.score(X_val, y_val)
+            else:  # regression - use R^2 score
+                train_pred = self.model.predict(X_train)
+                val_pred = self.model.predict(X_val)
+                train_score = 1 - np.mean((train_pred - y_train) ** 2) / np.var(y_train)
+                val_score = 1 - np.mean((val_pred - y_val) ** 2) / np.var(y_val)
             
         elif LIGHTGBM_AVAILABLE:
             # LightGBM training
             train_data = lgb.Dataset(X_train, label=y_train)
             val_data = lgb.Dataset(X_val, label=y_val, reference=train_data)
             
-            params = {
-                'objective': 'binary',
-                'metric': 'binary_logloss',
-                'num_leaves': 2 ** self.config.max_depth,
-                'learning_rate': self.config.learning_rate,
-                'verbose': -1,
-            }
+            if task_type == "classification":
+                params = {
+                    'objective': 'binary',
+                    'metric': 'binary_logloss',
+                    'num_leaves': 2 ** self.config.max_depth,
+                    'learning_rate': self.config.learning_rate,
+                    'verbose': -1,
+                }
+            else:  # regression
+                params = {
+                    'objective': 'regression',
+                    'metric': 'rmse',
+                    'num_leaves': 2 ** self.config.max_depth,
+                    'learning_rate': self.config.learning_rate,
+                    'verbose': -1,
+                }
             
             self.model = lgb.train(
                 params,
@@ -315,8 +345,13 @@ class MLConfidenceScorer:
             
             train_pred = self.model.predict(X_train)
             val_pred = self.model.predict(X_val)
-            train_score = np.mean((train_pred > 0.5) == y_train)
-            val_score = np.mean((val_pred > 0.5) == y_val)
+            
+            if task_type == "classification":
+                train_score = np.mean((train_pred > 0.5) == y_train)
+                val_score = np.mean((val_pred > 0.5) == y_val)
+            else:  # regression - use R^2 score
+                train_score = 1 - np.mean((train_pred - y_train) ** 2) / np.var(y_train)
+                val_score = 1 - np.mean((val_pred - y_val) ** 2) / np.var(y_val)
         
         self._is_trained = True
         
