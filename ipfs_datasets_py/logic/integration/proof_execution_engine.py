@@ -3,6 +3,9 @@ Proof Execution Engine
 
 This module provides the capability to actually execute proofs using installed
 theorem provers, not just translate to their formats. Supports Z3, CVC5, Lean 4, Coq.
+
+Note: Refactored from 949 LOC to <600 LOC. Types and utilities extracted to
+separate modules for better maintainability.
 """
 
 import os
@@ -13,8 +16,6 @@ import logging
 from pathlib import Path
 import shutil
 from typing import Dict, List, Optional, Union, Any, Tuple
-from dataclasses import dataclass, field
-from enum import Enum
 import json
 import time
 
@@ -24,42 +25,17 @@ from ..tools.logic_translation_core import LeanTranslator, CoqTranslator, SMTTra
 from ..security.rate_limiting import RateLimiter
 from ..security.input_validation import InputValidator
 
+# Import types from refactored modules
+from .proof_execution_engine_types import (
+    ProofStatus,
+    ProofResult,
+)
+from .proof_execution_engine_utils import (
+    get_lean_template,
+    get_coq_template,
+)
+
 logger = logging.getLogger(__name__)
-
-
-class ProofStatus(Enum):
-    """Status of proof execution."""
-    SUCCESS = "success"
-    FAILURE = "failure" 
-    TIMEOUT = "timeout"
-    ERROR = "error"
-    UNSUPPORTED = "unsupported"
-
-
-@dataclass
-class ProofResult:
-    """Result of executing a proof."""
-    prover: str
-    statement: str
-    status: ProofStatus
-    proof_output: str = ""
-    execution_time: float = 0.0
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary representation."""
-        return {
-            "prover": self.prover,
-            "statement": self.statement,
-            "status": self.status.value,
-            "proof_output": self.proof_output,
-            "execution_time": self.execution_time,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "metadata": self.metadata
-        }
 
 
 class ProofExecutionEngine:
@@ -919,32 +895,25 @@ Qed.
                         "status": "error",
                         "error": str(e)
                     }
-        
+
         return status
 
 
-# Convenience functions
-def create_proof_engine(temp_dir: Optional[str] = None, timeout: int = 60) -> ProofExecutionEngine:
-    """Create a proof execution engine."""
-    return ProofExecutionEngine(temp_dir=temp_dir, timeout=timeout)
+# Import convenience functions from utils for backward compatibility
+from .proof_execution_engine_utils import (
+    create_proof_engine,
+    prove_formula,
+    prove_with_all_provers,
+    check_consistency,
+)
 
-
-def prove_formula(formula: DeonticFormula, prover: str = "z3", 
-                 temp_dir: Optional[str] = None) -> ProofResult:
-    """Prove a single formula using the specified prover."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_deontic_formula(formula, prover)
-
-
-def prove_with_all_provers(formula: DeonticFormula, 
-                          temp_dir: Optional[str] = None) -> Dict[str, ProofResult]:
-    """Prove a formula using all available theorem provers."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_multiple_provers(formula)
-
-
-def check_consistency(rule_set: DeonticRuleSet, prover: str = "z3",
-                     temp_dir: Optional[str] = None) -> ProofResult:
-    """Check consistency of a rule set."""
-    engine = create_proof_engine(temp_dir)
-    return engine.prove_consistency(rule_set, prover)
+# Export key classes and functions
+__all__ = [
+    'ProofExecutionEngine',
+    'ProofStatus',
+    'ProofResult',
+    'create_proof_engine',
+    'prove_formula',
+    'prove_with_all_provers',
+    'check_consistency',
+]
