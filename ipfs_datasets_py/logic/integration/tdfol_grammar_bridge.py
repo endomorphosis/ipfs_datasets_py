@@ -16,6 +16,12 @@ from typing import Optional, List, Dict, Any, Tuple
 
 from ..TDFOL.tdfol_core import Formula
 from ..TDFOL.tdfol_dcec_parser import parse_dcec
+from ..TDFOL.tdfol_prover import ProofResult, ProofStatus
+from .base_prover_bridge import (
+    BaseProverBridge,
+    BridgeMetadata,
+    BridgeCapability
+)
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +35,7 @@ except ImportError as e:
     logger.warning(f"Grammar engine modules not available: {e}")
 
 
-class TDFOLGrammarBridge:
+class TDFOLGrammarBridge(BaseProverBridge):
     """
     Bridge between TDFOL and CEC's grammar engine.
     
@@ -39,7 +45,7 @@ class TDFOLGrammarBridge:
     
     def __init__(self):
         """Initialize the TDFOL-Grammar bridge."""
-        self.available = GRAMMAR_AVAILABLE
+        super().__init__()
         
         if not self.available:
             logger.warning("Grammar integration disabled")
@@ -60,6 +66,87 @@ class TDFOLGrammarBridge:
         except Exception as e:
             logger.warning(f"Failed to initialize grammar engine: {e}")
             self.available = False
+    
+    def _init_metadata(self) -> BridgeMetadata:
+        """Initialize bridge metadata."""
+        return BridgeMetadata(
+            name="TDFOL-Grammar Bridge",
+            version="1.0.0",
+            target_system="Grammar",
+            capabilities=[
+                BridgeCapability.BIDIRECTIONAL_CONVERSION
+            ],
+            requires_external_prover=False,
+            description="Integrates TDFOL with grammar-based NL parsing (100+ lexicon entries)"
+        )
+    
+    def _check_availability(self) -> bool:
+        """Check if grammar modules are available."""
+        return GRAMMAR_AVAILABLE
+    
+    def to_target_format(self, formula: Formula) -> str:
+        """
+        Convert TDFOL formula to natural language (grammar format).
+        
+        Args:
+            formula: TDFOL formula
+            
+        Returns:
+            Natural language representation
+            
+        Raises:
+            ValueError: If formula cannot be converted
+        """
+        if not self.is_available():
+            raise ValueError("Grammar bridge not available")
+        
+        return self.formula_to_natural_language(formula)
+    
+    def from_target_format(self, target_result: Any) -> ProofResult:
+        """
+        Convert grammar result to TDFOL ProofResult.
+        
+        Note: Grammar bridge is primarily for parsing, not proving.
+        
+        Args:
+            target_result: Result from grammar parsing
+            
+        Returns:
+            ProofResult with standardized format
+        """
+        # Grammar bridge doesn't do proving, so this is a placeholder
+        return ProofResult(
+            status=ProofStatus.UNKNOWN,
+            formula=None,
+            time_ms=0,
+            method="grammar",
+            message="Grammar bridge is for parsing, not proving"
+        )
+    
+    def prove(
+        self,
+        formula: Formula,
+        timeout: Optional[int] = None,
+        **kwargs
+    ) -> ProofResult:
+        """
+        Grammar bridge doesn't support proving.
+        
+        Args:
+            formula: TDFOL formula
+            timeout: Ignored
+            **kwargs: Ignored
+            
+        Returns:
+            ProofResult indicating proving not supported
+        """
+        return ProofResult(
+            status=ProofStatus.UNKNOWN,
+            formula=formula,
+            time_ms=0,
+            method="grammar",
+            message="Grammar bridge is for NL parsing, not theorem proving"
+        )
     
     def parse_natural_language(
         self,

@@ -23,6 +23,11 @@ from ..TDFOL.tdfol_core import (
     DeonticOperator,
 )
 from ..TDFOL.tdfol_prover import ProofResult, ProofStatus, ProofStep
+from .base_prover_bridge import (
+    BaseProverBridge,
+    BridgeMetadata,
+    BridgeCapability
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +50,7 @@ class ModalLogicType(Enum):
     D = "D"       # Serial (□p → ◊p) - for deontic logic
 
 
-class TDFOLShadowProverBridge:
+class TDFOLShadowProverBridge(BaseProverBridge):
     """
     Bridge between TDFOL and ShadowProver.
     
@@ -54,7 +59,7 @@ class TDFOLShadowProverBridge:
     
     def __init__(self):
         """Initialize the TDFOL-ShadowProver bridge."""
-        self.available = SHADOWPROVER_AVAILABLE
+        super().__init__()
         
         if not self.available:
             logger.warning("ShadowProver integration disabled")
@@ -77,6 +82,84 @@ class TDFOLShadowProverBridge:
         except Exception as e:
             logger.warning(f"Failed to initialize shadow provers: {e}")
             self.available = False
+    
+    def _init_metadata(self) -> BridgeMetadata:
+        """Initialize bridge metadata."""
+        return BridgeMetadata(
+            name="TDFOL-ShadowProver Bridge",
+            version="1.0.0",
+            target_system="ShadowProver",
+            capabilities=[
+                BridgeCapability.BIDIRECTIONAL_CONVERSION,
+                BridgeCapability.OPTIMIZATION
+            ],
+            requires_external_prover=False,
+            description="Integrates TDFOL with ShadowProver modal logic systems (K, S4, S5)"
+        )
+    
+    def _check_availability(self) -> bool:
+        """Check if ShadowProver modules are available."""
+        return SHADOWPROVER_AVAILABLE
+    
+    def to_target_format(self, formula: Formula) -> str:
+        """
+        Convert TDFOL formula to ShadowProver modal logic format.
+        
+        Args:
+            formula: TDFOL formula
+            
+        Returns:
+            Modal logic string representation
+            
+        Raises:
+            ValueError: If formula cannot be converted
+        """
+        if not self.is_available():
+            raise ValueError("ShadowProver bridge not available")
+        
+        return self.tdfol_to_modal_string(formula)
+    
+    def from_target_format(self, target_result: Any) -> ProofResult:
+        """
+        Convert ShadowProver result to TDFOL ProofResult.
+        
+        Args:
+            target_result: Result from ShadowProver
+            
+        Returns:
+            ProofResult with standardized format
+        """
+        if isinstance(target_result, ProofResult):
+            return target_result
+        
+        return ProofResult(
+            status=ProofStatus.UNKNOWN,
+            formula=None,
+            time_ms=0,
+            method="shadowprover",
+            message=f"Converted from ShadowProver result: {target_result}"
+        )
+    
+    def prove(
+        self,
+        formula: Formula,
+        timeout: Optional[int] = None,
+        modal_logic: Optional[str] = None,
+        **kwargs
+    ) -> ProofResult:
+        """
+        Prove a formula using ShadowProver.
+        
+        Args:
+            formula: TDFOL formula to prove
+            timeout: Optional timeout in seconds
+            modal_logic: Specific modal logic to use (K/S4/S5)
+            **kwargs: Additional parameters
+            
+        Returns:
+            ProofResult with status and details
+        """
+        return self.prove_modal_formula(formula)
     
     def select_modal_logic(self, formula: Formula) -> ModalLogicType:
         """
