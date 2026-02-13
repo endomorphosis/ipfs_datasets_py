@@ -30,7 +30,7 @@ Example:
 import json
 import time
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 

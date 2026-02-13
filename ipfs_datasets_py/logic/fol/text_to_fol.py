@@ -9,7 +9,6 @@ from .utils.predicate_extractor import extract_logical_relations, extract_predic
 from .utils.nlp_predicate_extractor import (
     extract_predicates_nlp,
     extract_logical_relations_nlp,
-    get_extraction_stats,
 )
 from .utils.fol_parser import (
     build_fol_formula,

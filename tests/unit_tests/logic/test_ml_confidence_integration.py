@@ -6,7 +6,6 @@ Tests ML confidence scorer functionality end-to-end.
 
 import pytest
 import numpy as np
-from pathlib import Path
 from ipfs_datasets_py.logic.ml_confidence import (
     MLConfidenceScorer,
     MLConfidenceConfig,

@@ -9,7 +9,6 @@ Tests cover:
 """
 
 import pytest
-import asyncio
 from ipfs_datasets_py.logic.fol.text_to_fol import (
     convert_text_to_fol,
     extract_text_from_dataset,

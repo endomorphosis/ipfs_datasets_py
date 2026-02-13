@@ -8,7 +8,7 @@ Extracted from deontological_reasoning.py to improve modularity.
 """
 
 import re
-from typing import List, Tuple, Set
+from typing import List, Set
 
 
 class DeonticPatterns:

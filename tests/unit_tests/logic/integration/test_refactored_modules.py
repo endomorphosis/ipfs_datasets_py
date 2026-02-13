@@ -21,7 +21,6 @@ from ipfs_datasets_py.logic.integration.logic_verification_types import (
     ProofResult,
     ConsistencyCheck,
     EntailmentResult,
-    VerificationResult,
 )
 
 

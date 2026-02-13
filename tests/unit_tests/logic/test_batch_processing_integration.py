@@ -8,7 +8,6 @@ import pytest
 import asyncio
 from ipfs_datasets_py.logic.batch_processing import (
     FOLBatchProcessor,
-    ProofBatchProcessor,
     ChunkedBatchProcessor,
     BatchResult,
 )

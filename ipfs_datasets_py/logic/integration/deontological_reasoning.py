@@ -29,14 +29,6 @@ from .deontological_reasoning_types import (
 )
 from .deontological_reasoning_utils import (
     DeonticPatterns,
-    extract_keywords,
-    calculate_text_similarity,
-    are_entities_similar,
-    are_actions_similar,
-    normalize_entity,
-    normalize_action,
-    extract_conditions_from_text,
-    extract_exceptions_from_text,
 )
 
 logger = logging.getLogger(__name__)

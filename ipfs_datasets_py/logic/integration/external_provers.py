@@ -27,7 +27,6 @@ Example:
 import subprocess
 import tempfile
 import logging
-import shutil
 from dataclasses import dataclass
 from typing import Optional, Dict, Any, List
 from pathlib import Path
