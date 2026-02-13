@@ -162,13 +162,12 @@ class LogicExtractor:
         """Initialize the LLM backend."""
         if self.backend is None and self.use_ipfs_accelerate:
             try:
-                # Try to import ipfs_accelerate_py
-                import ipfs_accelerate_py
-                logger.info("Using ipfs_accelerate_py for model inference")
-                # Initialize backend here
-                # self.backend = ipfs_accelerate_py.get_backend(self.model)
+                # Phase 2.3: Use LLM backend adapter
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import get_default_adapter
+                self.backend = get_default_adapter()
+                logger.info("Using LLM backend adapter (Phase 2.3)")
             except ImportError:
-                logger.warning("ipfs_accelerate_py not available, using fallback")
+                logger.warning("LLM backend adapter not available, using fallback")
                 self.backend = None
     
     def extract(self, context: LogicExtractionContext) -> ExtractionResult:
@@ -394,11 +393,25 @@ class LogicExtractor:
         Returns:
             LLM response text
         """
+        # Phase 2.3: Use LLM backend adapter
         if self.backend:
-            # Use actual backend
-            # response = self.backend.generate(prompt)
-            # return response
-            pass
+            try:
+                from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import LLMRequest
+                
+                request = LLMRequest(
+                    prompt=prompt,
+                    model=self.model,
+                    temperature=0.7,
+                    max_tokens=1024,
+                    metadata={'context': context.domain}
+                )
+                
+                response = self.backend.generate(request)
+                logger.info(f"Generated response using {response.backend} backend")
+                return response.text
+                
+            except Exception as e:
+                logger.warning(f"LLM backend error: {e}, using fallback")
         
         # Fallback mock response for testing
         logger.warning("Using mock LLM response")

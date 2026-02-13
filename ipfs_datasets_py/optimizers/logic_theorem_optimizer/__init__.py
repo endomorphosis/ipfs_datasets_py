@@ -47,10 +47,14 @@ __all__ = [
     # Ontology
     'KnowledgeGraphStabilizer',
     'OntologyConsistencyChecker',
-    # Phase 2: Prover Integration
+    # Phase 2.1: Prover Integration
     'ProverIntegrationAdapter',
     'ProverVerificationResult',
     'AggregatedProverResult',
+    # Phase 2.3: LLM Backend
+    'LLMBackendAdapter',
+    'LLMRequest',
+    'LLMResponse',
 ]
 
 __version__ = '0.1.0'
@@ -126,4 +130,14 @@ def __getattr__(name):
             return ProverVerificationResult
         else:
             return AggregatedProverResult
+    elif name == 'LLMBackendAdapter' or name == 'LLMRequest' or name == 'LLMResponse':
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.llm_backend import (
+            LLMBackendAdapter, LLMRequest, LLMResponse
+        )
+        if name == 'LLMBackendAdapter':
+            return LLMBackendAdapter
+        elif name == 'LLMRequest':
+            return LLMRequest
+        else:
+            return LLMResponse
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
