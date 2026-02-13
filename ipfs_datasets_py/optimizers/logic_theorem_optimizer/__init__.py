@@ -65,6 +65,12 @@ __all__ = [
     'NeuralResult',
     'SymbolicResult',
     'HybridProverResult',
+    # Future Enhancement 2: Prompt Optimization
+    'PromptOptimizer',
+    'OptimizationStrategy',
+    'PromptMetrics',
+    'PromptTemplate',
+    'OptimizationResult',
 ]
 
 __version__ = '0.1.0'
@@ -174,4 +180,18 @@ def __getattr__(name):
             return SymbolicResult
         else:
             return HybridProverResult
+    elif name in ('PromptOptimizer', 'OptimizationStrategy', 'PromptMetrics', 'PromptTemplate', 'OptimizationResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_optimizer import (
+            PromptOptimizer, OptimizationStrategy, PromptMetrics, PromptTemplate, OptimizationResult
+        )
+        if name == 'PromptOptimizer':
+            return PromptOptimizer
+        elif name == 'OptimizationStrategy':
+            return OptimizationStrategy
+        elif name == 'PromptMetrics':
+            return PromptMetrics
+        elif name == 'PromptTemplate':
+            return PromptTemplate
+        else:
+            return OptimizationResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
