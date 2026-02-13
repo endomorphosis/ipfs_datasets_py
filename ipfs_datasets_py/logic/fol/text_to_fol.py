@@ -182,6 +182,26 @@ async def convert_text_to_fol(
 
 
 def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
+    """Extract text content from various dataset formats.
+    
+    This function handles multiple common dataset structures including:
+    - Direct text fields
+    - Nested data with text/sentence/content keys
+    - Lists of sentences
+    - Fallback to any string values
+    
+    Args:
+        dataset: Dictionary containing dataset in various formats
+        
+    Returns:
+        List of extracted text strings, stripped of whitespace
+        
+    Examples:
+        >>> extract_text_from_dataset({"text": "Hello world"})
+        ["Hello world"]
+        >>> extract_text_from_dataset({"data": [{"sentence": "First"}, {"sentence": "Second"}]})
+        ["First", "Second"]
+    """
     texts: List[str] = []
 
     if "text" in dataset:
@@ -217,6 +237,19 @@ def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
 
 
 def extract_predicate_names(predicates: Dict[str, List[str]]) -> List[str]:
+    """Extract unique predicate names from categorized predicates dictionary.
+    
+    Args:
+        predicates: Dictionary mapping categories to lists of predicate names
+                   e.g., {"entities": ["Person", "Dog"], "actions": ["Run", "Walk"]}
+        
+    Returns:
+        Deduplicated list of all predicate names across all categories
+        
+    Examples:
+        >>> extract_predicate_names({"entities": ["Dog", "Cat"], "actions": ["Run"]})
+        ["Dog", "Cat", "Run"]
+    """
     names: List[str] = []
     for category in predicates.values():
         names.extend(category)
@@ -229,6 +262,34 @@ def calculate_conversion_confidence(
     predicates: Dict[str, List[str]],
     quantifiers: List[Dict[str, Any]],
 ) -> float:
+    """Calculate confidence score for FOL conversion quality.
+    
+    Uses multiple heuristics to estimate conversion quality:
+    - Predicate count (up to 0.3)
+    - Quantifier presence (up to 0.2)
+    - Complexity match between sentence and formula (up to 0.2)
+    - Logical indicator count (up to 0.2)
+    - Syntax validity (0.1)
+    - Bonus for clean quantified statements (0.1)
+    
+    Args:
+        sentence: Original natural language sentence
+        fol_formula: Generated first-order logic formula
+        predicates: Dictionary of extracted predicates by category
+        quantifiers: List of identified quantifiers
+        
+    Returns:
+        Confidence score between 0.0 and 1.0
+        
+    Examples:
+        >>> calculate_conversion_confidence(
+        ...     "All dogs are mammals",
+        ...     "∀x (Dog(x) → Mammal(x))",
+        ...     {"entities": ["Dog", "Mammal"]},
+        ...     [{"type": "universal"}]
+        ... )
+        0.9  # High confidence
+    """
     score = 0.0
 
     total_predicates = sum(len(preds) for preds in predicates.values())
@@ -264,20 +325,55 @@ def calculate_conversion_confidence(
 
 
 def estimate_sentence_complexity(sentence: str) -> int:
+    """Estimate complexity of natural language sentence by token count.
+    
+    Args:
+        sentence: Natural language sentence
+        
+    Returns:
+        Number of space-separated tokens
+    """
     tokens = sentence.split()
     return len(tokens)
 
 
 def estimate_formula_complexity(formula: str) -> int:
+    """Estimate complexity of FOL formula by operator count.
+    
+    Counts logical operators: ∀, ∃, ∧, ∨, →, ↔, ¬
+    
+    Args:
+        formula: First-order logic formula string
+        
+    Returns:
+        Sum of all logical operators plus 1
+    """
     return sum(formula.count(sym) for sym in ["∀", "∃", "∧", "∨", "→", "↔", "¬"]) + 1
 
 
 def count_indicators(sentence: str, indicators: List[str]) -> int:
+    """Count occurrences of logical indicator words in sentence.
+    
+    Args:
+        sentence: Natural language sentence
+        indicators: List of indicator words to count (e.g., ["all", "some", "if"])
+        
+    Returns:
+        Total count of all indicators found (case-insensitive)
+    """
     sentence_lower = sentence.lower()
     return sum(sentence_lower.count(ind) for ind in indicators)
 
 
 def get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Calculate distribution of quantifiers across conversion results.
+    
+    Args:
+        results: List of FOL conversion result dictionaries
+        
+    Returns:
+        Dictionary mapping quantifier symbols to counts {"∀": count, "∃": count}
+    """
     distribution = {"∀": 0, "∃": 0}
     for result in results:
         for quantifier in result.get("quantifiers", []):
@@ -287,6 +383,14 @@ def get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]
 
 
 def get_operator_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Calculate distribution of logical operators across conversion results.
+    
+    Args:
+        results: List of FOL conversion result dictionaries
+        
+    Returns:
+        Dictionary mapping operator symbols to counts {"∧": count, "∨": count, ...}
+    """
     distribution = {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0}
     for result in results:
         for operator in result.get("logical_operators", []):

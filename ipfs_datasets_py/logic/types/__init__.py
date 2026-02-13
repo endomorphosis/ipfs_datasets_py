@@ -31,6 +31,36 @@ from .translation_types import (
     AbstractLogicFormula,
 )
 
+from .common_types import (
+    LogicOperator,
+    Quantifier,
+    FormulaType,
+    ConfidenceScore,
+    ComplexityScore,
+    ComplexityMetrics,
+    Formula,
+    Prover,
+    Converter,
+)
+
+from .bridge_types import (
+    BridgeCapability,
+    ConversionStatus,
+    BridgeMetadata,
+    ConversionResult,
+    BridgeConfig,
+    ProverRecommendation,
+)
+
+from .fol_types import (
+    FOLOutputFormat,
+    PredicateCategory,
+    Predicate,
+    FOLFormula,
+    FOLConversionResult,
+    PredicateExtraction,
+)
+
 __all__ = [
     # Deontic types
     "DeonticOperator",
@@ -48,4 +78,28 @@ __all__ = [
     "LogicTranslationTarget",
     "TranslationResult",
     "AbstractLogicFormula",
+    # Common types
+    "LogicOperator",
+    "Quantifier",
+    "FormulaType",
+    "ConfidenceScore",
+    "ComplexityScore",
+    "ComplexityMetrics",
+    "Formula",
+    "Prover",
+    "Converter",
+    # Bridge types
+    "BridgeCapability",
+    "ConversionStatus",
+    "BridgeMetadata",
+    "ConversionResult",
+    "BridgeConfig",
+    "ProverRecommendation",
+    # FOL types
+    "FOLOutputFormat",
+    "PredicateCategory",
+    "Predicate",
+    "FOLFormula",
+    "FOLConversionResult",
+    "PredicateExtraction",
 ]

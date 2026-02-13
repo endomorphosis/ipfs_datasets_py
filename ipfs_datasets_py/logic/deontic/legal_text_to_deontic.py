@@ -235,6 +235,25 @@ async def convert_legal_text_to_deontic(
 
 
 def extract_legal_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
+    """Extract legal text content from various legal dataset formats.
+    
+    Handles multiple legal document structures including:
+    - Direct legal text fields (statute, regulation, contract_text, etc.)
+    - Nested data with legal content
+    - Lists of sections or provisions
+    
+    Args:
+        dataset: Dictionary containing legal dataset in various formats
+        
+    Returns:
+        List of extracted legal text strings, stripped of whitespace
+        
+    Examples:
+        >>> extract_legal_text_from_dataset({"statute": "All citizens shall..."})
+        ["All citizens shall..."]
+        >>> extract_legal_text_from_dataset({"sections": ["Section 1...", "Section 2..."]})
+        ["Section 1...", "Section 2..."]
+    """
     texts: List[str] = []
 
     legal_text_fields = [
@@ -279,6 +298,31 @@ def extract_legal_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
 
 
 def calculate_deontic_confidence(element: Dict[str, Any], deontic_formula: str) -> float:
+    """Calculate confidence score for deontic logic conversion quality.
+    
+    Uses multiple heuristics to estimate conversion quality:
+    - Valid deontic operator (O/P/F) presence (0.3)
+    - Subject identification (0.2)
+    - Action identification (0.2)
+    - Legal indicator words (up to 0.15)
+    - Temporal constraints (0.1)
+    - Conditions (0.05)
+    - Base score (0.1)
+    
+    Args:
+        element: Normative element dictionary with extracted components
+        deontic_formula: Generated deontic logic formula
+        
+    Returns:
+        Confidence score between 0.0 and 1.0
+        
+    Examples:
+        >>> calculate_deontic_confidence(
+        ...     {"deontic_operator": "O", "subject": ["citizens"], "action": ["file taxes"]},
+        ...     "O(FileTaxes(citizens))"
+        ... )
+        0.8  # High confidence with clear deontic structure
+    """
     score = 0.0
 
     if element.get("deontic_operator") in ["O", "P", "F"]:
@@ -324,12 +368,36 @@ def calculate_deontic_confidence(element: Dict[str, Any], deontic_formula: str) 
 
 
 def convert_to_defeasible_logic(deontic_formula: str, norm_type: str, exceptions: List[str]) -> str:
+    """Convert deontic formula to defeasible logic format with exceptions.
+    
+    Args:
+        deontic_formula: Deontic logic formula string
+        norm_type: Type of norm ("obligation", "permission", "prohibition")
+        exceptions: List of exception conditions
+        
+    Returns:
+        Defeasible logic formula string with exceptions clause if applicable
+        
+    Examples:
+        >>> convert_to_defeasible_logic("FileTaxes(x)", "obligation", ["under_18"])
+        "obligation(FileTaxes(x)) unless (under_18)."
+        >>> convert_to_defeasible_logic("Drive(x)", "permission", [])
+        "permission(Drive(x))."
+    """
     if exceptions:
         return f"{norm_type}({deontic_formula}) unless ({'; '.join(exceptions)})."
     return f"{norm_type}({deontic_formula})."
 
 
 def extract_all_legal_entities(results: List[Dict[str, Any]]) -> List[str]:
+    """Extract all legal entity subjects from conversion results.
+    
+    Args:
+        results: List of deontic conversion result dictionaries
+        
+    Returns:
+        List of all subject entities found across results
+    """
     entities: List[str] = []
     for result in results:
         entities.extend([str(s) for s in result.get("subject", [])])
@@ -337,6 +405,14 @@ def extract_all_legal_entities(results: List[Dict[str, Any]]) -> List[str]:
 
 
 def extract_all_legal_actions(results: List[Dict[str, Any]]) -> List[str]:
+    """Extract all legal actions from conversion results.
+    
+    Args:
+        results: List of deontic conversion result dictionaries
+        
+    Returns:
+        List of all actions found across results
+    """
     actions: List[str] = []
     for result in results:
         actions.extend([str(a) for a in result.get("action", [])])
@@ -344,6 +420,14 @@ def extract_all_legal_actions(results: List[Dict[str, Any]]) -> List[str]:
 
 
 def extract_all_temporal_constraints(results: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+    """Extract all temporal constraints from conversion results.
+    
+    Args:
+        results: List of deontic conversion result dictionaries
+        
+    Returns:
+        List of all temporal constraint dictionaries found across results
+    """
     constraints: List[Dict[str, str]] = []
     for result in results:
         constraints.extend(result.get("temporal_constraints", []))
