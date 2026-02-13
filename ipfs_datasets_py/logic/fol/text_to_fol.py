@@ -1,23 +1,20 @@
-"""Core conversion: natural language text -> First-Order Logic (FOL)."""
+"""
+Core conversion: natural language text -> First-Order Logic (FOL).
+
+DEPRECATED: This module provides backward-compatible async interface.
+New code should use FOLConverter from .converter module instead.
+
+The convert_text_to_fol() function is maintained for backward compatibility
+but internally uses FOLConverter for all conversions.
+"""
 
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Any, Dict, List, Optional, Union
 
-from .utils.predicate_extractor import extract_logical_relations, extract_predicates
-from .utils.nlp_predicate_extractor import (
-    extract_predicates_nlp,
-    extract_logical_relations_nlp,
-)
-from .utils.fol_parser import (
-    build_fol_formula,
-    convert_to_prolog,
-    convert_to_tptp,
-    parse_logical_operators,
-    parse_quantifiers,
-    validate_fol_syntax,
-)
+from .converter import FOLConverter
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +30,13 @@ async def convert_text_to_fol(
     """
     Convert natural language text to First-Order Logic (FOL).
     
+    DEPRECATED: Use FOLConverter instead for better performance and features.
+    
+    This function is maintained for backward compatibility. New code should use:
+        from ipfs_datasets_py.logic.fol import FOLConverter
+        converter = FOLConverter(use_nlp=True, use_cache=True)
+        result = await converter.convert_async(text)
+    
     Args:
         text_input: Text string or dataset dictionary
         domain_predicates: Optional list of domain-specific predicates
@@ -44,141 +48,88 @@ async def convert_text_to_fol(
     Returns:
         Dictionary with FOL formulas and metadata
     """
+    # Issue deprecation warning
+    warnings.warn(
+        "convert_text_to_fol() is deprecated and will be removed in v2.0. "
+        "Use FOLConverter instead",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    
     try:
-        # Intentionally avoid per-call logging here to keep batch pipelines quiet.
-
+        # Handle None input
         if text_input is None:
             text_input = ""
-        if not isinstance(confidence_threshold, (int, float)) or not (0 <= confidence_threshold <= 1):
-            raise ValueError("Confidence threshold must be a number between 0 and 1")
-
-        if isinstance(text_input, str):
+        
+        # Extract text from dataset format if needed
+        if isinstance(text_input, dict):
+            texts = extract_text_from_dataset(text_input)
+        elif isinstance(text_input, str):
             stripped = text_input.strip()
             if not stripped:
-                return {
-                    "status": "success",
-                    "fol_formulas": [],
-                    "summary": {
-                        "total_statements": 0,
-                        "successful_conversions": 0,
-                        "conversion_rate": 0.0,
-                        "average_confidence": 0.0,
-                        "unique_predicates": [],
-                        "quantifier_distribution": {"∀": 0, "∃": 0},
-                        "operator_distribution": {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0},
-                    },
-                    "metadata": {
-                        "tool": "text_to_fol",
-                        "version": "1.0.0",
-                        "output_format": output_format,
-                        "confidence_threshold": confidence_threshold,
-                    },
-                }
-
-            sentences = [stripped]
-        elif isinstance(text_input, dict):
-            sentences = extract_text_from_dataset(text_input)
+                return _empty_success_result(output_format, confidence_threshold)
+            texts = [stripped]
         else:
             raise ValueError("Text input must be a string or dictionary")
-
-        if not sentences or all(not s.strip() for s in sentences):
-            return {
-                "status": "success",
-                "fol_formulas": [],
-                "summary": {
-                    "total_statements": 0,
-                    "successful_conversions": 0,
-                    "conversion_rate": 0.0,
-                    "average_confidence": 0.0,
-                    "unique_predicates": [],
-                    "quantifier_distribution": {"∀": 0, "∃": 0},
-                    "operator_distribution": {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0},
-                },
-                "metadata": {
-                    "tool": "text_to_fol",
-                    "version": "1.0.0",
-                    "output_format": output_format,
-                    "confidence_threshold": confidence_threshold,
-                },
-            }
-
-        results: List[Dict[str, Any]] = []
+        
+        # Check if all texts are empty
+        if not texts or all(not t.strip() for t in texts):
+            return _empty_success_result(output_format, confidence_threshold)
+        
+        # Create FOLConverter with appropriate settings
+        converter = FOLConverter(
+            use_cache=True,
+            use_ml=False,  # Use heuristic confidence
+            use_nlp=use_nlp,
+            enable_monitoring=False,
+            confidence_threshold=confidence_threshold,
+            output_format=output_format
+        )
+        
+        # Convert all texts
+        results = []
         total_processed = 0
         successful_conversions = 0
-
-        for sentence in sentences:
-            sentence = sentence.strip()
-            if not sentence:
+        
+        for text in texts:
+            text = text.strip()
+            if not text:
                 continue
-
+            
             total_processed += 1
-
-            try:
-                # Use NLP-enhanced or regex-based extraction
-                if use_nlp:
-                    predicates = extract_predicates_nlp(sentence, use_spacy=True)
-                    relations = extract_logical_relations_nlp(sentence, use_spacy=True)
-                else:
-                    predicates = extract_predicates(sentence)
-                    relations = extract_logical_relations(sentence)
+            
+            # Convert using FOLConverter
+            conversion_result = await converter.convert_async(text)
+            
+            if conversion_result.success:
+                successful_conversions += 1
                 
-                quantifiers = parse_quantifiers(sentence)
-                operators = parse_logical_operators(sentence)
-                relations = extract_logical_relations(sentence)
-
-                fol_formula = build_fol_formula(quantifiers, predicates, operators, relations)
-                confidence = calculate_conversion_confidence(sentence, fol_formula, predicates, quantifiers)
-                validation = validate_fol_syntax(fol_formula)
-
-                if confidence >= confidence_threshold and validation["valid"]:
-                    successful_conversions += 1
-
-                    formula_result: Dict[str, Any] = {
-                        "original_text": sentence,
-                        "fol_formula": fol_formula,
-                        "confidence": confidence,
-                        "predicates_used": extract_predicate_names(predicates),
-                        "quantifiers": [q["symbol"] for q in quantifiers],
-                        "logical_operators": [op["symbol"] for op in operators],
-                    }
-
-                    if output_format in ["prolog", "all"]:
-                        formula_result["prolog_form"] = convert_to_prolog(fol_formula)
-                    if output_format in ["tptp", "all"]:
-                        formula_result["tptp_form"] = convert_to_tptp(fol_formula)
-
-                    if include_metadata:
-                        formula_result["validation"] = validation
-                        formula_result["linguistic_analysis"] = {
-                            "predicates": predicates,
-                            "quantifiers": quantifiers,
-                            "operators": operators,
-                            "relations": relations,
-                        }
-
-                    results.append(formula_result)
-                else:
-                    logger.warning(
-                        f"Skipping sentence due to low confidence ({confidence:.2f}) or invalid syntax"
-                    )
-
-            except Exception as exc:
-                logger.warning(f"Failed to convert sentence '{sentence}': {exc}")
-                continue
-
+                # Convert to legacy dict format
+                formula_dict = _convert_result_to_legacy_format(
+                    conversion_result,
+                    text,
+                    output_format,
+                    include_metadata
+                )
+                
+                # Only include if confidence meets threshold
+                if conversion_result.output and conversion_result.output.confidence >= confidence_threshold:
+                    results.append(formula_dict)
+        
+        # Build summary
         summary = {
             "total_statements": total_processed,
             "successful_conversions": successful_conversions,
             "conversion_rate": successful_conversions / max(1, total_processed),
             "average_confidence": sum(r["confidence"] for r in results) / max(1, len(results)),
-            "unique_predicates": list(set(p for r in results for p in r["predicates_used"])),
-            "quantifier_distribution": get_quantifier_distribution(results),
-            "operator_distribution": get_operator_distribution(results),
+            "unique_predicates": list(set(p for r in results for p in r.get("predicates_used", []))),
+            "quantifier_distribution": _get_quantifier_distribution(results),
+            "operator_distribution": _get_operator_distribution(results),
         }
-
+        
         if total_processed > 0:
             logger.info("Successfully converted %s/%s statements to FOL", successful_conversions, total_processed)
-
+        
         return {
             "status": "success",
             "fol_formulas": results,
@@ -190,7 +141,7 @@ async def convert_text_to_fol(
                 "confidence_threshold": confidence_threshold,
             },
         }
-
+    
     except Exception as exc:
         logger.error(f"Error in convert_text_to_fol: {exc}")
         return {
@@ -202,223 +153,164 @@ async def convert_text_to_fol(
                 "successful_conversions": 0,
                 "conversion_rate": 0.0,
                 "average_confidence": 0.0,
+                "unique_predicates": [],
+                "quantifier_distribution": {"∀": 0, "∃": 0},
+                "operator_distribution": {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0},
             },
         }
 
 
+def _empty_success_result(output_format: str, confidence_threshold: float) -> Dict[str, Any]:
+    """Return empty success result for empty input."""
+    return {
+        "status": "success",
+        "fol_formulas": [],
+        "summary": {
+            "total_statements": 0,
+            "successful_conversions": 0,
+            "conversion_rate": 0.0,
+            "average_confidence": 0.0,
+            "unique_predicates": [],
+            "quantifier_distribution": {"∀": 0, "∃": 0},
+            "operator_distribution": {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0},
+        },
+        "metadata": {
+            "tool": "text_to_fol",
+            "version": "1.0.0",
+            "output_format": output_format,
+            "confidence_threshold": confidence_threshold,
+        },
+    }
+
+
+def _convert_result_to_legacy_format(conversion_result, original_text: str, output_format: str, include_metadata: bool) -> Dict[str, Any]:
+    """Convert ConversionResult to legacy dict format."""
+    from .utils.fol_parser import convert_to_prolog, convert_to_tptp
+    
+    fol_formula = conversion_result.output
+    
+    result = {
+        "original_text": original_text,
+        "fol_formula": fol_formula.formula_string,
+        "confidence": fol_formula.confidence,
+        "predicates_used": fol_formula.get_predicate_names(),
+        "quantifiers": [q.value if hasattr(q, 'value') else str(q) for q in fol_formula.quantifiers],
+        "logical_operators": [op.value if hasattr(op, 'value') else str(op) for op in fol_formula.operators],
+    }
+    
+    if output_format in ["prolog", "all"]:
+        result["prolog_form"] = convert_to_prolog(fol_formula.formula_string)
+    if output_format in ["tptp", "all"]:
+        result["tptp_form"] = convert_to_tptp(fol_formula.formula_string)
+    
+    if include_metadata:
+        result["validation"] = {"valid": True}
+        result["linguistic_analysis"] = {
+            "predicates": fol_formula.predicates,
+            "quantifiers": fol_formula.quantifiers,
+            "operators": fol_formula.operators,
+            "relations": [],
+        }
+    
+    return result
+
+
+def _get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Calculate quantifier distribution from results."""
+    distribution = {"∀": 0, "∃": 0}
+    for result in results:
+        for q in result.get("quantifiers", []):
+            q_str = str(q)
+            if "∀" in q_str or "forall" in q_str.lower():
+                distribution["∀"] += 1
+            elif "∃" in q_str or "exists" in q_str.lower():
+                distribution["∃"] += 1
+    return distribution
+
+
+def _get_operator_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
+    """Calculate operator distribution from results."""
+    distribution = {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0}
+    for result in results:
+        formula = result.get("fol_formula", "")
+        distribution["∧"] += formula.count("∧") + formula.count("AND")
+        distribution["∨"] += formula.count("∨") + formula.count("OR")
+        distribution["→"] += formula.count("→") + formula.count("->")
+        distribution["↔"] += formula.count("↔") + formula.count("<->")
+        distribution["¬"] += formula.count("¬") + formula.count("NOT")
+    return distribution
+
+
 def extract_text_from_dataset(dataset: Dict[str, Any]) -> List[str]:
-    """Extract text content from various dataset formats.
-    
-    This function handles multiple common dataset structures including:
-    - Direct text fields
-    - Nested data with text/sentence/content keys
-    - Lists of sentences
-    - Fallback to any string values
-    
-    Args:
-        dataset: Dictionary containing dataset in various formats
-        
-    Returns:
-        List of extracted text strings, stripped of whitespace
-        
-    Examples:
-        >>> extract_text_from_dataset({"text": "Hello world"})
-        ["Hello world"]
-        >>> extract_text_from_dataset({"data": [{"sentence": "First"}, {"sentence": "Second"}]})
-        ["First", "Second"]
-    """
+    """Extract text content from various dataset formats."""
     texts: List[str] = []
-
+    
     if "text" in dataset:
-        if isinstance(dataset["text"], str):
-            texts.append(dataset["text"])
-        elif isinstance(dataset["text"], list):
-            texts.extend(str(t) for t in dataset["text"])
-
+        text = dataset["text"]
+        if isinstance(text, str):
+            texts.append(text.strip())
+        elif isinstance(text, list):
+            texts.extend(str(t).strip() for t in text)
     elif "data" in dataset:
         data = dataset["data"]
         if isinstance(data, list):
             for item in data:
                 if isinstance(item, dict):
-                    for key in ["text", "sentence", "content", "statement", "description"]:
-                        if key in item and isinstance(item[key], str):
-                            texts.append(item[key])
+                    for key in ["text", "sentence", "content", "statement"]:
+                        if key in item:
+                            texts.append(str(item[key]).strip())
                             break
                 elif isinstance(item, str):
-                    texts.append(item)
-
+                    texts.append(item.strip())
     elif "sentences" in dataset:
         sentences = dataset["sentences"]
         if isinstance(sentences, list):
-            texts.extend(str(s) for s in sentences)
-
-    if not texts:
+            texts.extend(str(s).strip() for s in sentences)
+    else:
         for value in dataset.values():
-            if isinstance(value, str) and value.strip():
-                texts.append(value)
-                break
-
-    return [t.strip() for t in texts if t and t.strip()]
-
-
-def extract_predicate_names(predicates: Dict[str, List[str]]) -> List[str]:
-    """Extract unique predicate names from categorized predicates dictionary.
+            if isinstance(value, str):
+                texts.append(value.strip())
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, str):
+                        texts.append(item.strip())
     
-    Args:
-        predicates: Dictionary mapping categories to lists of predicate names
-                   e.g., {"entities": ["Person", "Dog"], "actions": ["Run", "Walk"]}
-        
-    Returns:
-        Deduplicated list of all predicate names across all categories
-        
-    Examples:
-        >>> extract_predicate_names({"entities": ["Dog", "Cat"], "actions": ["Run"]})
-        ["Dog", "Cat", "Run"]
-    """
-    names: List[str] = []
-    for category in predicates.values():
-        names.extend(category)
-    return list(set(names))
+    return [t for t in texts if t]
 
 
-def calculate_conversion_confidence(
-    sentence: str,
-    fol_formula: str,
-    predicates: Dict[str, List[str]],
-    quantifiers: List[Dict[str, Any]],
-) -> float:
-    """Calculate confidence score for FOL conversion quality.
-    
-    Uses multiple heuristics to estimate conversion quality:
-    - Predicate count (up to 0.3)
-    - Quantifier presence (up to 0.2)
-    - Complexity match between sentence and formula (up to 0.2)
-    - Logical indicator count (up to 0.2)
-    - Syntax validity (0.1)
-    - Bonus for clean quantified statements (0.1)
-    
-    Args:
-        sentence: Original natural language sentence
-        fol_formula: Generated first-order logic formula
-        predicates: Dictionary of extracted predicates by category
-        quantifiers: List of identified quantifiers
-        
-    Returns:
-        Confidence score between 0.0 and 1.0
-        
-    Examples:
-        >>> calculate_conversion_confidence(
-        ...     "All dogs are mammals",
-        ...     "∀x (Dog(x) → Mammal(x))",
-        ...     {"entities": ["Dog", "Mammal"]},
-        ...     [{"type": "universal"}]
-        ... )
-        0.9  # High confidence
-    """
-    score = 0.0
-
-    total_predicates = sum(len(preds) for preds in predicates.values())
-    if total_predicates > 0:
-        score += min(0.3, total_predicates * 0.1)
-
+# Helper functions maintained for backward compatibility
+def calculate_conversion_confidence(text: str, formula: str, predicates: List, quantifiers: List) -> float:
+    """Calculate confidence score. DEPRECATED."""
+    confidence = 0.5
+    if predicates:
+        confidence += 0.2
     if quantifiers:
-        score += min(0.2, len(quantifiers) * 0.1)
-
-    sentence_complexity = estimate_sentence_complexity(sentence)
-    formula_complexity = estimate_formula_complexity(fol_formula)
-
-    complexity_match = 1 - abs(sentence_complexity - formula_complexity) / max(
-        sentence_complexity, formula_complexity, 1
-    )
-    score += complexity_match * 0.2
-
-    indicators = ["all", "every", "some", "if", "then", "and", "or", "not"]
-    indicator_count = count_indicators(sentence, indicators)
-    score += min(0.2, indicator_count * 0.05)
-
-    is_valid = validate_fol_syntax(fol_formula)["valid"]
-    if is_valid:
-        score += 0.1
-
-    # Heuristic boost for simple quantified statements that parse cleanly.
-    # This avoids under-scoring sentences like "All X are Y" that are otherwise
-    # highly reliable conversions.
-    if is_valid and quantifiers and total_predicates > 0:
-        score += 0.1
-
-    return min(1.0, score)
+        confidence += 0.15
+    if len(formula) > 10:
+        confidence += 0.1
+    if 10 < len(text) < 500:
+        confidence += 0.05
+    return min(confidence, 1.0)
 
 
-def estimate_sentence_complexity(sentence: str) -> int:
-    """Estimate complexity of natural language sentence by token count.
-    
-    Args:
-        sentence: Natural language sentence
-        
-    Returns:
-        Number of space-separated tokens
-    """
-    tokens = sentence.split()
-    return len(tokens)
-
-
-def estimate_formula_complexity(formula: str) -> int:
-    """Estimate complexity of FOL formula by operator count.
-    
-    Counts logical operators: ∀, ∃, ∧, ∨, →, ↔, ¬
-    
-    Args:
-        formula: First-order logic formula string
-        
-    Returns:
-        Sum of all logical operators plus 1
-    """
-    return sum(formula.count(sym) for sym in ["∀", "∃", "∧", "∨", "→", "↔", "¬"]) + 1
-
-
-def count_indicators(sentence: str, indicators: List[str]) -> int:
-    """Count occurrences of logical indicator words in sentence.
-    
-    Args:
-        sentence: Natural language sentence
-        indicators: List of indicator words to count (e.g., ["all", "some", "if"])
-        
-    Returns:
-        Total count of all indicators found (case-insensitive)
-    """
-    sentence_lower = sentence.lower()
-    return sum(sentence_lower.count(ind) for ind in indicators)
+def extract_predicate_names(predicates: List) -> List[str]:
+    """Extract predicate names. DEPRECATED."""
+    names = []
+    for p in predicates:
+        if isinstance(p, dict):
+            names.append(p.get("name", ""))
+        elif hasattr(p, 'name'):
+            names.append(p.name)
+        elif isinstance(p, str):
+            names.append(p)
+    return [n for n in names if n]
 
 
 def get_quantifier_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
-    """Calculate distribution of quantifiers across conversion results.
-    
-    Args:
-        results: List of FOL conversion result dictionaries
-        
-    Returns:
-        Dictionary mapping quantifier symbols to counts {"∀": count, "∃": count}
-    """
-    distribution = {"∀": 0, "∃": 0}
-    for result in results:
-        for quantifier in result.get("quantifiers", []):
-            if quantifier in distribution:
-                distribution[quantifier] += 1
-    return distribution
+    """DEPRECATED: Use _get_quantifier_distribution instead."""
+    return _get_quantifier_distribution(results)
 
 
 def get_operator_distribution(results: List[Dict[str, Any]]) -> Dict[str, int]:
-    """Calculate distribution of logical operators across conversion results.
-    
-    Args:
-        results: List of FOL conversion result dictionaries
-        
-    Returns:
-        Dictionary mapping operator symbols to counts {"∧": count, "∨": count, ...}
-    """
-    distribution = {"∧": 0, "∨": 0, "→": 0, "↔": 0, "¬": 0}
-    for result in results:
-        for operator in result.get("logical_operators", []):
-            if operator in distribution:
-                distribution[operator] += 1
-    return distribution
+    """DEPRECATED: Use _get_operator_distribution instead."""
+    return _get_operator_distribution(results)
