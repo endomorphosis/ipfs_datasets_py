@@ -30,7 +30,7 @@ try:
         TheoremMetadata,
         ConsistencyResult,
     )
-    from ipfs_datasets_py.logic.tools.deontic_logic_core import (
+    from ipfs_datasets_py.logic.integration.deontic_logic_core import (
         DeonticFormula,
         DeonticOperator,
     )

@@ -19,9 +19,9 @@ from typing import Dict, List, Optional, Union, Any, Tuple
 import json
 import time
 
-from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
-from ..tools.logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
-from ..tools.logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
+from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from .logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
+from .logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
 from ..security.rate_limiting import RateLimiter
 from ..security.input_validation import InputValidator
 
@@ -924,7 +924,7 @@ Qed.
         for prover, available in self.available_provers.items():
             if available:
                 # Create a simple test formula
-                from ..tools.deontic_logic_core import create_obligation, LegalAgent
+                from ..integration.deontic_logic_core import create_obligation, LegalAgent
                 test_agent = LegalAgent("test_agent", "Test Agent", "organization")
                 test_formula = create_obligation(test_agent, "test_proposition", "Test proposition")
                 

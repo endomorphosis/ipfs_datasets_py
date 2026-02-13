@@ -194,7 +194,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             
             if not elements:
                 # No normative elements found - create empty formula with minimal valid data
-                from ..tools.deontic_logic_core import LegalAgent
+                from ..integration.deontic_logic_core import LegalAgent
                 formula = DeonticFormula(
                     operator=DeonticOperator.OBLIGATION,
                     proposition="",
@@ -222,7 +222,7 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
             operator = operator_map.get(element.get("norm_type"), DeonticOperator.OBLIGATION)
             
             # Extract agent from subject
-            from ..tools.deontic_logic_core import LegalAgent
+            from ..integration.deontic_logic_core import LegalAgent
             agent = None
             subjects = element.get("subject", [])
             if subjects:

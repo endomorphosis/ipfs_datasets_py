@@ -9,7 +9,7 @@ This MCP module should only provide the MCP-facing entrypoint.
 
 from typing import Any, Dict, Union
 
-from ipfs_datasets_py.logic.tools.legal_text_to_deontic import convert_legal_text_to_deontic
+from ipfs_datasets_py.logic.deontic import convert_legal_text_to_deontic
 
 
 async def legal_text_to_deontic(

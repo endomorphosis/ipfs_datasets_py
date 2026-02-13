@@ -12,7 +12,7 @@ from typing import Optional, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from .proof_execution_engine import ProofExecutionEngine
     from .proof_execution_engine_types import ProofResult
-    from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
+    from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
 
 
 def create_proof_engine(temp_dir: Optional[str] = None, timeout: int = 60) -> "ProofExecutionEngine":
@@ -59,7 +59,7 @@ def prove_formula(
         ProofResult with execution details
         
     Example:
-        >>> from ipfs_datasets_py.logic.tools.deontic_logic_core import create_obligation
+        >>> from ipfs_datasets_py.logic.integration.deontic_logic_core import create_obligation
         >>> formula = create_obligation("pay_taxes", "citizen")
         >>> result = prove_formula(formula, prover="z3")
     """
@@ -119,7 +119,7 @@ def check_consistency(
         ProofResult indicating consistency status
         
     Example:
-        >>> from ipfs_datasets_py.logic.tools.deontic_logic_core import DeonticRuleSet
+        >>> from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticRuleSet
         >>> rule_set = DeonticRuleSet()
         >>> # Add rules to rule_set
         >>> result = check_consistency(rule_set)

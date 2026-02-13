@@ -634,7 +634,7 @@ class MCPDashboard(AdminDashboard):
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
                 from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic.tools.deontic_logic_core import DeonticOperator
+                from .logic.integration.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -678,7 +678,7 @@ class MCPDashboard(AdminDashboard):
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
                 from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic.tools.deontic_logic_core import DeonticOperator
+                from .logic.integration.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -714,7 +714,7 @@ class MCPDashboard(AdminDashboard):
             """Add a new temporal deontic logic theorem from caselaw."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1053,7 +1053,7 @@ class MCPDashboard(AdminDashboard):
             """Query relevant theorems using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1257,7 +1257,7 @@ class MCPDashboard(AdminDashboard):
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
                 from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic.tools.deontic_logic_core import DeonticOperator
+                from .logic.integration.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -1388,7 +1388,7 @@ class MCPDashboard(AdminDashboard):
             """Query relevant financial rules using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}
@@ -1470,7 +1470,7 @@ class MCPDashboard(AdminDashboard):
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
                 from .logic.integration.document_consistency_checker import DocumentConsistencyChecker
-                from .logic.tools.deontic_logic_core import DeonticOperator
+                from .logic.integration.deontic_logic_core import DeonticOperator
                 
                 # Initialize RAG store and get statistics
                 rag_store = TemporalDeonticRAGStore()
@@ -1589,7 +1589,7 @@ class MCPDashboard(AdminDashboard):
             """Query relevant medical guidelines using RAG retrieval."""
             try:
                 from .logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
-                from .logic.tools.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+                from .logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
                 from datetime import datetime
                 
                 data = request.json or {}

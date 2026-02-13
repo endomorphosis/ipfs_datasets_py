@@ -13,8 +13,8 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
-from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
-from ..tools.logic_translation_core import TranslationResult, LogicTranslationTarget
+from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from .logic_translation_core import TranslationResult, LogicTranslationTarget
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -115,8 +115,8 @@ class SymbolicFOLBridge:
         """Initialize fallback components from original FOL system."""
         try:
             # Import original FOL tools as fallback
-            from ..logic_tools.logic_utils import predicate_extractor
-            from ..logic_tools.logic_utils import fol_parser
+            from ..fol.utils import predicate_extractor
+            from ..fol.utils import fol_parser
 
             self.predicate_extractor = predicate_extractor.extract_predicates
             self.fol_parser = getattr(fol_parser, "parse_fol", None)
