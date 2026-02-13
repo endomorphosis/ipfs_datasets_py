@@ -110,8 +110,8 @@ class ZKPVerifier:
             if not proof.proof_data or not proof.public_inputs:
                 return False
             
-            # Check proof size (Groth16 should be ~256 bytes)
-            if proof.size_bytes < 100 or proof.size_bytes > 1000:
+            # Check proof size (should be 160-256 bytes for simulated Groth16)
+            if proof.size_bytes < 100 or proof.size_bytes > 300:
                 return False
             
             # Check security level
@@ -152,7 +152,7 @@ class ZKPVerifier:
         # Simulate pairing verification
         # In reality: verify e(A,B) = e(α,β)·e(C,δ)·e(pub,γ)
         # Here we just check proof data is well-formed
-        if len(proof_data) != 256:
+        if len(proof_data) < 100 or len(proof_data) > 300:
             return False
         
         # Simulate verification computation (would be pairing check)

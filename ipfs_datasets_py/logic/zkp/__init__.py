@@ -54,6 +54,7 @@ __all__ = [
     'ZKPVerifier',
     'ZKPCircuit',
     'ZKPError',
+    'create_implication_circuit',
 ]
 
 # Version
@@ -105,7 +106,7 @@ class ZKPError(Exception):
     pass
 
 
-# Import main components
-from .zkp_prover import ZKPProver
-from .zkp_verifier import ZKPVerifier
-from .circuits import ZKPCircuit
+# Import main components - must come after ZKPProof and ZKPError definitions
+from .zkp_prover import ZKPProver  # noqa: E402
+from .zkp_verifier import ZKPVerifier  # noqa: E402
+from .circuits import ZKPCircuit, create_implication_circuit  # noqa: E402
