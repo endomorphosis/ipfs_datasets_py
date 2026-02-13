@@ -58,7 +58,7 @@ def demonstrate_medical_reasoning():
     
     print("Medical Knowledge Base:")
     print("-" * 70)
-    print(medical_kb)
+    print(f"[INFO] Loaded medical knowledge base ({len(medical_kb)} characters).")
     print("-" * 70)
     
     # Initialize pipeline
