@@ -211,9 +211,7 @@ class TestBatchProcessingPerformance:
         for concurrency in [1, 5, 10]:
             processor = FOLBatchProcessor(max_concurrency=concurrency)
             
-            start = time.time()
             result = await processor.convert_batch(texts, use_nlp=False)
-            elapsed = time.time() - start
             
             results[concurrency] = result.items_per_second
         
