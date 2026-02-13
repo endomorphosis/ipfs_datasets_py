@@ -170,11 +170,6 @@ evolution.rollback_to_version(previous_version)
 evolution.export_ontology("ontology_v2.json")
 ```
 
-
-result = optimizer.optimize(training_data, max_iterations=20)
-print(f"Improvement: {result.improvement_over_baseline:.2f}")
-```
-
 ---
 
 ### Phase 4: Distributed Processing Support ✅

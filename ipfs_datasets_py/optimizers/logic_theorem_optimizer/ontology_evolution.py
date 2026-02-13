@@ -19,7 +19,7 @@ Integration:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 import time
@@ -290,8 +290,8 @@ class OntologyEvolution:
         # Extract predicates: P(x), Employee(x), etc.
         predicates = re.findall(r'([A-Z][a-zA-Z]*)\(', formula)
         
-        # Extract constants: specific capitalized words
-        constants = re.findall(r'\b([A-Z][a-z]*)\b', formula)
+        # Extract constants: capitalized identifiers (e.g., Employee, ABC, EmployeeID)
+        constants = re.findall(r'\b([A-Z][a-zA-Z0-9_]*)\b', formula)
         
         terms = list(set(predicates + constants))
         return terms

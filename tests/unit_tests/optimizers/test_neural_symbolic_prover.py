@@ -5,7 +5,7 @@ that combines neural LLM-based reasoning with symbolic theorem proving.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.neural_symbolic_prover import (
     NeuralSymbolicHybridProver,
     HybridStrategy,

@@ -451,8 +451,12 @@ class PromptOptimizer:
         best_score = self.prompt_metrics[best.template_id].get_overall_score() if best else 0.0
         
         baseline_score = (
-            self.prompt_metrics[self.baseline_prompt.template_id].get_overall_score()
-            if self.baseline_prompt else 0.0
+            self.prompt_metrics.get(
+                self.baseline_prompt.template_id,
+                PromptMetrics(self.baseline_prompt.template_id),
+            ).get_overall_score()
+            if self.baseline_prompt
+            else 0.0
         )
         
         return OptimizationResult(

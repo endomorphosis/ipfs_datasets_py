@@ -4,11 +4,10 @@ This module contains comprehensive tests for the real-time ontology evolution
 system that learns from new statements and adapts dynamically.
 """
 
-import pytest
 import json
 import tempfile
 import os
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.ontology_evolution import (
     OntologyEvolution,
     UpdateStrategy,

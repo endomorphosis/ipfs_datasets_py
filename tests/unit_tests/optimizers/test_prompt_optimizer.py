@@ -8,7 +8,6 @@ import pytest
 import json
 import tempfile
 import os
-from unittest.mock import Mock, patch
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.prompt_optimizer import (
     PromptOptimizer,
     OptimizationStrategy,
@@ -292,7 +291,7 @@ class TestPromptOptimizer:
         """
         optimizer = PromptOptimizer()
         
-        prompt_id = optimizer.add_baseline_prompt("Baseline prompt")
+        optimizer.add_baseline_prompt("Baseline prompt")
         
         assert optimizer.baseline_prompt is not None
         assert optimizer.baseline_prompt.template_id == "baseline"

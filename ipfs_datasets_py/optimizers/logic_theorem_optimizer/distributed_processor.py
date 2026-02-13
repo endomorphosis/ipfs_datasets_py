@@ -19,16 +19,13 @@ Integration:
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import time
-import json
 import hashlib
 import threading
 from queue import Queue, Empty
-from collections import defaultdict
-from copy import deepcopy
 
 logger = logging.getLogger(__name__)
 
@@ -194,9 +191,10 @@ class DistributedProcessor:
         self.total_tasks_failed = 0
         self.total_processing_time = 0.0
         
-        # Threading
+        # Threading and synchronization
         self.worker_threads: List[threading.Thread] = []
         self.stop_event = threading.Event()
+        self._state_lock = threading.Lock()  # Protect shared state
         
         logger.info(
             f"Initialized DistributedProcessor with {num_workers} workers, "
@@ -340,12 +338,13 @@ class DistributedProcessor:
                 if not task:
                     continue
                 
-                # Update worker and task status
-                worker.status = WorkerStatus.BUSY
-                worker.current_task = task_id
-                task.status = TaskStatus.RUNNING
-                task.assigned_worker = worker_id
-                task.started_at = time.time()
+                # Update worker and task status (thread-safe)
+                with self._state_lock:
+                    worker.status = WorkerStatus.BUSY
+                    worker.current_task = task_id
+                    task.status = TaskStatus.RUNNING
+                    task.assigned_worker = worker_id
+                    task.started_at = time.time()
                 
                 logger.debug(f"Worker {worker_id} processing task {task_id}")
                 
@@ -353,13 +352,14 @@ class DistributedProcessor:
                     # Process the task
                     result = process_func(task.data)
                     
-                    # Mark as completed
-                    task.status = TaskStatus.COMPLETED
-                    task.result = result
-                    task.completed_at = time.time()
-                    
-                    worker.tasks_completed += 1
-                    self.total_tasks_processed += 1
+                    # Mark as completed (thread-safe)
+                    with self._state_lock:
+                        task.status = TaskStatus.COMPLETED
+                        task.result = result
+                        task.completed_at = time.time()
+                        
+                        worker.tasks_completed += 1
+                        self.total_tasks_processed += 1
                     
                     logger.debug(f"Worker {worker_id} completed task {task_id}")
                     
@@ -369,28 +369,30 @@ class DistributedProcessor:
                     
                     task.error = str(e)
                     
-                    # Retry if enabled and not exceeded max retries
-                    if (self.enable_fault_tolerance and 
-                        task.retry_count < self.max_retries):
-                        task.retry_count += 1
-                        task.status = TaskStatus.RETRYING
-                        task.assigned_worker = None
-                        self.task_queue.put(task_id)
-                        
-                        logger.info(
-                            f"Retrying task {task_id} "
-                            f"(attempt {task.retry_count}/{self.max_retries})"
-                        )
-                    else:
-                        task.status = TaskStatus.FAILED
-                        worker.tasks_failed += 1
-                        self.total_tasks_failed += 1
+                    # Retry if enabled and not exceeded max retries (thread-safe)
+                    with self._state_lock:
+                        if (self.enable_fault_tolerance and 
+                            task.retry_count < self.max_retries):
+                            task.retry_count += 1
+                            task.status = TaskStatus.RETRYING
+                            task.assigned_worker = None
+                            self.task_queue.put(task_id)
+                            
+                            logger.info(
+                                f"Retrying task {task_id} "
+                                f"(attempt {task.retry_count}/{self.max_retries})"
+                            )
+                        else:
+                            task.status = TaskStatus.FAILED
+                            worker.tasks_failed += 1
+                            self.total_tasks_failed += 1
                 
                 finally:
-                    # Reset worker status
-                    worker.status = WorkerStatus.IDLE
-                    worker.current_task = None
-                    worker.last_heartbeat = time.time()
+                    # Reset worker status (thread-safe)
+                    with self._state_lock:
+                        worker.status = WorkerStatus.IDLE
+                        worker.current_task = None
+                        worker.last_heartbeat = time.time()
                     
             except Empty:
                 # No tasks available, continue
@@ -421,22 +423,23 @@ class DistributedProcessor:
         """Check for and handle stalled tasks."""
         current_time = time.time()
         
-        for task in self.tasks.values():
-            if (task.status == TaskStatus.RUNNING and 
-                task.started_at and
-                current_time - task.started_at > self.task_timeout):
-                
-                logger.warning(f"Task {task.task_id} timed out, retrying")
-                
-                # Mark for retry
-                if task.retry_count < self.max_retries:
-                    task.retry_count += 1
-                    task.status = TaskStatus.RETRYING
-                    task.assigned_worker = None
-                    self.task_queue.put(task.task_id)
-                else:
-                    task.status = TaskStatus.FAILED
-                    task.error = "Task timeout exceeded"
+        with self._state_lock:
+            for task in self.tasks.values():
+                if (task.status == TaskStatus.RUNNING and 
+                    task.started_at and
+                    current_time - task.started_at > self.task_timeout):
+                    
+                    logger.warning(f"Task {task.task_id} timed out, retrying")
+                    
+                    # Mark for retry
+                    if task.retry_count < self.max_retries:
+                        task.retry_count += 1
+                        task.status = TaskStatus.RETRYING
+                        task.assigned_worker = None
+                        self.task_queue.put(task.task_id)
+                    else:
+                        task.status = TaskStatus.FAILED
+                        task.error = "Task timeout exceeded"
     
     def _generate_task_id(self, index: int, data: Any) -> str:
         """Generate unique task ID.

@@ -4,9 +4,7 @@ This module contains comprehensive tests for the distributed processing system
 that enables scaling logic optimization across multiple nodes.
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch
 from ipfs_datasets_py.optimizers.logic_theorem_optimizer.distributed_processor import (
     DistributedProcessor,
     TaskStatus,
@@ -431,6 +429,68 @@ class TestDistributedProcessor:
         
         # At least some workers should have done work
         assert workers_with_work >= 1
+    
+    def test_thread_safe_worker_statistics(self):
+        """
+        GIVEN many tasks and multiple workers
+        WHEN processing tasks in parallel
+        THEN aggregated worker statistics should remain internally consistent
+        """
+        processor = DistributedProcessor(num_workers=8)
+
+        def process_func(data):
+            # Small delay to encourage overlapping work between workers
+            time.sleep(0.002)
+            return data
+
+        tasks = list(range(200))
+
+        result = processor.process_distributed(tasks, process_func)
+
+        # Global accounting should be correct
+        assert result.total_tasks == len(tasks)
+        assert result.completed_tasks == len(tasks)
+
+        # Per-worker accounting should match global completed count
+        stats = processor.get_statistics()
+        worker_stats = list(stats["worker_stats"].values())
+        assert len(worker_stats) == result.workers_used
+        total_completed_from_workers = sum(w["completed"] for w in worker_stats)
+        assert total_completed_from_workers == result.completed_tasks
+
+    def test_thread_safe_failure_accounting(self):
+        """
+        GIVEN intermittent task failures with multiple workers
+        WHEN processing tasks in parallel
+        THEN success and failure accounting should be consistent
+        """
+        processor = DistributedProcessor(
+            num_workers=6,
+            enable_fault_tolerance=True,
+            max_retries=1,
+        )
+
+        def process_func(data):
+            # Deterministic intermittent failures to exercise failure paths
+            if data % 3 == 0:
+                raise RuntimeError("Intermittent failure")
+            time.sleep(0.001)
+            return data
+
+        tasks = list(range(60))
+
+        result = processor.process_distributed(tasks, process_func)
+
+        # Every task should be accounted for as either completed or failed
+        assert result.total_tasks == len(tasks)
+        assert result.completed_tasks + result.failed_tasks == len(tasks)
+
+        # Per-worker completed counts should sum to global completed count
+        stats = processor.get_statistics()
+        worker_stats = list(stats["worker_stats"].values())
+        total_completed_from_workers = sum(w["completed"] for w in worker_stats)
+        assert total_completed_from_workers == result.completed_tasks
+
     
     def test_max_retries_exceeded(self):
         """
