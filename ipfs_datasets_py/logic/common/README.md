@@ -101,3 +101,62 @@ The common module will grow to include:
 
 - [ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md](../../ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md) - Full roadmap
 - [Phase 2 Task 7](../../ARCHITECTURE_REVIEW_LOGIC_COMPLETE.md#phase-2-quality-improvements-weeks-3-4---p1) - Extract common logic
+
+## Converter Base Classes (`converters.py`)
+
+**Added:** Phase 2 - Day 4
+
+Standardized base classes for logic conversion operations:
+
+- `LogicConverter[InputType, OutputType]` - Generic base class for converters
+- `ChainedConverter` - Chains multiple converters together
+- `ConversionResult` - Standardized conversion result format
+- `ConversionStatus` - Status enum (SUCCESS, PARTIAL, FAILED, CACHED)
+- `ValidationResult` - Input validation result format
+
+**Features:**
+- Built-in input validation
+- Automatic result caching
+- Error handling with context
+- Conversion chaining support
+- Metadata tracking
+
+**Simple Example:**
+
+```python
+from ipfs_datasets_py.logic.common import LogicConverter, ValidationResult
+
+class MyConverter(LogicConverter[str, str]):
+    def validate_input(self, text: str) -> ValidationResult:
+        result = ValidationResult(valid=True)
+        if not text:
+            result.add_error("Input cannot be empty")
+        return result
+    
+    def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
+        return text.upper()  # Your conversion logic
+
+converter = MyConverter()
+result = converter.convert("hello")
+if result.success:
+    print(result.output)  # "HELLO"
+```
+
+See `CONVERTER_USAGE.md` for comprehensive documentation with examples of:
+- Caching control
+- Validation patterns
+- Error handling
+- Conversion chaining
+- Testing strategies
+
+## Testing
+
+Tests are located in:
+- `tests/unit_tests/logic/test_common.py` - Error hierarchy tests (18 tests)
+- `tests/unit_tests/logic/test_converters.py` - Converter base class tests (23 tests)
+
+Run tests with:
+```bash
+pytest tests/unit_tests/logic/test_common.py
+pytest tests/unit_tests/logic/test_converters.py
+```
