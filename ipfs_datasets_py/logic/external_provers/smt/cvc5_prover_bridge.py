@@ -25,7 +25,7 @@ import time
 # Check CVC5 availability
 try:
     import cvc5
-    from cvc5 import Kind, Result
+    from cvc5 import Kind
     CVC5_AVAILABLE = True
 except ImportError:
     cvc5 = None
@@ -328,7 +328,7 @@ class CVC5ProverBridge:
                 formula,
                 axioms=axioms,
                 prover_name="CVC5",
-                prover_config={'timeout': timeout, 'use_proof': self.use_proof}
+                prover_config={'timeout': timeout, 'use_proof': self.use_proof, 'use_model': self.use_model}
             )
             if cached_result is not None:
                 return cached_result
@@ -381,8 +381,9 @@ class CVC5ProverBridge:
                 if self.use_proof:
                     try:
                         proof_obj = solver.getProof()
-                    except:
-                        pass  # Proof generation may not be available
+                    except Exception as exc:
+                        # Proof generation may not be available in all configurations
+                        logger.debug("Could not get proof from CVC5: %s", exc)
                 
                 proof_result = CVC5ProofResult(
                     is_valid=True,
@@ -395,9 +396,10 @@ class CVC5ProverBridge:
                     cvc5_result=result
                 )
                 
-                # Cache the result
+                # Cache the result (use same config as cache lookup for consistency)
                 if self.enable_cache and self._cache is not None:
-                    self._cache.set(formula, proof_result, axioms=axioms, prover_name="CVC5", prover_config={'timeout': timeout})
+                    self._cache.set(formula, proof_result, axioms=axioms, prover_name="CVC5", 
+                                    prover_config={'timeout': timeout, 'use_proof': self.use_proof, 'use_model': self.use_model})
                 
                 return proof_result
             
@@ -408,8 +410,9 @@ class CVC5ProverBridge:
                     try:
                         # Get model representation
                         model = str(solver.getModel())
-                    except:
-                        pass  # Model generation may fail
+                    except Exception as exc:
+                        # Model generation may fail in some cases
+                        logger.debug("Could not get model from CVC5: %s", exc)
                 
                 proof_result = CVC5ProofResult(
                     is_valid=False,

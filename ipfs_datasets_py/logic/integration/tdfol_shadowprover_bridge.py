@@ -421,6 +421,14 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         """
         Convert TDFOL formula to modal logic string format.
         
+        Note: This is a simplified string-based conversion with known limitations.
+        It performs global string replacements which may not correctly handle:
+        - Complex nested formulas where operator context matters
+        - Function/predicate arguments that get mixed with logical connectives
+        
+        For production use with complex formulas, consider implementing proper
+        AST traversal to emit correct modal syntax while preserving predicate structure.
+        
         Args:
             formula: TDFOL formula
         
@@ -441,14 +449,14 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         formula_str = formula_str.replace("Obligatory(", "□(")  # Obligation as necessity
         formula_str = formula_str.replace("Permitted(", "◊(")   # Permission as possibility
         
-        # Logical connectives (already standard)
-        formula_str = formula_str.replace("And(", "(")
-        formula_str = formula_str.replace("Or(", "(")
+        # Logical connectives
+        # Note: These simplified replacements work for basic formulas but may
+        # not correctly handle all cases (e.g., mixing connective operators with
+        # predicate arguments). A proper implementation would use AST traversal.
+        formula_str = formula_str.replace("And(", "∧(")
+        formula_str = formula_str.replace("Or(", "∨(")
         formula_str = formula_str.replace("Not(", "¬(")
-        formula_str = formula_str.replace("Implies(", "(")
-        
-        # Handle conjunctions/disjunctions
-        formula_str = formula_str.replace(", ", " ∧ ")
+        formula_str = formula_str.replace("Implies(", "→(")
         
         return formula_str
     

@@ -413,7 +413,8 @@ class TestFormulaAnalysisIntegration:
         """
         from ipfs_datasets_py.logic.external_provers.prover_router import ProverRouter
         
-        router = ProverRouter()
+        # Create instances
+        ProverRouter()  # Verify router can be instantiated with analyzer
         analyzer = FormulaAnalyzer()
         
         # Simple formula

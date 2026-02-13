@@ -257,11 +257,29 @@ class TestGrammarBasedNLGeneration:
         THEN: Returns casual English with simplified phrasing
         """
         dcec_str = "(O (agent1 laugh))"
-        result = self.bridge._dcec_to_natural_language(dcec_str, style="casual")
+        formal_result = self.bridge._dcec_to_natural_language(dcec_str, style="formal")
+        casual_result = self.bridge._dcec_to_natural_language(dcec_str, style="casual")
         
-        assert result is not None
-        # Casual style should simplify formal terms
-        # "must" is more casual than "is obligated to"
+        assert formal_result is not None
+        assert casual_result is not None
+        assert isinstance(casual_result, str)
+        assert len(casual_result) > 0
+        
+        # Casual style should differ from formal phrasing
+        assert casual_result != formal_result
+        
+        # Casual style should simplify formal terms:
+        # avoid highly formal "obligated" phrasing and prefer simpler modals.
+        casual_lower = casual_result.lower()
+        # Allow flexibility - casual style may use various simplified forms
+        has_casual_markers = (
+            "must" in casual_lower
+            or "should" in casual_lower
+            or "needs to" in casual_lower
+            or "has to" in casual_lower
+        )
+        # Should NOT have formal obligated terminology in casual style
+        assert "obligat" not in casual_lower or has_casual_markers
     
     def test_technical_style_generation(self):
         """
@@ -306,6 +324,8 @@ class TestGrammarBasedNLGeneration:
             # Should contain one of the expected terms
             result_lower = result.lower()
             # At least one term should be present (flexible check)
+            has_expected_term = any(term in result_lower for term in expected_terms)
+            assert has_expected_term, f"Expected one of {expected_terms} in '{result}'"
     
     def test_temporal_operator_rendering(self):
         """
@@ -323,6 +343,9 @@ class TestGrammarBasedNLGeneration:
             result = self.bridge._dcec_to_natural_language(dcec_str, style="formal")
             assert result is not None
             # Check for temporal language (flexible)
+            result_lower = result.lower()
+            has_expected_term = any(term in result_lower for term in expected_terms)
+            assert has_expected_term, f"Expected one of {expected_terms} in '{result}'"
     
     def test_complex_nested_formula_rendering(self):
         """

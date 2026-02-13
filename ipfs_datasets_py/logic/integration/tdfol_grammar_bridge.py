@@ -294,8 +294,8 @@ class TDFOLGrammarBridge(BaseProverBridge):
                     if style == "casual":
                         natural_text = self._apply_casual_style(natural_text)
                     elif style == "technical":
-                        # Technical style stays more formal, just clean up
-                        natural_text = natural_text
+                        # Technical style currently uses the default formal output unchanged
+                        pass
                     
                     logger.debug(f"Grammar-based generation successful: {natural_text}")
                     return natural_text

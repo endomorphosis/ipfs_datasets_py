@@ -12,7 +12,7 @@ Features:
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 import logging
 
 logger = logging.getLogger(__name__)
@@ -230,7 +230,12 @@ class FormulaAnalyzer:
                 return self._measure_quantifier_depth(formula.formula, current_depth)
             else:
                 return current_depth
-        except:
+        except (AttributeError, ImportError, TypeError) as exc:
+            logger.debug(
+                "Could not measure quantifier depth for formula: %s",
+                exc,
+                exc_info=True
+            )
             return current_depth
     
     def _measure_nesting_level(self, formula, current_level: int = 0) -> int:
@@ -251,7 +256,12 @@ class FormulaAnalyzer:
                 return self._measure_nesting_level(formula.formula, current_level + 1)
             else:
                 return current_level
-        except:
+        except (AttributeError, ImportError, TypeError) as exc:
+            logger.debug(
+                "Could not measure nesting level for formula: %s",
+                exc,
+                exc_info=True
+            )
             return current_level
     
     def _count_operators(self, formula) -> int:
@@ -270,7 +280,8 @@ class FormulaAnalyzer:
                 return 1 + self._count_operators(formula.formula)
             else:
                 return 0
-        except:
+        except (AttributeError, ImportError, TypeError) as exc:
+            logger.debug("Could not count operators: %s", exc, exc_info=True)
             return 0
     
     def _has_arithmetic(self, formula) -> bool:

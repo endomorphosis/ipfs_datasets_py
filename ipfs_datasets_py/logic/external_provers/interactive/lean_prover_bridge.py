@@ -19,7 +19,7 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import List, Optional
 import subprocess
 import shutil
 import time
@@ -320,9 +320,9 @@ class LeanProverBridge:
         for tactic in self.auto_tactics:
             script_lines.append(f"  try {tactic}")
         
-        # If all tactics fail, use sorry (admits the theorem without proof)
-        # In production, this would cause a compilation error
-        script_lines.append("  sorry")
+        # Note: If automatic tactics don't solve the goal, the theorem will fail
+        # to compile. This is the expected behavior for production use.
+        # For testing/development, you can add 'sorry' to admit unsolved goals.
         script_lines.append("")
         
         return "\n".join(script_lines)
@@ -378,7 +378,8 @@ class LeanProverBridge:
                 olean_file = script_file.replace('.lean', '.olean')
                 if os.path.exists(olean_file):
                     os.unlink(olean_file)
-            except:
+            except OSError:
+                # Files may not exist or already deleted - this is fine
                 pass
 
 

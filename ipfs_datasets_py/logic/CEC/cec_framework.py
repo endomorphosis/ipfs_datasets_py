@@ -244,7 +244,9 @@ class CECFramework:
                 tptp_axioms = [self._dcec_to_tptp_format(ax) for ax in (axioms or [])]
                 
                 # Determine appropriate modal logic
-                # Use S4 for temporal, D for deontic, K for basic modal
+                # Use S4 for temporal reasoning, K for non-temporal/basic modal
+                # Note: Deontic logic (D) would require detecting deontic operators
+                # Currently only temporal vs non-temporal distinction is implemented
                 logic_type = "S4" if use_temporal else "K"
                 
                 # Create proof task for ShadowProver
@@ -256,7 +258,7 @@ class CECFramework:
                 )
                 
                 # Submit to ShadowProver
-                shadow_result = self.shadow_prover_wrapper.submit_proof_task(shadow_task)
+                self.shadow_prover_wrapper.submit_proof_task(shadow_task)
                 
                 # Wait for result (with timeout)
                 import time
@@ -425,14 +427,21 @@ class CECFramework:
         tptp = tptp.replace("□(", "box(")
         tptp = tptp.replace("◇(", "diamond(")
         
-        # Deontic operators
+        # Deontic operators (must come BEFORE temporal since F is ambiguous)
+        # In DCEC: O = Obligation, P = Permission, F = Forbidden
         tptp = tptp.replace("O(", "obligated(")
         tptp = tptp.replace("P(", "permitted(")
-        tptp = tptp.replace("F(", "forbidden(")
+        # Note: F( for deontic Forbidden comes before temporal F (Eventually)
+        # Context-dependent: in pure deontic logic F=Forbidden, in temporal F=Eventually
+        # Since this is DCEC (deontic+temporal), we prioritize deontic interpretation
+        # For temporal "eventually", use explicit "Eventually(" or different marker
+        tptp = tptp.replace("Forbidden(", "forbidden(")
         
-        # Temporal operators
+        # Temporal operators  
+        # Note: F( is ambiguous (could be Forbidden or Eventually)
+        # In a proper implementation, would parse AST to distinguish context
         tptp = tptp.replace("G(", "always(")
-        tptp = tptp.replace("F(", "eventually(")
+        tptp = tptp.replace("Eventually(", "eventually(")  # Explicit temporal
         tptp = tptp.replace("X(", "next(")
         
         return tptp

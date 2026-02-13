@@ -19,7 +19,7 @@ Usage:
 """
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import List, Optional
 import subprocess
 import shutil
 import time
@@ -322,8 +322,8 @@ class CoqProverBridge:
         for tactic in self.auto_tactics:
             script_lines.append(f"  try {tactic}.")
         
-        # Fallback to admit if automatic tactics fail (for testing)
-        # In production, this would fail instead
+        # Note: if automatic tactics do not solve the goal, 'Qed.' will fail and
+        # Coq will report remaining subgoals (no implicit admit/Admitted fallback).
         script_lines.append("Qed.")
         script_lines.append("")
         
@@ -379,7 +379,8 @@ class CoqProverBridge:
                 # Also clean up .vo and .glob files if they exist
                 os.unlink(script_file.replace('.v', '.vo'))
                 os.unlink(script_file.replace('.v', '.glob'))
-            except:
+            except OSError:
+                # Files may not exist or already deleted - this is fine
                 pass
 
 

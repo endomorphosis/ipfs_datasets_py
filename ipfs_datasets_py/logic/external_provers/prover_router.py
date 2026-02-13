@@ -22,7 +22,7 @@ import concurrent.futures
 import time
 import logging
 
-from .formula_analyzer import FormulaAnalyzer, FormulaAnalysis
+from .formula_analyzer import FormulaAnalyzer
 
 logger = logging.getLogger(__name__)
 
