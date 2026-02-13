@@ -59,6 +59,7 @@ class OperationMetrics:
         min_time: Minimum execution time
         max_time: Maximum execution time
         recent_times: Recent execution times (for moving average)
+        window_size: Size of the sliding window for recent operations
     """
     total_count: int = 0
     success_count: int = 0
@@ -66,7 +67,13 @@ class OperationMetrics:
     total_time: float = 0.0
     min_time: float = float('inf')
     max_time: float = 0.0
-    recent_times: deque = field(default_factory=lambda: deque(maxlen=100))
+    window_size: int = 100
+    recent_times: deque = field(default_factory=deque)
+    
+    def __post_init__(self):
+        """Initialize recent_times with correct maxlen."""
+        if not self.recent_times:
+            self.recent_times = deque(maxlen=self.window_size)
     
     def record(self, success: bool, duration: float) -> None:
         """Record an operation."""
@@ -156,8 +163,10 @@ class LogicMonitor:
         self.window_size = window_size
         self.enable_prometheus = enable_prometheus
         
-        # Metrics storage
-        self._operations: Dict[str, OperationMetrics] = defaultdict(OperationMetrics)
+        # Metrics storage - use custom factory to pass window_size
+        self._operations: Dict[str, OperationMetrics] = defaultdict(
+            lambda: OperationMetrics(window_size=self.window_size)
+        )
         self._errors: Dict[str, int] = defaultdict(int)
         self._warnings: Dict[str, int] = defaultdict(int)
         

@@ -244,8 +244,17 @@ class ProofExecutionEngine:
             cached_result = self.proof_cache.get(formula_str, prover_name)
             if cached_result:
                 logger.debug(f"Cache hit for formula with prover={prover_name}")
-                # Convert cached dict back to ProofResult
-                return ProofResult(**cached_result)
+                # Convert cached dict back to ProofResult, deserializing enum
+                cached_result_dict = dict(cached_result)
+                status_value = cached_result_dict.get("status")
+                if isinstance(status_value, str):
+                    try:
+                        cached_result_dict["status"] = ProofStatus(status_value)
+                    except (ValueError, KeyError):
+                        # If the cached status string is unexpected, default to ERROR
+                        logger.warning(f"Invalid cached status value: {status_value}, defaulting to ERROR")
+                        cached_result_dict["status"] = ProofStatus.ERROR
+                return ProofResult(**cached_result_dict)
         
         # Apply rate limiting
         if self.enable_rate_limiting:

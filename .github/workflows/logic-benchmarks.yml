@@ -68,25 +68,26 @@ jobs:
         
         async def main():
             print('Running comprehensive benchmarks...')
-            results = await run_comprehensive_benchmarks()
+            summary = await run_comprehensive_benchmarks()
             
-            # Save results
-            benchmark_data = {
-                name: {
-                    'mean_time': result.mean_time,
-                    'median_time': result.median_time,
-                    'throughput': result.throughput,
-                    'std_dev': result.std_dev
+            # Extract and format benchmark results from summary
+            benchmark_data = {}
+            for result_dict in summary.get('results', []):
+                name = result_dict['name']
+                benchmark_data[name] = {
+                    'mean_time': result_dict['mean_time'],
+                    'median_time': result_dict['median_time'],
+                    'throughput': result_dict['throughput'],
+                    'std_dev': result_dict['std_dev']
                 }
-                for name, result in results.items()
-            }
             
             with open('benchmark_results.json', 'w') as f:
                 json.dump(benchmark_data, f, indent=2)
             
             print('\\nBenchmark Results Summary:')
-            for name, result in results.items():
-                print(f'{name}: {result.summary()}')
+            for name, data in benchmark_data.items():
+                mean_ms = data['mean_time'] * 1000
+                print(f'{name}: {mean_ms:.2f}ms avg, {data[\"throughput\"]:.1f} ops/sec')
         
         asyncio.run(main())
         "
@@ -109,9 +110,9 @@ jobs:
         
         # Define performance thresholds (in milliseconds)
         thresholds = {
-            'FOL Simple Conversion': 15.0,  # max 15ms
+            'FOL Simple Conversion (Regex)': 15.0,  # max 15ms
             'FOL Batch Conversion (10 items)': 200.0,  # max 200ms
-            'Cache Hit Performance': 0.05,  # max 0.05ms
+            'Cache Hit': 0.05,  # max 0.05ms
         }
         
         failed = []
