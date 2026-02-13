@@ -28,6 +28,15 @@ from .converters import (
     ValidationResult,
 )
 
+from .utility_monitor import (
+    UtilityMonitor,
+    track_performance,
+    with_caching,
+    get_global_stats,
+    clear_global_cache,
+    reset_global_stats,
+)
+
 __all__ = [
     # Error classes
     "LogicError",
@@ -46,4 +55,11 @@ __all__ = [
     "ConversionResult",
     "ConversionStatus",
     "ValidationResult",
+    # Utility monitoring
+    "UtilityMonitor",
+    "track_performance",
+    "with_caching",
+    "get_global_stats",
+    "clear_global_cache",
+    "reset_global_stats",
 ]
