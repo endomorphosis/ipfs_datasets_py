@@ -17,6 +17,8 @@ from ..tools.deontic_logic_core import (
     TemporalCondition, TemporalOperator
 )
 from .legal_domain_knowledge import LegalDomain
+from ..security.rate_limiting import RateLimiter
+from ..security.input_validation import InputValidator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -105,17 +107,29 @@ class LogicConflict:
 class DeonticQueryEngine:
     """Query engine for deontic logic formulas with compliance checking."""
     
-    def __init__(self, rule_set: Optional[DeonticRuleSet] = None):
+    def __init__(self, rule_set: Optional[DeonticRuleSet] = None,
+                 enable_rate_limiting: bool = True,
+                 enable_validation: bool = True):
         """
         Initialize the deontic query engine.
         
         Args:
             rule_set: Optional rule set to query against
+            enable_rate_limiting: Enable rate limiting for queries
+            enable_validation: Enable input validation
         """
         self.rule_set = rule_set
         self.formula_index: Dict[str, List[DeonticFormula]] = {}
         self.agent_index: Dict[str, List[DeonticFormula]] = {}
         self.operator_index: Dict[DeonticOperator, List[DeonticFormula]] = {}
+        
+        # Security features
+        self.enable_rate_limiting = enable_rate_limiting
+        self.enable_validation = enable_validation
+        if enable_rate_limiting:
+            self.rate_limiter = RateLimiter(calls=200, period=60)  # Higher limit for queries
+        if enable_validation:
+            self.validator = InputValidator()
         
         if rule_set:
             self._build_indexes(rule_set.formulas)
@@ -156,17 +170,41 @@ class DeonticQueryEngine:
                     f"{len(self.agent_index)} agents, {len(self.operator_index)} operators")
     
     def query_obligations(self, agent: Optional[str] = None, 
-                         context: Optional[Dict[str, Any]] = None) -> QueryResult:
+                         context: Optional[Dict[str, Any]] = None,
+                         user_id: str = "default") -> QueryResult:
         """
         Find all obligations for a specific agent or in general.
         
         Args:
             agent: Optional agent identifier
             context: Optional context for filtering
+            user_id: User identifier for rate limiting
             
         Returns:
             Query result with matching obligations
         """
+        # Apply rate limiting
+        if self.enable_rate_limiting:
+            try:
+                self.rate_limiter.check_rate_limit(user_id)
+            except Exception as e:
+                logger.warning(f"Rate limit exceeded for user {user_id}: {e}")
+                return QueryResult(
+                    query_type=QueryType.OBLIGATIONS,
+                    reasoning=f"Rate limit exceeded: {e}"
+                )
+        
+        # Validate agent input if provided
+        if self.enable_validation and agent:
+            try:
+                self.validator.validate_text(agent)
+            except Exception as e:
+                logger.warning(f"Validation failed for agent {agent}: {e}")
+                return QueryResult(
+                    query_type=QueryType.OBLIGATIONS,
+                    reasoning=f"Validation failed: {e}"
+                )
+        
         obligations = self.operator_index.get(DeonticOperator.OBLIGATION, [])
         
         if agent:

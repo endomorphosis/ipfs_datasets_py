@@ -21,6 +21,8 @@ import time
 from ..tools.deontic_logic_core import DeonticFormula, DeonticRuleSet
 from ..tools.logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
 from ..tools.logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
+from ..security.rate_limiting import RateLimiter
+from ..security.input_validation import InputValidator
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +72,8 @@ class ProofExecutionEngine:
         temp_dir: Optional[str] = None,
         timeout: int = 60,
         default_prover: Optional[str] = None,
+        enable_rate_limiting: bool = True,
+        enable_validation: bool = True,
     ):
         self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir()) / "ipfs_proofs"
         self.temp_dir.mkdir(exist_ok=True)
@@ -77,6 +81,14 @@ class ProofExecutionEngine:
 
         env_default = os.environ.get("IPFS_DATASETS_PY_PROOF_PROVER")
         self.default_prover = str(default_prover or env_default or "z3")
+
+        # Security features
+        self.enable_rate_limiting = enable_rate_limiting
+        self.enable_validation = enable_validation
+        if enable_rate_limiting:
+            self.rate_limiter = RateLimiter(calls=100, period=60)
+        if enable_validation:
+            self.validator = InputValidator()
 
         self._refresh_prover_state()
 
@@ -217,10 +229,43 @@ class ProofExecutionEngine:
         self,
         formula: DeonticFormula,
         prover: Optional[str] = None,
+        user_id: str = "default",
     ) -> ProofResult:
         """
         Prove a deontic logic formula using the specified theorem prover.
+        
+        Args:
+            formula: The deontic formula to prove
+            prover: The prover to use (z3, cvc5, lean, coq)
+            user_id: User identifier for rate limiting
+            
+        Returns:
+            ProofResult with status and details
         """
+        # Apply rate limiting
+        if self.enable_rate_limiting:
+            try:
+                self.rate_limiter.check_rate_limit(user_id)
+            except Exception as e:
+                return ProofResult(
+                    prover=prover or self.default_prover or "z3",
+                    statement=str(formula),
+                    status=ProofStatus.ERROR,
+                    errors=[f"Rate limit exceeded: {e}"]
+                )
+        
+        # Validate formula complexity
+        if self.enable_validation:
+            try:
+                self.validator.validate_formula(formula)
+            except Exception as e:
+                return ProofResult(
+                    prover=prover or self.default_prover or "z3",
+                    statement=str(formula),
+                    status=ProofStatus.ERROR,
+                    errors=[f"Validation failed: {e}"]
+                )
+        
         prover = str(prover or self.default_prover or "z3")
         if prover not in self.available_provers:
             return ProofResult(

@@ -14,6 +14,8 @@ import json
 import re
 
 from .deontic_logic_core import DeonticFormula, DeonticOperator, DeonticRuleSet
+from ..security.rate_limiting import RateLimiter
+from ..security.input_validation import InputValidator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -94,9 +96,19 @@ class LogicTranslator(ABC):
     Each target system should implement this interface.
     """
     
-    def __init__(self, target: LogicTranslationTarget):
+    def __init__(self, target: LogicTranslationTarget,
+                 enable_rate_limiting: bool = True,
+                 enable_validation: bool = True):
         self.target = target
         self.translation_cache: Dict[str, TranslationResult] = {}
+        
+        # Security features
+        self.enable_rate_limiting = enable_rate_limiting
+        self.enable_validation = enable_validation
+        if enable_rate_limiting:
+            self.rate_limiter = RateLimiter(calls=150, period=60)
+        if enable_validation:
+            self.validator = InputValidator()
         
     @abstractmethod
     def translate_deontic_formula(self, formula: DeonticFormula) -> TranslationResult:
