@@ -31,6 +31,14 @@ These files document completed development phases and historical decisions. They
 - `OLD_TESTS_ARCHIVED.md` - Old test documentation (superseded)
 - `TODO_ARCHIVED.md` - Old TODO list (superseded by current TODO.md)
 
+### Session Summaries (1 file)
+- `SESSION_SUMMARY.md` - Historical session summary (superseded by REFACTORING_STATUS_FINAL.md)
+
+### Auto-Generated Stubs (3 files)
+- `modal_logic_extension_stubs.md` - Auto-generated stubs (obsolete)
+- `symbolic_fol_bridge_stubs.md` - Auto-generated stubs (obsolete)
+- `symbolic_logic_primitives_stubs.md` - Auto-generated stubs (obsolete)
+
 ## Current Documentation
 
 **For current, up-to-date documentation, see:**
@@ -60,5 +68,5 @@ ls -la  # See all archived files
 ## Last Updated
 
 **Date:** 2026-02-13  
-**Action:** Phase 2 documentation cleanup - archived 16 obsolete phase completion files  
-**Branch:** copilot/improve-restructure-logic-folder
+**Action:** Phase 2 documentation cleanup - archived 19 obsolete files (16 phase completions, 1 session summary, 2 integration docs, 3 auto-generated stubs)  
+**Branch:** copilot/implement-refactoring-plan
