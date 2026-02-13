@@ -5,7 +5,7 @@ This module provides the capability to actually execute proofs using installed
 theorem provers, not just translate to their formats. Supports Z3, CVC5, Lean 4, Coq.
 
 Note: Refactored from 949 LOC to <600 LOC. Types and utilities extracted to
-separate modules for better maintainability.
+separate modules for better maintainability. Now includes proof caching for performance.
 """
 
 import os
@@ -35,6 +35,9 @@ from .proof_execution_engine_utils import (
     get_coq_template,
 )
 
+# Import proof cache
+from .proof_cache import ProofCache, get_global_cache
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +53,9 @@ class ProofExecutionEngine:
         default_prover: Optional[str] = None,
         enable_rate_limiting: bool = True,
         enable_validation: bool = True,
+        enable_caching: bool = True,
+        cache_size: int = 1000,
+        cache_ttl: int = 3600,
     ):
         self.temp_dir = Path(temp_dir) if temp_dir else Path(tempfile.gettempdir()) / "ipfs_proofs"
         self.temp_dir.mkdir(exist_ok=True)
@@ -65,6 +71,17 @@ class ProofExecutionEngine:
             self.rate_limiter = RateLimiter(calls=100, period=60)
         if enable_validation:
             self.validator = InputValidator()
+
+        # Proof caching
+        self.enable_caching = enable_caching
+        if enable_caching:
+            self.proof_cache = get_global_cache(
+                max_size=cache_size,
+                default_ttl=cache_ttl
+            )
+            logger.info(f"Proof caching enabled: max_size={cache_size}, ttl={cache_ttl}s")
+        else:
+            self.proof_cache = None
 
         self._refresh_prover_state()
 
@@ -206,6 +223,7 @@ class ProofExecutionEngine:
         formula: DeonticFormula,
         prover: Optional[str] = None,
         user_id: str = "default",
+        use_cache: bool = True,
     ) -> ProofResult:
         """
         Prove a deontic logic formula using the specified theorem prover.
@@ -214,10 +232,21 @@ class ProofExecutionEngine:
             formula: The deontic formula to prove
             prover: The prover to use (z3, cvc5, lean, coq)
             user_id: User identifier for rate limiting
+            use_cache: Whether to use cached results (default: True)
             
         Returns:
             ProofResult with status and details
         """
+        # Check cache first if enabled
+        if use_cache and self.enable_caching and self.proof_cache:
+            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            prover_name = prover or self.default_prover or "z3"
+            cached_result = self.proof_cache.get(formula_str, prover_name)
+            if cached_result:
+                logger.debug(f"Cache hit for formula with prover={prover_name}")
+                # Convert cached dict back to ProofResult
+                return ProofResult(**cached_result)
+        
         # Apply rate limiting
         if self.enable_rate_limiting:
             try:
@@ -280,20 +309,30 @@ class ProofExecutionEngine:
         
         # Execute proof based on prover type
         if prover == 'z3':
-            return self._execute_z3_proof(formula, translation_result)
+            result = self._execute_z3_proof(formula, translation_result)
         elif prover == 'cvc5':
-            return self._execute_cvc5_proof(formula, translation_result)
+            result = self._execute_cvc5_proof(formula, translation_result)
         elif prover == 'lean':
-            return self._execute_lean_proof(formula, translation_result)
+            result = self._execute_lean_proof(formula, translation_result)
         elif prover == 'coq':
-            return self._execute_coq_proof(formula, translation_result)
+            result = self._execute_coq_proof(formula, translation_result)
         else:
-            return ProofResult(
+            result = ProofResult(
                 prover=prover,
                 statement=formula.to_fol_string(),
                 status=ProofStatus.UNSUPPORTED,
                 errors=[f"Proof execution not implemented for {prover}"]
             )
+        
+        # Cache the result if enabled
+        if use_cache and self.enable_caching and self.proof_cache:
+            formula_str = formula.to_fol_string() if hasattr(formula, 'to_fol_string') else str(formula)
+            # Convert ProofResult to dict for caching
+            result_dict = result.to_dict()
+            self.proof_cache.put(formula_str, prover, result_dict)
+            logger.debug(f"Cached proof result for formula with prover={prover}")
+        
+        return result
     
     def _get_translator(self, prover: str) -> Optional[LogicTranslator]:
         """Get appropriate translator for prover."""
