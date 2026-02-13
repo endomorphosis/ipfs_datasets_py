@@ -59,6 +59,12 @@ __all__ = [
     'RAGIntegration',
     'RAGContext',
     'RAGStatistics',
+    # Future Enhancement 1: Neural-Symbolic Hybrid Prover
+    'NeuralSymbolicHybridProver',
+    'HybridStrategy',
+    'NeuralResult',
+    'SymbolicResult',
+    'HybridProverResult',
 ]
 
 __version__ = '0.1.0'
@@ -154,4 +160,18 @@ def __getattr__(name):
             return RAGContext
         else:
             return RAGStatistics
+    elif name in ('NeuralSymbolicHybridProver', 'HybridStrategy', 'NeuralResult', 'SymbolicResult', 'HybridProverResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.neural_symbolic_prover import (
+            NeuralSymbolicHybridProver, HybridStrategy, NeuralResult, SymbolicResult, HybridProverResult
+        )
+        if name == 'NeuralSymbolicHybridProver':
+            return NeuralSymbolicHybridProver
+        elif name == 'HybridStrategy':
+            return HybridStrategy
+        elif name == 'NeuralResult':
+            return NeuralResult
+        elif name == 'SymbolicResult':
+            return SymbolicResult
+        else:
+            return HybridProverResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
