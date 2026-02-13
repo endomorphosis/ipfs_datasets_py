@@ -217,9 +217,126 @@ class DCECToTDFOLConverter:
         return parse_tdfol(dcec_str)
     
     def _convert_dcec_formula(self, dcec_formula: Any) -> Formula:
-        """Convert DCEC Formula object to TDFOL."""
-        # This would need full DCEC formula structure knowledge
-        raise NotImplementedError("DCEC Formula object conversion not yet implemented")
+        """Convert DCEC Formula object to TDFOL.
+        
+        This method converts a DCEC Formula object (from the native CEC implementation)
+        into the corresponding TDFOL Formula representation.
+        
+        Args:
+            dcec_formula: DCEC Formula object from ipfs_datasets_py.logic.CEC.native.dcec_core
+            
+        Returns:
+            Equivalent TDFOL Formula
+        """
+        from ipfs_datasets_py.logic.CEC.native import dcec_core
+        
+        # Handle different DCEC formula types
+        formula_type = type(dcec_formula).__name__
+        
+        # Atom/Predicate
+        if hasattr(dcec_formula, 'name') and hasattr(dcec_formula, 'arguments'):
+            # This is a predicate/atom
+            args = []
+            if hasattr(dcec_formula, 'arguments') and dcec_formula.arguments:
+                for arg in dcec_formula.arguments:
+                    args.append(self._convert_dcec_term(arg))
+            return Predicate(dcec_formula.name, tuple(args))
+        
+        # Binary formulas (And, Or, Implies, Iff)
+        if hasattr(dcec_formula, 'left') and hasattr(dcec_formula, 'right'):
+            left = self._convert_dcec_formula(dcec_formula.left)
+            right = self._convert_dcec_formula(dcec_formula.right)
+            
+            # Map DCEC operators to TDFOL operators
+            if formula_type == 'And' or (hasattr(dcec_formula, 'operator') and dcec_formula.operator == 'and'):
+                return BinaryFormula(LogicOperator.AND, left, right)
+            elif formula_type == 'Or' or (hasattr(dcec_formula, 'operator') and dcec_formula.operator == 'or'):
+                return BinaryFormula(LogicOperator.OR, left, right)
+            elif formula_type == 'Implies' or (hasattr(dcec_formula, 'operator') and dcec_formula.operator == 'implies'):
+                return BinaryFormula(LogicOperator.IMPLIES, left, right)
+            elif formula_type == 'Iff' or (hasattr(dcec_formula, 'operator') and dcec_formula.operator == 'iff'):
+                return BinaryFormula(LogicOperator.IFF, left, right)
+        
+        # Unary formulas (Not)
+        if hasattr(dcec_formula, 'formula') and (formula_type == 'Not' or (hasattr(dcec_formula, 'operator') and dcec_formula.operator == 'not')):
+            inner = self._convert_dcec_formula(dcec_formula.formula)
+            return UnaryFormula(LogicOperator.NOT, inner)
+        
+        # Quantified formulas (Forall, Exists)
+        if hasattr(dcec_formula, 'variable') and hasattr(dcec_formula, 'body'):
+            var = self._convert_dcec_term(dcec_formula.variable)
+            body = self._convert_dcec_formula(dcec_formula.body)
+            
+            if formula_type == 'Forall' or (hasattr(dcec_formula, 'quantifier') and dcec_formula.quantifier == 'forall'):
+                return QuantifiedFormula(Quantifier.FORALL, var, body)
+            elif formula_type == 'Exists' or (hasattr(dcec_formula, 'quantifier') and dcec_formula.quantifier == 'exists'):
+                return QuantifiedFormula(Quantifier.EXISTS, var, body)
+        
+        # Deontic formulas (Obligation, Permission, Prohibition)
+        if hasattr(dcec_formula, 'deontic_operator') or formula_type in ['Obligation', 'Permission', 'Prohibition']:
+            inner = self._convert_dcec_formula(dcec_formula.formula if hasattr(dcec_formula, 'formula') else dcec_formula)
+            
+            if formula_type == 'Obligation' or (hasattr(dcec_formula, 'deontic_operator') and dcec_formula.deontic_operator == 'O'):
+                return DeonticFormula(DeonticOperator.OBLIGATION, inner)
+            elif formula_type == 'Permission' or (hasattr(dcec_formula, 'deontic_operator') and dcec_formula.deontic_operator == 'P'):
+                return DeonticFormula(DeonticOperator.PERMISSION, inner)
+            elif formula_type == 'Prohibition' or (hasattr(dcec_formula, 'deontic_operator') and dcec_formula.deontic_operator == 'F'):
+                return DeonticFormula(DeonticOperator.PROHIBITION, inner)
+        
+        # Temporal formulas (Always, Eventually, Next)
+        if hasattr(dcec_formula, 'temporal_operator') or formula_type in ['Always', 'Eventually', 'Next', 'Until', 'Since']:
+            if formula_type in ['Until', 'Since'] or (hasattr(dcec_formula, 'left') and hasattr(dcec_formula, 'right')):
+                # Binary temporal
+                left = self._convert_dcec_formula(dcec_formula.left)
+                right = self._convert_dcec_formula(dcec_formula.right)
+                
+                if formula_type == 'Until' or (hasattr(dcec_formula, 'temporal_operator') and dcec_formula.temporal_operator == 'U'):
+                    return BinaryTemporalFormula(TemporalOperator.UNTIL, left, right)
+                elif formula_type == 'Since' or (hasattr(dcec_formula, 'temporal_operator') and dcec_formula.temporal_operator == 'S'):
+                    return BinaryTemporalFormula(TemporalOperator.SINCE, left, right)
+            else:
+                # Unary temporal
+                inner = self._convert_dcec_formula(dcec_formula.formula if hasattr(dcec_formula, 'formula') else dcec_formula)
+                
+                if formula_type == 'Always' or (hasattr(dcec_formula, 'temporal_operator') and dcec_formula.temporal_operator == 'G'):
+                    return TemporalFormula(TemporalOperator.ALWAYS, inner)
+                elif formula_type == 'Eventually' or (hasattr(dcec_formula, 'temporal_operator') and dcec_formula.temporal_operator == 'F'):
+                    return TemporalFormula(TemporalOperator.EVENTUALLY, inner)
+                elif formula_type == 'Next' or (hasattr(dcec_formula, 'temporal_operator') and dcec_formula.temporal_operator == 'X'):
+                    return TemporalFormula(TemporalOperator.NEXT, inner)
+        
+        # If we couldn't convert, try to parse as string
+        logger.warning(f"Unknown DCEC formula type: {formula_type}, attempting string conversion")
+        return self._parse_dcec_string(str(dcec_formula))
+    
+    def _convert_dcec_term(self, dcec_term: Any) -> Term:
+        """Convert DCEC term to TDFOL term.
+        
+        Args:
+            dcec_term: DCEC term object
+            
+        Returns:
+            TDFOL Term (Variable, Constant, or FunctionApplication)
+        """
+        from ipfs_datasets_py.logic.CEC.native import dcec_core
+        
+        term_type = type(dcec_term).__name__
+        
+        # Variable
+        if term_type == 'Variable' or (hasattr(dcec_term, 'is_variable') and dcec_term.is_variable):
+            return Variable(dcec_term.name, Sort.OBJECT)
+        
+        # Constant
+        if term_type == 'Constant' or not hasattr(dcec_term, 'arguments'):
+            return Constant(str(dcec_term), Sort.OBJECT)
+        
+        # Function application
+        if hasattr(dcec_term, 'function') and hasattr(dcec_term, 'arguments'):
+            args = [self._convert_dcec_term(arg) for arg in dcec_term.arguments]
+            return FunctionApplication(dcec_term.function, tuple(args))
+        
+        # Fallback: treat as constant
+        return Constant(str(dcec_term), Sort.OBJECT)
 
 
 # ============================================================================
