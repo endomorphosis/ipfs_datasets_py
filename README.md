@@ -25,6 +25,7 @@
 ## ✨ Key Features
 
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
+- 🧬 **GraphRAG Ontology Optimizer** - AI-powered multi-agent system for knowledge graph optimization
 - 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs
 - 📝 **Universal File Conversion** - Convert any file type to text for AI processing
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
@@ -520,7 +521,7 @@ K-Nearest Neighbors indexing for IPFS content.
 
 ## 🎯 Functional Modules
 
-The package includes 11 functional modules providing specialized capabilities.
+The package includes 12 functional modules providing specialized capabilities.
 
 ### 1. dashboards/
 
@@ -744,7 +745,52 @@ result = prover.prove(formal_logic)
 - Legal text → formal logic
 - Formal verification
 
-### 11. ipfs_formats/
+### 11. optimizers/
+
+AI-powered optimization systems for knowledge graphs and logic.
+
+**Components:**
+- **graphrag/** - Knowledge graph ontology optimizer ([docs](ipfs_datasets_py/optimizers/graphrag/README.md))
+  - Multi-agent optimization (Generator, Critic, Mediator, Validator, Optimizer)
+  - SGD optimization cycles with convergence detection
+  - TDFOL theorem prover integration for logical validation
+  - Domain templates (legal, medical, scientific, general)
+  - Parallel batch processing with configurable workers
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyHarness, MetricsCollector, OntologyVisualizer
+)
+
+# Run ontology optimization with parallel execution
+harness = OntologyHarness(parallelism=4)
+metrics = MetricsCollector()
+
+cycle_results = harness.run_sgd_cycle(
+    data_sources=documents,
+    contexts=contexts,
+    num_cycles=10,
+    convergence_threshold=0.85
+)
+
+# Track and visualize results
+for cycle in cycle_results:
+    for session in cycle.sessions:
+        metrics.record_session(session)
+
+visualizer = OntologyVisualizer()
+dashboard = visualizer.create_dashboard(metrics)
+```
+
+**Features:**
+- Multi-agent adversarial optimization (complaint-generator pattern)
+- Quality-driven iterative refinement with 5-dimensional scoring
+- Logical consistency validation with theorem provers
+- Dynamic prompt generation with feedback adaptation
+- Comprehensive metrics and visualization
+- Production-ready with 305+ tests
+
+### 12. ipfs_formats/
 
 IPFS format handling and operations.
 
