@@ -268,12 +268,44 @@ class TDFOLGrammarBridge(BaseProverBridge):
     
     def _dcec_to_natural_language(self, dcec_str: str, style: str) -> str:
         """
-        Convert DCEC string to natural language.
+        Convert DCEC string to natural language using grammar engine.
         
-        This is a simplified version - full implementation would use
-        the grammar engine's generation capabilities.
+        This method leverages the grammar engine's generation capabilities
+        for high-quality natural language output.
+        
+        Args:
+            dcec_str: DCEC formula as string
+            style: Style of natural language (formal, casual, technical)
+            
+        Returns:
+            Natural language text
         """
-        # Simple template-based conversion
+        # Try grammar-based generation if available
+        if self.dcec_grammar and GRAMMAR_AVAILABLE:
+            try:
+                # Parse DCEC string to Formula object
+                dcec_formula = parse_dcec(dcec_str)
+                
+                if dcec_formula:
+                    # Use grammar engine to generate natural English
+                    natural_text = self.dcec_grammar.formula_to_english(dcec_formula)
+                    
+                    # Apply style modifications
+                    if style == "casual":
+                        natural_text = self._apply_casual_style(natural_text)
+                    elif style == "technical":
+                        # Technical style currently uses the default formal output unchanged
+                        pass
+                    
+                    logger.debug(f"Grammar-based generation successful: {natural_text}")
+                    return natural_text
+                else:
+                    logger.debug("DCEC parsing returned None, using template fallback")
+            
+            except Exception as e:
+                logger.warning(f"Grammar generation failed: {e}, falling back to templates")
+        
+        # Template-based fallback (original implementation)
         templates = {
             "formal": {
                 "O": "It is obligatory that",
@@ -298,10 +330,48 @@ class TDFOLGrammarBridge(BaseProverBridge):
         template_set = templates.get(style, templates["formal"])
         
         # Simple template application
-        # TODO: Implement proper grammar-based generation
         result = dcec_str
         for key, value in template_set.items():
             result = result.replace(f"({key} ", f"{value} ")
+        
+        logger.debug(f"Template-based generation: {result}")
+        return result
+    
+    def _apply_casual_style(self, formal_text: str) -> str:
+        """
+        Post-process formal English to casual style.
+        
+        Args:
+            formal_text: Formally phrased English text
+            
+        Returns:
+            Casually phrased English text
+        """
+        # Define formal → casual replacements
+        casual_replacements = {
+            "It is obligatory that": "must",
+            "It is permissible that": "can",
+            "It is forbidden that": "must not",
+            "it is obligatory that": "must",
+            "it is permissible that": "can",
+            "it is forbidden that": "must not",
+            "is obligatory": "must",
+            "is permissible": "can",
+            "is forbidden": "must not",
+            "obligated": "must",
+            "permitted": "can",
+            "prohibited": "must not",
+            "For all": "all",
+            "There exists": "some",
+            "for all": "all",
+            "there exists": "some",
+            "believes": "thinks",
+            "eventually": "sometime",
+        }
+        
+        result = formal_text
+        for formal, casual in casual_replacements.items():
+            result = result.replace(formal, casual)
         
         return result
     

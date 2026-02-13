@@ -236,8 +236,73 @@ class CECFramework:
         
         # Try with ShadowProver if requested and available
         if use_shadow_prover and self.shadow_prover_wrapper:
-            # Would need to convert to TPTP format first
-            logger.info("ShadowProver integration not yet implemented")
+            try:
+                logger.info("Attempting proof with ShadowProver")
+                
+                # Convert DCEC formula to TPTP format for ShadowProver
+                tptp_formula = self._dcec_to_tptp_format(conjecture)
+                tptp_axioms = [self._dcec_to_tptp_format(ax) for ax in (axioms or [])]
+                
+                # Determine appropriate modal logic
+                # Use S4 for temporal reasoning, K for non-temporal/basic modal
+                # Note: Deontic logic (D) would require detecting deontic operators
+                # Currently only temporal vs non-temporal distinction is implemented
+                logic_type = "S4" if use_temporal else "K"
+                
+                # Create proof task for ShadowProver
+                shadow_task = ProofTask(
+                    name=f"theorem_{hash(conjecture) % 10000}",
+                    formula=tptp_formula,
+                    assumptions=tptp_axioms,
+                    logic=logic_type
+                )
+                
+                # Submit to ShadowProver
+                self.shadow_prover_wrapper.submit_proof_task(shadow_task)
+                
+                # Wait for result (with timeout)
+                import time
+                timeout = 10.0  # 10 seconds
+                start = time.time()
+                
+                while time.time() - start < timeout:
+                    status = self.shadow_prover_wrapper.check_task_status(shadow_task.name)
+                    
+                    if status == ProverStatus.COMPLETED:
+                        # Get the proof result
+                        proof = self.shadow_prover_wrapper.get_proof_result(shadow_task.name)
+                        
+                        if proof and proof.is_successful():
+                            logger.info(f"ShadowProver successfully proved theorem with {logic_type} logic")
+                            
+                            # Update attempt with ShadowProver results
+                            if not attempt.proof_found:  # Only if Talos didn't prove it
+                                attempt.proof_found = True
+                                attempt.method_used = f"shadowprover_{logic_type}"
+                                attempt.result = ProofResult.PROVED
+                                
+                                # Extract proof steps if available
+                                if hasattr(proof, 'steps') and proof.steps:
+                                    attempt.proof_steps = [str(step) for step in proof.steps]
+                            
+                            break
+                        else:
+                            logger.info("ShadowProver could not prove theorem")
+                            break
+                    
+                    elif status == ProverStatus.FAILED:
+                        logger.warning("ShadowProver proof attempt failed")
+                        break
+                    
+                    # Still running, wait a bit
+                    time.sleep(0.5)
+                
+                if time.time() - start >= timeout:
+                    logger.warning(f"ShadowProver proof timed out after {timeout}s")
+                    
+            except Exception as e:
+                logger.error(f"Error during ShadowProver integration: {e}")
+                # Don't fail the whole attempt, just log and continue
         
         return attempt
     
@@ -328,6 +393,58 @@ class CECFramework:
             List of ReasoningTask objects
         """
         return [self.reason_about(stmt, prove=prove) for stmt in statements]
+    
+    def _dcec_to_tptp_format(self, dcec_formula: str) -> str:
+        """
+        Convert DCEC formula to TPTP (Thousands of Problems for Theorem Provers) format.
+        
+        TPTP is a standard format for automated theorem provers. This converts
+        basic DCEC syntax to TPTP's first-order logic format.
+        
+        Args:
+            dcec_formula: DCEC formula string
+        
+        Returns:
+            TPTP formatted formula string
+        """
+        # Simple conversion - in production, would use proper parser
+        tptp = dcec_formula
+        
+        # Convert common operators
+        # Logical connectives
+        tptp = tptp.replace(" & ", " & ")     # AND (already correct)
+        tptp = tptp.replace(" | ", " | ")     # OR (already correct)
+        tptp = tptp.replace(" -> ", " => ")   # IMPLIES
+        tptp = tptp.replace(" <-> ", " <=> ") # IFF
+        tptp = tptp.replace("~", "~")         # NOT (already correct)
+        
+        # Quantifiers
+        tptp = tptp.replace("forall ", "! ")  # Universal
+        tptp = tptp.replace("exists ", "? ")  # Existential
+        
+        # Modal operators to TPTP (use predicate notation)
+        # Box (necessity) → box(...)
+        tptp = tptp.replace("□(", "box(")
+        tptp = tptp.replace("◇(", "diamond(")
+        
+        # Deontic operators (must come BEFORE temporal since F is ambiguous)
+        # In DCEC: O = Obligation, P = Permission, F = Forbidden
+        tptp = tptp.replace("O(", "obligated(")
+        tptp = tptp.replace("P(", "permitted(")
+        # Note: F( for deontic Forbidden comes before temporal F (Eventually)
+        # Context-dependent: in pure deontic logic F=Forbidden, in temporal F=Eventually
+        # Since this is DCEC (deontic+temporal), we prioritize deontic interpretation
+        # For temporal "eventually", use explicit "Eventually(" or different marker
+        tptp = tptp.replace("Forbidden(", "forbidden(")
+        
+        # Temporal operators  
+        # Note: F( is ambiguous (could be Forbidden or Eventually)
+        # In a proper implementation, would parse AST to distinguish context
+        tptp = tptp.replace("G(", "always(")
+        tptp = tptp.replace("Eventually(", "eventually(")  # Explicit temporal
+        tptp = tptp.replace("X(", "next(")
+        
+        return tptp
     
     @beartype
     def get_statistics(self) -> Dict[str, Any]:

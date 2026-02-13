@@ -545,15 +545,182 @@ class TDFOLProver:
         return False
     
     def _modal_tableaux_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
-        """Prove using modal tableaux method."""
-        # This would integrate with modal_tableaux.py from CEC
-        # For now, return unknown
-        return ProofResult(
-            status=ProofStatus.UNKNOWN,
-            formula=goal,
-            method="modal_tableaux",
-            message="Modal tableaux integration not yet implemented"
-        )
+        """Prove using modal tableaux method via ShadowProver bridge.
+        
+        This method integrates with ShadowProver to leverage specialized
+        modal logic provers (K, S4, S5, D) for modal formulas.
+        
+        Args:
+            goal: Modal formula to prove
+            timeout_ms: Timeout in milliseconds
+            
+        Returns:
+            Proof result with modal tableaux details
+        """
+        import time
+        start_time = time.time()
+        
+        try:
+            # Import bridge
+            from ..integration.tdfol_shadowprover_bridge import (
+                TDFOLShadowProverBridge, ModalLogicType
+            )
+            
+            # Create bridge instance
+            bridge = TDFOLShadowProverBridge()
+            
+            if not bridge.available:
+                logger.debug("ShadowProver bridge not available")
+                return ProofResult(
+                    status=ProofStatus.UNKNOWN,
+                    formula=goal,
+                    time_ms=(time.time() - start_time) * 1000,
+                    method="modal_tableaux",
+                    message="ShadowProver not available"
+                )
+            
+            # Select appropriate modal logic system based on operators
+            logic_type = self._select_modal_logic_type(goal)
+            
+            logger.debug(f"Using modal logic system: {logic_type.value}")
+            
+            # Attempt proof via ShadowProver bridge
+            result = bridge.prove_with_shadowprover(goal, logic_type, timeout_ms)
+            
+            # Update timing information
+            result.time_ms = (time.time() - start_time) * 1000
+            
+            if result.is_proved():
+                logger.info(f"Modal tableaux proof successful using {logic_type.value}")
+            else:
+                logger.debug(f"Modal tableaux proof failed: {result.message}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Modal tableaux proving failed: {e}", exc_info=True)
+            return ProofResult(
+                status=ProofStatus.ERROR,
+                formula=goal,
+                time_ms=(time.time() - start_time) * 1000,
+                method="modal_tableaux",
+                message=f"Error in modal tableaux proving: {e}"
+            )
+    
+    def _select_modal_logic_type(self, formula: Formula) -> 'ModalLogicType':
+        """Select appropriate modal logic system for formula.
+        
+        Selection logic:
+        - Deontic operators (O, P, F) → D logic (serial accessibility)
+        - Knowledge/belief → S5 (equivalence relation)
+        - Temporal with nesting → S4 (reflexive + transitive)
+        - Basic modal → K (minimal modal logic)
+        
+        Args:
+            formula: Formula to analyze
+            
+        Returns:
+            Most appropriate modal logic type
+        """
+        from ..integration.tdfol_shadowprover_bridge import ModalLogicType
+        
+        # Check for deontic operators
+        if self._has_deontic_operators(formula):
+            logger.debug("Deontic operators detected, using D logic")
+            return ModalLogicType.D
+        
+        # Check for temporal operators with nesting
+        if self._has_nested_temporal(formula):
+            logger.debug("Nested temporal operators detected, using S4 logic")
+            return ModalLogicType.S4
+        
+        # Check for simple temporal (always/eventually)
+        if self._has_temporal_operators(formula):
+            logger.debug("Temporal operators detected, using S4 logic")
+            return ModalLogicType.S4
+        
+        # Default to basic modal logic K
+        logger.debug("Using basic modal logic K")
+        return ModalLogicType.K
+    
+    def _has_deontic_operators(self, formula: Formula) -> bool:
+        """Check if formula contains deontic operators (O, P, F).
+        
+        Args:
+            formula: Formula to check
+            
+        Returns:
+            True if deontic operators present
+        """
+        if isinstance(formula, DeonticFormula):
+            return True
+        if isinstance(formula, BinaryFormula):
+            return self._has_deontic_operators(formula.left) or self._has_deontic_operators(formula.right)
+        if isinstance(formula, BinaryTemporalFormula):
+            return self._has_deontic_operators(formula.left) or self._has_deontic_operators(formula.right)
+        if isinstance(formula, UnaryFormula):
+            return self._has_deontic_operators(formula.formula)
+        if isinstance(formula, QuantifiedFormula):
+            return self._has_deontic_operators(formula.formula)
+        if isinstance(formula, TemporalFormula):
+            return self._has_deontic_operators(formula.formula)
+        return False
+    
+    def _has_temporal_operators(self, formula: Formula) -> bool:
+        """Check if formula contains temporal operators (□, ◊, X, U, S).
+        
+        Args:
+            formula: Formula to check
+            
+        Returns:
+            True if temporal operators present
+        """
+        if isinstance(formula, TemporalFormula):
+            return True
+        if isinstance(formula, BinaryTemporalFormula):
+            return True
+        if isinstance(formula, BinaryFormula):
+            return self._has_temporal_operators(formula.left) or self._has_temporal_operators(formula.right)
+        if isinstance(formula, UnaryFormula):
+            return self._has_temporal_operators(formula.formula)
+        if isinstance(formula, QuantifiedFormula):
+            return self._has_temporal_operators(formula.formula)
+        if isinstance(formula, DeonticFormula):
+            return self._has_temporal_operators(formula.formula)
+        return False
+    
+    def _has_nested_temporal(self, formula: Formula, depth: int = 0) -> bool:
+        """Check if formula has nested temporal operators (depth >= 2).
+        
+        Args:
+            formula: Formula to check
+            depth: Current nesting depth
+            
+        Returns:
+            True if nested temporal operators detected
+        """
+        if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
+            new_depth = depth + 1
+            if new_depth >= 2:
+                return True
+            
+            if isinstance(formula, TemporalFormula):
+                return self._has_nested_temporal(formula.formula, new_depth)
+            else:  # BinaryTemporalFormula
+                return (self._has_nested_temporal(formula.left, new_depth) or 
+                       self._has_nested_temporal(formula.right, new_depth))
+        
+        if isinstance(formula, BinaryFormula):
+            return (self._has_nested_temporal(formula.left, depth) or 
+                   self._has_nested_temporal(formula.right, depth))
+        if isinstance(formula, UnaryFormula):
+            return self._has_nested_temporal(formula.formula, depth)
+        if isinstance(formula, QuantifiedFormula):
+            return self._has_nested_temporal(formula.formula, depth)
+        if isinstance(formula, DeonticFormula):
+            return self._has_nested_temporal(formula.formula, depth)
+        
+        return False
     
     def _cec_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
         """Prove using CEC inference engine."""

@@ -235,21 +235,73 @@ class TDFOLShadowProverBridge(BaseProverBridge):
             )
         
         try:
-            # Convert TDFOL formula to ShadowProver format
-            # This is a placeholder - actual conversion needed
-            formula_str = formula.to_string()
+            # Convert TDFOL formula to modal logic string format
+            modal_formula_str = self._tdfol_to_modal_format(formula)
             
-            # Attempt proof
-            # TODO: Implement actual ShadowProver API call
+            logger.debug(f"Converted to modal format: {modal_formula_str}")
+            
+            # Attempt proof using selected prover
+            timeout_sec = timeout_ms / 1000.0
+            
+            proof_tree = prover.prove(
+                goal=modal_formula_str,
+                assumptions=None,
+                timeout=int(timeout_sec)
+            )
+            
             elapsed_ms = (time.time() - start_time) * 1000
             
-            return ProofResult(
-                status=ProofStatus.UNKNOWN,
-                formula=formula,
-                time_ms=elapsed_ms,
-                method=f"shadowprover_{logic_type.value}",
-                message="ShadowProver proving not yet fully implemented"
-            )
+            # Convert proof result to TDFOL ProofResult
+            if proof_tree.status == shadow_prover.ProofStatus.SUCCESS:
+                # Extract proof steps
+                proof_steps = []
+                for i, sp_step in enumerate(proof_tree.steps):
+                    step = ProofStep(
+                        step_number=i + 1,
+                        formula=formula,
+                        rule_name=sp_step.rule_name,
+                        premises=[],  # Could extract from sp_step.premises
+                        justification=sp_step.justification or f"Modal rule: {sp_step.rule_name}"
+                    )
+                    proof_steps.append(step)
+                
+                logger.info(f"ShadowProver {logic_type.value} proof succeeded with {len(proof_steps)} steps")
+                
+                return ProofResult(
+                    status=ProofStatus.PROVED,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method=f"shadowprover_{logic_type.value}",
+                    proof_steps=proof_steps,
+                    message=f"Proved using {logic_type.value} modal logic with {len(proof_steps)} steps"
+                )
+                
+            elif proof_tree.status == shadow_prover.ProofStatus.FAILURE:
+                return ProofResult(
+                    status=ProofStatus.DISPROVED,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method=f"shadowprover_{logic_type.value}",
+                    message=f"Formula refuted in {logic_type.value} modal logic"
+                )
+                
+            elif proof_tree.status == shadow_prover.ProofStatus.TIMEOUT:
+                return ProofResult(
+                    status=ProofStatus.TIMEOUT,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method=f"shadowprover_{logic_type.value}",
+                    message=f"Proof timed out after {timeout_ms}ms"
+                )
+                
+            else:  # UNKNOWN or ERROR
+                return ProofResult(
+                    status=ProofStatus.UNKNOWN,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method=f"shadowprover_{logic_type.value}",
+                    message=f"Could not determine proof status: {proof_tree.status.value}"
+                )
             
         except Exception as e:
             elapsed_ms = (time.time() - start_time) * 1000
@@ -306,20 +358,54 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         start_time = time.time()
         
         try:
-            # Create tableaux prover
-            tableaux = modal_tableaux.TableauProver()
+            # Create tableaux prover with appropriate logic
+            logic_type = self.select_modal_logic(formula)
+            modal_logic = self._modal_logic_type_to_enum(logic_type)
             
-            # Convert formula and attempt proof
-            # TODO: Implement actual tableaux API call
+            tableaux_prover = modal_tableaux.TableauProver(modal_logic)
+            
+            # Convert formula to modal format
+            modal_formula_str = self._tdfol_to_modal_format(formula)
+            
+            logger.debug(f"Attempting tableaux proof for: {modal_formula_str}")
+            
+            # Attempt proof using tableau method
+            success, tableau = tableaux_prover.prove(modal_formula_str, assumptions=None)
+            
             elapsed_ms = (time.time() - start_time) * 1000
             
-            return ProofResult(
-                status=ProofStatus.UNKNOWN,
-                formula=formula,
-                time_ms=elapsed_ms,
-                method="modal_tableaux",
-                message="Modal tableaux proving not yet fully implemented"
-            )
+            # Convert tableau result to ProofResult
+            if success:
+                # Extract proof steps from tableau
+                proof_steps = []
+                for i, sp_step in enumerate(tableau.proof_steps):
+                    step = ProofStep(
+                        step_number=i + 1,
+                        formula=formula,
+                        rule_name=sp_step.rule_name,
+                        premises=[],
+                        justification=sp_step.justification or f"Tableau rule: {sp_step.rule_name}"
+                    )
+                    proof_steps.append(step)
+                
+                logger.info(f"Modal tableaux proof succeeded with {len(proof_steps)} steps")
+                
+                return ProofResult(
+                    status=ProofStatus.PROVED,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method="modal_tableaux",
+                    proof_steps=proof_steps,
+                    message=f"Proved using modal tableaux with {len(proof_steps)} steps ({tableau.world_counter} worlds)"
+                )
+            else:
+                return ProofResult(
+                    status=ProofStatus.DISPROVED,
+                    formula=formula,
+                    time_ms=elapsed_ms,
+                    method="modal_tableaux",
+                    message=f"Formula refuted by modal tableaux (tableau remained open)"
+                )
             
         except Exception as e:
             elapsed_ms = (time.time() - start_time) * 1000
@@ -330,6 +416,72 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 method="modal_tableaux",
                 message=f"Error during tableaux proving: {e}"
             )
+    
+    def _tdfol_to_modal_format(self, formula: Formula) -> str:
+        """
+        Convert TDFOL formula to modal logic string format.
+        
+        Note: This is a simplified string-based conversion with known limitations.
+        It performs global string replacements which may not correctly handle:
+        - Complex nested formulas where operator context matters
+        - Function/predicate arguments that get mixed with logical connectives
+        
+        For production use with complex formulas, consider implementing proper
+        AST traversal to emit correct modal syntax while preserving predicate structure.
+        
+        Args:
+            formula: TDFOL formula
+        
+        Returns:
+            Modal logic string (with □, ◊, etc.)
+        """
+        # Get the string representation
+        formula_str = formula.to_string()
+        
+        # Replace TDFOL operators with modal logic symbols
+        # Temporal operators
+        formula_str = formula_str.replace("Always(", "□(")
+        formula_str = formula_str.replace("Eventually(", "◊(")
+        formula_str = formula_str.replace("Next(", "X(")
+        formula_str = formula_str.replace("Until(", "U(")
+        
+        # Deontic operators (map to modal)
+        formula_str = formula_str.replace("Obligatory(", "□(")  # Obligation as necessity
+        formula_str = formula_str.replace("Permitted(", "◊(")   # Permission as possibility
+        
+        # Logical connectives
+        # Note: These simplified replacements work for basic formulas but may
+        # not correctly handle all cases (e.g., mixing connective operators with
+        # predicate arguments). A proper implementation would use AST traversal.
+        formula_str = formula_str.replace("And(", "∧(")
+        formula_str = formula_str.replace("Or(", "∨(")
+        formula_str = formula_str.replace("Not(", "¬(")
+        formula_str = formula_str.replace("Implies(", "→(")
+        
+        return formula_str
+    
+    def _modal_logic_type_to_enum(self, logic_type: ModalLogicType) -> 'shadow_prover.ModalLogic':
+        """
+        Convert ModalLogicType enum to shadow_prover.ModalLogic enum.
+        
+        Args:
+            logic_type: Bridge's modal logic type
+        
+        Returns:
+            ShadowProver's ModalLogic enum
+        """
+        if logic_type == ModalLogicType.K:
+            return shadow_prover.ModalLogic.K
+        elif logic_type == ModalLogicType.T:
+            return shadow_prover.ModalLogic.T
+        elif logic_type == ModalLogicType.S4:
+            return shadow_prover.ModalLogic.S4
+        elif logic_type == ModalLogicType.S5:
+            return shadow_prover.ModalLogic.S5
+        elif logic_type == ModalLogicType.D:
+            return shadow_prover.ModalLogic.D
+        else:
+            return shadow_prover.ModalLogic.K  # Default
 
 
 class ModalAwareTDFOLProver:

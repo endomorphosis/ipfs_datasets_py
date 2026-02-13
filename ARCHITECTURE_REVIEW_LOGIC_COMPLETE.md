@@ -187,9 +187,34 @@ CEC/
 
 ---
 
-### 4. integration Module (21,156 LOC) - Grade: C+ (78/100)
+### 4. integration Module (21,156 LOC) - Grade: B- (78/100) - UPDATED 2026-02-13
 
-**Status:** ⚠️ **NOT production-ready** - Critical test coverage gap
+**Status:** ⚠️ **NEEDS ATTENTION** - Test execution issues discovered
+
+**Critical Discovery:** Comprehensive coverage analysis reveals:
+- **500+ tests exist** across 24 test files
+- **Only 136 tests executing successfully**
+- **200+ tests blocked** by import/dependency issues
+- **Overall coverage: 13-30%** (varies by file)
+
+**Coverage Breakdown by Module:**
+| Module | Tests | Coverage | Status |
+|--------|-------|----------|--------|
+| base_prover_bridge.py | 23 | 91% | ✅ Excellent |
+| deontic_logic_converter.py | 56 | 27% | 🟡 Fair |
+| deontic_query_engine.py | 19 | 26% | 🟡 Fair |
+| tdfol_cec_bridge.py | 11 | 25% | 🟡 Fair |
+| tdfol_grammar_bridge.py | 12 | 22% | 🟡 Fair |
+| legal_symbolic_analyzer.py | 31 | 32% | 🟡 Fair |
+| proof_execution_engine.py | 30 | 18% | 🔴 Poor |
+| symbolic_contracts.py | 42 | 19% | 🔴 Poor |
+| logic_translation_core.py | 33 | **0%** | 🚨 Not running |
+| logic_verification.py | 28 | **0%** | 🚨 Not running |
+| modal_logic_extension.py | 35 | **0%** | 🚨 Not running |
+| symbolic_fol_bridge.py | 38 | **0%** | 🚨 Not running |
+| medical_theorem_framework.py | 35 | **0%** | 🚨 Not running |
+| neurosymbolic_graphrag.py | 15 | **0%** | 🚨 Not running |
+| temporal_deontic_rag_store.py | 22 | **2%** | 🚨 Not running |
 
 **Overview:**
 Neurosymbolic convergence layer connecting symbolic logic (TDFOL, CEC) with neural/semantic systems (SymbolicAI, GraphRAG). This is the LARGEST module (46% of total LOC).
@@ -229,43 +254,60 @@ integration/
 - Comprehensive API surface
 
 **Critical Weaknesses:**
-1. **Test coverage crisis**: <5% coverage 🚨
-   - 23 main modules with 0 tests
-   - `old_tests/` contains 3,600 LOC of disabled tests
-   - Cannot safely refactor or deploy
+1. **Test execution crisis**: 200+ tests exist but don't execute 🚨
+   - Import errors: missing pydantic, anyio, other dependencies
+   - Module initialization issues
+   - Test isolation problems
+   - **Cannot rely on coverage metrics until tests execute**
 
-2. **Code complexity**: Multiple files >800 LOC
+2. **Variable coverage**: Among executing tests (13-30%)
+   - 1 module excellent (91%)
+   - 6 modules fair (20-30%)
+   - 8 modules critical (0-2%)
+
+3. **Code complexity**: Multiple files >800 LOC
    - `proof_execution_engine.py`: 905 LOC
    - `deontological_reasoning.py`: 911 LOC
    - `interactive_fol_constructor.py`: 858 LOC
 
-3. **Dead code**: Massive backlog
-   - `TODO.md`: 7,181 LOC
-   - 7 disabled test files with `_test_` prefix
+4. **Dead code**: Massive backlog
+   - `TODO.md`: 7,181 LOC (archived in PR #926)
+   - 7 disabled test files with `_test_` prefix (archived)
 
-4. **Code duplication**: 
+5. **Code duplication**: 
    - 3-4x `convert_*`, `translate_*`, `parse_*` methods
    - Logic scattered across modules
 
-5. **Circular dependencies**:
-   - `..tools.*` ↔ `..integration.*` imports
-   - Risk of deployment ordering issues
+6. **Circular dependencies**: (RESOLVED ✅)
+   - Fixed via logic/types/ module in PR #926
 
 **Recommendations (Priority Order):**
 
-**P0 - CRITICAL (1-2 weeks):**
-1. **Expand test coverage to 60%+**
-   ```bash
-   # Add 200+ tests
-   tests/unit_tests/logic/integration/
-   ├── test_logic_translation_core.py (30 tests)
-   ├── test_deontic_logic_converter.py (40 tests)
-   ├── test_proof_execution_engine.py (35 tests)
-   ├── test_bridges.py (50 tests)
-   └── [5 more test files]
-   ```
+**P0 - CRITICAL (1-2 days):** 🚨
+1. **Fix test execution blockers**
+   - Install missing dependencies (pydantic, anyio, etc.)
+   - Fix import errors in 9 test files
+   - Update test fixtures and configuration
+   - **Goal: Get 500+ integration tests executing**
+   - **Impact: Will reveal true coverage metrics**
 
-2. **Consolidate bridge pattern**
+2. **Re-run comprehensive coverage analysis**
+   - Execute all 500+ integration tests
+   - Generate accurate coverage report
+   - Identify real gaps vs execution issues
+
+**P1 - HIGH (1-2 weeks):**
+3. **Improve modules with low coverage (20-30%)**
+   ```bash
+   # Target modules with tests but low coverage
+   - deontic_logic_converter.py: 27% → 70% (+43%)
+   - deontic_query_engine.py: 26% → 70% (+44%)
+   - proof_execution_engine.py: 18% → 60% (+42%)
+   - symbolic_contracts.py: 19% → 60% (+41%)
+   ```
+   Estimated: 50-100 new tests
+
+4. **Consolidate bridge pattern**
    ```python
    class BaseProverBridge(ABC):
        @abstractmethod
@@ -277,33 +319,24 @@ integration/
    class TDFOLShadowBridge(BaseProverBridge): ...
    ```
 
-3. **Activate old_tests/**
-   - Remove `_test_` prefixes
-   - Migrate to modern pytest
-   - Fix deprecated APIs
-
-**P1 - HIGH (2-3 weeks):**
-4. **Refactor complex modules**
+**P2 - MEDIUM (2-3 weeks):**
+5. **Refactor complex modules**
    - Split `proof_execution_engine.py` (905 LOC)
    - Extract strategies from large files
 
-5. **Resolve circular dependencies**
-   - Create `logic/types/` for shared types
-   - Break coupling between tools and integration
-
 6. **Extract common conversion logic**
-   - Create unified `LogicConverter` interface
+   - Use new LogicConverter base class (from PR #926)
    - DRY up duplicate methods
 
-**P2 - MEDIUM (3-4 weeks):**
+**P3 - LOWER (3-4 weeks):**
 7. Profile end-to-end performance
 8. Standardize API interfaces
 9. Generate API documentation
 
-**Test Coverage:** ⭐ (5%) - **CRITICAL FAILURE** 🚨
+**Test Coverage:** ⭐⭐ (20%) - **CRITICAL - EXECUTION ISSUES** 🚨
 **Code Quality:** ⭐⭐⭐ (65%) - Fair (duplication, complexity)
 **Documentation:** ⭐⭐⭐ (60%) - Fair
-**Production Readiness:** ❌ **NOT READY** - Needs tests
+**Production Readiness:** ⚠️ **CONDITIONAL** - Fix tests first
 
 ---
 
@@ -658,35 +691,47 @@ logic/
 
 ## Prioritized Improvement Roadmap
 
-### Phase 1: Critical Fixes (Weeks 1-2) - P0
+### Phase 1: Critical Fixes (Weeks 1-2) - P0 🔄 UPDATED
 
-**Goal:** Address critical production blockers
+**Goal:** Address critical production blockers and test execution issues
 
-1. **Expand test coverage** (5 days)
-   - Add 200+ tests to integration module
-   - Activate old_tests/ with pytest
-   - Target: 60% overall coverage
-
-2. **Integrate security modules** (3 days)
-   - Wire rate limiting to entry points
-   - Add complexity checks to parsers
-   - Enable audit logging
-
-3. **Consolidate bridge pattern** (2 days)
-   - Create BaseProverBridge ABC
-   - Unify bridge implementations
-   - Add bridge integration tests
-
-**Deliverables:**
-- ✅ 230+ new tests (Phase 1)
-- ✅ 66 additional tests (Phase 2 Days 1-4)
+**Completed:**
+- ✅ 230+ new tests (Phase 1 from PR #924)
+- ✅ 66 additional tests (Phase 2 Days 1-4 from PR #926)
 - ✅ Rate limiting active
 - ✅ Unified bridge interface
 - ✅ Dead code removed (-11,546 LOC)
 - ✅ Types module (100% coverage)
 - ✅ Error hierarchy (100% coverage)
 - ✅ LogicConverter base class (98% coverage)
-- 📊 Integration test analysis in progress
+- ✅ Comprehensive coverage analysis (Session 3)
+
+**In Progress:**
+1. **Fix test execution blockers** (1-2 days) 🚨 URGENT
+   - Install missing dependencies
+   - Fix import errors in 9 test files
+   - Update test fixtures
+   - Goal: Get 500+ integration tests executing
+   
+2. **Re-run coverage analysis** (1 day)
+   - Execute all integration tests
+   - Generate accurate coverage report
+   - Identify real gaps
+
+**Remaining:**
+3. **Improve low-coverage modules** (5-7 days)
+   - Target 4 modules: 20-30% → 60-70%
+   - Add 50-100 targeted tests
+   - Focus on uncovered branches
+
+**Deliverables:**
+- ✅ 296+ tests added (Phase 1 + Phase 2)
+- ✅ Rate limiting active
+- ✅ Unified bridge interface
+- ✅ Dead code cleaned
+- ✅ Infrastructure complete
+- 🔄 Test execution fixes in progress
+- ⏳ Coverage improvements pending
 
 ### Phase 2: Quality Improvements (Weeks 3-4) - P1 🔄 IN PROGRESS
 
@@ -779,31 +824,33 @@ logic/
 
 | Metric | Current | Target | Status |
 |--------|---------|--------|--------|
-| **Total LOC** | 45,754 | - | - |
-| **Test Coverage** | 25% | 80% | 🔴 |
+| **Total LOC** | 34,208 | - | - |
+| **Test Coverage** | 20% | 80% | 🔴 |
+| **Tests Available** | 1,100+ | - | ✅ |
+| **Tests Executing** | 136 | 500+ | 🔴 |
 | **Avg File Size** | 401 LOC | 300 LOC | 🟡 |
 | **Max File Size** | 2,884 LOC | 600 LOC | 🔴 |
-| **Circular Deps** | 4 | 0 | 🔴 |
-| **Dead Code** | 10,781 LOC | 0 | 🔴 |
+| **Circular Deps** | 0 | 0 | ✅ |
+| **Dead Code** | 0 | 0 | ✅ |
 | **Duplication** | ~15% | <5% | 🟡 |
 | **Type Coverage** | 70% | 95% | 🟡 |
 
 ### Technical Debt Analysis
 
 **High-Interest Debt** (Fix immediately):
-- Integration module test coverage (<5%)
-- Security module not integrated
-- Circular dependencies
+- **Test execution issues**: 200+ tests blocked 🚨
+- Integration module coverage gaps (20% vs 60% target)
+- Complex modules (prover_core.py: 2,884 LOC)
 
 **Medium-Interest Debt** (Fix soon):
-- Complex modules (prover_core.py: 2,884 LOC)
 - Code duplication (convert_* methods)
-- Dead code (old_tests/, TODO.md)
+- Missing async support
+- Type hint coverage gaps
 
 **Low-Interest Debt** (Fix eventually):
-- Missing async support
 - Documentation gaps
-- Type hint coverage
+- Performance profiling needed
+- API standardization
 
 ---
 

@@ -75,6 +75,20 @@ try:
 except ImportError:
     ProverRouter = None
 
+# Formula analyzer
+try:
+    from .formula_analyzer import (
+        FormulaAnalyzer,
+        FormulaAnalysis,
+        FormulaType,
+        FormulaComplexity
+    )
+except ImportError:
+    FormulaAnalyzer = None
+    FormulaAnalysis = None
+    FormulaType = None
+    FormulaComplexity = None
+
 
 def get_available_provers() -> List[str]:
     """Get list of available external provers.
@@ -128,6 +142,11 @@ __all__ = [
     "CoqProverBridge",
     "SymbolicAIProverBridge",
     "ProverRouter",
+    # Formula analysis
+    "FormulaAnalyzer",
+    "FormulaAnalysis",
+    "FormulaType",
+    "FormulaComplexity",
     # Result types
     "NeuralProofResult",
     # Availability flags
