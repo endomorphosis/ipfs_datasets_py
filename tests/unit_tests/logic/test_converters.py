@@ -13,8 +13,23 @@ from ipfs_datasets_py.logic.common import (
     ConversionResult,
     ConversionStatus,
     ValidationResult,
-    ConversionError
+    ConversionError,
+    ValidationError
 )
+
+
+class TestAbstractMethods:
+    """Test abstract method requirements."""
+    
+    def test_cannot_instantiate_abstract_converter(self):
+        """GIVEN LogicConverter abstract class
+        WHEN trying to instantiate directly
+        THEN TypeError is raised
+        """
+        with pytest.raises(TypeError) as exc_info:
+            LogicConverter()
+        
+        assert "Can't instantiate abstract class" in str(exc_info.value)
 
 
 class SimpleConverter(LogicConverter[str, str]):
@@ -50,6 +65,26 @@ class FailingConverter(LogicConverter[str, str]):
     
     def _convert_impl(self, input_data: str, options: Dict[str, Any]) -> str:
         raise ConversionError("Conversion always fails", context={"input": input_data})
+
+
+class ValidationErrorConverter(LogicConverter[str, str]):
+    """A test converter that raises ValidationError during conversion."""
+    
+    def validate_input(self, input_data: str) -> ValidationResult:
+        return ValidationResult(valid=True)
+    
+    def _convert_impl(self, input_data: str, options: Dict[str, Any]) -> str:
+        raise ValidationError("Validation error during conversion", context={"input": input_data})
+
+
+class UnexpectedErrorConverter(LogicConverter[str, str]):
+    """A test converter that raises unexpected exceptions."""
+    
+    def validate_input(self, input_data: str) -> ValidationResult:
+        return ValidationResult(valid=True)
+    
+    def _convert_impl(self, input_data: str, options: Dict[str, Any]) -> str:
+        raise RuntimeError("Unexpected runtime error")
 
 
 class TestConversionResult:
@@ -121,6 +156,20 @@ class TestConversionResult:
         assert dict_repr["success"] is True
         assert dict_repr["errors"] == ["error1"]
         assert dict_repr["warnings"] == ["warning1"]
+    
+    def test_to_dict_with_none_output(self):
+        """GIVEN a ConversionResult with None output
+        WHEN converting to dict
+        THEN output is None in dict
+        """
+        result = ConversionResult(
+            output=None,
+            status=ConversionStatus.FAILED
+        )
+        
+        dict_repr = result.to_dict()
+        assert dict_repr["output"] is None
+        assert dict_repr["status"] == "failed"
 
 
 class TestValidationResult:
@@ -283,6 +332,33 @@ class TestLogicConverter:
         assert result.status == ConversionStatus.FAILED
         assert len(result.errors) > 0
         assert "Conversion always fails" in result.errors[0]
+    
+    def test_validation_error_handling(self):
+        """GIVEN a converter that raises ValidationError during conversion
+        WHEN converting
+        THEN error is caught and result indicates failure
+        """
+        converter = ValidationErrorConverter()
+        result = converter.convert("test")
+        
+        assert result.success is False
+        assert result.status == ConversionStatus.FAILED
+        assert len(result.errors) > 0
+        assert "Validation error" in result.errors[0]
+    
+    def test_unexpected_error_handling(self):
+        """GIVEN a converter that raises unexpected exceptions
+        WHEN converting
+        THEN error is caught and result indicates failure with exception type
+        """
+        converter = UnexpectedErrorConverter()
+        result = converter.convert("test")
+        
+        assert result.success is False
+        assert result.status == ConversionStatus.FAILED
+        assert len(result.errors) > 0
+        assert "Unexpected error" in result.errors[0]
+        assert result.metadata.get("exception_type") == "RuntimeError"
 
 
 class TestChainedConverter:
