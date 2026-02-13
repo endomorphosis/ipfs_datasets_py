@@ -123,7 +123,8 @@ class LogicExtractor:
         self,
         model: Optional[str] = None,
         backend: Optional[Any] = None,
-        use_ipfs_accelerate: bool = True
+        use_ipfs_accelerate: bool = True,
+        enable_formula_translation: bool = True
     ):
         """Initialize the logic extractor.
         
@@ -131,14 +132,31 @@ class LogicExtractor:
             model: Model name to use (e.g., "gpt-4", "claude-3")
             backend: Backend for LLM inference
             use_ipfs_accelerate: Use ipfs_accelerate_py for model inference
+            enable_formula_translation: Use TDFOL/CEC translation (Phase 2 feature)
         """
         self.model = model or "gpt-4"
         self.backend = backend
         self.use_ipfs_accelerate = use_ipfs_accelerate
+        self.enable_formula_translation = enable_formula_translation
         self._init_backend()
         
         # Track extraction history for improvement
         self.extraction_history: List[ExtractionResult] = []
+        
+        # Phase 2: Initialize formula translator
+        self.formula_translator = None
+        if enable_formula_translation:
+            self._init_formula_translator()
+    
+    def _init_formula_translator(self) -> None:
+        """Initialize formula translator (Phase 2)."""
+        try:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import UnifiedFormulaTranslator
+            self.formula_translator = UnifiedFormulaTranslator()
+            logger.info("Formula translator initialized")
+        except Exception as e:
+            logger.warning(f"Could not initialize formula translator: {e}")
+            self.formula_translator = None
         
     def _init_backend(self) -> None:
         """Initialize the LLM backend."""
@@ -167,6 +185,11 @@ class LogicExtractor:
             if context.extraction_mode == ExtractionMode.AUTO:
                 context.extraction_mode = self._determine_mode(context)
             
+            # Phase 2: Use formula translation if available
+            if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
+                return self._extract_with_translation(context)
+            
+            # Phase 1: Legacy extraction method
             # Build the extraction prompt
             prompt = self._build_extraction_prompt(context)
             
@@ -199,6 +222,90 @@ class LogicExtractor:
                 success=False,
                 errors=[str(e)]
             )
+    
+    def _extract_with_translation(
+        self,
+        context: LogicExtractionContext
+    ) -> ExtractionResult:
+        """Extract using formula translation (Phase 2).
+        
+        Args:
+            context: Extraction context
+            
+        Returns:
+            ExtractionResult with translated formulas
+        """
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import FormulaFormalism
+        
+        # Map extraction mode to formalism
+        formalism_map = {
+            ExtractionMode.TDFOL: FormulaFormalism.TDFOL,
+            ExtractionMode.CEC: FormulaFormalism.CEC,
+            ExtractionMode.DEONTIC: FormulaFormalism.DEONTIC,
+            ExtractionMode.MODAL: FormulaFormalism.MODAL,
+            ExtractionMode.FOL: FormulaFormalism.FOL
+        }
+        
+        formalism = formalism_map.get(context.extraction_mode, FormulaFormalism.TDFOL)
+        
+        # Translate data to formal logic
+        translation_result = self.formula_translator.translate(
+            str(context.data),
+            formalism=formalism,
+            context={'domain': context.domain}
+        )
+        
+        if not translation_result.success:
+            logger.warning(f"Translation failed: {translation_result.errors}")
+            # Fallback to legacy extraction
+            return self._extract_legacy(context)
+        
+        # Create logical statement from translation
+        statement = LogicalStatement(
+            formula=str(translation_result.formula),
+            natural_language=translation_result.original_text,
+            confidence=0.85,  # Higher confidence for formal translation
+            formalism=translation_result.formalism.value,
+            metadata={
+                'translation_metadata': translation_result.metadata,
+                'translator': 'formula_translation'
+            }
+        )
+        
+        # Check ontology alignment
+        alignment = self._check_ontology_alignment([statement], context)
+        
+        result = ExtractionResult(
+            statements=[statement],
+            context=context,
+            success=True,
+            ontology_alignment=alignment,
+            reasoning_trace=[f"Translated to {formalism.value} using formula translator"]
+        )
+        
+        self.extraction_history.append(result)
+        return result
+    
+    def _extract_legacy(self, context: LogicExtractionContext) -> ExtractionResult:
+        """Legacy extraction method (Phase 1).
+        
+        Args:
+            context: Extraction context
+            
+        Returns:
+            ExtractionResult
+        """
+        prompt = self._build_extraction_prompt(context)
+        response = self._query_llm(prompt, context)
+        statements = self._parse_response(response, context)
+        alignment = self._check_ontology_alignment(statements, context)
+        
+        return ExtractionResult(
+            statements=statements,
+            context=context,
+            success=True,
+            ontology_alignment=alignment
+        )
     
     def extract_batch(
         self,
