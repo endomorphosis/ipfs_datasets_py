@@ -6,6 +6,11 @@ import logging
 from typing import Any, Dict, List, Optional, Union
 
 from .utils.predicate_extractor import extract_logical_relations, extract_predicates
+from .utils.nlp_predicate_extractor import (
+    extract_predicates_nlp,
+    extract_logical_relations_nlp,
+    get_extraction_stats,
+)
 from .utils.fol_parser import (
     build_fol_formula,
     convert_to_prolog,
@@ -24,8 +29,22 @@ async def convert_text_to_fol(
     output_format: str = "json",
     confidence_threshold: float = 0.7,
     include_metadata: bool = True,
+    use_nlp: bool = True,
 ) -> Dict[str, Any]:
-    """Convert natural language text to First-Order Logic (FOL)."""
+    """
+    Convert natural language text to First-Order Logic (FOL).
+    
+    Args:
+        text_input: Text string or dataset dictionary
+        domain_predicates: Optional list of domain-specific predicates
+        output_format: Output format (json, prolog, tptp)
+        confidence_threshold: Minimum confidence for including results
+        include_metadata: Whether to include metadata in output
+        use_nlp: Whether to use NLP-enhanced extraction (spaCy) vs regex fallback
+        
+    Returns:
+        Dictionary with FOL formulas and metadata
+    """
     try:
         # Intentionally avoid per-call logging here to keep batch pipelines quiet.
 
@@ -96,7 +115,14 @@ async def convert_text_to_fol(
             total_processed += 1
 
             try:
-                predicates = extract_predicates(sentence)
+                # Use NLP-enhanced or regex-based extraction
+                if use_nlp:
+                    predicates = extract_predicates_nlp(sentence, use_spacy=True)
+                    relations = extract_logical_relations_nlp(sentence, use_spacy=True)
+                else:
+                    predicates = extract_predicates(sentence)
+                    relations = extract_logical_relations(sentence)
+                
                 quantifiers = parse_quantifiers(sentence)
                 operators = parse_logical_operators(sentence)
                 relations = extract_logical_relations(sentence)
