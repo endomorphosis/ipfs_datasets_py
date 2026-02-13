@@ -649,7 +649,7 @@ class E2EValidator:
             from ipfs_datasets_py.logic.fol.text_to_fol import convert_text_to_fol
             
             # Empty input should be handled gracefully
-            result = await convert_text_to_fol("")
+            _ = await convert_text_to_fol("")  # Result not used, just checking it doesn't crash
             
             # Should either return error structure or handle gracefully
             passed = True  # As long as it doesn't crash

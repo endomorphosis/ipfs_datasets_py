@@ -223,7 +223,6 @@ class ProofCache:
         # TODO: Implement IPFS storage
         # This would use ipfs_kit_py to store the cached proof
         logger.debug(f"IPFS persistence not yet implemented for {key[:16]}...")
-        pass
     
     def invalidate(self, formula: str, prover: str) -> bool:
         """

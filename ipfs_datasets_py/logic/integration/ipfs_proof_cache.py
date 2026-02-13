@@ -194,11 +194,9 @@ class IPFSProofCache(ProofCache):
                 'version': '1.0'
             }
             
-            # Convert to JSON
-            proof_json = json.dumps(proof_data, indent=2)
-            
-            # Upload to IPFS
-            res = self.ipfs_client.add_json(proof_data)
+            # Upload to IPFS (convert to JSON for upload)
+            proof_data_json = json.dumps(proof_data, indent=2)
+            res = self.ipfs_client.add_json(json.loads(proof_data_json))
             cid = res
             
             self.ipfs_uploads += 1
@@ -295,31 +293,33 @@ class IPFSProofCache(ProofCache):
         
         return synced
     
-    def pin_proof(self, formula: str) -> bool:
+    def pin_proof(self, formula: str, prover: str = "default") -> bool:
         """
         Pin a cached proof to IPFS.
         
         Args:
             formula: Formula to pin
+            prover: Prover name (default: "default")
         
         Returns:
             True if successfully pinned, False otherwise
         
         Example:
-            >>> cache.pin_proof("∀x P(x)")
+            >>> cache.pin_proof("∀x P(x)", "z3")
         """
         if not self.enable_ipfs or not self.ipfs_client:
             return False
         
-        cached = self.get(formula)
+        cached = self.get(formula, prover)
         if not cached:
             logger.warning(f"Cannot pin: formula not in cache: {formula}")
             return False
         
         try:
             # Get or create CID
-            if formula in self._cache:
-                cached_item = self._cache[formula]
+            key = self._make_key(formula, prover)
+            if key in self._cache:
+                cached_item = self._cache[key]
                 if isinstance(cached_item, IPFSCachedProof) and cached_item.ipfs_cid:
                     cid = cached_item.ipfs_cid
                 else:
@@ -346,12 +346,13 @@ class IPFSProofCache(ProofCache):
         
         return False
     
-    def unpin_proof(self, formula: str) -> bool:
+    def unpin_proof(self, formula: str, prover: str = "default") -> bool:
         """
         Unpin a proof from IPFS.
         
         Args:
             formula: Formula to unpin
+            prover: Prover name (default: "default")
         
         Returns:
             True if successfully unpinned, False otherwise
@@ -360,8 +361,9 @@ class IPFSProofCache(ProofCache):
             return False
         
         try:
-            if formula in self._cache:
-                cached_item = self._cache[formula]
+            key = self._make_key(formula, prover)
+            if key in self._cache:
+                cached_item = self._cache[key]
                 if isinstance(cached_item, IPFSCachedProof) and cached_item.ipfs_cid:
                     self.ipfs_client.pin.rm(cached_item.ipfs_cid)
                     cached_item.pinned = False
@@ -406,8 +408,9 @@ class IPFSProofCache(ProofCache):
         if self.ipfs_client:
             try:
                 self.ipfs_client.close()
-            except:
-                pass
+            except Exception as e:
+                # IPFS client cleanup failed - ignore
+                logger.debug(f"IPFS client cleanup failed: {e}")
             self.ipfs_client = None
         
         super().close()

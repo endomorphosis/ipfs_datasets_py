@@ -110,6 +110,7 @@ class VampireProver:
                 logger.info(f"Vampire prover found: {self.vampire_path}")
                 return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
+            # Vampire binary not found or version check timed out - will warn below
             pass
         
         logger.warning(
@@ -225,7 +226,8 @@ class VampireProver:
             # Cleanup
             try:
                 Path(problem_file).unlink()
-            except:
+            except (OSError, FileNotFoundError):
+                # File cleanup failed - ignore
                 pass
     
     def _extract_proof(self, output: str) -> Optional[str]:
@@ -309,6 +311,7 @@ class EProver:
                 logger.info(f"E prover found: {self.eprover_path}")
                 return True
         except (FileNotFoundError, subprocess.TimeoutExpired):
+            # E prover binary not found or version check timed out - will warn below
             pass
         
         logger.warning(
@@ -425,7 +428,8 @@ class EProver:
             # Cleanup
             try:
                 Path(problem_file).unlink()
-            except:
+            except (OSError, FileNotFoundError):
+                # File cleanup failed - ignore
                 pass
     
     def _extract_proof(self, output: str) -> Optional[str]:
@@ -454,14 +458,16 @@ class EProver:
                 if len(parts) > 1:
                     try:
                         stats['processed_clauses'] = int(parts[1].strip())
-                    except:
+                    except (ValueError, IndexError):
+                        # Could not parse clause count - skip
                         pass
             if 'Generated clauses' in line:
                 parts = line.split(':')
                 if len(parts) > 1:
                     try:
                         stats['generated_clauses'] = int(parts[1].strip())
-                    except:
+                    except (ValueError, IndexError):
+                        # Could not parse clause count - skip
                         pass
         
         return stats
@@ -591,12 +597,14 @@ def get_prover_registry() -> ProverRegistry:
         # Auto-register available provers
         try:
             _global_registry.register(VampireProver())
-        except:
-            pass
+        except Exception as e:
+            # Vampire prover not available - skip registration
+            logger.debug(f"Could not register Vampire prover: {e}")
         
         try:
             _global_registry.register(EProver())
-        except:
-            pass
+        except Exception as e:
+            # E prover not available - skip registration
+            logger.debug(f"Could not register E prover: {e}")
     
     return _global_registry
