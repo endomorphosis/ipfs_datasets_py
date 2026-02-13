@@ -20,6 +20,14 @@ from .errors import (
     TemporalError,
 )
 
+from .converters import (
+    LogicConverter,
+    ChainedConverter,
+    ConversionResult,
+    ConversionStatus,
+    ValidationResult,
+)
+
 __all__ = [
     # Error classes
     "LogicError",
@@ -32,4 +40,10 @@ __all__ = [
     "DeonticError",
     "ModalError",
     "TemporalError",
+    # Converter classes
+    "LogicConverter",
+    "ChainedConverter",
+    "ConversionResult",
+    "ConversionStatus",
+    "ValidationResult",
 ]
