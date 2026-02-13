@@ -226,17 +226,92 @@ class TDFOLCECBridge(BaseProverBridge):
             logger.debug(f"Goal in DCEC: {goal_dcec}")
             logger.debug(f"Axioms in DCEC: {axioms_dcec}")
             
-            # TODO: Implement actual CEC proving
-            # For now, return a placeholder
+            # Parse DCEC strings to Formula objects
+            from ..CEC.native import dcec_parsing
+            
+            try:
+                goal_formula = dcec_parsing.parse_dcec_formula(goal_dcec)
+                axiom_formulas = [dcec_parsing.parse_dcec_formula(ax) for ax in axioms_dcec]
+            except Exception as e:
+                logger.error(f"Failed to parse DCEC formulas: {e}")
+                elapsed_ms = (time.time() - start_time) * 1000
+                return ProofResult(
+                    status=ProofStatus.ERROR,
+                    formula=goal,
+                    time_ms=elapsed_ms,
+                    method="cec_integration",
+                    message=f"DCEC parsing error: {e}"
+                )
+            
+            # Create CEC prover instance
+            cec_prover = prover_core.Prover(
+                timeout_ms=timeout_ms,
+                max_depth=100,  # Maximum proof depth
+                enable_logging=False  # Disable verbose logging
+            )
+            
+            # Add axioms to prover's knowledge base
+            for ax_formula in axiom_formulas:
+                cec_prover.add_axiom(ax_formula)
+            
+            logger.info(f"Attempting CEC proof with {len(axiom_formulas)} axioms")
+            
+            # Attempt proof using CEC's 87 inference rules
+            cec_result = cec_prover.prove(goal_formula)
+            
             elapsed_ms = (time.time() - start_time) * 1000
             
-            return ProofResult(
-                status=ProofStatus.UNKNOWN,
-                formula=goal,
-                time_ms=elapsed_ms,
-                method="cec_integration",
-                message="CEC proving not yet implemented in bridge"
-            )
+            # Convert CEC proof result to TDFOL ProofResult
+            if cec_result.result == prover_core.ProofResult.PROVED:
+                # Extract proof steps
+                proof_steps = []
+                for i, cec_step in enumerate(cec_result.proof_tree.steps):
+                    step = ProofStep(
+                        step_number=i + 1,
+                        formula=goal,  # Simplified - could convert each step
+                        rule_name=cec_step.rule,
+                        premises=cec_step.premises,
+                        justification=f"CEC rule: {cec_step.rule}"
+                    )
+                    proof_steps.append(step)
+                
+                logger.info(f"CEC proof succeeded with {len(proof_steps)} steps")
+                
+                return ProofResult(
+                    status=ProofStatus.PROVED,
+                    formula=goal,
+                    time_ms=elapsed_ms,
+                    method="cec_integration",
+                    proof_steps=proof_steps,
+                    message=f"Proved using CEC with {len(proof_steps)} inference steps"
+                )
+                
+            elif cec_result.result == prover_core.ProofResult.DISPROVED:
+                return ProofResult(
+                    status=ProofStatus.DISPROVED,
+                    formula=goal,
+                    time_ms=elapsed_ms,
+                    method="cec_integration",
+                    message="Formula disproved by CEC"
+                )
+                
+            elif cec_result.result == prover_core.ProofResult.TIMEOUT:
+                return ProofResult(
+                    status=ProofStatus.TIMEOUT,
+                    formula=goal,
+                    time_ms=elapsed_ms,
+                    method="cec_integration",
+                    message=f"CEC proving timed out after {timeout_ms}ms"
+                )
+                
+            else:  # UNKNOWN or ERROR
+                return ProofResult(
+                    status=ProofStatus.UNKNOWN,
+                    formula=goal,
+                    time_ms=elapsed_ms,
+                    method="cec_integration",
+                    message=f"CEC could not determine proof status: {cec_result.result.value}"
+                )
             
         except Exception as e:
             elapsed_ms = (time.time() - start_time) * 1000
