@@ -71,6 +71,13 @@ __all__ = [
     'PromptMetrics',
     'PromptTemplate',
     'OptimizationResult',
+    # Future Enhancement 3: Real-time Ontology Evolution
+    'OntologyEvolution',
+    'UpdateStrategy',
+    'EvolutionEvent',
+    'OntologyVersion',
+    'EvolutionMetrics',
+    'UpdateCandidate',
 ]
 
 __version__ = '0.1.0'
@@ -194,4 +201,20 @@ def __getattr__(name):
             return PromptTemplate
         else:
             return OptimizationResult
+    elif name in ('OntologyEvolution', 'UpdateStrategy', 'EvolutionEvent', 'OntologyVersion', 'EvolutionMetrics', 'UpdateCandidate'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.ontology_evolution import (
+            OntologyEvolution, UpdateStrategy, EvolutionEvent, OntologyVersion, EvolutionMetrics, UpdateCandidate
+        )
+        if name == 'OntologyEvolution':
+            return OntologyEvolution
+        elif name == 'UpdateStrategy':
+            return UpdateStrategy
+        elif name == 'EvolutionEvent':
+            return EvolutionEvent
+        elif name == 'OntologyVersion':
+            return OntologyVersion
+        elif name == 'EvolutionMetrics':
+            return EvolutionMetrics
+        else:
+            return UpdateCandidate
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
