@@ -55,6 +55,10 @@ __all__ = [
     'LLMBackendAdapter',
     'LLMRequest',
     'LLMResponse',
+    # Phase 2.5: RAG Integration
+    'RAGIntegration',
+    'RAGContext',
+    'RAGStatistics',
 ]
 
 __version__ = '0.1.0'
@@ -140,4 +144,14 @@ def __getattr__(name):
             return LLMRequest
         else:
             return LLMResponse
+    elif name == 'RAGIntegration' or name == 'RAGContext' or name == 'RAGStatistics':
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import (
+            RAGIntegration, RAGContext, RAGStatistics
+        )
+        if name == 'RAGIntegration':
+            return RAGIntegration
+        elif name == 'RAGContext':
+            return RAGContext
+        else:
+            return RAGStatistics
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

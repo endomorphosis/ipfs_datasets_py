@@ -125,7 +125,8 @@ class LogicExtractor:
         backend: Optional[Any] = None,
         use_ipfs_accelerate: bool = True,
         enable_formula_translation: bool = True,
-        enable_kg_integration: bool = True
+        enable_kg_integration: bool = True,
+        enable_rag_integration: bool = True
     ):
         """Initialize the logic extractor.
         
@@ -133,14 +134,16 @@ class LogicExtractor:
             model: Model name to use (e.g., "gpt-4", "claude-3")
             backend: Backend for LLM inference
             use_ipfs_accelerate: Use ipfs_accelerate_py for model inference
-            enable_formula_translation: Use TDFOL/CEC translation (Phase 2 feature)
+            enable_formula_translation: Use TDFOL/CEC translation (Phase 2.2 feature)
             enable_kg_integration: Use knowledge graph integration (Phase 2.4 feature)
+            enable_rag_integration: Use RAG integration (Phase 2.5 feature)
         """
         self.model = model or "gpt-4"
         self.backend = backend
         self.use_ipfs_accelerate = use_ipfs_accelerate
         self.enable_formula_translation = enable_formula_translation
         self.enable_kg_integration = enable_kg_integration
+        self.enable_rag_integration = enable_rag_integration
         self._init_backend()
         
         # Track extraction history for improvement
@@ -155,6 +158,11 @@ class LogicExtractor:
         self.kg_integration = None
         if enable_kg_integration:
             self._init_kg_integration()
+        
+        # Phase 2.5: Initialize RAG integration
+        self.rag_integration = None
+        if enable_rag_integration:
+            self._init_rag_integration()
     
     def _init_kg_integration(self) -> None:
         """Initialize knowledge graph integration (Phase 2.4)."""
@@ -167,7 +175,7 @@ class LogicExtractor:
             self.kg_integration = None
     
     def _init_formula_translator(self) -> None:
-        """Initialize formula translator (Phase 2)."""
+        """Initialize formula translator (Phase 2.2)."""
         try:
             from ipfs_datasets_py.optimizers.logic_theorem_optimizer.formula_translation import UnifiedFormulaTranslator
             self.formula_translator = UnifiedFormulaTranslator()
@@ -175,6 +183,16 @@ class LogicExtractor:
         except Exception as e:
             logger.warning(f"Could not initialize formula translator: {e}")
             self.formula_translator = None
+    
+    def _init_rag_integration(self) -> None:
+        """Initialize RAG integration (Phase 2.5)."""
+        try:
+            from ipfs_datasets_py.optimizers.logic_theorem_optimizer.rag_integration import RAGIntegration
+            self.rag_integration = RAGIntegration()
+            logger.info("RAG integration initialized")
+        except Exception as e:
+            logger.warning(f"Could not initialize RAG integration: {e}")
+            self.rag_integration = None
         
     def _init_backend(self) -> None:
         """Initialize the LLM backend."""
@@ -202,6 +220,19 @@ class LogicExtractor:
             if context.extraction_mode == ExtractionMode.AUTO:
                 context.extraction_mode = self._determine_mode(context)
             
+            # Phase 2.5: Get RAG context for enhanced extraction
+            rag_context = None
+            if self.rag_integration and self.rag_integration.is_available():
+                try:
+                    rag_context = self.rag_integration.get_context(
+                        query=str(context.data),
+                        num_documents=5,
+                        num_examples=3
+                    )
+                    logger.info(f"RAG context retrieved (confidence: {rag_context.confidence:.2f})")
+                except Exception as e:
+                    logger.warning(f"Could not get RAG context: {e}")
+            
             # Phase 2.4: Enrich context with KG information
             if self.kg_integration:
                 kg_context = self.kg_integration.get_context_for_extraction(str(context.data))
@@ -209,15 +240,19 @@ class LogicExtractor:
                 if not context.ontology and kg_context.ontology:
                     context.ontology = kg_context.ontology
                 # Store KG context for later use
+                context.metadata = getattr(context, 'metadata', {})
                 context.metadata['kg_context'] = kg_context
             
             # Phase 2.2: Use formula translation if available
             if self.formula_translator and context.extraction_mode in [ExtractionMode.TDFOL, ExtractionMode.CEC]:
-                return self._extract_with_translation(context)
+                return self._extract_with_translation(context, rag_context)
             
-            # Phase 1: Legacy extraction method
-            # Build the extraction prompt
-            prompt = self._build_extraction_prompt(context)
+            # Phase 1: Legacy extraction method with RAG enhancement
+            # Build the extraction prompt (with RAG context if available)
+            if rag_context:
+                prompt = self._build_rag_enhanced_prompt(context, rag_context)
+            else:
+                prompt = self._build_extraction_prompt(context)
             
             # Get LLM response
             response = self._query_llm(prompt, context)
@@ -234,6 +269,17 @@ class LogicExtractor:
                 success=True,
                 ontology_alignment=alignment
             )
+            
+            # Phase 2.5: Store successful extraction in RAG
+            if self.rag_integration and statements:
+                for stmt in statements:
+                    if stmt.confidence > 0.7:
+                        self.rag_integration.add_successful_extraction(
+                            input_text=str(context.data),
+                            output_formula=stmt.formula,
+                            formalism=stmt.formalism,
+                            confidence=stmt.confidence
+                        )
             
             # Phase 2.4: Add statements to KG
             if self.kg_integration:
@@ -256,12 +302,14 @@ class LogicExtractor:
     
     def _extract_with_translation(
         self,
-        context: LogicExtractionContext
+        context: LogicExtractionContext,
+        rag_context: Optional[Any] = None
     ) -> ExtractionResult:
-        """Extract using formula translation (Phase 2).
+        """Extract using formula translation (Phase 2.2).
         
         Args:
             context: Extraction context
+            rag_context: RAG context for enhanced extraction (Phase 2.5)
             
         Returns:
             ExtractionResult with translated formulas
@@ -414,6 +462,31 @@ class LogicExtractor:
         prompt_parts.append("3. Confidence score (0.0-1.0)")
         
         return "\n".join(prompt_parts)
+    
+    def _build_rag_enhanced_prompt(
+        self,
+        context: LogicExtractionContext,
+        rag_context: Any
+    ) -> str:
+        """Build RAG-enhanced extraction prompt (Phase 2.5).
+        
+        Args:
+            context: Extraction context
+            rag_context: RAG context with examples and relevant info
+            
+        Returns:
+            Enhanced prompt string
+        """
+        # Use RAG integration to build a context-aware prompt
+        if self.rag_integration:
+            return self.rag_integration.build_prompt(
+                text=str(context.data),
+                context=rag_context,
+                formalism=context.extraction_mode.value.upper()
+            )
+        
+        # Fallback to regular prompt
+        return self._build_extraction_prompt(context)
     
     def _query_llm(self, prompt: str, context: LogicExtractionContext) -> str:
         """Query the LLM with the extraction prompt.
