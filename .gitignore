@@ -28,6 +28,12 @@ bin/
 sql_configs.yaml
 *.log
 *.db
+
+# Proof and logic caching
+proof_cache/
+*.proof_cache
+logic_cache/
+.cache/
 *.duckdb
 data/databases/
 batch_results_batch_*
