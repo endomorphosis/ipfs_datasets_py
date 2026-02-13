@@ -14,6 +14,11 @@ from typing import Dict, List, Optional, Set, Any
 
 from ..TDFOL.tdfol_core import Formula, Predicate, Variable, Constant
 from ..TDFOL.tdfol_prover import TDFOLProver, ProofResult, ProofStatus, ProofStep
+from .base_prover_bridge import (
+    BaseProverBridge,
+    BridgeMetadata,
+    BridgeCapability
+)
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +36,7 @@ except ImportError as e:
     logger.warning(f"CEC native modules not available: {e}")
 
 
-class TDFOLCECBridge:
+class TDFOLCECBridge(BaseProverBridge):
     """
     Bridge between TDFOL and CEC systems.
     
@@ -43,7 +48,7 @@ class TDFOLCECBridge:
     
     def __init__(self):
         """Initialize the TDFOL-CEC bridge."""
-        self.cec_available = CEC_AVAILABLE
+        super().__init__()
         
         if not self.cec_available:
             logger.warning("CEC integration disabled - CEC modules not available")
@@ -52,6 +57,26 @@ class TDFOLCECBridge:
         # Initialize CEC components
         self.cec_rules = self._load_cec_rules()
         logger.info(f"Loaded {len(self.cec_rules)} CEC inference rules")
+    
+    def _init_metadata(self) -> BridgeMetadata:
+        """Initialize bridge metadata."""
+        return BridgeMetadata(
+            name="TDFOL-CEC Bridge",
+            version="1.0.0",
+            target_system="CEC",
+            capabilities=[
+                BridgeCapability.BIDIRECTIONAL_CONVERSION,
+                BridgeCapability.RULE_EXTRACTION,
+                BridgeCapability.OPTIMIZATION
+            ],
+            requires_external_prover=False,
+            description="Integrates TDFOL with CEC's 87 inference rules and modal logic"
+        )
+    
+    def _check_availability(self) -> bool:
+        """Check if CEC modules are available."""
+        self.cec_available = CEC_AVAILABLE
+        return CEC_AVAILABLE
     
     def _load_cec_rules(self) -> List[Any]:
         """Load CEC inference rules."""
@@ -79,7 +104,7 @@ class TDFOLCECBridge:
         
         return rules
     
-    def tdfol_to_dcec_string(self, formula: Formula) -> str:
+    def to_target_format(self, formula: Formula) -> str:
         """
         Convert TDFOL formula to DCEC string representation.
         
@@ -88,10 +113,68 @@ class TDFOLCECBridge:
         
         Returns:
             DCEC string representation
+            
+        Raises:
+            ValueError: If formula cannot be converted
         """
+        if not self.is_available():
+            raise ValueError("CEC bridge not available")
+        
         # Use the converter module
         from ..TDFOL.tdfol_converter import tdfol_to_dcec
         return tdfol_to_dcec(formula)
+    
+    def tdfol_to_dcec_string(self, formula: Formula) -> str:
+        """Legacy method for backward compatibility."""
+        return self.to_target_format(formula)
+    
+    def from_target_format(self, target_result: Any) -> ProofResult:
+        """
+        Convert CEC result back to TDFOL ProofResult.
+        
+        Args:
+            target_result: Result from CEC prover
+            
+        Returns:
+            ProofResult with standardized format
+        """
+        # CEC already returns ProofResult, so just pass through
+        # In more complex bridges, this would do actual conversion
+        if isinstance(target_result, ProofResult):
+            return target_result
+        
+        # Default conversion for unknown result types
+        return ProofResult(
+            status=ProofStatus.UNKNOWN,
+            formula=None,
+            time_ms=0,
+            method="cec_integration",
+            message=f"Converted from CEC result: {target_result}"
+        )
+    
+    def prove(
+        self,
+        formula: Formula,
+        timeout: Optional[int] = None,
+        axioms: Optional[List[Formula]] = None,
+        **kwargs
+    ) -> ProofResult:
+        """
+        Prove a formula using CEC.
+        
+        Args:
+            formula: TDFOL formula to prove
+            timeout: Optional timeout in seconds
+            axioms: Optional list of axioms
+            **kwargs: Additional CEC-specific parameters
+            
+        Returns:
+            ProofResult with status and details
+        """
+        timeout_ms = (timeout * 1000) if timeout else 5000
+        axioms = axioms or []
+        
+        return self.prove_with_cec(formula, axioms, timeout_ms)
     
     def dcec_string_to_tdfol(self, dcec_string: str) -> Formula:
         """
