@@ -78,6 +78,13 @@ __all__ = [
     'OntologyVersion',
     'EvolutionMetrics',
     'UpdateCandidate',
+    # Future Enhancement 4: Distributed Processing
+    'DistributedProcessor',
+    'TaskStatus',
+    'WorkerStatus',
+    'Task',
+    'WorkerInfo',
+    'DistributedResult',
 ]
 
 __version__ = '0.1.0'
@@ -217,4 +224,20 @@ def __getattr__(name):
             return EvolutionMetrics
         else:
             return UpdateCandidate
+    elif name in ('DistributedProcessor', 'TaskStatus', 'WorkerStatus', 'Task', 'WorkerInfo', 'DistributedResult'):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.distributed_processor import (
+            DistributedProcessor, TaskStatus, WorkerStatus, Task, WorkerInfo, DistributedResult
+        )
+        if name == 'DistributedProcessor':
+            return DistributedProcessor
+        elif name == 'TaskStatus':
+            return TaskStatus
+        elif name == 'WorkerStatus':
+            return WorkerStatus
+        elif name == 'Task':
+            return Task
+        elif name == 'WorkerInfo':
+            return WorkerInfo
+        else:
+            return DistributedResult
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
