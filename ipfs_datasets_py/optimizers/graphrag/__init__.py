@@ -76,10 +76,18 @@ from .logic_validator import (
     ValidationResult,
 )
 
-# Future components (placeholders)
-# These will be implemented in Phase 2
-# from .ontology_mediator import OntologyMediator, MediatorState
-# from .ontology_optimizer import OntologyOptimizer, OptimizationReport
+# Phase 2 components (scaffolding complete)
+from .ontology_mediator import (
+    OntologyMediator,
+    MediatorState,
+)
+
+from .ontology_optimizer import (
+    OntologyOptimizer,
+    OptimizationReport,
+)
+
+# Future components (placeholders for Phase 3)
 # from .ontology_session import OntologySession, SessionResult
 # from .ontology_harness import OntologyHarness, BatchResult
 
@@ -100,11 +108,13 @@ __all__ = [
     # Validator
     'LogicValidator',
     'ValidationResult',
-    # Future (Phase 2)
-    # 'OntologyMediator',
-    # 'MediatorState',
-    # 'OntologyOptimizer',
-    # 'OptimizationReport',
+    # Mediator (Phase 2)
+    'OntologyMediator',
+    'MediatorState',
+    # Optimizer (Phase 2)
+    'OntologyOptimizer',
+    'OptimizationReport',
+    # Future (Phase 3)
     # 'OntologySession',
     # 'SessionResult',
     # 'OntologyHarness',
