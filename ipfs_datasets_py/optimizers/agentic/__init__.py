@@ -61,6 +61,12 @@ from .validation import (
     SecurityValidator,
     StyleValidator,
 )
+from .llm_integration import (
+    OptimizerLLMRouter,
+    LLMProvider,
+    ProviderCapability,
+    PROVIDER_CAPABILITIES,
+)
 
 __all__ = [
     # Base classes
@@ -109,4 +115,9 @@ __all__ = [
     "PerformanceValidator",
     "SecurityValidator",
     "StyleValidator",
+    # LLM Integration
+    "OptimizerLLMRouter",
+    "LLMProvider",
+    "ProviderCapability",
+    "PROVIDER_CAPABILITIES",
 ]
