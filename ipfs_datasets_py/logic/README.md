@@ -590,6 +590,55 @@ result = reasoner.prove(eventually_q)
 
 ---
 
+## Module Documentation
+
+Each major module has detailed documentation with quick start examples:
+
+### Core Converters
+
+- **[fol/README.md](./fol/README.md)** - FOL (First-Order Logic) conversion
+  - NLP-powered predicate extraction
+  - ML confidence scoring
+  - Multiple output formats (JSON, Prolog, TPTP)
+  - Batch processing examples
+  
+- **[deontic/README.md](./deontic/README.md)** - Deontic logic for legal text
+  - Obligations, permissions, prohibitions
+  - Jurisdiction and document type support
+  - Legal domain extraction
+  - Contract and policy analysis
+
+### Infrastructure
+
+- **[common/README.md](./common/README.md)** - Shared utilities
+  - BoundedCache with TTL and LRU eviction
+  - LogicConverter base class
+  - Error hierarchy
+  - Quick start examples
+
+- **[zkp/README.md](./zkp/README.md)** - Zero-knowledge proofs
+  - Privacy-preserving theorem proving
+  - Fast verification (0.01ms)
+  - Compact proofs (~160 bytes)
+  - Use cases and examples
+
+### Advanced Modules
+
+- **[TDFOL/README.md](./TDFOL/README.md)** - Temporal Deontic FOL
+- **[CEC/README.md](./CEC/README.md)** - Cognitive Event Calculus
+- **[types/README.md](./types/README.md)** - Type definitions
+- **[external_provers/README.md](./external_provers/README.md)** - External prover integrations
+
+### Documentation Hub
+
+- **[DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md)** - Complete documentation index
+- **[CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md)** - Caching strategies and best practices
+- **[UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md)** - Converter architecture guide
+- **[FEATURES.md](./FEATURES.md)** - Complete feature catalog
+- **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Migration from legacy APIs
+
+---
+
 ## Contributing
 
 ### Adding New Inference Rules
