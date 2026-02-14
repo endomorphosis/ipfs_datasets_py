@@ -39,7 +39,7 @@ from ipfs_datasets_py.optimizers.advanced_performance_optimizer import (
 )
 
 # Import base components
-from ipfs_datasets_py.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
+from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
 from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem, WebsiteGraphRAGResult
 from ipfs_datasets_py.content_discovery import ContentManifest
 from ipfs_datasets_py.multimodal_processor import ProcessedContentBatch

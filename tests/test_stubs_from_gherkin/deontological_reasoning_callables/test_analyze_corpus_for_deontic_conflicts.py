@@ -6,7 +6,7 @@ Feature: DeontologicalReasoningEngine.analyze_corpus_for_deontic_conflicts()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine
+from ipfs_datasets_py.logic.integration.deontological_reasoning import DeontologicalReasoningEngine
 from conftest import FixtureError
 
 

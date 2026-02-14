@@ -43,7 +43,7 @@ async def demonstrate_advanced_graphrag():
     
     try:
         # Import the complete system
-        from ipfs_datasets_py.complete_advanced_graphrag import (
+        from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
             CompleteGraphRAGSystem,
             CompleteProcessingConfiguration,
             COMPLETE_PROCESSING_PRESETS
@@ -142,7 +142,7 @@ async def demonstrate_advanced_graphrag():
         print(f"   ✅ Dashboard: complete_graphrag_output/dashboard.html")
         
         # Create mock comprehensive result
-        from ipfs_datasets_py.complete_advanced_graphrag import CompleteProcessingResult
+        from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import CompleteProcessingResult
         
         result = CompleteProcessingResult(
             website_url=target_url,

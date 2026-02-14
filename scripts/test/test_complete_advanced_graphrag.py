@@ -23,7 +23,7 @@ async def test_complete_advanced_graphrag():
     
     try:
         # Import the complete system
-        from ipfs_datasets_py.complete_advanced_graphrag import (
+        from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
             CompleteGraphRAGSystem,
             CompleteProcessingConfiguration,
             COMPLETE_PROCESSING_PRESETS
@@ -64,7 +64,7 @@ async def test_complete_advanced_graphrag():
         print(f"🌐 Target website: {test_url}")
         
         # Create mock processing result for demonstration
-        from ipfs_datasets_py.complete_advanced_graphrag import CompleteProcessingResult
+        from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import CompleteProcessingResult
         
         mock_result = CompleteProcessingResult(
             website_url=test_url,

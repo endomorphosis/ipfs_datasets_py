@@ -6,7 +6,7 @@ Feature: DeontologicalReasoningEngine.query_conflicts()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import DeontologicalReasoningEngine, DeonticConflict, ConflictType, DeonticStatement, DeonticModality
+from ipfs_datasets_py.logic.integration.deontological_reasoning import DeontologicalReasoningEngine, DeonticConflict, ConflictType, DeonticStatement, DeonticModality
 from conftest import FixtureError
 
 

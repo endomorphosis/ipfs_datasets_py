@@ -6,7 +6,7 @@ Feature: ConflictDetector.detect_conflicts()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import ConflictDetector, DeonticStatement, DeonticConflict, ConflictType
+from ipfs_datasets_py.logic.integration.deontological_reasoning import ConflictDetector, DeonticStatement, DeonticConflict, ConflictType
 from conftest import FixtureError
 
 

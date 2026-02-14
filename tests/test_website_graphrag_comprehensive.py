@@ -24,7 +24,7 @@ from typing import Dict, List, Any
 import numpy as np
 
 # Import components under test
-from ipfs_datasets_py.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
+from ipfs_datasets_py.processors.website_graphrag_processor import WebsiteGraphRAGProcessor, WebsiteProcessingConfig
 from ipfs_datasets_py.content_discovery import ContentDiscoveryEngine, ContentManifest, ContentAsset
 from ipfs_datasets_py.multimodal_processor import MultiModalContentProcessor, ProcessedContent, ProcessedContentBatch
 from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem, SearchResult, WebsiteGraphRAGResult

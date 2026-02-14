@@ -46,7 +46,7 @@ except ImportError:
     is_accelerate_available = lambda: False
     get_accelerate_status = lambda: {"available": False}
 
-import ipfs_datasets_py.ipfs_multiformats as ipfs_multiformats
+import ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats as ipfs_multiformats
 
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 

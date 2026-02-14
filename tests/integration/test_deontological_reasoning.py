@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from ipfs_datasets_py.news_analysis_dashboard import UnifiedInvestigationDashboard, MCPDashboardConfig
-from ipfs_datasets_py.deontological_reasoning import (
+from ipfs_datasets_py.logic.integration.deontological_reasoning import (
     DeontologicalReasoningEngine,
     DeonticModality,
     ConflictType

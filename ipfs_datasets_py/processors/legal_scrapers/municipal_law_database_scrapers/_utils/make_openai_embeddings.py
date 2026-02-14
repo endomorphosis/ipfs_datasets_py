@@ -20,7 +20,7 @@ except ImportError:  # pragma: no cover
     tiktoken = None
 
 
-from ipfs_datasets_py.ipfs_multiformats import get_cid
+from ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats import get_cid
 from ipfs_datasets_py import embeddings_router
 from .configs import configs
 

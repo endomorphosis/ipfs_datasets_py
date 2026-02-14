@@ -41,7 +41,7 @@ class TestJsonnetConverter:
     
     def test_simple_jsonnet_to_json(self):
         """GIVEN a simple Jsonnet string WHEN converting to JSON THEN return valid JSON"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '{ name: "test", value: 42 }'
@@ -54,7 +54,7 @@ class TestJsonnetConverter:
     
     def test_jsonnet_array_to_json(self):
         """GIVEN a Jsonnet array WHEN converting to JSON THEN return valid JSON array"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '[{ id: 1, name: "first" }, { id: 2, name: "second" }]'
@@ -68,7 +68,7 @@ class TestJsonnetConverter:
     
     def test_jsonnet_with_external_vars(self):
         """GIVEN Jsonnet with external variables WHEN evaluating THEN use provided variables"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '{ name: std.extVar("name"), age: std.parseJson(std.extVar("age")) }'
@@ -84,7 +84,7 @@ class TestJsonnetConverter:
     
     def test_jsonnet_with_tla_vars(self):
         """GIVEN Jsonnet with TLA variables WHEN evaluating THEN use provided TLA vars"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         # TLA (Top-Level Arguments) are function parameters
@@ -101,7 +101,7 @@ class TestJsonnetConverter:
     
     def test_jsonnet_file_to_json(self):
         """GIVEN a Jsonnet file WHEN converting to JSON THEN return valid JSON"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -119,7 +119,7 @@ class TestJsonnetConverter:
     
     def test_jsonnet_to_dict(self):
         """GIVEN a Jsonnet string WHEN converting to dict THEN return Python dict"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '{ name: "test", value: 42 }'
@@ -132,7 +132,7 @@ class TestJsonnetConverter:
     
     def test_json_to_jsonnet(self):
         """GIVEN a JSON string WHEN converting to Jsonnet THEN return valid Jsonnet"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         json_str = '{"name": "test", "value": 42}'
@@ -148,7 +148,7 @@ class TestJsonnetConverter:
     
     def test_dict_to_jsonnet(self):
         """GIVEN a Python dict WHEN converting to Jsonnet THEN return valid Jsonnet"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         data = {"name": "test", "value": 42}
@@ -168,7 +168,7 @@ class TestJsonnetToJsonl:
     
     def test_jsonnet_array_to_jsonl(self):
         """GIVEN a Jsonnet array WHEN converting to JSONL THEN create valid JSONL file"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '[{ id: 1, name: "first" }, { id: 2, name: "second" }]'
@@ -195,7 +195,7 @@ class TestJsonnetToJsonl:
     
     def test_jsonnet_non_array_to_jsonl_raises_error(self):
         """GIVEN a Jsonnet object (not array) WHEN converting to JSONL THEN raise ValueError"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '{ id: 1, name: "single" }'
@@ -208,7 +208,7 @@ class TestJsonnetToJsonl:
     
     def test_jsonnet_file_to_jsonl(self):
         """GIVEN a Jsonnet file with array WHEN converting to JSONL THEN create valid JSONL"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -235,7 +235,7 @@ class TestJsonlToJsonnet:
     
     def test_jsonl_to_jsonnet(self):
         """GIVEN a JSONL file WHEN converting to Jsonnet THEN create valid Jsonnet"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -265,7 +265,7 @@ class TestJsonlToJsonnet:
     
     def test_jsonl_to_jsonnet_string(self):
         """GIVEN a JSONL file WHEN converting without output path THEN return Jsonnet string"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -292,7 +292,7 @@ class TestJsonnetToArrowParquet:
     
     def test_jsonnet_to_arrow(self):
         """GIVEN a Jsonnet array WHEN converting to Arrow THEN return valid Arrow table"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '[{ id: 1, name: "first", value: 10.5 }, { id: 2, name: "second", value: 20.5 }]'
@@ -307,7 +307,7 @@ class TestJsonnetToArrowParquet:
     
     def test_jsonnet_file_to_arrow(self):
         """GIVEN a Jsonnet file WHEN converting to Arrow THEN return valid Arrow table"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -323,7 +323,7 @@ class TestJsonnetToArrowParquet:
     
     def test_jsonnet_to_parquet(self):
         """GIVEN a Jsonnet array WHEN converting to Parquet THEN create valid Parquet file"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         jsonnet_str = '[{ id: 1, name: "first" }, { id: 2, name: "second" }]'
@@ -341,7 +341,7 @@ class TestJsonnetToArrowParquet:
     
     def test_jsonnet_file_to_parquet(self):
         """GIVEN a Jsonnet file WHEN converting to Parquet THEN create valid Parquet file"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         
@@ -365,7 +365,7 @@ class TestConvenienceFunctions:
     
     def test_jsonnet_to_json_function(self):
         """GIVEN convenience function WHEN converting Jsonnet to JSON THEN work correctly"""
-        from ipfs_datasets_py.jsonnet_utils import jsonnet_to_json
+        from ipfs_datasets_py.utils.jsonnet_utils import jsonnet_to_json
         
         jsonnet_str = '{ name: "test" }'
         json_str = jsonnet_to_json(jsonnet_str)
@@ -375,7 +375,7 @@ class TestConvenienceFunctions:
     
     def test_jsonnet_to_jsonl_function(self):
         """GIVEN convenience function WHEN converting Jsonnet to JSONL THEN work correctly"""
-        from ipfs_datasets_py.jsonnet_utils import jsonnet_to_jsonl
+        from ipfs_datasets_py.utils.jsonnet_utils import jsonnet_to_jsonl
         
         jsonnet_str = '[{ id: 1 }, { id: 2 }]'
         
@@ -387,7 +387,7 @@ class TestConvenienceFunctions:
     
     def test_jsonl_to_jsonnet_function(self):
         """GIVEN convenience function WHEN converting JSONL to Jsonnet THEN work correctly"""
-        from ipfs_datasets_py.jsonnet_utils import jsonl_to_jsonnet
+        from ipfs_datasets_py.utils.jsonnet_utils import jsonl_to_jsonnet
         
         with tempfile.TemporaryDirectory() as temp_dir:
             jsonl_path = os.path.join(temp_dir, "input.jsonl")
@@ -403,7 +403,7 @@ class TestErrorHandling:
     
     def test_invalid_jsonnet_syntax(self):
         """GIVEN invalid Jsonnet syntax WHEN evaluating THEN raise RuntimeError"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         invalid_jsonnet = '{ name: invalid syntax }'  # Missing quotes
@@ -413,7 +413,7 @@ class TestErrorHandling:
     
     def test_jsonnet_file_not_found(self):
         """GIVEN non-existent file WHEN evaluating THEN raise FileNotFoundError"""
-        from ipfs_datasets_py.jsonnet_utils import JsonnetConverter
+        from ipfs_datasets_py.utils.jsonnet_utils import JsonnetConverter
         
         converter = JsonnetConverter()
         

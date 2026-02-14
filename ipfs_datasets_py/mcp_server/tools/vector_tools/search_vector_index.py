@@ -14,7 +14,7 @@ import numpy as np
 import logging
 
 logger = logging.getLogger(__name__)
-from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator, VectorStore
+from ipfs_datasets_py.search.vector_tools import VectorSimilarityCalculator, VectorStore
 
 try:
     from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore

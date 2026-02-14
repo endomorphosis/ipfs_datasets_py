@@ -20,7 +20,7 @@ import tqdm
 
 
 from .configs import Configs, configs
-from ipfs_datasets_py.ipfs_multiformats import get_cid
+from ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats import get_cid
 from .make_openai_embeddings import OpenAIEmbedding
 
 
