@@ -114,7 +114,7 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         # Initialize IPFS cache if requested
         if use_ipfs:
             try:
-                from ..integration.ipfs_proof_cache import get_global_ipfs_cache
+                from ..integration.caching.ipfs_proof_cache import get_global_ipfs_cache
                 self.ipfs_cache = get_global_ipfs_cache()
             except ImportError:
                 logger.warning("IPFS cache not available, using local cache only")
