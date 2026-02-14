@@ -3,6 +3,9 @@
 This module provides coordination between multiple optimization agents
 working in parallel, including conflict resolution, task assignment,
 and distributed patch sharing via IPFS.
+
+ENHANCED: Added caching layer using utils.cache for improved performance
+of agent state, task queue, and conflict history management.
 """
 
 import asyncio
@@ -20,6 +23,7 @@ from .base import (
     OptimizationTask,
 )
 from .patch_control import IPFSPatchStore, Patch, WorktreeManager
+from ...utils.cache import LocalCache
 
 
 class AgentStatus(Enum):
@@ -269,6 +273,7 @@ class AgentCoordinator:
         repo_path: Path,
         ipfs_client: Any,
         max_agents: int = 5,
+        enable_cache: bool = True,
     ):
         """Initialize agent coordinator.
         
@@ -276,6 +281,7 @@ class AgentCoordinator:
             repo_path: Path to git repository
             ipfs_client: IPFS HTTP client
             max_agents: Maximum number of concurrent agents
+            enable_cache: Enable caching for agent state and tasks (default: True)
         """
         self.repo_path = Path(repo_path)
         self.max_agents = max_agents
@@ -287,6 +293,25 @@ class AgentCoordinator:
         self.agents: Dict[str, AgentState] = {}
         self.task_queue: List[OptimizationTask] = []
         self.pending_approvals: Dict[str, OptimizationResult] = {}
+        
+        # Add caching layer for coordination state
+        self._agent_cache = LocalCache(
+            maxsize=100,
+            default_ttl=1800,  # 30 minutes
+            name="AgentStateCache"
+        ) if enable_cache else None
+        
+        self._task_cache = LocalCache(
+            maxsize=200,
+            default_ttl=3600,  # 1 hour
+            name="TaskQueueCache"
+        ) if enable_cache else None
+        
+        self._conflict_cache = LocalCache(
+            maxsize=500,
+            default_ttl=7200,  # 2 hours
+            name="ConflictHistoryCache"
+        ) if enable_cache else None
         
     def register_agent(
         self,
@@ -316,6 +341,10 @@ class AgentCoordinator:
         )
         
         self.agents[agent_id] = state
+        
+        # Cache the agent state
+        self._cache_agent_state(agent_id, state)
+        
         return agent_id
     
     def unregister_agent(self, agent_id: str) -> bool:
@@ -538,7 +567,56 @@ class AgentCoordinator:
         
         return results
     
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics for all coordinator caches.
+        
+        Returns:
+            Dict with statistics for each cache
+        """
+        stats = {}
+        
+        if self._agent_cache:
+            stats['agent_cache'] = self._agent_cache.get_stats()
+        
+        if self._task_cache:
+            stats['task_cache'] = self._task_cache.get_stats()
+        
+        if self._conflict_cache:
+            stats['conflict_cache'] = self._conflict_cache.get_stats()
+        
+        return stats
+    
+    def clear_caches(self) -> None:
+        """Clear all coordination caches."""
+        if self._agent_cache:
+            self._agent_cache.clear()
+        if self._task_cache:
+            self._task_cache.clear()
+        if self._conflict_cache:
+            self._conflict_cache.clear()
+    
+    def _cache_agent_state(self, agent_id: str, state: AgentState) -> None:
+        """Cache agent state for quick retrieval.
+        
+        Args:
+            agent_id: Agent identifier
+            state: Agent state to cache
+        """
+        if self._agent_cache:
+            self._agent_cache.set(f"agent:{agent_id}", state)
+    
+    def _get_cached_agent_state(self, agent_id: str) -> Optional[AgentState]:
+        """Get cached agent state.
+        
+        Args:
+            agent_id: Agent identifier
+            
+        Returns:
+            Cached agent state or None
+        """
+        if self._agent_cache:
+            return self._agent_cache.get(f"agent:{agent_id}")
+        return None
         """Get coordinator statistics.
         
         Returns:
