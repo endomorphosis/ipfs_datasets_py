@@ -268,8 +268,8 @@ from ipfs_datasets_py.logic_integration import create_proof_engine
 from ipfs_datasets_py.pdf_processing import PDFProcessor
 # ✅ Correct import
 
-from ipfs_datasets_py.multimedia import YtDlpWrapper
-# ✅ Correct import
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
+# ✅ Correct import (updated path)
 
 from ipfs_datasets_py.rag import GraphRAGQueryEngine
 # ✅ Correct import
