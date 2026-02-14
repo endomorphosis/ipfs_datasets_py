@@ -32,8 +32,7 @@ This documentation is organized into several sections:
 ### Component Quick Links
 - [Vector Stores](../ipfs_datasets_py/vector_stores/README.md) - Multi-backend vector databases
 - [Embeddings](../ipfs_datasets_py/embeddings/README.md) - Embedding generation and management
-- [Search](../ipfs_datasets_py/search/README.md) - Semantic search capabilities
-- [RAG](../ipfs_datasets_py/rag/README.md) - Retrieval-augmented generation
+- [Search](../ipfs_datasets_py/search/README.md) - Semantic search, RAG, and GraphRAG capabilities
 - [PDF Processing](../ipfs_datasets_py/pdf_processing/README.md) - Advanced PDF analysis
 - [MCP Tools](../ipfs_datasets_py/mcp_tools/README.md) - AI assistant integration
 - [Utils](../ipfs_datasets_py/utils/README.md) - Text processing utilities
@@ -91,8 +90,7 @@ This documentation is organized into several sections:
   - [Utils](../ipfs_datasets_py/utils/README.md) - Text processing utilities
   - [Vector Stores](../ipfs_datasets_py/vector_stores/README.md) - Vector database support
   - [Embeddings](../ipfs_datasets_py/embeddings/README.md) - Embedding generation
-  - [Search](../ipfs_datasets_py/search/README.md) - Search capabilities
-  - [RAG](../ipfs_datasets_py/rag/README.md) - Retrieval-augmented generation
+  - [Search](../ipfs_datasets_py/search/README.md) - Search, RAG, and GraphRAG capabilities
   - [PDF Processing](../ipfs_datasets_py/pdf_processing/README.md) - PDF analysis
   - [Multimedia](../ipfs_datasets_py/multimedia/README.md) - Media processing
   - [LLM](../ipfs_datasets_py/llm/README.md) - Language model integration

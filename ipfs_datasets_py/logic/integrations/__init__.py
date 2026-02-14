@@ -9,9 +9,6 @@ from __future__ import annotations
 
 import logging
 
-# Re-export integration symbols for convenience.
-from .graphrag_integration import *  # noqa: F401,F403
-
 # Optional integrations may depend on heavyweight or extra dependencies.
 try:  # pragma: no cover
 	from .enhanced_graphrag_integration import *  # noqa: F401,F403
