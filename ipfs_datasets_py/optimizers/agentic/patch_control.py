@@ -6,6 +6,8 @@ on GitHub API. It uses:
 - Git worktrees for isolated development
 - IPFS CIDs for distributed patch storage and replication
 - Patch chains for tracking related changes
+
+ENHANCED: Added caching layer using utils.cache for improved performance.
 """
 
 import hashlib
@@ -20,6 +22,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..base import ChangeController, OptimizationResult
+from ...utils.cache import LocalCache
 
 
 @dataclass
@@ -87,16 +90,24 @@ class PatchManager:
         >>> manager.save_patch(patch, "patches/patch-1.patch")
     """
     
-    def __init__(self, patches_dir: Optional[Path] = None):
+    def __init__(self, patches_dir: Optional[Path] = None, enable_cache: bool = True):
         """Initialize patch manager.
         
         Args:
             patches_dir: Directory to store patch files (default: ./patches)
+            enable_cache: Enable caching for patch lookups (default: True)
         """
         self.patches_dir = patches_dir or Path("./patches")
         self.patches_dir.mkdir(parents=True, exist_ok=True)
         self.history_file = self.patches_dir / "patch_history.json"
         self.history: List[Dict[str, Any]] = self._load_history()
+        
+        # Add cache for patch lookups
+        self._cache = LocalCache(
+            maxsize=500,
+            default_ttl=3600,  # 1 hour
+            name="PatchCache"
+        ) if enable_cache else None
         
     def create_patch(
         self,
@@ -176,7 +187,7 @@ class PatchManager:
         return output_path
     
     def load_patch(self, patch_path: Path) -> Patch:
-        """Load patch from file.
+        """Load patch from file with caching.
         
         Args:
             patch_path: Path to patch file
@@ -188,6 +199,14 @@ class PatchManager:
             FileNotFoundError: If patch file doesn't exist
         """
         patch_path = Path(patch_path)
+        cache_key = str(patch_path)
+        
+        # Check cache first
+        if self._cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+        
         if not patch_path.exists():
             raise FileNotFoundError(f"Patch file not found: {patch_path}")
         
@@ -195,9 +214,23 @@ class PatchManager:
         metadata_path = patch_path.with_suffix('.json')
         if metadata_path.exists():
             metadata = json.loads(metadata_path.read_text())
-            return Patch.from_dict(metadata)
+            patch = Patch.from_dict(metadata)
+        else:
+            # Fallback: create basic patch from diff content
+            diff_content = patch_path.read_text()
+            patch = Patch(
+                patch_id=patch_path.stem,
+                agent_id="unknown",
+                task_id="unknown",
+                description="Loaded from file",
+                diff_content=diff_content,
+            )
         
-        # Fallback: create basic patch from diff content
+        # Cache the loaded patch
+        if self._cache:
+            self._cache.set(cache_key, patch)
+        
+        return patch
         diff_content = patch_path.read_text()
         return Patch(
             patch_id=patch_path.stem,
@@ -353,6 +386,21 @@ class PatchManager:
                 reversed_lines.append(line)
         
         return '\n'.join(reversed_lines)
+    
+    def get_cache_stats(self) -> Optional[Dict[str, Any]]:
+        """Get cache statistics.
+        
+        Returns:
+            Dict with cache stats or None if caching disabled
+        """
+        if self._cache:
+            return self._cache.get_cache_stats()
+        return None
+    
+    def clear_cache(self) -> None:
+        """Clear the patch cache."""
+        if self._cache:
+            self._cache.clear()
     
     def _load_history(self) -> List[Dict[str, Any]]:
         """Load patch history from file."""
