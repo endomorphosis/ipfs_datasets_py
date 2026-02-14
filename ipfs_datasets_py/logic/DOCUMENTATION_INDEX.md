@@ -40,6 +40,9 @@ This index provides a comprehensive guide to all documentation in the logic modu
 | [FEATURES.md](./FEATURES.md) | **Complete feature catalog** - All 12+ features documented | ✅ Current (v2.0) |
 | [REFACTORING_COMPLETE.md](./REFACTORING_COMPLETE.md) | **Final refactoring status** - What was delivered | ✅ Complete |
 | [FINAL_STATUS_REPORT.md](./FINAL_STATUS_REPORT.md) | Overall project status and metrics | ✅ Current |
+| [LOGIC_REFACTORING_FINAL_REPORT.md](./LOGIC_REFACTORING_FINAL_REPORT.md) | **Comprehensive improvement report** - 2026-02-14 cleanup & analysis | ✅ NEW |
+| [TYPE_SYSTEM_STATUS.md](./TYPE_SYSTEM_STATUS.md) | Type coverage analysis (95%+, Grade A) | ✅ NEW |
+| [CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md) | Caching strategies and best practices | ✅ NEW |
 
 ### Specialized Components
 
