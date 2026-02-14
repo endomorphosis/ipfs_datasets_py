@@ -456,7 +456,7 @@ def install_profile(profile_name):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python install_deps.py <profile>")
+        print("Usage: python scripts/setup/install_deps.py <profile>")
         print("Profiles: minimal, cli, pdf, ml, web")
         sys.exit(1)
     
@@ -887,7 +887,7 @@ def main():
     logger.info("\n🎉 Quick setup complete!")
     logger.info("\nNext steps:")
     logger.info("1. Run 'python dependency_manager.py setup' for interactive setup")
-    logger.info("2. Run 'python install_deps.py <profile>' for specific features")
+    logger.info("2. Run 'python scripts/setup/install_deps.py <profile>' for specific features")
     logger.info("3. Run CLI tests: 'python comprehensive_cli_test.py'")
     logger.info("\nProfiles available: minimal, cli, pdf, ml, web")
     

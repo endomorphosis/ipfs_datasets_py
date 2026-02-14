@@ -12,7 +12,7 @@ from collections import Counter
 logger = logging.getLogger(__name__)
 
 try:
-    from ipfs_datasets_py.file_detector import FileTypeDetector
+    from ipfs_datasets_py.utils.file_detector import FileTypeDetector
     HAVE_DETECTOR = True
 except ImportError:
     HAVE_DETECTOR = False

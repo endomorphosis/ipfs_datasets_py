@@ -25,7 +25,7 @@ from typing import Dict, List, Any, Optional, Union, Tuple, Set, Callable, TypeV
 from ipfs_datasets_py.ml.llm.llm_interface import LLMInterface, MockLLMInterface, LLMInterfaceFactory
 from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor, DomainSpecificProcessor
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.sparql_query_templates import *
+from ipfs_datasets_py.knowledge_graphs.sparql_query_templates import *
 
 # Type for generic schema validation
 T = TypeVar('T')

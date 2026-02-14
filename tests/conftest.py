@@ -230,11 +230,11 @@ def sample_graphrag_system():
 			Entity,
 			Relationship,
 		)
-		from ipfs_datasets_py.multimodal_processor import (
+		from ipfs_datasets_py.processors.multimodal_processor import (
 			ProcessedContentBatch,
 			ProcessedContent,
 		)
-		from ipfs_datasets_py.website_graphrag_system import WebsiteGraphRAGSystem
+		from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
 	except ModuleNotFoundError as e:
 		pytest.skip(f"Optional GraphRAG dependencies not installed: {e}")
 	except ImportError as e:

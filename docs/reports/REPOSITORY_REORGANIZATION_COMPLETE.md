@@ -268,7 +268,7 @@ python scripts/scrapers/legal/us_code_scraper.py
 **Installation:**
 ```bash
 # Old
-python install_deps.py --quick
+python scripts/setup/install_deps.py --quick
 
 # New
 python scripts/setup/install_deps.py --quick

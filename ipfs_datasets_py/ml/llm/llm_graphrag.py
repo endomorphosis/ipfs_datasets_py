@@ -32,7 +32,7 @@ from ipfs_datasets_py.ml.llm.llm_interface import (
     PromptLibrary, 
     AdaptivePrompting, 
 )
-from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex # Added import
+from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndex # Added import
 from ipfs_datasets_py.data_transformation.ipld.knowledge_graph import IPLDKnowledgeGraph # Added import
 
 # Import UnifiedGraphRAGQueryOptimizer conditionally to avoid circular imports

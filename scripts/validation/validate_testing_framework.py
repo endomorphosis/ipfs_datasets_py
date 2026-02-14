@@ -28,7 +28,7 @@ def test_imports():
         return False
     
     try:
-        from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+        from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
         print("✓ MCP dashboard can be imported")
     except ImportError as e:
         print(f"✗ MCP dashboard import failed: {e}")

@@ -25,7 +25,7 @@ import mimetypes
 from pathlib import Path
 
 # Base imports
-from ipfs_datasets_py.multimodal_processor import ProcessedContent, ProcessedContentBatch
+from ipfs_datasets_py.processors.multimodal_processor import ProcessedContent, ProcessedContentBatch
 from ipfs_datasets_py.content_discovery import ContentAsset, ContentManifest
 
 # Optional imports for enhanced functionality

@@ -21,7 +21,7 @@ def test_caselaw_dashboard_integration():
         from ipfs_datasets_py.logic.integration.temporal_deontic_rag_store import TemporalDeonticRAGStore
         from ipfs_datasets_py.logic.integration.document_consistency_checker import DocumentConsistencyChecker
         from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
-        from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+        from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
         print("✅ All imports successful")
         
         # Test RAG store initialization

@@ -7,7 +7,7 @@ Feature: DeontologicalReasoningEngine.query_deontic_statements()
 
 import pytest
 import anyio
-from ipfs_datasets_py.deontological_reasoning import (
+from ipfs_datasets_py.logic.integration.deontological_reasoning import (
     DeontologicalReasoningEngine, 
     DeonticStatement, 
     DeonticModality

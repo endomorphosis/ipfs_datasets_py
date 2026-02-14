@@ -49,7 +49,7 @@ def base_uploader(mock_api, mock_rate_limiter, tmp_path):
     """Create a basic uploader instance with mocked dependencies"""
     try:
         with patch('ipfs_datasets_py.mcp_server.tools.legal_dataset_tools.municipal_law_database_scrapers.hugging_face_pipeline.login'):
-            from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers.hugging_face_pipeline import UploadToHuggingFaceInParallel
+            from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers.hugging_face_pipeline import UploadToHuggingFaceInParallel
             
             configs = Mock()
             configs.REPO_ID = "test-repo"

@@ -104,7 +104,7 @@ class TestMCPPDFToolsDependencies:
         THEN it should be importable
         """
         try:
-            from ipfs_datasets_py.pdf_processing import PDFProcessor
+            from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
             assert PDFProcessor is not None
         except ImportError as e:
             pytest.skip(f"PDFProcessor not available: {e}")

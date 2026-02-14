@@ -7,7 +7,7 @@ Feature: DeonticExtractor.__init__()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import DeonticExtractor, DeonticPatterns
+from ipfs_datasets_py.logic.integration.deontological_reasoning import DeonticExtractor, DeonticPatterns
 from conftest import FixtureError
 
 

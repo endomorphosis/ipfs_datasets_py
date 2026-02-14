@@ -6,7 +6,7 @@ Feature: DeontologicalReasoningEngine.__init__()
 """
 
 import pytest
-from ipfs_datasets_py.deontological_reasoning import (
+from ipfs_datasets_py.logic.integration.deontological_reasoning import (
     DeontologicalReasoningEngine,
     DeonticExtractor,
     ConflictDetector

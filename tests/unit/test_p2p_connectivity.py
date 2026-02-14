@@ -8,7 +8,7 @@ and NAT traversal.
 import pytest
 import anyio
 
-from ipfs_datasets_py.p2p_connectivity import (
+from ipfs_datasets_py.p2p_networking.p2p_connectivity import (
     UniversalConnectivity,
     ConnectivityConfig,
     get_universal_connectivity

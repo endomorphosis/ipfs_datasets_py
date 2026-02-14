@@ -24,7 +24,7 @@ from ipfs_datasets_py.web_archive_utils import WebArchiveProcessor
 from ipfs_datasets_py.processors.graphrag.integration import GraphRAGFactory
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraphExtractor
 from ipfs_datasets_py.content_discovery import ContentDiscoveryEngine, ContentManifest
-from ipfs_datasets_py.multimodal_processor import MultiModalContentProcessor, ProcessedContentBatch
+from ipfs_datasets_py.processors.multimodal_processor import MultiModalContentProcessor, ProcessedContentBatch
 from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
 
 # Set up logging

@@ -5,7 +5,7 @@ This module provides Python wrappers for GitHub CLI (gh) commands,
 enabling seamless integration with the IPFS Accelerate package.
 """
 
-from ipfs_datasets_py.wrapper import GitHubCLI, WorkflowQueue, RunnerManager
+from ipfs_datasets_py.utils.github_wrapper import GitHubCLI, WorkflowQueue, RunnerManager
 from .cache import GitHubAPICache, get_global_cache, configure_cache
 from .graphql_wrapper import GitHubGraphQL
 

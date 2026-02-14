@@ -2,7 +2,7 @@
 import sys
 import traceback
 
-from ipfs_datasets_py.mcp_dashboard import MCPDashboard, MCPDashboardConfig
+from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard, MCPDashboardConfig
 
 
 def main():

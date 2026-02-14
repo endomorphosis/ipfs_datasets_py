@@ -46,10 +46,10 @@ class KnowledgeGraph:
         self.relationships[rel_id] = relationship
 
 # Import the enhanced components with mock classes
-sys.modules['ipfs_datasets_py.knowledge_graph_extraction'] = type(sys)('mock_kg')
-sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].Entity = Entity
-sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].Relationship = Relationship
-sys.modules['ipfs_datasets_py.knowledge_graph_extraction'].KnowledgeGraph = KnowledgeGraph
+sys.modules['ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction'] = type(sys)('mock_kg')
+sys.modules['ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction'].Entity = Entity
+sys.modules['ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction'].Relationship = Relationship
+sys.modules['ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction'].KnowledgeGraph = KnowledgeGraph
 
 from ipfs_datasets_py.advanced_knowledge_extractor import AdvancedKnowledgeExtractor, ExtractionContext
 from ipfs_datasets_py.advanced_performance_optimizer import AdvancedPerformanceOptimizer, ProcessingProfile

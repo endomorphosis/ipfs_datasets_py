@@ -15,7 +15,7 @@ import tempfile
 import os
 
 # Import the classes to test
-from ipfs_datasets_py.news_analysis_dashboard import (
+from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
     NewsAnalysisDashboard,
     NewsWorkflowManager,
     TimelineAnalysisEngine,
@@ -26,7 +26,7 @@ from ipfs_datasets_py.news_analysis_dashboard import (
     UserType,
     create_news_analysis_dashboard
 )
-from ipfs_datasets_py.mcp_dashboard import MCPDashboardConfig
+from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboardConfig
 
 
 class TestNewsArticle:

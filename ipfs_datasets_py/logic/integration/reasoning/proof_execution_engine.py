@@ -132,7 +132,7 @@ class ProofExecutionEngine:
         if not to_install:
             return
 
-        args = [sys.executable, "-m", "ipfs_prover_installer", "--yes"]
+        args = [sys.executable, "-m", "scripts.setup.ipfs_prover_installer", "--yes"]
         if want_z3:
             args.append("--z3")
         if want_cvc5:

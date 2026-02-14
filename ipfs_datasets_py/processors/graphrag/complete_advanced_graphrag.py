@@ -28,7 +28,7 @@ import uuid
 import tempfile
 
 # Import all advanced components
-from ipfs_datasets_py.advanced_web_archiving import (
+from ipfs_datasets_py.processors.advanced_web_archiving import (
     AdvancedWebArchiver, ArchivingConfig, ArchiveCollection, WebResource
 )
 from ipfs_datasets_py.processors.advanced_media_processing import (

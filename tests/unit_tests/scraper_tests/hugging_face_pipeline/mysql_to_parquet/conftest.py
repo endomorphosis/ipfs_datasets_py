@@ -16,7 +16,7 @@ duckdb = pytest.importorskip("duckdb")
 pd = pytest.importorskip("pandas")
 
 try:
-    from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers._utils.mysql_to_parquet import (
+    from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.mysql_to_parquet import (
         make_mysql_to_parquet,
         make_sql_statements,
     )
@@ -24,7 +24,7 @@ except Exception as e:
     pytest.skip(f"Failed to import mysql_to_parquet utils: {e}", allow_module_level=True)
 
 try:
-    from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers._utils.configs import (
+    from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.configs import (
         Configs, Paths, paths, configs
     )
 except Exception as e:
@@ -48,7 +48,7 @@ mock_configs.CLEAR_HASHES_CSV = True
 mock_configs.FILE_PATH_ENDING = "html"
 
 
-from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers._utils.mysql_to_parquet import (
+from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers._utils.mysql_to_parquet import (
     make_mysql_to_parquet,
 )
 

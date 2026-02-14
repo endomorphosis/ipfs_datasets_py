@@ -8,7 +8,7 @@ import time
 import pytest
 from pathlib import Path
 
-from ipfs_datasets_py.codeql_cache import (
+from ipfs_datasets_py.caching.codeql_cache import (
     CodeQLCache,
     CodeQLScanResult,
     get_global_codeql_cache,

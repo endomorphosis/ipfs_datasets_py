@@ -83,7 +83,7 @@ def install_profile(profile_name):
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print("Usage: python install_deps.py <profile>")
+        print("Usage: python scripts/setup/install_deps.py <profile>")
         print("Profiles: minimal, cli, pdf, ml, web")
         sys.exit(1)
     
