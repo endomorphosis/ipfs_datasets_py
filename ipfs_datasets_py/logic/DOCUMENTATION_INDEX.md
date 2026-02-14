@@ -37,14 +37,10 @@ This index provides a comprehensive guide to all documentation in the logic modu
 
 | Document | Content | Status |
 |----------|---------|--------|
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** 🆕 | **Visual architecture guide** - Mermaid diagrams for module dependencies, converters, caches, data flows, ZKP, integration | ✅ NEW (Phase 5) |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** 🆕 | **Visual architecture guide** - Mermaid diagrams for module dependencies, converters, caches, data flows, ZKP, integration | ✅ Production |
 | [FEATURES.md](./FEATURES.md) | **Complete feature catalog** - All 12+ features documented | ✅ Current (v2.0) |
-| [REFACTORING_COMPLETE.md](./REFACTORING_COMPLETE.md) | **Final refactoring status** - What was delivered | ✅ Complete |
-| [FINAL_STATUS_REPORT.md](./FINAL_STATUS_REPORT.md) | Overall project status and metrics | ✅ Current |
-| [LOGIC_REFACTORING_FINAL_REPORT.md](./LOGIC_REFACTORING_FINAL_REPORT.md) | **Comprehensive improvement report** - 2026-02-14 cleanup & analysis | ✅ Updated |
 | [TYPE_SYSTEM_STATUS.md](./TYPE_SYSTEM_STATUS.md) | Type coverage analysis (95%+, Grade A) | ✅ Current |
-| [CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md) | Caching strategies and unified cache (Phase 4) | ✅ Updated |
-| [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | Phases 1-4 implementation summary | ✅ Current |
+| [CACHING_ARCHITECTURE.md](./CACHING_ARCHITECTURE.md) | Caching strategies and unified cache | ✅ Current |
 
 ### Specialized Components
 
