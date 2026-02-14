@@ -46,7 +46,7 @@ class Test{tool_name.title().replace('_', '')}(unittest.TestCase):
         \"\"\"Helper to run async tests.\"\"\"
         return self.loop.run_until_complete(coro)
 
-    @patch('ipfs_datasets_py.ipfs_knn_index.IPFSKnnIndex')
+    @patch('ipfs_datasets_py.embeddings.ipfs_knn_index.IPFSKnnIndex')
     def test_{tool_name}_basic(self, mock_knn_index_class):
         \"\"\"Test basic functionality of {tool_name}.\"\"\"
         # Setup mock

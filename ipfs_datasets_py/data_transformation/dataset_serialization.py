@@ -668,7 +668,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
         super().__init__(name=name)
 
         # Initialize the vector index
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
         self.vector_index = IPFSKnnIndex(
             dimension=vector_dimension,
             metric=vector_metric,
@@ -732,7 +732,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
 
         # Currently, IPFSKnnIndex doesn't support direct updates
         # The simplest approach is to create a new index with all vectors
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
         
         all_embeddings = []
         all_metadata = []
@@ -1523,7 +1523,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             raise ValueError(f"IPLD block {cid} is not a vector-augmented graph")
 
         # Load the vector index
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
         vector_index_cid = root_obj["vector_index_cid"]
         vector_index = IPFSKnnIndex.load_from_ipfs(vector_index_cid, storage=storage)
 
@@ -2010,7 +2010,7 @@ class VectorAugmentedGraphDataset(GraphDataset):
             node_to_idx_map[node_id] = len(vectors) - 1
 
         # Create a new index
-        from ipfs_datasets_py.ipfs_knn_index import IPFSKnnIndex
+        from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndex
         new_index = IPFSKnnIndex(
             dimension=self.vector_index.dimension,
             metric=self.vector_index.metric,
