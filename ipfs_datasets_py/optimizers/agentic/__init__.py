@@ -33,13 +33,33 @@ from .github_api_unified import (
     APICallRecord,
 )
 from .github_control import GitHubChangeController
-from .methods import TestDrivenOptimizer
+from .methods import (
+    TestDrivenOptimizer,
+    AdversarialOptimizer,
+    ActorCriticOptimizer,
+    Policy,
+    ChaosEngineeringOptimizer,
+    FaultType,
+    FaultInjection,
+    ChaosTestResult,
+)
 from .patch_control import (
     IPFSPatchStore,
     Patch,
     PatchBasedChangeController,
     PatchManager,
     WorktreeManager,
+)
+from .validation import (
+    OptimizationValidator,
+    ValidationLevel,
+    DetailedValidationResult,
+    SyntaxValidator,
+    TypeValidator,
+    TestValidator,
+    PerformanceValidator,
+    SecurityValidator,
+    StyleValidator,
 )
 
 __all__ = [
@@ -72,4 +92,21 @@ __all__ = [
     "Patch",
     # Optimization methods
     "TestDrivenOptimizer",
+    "AdversarialOptimizer",
+    "ActorCriticOptimizer",
+    "Policy",
+    "ChaosEngineeringOptimizer",
+    "FaultType",
+    "FaultInjection",
+    "ChaosTestResult",
+    # Validation
+    "OptimizationValidator",
+    "ValidationLevel",
+    "DetailedValidationResult",
+    "SyntaxValidator",
+    "TypeValidator",
+    "TestValidator",
+    "PerformanceValidator",
+    "SecurityValidator",
+    "StyleValidator",
 ]
