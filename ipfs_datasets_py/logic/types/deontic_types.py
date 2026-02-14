@@ -9,11 +9,11 @@ For internal use within the logic module, import from here:
     from ipfs_datasets_py.logic.types import DeonticOperator, DeonticFormula
 
 For external use, the types are still available from their original location:
-    from ipfs_datasets_py.logic.tools.deontic_logic_core import DeonticOperator
+    from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticOperator
 """
 
 # Re-export from original location to maintain backward compatibility
-from ..tools.deontic_logic_core import (
+from ..integration.deontic_logic_core import (
     DeonticOperator,
     DeonticFormula,
     DeonticRuleSet,

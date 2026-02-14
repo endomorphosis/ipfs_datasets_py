@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import re
 
-from ..tools.deontic_logic_core import (
+from ..integration.deontic_logic_core import (
     DeonticFormula, DeonticOperator, DeonticRuleSet, TemporalCondition,
     LegalAgent, LegalContext
 )

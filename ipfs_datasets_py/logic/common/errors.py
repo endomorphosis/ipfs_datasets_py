@@ -14,7 +14,7 @@ from typing import Optional, Dict, Any
 class LogicError(Exception):
     """Base exception for all logic module errors."""
     
-    def __init__(self, message: str, context: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, context: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize LogicError with message and optional context.
         

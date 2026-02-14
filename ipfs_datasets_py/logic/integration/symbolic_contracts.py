@@ -588,7 +588,7 @@ if SYMBOLIC_AI_AVAILABLE:
         def forward(self, input_data: FOLInput) -> FOLOutput:
             """Main conversion logic."""
             try:
-                from ..tools.symbolic_fol_bridge import SymbolicFOLBridge
+                from .symbolic_fol_bridge import SymbolicFOLBridge
 
                 input_data = self._coerce_input(input_data)
                 

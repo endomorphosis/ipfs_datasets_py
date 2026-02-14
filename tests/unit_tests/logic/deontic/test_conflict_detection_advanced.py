@@ -12,8 +12,8 @@ Tests cover:
 import pytest
 from ipfs_datasets_py.logic.deontic.utils.deontic_parser import (
     detect_normative_conflicts,
-    DeonticOperator,
 )
+from ipfs_datasets_py.logic.types.deontic_types import DeonticOperator
 
 
 class TestAdvancedConflictDetection:

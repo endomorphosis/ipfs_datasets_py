@@ -13,7 +13,7 @@ from pathlib import Path
 
 from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
 from .document_consistency_checker import DocumentConsistencyChecker
-from ..tools.deontic_logic_core import (
+from ..integration.deontic_logic_core import (
     DeonticFormula,
     DeonticOperator,
     LegalAgent,

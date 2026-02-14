@@ -45,7 +45,7 @@ __version__ = "0.2.0"
 __author__ = "IPFS Datasets Python Team"
 
 # Core deontic logic exports
-from ..tools.deontic_logic_core import (
+from ..integration.deontic_logic_core import (
     DeonticOperator,
     DeonticFormula,
     DeonticRuleSet,
@@ -69,7 +69,7 @@ from .legal_domain_knowledge import (
 )
 
 # Logic translation exports
-from ..tools.logic_translation_core import (
+from .logic_translation_core import (
     LogicTranslationTarget,
     TranslationResult,
     AbstractLogicFormula,
@@ -165,8 +165,8 @@ except ImportError:
     DebugReport = None
 
 # Legacy SymbolicAI exports
-from ..tools.symbolic_fol_bridge import SymbolicFOLBridge
-from ..tools.symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
+from .symbolic_fol_bridge import SymbolicFOLBridge
+from .symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
 
 # Symbolic contracts (optional - requires pydantic)
 try:
@@ -199,7 +199,7 @@ try:
     from .interactive_fol_constructor import InteractiveFOLConstructor
     from .interactive_fol_types import StatementRecord, SessionMetadata
     from .interactive_fol_utils import create_interactive_session, demo_interactive_session
-    from ..tools.modal_logic_extension import ModalLogicSymbol, AdvancedLogicConverter, ModalFormula, LogicClassification
+    from .modal_logic_extension import ModalLogicSymbol, AdvancedLogicConverter, ModalFormula, LogicClassification
     from .logic_verification import LogicVerifier, LogicAxiom, ProofResult, ConsistencyCheck, EntailmentResult
     
     __all__ = [

@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional
 
 # Local imports for type hints
-from ..tools.symbolic_fol_bridge import LogicalComponents
+from .symbolic_fol_bridge import LogicalComponents
 
 
 @dataclass

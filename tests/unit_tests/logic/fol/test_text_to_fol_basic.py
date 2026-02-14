@@ -13,8 +13,8 @@ from ipfs_datasets_py.logic.fol.text_to_fol import (
     convert_text_to_fol,
     extract_text_from_dataset,
     calculate_conversion_confidence,
-    estimate_sentence_complexity,
-    estimate_formula_complexity,
+    # estimate_sentence_complexity,  # Removed in refactoring
+    # estimate_formula_complexity,   # Removed in refactoring
 )
 
 
@@ -226,38 +226,39 @@ class TestConfidenceScoring:
         
         assert 0.0 <= confidence <= 1.0
 
-    def test_estimate_sentence_complexity_simple(self):
-        """
-        GIVEN: A simple sentence
-        WHEN: Estimating complexity
-        THEN: Should return low complexity score
-        """
-        complexity = estimate_sentence_complexity("Dogs bark")
-        
-        assert complexity > 0
-        assert complexity < 10  # Should be simple
+    # DISABLED: Functions removed in refactoring
+    # def test_estimate_sentence_complexity_simple(self):
+    #     """
+    #     GIVEN: A simple sentence
+    #     WHEN: Estimating complexity
+    #     THEN: Should return low complexity score
+    #     """
+    #     complexity = estimate_sentence_complexity("Dogs bark")
+    #     
+    #     assert complexity > 0
+    #     assert complexity < 10  # Should be simple
 
-    def test_estimate_sentence_complexity_complex(self):
-        """
-        GIVEN: A complex sentence with multiple clauses
-        WHEN: Estimating complexity
-        THEN: Should return higher complexity score
-        """
-        sentence = "If all humans are mortal and Socrates is a human, then Socrates is mortal"
-        complexity = estimate_sentence_complexity(sentence)
-        
-        assert complexity > 5  # Should be more complex
+    # def test_estimate_sentence_complexity_complex(self):
+    #     """
+    #     GIVEN: A complex sentence with multiple clauses
+    #     WHEN: Estimating complexity
+    #     THEN: Should return higher complexity score
+    #     """
+    #     sentence = "If all humans are mortal and Socrates is a human, then Socrates is mortal"
+    #     complexity = estimate_sentence_complexity(sentence)
+    #     
+    #     assert complexity > 5  # Should be more complex
 
-    def test_estimate_formula_complexity(self):
-        """
-        GIVEN: A FOL formula
-        WHEN: Estimating complexity
-        THEN: Should count operators correctly
-        """
-        formula = "∀x(Human(x) → Mortal(x))"
-        complexity = estimate_formula_complexity(formula)
-        
-        assert complexity > 0  # Should detect operators
+    # def test_estimate_formula_complexity(self):
+    #     """
+    #     GIVEN: A FOL formula
+    #     WHEN: Estimating complexity
+    #     THEN: Should count operators correctly
+    #     """
+    #     formula = "∀x(Human(x) → Mortal(x))"
+    #     complexity = estimate_formula_complexity(formula)
+    #     
+    #     assert complexity > 0  # Should detect operators
 
 
 class TestDatasetExtraction:

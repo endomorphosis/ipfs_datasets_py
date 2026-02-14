@@ -106,7 +106,7 @@ class TestBackwardCompatibility:
         WHEN importing from original location
         THEN types are still available (backward compatibility)
         """
-        from ipfs_datasets_py.logic.tools.deontic_logic_core import (
+        from ipfs_datasets_py.logic.integration.deontic_logic_core import (
             DeonticOperator,
             DeonticFormula,
         )
@@ -150,7 +150,7 @@ class TestTypeIdentity:
         THEN they are the same object
         """
         from ipfs_datasets_py.logic.types import DeonticOperator as TypesDeonticOp
-        from ipfs_datasets_py.logic.tools.deontic_logic_core import DeonticOperator as OriginalDeonticOp
+        from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticOperator as OriginalDeonticOp
         
         assert TypesDeonticOp is OriginalDeonticOp
     
@@ -329,7 +329,7 @@ class TestCircularDependencyResolution:
         """
         # This would fail if there were circular dependencies
         from ipfs_datasets_py.logic.types import DeonticOperator
-        from ipfs_datasets_py.logic.tools.deontic_logic_core import DeonticFormula
+        from ipfs_datasets_py.logic.integration.deontic_logic_core import DeonticFormula
         
         assert DeonticOperator is not None
         assert DeonticFormula is not None

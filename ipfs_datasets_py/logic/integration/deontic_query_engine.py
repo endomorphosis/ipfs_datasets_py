@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import re
 
-from ..tools.deontic_logic_core import (
+from ..integration.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent, DeonticRuleSet,
     TemporalCondition, TemporalOperator
 )

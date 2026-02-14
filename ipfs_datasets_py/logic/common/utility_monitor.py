@@ -36,7 +36,7 @@ class UtilityMonitor:
         >>> print(f"Calls: {stats['my_utility']['calls']}")
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize utility monitor."""
         self._stats: Dict[str, Dict[str, Any]] = {}
         self._cache: Dict[str, Any] = {}
@@ -173,11 +173,11 @@ class UtilityMonitor:
         
         return all_stats
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the utility cache."""
         self._cache.clear()
     
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset all statistics."""
         self._stats.clear()
 
@@ -221,11 +221,11 @@ def get_global_stats() -> Dict[str, Any]:
     return _global_monitor.get_stats()
 
 
-def clear_global_cache():
+def clear_global_cache() -> None:
     """Clear global monitor cache."""
     _global_monitor.clear_cache()
 
 
-def reset_global_stats():
+def reset_global_stats() -> None:
     """Reset global monitor statistics."""
     _global_monitor.reset_stats()

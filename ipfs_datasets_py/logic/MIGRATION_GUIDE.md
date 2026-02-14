@@ -335,3 +335,217 @@ def test_new_way():
 | **IPFS** | ❌ None | ✅ Distributed caching |
 
 **Migration is strongly recommended for better performance and features!**
+
+---
+
+## Migrating from tools/ to integration/ (Phase 3)
+
+### Background
+
+The `tools/` directory contains duplicate and outdated implementations that mirror the `integration/` directory. As part of the refactoring plan, the `tools/` directory will be deleted and all imports should use `integration/` or module-specific locations.
+
+### Import Path Changes
+
+#### 1. FOL Text Conversion
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools import text_to_fol
+from ipfs_datasets_py.logic.tools.text_to_fol import convert_text_to_fol
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.fol import text_to_fol
+from ipfs_datasets_py.logic.fol import FOLConverter  # Recommended
+```
+
+#### 2. Deontic Logic Core
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.deontic_logic_core import (
+    DeonticFormula,
+    DeonticOperator,
+    LegalAgent
+)
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.integration.deontic_logic_core import (
+    DeonticFormula,
+    DeonticOperator,
+    LegalAgent
+)
+# Or use the type definitions:
+from ipfs_datasets_py.logic.types import DeonticFormula
+```
+
+#### 3. Symbolic FOL Bridge
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.symbolic_fol_bridge import SymbolicFOLBridge
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.integration.symbolic_fol_bridge import SymbolicFOLBridge
+```
+
+#### 4. Symbolic Logic Primitives
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.symbolic_logic_primitives import (
+    LogicSymbol,
+    Quantifier,
+    LogicOperator
+)
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.integration.symbolic_logic_primitives import (
+    LogicSymbol,
+    Quantifier,
+    LogicOperator
+)
+# Or use type definitions:
+from ipfs_datasets_py.logic.types import LogicOperator, Quantifier
+```
+
+#### 5. Modal Logic Extension
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.modal_logic_extension import ModalLogicSymbol
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.integration.modal_logic_extension import ModalLogicSymbol
+```
+
+#### 6. Logic Translation Core
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.logic_translation_core import LogicTranslator
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.integration.logic_translation_core import LogicTranslator
+```
+
+#### 7. Legal Text to Deontic
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.legal_text_to_deontic import convert_legal_text
+```
+
+**New (Correct):**
+```python
+from ipfs_datasets_py.logic.deontic import legal_text_to_deontic
+from ipfs_datasets_py.logic.deontic import DeonticConverter  # Recommended
+```
+
+### Utility Files Migration
+
+#### 8. Logic Utils (Parsers, Formatters, Extractors)
+**Old (Deprecated):**
+```python
+from ipfs_datasets_py.logic.tools.logic_utils import (
+    fol_parser,
+    deontic_parser,
+    logic_formatter,
+    predicate_extractor
+)
+```
+
+**New (Correct):**
+```python
+# FOL utilities
+from ipfs_datasets_py.logic.fol.utils import fol_parser
+from ipfs_datasets_py.logic.fol.utils import predicate_extractor
+from ipfs_datasets_py.logic.fol.utils import logic_formatter
+
+# Deontic utilities
+from ipfs_datasets_py.logic.deontic.utils import deontic_parser
+```
+
+### Automated Migration Script
+
+You can use this script to update your imports:
+
+```bash
+#!/bin/bash
+# migrate_imports.sh - Automatically update imports from tools/ to integration/
+
+# Replace tools/ imports
+find . -name "*.py" -type f -exec sed -i \
+  's/from ipfs_datasets_py\.logic\.tools/from ipfs_datasets_py.logic.integration/g' {} +
+
+# Replace specific module imports
+find . -name "*.py" -type f -exec sed -i \
+  's/from ipfs_datasets_py\.logic\.tools\.text_to_fol/from ipfs_datasets_py.logic.fol/g' {} +
+
+find . -name "*.py" -type f -exec sed -i \
+  's/from ipfs_datasets_py\.logic\.tools\.legal_text_to_deontic/from ipfs_datasets_py.logic.deontic/g' {} +
+
+echo "Migration complete. Please review changes and test."
+```
+
+### Testing After Migration
+
+After updating imports, run the test suite to ensure everything works:
+
+```bash
+# Test specific modules
+pytest tests/unit_tests/logic/fol/
+pytest tests/unit_tests/logic/deontic/
+pytest tests/unit_tests/logic/integration/
+
+# Run full logic module tests
+pytest tests/unit_tests/logic/
+
+# Check for any remaining tools/ imports
+grep -r "from.*logic.tools" ipfs_datasets_py/ tests/
+```
+
+### Timeline
+
+**Phase 3 Schedule:**
+- Analysis of dependencies: Week 2
+- Import path updates: Week 2
+- Testing and validation: Week 2-3
+- tools/ directory deletion: Week 3
+
+### Backward Compatibility
+
+During the transition period, a compatibility layer is available in `logic/__init__.py`:
+
+```python
+# Temporary backward compatibility (will be removed in v2.0)
+import warnings
+
+# Redirect old imports to new locations
+def __getattr__(name):
+    if name == "tools":
+        warnings.warn(
+            "Importing from logic.tools is deprecated. "
+            "Use integration/ or module-specific imports instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        from . import integration
+        return integration
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+```
+
+### Need Help?
+
+- **Full Refactoring Plan:** See `REFACTORING_PLAN.md` Phase 3
+- **Import Analysis:** Run `grep -r "from.*logic.tools" .` to find all imports
+- **Questions:** Refer to the main README.md or FEATURES.md
+
+---
+
+**Last Updated:** 2026-02-13  
+**Status:** Active migration - tools/ directory scheduled for removal in Phase 3
