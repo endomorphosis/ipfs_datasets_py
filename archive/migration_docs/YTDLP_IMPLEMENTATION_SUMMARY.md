@@ -83,7 +83,7 @@ Demo sections passed: 3/3
 
 ### Quick Start
 ```python
-from ipfs_datasets_py.multimedia import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
 
 downloader = YtDlpWrapper()
 result = await downloader.download_video(

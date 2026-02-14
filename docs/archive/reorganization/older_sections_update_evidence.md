@@ -55,7 +55,7 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
 # Note: These are MCP tool imports for MCP server integration.
 # For direct usage without MCP server, use:
 #   from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
-#   from ipfs_datasets_py.multimedia import FFmpegVideoProcessor
+#   from ipfs_datasets_py.data_transformation.multimedia import FFmpegVideoProcessor
 
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
     search_common_crawl,
