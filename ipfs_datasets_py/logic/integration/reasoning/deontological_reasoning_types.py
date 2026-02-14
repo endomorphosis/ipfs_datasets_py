@@ -102,7 +102,7 @@ class DeonticStatement:
     conditions: List[str] = field(default_factory=list)  # Conditions for the statement
     exceptions: List[str] = field(default_factory=list)  # Exceptions to the statement
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Normalize entity and action text."""
         if isinstance(self.modality, str):
             normalized = self.modality.strip()
