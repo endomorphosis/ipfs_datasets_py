@@ -665,11 +665,18 @@ class OptimizerCLI:
             return 1
 
 
-def main():
-    """Main entry point."""
+def main(args: Optional[List[str]] = None):
+    """Main entry point.
+    
+    Args:
+        args: Command-line arguments (defaults to sys.argv[1:])
+        
+    Returns:
+        Exit code
+    """
     cli = OptimizerCLI()
-    sys.exit(cli.run())
+    return cli.run(args)
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
