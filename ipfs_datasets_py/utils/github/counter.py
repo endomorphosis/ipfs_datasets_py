@@ -8,10 +8,11 @@ import json
 import logging
 import os
 import subprocess
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -237,6 +238,93 @@ class APICounter:
         self.cache_misses = 0
         self.start_time = datetime.now()
         logger.info("Reset API counter")
+    
+    def run_command_with_retry(
+        self,
+        command: List[str],
+        max_retries: int = 3,
+        backoff: float = 2.0,
+        timeout: int = 60
+    ) -> Tuple[bool, Optional[subprocess.CompletedProcess]]:
+        """Run a GitHub CLI command with retry logic.
+        
+        Automatically retries on rate limit errors and other transient failures.
+        
+        Args:
+            command: Command to run (e.g., ['gh', 'pr', 'list'])
+            max_retries: Maximum number of retry attempts
+            backoff: Backoff multiplier between retries (exponential)
+            timeout: Timeout in seconds for each attempt
+        
+        Returns:
+            Tuple of (success: bool, result: CompletedProcess or None)
+        """
+        for attempt in range(max_retries):
+            try:
+                result = self.run_gh_command(command, timeout=timeout, check=False)
+                
+                if result.returncode == 0:
+                    return True, result
+                
+                # Check for rate limit errors
+                if 'rate limit' in result.stderr.lower() or 'api rate limit' in result.stderr.lower():
+                    logger.warning(f"⚠️  Rate limit hit on attempt {attempt + 1}/{max_retries}")
+                    self.count_call('rate_limit_hit', 1, 
+                                   command=' '.join(command), 
+                                   attempt=attempt + 1)
+                    
+                    if attempt < max_retries - 1:
+                        wait_time = backoff ** (attempt + 1)
+                        logger.info(f"Waiting {wait_time}s before retry...")
+                        time.sleep(wait_time)
+                    continue
+                
+                # Other errors
+                logger.error(f"Command failed with exit code {result.returncode}: {result.stderr}")
+                if attempt < max_retries - 1:
+                    wait_time = backoff ** attempt
+                    logger.info(f"Retrying in {wait_time}s (attempt {attempt + 2}/{max_retries})...")
+                    time.sleep(wait_time)
+                else:
+                    return False, result
+                    
+            except subprocess.TimeoutExpired:
+                logger.error(f"Command timed out on attempt {attempt + 1}/{max_retries}")
+                if attempt == max_retries - 1:
+                    return False, None
+                time.sleep(backoff ** attempt)
+            except Exception as e:
+                logger.error(f"Unexpected error on attempt {attempt + 1}/{max_retries}: {e}")
+                if attempt == max_retries - 1:
+                    return False, None
+                time.sleep(backoff ** attempt)
+        
+        return False, None
+    
+    def is_approaching_limit(self, limit: int = 5000, threshold: float = 0.8) -> bool:
+        """Check if we're approaching the API rate limit.
+        
+        Args:
+            limit: Rate limit per hour (default: 5000 for GitHub)
+            threshold: Warning threshold as fraction (default: 0.8 = 80%)
+        
+        Returns:
+            True if current API usage >= (limit * threshold)
+        """
+        total_calls = self.cache_hits + self.cache_misses
+        return total_calls >= (limit * threshold)
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - save metrics automatically."""
+        try:
+            self.save_metrics()
+        except Exception as e:
+            logger.warning(f"Failed to save metrics on exit: {e}")
+        return False
 
 
 # Backward compatibility alias for optimizers and .github/scripts
