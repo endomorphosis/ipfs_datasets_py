@@ -106,10 +106,10 @@ class TestAnyioMigration:
             pytest.fail(f"Failed to import alerts.alert_manager: {e}")
         
         try:
-            from ipfs_datasets_py.multimedia import ytdlp_wrapper
+            from ipfs_datasets_py.data_transformation.multimedia import ytdlp_wrapper
             assert True
         except ImportError as e:
-            pytest.fail(f"Failed to import multimedia.ytdlp_wrapper: {e}")
+            pytest.fail(f"Failed to import data_transformation.multimedia.ytdlp_wrapper: {e}")
         
         try:
             from ipfs_datasets_py import unified_web_scraper

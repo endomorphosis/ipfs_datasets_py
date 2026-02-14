@@ -7,8 +7,8 @@ import pytest
 
 
 from ipfs_datasets_py.data_transformation.multimedia.media_processor import MediaProcessor
-from ipfs_datasets_py.multimedia import YtDlpWrapper
-from ipfs_datasets_py.multimedia import FFmpegWrapper
+from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
+from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
 
 @pytest.fixture
 def mock_ytdlp():
