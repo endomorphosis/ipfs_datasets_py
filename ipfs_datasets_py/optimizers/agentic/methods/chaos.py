@@ -74,6 +74,40 @@ class ChaosTestResult:
     suggestions: List[str] = field(default_factory=list)
 
 
+@dataclass
+class Vulnerability:
+    """Represents a vulnerability found during chaos testing.
+    
+    Attributes:
+        type: Type of fault that exposed the vulnerability
+        location: Where the vulnerability was found
+        description: Description of the vulnerability
+        severity: Severity level (low, medium, high, critical)
+        suggested_fix: Suggested fix for the vulnerability
+    """
+    type: FaultType
+    location: str
+    description: str
+    severity: str
+    suggested_fix: str
+
+
+@dataclass
+class ResilienceReport:
+    """Report on system resilience after chaos testing.
+    
+    Attributes:
+        vulnerabilities: List of vulnerabilities found
+        resilience_score: Overall resilience score (0-1)
+        total_faults_injected: Total number of faults injected
+        failures_detected: Number of failures detected
+    """
+    vulnerabilities: List[Vulnerability]
+    resilience_score: float
+    total_faults_injected: int
+    failures_detected: int
+
+
 class ChaosEngineeringOptimizer(AgenticOptimizer):
     """Chaos Engineering optimization implementation.
     
@@ -663,3 +697,7 @@ except Exception as e:
         except Exception as e:
             print(f"Error creating patch: {e}")
             return None, None
+
+
+# Backward compatibility alias
+ChaosOptimizer = ChaosEngineeringOptimizer
