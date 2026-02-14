@@ -231,14 +231,6 @@ class PatchManager:
             self._cache.set(cache_key, patch)
         
         return patch
-        diff_content = patch_path.read_text()
-        return Patch(
-            patch_id=patch_path.stem,
-            agent_id="unknown",
-            task_id="unknown",
-            description="Loaded from file",
-            diff_content=diff_content,
-        )
     
     def apply_patch(self, patch: Patch, target_path: Path) -> bool:
         """Apply patch to target directory.
@@ -393,9 +385,23 @@ class PatchManager:
         Returns:
             Dict with cache stats or None if caching disabled
         """
-        if self._cache:
-            return self._cache.get_cache_stats()
-        return None
+        if not self._cache:
+            return None
+        
+        # LocalCache exposes get_stats() returning a CacheStats object
+        stats = self._cache.get_stats()
+        if stats is None:
+            return None
+        
+        # Convert CacheStats to dict
+        from dataclasses import asdict
+        try:
+            return asdict(stats)
+        except (TypeError, AttributeError):
+            # Fallback for non-dataclass stats
+            if isinstance(stats, dict):
+                return stats
+            return getattr(stats, "__dict__", {"value": str(stats)})
     
     def clear_cache(self) -> None:
         """Clear the patch cache."""

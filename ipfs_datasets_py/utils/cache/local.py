@@ -100,12 +100,23 @@ class LocalCache(BaseCache):
         Args:
             key: Cache key
             value: Value to cache
-            ttl: Time-to-live in seconds (uses default_ttl if None)
+            ttl: Time-to-live in seconds. If None, uses default_ttl.
+                 Note: If ttl > default_ttl, the entry may be evicted by the
+                 underlying TTLCache before the custom TTL expires. For best
+                 results, use ttl <= default_ttl.
             **metadata: Additional metadata to store
         """
         with self._lock:
             try:
                 ttl_seconds = ttl if ttl is not None else self.default_ttl
+                
+                # Warn if TTL exceeds default (may cause premature eviction)
+                if ttl_seconds > self.default_ttl:
+                    logger.warning(
+                        f"TTL {ttl_seconds}s exceeds default_ttl {self.default_ttl}s. "
+                        f"Entry may be evicted early by underlying TTLCache."
+                    )
+                
                 expires_at = datetime.now() + timedelta(seconds=ttl_seconds)
                 
                 entry = CacheEntry(

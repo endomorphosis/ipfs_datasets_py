@@ -576,13 +576,13 @@ class AgentCoordinator:
         stats = {}
         
         if self._agent_cache:
-            stats['agent_cache'] = self._agent_cache.get_cache_stats()
+            stats['agent_cache'] = self._agent_cache.get_stats()
         
         if self._task_cache:
-            stats['task_cache'] = self._task_cache.get_cache_stats()
+            stats['task_cache'] = self._task_cache.get_stats()
         
         if self._conflict_cache:
-            stats['conflict_cache'] = self._conflict_cache.get_cache_stats()
+            stats['conflict_cache'] = self._conflict_cache.get_stats()
         
         return stats
     
