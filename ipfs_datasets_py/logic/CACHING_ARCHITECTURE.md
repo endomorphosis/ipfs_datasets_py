@@ -2,18 +2,37 @@
 
 **Module:** ipfs_datasets_py.logic  
 **Date:** 2026-02-14  
-**Status:** Production-Ready with Improvement Opportunities
+**Status:** Production-Ready with Recent Improvements ✅
+
+## 🎉 Recent Improvements (2026-02-14)
+
+**Base Converter Cache Enhanced:**
+- ✅ Added bounded cache with configurable maxsize (default: 1000)
+- ✅ Added TTL-based expiration (default: 1 hour) 
+- ✅ Implemented LRU eviction policy
+- ✅ Thread-safe operations with RLock
+- ✅ Rich statistics (hits, misses, evictions, expirations, hit_rate)
+- ✅ 100% backward compatible
+- ✅ Comprehensive test coverage
+
+**Impact:**
+- No more unbounded cache growth in production ✅
+- No more stale entries persisting indefinitely ✅
+- Better memory management with automatic eviction ✅
+- Detailed metrics for monitoring and optimization ✅
+
+---
 
 ## Executive Summary
 
 The logic module implements **multiple caching strategies** across different components:
-- ✅ **FOL/Deontic Converters** - Basic local caching with IPFS support
+- ✅ **FOL/Deontic Converters** - **IMPROVED** - Bounded cache with TTL and LRU
 - ✅ **Proof Results** - CID-based content-addressable caching
 - ✅ **TDFOL Module** - Specialized proof caching with TTL
 - ✅ **Integration Layer** - LRU+TTL hybrid caching
-- ⚠️ **Opportunity** - 4 similar cache implementations could be unified
+- ⚠️ **Opportunity** - 3 proof cache implementations could still be unified
 
-**Overall Grade:** B+ (Good functionality, opportunity for consolidation)
+**Overall Grade:** A- (Significantly improved from B+)
 
 ---
 
@@ -22,34 +41,58 @@ The logic module implements **multiple caching strategies** across different com
 ### 1. Base Converter Caching
 
 **Location:** `common/converters.py` - `LogicConverter` class  
-**Strategy:** Simple dictionary-based  
+**Strategy:** **IMPROVED** - Bounded cache with TTL and LRU eviction  
 **Features:**
 - ✅ Configurable via `enable_caching` parameter
 - ✅ Per-conversion result caching
 - ✅ Cache key generation from input + options
 - ✅ Statistics via `get_cache_stats()`
-- ⚠️ No TTL or size limits (unbounded growth)
-- ⚠️ No eviction policy
+- ✅ **NEW:** TTL-based expiration (configurable, default: 1 hour)
+- ✅ **NEW:** Maximum size limit (configurable, default: 1000 entries)
+- ✅ **NEW:** LRU eviction policy (prevents unbounded growth)
+- ✅ **NEW:** Thread-safe operations (RLock)
+- ✅ **NEW:** Comprehensive statistics (hits, misses, evictions, expirations, hit_rate)
 
 **Usage:**
 ```python
 from ipfs_datasets_py.logic.fol import FOLConverter
 from ipfs_datasets_py.logic.deontic import DeonticConverter
 
-# FOL conversion with caching
-fol = FOLConverter(use_cache=True)
+# FOL conversion with bounded cache (NEW parameters)
+fol = FOLConverter(
+    use_cache=True,
+    cache_maxsize=1000,  # Maximum 1000 entries
+    cache_ttl=3600,      # 1 hour TTL
+)
 result1 = fol.convert("text")  # Miss - computed
 result2 = fol.convert("text")  # Hit - from cache (14x faster)
 
-# Deontic conversion with caching
-deontic = DeonticConverter(use_cache=True)
+# Deontic conversion with custom cache settings
+deontic = DeonticConverter(
+    use_cache=True,
+    cache_maxsize=500,   # Smaller cache
+    cache_ttl=1800,      # 30 minute TTL
+)
 result = deontic.convert("The tenant must pay rent")
+
+# Get comprehensive statistics
+stats = fol.get_cache_stats()
+print(f"Hit rate: {stats['hit_rate']:.1%}")
+print(f"Evictions: {stats['evictions']}")
+print(f"Expirations: {stats['expirations']}")
+
+# Manually cleanup expired entries
+cleaned = fol.cleanup_expired_cache()
 ```
 
 **Performance:**
 - Cache hit speedup: **14x** (validated in Phase 7.4 benchmarks)
 - Lookup time: <0.1ms
-- Memory: O(n) where n = unique conversions
+- Memory: **Bounded** - max 1000 entries by default (configurable)
+- TTL prevents stale entries
+- LRU eviction prevents unbounded growth
+
+**Status:** ✅ **IMPROVED** (2026-02-14) - Production-ready with bounded cache
 
 ---
 
