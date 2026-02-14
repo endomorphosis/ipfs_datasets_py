@@ -1,0 +1,272 @@
+name: Agentic Code Optimization
+
+permissions:
+  contents: read
+
+on:
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+  
+  workflow_dispatch:
+    inputs:
+      target_files:
+        description: 'Target files or directories (comma-separated)'
+        required: false
+        default: 'ipfs_datasets_py/'
+      optimization_method:
+        description: 'Optimization method to use'
+        required: false
+        default: 'test_driven'
+        type: choice
+        options:
+          - test_driven
+          - adversarial
+          - actor_critic
+          - chaos
+      priority:
+        description: 'Task priority (0-100)'
+        required: false
+        default: '50'
+      validation_level:
+        description: 'Validation level'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - basic
+          - standard
+          - strict
+          - paranoid
+      dry_run:
+        description: 'Dry run (no changes made)'
+        required: false
+        default: false
+        type: boolean
+  
+  issues:
+    types: [labeled]
+
+jobs:
+  check-trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      target_files: ${{ steps.check.outputs.target_files }}
+      method: ${{ steps.check.outputs.method }}
+    
+    steps:
+      - name: Check if optimization requested
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "issues" ]]; then
+            if [[ "${{ contains(github.event.issue.labels.*.name, 'optimize') }}" == "true" ]]; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+              # Parse issue body for targets
+              echo "target_files=ipfs_datasets_py/" >> $GITHUB_OUTPUT
+              echo "method=test_driven" >> $GITHUB_OUTPUT
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "target_files=${{ github.event.inputs.target_files || 'ipfs_datasets_py/' }}" >> $GITHUB_OUTPUT
+            echo "method=${{ github.event.inputs.optimization_method || 'test_driven' }}" >> $GITHUB_OUTPUT
+          fi
+
+  optimize:
+    needs: check-trigger
+    if: needs.check-trigger.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for git operations
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[test]"
+          # Install optional dependencies for optimization
+          pip install mypy pytest flake8 || true
+      
+      - name: Check GitHub API rate limits
+        id: rate_limit
+        run: |
+          REMAINING=$(curl -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/rate_limit | jq -r '.rate.remaining')
+          echo "remaining=$REMAINING" >> $GITHUB_OUTPUT
+          
+          if [ "$REMAINING" -lt 100 ]; then
+            echo "::warning::GitHub API rate limit low: $REMAINING requests remaining"
+            echo "use_patch_mode=true" >> $GITHUB_OUTPUT
+          else
+            echo "use_patch_mode=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Configure optimizer
+        run: |
+          python -m ipfs_datasets_py.optimizers.agentic.cli config set \
+            --key change_control \
+            --value ${{ steps.rate_limit.outputs.use_patch_mode == 'true' && 'patch' || 'github' }}
+          
+          python -m ipfs_datasets_py.optimizers.agentic.cli config set \
+            --key validation_level \
+            --value ${{ github.event.inputs.validation_level || 'standard' }}
+      
+      - name: Run optimization
+        id: optimize
+        env:
+          IPFS_DATASETS_PY_LLM_PROVIDER: ${{ vars.LLM_PROVIDER || 'local' }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          TARGET="${{ needs.check-trigger.outputs.target_files }}"
+          METHOD="${{ needs.check-trigger.outputs.method }}"
+          PRIORITY="${{ github.event.inputs.priority || '50' }}"
+          DRY_RUN="${{ github.event.inputs.dry_run == true && '--dry-run' || '' }}"
+          
+          echo "Running optimization..."
+          echo "Target: $TARGET"
+          echo "Method: $METHOD"
+          echo "Priority: $PRIORITY"
+          
+          python -m ipfs_datasets_py.optimizers.agentic.cli optimize \
+            --method "$METHOD" \
+            --target "$TARGET" \
+            --description "Automated code optimization via GitHub Actions" \
+            --priority "$PRIORITY" \
+            $DRY_RUN \
+            2>&1 | tee optimization.log
+          
+          # Check if optimization succeeded
+          if [ $? -eq 0 ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Validate changes
+        if: steps.optimize.outputs.success == 'true' && github.event.inputs.dry_run != true
+        run: |
+          # Run validation on changed files
+          git diff --name-only > changed_files.txt
+          
+          while IFS= read -r file; do
+            if [[ "$file" == *.py ]]; then
+              echo "Validating $file..."
+              python -m ipfs_datasets_py.optimizers.agentic.cli validate \
+                "$file" \
+                --level ${{ github.event.inputs.validation_level || 'standard' }} \
+                || echo "::warning::Validation failed for $file"
+            fi
+          done < changed_files.txt
+      
+      - name: Create Pull Request
+        if: steps.optimize.outputs.success == 'true' && github.event.inputs.dry_run != true
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            🤖 Automated code optimization
+            
+            Method: ${{ needs.check-trigger.outputs.method }}
+            Target: ${{ needs.check-trigger.outputs.target_files }}
+            Validation: ${{ github.event.inputs.validation_level || 'standard' }}
+            
+            Generated by GitHub Actions workflow
+          branch: automated-optimization-${{ github.run_number }}
+          title: '🤖 Automated Code Optimization (${{ needs.check-trigger.outputs.method }})'
+          body: |
+            ## Automated Code Optimization
+            
+            **Method:** `${{ needs.check-trigger.outputs.method }}`  
+            **Target:** `${{ needs.check-trigger.outputs.target_files }}`  
+            **Validation Level:** `${{ github.event.inputs.validation_level || 'standard' }}`  
+            **Priority:** `${{ github.event.inputs.priority || '50' }}`
+            
+            ### Changes
+            
+            This PR contains automated code optimizations generated by the agentic optimizer.
+            
+            ### Validation
+            
+            All changes have been validated at the `${{ github.event.inputs.validation_level || 'standard' }}` level.
+            
+            ### Review Checklist
+            
+            - [ ] Review code changes for correctness
+            - [ ] Verify tests pass
+            - [ ] Check performance improvements
+            - [ ] Ensure backward compatibility
+            - [ ] Approve and merge if satisfactory
+            
+            ---
+            
+            Generated by [Agentic Optimizer](.github/workflows/agentic-optimization.yml)  
+            Workflow Run: #${{ github.run_number }}
+          labels: |
+            automated
+            optimization
+            ${{ needs.check-trigger.outputs.method }}
+          draft: true
+      
+      - name: Get optimization statistics
+        if: always()
+        run: |
+          echo "## Optimization Statistics" >> $GITHUB_STEP_SUMMARY
+          python -m ipfs_datasets_py.optimizers.agentic.cli stats >> $GITHUB_STEP_SUMMARY 2>&1 || true
+      
+      - name: Upload optimization log
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: optimization-log
+          path: optimization.log
+          retention-days: 30
+      
+      - name: Comment on issue
+        if: github.event_name == 'issues' && steps.optimize.outputs.success == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ Optimization completed successfully!
+              
+              A draft PR has been created with the optimized code.
+              Review the changes and merge if satisfactory.
+              
+              Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            })
+      
+      - name: Report failure
+        if: failure() && github.event_name == 'issues'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ Optimization failed.
+              
+              Check the workflow logs for details:
+              ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+            })

@@ -14,7 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..base import ChangeController, OptimizationResult
+from .base import ChangeController, OptimizationResult
 
 # Import from unified utils modules instead of duplicating
 from ...utils.cache import CacheBackend, CacheEntry, GitHubCache
