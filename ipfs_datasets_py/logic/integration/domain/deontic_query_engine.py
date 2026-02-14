@@ -12,13 +12,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 import re
 
-from ..integration.deontic_logic_core import (
+from ..converters.deontic_logic_core import (
     DeonticFormula, DeonticOperator, LegalAgent, DeonticRuleSet,
     TemporalCondition, TemporalOperator
 )
 from .legal_domain_knowledge import LegalDomain
-from ..security.rate_limiting import RateLimiter
-from ..security.input_validation import InputValidator
+from ...security.rate_limiting import RateLimiter
+from ...security.input_validation import InputValidator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

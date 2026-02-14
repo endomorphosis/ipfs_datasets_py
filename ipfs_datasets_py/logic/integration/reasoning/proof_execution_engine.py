@@ -19,11 +19,11 @@ from typing import Dict, List, Optional, Union, Any, Tuple
 import json
 import time
 
-from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
-from .logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
-from .logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
-from ..security.rate_limiting import RateLimiter
-from ..security.input_validation import InputValidator
+from ..converters.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from ..converters.logic_translation_core import LogicTranslationTarget, TranslationResult, LogicTranslator
+from ..converters.logic_translation_core import LeanTranslator, CoqTranslator, SMTTranslator
+from ...security.rate_limiting import RateLimiter
+from ...security.input_validation import InputValidator
 
 # Import types from refactored modules
 from .proof_execution_engine_types import (
@@ -32,7 +32,7 @@ from .proof_execution_engine_types import (
 )
 
 # Import proof cache
-from .proof_cache import get_global_cache
+from ..caching.proof_cache import get_global_cache
 
 logger = logging.getLogger(__name__)
 
@@ -924,7 +924,7 @@ Qed.
         for prover, available in self.available_provers.items():
             if available:
                 # Create a simple test formula
-                from ..integration.deontic_logic_core import create_obligation, LegalAgent
+                from ..converters.deontic_logic_core import create_obligation, LegalAgent
                 test_agent = LegalAgent("test_agent", "Test Agent", "organization")
                 test_formula = create_obligation(test_agent, "test_proposition", "Test proposition")
                 

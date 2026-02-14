@@ -12,7 +12,7 @@ from typing import Optional, List, TYPE_CHECKING
 if TYPE_CHECKING:
     from .proof_execution_engine import ProofExecutionEngine
     from .proof_execution_engine_types import ProofResult
-    from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
+    from ..converters.deontic_logic_core import DeonticFormula, DeonticRuleSet
 
 
 def create_proof_engine(temp_dir: Optional[str] = None, timeout: int = 60) -> "ProofExecutionEngine":
