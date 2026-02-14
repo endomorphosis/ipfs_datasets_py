@@ -22,12 +22,32 @@ from .base_optimizer import (
     OptimizationStrategy,
 )
 
+from .performance import (
+    CacheEntry,
+    LLMCache,
+    cached_llm_call,
+    ParallelValidator,
+    PerformanceMetrics,
+    profile_optimizer,
+    BatchFileProcessor,
+    get_global_cache,
+)
+
 __all__ = [
     # Base classes
     "BaseOptimizer",
     "OptimizerConfig",
     "OptimizationContext",
     "OptimizationStrategy",
+    # Performance utilities
+    "CacheEntry",
+    "LLMCache",
+    "cached_llm_call",
+    "ParallelValidator",
+    "PerformanceMetrics",
+    "profile_optimizer",
+    "BatchFileProcessor",
+    "get_global_cache",
 ]
 
 __version__ = "0.1.0"
