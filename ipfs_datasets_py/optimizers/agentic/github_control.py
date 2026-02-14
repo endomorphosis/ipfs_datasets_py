@@ -2,276 +2,37 @@
 
 This module implements the primary change control method using GitHub Issues
 and Draft Pull Requests, with comprehensive API caching to avoid rate limits.
+
+REFACTORED: Now uses unified utils.cache and utils.github modules instead of
+duplicate implementations. Maintains backward compatibility.
 """
 
-import hashlib
 import json
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
+import warnings
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import ChangeController, OptimizationResult
 
+# Import from unified utils modules instead of duplicating
+from ...utils.cache import CacheBackend, CacheEntry, GitHubCache
+from ...utils.github import RateLimiter
 
-class CacheBackend(Enum):
-    """Cache backend type."""
-    MEMORY = "memory"
-    FILE = "file"
-    REDIS = "redis"
-
-
-@dataclass
-class CacheEntry:
-    """Cached API response entry.
-    
-    Attributes:
-        key: Cache key (hashed request)
-        value: Cached response data
-        etag: ETag for conditional requests
-        expires_at: When this entry expires
-        created_at: When entry was created
-    """
-    key: str
-    value: Any
-    etag: Optional[str] = None
-    expires_at: datetime = field(default_factory=lambda: datetime.now() + timedelta(minutes=5))
-    created_at: datetime = field(default_factory=datetime.now)
-    
-    def is_expired(self) -> bool:
-        """Check if cache entry has expired."""
-        return datetime.now() > self.expires_at
+# Issue deprecation warning for direct class usage
+warnings.warn(
+    "Direct use of GitHubAPICache and AdaptiveRateLimiter from github_control "
+    "is deprecated. Use GitHubCache from utils.cache and RateLimiter from "
+    "utils.github instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 
-class GitHubAPICache:
-    """Cache layer for GitHub API requests.
-    
-    Implements intelligent caching with:
-    - TTL-based expiration
-    - ETag support for conditional requests
-    - Rate limit tracking
-    - Automatic cache invalidation
-    
-    Example:
-        >>> cache = GitHubAPICache(backend=CacheBackend.FILE)
-        >>> response = cache.get("repos/owner/repo")
-        >>> if response is None:
-        ...     response = github_api_call()
-        ...     cache.set("repos/owner/repo", response)
-    """
-    
-    def __init__(
-        self,
-        backend: CacheBackend = CacheBackend.MEMORY,
-        cache_dir: Optional[Path] = None,
-        default_ttl: int = 300,  # 5 minutes
-    ):
-        """Initialize API cache.
-        
-        Args:
-            backend: Cache backend to use
-            cache_dir: Directory for file-based cache (required for FILE backend)
-            default_ttl: Default cache TTL in seconds
-        """
-        self.backend = backend
-        self.default_ttl = default_ttl
-        self.cache_dir = cache_dir or Path(".cache/github-api")
-        
-        if backend == CacheBackend.FILE:
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
-        self._memory_cache: Dict[str, CacheEntry] = {}
-        
-    def get(self, key: str) -> Optional[Tuple[Any, Optional[str]]]:
-        """Get value from cache.
-        
-        Args:
-            key: Cache key
-            
-        Returns:
-            Tuple of (cached_value, etag) if found and not expired, None otherwise
-        """
-        cache_key = self._hash_key(key)
-        
-        if self.backend == CacheBackend.MEMORY:
-            entry = self._memory_cache.get(cache_key)
-            if entry and not entry.is_expired():
-                return (entry.value, entry.etag)
-            elif entry:
-                # Remove expired entry
-                del self._memory_cache[cache_key]
-                
-        elif self.backend == CacheBackend.FILE:
-            cache_file = self.cache_dir / f"{cache_key}.json"
-            if cache_file.exists():
-                try:
-                    data = json.loads(cache_file.read_text())
-                    entry = CacheEntry(
-                        key=cache_key,
-                        value=data['value'],
-                        etag=data.get('etag'),
-                        expires_at=datetime.fromisoformat(data['expires_at']),
-                        created_at=datetime.fromisoformat(data['created_at']),
-                    )
-                    if not entry.is_expired():
-                        return (entry.value, entry.etag)
-                    else:
-                        # Remove expired file
-                        cache_file.unlink()
-                except Exception as e:
-                    print(f"Error reading cache file: {e}")
-        
-        return None
-    
-    def set(
-        self,
-        key: str,
-        value: Any,
-        etag: Optional[str] = None,
-        ttl: Optional[int] = None,
-    ) -> None:
-        """Set value in cache.
-        
-        Args:
-            key: Cache key
-            value: Value to cache
-            etag: Optional ETag for conditional requests
-            ttl: Optional custom TTL (default: self.default_ttl)
-        """
-        cache_key = self._hash_key(key)
-        ttl = ttl or self.default_ttl
-        
-        entry = CacheEntry(
-            key=cache_key,
-            value=value,
-            etag=etag,
-            expires_at=datetime.now() + timedelta(seconds=ttl),
-        )
-        
-        if self.backend == CacheBackend.MEMORY:
-            self._memory_cache[cache_key] = entry
-            
-        elif self.backend == CacheBackend.FILE:
-            cache_file = self.cache_dir / f"{cache_key}.json"
-            data = {
-                'value': value,
-                'etag': etag,
-                'expires_at': entry.expires_at.isoformat(),
-                'created_at': entry.created_at.isoformat(),
-            }
-            cache_file.write_text(json.dumps(data, indent=2))
-    
-    def invalidate(self, key: str) -> None:
-        """Invalidate cache entry.
-        
-        Args:
-            key: Cache key to invalidate
-        """
-        cache_key = self._hash_key(key)
-        
-        if self.backend == CacheBackend.MEMORY:
-            self._memory_cache.pop(cache_key, None)
-            
-        elif self.backend == CacheBackend.FILE:
-            cache_file = self.cache_dir / f"{cache_key}.json"
-            if cache_file.exists():
-                cache_file.unlink()
-    
-    def clear(self) -> None:
-        """Clear all cache entries."""
-        if self.backend == CacheBackend.MEMORY:
-            self._memory_cache.clear()
-            
-        elif self.backend == CacheBackend.FILE:
-            for cache_file in self.cache_dir.glob("*.json"):
-                cache_file.unlink()
-    
-    def _hash_key(self, key: str) -> str:
-        """Generate hash for cache key."""
-        return hashlib.sha256(key.encode()).hexdigest()[:32]
-
-
-class AdaptiveRateLimiter:
-    """Adaptive rate limiter for GitHub API.
-    
-    Tracks API usage and automatically adjusts request rate to avoid
-    hitting rate limits. Falls back to patch-based system when limits
-    are approaching.
-    
-    Example:
-        >>> limiter = AdaptiveRateLimiter(threshold=100)
-        >>> if limiter.can_make_request():
-        ...     response = github_api_call()
-        ...     limiter.record_request(response.headers)
-        >>> else:
-        ...     # Use patch-based fallback
-    """
-    
-    def __init__(
-        self,
-        threshold: int = 100,
-        window_size: int = 3600,  # 1 hour
-    ):
-        """Initialize rate limiter.
-        
-        Args:
-            threshold: Minimum remaining requests before fallback
-            window_size: Rate limit window in seconds
-        """
-        self.threshold = threshold
-        self.window_size = window_size
-        self.requests_made = 0
-        self.requests_remaining = 5000  # GitHub default
-        self.reset_time = datetime.now() + timedelta(seconds=window_size)
-        self.last_check = datetime.now()
-        
-    def can_make_request(self) -> bool:
-        """Check if we can make another API request.
-        
-        Returns:
-            True if safe to make request, False if should use fallback
-        """
-        # Check if rate limit window has reset
-        if datetime.now() > self.reset_time:
-            self.requests_made = 0
-            self.requests_remaining = 5000
-            self.reset_time = datetime.now() + timedelta(seconds=self.window_size)
-        
-        # Check if we're approaching limit
-        return self.requests_remaining > self.threshold
-    
-    def record_request(self, response_headers: Dict[str, str]) -> None:
-        """Record a made request and update rate limit info.
-        
-        Args:
-            response_headers: Response headers from GitHub API
-        """
-        self.requests_made += 1
-        self.last_check = datetime.now()
-        
-        # Extract rate limit info from headers
-        if 'X-RateLimit-Remaining' in response_headers:
-            self.requests_remaining = int(response_headers['X-RateLimit-Remaining'])
-        
-        if 'X-RateLimit-Reset' in response_headers:
-            reset_timestamp = int(response_headers['X-RateLimit-Reset'])
-            self.reset_time = datetime.fromtimestamp(reset_timestamp)
-    
-    def get_status(self) -> Dict[str, Any]:
-        """Get current rate limit status.
-        
-        Returns:
-            Dictionary with rate limit information
-        """
-        return {
-            'requests_made': self.requests_made,
-            'requests_remaining': self.requests_remaining,
-            'reset_time': self.reset_time.isoformat(),
-            'can_make_request': self.can_make_request(),
-            'time_until_reset': (self.reset_time - datetime.now()).total_seconds(),
-        }
+# Backward compatibility aliases - use utils modules instead
+GitHubAPICache = GitHubCache
+AdaptiveRateLimiter = RateLimiter
 
 
 class IssueManager:
