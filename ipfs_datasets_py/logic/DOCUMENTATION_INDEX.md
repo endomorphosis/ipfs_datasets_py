@@ -46,12 +46,21 @@ This index provides a comprehensive guide to all documentation in the logic modu
 
 ### Specialized Components
 
+**Quick Start Guides:** ✨ NEW - Hands-on examples and practical usage
+
+| Module | Description | Guide |
+|--------|-------------|-------|
+| **[fol/README.md](./fol/README.md)** | **FOL Conversion** - Text → First-Order Logic (NLP + ML) | ✨ NEW |
+| **[deontic/README.md](./deontic/README.md)** | **Legal Logic** - Obligations, permissions, prohibitions | ✨ NEW |
+| **[common/README.md](./common/README.md)** | **Utilities** - BoundedCache (TTL+LRU), base classes | ✅ UPDATED |
+
+**Architecture Documentation:**
+
 | Document | Content |
 |----------|---------|
 | [zkp/README.md](./zkp/README.md) | Zero-Knowledge Proof system |
 | [TDFOL/README.md](./TDFOL/README.md) | Temporal Deontic First-Order Logic |
 | [CEC/CEC_SYSTEM_GUIDE.md](./CEC/CEC_SYSTEM_GUIDE.md) | Cognitive Event Calculus |
-| [common/README.md](./common/README.md) | Common utilities and base classes |
 | [common/CONVERTER_USAGE.md](./common/CONVERTER_USAGE.md) | Base converter framework |
 | [external_provers/README.md](./external_provers/README.md) | External theorem prover integration |
 | [types/README.md](./types/README.md) | Type system documentation |

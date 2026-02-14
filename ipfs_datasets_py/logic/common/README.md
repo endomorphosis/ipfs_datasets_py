@@ -104,11 +104,13 @@ The common module will grow to include:
 
 ## Converter Base Classes (`converters.py`)
 
-**Added:** Phase 2 - Day 4
+**Added:** Phase 2 - Day 4  
+**Updated:** 2026-02-14 - Added BoundedCache with TTL and LRU eviction
 
 Standardized base classes for logic conversion operations:
 
 - `LogicConverter[InputType, OutputType]` - Generic base class for converters
+- `BoundedCache[T]` - Production-ready cache with TTL and LRU eviction (**NEW**)
 - `ChainedConverter` - Chains multiple converters together
 - `ConversionResult` - Standardized conversion result format
 - `ConversionStatus` - Status enum (SUCCESS, PARTIAL, FAILED, CACHED)
@@ -116,12 +118,17 @@ Standardized base classes for logic conversion operations:
 
 **Features:**
 - Built-in input validation
-- Automatic result caching
+- **NEW:** Bounded caching with configurable maxsize and TTL
+- **NEW:** LRU eviction prevents unbounded growth
+- **NEW:** Thread-safe cache operations
+- **NEW:** Rich statistics (hits, misses, evictions, expirations, hit_rate)
 - Error handling with context
 - Conversion chaining support
 - Metadata tracking
 
-**Simple Example:**
+### Quick Start
+
+**Basic Converter:**
 
 ```python
 from ipfs_datasets_py.logic.common import LogicConverter, ValidationResult
@@ -136,18 +143,81 @@ class MyConverter(LogicConverter[str, str]):
     def _convert_impl(self, text: str, options: Dict[str, Any]) -> str:
         return text.upper()  # Your conversion logic
 
+# Use with default bounded cache (1000 entries, 1 hour TTL)
 converter = MyConverter()
 result = converter.convert("hello")
 if result.success:
     print(result.output)  # "HELLO"
 ```
 
+**Custom Cache Configuration:**
+
+```python
+# Configure cache size and TTL
+converter = MyConverter(
+    enable_caching=True,
+    cache_maxsize=500,   # Max 500 entries
+    cache_ttl=1800,      # 30 minute TTL
+)
+
+# Get detailed statistics
+stats = converter.get_cache_stats()
+print(f"Hit rate: {stats['hit_rate']:.1%}")
+print(f"Evictions: {stats['evictions']}")
+
+# Manually cleanup expired entries
+cleaned = converter.cleanup_expired_cache()
+```
+
+**Disable Caching:**
+
+```python
+# For testing or when caching isn't needed
+converter = MyConverter(enable_caching=False)
+```
+
 See `CONVERTER_USAGE.md` for comprehensive documentation with examples of:
-- Caching control
+- Caching control and configuration
 - Validation patterns
 - Error handling
 - Conversion chaining
 - Testing strategies
+
+### BoundedCache Details
+
+The new `BoundedCache` class (in `bounded_cache.py`) provides:
+
+- **TTL Expiration:** Entries automatically expire after configurable time
+- **Size Limits:** Maximum entries with LRU eviction when full
+- **Thread-Safe:** RLock ensures safe concurrent access
+- **Statistics:** Comprehensive metrics for monitoring
+- **Performance:** O(1) lookups with minimal overhead
+
+**Direct Usage:**
+
+```python
+from ipfs_datasets_py.logic.common.bounded_cache import BoundedCache
+
+# Create cache
+cache = BoundedCache[str](maxsize=1000, ttl=3600)
+
+# Store and retrieve
+cache.set("key1", "value1")
+value = cache.get("key1")  # Returns "value1"
+
+# Statistics
+stats = cache.get_stats()
+# {
+#   'size': 1,
+#   'maxsize': 1000,
+#   'ttl': 3600,
+#   'hits': 1,
+#   'misses': 0,
+#   'hit_rate': 1.0,
+#   'evictions': 0,
+#   'expirations': 0
+# }
+```
 
 ## Testing
 
