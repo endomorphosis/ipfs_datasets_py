@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # Try to import grammar components
 GRAMMAR_AVAILABLE = False
 try:
-    from ..CEC.native import grammar_engine, dcec_english_grammar, nl_converter
+    from ...CEC.native import grammar_engine, dcec_english_grammar, nl_converter
     GRAMMAR_AVAILABLE = True
     logger.info("Grammar engine modules loaded successfully")
 except ImportError as e:

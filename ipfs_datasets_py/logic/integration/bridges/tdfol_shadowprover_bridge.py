@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Try to import ShadowProver components
 SHADOWPROVER_AVAILABLE = False
 try:
-    from ..CEC.native import shadow_prover, modal_tableaux
+    from ...CEC.native import shadow_prover, modal_tableaux
     SHADOWPROVER_AVAILABLE = True
     logger.info("ShadowProver modules loaded successfully")
 except ImportError as e:

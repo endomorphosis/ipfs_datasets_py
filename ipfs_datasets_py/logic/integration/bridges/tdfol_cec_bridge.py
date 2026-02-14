@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # Try to import CEC components
 CEC_AVAILABLE = False
 try:
-    from ..CEC.native import (
+    from ...CEC.native import (
         prover_core,
         dcec_parsing,
         dcec_core,
@@ -227,7 +227,7 @@ class TDFOLCECBridge(BaseProverBridge):
             logger.debug(f"Axioms in DCEC: {axioms_dcec}")
             
             # Parse DCEC strings to Formula objects
-            from ..CEC.native import dcec_parsing
+            from ...CEC.native import dcec_parsing
             
             try:
                 goal_formula = dcec_parsing.parse_dcec_formula(goal_dcec)
