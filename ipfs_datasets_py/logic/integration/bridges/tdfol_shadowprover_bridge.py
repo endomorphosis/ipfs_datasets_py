@@ -15,14 +15,14 @@ import logging
 from enum import Enum
 from typing import Optional, List, Dict, Any
 
-from ..TDFOL.tdfol_core import (
+from ...TDFOL.tdfol_core import (
     Formula,
     TemporalFormula,
     TemporalOperator,
     DeonticFormula,
     DeonticOperator,
 )
-from ..TDFOL.tdfol_prover import ProofResult, ProofStatus, ProofStep
+from ...TDFOL.tdfol_prover import ProofResult, ProofStatus, ProofStep
 from .base_prover_bridge import (
     BaseProverBridge,
     BridgeMetadata,
@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 # Try to import ShadowProver components
 SHADOWPROVER_AVAILABLE = False
 try:
-    from ..CEC.native import shadow_prover, modal_tableaux
+    from ...CEC.native import shadow_prover, modal_tableaux
     SHADOWPROVER_AVAILABLE = True
     logger.info("ShadowProver modules loaded successfully")
 except ImportError as e:
@@ -496,8 +496,8 @@ class ModalAwareTDFOLProver:
     
     def __init__(self):
         """Initialize modal-aware prover."""
-        from ..TDFOL.tdfol_prover import TDFOLProver
-        from ..TDFOL.tdfol_core import TDFOLKnowledgeBase
+        from ...TDFOL.tdfol_prover import TDFOLProver
+        from ...TDFOL.tdfol_core import TDFOLKnowledgeBase
         
         self.base_prover = TDFOLProver(TDFOLKnowledgeBase())
         self.shadow_bridge = TDFOLShadowProverBridge()

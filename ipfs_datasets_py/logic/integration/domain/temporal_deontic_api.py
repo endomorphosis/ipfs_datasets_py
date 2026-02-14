@@ -132,7 +132,7 @@ async def query_theorems_from_parameters(
 
     def _run() -> Dict[str, Any]:
         from .temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ..integration.deontic_logic_core import DeonticOperator
+        from ..converters.deontic_logic_core import DeonticOperator
 
         query = parameters.get("query", "")
         operator_filter = parameters.get("operator_filter", "all")
@@ -327,7 +327,7 @@ async def add_theorem_from_parameters(
 
     def _run() -> Dict[str, Any]:
         from .temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ..integration.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
+        from ..converters.deontic_logic_core import DeonticFormula, DeonticOperator, LegalAgent
 
         operator_str = parameters.get("operator")
         proposition = parameters.get("proposition", "")

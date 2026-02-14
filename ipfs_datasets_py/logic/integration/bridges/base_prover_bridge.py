@@ -13,8 +13,8 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
-from ..TDFOL.tdfol_core import Formula
-from ..TDFOL.tdfol_prover import ProofResult
+from ...TDFOL.tdfol_core import Formula
+from ...TDFOL.tdfol_prover import ProofResult
 
 
 class BridgeCapability(Enum):

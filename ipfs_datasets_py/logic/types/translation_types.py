@@ -13,7 +13,7 @@ For external use, the types are still available from their original location:
 """
 
 # Re-export from original location to maintain backward compatibility
-from ..integration.logic_translation_core import (
+from ..integration.converters.logic_translation_core import (
     LogicTranslationTarget,
     TranslationResult,
     AbstractLogicFormula,

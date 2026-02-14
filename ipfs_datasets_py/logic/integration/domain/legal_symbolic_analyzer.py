@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import re
 
-from ..integration.deontic_logic_core import DeonticOperator, LegalAgent, TemporalCondition
+from ..converters.deontic_logic_core import DeonticOperator, LegalAgent, TemporalCondition
 from .legal_domain_knowledge import LegalDomain
 
 # Configure logging

@@ -14,8 +14,8 @@ import json
 import re
 
 from .deontic_logic_core import DeonticFormula, DeonticOperator, DeonticRuleSet
-from ..security.rate_limiting import RateLimiter
-from ..security.input_validation import InputValidator
+from ...security.rate_limiting import RateLimiter
+from ...security.input_validation import InputValidator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
