@@ -58,14 +58,14 @@ class ConversionResult(Generic[OutputType]):
             "metadata": self.metadata
         }
     
-    def add_error(self, error: str, context: Optional[Dict[str, Any]] = None):
+    def add_error(self, error: str, context: Optional[Dict[str, Any]] = None) -> None:
         """Add an error message to the result."""
         self.errors.append(error)
         if context:
             self.metadata.setdefault("error_contexts", []).append(context)
         self.status = ConversionStatus.FAILED
     
-    def add_warning(self, warning: str):
+    def add_warning(self, warning: str) -> None:
         """Add a warning message to the result."""
         self.warnings.append(warning)
         if self.status == ConversionStatus.SUCCESS:
@@ -80,12 +80,12 @@ class ValidationResult:
     warnings: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
     
-    def add_error(self, error: str):
+    def add_error(self, error: str) -> None:
         """Add a validation error."""
         self.errors.append(error)
         self.valid = False
     
-    def add_warning(self, warning: str):
+    def add_warning(self, warning: str) -> None:
         """Add a validation warning."""
         self.warnings.append(warning)
 
@@ -119,7 +119,7 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
     
     def __init__(self, 
                  enable_caching: bool = True,
-                 enable_validation: bool = True):
+                 enable_validation: bool = True) -> None:
         """
         Initialize the converter.
         
@@ -247,7 +247,7 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
         options_str = str(sorted(options.items()))
         return f"{self.__class__.__name__}:{input_str}:{options_str}"
     
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """Clear the conversion cache."""
         self._conversion_cache.clear()
     
@@ -279,7 +279,7 @@ class ChainedConverter(LogicConverter[InputType, OutputType]):
     def __init__(self, 
                  converters: List[LogicConverter],
                  enable_caching: bool = True,
-                 enable_validation: bool = True):
+                 enable_validation: bool = True) -> None:
         """
         Initialize the chained converter.
         
