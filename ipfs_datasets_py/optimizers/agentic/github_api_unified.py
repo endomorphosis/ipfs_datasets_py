@@ -1,6 +1,13 @@
 """Unified GitHub API integration with caching, rate limiting, and call tracking.
 
-This module consolidates GitHub API functionality from:
+DEPRECATED: This module is being phased out in favor of:
+- ipfs_datasets_py.utils.cache for caching functionality
+- ipfs_datasets_py.utils.github for GitHub operations
+
+This module now re-exports from the unified utils modules while maintaining
+backward compatibility for existing optimizer code.
+
+Original functionality consolidated from:
 - optimizers/agentic/github_control.py (GitHubAPICache, AdaptiveRateLimiter)
 - .github/scripts/github_api_counter.py (API call tracking)
 
@@ -10,226 +17,73 @@ Provides a single source of truth for all GitHub API interactions used by:
 - Workflow helper scripts (.github/scripts/)
 """
 
-import hashlib
-import json
 import logging
-import os
-import subprocess
-import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
+import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional
+
+# Import from unified utils modules
+from ...utils.cache import CacheBackend, CacheEntry, GitHubCache
+from ...utils.github import APICounter
 
 logger = logging.getLogger(__name__)
 
+# Issue deprecation warning
+warnings.warn(
+    "optimizers.agentic.github_api_unified is deprecated. "
+    "Use ipfs_datasets_py.utils.cache.GitHubCache and "
+    "ipfs_datasets_py.utils.github.APICounter instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
-class CacheBackend(Enum):
-    """Cache backend type."""
-    MEMORY = "memory"
-    FILE = "file"
-    REDIS = "redis"
-
-
-@dataclass
-class CacheEntry:
-    """Cached API response entry.
-    
-    Attributes:
-        key: Cache key (hashed request)
-        value: Cached response data
-        etag: ETag for conditional requests
-        expires_at: When this entry expires
-        created_at: When entry was created
-        access_count: Number of times accessed
-        last_accessed: Last access timestamp
-    """
-    key: str
-    value: Any
-    etag: Optional[str] = None
-    expires_at: datetime = field(default_factory=lambda: datetime.now() + timedelta(minutes=5))
-    created_at: datetime = field(default_factory=datetime.now)
-    access_count: int = 0
-    last_accessed: datetime = field(default_factory=datetime.now)
-    
-    def is_expired(self) -> bool:
-        """Check if cache entry has expired."""
-        return datetime.now() > self.expires_at
-
-
-@dataclass
-class APICallRecord:
-    """Record of a GitHub API call.
-    
-    Attributes:
-        call_type: Type of API call (gh_pr_list, gh_issue_create, etc.)
-        count: Number of calls
-        timestamp: When the call was made
-        metadata: Additional call metadata
-        cached: Whether this call was served from cache
-    """
-    call_type: str
-    count: int
-    timestamp: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    cached: bool = False
 
 
 class UnifiedGitHubAPICache:
     """Unified GitHub API cache with call tracking and statistics.
     
-    Combines caching, rate limiting awareness, and call counting in a single
-    implementation used across all optimizer and workflow code.
+    DEPRECATED: Use GitHubCache from utils.cache and APICounter from utils.github instead.
     
-    Features:
-    - TTL-based expiration with configurable per-operation TTLs
-    - ETag support for conditional requests
-    - API call tracking and statistics
-    - Rate limit monitoring
-    - P2P cache sharing support (via cache-config.yml)
-    - Metrics export for monitoring
+    This is a compatibility wrapper that combines GitHubCache and APICounter
+    to maintain backward compatibility with existing optimizer code.
     
     Example:
+        >>> # New recommended approach:
+        >>> from ipfs_datasets_py.utils.cache import GitHubCache
+        >>> from ipfs_datasets_py.utils.github import APICounter
+        >>> cache = GitHubCache()
+        >>> counter = APICounter()
+        
+        >>> # Old approach (deprecated but still works):
         >>> cache = UnifiedGitHubAPICache()
-        >>> # Check cache first
-        >>> response = cache.get("repos/owner/repo")
-        >>> if response is None:
-        ...     # Make API call
-        ...     response = github_api_call()
-        ...     cache.set("repos/owner/repo", response)
-        ...     cache.count_api_call("gh_repo_view")
-        >>> else:
-        ...     print("Cache hit!")
-        >>> 
-        >>> # Get statistics
-        >>> stats = cache.get_statistics()
-        >>> print(f"Cache hit rate: {stats['hit_rate']:.2%}")
     """
-    
-    # API call type costs (estimated requests per operation)
-    API_COSTS = {
-        'gh_pr_list': 1,
-        'gh_pr_view': 1,
-        'gh_pr_create': 1,
-        'gh_pr_comment': 1,
-        'gh_pr_edit': 1,
-        'gh_pr_close': 1,
-        'gh_pr_merge': 1,
-        'gh_issue_list': 1,
-        'gh_issue_view': 1,
-        'gh_issue_create': 1,
-        'gh_issue_comment': 1,
-        'gh_issue_edit': 1,
-        'gh_issue_close': 1,
-        'gh_run_list': 1,
-        'gh_run_view': 1,
-        'gh_run_download': 1,
-        'gh_api': 1,
-        'gh_repo_view': 1,
-        'gh_repo_list': 1,
-        'gh_workflow_view': 1,
-        'gh_workflow_run': 1,
-        'gh_release_list': 1,
-        'gh_release_view': 1,
-        'gh_release_create': 1,
-        'github_api_rest': 1,
-        'github_api_graphql': 1,
-    }
-    
-    # Default TTLs for different operation types (from cache-config.yml)
-    OPERATION_TTLS = {
-        'list_repos': 600,          # 10 minutes
-        'get_repo_info': 300,       # 5 minutes
-        'list_workflows': 300,      # 5 minutes
-        'get_workflow_runs': 120,   # 2 minutes
-        'get_workflow_run': 60,     # 1 minute
-        'list_runners': 300,        # 5 minutes
-        'get_runner_status': 60,    # 1 minute
-        'copilot_completion': 3600, # 1 hour
-    }
     
     def __init__(
         self,
-        backend: CacheBackend = CacheBackend.FILE,
+        backend = None,  # Ignored, uses GitHubCache defaults
         cache_dir: Optional[Path] = None,
-        default_ttl: int = 300,  # 5 minutes
+        default_ttl: int = 300,
         config_file: Optional[Path] = None,
     ):
         """Initialize unified GitHub API cache.
         
         Args:
-            backend: Cache backend to use
-            cache_dir: Directory for file-based cache
+            backend: DEPRECATED - Ignored, GitHubCache handles backend selection
+            cache_dir: DEPRECATED - Configured via .github/cache-config.yml
             default_ttl: Default cache TTL in seconds
             config_file: Optional cache-config.yml file path
         """
-        self.backend = backend
+        # Use new unified modules
+        self._github_cache = GitHubCache(
+            maxsize=5000,
+            default_ttl=default_ttl,
+            config_file=str(config_file) if config_file else None
+        )
+        self._api_counter = APICounter()
+        
+        # Store config for backward compatibility
         self.default_ttl = default_ttl
         self.cache_dir = cache_dir or Path(".cache/github-api")
-        
-        # Load configuration from cache-config.yml if available
-        self.config = self._load_config(config_file)
-        
-        # Apply config settings
-        if self.config:
-            self.default_ttl = self.config.get('cache', {}).get('default_ttl', default_ttl)
-            cache_dir_config = self.config.get('cache', {}).get('directory')
-            if cache_dir_config:
-                self.cache_dir = Path(cache_dir_config).expanduser()
-        
-        if backend == CacheBackend.FILE:
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-        
-        self._memory_cache: Dict[str, CacheEntry] = {}
-        
-        # API call tracking
-        self.call_counts: Dict[str, int] = {}
-        self.call_records: List[APICallRecord] = []
-        self.cache_hits = 0
-        self.cache_misses = 0
-        
-        # Workflow context
-        self.workflow_run_id = os.getenv('GITHUB_RUN_ID', 'local')
-        self.workflow_name = os.getenv('GITHUB_WORKFLOW', 'unknown')
-        self.start_time = datetime.now()
-        
-        # Metrics file for persistence
-        runner_temp = os.getenv('RUNNER_TEMP', '/tmp')
-        self.metrics_file = Path(runner_temp) / f'github_api_metrics_{self.workflow_run_id}.json'
-        
-        # Load existing metrics
-        self._load_existing_metrics()
-    
-    def _load_config(self, config_file: Optional[Path]) -> Optional[Dict]:
-        """Load cache configuration from YAML file."""
-        if config_file is None:
-            # Try default location
-            config_file = Path('.github/cache-config.yml')
-        
-        if not config_file.exists():
-            return None
-        
-        try:
-            import yaml
-            with open(config_file) as f:
-                return yaml.safe_load(f)
-        except Exception as e:
-            logger.warning(f"Could not load cache config: {e}")
-            return None
-    
-    def _load_existing_metrics(self):
-        """Load existing metrics from file if available."""
-        if self.metrics_file.exists():
-            try:
-                with open(self.metrics_file, 'r') as f:
-                    data = json.load(f)
-                    self.call_counts = data.get('call_counts', {})
-                    self.cache_hits = data.get('cache_hits', 0)
-                    self.cache_misses = data.get('cache_misses', 0)
-                    logger.info(f"Loaded existing metrics from {self.metrics_file}")
-            except Exception as e:
-                logger.warning(f"Could not load existing metrics: {e}")
     
     def get(self, key: str, operation_type: Optional[str] = None) -> Optional[Tuple[Any, Optional[str]]]:
         """Get value from cache.
