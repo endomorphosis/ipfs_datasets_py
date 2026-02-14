@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Generic, TypeVar
 from enum import Enum
 
 from .errors import ConversionError, ValidationError
+from .bounded_cache import BoundedCache
 
 # Type variables for generic converter
 InputType = TypeVar('InputType')
@@ -119,16 +120,31 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
     
     def __init__(self, 
                  enable_caching: bool = True,
-                 enable_validation: bool = True) -> None:
+                 enable_validation: bool = True,
+                 cache_maxsize: int = 1000,
+                 cache_ttl: float = 3600) -> None:
         """
         Initialize the converter.
         
         Args:
             enable_caching: Whether to cache conversion results
             enable_validation: Whether to validate inputs before conversion
+            cache_maxsize: Maximum cache size (0 = unlimited, default: 1000)
+            cache_ttl: Cache TTL in seconds (0 = no expiration, default: 3600)
         """
         self.enable_caching = enable_caching
         self.enable_validation = enable_validation
+        
+        # Use bounded cache with TTL and LRU eviction
+        if self.enable_caching:
+            self._cache = BoundedCache[ConversionResult[OutputType]](
+                maxsize=cache_maxsize,
+                ttl=cache_ttl
+            )
+        else:
+            self._cache = None
+        
+        # Legacy dict for backward compatibility (deprecated)
         self._conversion_cache: Dict[str, ConversionResult[OutputType]] = {}
     
     @abstractmethod
@@ -190,11 +206,18 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
         # Generate cache key
         cache_key = self._generate_cache_key(input_data, options)
         
-        # Check cache
-        if self.enable_caching and use_cache and cache_key in self._conversion_cache:
-            cached = self._conversion_cache[cache_key]
-            cached.status = ConversionStatus.CACHED
-            return cached
+        # Check cache (use bounded cache if available, fall back to legacy dict)
+        if self.enable_caching and use_cache:
+            if self._cache is not None:
+                cached = self._cache.get(cache_key)
+                if cached is not None:
+                    cached.status = ConversionStatus.CACHED
+                    return cached
+            elif cache_key in self._conversion_cache:
+                # Legacy dict cache fallback
+                cached = self._conversion_cache[cache_key]
+                cached.status = ConversionStatus.CACHED
+                return cached
         
         try:
             # Validate input
@@ -218,7 +241,11 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
             
             # Cache successful result
             if self.enable_caching and result.success:
-                self._conversion_cache[cache_key] = result
+                if self._cache is not None:
+                    self._cache.set(cache_key, result)
+                else:
+                    # Legacy dict cache fallback
+                    self._conversion_cache[cache_key] = result
             
         except ConversionError as e:
             result.add_error(f"Conversion error: {str(e)}", e.context if hasattr(e, 'context') else None)
@@ -249,14 +276,40 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
     
     def clear_cache(self) -> None:
         """Clear the conversion cache."""
+        if self._cache is not None:
+            self._cache.clear()
         self._conversion_cache.clear()
     
+    def cleanup_expired_cache(self) -> int:
+        """
+        Clean up expired cache entries.
+        
+        Returns:
+            Number of entries removed
+        """
+        if self._cache is not None:
+            return self._cache.cleanup_expired()
+        return 0
+    
     def get_cache_stats(self) -> Dict[str, Any]:
-        """Get statistics about cache usage."""
-        return {
-            "cache_size": len(self._conversion_cache),
-            "cache_enabled": self.enable_caching
-        }
+        """
+        Get statistics about cache usage.
+        
+        Returns:
+            Dictionary with cache statistics including size, hits, misses, hit rate, etc.
+        """
+        if self._cache is not None:
+            stats = self._cache.get_stats()
+            stats["cache_enabled"] = self.enable_caching
+            stats["cache_type"] = "bounded"
+            return stats
+        else:
+            # Legacy dict cache stats
+            return {
+                "cache_size": len(self._conversion_cache),
+                "cache_enabled": self.enable_caching,
+                "cache_type": "legacy_dict"
+            }
 
 
 class ChainedConverter(LogicConverter[InputType, OutputType]):
@@ -279,7 +332,9 @@ class ChainedConverter(LogicConverter[InputType, OutputType]):
     def __init__(self, 
                  converters: List[LogicConverter],
                  enable_caching: bool = True,
-                 enable_validation: bool = True) -> None:
+                 enable_validation: bool = True,
+                 cache_maxsize: int = 1000,
+                 cache_ttl: float = 3600) -> None:
         """
         Initialize the chained converter.
         
@@ -287,8 +342,10 @@ class ChainedConverter(LogicConverter[InputType, OutputType]):
             converters: List of converters to chain in order
             enable_caching: Whether to cache conversion results
             enable_validation: Whether to validate inputs
+            cache_maxsize: Maximum cache size
+            cache_ttl: Cache TTL in seconds
         """
-        super().__init__(enable_caching, enable_validation)
+        super().__init__(enable_caching, enable_validation, cache_maxsize, cache_ttl)
         self.converters = converters
     
     def validate_input(self, input_data: InputType) -> ValidationResult:

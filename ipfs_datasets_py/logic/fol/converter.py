@@ -89,6 +89,8 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         enable_monitoring: bool = True,
         confidence_threshold: float = 0.7,
         output_format: str = "json",
+        cache_maxsize: int = 1000,
+        cache_ttl: float = 3600,
     ):
         """
         Initialize FOL converter with feature configuration.
@@ -101,8 +103,15 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
             enable_monitoring: Enable operation monitoring (default: True)
             confidence_threshold: Minimum confidence for results (default: 0.7)
             output_format: Output format - json, prolog, tptp (default: "json")
+            cache_maxsize: Maximum cache entries (default: 1000, 0=unlimited)
+            cache_ttl: Cache TTL in seconds (default: 3600, 0=no expiration)
         """
-        super().__init__(enable_caching=use_cache, enable_validation=True)
+        super().__init__(
+            enable_caching=use_cache, 
+            enable_validation=True,
+            cache_maxsize=cache_maxsize,
+            cache_ttl=cache_ttl
+        )
         
         self.use_ipfs = use_ipfs
         self.use_ml = use_ml
@@ -422,10 +431,12 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         Returns:
             Dictionary with cache statistics including hit rate, size, etc.
         """
-        cache_size = len(self._conversion_cache)
+        # Get base cache stats (includes bounded cache metrics)
+        base_stats = super().get_cache_stats()
+        
+        # Add FOL-specific stats
         stats = {
-            "cache_size": cache_size,
-            "cache_enabled": self.enable_caching,
+            **base_stats,
             "ipfs_enabled": self.use_ipfs,
         }
         
