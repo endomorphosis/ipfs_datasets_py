@@ -207,7 +207,7 @@ This PR was automatically generated to fix a failure in the **{self.workflow_nam
 4. Merge if all checks pass
 
 ### Related
-- Workflow Run: https://github.com/${{{{ github.repository }}}}/actions/runs/{run_id}
+- Workflow Run: https://github.com/${{ github.repository }}/actions/runs/{run_id}
 - Workflow File: `.github/workflows/{self._get_workflow_filename()}`
 """
         

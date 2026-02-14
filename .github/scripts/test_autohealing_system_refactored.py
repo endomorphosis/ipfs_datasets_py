@@ -78,7 +78,9 @@ class AutoHealingSystemTester:
             analyzer = WorkflowAnalyzer()
             
             assert hasattr(analyzer, 'analyze_failure')
-            assert hasattr(analyzer, 'detect_error_patterns')
+            assert hasattr(analyzer, 'generate_report')
+            assert hasattr(analyzer, '_generate_suggestions')
+            assert hasattr(analyzer, '_determine_severity')
             
             print("   ✅ PASSED: WorkflowAnalyzer initialized correctly")
             return {'name': 'analyzer_initialization', 'passed': True}
