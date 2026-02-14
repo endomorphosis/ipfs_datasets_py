@@ -21,7 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ..base import ChangeController, OptimizationResult
+from .base import ChangeController, OptimizationResult
 from ...utils.cache import LocalCache
 
 
