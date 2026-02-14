@@ -177,7 +177,7 @@ async def test_government_sources_integration():
     print("=" * 70)
     
     try:
-        from ipfs_datasets_py.news_analysis_dashboard import (
+        from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
             NewsAnalysisDashboard, 
             MCPDashboardConfig,
             UserType,

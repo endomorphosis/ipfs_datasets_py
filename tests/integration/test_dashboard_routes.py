@@ -13,7 +13,7 @@ sys.path.insert(0, str(repo_root))
 def test_dashboard_routes():
     """Test that dashboard routes are properly set up."""
     try:
-        from ipfs_datasets_py.mcp_dashboard import MCPDashboard
+        from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
         
         # Check that the setup methods exist
         assert hasattr(MCPDashboard, '_setup_caselaw_routes'), "Missing _setup_caselaw_routes method"

@@ -139,7 +139,7 @@ def test_api_routes():
     print("\nTesting API route configuration...")
     
     try:
-        from ipfs_datasets_py.mcp_dashboard import MCPDashboard
+        from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
         
         # The routes are set up when the dashboard is configured
         # We can check if the _setup_legal_dataset_routes method exists

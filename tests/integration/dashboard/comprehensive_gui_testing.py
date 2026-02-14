@@ -68,7 +68,7 @@ class ComprehensiveGUITester:
         """Start the news analysis dashboard server."""
         try:
             # Import and start dashboard
-            from ipfs_datasets_py.news_analysis_dashboard import NewsAnalysisDashboard, MCPDashboardConfig
+            from ipfs_datasets_py.dashboards.news_analysis_dashboard import NewsAnalysisDashboard, MCPDashboardConfig
             
             config = MCPDashboardConfig()
             dashboard = NewsAnalysisDashboard(config)

@@ -28,7 +28,7 @@ def test_imports():
     print("=" * 50)
     
     try:
-        from ipfs_datasets_py.news_analysis_dashboard import (
+        from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
             NewsAnalysisDashboard, 
             MCPDashboardConfig,
             UserType,
@@ -47,7 +47,7 @@ def test_basic_instantiation():
     print("=" * 50)
     
     try:
-        from ipfs_datasets_py.news_analysis_dashboard import (
+        from ipfs_datasets_py.dashboards.news_analysis_dashboard import (
             NewsAnalysisDashboard, 
             MCPDashboardConfig,
         )

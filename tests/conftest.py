@@ -230,7 +230,7 @@ def sample_graphrag_system():
 			Entity,
 			Relationship,
 		)
-		from ipfs_datasets_py.multimodal_processor import (
+		from ipfs_datasets_py.processors.multimodal_processor import (
 			ProcessedContentBatch,
 			ProcessedContent,
 		)

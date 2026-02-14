@@ -18,7 +18,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from ipfs_datasets_py.news_analysis_dashboard import NewsAnalysisDashboard, MCPDashboardConfig
+    from ipfs_datasets_py.dashboards.news_analysis_dashboard import NewsAnalysisDashboard, MCPDashboardConfig
     from html2image import Html2Image
     print("✓ Successfully imported dependencies")
 except ImportError as e:
