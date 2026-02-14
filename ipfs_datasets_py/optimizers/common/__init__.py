@@ -33,6 +33,14 @@ from .performance import (
     get_global_cache,
 )
 
+from .performance_monitor import (
+    OptimizationCycleMetrics,
+    PerformanceMetricsCollector,
+    PerformanceDashboard,
+    get_global_collector,
+    set_global_collector,
+)
+
 __all__ = [
     # Base classes
     "BaseOptimizer",
@@ -48,6 +56,12 @@ __all__ = [
     "profile_optimizer",
     "BatchFileProcessor",
     "get_global_cache",
+    # Performance monitoring
+    "OptimizationCycleMetrics",
+    "PerformanceMetricsCollector",
+    "PerformanceDashboard",
+    "get_global_collector",
+    "set_global_collector",
 ]
 
 __version__ = "0.1.0"
