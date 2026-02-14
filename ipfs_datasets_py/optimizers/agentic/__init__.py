@@ -36,12 +36,18 @@ from .github_control import GitHubChangeController
 from .methods import (
     TestDrivenOptimizer,
     AdversarialOptimizer,
+    Solution,
+    BenchmarkResult,
     ActorCriticOptimizer,
     Policy,
+    CriticFeedback,
     ChaosEngineeringOptimizer,
+    ChaosOptimizer,
     FaultType,
     FaultInjection,
     ChaosTestResult,
+    Vulnerability,
+    ResilienceReport,
 )
 from .patch_control import (
     IPFSPatchStore,
@@ -110,12 +116,18 @@ __all__ = [
     # Optimization methods
     "TestDrivenOptimizer",
     "AdversarialOptimizer",
+    "Solution",
+    "BenchmarkResult",
     "ActorCriticOptimizer",
     "Policy",
+    "CriticFeedback",
     "ChaosEngineeringOptimizer",
+    "ChaosOptimizer",
     "FaultType",
     "FaultInjection",
     "ChaosTestResult",
+    "Vulnerability",
+    "ResilienceReport",
     # Validation
     "OptimizationValidator",
     "ValidationLevel",
