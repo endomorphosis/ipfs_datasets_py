@@ -12,7 +12,7 @@ def _get_global_manager():
     """Get or create the global index manager."""
     global _global_manager
     if _global_manager is None:
-        from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndexManager
+        from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndexManager
         _global_manager = IPFSKnnIndexManager()
     return _global_manager
 
@@ -27,7 +27,7 @@ async def get_global_manager():
     global _global_manager
     if _global_manager is None:
         try:
-            from ipfs_datasets_py.embeddings.ipfs_knn_index import IPFSKnnIndexManager
+            from ipfs_datasets_py.ml.embeddings.ipfs_knn_index import IPFSKnnIndexManager
             _global_manager = IPFSKnnIndexManager()
         except ImportError:
             _global_manager = None

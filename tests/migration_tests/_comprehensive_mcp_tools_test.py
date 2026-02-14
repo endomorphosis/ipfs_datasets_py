@@ -471,7 +471,7 @@ class IPFSToolsTest(BaseToolTester):
 class VectorToolsTest(BaseToolTester):
     """Tests for vector tools."""
 
-    @patch('ipfs_datasets_py.embeddings.ipfs_knn_index.IPFSKnnIndex') # Patch the IPFSFaiss class
+    @patch('ipfs_datasets_py.ml.embeddings.ipfs_knn_index.IPFSKnnIndex') # Patch the IPFSFaiss class
     def test_create_vector_index(self, MockIPFSKnnIndex):
         """Test create_vector_index tool."""
         tool_func = self.get_tool_func("vector_tools", "create_vector_index")
@@ -496,7 +496,7 @@ class VectorToolsTest(BaseToolTester):
         MockIPFSKnnIndex.assert_called_once()
         mock_faiss.create_index.assert_called_once_with(vectors, output_path)
 
-    @patch('ipfs_datasets_py.embeddings.ipfs_knn_index.IPFSKnnIndex') # Patch the IPFSFaiss class
+    @patch('ipfs_datasets_py.ml.embeddings.ipfs_knn_index.IPFSKnnIndex') # Patch the IPFSFaiss class
     def test_search_vector_index(self, MockIPFSKnnIndex):
         """Test search_vector_index tool."""
         tool_func = self.get_tool_func("vector_tools", "search_vector_index")
