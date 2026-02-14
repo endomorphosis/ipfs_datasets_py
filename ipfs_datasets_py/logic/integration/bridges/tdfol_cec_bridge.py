@@ -12,8 +12,8 @@ from __future__ import annotations
 import logging
 from typing import Dict, List, Optional, Set, Any
 
-from ..TDFOL.tdfol_core import Formula, Predicate, Variable, Constant
-from ..TDFOL.tdfol_prover import TDFOLProver, ProofResult, ProofStatus, ProofStep
+from ...TDFOL.tdfol_core import Formula, Predicate, Variable, Constant
+from ...TDFOL.tdfol_prover import TDFOLProver, ProofResult, ProofStatus, ProofStep
 from .base_prover_bridge import (
     BaseProverBridge,
     BridgeMetadata,
@@ -121,7 +121,7 @@ class TDFOLCECBridge(BaseProverBridge):
             raise ValueError("CEC bridge not available")
         
         # Use the converter module
-        from ..TDFOL.tdfol_converter import tdfol_to_dcec
+        from ...TDFOL.tdfol_converter import tdfol_to_dcec
         return tdfol_to_dcec(formula)
     
     def tdfol_to_dcec_string(self, formula: Formula) -> str:
@@ -186,7 +186,7 @@ class TDFOLCECBridge(BaseProverBridge):
         Returns:
             TDFOL formula
         """
-        from ..TDFOL.tdfol_dcec_parser import parse_dcec
+        from ...TDFOL.tdfol_dcec_parser import parse_dcec
         return parse_dcec(dcec_string)
     
     def prove_with_cec(

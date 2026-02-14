@@ -14,9 +14,9 @@ from __future__ import annotations
 import logging
 from typing import Optional, List, Dict, Any, Tuple
 
-from ..TDFOL.tdfol_core import Formula
-from ..TDFOL.tdfol_dcec_parser import parse_dcec
-from ..TDFOL.tdfol_prover import ProofResult, ProofStatus
+from ...TDFOL.tdfol_core import Formula
+from ...TDFOL.tdfol_dcec_parser import parse_dcec
+from ...TDFOL.tdfol_prover import ProofResult, ProofStatus
 from .base_prover_bridge import (
     BaseProverBridge,
     BridgeMetadata,
@@ -253,7 +253,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         try:
             # Convert TDFOL to DCEC string
-            from ..TDFOL.tdfol_converter import tdfol_to_dcec
+            from ...TDFOL.tdfol_converter import tdfol_to_dcec
             dcec_str = tdfol_to_dcec(formula)
             
             # Use grammar engine for DCEC → NL
@@ -539,7 +539,7 @@ class NaturalLanguageTDFOLInterface:
             }
         
         # Add premises to knowledge base
-        from ..TDFOL.tdfol_core import TDFOLKnowledgeBase
+        from ...TDFOL.tdfol_core import TDFOLKnowledgeBase
         kb = TDFOLKnowledgeBase()
         for formula in premise_formulas:
             kb.add_axiom(formula)

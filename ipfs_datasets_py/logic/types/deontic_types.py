@@ -13,7 +13,7 @@ For external use, the types are still available from their original location:
 """
 
 # Re-export from original location to maintain backward compatibility
-from ..integration.deontic_logic_core import (
+from ..integration.converters.deontic_logic_core import (
     DeonticOperator,
     DeonticFormula,
     DeonticRuleSet,
