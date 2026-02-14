@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import os
 import re
 
-from ...llm_router import generate as router_generate
+from ...llm_router import generate_text as router_generate
 from .base import OptimizationMethod
 
 

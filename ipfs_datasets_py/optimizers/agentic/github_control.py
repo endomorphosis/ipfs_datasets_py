@@ -13,7 +13,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..base import ChangeController, OptimizationResult
+from .base import ChangeController, OptimizationResult
 
 
 class CacheBackend(Enum):
