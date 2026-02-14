@@ -47,7 +47,7 @@ from .logic_critic import (
     CriticDimensions,
 )
 from .logic_optimizer import LogicOptimizer as LegacyLogicOptimizer
-from .prover_integration import ProverIntegration
+from .prover_integration import ProverIntegrationAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         self.extractor = LogicExtractor(llm_backend=llm_backend)
         self.critic = LogicCritic(use_provers=use_provers or ['z3'])
         self.legacy_optimizer = LegacyLogicOptimizer()
-        self.prover_integration = ProverIntegration(use_provers=use_provers or ['z3'])
+        self.prover_adapter = ProverIntegrationAdapter(use_provers=use_provers or ['z3'])
         
         # Store settings
         self.extraction_mode = extraction_mode
@@ -332,7 +332,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             
             for statement in artifact.statements:
                 # Validate with prover integration
-                is_valid = self.prover_integration.validate_statement(
+                is_valid = self.prover_adapter.validate_statement(
                     statement.formula,
                     statement.formalism
                 )
@@ -389,7 +389,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         
         logic_capabilities = {
             'extraction_modes': [mode.value for mode in ExtractionMode],
-            'theorem_provers': self.prover_integration.get_available_provers(),
+            'theorem_provers': self.prover_adapter.get_available_provers(),
             'evaluation_dimensions': [dim.value for dim in CriticDimensions],
             'domain': self.domain,
             'current_extraction_mode': self.extraction_mode.value,

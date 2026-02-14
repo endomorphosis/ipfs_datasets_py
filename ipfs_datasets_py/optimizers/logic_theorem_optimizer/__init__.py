@@ -24,6 +24,8 @@ Integration:
 """
 
 __all__ = [
+    # Unified Optimizer (NEW - BaseOptimizer implementation)
+    'LogicTheoremOptimizer',
     # Extractor
     'LogicExtractor',
     'LogicExtractionContext',
@@ -113,7 +115,11 @@ __version__ = '0.1.0'
 
 def __getattr__(name):
     """Lazy imports to avoid circular dependencies."""
-    if name == 'LogicExtractor' or name == 'LogicExtractionContext' or name == 'ExtractionResult':
+    if name == 'LogicTheoremOptimizer':
+        # NEW: Unified optimizer using BaseOptimizer
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+        return LogicTheoremOptimizer
+    elif name == 'LogicExtractor' or name == 'LogicExtractionContext' or name == 'ExtractionResult':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
             LogicExtractor, LogicExtractionContext, ExtractionResult
         )
@@ -133,16 +139,18 @@ def __getattr__(name):
             return CriticScore
         else:
             return CriticDimensions
-    elif name == 'LogicOptimizer' or name == 'OptimizationReport' or name == 'OptimizationStrategy':
+    elif name == 'LogicOptimizer' or name == 'OptimizationReport':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_optimizer import (
-            LogicOptimizer, OptimizationReport, OptimizationStrategy
+            LogicOptimizer, OptimizationReport
         )
         if name == 'LogicOptimizer':
             return LogicOptimizer
-        elif name == 'OptimizationReport':
-            return OptimizationReport
         else:
-            return OptimizationStrategy
+            return OptimizationReport
+    elif name == 'OptimizationStrategy':
+        # Import from BaseOptimizer (no longer duplicated in logic_optimizer)
+        from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrategy
+        return OptimizationStrategy
     elif name == 'TheoremSession' or name == 'SessionResult' or name == 'SessionConfig':
         from ipfs_datasets_py.optimizers.logic_theorem_optimizer.theorem_session import (
             TheoremSession, SessionResult, SessionConfig
