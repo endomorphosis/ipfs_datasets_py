@@ -12,6 +12,7 @@ import re
 
 from ...llm_router import generate_text as router_generate
 from .base import OptimizationMethod
+from .production_hardening import CircuitBreaker, RetryHandler
 
 
 class LLMProvider(Enum):
@@ -147,6 +148,15 @@ class OptimizerLLMRouter:
         self.token_usage: Dict[str, int] = {}
         self.call_count: Dict[str, int] = {}
         self.error_count: Dict[str, int] = {}
+        
+        # Production hardening: Circuit breakers for each provider
+        self._breakers: Dict[LLMProvider, CircuitBreaker] = {
+            provider: CircuitBreaker(failure_threshold=3, timeout=30)
+            for provider in LLMProvider if provider != LLMProvider.AUTO
+        }
+        
+        # Production hardening: Retry handler with exponential backoff
+        self._retry_handler = RetryHandler(max_retries=3, base_delay=1.0, max_delay=30.0)
     
     def _detect_provider(self) -> LLMProvider:
         """Auto-detect best available provider.
@@ -278,12 +288,17 @@ class OptimizerLLMRouter:
                 # Call router with provider hint
                 os.environ["IPFS_DATASETS_PY_LLM_PROVIDER"] = provider_name
                 
-                response = router_generate(
-                    prompt=prompt,
-                    max_tokens=max_tokens,
-                    temperature=temperature,
-                    **kwargs
-                )
+                # Production hardening: Use circuit breaker + retry logic
+                def _make_llm_call():
+                    return self._breakers[current_provider].call(
+                        router_generate,
+                        prompt=prompt,
+                        max_tokens=max_tokens,
+                        temperature=temperature,
+                        **kwargs
+                    )
+                
+                response = self._retry_handler.retry(_make_llm_call, max_retries=2)
                 
                 # Track tokens (estimate)
                 if self.enable_tracking:

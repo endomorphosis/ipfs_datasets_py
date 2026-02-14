@@ -28,6 +28,11 @@ from .methods import (
     ChaosEngineeringOptimizer,
 )
 from .validation import OptimizationValidator, ValidationLevel
+from .production_hardening import (
+    InputSanitizer,
+    ResourceMonitor,
+    get_input_sanitizer,
+)
 
 
 class OptimizerCLI:
@@ -38,6 +43,12 @@ class OptimizerCLI:
         self.coordinator: Optional[AgentCoordinator] = None
         self.config_path = Path(".optimizer-config.json")
         self.config = self._load_config()
+        
+        # Production hardening: Input sanitizer for security
+        self._sanitizer = get_input_sanitizer()
+        
+        # Production hardening: Resource monitor for tracking
+        self._monitor = ResourceMonitor()
     
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file.
@@ -84,10 +95,17 @@ class OptimizerCLI:
             for pattern in args.target:
                 path = Path(pattern)
                 if path.is_file():
+                    # Production hardening: Validate file path
+                    if not self._sanitizer.validate_file_path(str(path)):
+                        print(f"⚠️  Warning: {pattern} failed security validation")
+                        continue
                     target_files.append(path)
                 elif path.is_dir():
                     # Add all Python files in directory
-                    target_files.extend(path.glob("**/*.py"))
+                    for py_file in path.glob("**/*.py"):
+                        # Production hardening: Validate each file
+                        if self._sanitizer.validate_file_path(str(py_file)):
+                            target_files.append(py_file)
                 else:
                     print(f"⚠️  Warning: {pattern} not found")
         
@@ -411,11 +429,16 @@ class OptimizerCLI:
         print("\n⏳ Running validation...")
         
         try:
-            result = validator.validate_sync(
-                code=code,
-                target_files=[target_path],
-                context={},
-            )
+            # Production hardening: Monitor resources during validation
+            with self._monitor.monitor():
+                result = validator.validate_sync(
+                    code=code,
+                    target_files=[target_path],
+                    context={},
+                )
+            
+            # Get resource stats
+            stats = self._monitor.get_stats()
             
             # Display results
             print(f"\n{'='*60}")
@@ -473,6 +496,11 @@ class OptimizerCLI:
                     print(f"   ... and {len(result.warnings) - 5} more")
             
             print(f"\n⏱️  Validation time: {result.execution_time:.2f}s")
+            
+            # Production hardening: Show resource usage
+            print(f"📊 Resource usage:")
+            print(f"   • Time: {stats['elapsed_time']:.2f}s")
+            print(f"   • Peak memory: {stats['peak_memory_mb']:.1f}MB")
             
             return 0 if result.passed else 1
             

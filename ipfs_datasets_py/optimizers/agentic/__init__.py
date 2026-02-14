@@ -67,6 +67,17 @@ from .llm_integration import (
     ProviderCapability,
     PROVIDER_CAPABILITIES,
 )
+from .production_hardening import (
+    SecurityConfig,
+    InputSanitizer,
+    SandboxExecutor,
+    CircuitBreaker,
+    RetryHandler,
+    ResourceMonitor,
+    get_security_config,
+    get_input_sanitizer,
+    get_sandbox_executor,
+)
 
 __all__ = [
     # Base classes
@@ -120,4 +131,14 @@ __all__ = [
     "LLMProvider",
     "ProviderCapability",
     "PROVIDER_CAPABILITIES",
+    # Production Hardening
+    "SecurityConfig",
+    "InputSanitizer",
+    "SandboxExecutor",
+    "CircuitBreaker",
+    "RetryHandler",
+    "ResourceMonitor",
+    "get_security_config",
+    "get_input_sanitizer",
+    "get_sandbox_executor",
 ]

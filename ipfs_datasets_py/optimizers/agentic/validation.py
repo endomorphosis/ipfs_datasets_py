@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from .base import ValidationResult
+from .production_hardening import SandboxExecutor, get_sandbox_executor
 
 
 class ValidationLevel(Enum):
@@ -250,6 +251,8 @@ class TestValidator(Validator):
             test_path: Path to tests (None = auto-detect)
         """
         self.test_path = test_path
+        # Production hardening: Use sandbox for test execution
+        self._sandbox = get_sandbox_executor()
     
     async def validate(
         self,
