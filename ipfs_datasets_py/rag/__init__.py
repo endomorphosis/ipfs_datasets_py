@@ -1,6 +1,10 @@
-"""RAG (Retrieval-Augmented Generation) components with logic integration."""
+"""RAG (Retrieval-Augmented Generation) components with logic integration.
 
-from ipfs_datasets_py.rag.logic_integration.logic_enhanced_rag import (
+DEPRECATED: Logic integration components have been moved to ipfs_datasets_py.search.logic_integration.
+This module provides backward compatibility.
+"""
+
+from ipfs_datasets_py.search.logic_integration import (
     LogicEnhancedRAG,
     RAGQueryResult
 )

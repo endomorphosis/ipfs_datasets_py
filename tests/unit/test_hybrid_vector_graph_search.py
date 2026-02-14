@@ -1,6 +1,6 @@
 import numpy as np
 
-from ipfs_datasets_py.logic.integrations.graphrag_integration import HybridVectorGraphSearch, GraphRAGFactory
+from ipfs_datasets_py.search.graphrag_integration import HybridVectorGraphSearch, GraphRAGFactory
 
 
 class _ToyDataset:

@@ -1,6 +1,6 @@
 import numpy as np
 
-from ipfs_datasets_py.graphrag.integrations.graphrag_integration import (
+from ipfs_datasets_py.search.graphrag_integration import (
     GraphRAGQueryEngine,
     HybridVectorGraphSearch,
 )

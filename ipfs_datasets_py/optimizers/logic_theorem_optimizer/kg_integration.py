@@ -100,7 +100,7 @@ class KnowledgeGraphIntegration:
         # Initialize knowledge graph
         if self.kg is None:
             try:
-                from ipfs_datasets_py.rag.logic_integration.logic_aware_knowledge_graph import LogicAwareKnowledgeGraph
+                from ipfs_datasets_py.search.logic_integration import LogicAwareKnowledgeGraph
                 self.kg = LogicAwareKnowledgeGraph()
                 logger.info("Initialized LogicAwareKnowledgeGraph")
             except ImportError as e:
@@ -110,7 +110,7 @@ class KnowledgeGraphIntegration:
         # Initialize entity extractor
         if self.enable_entity_extraction:
             try:
-                from ipfs_datasets_py.rag.logic_integration.logic_aware_entity_extractor import LogicAwareEntityExtractor
+                from ipfs_datasets_py.search.logic_integration import LogicAwareEntityExtractor
                 self.entity_extractor = LogicAwareEntityExtractor()
                 logger.info("Initialized LogicAwareEntityExtractor")
             except ImportError as e:
@@ -120,7 +120,7 @@ class KnowledgeGraphIntegration:
         # Initialize theorem RAG
         if self.enable_theorem_augmentation and self.kg:
             try:
-                from ipfs_datasets_py.rag.logic_integration.theorem_augmented_rag import TheoremAugmentedRAG
+                from ipfs_datasets_py.search.logic_integration import TheoremAugmentedRAG
                 self.theorem_rag = TheoremAugmentedRAG(kg=self.kg)
                 logger.info("Initialized TheoremAugmentedRAG")
             except ImportError as e:
@@ -197,7 +197,7 @@ class KnowledgeGraphIntegration:
             text = getattr(statement, 'natural_language', str(statement))
             
             # Create entity
-            from ipfs_datasets_py.rag.logic_integration.logic_aware_entity_extractor import (
+            from ipfs_datasets_py.search.logic_integration import (
                 LogicalEntity, LogicalEntityType
             )
             entity = LogicalEntity(

@@ -198,7 +198,7 @@ def demo_entity_extraction():
     """Demonstrate entity extraction capabilities."""
     print_section("DEMO: Entity Extraction Capabilities")
     
-    from ipfs_datasets_py.rag.logic_integration import LogicAwareEntityExtractor
+    from ipfs_datasets_py.search.logic_integration import LogicAwareEntityExtractor
     
     extractor = LogicAwareEntityExtractor(use_neural=False)
     
