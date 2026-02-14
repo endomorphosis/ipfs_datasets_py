@@ -203,14 +203,14 @@ async def example_error_handling():
 async def example_graphrag_integration():
     """Example 7: GraphRAG integration (if available)."""
     print("=" * 60)
-    print("Example 7: GraphRAG Integration")
+    print("Example 7: Logic-Enhanced RAG Integration")
     print("=" * 60)
     
     try:
         from ipfs_datasets_py.processors.file_converter import FileConverter
-        from ipfs_datasets_py.rag import GraphRAG
+        from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
         
-        print("GraphRAG available - demonstrating integration...")
+        print("Logic-Enhanced RAG available - demonstrating integration...")
         
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create sample documents
@@ -230,17 +230,17 @@ async def example_graphrag_integration():
                 print(f"✓ Converted {len([result1, result2])} documents")
                 print(f"  Doc 1: {len(result1.text)} chars")
                 print(f"  Doc 2: {len(result2.text)} chars")
-                print("  Ready for GraphRAG processing")
+                print("  Ready for Logic-Enhanced RAG processing")
                 
-                # Note: Actual GraphRAG integration would require initialization
-                # graph = GraphRAG()
-                # await graph.add_document(result1.text, metadata=result1.metadata)
-                # await graph.add_document(result2.text, metadata=result2.metadata)
+                # Note: Actual Logic-Enhanced RAG integration would require initialization
+                # rag = LogicEnhancedRAG()
+                # rag.ingest_document(result1.text, doc_id="doc1")
+                # rag.ingest_document(result2.text, doc_id="doc2")
             else:
                 print("✗ Conversion failed")
         
     except ImportError as e:
-        print(f"⊗ GraphRAG not available: {e}")
+        print(f"⊗ Logic-Enhanced RAG not available: {e}")
     
     print()
 

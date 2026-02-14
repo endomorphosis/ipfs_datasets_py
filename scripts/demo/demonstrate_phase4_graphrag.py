@@ -15,7 +15,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ipfs_datasets_py.rag import LogicEnhancedRAG
+from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
 
 
 def print_section(title: str):
