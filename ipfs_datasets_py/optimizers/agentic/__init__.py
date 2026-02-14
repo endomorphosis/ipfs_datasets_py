@@ -24,6 +24,14 @@ from .coordinator import (
     AgentStatus,
     ConflictResolver,
 )
+from .github_api_unified import (
+    UnifiedGitHubAPICache,
+    GitHubAPICache,  # Backward compatibility alias
+    GitHubAPICounter,  # Backward compatibility alias
+    CacheBackend,
+    CacheEntry,
+    APICallRecord,
+)
 from .github_control import GitHubChangeController
 from .methods import TestDrivenOptimizer
 from .patch_control import (
@@ -48,6 +56,13 @@ __all__ = [
     "AgentState",
     "AgentStatus",
     "ConflictResolver",
+    # GitHub API (Unified)
+    "UnifiedGitHubAPICache",
+    "GitHubAPICache",  # Backward compatibility
+    "GitHubAPICounter",  # Backward compatibility
+    "CacheBackend",
+    "CacheEntry",
+    "APICallRecord",
     # Change control
     "GitHubChangeController",
     "PatchBasedChangeController",
