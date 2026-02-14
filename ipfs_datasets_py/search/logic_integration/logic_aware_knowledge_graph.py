@@ -16,7 +16,7 @@ try:
 except ImportError:
     HAS_NETWORKX = False
 
-from ipfs_datasets_py.rag.logic_integration.logic_aware_entity_extractor import (
+from ipfs_datasets_py.search.logic_integration.logic_aware_entity_extractor import (
     LogicalEntity,
     LogicalRelationship,
     LogicalEntityType

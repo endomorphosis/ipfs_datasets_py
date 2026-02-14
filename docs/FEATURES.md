@@ -32,14 +32,14 @@ AI-powered document processing with knowledge graph integration:
 **Example:**
 ```python
 from ipfs_datasets_py.pdf_processing import PDFProcessor
-from ipfs_datasets_py.rag import GraphRAG
+from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
 
 pdf = PDFProcessor()
-graph = GraphRAG()
+rag = LogicEnhancedRAG()
 
 content = pdf.process("document.pdf")
-graph.add_document(content)
-results = graph.query("What are the key findings?")
+rag.ingest_document(content, "doc1")
+results = rag.query("What are the key findings?")
 ```
 
 ### Universal File Conversion

@@ -7,7 +7,7 @@ proven logical theorems from the TDFOL prover.
 from typing import List, Dict, Optional, Any
 import logging
 
-from ipfs_datasets_py.rag.logic_integration.logic_aware_knowledge_graph import (
+from ipfs_datasets_py.search.logic_integration.logic_aware_knowledge_graph import (
     LogicAwareKnowledgeGraph,
     LogicNode
 )

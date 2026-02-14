@@ -15,7 +15,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ipfs_datasets_py.rag import LogicEnhancedRAG
+from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
 
 
 def print_section(title: str):
@@ -198,7 +198,7 @@ def demo_entity_extraction():
     """Demonstrate entity extraction capabilities."""
     print_section("DEMO: Entity Extraction Capabilities")
     
-    from ipfs_datasets_py.rag.logic_integration import LogicAwareEntityExtractor
+    from ipfs_datasets_py.search.logic_integration import LogicAwareEntityExtractor
     
     extractor = LogicAwareEntityExtractor(use_neural=False)
     

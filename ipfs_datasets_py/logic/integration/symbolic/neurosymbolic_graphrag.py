@@ -33,7 +33,7 @@ except ImportError:
     HAS_NEUROSYMBOLIC = False
 
 # Phase 4: Logic-Enhanced GraphRAG
-from ipfs_datasets_py.rag import LogicEnhancedRAG, RAGQueryResult
+from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG, RAGQueryResult
 
 logger = logging.getLogger(__name__)
 

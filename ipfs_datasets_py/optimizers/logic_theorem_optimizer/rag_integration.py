@@ -87,7 +87,7 @@ class RAGIntegration:
     def _init_rag_system(self) -> None:
         """Initialize LogicEnhancedRAG system if available."""
         try:
-            from ipfs_datasets_py.rag.logic_integration import LogicEnhancedRAG
+            from ipfs_datasets_py.search.logic_integration import LogicEnhancedRAG
             self.rag_system = LogicEnhancedRAG(use_neural=True)
             logger.info("LogicEnhancedRAG system initialized")
         except (ImportError, Exception) as e:

@@ -46,8 +46,8 @@ This directory contains all the documentation for the IPFS Datasets Python proje
 
 - [Vector Stores](../ipfs_datasets_py/vector_stores/) - Vector database implementations
 - [Embeddings](../ipfs_datasets_py/embeddings/) - Embedding generation and management
-- [Search](../ipfs_datasets_py/search/) - Advanced search capabilities
-- [RAG](../ipfs_datasets_py/rag/) - Retrieval-augmented generation
+- [Search](../ipfs_datasets_py/search/) - Advanced search capabilities including RAG and GraphRAG
+
 - [PDF Processing](../ipfs_datasets_py/pdf_processing/) - PDF analysis and processing
 - [Multimedia](../ipfs_datasets_py/multimedia/) - Media processing capabilities
 - [LLM](../ipfs_datasets_py/llm/) - Language model integration

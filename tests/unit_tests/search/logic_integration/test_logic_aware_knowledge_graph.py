@@ -5,12 +5,12 @@ and query capabilities.
 """
 
 import pytest
-from ipfs_datasets_py.rag.logic_integration.logic_aware_entity_extractor import (
+from ipfs_datasets_py.search.logic_integration.logic_aware_entity_extractor import (
     LogicalEntity,
     LogicalEntityType,
     LogicalRelationship
 )
-from ipfs_datasets_py.rag.logic_integration.logic_aware_knowledge_graph import (
+from ipfs_datasets_py.search.logic_integration.logic_aware_knowledge_graph import (
     LogicAwareKnowledgeGraph,
     LogicNode,
     LogicEdge
