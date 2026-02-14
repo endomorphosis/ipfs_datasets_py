@@ -5,16 +5,16 @@ Provides core reasoning engines and proof execution.
 
 Components:
 - ProofExecutionEngine: Main proof execution engine
-- DeontologicalReasoning: Deontic reasoning engine
+- DeontologicalReasoningEngine: Deontic reasoning engine
 - LogicVerification: Logic verification system
 """
 
 from .proof_execution_engine import ProofExecutionEngine
-from .deontological_reasoning import DeontologicalReasoning
-from .logic_verification import LogicVerification
+from .deontological_reasoning import DeontologicalReasoningEngine
+from .logic_verification import LogicVerifier
 
 __all__ = [
     'ProofExecutionEngine',
-    'DeontologicalReasoning',
-    'LogicVerification',
+    'DeontologicalReasoningEngine',
+    'LogicVerifier',
 ]
