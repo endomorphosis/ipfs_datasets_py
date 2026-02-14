@@ -187,7 +187,7 @@ python scripts/scrapers/legal/state_laws_scraper.py [options]
 
 **Before:**
 ```bash
-python install_deps.py --quick
+python scripts/setup/install_deps.py --quick
 ```
 
 **After:**

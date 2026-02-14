@@ -36,7 +36,7 @@ def _bootstrap_symai_env_for_benchmark(*, base_env: Dict[str, str], model: str, 
         base_env.setdefault("IPFS_DATASETS_PY_SYMAI_ROUTER_DRY_RUN", "1")
 
     if use_codex_for_symai:
-        # Ensure the spawned test process registers SyMAI engines via ipfs_datasets_py/sitecustomize.py.
+        # Ensure the spawned test process registers SyMAI engines via scripts/setup/sitecustomize.py.
         base_env.setdefault("IPFS_DATASETS_PY_SYMAI_SITEBOOT", "1")
         base_env.setdefault("IPFS_DATASETS_PY_USE_CODEX_FOR_SYMAI", "1")
         base_env.setdefault("IPFS_DATASETS_PY_CODEX_MODEL", str(model))
@@ -54,7 +54,7 @@ def _bootstrap_symai_env_for_benchmark(*, base_env: Dict[str, str], model: str, 
             log(f"SyMAI bootstrap: ensured config at {config_path}")
 
         # NOTE: EngineRepository registration must happen inside the test subprocess.
-        # We rely on `ipfs_datasets_py/sitecustomize.py` (gated by IPFS_DATASETS_PY_SYMAI_SITEBOOT)
+        # We rely on `scripts/setup/sitecustomize.py` (gated by IPFS_DATASETS_PY_SYMAI_SITEBOOT)
         # to register the neurosymbolic engine before tests call Expression.prompt.
         log("SyMAI bootstrap: enabled sitecustomize engine registration")
         return

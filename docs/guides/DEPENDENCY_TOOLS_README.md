@@ -91,10 +91,10 @@ Installs essential packages for basic CLI functionality.
 
 ```bash
 # Generated after running quick_setup.py
-python install_deps.py cli      # CLI tools
-python install_deps.py pdf      # PDF processing
-python install_deps.py ml       # Machine learning
-python install_deps.py web      # Web scraping
+python scripts/setup/install_deps.py cli      # CLI tools
+python scripts/setup/install_deps.py pdf      # PDF processing
+python scripts/setup/install_deps.py ml       # Machine learning
+python scripts/setup/install_deps.py web      # Web scraping
 ```
 
 ## 📊 Installation Profiles
