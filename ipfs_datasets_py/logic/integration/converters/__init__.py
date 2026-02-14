@@ -5,19 +5,27 @@ Provides format conversion and translation utilities.
 
 Components:
 - DeonticLogicConverter: Deontic logic converter
-- DeonticLogicCore: Core deontic logic
 - LogicTranslationCore: Logic translation utilities
 - ModalLogicExtension: Modal logic extensions
 """
 
-from .deontic_logic_converter import DeonticLogicConverter
-from .deontic_logic_core import DeonticLogicCore
-from .logic_translation_core import LogicTranslationCore
-from .modal_logic_extension import ModalLogicExtension
+try:
+    from .deontic_logic_converter import DeonticLogicConverter
+except ImportError:
+    DeonticLogicConverter = None
+
+try:
+    from .logic_translation_core import LogicTranslationCore
+except ImportError:
+    LogicTranslationCore = None
+
+try:
+    from .modal_logic_extension import ModalLogicExtension
+except ImportError:
+    ModalLogicExtension = None
 
 __all__ = [
     'DeonticLogicConverter',
-    'DeonticLogicCore',
     'LogicTranslationCore',
     'ModalLogicExtension',
 ]

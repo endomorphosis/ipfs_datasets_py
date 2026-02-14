@@ -13,7 +13,7 @@ import hashlib
 from datetime import datetime
 from pathlib import Path
 
-from ..integration.deontic_logic_core import DeonticFormula, DeonticRuleSet
+from ..converters.deontic_logic_core import DeonticFormula, DeonticRuleSet
 from .logic_translation_core import TranslationResult, LogicTranslationTarget
 
 # Configure logging

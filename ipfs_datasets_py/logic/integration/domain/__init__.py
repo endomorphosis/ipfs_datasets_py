@@ -11,20 +11,36 @@ Components:
 - Document: Consistency checking
 """
 
-from .legal_domain_knowledge import LegalDomainKnowledge
-from .legal_symbolic_analyzer import LegalSymbolicAnalyzer
-from .medical_theorem_framework import MedicalTheoremFramework
-from .symbolic_contracts import SymbolicContracts
-from .document_consistency_checker import DocumentConsistencyChecker
-from .deontic_query_engine import DeonticQueryEngine
-from .temporal_deontic_api import TemporalDeonticAPI
+# Only import the classes that actually exist
+try:
+    from .legal_domain_knowledge import LegalDomainKnowledge
+except ImportError:
+    LegalDomainKnowledge = None
+
+try:
+    from .legal_symbolic_analyzer import LegalSymbolicAnalyzer
+except ImportError:
+    LegalSymbolicAnalyzer = None
+
+try:
+    from .deontic_query_engine import DeonticQueryEngine
+except ImportError:
+    DeonticQueryEngine = None
+
+try:
+    from .temporal_deontic_api import TemporalDeonticAPI
+except ImportError:
+    TemporalDeonticAPI = None
+
+try:
+    from .document_consistency_checker import DocumentConsistencyChecker
+except ImportError:
+    DocumentConsistencyChecker = None
 
 __all__ = [
     'LegalDomainKnowledge',
     'LegalSymbolicAnalyzer',
-    'MedicalTheoremFramework',
-    'SymbolicContracts',
-    'DocumentConsistencyChecker',
     'DeonticQueryEngine',
     'TemporalDeonticAPI',
+    'DocumentConsistencyChecker',
 ]
