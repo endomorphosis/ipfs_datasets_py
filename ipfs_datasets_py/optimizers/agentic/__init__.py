@@ -11,15 +11,50 @@ The framework supports two change control methods:
 
 from .base import (
     AgenticOptimizer,
-    OptimizationTask,
-    OptimizationResult,
+    ChangeController,
     ChangeControlMethod,
+    OptimizationMethod,
+    OptimizationResult,
+    OptimizationTask,
+    ValidationResult,
+)
+from .coordinator import (
+    AgentCoordinator,
+    AgentState,
+    AgentStatus,
+    ConflictResolver,
+)
+from .github_control import GitHubChangeController
+from .methods import TestDrivenOptimizer
+from .patch_control import (
+    IPFSPatchStore,
+    Patch,
+    PatchBasedChangeController,
+    PatchManager,
+    WorktreeManager,
 )
 
 __all__ = [
     # Base classes
     "AgenticOptimizer",
-    "OptimizationTask",
-    "OptimizationResult",
+    "ChangeController",
     "ChangeControlMethod",
+    "OptimizationMethod",
+    "OptimizationResult",
+    "OptimizationTask",
+    "ValidationResult",
+    # Coordination
+    "AgentCoordinator",
+    "AgentState",
+    "AgentStatus",
+    "ConflictResolver",
+    # Change control
+    "GitHubChangeController",
+    "PatchBasedChangeController",
+    "PatchManager",
+    "WorktreeManager",
+    "IPFSPatchStore",
+    "Patch",
+    # Optimization methods
+    "TestDrivenOptimizer",
 ]
