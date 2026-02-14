@@ -14,7 +14,7 @@ from pathlib import Path
 # Add parent directory to path to import from ipfs_datasets_py
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from ipfs_datasets_py.legal_scrapers.state_scrapers import (
+from ipfs_datasets_py.processors.legal_scrapers.state_scrapers import (
     AlabamaScraper,
     ConnecticutScraper,
     DelawareScraper,

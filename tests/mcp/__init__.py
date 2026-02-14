@@ -75,7 +75,7 @@ class TestMCPPDFToolsIntegration:
         THEN it should be accessible from pdf_processing module
         """
         try:
-            from ipfs_datasets_py.pdf_processing import PDFProcessor
+            from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
             assert PDFProcessor is not None
             
             # Try to instantiate (this may fail due to dependencies, which is okay)

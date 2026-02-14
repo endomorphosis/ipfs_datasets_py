@@ -10,7 +10,7 @@ import pytest
 
 
 # Import directly from the module file
-from ipfs_datasets_py.legal_scrapers.municipal_law_database_scrapers.municode_scraper import (
+from ipfs_datasets_py.processors.legal_scrapers.municipal_law_database_scrapers.municode_scraper import (
     search_jurisdictions,
     get_municode_jurisdictions,
     scrape_jurisdiction,

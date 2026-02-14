@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 # Import scrapers from core legal_scrapers module
-from ipfs_datasets_py.legal_scrapers import (
+from ipfs_datasets_py.processors.legal_scrapers import (
     us_code_scraper,
     federal_register_scraper,
     state_laws_scraper,

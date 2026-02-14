@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / '../..'))
 
 # Import from the core legal_scrapers module
-from ipfs_datasets_py.legal_scrapers.recap_archive_scraper import (
+from ipfs_datasets_py.processors.legal_scrapers.recap_archive_scraper import (
     search_recap_documents,
     scrape_recap_archive,
     get_recap_document

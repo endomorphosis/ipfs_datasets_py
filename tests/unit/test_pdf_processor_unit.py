@@ -42,7 +42,7 @@ class TestPDFProcessorInitialization:
         WHEN creating a new instance
         THEN should initialize with default configuration
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -59,7 +59,7 @@ class TestPDFProcessorInitialization:
         WHEN creating a new instance
         THEN should configure monitoring system
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor(enable_monitoring=True)
         
@@ -72,7 +72,7 @@ class TestPDFProcessorInitialization:
         WHEN creating a new instance
         THEN should apply custom settings
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor(
             enable_audit=False,
@@ -98,7 +98,7 @@ class TestPDFProcessorValidation:
         WHEN validating the PDF
         THEN should return True
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -127,7 +127,7 @@ class TestPDFProcessorValidation:
         WHEN validating the PDF
         THEN should raise appropriate error
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -141,7 +141,7 @@ class TestPDFProcessorValidation:
         WHEN validating the PDF
         THEN should handle gracefully
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -167,7 +167,7 @@ class TestPDFProcessorComponentIntegration:
         WHEN processing a PDF
         THEN should invoke all required components in sequence
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -194,7 +194,7 @@ class TestPDFProcessorComponentIntegration:
         WHEN checking GraphRAG integrator
         THEN should have GraphRAG integration component
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -208,7 +208,7 @@ class TestPDFProcessorComponentIntegration:
         WHEN checking IPLD storage
         THEN should have IPLD storage component
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -227,7 +227,7 @@ class TestPDFProcessorErrorHandling:
         WHEN processing through PDFProcessor
         THEN should handle errors gracefully
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -255,7 +255,7 @@ class TestPDFProcessorErrorHandling:
         WHEN processing a PDF
         THEN should continue with fallback implementations
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
@@ -292,7 +292,7 @@ class TestPDFProcessorMetadataHandling:
         WHEN processing the PDF
         THEN should extract and include metadata in results
         """
-        from ipfs_datasets_py.pdf_processing.pdf_processor import PDFProcessor
+        from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
         
         processor = PDFProcessor()
         
