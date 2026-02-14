@@ -2732,7 +2732,7 @@ For detailed help: ipfs-datasets email <subcommand> --help
             subcommand = args[1] if len(args) > 1 else "detect"
             
             try:
-                from ipfs_datasets_py.file_detector import FileTypeDetector
+                from ipfs_datasets_py.utils.file_detector import FileTypeDetector
                 
                 detector = FileTypeDetector()
                 

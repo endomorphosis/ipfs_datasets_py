@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 import pytest
 
-from ipfs_datasets_py.file_detector import (
+from ipfs_datasets_py.utils.file_detector import (
     FileTypeDetector,
     DetectionMethod,
     DetectionStrategy,
