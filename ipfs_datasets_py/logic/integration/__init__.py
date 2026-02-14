@@ -94,8 +94,9 @@ except ImportError:
     DocumentAnalysis = None
     DebugReport = None
 
-# Symbolic subsystem
-from .symbolic.symbolic_fol_bridge import SymbolicFOLBridge
+# Bridges subsystem - SymbolicFOLBridge
+from .bridges.symbolic_fol_bridge import SymbolicFOLBridge
+# Symbolic subsystem - LogicPrimitives
 from .symbolic.symbolic_logic_primitives import LogicPrimitives, create_logic_symbol
 
 try:

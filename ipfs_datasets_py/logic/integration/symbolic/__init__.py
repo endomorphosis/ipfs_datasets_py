@@ -4,18 +4,29 @@ Symbolic AI integration for logic module.
 Provides SymbolicAI and neurosymbolic integration.
 
 Components:
-- SymbolicLogicPrimitives: Symbolic logic primitives
+- LogicPrimitives: Symbolic logic primitives
 - NeurosymbolicAPI: Neurosymbolic API
 - NeurosymbolicGraphRAG: GraphRAG integration
 - neurosymbolic/ package
 """
 
-from .symbolic_logic_primitives import SymbolicLogicPrimitives
-from .neurosymbolic_api import NeurosymbolicAPI
-from .neurosymbolic_graphrag import NeurosymbolicGraphRAG
+try:
+    from .symbolic_logic_primitives import LogicPrimitives
+except ImportError:
+    LogicPrimitives = None
+
+try:
+    from .neurosymbolic_api import NeurosymbolicAPI
+except ImportError:
+    NeurosymbolicAPI = None
+
+try:
+    from .neurosymbolic_graphrag import NeurosymbolicGraphRAG
+except ImportError:
+    NeurosymbolicGraphRAG = None
 
 __all__ = [
-    'SymbolicLogicPrimitives',
+    'LogicPrimitives',
     'NeurosymbolicAPI',
     'NeurosymbolicGraphRAG',
 ]
