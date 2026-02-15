@@ -684,10 +684,15 @@ class QueryExecutor:
     def _apply_operator(self, left: Any, operator: str, right: Any) -> bool:
         """Apply comparison operator."""
         try:
+            operator = operator.upper()
+            
+            # Equality operators
             if operator == "=":
                 return left == right
             elif operator in ("<>", "!="):
                 return left != right
+            
+            # Comparison operators
             elif operator == ">":
                 return left > right
             elif operator == "<":
@@ -696,9 +701,35 @@ class QueryExecutor:
                 return left >= right
             elif operator == "<=":
                 return left <= right
-            else:
+            
+            # IN operator - check membership in list
+            elif operator == "IN":
+                if isinstance(right, list):
+                    return left in right
                 return False
-        except (TypeError, ValueError):
+            
+            # String operators
+            elif operator == "CONTAINS":
+                if isinstance(left, str) and isinstance(right, str):
+                    return right in left
+                return False
+            
+            elif operator in ("STARTS", "STARTS WITH"):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.startswith(right)
+                return False
+            
+            elif operator in ("ENDS", "ENDS WITH"):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.endswith(right)
+                return False
+            
+            else:
+                logger.warning("Unknown operator: %s", operator)
+                return False
+                
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Operator %s failed: %s", operator, e)
             return False
     
     def _validate_parameters(self, parameters: Dict[str, Any]) -> None:
