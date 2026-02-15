@@ -5,6 +5,7 @@ This module provides the foundational components for the processor architecture:
 - ProcessingContext: Context for processing operations
 - ProcessingResult: Standardized result format
 - InputType: Classification of input types
+- InputDetector: Automatic input detection and classification
 """
 
 from .protocol import (
@@ -15,6 +16,11 @@ from .protocol import (
     Processor,
     is_processor,
 )
+from .input_detector import (
+    InputDetector,
+    detect_input,
+    detect_format,
+)
 
 __all__ = [
     'ProcessorProtocol',
@@ -23,4 +29,7 @@ __all__ = [
     'ProcessingResult',
     'InputType',
     'is_processor',
+    'InputDetector',
+    'detect_input',
+    'detect_format',
 ]
