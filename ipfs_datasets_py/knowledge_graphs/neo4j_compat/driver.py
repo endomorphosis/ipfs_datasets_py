@@ -25,6 +25,7 @@ from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlparse
 
 from .session import IPFSSession
+from .connection_pool import ConnectionPool
 
 try:
     from ipfs_datasets_py.router_deps import RouterDeps
@@ -101,9 +102,18 @@ class IPFSDriver:
         self.deps = deps if deps is not None else RouterDeps()
         self.backend = IPLDBackend(deps=self.deps)
         
+        # Initialize connection pool
+        self._connection_pool = ConnectionPool(
+            max_size=max_connection_pool_size,
+            max_connection_lifetime=max_connection_lifetime,
+            connection_timeout=connection_timeout,
+            keep_alive=keep_alive
+        )
+        
         self._closed = False
         
-        logger.info("IPFSDriver initialized: uri=%s, mode=%s", uri, self._mode)
+        logger.info("IPFSDriver initialized: uri=%s, mode=%s, pool_size=%d", 
+                   uri, self._mode, max_connection_pool_size)
     
     def _parse_uri(self, uri: str) -> Tuple[str, Optional[str]]:
         """
@@ -184,7 +194,10 @@ class IPFSDriver:
         """
         if not self._closed:
             self._closed = True
-            logger.info("IPFSDriver closed")
+            # Close connection pool
+            self._connection_pool.close()
+            logger.info("IPFSDriver closed (pool stats: %s)", 
+                       self._connection_pool.get_stats())
     
     def verify_connectivity(self) -> Dict[str, Any]:
         """
@@ -227,6 +240,31 @@ class IPFSDriver:
     def closed(self) -> bool:
         """Check if driver is closed."""
         return self._closed
+    
+    def get_pool_stats(self) -> Dict[str, Any]:
+        """
+        Get connection pool statistics.
+        
+        Returns:
+            Dictionary with pool statistics including:
+            - max_size: Maximum pool size
+            - available: Available connections
+            - in_use: Connections currently in use
+            - total: Total connections in pool
+            - stats: Detailed statistics (created, acquired, released, etc.)
+        """
+        return self._connection_pool.get_stats()
+    
+    def verify_authentication(self) -> bool:
+        """
+        Verify authentication credentials.
+        
+        Returns:
+            True if authentication is valid, False otherwise
+        """
+        # Phase 2 will implement actual authentication
+        # For now, always return True if auth was provided
+        return self.auth is not None
 
 
 class GraphDatabase:
