@@ -44,6 +44,11 @@ __all__ = [
     'classify_input',
     'get_global_registry',
     
+    # Developer tools (Phase 7)
+    'debug_tools',   # Debugging utilities module
+    'profiling',     # Performance profiling module
+    'cli',           # Command-line interface module
+    
     # Legacy exports (existing processors)
     'graphrag_processor',
     'enhanced_multimodal_processor',
