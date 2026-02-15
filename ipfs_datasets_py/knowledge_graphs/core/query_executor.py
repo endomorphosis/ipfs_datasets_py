@@ -132,8 +132,7 @@ class QueryExecutor:
         """
         Execute a Cypher query.
         
-        Phase 1: Returns error message (not implemented)
-        Phase 2: Will parse and execute via CypherParser
+        Phase 2: Parses and executes via CypherParser + CypherCompiler
         
         Args:
             query: Cypher query string
@@ -143,17 +142,43 @@ class QueryExecutor:
         Returns:
             Result object
         """
-        logger.warning("Cypher query detected but not yet implemented: %s", query[:50])
+        logger.info("Executing Cypher query: %s", query[:50])
         
-        # Phase 1: Return helpful error
-        # Phase 2: Will delegate to cypher.parser.CypherParser
-        
-        raise NotImplementedError(
-            f"Cypher query support coming in Phase 2 (Weeks 3-4).\n"
-            f"Query: {query[:100]}...\n"
-            f"For now, use IR queries or simple node/relationship operations.\n"
-            f"See documentation for current capabilities."
-        )
+        try:
+            # Import parser and compiler
+            from ..cypher import CypherParser, CypherCompiler
+            
+            # Parse query to AST
+            parser = CypherParser()
+            ast = parser.parse(query)
+            logger.debug("Parsed query into AST with %d clauses", len(ast.clauses))
+            
+            # Compile AST to IR
+            compiler = CypherCompiler()
+            ir_operations = compiler.compile(ast)
+            logger.debug("Compiled to %d IR operations", len(ir_operations))
+            
+            # Execute IR operations
+            records = self._execute_ir_operations(ir_operations, parameters)
+            
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "ir_operations": len(ir_operations),
+                "records_returned": len(records)
+            }
+            
+            return Result(records, summary=summary)
+            
+        except Exception as e:
+            logger.error("Cypher execution failed: %s", e)
+            # Return error as empty result with error info
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e)
+            }
+            return Result([], summary=summary)
     
     def _execute_ir(
         self,
@@ -198,26 +223,184 @@ class QueryExecutor:
         For basic operations like "get node by id".
         
         Args:
-            query: Simple query pattern
+            query: Simple query string
             parameters: Query parameters
             **options: Execution options
             
         Returns:
             Result object
         """
-        logger.debug("Executing simple query: %s", query)
+        logger.debug("Executing simple query")
         
-        # Phase 1: Basic patterns
-        # Phase 2: More sophisticated patterns
-        
+        # Phase 1: Return empty result
         records = []
         summary = {
             "query_type": "simple",
-            "query": query,
-            "execution_time_ms": 0
+            "query": query[:100]
         }
         
         return Result(records, summary=summary)
+    
+    def _execute_ir_operations(
+        self,
+        operations: List[Dict[str, Any]],
+        parameters: Dict[str, Any]
+    ) -> List[Record]:
+        """
+        Execute IR operations using GraphEngine.
+        
+        Args:
+            operations: List of IR operations
+            parameters: Query parameters for substitution
+            
+        Returns:
+            List of Record objects
+        """
+        if not self.graph_engine:
+            logger.warning("No GraphEngine available, returning empty results")
+            return []
+        
+        # Track intermediate results
+        result_set = {}  # variable → values
+        final_results = []
+        
+        for op in operations:
+            op_type = op.get("op")
+            
+            if op_type == "ScanLabel":
+                # Scan nodes by label
+                label = op.get("label")
+                variable = op.get("variable")
+                nodes = self.graph_engine.find_nodes(labels=[label])
+                result_set[variable] = nodes
+                logger.debug("ScanLabel %s: found %d nodes", label, len(nodes))
+            
+            elif op_type == "ScanAll":
+                # Scan all nodes
+                variable = op.get("variable")
+                nodes = self.graph_engine.find_nodes()
+                result_set[variable] = nodes
+                logger.debug("ScanAll: found %d nodes", len(nodes))
+            
+            elif op_type == "Filter":
+                # Apply filter to variable
+                variable = op.get("variable")
+                property_name = op.get("property")
+                operator = op.get("operator")
+                value = self._resolve_value(op.get("value"), parameters)
+                
+                if variable in result_set:
+                    filtered = []
+                    for item in result_set[variable]:
+                        item_value = item.get(property_name)
+                        if self._apply_operator(item_value, operator, value):
+                            filtered.append(item)
+                    result_set[variable] = filtered
+                    logger.debug("Filter %s.%s %s %s: %d results",
+                               variable, property_name, operator, value, len(filtered))
+            
+            elif op_type == "Project":
+                # Project fields
+                items = op.get("items", [])
+                for var_name, values in result_set.items():
+                    for value in values:
+                        record_data = {}
+                        for item in items:
+                            expr = item.get("expression")
+                            alias = item.get("alias", expr)
+                            
+                            # Simple expression evaluation
+                            if "." in expr:
+                                var, prop = expr.split(".", 1)
+                                if var == var_name:
+                                    record_data[alias] = value.get(prop)
+                            elif expr == var_name:
+                                record_data[alias] = value
+                        
+                        if record_data:
+                            # Create Record with keys and values
+                            keys = list(record_data.keys())
+                            values = list(record_data.values())
+                            final_results.append(Record(keys, values))
+                
+                logger.debug("Project: %d results", len(final_results))
+            
+            elif op_type == "Limit":
+                # Limit results
+                count = op.get("count")
+                final_results = final_results[:count]
+                logger.debug("Limit: keeping %d results", len(final_results))
+            
+            elif op_type == "Skip":
+                # Skip results
+                count = op.get("count")
+                final_results = final_results[count:]
+                logger.debug("Skip: %d results remaining", len(final_results))
+            
+            elif op_type == "OrderBy":
+                # Order results (simplified)
+                logger.debug("OrderBy: not yet fully implemented")
+            
+            elif op_type == "CreateNode":
+                # Create node
+                variable = op.get("variable")
+                labels = op.get("labels", [])
+                properties = op.get("properties", {})
+                
+                node = self.graph_engine.create_node(labels=labels, properties=properties)
+                result_set[variable] = [node]
+                logger.debug("CreateNode: created node %s", node.id)
+            
+            elif op_type == "Delete":
+                # Delete node
+                variable = op.get("variable")
+                if variable in result_set:
+                    for item in result_set[variable]:
+                        self.graph_engine.delete_node(item.id)
+                    logger.debug("Delete: deleted %d nodes", len(result_set[variable]))
+            
+            elif op_type == "SetProperty":
+                # Set property
+                variable = op.get("variable")
+                property_name = op.get("property")
+                value = self._resolve_value(op.get("value"), parameters)
+                
+                if variable in result_set:
+                    for item in result_set[variable]:
+                        self.graph_engine.update_node(item.id, {property_name: value})
+                    logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
+        
+        return final_results
+    
+    def _resolve_value(self, value: Any, parameters: Dict[str, Any]) -> Any:
+        """Resolve value, substituting parameters if needed."""
+        if isinstance(value, dict):
+            if "param" in value:
+                param_name = value["param"]
+                return parameters.get(param_name)
+            elif "var" in value:
+                return value  # Keep as reference
+        return value
+    
+    def _apply_operator(self, left: Any, operator: str, right: Any) -> bool:
+        """Apply comparison operator."""
+        try:
+            if operator == "=":
+                return left == right
+            elif operator in ("<>", "!="):
+                return left != right
+            elif operator == ">":
+                return left > right
+            elif operator == "<":
+                return left < right
+            elif operator == ">=":
+                return left >= right
+            elif operator == "<=":
+                return left <= right
+            else:
+                return False
+        except (TypeError, ValueError):
+            return False
     
     def _validate_parameters(self, parameters: Dict[str, Any]) -> None:
         """

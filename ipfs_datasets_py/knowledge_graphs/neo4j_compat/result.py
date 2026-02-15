@@ -274,3 +274,8 @@ class Result:
     def __repr__(self) -> str:
         """String representation."""
         return f"Result(records={len(self._records)}, consumed={self._consumed})"
+    
+    @property
+    def summary(self) -> Dict[str, Any]:
+        """Get the query summary."""
+        return self._summary
