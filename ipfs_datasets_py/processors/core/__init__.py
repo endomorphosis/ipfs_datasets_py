@@ -6,6 +6,7 @@ This module provides the foundational components for the processor architecture:
 - ProcessingResult: Standardized result format
 - InputType: Classification of input types
 - InputDetector: Automatic input detection and classification
+- ProcessorRegistry: Registration and discovery of processors
 """
 
 from .protocol import (
@@ -21,6 +22,11 @@ from .input_detector import (
     detect_input,
     detect_format,
 )
+from .processor_registry import (
+    ProcessorRegistry,
+    ProcessorEntry,
+    get_global_registry,
+)
 
 __all__ = [
     'ProcessorProtocol',
@@ -32,4 +38,7 @@ __all__ = [
     'InputDetector',
     'detect_input',
     'detect_format',
+    'ProcessorRegistry',
+    'ProcessorEntry',
+    'get_global_registry',
 ]

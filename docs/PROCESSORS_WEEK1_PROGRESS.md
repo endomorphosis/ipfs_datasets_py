@@ -1,18 +1,18 @@
 # Processors Implementation - Week 1 Progress
 
 **Branch:** `copilot/refactor-session-management`  
-**Status:** Day 2 Complete ✅  
+**Status:** Day 3 Complete ✅  
 **Last Updated:** 2026-02-15
 
 ## 4-Week Timeline
 
-### Week 1: Core Infrastructure (Days 1-5) 🚧 40% COMPLETE
+### Week 1: Core Infrastructure (Days 1-5) 🚧 60% COMPLETE
 
 | Day | Component | Status | Lines | Progress |
 |-----|-----------|--------|-------|----------|
 | **1** | **ProcessorProtocol** | ✅ **COMPLETE** | 13KB | 100% |
 | **2** | **InputDetector** | ✅ **COMPLETE** | 15.5KB | 100% |
-| 3 | ProcessorRegistry | ⬜ Planned | ~250 | 0% |
+| **3** | **ProcessorRegistry** | ✅ **COMPLETE** | 14.5KB | 100% |
 | 4 | UniversalProcessor | ⬜ Planned | ~400 | 0% |
 | 5 | Integration Testing | ⬜ Planned | - | 0% |
 
@@ -395,3 +395,209 @@ class InputDetector:
 
 **Branch:** `copilot/implement-processors-week1`  
 **Commit:** Week 1 Day 1 COMPLETE: ProcessorProtocol core infrastructure
+
+## Day 3 Summary ✅
+
+### What Was Built
+
+#### 1. ProcessorRegistry (14.5KB)
+
+**File:** `ipfs_datasets_py/processors/core/processor_registry.py`
+
+Created centralized registry for processor management:
+
+**Core Features:**
+- ✅ **Registration** - Register processors with priority, name, metadata
+- ✅ **Discovery** - Find suitable processors for any input
+- ✅ **Priority-based Selection** - Highest priority checked first
+- ✅ **can_handle() Checking** - Validates each processor
+- ✅ **Capability Reporting** - Aggregates capabilities from all processors
+- ✅ **Enable/Disable Control** - Runtime processor control
+- ✅ **Error Handling** - Graceful handling of processor errors
+- ✅ **Logging** - Comprehensive logging throughout
+
+**ProcessorEntry Dataclass:**
+```python
+@dataclass
+class ProcessorEntry:
+    processor: ProcessorProtocol
+    priority: int = 10
+    name: str = ""
+    enabled: bool = True
+    metadata: Dict[str, Any] = field(default_factory=dict)
+```
+
+**Main API:**
+```python
+class ProcessorRegistry:
+    def register(processor, priority=10, name=None, enabled=True, **metadata) -> str
+    def unregister(name: str) -> bool
+    def get_processor(name: str) -> Optional[ProcessorProtocol]
+    def get_processors(context, limit=None) -> List[ProcessorProtocol]
+    def get_all_processors() -> List[Tuple[str, ProcessorProtocol, int]]
+    def get_capabilities() -> Dict[str, Any]
+    def enable(name: str) -> bool
+    def disable(name: str) -> bool
+    def clear() -> None
+```
+
+**Priority-based Selection:**
+Processors are sorted by priority (highest first). When selecting a processor:
+1. Check processors in priority order
+2. Call can_handle() for each
+3. Return first processor where can_handle() returns True
+4. Skip disabled processors
+5. Handle errors gracefully
+
+**Capability Aggregation:**
+```python
+caps = registry.get_capabilities()
+# Returns:
+# {
+#     'total_processors': 5,
+#     'enabled_processors': 4,
+#     'processors': [...],  # List of processor details
+#     'supported_input_types': ['url', 'file', 'folder', ...],
+#     'supported_formats': ['pdf', 'html', 'mp4', ...]
+# }
+```
+
+**Global Registry Singleton:**
+```python
+from ipfs_datasets_py.processors.core import get_global_registry
+
+registry = get_global_registry()
+# Always returns the same instance
+```
+
+#### 2. Test Suite (17KB)
+
+**File:** `tests/unit/processors/core/test_processor_registry.py`
+
+**50+ test cases across 10 test classes:**
+- `TestProcessorRegistry` - Basic functionality (6 tests)
+- `TestProcessorSelection` - Selection and discovery (5 tests)
+- `TestProcessorEnableDisable` - Enable/disable control (3 tests)
+- `TestCapabilities` - Capability reporting (3 tests)
+- `TestErrorHandling` - Error handling (1 test)
+- `TestRegistryClear` - Clear functionality (1 test)
+- `TestGlobalRegistry` - Singleton behavior (2 tests)
+- `TestProcessorEntry` - Entry dataclass (2 tests)
+- `TestRegistryMagicMethods` - Magic methods (3 tests)
+
+**Manual Test Results:**
+```
+✓ Registry creation and initialization
+✓ Processor registration with priority
+✓ Priority ordering (highest first)
+✓ Processor selection by format
+✓ Processor selection by input type
+✓ Capability aggregation
+✓ Enable/disable control
+✓ Global registry singleton
+✓ 'in' operator (__contains__)
+✓ len() operator (__len__)
+```
+
+### Design Decisions
+
+1. **Priority-based Selection**
+   - Higher priority = checked first
+   - Allows override/fallback patterns
+   - Example: IPFS(20) → GraphRAG(10) → FileConverter(5)
+
+2. **Processor Entry Pattern**
+   - Wraps processor with metadata
+   - Supports enable/disable without unregistering
+   - Auto-generates name from class if not provided
+
+3. **Error Resilience**
+   - Catches errors in can_handle()
+   - Logs errors but continues checking other processors
+   - Never fails completely - returns empty list if no match
+
+4. **Global Registry Singleton**
+   - Convenience for sharing processors across app
+   - Optional - can create local registries too
+   - Thread-safe (single instance)
+
+5. **Rich Capability Reporting**
+   - Aggregates capabilities from all processors
+   - Shows supported formats and input types
+   - Includes processor metadata and status
+
+### Usage Examples
+
+**Basic Registration and Selection:**
+```python
+from ipfs_datasets_py.processors.core import (
+    ProcessorRegistry,
+    ProcessingContext,
+    InputType
+)
+
+# Create registry
+registry = ProcessorRegistry()
+
+# Register processors with priorities
+registry.register(pdf_processor, priority=10, name="PDF")
+registry.register(graphrag_processor, priority=20, name="GraphRAG")
+registry.register(multimedia_processor, priority=15, name="Multimedia")
+
+# Find processor for input
+context = ProcessingContext(
+    input_type=InputType.FILE,
+    source="document.pdf",
+    metadata={'format': 'pdf'}
+)
+
+processors = registry.get_processors(context)
+if processors:
+    result = processors[0].process(context)
+```
+
+**Using Global Registry:**
+```python
+from ipfs_datasets_py.processors.core import get_global_registry
+
+# Register once at app startup
+registry = get_global_registry()
+registry.register(my_processor, priority=10)
+
+# Use anywhere in app
+registry = get_global_registry()
+processors = registry.get_processors(context)
+```
+
+**Runtime Control:**
+```python
+# Temporarily disable a processor
+registry.disable("PDF Processor")
+
+# Process without PDF processor
+processors = registry.get_processors(context)
+
+# Re-enable
+registry.enable("PDF Processor")
+```
+
+**Capability Discovery:**
+```python
+caps = registry.get_capabilities()
+
+print(f"Total: {caps['total_processors']}")
+print(f"Enabled: {caps['enabled_processors']}")
+print(f"Formats: {caps['supported_formats']}")
+
+for proc_info in caps['processors']:
+    print(f"{proc_info['name']}: priority {proc_info['priority']}")
+```
+
+### Next Steps (Day 4)
+
+Tomorrow: Implement UniversalProcessor (~400 lines)
+- Single entry point for all processing
+- Integrates InputDetector + ProcessorRegistry
+- Automatic routing and processing
+- Result aggregation
+- Error handling and retries
