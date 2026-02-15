@@ -439,14 +439,29 @@ else:
 
 if _MINIMAL_IMPORTS:
     HAVE_GRAPHRAG_PROCESSOR = False
+    UnifiedGraphRAGProcessor = None
+    GraphRAGConfiguration = None
+    GraphRAGResult = None
     GraphRAGProcessor = None
     MockGraphRAGProcessor = None
 else:
+    # GraphRAG processors - Unified implementation recommended
     try:
+        # Import unified GraphRAG processor (recommended)
+        from .processors.graphrag.unified_graphrag import (
+            UnifiedGraphRAGProcessor,
+            GraphRAGConfiguration,
+            GraphRAGResult
+        )
+        
+        # Legacy imports with deprecation warnings (backward compatibility)
         from .processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
         HAVE_GRAPHRAG_PROCESSOR = True
     except ImportError:
         HAVE_GRAPHRAG_PROCESSOR = False
+        UnifiedGraphRAGProcessor = None
+        GraphRAGConfiguration = None
+        GraphRAGResult = None
         GraphRAGProcessor = None
         MockGraphRAGProcessor = None
 
@@ -1045,7 +1060,13 @@ if HAVE_VECTOR_STORES:
     ])
 
 if HAVE_GRAPHRAG_PROCESSOR:
-    __all__.extend(['GraphRAGProcessor', 'MockGraphRAGProcessor'])
+    __all__.extend([
+        'UnifiedGraphRAGProcessor',  # Recommended unified implementation
+        'GraphRAGConfiguration',
+        'GraphRAGResult',
+        'GraphRAGProcessor',  # Legacy (deprecated)
+        'MockGraphRAGProcessor'  # Legacy (deprecated)
+    ])
 
 if HAVE_KNN:
     __all__.extend(['IPFSKnnIndex'])
