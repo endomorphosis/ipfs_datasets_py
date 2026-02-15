@@ -1,0 +1,501 @@
+name: JavaScript SDK Error Monitoring
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/static/js/mcp-sdk.js'
+      - 'ipfs_datasets_py/static/js/mcp-api-client.js'
+      - 'ipfs_datasets_py/static/js/mcp_client_sdk.js'
+      - 'ipfs_datasets_py/static/js/error-reporter.js'
+      - '.github/workflows/javascript-sdk-monitoring.yml'
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - browser
+  schedule:
+    # Run JavaScript SDK monitoring daily at 5 AM UTC
+    - cron: '0 5 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '20'
+
+jobs:
+  # SDK static analysis and linting
+  sdk-static-analysis:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: node:20-slim
+      options: --user root
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install linting tools
+        run: |
+          npm install -g eslint jshint
+      
+      - name: Lint MCP SDK
+        id: lint_sdk
+        continue-on-error: true
+        run: |
+          echo "🔍 Linting MCP SDK..."
+          
+          # Create a basic .eslintrc.json if it doesn't exist
+          if [ ! -f .eslintrc.json ]; then
+            cat > .eslintrc.json << 'EOF'
+          {
+            "env": {
+              "browser": true,
+              "es2021": true
+            },
+            "extends": "eslint:recommended",
+            "parserOptions": {
+              "ecmaVersion": 12
+            },
+            "rules": {
+              "no-unused-vars": "warn",
+              "no-undef": "error"
+            }
+          }
+          EOF
+          fi
+          
+          # Lint SDK files
+          eslint ipfs_datasets_py/static/js/mcp-sdk.js || echo "sdk_lint_failed=true" >> $GITHUB_OUTPUT
+          eslint ipfs_datasets_py/static/js/mcp-api-client.js || echo "api_client_lint_failed=true" >> $GITHUB_OUTPUT
+          eslint ipfs_datasets_py/static/js/error-reporter.js || echo "error_reporter_lint_failed=true" >> $GITHUB_OUTPUT
+      
+      - name: Check for Syntax Errors
+        id: syntax_check
+        continue-on-error: true
+        run: |
+          echo "✅ Checking JavaScript syntax..."
+          node --check ipfs_datasets_py/static/js/mcp-sdk.js || echo "sdk_syntax_error=true" >> $GITHUB_OUTPUT
+          node --check ipfs_datasets_py/static/js/mcp-api-client.js || echo "api_syntax_error=true" >> $GITHUB_OUTPUT
+          node --check ipfs_datasets_py/static/js/error-reporter.js || echo "error_reporter_syntax_error=true" >> $GITHUB_OUTPUT
+      
+      - name: Report Syntax Issues
+        if: steps.syntax_check.outputs.sdk_syntax_error == 'true' || steps.syntax_check.outputs.api_syntax_error == 'true' || steps.syntax_check.outputs.error_reporter_syntax_error == 'true'
+        run: |
+          echo "## ❌ JavaScript Syntax Errors Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Critical syntax errors found in SDK files. Auto-healing will be triggered." >> $GITHUB_STEP_SUMMARY
+
+  # SDK functionality tests
+  sdk-functionality-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: sdk-static-analysis
+    if: ${{ !cancelled() }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y git curl nodejs npm
+          pip install --upgrade pip
+          pip install -e .[test]
+      
+      - name: Start MCP Dashboard for SDK Testing
+        run: |
+          echo "🚀 Starting MCP Dashboard..."
+          python -m ipfs_datasets_py.mcp_dashboard &
+          MCP_PID=$!
+          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          
+          # Wait for dashboard to be ready
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/health 2>/dev/null; then
+              echo "✅ Dashboard is ready!"
+              break
+            fi
+            if [ $i -eq 60 ]; then
+              echo "❌ Dashboard failed to start"
+              exit 1
+            fi
+            sleep 2
+          done
+      
+      - name: Test SDK API Calls
+        id: sdk_api_tests
+        continue-on-error: true
+        run: |
+          echo "🧪 Testing SDK API functionality..."
+          
+          # Create a Node.js test script
+          cat > test_sdk.js << 'EOF'
+          const http = require('http');
+          
+          // Test health endpoint
+          function testHealthEndpoint() {
+            return new Promise((resolve, reject) => {
+              const req = http.get('http://127.0.0.1:8899/api/health', (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  if (res.statusCode === 200) {
+                    console.log('✅ Health endpoint working');
+                    resolve(true);
+                  } else {
+                    console.log('❌ Health endpoint failed:', res.statusCode);
+                    reject(false);
+                  }
+                });
+              });
+              req.on('error', reject);
+              req.setTimeout(5000, () => {
+                req.destroy();
+                reject(new Error('Timeout'));
+              });
+            });
+          }
+          
+          // Test MCP tools endpoint
+          function testToolsEndpoint() {
+            return new Promise((resolve, reject) => {
+              const req = http.get('http://127.0.0.1:8899/api/mcp/tools', (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  if (res.statusCode === 200) {
+                    try {
+                      const tools = JSON.parse(data);
+                      console.log(`✅ Tools endpoint working (${Array.isArray(tools) ? tools.length : Object.keys(tools).length} tools)`);
+                      resolve(true);
+                    } catch (e) {
+                      console.log('❌ Tools endpoint returned invalid JSON');
+                      reject(false);
+                    }
+                  } else {
+                    console.log('❌ Tools endpoint failed:', res.statusCode);
+                    reject(false);
+                  }
+                });
+              });
+              req.on('error', reject);
+              req.setTimeout(10000, () => {
+                req.destroy();
+                reject(new Error('Timeout'));
+              });
+            });
+          }
+          
+          // Run tests
+          (async () => {
+            try {
+              await testHealthEndpoint();
+              await testToolsEndpoint();
+              console.log('✅ All SDK API tests passed');
+              process.exit(0);
+            } catch (error) {
+              console.error('❌ SDK API tests failed:', error);
+              process.exit(1);
+            }
+          })();
+          EOF
+          
+          node test_sdk.js || echo "sdk_api_failed=true" >> $GITHUB_OUTPUT
+      
+      - name: Stop Dashboard
+        if: always()
+        run: |
+          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
+            kill $MCP_DASHBOARD_PID || true
+          fi
+          pkill -f "mcp_dashboard" || true
+
+  # JavaScript error reporter test
+  js-error-reporter-test:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: node:20-slim
+      options: --user root
+    needs: sdk-static-analysis
+    if: ${{ !cancelled() }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Test Error Reporter Class
+        run: |
+          echo "🧪 Testing JavaScript Error Reporter..."
+          
+          # Create a test script for error reporter
+          cat > test_error_reporter.js << 'EOF'
+          // Load the error reporter code (simplified for Node.js environment)
+          class JavaScriptErrorReporter {
+            constructor(options = {}) {
+              this.enabled = options.enabled !== undefined ? options.enabled : false;
+              this.endpoint = options.endpoint || '/api/report-error';
+              this.reportedErrors = new Set();
+              this.minReportInterval = options.minReportInterval || 3600000;
+              this.maxReportsPerSession = options.maxReportsPerSession || 10;
+              this.reportCount = 0;
+            }
+            
+            computeErrorHash(errorType, errorMessage, errorLocation) {
+              const content = `${errorType}|${errorMessage}|${errorLocation}`;
+              let hash = 0;
+              for (let i = 0; i < content.length; i++) {
+                const char = content.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+              }
+              return Math.abs(hash).toString(16);
+            }
+            
+            shouldReportError(errorHash) {
+              if (this.reportCount >= this.maxReportsPerSession) {
+                return false;
+              }
+              if (this.reportedErrors.has(errorHash)) {
+                return false;
+              }
+              return true;
+            }
+          }
+          
+          // Test the error reporter
+          const reporter = new JavaScriptErrorReporter({ enabled: true });
+          
+          // Test hash computation
+          const hash1 = reporter.computeErrorHash('TypeError', 'Test error', 'test.js:10');
+          const hash2 = reporter.computeErrorHash('TypeError', 'Test error', 'test.js:10');
+          const hash3 = reporter.computeErrorHash('TypeError', 'Different error', 'test.js:10');
+          
+          if (hash1 !== hash2) {
+            console.error('❌ Hash computation inconsistent');
+            process.exit(1);
+          }
+          
+          if (hash1 === hash3) {
+            console.error('❌ Hash not differentiating errors');
+            process.exit(1);
+          }
+          
+          console.log('✅ Hash computation working correctly');
+          
+          // Test error deduplication
+          if (!reporter.shouldReportError(hash1)) {
+            console.error('❌ First error should be reported');
+            process.exit(1);
+          }
+          
+          reporter.reportedErrors.add(hash1);
+          reporter.reportCount++;
+          
+          if (reporter.shouldReportError(hash1)) {
+            console.error('❌ Duplicate error should not be reported');
+            process.exit(1);
+          }
+          
+          console.log('✅ Error deduplication working correctly');
+          
+          // Test report limit
+          for (let i = 0; i < 20; i++) {
+            const testHash = `test_hash_${i}`;
+            if (reporter.shouldReportError(testHash)) {
+              reporter.reportedErrors.add(testHash);
+              reporter.reportCount++;
+            }
+          }
+          
+          if (reporter.reportCount > reporter.maxReportsPerSession) {
+            console.error('❌ Report limit not enforced');
+            process.exit(1);
+          }
+          
+          console.log('✅ Report limit enforced correctly');
+          console.log('✅ All JavaScript error reporter tests passed');
+          EOF
+          
+          node test_error_reporter.js
+
+  # Browser-based integration tests (using headless browser)
+  sdk-browser-tests:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [sdk-static-analysis, sdk-functionality-tests]
+    if: ${{ !cancelled() && (github.event.inputs.test_mode == 'browser' || github.event.inputs.test_mode == 'comprehensive') }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: false
+      
+      - name: Install browser testing dependencies
+        run: |
+          apt-get update
+          apt-get install -y chromium chromium-driver curl
+          pip install --upgrade pip
+          pip install -e .[test]
+          pip install selenium
+      
+      - name: Start MCP Dashboard
+        run: |
+          python -m ipfs_datasets_py.mcp_dashboard &
+          MCP_PID=$!
+          echo "MCP_DASHBOARD_PID=$MCP_PID" >> $GITHUB_ENV
+          
+          # Wait for dashboard
+          for i in {1..60}; do
+            if curl -f http://127.0.0.1:8899/api/health 2>/dev/null; then
+              echo "✅ Dashboard ready for browser tests!"
+              break
+            fi
+            sleep 2
+          done
+      
+      - name: Run Browser SDK Tests
+        id: browser_tests
+        continue-on-error: true
+        run: |
+          echo "🌐 Running browser-based SDK tests..."
+          
+          python -c "
+          from selenium import webdriver
+          from selenium.webdriver.chrome.options import Options
+          from selenium.webdriver.common.by import By
+          from selenium.webdriver.support.ui import WebDriverWait
+          from selenium.webdriver.support import expected_conditions as EC
+          import time
+          
+          # Set up headless Chrome
+          options = Options()
+          options.add_argument('--headless')
+          options.add_argument('--no-sandbox')
+          options.add_argument('--disable-dev-shm-usage')
+          options.add_argument('--disable-gpu')
+          
+          try:
+              driver = webdriver.Chrome(options=options)
+              
+              # Navigate to dashboard
+              driver.get('http://127.0.0.1:8899')
+              time.sleep(3)
+              
+              # Check if page loaded
+              assert 'MCP' in driver.title or 'IPFS' in driver.title, 'Dashboard page did not load'
+              print('✅ Dashboard page loaded successfully')
+              
+              # Execute JavaScript to test SDK loading
+              sdk_loaded = driver.execute_script('''
+                  return typeof MCPClient !== 'undefined';
+              ''')
+              
+              if sdk_loaded:
+                  print('✅ MCP SDK loaded in browser')
+              else:
+                  print('⚠️ MCP SDK not found in page (may be expected)')
+              
+              # Check for JavaScript errors in console
+              logs = driver.get_log('browser')
+              errors = [log for log in logs if log['level'] == 'SEVERE']
+              
+              if errors:
+                  print(f'⚠️ Found {len(errors)} JavaScript errors:')
+                  for error in errors[:5]:  # Show first 5
+                      print(f'  - {error[\"message\"]}')
+              else:
+                  print('✅ No JavaScript errors detected')
+              
+              driver.quit()
+              print('✅ Browser SDK tests completed')
+              
+          except Exception as e:
+              print(f'❌ Browser tests failed: {e}')
+              import traceback
+              traceback.print_exc()
+              exit(1)
+          " || echo "browser_tests_failed=true" >> $GITHUB_OUTPUT
+      
+      - name: Stop Dashboard
+        if: always()
+        run: |
+          if [ ! -z "$MCP_DASHBOARD_PID" ]; then
+            kill $MCP_DASHBOARD_PID || true
+          fi
+          pkill -f "mcp_dashboard" || true
+
+  # Generate comprehensive test summary
+  sdk-monitoring-summary:
+    runs-on: [self-hosted, linux, x64]
+    container:
+      image: python:3.12-slim
+      options: --user root
+    needs: [sdk-static-analysis, sdk-functionality-tests, js-error-reporter-test]
+    if: always()
+    
+    steps:
+      - name: Generate SDK Monitoring Summary
+        run: |
+          echo "## 📱 JavaScript SDK Error Monitoring Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Suite Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Static Analysis | ${{ needs.sdk-static-analysis.result }} | Linting and syntax checks |" >> $GITHUB_STEP_SUMMARY
+          echo "| Functionality Tests | ${{ needs.sdk-functionality-tests.result }} | SDK API integration tests |" >> $GITHUB_STEP_SUMMARY
+          echo "| Error Reporter Test | ${{ needs.js-error-reporter-test.result }} | JS error capture system |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add analysis
+          echo "### Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.sdk-static-analysis.result }}" = "success" ]; then
+            echo "✅ **Static Analysis**: No syntax or linting issues" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Static Analysis**: Code quality issues detected - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.sdk-functionality-tests.result }}" = "success" ]; then
+            echo "✅ **Functionality**: SDK is working correctly" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Functionality**: SDK integration issues - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.js-error-reporter-test.result }}" = "success" ]; then
+            echo "✅ **Error Reporter**: JavaScript error capture is functional" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ **Error Reporter**: Issues with JS error reporting" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Auto-Healing Integration" >> $GITHUB_STEP_SUMMARY
+          echo "- Failed workflows will trigger copilot-agent-autofix" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub issues will be created for detected JS errors" >> $GITHUB_STEP_SUMMARY
+          echo "- Draft PRs will be generated with Copilot fixes" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,43 @@
+name: JavaScript SDK Error Monitoring (Unified)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/static/js/mcp-sdk.js'
+      - 'ipfs_datasets_py/static/js/mcp-api-client.js'
+      - 'ipfs_datasets_py/static/js/mcp_client_sdk.js'
+      - 'ipfs_datasets_py/static/js/error-reporter.js'
+      - '.github/workflows/javascript-sdk-monitoring-unified.yml'
+      - '.github/workflows/templates/error-monitoring-template.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/static/js/**/*.js'
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - browser
+  schedule:
+    # Run JavaScript SDK monitoring daily at 5 AM UTC
+    - cron: '0 5 * * *'
+
+# Call the unified error monitoring template
+jobs:
+  javascript-sdk-monitoring:
+    uses: ./.github/workflows/templates/error-monitoring-template.yml
+    with:
+      service_name: "JavaScript SDK"
+      service_type: "javascript"
+      watch_paths: "ipfs_datasets_py/static/js/"
+      test_mode: ${{ github.event.inputs.test_mode || 'comprehensive' }}
+      cron_schedule: "0 5 * * *"
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
