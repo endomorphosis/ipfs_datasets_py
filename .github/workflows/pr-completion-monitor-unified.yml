@@ -1,0 +1,28 @@
+name: PR Completion Monitor (Unified)
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+  schedule:
+    - cron: '0 */2 * * *'  # Every 2 hours
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'Specific PR number to check'
+        required: false
+        type: string
+      force_fix:
+        description: 'Force fix even if PR appears complete'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  monitor:
+    uses: ./.github/workflows/templates/pr-monitoring-template.yml
+    with:
+      monitoring_mode: 'completion'
+      pr_number: ${{ inputs.pr_number || '' }}
+      force_action: ${{ inputs.force_fix || false }}
+      schedule_interval: 'Every 2 hours'
+    secrets: inherit
