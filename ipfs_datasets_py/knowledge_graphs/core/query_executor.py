@@ -833,14 +833,59 @@ class QueryExecutor:
         Evaluate an expression against a data row.
         
         Args:
-            expr: Expression string (e.g., "n.age", "n")
+            expr: Expression string (e.g., "n.age", "n", "toLower(n.name)")
             row: Data row (variable bindings)
             
         Returns:
             Evaluated value
         """
+        # Check if it's a function call
+        if "(" in expr and expr.endswith(")"):
+            # Extract function name and arguments
+            func_match = expr.find("(")
+            func_name = expr[:func_match].strip()
+            args_str = expr[func_match+1:-1].strip()
+            
+            # Parse arguments (simple comma-separated for now)
+            if args_str:
+                # Split by comma, but be careful with nested functions
+                args = []
+                current_arg = ""
+                paren_depth = 0
+                for char in args_str:
+                    if char == "," and paren_depth == 0:
+                        args.append(current_arg.strip())
+                        current_arg = ""
+                    else:
+                        if char == "(":
+                            paren_depth += 1
+                        elif char == ")":
+                            paren_depth -= 1
+                        current_arg += char
+                if current_arg:
+                    args.append(current_arg.strip())
+                
+                # Evaluate each argument
+                eval_args = []
+                for arg in args:
+                    # Try to parse as literal number
+                    if arg.isdigit():
+                        eval_args.append(int(arg))
+                    # Try to parse as literal string (quoted)
+                    elif (arg.startswith("'") and arg.endswith("'")) or \
+                         (arg.startswith('"') and arg.endswith('"')):
+                        eval_args.append(arg[1:-1])
+                    else:
+                        # Evaluate as expression
+                        eval_args.append(self._evaluate_expression(arg, row))
+            else:
+                eval_args = []
+            
+            # Call the function
+            return self._call_function(func_name, eval_args)
+        
+        # Property access: "n.age"
         if "." in expr:
-            # Property access: "n.age"
             var, prop = expr.split(".", 1)
             if var in row:
                 val = row[var]
@@ -848,11 +893,103 @@ class QueryExecutor:
                     return val.get(prop)
                 elif hasattr(val, '_properties') and prop in val._properties:
                     return val._properties[prop]
+        # Variable access: "n"
         elif expr in row:
-            # Variable access: "n"
             return row[expr]
         
         return None
+    
+    def _call_function(self, func_name: str, args: List[Any]) -> Any:
+        """
+        Call a built-in function.
+        
+        Args:
+            func_name: Function name (e.g., "toLower", "substring")
+            args: List of evaluated arguments
+            
+        Returns:
+            Function result
+        """
+        func_name = func_name.lower()
+        
+        # String functions
+        if func_name == "tolower":
+            if args and isinstance(args[0], str):
+                return args[0].lower()
+            return None
+        
+        elif func_name == "toupper":
+            if args and isinstance(args[0], str):
+                return args[0].upper()
+            return None
+        
+        elif func_name == "substring":
+            if len(args) >= 2 and isinstance(args[0], str):
+                string = args[0]
+                start = args[1] if isinstance(args[1], int) else 0
+                if len(args) >= 3 and isinstance(args[2], int):
+                    length = args[2]
+                    return string[start:start+length]
+                else:
+                    return string[start:]
+            return None
+        
+        elif func_name == "trim":
+            if args and isinstance(args[0], str):
+                return args[0].strip()
+            return None
+        
+        elif func_name == "ltrim":
+            if args and isinstance(args[0], str):
+                return args[0].lstrip()
+            return None
+        
+        elif func_name == "rtrim":
+            if args and isinstance(args[0], str):
+                return args[0].rstrip()
+            return None
+        
+        elif func_name == "replace":
+            if len(args) >= 3 and isinstance(args[0], str):
+                string = args[0]
+                search = str(args[1]) if args[1] is not None else ""
+                replace = str(args[2]) if args[2] is not None else ""
+                return string.replace(search, replace)
+            return None
+        
+        elif func_name == "reverse":
+            if args and isinstance(args[0], str):
+                return args[0][::-1]
+            return None
+        
+        elif func_name == "size":
+            if args:
+                if isinstance(args[0], str):
+                    return len(args[0])
+                elif isinstance(args[0], (list, tuple)):
+                    return len(args[0])
+            return None
+        
+        elif func_name == "split":
+            if len(args) >= 2 and isinstance(args[0], str):
+                string = args[0]
+                delimiter = str(args[1]) if args[1] is not None else ","
+                return string.split(delimiter)
+            return None
+        
+        elif func_name == "left":
+            if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
+                return args[0][:args[1]]
+            return None
+        
+        elif func_name == "right":
+            if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
+                return args[0][-args[1]:]
+            return None
+        
+        else:
+            logger.warning("Unknown function: %s", func_name)
+            return None
     
     def _compute_aggregation(self, func: str, values: List[Any]) -> Any:
         """
