@@ -284,20 +284,53 @@ class QueryExecutor:
             
             elif op_type == "Filter":
                 # Apply filter to variable
-                variable = op.get("variable")
-                property_name = op.get("property")
-                operator = op.get("operator")
-                value = self._resolve_value(op.get("value"), parameters)
+                # Check for complex expression format (new)
+                if "expression" in op:
+                    # Complex expression filter (e.g., function calls, complex operators)
+                    expression = op["expression"]
+                    
+                    # Filter all variables in result_set
+                    filtered_results = []
+                    
+                    # Get all current variable bindings
+                    if hasattr(self, '_bindings') and self._bindings:
+                        # Use bindings from Expand
+                        for binding in self._bindings:
+                            # Evaluate expression against this binding
+                            result = self._evaluate_compiled_expression(expression, binding)
+                            if result:  # If expression evaluates to truthy value
+                                filtered_results.append(binding)
+                        self._bindings = filtered_results
+                    else:
+                        # Single variable case
+                        for var_name, items in list(result_set.items()):
+                            filtered_items = []
+                            for item in items:
+                                binding = {var_name: item}
+                                result_val = self._evaluate_compiled_expression(expression, binding)
+                                if result_val:  # If expression evaluates to truthy value
+                                    filtered_items.append(item)
+                            result_set[var_name] = filtered_items
+                    
+                    logger.debug("Filter (complex expression): filtered to %d results", 
+                               len(filtered_results) if filtered_results else sum(len(v) for v in result_set.values()))
                 
-                if variable in result_set:
-                    filtered = []
-                    for item in result_set[variable]:
-                        item_value = item.get(property_name)
-                        if self._apply_operator(item_value, operator, value):
-                            filtered.append(item)
-                    result_set[variable] = filtered
-                    logger.debug("Filter %s.%s %s %s: %d results",
-                               variable, property_name, operator, value, len(filtered))
+                else:
+                    # Simple property filter (old format)
+                    variable = op.get("variable")
+                    property_name = op.get("property")
+                    operator = op.get("operator")
+                    value = self._resolve_value(op.get("value"), parameters)
+                    
+                    if variable in result_set:
+                        filtered = []
+                        for item in result_set[variable]:
+                            item_value = item.get(property_name)
+                            if self._apply_operator(item_value, operator, value):
+                                filtered.append(item)
+                        result_set[variable] = filtered
+                        logger.debug("Filter %s.%s %s %s: %d results",
+                                   variable, property_name, operator, value, len(filtered))
             
             elif op_type == "Expand":
                 # Expand relationships from nodes
