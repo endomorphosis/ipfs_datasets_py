@@ -61,7 +61,7 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false
         clean: true
@@ -134,7 +134,7 @@ jobs:
     
     - name: Upload coverage to Codecov
       if: hashFiles('test-results/coverage.xml') != ''
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./test-results/coverage.xml
         flags: unittests
@@ -168,7 +168,7 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         submodules: false
         clean: true
@@ -222,12 +222,12 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: false
     
     - name: Log in to Container Registry
-      uses: docker/login-action@v2
+      uses: docker/login-action@v3
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
@@ -235,7 +235,7 @@ jobs:
     
     - name: Extract metadata
       id: meta
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
@@ -246,7 +246,7 @@ jobs:
           type=sha
     
     - name: Build and push Docker image
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v5
       with:
         context: .
         push: true
@@ -281,7 +281,7 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: false
     
@@ -322,7 +322,7 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         submodules: false
     

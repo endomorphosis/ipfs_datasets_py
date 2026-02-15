@@ -90,7 +90,7 @@ jobs:
         continue-on-error: true
       
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: false
       
@@ -181,7 +181,7 @@ jobs:
         continue-on-error: true
       
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: false
       
@@ -290,7 +290,7 @@ jobs:
         continue-on-error: true
       
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: false
       

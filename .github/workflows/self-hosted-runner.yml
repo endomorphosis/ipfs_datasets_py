@@ -41,7 +41,7 @@ jobs:
           echo "✅ Docker is available" >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Docker image on self-hosted runner
         run: |
@@ -91,7 +91,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Docker image on GitHub runner
         run: |

@@ -90,7 +90,7 @@ jobs:
 
       - name: Checkout repository
         id: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           clean: false  # Disable automatic cleanup - we handle it manually
@@ -118,7 +118,7 @@ jobs:
       
       - name: Retry checkout in fresh workspace
         if: steps.checkout.outcome == 'failure'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           clean: false
