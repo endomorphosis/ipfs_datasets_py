@@ -370,7 +370,7 @@ class CypherCompiler:
             order_items = []
             for order_item in ret.order_by.items:
                 order_items.append({
-                    "expression": self._expression_to_string(order_item.expression),
+                    "expression": self._compile_expression(order_item.expression),
                     "ascending": order_item.ascending
                 })
             
