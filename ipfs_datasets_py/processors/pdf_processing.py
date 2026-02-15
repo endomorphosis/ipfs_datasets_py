@@ -1,135 +1,39 @@
 """
-PDF Processing Pipeline Module
+DEPRECATED: PDF Processing module.
 
-A comprehensive PDF processing pipeline that follows the order:
-PDF Input → Decomposition → IPLD Structuring → OCR Processing → 
-LLM Optimization → Entity Extraction → Vector Embedding → 
-IPLD GraphRAG Integration → Cross-Document Analysis → Query Interface
+This module has been deprecated and moved to processors.specialized.pdf.
 
-This module provides:
-- Complete PDF decomposition and analysis
-- Multi-engine OCR with intelligent fallback
-- LLM-optimized content chunking and summarization
-- Knowledge graph extraction and IPLD integration
-- Advanced querying and cross-document analysis
-- Batch processing capabilities
+.. deprecated:: 1.9.0
+   This module is deprecated. Use processors.specialized.pdf instead. 
+   This file will be removed in v2.0.0 (August 2026).
+
+Migration:
+    OLD:
+        from ipfs_datasets_py.processors.pdf_processing import ...
+    
+    NEW:
+        from ipfs_datasets_py.processors.specialized.pdf import ...
+
+For more information, see:
+    docs/PROCESSORS_REFACTORING_MIGRATION_GUIDE.md
 """
 
-# Main components with safe imports
+import warnings
+
+warnings.warn(
+    "processors.pdf_processing is deprecated. "
+    "Use processors.specialized.pdf instead. "
+    "This import will be removed in v2.0.0 (August 2026). "
+    "See docs/PROCESSORS_REFACTORING_MIGRATION_GUIDE.md for details.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# Import from new location for backward compatibility
 try:
-    from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
-    HAVE_PDF_PROCESSOR = True
-except ImportError as e:
-    print(f"Warning: PDFProcessor not available: {e}")
-    HAVE_PDF_PROCESSOR = False
-    PDFProcessor = None  # type: ignore[assignment]
+    from ipfs_datasets_py.processors.specialized.pdf.pdf_processing import *
+except ImportError:
+    # If specialized.pdf is not available, pass
+    pass
 
-try:
-    from ipfs_datasets_py.processors.ocr_engine import MultiEngineOCR, SuryaOCR, TesseractOCR, EasyOCR
-    HAVE_OCR_ENGINE = True
-except ImportError as e:
-    print(f"Warning: OCR engines not available: {e}")
-    HAVE_OCR_ENGINE = False
-    MultiEngineOCR = None  # type: ignore[assignment]
-    SuryaOCR = None  # type: ignore[assignment]
-    TesseractOCR = None  # type: ignore[assignment]
-    EasyOCR = None  # type: ignore[assignment]
-
-try:
-    from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer, LLMDocument, LLMChunk
-    HAVE_LLM_OPTIMIZER = True
-except ImportError as e:
-    print(f"Warning: LLM optimizer not available: {e}")
-    HAVE_LLM_OPTIMIZER = False
-    LLMOptimizer = None  # type: ignore[assignment]
-    LLMDocument = None  # type: ignore[assignment]
-    LLMChunk = None  # type: ignore[assignment]
-
-try:
-    from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity, Relationship
-    HAVE_GRAPHRAG_INTEGRATOR = True
-except ImportError as e:
-    print(f"Warning: GraphRAG integrator not available: {e}")
-    HAVE_GRAPHRAG_INTEGRATOR = False
-    GraphRAGIntegrator = None  # type: ignore[assignment]
-    KnowledgeGraph = None  # type: ignore[assignment]
-    Entity = None  # type: ignore[assignment]
-    Relationship = None  # type: ignore[assignment]
-
-try:
-    from ipfs_datasets_py.processors.query_engine import QueryEngine, QueryResult, QueryResponse
-    HAVE_QUERY_ENGINE = True
-except ImportError as e:
-    print(f"Warning: Query engine not available: {e}")
-    HAVE_QUERY_ENGINE = False
-    QueryEngine = None  # type: ignore[assignment]
-    QueryResult = None  # type: ignore[assignment]
-    QueryResponse = None  # type: ignore[assignment]
-
-try:
-    from ipfs_datasets_py.processors.relationship_analyzer import RelationshipAnalyzer
-    HAVE_RELATIONSHIP_ANALYZER = True
-except ImportError as e:
-    print(f"Warning: Relationship analyzer not available: {e}")
-    HAVE_RELATIONSHIP_ANALYZER = False
-    RelationshipAnalyzer = None  # type: ignore[assignment]
-
-try:
-    from ipfs_datasets_py.processors.batch_processor import BatchProcessor, ProcessingJob, BatchStatus
-    HAVE_BATCH_PROCESSOR = True
-except ImportError as e:
-    print(f"Warning: Batch processor not available: {e}")
-    HAVE_BATCH_PROCESSOR = False
-    BatchProcessor = None  # type: ignore[assignment]
-    ProcessingJob = None  # type: ignore[assignment]
-    BatchStatus = None  # type: ignore[assignment]
-
-__all__ = [
-    # Core processing
-    'PDFProcessor',
-    
-    # OCR engines
-    'MultiEngineOCR',
-    'SuryaOCR', 
-    'TesseractOCR',
-    'EasyOCR',
-    
-    # LLM optimization
-    'LLMOptimizer',
-    'LLMDocument',
-    'LLMChunk',
-    
-    # GraphRAG integration
-    'GraphRAGIntegrator',
-    'KnowledgeGraph',
-    'Entity',
-    'Relationship',
-    
-    # Query engine
-    'QueryEngine',
-    'QueryResult',
-    'QueryResponse',
-
-    # Relationship analysis
-    'RelationshipAnalyzer',
-    
-    # Batch processing
-    'BatchProcessor',
-    'ProcessingJob',
-    'BatchStatus'
-]
-
-# Version information
-__version__ = "2.0.0"
-__author__ = "IPFS Datasets Team"
-
-# Pipeline configuration
-DEFAULT_PIPELINE_CONFIG = {
-    'ocr_engines': ['surya', 'tesseract', 'easyocr'],
-    'llm_model': 'sentence-transformers/all-MiniLM-L6-v2',
-    'max_chunk_size': 2048,
-    'chunk_overlap': 200,
-    'enable_monitoring': True,
-    'enable_audit': True,
-    'batch_max_workers': 4
-}
+__all__ = []
