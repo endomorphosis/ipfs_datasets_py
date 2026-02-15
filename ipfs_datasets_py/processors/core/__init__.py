@@ -7,6 +7,7 @@ This module provides the foundational components for the processor architecture:
 - InputType: Classification of input types
 - InputDetector: Automatic input detection and classification
 - ProcessorRegistry: Registration and discovery of processors
+- UniversalProcessor: Single entry point for all processing operations
 """
 
 from .protocol import (
@@ -27,6 +28,12 @@ from .processor_registry import (
     ProcessorEntry,
     get_global_registry,
 )
+from .universal_processor import (
+    UniversalProcessor,
+    get_universal_processor,
+    process,
+    process_batch,
+)
 
 __all__ = [
     'ProcessorProtocol',
@@ -41,4 +48,8 @@ __all__ = [
     'ProcessorRegistry',
     'ProcessorEntry',
     'get_global_registry',
+    'UniversalProcessor',
+    'get_universal_processor',
+    'process',
+    'process_batch',
 ]
