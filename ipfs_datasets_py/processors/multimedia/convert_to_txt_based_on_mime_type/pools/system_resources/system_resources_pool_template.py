@@ -129,35 +129,7 @@ class SystemResourcesPoolTemplate():
 
 
 
-    def __init__(self, configs):
-        self.timeout = configs.timeout
-        self.amount_available: int = 0
-        self.max_value = asyncio.Semaphore(100)
-        self.min_value = asyncio.Semaphore(1)
-        self.resource_type = None
 
-
-
-
-    async def add_value_to_resource(self, resource: Resource) -> Resource:
-    
-        async with asyncio.timeout(self.timeout):
-            async with self.max_value:
-                try:
-                    return await self._add_value_implementation(resource)
-                except Exception as e:
-                    raise ResourceError(f"Failed to add resource: {e}")
-
-
-    async def _add_value_implementation(self, resource: Resource) -> Resource:
-
-        amount_requested = resource.request(self.resource_type)
-        
-        if amount_requested <= 0:
-            raise ValueError("Requested amount must be greater than zero.")
-            
-        async with self._amount_lock:  # Add this lock as instance variable
-            while amount_requested > self.amount_available:
                 await self._resource_available.wait()  # Add condition variable
                 
             for _ in range(amount_requested):

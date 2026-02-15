@@ -33,7 +33,7 @@ def error_on_wrong_value(this_value: Any,
     Raises:
         ValueError: If any of the specified conditions are not met and raise_on_error is True.
     """
-    conditions: tuple[bool, str] = [
+    conditions: list[tuple[bool, str]] = [
         (equal_to_this_value is not None and this_value != equal_to_this_value,
          f'Expected {this_value} to be equal to {equal_to_this_value}'),
         (not_equal_to_this_value is not None and this_value == not_equal_to_this_value,

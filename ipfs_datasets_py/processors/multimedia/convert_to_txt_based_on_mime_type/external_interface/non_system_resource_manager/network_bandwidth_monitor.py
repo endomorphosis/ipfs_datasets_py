@@ -14,7 +14,7 @@ class NetworkBandwidthMonitor:
 
     def convert_to_gigabytes(self, bits: int):
         bytes_ = bits / 8
-        return  bytes_ / (1024 ^ 3)
+        return  bytes_ / (1024 ** 3)
 
 
     def get_network_bandwidth(self):
