@@ -165,17 +165,21 @@ class IPFSDriver:
         Args:
             database: Database name (for multi-database support)
             default_access_mode: "READ" or "WRITE"
-            bookmarks: Bookmarks for causal consistency (future)
+            bookmarks: Bookmarks for causal consistency (Phase 2)
             **config: Additional session configuration
             
         Returns:
             Session object
             
         Example:
+            # Basic session
             with driver.session() as session:
                 result = session.run("MATCH (n) RETURN n")
-                for record in result:
-                    print(record)
+            
+            # Session with bookmarks for causal consistency
+            bookmark = session1.last_bookmark()
+            with driver.session(bookmarks=[bookmark]) as session2:
+                result = session2.run("MATCH (n) RETURN n")
         """
         if self._closed:
             raise RuntimeError("Driver is closed")
@@ -183,7 +187,8 @@ class IPFSDriver:
         return IPFSSession(
             driver=self,
             database=database,
-            default_access_mode=default_access_mode
+            default_access_mode=default_access_mode,
+            bookmarks=bookmarks
         )
     
     def close(self) -> None:
