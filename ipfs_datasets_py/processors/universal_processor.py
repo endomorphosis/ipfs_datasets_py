@@ -182,6 +182,14 @@ class UniversalProcessor:
         except ImportError as e:
             logger.debug(f"MultimediaProcessorAdapter not available: {e}")
         
+        # Import and register Web Archive processor
+        try:
+            from .adapters.web_archive_adapter import WebArchiveProcessorAdapter
+            self.registry.register(WebArchiveProcessorAdapter(), priority=8)
+            logger.info("Registered WebArchiveProcessorAdapter")
+        except ImportError as e:
+            logger.debug(f"WebArchiveProcessorAdapter not available: {e}")
+        
         # Import and register FileConverter processor
         try:
             from .adapters.file_converter_adapter import FileConverterProcessorAdapter

@@ -17,6 +17,7 @@ __all__ = [
     'FileConverterProcessorAdapter',
     'BatchProcessorAdapter',
     'IPFSProcessorAdapter',
+    'WebArchiveProcessorAdapter',
 ]
 
 # Optional imports with graceful fallback
@@ -49,3 +50,8 @@ try:
     from .ipfs_adapter import IPFSProcessorAdapter
 except ImportError:
     IPFSProcessorAdapter = None
+
+try:
+    from .web_archive_adapter import WebArchiveProcessorAdapter
+except ImportError:
+    WebArchiveProcessorAdapter = None
