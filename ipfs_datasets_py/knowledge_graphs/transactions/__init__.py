@@ -46,6 +46,12 @@ Usage:
         txn_manager.rollback(txn)
         raise
 
+Phase 3 Implementation Status:
+- Task 3.1: WAL structure design (COMPLETE)
+- Task 3.2: WAL implementation (COMPLETE)
+- Task 3.3: Transaction Manager (IN PROGRESS)
+- Task 3.4-3.6: Integration and testing (PLANNED)
+
 WAL Entry Format:
     {
         "txn_id": "uuid-string",
@@ -63,22 +69,40 @@ Roadmap:
 """
 
 # Phase 3 implementation (Weeks 5-6)
-# from .manager import TransactionManager, Transaction
-# from .wal import WriteAheadLog, WALEntry
-# from .isolation import IsolationLevel, ConflictResolver
-# from .exceptions import TransactionConflict, TransactionTimeout
+from .types import (
+    IsolationLevel,
+    TransactionState,
+    OperationType,
+    Operation,
+    WALEntry,
+    Transaction,
+    ConflictError,
+    TransactionAbortedError,
+    DeadlockDetectedError
+)
+from .wal import WriteAheadLog
+
+# Future imports (when implemented)
+# from .manager import TransactionManager
 
 __all__ = [
-    # Phase 3 exports will go here
+    # Types
+    "IsolationLevel",
+    "TransactionState",
+    "OperationType",
+    "Operation",
+    "WALEntry",
+    "Transaction",
+    # WAL
+    "WriteAheadLog",
+    # Exceptions
+    "ConflictError",
+    "TransactionAbortedError",
+    "DeadlockDetectedError",
+    # Future
     # "TransactionManager",
-    # "Transaction",
-    # "WriteAheadLog",
-    # "WALEntry",
-    # "IsolationLevel",
-    # "TransactionConflict",
-    # "TransactionTimeout",
 ]
 
 # Version info
-__version__ = "0.1.0"
-__status__ = "planning"  # Will be "development" in Phase 3
+__version__ = "0.2.0"
+__status__ = "development"  # Phase 3 in progress
