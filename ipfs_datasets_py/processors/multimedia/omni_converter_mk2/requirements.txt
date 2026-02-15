@@ -1,0 +1,33 @@
+anthropic
+duckdb
+numpy
+pandas
+Pillow
+psutil
+pydantic
+pydub
+pymediainfo
+PyPDF2
+python-docx
+# python-magics
+pytesseract
+reportlab
+openai
+openai-whisper
+openpyxl
+tqdm
+nltk
+rouge
+pyyaml
+opencv-contrib-python-headless # https://pypi.org/project/opencv-python/ NOTE: 56.1 mb
+jinja2 # for templating
+rouge-score # for rouge score
+python-pptx # for pptx processing
+beautifulsoup4 # for html processing
+coverage
+python-magic
+
+# testing
+pytest
+pytest-cov
+pytest-asyncio

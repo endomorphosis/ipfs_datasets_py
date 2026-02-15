@@ -7,7 +7,44 @@ from __future__ import annotations
 # Importing processor implementations can pull in optional dependencies
 # and/or modules that may not exist in minimal environments.
 
+# New unified processor architecture (Phase 1)
+from .protocol import (
+    ProcessorProtocol,
+    ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
+    InputType,
+    KnowledgeGraph as UnifiedKnowledgeGraph,
+    Entity as UnifiedEntity,
+    Relationship as UnifiedRelationship,
+    VectorStore,
+)
+from .registry import ProcessorRegistry, get_global_registry
+from .input_detection import InputDetector, detect_input_type, classify_input
+from .universal_processor import UniversalProcessor, ProcessorConfig
+
 __all__ = [
+    # New unified architecture
+    'UniversalProcessor',
+    'ProcessorProtocol',
+    'ProcessingResult',
+    'ProcessingMetadata',
+    'ProcessingStatus',
+    'InputType',
+    'ProcessorRegistry',
+    'ProcessorConfig',
+    'InputDetector',
+    'VectorStore',
+    'UnifiedKnowledgeGraph',
+    'UnifiedEntity',
+    'UnifiedRelationship',
+    
+    # Convenience functions
+    'detect_input_type',
+    'classify_input',
+    'get_global_registry',
+    
+    # Legacy exports (existing processors)
     'graphrag_processor',
     'enhanced_multimodal_processor',
     'website_graphrag_processor',

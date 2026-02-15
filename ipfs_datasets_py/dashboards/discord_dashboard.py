@@ -511,7 +511,7 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
             JSON response with integration status
         """
         try:
-            from ipfs_datasets_py.data_transformation.multimedia import HAVE_DISCORD
+            from ipfs_datasets_py.processors.multimedia import HAVE_DISCORD
             from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
             
             # Check if Discord integration is available

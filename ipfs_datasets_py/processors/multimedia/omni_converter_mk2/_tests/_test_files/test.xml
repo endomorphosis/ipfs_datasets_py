@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalog>
+    <metadata>
+        <created>2025-05-24</created>
+        <version>1.0</version>
+        <description>Test XML document for omni converter</description>
+    </metadata>
+    <products>
+        <product id="1">
+            <name>Test Product Alpha</name>
+            <price currency="USD">29.99</price>
+            <category>Electronics</category>
+            <stock>150</stock>
+            <features>
+                <feature>Wireless connectivity</feature>
+                <feature>Long battery life</feature>
+                <feature>Compact design</feature>
+            </features>
+        </product>
+        <product id="2">
+            <name>Test Product Beta</name>
+            <price currency="EUR">45.50</price>
+            <category>Home &amp; Garden</category>
+            <stock>87</stock>
+            <features>
+                <feature>Eco-friendly materials</feature>
+                <feature>Easy assembly</feature>
+            </features>
+        </product>
+        <product id="3">
+            <name>Test Product Gamma</name>
+            <price currency="GBP">99.00</price>
+            <category>Sports</category>
+            <stock>0</stock>
+            <discontinued>true</discontinued>
+        </product>
+    </products>
+    <customers>
+        <customer id="C001">
+            <name>John Doe</name>
+            <email>john.doe@example.com</email>
+            <orders>5</orders>
+        </customer>
+        <customer id="C002">
+            <name>Jane Smith</name>
+            <email>jane.smith@example.com</email>
+            <orders>12</orders>
+        </customer>
+    </customers>
+</catalog>

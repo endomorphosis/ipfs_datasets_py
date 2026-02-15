@@ -1,20 +1,53 @@
 """
 GraphRAG Processor module for IPFS datasets.
 Provides core GraphRAG processing functionality combining vector search and graph traversal.
+
+.. deprecated:: 1.0.0
+   This module is deprecated. Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+   The UnifiedGraphRAGProcessor consolidates all GraphRAG implementations into a single, comprehensive processor.
 """
 
 import logging
+import warnings
 from typing import Dict, List, Optional, Any, Union
 import numpy as np
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
+class DeprecatedGraphRAGWarning(DeprecationWarning):
+    """Warning for deprecated GraphRAG processor usage."""
+    pass
+
+
+# Enable deprecation warnings by default
+warnings.simplefilter('always', DeprecatedGraphRAGWarning)
+
+
 class GraphRAGProcessor:
-    """Core GraphRAG processor for combining vector search with graph traversal."""
+    """
+    Core GraphRAG processor for combining vector search with graph traversal.
+    
+    .. deprecated:: 1.0.0
+       Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+       This class is maintained for backward compatibility but will be removed in version 2.0.0.
+    """
 
     def __init__(self, vector_store=None, knowledge_graph=None, embedding_model=None):
-        """Initialize GraphRAG processor with vector store and knowledge graph."""
+        """
+        Initialize GraphRAG processor with vector store and knowledge graph.
+        
+        .. deprecated:: 1.0.0
+           Use UnifiedGraphRAGProcessor instead. This implementation will be removed in version 2.0.0.
+        """
+        warnings.warn(
+            "GraphRAGProcessor is deprecated and will be removed in version 2.0.0. "
+            "Use ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor instead. "
+            "The unified processor provides all features from this implementation plus additional capabilities.",
+            DeprecatedGraphRAGWarning,
+            stacklevel=2
+        )
         self.vector_store = vector_store
         self.knowledge_graph = knowledge_graph
         self.embedding_model = embedding_model
