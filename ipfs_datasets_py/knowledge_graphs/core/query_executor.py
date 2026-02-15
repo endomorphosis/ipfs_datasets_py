@@ -690,13 +690,8 @@ class QueryExecutor:
                 
                 # Sort the results
                 try:
-                    # Determine if we need reverse (all descending)
-                    all_descending = all(not item.get("ascending", True) for item in order_items)
-                    
-                    if all_descending:
-                        final_results.sort(key=make_sort_key, reverse=True)
-                    else:
-                        final_results.sort(key=make_sort_key)
+                    # Always sort ascending - we've already negated DESC values in make_sort_key
+                    final_results.sort(key=make_sort_key)
                     
                     logger.debug("OrderBy: sorted %d results by %d expressions", 
                                 len(final_results), len(order_items))
