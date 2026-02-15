@@ -15,7 +15,14 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-import numpy as np
+
+# Optional numpy import (for vector embeddings)
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    np = None
 
 
 class InputType(Enum):
@@ -57,7 +64,7 @@ class Entity:
     type: str
     label: str
     properties: dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[np.ndarray] = None
+    embedding: Optional[Any] = None  # np.ndarray when numpy available
     confidence: float = 1.0
     
     def __post_init__(self):
@@ -210,11 +217,11 @@ class VectorStore:
         metadata: Metadata about the embedding model and parameters
         dimension: Dimensionality of embeddings
     """
-    embeddings: dict[str, np.ndarray] = field(default_factory=dict)
+    embeddings: dict[str, Any] = field(default_factory=dict)  # np.ndarray when numpy available
     metadata: dict[str, Any] = field(default_factory=dict)
     dimension: Optional[int] = None
     
-    def add_embedding(self, content_id: str, embedding: np.ndarray) -> None:
+    def add_embedding(self, content_id: str, embedding: Any) -> None:
         """Add an embedding to the store."""
         if self.dimension is None:
             self.dimension = len(embedding)
@@ -222,11 +229,11 @@ class VectorStore:
             raise ValueError(f"Embedding dimension mismatch: expected {self.dimension}, got {len(embedding)}")
         self.embeddings[content_id] = embedding
     
-    def get_embedding(self, content_id: str) -> Optional[np.ndarray]:
+    def get_embedding(self, content_id: str) -> Optional[Any]:
         """Get an embedding by content ID."""
         return self.embeddings.get(content_id)
     
-    def search(self, query_embedding: np.ndarray, top_k: int = 10) -> list[tuple[str, float]]:
+    def search(self, query_embedding: Any, top_k: int = 10) -> list[tuple[str, float]]:
         """
         Search for similar embeddings using cosine similarity.
         
@@ -237,6 +244,9 @@ class VectorStore:
         Returns:
             List of (content_id, similarity_score) tuples
         """
+        if not NUMPY_AVAILABLE:
+            raise RuntimeError("Numpy is required for vector search. Install with: pip install numpy")
+        
         if len(query_embedding) != self.dimension:
             raise ValueError(f"Query embedding dimension mismatch: expected {self.dimension}, got {len(query_embedding)}")
         
