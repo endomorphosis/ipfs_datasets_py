@@ -6,6 +6,7 @@ This directory contains all GitHub Actions workflows for the repository, includi
 
 **NEW:** A comprehensive improvement plan for all GitHub Actions workflows is now available!
 
+- 📊 **[Visual Summary](IMPROVEMENT_VISUAL_SUMMARY.md)** - At-a-glance overview with ASCII diagrams
 - 📖 **[Full Improvement Plan](COMPREHENSIVE_IMPROVEMENT_PLAN.md)** - Complete 6-phase plan (216 hours, 6-9 weeks)
 - ⚡ **[Quick Reference](IMPROVEMENT_QUICK_REFERENCE.md)** - Quick wins, critical issues, common commands
 - ✅ **[Implementation Checklist](IMPLEMENTATION_CHECKLIST.md)** - Detailed task breakdown for all phases
