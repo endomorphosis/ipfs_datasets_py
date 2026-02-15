@@ -605,8 +605,83 @@ class QueryExecutor:
                 logger.debug("Skip: %d results remaining", len(final_results))
             
             elif op_type == "OrderBy":
-                # Order results (simplified)
-                logger.debug("OrderBy: not yet fully implemented")
+                # Order results by specified expressions
+                order_items = op.get("items", [])
+                
+                if not order_items:
+                    logger.debug("OrderBy: no items specified")
+                    continue
+                
+                # Sort final_results (which should be a list of Record objects)
+                if not final_results:
+                    logger.debug("OrderBy: no results to sort")
+                    continue
+                
+                def make_sort_key(record):
+                    """Create a sort key tuple for a record."""
+                    key_parts = []
+                    for item in order_items:
+                        expr = item["expression"]
+                        ascending = item.get("ascending", True)
+                        
+                        # Get the value for this expression
+                        # Expression could be like "n.age" or just "count"
+                        if '.' in expr:
+                            # Property access like "n.age"
+                            parts = expr.split('.', 1)
+                            var_name = parts[0]
+                            prop_name = parts[1]
+                            
+                            # Get the value from the record
+                            try:
+                                value = record.get(expr)  # Try direct access first
+                                if value is None and var_name in record._values:
+                                    # Try to access as object property
+                                    obj = record._values.get(var_name)
+                                    if hasattr(obj, 'properties') and prop_name in obj.properties:
+                                        value = obj.properties[prop_name]
+                                    elif hasattr(obj, prop_name):
+                                        value = getattr(obj, prop_name)
+                            except:
+                                value = None
+                        else:
+                            # Simple alias like "count"
+                            value = record.get(expr)
+                        
+                        # Handle None values (sort them to the end)
+                        if value is None:
+                            value = (1, None)  # Tuple to sort Nones last
+                        else:
+                            value = (0, value)
+                        
+                        # Invert for descending
+                        if not ascending:
+                            # For descending, we need to negate numbers or reverse strings
+                            if isinstance(value[1], (int, float)):
+                                value = (value[0], -value[1] if value[1] is not None else None)
+                            elif isinstance(value[1], str):
+                                # Reverse string comparison by using reversed tuple
+                                value = (value[0], value[1])  # Will handle with reverse=True
+                        
+                        key_parts.append(value)
+                    
+                    return tuple(key_parts)
+                
+                # Sort the results
+                try:
+                    # Determine if we need reverse (all descending)
+                    all_descending = all(not item.get("ascending", True) for item in order_items)
+                    
+                    if all_descending:
+                        final_results.sort(key=make_sort_key, reverse=True)
+                    else:
+                        final_results.sort(key=make_sort_key)
+                    
+                    logger.debug("OrderBy: sorted %d results by %d expressions", 
+                                len(final_results), len(order_items))
+                except Exception as e:
+                    logger.warning("OrderBy: failed to sort results: %s", e)
+                    # Continue without sorting if there's an error
             
             elif op_type == "CreateNode":
                 # Create node
