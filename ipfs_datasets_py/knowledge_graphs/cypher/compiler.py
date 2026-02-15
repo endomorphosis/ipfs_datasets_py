@@ -271,24 +271,60 @@ class CypherCompiler:
         """
         Compile RETURN clause.
         
-        Generates Project, OrderBy, Limit operations.
+        Generates Project/Aggregate, OrderBy, Limit operations.
         """
-        # Project operation
-        items = []
-        for return_item in ret.items:
-            item_info = {
-                "expression": self._expression_to_string(return_item.expression)
-            }
-            if return_item.alias:
-                item_info["alias"] = return_item.alias
-            items.append(item_info)
+        # Check if any return items are aggregations
+        has_aggregation = any(
+            self._is_aggregation(return_item.expression)
+            for return_item in ret.items
+        )
         
-        op = {
-            "op": "Project",
-            "items": items,
-            "distinct": ret.distinct
-        }
-        self.operations.append(op)
+        if has_aggregation:
+            # Aggregate operation
+            aggregations = []
+            group_by = []
+            
+            for return_item in ret.items:
+                if self._is_aggregation(return_item.expression):
+                    # This is an aggregation function
+                    agg_info = self._compile_aggregation(return_item.expression)
+                    if return_item.alias:
+                        agg_info["alias"] = return_item.alias
+                    else:
+                        agg_info["alias"] = self._expression_to_string(return_item.expression)
+                    aggregations.append(agg_info)
+                else:
+                    # This is a grouping key
+                    group_expr = self._expression_to_string(return_item.expression)
+                    group_by.append({
+                        "expression": group_expr,
+                        "alias": return_item.alias or group_expr
+                    })
+            
+            op = {
+                "op": "Aggregate",
+                "aggregations": aggregations,
+                "group_by": group_by,
+                "distinct": ret.distinct
+            }
+            self.operations.append(op)
+        else:
+            # Regular project operation
+            items = []
+            for return_item in ret.items:
+                item_info = {
+                    "expression": self._expression_to_string(return_item.expression)
+                }
+                if return_item.alias:
+                    item_info["alias"] = return_item.alias
+                items.append(item_info)
+            
+            op = {
+                "op": "Project",
+                "items": items,
+                "distinct": ret.distinct
+            }
+            self.operations.append(op)
         
         # OrderBy operation
         if ret.order_by:
@@ -461,6 +497,61 @@ class CypherCompiler:
         
         else:
             return str(expr)
+    
+    def _is_aggregation(self, expr) -> bool:
+        """
+        Check if an expression is an aggregation function.
+        
+        Args:
+            expr: Expression node to check
+            
+        Returns:
+            True if expression is an aggregation function
+        """
+        if not isinstance(expr, FunctionCallNode):
+            return False
+        
+        aggregation_functions = {
+            'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'COLLECT',
+            'STDEV', 'STDEVP', 'PERCENTILECONT', 'PERCENTILEDISC'
+        }
+        
+        return expr.name.upper() in aggregation_functions
+    
+    def _compile_aggregation(self, func_node: FunctionCallNode) -> Dict[str, Any]:
+        """
+        Compile an aggregation function.
+        
+        Args:
+            func_node: FunctionCallNode representing aggregation
+            
+        Returns:
+            Dictionary with aggregation info for IR
+        """
+        func_name = func_node.name.upper()
+        
+        # Handle special case: COUNT(*)
+        if func_name == 'COUNT' and len(func_node.arguments) == 1:
+            arg = func_node.arguments[0]
+            if isinstance(arg, VariableNode) and arg.name == '*':
+                return {
+                    "function": "COUNT",
+                    "expression": "*",
+                    "distinct": func_node.distinct
+                }
+        
+        # Regular aggregation
+        if func_node.arguments:
+            arg_expr = self._expression_to_string(func_node.arguments[0])
+        else:
+            arg_expr = "*"
+        
+        return {
+            "function": func_name,
+            "expression": arg_expr,
+            "distinct": func_node.distinct
+        }
+
 
 
 # Convenience function

@@ -360,6 +360,91 @@ class QueryExecutor:
                 logger.debug("Expand %s-[%s]->%s: found %d relationships",
                            from_var, rel_var, to_var, len(new_results))
             
+            elif op_type == "Aggregate":
+                # Aggregate operation (COUNT, SUM, AVG, MIN, MAX, COLLECT)
+                aggregations = op.get("aggregations", [])
+                group_by = op.get("group_by", [])
+                
+                # Get all current bindings
+                if hasattr(self, '_bindings') and self._bindings:
+                    data_rows = self._bindings
+                else:
+                    # Create bindings from result_set
+                    data_rows = []
+                    if result_set:
+                        # Combine all variables into rows
+                        var_names = list(result_set.keys())
+                        if var_names:
+                            first_var = var_names[0]
+                            for item in result_set[first_var]:
+                                row = {first_var: item}
+                                data_rows.append(row)
+                
+                # Group data
+                if group_by:
+                    # Group by specified keys
+                    groups = {}
+                    for row in data_rows:
+                        # Build group key
+                        group_key_parts = []
+                        for group_spec in group_by:
+                            expr = group_spec["expression"]
+                            value = self._evaluate_expression(expr, row)
+                            group_key_parts.append(str(value))
+                        group_key = tuple(group_key_parts)
+                        
+                        if group_key not in groups:
+                            groups[group_key] = []
+                        groups[group_key].append(row)
+                else:
+                    # Single group (all rows)
+                    groups = {(): data_rows}
+                
+                # Compute aggregations for each group
+                agg_results = []
+                for group_key, group_rows in groups.items():
+                    result_row = {}
+                    
+                    # Add group by values
+                    for i, group_spec in enumerate(group_by):
+                        alias = group_spec["alias"]
+                        expr = group_spec["expression"]
+                        value = self._evaluate_expression(expr, group_rows[0])
+                        result_row[alias] = value
+                    
+                    # Compute aggregations
+                    for agg_spec in aggregations:
+                        func = agg_spec["function"]
+                        expr = agg_spec["expression"]
+                        alias = agg_spec["alias"]
+                        distinct = agg_spec.get("distinct", False)
+                        
+                        # Extract values for aggregation
+                        if expr == "*":
+                            values = group_rows
+                        else:
+                            values = [self._evaluate_expression(expr, row) for row in group_rows]
+                            # Filter out None values
+                            values = [v for v in values if v is not None]
+                        
+                        # Apply DISTINCT if requested
+                        if distinct and expr != "*":
+                            values = list(set(values))
+                        
+                        # Compute aggregation
+                        agg_value = self._compute_aggregation(func, values)
+                        result_row[alias] = agg_value
+                    
+                    agg_results.append(result_row)
+                
+                # Convert to Records
+                for row in agg_results:
+                    keys = list(row.keys())
+                    values = list(row.values())
+                    final_results.append(Record(keys, values))
+                
+                logger.debug("Aggregate: %d groups, %d results", len(groups), len(final_results))
+            
             elif op_type == "Project":
                 # Project fields
                 items = op.get("items", [])
@@ -513,6 +598,89 @@ class QueryExecutor:
                 raise ValueError(f"Parameter name '{key}' is reserved")
         
         logger.debug("Parameters validated: %d params", len(parameters))
+    
+    def _evaluate_expression(self, expr: str, row: Dict[str, Any]) -> Any:
+        """
+        Evaluate an expression against a data row.
+        
+        Args:
+            expr: Expression string (e.g., "n.age", "n")
+            row: Data row (variable bindings)
+            
+        Returns:
+            Evaluated value
+        """
+        if "." in expr:
+            # Property access: "n.age"
+            var, prop = expr.split(".", 1)
+            if var in row:
+                val = row[var]
+                if hasattr(val, 'get'):
+                    return val.get(prop)
+                elif hasattr(val, '_properties') and prop in val._properties:
+                    return val._properties[prop]
+        elif expr in row:
+            # Variable access: "n"
+            return row[expr]
+        
+        return None
+    
+    def _compute_aggregation(self, func: str, values: List[Any]) -> Any:
+        """
+        Compute an aggregation function.
+        
+        Args:
+            func: Aggregation function name (COUNT, SUM, AVG, etc.)
+            values: Values to aggregate
+            
+        Returns:
+            Aggregated result
+        """
+        func = func.upper()
+        
+        if func == "COUNT":
+            return len(values)
+        
+        elif func == "SUM":
+            # Filter numeric values
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            return sum(numeric_values) if numeric_values else 0
+        
+        elif func == "AVG":
+            # Filter numeric values
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                return sum(numeric_values) / len(numeric_values)
+            return None
+        
+        elif func == "MIN":
+            # Filter comparable values
+            comparable_values = [v for v in values if v is not None]
+            return min(comparable_values) if comparable_values else None
+        
+        elif func == "MAX":
+            # Filter comparable values
+            comparable_values = [v for v in values if v is not None]
+            return max(comparable_values) if comparable_values else None
+        
+        elif func == "COLLECT":
+            # Return list of all values
+            return list(values)
+        
+        elif func in ("STDEV", "STDEVP"):
+            # Standard deviation
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if len(numeric_values) < 2:
+                return None
+            
+            mean = sum(numeric_values) / len(numeric_values)
+            variance = sum((x - mean) ** 2 for x in numeric_values) / len(numeric_values)
+            return variance ** 0.5
+        
+        else:
+            logger.warning("Unknown aggregation function: %s", func)
+            return None
+
 
 
 class GraphEngine:
