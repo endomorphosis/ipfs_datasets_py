@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import time
+import asyncio
 from typing import Union, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, field
@@ -25,6 +26,16 @@ from .protocol import (
 )
 from .registry import ProcessorRegistry
 from .input_detection import InputDetector, classify_input
+from .caching import SmartCache
+from .error_handling import (
+    ProcessorError,
+    TransientError,
+    RetryConfig,
+    RetryWithBackoff,
+    CircuitBreaker,
+    CircuitBreakerConfig
+)
+from .monitoring import HealthMonitor
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +53,12 @@ class ProcessorConfig:
         preferred_processors: Manual routing overrides {input_pattern: processor_name}
         max_retries: Maximum retry attempts on failure
         raise_on_error: Raise exception on processing error vs. return error result
+        cache_size_mb: Maximum cache size in megabytes (default: 100)
+        cache_ttl_seconds: Cache time-to-live in seconds (default: 3600)
+        cache_eviction_policy: Cache eviction policy: "lru", "lfu", or "fifo" (default: "lru")
+        enable_monitoring: Enable health checks and monitoring (default: True)
+        circuit_breaker_enabled: Enable circuit breaker pattern (default: True)
+        circuit_breaker_threshold: Number of failures before opening circuit (default: 5)
     """
     enable_caching: bool = True
     parallel_workers: int = 4
@@ -50,6 +67,32 @@ class ProcessorConfig:
     preferred_processors: dict[str, str] = field(default_factory=dict)
     max_retries: int = 2
     raise_on_error: bool = False
+    cache_size_mb: int = 100
+    cache_ttl_seconds: int = 3600
+    cache_eviction_policy: str = "lru"
+    enable_monitoring: bool = True
+    circuit_breaker_enabled: bool = True
+    circuit_breaker_threshold: int = 5
+    
+    def __post_init__(self):
+        """Validate configuration."""
+        if self.parallel_workers < 1:
+            raise ValueError("parallel_workers must be >= 1")
+        
+        if self.timeout_seconds < 1:
+            raise ValueError("timeout_seconds must be >= 1")
+        
+        if self.max_retries < 0:
+            raise ValueError("max_retries must be >= 0")
+        
+        if self.cache_size_mb < 1:
+            raise ValueError("cache_size_mb must be >= 1")
+        
+        if not 1 <= self.cache_ttl_seconds <= 86400:
+            raise ValueError("cache_ttl_seconds must be 1-86400 (1 day)")
+        
+        if self.cache_eviction_policy not in ("lru", "lfu", "fifo"):
+            raise ValueError("cache_eviction_policy must be 'lru', 'lfu', or 'fifo'")
 
 
 @dataclass
@@ -120,7 +163,35 @@ class UniversalProcessor:
         self.config = config or ProcessorConfig()
         self.registry = ProcessorRegistry()
         self.detector = InputDetector()
-        self._cache: dict[str, ProcessingResult] = {}
+        
+        # Initialize smart cache
+        if self.config.enable_caching:
+            self._cache = SmartCache(
+                max_size_mb=self.config.cache_size_mb,
+                ttl_seconds=self.config.cache_ttl_seconds,
+                eviction_policy=self.config.cache_eviction_policy
+            )
+        else:
+            self._cache = None
+        
+        # Initialize retry handler
+        retry_config = RetryConfig(
+            max_retries=self.config.max_retries,
+            initial_backoff=1.0,
+            max_backoff=60.0
+        )
+        self._retry_handler = RetryWithBackoff(config=retry_config)
+        
+        # Initialize circuit breakers for each processor
+        self._circuit_breakers: dict[str, CircuitBreaker] = {}
+        
+        # Initialize health monitor
+        if self.config.enable_monitoring:
+            self._health_monitor = HealthMonitor(self.registry)
+        else:
+            self._health_monitor = None
+        
+        # Basic statistics (in addition to registry stats)
         self._statistics = {
             "total_calls": 0,
             "successful_calls": 0,
@@ -132,7 +203,11 @@ class UniversalProcessor:
         # Initialize processors
         self._initialize_processors()
         
-        logger.info(f"UniversalProcessor initialized with {len(self.registry)} processors")
+        logger.info(
+            f"UniversalProcessor initialized with {len(self.registry)} processors "
+            f"(caching={'ON' if self.config.enable_caching else 'OFF'}, "
+            f"monitoring={'ON' if self.config.enable_monitoring else 'OFF'})"
+        )
     
     def _initialize_processors(self) -> None:
         """
@@ -252,10 +327,10 @@ class UniversalProcessor:
         try:
             # Check cache
             cache_key = str(input_source)
-            if self.config.enable_caching and cache_key in self._cache:
+            if self._cache and self._cache.has_key(cache_key):
                 logger.info(f"Cache hit for: {input_source}")
                 self._statistics["cache_hits"] += 1
-                return self._cache[cache_key]
+                return self._cache.get(cache_key)
             
             # Classify input
             classification = self.detector.classify_for_routing(input_source)
@@ -288,8 +363,8 @@ class UniversalProcessor:
             result = await self._process_with_retries(processor, input_source, **options)
             
             # Cache result
-            if self.config.enable_caching:
-                self._cache[cache_key] = result
+            if self._cache:
+                self._cache.put(cache_key, result)
             
             # Update statistics
             elapsed = time.time() - start_time
@@ -552,8 +627,9 @@ class UniversalProcessor:
     
     def clear_cache(self) -> None:
         """Clear result cache."""
-        self._cache.clear()
-        logger.info("Cleared result cache")
+        if self._cache:
+            self._cache.clear()
+            logger.info("Cleared result cache")
     
     def list_processors(self) -> dict[str, dict[str, Any]]:
         """
@@ -564,6 +640,77 @@ class UniversalProcessor:
         """
         return self.registry.list_processors()
     
+    def get_health_report(self, format: str = "text") -> str:
+        """
+        Generate health report for all processors.
+        
+        Args:
+            format: Output format ("text" or "json")
+            
+        Returns:
+            Formatted health report
+            
+        Example:
+            >>> report = processor.get_health_report()
+            >>> print(report)
+        """
+        if not self._health_monitor:
+            return "Health monitoring is disabled"
+        
+        return self._health_monitor.get_health_report(format=format)
+    
+    def check_health(self):
+        """
+        Check overall system health.
+        
+        Returns:
+            SystemHealth object with current status
+            
+        Example:
+            >>> health = processor.check_health()
+            >>> if health.status == HealthStatus.UNHEALTHY:
+            ...     print("System is unhealthy!")
+        """
+        if not self._health_monitor:
+            logger.warning("Health monitoring is disabled")
+            return None
+        
+        return self._health_monitor.check_system_health()
+    
+    def get_cache_statistics(self) -> dict:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dictionary with cache stats (hits, misses, evictions, hit_rate)
+        """
+        if not self._cache:
+            return {"enabled": False}
+        
+        stats = self._cache.get_statistics()
+        return {
+            "enabled": True,
+            **stats.to_dict(),
+            "size_mb": self._cache.get_size_mb(),
+            "usage_percent": self._cache.get_usage_percent()
+        }
+    
+    def _get_or_create_circuit_breaker(self, processor_name: str) -> Optional[CircuitBreaker]:
+        """Get or create circuit breaker for processor."""
+        if not self.config.circuit_breaker_enabled:
+            return None
+        
+        if processor_name not in self._circuit_breakers:
+            config = CircuitBreakerConfig(
+                failure_threshold=self.config.circuit_breaker_threshold,
+                success_threshold=2,
+                timeout_seconds=60.0
+            )
+            self._circuit_breakers[processor_name] = CircuitBreaker(config=config)
+        
+        return self._circuit_breakers[processor_name]
+    
     def __repr__(self) -> str:
         """String representation."""
-        return f"UniversalProcessor({len(self.registry)} processors, {len(self._cache)} cached)"
+        cache_count = len(self._cache._cache) if self._cache else 0
+        return f"UniversalProcessor({len(self.registry)} processors, {cache_count} cached)"
