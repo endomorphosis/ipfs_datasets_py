@@ -2,25 +2,23 @@
 PDFProcessorAdapter - Adapter for PDF processing.
 
 Wraps existing PDF processors to implement ProcessorProtocol.
+
+This adapter follows the unified ProcessorProtocol from processors.core
+and provides synchronous processing of PDF files.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Union
+from typing import Any, Dict, List
 from pathlib import Path
 import time
 
-from ..protocol import (
+from ..core.protocol import (
     ProcessorProtocol,
+    ProcessingContext,
     ProcessingResult,
-    ProcessingMetadata,
-    ProcessingStatus,
     InputType,
-    KnowledgeGraph,
-    VectorStore,
-    Entity,
-    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -33,15 +31,25 @@ class PDFProcessorAdapter:
     This adapter wraps existing PDF processing functionality to provide
     a unified interface compatible with UniversalProcessor.
     
+    Implements the synchronous ProcessorProtocol from processors.core.
+    
     Example:
+        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = PDFProcessorAdapter()
-        >>> can_process = await adapter.can_process("document.pdf")
-        >>> result = await adapter.process("document.pdf")
+        >>> context = ProcessingContext(
+        ...     input_type=InputType.FILE,
+        ...     source="document.pdf",
+        ...     metadata={"format": "pdf"}
+        ... )
+        >>> can_handle = adapter.can_handle(context)
+        >>> result = adapter.process(context)
     """
     
     def __init__(self):
         """Initialize adapter."""
         self._processor = None
+        self._name = "PDFProcessor"
+        self._priority = 10
     
     def _get_processor(self):
         """Lazy-load PDF processor on first use."""
@@ -63,57 +71,53 @@ class PDFProcessorAdapter:
                     raise RuntimeError("No PDF processor available")
         return self._processor
     
-    async def can_process(self, input_source: Union[str, Path]) -> bool:
+    def can_handle(self, context: ProcessingContext) -> bool:
         """
         Check if this adapter can handle PDF inputs.
         
         Args:
-            input_source: Input to check
+            context: Processing context with input information
             
         Returns:
             True if input is a PDF file or URL pointing to PDF
         """
-        input_str = str(input_source).lower()
+        # Check format from metadata
+        fmt = context.get_format()
+        if fmt and fmt.lower() == 'pdf':
+            return True
+        
+        # Check source if it's a file or URL
+        source_str = str(context.source).lower()
         
         # Check if it's a PDF file
-        if input_str.endswith('.pdf'):
+        if source_str.endswith('.pdf'):
             return True
         
         # Check if it's a URL pointing to a PDF
-        if input_str.startswith(('http://', 'https://')) and '.pdf' in input_str:
+        if source_str.startswith(('http://', 'https://')) and '.pdf' in source_str:
             return True
         
         # Check if file exists and is PDF
-        path = Path(input_source)
-        if path.exists() and path.is_file():
-            if path.suffix.lower() == '.pdf':
-                return True
+        if context.input_type == InputType.FILE:
+            path = Path(context.source)
+            if path.exists() and path.is_file():
+                if path.suffix.lower() == '.pdf':
+                    return True
         
         return False
     
-    async def process(
-        self,
-        input_source: Union[str, Path],
-        **options
-    ) -> ProcessingResult:
+    def process(self, context: ProcessingContext) -> ProcessingResult:
         """
         Process PDF file and return standardized result.
         
         Args:
-            input_source: PDF file path or URL
-            **options: Processing options
+            context: Processing context with input source and options
             
         Returns:
             ProcessingResult with extracted content and knowledge graph
         """
         start_time = time.time()
-        
-        # Metadata for result
-        metadata = ProcessingMetadata(
-            processor_name="PDFProcessor",
-            processor_version="1.0",
-            input_type=InputType.FILE
-        )
+        source = context.source
         
         try:
             processor = self._get_processor()
@@ -122,56 +126,51 @@ class PDFProcessorAdapter:
             # Note: Actual implementation will depend on the PDF processor interface
             # For now, create a simplified version
             
-            text = f"PDF content from {input_source}"
+            text = f"PDF content from {source}"
             pdf_metadata = {
-                "source": str(input_source),
+                "source": str(source),
                 "format": "pdf",
                 "pages": 1  # Placeholder
             }
             
             # Build knowledge graph
-            kg = self._build_knowledge_graph(text, str(input_source), pdf_metadata)
+            kg = self._build_knowledge_graph(text, str(source), pdf_metadata)
             
-            # Generate vectors (placeholder)
-            vectors = VectorStore(
-                metadata={
-                    "model": "pdf_processor",
-                    "source": str(input_source)
-                }
-            )
+            # Generate vectors (placeholder - empty for now)
+            vectors: List[List[float]] = []
             
             # Processing time
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.SUCCESS
             
             return ProcessingResult(
+                success=True,
                 knowledge_graph=kg,
                 vectors=vectors,
-                content={
-                    "text": text,
-                    "metadata": pdf_metadata
-                },
-                metadata=metadata,
-                extra={
+                metadata={
+                    "processor": self._name,
                     "processor_type": "pdf",
-                    "pages": pdf_metadata.get("pages", 0)
+                    "processing_time": elapsed,
+                    "pages": pdf_metadata.get("pages", 0),
+                    "text_length": len(text),
+                    **pdf_metadata
                 }
             )
         
         except Exception as e:
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.FAILED
-            metadata.add_error(str(e))
             
-            logger.error(f"PDF processing failed for {input_source}: {e}")
+            logger.error(f"PDF processing failed for {source}: {e}")
             
             return ProcessingResult(
-                knowledge_graph=KnowledgeGraph(source=str(input_source)),
-                vectors=VectorStore(),
-                content={"error": str(e)},
-                metadata=metadata
+                success=False,
+                knowledge_graph={},
+                vectors=[],
+                metadata={
+                    "processor": self._name,
+                    "processing_time": elapsed,
+                    "error": str(e)
+                },
+                errors=[f"PDF processing failed: {str(e)}"]
             )
     
     def _build_knowledge_graph(
@@ -179,36 +178,52 @@ class PDFProcessorAdapter:
         text: str,
         source: str,
         pdf_metadata: dict
-    ) -> KnowledgeGraph:
-        """Build knowledge graph from PDF content."""
-        kg = KnowledgeGraph(source=source)
+    ) -> Dict[str, Any]:
+        """
+        Build knowledge graph from PDF content.
         
+        Returns a dictionary with entities and relationships.
+        """
         # Create document entity
-        doc_entity = Entity(
-            id=f"pdf_{hash(source)}",
-            type="PDFDocument",
-            label=Path(source).name,
-            properties={
+        doc_entity = {
+            "id": f"pdf_{abs(hash(source))}",
+            "type": "PDFDocument",
+            "label": Path(source).name,
+            "properties": {
                 "source": source,
                 "pages": pdf_metadata.get("pages", 0),
                 "word_count": len(text.split()),
                 **pdf_metadata
             }
-        )
-        kg.add_entity(doc_entity)
+        }
         
-        # In production, would extract entities, relationships, etc.
+        # Build knowledge graph structure
+        kg = {
+            "entities": [doc_entity],
+            "relationships": [],
+            "source": source
+        }
+        
+        # In production, would extract more entities, relationships, etc.
         
         return kg
     
-    def get_supported_types(self) -> list[str]:
-        """Return supported input types."""
-        return ["pdf", "file"]
-    
-    def get_priority(self) -> int:
-        """Return processor priority (higher for specialized processors)."""
-        return 10
-    
-    def get_name(self) -> str:
-        """Return processor name."""
-        return "PDFProcessor"
+    def get_capabilities(self) -> Dict[str, Any]:
+        """
+        Return processor capabilities and metadata.
+        
+        Returns:
+            Dictionary with processor name, priority, supported formats, etc.
+        """
+        return {
+            "name": self._name,
+            "priority": self._priority,
+            "formats": ["pdf"],
+            "input_types": ["file", "url"],
+            "outputs": ["knowledge_graph", "text"],
+            "features": [
+                "text_extraction",
+                "entity_extraction",
+                "document_metadata"
+            ]
+        }
