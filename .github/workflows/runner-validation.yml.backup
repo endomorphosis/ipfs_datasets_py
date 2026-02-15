@@ -1,0 +1,433 @@
+name: Self-Hosted Runner Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      validation_level:
+        description: 'Validation level'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - extended
+      save_artifacts:
+        description: 'Save validation artifacts'
+        required: false
+        default: true
+        type: boolean
+  schedule:
+    # Run daily at 6 AM UTC to validate runner health
+    - cron: '0 6 * * *'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+      - 'comprehensive_runner_validation.py'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  validate-runner:
+    name: Validate Self-Hosted Runner
+    runs-on: [self-hosted, linux, arm64]
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Set up Python Environment
+        run: |
+          echo "🐍 Setting up Python environment"
+          python3 --version
+          python3 -m pip --version
+          
+          # Check if virtual environment exists and activate it
+          if [ -d ".venv" ]; then
+            echo "✅ Virtual environment found"
+            source .venv/bin/activate
+            python --version
+            pip list | head -10
+          else
+            echo "⚠️ No virtual environment found, using system Python"
+          fi
+          
+          # Install/update required packages
+          python3 -m pip install --user --upgrade pip
+          
+          # Install package in development mode if setup.py exists
+          if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
+            echo "📦 Installing package in development mode"
+            python3 -m pip install --user -e .
+          fi
+      
+      - name: System Information
+        run: |
+          echo "🖥️ System Information"
+          echo "===================="
+          uname -a
+          echo ""
+          echo "Architecture: $(uname -m)"
+          echo "CPU Info:"
+          lscpu | grep -E "Architecture|CPU\\(s\\)|Model name|Thread|Core"
+          echo ""
+          echo "Memory Info:"
+          free -h
+          echo ""
+          echo "Disk Info:"
+          df -h /
+          echo ""
+          echo "GPU Info:"
+          if command -v nvidia-smi &> /dev/null; then
+            nvidia-smi --query-gpu=name,memory.total --format=csv
+          else
+            echo "No NVIDIA GPU detected"
+          fi
+          echo ""
+          echo "Network Info:"
+          ip addr show | grep -E "inet.*scope global" | head -3
+      
+      - name: Docker Information
+        run: |
+          echo "🐳 Docker Information"
+          echo "===================="
+          if command -v docker &> /dev/null; then
+            docker --version
+            echo ""
+            echo "Docker daemon status:"
+            if docker info >/dev/null 2>&1; then
+              echo "✅ Docker daemon is running"
+              docker info | grep -E "Server Version|Architecture|CPUs|Total Memory"
+            else
+              echo "⚠️ Docker daemon is not accessible"
+            fi
+          else
+            echo "❌ Docker is not installed"
+          fi
+      
+      - name: Python Environment Check
+        run: |
+          echo "🐍 Python Environment Check"
+          echo "==========================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          echo "Python executable: $($PYTHON_CMD -c 'import sys; print(sys.executable)')"
+          echo "Python version: $($PYTHON_CMD --version)"
+          echo "Python path: $($PYTHON_CMD -c 'import sys; print(sys.path[:3])')"
+          echo ""
+          
+          echo "Testing core package imports:"
+          for pkg in numpy requests json pathlib asyncio subprocess platform sys os; do
+            if $PYTHON_CMD -c "import $pkg" 2>/dev/null; then
+              echo "  ✅ $pkg"
+            else
+              echo "  ❌ $pkg"
+            fi
+          done
+          
+          echo ""
+          echo "Testing ipfs_datasets_py import:"
+          if $PYTHON_CMD -c "import ipfs_datasets_py; print(f'Version: {getattr(ipfs_datasets_py, \"__version__\", \"unknown\")}')" 2>/dev/null; then
+            echo "  ✅ ipfs_datasets_py imported successfully"
+          else
+            echo "  ❌ ipfs_datasets_py import failed"
+          fi
+      
+      - name: Run Comprehensive Validation
+        run: |
+          echo "🚀 Running Comprehensive Validation"
+          echo "==================================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          # Determine validation level
+          VALIDATION_LEVEL="${{ github.event.inputs.validation_level || 'comprehensive' }}"
+          echo "Validation level: $VALIDATION_LEVEL"
+          
+          # Run the comprehensive validation
+          $PYTHON_CMD comprehensive_runner_validation.py \
+            --output "runner_validation_results.json" \
+            --report "runner_validation_report.md" \
+            --verbose
+          
+          echo ""
+          echo "📊 Validation Summary:"
+          if [ -f "runner_validation_results.json" ]; then
+            OVERALL_SUCCESS=$($PYTHON_CMD -c "import json; results = json.load(open('runner_validation_results.json')); print(results.get('overall_success', False))")
+            DURATION=$($PYTHON_CMD -c "import json; results = json.load(open('runner_validation_results.json')); print('{:.2f}'.format(results.get('validation_duration', 0)))")
+            echo "Overall Success: $OVERALL_SUCCESS"
+            echo "Duration: ${DURATION} seconds"
+            
+            # Check for failed tests
+            FAILED_TESTS=$($PYTHON_CMD -c "import json; results = json.load(open('runner_validation_results.json')); failed = results.get('failed_critical_tests', []); print(len(failed))")
+            if [ "$FAILED_TESTS" -gt 0 ]; then
+              echo "Failed Critical Tests: $FAILED_TESTS"
+            fi
+          fi
+      
+      - name: Display Validation Report
+        if: always()
+        run: |
+          echo "📝 Validation Report"
+          echo "==================="
+          if [ -f "runner_validation_report.md" ]; then
+            cat runner_validation_report.md
+          else
+            echo "❌ Validation report not generated"
+          fi
+      
+      - name: Test MCP Dashboard Startup
+        run: |
+          echo "🎛️ Testing MCP Dashboard"
+          echo "======================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          # Try to start MCP dashboard in background
+          echo "Starting MCP dashboard..."
+          $PYTHON_CMD -m ipfs_datasets_py.mcp_dashboard &
+          DASHBOARD_PID=$!
+          
+          echo "Dashboard PID: $DASHBOARD_PID"
+          
+          # Wait for startup
+          sleep 5
+          
+          # Test dashboard endpoint
+          if curl -sf http://127.0.0.1:8899/api/mcp/status >/dev/null 2>&1; then
+            echo "✅ MCP dashboard is responding"
+            curl -s http://127.0.0.1:8899/api/mcp/status | head -c 300
+          else
+            echo "⚠️ MCP dashboard not responding"
+          fi
+          
+          # Clean up
+          if kill -0 $DASHBOARD_PID 2>/dev/null; then
+            echo "Stopping dashboard..."
+            kill $DASHBOARD_PID
+            wait $DASHBOARD_PID 2>/dev/null || true
+          fi
+      
+      - name: Test Basic MCP Tools
+        run: |
+          echo "🔧 Testing Basic MCP Tools"
+          echo "========================="
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          # Test basic tool imports
+          echo "Testing tool imports:"
+          
+          # Test dataset tools
+          if $PYTHON_CMD -c "from ipfs_datasets_py.mcp_server.tools.dataset_tools.load_dataset import load_dataset" 2>/dev/null; then
+            echo "  ✅ dataset_tools.load_dataset"
+          else
+            echo "  ❌ dataset_tools.load_dataset"
+          fi
+          
+          # Test IPFS tools
+          if $PYTHON_CMD -c "from ipfs_datasets_py.mcp_server.tools.ipfs_tools.get_from_ipfs import get_from_ipfs" 2>/dev/null; then
+            echo "  ✅ ipfs_tools.get_from_ipfs"
+          else
+            echo "  ❌ ipfs_tools.get_from_ipfs"
+          fi
+          
+          # Test vector tools
+          if $PYTHON_CMD -c "from ipfs_datasets_py.mcp_server.tools.vector_tools.create_vector_index import create_vector_index" 2>/dev/null; then
+            echo "  ✅ vector_tools.create_vector_index"
+          else
+            echo "  ❌ vector_tools.create_vector_index"
+          fi
+      
+      - name: Network Connectivity Test
+        run: |
+          echo "🌐 Network Connectivity Test"
+          echo "============================"
+          
+          # Test critical external services
+          for service in "github.com:443" "pypi.org:443" "hub.docker.com:443"; do
+            if timeout 10 bash -c "</dev/tcp/${service/:// }"; then
+              echo "✅ $service reachable"
+            else
+              echo "❌ $service not reachable"
+            fi
+          done
+          
+          # Test DNS resolution
+          echo ""
+          echo "DNS Resolution:"
+          for host in github.com pypi.org hub.docker.com; do
+            if nslookup $host >/dev/null 2>&1; then
+              echo "  ✅ $host"
+            else
+              echo "  ❌ $host"
+            fi
+          done
+      
+      - name: Performance Baseline
+        run: |
+          echo "⚡ Performance Baseline"
+          echo "======================"
+          
+          # Use appropriate Python based on environment
+          if [ -d ".venv" ]; then
+            source .venv/bin/activate
+            PYTHON_CMD="python"
+          else
+            PYTHON_CMD="python3"
+          fi
+          
+          echo "CPU Performance:"
+          time $PYTHON_CMD -c "
+          import time
+          start = time.time()
+          def fib(n):
+              if n <= 1: 
+                  return n
+              return fib(n-1) + fib(n-2)
+          result = fib(25)
+          end = time.time()
+          print('Fibonacci(25) = {} in {:.3f}s'.format(result, end-start))
+          "
+          
+          echo ""
+          echo "Memory Test:"
+          $PYTHON_CMD -c "
+          import sys
+          baseline = sys.getsizeof([]) + sys.getsizeof({})
+          print('Python memory usage: {} bytes baseline'.format(baseline))
+          data = [i*i for i in range(10000)]
+          print('Created list of 10k integers: {} items'.format(len(data)))
+          del data
+          print('Memory test completed')
+          "
+          
+          echo ""
+          echo "Disk I/O Test:"
+          time dd if=/dev/zero of=/tmp/test_file bs=1M count=10 2>/dev/null
+          time dd if=/tmp/test_file of=/dev/null bs=1M 2>/dev/null
+          rm -f /tmp/test_file
+          echo "Disk I/O test completed"
+      
+      - name: Upload Validation Artifacts
+        if: always() && (github.event.inputs.save_artifacts == 'true' || github.event.inputs.save_artifacts == '')
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-validation-results-${{ github.run_id }}
+          path: |
+            runner_validation_results.json
+            runner_validation_report.md
+          retention-days: 30
+      
+      - name: Check Validation Result
+        if: always()
+        run: |
+          echo "🎯 Final Validation Check"
+          echo "========================="
+          
+          if [ -f "runner_validation_results.json" ]; then
+            # Use appropriate Python based on environment
+            if [ -d ".venv" ]; then
+              source .venv/bin/activate
+              PYTHON_CMD="python"
+            else
+              PYTHON_CMD="python3"
+            fi
+            
+            OVERALL_SUCCESS=$($PYTHON_CMD -c "
+            import json
+            with open('runner_validation_results.json', 'r') as f:
+                results = json.load(f)
+            print(results.get('overall_success', False))
+            ")
+            
+            if [ "$OVERALL_SUCCESS" = "True" ]; then
+              echo "🎉 All validations PASSED!"
+              echo "✅ Self-hosted runner is ready for production workflows"
+              exit 0
+            else
+              echo "❌ Some validations FAILED!"
+              echo "⚠️ Review the validation report above"
+              exit 1
+            fi
+          else
+            echo "❌ Validation results file not found"
+            exit 1
+          fi
+
+  runner-health-check:
+    name: Runner Health Check
+    runs-on: [self-hosted, linux, arm64]
+    if: github.event_name == 'schedule'
+    timeout-minutes: 10
+    
+    steps:
+      - name: Basic Health Check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🏥 Runner Health Check"
+          echo "====================="
+          
+          echo "Timestamp: $(date)"
+          echo "Uptime: $(uptime)"
+          echo "Load Average: $(cat /proc/loadavg)"
+          echo "Memory Usage: $(free -h | grep Mem)"
+          echo "Disk Usage: $(df -h / | tail -1)"
+          
+          # Check if runner service is healthy
+          if pgrep -f "Runner.Listener" >/dev/null; then
+            echo "✅ Runner process is running"
+          else
+            echo "❌ Runner process not found"
+            exit 1
+          fi
+          
+          # Check system resources
+          LOAD=$(cat /proc/loadavg | cut -d' ' -f1)
+          if (( $(echo "$LOAD > 10.0" | bc -l) )); then
+            echo "⚠️ High system load: $LOAD"
+          else
+            echo "✅ System load normal: $LOAD"
+          fi
+          
+          # Check available memory (should be > 1GB)
+          MEM_AVAIL=$(free -m | grep Mem | awk '{print $7}')
+          if [ "$MEM_AVAIL" -lt 1024 ]; then
+            echo "⚠️ Low memory available: ${MEM_AVAIL}MB"
+          else
+            echo "✅ Memory available: ${MEM_AVAIL}MB"
+          fi
+          
+          echo "🎯 Health check completed successfully"
