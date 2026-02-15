@@ -263,7 +263,10 @@ class GraphEngine:
         self.storage = storage_backend
         self._node_cache = {}
         self._relationship_cache = {}
-        logger.debug("GraphEngine initialized")
+        self._node_id_counter = 0
+        self._rel_id_counter = 0
+        self._enable_persistence = storage_backend is not None
+        logger.debug("GraphEngine initialized (persistence=%s)", self._enable_persistence)
     
     def create_node(
         self,
@@ -298,9 +301,20 @@ class GraphEngine:
         # Store in cache
         self._node_cache[node_id] = node
         
-        # Phase 2: Persist to IPLD storage
-        # if self.storage:
-        #     cid = self.storage.store(node_data)
+        # Persist to IPLD storage if available
+        if self._enable_persistence and self.storage:
+            try:
+                node_data = {
+                    "id": node_id,
+                    "labels": labels or [],
+                    "properties": properties or {}
+                }
+                cid = self.storage.store(node_data, pin=True, codec="dag-json")
+                # Store CID mapping for retrieval
+                self._node_cache[f"cid:{node_id}"] = cid
+                logger.debug("Node %s persisted with CID: %s", node_id, cid)
+            except Exception as e:
+                logger.warning("Failed to persist node %s: %s", node_id, e)
         
         logger.info("Created node: %s (labels=%s)", node_id, labels)
         return node
@@ -320,10 +334,25 @@ class GraphEngine:
             logger.debug("Node found in cache: %s", node_id)
             return self._node_cache[node_id]
         
-        # Phase 2: Load from IPLD storage
-        # if self.storage:
-        #     node_data = self.storage.retrieve_json(node_id)
-        #     return Node(**node_data)
+        # Load from IPLD storage if available
+        if self._enable_persistence and self.storage:
+            try:
+                # Try to get CID for this node
+                cid_key = f"cid:{node_id}"
+                if cid_key in self._node_cache:
+                    cid = self._node_cache[cid_key]
+                    node_data = self.storage.retrieve_json(cid)
+                    node = Node(
+                        node_id=node_data["id"],
+                        labels=node_data.get("labels", []),
+                        properties=node_data.get("properties", {})
+                    )
+                    # Cache the loaded node
+                    self._node_cache[node_id] = node
+                    logger.debug("Node %s loaded from IPLD (CID: %s)", node_id, cid)
+                    return node
+            except Exception as e:
+                logger.debug("Failed to load node %s from storage: %s", node_id, e)
         
         logger.debug("Node not found: %s", node_id)
         return None
@@ -352,6 +381,20 @@ class GraphEngine:
         node._properties.update(properties)
         self._node_cache[node_id] = node
         
+        # Update in IPLD storage if persistence is enabled
+        if self._enable_persistence and self.storage:
+            try:
+                node_data = {
+                    "id": node_id,
+                    "labels": node._labels,
+                    "properties": node._properties
+                }
+                cid = self.storage.store(node_data, pin=True, codec="dag-json")
+                self._node_cache[f"cid:{node_id}"] = cid
+                logger.debug("Node %s updated in storage (CID: %s)", node_id, cid)
+            except Exception as e:
+                logger.warning("Failed to update node %s in storage: %s", node_id, e)
+        
         logger.info("Updated node: %s", node_id)
         return node
     
@@ -369,6 +412,13 @@ class GraphEngine:
             return False
         
         del self._node_cache[node_id]
+        
+        # Also delete CID mapping if exists
+        cid_key = f"cid:{node_id}"
+        if cid_key in self._node_cache:
+            del self._node_cache[cid_key]
+        
+        # Note: We don't unpin from IPFS as other references may exist
         logger.info("Deleted node: %s", node_id)
         return True
     
@@ -402,6 +452,23 @@ class GraphEngine:
         )
         
         self._relationship_cache[rel_id] = relationship
+        
+        # Persist to IPLD storage if available
+        if self._enable_persistence and self.storage:
+            try:
+                rel_data = {
+                    "id": rel_id,
+                    "type": rel_type,
+                    "start_node": start_node,
+                    "end_node": end_node,
+                    "properties": properties or {}
+                }
+                cid = self.storage.store(rel_data, pin=True, codec="dag-json")
+                self._relationship_cache[f"cid:{rel_id}"] = cid
+                logger.debug("Relationship %s persisted with CID: %s", rel_id, cid)
+            except Exception as e:
+                logger.warning("Failed to persist relationship %s: %s", rel_id, e)
+        
         logger.info("Created relationship: %s -%s-> %s", start_node, rel_type, end_node)
         return relationship
     
@@ -431,6 +498,12 @@ class GraphEngine:
             return False
         
         del self._relationship_cache[rel_id]
+        
+        # Also delete CID mapping if exists
+        cid_key = f"cid:{rel_id}"
+        if cid_key in self._relationship_cache:
+            del self._relationship_cache[cid_key]
+        
         logger.info("Deleted relationship: %s", rel_id)
         return True
     
@@ -453,7 +526,15 @@ class GraphEngine:
         """
         results = []
         
-        for node in self._node_cache.values():
+        # Filter only Node objects (exclude CID mappings)
+        for key, value in self._node_cache.items():
+            if key.startswith("cid:"):
+                continue  # Skip CID mapping entries
+            
+            node = value
+            if not isinstance(node, Node):
+                continue
+            
             # Check labels
             if labels and not any(label in node.labels for label in labels):
                 continue
@@ -480,3 +561,111 @@ class GraphEngine:
         """Generate a unique relationship ID."""
         import uuid
         return f"rel-{uuid.uuid4().hex[:12]}"
+    
+    def save_graph(self) -> Optional[str]:
+        """
+        Save the entire graph to IPLD storage.
+        
+        Returns:
+            Root CID of the saved graph, or None if persistence is disabled
+            
+        Example:
+            cid = engine.save_graph()
+            print(f"Graph saved with CID: {cid}")
+        """
+        if not self._enable_persistence or not self.storage:
+            logger.warning("Graph persistence is disabled")
+            return None
+        
+        try:
+            # Extract nodes (exclude CID mappings)
+            nodes = []
+            for key, value in self._node_cache.items():
+                if not key.startswith("cid:") and isinstance(value, Node):
+                    nodes.append({
+                        "id": value._id,
+                        "labels": value._labels,
+                        "properties": value._properties
+                    })
+            
+            # Extract relationships (exclude CID mappings)
+            relationships = []
+            for key, value in self._relationship_cache.items():
+                if not key.startswith("cid:") and isinstance(value, Relationship):
+                    relationships.append({
+                        "id": value._id,
+                        "type": value._type,
+                        "start_node": value._start_node,
+                        "end_node": value._end_node,
+                        "properties": value._properties
+                    })
+            
+            # Save using storage backend
+            cid = self.storage.store_graph(
+                nodes=nodes,
+                relationships=relationships,
+                metadata={
+                    "node_count": len(nodes),
+                    "relationship_count": len(relationships),
+                    "version": "1.0"
+                }
+            )
+            
+            logger.info("Graph saved with CID: %s (%d nodes, %d relationships)", 
+                       cid, len(nodes), len(relationships))
+            return cid
+        except Exception as e:
+            logger.error("Failed to save graph: %s", e)
+            return None
+    
+    def load_graph(self, root_cid: str) -> bool:
+        """
+        Load a graph from IPLD storage.
+        
+        Args:
+            root_cid: Root CID of the graph to load
+            
+        Returns:
+            True if successful, False otherwise
+            
+        Example:
+            success = engine.load_graph("bafybeig...")
+        """
+        if not self._enable_persistence or not self.storage:
+            logger.warning("Graph persistence is disabled")
+            return False
+        
+        try:
+            # Retrieve graph data
+            graph_data = self.storage.retrieve_graph(root_cid)
+            
+            # Clear current caches
+            self._node_cache.clear()
+            self._relationship_cache.clear()
+            
+            # Load nodes
+            for node_data in graph_data.get("nodes", []):
+                node = Node(
+                    node_id=node_data["id"],
+                    labels=node_data.get("labels", []),
+                    properties=node_data.get("properties", {})
+                )
+                self._node_cache[node.id] = node
+            
+            # Load relationships
+            for rel_data in graph_data.get("relationships", []):
+                rel = Relationship(
+                    rel_id=rel_data["id"],
+                    rel_type=rel_data["type"],
+                    start_node=rel_data["start_node"],
+                    end_node=rel_data["end_node"],
+                    properties=rel_data.get("properties", {})
+                )
+                self._relationship_cache[rel.id] = rel
+            
+            logger.info("Graph loaded from CID: %s (%d nodes, %d relationships)",
+                       root_cid, len(self._node_cache), len(self._relationship_cache))
+            return True
+        except Exception as e:
+            logger.error("Failed to load graph from %s: %s", root_cid, e)
+            return False
