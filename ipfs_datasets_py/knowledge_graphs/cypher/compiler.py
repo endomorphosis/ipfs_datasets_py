@@ -336,7 +336,7 @@ class CypherCompiler:
             items = []
             for return_item in ret.items:
                 item_info = {
-                    "expression": self._expression_to_string(return_item.expression)
+                    "expression": self._compile_expression(return_item.expression)
                 }
                 if return_item.alias:
                     item_info["alias"] = return_item.alias
@@ -476,6 +476,13 @@ class CypherCompiler:
             if isinstance(obj, dict) and "var" in obj:
                 return {"property": f"{obj['var']}.{expr.property}"}
             return {"property": f"{expr.property}"}
+        
+        elif isinstance(expr, FunctionCallNode):
+            # Compile function calls (e.g., toLower, toUpper, etc.)
+            return {
+                "function": expr.name,
+                "args": [self._compile_expression(arg) for arg in expr.arguments]
+            }
         
         elif isinstance(expr, BinaryOpNode):
             return {

@@ -271,6 +271,21 @@ class Result:
         """Check if result has any records."""
         return len(self._records) > 0
     
+    def __getitem__(self, index: int) -> Record:
+        """
+        Get record by index.
+        
+        Args:
+            index: Record index
+            
+        Returns:
+            Record at the specified index
+            
+        Raises:
+            IndexError: If index is out of range
+        """
+        return self._records[index]
+    
     def __repr__(self) -> str:
         """String representation."""
         return f"Result(records={len(self._records)}, consumed={self._consumed})"
