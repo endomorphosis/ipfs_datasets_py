@@ -75,10 +75,17 @@ Roadmap:
 
 # Phase 1 implementation complete
 from .ipld_backend import IPLDBackend, create_backend
+from .types import Entity, Relationship, EntityID, RelationshipID, is_entity, is_relationship
 
 __all__ = [
     "IPLDBackend",
     "create_backend",
+    "Entity",
+    "Relationship",
+    "EntityID",
+    "RelationshipID",
+    "is_entity",
+    "is_relationship",
 ]
 
 # Version info
