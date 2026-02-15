@@ -62,6 +62,8 @@ from .ast import (
     ParameterNode,
     ListNode,
     MapNode,
+    CaseExpressionNode,
+    WhenClause,
     ASTVisitor,
     ASTPrettyPrinter,
 )
@@ -100,6 +102,8 @@ __all__ = [
     'ParameterNode',
     'ListNode',
     'MapNode',
+    'CaseExpressionNode',
+    'WhenClause',
     
     # Visitors
     'ASTVisitor',
