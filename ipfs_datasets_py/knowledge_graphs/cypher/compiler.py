@@ -271,17 +271,30 @@ class CypherCompiler:
                     self._compile_where_expression(expr.right)
                 # OR would need more complex handling
             else:
-                # Comparison operator
+                # Comparison operator - can be complex expression
                 left_info = self._analyze_expression(expr.left)
-                right_value = self._compile_expression(expr.right)
                 
+                # Check if it's a simple property comparison
                 if left_info['type'] == 'property':
+                    # Simple property comparison - use old format for backward compatibility
+                    right_value = self._compile_expression(expr.right)
                     op = {
                         "op": "Filter",
                         "variable": left_info['variable'],
                         "property": left_info['property'],
                         "operator": expr.operator,
                         "value": right_value
+                    }
+                    self.operations.append(op)
+                else:
+                    # Complex expression (e.g., function call) - compile full expression
+                    op = {
+                        "op": "Filter",
+                        "expression": {
+                            "op": expr.operator,
+                            "left": self._compile_expression(expr.left),
+                            "right": self._compile_expression(expr.right)
+                        }
                     }
                     self.operations.append(op)
         
