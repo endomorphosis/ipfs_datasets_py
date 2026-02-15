@@ -4,11 +4,46 @@ This module implements a single adversarial session that coordinates
 the extractor, critic, and data through multiple rounds of refinement.
 
 Analogous to AdversarialSession in the complaint-generator harness.
+
+.. deprecated:: 0.2.0
+    `TheoremSession`, `SessionConfig`, and `SessionResult` are deprecated.
+    Use `LogicTheoremOptimizer` from `unified_optimizer` instead, which provides
+    the same functionality through the standardized BaseOptimizer interface.
+    
+    Migration Example::
+    
+        # Old approach
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            TheoremSession, LogicExtractor, LogicCritic, SessionConfig
+        )
+        extractor = LogicExtractor(model="gpt-4")
+        critic = LogicCritic(use_provers=['z3'])
+        session = TheoremSession(extractor, critic, SessionConfig(max_rounds=10))
+        result = session.run(data="All employees must complete training")
+        
+        # New approach (recommended)
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+        from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+        
+        optimizer = LogicTheoremOptimizer(
+            config=OptimizerConfig(max_iterations=10, target_score=0.85),
+            use_provers=['z3']
+        )
+        context = OptimizationContext(
+            session_id="session-001",
+            input_data="All employees must complete training",
+            domain="general"
+        )
+        result = optimizer.run_session(
+            data="All employees must complete training",
+            context=context
+        )
 """
 
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 import time
@@ -20,6 +55,9 @@ logger = logging.getLogger(__name__)
 class SessionConfig:
     """Configuration for a theorem session.
     
+    .. deprecated:: 0.2.0
+        Use `OptimizerConfig` from `optimizers.common.base_optimizer` instead.
+        
     Attributes:
         max_rounds: Maximum number of refinement rounds
         convergence_threshold: Score threshold for early termination
@@ -30,11 +68,24 @@ class SessionConfig:
     convergence_threshold: float = 0.85
     use_ontology: bool = True
     strict_evaluation: bool = False
+    
+    def __post_init__(self):
+        """Issue deprecation warning on instantiation."""
+        warnings.warn(
+            "SessionConfig is deprecated. Use OptimizerConfig from "
+            "optimizers.common.base_optimizer instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
 
 @dataclass
 class SessionResult:
     """Result of a single theorem extraction session.
+    
+    .. deprecated:: 0.2.0
+        SessionResult is deprecated. LogicTheoremOptimizer returns a standardized
+        result dict compatible with BaseOptimizer interface.
     
     Attributes:
         extraction_result: Final extraction result
@@ -57,6 +108,16 @@ class SessionResult:
 class TheoremSession:
     """Single theorem extraction session with iterative refinement.
     
+    .. deprecated:: 0.2.0
+        TheoremSession is deprecated. Use `LogicTheoremOptimizer` instead.
+        
+        LogicTheoremOptimizer provides the same functionality through the
+        standardized BaseOptimizer interface with improved:
+        - Automatic metrics collection
+        - Built-in caching and performance optimization
+        - Consistent API across all optimizer types
+        - Better resource management
+    
     This class coordinates a single extraction session where:
     1. Extractor generates logical statements from data
     2. Critic evaluates the quality
@@ -68,6 +129,7 @@ class TheoremSession:
     complaint scenario.
     
     Example:
+        >>> # DEPRECATED - Use LogicTheoremOptimizer instead
         >>> from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         ...     TheoremSession, LogicExtractor, LogicCritic, SessionConfig
         ... )
@@ -86,11 +148,20 @@ class TheoremSession:
     ):
         """Initialize the theorem session.
         
+        .. deprecated:: 0.2.0
+            Use LogicTheoremOptimizer instead.
+        
         Args:
             extractor: LogicExtractor instance
             critic: LogicCritic instance
             config: Session configuration
         """
+        warnings.warn(
+            "TheoremSession is deprecated. Use LogicTheoremOptimizer from "
+            "unified_optimizer instead. See module docstring for migration guide.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.extractor = extractor
         self.critic = critic
         self.config = config or SessionConfig()
