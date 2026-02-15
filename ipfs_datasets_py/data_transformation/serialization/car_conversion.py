@@ -105,16 +105,19 @@ class DataInterchangeUtils:
         Raises:
             ImportError: If dependencies are not available
         """
+        # Validate and normalize the output path to protect against path traversal
+        safe_output_path = self._validate_car_path(output_path)
+
         if not HAVE_ARROW:
             # Mock implementation for testing
-            with open(output_path, 'wb') as f:
+            with open(safe_output_path, 'wb') as f:
                 f.write(b"mock CAR data")
             return "bafybeicarfilecid"
 
         if not HAVE_IPLD_CAR:
             # JSON fallback when CAR support is unavailable
             records = table.to_pylist()
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(safe_output_path, 'w', encoding='utf-8') as f:
                 json.dump(records, f)
             return "bafybeicarjsonfallback"
 
@@ -122,7 +125,7 @@ class DataInterchangeUtils:
         root_cid = self.serializer.serialize_arrow_table(table, hash_columns=hash_columns)
 
         # Export to CAR
-        self.storage.export_to_car([root_cid], output_path)
+        self.storage.export_to_car([root_cid], safe_output_path)
 
         return root_cid
 
