@@ -21,8 +21,29 @@ Example:
 """
 
 from .unified_graphrag import UnifiedGraphRAGProcessor, GraphRAGConfiguration
-from .integration import GraphRAGIntegration, HybridVectorGraphSearch, GraphRAGFactory
-from .website_system import WebsiteGraphRAGSystem, SearchResult
+
+# Optional imports with fallback
+try:
+    from .integration import GraphRAGIntegration, HybridVectorGraphSearch, GraphRAGFactory
+    _integration_available = True
+except ImportError as e:
+    # Create stub classes for when dependencies are missing
+    import warnings
+    warnings.warn(f"GraphRAG integration features unavailable: {e}", ImportWarning)
+    GraphRAGIntegration = None
+    HybridVectorGraphSearch = None
+    GraphRAGFactory = None
+    _integration_available = False
+
+try:
+    from .website_system import WebsiteGraphRAGSystem, SearchResult
+    _website_available = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"GraphRAG website system unavailable: {e}", ImportWarning)
+    WebsiteGraphRAGSystem = None
+    SearchResult = None
+    _website_available = False
 
 __all__ = [
     'UnifiedGraphRAGProcessor',
