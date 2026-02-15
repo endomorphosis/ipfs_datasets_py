@@ -647,20 +647,27 @@ class QueryExecutor:
                         
                         # Evaluate the expression - could be string or compiled dict
                         if isinstance(expr, dict):
-                            # Compiled expression (e.g., function call)
-                            # Create binding from record data
-                            binding = record._data.copy() if hasattr(record, '_data') else {}
-                            
-                            # Also add direct values if they're Node/Relationship objects
-                            for key, val in binding.items():
-                                # If value is a Node/Relationship, add it as a variable too
-                                if hasattr(val, 'labels') or hasattr(val, 'type'):
-                                    # Extract variable name (e.g., "n" from "n.name")
-                                    if '.' in key:
-                                        var_name = key.split('.')[0]
-                                        binding[var_name] = val
-                            
-                            value = self._evaluate_compiled_expression(expr, binding)
+                            # Check if it's a simple property expression
+                            if 'property' in expr and len(expr) == 1:
+                                # Simple property like {"property": "n.age"}
+                                # Just get it directly from the record
+                                prop_name = expr['property']
+                                value = record.get(prop_name)
+                            else:
+                                # Complex expression (e.g., function call)
+                                # Create binding from record data
+                                binding = record._data.copy() if hasattr(record, '_data') else {}
+                                
+                                # Also add direct values if they're Node/Relationship objects
+                                for key, val in binding.items():
+                                    # If value is a Node/Relationship, add it as a variable too
+                                    if hasattr(val, 'labels') or hasattr(val, 'type'):
+                                        # Extract variable name (e.g., "n" from "n.name")
+                                        if '.' in key:
+                                            var_name = key.split('.')[0]
+                                            binding[var_name] = val
+                                
+                                value = self._evaluate_compiled_expression(expr, binding)
                         elif isinstance(expr, str):
                             # String expression (legacy)
                             # Get the value for this expression
