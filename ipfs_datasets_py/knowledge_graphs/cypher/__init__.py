@@ -1,58 +1,119 @@
 """
-Cypher Query Language Module
+Cypher Query Language Support Module
 
-This module provides Cypher query language support for the IPFS graph database,
-enabling Neo4j-compatible queries to be executed on IPLD-stored graphs.
+This module provides comprehensive Cypher query language support for the
+IPFS graph database.
 
-Architecture:
-    Cypher Text → Lexer → Parser → AST → Compiler → IR → Executor
-    
 Components:
-- Lexer: Tokenizes Cypher query text (Phase 2)
-- Parser: Builds Abstract Syntax Tree (AST) from tokens (Phase 1 stub complete)
-- AST: Internal representation of query structure (Phase 2)
-- Compiler: Translates AST to IR (Intermediate Representation) (Phase 2)
-- Optimizer: Cost-based query optimization (Phase 3)
+- lexer: Tokenization of Cypher queries
+- ast: Abstract Syntax Tree definitions  
+- parser: Cypher query parser
+- compiler: AST to IR compiler ✅ **NEW**
+- optimizer: Query plan optimization (Phase 3)
 
-Supported Cypher Features (Phase 2 - Weeks 3-4):
-- MATCH patterns (nodes and relationships)
-- WHERE clauses (filters and predicates)
-- RETURN projections (with aliases)
-- CREATE nodes and relationships
-- SET properties
-- DELETE operations
-- ORDER BY, LIMIT, SKIP
+Phase 2 Progress:
+- Task 2.1: Grammar definition ✅
+- Task 2.2: Lexer implementation ✅
+- Task 2.3: Parser implementation ✅
+- Task 2.4: AST structure ✅
+- Task 2.5: Compiler ✅ **COMPLETE**
+- Task 2.6: Integration (in progress)
 
-Future Features (Post v1.0):
-- WITH clause (query piping)
-- MERGE (upsert operations)
-- OPTIONAL MATCH
-- Aggregations (COUNT, SUM, AVG, etc.)
-- Path functions (shortestPath, allShortestPaths)
-- List operations (UNWIND)
-- Pattern comprehensions
-
-Usage (Phase 2+):
-    from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser
+Usage:
+    from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser, CypherCompiler
     
     # Parse Cypher query
     parser = CypherParser()
-    ast = parser.parse("MATCH (n:Person) WHERE n.age > 25 RETURN n.name")
+    ast = parser.parse("MATCH (n:Person) WHERE n.age > 30 RETURN n")
     
-    # Phase 2 will add compilation
-    # compiler = CypherCompiler()
-    # ir = compiler.compile(ast)
+    # Compile to IR
+    compiler = CypherCompiler()
+    ir = compiler.compile(ast)
+    
+    # Execute IR (via QueryExecutor)
+    executor.execute_ir(ir)
 """
 
-# Phase 1 implementation (stub)
+# Phase 2 completed components
+from .lexer import CypherLexer, Token, TokenType
+from .ast import (
+    ASTNode,
+    ASTNodeType,
+    QueryNode,
+    MatchClause,
+    WhereClause,
+    ReturnClause,
+    ReturnItem,
+    OrderByClause,
+    OrderItem,
+    CreateClause,
+    DeleteClause,
+    SetClause,
+    PatternNode,
+    NodePattern,
+    RelationshipPattern,
+    ExpressionNode,
+    BinaryOpNode,
+    UnaryOpNode,
+    PropertyAccessNode,
+    FunctionCallNode,
+    LiteralNode,
+    VariableNode,
+    ParameterNode,
+    ListNode,
+    MapNode,
+    ASTVisitor,
+    ASTPrettyPrinter,
+)
 from .parser import CypherParser, CypherParseError, parse_cypher
+from .compiler import CypherCompiler, CypherCompileError, compile_cypher
 
 __all__ = [
-    "CypherParser",
-    "CypherParseError",
-    "parse_cypher",
+    # Lexer
+    'CypherLexer',
+    'Token',
+    'TokenType',
+    
+    # AST nodes
+    'ASTNode',
+    'ASTNodeType',
+    'QueryNode',
+    'MatchClause',
+    'WhereClause',
+    'ReturnClause',
+    'ReturnItem',
+    'OrderByClause',
+    'OrderItem',
+    'CreateClause',
+    'DeleteClause',
+    'SetClause',
+    'PatternNode',
+    'NodePattern',
+    'RelationshipPattern',
+    'ExpressionNode',
+    'BinaryOpNode',
+    'UnaryOpNode',
+    'PropertyAccessNode',
+    'FunctionCallNode',
+    'LiteralNode',
+    'VariableNode',
+    'ParameterNode',
+    'ListNode',
+    'MapNode',
+    
+    # Visitors
+    'ASTVisitor',
+    'ASTPrettyPrinter',
+    
+    # Parser
+    'CypherParser',
+    'CypherParseError',
+    'parse_cypher',
+    
+    # Compiler
+    'CypherCompiler',
+    'CypherCompileError',
+    'compile_cypher',
 ]
 
-# Version info
-__version__ = "0.1.0"
-__status__ = "development"  # Phase 1 stub complete
+__version__ = '0.2.5'  # Phase 2 nearly complete

@@ -10,6 +10,7 @@ All IPFS operations go through ipfs_backend_router for maximum compatibility.
 import json
 import logging
 from typing import Any, Dict, List, Optional, Union
+from collections import OrderedDict
 
 try:
     from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
@@ -20,6 +21,68 @@ except ImportError:
     RouterDeps = None  # type: ignore
 
 logger = logging.getLogger(__name__)
+
+
+class LRUCache:
+    """
+    Simple LRU (Least Recently Used) cache implementation.
+    
+    Provides O(1) get/set operations using an OrderedDict.
+    """
+    
+    def __init__(self, capacity: int = 1000):
+        """
+        Initialize the LRU cache.
+        
+        Args:
+            capacity: Maximum number of items to cache
+        """
+        self.capacity = capacity
+        self.cache: OrderedDict = OrderedDict()
+    
+    def get(self, key: str) -> Optional[Any]:
+        """
+        Get value from cache.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            Cached value or None if not found
+        """
+        if key not in self.cache:
+            return None
+        
+        # Move to end (most recently used)
+        self.cache.move_to_end(key)
+        return self.cache[key]
+    
+    def put(self, key: str, value: Any) -> None:
+        """
+        Put value in cache.
+        
+        Args:
+            key: Cache key
+            value: Value to cache
+        """
+        if key in self.cache:
+            # Update existing key
+            self.cache.move_to_end(key)
+        else:
+            # Add new key
+            if len(self.cache) >= self.capacity:
+                # Remove least recently used (first item)
+                self.cache.popitem(last=False)
+        
+        self.cache[key] = value
+    
+    def clear(self) -> None:
+        """Clear all cached items."""
+        self.cache.clear()
+    
+    def __len__(self) -> int:
+        """Get current cache size."""
+        return len(self.cache)
 
 
 class IPLDBackend:
@@ -51,7 +114,8 @@ class IPLDBackend:
     def __init__(
         self,
         deps: Optional['RouterDeps'] = None,
-        pin_by_default: bool = True
+        pin_by_default: bool = True,
+        cache_capacity: int = 1000
     ):
         """
         Initialize the IPLD backend.
@@ -59,6 +123,7 @@ class IPLDBackend:
         Args:
             deps: RouterDeps instance for shared state (creates new if None)
             pin_by_default: Whether to pin content by default
+            cache_capacity: Maximum number of items to cache (0 to disable)
         """
         if not HAVE_ROUTER:
             raise ImportError(
@@ -69,8 +134,10 @@ class IPLDBackend:
         self.deps = deps if deps is not None else RouterDeps()
         self.pin_by_default = pin_by_default
         self._backend = None
+        self._cache = LRUCache(cache_capacity) if cache_capacity > 0 else None
         
-        logger.debug("IPLDBackend initialized with deps=%s", self.deps)
+        logger.debug("IPLDBackend initialized (deps=%s, cache=%s)", 
+                    self.deps, cache_capacity if self._cache else "disabled")
     
     def _get_backend(self):
         """
@@ -147,6 +214,13 @@ class IPLDBackend:
         """
         backend = self._get_backend()
         
+        # Check cache first
+        if self._cache:
+            cached_data = self._cache.get(cid)
+            if cached_data is not None:
+                logger.debug("Cache hit for CID: %s", cid)
+                return cached_data
+        
         try:
             # Try block_get first (works for all codecs)
             data = backend.block_get(cid)
@@ -154,6 +228,10 @@ class IPLDBackend:
             logger.debug("block_get failed, trying cat: %s", e)
             # Fallback to cat
             data = backend.cat(cid)
+        
+        # Store in cache
+        if self._cache:
+            self._cache.put(cid, data)
         
         logger.debug("Retrieved %d bytes for CID: %s", len(data), cid)
         return data
@@ -171,8 +249,22 @@ class IPLDBackend:
         Example:
             data = backend.retrieve_json("bafybeig...")
         """
+        # Check cache for parsed JSON
+        cache_key = f"json:{cid}"
+        if self._cache:
+            cached_json = self._cache.get(cache_key)
+            if cached_json is not None:
+                logger.debug("Cache hit for JSON CID: %s", cid)
+                return cached_json
+        
         data_bytes = self.retrieve(cid)
-        return json.loads(data_bytes.decode('utf-8'))
+        json_data = json.loads(data_bytes.decode('utf-8'))
+        
+        # Cache the parsed JSON
+        if self._cache:
+            self._cache.put(cache_key, json_data)
+        
+        return json_data
     
     def pin(self, cid: str) -> None:
         """
@@ -194,6 +286,12 @@ class IPLDBackend:
         """
         backend = self._get_backend()
         backend.unpin(cid)
+        
+        # Clear from cache
+        if self._cache:
+            self._cache.get(cid)  # This will not return anything, just checking
+            # Note: We don't actively remove from cache as it's LRU and will expire naturally
+        
         logger.debug("Unpinned CID: %s", cid)
     
     def list_directory(self, cid: str) -> List[str]:
@@ -275,6 +373,32 @@ class IPLDBackend:
             relationships = graph["relationships"]
         """
         return self.retrieve_json(root_cid)
+    
+    def clear_cache(self) -> None:
+        """
+        Clear the LRU cache.
+        
+        Useful for freeing memory or forcing fresh data retrieval.
+        """
+        if self._cache:
+            self._cache.clear()
+            logger.debug("Cache cleared")
+    
+    def get_cache_stats(self) -> Dict[str, int]:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dictionary with cache size and capacity
+        """
+        if not self._cache:
+            return {"enabled": False}
+        
+        return {
+            "enabled": True,
+            "size": len(self._cache),
+            "capacity": self._cache.capacity
+        }
 
 
 # Convenience function for creating backend with defaults

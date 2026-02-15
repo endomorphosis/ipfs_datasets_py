@@ -1,5 +1,25 @@
 """
-IPLD Knowledge Graph Module
+IPLD Knowledge Graph Module (LEGACY - Deprecated)
+
+⚠️ DEPRECATION NOTICE:
+This module is deprecated and will be removed in a future version.
+Please migrate to the new Neo4j-compatible API:
+
+    from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
+    from ipfs_datasets_py.knowledge_graphs.storage import Entity, Relationship
+    
+    # Old way (deprecated):
+    # graph = IPLDKnowledgeGraph(storage)
+    
+    # New way:
+    # driver = GraphDatabase.driver("ipfs://localhost:5001")
+    # session = driver.session()
+
+For more information, see docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md
+
+---
+
+LEGACY DOCUMENTATION:
 
 Provides a class for representing and storing knowledge graphs using IPLD.
 This module implements entity and relationship modeling with IPLD for
@@ -27,10 +47,20 @@ import os
 import json
 import uuid
 import logging
+import warnings
 from typing import Dict, List, Any, Optional, Set, Tuple, Union
 from collections import defaultdict
 from collections import deque
 import numpy as np
+
+# Emit deprecation warning when module is imported
+warnings.warn(
+    "The ipfs_datasets_py.knowledge_graphs.ipld module is deprecated and will be removed in a future version. "
+    "Please migrate to the new Neo4j-compatible API. "
+    "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
 from ipfs_datasets_py.data_transformation.ipld.dag_pb import create_dag_node, parse_dag_node
