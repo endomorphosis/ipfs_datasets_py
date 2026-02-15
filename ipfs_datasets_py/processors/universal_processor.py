@@ -158,6 +158,14 @@ class UniversalProcessor:
         except ImportError as e:
             logger.debug(f"BatchProcessorAdapter not available: {e}")
         
+        # Import and register Specialized Scraper processor
+        try:
+            from .adapters.specialized_scraper_adapter import SpecializedScraperAdapter
+            self.registry.register(SpecializedScraperAdapter(), priority=12)
+            logger.info("Registered SpecializedScraperAdapter")
+        except ImportError as e:
+            logger.debug(f"SpecializedScraperAdapter not available: {e}")
+        
         # Import and register PDF processor
         try:
             from .adapters.pdf_adapter import PDFProcessorAdapter

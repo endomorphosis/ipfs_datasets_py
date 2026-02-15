@@ -18,6 +18,7 @@ __all__ = [
     'BatchProcessorAdapter',
     'IPFSProcessorAdapter',
     'WebArchiveProcessorAdapter',
+    'SpecializedScraperAdapter',
 ]
 
 # Optional imports with graceful fallback
@@ -55,3 +56,8 @@ try:
     from .web_archive_adapter import WebArchiveProcessorAdapter
 except ImportError:
     WebArchiveProcessorAdapter = None
+
+try:
+    from .specialized_scraper_adapter import SpecializedScraperAdapter
+except ImportError:
+    SpecializedScraperAdapter = None
