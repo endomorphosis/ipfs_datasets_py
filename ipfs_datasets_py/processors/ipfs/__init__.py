@@ -11,6 +11,6 @@ Components:
     - unixfs: UnixFS data structure implementation
 """
 
-from .unixfs import UnixFS
+from .unixfs import UnixFSHandler
 
-__all__ = ['UnixFS']
+__all__ = ['UnixFSHandler']
