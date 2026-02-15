@@ -1,8 +1,10 @@
-"""ProcessorProtocol - Interface for all processors.
+"""ProcessorProtocol - Async interface for all processors.
 
 This module defines the core protocol that all processors must implement to be
-part of the unified processor system. It provides type-safe interfaces and
+part of the unified processor system. It provides type-safe async interfaces and
 standardized data structures for consistent processing across all input types.
+
+Uses anyio for unified async/await support across different async backends.
 """
 
 from __future__ import annotations
@@ -11,6 +13,14 @@ from typing import Protocol, Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime
+
+# anyio for unified async support
+try:
+    import anyio
+    ANYIO_AVAILABLE = True
+except ImportError:
+    ANYIO_AVAILABLE = False
+    anyio = None
 
 
 class InputType(Enum):
@@ -201,22 +211,23 @@ class ProcessingResult:
 
 
 class ProcessorProtocol(Protocol):
-    """Protocol that all processors must implement.
+    """Async protocol that all processors must implement.
     
     This is the core interface for the unified processor system. Any processor
-    that wants to be part of the system must implement these three methods.
+    that wants to be part of the system must implement these three async methods.
     
-    The protocol uses Python's Protocol type (PEP 544) for structural subtyping,
-    meaning classes don't need to explicitly inherit from this protocol - they
-    just need to implement the required methods with matching signatures.
+    The protocol uses anyio for unified async support, allowing processors to work
+    with asyncio, trio, or any other async backend.
     
     Example:
         >>> class MyProcessor:
-        ...     def can_handle(self, context: ProcessingContext) -> bool:
+        ...     async def can_handle(self, context: ProcessingContext) -> bool:
         ...         return context.get_format() == 'my_format'
         ...     
-        ...     def process(self, context: ProcessingContext) -> ProcessingResult:
-        ...         # Processing logic here
+        ...     async def process(self, context: ProcessingContext) -> ProcessingResult:
+        ...         # Processing logic here with anyio support
+        ...         async with anyio.create_task_group() as tg:
+        ...             result = await async_operation()
         ...         return ProcessingResult(success=True, ...)
         ...     
         ...     def get_capabilities(self) -> Dict[str, Any]:
@@ -227,8 +238,8 @@ class ProcessorProtocol(Protocol):
         ...         }
     """
     
-    def can_handle(self, context: ProcessingContext) -> bool:
-        """Check if this processor can handle the given input.
+    async def can_handle(self, context: ProcessingContext) -> bool:
+        """Async check if this processor can handle the given input.
         
         This method is called by the ProcessorRegistry to determine if this
         processor is suitable for the given input. Processors should examine
@@ -241,21 +252,26 @@ class ProcessorProtocol(Protocol):
             True if this processor can handle the input, False otherwise
             
         Example:
-            >>> def can_handle(self, context: ProcessingContext) -> bool:
-            ...     # Only handle PDF files
+            >>> async def can_handle(self, context: ProcessingContext) -> bool:
+            ...     # Can do async checks if needed
             ...     return context.get_format() == 'pdf'
         """
         ...
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
-        """Process the input and return standardized result.
+    async def process(self, context: ProcessingContext) -> ProcessingResult:
+        """Async process the input and return standardized result.
         
         This is the main processing method. It should:
-        1. Extract/fetch the content from context.source
+        1. Extract/fetch the content from context.source (may be async I/O)
         2. Process the content (extract text, entities, etc.)
         3. Build a knowledge graph
         4. Generate vector embeddings
         5. Return a ProcessingResult with all outputs
+        
+        Uses anyio for unified async support:
+        - Can use anyio.to_thread.run_sync() for CPU-bound work
+        - Can use anyio.create_task_group() for concurrent tasks
+        - Can use anyio.sleep() for delays
         
         Args:
             context: Processing context with input and options
@@ -325,24 +341,28 @@ Processor = ProcessorProtocol
 
 
 def is_processor(obj: Any) -> bool:
-    """Check if an object implements the ProcessorProtocol.
+    """Check if an object implements the async ProcessorProtocol.
     
     This utility function checks if an object has all the required methods
-    to be considered a valid processor.
+    to be considered a valid processor, including verifying that can_handle
+    and process are async methods.
     
     Args:
         obj: Object to check
         
     Returns:
-        True if object implements ProcessorProtocol, False otherwise
+        True if object implements ProcessorProtocol (with async methods), False otherwise
         
     Example:
         >>> processor = MyProcessor()
         >>> if is_processor(processor):
-        ...     result = processor.process(context)
+        ...     result = await processor.process(context)
     """
+    import inspect
     return (
-        callable(getattr(obj, 'can_handle', None)) and
-        callable(getattr(obj, 'process', None)) and
-        callable(getattr(obj, 'get_capabilities', None))
+        hasattr(obj, 'can_handle') and callable(obj.can_handle) and
+        inspect.iscoroutinefunction(obj.can_handle) and
+        hasattr(obj, 'process') and callable(obj.process) and
+        inspect.iscoroutinefunction(obj.process) and
+        hasattr(obj, 'get_capabilities') and callable(obj.get_capabilities)
     )

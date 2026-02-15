@@ -7,14 +7,13 @@ with the new IPFS adapter.
 
 The IPFS adapter automatically detects IPFS content (CIDs, ipfs:// URLs, /ipfs/ paths)
 and processes them through the unified interface.
-
-Updated to use the synchronous ProcessorProtocol (2026-02-15).
 """
 
+import asyncio
 from ipfs_datasets_py.processors import UniversalProcessor
 
 
-def main():
+async def main():
     """Demonstrate IPFS content processing."""
     
     # Create processor instance
@@ -39,14 +38,6 @@ def main():
     print("✓ Supports: CIDs, ipfs:// URLs, /ipfs/ paths, ipns:// URLs")
     print("✓ Multi-strategy fetching: daemon → ipfs_kit → gateway")
     print()
-    
-    # Process the CID (synchronous)
-    # Note: Uncomment the following to actually process
-    # result = processor.process(cid)
-    # if result.success:
-    #     print(f"✓ Success! Extracted {len(result.knowledge_graph.get('entities', []))} entities")
-    # else:
-    #     print(f"✗ Failed: {result.errors}")
 
 
 if __name__ == "__main__":
@@ -58,5 +49,4 @@ if __name__ == "__main__":
     print("Starting example...")
     print()
     
-    main()
-
+    asyncio.run(main())

@@ -8,15 +8,20 @@ enabling it to work with UniversalProcessor.
 from __future__ import annotations
 
 import logging
-from typing import Union, Dict, Any, List
+from typing import Union
 from pathlib import Path
 import time
 
-from ..core.protocol import (
+from ..protocol import (
     ProcessorProtocol,
-    ProcessingContext,
     ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
     InputType,
+    KnowledgeGraph,
+    VectorStore,
+    Entity,
+    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -29,18 +34,10 @@ class FileConverterProcessorAdapter:
     This adapter wraps the existing file_converter.FileConverter to provide
     a unified interface compatible with UniversalProcessor.
     
-    Implements the synchronous ProcessorProtocol from processors.core.
-    
     Example:
-        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = FileConverterProcessorAdapter()
-        >>> context = ProcessingContext(
-        ...     input_type=InputType.FILE,
-        ...     source="document.docx",
-        ...     metadata={"format": "docx"}
-        ... )
-        >>> can_handle = adapter.can_handle(context)
-        >>> result = adapter.process(context)
+        >>> can_process = await adapter.can_process("document.docx")
+        >>> result = await adapter.process("document.docx")
     """
     
     def __init__(self, backend: str = 'auto'):
@@ -52,8 +49,6 @@ class FileConverterProcessorAdapter:
         """
         self.backend_name = backend
         self._converter = None
-        self._name = "FileConverterProcessor"
-        self._priority = 5
     
     def _get_converter(self):
         """Lazy-load FileConverter on first use."""
@@ -67,100 +62,102 @@ class FileConverterProcessorAdapter:
                 raise
         return self._converter
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_process(self, input_source: Union[str, Path]) -> bool:
         """
         Check if FileConverter can handle this input.
         
         FileConverter can handle most file types for conversion to text.
-        
-        Args:
-            context: Processing context with input information
-            
-        Returns:
-            True if input is a file that FileConverter can handle
         """
-        # Don't handle URLs
-        if context.input_type == InputType.URL:
+        path = Path(input_source)
+        
+        # Check if it's a file (not URL, folder, etc.)
+        if not path.exists() and not str(input_source).startswith(('http://', 'https://')):
             return False
         
-        # Don't handle folders
-        if context.input_type == InputType.FOLDER:
+        if path.exists() and path.is_dir():
             return False
-        
-        # Check if file exists
-        if context.input_type == InputType.FILE:
-            path = Path(context.source)
-            if not path.exists() or path.is_dir():
-                return False
         
         # FileConverter can handle many file types
         # It has built-in format detection
         return True
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(
+        self,
+        input_source: Union[str, Path],
+        **options
+    ) -> ProcessingResult:
         """
         Process file using FileConverter and return standardized result.
         
         Args:
-            context: Processing context with input source and options
+            input_source: File path or URL to process
+            **options: FileConverter options
             
         Returns:
             ProcessingResult with extracted content and metadata
         """
         start_time = time.time()
         converter = self._get_converter()
-        source = context.source
+        
+        # Metadata for result
+        metadata = ProcessingMetadata(
+            processor_name="FileConverterProcessor",
+            processor_version="1.0",
+            input_type=InputType.FILE
+        )
         
         try:
-            # Convert file (note: actual converter might be async, this is placeholder)
-            # result = await converter.convert(source, **context.options)
-            # For now, create placeholder result
-            text = f"Converted content from {source}"
-            file_metadata = {
-                "format": context.get_format() or "unknown",
-                "source": str(source)
-            }
+            # Convert file
+            result = await converter.convert(input_source, **options)
+            
+            # Extract content
+            text = result.text
+            file_metadata = result.metadata
             
             # Build knowledge graph from extracted text
-            kg = self._build_knowledge_graph(text, str(source), file_metadata)
+            kg = self._build_knowledge_graph(text, str(input_source), file_metadata)
             
-            # Generate vector embeddings (placeholder)
-            vectors: List[List[float]] = []
+            # Generate vector embeddings (simplified - in production, use real embeddings)
+            vectors = self._generate_vectors(text, str(input_source))
             
             # Processing time
             elapsed = time.time() - start_time
+            metadata.processing_time_seconds = elapsed
+            metadata.status = ProcessingStatus.SUCCESS if result.success else ProcessingStatus.PARTIAL
+            
+            if result.error:
+                metadata.add_error(result.error)
             
             # Create result
             return ProcessingResult(
-                success=True,
                 knowledge_graph=kg,
                 vectors=vectors,
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "backend": self.backend_name,
-                    "original_format": file_metadata.get("format", "unknown"),
-                    "text_length": len(text),
-                    **file_metadata
+                content={
+                    "text": text,
+                    "metadata": file_metadata,
+                    "backend": result.backend
+                },
+                metadata=metadata,
+                extra={
+                    "conversion_backend": result.backend,
+                    "original_format": file_metadata.get("format", "unknown")
                 }
             )
         
         except Exception as e:
             # Handle errors
             elapsed = time.time() - start_time
+            metadata.processing_time_seconds = elapsed
+            metadata.status = ProcessingStatus.FAILED
+            metadata.add_error(str(e))
             
-            logger.error(f"FileConverter failed for {source}: {e}")
+            logger.error(f"FileConverter failed for {input_source}: {e}")
             
             return ProcessingResult(
-                success=False,
-                knowledge_graph={},
-                vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "error": str(e)
-                },
-                errors=[f"File conversion failed: {str(e)}"]
+                knowledge_graph=KnowledgeGraph(source=str(input_source)),
+                vectors=VectorStore(),
+                content={"error": str(e)},
+                metadata=metadata
             )
     
     def _build_knowledge_graph(
@@ -168,29 +165,29 @@ class FileConverterProcessorAdapter:
         text: str,
         source: str,
         file_metadata: dict
-    ) -> Dict[str, Any]:
+    ) -> KnowledgeGraph:
         """
         Build a basic knowledge graph from extracted text.
         
         In production, this would use NLP/NER to extract entities and relationships.
         For now, we create a simple document-level node.
         """
+        kg = KnowledgeGraph(source=source)
+        
         # Create document entity
-        doc_entity = {
-            "id": f"doc_{abs(hash(source))}",
-            "type": "Document",
-            "label": file_metadata.get("title", Path(source).name),
-            "properties": {
+        doc_entity = Entity(
+            id=f"doc_{hash(source)}",
+            type="Document",
+            label=file_metadata.get("title", Path(source).name),
+            properties={
                 "source": source,
                 "format": file_metadata.get("format", "unknown"),
                 "word_count": len(text.split()),
                 "char_count": len(text),
                 **file_metadata
             }
-        }
-        
-        entities = [doc_entity]
-        relationships = []
+        )
+        kg.add_entity(doc_entity)
         
         # In production, we would:
         # 1. Run NER to extract entities (Person, Organization, Location, etc.)
@@ -200,45 +197,64 @@ class FileConverterProcessorAdapter:
         
         # For now, add some basic metadata entities
         if "author" in file_metadata:
-            author_entity = {
-                "id": f"author_{abs(hash(file_metadata['author']))}",
-                "type": "Person",
-                "label": file_metadata["author"],
-                "properties": {"role": "author"}
-            }
-            entities.append(author_entity)
+            author_entity = Entity(
+                id=f"author_{hash(file_metadata['author'])}",
+                type="Person",
+                label=file_metadata["author"],
+                properties={"role": "author"}
+            )
+            kg.add_entity(author_entity)
             
             # Create authorship relationship
-            relationships.append({
-                "id": f"authored_{abs(hash(source))}",
-                "source": author_entity["id"],
-                "target": doc_entity["id"],
-                "type": "AUTHORED",
-                "properties": {}
-            })
+            kg.add_relationship(Relationship(
+                id=f"authored_{hash(source)}",
+                source=author_entity.id,
+                target=doc_entity.id,
+                type="AUTHORED",
+                properties={}
+            ))
         
-        return {
-            "entities": entities,
-            "relationships": relationships,
-            "source": source
-        }
+        return kg
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    def _generate_vectors(self, text: str, source: str) -> VectorStore:
         """
-        Return processor capabilities and metadata.
+        Generate vector embeddings for text.
         
-        Returns:
-            Dictionary with processor name, priority, supported formats, etc.
+        In production, this would use a real embedding model.
+        For now, we create a placeholder VectorStore.
         """
-        return {
-            "name": self._name,
-            "priority": self._priority,
-            "formats": ["pdf", "docx", "xlsx", "pptx", "txt", "html", "md"],
-            "input_types": ["file"],
-            "outputs": ["knowledge_graph", "text"],
-            "features": [
-                "text_extraction",
-                "format_conversion",
-                "metadata_extraction"
-            ]
-        }
+        vectors = VectorStore(
+            metadata={
+                "model": "placeholder",
+                "source": source
+            }
+        )
+        
+        # In production:
+        # 1. Chunk text into segments
+        # 2. Generate embeddings using transformer model
+        # 3. Store embeddings with content IDs
+        # vectors.add_embedding("chunk_0", embedding_array)
+        
+        return vectors
+    
+    def get_supported_types(self) -> list[str]:
+        """Return supported input types."""
+        return [
+            "file",
+            "pdf",
+            "document",
+            "spreadsheet",
+            "presentation",
+            "text",
+            "html",
+            "image"
+        ]
+    
+    def get_priority(self) -> int:
+        """Return processor priority (lower than specialized processors)."""
+        return 5
+    
+    def get_name(self) -> str:
+        """Return processor name."""
+        return "FileConverterProcessor"

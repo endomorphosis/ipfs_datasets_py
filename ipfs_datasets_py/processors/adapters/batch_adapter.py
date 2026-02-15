@@ -8,15 +8,20 @@ enabling batch/folder processing through UniversalProcessor.
 from __future__ import annotations
 
 import logging
-from typing import Union, List, Dict, Any
+from typing import Union, List
 from pathlib import Path
 import time
 
-from ..core.protocol import (
+from ..protocol import (
     ProcessorProtocol,
-    ProcessingContext,
     ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
     InputType,
+    KnowledgeGraph,
+    VectorStore,
+    Entity,
+    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -29,18 +34,10 @@ class BatchProcessorAdapter:
     Wraps the existing BatchProcessor to provide unified interface for
     processing folders and multiple files through UniversalProcessor.
     
-    Implements the synchronous ProcessorProtocol from processors.core.
-    
     Example:
-        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = BatchProcessorAdapter()
-        >>> context = ProcessingContext(
-        ...     input_type=InputType.FOLDER,
-        ...     source="/path/to/folder",
-        ...     metadata={}
-        ... )
-        >>> can_handle = adapter.can_handle(context)
-        >>> result = adapter.process(context)
+        >>> can_process = await adapter.can_process("/path/to/folder")
+        >>> result = await adapter.process("/path/to/folder")
     """
     
     def __init__(self, universal_processor=None):
@@ -53,8 +50,6 @@ class BatchProcessorAdapter:
         """
         self._batch_processor = None
         self._universal_processor = universal_processor
-        self._name = "BatchProcessor"
-        self._priority = 15
     
     def _get_batch_processor(self):
         """Lazy-load batch processor on first use."""
@@ -76,53 +71,58 @@ class BatchProcessorAdapter:
             logger.info("UniversalProcessor created for batch processing")
         return self._universal_processor
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_process(self, input_source: Union[str, Path]) -> bool:
         """
         Check if this adapter can handle folder/batch inputs.
         
         Args:
-            context: Processing context with input information
+            input_source: Input to check
             
         Returns:
             True if input is a directory or list of files
         """
-        # Check if it's a folder input type
-        if context.input_type == InputType.FOLDER:
+        # Check if it's a directory
+        path = Path(input_source)
+        if path.exists() and path.is_dir():
             return True
         
-        # Check if it's a directory
-        if context.input_type == InputType.FILE:
-            path = Path(context.source)
-            if path.exists() and path.is_dir():
-                return True
-        
         # Check if it's a pattern or glob (simple check)
-        source_str = str(context.source)
-        if '*' in source_str or '?' in source_str:
+        input_str = str(input_source)
+        if '*' in input_str or '?' in input_str:
             return True
         
         return False
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(
+        self,
+        input_source: Union[str, Path],
+        **options
+    ) -> ProcessingResult:
         """
         Process folder or multiple files and return aggregated result.
         
         Args:
-            context: Processing context with input source and options
+            input_source: Folder path or file pattern
+            **options: Processing options
             
         Returns:
             ProcessingResult with aggregated knowledge graph and statistics
         """
         start_time = time.time()
-        source = context.source
+        
+        metadata = ProcessingMetadata(
+            processor_name="BatchProcessor",
+            processor_version="1.0",
+            input_type=InputType.FOLDER
+        )
         
         try:
-            path = Path(source)
+            path = Path(input_source)
             
             # Collect files to process
             if path.is_dir():
                 # Get all files in directory (recursively or not based on options)
-                recursive = context.options.get('recursive', False)
+                recursive = options.get('recursive', False)
                 if recursive:
                     files = list(path.rglob('*'))
                 else:
@@ -136,31 +136,28 @@ class BatchProcessorAdapter:
             
             logger.info(f"Found {len(files)} files to process in batch")
             
-            warnings = []
             if not files:
-                warnings.append("No files found to process")
+                metadata.add_warning("No files found to process")
             
             # Process each file using UniversalProcessor
-            # Note: In sync version, we can't await, so this is placeholder
-            # Real implementation would need to call processor.process() synchronously
+            universal = self._get_universal_processor()
             processed_results = []
             errors = []
             
             for file_path in files:
                 try:
-                    # Placeholder - in real implementation, would process each file
-                    # result = universal.process(str(file_path), **context.options)
-                    # processed_results.append(result)
-                    logger.debug(f"Would process: {file_path}")
+                    result = await universal.process(str(file_path), **options)
+                    processed_results.append(result)
                 except Exception as e:
                     logger.error(f"Failed to process {file_path}: {e}")
                     errors.append((str(file_path), str(e)))
+                    metadata.add_error(f"Failed: {file_path.name} - {e}")
             
             # Aggregate results into single knowledge graph
-            aggregated_kg = self._aggregate_knowledge_graphs(processed_results, str(source))
+            aggregated_kg = self._aggregate_knowledge_graphs(processed_results, str(input_source))
             
             # Aggregate vectors
-            aggregated_vectors: List[List[float]] = []
+            aggregated_vectors = self._aggregate_vectors(processed_results)
             
             # Calculate statistics
             total_files = len(files)
@@ -169,45 +166,51 @@ class BatchProcessorAdapter:
             
             # Processing time
             elapsed = time.time() - start_time
+            metadata.processing_time_seconds = elapsed
+            
+            if successful > 0:
+                metadata.status = ProcessingStatus.SUCCESS if failed == 0 else ProcessingStatus.PARTIAL
+            else:
+                metadata.status = ProcessingStatus.FAILED
             
             return ProcessingResult(
-                success=(successful > 0 or total_files == 0),
                 knowledge_graph=aggregated_kg,
                 vectors=aggregated_vectors,
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
+                content={
                     "total_files": total_files,
                     "successful": successful,
                     "failed": failed,
-                    "folder_path": str(source)
+                    "errors": errors,
+                    "folder_path": str(input_source)
                 },
-                warnings=warnings,
-                errors=[f"Failed: {f} - {e}" for f, e in errors]
+                metadata=metadata,
+                extra={
+                    "processor_type": "batch",
+                    "success_rate": successful / total_files if total_files > 0 else 0.0,
+                    "processed_files": [str(f) for f in files if f in [Path(r.content.get('source', '')) for r in processed_results]]
+                }
             )
         
         except Exception as e:
             elapsed = time.time() - start_time
+            metadata.processing_time_seconds = elapsed
+            metadata.status = ProcessingStatus.FAILED
+            metadata.add_error(str(e))
             
-            logger.error(f"Batch processing failed for {source}: {e}")
+            logger.error(f"Batch processing failed for {input_source}: {e}")
             
             return ProcessingResult(
-                success=False,
-                knowledge_graph={},
-                vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "error": str(e)
-                },
-                errors=[f"Batch processing failed: {str(e)}"]
+                knowledge_graph=KnowledgeGraph(source=str(input_source)),
+                vectors=VectorStore(),
+                content={"error": str(e)},
+                metadata=metadata
             )
     
     def _aggregate_knowledge_graphs(
         self,
         results: List[ProcessingResult],
         source: str
-    ) -> Dict[str, Any]:
+    ) -> KnowledgeGraph:
         """
         Aggregate multiple knowledge graphs into one.
         
@@ -218,69 +221,82 @@ class BatchProcessorAdapter:
         Returns:
             Aggregated knowledge graph
         """
+        aggregated = KnowledgeGraph(source=source)
+        
         # Create a folder entity
-        folder_entity = {
-            "id": f"folder_{abs(hash(source))}",
-            "type": "Folder",
-            "label": Path(source).name,
-            "properties": {
+        folder_entity = Entity(
+            id=f"folder_{hash(source)}",
+            type="Folder",
+            label=Path(source).name,
+            properties={
                 "path": source,
                 "file_count": len(results)
             }
-        }
-        
-        entities = [folder_entity]
-        relationships = []
+        )
+        aggregated.add_entity(folder_entity)
         
         # Merge all entities and relationships from individual results
         entity_ids = set()
-        entity_ids.add(folder_entity["id"])
-        
         for result in results:
             kg = result.knowledge_graph
             
             # Add entities (avoid duplicates by ID)
-            for entity in kg.get("entities", []):
-                if entity["id"] not in entity_ids:
-                    entities.append(entity)
-                    entity_ids.add(entity["id"])
+            for entity in kg.entities:
+                if entity.id not in entity_ids:
+                    aggregated.add_entity(entity)
+                    entity_ids.add(entity.id)
                     
                     # Link entity to folder
-                    relationships.append({
-                        "id": f"contains_{entity['id']}",
-                        "source": folder_entity["id"],
-                        "target": entity["id"],
-                        "type": "CONTAINS",
-                        "properties": {}
-                    })
+                    aggregated.add_relationship(Relationship(
+                        id=f"contains_{entity.id}",
+                        source=folder_entity.id,
+                        target=entity.id,
+                        type="CONTAINS",
+                        properties={}
+                    ))
             
             # Add relationships
-            for rel in kg.get("relationships", []):
-                relationships.append(rel)
+            for rel in kg.relationships:
+                aggregated.add_relationship(rel)
         
-        return {
-            "entities": entities,
-            "relationships": relationships,
-            "source": source
-        }
+        return aggregated
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    def _aggregate_vectors(self, results: List[ProcessingResult]) -> VectorStore:
         """
-        Return processor capabilities and metadata.
+        Aggregate vector embeddings from multiple results.
         
+        Args:
+            results: List of processing results
+            
         Returns:
-            Dictionary with processor name, priority, supported formats, etc.
+            Aggregated vector store
         """
-        return {
-            "name": self._name,
-            "priority": self._priority,
-            "formats": ["*"],  # Handles all formats via delegation
-            "input_types": ["folder", "directory", "batch"],
-            "outputs": ["knowledge_graph", "aggregated_results"],
-            "features": [
-                "batch_processing",
-                "folder_processing",
-                "recursive_processing",
-                "result_aggregation"
-            ]
-        }
+        aggregated = VectorStore(
+            metadata={
+                "aggregated_from": len(results),
+                "model": "batch_aggregation"
+            }
+        )
+        
+        # Merge all embeddings (with unique IDs)
+        for i, result in enumerate(results):
+            vectors = result.vectors
+            for content_id, embedding in vectors.embeddings.items():
+                # Prefix with result index to ensure uniqueness
+                unique_id = f"result_{i}_{content_id}"
+                if embedding is not None:
+                    aggregated.add_embedding(unique_id, embedding)
+        
+        return aggregated
+    
+    def get_supported_types(self) -> list[str]:
+        """Return supported input types."""
+        return ["folder", "directory", "batch"]
+    
+    def get_priority(self) -> int:
+        """Return processor priority (higher for specialized folder processing)."""
+        return 15
+    
+    def get_name(self) -> str:
+        """Return processor name."""
+        return "BatchProcessor"

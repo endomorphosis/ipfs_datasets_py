@@ -3,22 +3,25 @@ WebArchiveProcessorAdapter - Adapter for web archiving functionality.
 
 This adapter provides web archiving capabilities through ProcessorProtocol,
 supporting multiple archiving services and local WARC creation.
-
-Implements the synchronous ProcessorProtocol from processors.core.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Union, Optional, Dict, Any, List
+from typing import Union, Optional
 from pathlib import Path
 import time
 
-from ..core.protocol import (
+from ..protocol import (
     ProcessorProtocol,
-    ProcessingContext,
     ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
     InputType,
+    KnowledgeGraph,
+    VectorStore,
+    Entity,
+    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -42,22 +45,14 @@ class WebArchiveProcessorAdapter:
     - Bulk website archiving
     
     Example:
-        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = WebArchiveProcessorAdapter()
-        >>> context = ProcessingContext(
-        ...     input_type=InputType.URL,
-        ...     source="https://example.com",
-        ...     options={"archive_services": ["internet_archive"]}
-        ... )
-        >>> can_handle = adapter.can_handle(context)
-        >>> result = adapter.process(context)
+        >>> can_process = await adapter.can_process("https://example.com")
+        >>> result = await adapter.process("https://example.com", archive_services=['internet_archive'])
     """
     
     def __init__(self):
         """Initialize adapter."""
         self._archiver = None
-        self._name = "WebArchiveProcessor"
-        self._priority = 8  # Medium-high priority for web archiving
     
     def _get_archiver(self):
         """Lazy-load web archiver on first use."""
@@ -73,17 +68,17 @@ class WebArchiveProcessorAdapter:
                 logger.info("Using minimal web archiver fallback")
         return self._archiver
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_process(self, input_source: Union[str, Path]) -> bool:
         """
         Check if this adapter can handle web archiving inputs.
         
         Args:
-            context: Processing context with input information
+            input_source: Input to check
             
         Returns:
             True if input is a URL (web archiving makes sense for URLs)
         """
-        input_str = str(context.source).lower()
+        input_str = str(input_source).lower()
         
         # Web archiving is for HTTP/HTTPS URLs
         if input_str.startswith(('http://', 'https://')):
@@ -91,7 +86,11 @@ class WebArchiveProcessorAdapter:
         
         return False
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(
+        self,
+        input_source: Union[str, Path],
+        **options
+    ) -> ProcessingResult:
         """
         Process URL and create web archives.
         
@@ -102,7 +101,8 @@ class WebArchiveProcessorAdapter:
         4. Returns unified result with archive metadata
         
         Args:
-            context: Processing context with input source and options
+            input_source: URL to archive
+            **options: Archiving options
                 - archive_services: List of services ['internet_archive', 'archive_is', 'local_warc']
                 - verify_archives: Whether to verify archive success (default: True)
                 - include_knowledge_graph: Extract content for KG (default: True)
@@ -112,22 +112,31 @@ class WebArchiveProcessorAdapter:
             ProcessingResult with archive URLs and knowledge graph
             
         Example:
-            >>> result = adapter.process(context)
-            >>> print(result.metadata['archive_urls'])
+            >>> result = await adapter.process(
+            ...     "https://example.com",
+            ...     archive_services=['internet_archive', 'local_warc'],
+            ...     verify_archives=True
+            ... )
+            >>> print(result.content['archive_urls'])
         """
         start_time = time.time()
-        source = context.source
-        options = context.options
+        
+        # Create metadata
+        metadata = ProcessingMetadata(
+            processor_name="WebArchiveProcessorAdapter",
+            processor_version="1.0",
+            input_type=InputType.URL
+        )
         
         try:
-            url = str(source)
+            url = str(input_source)
             logger.info(f"Archiving URL: {url}")
             
             # Get archiver
             archiver = self._get_archiver()
             
             # Archive the URL
-            archive_result = self._archive_url(
+            archive_result = await self._archive_url(
                 archiver,
                 url,
                 options
@@ -136,49 +145,47 @@ class WebArchiveProcessorAdapter:
             # Build knowledge graph
             knowledge_graph = self._build_knowledge_graph(url, archive_result)
             
-            # Generate vectors (placeholder)
-            vectors: List[List[float]] = []
+            # Create vector store (minimal for now)
+            vectors = VectorStore()
             
-            # Processing time
-            elapsed = time.time() - start_time
+            # Collect content
+            content = {
+                'url': url,
+                'archive_urls': archive_result.get('archive_urls', {}),
+                'archive_status': archive_result.get('status', 'unknown'),
+                'archived_at': archive_result.get('archived_at', ''),
+                'archive_size': archive_result.get('size', 0),
+                'warc_path': archive_result.get('warc_path', None)
+            }
+            
+            # Update metadata
+            metadata.status = ProcessingStatus.SUCCESS
+            metadata.resource_usage['archive_services'] = list(archive_result.get('archive_urls', {}).keys())
+            metadata.processing_time_seconds = time.time() - start_time
             
             logger.info(f"Successfully archived: {url}")
             
             return ProcessingResult(
-                success=True,
                 knowledge_graph=knowledge_graph,
                 vectors=vectors,
-                metadata={
-                    "processor": self._name,
-                    "processor_type": "web_archive",
-                    "processing_time": elapsed,
-                    "url": url,
-                    "archive_urls": archive_result.get('archive_urls', {}),
-                    "archive_status": archive_result.get('status', 'unknown'),
-                    "archived_at": archive_result.get('archived_at', ''),
-                    "archive_size": archive_result.get('size', 0),
-                    "warc_path": archive_result.get('warc_path', None),
-                    "archive_services": list(archive_result.get('archive_urls', {}).keys())
-                }
+                content=content,
+                metadata=metadata
             )
             
         except Exception as e:
-            elapsed = time.time() - start_time
+            metadata.add_error(f"Web archiving failed: {str(e)}")
+            metadata.status = ProcessingStatus.FAILED
+            metadata.processing_time_seconds = time.time() - start_time
             logger.error(f"Web archiving error: {e}", exc_info=True)
             
             return ProcessingResult(
-                success=False,
-                knowledge_graph={},
-                vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "error": str(e)
-                },
-                errors=[f"Web archiving failed: {str(e)}"]
+                knowledge_graph=KnowledgeGraph(),
+                vectors=VectorStore(),
+                content={'error': str(e)},
+                metadata=metadata
             )
     
-    def _archive_url(self, archiver, url: str, options: dict) -> dict:
+    async def _archive_url(self, archiver, url: str, options: dict) -> dict:
         """
         Archive URL using the archiver.
         
@@ -200,7 +207,7 @@ class WebArchiveProcessorAdapter:
         # Try Internet Archive
         if 'internet_archive' in services:
             try:
-                ia_url = self._archive_to_internet_archive(url)
+                ia_url = await self._archive_to_internet_archive(url)
                 if ia_url:
                     archive_urls['internet_archive'] = ia_url
             except Exception as e:
@@ -210,7 +217,7 @@ class WebArchiveProcessorAdapter:
         # Try Archive.is
         if 'archive_is' in services:
             try:
-                archive_is_url = self._archive_to_archive_is(url)
+                archive_is_url = await self._archive_to_archive_is(url)
                 if archive_is_url:
                     archive_urls['archive_is'] = archive_is_url
             except Exception as e:
@@ -220,7 +227,7 @@ class WebArchiveProcessorAdapter:
         # Try local WARC
         if 'local_warc' in services:
             try:
-                warc_path = self._create_local_warc(archiver, url)
+                warc_path = await self._create_local_warc(archiver, url)
                 if warc_path:
                     archive_urls['local_warc'] = str(warc_path)
             except Exception as e:
@@ -238,64 +245,65 @@ class WebArchiveProcessorAdapter:
             'size': 0  # Could calculate if needed
         }
     
-    def _archive_to_internet_archive(self, url: str) -> Optional[str]:
+    async def _archive_to_internet_archive(self, url: str) -> Optional[str]:
         """Submit URL to Internet Archive Wayback Machine."""
         try:
-            import requests
+            import aiohttp
             
             # Wayback Machine Save API
             save_url = f"https://web.archive.org/save/{url}"
             
-            response = requests.get(save_url, timeout=30, allow_redirects=True)
-            if response.status_code in (200, 302):
-                # Get the archived URL from response
-                archived_url = str(response.url)
-                logger.info(f"Archived to Internet Archive: {archived_url}")
-                return archived_url
-            else:
-                logger.warning(f"Internet Archive returned status {response.status_code}")
-                return None
+            async with aiohttp.ClientSession() as session:
+                async with session.get(save_url, timeout=30) as response:
+                    if response.status in (200, 302):
+                        # Get the archived URL from response
+                        archived_url = str(response.url)
+                        logger.info(f"Archived to Internet Archive: {archived_url}")
+                        return archived_url
+                    else:
+                        logger.warning(f"Internet Archive returned status {response.status}")
+                        return None
         except Exception as e:
             logger.warning(f"Internet Archive submission failed: {e}")
             return None
     
-    def _archive_to_archive_is(self, url: str) -> Optional[str]:
+    async def _archive_to_archive_is(self, url: str) -> Optional[str]:
         """Submit URL to Archive.is (archive.today)."""
         try:
-            import requests
-            import re
+            import aiohttp
             
             # Archive.is Submit API
             submit_url = "https://archive.is/submit/"
             
-            response = requests.post(
-                submit_url,
-                data={'url': url},
-                timeout=30,
-                allow_redirects=True
-            )
-            if response.status_code in (200, 302):
-                # Extract archived URL from response
-                text = response.text
-                # Simple extraction - could be improved
-                match = re.search(r'https://archive\.(is|today|ph)/[A-Za-z0-9]+', text)
-                if match:
-                    archived_url = match.group(0)
-                    logger.info(f"Archived to Archive.is: {archived_url}")
-                    return archived_url
-            
-            logger.warning(f"Archive.is returned status {response.status_code}")
-            return None
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    submit_url,
+                    data={'url': url},
+                    timeout=30
+                ) as response:
+                    if response.status in (200, 302):
+                        # Extract archived URL from response
+                        text = await response.text()
+                        # Simple extraction - could be improved
+                        import re
+                        match = re.search(r'https://archive\.(is|today|ph)/[A-Za-z0-9]+', text)
+                        if match:
+                            archived_url = match.group(0)
+                            logger.info(f"Archived to Archive.is: {archived_url}")
+                            return archived_url
+                    
+                    logger.warning(f"Archive.is returned status {response.status}")
+                    return None
         except Exception as e:
             logger.warning(f"Archive.is submission failed: {e}")
             return None
     
-    def _create_local_warc(self, archiver, url: str) -> Optional[Path]:
+    async def _create_local_warc(self, archiver, url: str) -> Optional[Path]:
         """Create local WARC file."""
         try:
             # If archiver has archive_url method, use it
             if hasattr(archiver, 'archive_url'):
-                result = archiver.archive_url(url, enable_local_warc=True)
+                result = await archiver.archive_url(url, enable_local_warc=True)
                 if result and result.get('warc_path'):
                     return Path(result['warc_path'])
             
@@ -307,7 +315,7 @@ class WebArchiveProcessorAdapter:
             logger.warning(f"Local WARC creation failed: {e}")
             return None
     
-    def _build_knowledge_graph(self, url: str, archive_result: dict) -> Dict[str, Any]:
+    def _build_knowledge_graph(self, url: str, archive_result: dict) -> KnowledgeGraph:
         """
         Build knowledge graph from archive results.
         
@@ -316,83 +324,86 @@ class WebArchiveProcessorAdapter:
             archive_result: Archive operation results
             
         Returns:
-            Dictionary with archive entities and relationships
+            KnowledgeGraph with archive entities and relationships
         """
-        entities = []
-        relationships = []
+        kg = KnowledgeGraph(source=url)
         
         # Create main URL entity
-        url_entity = {
-            "id": f"url:{url}",
-            "type": "WebPage",
-            "label": url,
-            "properties": {
+        url_entity = Entity(
+            id=f"url:{url}",
+            type="WebPage",
+            label=url,
+            properties={
                 "url": url,
                 "archived": True,
                 "archive_status": archive_result.get('status', 'unknown')
             }
-        }
-        entities.append(url_entity)
+        )
+        kg.add_entity(url_entity)
         
         # Create archive entities for each service
         for service, archive_url in archive_result.get('archive_urls', {}).items():
-            archive_entity = {
-                "id": f"archive:{service}:{url}",
-                "type": "WebArchive",
-                "label": f"{service} archive",
-                "properties": {
+            archive_entity = Entity(
+                id=f"archive:{service}:{url}",
+                type="WebArchive",
+                label=f"{service} archive",
+                properties={
                     "service": service,
                     "archive_url": archive_url,
                     "archived_at": archive_result.get('archived_at', '')
                 }
-            }
-            entities.append(archive_entity)
+            )
+            kg.add_entity(archive_entity)
             
             # Create relationship
-            relationship = {
-                "id": f"archived_by:{url}:{service}",
-                "source": url_entity["id"],
-                "target": archive_entity["id"],
-                "type": "ARCHIVED_BY",
-                "properties": {
+            relationship = Relationship(
+                id=f"archived_by:{url}:{service}",
+                source=url_entity.id,
+                target=archive_entity.id,
+                type="ARCHIVED_BY",
+                properties={
                     "service": service,
                     "timestamp": archive_result.get('archived_at', '')
                 }
-            }
-            relationships.append(relationship)
+            )
+            kg.add_relationship(relationship)
         
-        return {
-            "entities": entities,
-            "relationships": relationships,
-            "source": url
-        }
+        return kg
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_supported_types(self) -> list[str]:
         """
-        Return processor capabilities and metadata.
+        Return list of supported input types.
         
         Returns:
-            Dictionary with processor name, priority, supported formats, etc.
+            List of type identifiers
         """
-        return {
-            "name": self._name,
-            "priority": self._priority,
-            "formats": ["url", "webpage", "web_archive"],
-            "input_types": ["url"],
-            "outputs": ["knowledge_graph", "archive_urls"],
-            "features": [
-                "internet_archive",
-                "archive_is",
-                "local_warc",
-                "archive_verification"
-            ]
-        }
+        return ["url", "webpage", "web_archive"]
+    
+    def get_priority(self) -> int:
+        """
+        Get processor priority.
+        
+        Web archiving is specialized, so medium priority.
+        
+        Returns:
+            Priority value (higher = more preferred)
+        """
+        return 8  # Medium-high priority for web archiving
+    
+    def get_name(self) -> str:
+        """
+        Get processor name.
+        
+        Returns:
+            Processor name
+        """
+        return "WebArchiveProcessorAdapter"
 
 
 class MinimalWebArchiver:
     """Minimal fallback web archiver when full implementation not available."""
     
-    def archive_url(self, url: str, **options) -> dict:
+    async def archive_url(self, url: str, **options) -> dict:
         """Minimal archive implementation."""
         return {
             'url': url,

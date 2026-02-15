@@ -3,24 +3,26 @@ IPFSProcessorAdapter - Adapter for IPFS content processing.
 
 This adapter provides first-class support for IPFS content, automatically
 detecting content types and routing to appropriate sub-processors.
-
-Implements the synchronous ProcessorProtocol from processors.core.
 """
 
 from __future__ import annotations
 
 import logging
 import tempfile
-from typing import Union, Optional, Dict, Any, List
+from typing import Union, Optional
 from pathlib import Path
 import time
 import re
 
-from ..core.protocol import (
+from ..protocol import (
     ProcessorProtocol,
-    ProcessingContext,
     ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
     InputType,
+    KnowledgeGraph,
+    VectorStore,
+    Entity
 )
 
 logger = logging.getLogger(__name__)
@@ -51,15 +53,9 @@ class IPFSProcessorAdapter:
     - Integration with ipfs_kit_py
     
     Example:
-        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = IPFSProcessorAdapter()
-        >>> context = ProcessingContext(
-        ...     input_type=InputType.IPFS,
-        ...     source="QmXXX...",
-        ...     metadata={}
-        ... )
-        >>> can_handle = adapter.can_handle(context)
-        >>> result = adapter.process(context)
+        >>> can_process = await adapter.can_process("QmXXX...")
+        >>> result = await adapter.process("ipfs://QmXXX...")
     """
     
     def __init__(self, parent_processor=None):
@@ -73,8 +69,6 @@ class IPFSProcessorAdapter:
         self._ipfs_client = None
         self._ipfs_kit = None
         self._temp_files: list[Path] = []  # Track temp files for cleanup
-        self._name = "IPFSProcessor"
-        self._priority = 20  # Highest priority - IPFS is core to this project
     
     def __del__(self):
         """Cleanup temporary files on deletion."""
@@ -194,27 +188,31 @@ class IPFSProcessorAdapter:
         
         return False
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_process(self, input_source: Union[str, Path]) -> bool:
         """
         Check if this adapter can handle IPFS inputs.
         
         Args:
-            context: Processing context with input information
+            input_source: Input to check
             
         Returns:
             True if input is IPFS content (CID, ipfs://, /ipfs/, ipns://)
         """
-        input_str = str(context.source).lower()
+        input_str = str(input_source).lower()
         
         # Check for IPFS patterns
         if input_str.startswith(('ipfs://', '/ipfs/', 'ipns://')):
             return True
         
         # Check if it's a CID
-        cid = self._extract_cid(str(context.source))
+        cid = self._extract_cid(str(input_source))
         return cid is not None
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(
+        self,
+        input_source: Union[str, Path],
+        **options
+    ) -> ProcessingResult:
         """
         Process IPFS content and return standardized result.
         
@@ -226,7 +224,8 @@ class IPFSProcessorAdapter:
         5. Adds IPFS metadata to result
         
         Args:
-            context: Processing context with input source and options
+            input_source: IPFS CID, ipfs:// URL, /ipfs/ path, or ipns:// URL
+            **options: Processing options
                 - pin: Whether to pin content (default: False)
                 - gateway_fallback: Use gateway if daemon unavailable (default: True)
                 - recursive: Fetch directories recursively (default: False)
@@ -235,104 +234,95 @@ class IPFSProcessorAdapter:
             ProcessingResult with IPFS metadata
             
         Example:
-            >>> result = adapter.process(context)
-            >>> print(result.metadata['ipfs_cid'])
+            >>> result = await adapter.process("QmXXX...")
+            >>> print(result.metadata.resource_usage['ipfs_cid'])
         """
         start_time = time.time()
-        source = context.source
-        options = context.options
+        
+        # Create metadata
+        metadata = ProcessingMetadata(
+            processor_name="IPFSProcessorAdapter",
+            processor_version="1.0",
+            input_type=InputType.IPFS
+        )
         
         try:
             # Extract CID
-            cid = self._extract_cid(str(source))
+            cid = self._extract_cid(str(input_source))
             if not cid:
+                metadata.add_error("Could not extract valid CID from input")
+                metadata.status = ProcessingStatus.FAILED
                 return ProcessingResult(
-                    success=False,
-                    knowledge_graph={},
-                    vectors=[],
-                    metadata={
-                        "processor": self._name,
-                        "processing_time": time.time() - start_time,
-                        "error": "Could not extract valid CID from input"
-                    },
-                    errors=["Could not extract valid CID from input"]
+                    knowledge_graph=KnowledgeGraph(),
+                    vectors=VectorStore(),
+                    content={},
+                    metadata=metadata
                 )
             
             logger.info(f"Processing IPFS content: {cid}")
             
             # Fetch content from IPFS
-            content_path, content_info = self._fetch_ipfs_content(
+            content_path, content_info = await self._fetch_ipfs_content(
                 cid,
                 pin=options.get('pin', False),
                 gateway_fallback=options.get('gateway_fallback', True)
             )
             
             if not content_path:
+                metadata.add_error(f"Could not fetch IPFS content: {cid}")
+                metadata.status = ProcessingStatus.FAILED
                 return ProcessingResult(
-                    success=False,
-                    knowledge_graph={},
-                    vectors=[],
-                    metadata={
-                        "processor": self._name,
-                        "processing_time": time.time() - start_time,
-                        "error": f"Could not fetch IPFS content: {cid}"
-                    },
-                    errors=[f"Could not fetch IPFS content: {cid}"]
+                    knowledge_graph=KnowledgeGraph(),
+                    vectors=VectorStore(),
+                    content={},
+                    metadata=metadata
                 )
             
             # Detect content type and route to appropriate processor
-            result = self._process_content(
+            result = await self._process_content(
                 content_path,
                 content_info,
-                options
+                **options
             )
             
-            # Add IPFS metadata to result
-            if result.metadata is None:
-                result.metadata = {}
-            result.metadata['ipfs_cid'] = cid
-            result.metadata['ipfs_size'] = content_info.get('size', 0)
-            result.metadata['ipfs_type'] = content_info.get('type', 'unknown')
-            result.metadata['processor'] = self._name
-            result.metadata['processing_time'] = time.time() - start_time
+            # Add IPFS metadata
+            result.metadata.resource_usage['ipfs_cid'] = cid
+            result.metadata.resource_usage['ipfs_size'] = content_info.get('size', 0)
+            result.metadata.resource_usage['ipfs_type'] = content_info.get('type', 'unknown')
             
             # Add IPFS entity to knowledge graph
-            ipfs_entity = {
-                "id": f"ipfs:{cid}",
-                "type": "IPFSContent",
-                "label": f"IPFS Content {cid[:8]}...",
-                "properties": {
+            ipfs_entity = Entity(
+                id=f"ipfs:{cid}",
+                type="IPFSContent",
+                label=f"IPFS Content {cid[:8]}...",
+                properties={
                     "cid": cid,
                     "size": content_info.get('size', 0),
                     "type": content_info.get('type', 'unknown')
                 }
-            }
+            )
+            result.knowledge_graph.add_entity(ipfs_entity)
             
-            if isinstance(result.knowledge_graph, dict):
-                if "entities" not in result.knowledge_graph:
-                    result.knowledge_graph["entities"] = []
-                result.knowledge_graph["entities"].append(ipfs_entity)
+            # Update timing
+            result.metadata.processing_time_seconds = time.time() - start_time
             
             logger.info(f"Successfully processed IPFS content: {cid}")
             return result
             
         except Exception as e:
-            elapsed = time.time() - start_time
+            metadata.add_error(f"IPFS processing failed: {str(e)}")
+            metadata.status = ProcessingStatus.FAILED
+            metadata.processing_time_seconds = time.time() - start_time
             logger.error(f"IPFS processing error: {e}", exc_info=True)
             
             return ProcessingResult(
-                success=False,
-                knowledge_graph={},
-                vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "error": str(e)
-                },
-                errors=[f"IPFS processing failed: {str(e)}"]
+                knowledge_graph=KnowledgeGraph(),
+                vectors=VectorStore(),
+                content={'error': str(e)},
+                metadata=metadata
             )
     
-    def _fetch_ipfs_content(
+    async def _fetch_ipfs_content(
         self,
         cid: str,
         pin: bool = False,
@@ -408,7 +398,7 @@ class IPFSProcessorAdapter:
         # Gateway fallback
         if gateway_fallback:
             try:
-                import requests
+                import aiohttp
                 
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.ipfs')
                 temp_path = Path(temp_file.name)
@@ -422,36 +412,37 @@ class IPFSProcessorAdapter:
                     f"https://cloudflare-ipfs.com/ipfs/{cid}"
                 ]
                 
-                for gateway_url in gateways:
-                    try:
-                        response = requests.get(gateway_url, timeout=30)
-                        if response.status_code == 200:
-                            content = response.content
-                            temp_path.write_bytes(content)
-                            
-                            content_info = {
-                                'size': len(content),
-                                'type': 'file',
-                                'source': 'gateway',
-                                'gateway': gateway_url
-                            }
-                            
-                            logger.info(f"Fetched via gateway: {gateway_url}")
-                            return temp_path, content_info
-                    except Exception as e:
-                        logger.debug(f"Gateway {gateway_url} failed: {e}")
-                        continue
+                async with aiohttp.ClientSession() as session:
+                    for gateway_url in gateways:
+                        try:
+                            async with session.get(gateway_url, timeout=30) as response:
+                                if response.status == 200:
+                                    content = await response.read()
+                                    temp_path.write_bytes(content)
+                                    
+                                    content_info = {
+                                        'size': len(content),
+                                        'type': 'file',
+                                        'source': 'gateway',
+                                        'gateway': gateway_url
+                                    }
+                                    
+                                    logger.info(f"Fetched via gateway: {gateway_url}")
+                                    return temp_path, content_info
+                        except Exception as e:
+                            logger.debug(f"Gateway {gateway_url} failed: {e}")
+                            continue
                 
             except Exception as e:
                 logger.error(f"Gateway fetch failed: {e}")
         
         return None, {}
     
-    def _process_content(
+    async def _process_content(
         self,
         content_path: Path,
         content_info: dict,
-        options: dict
+        **options
     ) -> ProcessingResult:
         """
         Process fetched IPFS content by routing to appropriate processor.
@@ -459,7 +450,7 @@ class IPFSProcessorAdapter:
         Args:
             content_path: Path to fetched content
             content_info: Information about content
-            options: Processing options
+            **options: Processing options
             
         Returns:
             ProcessingResult from sub-processor
@@ -467,20 +458,18 @@ class IPFSProcessorAdapter:
         # If we have a parent processor, use it to route
         if self._parent_processor:
             try:
-                # Create context for parent processor
-                from ..core.protocol import ProcessingContext
-                sub_context = ProcessingContext(
-                    input_type=InputType.FILE,
-                    source=str(content_path),
-                    metadata=content_info,
-                    options=options
-                )
-                return self._parent_processor.process(sub_context)
+                return await self._parent_processor.process(content_path, **options)
             except Exception as e:
                 logger.error(f"Sub-processor routing failed: {e}")
         
         # Fallback: basic processing
-        warnings = ["No parent processor available for routing"]
+        metadata = ProcessingMetadata(
+            processor_name="IPFSProcessorAdapter",
+            processor_version="1.0",
+            input_type=InputType.IPFS,
+            status=ProcessingStatus.PARTIAL
+        )
+        metadata.add_warning("No parent processor available for routing")
         
         # Read content
         try:
@@ -493,39 +482,41 @@ class IPFSProcessorAdapter:
             text_content = f"Could not read content: {e}"
         
         return ProcessingResult(
-            success=True,
-            knowledge_graph={
-                "entities": [],
-                "relationships": [],
-                "source": str(content_path)
+            knowledge_graph=KnowledgeGraph(),
+            vectors=VectorStore(),
+            content={
+                'text': text_content,
+                'size': content_info.get('size', 0),
+                'source': content_info.get('source', 'unknown')
             },
-            vectors=[],
-            metadata={
-                "processor": self._name,
-                "text": text_content,
-                "size": content_info.get('size', 0),
-                "source": content_info.get('source', 'unknown')
-            },
-            warnings=warnings
+            metadata=metadata
         )
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_supported_types(self) -> list[str]:
         """
-        Return processor capabilities and metadata.
+        Return list of supported input types.
         
         Returns:
-            Dictionary with processor name, priority, supported formats, etc.
+            List of type identifiers
         """
-        return {
-            "name": self._name,
-            "priority": self._priority,
-            "formats": ["ipfs", "cid", "ipns"],
-            "input_types": ["ipfs", "cid", "ipns"],
-            "outputs": ["knowledge_graph", "content"],
-            "features": [
-                "ipfs_content_fetch",
-                "cid_extraction",
-                "gateway_fallback",
-                "content_pinning"
-            ]
-        }
+        return ["ipfs", "cid", "ipns"]
+    
+    def get_priority(self) -> int:
+        """
+        Get processor priority.
+        
+        IPFS is critical to this project, so give it high priority.
+        
+        Returns:
+            Priority value (higher = more preferred)
+        """
+        return 20  # Highest priority - IPFS is core to this project
+    
+    def get_name(self) -> str:
+        """
+        Get processor name.
+        
+        Returns:
+            Processor name
+        """
+        return "IPFSProcessorAdapter"

@@ -3,23 +3,26 @@ SpecializedScraperAdapter - Adapter for domain-specific web scrapers.
 
 This adapter provides intelligent routing to specialized scrapers based on
 URL domain patterns, supporting legal databases, patent systems, Wikipedia, and more.
-
-Implements the synchronous ProcessorProtocol from processors.core.
 """
 
 from __future__ import annotations
 
 import logging
-from typing import Union, Optional, Dict, Any, List
+from typing import Union, Optional
 from pathlib import Path
 import time
 from urllib.parse import urlparse
 
-from ..core.protocol import (
+from ..protocol import (
     ProcessorProtocol,
-    ProcessingContext,
     ProcessingResult,
+    ProcessingMetadata,
+    ProcessingStatus,
     InputType,
+    KnowledgeGraph,
+    VectorStore,
+    Entity,
+    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -40,22 +43,11 @@ class SpecializedScraperAdapter:
     for optimal data extraction and knowledge graph generation.
     
     Example:
-        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = SpecializedScraperAdapter()
         >>> # Automatically routes to Wikipedia scraper
-        >>> context = ProcessingContext(
-        ...     input_type=InputType.URL,
-        ...     source="https://en.wikipedia.org/wiki/Python",
-        ...     metadata={}
-        ... )
-        >>> result = adapter.process(context)
+        >>> result = await adapter.process("https://en.wikipedia.org/wiki/Python")
         >>> # Automatically routes to patent scraper
-        >>> context2 = ProcessingContext(
-        ...     input_type=InputType.URL,
-        ...     source="https://patents.google.com/patent/US...",
-        ...     metadata={}
-        ... )
-        >>> result2 = adapter.process(context2)
+        >>> result = await adapter.process("https://patents.google.com/patent/US...")
     """
     
     # Domain patterns for specialized scrapers
@@ -89,8 +81,6 @@ class SpecializedScraperAdapter:
     def __init__(self):
         """Initialize adapter."""
         self._scrapers = {}
-        self._name = "SpecializedScraperProcessor"
-        self._priority = 12  # Higher than generic GraphRAG (10) but lower than Batch (15)
     
     def _get_scraper_type(self, url: str) -> Optional[str]:
         """
@@ -156,17 +146,17 @@ class SpecializedScraperAdapter:
                 self._scrapers['wikipedia'] = None
         return self._scrapers['wikipedia']
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_process(self, input_source: Union[str, Path]) -> bool:
         """
         Check if this adapter can handle specialized scraping inputs.
         
         Args:
-            context: Processing context with input information
+            input_source: Input to check
             
         Returns:
             True if URL matches a known specialized scraper domain
         """
-        input_str = str(context.source).lower()
+        input_str = str(input_source).lower()
         
         # Only process URLs
         if not input_str.startswith(('http://', 'https://')):
@@ -176,7 +166,11 @@ class SpecializedScraperAdapter:
         scraper_type = self._get_scraper_type(input_str)
         return scraper_type is not None
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(
+        self,
+        input_source: Union[str, Path],
+        **options
+    ) -> ProcessingResult:
         """
         Process URL using appropriate specialized scraper.
         
@@ -188,77 +182,75 @@ class SpecializedScraperAdapter:
         5. Returns unified result
         
         Args:
-            context: Processing context with input source and options
+            input_source: URL to scrape
+            **options: Scraper-specific options
                 
         Returns:
             ProcessingResult with specialized knowledge graph
             
         Example:
-            >>> result = adapter.process(context)
-            >>> # Returns knowledge graph with domain-specific entities
+            >>> result = await adapter.process("https://en.wikipedia.org/wiki/Python")
+            >>> # Returns knowledge graph with Wikipedia-specific entities
         """
         start_time = time.time()
-        source = context.source
-        options = context.options
+        
+        # Create metadata
+        metadata = ProcessingMetadata(
+            processor_name="SpecializedScraperAdapter",
+            processor_version="1.0",
+            input_type=InputType.URL
+        )
         
         try:
-            url = str(source)
+            url = str(input_source)
             scraper_type = self._get_scraper_type(url)
             
             if not scraper_type:
+                metadata.add_error(f"No specialized scraper for URL: {url}")
+                metadata.status = ProcessingStatus.FAILED
                 return ProcessingResult(
-                    success=False,
-                    knowledge_graph={},
-                    vectors=[],
-                    metadata={
-                        "processor": self._name,
-                        "processing_time": time.time() - start_time,
-                        "error": f"No specialized scraper for URL: {url}"
-                    },
-                    errors=[f"No specialized scraper for URL: {url}"]
+                    knowledge_graph=KnowledgeGraph(),
+                    vectors=VectorStore(),
+                    content={'error': 'No specialized scraper available'},
+                    metadata=metadata
                 )
             
             logger.info(f"Processing {url} with {scraper_type} scraper")
             
             # Route to appropriate scraper
             if scraper_type == 'legal':
-                result = self._process_legal(url, options)
+                result = await self._process_legal(url, options)
             elif scraper_type == 'patent':
-                result = self._process_patent(url, options)
+                result = await self._process_patent(url, options)
             elif scraper_type == 'wikipedia':
-                result = self._process_wikipedia(url, options)
+                result = await self._process_wikipedia(url, options)
             elif scraper_type == 'academic':
-                result = self._process_academic(url, options)
+                result = await self._process_academic(url, options)
             else:
                 raise ValueError(f"Unknown scraper type: {scraper_type}")
             
             # Update metadata
-            if result.metadata is None:
-                result.metadata = {}
-            result.metadata["processor"] = self._name
-            result.metadata["scraper_type"] = scraper_type
-            result.metadata["processing_time"] = time.time() - start_time
+            result.metadata.processor_name = "SpecializedScraperAdapter"
+            result.metadata.resource_usage['scraper_type'] = scraper_type
+            result.metadata.processing_time_seconds = time.time() - start_time
             
             logger.info(f"Successfully scraped {url} using {scraper_type} scraper")
             return result
             
         except Exception as e:
-            elapsed = time.time() - start_time
+            metadata.add_error(f"Specialized scraping failed: {str(e)}")
+            metadata.status = ProcessingStatus.FAILED
+            metadata.processing_time_seconds = time.time() - start_time
             logger.error(f"Scraping error: {e}", exc_info=True)
             
             return ProcessingResult(
-                success=False,
-                knowledge_graph={},
-                vectors=[],
-                metadata={
-                    "processor": self._name,
-                    "processing_time": elapsed,
-                    "error": str(e)
-                },
-                errors=[f"Specialized scraping failed: {str(e)}"]
+                knowledge_graph=KnowledgeGraph(),
+                vectors=VectorStore(),
+                content={'error': str(e)},
+                metadata=metadata
             )
     
-    def _process_legal(self, url: str, options: dict) -> ProcessingResult:
+    async def _process_legal(self, url: str, options: dict) -> ProcessingResult:
         """Process legal database URL."""
         scraper = self._get_legal_scraper()
         
@@ -269,7 +261,7 @@ class SpecializedScraperAdapter:
         # Use legal scraper
         try:
             if hasattr(scraper, 'scrape_url'):
-                result = scraper.scrape_url(url, **options)
+                result = await scraper.scrape_url(url, **options)
                 return self._convert_to_processing_result(result, url, "legal")
             else:
                 return self._create_basic_result(url, "legal")
@@ -277,7 +269,7 @@ class SpecializedScraperAdapter:
             logger.warning(f"Legal scraper error: {e}")
             return self._create_basic_result(url, "legal")
     
-    def _process_patent(self, url: str, options: dict) -> ProcessingResult:
+    async def _process_patent(self, url: str, options: dict) -> ProcessingResult:
         """Process patent database URL."""
         scraper = self._get_patent_scraper()
         
@@ -287,7 +279,7 @@ class SpecializedScraperAdapter:
         # Use patent scraper
         try:
             if hasattr(scraper, 'scrape_patent'):
-                result = scraper.scrape_patent(url, **options)
+                result = await scraper.scrape_patent(url, **options)
                 return self._convert_to_processing_result(result, url, "patent")
             else:
                 return self._create_basic_result(url, "patent")
@@ -295,7 +287,7 @@ class SpecializedScraperAdapter:
             logger.warning(f"Patent scraper error: {e}")
             return self._create_basic_result(url, "patent")
     
-    def _process_wikipedia(self, url: str, options: dict) -> ProcessingResult:
+    async def _process_wikipedia(self, url: str, options: dict) -> ProcessingResult:
         """Process Wikipedia URL."""
         scraper = self._get_wikipedia_scraper()
         
@@ -305,7 +297,7 @@ class SpecializedScraperAdapter:
         # Use Wikipedia scraper
         try:
             if hasattr(scraper, 'process_article'):
-                result = scraper.process_article(url, **options)
+                result = await scraper.process_article(url, **options)
                 return self._convert_to_processing_result(result, url, "wikipedia")
             else:
                 return self._create_basic_result(url, "wikipedia")
@@ -313,7 +305,7 @@ class SpecializedScraperAdapter:
             logger.warning(f"Wikipedia scraper error: {e}")
             return self._create_basic_result(url, "wikipedia")
     
-    def _process_academic(self, url: str, options: dict) -> ProcessingResult:
+    async def _process_academic(self, url: str, options: dict) -> ProcessingResult:
         """Process academic paper URL."""
         # Basic processing for now - could be enhanced with specific scrapers
         return self._create_basic_result(url, "academic")
@@ -329,35 +321,39 @@ class SpecializedScraperAdapter:
         Returns:
             Basic ProcessingResult
         """
+        kg = KnowledgeGraph(source=url)
+        
         # Create basic entity
-        entity = {
-            "id": f"url:{url}",
-            "type": scraper_type.title() + "Resource",
-            "label": url,
-            "properties": {
+        entity = Entity(
+            id=f"url:{url}",
+            type=scraper_type.title() + "Resource",
+            label=url,
+            properties={
                 "url": url,
                 "scraper_type": scraper_type,
                 "processed": True
             }
-        }
+        )
+        kg.add_entity(entity)
         
-        warnings = [f"Using basic processing for {scraper_type} content"]
+        metadata = ProcessingMetadata(
+            processor_name="SpecializedScraperAdapter",
+            processor_version="1.0",
+            input_type=InputType.URL,
+            status=ProcessingStatus.PARTIAL
+        )
+        metadata.add_warning(f"Using basic processing for {scraper_type} content")
+        metadata.resource_usage['scraper_type'] = scraper_type
         
         return ProcessingResult(
-            success=True,
-            knowledge_graph={
-                "entities": [entity],
-                "relationships": [],
-                "source": url
+            knowledge_graph=kg,
+            vectors=VectorStore(),
+            content={
+                'url': url,
+                'scraper_type': scraper_type,
+                'mode': 'basic'
             },
-            vectors=[],
-            metadata={
-                "processor": self._name,
-                "url": url,
-                "scraper_type": scraper_type,
-                "mode": "basic"
-            },
-            warnings=warnings
+            metadata=metadata
         )
     
     def _convert_to_processing_result(
@@ -383,40 +379,56 @@ class SpecializedScraperAdapter:
         
         # Otherwise, create from scraper result
         # (This would need to be customized based on actual scraper APIs)
+        kg = KnowledgeGraph(source=url)
+        vectors = VectorStore()
+        
+        metadata = ProcessingMetadata(
+            processor_name="SpecializedScraperAdapter",
+            processor_version="1.0",
+            input_type=InputType.URL,
+            status=ProcessingStatus.SUCCESS
+        )
+        metadata.resource_usage['scraper_type'] = scraper_type
+        
+        content = {
+            'url': url,
+            'scraper_type': scraper_type,
+            'data': scraper_result
+        }
+        
         return ProcessingResult(
-            success=True,
-            knowledge_graph={
-                "entities": [],
-                "relationships": [],
-                "source": url
-            },
-            vectors=[],
-            metadata={
-                "processor": self._name,
-                "url": url,
-                "scraper_type": scraper_type,
-                "data": scraper_result
-            }
+            knowledge_graph=kg,
+            vectors=vectors,
+            content=content,
+            metadata=metadata
         )
     
-    def get_capabilities(self) -> Dict[str, Any]:
+    def get_supported_types(self) -> list[str]:
         """
-        Return processor capabilities and metadata.
+        Return list of supported input types.
         
         Returns:
-            Dictionary with processor name, priority, supported formats, etc.
+            List of type identifiers
         """
-        return {
-            "name": self._name,
-            "priority": self._priority,
-            "formats": ["url", "legal", "patent", "wikipedia", "academic"],
-            "input_types": ["url"],
-            "outputs": ["knowledge_graph", "structured_data"],
-            "features": [
-                "legal_scraping",
-                "patent_scraping",
-                "wikipedia_scraping",
-                "academic_scraping",
-                "domain_routing"
-            ]
-        }
+        return ["url", "legal", "patent", "wikipedia", "academic"]
+    
+    def get_priority(self) -> int:
+        """
+        Get processor priority.
+        
+        Specialized scrapers should have medium-high priority
+        to be preferred over generic web scraping.
+        
+        Returns:
+            Priority value (higher = more preferred)
+        """
+        return 12  # Higher than generic GraphRAG (10) but lower than Batch (15)
+    
+    def get_name(self) -> str:
+        """
+        Get processor name.
+        
+        Returns:
+            Processor name
+        """
+        return "SpecializedScraperAdapter"
