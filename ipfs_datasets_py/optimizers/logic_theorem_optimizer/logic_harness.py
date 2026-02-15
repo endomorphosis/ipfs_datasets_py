@@ -3,11 +3,52 @@
 This module implements the harness for running multiple theorem extraction
 sessions in parallel, analogous to the AdversarialHarness in the
 complaint-generator system.
+
+.. deprecated:: 0.2.0
+    `LogicHarness`, `HarnessConfig`, and `HarnessResult` are deprecated.
+    Use `LogicTheoremOptimizer` with batch processing instead.
+    
+    Migration Example::
+    
+        # Old approach
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+            LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
+        )
+        extractor = LogicExtractor(model="gpt-4")
+        critic = LogicCritic(use_provers=['z3', 'cvc5'])
+        harness = LogicHarness(
+            extractor=extractor,
+            critic=critic,
+            config=HarnessConfig(parallelism=4)
+        )
+        data_samples = ["Sample 1", "Sample 2", "Sample 3"]
+        result = harness.run_sessions(data_samples)
+        
+        # New approach (recommended)
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+        from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+        
+        optimizer = LogicTheoremOptimizer(
+            config=OptimizerConfig(max_iterations=10, target_score=0.85),
+            use_provers=['z3', 'cvc5']
+        )
+        
+        # Process each sample
+        results = []
+        for i, sample in enumerate(data_samples):
+            context = OptimizationContext(
+                session_id=f"session-{i}",
+                input_data=sample,
+                domain="general"
+            )
+            result = optimizer.run_session(sample, context)
+            results.append(result)
 """
 
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -20,6 +61,9 @@ logger = logging.getLogger(__name__)
 class HarnessConfig:
     """Configuration for the logic harness.
     
+    .. deprecated:: 0.2.0
+        Use `OptimizerConfig` from `optimizers.common.base_optimizer` instead.
+    
     Attributes:
         parallelism: Number of parallel sessions
         max_retries: Maximum retries for failed sessions
@@ -30,11 +74,24 @@ class HarnessConfig:
     max_retries: int = 3
     timeout_per_session: float = 300.0  # 5 minutes
     batch_size: int = 10
+    
+    def __post_init__(self):
+        """Issue deprecation warning on instantiation."""
+        warnings.warn(
+            "HarnessConfig is deprecated. Use OptimizerConfig from "
+            "optimizers.common.base_optimizer instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
 
 @dataclass
 class HarnessResult:
     """Result of batch theorem extraction.
+    
+    .. deprecated:: 0.2.0
+        HarnessResult is deprecated. Process batches using LogicTheoremOptimizer
+        and aggregate results manually or use BaseOptimizer's built-in metrics.
     
     Attributes:
         session_results: List of individual session results
@@ -61,6 +118,14 @@ class HarnessResult:
 class LogicHarness:
     """Batch processing harness for theorem extraction.
     
+    .. deprecated:: 0.2.0
+        LogicHarness is deprecated. Use `LogicTheoremOptimizer` for batch
+        processing instead. The new optimizer provides better:
+        - Resource management with built-in pooling
+        - Automatic metrics collection via BaseOptimizer
+        - Better error handling and retry logic
+        - Consistent API across optimizer types
+    
     This harness orchestrates multiple theorem extraction sessions in parallel,
     handles failures and retries, aggregates results, and provides comprehensive
     reporting for optimization.
@@ -73,6 +138,7 @@ class LogicHarness:
     - Performance metrics
     
     Example:
+        >>> # DEPRECATED - Use LogicTheoremOptimizer instead
         >>> from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         ...     LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
         ... )
@@ -96,11 +162,20 @@ class LogicHarness:
     ):
         """Initialize the logic harness.
         
+        .. deprecated:: 0.2.0
+            Use LogicTheoremOptimizer instead.
+        
         Args:
             extractor: LogicExtractor instance
             critic: LogicCritic instance
             config: Harness configuration
         """
+        warnings.warn(
+            "LogicHarness is deprecated. Use LogicTheoremOptimizer from "
+            "unified_optimizer for batch processing. See module docstring for migration guide.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.extractor = extractor
         self.critic = critic
         self.config = config or HarnessConfig()

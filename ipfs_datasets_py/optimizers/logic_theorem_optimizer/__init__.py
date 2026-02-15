@@ -38,11 +38,11 @@ __all__ = [
     'LogicOptimizer',
     'OptimizationReport',
     'OptimizationStrategy',
-    # Session
+    # Session (DEPRECATED - Use LogicTheoremOptimizer)
     'TheoremSession',
     'SessionResult',
     'SessionConfig',
-    # Harness
+    # Harness (DEPRECATED - Use LogicTheoremOptimizer)
     'LogicHarness',
     'HarnessConfig',
     'HarnessResult',
