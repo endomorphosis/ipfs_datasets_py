@@ -1,8 +1,11 @@
 """
 GraphRAGProcessorAdapter - Adapter for GraphRAG processing.
 
-Wraps existing GraphRAG processors to implement ProcessorProtocol.
-This will eventually use the consolidated GraphRAG processor.
+Wraps the consolidated GraphRAG processor (processors.specialized.graphrag) 
+to implement ProcessorProtocol. Uses UnifiedGraphRAGProcessor as the primary
+implementation with fallbacks for backward compatibility.
+
+Updated: 2026-02-15 - Now uses processors.specialized.graphrag
 """
 
 from __future__ import annotations
@@ -48,31 +51,26 @@ class GraphRAGProcessorAdapter:
         """Lazy-load GraphRAG processor on first use."""
         if self._processor is None:
             try:
-                # Use new unified processor (consolidates all 4 implementations)
-                from ..graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+                # Use new specialized unified processor (consolidates all implementations)
+                from ..specialized.graphrag import UnifiedGraphRAGProcessor
                 self._processor = UnifiedGraphRAGProcessor()
-                logger.info("UnifiedGraphRAGProcessor loaded (consolidated implementation)")
-            except ImportError:
+                logger.info("UnifiedGraphRAGProcessor loaded from specialized.graphrag")
+            except ImportError as e:
+                logger.warning(f"Could not load UnifiedGraphRAGProcessor from specialized.graphrag: {e}")
                 try:
-                    # Fall back to advanced processor
-                    from ..advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
-                    self._processor = AdvancedGraphRAGWebsiteProcessor()
-                    logger.info("AdvancedGraphRAGWebsiteProcessor loaded (fallback)")
+                    # Fall back to old location (deprecated)
+                    from ..graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+                    self._processor = UnifiedGraphRAGProcessor()
+                    logger.warning("Loaded UnifiedGraphRAGProcessor from deprecated location")
                 except ImportError:
                     try:
-                        # Fall back to website processor
-                        from ..website_graphrag_processor import WebsiteGraphRAGProcessor
-                        self._processor = WebsiteGraphRAGProcessor()
-                        logger.info("WebsiteGraphRAGProcessor loaded (fallback)")
-                    except ImportError:
-                        try:
-                            # Fall back to basic processor
-                            from ..graphrag_processor import GraphRAGProcessor
-                            self._processor = GraphRAGProcessor()
-                            logger.info("GraphRAGProcessor loaded (fallback)")
-                        except ImportError as e:
-                            logger.error(f"No GraphRAG processor available: {e}")
-                            raise RuntimeError("No GraphRAG processor available")
+                        # Fall back to deprecated processors (with warnings)
+                        from ..graphrag_processor import GraphRAGProcessor
+                        self._processor = GraphRAGProcessor()
+                        logger.warning("Loaded GraphRAGProcessor from deprecated location")
+                    except ImportError as e:
+                        logger.error(f"No GraphRAG processor available: {e}")
+                        raise RuntimeError("No GraphRAG processor available")
         return self._processor
     
     async def can_process(self, input_source: Union[str, Path]) -> bool:
