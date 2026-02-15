@@ -1,7 +1,11 @@
 """
 PDFProcessorAdapter - Adapter for PDF processing.
 
-Wraps existing PDF processors to implement ProcessorProtocol.
+Wraps the consolidated PDF processor (processors.specialized.pdf) 
+to implement ProcessorProtocol. Uses PDFProcessor from the specialized 
+package with fallback for backward compatibility.
+
+Updated: 2026-02-15 - Now uses processors.specialized.pdf
 """
 
 from __future__ import annotations
@@ -47,20 +51,27 @@ class PDFProcessorAdapter:
         """Lazy-load PDF processor on first use."""
         if self._processor is None:
             try:
-                # Try to import PDF processor
-                from ..pdf_processor import PDFProcessor
+                # Use new specialized PDF processor
+                from ..specialized.pdf import PDFProcessor
                 self._processor = PDFProcessor()
-                logger.info("PDFProcessor loaded successfully")
+                logger.info("PDFProcessor loaded from specialized.pdf")
             except ImportError as e:
-                logger.warning(f"Could not import PDFProcessor: {e}")
-                # Use fallback - file converter for PDFs
+                logger.warning(f"Could not load PDFProcessor from specialized.pdf: {e}")
                 try:
-                    from ..file_converter import FileConverter
-                    self._processor = FileConverter()
-                    logger.info("Using FileConverter as fallback for PDF processing")
-                except ImportError as e2:
-                    logger.error(f"No PDF processor available: {e2}")
-                    raise RuntimeError("No PDF processor available")
+                    # Fall back to old location (deprecated)
+                    from ..pdf_processor import PDFProcessor
+                    self._processor = PDFProcessor()
+                    logger.warning("Loaded PDFProcessor from deprecated location")
+                except ImportError as e:
+                    logger.warning(f"Could not import PDFProcessor: {e}")
+                    # Use fallback - file converter for PDFs
+                    try:
+                        from ..file_converter import FileConverter
+                        self._processor = FileConverter()
+                        logger.info("Using FileConverter as fallback for PDF processing")
+                    except ImportError as e2:
+                        logger.error(f"No PDF processor available: {e2}")
+                        raise RuntimeError("No PDF processor available")
         return self._processor
     
     async def can_process(self, input_source: Union[str, Path]) -> bool:
