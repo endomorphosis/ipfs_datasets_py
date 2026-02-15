@@ -833,12 +833,16 @@ class QueryExecutor:
         Evaluate an expression against a data row.
         
         Args:
-            expr: Expression string (e.g., "n.age", "n", "toLower(n.name)")
+            expr: Expression string (e.g., "n.age", "n", "toLower(n.name)", CASE expression)
             row: Data row (variable bindings)
             
         Returns:
             Evaluated value
         """
+        # Check if it's a CASE expression
+        if expr.startswith("CASE|"):
+            return self._evaluate_case_expression(expr, row)
+        
         # Check if it's a function call
         if "(" in expr and expr.endswith(")"):
             # Extract function name and arguments
@@ -898,6 +902,97 @@ class QueryExecutor:
             return row[expr]
         
         return None
+    
+    def _evaluate_case_expression(self, case_expr: str, row: Dict[str, Any]) -> Any:
+        """
+        Evaluate a CASE expression.
+        
+        Format: CASE|[TEST:test_expr]|WHEN:cond:THEN:result|...|[ELSE:else_result]|END
+        
+        Args:
+            case_expr: Serialized CASE expression
+            row: Data row
+            
+        Returns:
+            Result of CASE evaluation
+        """
+        # Parse the CASE expression
+        parts = case_expr.split("|")
+        
+        if parts[0] != "CASE" or parts[-1] != "END":
+            logger.warning("Invalid CASE expression format: %s", case_expr)
+            return None
+        
+        test_expr = None
+        when_clauses = []
+        else_result = None
+        
+        i = 1
+        while i < len(parts) - 1:
+            part = parts[i]
+            
+            if part.startswith("TEST:"):
+                test_expr = part[5:]  # Remove "TEST:" prefix
+            
+            elif part.startswith("WHEN:"):
+                # Format: WHEN:condition:THEN:result
+                when_parts = part.split(":")
+                if len(when_parts) >= 4 and when_parts[2] == "THEN":
+                    condition = when_parts[1]
+                    result = ":".join(when_parts[3:])  # In case result contains ":"
+                    when_clauses.append((condition, result))
+            
+            elif part.startswith("ELSE:"):
+                else_result = part[5:]  # Remove "ELSE:" prefix
+            
+            i += 1
+        
+        # Evaluate the CASE expression
+        if test_expr:
+            # Simple CASE: compare test expression against each WHEN value
+            test_value = self._evaluate_expression(test_expr, row)
+            
+            for condition, result in when_clauses:
+                when_value = self._evaluate_expression(condition, row)
+                if test_value == when_value:
+                    return self._evaluate_expression(result, row)
+        
+        else:
+            # Generic CASE: evaluate each WHEN condition
+            for condition, result in when_clauses:
+                # Parse condition (might be a comparison)
+                if self._evaluate_condition(condition, row):
+                    return self._evaluate_expression(result, row)
+        
+        # No WHEN matched, return ELSE or None
+        if else_result:
+            return self._evaluate_expression(else_result, row)
+        
+        return None
+    
+    def _evaluate_condition(self, condition: str, row: Dict[str, Any]) -> bool:
+        """
+        Evaluate a condition expression.
+        
+        Args:
+            condition: Condition string (e.g., "n.age > 30")
+            row: Data row
+            
+        Returns:
+            Boolean result
+        """
+        # Simple evaluation for now - check for comparison operators
+        for op in [" >= ", " <= ", " <> ", " != ", " = ", " > ", " < "]:
+            if op in condition:
+                parts = condition.split(op, 1)
+                if len(parts) == 2:
+                    left_val = self._evaluate_expression(parts[0].strip(), row)
+                    right_val = self._evaluate_expression(parts[1].strip(), row)
+                    return self._apply_operator(left_val, op.strip(), right_val)
+        
+        # If no operator, just evaluate as expression (truthy check)
+        value = self._evaluate_expression(condition, row)
+        return bool(value)
     
     def _call_function(self, func_name: str, args: List[Any]) -> Any:
         """

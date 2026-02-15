@@ -518,6 +518,8 @@ class CypherCompiler:
     
     def _expression_to_string(self, expr) -> str:
         """Convert expression to string representation."""
+        from .ast import CaseExpressionNode
+        
         if isinstance(expr, VariableNode):
             return expr.name
         
@@ -526,11 +528,33 @@ class CypherCompiler:
             return f"{obj_str}.{expr.property}"
         
         elif isinstance(expr, LiteralNode):
+            if isinstance(expr.value, str):
+                return f"'{expr.value}'"
             return str(expr.value)
         
         elif isinstance(expr, FunctionCallNode):
             args = ", ".join(self._expression_to_string(arg) for arg in expr.arguments)
             return f"{expr.name}({args})"
+        
+        elif isinstance(expr, CaseExpressionNode):
+            # Serialize CASE expression as a special format
+            # CASE:[test_expr]|WHEN:cond:result|...|ELSE:else_result|END
+            parts = ["CASE"]
+            
+            if expr.test_expression:
+                parts.append(f"TEST:{self._expression_to_string(expr.test_expression)}")
+            
+            for when_clause in expr.when_clauses:
+                cond_str = self._expression_to_string(when_clause.condition)
+                result_str = self._expression_to_string(when_clause.result)
+                parts.append(f"WHEN:{cond_str}:THEN:{result_str}")
+            
+            if expr.else_result:
+                else_str = self._expression_to_string(expr.else_result)
+                parts.append(f"ELSE:{else_str}")
+            
+            parts.append("END")
+            return "|".join(parts)
         
         else:
             return str(expr)

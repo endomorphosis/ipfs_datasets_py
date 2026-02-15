@@ -611,6 +611,10 @@ class CypherParser:
     
     def _parse_primary(self) -> ExpressionNode:
         """Parse primary expressions."""
+        # CASE expressions
+        if self._match(TokenType.CASE):
+            return self._parse_case_expression()
+        
         # Numbers
         if self._match(TokenType.NUMBER):
             value = self._advance().value
@@ -744,6 +748,57 @@ class CypherParser:
         self._expect(TokenType.RBRACE)
         
         return properties
+    
+    def _parse_case_expression(self) -> 'CaseExpressionNode':
+        """
+        Parse CASE expression.
+        
+        Two forms:
+        1. Simple CASE: CASE expr WHEN value THEN result ... ELSE default END
+        2. Generic CASE: CASE WHEN condition THEN result ... ELSE default END
+        """
+        from .ast import CaseExpressionNode, WhenClause
+        
+        self._expect(TokenType.CASE)
+        
+        test_expression = None
+        when_clauses = []
+        else_result = None
+        
+        # Check if this is a simple CASE (has test expression)
+        # Simple CASE starts with expression before WHEN
+        if not self._match(TokenType.WHEN):
+            # Simple CASE: CASE expr WHEN ...
+            test_expression = self._parse_expression()
+        
+        # Parse WHEN clauses
+        while self._match(TokenType.WHEN):
+            self._advance()  # consume WHEN
+            
+            # Parse condition/value
+            condition = self._parse_expression()
+            
+            # Expect THEN
+            self._expect(TokenType.THEN)
+            
+            # Parse result
+            result = self._parse_expression()
+            
+            when_clauses.append(WhenClause(condition=condition, result=result))
+        
+        # Parse optional ELSE
+        if self._match(TokenType.ELSE):
+            self._advance()  # consume ELSE
+            else_result = self._parse_expression()
+        
+        # Expect END
+        self._expect(TokenType.END)
+        
+        return CaseExpressionNode(
+            test_expression=test_expression,
+            when_clauses=when_clauses,
+            else_result=else_result
+        )
 
 
 # Convenience function

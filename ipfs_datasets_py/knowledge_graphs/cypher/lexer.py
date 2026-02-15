@@ -53,6 +53,11 @@ class TokenType(Enum):
     UNWIND = auto()
     CALL = auto()
     YIELD = auto()
+    CASE = auto()
+    WHEN = auto()
+    THEN = auto()
+    ELSE = auto()
+    END = auto()
     
     # Operators
     EQ = auto()          # =
@@ -159,6 +164,11 @@ class CypherLexer:
         'UNWIND': TokenType.UNWIND,
         'CALL': TokenType.CALL,
         'YIELD': TokenType.YIELD,
+        'CASE': TokenType.CASE,
+        'WHEN': TokenType.WHEN,
+        'THEN': TokenType.THEN,
+        'ELSE': TokenType.ELSE,
+        'END': TokenType.END,
     }
     
     def __init__(self):
