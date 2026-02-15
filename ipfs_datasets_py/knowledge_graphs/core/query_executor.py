@@ -852,3 +852,217 @@ class GraphEngine:
         except Exception as e:
             logger.error("Failed to load graph from %s: %s", root_cid, e)
             return False
+    
+    def get_relationships(
+        self,
+        node_id: str,
+        direction: str = "out",
+        rel_type: Optional[str] = None
+    ) -> List[Relationship]:
+        """
+        Get relationships for a node with optional filtering.
+        
+        This is a critical method for graph traversal - enables MATCH queries
+        to follow relationships between nodes.
+        
+        Args:
+            node_id: Node identifier
+            direction: Relationship direction - "out", "in", or "both"
+            rel_type: Optional relationship type filter
+            
+        Returns:
+            List of matching relationships
+            
+        Example:
+            # Get all outgoing KNOWS relationships
+            rels = engine.get_relationships("node-123", "out", "KNOWS")
+            
+            # Get all relationships (any direction)
+            rels = engine.get_relationships("node-123", "both")
+        """
+        results = []
+        
+        for key, rel in self._relationship_cache.items():
+            if key.startswith("cid:"):
+                continue  # Skip CID mappings
+            
+            if not isinstance(rel, Relationship):
+                continue
+            
+            # Check direction and node match
+            match = False
+            if direction == "out" and rel._start_node == node_id:
+                match = True
+            elif direction == "in" and rel._end_node == node_id:
+                match = True
+            elif direction == "both":
+                if rel._start_node == node_id or rel._end_node == node_id:
+                    match = True
+            
+            if not match:
+                continue
+            
+            # Check relationship type if specified
+            if rel_type and rel._type != rel_type:
+                continue
+            
+            results.append(rel)
+        
+        logger.debug("Found %d relationships for node %s (direction=%s, type=%s)",
+                    len(results), node_id, direction, rel_type)
+        return results
+    
+    def traverse_pattern(
+        self,
+        start_nodes: List[Node],
+        pattern: List[Dict[str, Any]],
+        limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Traverse a graph pattern starting from given nodes.
+        
+        Implements pattern matching for MATCH clauses like:
+        (n:Person)-[:KNOWS]->(f:Person)
+        
+        Args:
+            start_nodes: Starting nodes for traversal
+            pattern: Pattern specification as list of steps
+            limit: Maximum results to return
+            
+        Returns:
+            List of pattern matches, each as a dict of variable -> value
+            
+        Example pattern:
+            [
+                {"variable": "n", "labels": ["Person"]},
+                {"rel_type": "KNOWS", "direction": "out", "variable": "r"},
+                {"variable": "f", "labels": ["Person"]}
+            ]
+        """
+        results = []
+        
+        for start_node in start_nodes:
+            # Initialize bindings with start node
+            bindings = {"start": start_node}
+            
+            # Process pattern steps
+            current_matches = [bindings]
+            
+            for i, step in enumerate(pattern):
+                if "rel_type" in step:
+                    # Relationship traversal step
+                    new_matches = []
+                    for match in current_matches:
+                        # Get last node in pattern
+                        last_var = list(match.keys())[-1]
+                        last_node = match[last_var]
+                        
+                        # Find relationships
+                        rels = self.get_relationships(
+                            last_node.id,
+                            direction=step.get("direction", "out"),
+                            rel_type=step.get("rel_type")
+                        )
+                        
+                        for rel in rels:
+                            # Get target node
+                            if step.get("direction") == "in":
+                                target_id = rel._start_node
+                            else:
+                                target_id = rel._end_node
+                            
+                            target_node = self.get_node(target_id)
+                            if not target_node:
+                                continue
+                            
+                            # Create new binding with relationship and target
+                            new_match = match.copy()
+                            if "variable" in step:
+                                new_match[step["variable"]] = rel
+                            
+                            # Add target node (next step should be node)
+                            if i + 1 < len(pattern):
+                                next_step = pattern[i + 1]
+                                if "variable" in next_step:
+                                    # Check labels if specified
+                                    if "labels" in next_step:
+                                        if not any(label in target_node.labels 
+                                                  for label in next_step["labels"]):
+                                            continue
+                                    new_match[next_step["variable"]] = target_node
+                            
+                            new_matches.append(new_match)
+                    
+                    current_matches = new_matches
+            
+            # Add matches to results
+            results.extend(current_matches)
+            
+            if limit and len(results) >= limit:
+                results = results[:limit]
+                break
+        
+        logger.debug("Pattern traversal found %d matches", len(results))
+        return results
+    
+    def find_paths(
+        self,
+        start_node_id: str,
+        end_node_id: str,
+        max_depth: int = 5,
+        rel_type: Optional[str] = None
+    ) -> List[List[Relationship]]:
+        """
+        Find paths between two nodes.
+        
+        Uses breadth-first search to find all paths up to max_depth.
+        Includes cycle detection to prevent infinite loops.
+        
+        Args:
+            start_node_id: Start node ID
+            end_node_id: End node ID
+            max_depth: Maximum path length
+            rel_type: Optional relationship type filter
+            
+        Returns:
+            List of paths, each path is a list of relationships
+            
+        Example:
+            paths = engine.find_paths("node-1", "node-5", max_depth=3)
+            print(f"Found {len(paths)} paths")
+        """
+        paths = []
+        
+        # BFS queue: (current_node_id, path_so_far, visited_nodes)
+        queue = [(start_node_id, [], {start_node_id})]
+        
+        while queue:
+            current_id, path, visited = queue.pop(0)
+            
+            # Check depth limit
+            if len(path) >= max_depth:
+                continue
+            
+            # Get outgoing relationships
+            rels = self.get_relationships(current_id, "out", rel_type)
+            
+            for rel in rels:
+                target_id = rel._end_node
+                
+                # Found target
+                if target_id == end_node_id:
+                    paths.append(path + [rel])
+                    continue
+                
+                # Cycle detection
+                if target_id in visited:
+                    continue
+                
+                # Add to queue for further exploration
+                new_visited = visited.copy()
+                new_visited.add(target_id)
+                queue.append((target_id, path + [rel], new_visited))
+        
+        logger.debug("Found %d paths from %s to %s", 
+                    len(paths), start_node_id, end_node_id)
+        return paths
