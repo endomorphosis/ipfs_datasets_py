@@ -1,4 +1,6 @@
 name: PR Draft Creation Monitor (Unified)
+permissions:
+  contents: read
 
 on:
   schedule:
