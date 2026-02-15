@@ -1,0 +1,10 @@
+# test.mp4
+## Metadata
+- Name: test.mp4
+- Time Created: unknown
+
+## Summary
+A rainbow test pattern. The numbers 1 to 5 flash on the screen.
+
+## Text
+1 2 3 4 5

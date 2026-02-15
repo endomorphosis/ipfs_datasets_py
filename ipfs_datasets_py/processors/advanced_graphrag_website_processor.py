@@ -6,6 +6,10 @@ This module provides a comprehensive GraphRAG system for processing entire websi
 with advanced knowledge extraction, intelligent performance optimization, and 
 production-ready integration features.
 
+.. deprecated:: 1.0.0
+   This module is deprecated. Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+   The UnifiedGraphRAGProcessor consolidates all GraphRAG implementations including this one.
+
 Key Features:
 - Multi-pass knowledge extraction with domain-specific patterns
 - Intelligent performance optimization with resource monitoring
@@ -14,8 +18,14 @@ Key Features:
 - Production-ready error handling and monitoring
 
 Usage:
+    # DEPRECATED - for backward compatibility only
     processor = AdvancedGraphRAGWebsiteProcessor()
     result = processor.process_website(website_data, options)
+    
+    # NEW - recommended approach
+    from ipfs_datasets_py.processors.graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+    processor = UnifiedGraphRAGProcessor()
+    result = await processor.process_website("https://example.com")
 """
 
 import os
@@ -23,6 +33,7 @@ import sys
 import json
 import time
 import logging
+import warnings
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
@@ -112,10 +123,28 @@ class AdvancedWebsiteResult:
 
 class AdvancedGraphRAGWebsiteProcessor:
     """
-    Advanced GraphRAG processor for comprehensive website knowledge extraction
+    Advanced GraphRAG processor for comprehensive website knowledge extraction.
+    
+    .. deprecated:: 1.0.0
+       Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+       This class is maintained for backward compatibility but will be removed in version 2.0.0.
+       The unified processor provides all features from this implementation plus async support.
     """
     
     def __init__(self, config: Optional[WebsiteProcessingConfiguration] = None):
+        """
+        Initialize advanced GraphRAG processor.
+        
+        .. deprecated:: 1.0.0
+           Use UnifiedGraphRAGProcessor instead.
+        """
+        warnings.warn(
+            "AdvancedGraphRAGWebsiteProcessor is deprecated and will be removed in version 2.0.0. "
+            "Use ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor instead. "
+            "The unified processor consolidates all GraphRAG implementations including this one.",
+            DeprecationWarning,
+            stacklevel=2
+        )
         self.config = config or WebsiteProcessingConfiguration()
         
         # Initialize advanced components if available

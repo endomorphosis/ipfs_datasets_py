@@ -1,0 +1,1 @@
+# Skeleton tests - for test framework structure without implementation

@@ -1,0 +1,22 @@
+schema: openai
+settings:
+  temperature: 0.3
+  max_tokens: 500
+  top_p: 1.0
+  frequency_penalty: 0.0
+  presence_penalty: 0.0
+system_prompt: 
+  role: system
+  content: |
+    You are a document summarization assistant specialized in creating concise summaries.
+    Your task is to summarize the provided content while maintaining the key information.
+    Focus on extracting the main ideas, important facts, and critical details.
+    Avoid including minor details or examples unless they are essential.
+user_prompt:
+  role: user
+  content: |
+    Please summarize the following content:
+
+    {content}
+
+    Please provide a summary that captures the essence of this content.

@@ -14,7 +14,7 @@ from pathlib import Path
 import logging
 
 # Import from core multimedia module
-from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 
 logger = logging.getLogger(__name__)
 

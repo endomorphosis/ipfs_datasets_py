@@ -1,0 +1,24 @@
+{
+  "name": "Omni-Converter Test",
+  "version": "1.0",
+  "description": "A test JSON file for the Omni-Converter",
+  "formats": [
+    "text",
+    "image",
+    "application",
+    "audio",
+    "video"
+  ],
+  "implementation_status": {
+    "text": "completed",
+    "image": "completed",
+    "application": "completed",
+    "audio": "not started",
+    "video": "not started"
+  },
+  "metadata": {
+    "created": "2025-03-16",
+    "author": "Claude",
+    "purpose": "Testing"
+  }
+}
