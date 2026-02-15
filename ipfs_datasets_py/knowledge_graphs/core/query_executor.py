@@ -546,19 +546,12 @@ class QueryExecutor:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
-                            alias = item.get("alias", expr)
+                            alias = item.get("alias", expr if isinstance(expr, str) else "result")
                             
                             # Evaluate expression against binding
-                            if "." in expr:
-                                var, prop = expr.split(".", 1)
-                                if var in binding:
-                                    val = binding[var]
-                                    if hasattr(val, 'get'):
-                                        record_data[alias] = val.get(prop)
-                                    elif hasattr(val, '_properties') and prop in val._properties:
-                                        record_data[alias] = val._properties[prop]
-                            elif expr in binding:
-                                record_data[alias] = binding[expr]
+                            value = self._evaluate_compiled_expression(expr, binding)
+                            if value is not None:
+                                record_data[alias] = value
                         
                         if record_data:
                             keys = list(record_data.keys())
@@ -571,18 +564,13 @@ class QueryExecutor:
                             record_data = {}
                             for item in items:
                                 expr = item.get("expression")
-                                alias = item.get("alias", expr)
+                                alias = item.get("alias", expr if isinstance(expr, str) else "result")
                                 
-                                # Simple expression evaluation
-                                if "." in expr:
-                                    var, prop = expr.split(".", 1)
-                                    if var == var_name:
-                                        if hasattr(value, 'get'):
-                                            record_data[alias] = value.get(prop)
-                                        elif hasattr(value, '_properties') and prop in value._properties:
-                                            record_data[alias] = value._properties[prop]
-                                elif expr == var_name:
-                                    record_data[alias] = value
+                                # Create binding for evaluation
+                                binding = {var_name: value}
+                                result_value = self._evaluate_compiled_expression(expr, binding)
+                                if result_value is not None:
+                                    record_data[alias] = result_value
                             
                             if record_data:
                                 # Create Record with keys and values
@@ -755,6 +743,68 @@ class QueryExecutor:
             elif "var" in value:
                 return value  # Keep as reference
         return value
+    
+    def _evaluate_compiled_expression(self, expr: Any, binding: Dict[str, Any]) -> Any:
+        """
+        Evaluate a compiled expression (dict or string) against a binding.
+        
+        Args:
+            expr: Compiled expression - can be:
+                  - String: "n.age", "n"
+                  - Dict with 'property': {'property': 'n.age'}
+                  - Dict with 'function': {'function': 'toLower', 'args': [...]}
+                  - Dict with 'var': {'var': 'n'}
+                  - Other dict formats
+            binding: Variable bindings (e.g., {'n': node_obj})
+            
+        Returns:
+            Evaluated value
+        """
+        # Handle dict expressions (from compiler)
+        if isinstance(expr, dict):
+            if 'function' in expr:
+                # Function call: {'function': 'toLower', 'args': [{'property': 'n.email'}]}
+                func_name = expr['function']
+                args = expr.get('args', [])
+                
+                # Recursively evaluate arguments
+                eval_args = [self._evaluate_compiled_expression(arg, binding) for arg in args]
+                
+                # Call the function
+                return self._call_function(func_name, eval_args)
+            
+            elif 'property' in expr:
+                # Property access: {'property': 'n.email'}
+                prop_path = expr['property']
+                if '.' in prop_path:
+                    var, prop = prop_path.split('.', 1)
+                    if var in binding:
+                        val = binding[var]
+                        if hasattr(val, 'get'):
+                            return val.get(prop)
+                        elif hasattr(val, '_properties') and prop in val._properties:
+                            return val._properties[prop]
+                return None
+            
+            elif 'var' in expr:
+                # Variable reference: {'var': 'n'}
+                var_name = expr['var']
+                return binding.get(var_name)
+            
+            elif 'op' in expr:
+                # Binary operation: {'op': '>', 'left': ..., 'right': ...}
+                left = self._evaluate_compiled_expression(expr['left'], binding)
+                right = self._evaluate_compiled_expression(expr['right'], binding)
+                return self._apply_operator(left, expr['op'], right)
+        
+        # Handle string expressions (legacy/simple cases)
+        elif isinstance(expr, str):
+            # Use existing string expression evaluation
+            return self._evaluate_expression(expr, binding)
+        
+        # Handle literal values (numbers, strings, etc.)
+        else:
+            return expr
     
     def _apply_operator(self, left: Any, operator: str, right: Any) -> bool:
         """Apply comparison operator."""
