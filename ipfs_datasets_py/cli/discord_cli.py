@@ -149,7 +149,7 @@ def create_parser() -> argparse.ArgumentParser:
 async def cmd_guilds(args) -> int:
     """Execute guilds listing command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         wrapper = DiscordWrapper(token=args.token)
         result = await wrapper.list_guilds(token=args.token)
@@ -176,7 +176,7 @@ async def cmd_guilds(args) -> int:
 async def cmd_channels(args) -> int:
     """Execute channels listing command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         wrapper = DiscordWrapper(token=args.token)
         result = await wrapper.list_channels(guild_id=args.guild_id, token=args.token)
@@ -203,7 +203,7 @@ async def cmd_channels(args) -> int:
 async def cmd_dms(args) -> int:
     """Execute DMs listing command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         wrapper = DiscordWrapper(token=args.token)
         result = await wrapper.list_dm_channels(token=args.token)
@@ -230,7 +230,7 @@ async def cmd_dms(args) -> int:
 async def cmd_export(args) -> int:
     """Execute channel export command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         print(f"Exporting channel {args.channel_id}...")
         
@@ -266,7 +266,7 @@ async def cmd_export(args) -> int:
 async def cmd_export_guild(args) -> int:
     """Execute guild export command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         print(f"Exporting guild {args.guild_id}...")
         
@@ -298,7 +298,7 @@ async def cmd_export_guild(args) -> int:
 async def cmd_export_dms(args) -> int:
     """Execute DMs export command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         print("Exporting all DM channels...")
         
@@ -327,7 +327,7 @@ async def cmd_export_dms(args) -> int:
 async def cmd_export_all(args) -> int:
     """Execute export all command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import DiscordWrapper
+        from ipfs_datasets_py.processors.multimedia import DiscordWrapper
         
         print("Exporting all accessible channels...")
         
@@ -445,7 +445,7 @@ async def cmd_analyze_export(args) -> int:
 def cmd_status(args) -> int:
     """Execute status command."""
     try:
-        from ipfs_datasets_py.data_transformation.multimedia import HAVE_DISCORD
+        from ipfs_datasets_py.processors.multimedia import HAVE_DISCORD
         from ipfs_datasets_py.utils.discord_chat_exporter import DiscordChatExporter
         
         print("Discord Integration Status:")

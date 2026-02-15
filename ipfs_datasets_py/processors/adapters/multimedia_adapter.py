@@ -50,7 +50,7 @@ class MultimediaProcessorAdapter:
         """Lazy-load FFmpeg wrapper."""
         if self._ffmpeg is None:
             try:
-                from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+                from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
                 self._ffmpeg = FFmpegWrapper()
                 logger.info("FFmpegWrapper loaded")
             except ImportError as e:
@@ -61,7 +61,7 @@ class MultimediaProcessorAdapter:
         """Lazy-load yt-dlp wrapper."""
         if self._ytdlp is None:
             try:
-                from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper
+                from ipfs_datasets_py.processors.multimedia import YtDlpWrapper
                 self._ytdlp = YtDlpWrapper()
                 logger.info("YtDlpWrapper loaded")
             except ImportError as e:
@@ -72,7 +72,7 @@ class MultimediaProcessorAdapter:
         """Lazy-load media processor."""
         if self._media_processor is None:
             try:
-                from ipfs_datasets_py.data_transformation.multimedia import MediaProcessor
+                from ipfs_datasets_py.processors.multimedia import MediaProcessor
                 self._media_processor = MediaProcessor()
                 logger.info("MediaProcessor loaded")
             except ImportError as e:

@@ -12,7 +12,7 @@ from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
-from ipfs_datasets_py.data_transformation.multimedia import YtDlpWrapper, HAVE_YTDLP
+from ipfs_datasets_py.processors.multimedia import YtDlpWrapper, HAVE_YTDLP
 
 
 async def ytdlp_download_video(
