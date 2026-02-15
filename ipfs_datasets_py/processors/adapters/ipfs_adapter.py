@@ -68,6 +68,22 @@ class IPFSProcessorAdapter:
         self._parent_processor = parent_processor
         self._ipfs_client = None
         self._ipfs_kit = None
+        self._temp_files: list[Path] = []  # Track temp files for cleanup
+    
+    def __del__(self):
+        """Cleanup temporary files on deletion."""
+        self._cleanup_temp_files()
+    
+    def _cleanup_temp_files(self):
+        """Clean up all tracked temporary files."""
+        for temp_file in self._temp_files:
+            try:
+                if temp_file.exists():
+                    temp_file.unlink()
+                    logger.debug(f"Cleaned up temp file: {temp_file}")
+            except Exception as e:
+                logger.warning(f"Failed to clean up temp file {temp_file}: {e}")
+        self._temp_files.clear()
     
     def _get_ipfs_client(self):
         """Lazy-load IPFS client."""
@@ -335,6 +351,8 @@ class IPFSProcessorAdapter:
                 # Create temp file to store content
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.ipfs')
                 temp_path = Path(temp_file.name)
+                temp_file.close()  # Close but don't delete
+                self._temp_files.append(temp_path)  # Track for cleanup
                 
                 # Fetch content
                 client.get(cid, target=str(temp_path.parent))
@@ -363,6 +381,8 @@ class IPFSProcessorAdapter:
             try:
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.ipfs')
                 temp_path = Path(temp_file.name)
+                temp_file.close()  # Close but don't delete
+                self._temp_files.append(temp_path)  # Track for cleanup
                 
                 # Use ipfs_kit_py to fetch
                 # (Assuming it has a get/cat method)
@@ -382,6 +402,8 @@ class IPFSProcessorAdapter:
                 
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.ipfs')
                 temp_path = Path(temp_file.name)
+                temp_file.close()  # Close but don't delete
+                self._temp_files.append(temp_path)  # Track for cleanup
                 
                 # Try multiple gateways
                 gateways = [
