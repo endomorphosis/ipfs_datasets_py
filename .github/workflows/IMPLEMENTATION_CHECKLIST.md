@@ -2,36 +2,47 @@
 
 **Start Date:** 2026-02-15  
 **Target Completion:** 2026-04-15 (9 weeks)  
-**Status:** 🔄 In Planning
+**Status:** 🔄 Phase 1 In Progress (Runner Gating Implemented)
+
+**Latest Update:** 2026-02-15 - Runner gating system complete, applying to workflows
 
 ---
 
 ## Phase 1: Infrastructure & Reliability (Week 1-2)
 
-**Goal:** Eliminate single points of failure and add fallback mechanisms  
-**Duration:** 40 hours | **Priority:** P0 | **Risk:** Low
+**Goal:** Implement runner availability gating (REVISED: No fallback to GitHub-hosted)  
+**Duration:** 40 hours | **Priority:** P0 | **Risk:** Low  
+**Progress:** 40% Complete (16/40 hours)
 
-### 1.1 Self-Hosted Runner Fallback Strategy
+### 1.1 Self-Hosted Runner Gating Strategy (REVISED)
 
-- [ ] **Audit workflows using self-hosted runners** (2 hours)
-  - [ ] List all workflows with `[self-hosted, linux, x64]`
-  - [ ] List all workflows with `[self-hosted, linux, arm64]`
-  - [ ] Document dependencies (Docker, GPU, etc.)
-  - [ ] Identify which can use fallback runners
+**Note:** Strategy changed from "fallback to GitHub-hosted" to "gate and skip gracefully"  
+**Reason:** Dataset-heavy operations require self-hosted runners; GitHub-hosted insufficient
 
-- [ ] **Design fallback matrix strategy** (2 hours)
-  - [ ] Create template for matrix strategy
-  - [ ] Test template on sample workflow
-  - [ ] Document usage patterns
-  - [ ] Create migration guide
+- [x] **Audit workflows using self-hosted runners** (2 hours) ✅
+  - [x] Listed all workflows with `[self-hosted, linux, x64]` (31 workflows)
+  - [x] Listed all workflows with `[self-hosted, linux, arm64]` (5 workflows)
+  - [x] Documented dependencies (Docker, GPU, large datasets)
+  - [x] Identified runners cannot be replaced with GitHub-hosted
 
-- [ ] **Implement fallback for CI/CD workflows** (8 hours)
-  - [ ] `docker-build-test.yml` - Add ubuntu-latest fallback
-  - [ ] `docker-ci.yml` - Add ubuntu-latest fallback
-  - [ ] `pdf_processing_ci.yml` - Add ubuntu-latest fallback
-  - [ ] `graphrag-production-ci.yml` - Add ubuntu-latest fallback
-  - [ ] `mcp-integration-tests.yml` - Add ubuntu-latest fallback
-  - [ ] Test each workflow with both runner types
+- [x] **Design runner gating strategy** (3 hours) ✅
+  - [x] Created runner availability check script
+  - [x] Created reusable workflow template
+  - [x] Tested on GPU workflow example
+  - [x] Documented usage patterns
+
+- [x] **Implement gating infrastructure** (6 hours) ✅
+  - [x] `check_runner_availability.py` - API-based availability check
+  - [x] `templates/check-runner-availability.yml` - Reusable workflow
+  - [x] `gpu-tests-gated.yml` - Example implementation
+  - [x] Comprehensive documentation created
+
+- [ ] **Apply gating to CI/CD workflows** (5 hours) 🔄 IN PROGRESS
+  - [x] `gpu-tests.yml` - Gated version created ✅
+  - [ ] `docker-build-test.yml` - Apply gating pattern
+  - [ ] `graphrag-production-ci.yml` - Apply gating pattern
+  - [ ] `mcp-integration-tests.yml` - Apply gating pattern
+  - [ ] `pdf_processing_ci.yml` - Apply gating pattern
 
 - [ ] **Implement fallback for monitoring workflows** (4 hours)
   - [ ] `workflow-health-check.yml` - Add fallback
