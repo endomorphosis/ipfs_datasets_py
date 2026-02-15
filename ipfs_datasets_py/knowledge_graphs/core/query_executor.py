@@ -299,29 +299,120 @@ class QueryExecutor:
                     logger.debug("Filter %s.%s %s %s: %d results",
                                variable, property_name, operator, value, len(filtered))
             
+            elif op_type == "Expand":
+                # Expand relationships from nodes
+                from_var = op.get("from_variable")
+                to_var = op.get("to_variable")
+                rel_var = op.get("rel_variable")
+                direction = op.get("direction", "out")
+                rel_types = op.get("rel_types")
+                
+                if from_var not in result_set:
+                    logger.warning("Expand: source variable %s not found", from_var)
+                    continue
+                
+                # Collect new bindings with relationships
+                new_results = []
+                
+                for from_node in result_set[from_var]:
+                    # Get relationships for this node
+                    rels = self.graph_engine.get_relationships(
+                        from_node.id,
+                        direction=direction,
+                        rel_type=rel_types[0] if rel_types else None
+                    )
+                    
+                    for rel in rels:
+                        # Get target node
+                        if direction == "in":
+                            target_id = rel._start_node
+                        else:
+                            target_id = rel._end_node
+                        
+                        target_node = self.graph_engine.get_node(target_id)
+                        if not target_node:
+                            continue
+                        
+                        # Create binding with relationship and target node
+                        # Store as tuple (from_node, relationship, to_node)
+                        new_results.append({
+                            from_var: from_node,
+                            rel_var: rel,
+                            to_var: target_node
+                        })
+                
+                # Update result_set with expanded results
+                # Need to restructure result_set to handle multiple variables
+                if new_results:
+                    # Merge all variables into result_set
+                    for binding in new_results:
+                        for var, val in binding.items():
+                            if var not in result_set:
+                                result_set[var] = []
+                            if val not in result_set[var]:
+                                result_set[var].append(val)
+                    
+                    # Store bindings for projection
+                    if not hasattr(self, '_bindings'):
+                        self._bindings = []
+                    self._bindings = new_results
+                
+                logger.debug("Expand %s-[%s]->%s: found %d relationships",
+                           from_var, rel_var, to_var, len(new_results))
+            
             elif op_type == "Project":
                 # Project fields
                 items = op.get("items", [])
-                for var_name, values in result_set.items():
-                    for value in values:
+                
+                # Use bindings if available (from Expand operations)
+                if hasattr(self, '_bindings') and self._bindings:
+                    for binding in self._bindings:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
                             alias = item.get("alias", expr)
                             
-                            # Simple expression evaluation
+                            # Evaluate expression against binding
                             if "." in expr:
                                 var, prop = expr.split(".", 1)
-                                if var == var_name:
-                                    record_data[alias] = value.get(prop)
-                            elif expr == var_name:
-                                record_data[alias] = value
+                                if var in binding:
+                                    val = binding[var]
+                                    if hasattr(val, 'get'):
+                                        record_data[alias] = val.get(prop)
+                                    elif hasattr(val, '_properties') and prop in val._properties:
+                                        record_data[alias] = val._properties[prop]
+                            elif expr in binding:
+                                record_data[alias] = binding[expr]
                         
                         if record_data:
-                            # Create Record with keys and values
                             keys = list(record_data.keys())
                             values = list(record_data.values())
                             final_results.append(Record(keys, values))
+                else:
+                    # Fallback to old logic for simple queries
+                    for var_name, values in result_set.items():
+                        for value in values:
+                            record_data = {}
+                            for item in items:
+                                expr = item.get("expression")
+                                alias = item.get("alias", expr)
+                                
+                                # Simple expression evaluation
+                                if "." in expr:
+                                    var, prop = expr.split(".", 1)
+                                    if var == var_name:
+                                        if hasattr(value, 'get'):
+                                            record_data[alias] = value.get(prop)
+                                        elif hasattr(value, '_properties') and prop in value._properties:
+                                            record_data[alias] = value._properties[prop]
+                                elif expr == var_name:
+                                    record_data[alias] = value
+                            
+                            if record_data:
+                                # Create Record with keys and values
+                                keys = list(record_data.keys())
+                                values = list(record_data.values())
+                                final_results.append(Record(keys, values))
                 
                 logger.debug("Project: %d results", len(final_results))
             
