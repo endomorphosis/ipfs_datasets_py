@@ -121,7 +121,19 @@ def query_knowledge_graph(
 
         # Keep this lightweight and dependency-free. For PDF graphs, prefer
         # pdf_tools/pdf_query_knowledge_graph.
-        from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+        # Import unified processor (recommended) with fallback to legacy
+        try:
+            from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
+                UnifiedGraphRAGProcessor,
+                GraphRAGConfiguration
+            )
+            # Use unified processor
+            config = GraphRAGConfiguration(processing_mode="fast")
+            processor = UnifiedGraphRAGProcessor(config=config)
+        except ImportError:
+            # Fallback to legacy processor (deprecated but still supported)
+            from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
+            processor = GraphRAGProcessor()
 
         processor: GraphRAGProcessor
         if graph_id == "test_graph":

@@ -9,6 +9,18 @@
 
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
 
+## 🎉 Recent Updates (v1.0+)
+
+**Architecture Consolidation Complete!** We've unified and organized the codebase:
+
+- ✅ **GraphRAG Unified:** 7 implementations → 1 `UnifiedGraphRAGProcessor` (~170KB eliminated)
+- ✅ **Clean Architecture:** Three-tier separation (User APIs, Transformation, IPFS Backend)
+- ✅ **Organized Modules:** Multimedia in `processors/`, serialization in `data_transformation/serialization/`
+- ✅ **Backward Compatible:** All legacy imports work with deprecation warnings until v2.0 (6-month window)
+- 📚 **[Migration Guide Available](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 upgrade guide
+
+**Migration Timeline:** Feb 2026 → Aug 2026 (6 months) | **[Details](docs/DEPRECATION_TIMELINE.md)**
+
 ## 📑 Table of Contents
 
 - [Key Features](#-key-features)
@@ -818,6 +830,13 @@ car_cid = create_car_file("data/", "output.car")
 - **[Installation Guide](docs/installation.md)** - Detailed installation instructions
 - **[Architecture Overview](docs/architecture/)** - Package structure and design
 
+### Architecture & Migration (NEW) 🆕
+- **[Three-Tier Architecture](docs/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** - Complete architecture documentation
+- **[Migration Guide v2.0](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 migration guide
+- **[Deprecation Timeline](docs/DEPRECATION_TIMELINE.md)** - 6-month deprecation schedule (Feb-Aug 2026)
+- **[GraphRAG Consolidation](docs/GRAPHRAG_CONSOLIDATION_GUIDE.md)** - Unified GraphRAG processor guide
+- **[Multimedia Migration](docs/MULTIMEDIA_MIGRATION_GUIDE.md)** - Multimedia processor migration
+
 ### Features & Integration
 - **[Complete Features List](docs/FEATURES.md)** - All capabilities explained
 - **[Hardware Acceleration](docs/guides/IPFS_ACCELERATE_INTEGRATION.md)** - ipfs_accelerate_py (2-20x speedup)
@@ -825,7 +844,6 @@ car_cid = create_car_file("data/", "output.car")
 - **[Best Practices](docs/guides/BEST_PRACTICES.md)** - Performance, security, patterns
 
 ### Migration & CLI
-- **[Migration Guide](docs/guides/REFACTORING_SUMMARY.md)** - Updating from old versions
 - **[CLI Tools](docs/guides/CLI_TOOL_MERGE.md)** - Command-line interface guide
 
 ## 📄 License
