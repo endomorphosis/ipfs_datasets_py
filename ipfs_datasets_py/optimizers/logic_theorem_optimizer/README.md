@@ -2,10 +2,66 @@
 
 A stochastic gradient descent (SGD) based system for generating and optimizing logical theorems from arbitrary data types.
 
+## Quick Start (Recommended)
+
+**Use the unified `LogicTheoremOptimizer` for new code** - it provides the same functionality through a standardized interface:
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+
+# Configure optimizer
+config = OptimizerConfig(
+    max_iterations=10,
+    target_score=0.85,
+    metrics_enabled=True
+)
+
+# Create optimizer
+optimizer = LogicTheoremOptimizer(
+    config=config,
+    use_provers=['z3', 'cvc5'],
+    domain='legal'
+)
+
+# Run optimization
+context = OptimizationContext(
+    session_id="session-001",
+    input_data="All employees must complete training annually",
+    domain="legal"
+)
+
+result = optimizer.run_session(
+    data="All employees must complete training annually",
+    context=context
+)
+
+print(f"Score: {result['score']}")
+print(f"Valid: {result['valid']}")
+print(f"Iterations: {result['iterations']}")
+print(f"Metrics: {result['metrics']}")
+```
+
+### Why LogicTheoremOptimizer?
+
+- ✅ **Automatic metrics collection** via BaseOptimizer
+- ✅ **Consistent API** across all optimizer types
+- ✅ **Built-in performance optimization** with caching
+- ✅ **Better resource management**
+- ✅ **Standardized configuration** with OptimizerConfig
+
+### Migration from Legacy Classes
+
+See [MIGRATION_GUIDE.md](#migration-guide) below for migrating from:
+- `TheoremSession` → `LogicTheoremOptimizer`
+- `LogicHarness` → `LogicTheoremOptimizer` with batch processing
+- `SessionConfig` → `OptimizerConfig`
+
 ## Status
 
 ✅ **Phase 1 Complete**: Foundation (6 core components, 2,628 LOC)  
 ✅ **Phase 2 Complete**: Integration Layer (5 integrations, 2,789 LOC)  
+✅ **Phase 2.1 Complete**: Unified Optimizer (LogicTheoremOptimizer with BaseOptimizer)  
 📊 **Total Delivered**: 5,417 LOC + 36+ tests + comprehensive documentation
 
 **Phase 2 Integrations**:
@@ -15,6 +71,7 @@ A stochastic gradient descent (SGD) based system for generating and optimizing l
 - ✅ 2 LLM Backends (ipfs_accelerate_py + Mock)
 - ✅ 3 Knowledge Graph Components
 - ✅ 1 RAG System (LogicEnhancedRAG)
+- ✅ 1 Unified Optimizer (BaseOptimizer integration)
 
 See [PHASE2_COMPLETE.md](PHASE2_COMPLETE.md) for full Phase 2 details.
 
@@ -554,6 +611,166 @@ optimizer.export_library("prompts.json")
 
 **Tests**: 31 comprehensive tests covering all strategies and metrics
 
+
+## Migration Guide
+
+### Migrating from TheoremSession
+
+**Old Code (Deprecated):**
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    TheoremSession, LogicExtractor, LogicCritic, SessionConfig
+)
+
+extractor = LogicExtractor(model="gpt-4")
+critic = LogicCritic(use_provers=['z3'])
+session = TheoremSession(
+    extractor=extractor,
+    critic=critic,
+    config=SessionConfig(
+        max_rounds=10,
+        convergence_threshold=0.85
+    )
+)
+
+result = session.run(
+    data="All employees must complete training",
+    context={'domain': 'legal'}
+)
+
+print(f"Converged: {result.converged}")
+print(f"Score: {result.critic_score.overall}")
+```
+
+**New Code (Recommended):**
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+
+optimizer = LogicTheoremOptimizer(
+    config=OptimizerConfig(
+        max_iterations=10,
+        target_score=0.85
+    ),
+    use_provers=['z3'],
+    domain='legal'
+)
+
+context = OptimizationContext(
+    session_id="session-001",
+    input_data="All employees must complete training",
+    domain="legal"
+)
+
+result = optimizer.run_session(
+    data="All employees must complete training",
+    context=context
+)
+
+print(f"Valid: {result['valid']}")
+print(f"Score: {result['score']}")
+print(f"Iterations: {result['iterations']}")
+print(f"Metrics: {result['metrics']}")
+```
+
+**Key Differences:**
+- ✅ No need to manually create extractor/critic instances
+- ✅ Automatic metrics collection via `result['metrics']`
+- ✅ Standardized configuration with `OptimizerConfig`
+- ✅ Better error handling and resource management
+
+### Migrating from LogicHarness (Batch Processing)
+
+**Old Code (Deprecated):**
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
+    LogicHarness, LogicExtractor, LogicCritic, HarnessConfig
+)
+
+extractor = LogicExtractor(model="gpt-4")
+critic = LogicCritic(use_provers=['z3', 'cvc5'])
+harness = LogicHarness(
+    extractor=extractor,
+    critic=critic,
+    config=HarnessConfig(parallelism=4)
+)
+
+data_samples = ["Sample 1", "Sample 2", "Sample 3"]
+result = harness.run_sessions(data_samples)
+
+print(f"Success rate: {result.successful_sessions / result.total_sessions}")
+print(f"Average score: {result.average_score}")
+```
+
+**New Code (Recommended):**
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+optimizer = LogicTheoremOptimizer(
+    config=OptimizerConfig(
+        max_iterations=10,
+        target_score=0.85,
+        metrics_enabled=True
+    ),
+    use_provers=['z3', 'cvc5']
+)
+
+data_samples = ["Sample 1", "Sample 2", "Sample 3"]
+results = []
+
+# Process in parallel
+with ThreadPoolExecutor(max_workers=4) as executor:
+    futures = []
+    for i, sample in enumerate(data_samples):
+        context = OptimizationContext(
+            session_id=f"session-{i}",
+            input_data=sample,
+            domain="general"
+        )
+        future = executor.submit(optimizer.run_session, sample, context)
+        futures.append(future)
+    
+    for future in as_completed(futures):
+        result = future.result()
+        results.append(result)
+
+# Calculate metrics
+successful = [r for r in results if r['valid']]
+success_rate = len(successful) / len(results)
+avg_score = sum(r['score'] for r in successful) / len(successful)
+
+print(f"Success rate: {success_rate}")
+print(f"Average score: {avg_score}")
+```
+
+**Key Differences:**
+- ✅ More control over parallelism using standard Python libraries
+- ✅ Better error handling with futures
+- ✅ Each session gets full metrics automatically
+- ✅ Can customize per-session configurations
+
+### Configuration Mapping
+
+| Old (SessionConfig/HarnessConfig) | New (OptimizerConfig) |
+|-----------------------------------|----------------------|
+| `max_rounds` | `max_iterations` |
+| `convergence_threshold` | `target_score` |
+| `parallelism` | Use `ThreadPoolExecutor(max_workers=N)` |
+| `max_retries` | Handle in executor submit |
+| `timeout_per_session` | Use `future.result(timeout=...)` |
+
+### Result Mapping
+
+| Old (SessionResult) | New (result dict) |
+|--------------------|-------------------|
+| `result.converged` | `result['score'] >= config.target_score` |
+| `result.critic_score.overall` | `result['score']` |
+| `result.num_rounds` | `result['iterations']` |
+| `result.success` | `result['valid']` |
+| `result.total_time` | `result['execution_time']` |
+| `result.extraction_result` | `result['artifact']` |
 
 ## See Also
 
