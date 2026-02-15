@@ -284,20 +284,53 @@ class QueryExecutor:
             
             elif op_type == "Filter":
                 # Apply filter to variable
-                variable = op.get("variable")
-                property_name = op.get("property")
-                operator = op.get("operator")
-                value = self._resolve_value(op.get("value"), parameters)
+                # Check for complex expression format (new)
+                if "expression" in op:
+                    # Complex expression filter (e.g., function calls, complex operators)
+                    expression = op["expression"]
+                    
+                    # Filter all variables in result_set
+                    filtered_results = []
+                    
+                    # Get all current variable bindings
+                    if hasattr(self, '_bindings') and self._bindings:
+                        # Use bindings from Expand
+                        for binding in self._bindings:
+                            # Evaluate expression against this binding
+                            result = self._evaluate_compiled_expression(expression, binding)
+                            if result:  # If expression evaluates to truthy value
+                                filtered_results.append(binding)
+                        self._bindings = filtered_results
+                    else:
+                        # Single variable case
+                        for var_name, items in list(result_set.items()):
+                            filtered_items = []
+                            for item in items:
+                                binding = {var_name: item}
+                                result_val = self._evaluate_compiled_expression(expression, binding)
+                                if result_val:  # If expression evaluates to truthy value
+                                    filtered_items.append(item)
+                            result_set[var_name] = filtered_items
+                    
+                    logger.debug("Filter (complex expression): filtered to %d results", 
+                               len(filtered_results) if filtered_results else sum(len(v) for v in result_set.values()))
                 
-                if variable in result_set:
-                    filtered = []
-                    for item in result_set[variable]:
-                        item_value = item.get(property_name)
-                        if self._apply_operator(item_value, operator, value):
-                            filtered.append(item)
-                    result_set[variable] = filtered
-                    logger.debug("Filter %s.%s %s %s: %d results",
-                               variable, property_name, operator, value, len(filtered))
+                else:
+                    # Simple property filter (old format)
+                    variable = op.get("variable")
+                    property_name = op.get("property")
+                    operator = op.get("operator")
+                    value = self._resolve_value(op.get("value"), parameters)
+                    
+                    if variable in result_set:
+                        filtered = []
+                        for item in result_set[variable]:
+                            item_value = item.get(property_name)
+                            if self._apply_operator(item_value, operator, value):
+                                filtered.append(item)
+                        result_set[variable] = filtered
+                        logger.debug("Filter %s.%s %s %s: %d results",
+                                   variable, property_name, operator, value, len(filtered))
             
             elif op_type == "Expand":
                 # Expand relationships from nodes
@@ -546,24 +579,17 @@ class QueryExecutor:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
-                            alias = item.get("alias", expr)
+                            alias = item.get("alias", expr if isinstance(expr, str) else "result")
                             
                             # Evaluate expression against binding
-                            if "." in expr:
-                                var, prop = expr.split(".", 1)
-                                if var in binding:
-                                    val = binding[var]
-                                    if hasattr(val, 'get'):
-                                        record_data[alias] = val.get(prop)
-                                    elif hasattr(val, '_properties') and prop in val._properties:
-                                        record_data[alias] = val._properties[prop]
-                            elif expr in binding:
-                                record_data[alias] = binding[expr]
+                            value = self._evaluate_compiled_expression(expr, binding)
+                            # Always add value, even if None
+                            record_data[alias] = value
                         
-                        if record_data:
-                            keys = list(record_data.keys())
-                            values = list(record_data.values())
-                            final_results.append(Record(keys, values))
+                        # Always create record, even if all values are None
+                        keys = list(record_data.keys())
+                        values = list(record_data.values())
+                        final_results.append(Record(keys, values))
                 else:
                     # Fallback to old logic for simple queries
                     for var_name, values in result_set.items():
@@ -571,24 +597,18 @@ class QueryExecutor:
                             record_data = {}
                             for item in items:
                                 expr = item.get("expression")
-                                alias = item.get("alias", expr)
+                                alias = item.get("alias", expr if isinstance(expr, str) else "result")
                                 
-                                # Simple expression evaluation
-                                if "." in expr:
-                                    var, prop = expr.split(".", 1)
-                                    if var == var_name:
-                                        if hasattr(value, 'get'):
-                                            record_data[alias] = value.get(prop)
-                                        elif hasattr(value, '_properties') and prop in value._properties:
-                                            record_data[alias] = value._properties[prop]
-                                elif expr == var_name:
-                                    record_data[alias] = value
+                                # Create binding for evaluation
+                                binding = {var_name: value}
+                                result_value = self._evaluate_compiled_expression(expr, binding)
+                                # Always add value, even if None
+                                record_data[alias] = result_value
                             
-                            if record_data:
-                                # Create Record with keys and values
-                                keys = list(record_data.keys())
-                                values = list(record_data.values())
-                                final_results.append(Record(keys, values))
+                            # Always create record, even if all values are None
+                            keys = list(record_data.keys())
+                            values = list(record_data.values())
+                            final_results.append(Record(keys, values))
                 
                 logger.debug("Project: %d results", len(final_results))
             
@@ -624,29 +644,55 @@ class QueryExecutor:
                         expr = item["expression"]
                         ascending = item.get("ascending", True)
                         
-                        # Get the value for this expression
-                        # Expression could be like "n.age" or just "count"
-                        if '.' in expr:
-                            # Property access like "n.age"
-                            parts = expr.split('.', 1)
-                            var_name = parts[0]
-                            prop_name = parts[1]
-                            
-                            # Get the value from the record
-                            try:
-                                value = record.get(expr)  # Try direct access first
-                                if value is None and var_name in record._values:
-                                    # Try to access as object property
-                                    obj = record._values.get(var_name)
-                                    if hasattr(obj, 'properties') and prop_name in obj.properties:
-                                        value = obj.properties[prop_name]
-                                    elif hasattr(obj, prop_name):
-                                        value = getattr(obj, prop_name)
-                            except:
-                                value = None
+                        # Evaluate the expression - could be string or compiled dict
+                        if isinstance(expr, dict):
+                            # Check if it's a simple property expression
+                            if 'property' in expr and len(expr) == 1:
+                                # Simple property like {"property": "n.age"}
+                                # Just get it directly from the record
+                                prop_name = expr['property']
+                                value = record.get(prop_name)
+                            else:
+                                # Complex expression (e.g., function call)
+                                # Create binding from record data
+                                binding = record._data.copy() if hasattr(record, '_data') else {}
+                                
+                                # Also add direct values if they're Node/Relationship objects
+                                for key, val in binding.items():
+                                    # If value is a Node/Relationship, add it as a variable too
+                                    if hasattr(val, 'labels') or hasattr(val, 'type'):
+                                        # Extract variable name (e.g., "n" from "n.name")
+                                        if '.' in key:
+                                            var_name = key.split('.')[0]
+                                            binding[var_name] = val
+                                
+                                value = self._evaluate_compiled_expression(expr, binding)
+                        elif isinstance(expr, str):
+                            # String expression (legacy)
+                            # Get the value for this expression
+                            if '.' in expr:
+                                # Property access like "n.age"
+                                parts = expr.split('.', 1)
+                                var_name = parts[0]
+                                prop_name = parts[1]
+                                
+                                # Get the value from the record
+                                try:
+                                    value = record.get(expr)  # Try direct access first
+                                    if value is None and var_name in record._values:
+                                        # Try to access as object property
+                                        obj = record._values.get(var_name)
+                                        if hasattr(obj, 'properties') and prop_name in obj.properties:
+                                            value = obj.properties[prop_name]
+                                        elif hasattr(obj, prop_name):
+                                            value = getattr(obj, prop_name)
+                                except:
+                                    value = None
+                            else:
+                                # Simple alias like "count"
+                                value = record.get(expr)
                         else:
-                            # Simple alias like "count"
-                            value = record.get(expr)
+                            value = None
                         
                         # Handle None values (sort them to the end)
                         if value is None:
@@ -669,13 +715,8 @@ class QueryExecutor:
                 
                 # Sort the results
                 try:
-                    # Determine if we need reverse (all descending)
-                    all_descending = all(not item.get("ascending", True) for item in order_items)
-                    
-                    if all_descending:
-                        final_results.sort(key=make_sort_key, reverse=True)
-                    else:
-                        final_results.sort(key=make_sort_key)
+                    # Always sort ascending - we've already negated DESC values in make_sort_key
+                    final_results.sort(key=make_sort_key)
                     
                     logger.debug("OrderBy: sorted %d results by %d expressions", 
                                 len(final_results), len(order_items))
@@ -755,6 +796,84 @@ class QueryExecutor:
             elif "var" in value:
                 return value  # Keep as reference
         return value
+    
+    def _evaluate_compiled_expression(self, expr: Any, binding: Dict[str, Any]) -> Any:
+        """
+        Evaluate a compiled expression (dict or string) against a binding.
+        
+        Args:
+            expr: Compiled expression - can be:
+                  - String: "n.age", "n"
+                  - Dict with 'property': {'property': 'n.age'}
+                  - Dict with 'function': {'function': 'toLower', 'args': [...]}
+                  - Dict with 'var': {'var': 'n'}
+                  - Other dict formats
+            binding: Variable bindings (e.g., {'n': node_obj})
+            
+        Returns:
+            Evaluated value
+        """
+        # Handle dict expressions (from compiler)
+        if isinstance(expr, dict):
+            if 'function' in expr:
+                # Function call: {'function': 'toLower', 'args': [{'property': 'n.email'}]}
+                func_name = expr['function']
+                args = expr.get('args', [])
+                
+                # Recursively evaluate arguments
+                eval_args = [self._evaluate_compiled_expression(arg, binding) for arg in args]
+                
+                # Call the function
+                return self._call_function(func_name, eval_args)
+            
+            elif 'property' in expr:
+                # Property access: {'property': 'n.email'}
+                prop_path = expr['property']
+                if '.' in prop_path:
+                    var, prop = prop_path.split('.', 1)
+                    if var in binding:
+                        val = binding[var]
+                        if hasattr(val, 'get'):
+                            return val.get(prop)
+                        elif hasattr(val, '_properties') and prop in val._properties:
+                            return val._properties[prop]
+                return None
+            
+            elif 'var' in expr:
+                # Variable reference: {'var': 'n'}
+                var_name = expr['var']
+                return binding.get(var_name)
+            
+            elif 'op' in expr:
+                # Binary operation: {'op': '>', 'left': ..., 'right': ...}
+                left = self._evaluate_compiled_expression(expr['left'], binding)
+                right = self._evaluate_compiled_expression(expr['right'], binding)
+                return self._apply_operator(left, expr['op'], right)
+        
+        # Handle string expressions (legacy/simple cases)
+        elif isinstance(expr, str):
+            # Check if this looks like a property access expression (var.prop pattern)
+            # Not just any string with a "." (which could be an email, URL, etc.)
+            if expr in binding:
+                # Variable name
+                return self._evaluate_expression(expr, binding)
+            elif "." in expr:
+                # Could be property access like "n.age" or literal like "test@example.com"
+                # Check if it looks like a valid property access pattern
+                parts = expr.split(".")
+                if len(parts) == 2 and parts[0].isidentifier():
+                    # Looks like "n.age" - try to evaluate as expression
+                    return self._evaluate_expression(expr, binding)
+                else:
+                    # Looks like a literal (e.g., "test@example.com", "1.5")
+                    return expr
+            else:
+                # Simple string with no special meaning
+                return expr
+        
+        # Handle literal values (numbers, strings, etc.)
+        else:
+            return expr
     
     def _apply_operator(self, left: Any, operator: str, right: Any) -> bool:
         """Apply comparison operator."""

@@ -9,8 +9,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from ipfs_datasets_py.knowledge_graphs.core.query_executor import QueryExecutor
-from ipfs_datasets_py.knowledge_graphs.core.graph_engine import GraphEngine
+from ipfs_datasets_py.knowledge_graphs.core import QueryExecutor, GraphEngine
 
 
 class TestOrderBy:

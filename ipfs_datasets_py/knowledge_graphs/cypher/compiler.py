@@ -271,17 +271,30 @@ class CypherCompiler:
                     self._compile_where_expression(expr.right)
                 # OR would need more complex handling
             else:
-                # Comparison operator
+                # Comparison operator - can be complex expression
                 left_info = self._analyze_expression(expr.left)
-                right_value = self._compile_expression(expr.right)
                 
+                # Check if it's a simple property comparison
                 if left_info['type'] == 'property':
+                    # Simple property comparison - use old format for backward compatibility
+                    right_value = self._compile_expression(expr.right)
                     op = {
                         "op": "Filter",
                         "variable": left_info['variable'],
                         "property": left_info['property'],
                         "operator": expr.operator,
                         "value": right_value
+                    }
+                    self.operations.append(op)
+                else:
+                    # Complex expression (e.g., function call) - compile full expression
+                    op = {
+                        "op": "Filter",
+                        "expression": {
+                            "op": expr.operator,
+                            "left": self._compile_expression(expr.left),
+                            "right": self._compile_expression(expr.right)
+                        }
                     }
                     self.operations.append(op)
         
@@ -336,10 +349,13 @@ class CypherCompiler:
             items = []
             for return_item in ret.items:
                 item_info = {
-                    "expression": self._expression_to_string(return_item.expression)
+                    "expression": self._compile_expression(return_item.expression)
                 }
                 if return_item.alias:
                     item_info["alias"] = return_item.alias
+                else:
+                    # Generate default alias from expression
+                    item_info["alias"] = self._expression_to_string(return_item.expression)
                 items.append(item_info)
             
             op = {
@@ -354,7 +370,7 @@ class CypherCompiler:
             order_items = []
             for order_item in ret.order_by.items:
                 order_items.append({
-                    "expression": self._expression_to_string(order_item.expression),
+                    "expression": self._compile_expression(order_item.expression),
                     "ascending": order_item.ascending
                 })
             
@@ -476,6 +492,13 @@ class CypherCompiler:
             if isinstance(obj, dict) and "var" in obj:
                 return {"property": f"{obj['var']}.{expr.property}"}
             return {"property": f"{expr.property}"}
+        
+        elif isinstance(expr, FunctionCallNode):
+            # Compile function calls (e.g., toLower, toUpper, etc.)
+            return {
+                "function": expr.name,
+                "args": [self._compile_expression(arg) for arg in expr.arguments]
+            }
         
         elif isinstance(expr, BinaryOpNode):
             return {

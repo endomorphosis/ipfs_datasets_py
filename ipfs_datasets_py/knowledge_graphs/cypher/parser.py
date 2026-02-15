@@ -555,13 +555,49 @@ class CypherParser:
         return self._parse_comparison()
     
     def _parse_comparison(self) -> ExpressionNode:
-        """Parse comparison expressions."""
+        """Parse comparison expressions including string operators."""
         left = self._parse_additive()
         
-        while self._match(TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE):
-            op = self._advance().value
-            right = self._parse_additive()
-            left = BinaryOpNode(operator=op, left=left, right=right)
+        # Check for comparison operators and string operators
+        while True:
+            # Basic comparison operators
+            if self._match(TokenType.EQ, TokenType.NEQ, TokenType.LT, TokenType.GT, TokenType.LTE, TokenType.GTE):
+                op = self._advance().value
+                right = self._parse_additive()
+                left = BinaryOpNode(operator=op, left=left, right=right)
+            
+            # IN operator
+            elif self._match(TokenType.IN):
+                op = self._advance().value
+                right = self._parse_additive()
+                left = BinaryOpNode(operator=op, left=left, right=right)
+            
+            # CONTAINS operator
+            elif self._match(TokenType.CONTAINS):
+                op = self._advance().value
+                right = self._parse_additive()
+                left = BinaryOpNode(operator=op, left=left, right=right)
+            
+            # STARTS WITH operator (two tokens)
+            elif self._match(TokenType.STARTS):
+                self._advance()  # Consume STARTS
+                if not self._match(TokenType.WITH):
+                    raise CypherParseError("Expected WITH after STARTS", self._current())
+                self._advance()  # Consume WITH
+                right = self._parse_additive()
+                left = BinaryOpNode(operator="STARTS WITH", left=left, right=right)
+            
+            # ENDS WITH operator (two tokens)
+            elif self._match(TokenType.ENDS):
+                self._advance()  # Consume ENDS
+                if not self._match(TokenType.WITH):
+                    raise CypherParseError("Expected WITH after ENDS", self._current())
+                self._advance()  # Consume WITH
+                right = self._parse_additive()
+                left = BinaryOpNode(operator="ENDS WITH", left=left, right=right)
+            
+            else:
+                break
         
         return left
     
