@@ -14,6 +14,17 @@ from .types import Node, Relationship, Path
 
 logger = logging.getLogger(__name__)
 
+# Lazy import to avoid circular dependencies
+_query_executor = None
+
+def _get_query_executor():
+    """Get QueryExecutor (lazy import)."""
+    global _query_executor
+    if _query_executor is None:
+        from ..core.query_executor import QueryExecutor
+        _query_executor = QueryExecutor
+    return _query_executor
+
 
 class IPFSTransaction:
     """
@@ -136,6 +147,10 @@ class IPFSSession:
         self._closed = False
         self._transaction = None
         
+        # Create query executor
+        QueryExecutorClass = _get_query_executor()
+        self._query_executor = QueryExecutorClass()
+        
         logger.debug("Session created (database=%s, mode=%s)", database, default_access_mode)
     
     def run(
@@ -165,14 +180,16 @@ class IPFSSession:
         
         logger.debug("Executing query: %s", query[:100])
         
-        # Phase 1: Return stub result
-        # Phase 2: Parse Cypher and execute
+        # Phase 1: Use QueryExecutor to route query
+        # Phase 2: QueryExecutor will parse Cypher and execute
         # Phase 3: Wrap in transaction
         
-        # For now, return empty result
-        # This will be replaced with actual query execution in Phase 2
-        records = []
-        return Result(records, summary={"query": query})
+        try:
+            return self._query_executor.execute(query, parameters, **kwargs)
+        except NotImplementedError as e:
+            # Cypher not yet implemented - return helpful error
+            logger.warning("Query execution not implemented: %s", str(e))
+            raise
     
     def begin_transaction(self, **kwargs) -> IPFSTransaction:
         """

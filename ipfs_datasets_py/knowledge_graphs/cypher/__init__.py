@@ -8,11 +8,11 @@ Architecture:
     Cypher Text → Lexer → Parser → AST → Compiler → IR → Executor
     
 Components:
-- Lexer: Tokenizes Cypher query text
-- Parser: Builds Abstract Syntax Tree (AST) from tokens
-- AST: Internal representation of query structure
-- Compiler: Translates AST to IR (Intermediate Representation)
-- Optimizer: Cost-based query optimization
+- Lexer: Tokenizes Cypher query text (Phase 2)
+- Parser: Builds Abstract Syntax Tree (AST) from tokens (Phase 1 stub complete)
+- AST: Internal representation of query structure (Phase 2)
+- Compiler: Translates AST to IR (Intermediate Representation) (Phase 2)
+- Optimizer: Cost-based query optimization (Phase 3)
 
 Supported Cypher Features (Phase 2 - Weeks 3-4):
 - MATCH patterns (nodes and relationships)
@@ -32,39 +32,27 @@ Future Features (Post v1.0):
 - List operations (UNWIND)
 - Pattern comprehensions
 
-Usage:
-    from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser, CypherCompiler
+Usage (Phase 2+):
+    from ipfs_datasets_py.knowledge_graphs.cypher import CypherParser
     
     # Parse Cypher query
     parser = CypherParser()
     ast = parser.parse("MATCH (n:Person) WHERE n.age > 25 RETURN n.name")
     
-    # Compile to IR
-    compiler = CypherCompiler()
-    ir = compiler.compile(ast)
-    
-    # Execute via query engine
-    result = executor.execute(ir, parameters={})
+    # Phase 2 will add compilation
+    # compiler = CypherCompiler()
+    # ir = compiler.compile(ast)
 """
 
-# Phase 2 implementation (Weeks 3-4)
-# from .lexer import CypherLexer
-# from .parser import CypherParser
-# from .ast import (
-#     QueryNode, MatchNode, WhereNode, ReturnNode,
-#     PatternNode, NodePatternNode, RelationshipPatternNode
-# )
-# from .compiler import CypherCompiler
-# from .optimizer import CypherOptimizer
+# Phase 1 implementation (stub)
+from .parser import CypherParser, CypherParseError, parse_cypher
 
 __all__ = [
-    # Phase 2 exports will go here
-    # "CypherLexer",
-    # "CypherParser",
-    # "CypherCompiler",
-    # "CypherOptimizer",
+    "CypherParser",
+    "CypherParseError",
+    "parse_cypher",
 ]
 
 # Version info
 __version__ = "0.1.0"
-__status__ = "planning"  # Will be "development" in Phase 2
+__status__ = "development"  # Phase 1 stub complete
