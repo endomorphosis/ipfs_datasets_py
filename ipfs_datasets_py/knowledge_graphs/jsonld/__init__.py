@@ -86,29 +86,36 @@ Roadmap:
 - Phase 4 (Week 7): Full bidirectional translation implementation
 """
 
-# Phase 4 implementation (Week 7)
-# from .translator import JSONLDTranslator
-# from .context import ContextExpander, ContextCompactor
-# from .vocabularies import (
-#     SchemaOrgVocabulary,
-#     FOAFVocabulary,
-#     DublinCoreVocabulary,
-#     register_vocabulary
-# )
-# from .validation import SemanticValidator
+# Phase 4 implementation (Week 7) - IMPLEMENTED
+from .translator import JSONLDTranslator
+from .context import ContextExpander, ContextCompactor
+from .validation import SemanticValidator, SchemaValidator, SHACLValidator
+from .types import (
+    JSONLDContext,
+    IPLDGraph,
+    TranslationOptions,
+    ValidationResult,
+    VocabularyType
+)
 
 __all__ = [
-    # Phase 4 exports will go here
-    # "JSONLDTranslator",
-    # "ContextExpander",
-    # "ContextCompactor",
-    # "SchemaOrgVocabulary",
-    # "FOAFVocabulary",
-    # "DublinCoreVocabulary",
-    # "register_vocabulary",
-    # "SemanticValidator",
+    # Translator
+    "JSONLDTranslator",
+    # Context management
+    "ContextExpander",
+    "ContextCompactor",
+    # Validation
+    "SemanticValidator",
+    "SchemaValidator",
+    "SHACLValidator",
+    # Types
+    "JSONLDContext",
+    "IPLDGraph",
+    "TranslationOptions",
+    "ValidationResult",
+    "VocabularyType",
 ]
 
 # Version info
-__version__ = "0.1.0"
-__status__ = "planning"  # Will be "development" in Phase 4
+__version__ = "1.0.0"
+__status__ = "stable"  # Phase 4 complete
