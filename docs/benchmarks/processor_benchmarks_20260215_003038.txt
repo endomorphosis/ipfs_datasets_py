@@ -1,0 +1,84 @@
+
+======================================================================
+PROCESSOR BENCHMARKING REPORT
+======================================================================
+
+Mode: Quick
+Total Benchmarks: 5
+Date: 2026-02-15 00:30:38
+
+======================================================================
+
+SUMMARY STATISTICS
+----------------------------------------------------------------------
+Total Duration: 1.74s
+Total Items Processed: 1,825
+Average Success Rate: 100.0%
+
+
+DETAILED RESULTS
+----------------------------------------------------------------------
+
+Batch Processing (5 files)
+  Duration: 0.501s
+  Memory Peak: 0.00 MB
+  Items: 5
+  Throughput: 9.98 items/sec
+  Success Rate: 100.0%
+  Metadata:
+    batch_size: 5
+    mode: mock
+    note: Actual performance will vary with real files
+
+Batch Processing (10 files)
+  Duration: 1.001s
+  Memory Peak: 0.00 MB
+  Items: 10
+  Throughput: 9.99 items/sec
+  Success Rate: 100.0%
+  Metadata:
+    batch_size: 10
+    mode: mock
+    note: Actual performance will vary with real files
+
+Input Routing Performance
+  Duration: 0.084s
+  Memory Peak: 0.34 MB
+  Items: 800
+  Throughput: 9550.61 items/sec
+  Success Rate: 100.0%
+  Metadata:
+    iterations: 100
+    unique_inputs: 8
+    total_classifications: 800
+
+Processor Registration & Lookup
+  Duration: 0.013s
+  Memory Peak: 0.06 MB
+  Items: 1,000
+  Throughput: 77091.26 items/sec
+  Success Rate: 100.0%
+  Metadata:
+    iterations: 100
+    processors_per_iteration: 10
+
+Memory Baseline (Processor Creation)
+  Duration: 0.142s
+  Memory Peak: 0.86 MB
+  Items: 10
+  Throughput: 70.45 items/sec
+  Success Rate: 100.0%
+  Metadata:
+    instances_created: 10
+    note: Peak memory includes all adapters and registry
+
+
+PERFORMANCE GRADES
+----------------------------------------------------------------------
+Batch Processing (5 files): D (Below Average)
+Batch Processing (10 files): D (Below Average)
+Input Routing Performance: A (Excellent)
+Processor Registration & Lookup: A (Excellent)
+Memory Baseline (Processor Creation): B (Good)
+
+======================================================================
