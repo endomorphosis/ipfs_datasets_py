@@ -514,6 +514,28 @@ class QueryExecutor:
                 
                 logger.debug("Aggregate: %d groups, %d results", len(groups), len(final_results))
             
+            elif op_type == "Union":
+                # Union operation - combines result sets
+                # For UNION, remove duplicates; for UNION ALL, keep all
+                all_flag = op.get("all", False)
+                
+                # Store current results as first part
+                first_results = final_results.copy()
+                
+                # Clear for next part (operations after Union will populate)
+                final_results = []
+                
+                # Mark that we need to merge later
+                if not hasattr(self, '_union_parts'):
+                    self._union_parts = []
+                self._union_parts.append({
+                    'results': first_results,
+                    'all': all_flag
+                })
+                
+                logger.debug("Union: stored %d results from first part (all=%s)",
+                           len(first_results), all_flag)
+            
             elif op_type == "Project":
                 # Project fields
                 items = op.get("items", [])
@@ -614,6 +636,38 @@ class QueryExecutor:
                     for item in result_set[variable]:
                         self.graph_engine.update_node(item.id, {property_name: value})
                     logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
+        
+        # Handle UNION merging
+        if hasattr(self, '_union_parts') and self._union_parts:
+            # Merge all union parts with final_results
+            all_parts = []
+            for part in self._union_parts:
+                all_parts.extend(part['results'])
+            all_parts.extend(final_results)
+            
+            # Check if we should remove duplicates
+            # Use the 'all' flag from the last union (or first if multiple)
+            remove_duplicates = not self._union_parts[0]['all']
+            
+            if remove_duplicates:
+                # Remove duplicate records
+                seen = set()
+                unique_results = []
+                for record in all_parts:
+                    # Create hashable representation
+                    record_tuple = tuple(record._values)
+                    if record_tuple not in seen:
+                        seen.add(record_tuple)
+                        unique_results.append(record)
+                final_results = unique_results
+                logger.debug("Union: removed duplicates, %d unique results", len(final_results))
+            else:
+                # UNION ALL - keep all results
+                final_results = all_parts
+                logger.debug("Union ALL: combined %d total results", len(final_results))
+            
+            # Clean up
+            delattr(self, '_union_parts')
         
         return final_results
     

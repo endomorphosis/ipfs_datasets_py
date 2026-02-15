@@ -158,10 +158,40 @@ class CypherParser:
         return self.current_token.type in token_types
     
     def _parse_query(self) -> QueryNode:
-        """Parse a complete query."""
+        """Parse a complete query, potentially with UNION."""
+        # Parse first query part
+        clauses = self._parse_query_part()
+        
+        # Check for UNION
+        while self._match(TokenType.UNION):
+            self._advance()
+            
+            # Check for ALL keyword
+            all_flag = False
+            if self._match(TokenType.ALL):
+                self._advance()
+                all_flag = True
+            
+            # Add UNION marker clause
+            from .ast import UnionClause
+            union_clause = UnionClause(all=all_flag)
+            clauses.append(union_clause)
+            
+            # Parse next query part
+            next_clauses = self._parse_query_part()
+            clauses.extend(next_clauses)
+        
+        return QueryNode(clauses=clauses)
+    
+    def _parse_query_part(self) -> List:
+        """Parse a single query part (before UNION)."""
         clauses = []
         
         while self.current_token and self.current_token.type != TokenType.EOF:
+            # Stop at UNION
+            if self._match(TokenType.UNION):
+                break
+                
             # Check for OPTIONAL MATCH first
             if self._match(TokenType.OPTIONAL):
                 clauses.append(self._parse_optional_match())
@@ -171,6 +201,7 @@ class CypherParser:
                 clauses.append(self._parse_create())
             elif self._match(TokenType.RETURN):
                 clauses.append(self._parse_return())
+                break  # RETURN ends this query part
             elif self._match(TokenType.WHERE):
                 # WHERE can appear standalone in some contexts
                 clauses.append(self._parse_where())
@@ -181,12 +212,10 @@ class CypherParser:
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
-                raise CypherParseError(
-                    f"Unexpected token {self._current().type.name} at start of clause",
-                    self._current()
-                )
+                # Stop parsing this part
+                break
         
-        return QueryNode(clauses=clauses)
+        return clauses
     
     def _parse_optional_match(self) -> MatchClause:
         """

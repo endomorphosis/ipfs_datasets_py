@@ -108,6 +108,8 @@ class CypherCompiler:
     
     def _compile_clause(self, clause):
         """Compile a single clause."""
+        from .ast import UnionClause
+        
         if isinstance(clause, MatchClause):
             self._compile_match(clause)
         elif isinstance(clause, WhereClause):
@@ -120,6 +122,8 @@ class CypherCompiler:
             self._compile_delete(clause)
         elif isinstance(clause, SetClause):
             self._compile_set(clause)
+        elif isinstance(clause, UnionClause):
+            self._compile_union(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
@@ -437,6 +441,20 @@ class CypherCompiler:
                     "value": value
                 }
                 self.operations.append(op)
+    
+    def _compile_union(self, union_clause):
+        """
+        Compile UNION or UNION ALL clause.
+        
+        Generates Union operation to combine result sets.
+        """
+        from .ast import UnionClause
+        
+        op = {
+            "op": "Union",
+            "all": union_clause.all  # True for UNION ALL, False for UNION
+        }
+        self.operations.append(op)
     
     def _compile_expression(self, expr) -> Any:
         """

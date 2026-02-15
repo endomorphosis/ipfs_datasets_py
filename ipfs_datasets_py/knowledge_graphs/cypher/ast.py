@@ -226,6 +226,26 @@ class SetClause(ASTNode):
             self.node_type = ASTNodeType.SET
 
 
+@dataclass
+class UnionClause(ASTNode):
+    """
+    Represents a UNION or UNION ALL clause.
+    
+    Combines results from two queries.
+    UNION removes duplicates, UNION ALL keeps all results.
+    
+    Example: 
+        MATCH (n) RETURN n UNION MATCH (m) RETURN m
+        MATCH (n) RETURN n UNION ALL MATCH (m) RETURN m
+    """
+    
+    all: bool = False  # True for UNION ALL, False for UNION (with DISTINCT)
+    
+    def __post_init__(self):
+        if not hasattr(self, 'node_type') or self.node_type is None:
+            self.node_type = ASTNodeType.SET  # Placeholder, can add UNION to enum later
+
+
 # Pattern nodes
 
 @dataclass
