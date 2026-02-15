@@ -207,7 +207,7 @@ class CypherCompiler:
                                 self.operations.append(op)
                     else:
                         # Not a target - compile normally with ScanLabel
-                        self._compile_node_pattern(element, f"_n{i}")
+                        self._compile_node_pattern(element, f"_n{i}", is_optional=is_optional)
                 node_index += 1
             elif isinstance(element, RelationshipPattern):
                 # Get previous and next node variables from tracked list
@@ -223,39 +223,54 @@ class CypherCompiler:
                                                       is_optional=is_optional,
                                                       target_labels=target_labels)
     
-    def _compile_node_pattern(self, node: NodePattern, default_var: str = None):
+    def _compile_node_pattern(self, node: NodePattern, default_var: str = None, is_optional: bool = False):
         """
         Compile node pattern.
         
         Generates ScanLabel or ScanAll operation.
+        
+        Args:
+            node: NodePattern to compile
+            default_var: Default variable name if node doesn't have one
+            is_optional: Whether this is from OPTIONAL MATCH
         """
         variable = node.variable or default_var
         
         if not variable:
             variable = f"_anon{len(self.variables)}"
         
-        self.variables[variable] = "node"
+        # Check if this variable already exists from a previous clause
+        # Only skip scanning if:
+        # 1. This is from an OPTIONAL MATCH (is_optional=True)
+        # 2. AND the variable was already defined in a previous clause
+        # This allows OPTIONAL MATCH to reuse variables from MATCH,
+        # but doesn't break UNION queries where each branch is independent
+        variable_exists = variable in self.variables
+        should_skip_scan = variable_exists and is_optional
         
-        # Generate scan operation
-        if node.labels:
-            # Scan by label
-            for label in node.labels:
+        if not should_skip_scan:
+            self.variables[variable] = "node"
+            
+            # Generate scan operation
+            if node.labels:
+                # Scan by label
+                for label in node.labels:
+                    op = {
+                        "op": "ScanLabel",
+                        "label": label,
+                        "variable": variable
+                    }
+                    self.operations.append(op)
+            else:
+                # Scan all nodes
                 op = {
-                    "op": "ScanLabel",
-                    "label": label,
+                    "op": "ScanAll",
+                    "type": "node",
                     "variable": variable
                 }
                 self.operations.append(op)
-        else:
-            # Scan all nodes
-            op = {
-                "op": "ScanAll",
-                "type": "node",
-                "variable": variable
-            }
-            self.operations.append(op)
         
-        # Add property filters
+        # Add property filters (even if variable already exists)
         if node.properties:
             for prop_name, prop_value in node.properties.items():
                 value = self._compile_expression(prop_value)

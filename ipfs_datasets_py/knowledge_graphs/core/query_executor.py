@@ -858,6 +858,12 @@ class QueryExecutor:
             elif 'property' in expr:
                 # Property access: {'property': 'n.email'}
                 prop_path = expr['property']
+                
+                # First, check if the full property path is directly available in binding
+                if prop_path in binding:
+                    return binding[prop_path]
+                
+                # Otherwise, try to split and access as variable.property
                 if '.' in prop_path:
                     var, prop = prop_path.split('.', 1)
                     if var in binding:
