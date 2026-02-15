@@ -125,23 +125,32 @@ class CypherCompiler:
     
     def _compile_match(self, match: MatchClause):
         """
-        Compile MATCH clause.
+        Compile MATCH or OPTIONAL MATCH clause.
         
         Generates:
         - ScanLabel operations for labeled nodes
         - ScanAll for unlabeled nodes
-        - Expand operations for relationships
+        - Expand operations for relationships (or OptionalExpand if optional)
         - Filter operations for WHERE
         """
+        # Store whether this is an optional match for relationship compilation
+        is_optional = match.optional
+        
         for pattern in match.patterns:
-            self._compile_pattern(pattern)
+            self._compile_pattern(pattern, is_optional=is_optional)
         
         # Compile WHERE if present
         if match.where:
             self._compile_where(match.where)
     
-    def _compile_pattern(self, pattern: PatternNode):
-        """Compile a graph pattern."""
+    def _compile_pattern(self, pattern: PatternNode, is_optional: bool = False):
+        """
+        Compile a graph pattern.
+        
+        Args:
+            pattern: Pattern to compile
+            is_optional: Whether this is from OPTIONAL MATCH
+        """
         for i, element in enumerate(pattern.elements):
             if isinstance(element, NodePattern):
                 self._compile_node_pattern(element, f"_n{i}")
@@ -150,7 +159,7 @@ class CypherCompiler:
                 if i > 0 and i < len(pattern.elements) - 1:
                     start_var = element.variable or f"_n{i-1}"
                     end_var = f"_n{i+1}"
-                    self._compile_relationship_pattern(element, start_var, end_var)
+                    self._compile_relationship_pattern(element, start_var, end_var, is_optional=is_optional)
     
     def _compile_node_pattern(self, node: NodePattern, default_var: str = None):
         """
@@ -201,18 +210,28 @@ class CypherCompiler:
         self,
         rel: RelationshipPattern,
         start_var: str,
-        end_var: str
+        end_var: str,
+        is_optional: bool = False
     ):
         """
         Compile relationship pattern.
         
-        Generates Expand operation.
+        Generates Expand or OptionalExpand operation.
+        
+        Args:
+            rel: RelationshipPattern to compile
+            start_var: Variable for start node
+            end_var: Variable for end node
+            is_optional: Whether this is from OPTIONAL MATCH
         """
         rel_var = rel.variable or f"_r{len(self.variables)}"
         self.variables[rel_var] = "relationship"
         
+        # Choose operation type based on whether it's optional
+        op_type = "OptionalExpand" if is_optional else "Expand"
+        
         op = {
-            "op": "Expand",
+            "op": op_type,
             "from_variable": start_var,
             "to_variable": end_var,
             "rel_variable": rel_var,

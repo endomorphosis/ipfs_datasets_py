@@ -360,6 +360,75 @@ class QueryExecutor:
                 logger.debug("Expand %s-[%s]->%s: found %d relationships",
                            from_var, rel_var, to_var, len(new_results))
             
+            elif op_type == "OptionalExpand":
+                # Optional expand - left join semantics
+                # Preserve rows even when no relationships match
+                from_var = op.get("from_variable")
+                to_var = op.get("to_variable")
+                rel_var = op.get("rel_variable")
+                direction = op.get("direction", "out")
+                rel_types = op.get("rel_types")
+                
+                if from_var not in result_set:
+                    logger.warning("OptionalExpand: source variable %s not found", from_var)
+                    continue
+                
+                # Collect new bindings with relationships
+                new_results = []
+                
+                for from_node in result_set[from_var]:
+                    # Get relationships for this node
+                    rels = self.graph_engine.get_relationships(
+                        from_node.id,
+                        direction=direction,
+                        rel_type=rel_types[0] if rel_types else None
+                    )
+                    
+                    if rels:
+                        # Found relationships - add them
+                        for rel in rels:
+                            # Get target node
+                            if direction == "in":
+                                target_id = rel._start_node
+                            else:
+                                target_id = rel._end_node
+                            
+                            target_node = self.graph_engine.get_node(target_id)
+                            if not target_node:
+                                continue
+                            
+                            # Create binding with relationship and target node
+                            new_results.append({
+                                from_var: from_node,
+                                rel_var: rel,
+                                to_var: target_node
+                            })
+                    else:
+                        # No relationships found - preserve row with NULLs (left join)
+                        new_results.append({
+                            from_var: from_node,
+                            rel_var: None,
+                            to_var: None
+                        })
+                
+                # Update result_set with expanded results
+                if new_results:
+                    # Merge all variables into result_set
+                    for binding in new_results:
+                        for var, val in binding.items():
+                            if var not in result_set:
+                                result_set[var] = []
+                            if val is not None and val not in result_set[var]:
+                                result_set[var].append(val)
+                    
+                    # Store bindings for projection
+                    if not hasattr(self, '_bindings'):
+                        self._bindings = []
+                    self._bindings = new_results
+                
+                logger.debug("OptionalExpand %s-[%s]->%s: found %d relationships (including NULL rows)",
+                           from_var, rel_var, to_var, len(new_results))
+            
             elif op_type == "Aggregate":
                 # Aggregate operation (COUNT, SUM, AVG, MIN, MAX, COLLECT)
                 aggregations = op.get("aggregations", [])

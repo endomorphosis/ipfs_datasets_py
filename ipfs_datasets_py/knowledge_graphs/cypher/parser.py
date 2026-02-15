@@ -162,7 +162,10 @@ class CypherParser:
         clauses = []
         
         while self.current_token and self.current_token.type != TokenType.EOF:
-            if self._match(TokenType.MATCH):
+            # Check for OPTIONAL MATCH first
+            if self._match(TokenType.OPTIONAL):
+                clauses.append(self._parse_optional_match())
+            elif self._match(TokenType.MATCH):
                 clauses.append(self._parse_match())
             elif self._match(TokenType.CREATE):
                 clauses.append(self._parse_create())
@@ -184,6 +187,26 @@ class CypherParser:
                 )
         
         return QueryNode(clauses=clauses)
+    
+    def _parse_optional_match(self) -> MatchClause:
+        """
+        Parse OPTIONAL MATCH clause.
+        
+        Grammar:
+            OPTIONAL MATCH pattern [WHERE expression]
+        """
+        self._expect(TokenType.OPTIONAL)
+        self._expect(TokenType.MATCH)
+        
+        # Parse patterns
+        patterns = self._parse_patterns()
+        
+        # Parse optional WHERE
+        where = None
+        if self._match(TokenType.WHERE):
+            where = self._parse_where()
+        
+        return MatchClause(patterns=patterns, optional=True, where=where)
     
     def _parse_match(self) -> MatchClause:
         """Parse MATCH clause."""
