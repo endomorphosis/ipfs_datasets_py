@@ -8,11 +8,44 @@ Adapters provide a bridge between the old processor APIs and the new
 unified interface.
 """
 
-# Adapters will be implemented in separate files:
-# - pdf_adapter.py - Wraps PDF processors
-# - graphrag_adapter.py - Wraps GraphRAG processors  
-# - multimedia_adapter.py - Wraps multimedia processors
-# - file_converter_adapter.py - Wraps file converter
-# - batch_adapter.py - Wraps batch processor
+from __future__ import annotations
 
-__all__ = []
+__all__ = [
+    'PDFProcessorAdapter',
+    'GraphRAGProcessorAdapter',
+    'MultimediaProcessorAdapter',
+    'FileConverterProcessorAdapter',
+    'BatchProcessorAdapter',
+    'IPFSProcessorAdapter',
+]
+
+# Optional imports with graceful fallback
+try:
+    from .pdf_adapter import PDFProcessorAdapter
+except ImportError:
+    PDFProcessorAdapter = None
+
+try:
+    from .graphrag_adapter import GraphRAGProcessorAdapter
+except ImportError:
+    GraphRAGProcessorAdapter = None
+
+try:
+    from .multimedia_adapter import MultimediaProcessorAdapter
+except ImportError:
+    MultimediaProcessorAdapter = None
+
+try:
+    from .file_converter_adapter import FileConverterProcessorAdapter
+except ImportError:
+    FileConverterProcessorAdapter = None
+
+try:
+    from .batch_adapter import BatchProcessorAdapter
+except ImportError:
+    BatchProcessorAdapter = None
+
+try:
+    from .ipfs_adapter import IPFSProcessorAdapter
+except ImportError:
+    IPFSProcessorAdapter = None

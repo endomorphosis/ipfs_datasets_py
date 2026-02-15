@@ -142,6 +142,22 @@ class UniversalProcessor:
         available in the system. It's designed to gracefully handle missing
         dependencies.
         """
+        # Import and register IPFS processor (HIGHEST PRIORITY)
+        try:
+            from .adapters.ipfs_adapter import IPFSProcessorAdapter
+            self.registry.register(IPFSProcessorAdapter(self), priority=20)
+            logger.info("Registered IPFSProcessorAdapter")
+        except ImportError as e:
+            logger.debug(f"IPFSProcessorAdapter not available: {e}")
+        
+        # Import and register Batch processor
+        try:
+            from .adapters.batch_adapter import BatchProcessorAdapter
+            self.registry.register(BatchProcessorAdapter(self), priority=15)
+            logger.info("Registered BatchProcessorAdapter")
+        except ImportError as e:
+            logger.debug(f"BatchProcessorAdapter not available: {e}")
+        
         # Import and register PDF processor
         try:
             from .adapters.pdf_adapter import PDFProcessorAdapter
@@ -173,22 +189,6 @@ class UniversalProcessor:
             logger.info("Registered FileConverterProcessorAdapter")
         except ImportError as e:
             logger.debug(f"FileConverterProcessorAdapter not available: {e}")
-        
-        # Import and register Batch processor
-        try:
-            from .adapters.batch_adapter import BatchProcessorAdapter
-            self.registry.register(BatchProcessorAdapter(self), priority=15)
-            logger.info("Registered BatchProcessorAdapter")
-        except ImportError as e:
-            logger.debug(f"BatchProcessorAdapter not available: {e}")
-        
-        # Import and register Batch processor
-        try:
-            from .adapters.batch_adapter import BatchProcessorAdapter
-            self.registry.register(BatchProcessorAdapter(self), priority=15)
-            logger.info("Registered BatchProcessorAdapter")
-        except ImportError as e:
-            logger.debug(f"BatchProcessorAdapter not available: {e}")
         
         if len(self.registry) == 0:
             logger.warning("No processors registered! UniversalProcessor will not be able to process inputs.")
