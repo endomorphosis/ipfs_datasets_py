@@ -130,6 +130,8 @@ class DataInterchangeUtils:
         return root_cid
 
     def import_table_from_car(self, car_path):
+        # Validate and normalize the input CAR path to protect against path traversal
+        safe_car_path = self._validate_car_path(car_path)
         """
         Import an Arrow table from a CAR file.
 
