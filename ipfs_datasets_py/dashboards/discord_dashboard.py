@@ -472,6 +472,34 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
         try:
             from ipfs_datasets_py.mcp_server.tools.discord_tools import discord_convert_export
             
+            # Helper functions for safe path handling within the exports directory
+            def _get_discord_exports_base_dir() -> Path:
+                """
+                Get or create the base directory for Discord export conversions.
+                
+                The directory can be configured via the DISCORD_EXPORT_BASE_DIR
+                environment variable. Defaults to ./discord_exports.
+                """
+                base = os.environ.get("DISCORD_EXPORT_BASE_DIR", os.path.join(os.getcwd(), "discord_exports"))
+                base_path = Path(base).resolve()
+                base_path.mkdir(parents=True, exist_ok=True)
+                return base_path
+            
+            def _resolve_safe_path(user_path: str) -> Path:
+                """
+                Resolve a user-provided path safely within the exports base directory.
+                
+                Raises ValueError if the resolved path escapes the base directory.
+                """
+                base_dir = _get_discord_exports_base_dir()
+                # Treat user_path as relative to the base directory
+                candidate = (base_dir / user_path).resolve()
+                try:
+                    candidate.relative_to(base_dir)
+                except ValueError:
+                    raise ValueError("Path outside of allowed exports directory")
+                return candidate
+            
             # Get request data
             data = request.get_json()
             input_path = data.get('input_path')
@@ -484,10 +512,21 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
                     "error": "Missing required parameters: input_path, output_path, to_format"
                 }), 400
             
+            # Resolve and validate paths within the exports base directory
+            try:
+                safe_input_path = str(_resolve_safe_path(input_path))
+                safe_output_path = str(_resolve_safe_path(output_path))
+            except ValueError as ve:
+                logging.warning("Invalid export path provided: %s", ve)
+                return jsonify({
+                    "status": "error",
+                    "error": "Invalid path: outside of allowed exports directory"
+                }), 400
+            
             # Convert export
             result = await discord_convert_export(
-                input_path=input_path,
-                output_path=output_path,
+                input_path=safe_input_path,
+                output_path=safe_output_path,
                 to_format=to_format,
                 compression=data.get('compression'),
                 context=data.get('context')

@@ -21,8 +21,8 @@ from ipfs_datasets_py.utils.jsonnet_utils import (
     jsonnet_to_parquet,
 )
 
-from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
-from ipfs_datasets_py.data_transformation.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
+from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
 
 
 def create_sample_jsonnet(file_path):
