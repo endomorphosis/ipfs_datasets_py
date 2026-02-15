@@ -34,8 +34,24 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Check if x64 runners are available
+  check-runner-x64:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+  
+  # Check if ARM64 runners are available
+  check-runner-arm64:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,arm64"
+      skip_if_unavailable: true
+
   # Test on GitHub-hosted runners (x86_64)
   test-github-x86:
+    needs: [check-runner-x64]
+    if: ${{ needs.check-runner-x64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
@@ -92,10 +108,9 @@ jobs:
 
   # Test on self-hosted x86_64 runner (if available)
   test-self-hosted-x86:
+    needs: [check-runner-x64]
+    if: ${{ needs.check-runner-x64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
-    # Only run if runner is available, skip otherwise
-    if: ${{ !cancelled() }}
-    continue-on-error: true
     
     steps:
       - name: System information
@@ -148,9 +163,9 @@ jobs:
 
   # Test on self-hosted ARM64 runner (if available)
   test-self-hosted-arm64:
+    needs: [check-runner-arm64]
+    if: ${{ needs.check-runner-arm64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, arm64]
-    if: ${{ !cancelled() }}
-    continue-on-error: true
     
     steps:
       - name: System information
@@ -203,11 +218,12 @@ jobs:
 
   # Multi-architecture build using buildx
   build-multi-arch:
+    needs: [check-runner-x64]
+    if: ${{ needs.check-runner-x64.outputs.should_run == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main') }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
     
     permissions:
       contents: read
@@ -267,21 +283,29 @@ jobs:
 
   # Summary job
   test-summary:
-    runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.12-slim
-      options: --user root
-    needs: [test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
+    needs: [check-runner-x64, check-runner-arm64, test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
     if: always()
+    runs-on: ubuntu-latest
     
     steps:
       - name: Generate summary
         run: |
           echo "## 📊 Docker Build Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Runner availability status
+          echo "### Runner Availability" >> $GITHUB_STEP_SUMMARY
+          echo "| Runner Type | Available |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------------|-----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| x64 Self-Hosted | ${{ needs.check-runner-x64.outputs.runners_available }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ARM64 Self-Hosted | ${{ needs.check-runner-arm64.outputs.runners_available }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test results
+          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Runner Type | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|-------------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| x86_64 | GitHub-hosted | ${{ needs.test-github-x86.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| x86_64 | Self-Hosted | ${{ needs.test-github-x86.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| x86_64 | Self-hosted | ${{ needs.test-self-hosted-x86.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| ARM64 | Self-hosted | ${{ needs.test-self-hosted-arm64.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
