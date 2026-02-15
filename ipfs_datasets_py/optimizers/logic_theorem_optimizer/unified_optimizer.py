@@ -108,7 +108,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         super().__init__(config=config, llm_backend=llm_backend)
         
         # Initialize components
-        self.extractor = LogicExtractor(llm_backend=llm_backend)
+        self.extractor = LogicExtractor(backend=llm_backend)
         self.critic = LogicCritic(use_provers=use_provers or ['z3'])
         self.legacy_optimizer = LegacyLogicOptimizer()
         self.prover_adapter = ProverIntegrationAdapter(use_provers=use_provers or ['z3'])
