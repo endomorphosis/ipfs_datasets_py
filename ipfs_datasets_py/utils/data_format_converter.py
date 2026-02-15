@@ -482,7 +482,7 @@ class UniversalDataConverter:
     def _load_car(self, path: str, **kwargs) -> List[Dict]:
         """Load CAR file."""
         try:
-            from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
+            from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
             utils = DataInterchangeUtils()
             table = utils.import_table_from_car(path)
             
@@ -501,7 +501,7 @@ class UniversalDataConverter:
     def _save_car(self, data: Any, path: str, **kwargs) -> str:
         """Save CAR file."""
         try:
-            from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
+            from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
             
             # Convert to Arrow table first
             if not isinstance(data, pa.Table):

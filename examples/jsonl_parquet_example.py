@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 # Add parent directory to path so we can import the module
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from ipfs_datasets_py.data_transformation.jsonl_to_parquet import (
+from ipfs_datasets_py.data_transformation.serialization.jsonl_to_parquet import (
     jsonl_to_parquet,
     batch_jsonl_to_parquet,
     infer_schema_from_jsonl,
