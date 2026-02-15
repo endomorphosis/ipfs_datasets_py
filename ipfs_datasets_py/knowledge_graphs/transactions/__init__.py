@@ -81,9 +81,7 @@ from .types import (
     DeadlockDetectedError
 )
 from .wal import WriteAheadLog
-
-# Future imports (when implemented)
-# from .manager import TransactionManager
+from .manager import TransactionManager
 
 __all__ = [
     # Types
@@ -95,12 +93,12 @@ __all__ = [
     "Transaction",
     # WAL
     "WriteAheadLog",
+    # Manager
+    "TransactionManager",
     # Exceptions
     "ConflictError",
     "TransactionAbortedError",
     "DeadlockDetectedError",
-    # Future
-    # "TransactionManager",
 ]
 
 # Version info
