@@ -22,10 +22,10 @@ from ipfs_datasets_py.processors.core import (
 class MockPDFProcessor:
     """Mock processor that handles PDF files."""
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_handle(self, context: ProcessingContext) -> bool:
         return context.get_format() == 'pdf'
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(self, context: ProcessingContext) -> ProcessingResult:
         return ProcessingResult(
             success=True,
             knowledge_graph={'entities': ['pdf_entity']},
@@ -44,10 +44,10 @@ class MockPDFProcessor:
 class MockGraphRAGProcessor:
     """Mock processor that handles URLs."""
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_handle(self, context: ProcessingContext) -> bool:
         return context.input_type == InputType.URL
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(self, context: ProcessingContext) -> ProcessingResult:
         return ProcessingResult(
             success=True,
             knowledge_graph={'entities': ['url_entity']},
@@ -66,11 +66,11 @@ class MockGraphRAGProcessor:
 class MockMultimediaProcessor:
     """Mock processor that handles multimedia files."""
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_handle(self, context: ProcessingContext) -> bool:
         fmt = context.get_format()
         return fmt in ('mp4', 'mp3', 'wav', 'avi')
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(self, context: ProcessingContext) -> ProcessingResult:
         return ProcessingResult(
             success=True,
             knowledge_graph={'entities': ['media_entity']},
@@ -89,10 +89,10 @@ class MockMultimediaProcessor:
 class MockErrorProcessor:
     """Mock processor that raises errors."""
     
-    def can_handle(self, context: ProcessingContext) -> bool:
+    async def can_handle(self, context: ProcessingContext) -> bool:
         raise RuntimeError("Simulated can_handle error")
     
-    def process(self, context: ProcessingContext) -> ProcessingResult:
+    async def process(self, context: ProcessingContext) -> ProcessingResult:
         raise RuntimeError("Simulated processing error")
     
     def get_capabilities(self) -> Dict[str, Any]:
@@ -166,7 +166,8 @@ class TestProcessorRegistry:
 class TestProcessorSelection:
     """Test processor selection and discovery."""
     
-    def test_get_processors_by_format(self):
+    @pytest.mark.asyncio
+    async def test_get_processors_by_format(self):
         """Test getting processors by format."""
         registry = ProcessorRegistry()
         pdf_proc = MockPDFProcessor()
@@ -181,11 +182,12 @@ class TestProcessorSelection:
             source="test.pdf",
             metadata={'format': 'pdf'}
         )
-        processors = registry.get_processors(pdf_context)
+        processors = await registry.get_processors(pdf_context)
         assert len(processors) == 1
         assert processors[0] is pdf_proc
     
-    def test_get_processors_by_input_type(self):
+    @pytest.mark.asyncio
+    async def test_get_processors_by_input_type(self):
         """Test getting processors by input type."""
         registry = ProcessorRegistry()
         pdf_proc = MockPDFProcessor()
@@ -199,7 +201,7 @@ class TestProcessorSelection:
             input_type=InputType.URL,
             source="https://example.com"
         )
-        processors = registry.get_processors(url_context)
+        processors = await registry.get_processors(url_context)
         assert len(processors) == 1
         assert processors[0] is graphrag_proc
     
@@ -226,16 +228,17 @@ class TestProcessorSelection:
         assert priorities == [30, 20, 10]
         assert names == ["GraphRAG", "Multimedia", "PDF"]
     
-    def test_get_processors_with_limit(self):
+    @pytest.mark.asyncio
+    async def test_get_processors_with_limit(self):
         """Test limiting number of returned processors."""
         registry = ProcessorRegistry()
         
         # Create multiple processors that all handle the same format
         class UniversalProcessor:
-            def can_handle(self, context: ProcessingContext) -> bool:
+            async def can_handle(self, context: ProcessingContext) -> bool:
                 return True  # Handles everything
             
-            def process(self, context: ProcessingContext) -> ProcessingResult:
+            async def process(self, context: ProcessingContext) -> ProcessingResult:
                 return ProcessingResult(success=True)
             
             def get_capabilities(self) -> Dict[str, Any]:
@@ -249,14 +252,15 @@ class TestProcessorSelection:
         context = ProcessingContext(InputType.FILE, "test.txt")
         
         # Get all
-        all_procs = registry.get_processors(context)
+        all_procs = await registry.get_processors(context)
         assert len(all_procs) == 5
         
         # Get limited
-        limited = registry.get_processors(context, limit=2)
+        limited = await registry.get_processors(context, limit=2)
         assert len(limited) == 2
     
-    def test_no_suitable_processors(self):
+    @pytest.mark.asyncio
+    async def test_no_suitable_processors(self):
         """Test when no processors can handle the input."""
         registry = ProcessorRegistry()
         pdf_proc = MockPDFProcessor()
@@ -269,7 +273,7 @@ class TestProcessorSelection:
             source="test.xyz",
             metadata={'format': 'xyz'}
         )
-        processors = registry.get_processors(context)
+        processors = await registry.get_processors(context)
         
         assert len(processors) == 0
 
@@ -302,7 +306,8 @@ class TestProcessorEnableDisable:
         assert result is True
         assert registry.get_enabled_count() == 1
     
-    def test_disabled_processor_not_selected(self):
+    @pytest.mark.asyncio
+    async def test_disabled_processor_not_selected(self):
         """Test that disabled processors are not selected."""
         registry = ProcessorRegistry()
         processor = MockPDFProcessor()
@@ -315,7 +320,7 @@ class TestProcessorEnableDisable:
             source="test.pdf",
             metadata={'format': 'pdf'}
         )
-        processors = registry.get_processors(context)
+        processors = await registry.get_processors(context)
         
         assert len(processors) == 0  # Disabled processor not returned
 
@@ -374,7 +379,8 @@ class TestCapabilities:
 class TestErrorHandling:
     """Test error handling in registry operations."""
     
-    def test_can_handle_error(self):
+    @pytest.mark.asyncio
+    async def test_can_handle_error(self):
         """Test handling errors in can_handle()."""
         registry = ProcessorRegistry()
         error_proc = MockErrorProcessor()
@@ -390,7 +396,7 @@ class TestErrorHandling:
         )
         
         # Should skip error processor and find PDF processor
-        processors = registry.get_processors(context)
+        processors = await registry.get_processors(context)
         assert len(processors) == 1
         assert processors[0] is pdf_proc
 
