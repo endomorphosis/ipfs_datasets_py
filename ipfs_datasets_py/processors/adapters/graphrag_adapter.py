@@ -48,25 +48,31 @@ class GraphRAGProcessorAdapter:
         """Lazy-load GraphRAG processor on first use."""
         if self._processor is None:
             try:
-                # Try advanced processor first (most comprehensive)
-                from ..advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
-                self._processor = AdvancedGraphRAGWebsiteProcessor()
-                logger.info("AdvancedGraphRAGWebsiteProcessor loaded")
+                # Use new unified processor (consolidates all 4 implementations)
+                from ..graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+                self._processor = UnifiedGraphRAGProcessor()
+                logger.info("UnifiedGraphRAGProcessor loaded (consolidated implementation)")
             except ImportError:
                 try:
-                    # Fall back to website processor
-                    from ..website_graphrag_processor import WebsiteGraphRAGProcessor
-                    self._processor = WebsiteGraphRAGProcessor()
-                    logger.info("WebsiteGraphRAGProcessor loaded")
+                    # Fall back to advanced processor
+                    from ..advanced_graphrag_website_processor import AdvancedGraphRAGWebsiteProcessor
+                    self._processor = AdvancedGraphRAGWebsiteProcessor()
+                    logger.info("AdvancedGraphRAGWebsiteProcessor loaded (fallback)")
                 except ImportError:
                     try:
-                        # Fall back to basic processor
-                        from ..graphrag_processor import GraphRAGProcessor
-                        self._processor = GraphRAGProcessor()
-                        logger.info("GraphRAGProcessor loaded")
-                    except ImportError as e:
-                        logger.error(f"No GraphRAG processor available: {e}")
-                        raise RuntimeError("No GraphRAG processor available")
+                        # Fall back to website processor
+                        from ..website_graphrag_processor import WebsiteGraphRAGProcessor
+                        self._processor = WebsiteGraphRAGProcessor()
+                        logger.info("WebsiteGraphRAGProcessor loaded (fallback)")
+                    except ImportError:
+                        try:
+                            # Fall back to basic processor
+                            from ..graphrag_processor import GraphRAGProcessor
+                            self._processor = GraphRAGProcessor()
+                            logger.info("GraphRAGProcessor loaded (fallback)")
+                        except ImportError as e:
+                            logger.error(f"No GraphRAG processor available: {e}")
+                            raise RuntimeError("No GraphRAG processor available")
         return self._processor
     
     async def can_process(self, input_source: Union[str, Path]) -> bool:
