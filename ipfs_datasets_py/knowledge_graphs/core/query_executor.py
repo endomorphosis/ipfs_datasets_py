@@ -583,13 +583,13 @@ class QueryExecutor:
                             
                             # Evaluate expression against binding
                             value = self._evaluate_compiled_expression(expr, binding)
-                            if value is not None:
-                                record_data[alias] = value
+                            # Always add value, even if None
+                            record_data[alias] = value
                         
-                        if record_data:
-                            keys = list(record_data.keys())
-                            values = list(record_data.values())
-                            final_results.append(Record(keys, values))
+                        # Always create record, even if all values are None
+                        keys = list(record_data.keys())
+                        values = list(record_data.values())
+                        final_results.append(Record(keys, values))
                 else:
                     # Fallback to old logic for simple queries
                     for var_name, values in result_set.items():
@@ -602,14 +602,13 @@ class QueryExecutor:
                                 # Create binding for evaluation
                                 binding = {var_name: value}
                                 result_value = self._evaluate_compiled_expression(expr, binding)
-                                if result_value is not None:
-                                    record_data[alias] = result_value
+                                # Always add value, even if None
+                                record_data[alias] = result_value
                             
-                            if record_data:
-                                # Create Record with keys and values
-                                keys = list(record_data.keys())
-                                values = list(record_data.values())
-                                final_results.append(Record(keys, values))
+                            # Always create record, even if all values are None
+                            keys = list(record_data.keys())
+                            values = list(record_data.values())
+                            final_results.append(Record(keys, values))
                 
                 logger.debug("Project: %d results", len(final_results))
             
