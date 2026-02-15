@@ -63,7 +63,7 @@ from .monad import Monad
 from .error import ErrorMonad
 
 
-class Async(Monad(T)):
+class Async(Monad[T]):
 
     def __init__(self, work, *args, **kwargs) -> None:
 

@@ -3,7 +3,7 @@
 from typing import Never
 
 
-def _check_if_there_are_duplicate_keys_in_this_dictionary(configs_dict: dict) -> Never:
+def _check_if_there_are_duplicate_keys_in_this_dictionary(configs_dict: dict) -> None:
     """
     Check if there are multiple keys with the same name in the YAML file.
 
