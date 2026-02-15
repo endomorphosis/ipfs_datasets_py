@@ -852,12 +852,23 @@ class QueryExecutor:
         
         # Handle string expressions (legacy/simple cases)
         elif isinstance(expr, str):
-            # Check if this looks like an expression (contains ".") or is in binding
-            if "." in expr or expr in binding:
-                # Use existing string expression evaluation
+            # Check if this looks like a property access expression (var.prop pattern)
+            # Not just any string with a "." (which could be an email, URL, etc.)
+            if expr in binding:
+                # Variable name
                 return self._evaluate_expression(expr, binding)
+            elif "." in expr:
+                # Could be property access like "n.age" or literal like "test@example.com"
+                # Check if it looks like a valid property access pattern
+                parts = expr.split(".")
+                if len(parts) == 2 and parts[0].isidentifier():
+                    # Looks like "n.age" - try to evaluate as expression
+                    return self._evaluate_expression(expr, binding)
+                else:
+                    # Looks like a literal (e.g., "test@example.com", "1.5")
+                    return expr
             else:
-                # Treat as literal string value
+                # Simple string with no special meaning
                 return expr
         
         # Handle literal values (numbers, strings, etc.)
