@@ -249,7 +249,7 @@ if _MINIMAL_IMPORTS:
     car_conversion = None  # type: ignore
 else:
     try:
-        from .data_transformation.dataset_serialization import (
+        from .data_transformation.serialization.dataset_serialization import (
             DatasetSerializer,
             GraphDataset,
             GraphNode,
@@ -265,7 +265,7 @@ else:
 
     # Expose the module itself for `from ipfs_datasets_py import dataset_serialization`.
     try:
-        from .data_transformation import dataset_serialization as dataset_serialization  # type: ignore
+        from .data_transformation.serialization import dataset_serialization as dataset_serialization  # type: ignore
     except Exception:
         dataset_serialization = None  # type: ignore
 
@@ -277,7 +277,7 @@ else:
         DatasetManager = None
 
     try:
-        from .data_transformation.car_conversion import DataInterchangeUtils
+        from .data_transformation.serialization.car_conversion import DataInterchangeUtils
         HAVE_CAR_CONVERSION = True
     except ImportError:
         HAVE_CAR_CONVERSION = False
