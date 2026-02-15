@@ -517,9 +517,10 @@ def create_discord_dashboard_blueprint() -> Optional[Blueprint]:
                 safe_input_path = str(_resolve_safe_path(input_path))
                 safe_output_path = str(_resolve_safe_path(output_path))
             except ValueError as ve:
+                logging.warning("Invalid export path provided: %s", ve)
                 return jsonify({
                     "status": "error",
-                    "error": f"Invalid path: {ve}"
+                    "error": "Invalid path: outside of allowed exports directory"
                 }), 400
             
             # Convert export
