@@ -446,6 +446,13 @@ if _MINIMAL_IMPORTS:
     MockGraphRAGProcessor = None
 else:
     # GraphRAG processors - Unified implementation recommended
+    UnifiedGraphRAGProcessor = None
+    GraphRAGConfiguration = None
+    GraphRAGResult = None
+    GraphRAGProcessor = None
+    MockGraphRAGProcessor = None
+    HAVE_GRAPHRAG_PROCESSOR = False
+    
     try:
         # Import unified GraphRAG processor (recommended)
         from .processors.graphrag.unified_graphrag import (
@@ -453,17 +460,16 @@ else:
             GraphRAGConfiguration,
             GraphRAGResult
         )
-        
+        HAVE_GRAPHRAG_PROCESSOR = True
+    except ImportError as e:
+        logging.debug(f"UnifiedGraphRAGProcessor unavailable: {e}")
+    
+    try:
         # Legacy imports with deprecation warnings (backward compatibility)
         from .processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
         HAVE_GRAPHRAG_PROCESSOR = True
-    except ImportError:
-        HAVE_GRAPHRAG_PROCESSOR = False
-        UnifiedGraphRAGProcessor = None
-        GraphRAGConfiguration = None
-        GraphRAGResult = None
-        GraphRAGProcessor = None
-        MockGraphRAGProcessor = None
+    except ImportError as e:
+        logging.debug(f"Legacy GraphRAGProcessor unavailable: {e}")
 
 if _MINIMAL_IMPORTS:
     HAVE_KNN = False
