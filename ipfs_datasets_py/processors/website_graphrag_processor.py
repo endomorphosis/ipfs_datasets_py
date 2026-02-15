@@ -5,16 +5,27 @@ Central orchestration class for processing entire websites into GraphRAG systems
 Coordinates web archiving, content discovery, multi-modal processing, knowledge
 graph extraction, and GraphRAG system creation.
 
+.. deprecated:: 1.0.0
+   This module is deprecated. Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+   The UnifiedGraphRAGProcessor provides async-first architecture and all features from this implementation.
+
 Usage:
+    # DEPRECATED - for backward compatibility only
     processor = WebsiteGraphRAGProcessor()
     graphrag_system = await processor.process_website("https://example.com")
     results = graphrag_system.query("What is this website about?")
+    
+    # NEW - recommended approach
+    from ipfs_datasets_py.processors.graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+    processor = UnifiedGraphRAGProcessor()
+    result = await processor.process_website("https://example.com")
 """
 
 import os
 import json
 import anyio
 import logging
+import warnings
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
@@ -67,6 +78,10 @@ class WebsiteGraphRAGProcessor:
     """
     Comprehensive website processing for GraphRAG implementation.
     
+    .. deprecated:: 1.0.0
+       Use :class:`ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor` instead.
+       This class is maintained for backward compatibility but will be removed in version 2.0.0.
+    
     Handles end-to-end processing from URL to searchable GraphRAG system:
     1. Website archiving and content discovery
     2. Multi-format content extraction (HTML, PDF, audio, video)
@@ -75,6 +90,7 @@ class WebsiteGraphRAGProcessor:
     5. GraphRAG system creation
     
     Example:
+        # DEPRECATED - for backward compatibility only
         processor = WebsiteGraphRAGProcessor()
         graphrag_system = await processor.process_website(
             url="https://example.com",
@@ -82,12 +98,26 @@ class WebsiteGraphRAGProcessor:
             include_media=True
         )
         
-        # Search across all website content
-        results = graphrag_system.query(
-            "What are the main topics discussed on this website?"
-        )
+        # NEW - recommended approach
+        from ipfs_datasets_py.processors.graphrag.unified_graphrag import UnifiedGraphRAGProcessor
+        processor = UnifiedGraphRAGProcessor()
+        result = await processor.process_website("https://example.com")
     """
     
+    def __init__(self):
+        """
+        Initialize website GraphRAG processor.
+        
+        .. deprecated:: 1.0.0
+           Use UnifiedGraphRAGProcessor instead.
+        """
+        warnings.warn(
+            "WebsiteGraphRAGProcessor is deprecated and will be removed in version 2.0.0. "
+            "Use ipfs_datasets_py.processors.graphrag.unified_graphrag.UnifiedGraphRAGProcessor instead. "
+            "The unified processor provides async-first architecture and all features from this implementation.",
+            DeprecationWarning,
+            stacklevel=2
+        )
     def __init__(self, config: Optional[WebsiteProcessingConfig] = None):
         """
         Initialize processor with configuration.

@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 # Import from core multimedia module
-from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
 
 logger = logging.getLogger(__name__)
 
