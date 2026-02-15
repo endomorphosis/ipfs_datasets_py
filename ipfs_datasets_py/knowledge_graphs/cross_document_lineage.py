@@ -277,7 +277,7 @@ class EnhancedLineageTracker:
         self._ipld_storage_enabled = self.config.get("enable_ipld_storage", False)
         if self._ipld_storage_enabled:
             try:
-                from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+                from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
                 self.ipld_storage = storage or IPLDStorage()
                 self._ipld_blocks = {}  # Cache for IPLD blocks
                 self._root_cid = None  # Root CID for the lineage graph
@@ -1615,7 +1615,7 @@ class EnhancedLineageTracker:
         """
         try:
             import json
-            from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+            from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 
             # Create IPLD storage if not provided
             storage = ipld_storage or IPLDStorage()

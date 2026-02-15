@@ -24,9 +24,9 @@ from typing import Dict, List, Any, Optional, Union, Tuple, Set, TypeVar, Generi
 from collections import defaultdict
 from dataclasses import dataclass
 
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-from ipfs_datasets_py.data_transformation.ipld.dag_pb import create_dag_node, parse_dag_node
-from ipfs_datasets_py.data_transformation.ipld.optimized_codec import OptimizedEncoder, OptimizedDecoder
+from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld.dag_pb import create_dag_node, parse_dag_node
+from ipfs_datasets_py.processors.storage.ipld.optimized_codec import OptimizedEncoder, OptimizedDecoder
 
 # Check if we have optional dependencies
 try:

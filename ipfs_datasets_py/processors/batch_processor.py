@@ -63,7 +63,7 @@ from pydantic import (
 )
 
 
-from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem
 from ipfs_datasets_py.processors.pdf_processor import PDFProcessor

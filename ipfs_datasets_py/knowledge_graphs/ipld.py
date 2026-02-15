@@ -62,9 +62,9 @@ warnings.warn(
     stacklevel=2
 )
 
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-from ipfs_datasets_py.data_transformation.ipld.dag_pb import create_dag_node, parse_dag_node
-from ipfs_datasets_py.data_transformation.ipld.optimized_codec import OptimizedEncoder, OptimizedDecoder
+from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld.dag_pb import create_dag_node, parse_dag_node
+from ipfs_datasets_py.processors.storage.ipld.optimized_codec import OptimizedEncoder, OptimizedDecoder
 from ipfs_datasets_py.vector_stores.ipld import IPLDVectorStore, SearchResult
 
 try:

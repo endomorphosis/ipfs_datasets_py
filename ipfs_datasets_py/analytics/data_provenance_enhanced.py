@@ -72,8 +72,8 @@ except ImportError:
 
 # IPLD storage integration
 try:
-    from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-    from ipfs_datasets_py.data_transformation.ipld.dag_pb import DAGNode, DAGLink
+    from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
+    from ipfs_datasets_py.processors.storage.ipld.dag_pb import DAGNode, DAGLink
     IPLD_AVAILABLE = True
     DAGPB_AVAILABLE = True
 except ImportError:

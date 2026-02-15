@@ -51,7 +51,7 @@ import ipfs_datasets_py.data_transformation.ipfs_formats.ipfs_multiformats as ip
 get_cid = ipfs_multiformats.ipfs_multiformats_py(None, None).get_cid
 
 
-from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 from ipfs_datasets_py.processors.llm_optimizer import (
     LLMDocument, LLMChunk,
     WIKIPEDIA_CLASSIFICATIONS
