@@ -60,28 +60,33 @@ class DataInterchangeUtils:
         """
         Validate and normalize a CAR file path.
 
-        This applies basic safety checks to defend against path traversal
+        This applies safety checks to defend against path traversal
         and unintended access to arbitrary filesystem locations.
-        If the environment variable IPFS_DATASETS_SAFE_ROOT is set, the path
-        is required to reside within that directory.
+
+        The path is always required to reside within a safe root directory:
+        - If the environment variable IPFS_DATASETS_SAFE_ROOT is set, that
+          directory (after normalization) is used as the root.
+        - Otherwise, the current working directory is used as the root.
         """
         if not isinstance(path, str):
             raise ValueError("CAR path must be a string")
 
-        # Normalize to an absolute path
+        # Normalize candidate path to an absolute path
         normalized_path = os.path.abspath(os.path.normpath(path))
 
-        # Optional root directory restriction
-        safe_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT")
-        if safe_root:
-            safe_root_abs = os.path.abspath(os.path.normpath(safe_root))
-            try:
-                common = os.path.commonpath([safe_root_abs, normalized_path])
-            except ValueError:
-                # Different drive on Windows or other path issues
-                raise ValueError("Invalid CAR path")
-            if common != safe_root_abs:
-                raise ValueError("CAR path is outside of the allowed directory")
+        # Determine and normalize safe root directory
+        safe_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT") or os.getcwd()
+        safe_root_abs = os.path.abspath(os.path.normpath(safe_root))
+
+        try:
+            # Ensure the candidate path is within the safe root
+            common = os.path.commonpath([safe_root_abs, normalized_path])
+        except ValueError:
+            # Different drive on Windows or other path issues
+            raise ValueError("Invalid CAR path")
+
+        if common != safe_root_abs:
+            raise ValueError("CAR path is outside of the allowed directory")
 
         return normalized_path
 
