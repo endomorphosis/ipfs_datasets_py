@@ -18,7 +18,7 @@ def extract_metadata(data: str, options: Optional[dict[str, Any]] = None) -> dic
         Dictionary of metadata.
     """
     # Extract title
-    title_match = re.search(r'<title[^>]*>(.*?)</title>', data, re.IGNORECASE | re.DOTALL)
+    title_match = re.search(r'<title\b[^>]*>(.*?)</title\b[^>]*>', data, re.IGNORECASE | re.DOTALL)
     title = title_match.group(1) if title_match else ""
     
     # Extract metadata from meta tags
@@ -60,8 +60,8 @@ def extract_text(data: str, options: Optional[dict[str, Any]] = None) -> str:
         Plain text extracted from HTML.
     """
     # Remove script and style tags
-    text = re.sub(r'<script[^>]*>.*?</script>', '', data, flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r'<style[^>]*>.*?</style>', '', text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<script\b[^>]*>.*?</script\b[^>]*>', '', data, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r'<style\b[^>]*>.*?</style\b[^>]*>', '', text, flags=re.IGNORECASE | re.DOTALL)
     
     # Replace common tags with newlines or spaces
     text = re.sub(r'<(br|p|div|h[1-6]|li)[^>]*>', '\n', text, flags=re.IGNORECASE)
@@ -98,7 +98,7 @@ def extract_structure(data: str, metadata: dict[str, Any]) -> list[dict[str, Any
         })
     
     # Extract headings
-    heading_pattern = r'<h([1-6])[^>]*>(.*?)</h\1>'
+    heading_pattern = r'<h([1-6])\b[^>]*>(.*?)</h\1\b[^>]*>'
     headings = re.findall(heading_pattern, data, re.IGNORECASE | re.DOTALL)
     
     for level, content in headings:
