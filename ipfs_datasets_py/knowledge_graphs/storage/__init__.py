@@ -25,26 +25,32 @@ Environment Variables:
 
 Components:
 - IPLDBackend: Main storage interface using ipfs_backend_router
-- CacheLayer: LRU cache for frequently accessed CIDs
-- BatchProcessor: Bulk operations for efficiency
-- CAROperations: Import/export CAR files
 
 Usage:
-    from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
+    from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend, create_backend
     from ipfs_datasets_py.router_deps import RouterDeps
     
     # Create storage backend with router deps
     deps = RouterDeps()
     storage = IPLDBackend(deps=deps)
     
+    # Or use convenience function
+    storage = create_backend()
+    
     # Store data (uses ipfs_backend_router automatically)
-    cid = storage.store(data_bytes, pin=True)
+    cid = storage.store({"hello": "world"}, pin=True)
     
     # Retrieve data
-    data = storage.retrieve(cid)
+    data = storage.retrieve_json(cid)
+    
+    # Store complete graph
+    graph_cid = storage.store_graph(
+        nodes=[{"id": "1", "name": "Alice"}],
+        relationships=[{"type": "KNOWS", "start": "1", "end": "2"}]
+    )
     
     # Export to CAR file
-    storage.export_to_car(root_cid, "graph.car")
+    car_bytes = storage.export_car(graph_cid)
 
 Integration Pattern:
     All IPFS operations go through ipfs_backend_router for compatibility:
@@ -63,22 +69,18 @@ Integration Pattern:
             return self.backend.cat(cid)
 
 Roadmap:
-- Phase 1 (Weeks 1-2): Consolidate IPLD storage with router integration
+- Phase 1 (Weeks 1-2): IPLD storage with router integration ✅
 - Phase 4 (Week 7): Enhanced CAR operations for JSON-LD
 """
 
-# Phase 1 implementation (Weeks 1-2)
-# from .ipld_backend import IPLDBackend
-# from .cache import CacheLayer
-# from .car_operations import CAROperations
+# Phase 1 implementation complete
+from .ipld_backend import IPLDBackend, create_backend
 
 __all__ = [
-    # Phase 1 exports will go here
-    # "IPLDBackend",
-    # "CacheLayer",
-    # "CAROperations",
+    "IPLDBackend",
+    "create_backend",
 ]
 
 # Version info
 __version__ = "0.1.0"
-__status__ = "planning"  # Will be "development" in Phase 1
+__status__ = "development"  # Phase 1 in progress

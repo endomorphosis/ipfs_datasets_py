@@ -18,42 +18,50 @@ Usage:
     
     driver.close()
 
-Supported Features (v1.0):
+Supported Features (Phase 1):
 - Neo4j driver API (driver, session, result, record)
 - Connection URI parsing (ipfs://, ipfs+embedded://)
 - Session management (auto-commit, explicit transactions)
-- Query execution (Cypher queries translated to IR)
 - Result handling (single, data, graph methods)
 - Transaction support (begin, commit, rollback)
 - Read/write transactions with retry logic
+- Integration with ipfs_backend_router (Kubo, ipfs_kit_py, ipfs_accelerate_py)
 
 Roadmap:
-- Phase 1 (Weeks 1-2): Basic driver API and connection management
+- Phase 1 (Weeks 1-2): Basic driver API and connection management ✅
 - Phase 2 (Weeks 3-4): Cypher query language support
 - Phase 3 (Weeks 5-6): ACID transactions with WAL
 """
 
-# Phase 1 implementation (Weeks 1-2)
-# from .driver import IPFSGraphDatabase, GraphDatabase
-# from .session import IPFSSession, IPFSTransaction
-# from .result import Result, Record
-# from .types import Node, Relationship, Path
+# Phase 1 implementation complete
+from .driver import IPFSDriver, GraphDatabase, create_driver
+from .session import IPFSSession, IPFSTransaction
+from .result import Result, Record
+from .types import Node, Relationship, Path, GraphObject
 
 __all__ = [
-    # Phase 1 exports will go here
-    # "GraphDatabase",
-    # "IPFSGraphDatabase",
-    # "IPFSSession",
-    # "IPFSTransaction",
-    # "Result",
-    # "Record",
-    # "Node",
-    # "Relationship",
-    # "Path",
+    # Main driver interface (Neo4j compatible)
+    "GraphDatabase",
+    "IPFSDriver",
+    "create_driver",
+    
+    # Session and transaction management
+    "IPFSSession",
+    "IPFSTransaction",
+    
+    # Result handling
+    "Result",
+    "Record",
+    
+    # Graph types
+    "Node",
+    "Relationship",
+    "Path",
+    "GraphObject",
 ]
 
 # Version info
 __version__ = "0.1.0"
 __author__ = "IPFS Datasets Team"
 __description__ = "Neo4j-compatible graph database on IPFS/IPLD"
-__status__ = "planning"  # Will be "development" in Phase 1
+__status__ = "development"  # Phase 1 in progress
