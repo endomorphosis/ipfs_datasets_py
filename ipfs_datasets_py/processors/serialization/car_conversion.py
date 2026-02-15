@@ -11,8 +11,8 @@ import json
 import tempfile
 from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, BinaryIO
 
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
+from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
+from ipfs_datasets_py.processors.serialization.dataset_serialization import DatasetSerializer
 
 # Check for dependencies
 try:

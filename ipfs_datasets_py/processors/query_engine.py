@@ -122,7 +122,7 @@ except ImportError:
     torch = None
     HAVE_TORCH = False
 
-from ipfs_datasets_py.data_transformation.ipld import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 
 try:
     from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, Entity, Relationship

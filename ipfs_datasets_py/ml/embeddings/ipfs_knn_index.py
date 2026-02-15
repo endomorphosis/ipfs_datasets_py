@@ -12,7 +12,7 @@ import tempfile
 import uuid
 from typing import Dict, List, Optional, Tuple, Any, Union, Generator
 
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 from ipfs_datasets_py.data_transformation.serialization.dataset_serialization import DatasetSerializer
 
 
@@ -245,7 +245,7 @@ class IPFSKnnIndex:
             )
             
             # Custom storage configuration for distributed deployment
-            from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
+            from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
             
             custom_storage = IPLDStorage(
                 ipfs_gateway="http://production-ipfs:8080",
