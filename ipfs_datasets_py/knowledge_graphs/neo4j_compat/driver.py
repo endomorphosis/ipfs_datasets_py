@@ -100,7 +100,10 @@ class IPFSDriver:
         
         # Initialize RouterDeps and backend
         self.deps = deps if deps is not None else RouterDeps()
-        self.backend = IPLDBackend(deps=self.deps)
+        self.backend = IPLDBackend(deps=self.deps, database="neo4j")  # Default backend
+        self._backend_cache: Dict[str, IPLDBackend] = {
+            "neo4j": self.backend  # Cache default backend
+        }
         
         # Initialize connection pool
         self._connection_pool = ConnectionPool(
@@ -152,6 +155,29 @@ class IPFSDriver:
                 f"Use 'ipfs://' or 'ipfs+embedded://'"
             )
     
+    def _get_database_backend(self, database: str = "neo4j") -> 'IPLDBackend':
+        """
+        Get or create backend for specific database.
+        
+        Implements per-database caching for namespace isolation.
+        
+        Args:
+            database: Database name
+            
+        Returns:
+            IPLDBackend instance for the specified database
+            
+        Example:
+            backend = driver._get_database_backend("analytics")
+        """
+        if database not in self._backend_cache:
+            logger.debug("Creating new backend for database: %s", database)
+            self._backend_cache[database] = IPLDBackend(
+                deps=self.deps,
+                database=database
+            )
+        return self._backend_cache[database]
+    
     def session(
         self,
         database: Optional[str] = None,
@@ -184,9 +210,14 @@ class IPFSDriver:
         if self._closed:
             raise RuntimeError("Driver is closed")
         
+        # Get database-specific backend
+        database_name = database or "neo4j"
+        backend = self._get_database_backend(database_name)
+        
         return IPFSSession(
             driver=self,
-            database=database,
+            backend=backend,
+            database=database_name,
             default_access_mode=default_access_mode,
             bookmarks=bookmarks
         )

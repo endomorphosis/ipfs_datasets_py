@@ -1153,26 +1153,44 @@ class QueryExecutor:
         Call a built-in function.
         
         Args:
-            func_name: Function name (e.g., "toLower", "substring")
+            func_name: Function name (e.g., "toLower", "substring", "abs", "point")
             args: List of evaluated arguments
             
         Returns:
             Function result
         """
-        func_name = func_name.lower()
+        func_name_lower = func_name.lower()
         
-        # String functions
-        if func_name == "tolower":
+        # Try function registry first (math, spatial, temporal)
+        from ..cypher.functions import FUNCTION_REGISTRY
+        if func_name_lower in FUNCTION_REGISTRY:
+            try:
+                func = FUNCTION_REGISTRY[func_name_lower]
+                # Handle single argument functions
+                if len(args) == 1:
+                    return func(args[0])
+                # Handle multi-argument functions
+                elif len(args) > 1:
+                    return func(*args)
+                # Handle no-argument functions
+                else:
+                    return func()
+            except Exception as e:
+                logger.warning("Function %s raised exception: %s", func_name, e)
+                return None
+        
+        # String functions (existing implementation)
+        if func_name_lower == "tolower":
             if args and isinstance(args[0], str):
                 return args[0].lower()
             return None
         
-        elif func_name == "toupper":
+        elif func_name_lower == "toupper":
             if args and isinstance(args[0], str):
                 return args[0].upper()
             return None
         
-        elif func_name == "substring":
+        elif func_name_lower == "substring":
             if len(args) >= 2 and isinstance(args[0], str):
                 string = args[0]
                 start = args[1] if isinstance(args[1], int) else 0
@@ -1183,22 +1201,22 @@ class QueryExecutor:
                     return string[start:]
             return None
         
-        elif func_name == "trim":
+        elif func_name_lower == "trim":
             if args and isinstance(args[0], str):
                 return args[0].strip()
             return None
         
-        elif func_name == "ltrim":
+        elif func_name_lower == "ltrim":
             if args and isinstance(args[0], str):
                 return args[0].lstrip()
             return None
         
-        elif func_name == "rtrim":
+        elif func_name_lower == "rtrim":
             if args and isinstance(args[0], str):
                 return args[0].rstrip()
             return None
         
-        elif func_name == "replace":
+        elif func_name_lower == "replace":
             if len(args) >= 3 and isinstance(args[0], str):
                 string = args[0]
                 search = str(args[1]) if args[1] is not None else ""
@@ -1206,12 +1224,12 @@ class QueryExecutor:
                 return string.replace(search, replace)
             return None
         
-        elif func_name == "reverse":
+        elif func_name_lower == "reverse":
             if args and isinstance(args[0], str):
                 return args[0][::-1]
             return None
         
-        elif func_name == "size":
+        elif func_name_lower == "size":
             if args:
                 if isinstance(args[0], str):
                     return len(args[0])
@@ -1219,19 +1237,19 @@ class QueryExecutor:
                     return len(args[0])
             return None
         
-        elif func_name == "split":
+        elif func_name_lower == "split":
             if len(args) >= 2 and isinstance(args[0], str):
                 string = args[0]
                 delimiter = str(args[1]) if args[1] is not None else ","
                 return string.split(delimiter)
             return None
         
-        elif func_name == "left":
+        elif func_name_lower == "left":
             if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
                 return args[0][:args[1]]
             return None
         
-        elif func_name == "right":
+        elif func_name_lower == "right":
             if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
                 return args[0][-args[1]:]
             return None

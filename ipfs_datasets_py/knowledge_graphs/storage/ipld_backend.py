@@ -114,6 +114,7 @@ class IPLDBackend:
     def __init__(
         self,
         deps: Optional['RouterDeps'] = None,
+        database: str = "neo4j",
         pin_by_default: bool = True,
         cache_capacity: int = 1000
     ):
@@ -122,6 +123,7 @@ class IPLDBackend:
         
         Args:
             deps: RouterDeps instance for shared state (creates new if None)
+            database: Database name for namespace isolation
             pin_by_default: Whether to pin content by default
             cache_capacity: Maximum number of items to cache (0 to disable)
         """
@@ -132,12 +134,14 @@ class IPLDBackend:
             )
         
         self.deps = deps if deps is not None else RouterDeps()
+        self.database = database
+        self._namespace = f"kg:db:{database}:"
         self.pin_by_default = pin_by_default
         self._backend = None
         self._cache = LRUCache(cache_capacity) if cache_capacity > 0 else None
         
-        logger.debug("IPLDBackend initialized (deps=%s, cache=%s)", 
-                    self.deps, cache_capacity if self._cache else "disabled")
+        logger.debug("IPLDBackend initialized (deps=%s, database=%s, cache=%s)", 
+                    self.deps, database, cache_capacity if self._cache else "disabled")
     
     def _get_backend(self):
         """
@@ -153,6 +157,22 @@ class IPLDBackend:
             self._backend = get_ipfs_backend(deps=self.deps)
             logger.debug("IPFS backend initialized: %s", type(self._backend).__name__)
         return self._backend
+    
+    def _make_key(self, key: str) -> str:
+        """
+        Add database namespace to key for multi-database isolation.
+        
+        Args:
+            key: Storage key
+            
+        Returns:
+            Namespaced key (e.g., "kg:db:neo4j:nodes:123")
+            
+        Example:
+            >>> backend._make_key("nodes:123")
+            'kg:db:neo4j:nodes:123'
+        """
+        return f"{self._namespace}{key}"
     
     def store(
         self,

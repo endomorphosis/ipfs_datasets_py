@@ -136,6 +136,7 @@ class IPFSSession:
     def __init__(
         self,
         driver: 'IPFSDriver',
+        backend: Optional[Any] = None,
         database: Optional[str] = None,
         default_access_mode: str = "WRITE",
         bookmarks: Optional[Union[str, List[str], Bookmarks]] = None
@@ -145,15 +146,23 @@ class IPFSSession:
         
         Args:
             driver: Parent driver
+            backend: Database-specific backend (created if None)
             database: Database name (optional, for multi-database support)
             default_access_mode: "READ" or "WRITE"
             bookmarks: Initial bookmarks for causal consistency (Phase 2)
         """
         self._driver = driver
-        self._database = database or "default"
+        self._database = database or "neo4j"
         self._default_access_mode = default_access_mode
         self._closed = False
         self._transaction = None
+        
+        # Use provided backend or get from driver
+        if backend is not None:
+            self.backend = backend
+        else:
+            # Fallback to driver's default backend for backward compatibility
+            self.backend = driver.backend
         
         # Bookmark support (Phase 2)
         if isinstance(bookmarks, Bookmarks):
