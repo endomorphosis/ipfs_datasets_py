@@ -282,7 +282,7 @@ class LiveOptimizerVisualization:
                 cycle_id=f"cycle_{i}",
                 analyzed_queries=10 + i * 5 + random.randint(-2, 2),
                 patterns_identified=2 + i + random.randint(0, 2),
-                parameters_adjusted=i % 3 + 1,
+                parameters_adjusted={f"param{j}": float(j) for j in range(i % 3 + 1)},
                 execution_time=2.5 + i * 0.5 + random.random(),
                 timestamp=now - datetime.timedelta(days=num_cycles-i)
             )
@@ -314,7 +314,8 @@ class LiveOptimizerVisualization:
                 parameter_name=param_name,
                 old_value=old_value,
                 new_value=new_value,
-                reason=f"Performance tuning cycle {i//3}",
+                adaptation_reason=f"Performance tuning cycle {i//3}",
+                confidence=0.8 + random.random() * 0.2,
                 timestamp=now - datetime.timedelta(days=num_adaptations//2-i//2)
             )
 
@@ -347,11 +348,11 @@ class LiveOptimizerVisualization:
                 mean_latency = mean_latency + 0.8
 
             metrics_collector.record_strategy_effectiveness(
-                strategy=strategy,
+                strategy_name=strategy,
                 query_type=query_type,
-                success_rate=success_rate,
-                mean_latency=mean_latency,
-                sample_size=10 + i,
+                effectiveness_score=success_rate,
+                execution_time=mean_latency,
+                result_count=10 + i,
                 timestamp=timestamp
             )
 

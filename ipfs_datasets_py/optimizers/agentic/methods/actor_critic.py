@@ -22,6 +22,24 @@ from ..patch_control import PatchManager
 
 
 @dataclass
+class CriticFeedback:
+    """Feedback from the critic evaluating a solution.
+    
+    Attributes:
+        correctness_score: Score for correctness (0-1)
+        performance_score: Score for performance (0-1)
+        style_score: Score for code style (0-1)
+        overall_score: Overall weighted score (0-1)
+        comments: List of feedback comments
+    """
+    correctness_score: float
+    performance_score: float
+    style_score: float
+    overall_score: float
+    comments: List[str] = field(default_factory=list)
+
+
+@dataclass
 class Policy:
     """Represents a learned policy for code generation.
     

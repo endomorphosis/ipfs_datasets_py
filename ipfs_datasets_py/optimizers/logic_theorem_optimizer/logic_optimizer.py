@@ -12,19 +12,12 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
-from enum import Enum
 from collections import defaultdict
 
+# Import OptimizationStrategy from BaseOptimizer (removing duplicate)
+from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationStrategy
+
 logger = logging.getLogger(__name__)
-
-
-class OptimizationStrategy(Enum):
-    """Strategy for optimization."""
-    PROMPT_TUNING = "prompt_tuning"  # Optimize extraction prompts
-    CONFIDENCE_ADJUSTMENT = "confidence_adjustment"  # Adjust confidence thresholds
-    MODE_SELECTION = "mode_selection"  # Improve extraction mode selection
-    ONTOLOGY_ALIGNMENT = "ontology_alignment"  # Improve ontology alignment
-    MULTI_OBJECTIVE = "multi_objective"  # Optimize multiple objectives
 
 
 @dataclass

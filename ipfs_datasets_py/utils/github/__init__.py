@@ -23,7 +23,7 @@ Example:
 
 # Core components
 from .cli_wrapper import GitHubCLI
-from .counter import APICounter, GitHubAPICounter
+from .counter import APICounter, APICallRecord, GitHubAPICounter
 from .rate_limiter import RateLimiter, AdaptiveRateLimiter
 
 # Re-export GitHubCache from cache module
@@ -33,6 +33,7 @@ __all__ = [
     # Main API
     'GitHubCLI',
     'APICounter',
+    'APICallRecord',
     'RateLimiter',
     'GitHubCache',
     

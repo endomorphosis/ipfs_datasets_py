@@ -17,14 +17,16 @@ Provides a single source of truth for all GitHub API interactions used by:
 - Workflow helper scripts (.github/scripts/)
 """
 
+import json
 import logging
+import subprocess
 import warnings
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Import from unified utils modules
 from ...utils.cache import CacheBackend, CacheEntry, GitHubCache
-from ...utils.github import APICounter
+from ...utils.github import APICounter, APICallRecord
 
 logger = logging.getLogger(__name__)
 

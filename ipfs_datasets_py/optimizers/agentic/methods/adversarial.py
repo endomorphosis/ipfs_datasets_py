@@ -8,6 +8,7 @@ import ast
 import subprocess
 import tempfile
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -20,6 +21,36 @@ from ..base import (
     ValidationResult,
 )
 from ..patch_control import PatchManager
+
+
+@dataclass
+class BenchmarkResult:
+    """Results from benchmarking a solution.
+    
+    Attributes:
+        execution_time: Time taken to execute (seconds)
+        memory_usage: Memory used (MB)
+        correctness_score: Correctness score (0-1)
+    """
+    execution_time: float
+    memory_usage: float
+    correctness_score: float
+
+
+@dataclass
+class Solution:
+    """Represents a candidate solution.
+    
+    Attributes:
+        id: Unique identifier for the solution
+        code: The solution code
+        description: Description of the solution approach
+        benchmark_result: Benchmark results (if evaluated)
+    """
+    id: str
+    code: str
+    description: str
+    benchmark_result: Optional[BenchmarkResult] = None
 
 
 class AdversarialOptimizer(AgenticOptimizer):
