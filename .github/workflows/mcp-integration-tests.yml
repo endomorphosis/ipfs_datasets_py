@@ -35,8 +35,17 @@ env:
   MCP_DASHBOARD_PORT: 8899
 
 jobs:
+  # Check if self-hosted runners are available
+  check-runner:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+
   # Basic integration tests (containerized)
   basic-integration-tests:
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
@@ -92,12 +101,12 @@ jobs:
 
   # Comprehensive integration tests (containerized)
   comprehensive-integration-tests:
+    needs: [check-runner, basic-integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: basic-integration-tests
-    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     
     steps:
       - name: Checkout repository
@@ -152,12 +161,12 @@ jobs:
 
   # Tools-specific tests (containerized)
   tools-integration-tests:
+    needs: [check-runner, basic-integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: basic-integration-tests
-    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
     
     steps:
       - name: Checkout repository
@@ -209,12 +218,12 @@ jobs:
 
   # Performance tests (containerized)
   performance-integration-tests:
+    needs: [check-runner, basic-integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: basic-integration-tests
-    if: ${{ !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
     
     steps:
       - name: Checkout repository
@@ -407,9 +416,9 @@ jobs:
 
   # Multi-architecture integration tests
   multi-arch-integration-tests:
+    needs: [check-runner, basic-integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() }}
     runs-on: ${{ matrix.runner }}
-    needs: basic-integration-tests
-    if: ${{ !cancelled() }}
     continue-on-error: true
     strategy:
       matrix:
@@ -466,12 +475,9 @@ jobs:
 
   # Generate comprehensive test summary
   integration-test-summary:
-    runs-on: [self-hosted, linux, x64]
-    container:
-      image: python:3.12-slim
-      options: --user root
-    needs: [basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
+    needs: [check-runner, basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
     if: always()
+    runs-on: ubuntu-latest
     
     steps:
       - name: Download Test Results
