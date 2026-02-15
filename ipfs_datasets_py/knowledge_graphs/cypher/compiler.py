@@ -340,6 +340,9 @@ class CypherCompiler:
                 }
                 if return_item.alias:
                     item_info["alias"] = return_item.alias
+                else:
+                    # Generate default alias from expression
+                    item_info["alias"] = self._expression_to_string(return_item.expression)
                 items.append(item_info)
             
             op = {

@@ -799,8 +799,13 @@ class QueryExecutor:
         
         # Handle string expressions (legacy/simple cases)
         elif isinstance(expr, str):
-            # Use existing string expression evaluation
-            return self._evaluate_expression(expr, binding)
+            # Check if this looks like an expression (contains ".") or is in binding
+            if "." in expr or expr in binding:
+                # Use existing string expression evaluation
+                return self._evaluate_expression(expr, binding)
+            else:
+                # Treat as literal string value
+                return expr
         
         # Handle literal values (numbers, strings, etc.)
         else:
