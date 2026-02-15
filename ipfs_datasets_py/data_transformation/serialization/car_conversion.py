@@ -56,6 +56,35 @@ class DataInterchangeUtils:
         self.storage = storage or IPLDStorage()
         self.serializer = DatasetSerializer(storage=self.storage)
 
+    def _validate_car_path(self, path: str) -> str:
+        """
+        Validate and normalize a CAR file path.
+
+        This applies basic safety checks to defend against path traversal
+        and unintended access to arbitrary filesystem locations.
+        If the environment variable IPFS_DATASETS_SAFE_ROOT is set, the path
+        is required to reside within that directory.
+        """
+        if not isinstance(path, str):
+            raise ValueError("CAR path must be a string")
+
+        # Normalize to an absolute path
+        normalized_path = os.path.abspath(os.path.normpath(path))
+
+        # Optional root directory restriction
+        safe_root = os.environ.get("IPFS_DATASETS_SAFE_ROOT")
+        if safe_root:
+            safe_root_abs = os.path.abspath(os.path.normpath(safe_root))
+            try:
+                common = os.path.commonpath([safe_root_abs, normalized_path])
+            except ValueError:
+                # Different drive on Windows or other path issues
+                raise ValueError("Invalid CAR path")
+            if common != safe_root_abs:
+                raise ValueError("CAR path is outside of the allowed directory")
+
+        return normalized_path
+
     def export_table_to_car(self, table, output_path, hash_columns=None):
         """
         Export an Arrow table to a CAR file.
@@ -124,7 +153,8 @@ class DataInterchangeUtils:
         if not HAVE_IPLD_CAR:
             # JSON fallback when CAR support is unavailable
             try:
-                with open(car_path, 'r', encoding='utf-8') as f:
+                safe_car_path = self._validate_car_path(car_path)
+                with open(safe_car_path, 'r', encoding='utf-8') as f:
                     records = json.load(f)
                 if not isinstance(records, list):
                     records = [records]
