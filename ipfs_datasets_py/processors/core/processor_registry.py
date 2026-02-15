@@ -3,6 +3,10 @@
 This module provides a centralized registry for managing processors in the
 unified processor system. It handles processor registration, discovery based
 on input context, priority-based selection, and capability reporting.
+
+Supports both synchronous and asynchronous processor operations. The
+get_processors() method is async to support processors with async can_handle()
+checks.
 """
 
 from __future__ import annotations
@@ -43,12 +47,12 @@ class ProcessorEntry:
 
 
 class ProcessorRegistry:
-    """Registry for managing processors.
+    """Registry for managing processors with async support.
     
     The ProcessorRegistry is the central manager for all processors in the
     unified system. It handles:
     - Processor registration with priorities
-    - Discovery of suitable processors for inputs
+    - Discovery of suitable processors for inputs (async)
     - Priority-based selection
     - Capability aggregation and reporting
     
@@ -56,15 +60,18 @@ class ProcessorRegistry:
     processor for an input, the registry checks processors in priority order
     (highest first) and returns the first one where can_handle() returns True.
     
+    Note: get_processors() is async to support processors with async can_handle()
+    methods.
+    
     Example:
         >>> registry = ProcessorRegistry()
         >>> registry.register(pdf_processor, priority=10, name="PDF Processor")
         >>> registry.register(graphrag_processor, priority=20, name="GraphRAG")
         >>> 
         >>> context = ProcessingContext(InputType.FILE, "document.pdf")
-        >>> processors = registry.get_processors(context)
+        >>> processors = await registry.get_processors(context)
         >>> if processors:
-        ...     result = processors[0].process(context)
+        ...     result = await processors[0].process(context)
     """
     
     def __init__(self):
@@ -179,15 +186,16 @@ class ProcessorRegistry:
         entry = self._name_index.get(name)
         return entry.processor if entry else None
     
-    def get_processors(
+    async def get_processors(
         self,
         context: ProcessingContext,
         limit: Optional[int] = None
     ) -> List[ProcessorProtocol]:
-        """Get processors that can handle the given context.
+        """Get processors that can handle the given context (async).
         
         Checks all enabled processors in priority order (highest first) and
-        returns those where can_handle() returns True.
+        returns those where can_handle() returns True. This method is async
+        because it needs to await the can_handle() method on each processor.
         
         Args:
             context: Processing context to check
@@ -198,9 +206,9 @@ class ProcessorRegistry:
             
         Example:
             >>> context = ProcessingContext(InputType.FILE, "doc.pdf")
-            >>> processors = registry.get_processors(context)
+            >>> processors = await registry.get_processors(context)
             >>> if processors:
-            ...     result = processors[0].process(context)
+            ...     result = await processors[0].process(context)
         """
         suitable = []
         
@@ -209,9 +217,9 @@ class ProcessorRegistry:
             if not entry.enabled:
                 continue
             
-            # Check if processor can handle this context
+            # Check if processor can handle this context (async)
             try:
-                if entry.processor.can_handle(context):
+                if await entry.processor.can_handle(context):
                     suitable.append(entry.processor)
                     logger.debug(
                         f"Processor '{entry.name}' (priority {entry.priority}) "
