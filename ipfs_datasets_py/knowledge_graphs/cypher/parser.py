@@ -158,16 +158,50 @@ class CypherParser:
         return self.current_token.type in token_types
     
     def _parse_query(self) -> QueryNode:
-        """Parse a complete query."""
+        """Parse a complete query, potentially with UNION."""
+        # Parse first query part
+        clauses = self._parse_query_part()
+        
+        # Check for UNION
+        while self._match(TokenType.UNION):
+            self._advance()
+            
+            # Check for ALL keyword
+            all_flag = False
+            if self._match(TokenType.ALL):
+                self._advance()
+                all_flag = True
+            
+            # Add UNION marker clause
+            from .ast import UnionClause
+            union_clause = UnionClause(all=all_flag)
+            clauses.append(union_clause)
+            
+            # Parse next query part
+            next_clauses = self._parse_query_part()
+            clauses.extend(next_clauses)
+        
+        return QueryNode(clauses=clauses)
+    
+    def _parse_query_part(self) -> List:
+        """Parse a single query part (before UNION)."""
         clauses = []
         
         while self.current_token and self.current_token.type != TokenType.EOF:
-            if self._match(TokenType.MATCH):
+            # Stop at UNION
+            if self._match(TokenType.UNION):
+                break
+                
+            # Check for OPTIONAL MATCH first
+            if self._match(TokenType.OPTIONAL):
+                clauses.append(self._parse_optional_match())
+            elif self._match(TokenType.MATCH):
                 clauses.append(self._parse_match())
             elif self._match(TokenType.CREATE):
                 clauses.append(self._parse_create())
             elif self._match(TokenType.RETURN):
                 clauses.append(self._parse_return())
+                break  # RETURN ends this query part
             elif self._match(TokenType.WHERE):
                 # WHERE can appear standalone in some contexts
                 clauses.append(self._parse_where())
@@ -178,12 +212,30 @@ class CypherParser:
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
-                raise CypherParseError(
-                    f"Unexpected token {self._current().type.name} at start of clause",
-                    self._current()
-                )
+                # Stop parsing this part
+                break
         
-        return QueryNode(clauses=clauses)
+        return clauses
+    
+    def _parse_optional_match(self) -> MatchClause:
+        """
+        Parse OPTIONAL MATCH clause.
+        
+        Grammar:
+            OPTIONAL MATCH pattern [WHERE expression]
+        """
+        self._expect(TokenType.OPTIONAL)
+        self._expect(TokenType.MATCH)
+        
+        # Parse patterns
+        patterns = self._parse_patterns()
+        
+        # Parse optional WHERE
+        where = None
+        if self._match(TokenType.WHERE):
+            where = self._parse_where()
+        
+        return MatchClause(patterns=patterns, optional=True, where=where)
     
     def _parse_match(self) -> MatchClause:
         """Parse MATCH clause."""
@@ -559,6 +611,10 @@ class CypherParser:
     
     def _parse_primary(self) -> ExpressionNode:
         """Parse primary expressions."""
+        # CASE expressions
+        if self._match(TokenType.CASE):
+            return self._parse_case_expression()
+        
         # Numbers
         if self._match(TokenType.NUMBER):
             value = self._advance().value
@@ -692,6 +748,57 @@ class CypherParser:
         self._expect(TokenType.RBRACE)
         
         return properties
+    
+    def _parse_case_expression(self) -> 'CaseExpressionNode':
+        """
+        Parse CASE expression.
+        
+        Two forms:
+        1. Simple CASE: CASE expr WHEN value THEN result ... ELSE default END
+        2. Generic CASE: CASE WHEN condition THEN result ... ELSE default END
+        """
+        from .ast import CaseExpressionNode, WhenClause
+        
+        self._expect(TokenType.CASE)
+        
+        test_expression = None
+        when_clauses = []
+        else_result = None
+        
+        # Check if this is a simple CASE (has test expression)
+        # Simple CASE starts with expression before WHEN
+        if not self._match(TokenType.WHEN):
+            # Simple CASE: CASE expr WHEN ...
+            test_expression = self._parse_expression()
+        
+        # Parse WHEN clauses
+        while self._match(TokenType.WHEN):
+            self._advance()  # consume WHEN
+            
+            # Parse condition/value
+            condition = self._parse_expression()
+            
+            # Expect THEN
+            self._expect(TokenType.THEN)
+            
+            # Parse result
+            result = self._parse_expression()
+            
+            when_clauses.append(WhenClause(condition=condition, result=result))
+        
+        # Parse optional ELSE
+        if self._match(TokenType.ELSE):
+            self._advance()  # consume ELSE
+            else_result = self._parse_expression()
+        
+        # Expect END
+        self._expect(TokenType.END)
+        
+        return CaseExpressionNode(
+            test_expression=test_expression,
+            when_clauses=when_clauses,
+            else_result=else_result
+        )
 
 
 # Convenience function

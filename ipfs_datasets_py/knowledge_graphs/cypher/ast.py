@@ -43,6 +43,7 @@ class ASTNodeType(Enum):
     PARAMETER = auto()
     LIST = auto()
     MAP = auto()
+    CASE_EXPRESSION = auto()
     
     # Projections
     RETURN_ITEM = auto()
@@ -224,6 +225,26 @@ class SetClause(ASTNode):
     def __post_init__(self):
         if not hasattr(self, 'node_type') or self.node_type is None:
             self.node_type = ASTNodeType.SET
+
+
+@dataclass
+class UnionClause(ASTNode):
+    """
+    Represents a UNION or UNION ALL clause.
+    
+    Combines results from two queries.
+    UNION removes duplicates, UNION ALL keeps all results.
+    
+    Example: 
+        MATCH (n) RETURN n UNION MATCH (m) RETURN m
+        MATCH (n) RETURN n UNION ALL MATCH (m) RETURN m
+    """
+    
+    all: bool = False  # True for UNION ALL, False for UNION (with DISTINCT)
+    
+    def __post_init__(self):
+        if not hasattr(self, 'node_type') or self.node_type is None:
+            self.node_type = ASTNodeType.SET  # Placeholder, can add UNION to enum later
 
 
 # Pattern nodes
@@ -428,6 +449,38 @@ class MapNode(ExpressionNode):
     def __post_init__(self):
         if not hasattr(self, 'node_type') or self.node_type is None:
             self.node_type = ASTNodeType.MAP
+
+
+@dataclass
+class CaseExpressionNode(ExpressionNode):
+    """Represents a CASE expression.
+    
+    Two forms:
+    1. Simple CASE: CASE expr WHEN value1 THEN result1 ... ELSE default END
+    2. Generic CASE: CASE WHEN condition1 THEN result1 ... ELSE default END
+    """
+    test_expression: Optional[ExpressionNode] = None  # For simple CASE
+    when_clauses: List['WhenClause'] = field(default_factory=list)
+    else_result: Optional[ExpressionNode] = None
+    
+    def __post_init__(self):
+        if not hasattr(self, 'node_type') or self.node_type is None:
+            self.node_type = ASTNodeType.CASE_EXPRESSION
+    
+    def __repr__(self) -> str:
+        if self.test_expression:
+            return f"CaseExpression(test={self.test_expression}, whens={len(self.when_clauses)})"
+        return f"CaseExpression(whens={len(self.when_clauses)})"
+
+
+@dataclass
+class WhenClause:
+    """Represents a WHEN clause in a CASE expression."""
+    condition: ExpressionNode  # For generic CASE, or value for simple CASE
+    result: ExpressionNode
+    
+    def __repr__(self) -> str:
+        return f"When({self.condition} -> {self.result})"
 
 
 # Visitor base class

@@ -299,29 +299,296 @@ class QueryExecutor:
                     logger.debug("Filter %s.%s %s %s: %d results",
                                variable, property_name, operator, value, len(filtered))
             
+            elif op_type == "Expand":
+                # Expand relationships from nodes
+                from_var = op.get("from_variable")
+                to_var = op.get("to_variable")
+                rel_var = op.get("rel_variable")
+                direction = op.get("direction", "out")
+                rel_types = op.get("rel_types")
+                
+                if from_var not in result_set:
+                    logger.warning("Expand: source variable %s not found", from_var)
+                    continue
+                
+                # Collect new bindings with relationships
+                new_results = []
+                
+                for from_node in result_set[from_var]:
+                    # Get relationships for this node
+                    rels = self.graph_engine.get_relationships(
+                        from_node.id,
+                        direction=direction,
+                        rel_type=rel_types[0] if rel_types else None
+                    )
+                    
+                    for rel in rels:
+                        # Get target node
+                        if direction == "in":
+                            target_id = rel._start_node
+                        else:
+                            target_id = rel._end_node
+                        
+                        target_node = self.graph_engine.get_node(target_id)
+                        if not target_node:
+                            continue
+                        
+                        # Create binding with relationship and target node
+                        # Store as tuple (from_node, relationship, to_node)
+                        new_results.append({
+                            from_var: from_node,
+                            rel_var: rel,
+                            to_var: target_node
+                        })
+                
+                # Update result_set with expanded results
+                # Need to restructure result_set to handle multiple variables
+                if new_results:
+                    # Merge all variables into result_set
+                    for binding in new_results:
+                        for var, val in binding.items():
+                            if var not in result_set:
+                                result_set[var] = []
+                            if val not in result_set[var]:
+                                result_set[var].append(val)
+                    
+                    # Store bindings for projection
+                    if not hasattr(self, '_bindings'):
+                        self._bindings = []
+                    self._bindings = new_results
+                
+                logger.debug("Expand %s-[%s]->%s: found %d relationships",
+                           from_var, rel_var, to_var, len(new_results))
+            
+            elif op_type == "OptionalExpand":
+                # Optional expand - left join semantics
+                # Preserve rows even when no relationships match
+                from_var = op.get("from_variable")
+                to_var = op.get("to_variable")
+                rel_var = op.get("rel_variable")
+                direction = op.get("direction", "out")
+                rel_types = op.get("rel_types")
+                
+                if from_var not in result_set:
+                    logger.warning("OptionalExpand: source variable %s not found", from_var)
+                    continue
+                
+                # Collect new bindings with relationships
+                new_results = []
+                
+                for from_node in result_set[from_var]:
+                    # Get relationships for this node
+                    rels = self.graph_engine.get_relationships(
+                        from_node.id,
+                        direction=direction,
+                        rel_type=rel_types[0] if rel_types else None
+                    )
+                    
+                    if rels:
+                        # Found relationships - add them
+                        for rel in rels:
+                            # Get target node
+                            if direction == "in":
+                                target_id = rel._start_node
+                            else:
+                                target_id = rel._end_node
+                            
+                            target_node = self.graph_engine.get_node(target_id)
+                            if not target_node:
+                                continue
+                            
+                            # Create binding with relationship and target node
+                            new_results.append({
+                                from_var: from_node,
+                                rel_var: rel,
+                                to_var: target_node
+                            })
+                    else:
+                        # No relationships found - preserve row with NULLs (left join)
+                        new_results.append({
+                            from_var: from_node,
+                            rel_var: None,
+                            to_var: None
+                        })
+                
+                # Update result_set with expanded results
+                if new_results:
+                    # Merge all variables into result_set
+                    for binding in new_results:
+                        for var, val in binding.items():
+                            if var not in result_set:
+                                result_set[var] = []
+                            if val is not None and val not in result_set[var]:
+                                result_set[var].append(val)
+                    
+                    # Store bindings for projection
+                    if not hasattr(self, '_bindings'):
+                        self._bindings = []
+                    self._bindings = new_results
+                
+                logger.debug("OptionalExpand %s-[%s]->%s: found %d relationships (including NULL rows)",
+                           from_var, rel_var, to_var, len(new_results))
+            
+            elif op_type == "Aggregate":
+                # Aggregate operation (COUNT, SUM, AVG, MIN, MAX, COLLECT)
+                aggregations = op.get("aggregations", [])
+                group_by = op.get("group_by", [])
+                
+                # Get all current bindings
+                if hasattr(self, '_bindings') and self._bindings:
+                    data_rows = self._bindings
+                else:
+                    # Create bindings from result_set
+                    data_rows = []
+                    if result_set:
+                        # Combine all variables into rows
+                        var_names = list(result_set.keys())
+                        if var_names:
+                            first_var = var_names[0]
+                            for item in result_set[first_var]:
+                                row = {first_var: item}
+                                data_rows.append(row)
+                
+                # Group data
+                if group_by:
+                    # Group by specified keys
+                    groups = {}
+                    for row in data_rows:
+                        # Build group key
+                        group_key_parts = []
+                        for group_spec in group_by:
+                            expr = group_spec["expression"]
+                            value = self._evaluate_expression(expr, row)
+                            group_key_parts.append(str(value))
+                        group_key = tuple(group_key_parts)
+                        
+                        if group_key not in groups:
+                            groups[group_key] = []
+                        groups[group_key].append(row)
+                else:
+                    # Single group (all rows)
+                    groups = {(): data_rows}
+                
+                # Compute aggregations for each group
+                agg_results = []
+                for group_key, group_rows in groups.items():
+                    result_row = {}
+                    
+                    # Add group by values
+                    for i, group_spec in enumerate(group_by):
+                        alias = group_spec["alias"]
+                        expr = group_spec["expression"]
+                        value = self._evaluate_expression(expr, group_rows[0])
+                        result_row[alias] = value
+                    
+                    # Compute aggregations
+                    for agg_spec in aggregations:
+                        func = agg_spec["function"]
+                        expr = agg_spec["expression"]
+                        alias = agg_spec["alias"]
+                        distinct = agg_spec.get("distinct", False)
+                        
+                        # Extract values for aggregation
+                        if expr == "*":
+                            values = group_rows
+                        else:
+                            values = [self._evaluate_expression(expr, row) for row in group_rows]
+                            # Filter out None values
+                            values = [v for v in values if v is not None]
+                        
+                        # Apply DISTINCT if requested
+                        if distinct and expr != "*":
+                            values = list(set(values))
+                        
+                        # Compute aggregation
+                        agg_value = self._compute_aggregation(func, values)
+                        result_row[alias] = agg_value
+                    
+                    agg_results.append(result_row)
+                
+                # Convert to Records
+                for row in agg_results:
+                    keys = list(row.keys())
+                    values = list(row.values())
+                    final_results.append(Record(keys, values))
+                
+                logger.debug("Aggregate: %d groups, %d results", len(groups), len(final_results))
+            
+            elif op_type == "Union":
+                # Union operation - combines result sets
+                # For UNION, remove duplicates; for UNION ALL, keep all
+                all_flag = op.get("all", False)
+                
+                # Store current results as first part
+                first_results = final_results.copy()
+                
+                # Clear for next part (operations after Union will populate)
+                final_results = []
+                
+                # Mark that we need to merge later
+                if not hasattr(self, '_union_parts'):
+                    self._union_parts = []
+                self._union_parts.append({
+                    'results': first_results,
+                    'all': all_flag
+                })
+                
+                logger.debug("Union: stored %d results from first part (all=%s)",
+                           len(first_results), all_flag)
+            
             elif op_type == "Project":
                 # Project fields
                 items = op.get("items", [])
-                for var_name, values in result_set.items():
-                    for value in values:
+                
+                # Use bindings if available (from Expand operations)
+                if hasattr(self, '_bindings') and self._bindings:
+                    for binding in self._bindings:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
                             alias = item.get("alias", expr)
                             
-                            # Simple expression evaluation
+                            # Evaluate expression against binding
                             if "." in expr:
                                 var, prop = expr.split(".", 1)
-                                if var == var_name:
-                                    record_data[alias] = value.get(prop)
-                            elif expr == var_name:
-                                record_data[alias] = value
+                                if var in binding:
+                                    val = binding[var]
+                                    if hasattr(val, 'get'):
+                                        record_data[alias] = val.get(prop)
+                                    elif hasattr(val, '_properties') and prop in val._properties:
+                                        record_data[alias] = val._properties[prop]
+                            elif expr in binding:
+                                record_data[alias] = binding[expr]
                         
                         if record_data:
-                            # Create Record with keys and values
                             keys = list(record_data.keys())
                             values = list(record_data.values())
                             final_results.append(Record(keys, values))
+                else:
+                    # Fallback to old logic for simple queries
+                    for var_name, values in result_set.items():
+                        for value in values:
+                            record_data = {}
+                            for item in items:
+                                expr = item.get("expression")
+                                alias = item.get("alias", expr)
+                                
+                                # Simple expression evaluation
+                                if "." in expr:
+                                    var, prop = expr.split(".", 1)
+                                    if var == var_name:
+                                        if hasattr(value, 'get'):
+                                            record_data[alias] = value.get(prop)
+                                        elif hasattr(value, '_properties') and prop in value._properties:
+                                            record_data[alias] = value._properties[prop]
+                                elif expr == var_name:
+                                    record_data[alias] = value
+                            
+                            if record_data:
+                                # Create Record with keys and values
+                                keys = list(record_data.keys())
+                                values = list(record_data.values())
+                                final_results.append(Record(keys, values))
                 
                 logger.debug("Project: %d results", len(final_results))
             
@@ -338,8 +605,83 @@ class QueryExecutor:
                 logger.debug("Skip: %d results remaining", len(final_results))
             
             elif op_type == "OrderBy":
-                # Order results (simplified)
-                logger.debug("OrderBy: not yet fully implemented")
+                # Order results by specified expressions
+                order_items = op.get("items", [])
+                
+                if not order_items:
+                    logger.debug("OrderBy: no items specified")
+                    continue
+                
+                # Sort final_results (which should be a list of Record objects)
+                if not final_results:
+                    logger.debug("OrderBy: no results to sort")
+                    continue
+                
+                def make_sort_key(record):
+                    """Create a sort key tuple for a record."""
+                    key_parts = []
+                    for item in order_items:
+                        expr = item["expression"]
+                        ascending = item.get("ascending", True)
+                        
+                        # Get the value for this expression
+                        # Expression could be like "n.age" or just "count"
+                        if '.' in expr:
+                            # Property access like "n.age"
+                            parts = expr.split('.', 1)
+                            var_name = parts[0]
+                            prop_name = parts[1]
+                            
+                            # Get the value from the record
+                            try:
+                                value = record.get(expr)  # Try direct access first
+                                if value is None and var_name in record._values:
+                                    # Try to access as object property
+                                    obj = record._values.get(var_name)
+                                    if hasattr(obj, 'properties') and prop_name in obj.properties:
+                                        value = obj.properties[prop_name]
+                                    elif hasattr(obj, prop_name):
+                                        value = getattr(obj, prop_name)
+                            except:
+                                value = None
+                        else:
+                            # Simple alias like "count"
+                            value = record.get(expr)
+                        
+                        # Handle None values (sort them to the end)
+                        if value is None:
+                            value = (1, None)  # Tuple to sort Nones last
+                        else:
+                            value = (0, value)
+                        
+                        # Invert for descending
+                        if not ascending:
+                            # For descending, we need to negate numbers or reverse strings
+                            if isinstance(value[1], (int, float)):
+                                value = (value[0], -value[1] if value[1] is not None else None)
+                            elif isinstance(value[1], str):
+                                # Reverse string comparison by using reversed tuple
+                                value = (value[0], value[1])  # Will handle with reverse=True
+                        
+                        key_parts.append(value)
+                    
+                    return tuple(key_parts)
+                
+                # Sort the results
+                try:
+                    # Determine if we need reverse (all descending)
+                    all_descending = all(not item.get("ascending", True) for item in order_items)
+                    
+                    if all_descending:
+                        final_results.sort(key=make_sort_key, reverse=True)
+                    else:
+                        final_results.sort(key=make_sort_key)
+                    
+                    logger.debug("OrderBy: sorted %d results by %d expressions", 
+                                len(final_results), len(order_items))
+                except Exception as e:
+                    logger.warning("OrderBy: failed to sort results: %s", e)
+                    # Continue without sorting if there's an error
             
             elif op_type == "CreateNode":
                 # Create node
@@ -370,6 +712,38 @@ class QueryExecutor:
                         self.graph_engine.update_node(item.id, {property_name: value})
                     logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
         
+        # Handle UNION merging
+        if hasattr(self, '_union_parts') and self._union_parts:
+            # Merge all union parts with final_results
+            all_parts = []
+            for part in self._union_parts:
+                all_parts.extend(part['results'])
+            all_parts.extend(final_results)
+            
+            # Check if we should remove duplicates
+            # Use the 'all' flag from the last union (or first if multiple)
+            remove_duplicates = not self._union_parts[0]['all']
+            
+            if remove_duplicates:
+                # Remove duplicate records
+                seen = set()
+                unique_results = []
+                for record in all_parts:
+                    # Create hashable representation
+                    record_tuple = tuple(record._values)
+                    if record_tuple not in seen:
+                        seen.add(record_tuple)
+                        unique_results.append(record)
+                final_results = unique_results
+                logger.debug("Union: removed duplicates, %d unique results", len(final_results))
+            else:
+                # UNION ALL - keep all results
+                final_results = all_parts
+                logger.debug("Union ALL: combined %d total results", len(final_results))
+            
+            # Clean up
+            delattr(self, '_union_parts')
+        
         return final_results
     
     def _resolve_value(self, value: Any, parameters: Dict[str, Any]) -> Any:
@@ -385,10 +759,15 @@ class QueryExecutor:
     def _apply_operator(self, left: Any, operator: str, right: Any) -> bool:
         """Apply comparison operator."""
         try:
+            operator = operator.upper()
+            
+            # Equality operators
             if operator == "=":
                 return left == right
             elif operator in ("<>", "!="):
                 return left != right
+            
+            # Comparison operators
             elif operator == ">":
                 return left > right
             elif operator == "<":
@@ -397,9 +776,35 @@ class QueryExecutor:
                 return left >= right
             elif operator == "<=":
                 return left <= right
-            else:
+            
+            # IN operator - check membership in list
+            elif operator == "IN":
+                if isinstance(right, list):
+                    return left in right
                 return False
-        except (TypeError, ValueError):
+            
+            # String operators
+            elif operator == "CONTAINS":
+                if isinstance(left, str) and isinstance(right, str):
+                    return right in left
+                return False
+            
+            elif operator in ("STARTS", "STARTS WITH"):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.startswith(right)
+                return False
+            
+            elif operator in ("ENDS", "ENDS WITH"):
+                if isinstance(left, str) and isinstance(right, str):
+                    return left.endswith(right)
+                return False
+            
+            else:
+                logger.warning("Unknown operator: %s", operator)
+                return False
+                
+        except (TypeError, ValueError, AttributeError) as e:
+            logger.debug("Operator %s failed: %s", operator, e)
             return False
     
     def _validate_parameters(self, parameters: Dict[str, Any]) -> None:
@@ -422,6 +827,321 @@ class QueryExecutor:
                 raise ValueError(f"Parameter name '{key}' is reserved")
         
         logger.debug("Parameters validated: %d params", len(parameters))
+    
+    def _evaluate_expression(self, expr: str, row: Dict[str, Any]) -> Any:
+        """
+        Evaluate an expression against a data row.
+        
+        Args:
+            expr: Expression string (e.g., "n.age", "n", "toLower(n.name)", CASE expression)
+            row: Data row (variable bindings)
+            
+        Returns:
+            Evaluated value
+        """
+        # Check if it's a CASE expression
+        if expr.startswith("CASE|"):
+            return self._evaluate_case_expression(expr, row)
+        
+        # Check if it's a function call
+        if "(" in expr and expr.endswith(")"):
+            # Extract function name and arguments
+            func_match = expr.find("(")
+            func_name = expr[:func_match].strip()
+            args_str = expr[func_match+1:-1].strip()
+            
+            # Parse arguments (simple comma-separated for now)
+            if args_str:
+                # Split by comma, but be careful with nested functions
+                args = []
+                current_arg = ""
+                paren_depth = 0
+                for char in args_str:
+                    if char == "," and paren_depth == 0:
+                        args.append(current_arg.strip())
+                        current_arg = ""
+                    else:
+                        if char == "(":
+                            paren_depth += 1
+                        elif char == ")":
+                            paren_depth -= 1
+                        current_arg += char
+                if current_arg:
+                    args.append(current_arg.strip())
+                
+                # Evaluate each argument
+                eval_args = []
+                for arg in args:
+                    # Try to parse as literal number
+                    if arg.isdigit():
+                        eval_args.append(int(arg))
+                    # Try to parse as literal string (quoted)
+                    elif (arg.startswith("'") and arg.endswith("'")) or \
+                         (arg.startswith('"') and arg.endswith('"')):
+                        eval_args.append(arg[1:-1])
+                    else:
+                        # Evaluate as expression
+                        eval_args.append(self._evaluate_expression(arg, row))
+            else:
+                eval_args = []
+            
+            # Call the function
+            return self._call_function(func_name, eval_args)
+        
+        # Property access: "n.age"
+        if "." in expr:
+            var, prop = expr.split(".", 1)
+            if var in row:
+                val = row[var]
+                if hasattr(val, 'get'):
+                    return val.get(prop)
+                elif hasattr(val, '_properties') and prop in val._properties:
+                    return val._properties[prop]
+        # Variable access: "n"
+        elif expr in row:
+            return row[expr]
+        
+        return None
+    
+    def _evaluate_case_expression(self, case_expr: str, row: Dict[str, Any]) -> Any:
+        """
+        Evaluate a CASE expression.
+        
+        Format: CASE|[TEST:test_expr]|WHEN:cond:THEN:result|...|[ELSE:else_result]|END
+        
+        Args:
+            case_expr: Serialized CASE expression
+            row: Data row
+            
+        Returns:
+            Result of CASE evaluation
+        """
+        # Parse the CASE expression
+        parts = case_expr.split("|")
+        
+        if parts[0] != "CASE" or parts[-1] != "END":
+            logger.warning("Invalid CASE expression format: %s", case_expr)
+            return None
+        
+        test_expr = None
+        when_clauses = []
+        else_result = None
+        
+        i = 1
+        while i < len(parts) - 1:
+            part = parts[i]
+            
+            if part.startswith("TEST:"):
+                test_expr = part[5:]  # Remove "TEST:" prefix
+            
+            elif part.startswith("WHEN:"):
+                # Format: WHEN:condition:THEN:result
+                when_parts = part.split(":")
+                if len(when_parts) >= 4 and when_parts[2] == "THEN":
+                    condition = when_parts[1]
+                    result = ":".join(when_parts[3:])  # In case result contains ":"
+                    when_clauses.append((condition, result))
+            
+            elif part.startswith("ELSE:"):
+                else_result = part[5:]  # Remove "ELSE:" prefix
+            
+            i += 1
+        
+        # Evaluate the CASE expression
+        if test_expr:
+            # Simple CASE: compare test expression against each WHEN value
+            test_value = self._evaluate_expression(test_expr, row)
+            
+            for condition, result in when_clauses:
+                when_value = self._evaluate_expression(condition, row)
+                if test_value == when_value:
+                    return self._evaluate_expression(result, row)
+        
+        else:
+            # Generic CASE: evaluate each WHEN condition
+            for condition, result in when_clauses:
+                # Parse condition (might be a comparison)
+                if self._evaluate_condition(condition, row):
+                    return self._evaluate_expression(result, row)
+        
+        # No WHEN matched, return ELSE or None
+        if else_result:
+            return self._evaluate_expression(else_result, row)
+        
+        return None
+    
+    def _evaluate_condition(self, condition: str, row: Dict[str, Any]) -> bool:
+        """
+        Evaluate a condition expression.
+        
+        Args:
+            condition: Condition string (e.g., "n.age > 30")
+            row: Data row
+            
+        Returns:
+            Boolean result
+        """
+        # Simple evaluation for now - check for comparison operators
+        for op in [" >= ", " <= ", " <> ", " != ", " = ", " > ", " < "]:
+            if op in condition:
+                parts = condition.split(op, 1)
+                if len(parts) == 2:
+                    left_val = self._evaluate_expression(parts[0].strip(), row)
+                    right_val = self._evaluate_expression(parts[1].strip(), row)
+                    return self._apply_operator(left_val, op.strip(), right_val)
+        
+        # If no operator, just evaluate as expression (truthy check)
+        value = self._evaluate_expression(condition, row)
+        return bool(value)
+    
+    def _call_function(self, func_name: str, args: List[Any]) -> Any:
+        """
+        Call a built-in function.
+        
+        Args:
+            func_name: Function name (e.g., "toLower", "substring")
+            args: List of evaluated arguments
+            
+        Returns:
+            Function result
+        """
+        func_name = func_name.lower()
+        
+        # String functions
+        if func_name == "tolower":
+            if args and isinstance(args[0], str):
+                return args[0].lower()
+            return None
+        
+        elif func_name == "toupper":
+            if args and isinstance(args[0], str):
+                return args[0].upper()
+            return None
+        
+        elif func_name == "substring":
+            if len(args) >= 2 and isinstance(args[0], str):
+                string = args[0]
+                start = args[1] if isinstance(args[1], int) else 0
+                if len(args) >= 3 and isinstance(args[2], int):
+                    length = args[2]
+                    return string[start:start+length]
+                else:
+                    return string[start:]
+            return None
+        
+        elif func_name == "trim":
+            if args and isinstance(args[0], str):
+                return args[0].strip()
+            return None
+        
+        elif func_name == "ltrim":
+            if args and isinstance(args[0], str):
+                return args[0].lstrip()
+            return None
+        
+        elif func_name == "rtrim":
+            if args and isinstance(args[0], str):
+                return args[0].rstrip()
+            return None
+        
+        elif func_name == "replace":
+            if len(args) >= 3 and isinstance(args[0], str):
+                string = args[0]
+                search = str(args[1]) if args[1] is not None else ""
+                replace = str(args[2]) if args[2] is not None else ""
+                return string.replace(search, replace)
+            return None
+        
+        elif func_name == "reverse":
+            if args and isinstance(args[0], str):
+                return args[0][::-1]
+            return None
+        
+        elif func_name == "size":
+            if args:
+                if isinstance(args[0], str):
+                    return len(args[0])
+                elif isinstance(args[0], (list, tuple)):
+                    return len(args[0])
+            return None
+        
+        elif func_name == "split":
+            if len(args) >= 2 and isinstance(args[0], str):
+                string = args[0]
+                delimiter = str(args[1]) if args[1] is not None else ","
+                return string.split(delimiter)
+            return None
+        
+        elif func_name == "left":
+            if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
+                return args[0][:args[1]]
+            return None
+        
+        elif func_name == "right":
+            if len(args) >= 2 and isinstance(args[0], str) and isinstance(args[1], int):
+                return args[0][-args[1]:]
+            return None
+        
+        else:
+            logger.warning("Unknown function: %s", func_name)
+            return None
+    
+    def _compute_aggregation(self, func: str, values: List[Any]) -> Any:
+        """
+        Compute an aggregation function.
+        
+        Args:
+            func: Aggregation function name (COUNT, SUM, AVG, etc.)
+            values: Values to aggregate
+            
+        Returns:
+            Aggregated result
+        """
+        func = func.upper()
+        
+        if func == "COUNT":
+            return len(values)
+        
+        elif func == "SUM":
+            # Filter numeric values
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            return sum(numeric_values) if numeric_values else 0
+        
+        elif func == "AVG":
+            # Filter numeric values
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if numeric_values:
+                return sum(numeric_values) / len(numeric_values)
+            return None
+        
+        elif func == "MIN":
+            # Filter comparable values
+            comparable_values = [v for v in values if v is not None]
+            return min(comparable_values) if comparable_values else None
+        
+        elif func == "MAX":
+            # Filter comparable values
+            comparable_values = [v for v in values if v is not None]
+            return max(comparable_values) if comparable_values else None
+        
+        elif func == "COLLECT":
+            # Return list of all values
+            return list(values)
+        
+        elif func in ("STDEV", "STDEVP"):
+            # Standard deviation
+            numeric_values = [v for v in values if isinstance(v, (int, float))]
+            if len(numeric_values) < 2:
+                return None
+            
+            mean = sum(numeric_values) / len(numeric_values)
+            variance = sum((x - mean) ** 2 for x in numeric_values) / len(numeric_values)
+            return variance ** 0.5
+        
+        else:
+            logger.warning("Unknown aggregation function: %s", func)
+            return None
+
 
 
 class GraphEngine:
@@ -852,3 +1572,217 @@ class GraphEngine:
         except Exception as e:
             logger.error("Failed to load graph from %s: %s", root_cid, e)
             return False
+    
+    def get_relationships(
+        self,
+        node_id: str,
+        direction: str = "out",
+        rel_type: Optional[str] = None
+    ) -> List[Relationship]:
+        """
+        Get relationships for a node with optional filtering.
+        
+        This is a critical method for graph traversal - enables MATCH queries
+        to follow relationships between nodes.
+        
+        Args:
+            node_id: Node identifier
+            direction: Relationship direction - "out", "in", or "both"
+            rel_type: Optional relationship type filter
+            
+        Returns:
+            List of matching relationships
+            
+        Example:
+            # Get all outgoing KNOWS relationships
+            rels = engine.get_relationships("node-123", "out", "KNOWS")
+            
+            # Get all relationships (any direction)
+            rels = engine.get_relationships("node-123", "both")
+        """
+        results = []
+        
+        for key, rel in self._relationship_cache.items():
+            if key.startswith("cid:"):
+                continue  # Skip CID mappings
+            
+            if not isinstance(rel, Relationship):
+                continue
+            
+            # Check direction and node match
+            match = False
+            if direction == "out" and rel._start_node == node_id:
+                match = True
+            elif direction == "in" and rel._end_node == node_id:
+                match = True
+            elif direction == "both":
+                if rel._start_node == node_id or rel._end_node == node_id:
+                    match = True
+            
+            if not match:
+                continue
+            
+            # Check relationship type if specified
+            if rel_type and rel._type != rel_type:
+                continue
+            
+            results.append(rel)
+        
+        logger.debug("Found %d relationships for node %s (direction=%s, type=%s)",
+                    len(results), node_id, direction, rel_type)
+        return results
+    
+    def traverse_pattern(
+        self,
+        start_nodes: List[Node],
+        pattern: List[Dict[str, Any]],
+        limit: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Traverse a graph pattern starting from given nodes.
+        
+        Implements pattern matching for MATCH clauses like:
+        (n:Person)-[:KNOWS]->(f:Person)
+        
+        Args:
+            start_nodes: Starting nodes for traversal
+            pattern: Pattern specification as list of steps
+            limit: Maximum results to return
+            
+        Returns:
+            List of pattern matches, each as a dict of variable -> value
+            
+        Example pattern:
+            [
+                {"variable": "n", "labels": ["Person"]},
+                {"rel_type": "KNOWS", "direction": "out", "variable": "r"},
+                {"variable": "f", "labels": ["Person"]}
+            ]
+        """
+        results = []
+        
+        for start_node in start_nodes:
+            # Initialize bindings with start node
+            bindings = {"start": start_node}
+            
+            # Process pattern steps
+            current_matches = [bindings]
+            
+            for i, step in enumerate(pattern):
+                if "rel_type" in step:
+                    # Relationship traversal step
+                    new_matches = []
+                    for match in current_matches:
+                        # Get last node in pattern
+                        last_var = list(match.keys())[-1]
+                        last_node = match[last_var]
+                        
+                        # Find relationships
+                        rels = self.get_relationships(
+                            last_node.id,
+                            direction=step.get("direction", "out"),
+                            rel_type=step.get("rel_type")
+                        )
+                        
+                        for rel in rels:
+                            # Get target node
+                            if step.get("direction") == "in":
+                                target_id = rel._start_node
+                            else:
+                                target_id = rel._end_node
+                            
+                            target_node = self.get_node(target_id)
+                            if not target_node:
+                                continue
+                            
+                            # Create new binding with relationship and target
+                            new_match = match.copy()
+                            if "variable" in step:
+                                new_match[step["variable"]] = rel
+                            
+                            # Add target node (next step should be node)
+                            if i + 1 < len(pattern):
+                                next_step = pattern[i + 1]
+                                if "variable" in next_step:
+                                    # Check labels if specified
+                                    if "labels" in next_step:
+                                        if not any(label in target_node.labels 
+                                                  for label in next_step["labels"]):
+                                            continue
+                                    new_match[next_step["variable"]] = target_node
+                            
+                            new_matches.append(new_match)
+                    
+                    current_matches = new_matches
+            
+            # Add matches to results
+            results.extend(current_matches)
+            
+            if limit and len(results) >= limit:
+                results = results[:limit]
+                break
+        
+        logger.debug("Pattern traversal found %d matches", len(results))
+        return results
+    
+    def find_paths(
+        self,
+        start_node_id: str,
+        end_node_id: str,
+        max_depth: int = 5,
+        rel_type: Optional[str] = None
+    ) -> List[List[Relationship]]:
+        """
+        Find paths between two nodes.
+        
+        Uses breadth-first search to find all paths up to max_depth.
+        Includes cycle detection to prevent infinite loops.
+        
+        Args:
+            start_node_id: Start node ID
+            end_node_id: End node ID
+            max_depth: Maximum path length
+            rel_type: Optional relationship type filter
+            
+        Returns:
+            List of paths, each path is a list of relationships
+            
+        Example:
+            paths = engine.find_paths("node-1", "node-5", max_depth=3)
+            print(f"Found {len(paths)} paths")
+        """
+        paths = []
+        
+        # BFS queue: (current_node_id, path_so_far, visited_nodes)
+        queue = [(start_node_id, [], {start_node_id})]
+        
+        while queue:
+            current_id, path, visited = queue.pop(0)
+            
+            # Check depth limit
+            if len(path) >= max_depth:
+                continue
+            
+            # Get outgoing relationships
+            rels = self.get_relationships(current_id, "out", rel_type)
+            
+            for rel in rels:
+                target_id = rel._end_node
+                
+                # Found target
+                if target_id == end_node_id:
+                    paths.append(path + [rel])
+                    continue
+                
+                # Cycle detection
+                if target_id in visited:
+                    continue
+                
+                # Add to queue for further exploration
+                new_visited = visited.copy()
+                new_visited.add(target_id)
+                queue.append((target_id, path + [rel], new_visited))
+        
+        logger.debug("Found %d paths from %s to %s", 
+                    len(paths), start_node_id, end_node_id)
+        return paths

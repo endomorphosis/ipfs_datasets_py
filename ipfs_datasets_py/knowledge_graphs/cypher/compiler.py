@@ -108,6 +108,8 @@ class CypherCompiler:
     
     def _compile_clause(self, clause):
         """Compile a single clause."""
+        from .ast import UnionClause
+        
         if isinstance(clause, MatchClause):
             self._compile_match(clause)
         elif isinstance(clause, WhereClause):
@@ -120,28 +122,39 @@ class CypherCompiler:
             self._compile_delete(clause)
         elif isinstance(clause, SetClause):
             self._compile_set(clause)
+        elif isinstance(clause, UnionClause):
+            self._compile_union(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
     def _compile_match(self, match: MatchClause):
         """
-        Compile MATCH clause.
+        Compile MATCH or OPTIONAL MATCH clause.
         
         Generates:
         - ScanLabel operations for labeled nodes
         - ScanAll for unlabeled nodes
-        - Expand operations for relationships
+        - Expand operations for relationships (or OptionalExpand if optional)
         - Filter operations for WHERE
         """
+        # Store whether this is an optional match for relationship compilation
+        is_optional = match.optional
+        
         for pattern in match.patterns:
-            self._compile_pattern(pattern)
+            self._compile_pattern(pattern, is_optional=is_optional)
         
         # Compile WHERE if present
         if match.where:
             self._compile_where(match.where)
     
-    def _compile_pattern(self, pattern: PatternNode):
-        """Compile a graph pattern."""
+    def _compile_pattern(self, pattern: PatternNode, is_optional: bool = False):
+        """
+        Compile a graph pattern.
+        
+        Args:
+            pattern: Pattern to compile
+            is_optional: Whether this is from OPTIONAL MATCH
+        """
         for i, element in enumerate(pattern.elements):
             if isinstance(element, NodePattern):
                 self._compile_node_pattern(element, f"_n{i}")
@@ -150,7 +163,7 @@ class CypherCompiler:
                 if i > 0 and i < len(pattern.elements) - 1:
                     start_var = element.variable or f"_n{i-1}"
                     end_var = f"_n{i+1}"
-                    self._compile_relationship_pattern(element, start_var, end_var)
+                    self._compile_relationship_pattern(element, start_var, end_var, is_optional=is_optional)
     
     def _compile_node_pattern(self, node: NodePattern, default_var: str = None):
         """
@@ -201,18 +214,28 @@ class CypherCompiler:
         self,
         rel: RelationshipPattern,
         start_var: str,
-        end_var: str
+        end_var: str,
+        is_optional: bool = False
     ):
         """
         Compile relationship pattern.
         
-        Generates Expand operation.
+        Generates Expand or OptionalExpand operation.
+        
+        Args:
+            rel: RelationshipPattern to compile
+            start_var: Variable for start node
+            end_var: Variable for end node
+            is_optional: Whether this is from OPTIONAL MATCH
         """
         rel_var = rel.variable or f"_r{len(self.variables)}"
         self.variables[rel_var] = "relationship"
         
+        # Choose operation type based on whether it's optional
+        op_type = "OptionalExpand" if is_optional else "Expand"
+        
         op = {
-            "op": "Expand",
+            "op": op_type,
             "from_variable": start_var,
             "to_variable": end_var,
             "rel_variable": rel_var,
@@ -271,24 +294,60 @@ class CypherCompiler:
         """
         Compile RETURN clause.
         
-        Generates Project, OrderBy, Limit operations.
+        Generates Project/Aggregate, OrderBy, Limit operations.
         """
-        # Project operation
-        items = []
-        for return_item in ret.items:
-            item_info = {
-                "expression": self._expression_to_string(return_item.expression)
-            }
-            if return_item.alias:
-                item_info["alias"] = return_item.alias
-            items.append(item_info)
+        # Check if any return items are aggregations
+        has_aggregation = any(
+            self._is_aggregation(return_item.expression)
+            for return_item in ret.items
+        )
         
-        op = {
-            "op": "Project",
-            "items": items,
-            "distinct": ret.distinct
-        }
-        self.operations.append(op)
+        if has_aggregation:
+            # Aggregate operation
+            aggregations = []
+            group_by = []
+            
+            for return_item in ret.items:
+                if self._is_aggregation(return_item.expression):
+                    # This is an aggregation function
+                    agg_info = self._compile_aggregation(return_item.expression)
+                    if return_item.alias:
+                        agg_info["alias"] = return_item.alias
+                    else:
+                        agg_info["alias"] = self._expression_to_string(return_item.expression)
+                    aggregations.append(agg_info)
+                else:
+                    # This is a grouping key
+                    group_expr = self._expression_to_string(return_item.expression)
+                    group_by.append({
+                        "expression": group_expr,
+                        "alias": return_item.alias or group_expr
+                    })
+            
+            op = {
+                "op": "Aggregate",
+                "aggregations": aggregations,
+                "group_by": group_by,
+                "distinct": ret.distinct
+            }
+            self.operations.append(op)
+        else:
+            # Regular project operation
+            items = []
+            for return_item in ret.items:
+                item_info = {
+                    "expression": self._expression_to_string(return_item.expression)
+                }
+                if return_item.alias:
+                    item_info["alias"] = return_item.alias
+                items.append(item_info)
+            
+            op = {
+                "op": "Project",
+                "items": items,
+                "distinct": ret.distinct
+            }
+            self.operations.append(op)
         
         # OrderBy operation
         if ret.order_by:
@@ -383,6 +442,20 @@ class CypherCompiler:
                 }
                 self.operations.append(op)
     
+    def _compile_union(self, union_clause):
+        """
+        Compile UNION or UNION ALL clause.
+        
+        Generates Union operation to combine result sets.
+        """
+        from .ast import UnionClause
+        
+        op = {
+            "op": "Union",
+            "all": union_clause.all  # True for UNION ALL, False for UNION
+        }
+        self.operations.append(op)
+    
     def _compile_expression(self, expr) -> Any:
         """
         Compile expression to a value.
@@ -445,6 +518,8 @@ class CypherCompiler:
     
     def _expression_to_string(self, expr) -> str:
         """Convert expression to string representation."""
+        from .ast import CaseExpressionNode
+        
         if isinstance(expr, VariableNode):
             return expr.name
         
@@ -453,14 +528,91 @@ class CypherCompiler:
             return f"{obj_str}.{expr.property}"
         
         elif isinstance(expr, LiteralNode):
+            if isinstance(expr.value, str):
+                return f"'{expr.value}'"
             return str(expr.value)
         
         elif isinstance(expr, FunctionCallNode):
             args = ", ".join(self._expression_to_string(arg) for arg in expr.arguments)
             return f"{expr.name}({args})"
         
+        elif isinstance(expr, CaseExpressionNode):
+            # Serialize CASE expression as a special format
+            # CASE:[test_expr]|WHEN:cond:result|...|ELSE:else_result|END
+            parts = ["CASE"]
+            
+            if expr.test_expression:
+                parts.append(f"TEST:{self._expression_to_string(expr.test_expression)}")
+            
+            for when_clause in expr.when_clauses:
+                cond_str = self._expression_to_string(when_clause.condition)
+                result_str = self._expression_to_string(when_clause.result)
+                parts.append(f"WHEN:{cond_str}:THEN:{result_str}")
+            
+            if expr.else_result:
+                else_str = self._expression_to_string(expr.else_result)
+                parts.append(f"ELSE:{else_str}")
+            
+            parts.append("END")
+            return "|".join(parts)
+        
         else:
             return str(expr)
+    
+    def _is_aggregation(self, expr) -> bool:
+        """
+        Check if an expression is an aggregation function.
+        
+        Args:
+            expr: Expression node to check
+            
+        Returns:
+            True if expression is an aggregation function
+        """
+        if not isinstance(expr, FunctionCallNode):
+            return False
+        
+        aggregation_functions = {
+            'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'COLLECT',
+            'STDEV', 'STDEVP', 'PERCENTILECONT', 'PERCENTILEDISC'
+        }
+        
+        return expr.name.upper() in aggregation_functions
+    
+    def _compile_aggregation(self, func_node: FunctionCallNode) -> Dict[str, Any]:
+        """
+        Compile an aggregation function.
+        
+        Args:
+            func_node: FunctionCallNode representing aggregation
+            
+        Returns:
+            Dictionary with aggregation info for IR
+        """
+        func_name = func_node.name.upper()
+        
+        # Handle special case: COUNT(*)
+        if func_name == 'COUNT' and len(func_node.arguments) == 1:
+            arg = func_node.arguments[0]
+            if isinstance(arg, VariableNode) and arg.name == '*':
+                return {
+                    "function": "COUNT",
+                    "expression": "*",
+                    "distinct": func_node.distinct
+                }
+        
+        # Regular aggregation
+        if func_node.arguments:
+            arg_expr = self._expression_to_string(func_node.arguments[0])
+        else:
+            arg_expr = "*"
+        
+        return {
+            "function": func_name,
+            "expression": arg_expr,
+            "distinct": func_node.distinct
+        }
+
 
 
 # Convenience function
