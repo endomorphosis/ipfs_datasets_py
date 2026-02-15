@@ -1,14 +1,50 @@
 """
 ProcessorProtocol - Base interface for all processors.
 
-This module defines the core protocol that all processors must implement
-to ensure consistency and enable automatic routing via UniversalProcessor.
+⚠️ DEPRECATED: This module is deprecated as of 2026-02-15.
+Use processors.core.protocol instead.
 
-All processors should implement ProcessorProtocol to be discoverable and
-usable through the unified interface.
+Migration Guide:
+    OLD (deprecated):
+        from ipfs_datasets_py.processors.protocol import (
+            ProcessorProtocol, ProcessingResult, KnowledgeGraph
+        )
+        
+        class MyProcessor:
+            async def can_process(self, input_source): ...
+            async def process(self, input_source, **options): ...
+    
+    NEW (recommended):
+        from ipfs_datasets_py.processors.core.protocol import (
+            ProcessorProtocol, ProcessingContext, ProcessingResult
+        )
+        
+        class MyProcessor:
+            def can_handle(self, context: ProcessingContext) -> bool: ...
+            def process(self, context: ProcessingContext) -> ProcessingResult: ...
+            def get_capabilities(self) -> Dict[str, Any]: ...
+
+Key Changes:
+1. All methods are now synchronous (no async/await)
+2. Methods accept ProcessingContext instead of raw input
+3. Simpler data structures (Dict instead of rich objects)
+4. Unified get_capabilities() instead of multiple get_* methods
+
+This module will be removed in a future version.
 """
 
 from __future__ import annotations
+
+import warnings
+
+# Issue deprecation warning when this module is imported
+warnings.warn(
+    "ipfs_datasets_py.processors.protocol is deprecated and will be removed in a future version. "
+    "Use ipfs_datasets_py.processors.core.protocol instead. "
+    "See module docstring for migration guide.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 from typing import Protocol, Union, Optional, Any, runtime_checkable
 from pathlib import Path
