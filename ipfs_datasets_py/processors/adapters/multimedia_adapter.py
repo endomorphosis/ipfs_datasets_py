@@ -8,20 +8,15 @@ implement ProcessorProtocol.
 from __future__ import annotations
 
 import logging
-from typing import Union
+from typing import Union, Dict, Any, List
 from pathlib import Path
 import time
 
-from ..protocol import (
+from ..core.protocol import (
     ProcessorProtocol,
+    ProcessingContext,
     ProcessingResult,
-    ProcessingMetadata,
-    ProcessingStatus,
     InputType,
-    KnowledgeGraph,
-    VectorStore,
-    Entity,
-    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -34,10 +29,18 @@ class MultimediaProcessorAdapter:
     Wraps FFmpeg, yt-dlp, and audio transcription to provide unified
     interface for video, audio, and media URL processing.
     
+    Implements the synchronous ProcessorProtocol from processors.core.
+    
     Example:
+        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = MultimediaProcessorAdapter()
-        >>> can_process = await adapter.can_process("video.mp4")
-        >>> result = await adapter.process("video.mp4")
+        >>> context = ProcessingContext(
+        ...     input_type=InputType.FILE,
+        ...     source="video.mp4",
+        ...     metadata={"format": "mp4"}
+        ... )
+        >>> can_handle = adapter.can_handle(context)
+        >>> result = adapter.process(context)
     """
     
     def __init__(self):
@@ -45,6 +48,8 @@ class MultimediaProcessorAdapter:
         self._ffmpeg = None
         self._ytdlp = None
         self._media_processor = None
+        self._name = "MultimediaProcessor"
+        self._priority = 10
     
     def _get_ffmpeg(self):
         """Lazy-load FFmpeg wrapper."""
@@ -79,136 +84,127 @@ class MultimediaProcessorAdapter:
                 logger.warning(f"MediaProcessor not available: {e}")
         return self._media_processor
     
-    async def can_process(self, input_source: Union[str, Path]) -> bool:
+    def can_handle(self, context: ProcessingContext) -> bool:
         """
         Check if this adapter can handle multimedia inputs.
         
         Args:
-            input_source: Input to check
+            context: Processing context with input information
             
         Returns:
             True if input is video, audio, or media URL
         """
-        input_str = str(input_source).lower()
+        # Check format from metadata
+        fmt = context.get_format()
+        if fmt:
+            fmt_lower = fmt.lower()
+            # Video formats
+            if fmt_lower in ('mp4', 'avi', 'mkv', 'mov', 'wmv', 'flv', 'webm', 'm4v'):
+                return True
+            # Audio formats
+            if fmt_lower in ('mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a'):
+                return True
+        
+        # Check source string
+        source_str = str(context.source).lower()
         
         # Video extensions
         video_exts = ('.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv', '.webm', '.m4v')
-        if input_str.endswith(video_exts):
+        if source_str.endswith(video_exts):
             return True
         
         # Audio extensions
         audio_exts = ('.mp3', '.wav', '.ogg', '.flac', '.aac', '.m4a')
-        if input_str.endswith(audio_exts):
+        if source_str.endswith(audio_exts):
             return True
         
         # Video streaming URLs
         video_sites = ('youtube.com', 'youtu.be', 'vimeo.com', 'dailymotion.com')
-        if any(site in input_str for site in video_sites):
+        if any(site in source_str for site in video_sites):
             return True
         
         return False
     
-    async def process(
-        self,
-        input_source: Union[str, Path],
-        **options
-    ) -> ProcessingResult:
+    def process(self, context: ProcessingContext) -> ProcessingResult:
         """
         Process multimedia file or URL and return standardized result.
         
         Args:
-            input_source: Video/audio file or URL
-            **options: Processing options
+            context: Processing context with input source and options
             
         Returns:
             ProcessingResult with transcription and metadata
         """
         start_time = time.time()
-        
-        # Determine input type
-        is_url = str(input_source).startswith(('http://', 'https://'))
-        input_type = InputType.URL if is_url else InputType.FILE
-        
-        metadata = ProcessingMetadata(
-            processor_name="MultimediaProcessor",
-            processor_version="1.0",
-            input_type=input_type
-        )
+        source = context.source
         
         try:
             # Download if URL
-            local_file = input_source
-            if is_url:
+            local_file = source
+            if context.input_type == InputType.URL:
                 ytdlp = self._get_ytdlp()
                 if ytdlp:
                     # Download video/audio
-                    download_result = await self._download_media(str(input_source))
-                    local_file = download_result.get("local_path", input_source)
-                else:
-                    metadata.add_warning("yt-dlp not available, cannot download")
+                    download_result = self._download_media(str(source))
+                    local_file = download_result.get("local_path", source)
             
             # Extract metadata
-            file_metadata = await self._extract_metadata(local_file)
+            file_metadata = self._extract_metadata(local_file)
             
             # Transcribe if audio/video
-            transcription = await self._transcribe_media(local_file)
+            transcription = self._transcribe_media(local_file)
             
             # Build knowledge graph
-            kg = self._build_knowledge_graph(transcription, str(input_source), file_metadata)
+            kg = self._build_knowledge_graph(transcription, str(source), file_metadata)
             
             # Generate vectors (placeholder)
-            vectors = VectorStore(
-                metadata={
-                    "model": "multimedia_processor",
-                    "source": str(input_source)
-                }
-            )
+            vectors: List[List[float]] = []
             
             # Processing time
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.SUCCESS
             
             return ProcessingResult(
+                success=True,
                 knowledge_graph=kg,
                 vectors=vectors,
-                content={
-                    "transcription": transcription,
-                    "metadata": file_metadata,
-                    "local_file": str(local_file) if local_file != input_source else None
-                },
-                metadata=metadata,
-                extra={
+                metadata={
+                    "processor": self._name,
                     "processor_type": "multimedia",
-                    "media_type": file_metadata.get("type", "unknown")
+                    "processing_time": elapsed,
+                    "media_type": file_metadata.get("type", "unknown"),
+                    "transcription": transcription,
+                    "duration": file_metadata.get("duration", 0),
+                    "local_file": str(local_file) if local_file != source else None
                 }
             )
         
         except Exception as e:
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.FAILED
-            metadata.add_error(str(e))
             
-            logger.error(f"Multimedia processing failed for {input_source}: {e}")
+            logger.error(f"Multimedia processing failed for {source}: {e}")
             
             return ProcessingResult(
-                knowledge_graph=KnowledgeGraph(source=str(input_source)),
-                vectors=VectorStore(),
-                content={"error": str(e)},
-                metadata=metadata
+                success=False,
+                knowledge_graph={},
+                vectors=[],
+                metadata={
+                    "processor": self._name,
+                    "processing_time": elapsed,
+                    "error": str(e)
+                },
+                errors=[f"Multimedia processing failed: {str(e)}"]
             )
     
-    async def _download_media(self, url: str) -> dict:
+    def _download_media(self, url: str) -> dict:
         """Download media from URL."""
         # Placeholder - actual implementation would use yt-dlp
         return {
-            "local_path": f"/tmp/downloaded_{hash(url)}.mp4",
+            "local_path": f"/tmp/downloaded_{abs(hash(url))}.mp4",
             "title": "Downloaded video",
             "duration": 120
         }
     
-    async def _extract_metadata(self, file_path: Union[str, Path]) -> dict:
+    def _extract_metadata(self, file_path: Union[str, Path]) -> dict:
         """Extract media metadata."""
         # Placeholder - actual implementation would use FFmpeg
         return {
@@ -218,7 +214,7 @@ class MultimediaProcessorAdapter:
             "resolution": "1920x1080"
         }
     
-    async def _transcribe_media(self, file_path: Union[str, Path]) -> str:
+    def _transcribe_media(self, file_path: Union[str, Path]) -> str:
         """Transcribe audio/video."""
         # Placeholder - actual implementation would use Whisper or similar
         return f"Transcription of {file_path}"
@@ -228,36 +224,48 @@ class MultimediaProcessorAdapter:
         transcription: str,
         source: str,
         media_metadata: dict
-    ) -> KnowledgeGraph:
+    ) -> Dict[str, Any]:
         """Build knowledge graph from media transcription."""
-        kg = KnowledgeGraph(source=source)
-        
         # Create media entity
-        media_entity = Entity(
-            id=f"media_{hash(source)}",
-            type="MediaFile",
-            label=Path(source).name if not source.startswith('http') else source,
-            properties={
+        media_entity = {
+            "id": f"media_{abs(hash(source))}",
+            "type": "MediaFile",
+            "label": Path(source).name if not source.startswith('http') else source,
+            "properties": {
                 "source": source,
                 "type": media_metadata.get("type", "unknown"),
                 "duration": media_metadata.get("duration", 0),
                 **media_metadata
             }
-        )
-        kg.add_entity(media_entity)
+        }
+        
+        kg = {
+            "entities": [media_entity],
+            "relationships": [],
+            "source": source
+        }
         
         # In production, would extract entities from transcription using NER
         
         return kg
     
-    def get_supported_types(self) -> list[str]:
-        """Return supported input types."""
-        return ["video", "audio", "url", "media"]
-    
-    def get_priority(self) -> int:
-        """Return processor priority."""
-        return 10
-    
-    def get_name(self) -> str:
-        """Return processor name."""
-        return "MultimediaProcessor"
+    def get_capabilities(self) -> Dict[str, Any]:
+        """
+        Return processor capabilities and metadata.
+        
+        Returns:
+            Dictionary with processor name, priority, supported formats, etc.
+        """
+        return {
+            "name": self._name,
+            "priority": self._priority,
+            "formats": ["mp4", "avi", "mkv", "mov", "mp3", "wav", "ogg", "flac"],
+            "input_types": ["file", "url", "video", "audio"],
+            "outputs": ["knowledge_graph", "transcription"],
+            "features": [
+                "video_transcription",
+                "audio_transcription",
+                "media_metadata",
+                "youtube_download"
+            ]
+        }

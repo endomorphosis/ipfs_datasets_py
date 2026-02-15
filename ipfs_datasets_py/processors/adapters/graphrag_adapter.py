@@ -8,20 +8,15 @@ This will eventually use the consolidated GraphRAG processor.
 from __future__ import annotations
 
 import logging
-from typing import Union
+from typing import Union, Dict, Any, List
 from pathlib import Path
 import time
 
-from ..protocol import (
+from ..core.protocol import (
     ProcessorProtocol,
+    ProcessingContext,
     ProcessingResult,
-    ProcessingMetadata,
-    ProcessingStatus,
     InputType,
-    KnowledgeGraph,
-    VectorStore,
-    Entity,
-    Relationship
 )
 
 logger = logging.getLogger(__name__)
@@ -34,15 +29,25 @@ class GraphRAGProcessorAdapter:
     This adapter wraps existing GraphRAG functionality (website processing,
     document graph extraction) to provide a unified interface.
     
+    Implements the synchronous ProcessorProtocol from processors.core.
+    
     Example:
+        >>> from ipfs_datasets_py.processors.core import ProcessingContext, InputType
         >>> adapter = GraphRAGProcessorAdapter()
-        >>> can_process = await adapter.can_process("https://example.com")
-        >>> result = await adapter.process("https://example.com")
+        >>> context = ProcessingContext(
+        ...     input_type=InputType.URL,
+        ...     source="https://example.com",
+        ...     metadata={"format": "html"}
+        ... )
+        >>> can_handle = adapter.can_handle(context)
+        >>> result = adapter.process(context)
     """
     
     def __init__(self):
         """Initialize adapter."""
         self._processor = None
+        self._name = "GraphRAGProcessor"
+        self._priority = 10
     
     def _get_processor(self):
         """Lazy-load GraphRAG processor on first use."""
@@ -75,122 +80,114 @@ class GraphRAGProcessorAdapter:
                             raise RuntimeError("No GraphRAG processor available")
         return self._processor
     
-    async def can_process(self, input_source: Union[str, Path]) -> bool:
+    def can_handle(self, context: ProcessingContext) -> bool:
         """
         Check if this adapter can handle web/document inputs for GraphRAG.
         
         Args:
-            input_source: Input to check
+            context: Processing context with input information
             
         Returns:
             True if input is a URL or document suitable for GraphRAG
         """
-        input_str = str(input_source).lower()
-        
         # Check if it's a URL
-        if input_str.startswith(('http://', 'https://')):
+        if context.input_type in (InputType.URL, InputType.IPFS_CID, InputType.IPNS):
             return True
         
-        # Check if it's a document that can benefit from GraphRAG
-        # (PDFs, docs, etc. can be processed for knowledge graphs)
-        if input_str.endswith(('.html', '.htm', '.md', '.txt')):
+        # Check format from metadata
+        fmt = context.get_format()
+        if fmt and fmt.lower() in ('html', 'htm', 'md', 'txt'):
+            return True
+        
+        # Check source if it's a file
+        source_str = str(context.source).lower()
+        if source_str.endswith(('.html', '.htm', '.md', '.txt')):
             return True
         
         return False
     
-    async def process(
-        self,
-        input_source: Union[str, Path],
-        **options
-    ) -> ProcessingResult:
+    def process(self, context: ProcessingContext) -> ProcessingResult:
         """
         Process input for GraphRAG and return standardized result.
         
         Args:
-            input_source: URL or document path
-            **options: Processing options
+            context: Processing context with input source and options
             
         Returns:
             ProcessingResult with knowledge graph and vectors
         """
         start_time = time.time()
-        
-        # Metadata for result
-        input_type = InputType.URL if str(input_source).startswith(('http://', 'https://')) else InputType.FILE
-        metadata = ProcessingMetadata(
-            processor_name="GraphRAGProcessor",
-            processor_version="1.0",
-            input_type=input_type
-        )
+        source = context.source
         
         try:
             processor = self._get_processor()
             
             # Process based on input type
-            if input_type == InputType.URL:
+            if context.input_type == InputType.URL:
                 # Process website
-                result_data = await self._process_website(processor, str(input_source), **options)
+                result_data = self._process_website(processor, str(source), context.options)
             else:
                 # Process document
-                result_data = await self._process_document(processor, input_source, **options)
+                result_data = self._process_document(processor, source, context.options)
             
             # Extract knowledge graph and content
-            kg = result_data.get("knowledge_graph", KnowledgeGraph(source=str(input_source)))
+            kg = result_data.get("knowledge_graph", {})
             content = result_data.get("content", {})
             
-            # Generate vectors
-            vectors = VectorStore(
-                metadata={
-                    "model": "graphrag",
-                    "source": str(input_source)
-                }
-            )
+            # Generate vectors (placeholder)
+            vectors: List[List[float]] = []
             
             # Processing time
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.SUCCESS
             
             return ProcessingResult(
+                success=True,
                 knowledge_graph=kg,
                 vectors=vectors,
-                content=content,
-                metadata=metadata,
-                extra={
+                metadata={
+                    "processor": self._name,
                     "processor_type": "graphrag",
-                    "entity_count": len(kg.entities),
-                    "relationship_count": len(kg.relationships)
+                    "processing_time": elapsed,
+                    "entity_count": len(kg.get("entities", [])),
+                    "relationship_count": len(kg.get("relationships", [])),
+                    **content
                 }
             )
         
         except Exception as e:
             elapsed = time.time() - start_time
-            metadata.processing_time_seconds = elapsed
-            metadata.status = ProcessingStatus.FAILED
-            metadata.add_error(str(e))
             
-            logger.error(f"GraphRAG processing failed for {input_source}: {e}")
+            logger.error(f"GraphRAG processing failed for {source}: {e}")
             
             return ProcessingResult(
-                knowledge_graph=KnowledgeGraph(source=str(input_source)),
-                vectors=VectorStore(),
-                content={"error": str(e)},
-                metadata=metadata
+                success=False,
+                knowledge_graph={},
+                vectors=[],
+                metadata={
+                    "processor": self._name,
+                    "processing_time": elapsed,
+                    "error": str(e)
+                },
+                errors=[f"GraphRAG processing failed: {str(e)}"]
             )
     
-    async def _process_website(self, processor, url: str, **options) -> dict:
+    def _process_website(self, processor, url: str, options: dict) -> dict:
         """Process website for GraphRAG."""
         # Simplified - actual implementation will call processor methods
-        kg = KnowledgeGraph(source=url)
         
         # Create page entity
-        page_entity = Entity(
-            id=f"page_{hash(url)}",
-            type="WebPage",
-            label=url,
-            properties={"url": url}
-        )
-        kg.add_entity(page_entity)
+        page_entity = {
+            "id": f"page_{abs(hash(url))}",
+            "type": "WebPage",
+            "label": url,
+            "properties": {"url": url}
+        }
+        
+        kg = {
+            "entities": [page_entity],
+            "relationships": [],
+            "source": url
+        }
         
         return {
             "knowledge_graph": kg,
@@ -200,18 +197,21 @@ class GraphRAGProcessorAdapter:
             }
         }
     
-    async def _process_document(self, processor, file_path: Union[str, Path], **options) -> dict:
+    def _process_document(self, processor, file_path: Union[str, Path], options: dict) -> dict:
         """Process document for GraphRAG."""
-        kg = KnowledgeGraph(source=str(file_path))
-        
         # Create document entity
-        doc_entity = Entity(
-            id=f"doc_{hash(str(file_path))}",
-            type="Document",
-            label=Path(file_path).name,
-            properties={"path": str(file_path)}
-        )
-        kg.add_entity(doc_entity)
+        doc_entity = {
+            "id": f"doc_{abs(hash(str(file_path)))}",
+            "type": "Document",
+            "label": Path(file_path).name,
+            "properties": {"path": str(file_path)}
+        }
+        
+        kg = {
+            "entities": [doc_entity],
+            "relationships": [],
+            "source": str(file_path)
+        }
         
         return {
             "knowledge_graph": kg,
@@ -221,14 +221,22 @@ class GraphRAGProcessorAdapter:
             }
         }
     
-    def get_supported_types(self) -> list[str]:
-        """Return supported input types."""
-        return ["url", "webpage", "html", "document"]
-    
-    def get_priority(self) -> int:
-        """Return processor priority."""
-        return 10
-    
-    def get_name(self) -> str:
-        """Return processor name."""
-        return "GraphRAGProcessor"
+    def get_capabilities(self) -> Dict[str, Any]:
+        """
+        Return processor capabilities and metadata.
+        
+        Returns:
+            Dictionary with processor name, priority, supported formats, etc.
+        """
+        return {
+            "name": self._name,
+            "priority": self._priority,
+            "formats": ["html", "htm", "md", "txt"],
+            "input_types": ["url", "webpage", "file"],
+            "outputs": ["knowledge_graph", "text"],
+            "features": [
+                "entity_extraction",
+                "relationship_extraction",
+                "graph_generation"
+            ]
+        }
