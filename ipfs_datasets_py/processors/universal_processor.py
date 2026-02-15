@@ -85,14 +85,17 @@ class ProcessorConfig:
         if self.max_retries < 0:
             raise ValueError("max_retries must be >= 0")
         
-        if self.cache_size_mb < 1:
-            raise ValueError("cache_size_mb must be >= 1")
+        if self.cache_size_mb < 0:
+            raise ValueError("cache_size_mb must be >= 0 (0 = no cache size limit)")
         
-        if not 1 <= self.cache_ttl_seconds <= 86400:
-            raise ValueError("cache_ttl_seconds must be 1-86400 (1 day)")
+        if self.cache_ttl_seconds < 0:
+            raise ValueError("cache_ttl_seconds must be >= 0 (0 = no expiration)")
+        
+        if self.cache_ttl_seconds > 86400:
+            raise ValueError("cache_ttl_seconds must be between 0 and 86400 seconds (0 to 1 day)")
         
         if self.cache_eviction_policy not in ("lru", "lfu", "fifo"):
-            raise ValueError("cache_eviction_policy must be 'lru', 'lfu', or 'fifo'")
+            raise ValueError("cache_eviction_policy must be one of: 'lru', 'lfu', 'fifo'")
 
 
 @dataclass

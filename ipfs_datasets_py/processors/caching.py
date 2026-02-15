@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import sys
 import logging
+import threading
+import heapq
 from enum import Enum
 from typing import Optional, Any
 from dataclasses import dataclass, field
@@ -123,11 +125,11 @@ class SmartCache:
         Initialize smart cache.
         
         Args:
-            max_size_mb: Maximum cache size in megabytes
+            max_size_mb: Maximum cache size in megabytes (0 = no limit)
             ttl_seconds: Time-to-live in seconds (0 = no expiration)
             eviction_policy: Eviction policy ("lru", "lfu", or "fifo")
         """
-        self.max_size_bytes = max_size_mb * 1024 * 1024
+        self.max_size_bytes = max_size_mb * 1024 * 1024 if max_size_mb > 0 else float('inf')
         self.ttl = timedelta(seconds=ttl_seconds) if ttl_seconds > 0 else None
         
         try:
@@ -138,7 +140,9 @@ class SmartCache:
         
         self._cache: dict[str, CacheEntry] = {}
         self._access_order: OrderedDict[str, None] = OrderedDict()  # For LRU
+        self._lfu_heap: list[tuple[int, str]] = []  # For LFU eviction (access_count, key)
         self._stats = CacheStatistics()
+        self._lock = threading.Lock()  # Thread safety
         
         logger.info(
             f"SmartCache initialized: "
@@ -182,48 +186,54 @@ class SmartCache:
     
     def put(self, key: str, value: Any) -> None:
         """
-        Add value to cache.
+        Add value to cache (thread-safe).
         
         Args:
             key: Cache key
             value: Value to cache
         """
-        # Calculate size
-        size = sys.getsizeof(value)
-        
-        # If this key already exists, remove old entry first
-        if key in self._cache:
-            self._remove_entry(key)
-        
-        # Evict entries if needed to make space
-        while (self._stats.total_size_bytes + size > self.max_size_bytes and 
-               self._stats.entry_count > 0):
-            self._evict_one()
-        
-        # If single entry is too large, don't cache it
-        if size > self.max_size_bytes:
-            logger.warning(
-                f"Entry too large to cache: {size} bytes > {self.max_size_bytes} bytes"
+        with self._lock:
+            # Calculate size
+            size = sys.getsizeof(value)
+            
+            # If this key already exists, remove old entry first
+            if key in self._cache:
+                self._remove_entry(key)
+            
+            # Evict entries if needed to make space
+            while (self._stats.total_size_bytes + size > self.max_size_bytes and 
+                   self._stats.entry_count > 0):
+                self._evict_one()
+            
+            # If single entry is too large, don't cache it
+            if size > self.max_size_bytes:
+                logger.warning(
+                    f"Entry too large to cache: {size} bytes > {self.max_size_bytes} bytes"
+                )
+                return
+            
+            # Create and add entry
+            entry = CacheEntry(
+                key=key,
+                value=value,
+                created_at=datetime.now(),
+                last_accessed=datetime.now(),
+                access_count=0,
+                size_bytes=size
             )
-            return
-        
-        # Create and add entry
-        entry = CacheEntry(
-            key=key,
-            value=value,
-            created_at=datetime.now(),
-            last_accessed=datetime.now(),
-            access_count=0,
-            size_bytes=size
-        )
-        
-        self._cache[key] = entry
-        self._access_order[key] = None
-        self._stats.total_size_bytes += size
-        self._stats.entry_count += 1
-        
-        logger.debug(
-            f"Cached entry: {key} ({size} bytes, "
+            
+            self._cache[key] = entry
+            self._access_order[key] = None
+            
+            # For LFU, add to heap
+            if self.eviction_policy == EvictionPolicy.LFU:
+                heapq.heappush(self._lfu_heap, (0, key))
+            
+            self._stats.total_size_bytes += size
+            self._stats.entry_count += 1
+            
+            logger.debug(
+                f"Cached entry: {key} ({size} bytes, "
             f"cache now {self._stats.entry_count} entries, "
             f"{self._stats.total_size_bytes / (1024*1024):.2f} MB)"
         )

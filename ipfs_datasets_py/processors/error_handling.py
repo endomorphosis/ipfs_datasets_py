@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import threading
 from enum import Enum
 from typing import Optional, Callable, Any, TypeVar
 from dataclasses import dataclass, field
@@ -141,55 +142,66 @@ class CircuitBreaker:
     
     When a processor fails repeatedly, the circuit breaker "opens" and
     rejects requests without trying, allowing the service to recover.
+    
+    Thread-safe for concurrent access.
     """
     config: CircuitBreakerConfig
     state: CircuitBreakerState = CircuitBreakerState.CLOSED
     failure_count: int = 0
     success_count: int = 0
     last_failure_time: Optional[datetime] = None
+    _lock: threading.Lock = None
+    
+    def __post_init__(self):
+        """Initialize thread lock."""
+        if self._lock is None:
+            object.__setattr__(self, '_lock', threading.Lock())
     
     def should_allow_request(self) -> bool:
-        """Check if request should be allowed."""
-        if self.state == CircuitBreakerState.CLOSED:
-            return True
-        elif self.state == CircuitBreakerState.OPEN:
-            # Check if timeout has elapsed
-            if self.last_failure_time:
-                elapsed = (datetime.now() - self.last_failure_time).total_seconds()
-                if elapsed >= self.config.timeout_seconds:
-                    self.state = CircuitBreakerState.HALF_OPEN
-                    self.success_count = 0
-                    logger.info("Circuit breaker entering HALF_OPEN state")
-                    return True
-            return False
-        else:  # HALF_OPEN
-            return True
+        """Check if request should be allowed (thread-safe)."""
+        with self._lock:
+            if self.state == CircuitBreakerState.CLOSED:
+                return True
+            elif self.state == CircuitBreakerState.OPEN:
+                # Check if timeout has elapsed
+                if self.last_failure_time:
+                    elapsed = (datetime.now() - self.last_failure_time).total_seconds()
+                    if elapsed >= self.config.timeout_seconds:
+                        self.state = CircuitBreakerState.HALF_OPEN
+                        self.success_count = 0
+                        logger.info("Circuit breaker entering HALF_OPEN state")
+                        return True
+                return False
+            else:  # HALF_OPEN
+                return True
     
     def record_success(self):
-        """Record successful operation."""
-        if self.state == CircuitBreakerState.HALF_OPEN:
-            self.success_count += 1
-            if self.success_count >= self.config.success_threshold:
-                self.state = CircuitBreakerState.CLOSED
-                self.failure_count = 0
-                logger.info("Circuit breaker CLOSED after successful recovery")
-        elif self.state == CircuitBreakerState.CLOSED:
-            self.failure_count = max(0, self.failure_count - 1)
+        """Record successful operation (thread-safe)."""
+        with self._lock:
+            if self.state == CircuitBreakerState.HALF_OPEN:
+                self.success_count += 1
+                if self.success_count >= self.config.success_threshold:
+                    self.state = CircuitBreakerState.CLOSED
+                    self.failure_count = 0
+                    logger.info("Circuit breaker CLOSED after successful recovery")
+            elif self.state == CircuitBreakerState.CLOSED:
+                self.failure_count = max(0, self.failure_count - 1)
     
     def record_failure(self):
-        """Record failed operation."""
-        self.failure_count += 1
-        self.last_failure_time = datetime.now()
-        
-        if self.state == CircuitBreakerState.HALF_OPEN:
-            self.state = CircuitBreakerState.OPEN
-            logger.warning("Circuit breaker re-OPENED due to failure in HALF_OPEN state")
-        elif self.state == CircuitBreakerState.CLOSED:
-            if self.failure_count >= self.config.failure_threshold:
+        """Record failed operation (thread-safe)."""
+        with self._lock:
+            self.failure_count += 1
+            self.last_failure_time = datetime.now()
+            
+            if self.state == CircuitBreakerState.HALF_OPEN:
                 self.state = CircuitBreakerState.OPEN
-                logger.error(
-                    f"Circuit breaker OPENED after {self.failure_count} failures"
-                )
+                logger.warning("Circuit breaker re-OPENED due to failure in HALF_OPEN state")
+            elif self.state == CircuitBreakerState.CLOSED:
+                if self.failure_count >= self.config.failure_threshold:
+                    self.state = CircuitBreakerState.OPEN
+                    logger.error(
+                        f"Circuit breaker OPENED after {self.failure_count} failures"
+                    )
 
 
 class RetryWithBackoff:
