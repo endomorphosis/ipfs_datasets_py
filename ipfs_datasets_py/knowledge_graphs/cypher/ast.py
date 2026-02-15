@@ -54,12 +54,14 @@ class ASTNodeType(Enum):
 class ASTNode:
     """Base class for all AST nodes."""
     
-    node_type: ASTNodeType
+    node_type: Optional[ASTNodeType] = None
     line: int = 0
     column: int = 0
     
     def accept(self, visitor: 'ASTVisitor') -> Any:
         """Accept a visitor (visitor pattern)."""
+        if self.node_type is None:
+            raise ValueError(f"node_type not set for {self.__class__.__name__}")
         method_name = f'visit_{self.node_type.name.lower()}'
         method = getattr(visitor, method_name, visitor.generic_visit)
         return method(self)
