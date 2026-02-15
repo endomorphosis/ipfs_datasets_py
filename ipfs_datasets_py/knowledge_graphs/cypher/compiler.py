@@ -155,49 +155,122 @@ class CypherCompiler:
             pattern: Pattern to compile
             is_optional: Whether this is from OPTIONAL MATCH
         """
+        # First pass: track actual node variables used in pattern
+        node_vars = []
         for i, element in enumerate(pattern.elements):
             if isinstance(element, NodePattern):
-                self._compile_node_pattern(element, f"_n{i}")
+                # Determine the actual variable that will be used
+                variable = element.variable or f"_n{i}"
+                if not variable:
+                    variable = f"_anon{len(self.variables)}"
+                node_vars.append(variable)
+            else:
+                node_vars.append(None)  # Placeholder for non-node elements
+        
+        # Identify nodes that are targets of relationships (don't need ScanLabel)
+        target_nodes = set()
+        for i, element in enumerate(pattern.elements):
+            if isinstance(element, RelationshipPattern):
+                # The node after the relationship is a target
+                if i + 1 < len(node_vars):
+                    target_nodes.add(i + 1)
+        
+        # Second pass: compile elements with correct variable references
+        node_index = 0
+        for i, element in enumerate(pattern.elements):
+            if isinstance(element, NodePattern):
+                # Only compile node pattern if it's not a relationship target
+                # OR if it has label/property constraints that need filtering
+                is_target = i in target_nodes
+                if not is_target or element.labels or element.properties:
+                    # If it's a target with constraints, we still need to add filters
+                    # but Expand will provide the nodes
+                    if is_target:
+                        # Register the variable but don't generate ScanLabel
+                        variable = element.variable or f"_n{i}"
+                        if not variable:
+                            variable = f"_anon{len(self.variables)}"
+                        self.variables[variable] = "node"
+                        # Store the target node info for the relationship compilation
+                        # Labels will be passed to Expand/OptionalExpand
+                        # Property filters will be added after Expand
+                        if element.properties:
+                            for prop_name, prop_value in element.properties.items():
+                                value = self._compile_expression(prop_value)
+                                op = {
+                                    "op": "Filter",
+                                    "variable": variable,
+                                    "property": prop_name,
+                                    "operator": "=",
+                                    "value": value
+                                }
+                                self.operations.append(op)
+                    else:
+                        # Not a target - compile normally with ScanLabel
+                        self._compile_node_pattern(element, f"_n{i}", is_optional=is_optional)
+                node_index += 1
             elif isinstance(element, RelationshipPattern):
-                # Get previous and next node variables
+                # Get previous and next node variables from tracked list
                 if i > 0 and i < len(pattern.elements) - 1:
-                    start_var = element.variable or f"_n{i-1}"
-                    end_var = f"_n{i+1}"
-                    self._compile_relationship_pattern(element, start_var, end_var, is_optional=is_optional)
+                    # Find the actual variable names from node patterns
+                    start_var = node_vars[i-1] if i-1 < len(node_vars) else f"_n{i-1}"
+                    end_var = node_vars[i+1] if i+1 < len(node_vars) else f"_n{i+1}"
+                    # Get target node labels if target is a NodePattern
+                    target_labels = None
+                    if i + 1 < len(pattern.elements) and isinstance(pattern.elements[i+1], NodePattern):
+                        target_labels = pattern.elements[i+1].labels
+                    self._compile_relationship_pattern(element, start_var, end_var, 
+                                                      is_optional=is_optional,
+                                                      target_labels=target_labels)
     
-    def _compile_node_pattern(self, node: NodePattern, default_var: str = None):
+    def _compile_node_pattern(self, node: NodePattern, default_var: str = None, is_optional: bool = False):
         """
         Compile node pattern.
         
         Generates ScanLabel or ScanAll operation.
+        
+        Args:
+            node: NodePattern to compile
+            default_var: Default variable name if node doesn't have one
+            is_optional: Whether this is from OPTIONAL MATCH
         """
         variable = node.variable or default_var
         
         if not variable:
             variable = f"_anon{len(self.variables)}"
         
-        self.variables[variable] = "node"
+        # Check if this variable already exists from a previous clause
+        # Only skip scanning if:
+        # 1. This is from an OPTIONAL MATCH (is_optional=True)
+        # 2. AND the variable was already defined in a previous clause
+        # This allows OPTIONAL MATCH to reuse variables from MATCH,
+        # but doesn't break UNION queries where each branch is independent
+        variable_exists = variable in self.variables
+        should_skip_scan = variable_exists and is_optional
         
-        # Generate scan operation
-        if node.labels:
-            # Scan by label
-            for label in node.labels:
+        if not should_skip_scan:
+            self.variables[variable] = "node"
+            
+            # Generate scan operation
+            if node.labels:
+                # Scan by label
+                for label in node.labels:
+                    op = {
+                        "op": "ScanLabel",
+                        "label": label,
+                        "variable": variable
+                    }
+                    self.operations.append(op)
+            else:
+                # Scan all nodes
                 op = {
-                    "op": "ScanLabel",
-                    "label": label,
+                    "op": "ScanAll",
+                    "type": "node",
                     "variable": variable
                 }
                 self.operations.append(op)
-        else:
-            # Scan all nodes
-            op = {
-                "op": "ScanAll",
-                "type": "node",
-                "variable": variable
-            }
-            self.operations.append(op)
         
-        # Add property filters
+        # Add property filters (even if variable already exists)
         if node.properties:
             for prop_name, prop_value in node.properties.items():
                 value = self._compile_expression(prop_value)
@@ -215,7 +288,8 @@ class CypherCompiler:
         rel: RelationshipPattern,
         start_var: str,
         end_var: str,
-        is_optional: bool = False
+        is_optional: bool = False,
+        target_labels: Optional[List[str]] = None
     ):
         """
         Compile relationship pattern.
@@ -227,6 +301,7 @@ class CypherCompiler:
             start_var: Variable for start node
             end_var: Variable for end node
             is_optional: Whether this is from OPTIONAL MATCH
+            target_labels: Labels for the target node (for filtering)
         """
         rel_var = rel.variable or f"_r{len(self.variables)}"
         self.variables[rel_var] = "relationship"
@@ -250,6 +325,10 @@ class CypherCompiler:
                 k: self._compile_expression(v)
                 for k, v in rel.properties.items()
             }
+        
+        # Add target node labels for filtering
+        if target_labels:
+            op["target_labels"] = target_labels
         
         self.operations.append(op)
     

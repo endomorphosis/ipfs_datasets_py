@@ -339,6 +339,13 @@ class QueryExecutor:
                 rel_var = op.get("rel_variable")
                 direction = op.get("direction", "out")
                 rel_types = op.get("rel_types")
+                target_labels = op.get("target_labels")  # Labels for target node filtering
+                
+                # Convert Cypher direction to graph engine direction
+                if direction == "right":
+                    direction = "out"
+                elif direction == "left":
+                    direction = "in"
                 
                 if from_var not in result_set:
                     logger.warning("Expand: source variable %s not found", from_var)
@@ -365,6 +372,12 @@ class QueryExecutor:
                         target_node = self.graph_engine.get_node(target_id)
                         if not target_node:
                             continue
+                        
+                        # Filter by target labels if specified
+                        if target_labels:
+                            node_labels = getattr(target_node, 'labels', [])
+                            if not any(label in node_labels for label in target_labels):
+                                continue
                         
                         # Create binding with relationship and target node
                         # Store as tuple (from_node, relationship, to_node)
@@ -401,6 +414,13 @@ class QueryExecutor:
                 rel_var = op.get("rel_variable")
                 direction = op.get("direction", "out")
                 rel_types = op.get("rel_types")
+                target_labels = op.get("target_labels")  # Labels for target node filtering
+                
+                # Convert Cypher direction to graph engine direction
+                if direction == "right":
+                    direction = "out"
+                elif direction == "left":
+                    direction = "in"
                 
                 if from_var not in result_set:
                     logger.warning("OptionalExpand: source variable %s not found", from_var)
@@ -417,6 +437,7 @@ class QueryExecutor:
                         rel_type=rel_types[0] if rel_types else None
                     )
                     
+                    matched = False
                     if rels:
                         # Found relationships - add them
                         for rel in rels:
@@ -430,13 +451,21 @@ class QueryExecutor:
                             if not target_node:
                                 continue
                             
+                            # Filter by target labels if specified
+                            if target_labels:
+                                node_labels = getattr(target_node, 'labels', [])
+                                if not any(label in node_labels for label in target_labels):
+                                    continue
+                            
                             # Create binding with relationship and target node
                             new_results.append({
                                 from_var: from_node,
                                 rel_var: rel,
                                 to_var: target_node
                             })
-                    else:
+                            matched = True
+                    
+                    if not matched:
                         # No relationships found - preserve row with NULLs (left join)
                         new_results.append({
                             from_var: from_node,
@@ -829,6 +858,12 @@ class QueryExecutor:
             elif 'property' in expr:
                 # Property access: {'property': 'n.email'}
                 prop_path = expr['property']
+                
+                # First, check if the full property path is directly available in binding
+                if prop_path in binding:
+                    return binding[prop_path]
+                
+                # Otherwise, try to split and access as variable.property
                 if '.' in prop_path:
                     var, prop = prop_path.split('.', 1)
                     if var in binding:
