@@ -19,7 +19,16 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Check if self-hosted runners are available
+  check-runner:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+
   test:
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     strategy:
       matrix:
@@ -132,6 +141,8 @@ jobs:
         name: codecov-umbrella
 
   security:
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     steps:
     - name: Clean workspace (fix permissions)
@@ -187,7 +198,8 @@ jobs:
           safety-report.json
 
   build:
-    needs: [test, security]
+    needs: [check-runner, test, security]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
@@ -246,12 +258,13 @@ jobs:
         cache-to: type=gha,mode=max
 
   deploy-staging:
-    needs: build
+    needs: [check-runner, build]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/develop' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    if: github.ref == 'refs/heads/develop'
+    environment: staging
     environment: staging
     
     steps:
@@ -286,12 +299,13 @@ jobs:
         kubectl rollout status deployment/website-graphrag-processor -n graphrag-system --timeout=600s
 
   deploy-production:
-    needs: build
+    needs: [check-runner, build]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
     environment: production
     
     steps:
