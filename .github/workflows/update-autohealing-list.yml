@@ -9,6 +9,11 @@ name: Update Auto-Healing Workflow List
 on:
   workflow_dispatch:
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 # Original triggers (disabled):
 #  push:
 #    paths:

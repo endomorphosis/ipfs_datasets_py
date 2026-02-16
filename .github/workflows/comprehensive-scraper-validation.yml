@@ -24,6 +24,11 @@ on:
       - 'tests/scraper_tests/**'
       - 'comprehensive_scraper_validation.py'
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write

@@ -38,6 +38,11 @@ on:
     # Run scraper validation daily at 3 AM UTC
     - cron: '0 3 * * *'
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read

@@ -6,6 +6,11 @@ on:
     branches: [main]
     paths: ['.github/workflows/test-datasets-runner.yml']
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read

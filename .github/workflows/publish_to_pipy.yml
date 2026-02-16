@@ -12,6 +12,11 @@ on:
   release:
     types: [created]
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -19,6 +24,7 @@ jobs:
   build:
     name: Build distribution 📦
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     permissions:
       contents: write  # Needed to clean up working directory
     
@@ -55,6 +61,7 @@ jobs:
     if: github.ref == 'refs/heads/main'  # only publish to PyPI on pushes to main branch
     needs: build
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     environment:
       name: pypi
       url: https://pypi.org/p/ipfs-datasets # Replace <package-name> with your PyPI project name
