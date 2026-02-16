@@ -1,573 +1,325 @@
 # Knowledge Graphs Migration Guide
 
-**Version:** 1.0  
-**Date:** 2026-02-15  
-**Status:** Active
-
----
-
 ## Overview
 
-This guide helps you migrate from the legacy `ipld.py` knowledge graph API to the new Neo4j-compatible graph database API. The new API provides better compatibility, more features, and improved performance.
+This guide helps you migrate from the old duplicate lineage tracking modules to the new consolidated `lineage/` package.
 
----
+## Quick Start
 
-## Why Migrate?
-
-### Benefits of the New API
-
-1. **Neo4j Compatibility**: Drop-in replacement for Neo4j driver - change one line of code
-2. **Cypher Query Support**: Coming in Phase 2 (Weeks 3-4)
-3. **ACID Transactions**: Full transaction support with WAL (Phase 3)
-4. **Better Performance**: LRU caching, optimized storage
-5. **Active Development**: New features, bug fixes, and improvements
-6. **Standard API**: Follow industry-standard graph database patterns
-
-### Deprecation Timeline
-
-- **Current (Phase 1)**: Legacy API deprecated with warnings
-- **Phase 2 (Weeks 3-4)**: Legacy API marked for removal
-- **Phase 3 (Weeks 5-6)**: Legacy API removed from main codebase
-- **Archive**: Legacy code moved to `legacy/` directory
-
----
-
-## Quick Migration
-
-### Before (Legacy API)
-
+### Old Way (Deprecated)
 ```python
-from ipfs_datasets_py.knowledge_graphs.ipld import (
-    IPLDKnowledgeGraph, 
-    Entity, 
-    Relationship
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
+    CrossDocumentLineageTracker,
+    LineageNode,
+    LineageLink
 )
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
 
-# Create storage
-storage = IPLDStorage(ipfs_host="localhost", ipfs_port=5001)
-
-# Create knowledge graph
-kg = IPLDKnowledgeGraph(storage)
-
-# Add entities
-entity1 = Entity(
-    entity_type="Person",
-    name="Alice",
-    properties={"age": 30}
-)
-entity2 = Entity(
-    entity_type="Person",
-    name="Bob",
-    properties={"age": 25}
-)
-kg.add_entity(entity1)
-kg.add_entity(entity2)
-
-# Add relationship
-rel = Relationship(
-    relationship_type="KNOWS",
-    source_id=entity1.id,
-    target_id=entity2.id,
-    properties={"since": 2020}
-)
-kg.add_relationship(rel)
-
-# Save graph
-cid = kg.save()
+# Old API
+tracker = CrossDocumentLineageTracker()
 ```
 
-### After (New API)
-
+### New Way (Recommended)
 ```python
-from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
-from ipfs_datasets_py.knowledge_graphs.core import GraphEngine
-from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    LineageTracker,
+    LineageNode,
+    LineageLink
+)
 
-# Create driver (Neo4j-compatible)
-driver = GraphDatabase.driver("ipfs://localhost:5001")
-
-# Get session
-with driver.session() as session:
-    # Create storage backend (optional for persistence)
-    backend = IPLDBackend(cache_capacity=1000)
-    engine = GraphEngine(storage_backend=backend)
-    
-    # Add nodes (equivalent to entities)
-    alice = engine.create_node(
-        labels=["Person"],
-        properties={"name": "Alice", "age": 30}
-    )
-    bob = engine.create_node(
-        labels=["Person"],
-        properties={"name": "Bob", "age": 25}
-    )
-    
-    # Add relationship
-    rel = engine.create_relationship(
-        rel_type="KNOWS",
-        start_node=alice.id,
-        end_node=bob.id,
-        properties={"since": 2020}
-    )
-    
-    # Save graph
-    cid = engine.save_graph()
-
-driver.close()
+# New unified API
+tracker = LineageTracker()
 ```
 
----
+## API Mapping
 
-## Detailed Migration Steps
+### Core Classes
+
+| Old Module | Old Class | New Module | New Class |
+|------------|-----------|------------|-----------|
+| cross_document_lineage | CrossDocumentLineageTracker | lineage.core | LineageTracker |
+| cross_document_lineage | EnhancedLineageTracker | lineage.enhanced | EnhancedLineageTracker |
+| cross_document_lineage | LineageNode | lineage.types | LineageNode |
+| cross_document_lineage | LineageLink | lineage.types | LineageLink |
+| cross_document_lineage_enhanced | CrossDocumentLineageEnhancer | lineage.enhanced | SemanticAnalyzer |
+
+### Method Mapping
+
+| Old Method | New Method | Notes |
+|------------|------------|-------|
+| track_entity() | track_node() | Renamed for consistency |
+| add_relationship() | track_link() | Renamed for consistency |
+| get_lineage() | find_lineage_path() | More descriptive name |
+| analyze_impact() | Use ImpactAnalyzer class | Now separate analyzer |
+
+## Migration Steps
 
 ### Step 1: Update Imports
 
-#### Old Imports
+**Before:**
 ```python
-from ipfs_datasets_py.knowledge_graphs.ipld import (
-    IPLDKnowledgeGraph,
-    Entity,
-    Relationship
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
+    CrossDocumentLineageTracker,
+    LineageNode,
+    LineageLink,
+    LineageDomain
 )
 ```
 
-#### New Imports
+**After:**
 ```python
-# Driver API (Neo4j-compatible)
-from ipfs_datasets_py.knowledge_graphs.neo4j_compat import (
-    GraphDatabase,
-    Node,
-    Relationship,
-    Path
-)
-
-# Core graph engine
-from ipfs_datasets_py.knowledge_graphs.core import (
-    GraphEngine,
-    QueryExecutor
-)
-
-# Storage layer
-from ipfs_datasets_py.knowledge_graphs.storage import (
-    IPLDBackend,
-    Entity,  # Compatible with legacy Entity
-    Relationship as StorageRelationship,
-    LRUCache
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    LineageTracker,
+    LineageNode,
+    LineageLink,
+    LineageDomain
 )
 ```
 
-### Step 2: Initialize Driver
+### Step 2: Update Class Instantiation
 
-#### Old Way
+**Before:**
 ```python
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-storage = IPLDStorage(ipfs_host="localhost", ipfs_port=5001)
-kg = IPLDKnowledgeGraph(storage)
-```
-
-#### New Way
-```python
-# Option 1: Use Neo4j-compatible driver (recommended)
-driver = GraphDatabase.driver("ipfs://localhost:5001")
-session = driver.session()
-
-# Option 2: Use GraphEngine directly
-from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
-backend = IPLDBackend(cache_capacity=1000)
-engine = GraphEngine(storage_backend=backend)
-```
-
-### Step 3: Create Nodes (Entities)
-
-#### Old Way
-```python
-entity = Entity(
-    entity_id="person-1",
-    entity_type="Person",
-    name="Alice",
-    properties={"age": 30, "city": "SF"},
-    confidence=0.95,
-    source_text="Alice is 30 years old"
-)
-kg.add_entity(entity)
-```
-
-#### New Way
-```python
-# Using GraphEngine
-node = engine.create_node(
-    labels=["Person"],
-    properties={
-        "name": "Alice",
-        "age": 30,
-        "city": "SF"
-    }
-)
-
-# Using storage Entity (for compatibility)
-from ipfs_datasets_py.knowledge_graphs.storage import Entity
-entity = Entity(
-    entity_type="Person",
-    name="Alice",
-    properties={"age": 30, "city": "SF"},
-    confidence=0.95,
-    source_text="Alice is 30 years old"
-)
-# Convert to node if needed
-```
-
-### Step 4: Create Relationships
-
-#### Old Way
-```python
-rel = Relationship(
-    relationship_id="rel-1",
-    relationship_type="KNOWS",
-    source_id=entity1.id,
-    target_id=entity2.id,
-    properties={"since": 2020},
-    confidence=0.9
-)
-kg.add_relationship(rel)
-```
-
-#### New Way
-```python
-# Using GraphEngine
-rel = engine.create_relationship(
-    rel_type="KNOWS",
-    start_node=node1.id,
-    end_node=node2.id,
-    properties={"since": 2020}
+tracker = CrossDocumentLineageTracker(
+    enable_semantic_analysis=True,
+    enable_boundary_detection=True
 )
 ```
 
-### Step 5: Query Nodes
-
-#### Old Way
+**After:**
 ```python
-# Get entity by ID
-entity = kg.get_entity(entity_id)
+from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
 
-# Get all entities of a type
-persons = kg.get_entities_by_type("Person")
-
-# Search entities
-results = kg.search_entities(query="Alice")
+tracker = EnhancedLineageTracker(
+    enable_temporal_consistency=True
+)
+# Semantic analysis and boundary detection are built-in
 ```
 
-#### New Way
+### Step 3: Update Method Calls
+
+**Before:**
 ```python
-# Get node by ID
-node = engine.get_node(node_id)
-
-# Find nodes by label
-persons = engine.find_nodes(labels=["Person"])
-
-# Find nodes by properties
-results = engine.find_nodes(
-    labels=["Person"],
-    properties={"name": "Alice"}
+# Track entities
+tracker.track_entity(
+    entity_id="dataset_1",
+    entity_type="dataset",
+    metadata={"name": "users"}
 )
 
-# With limit
-limited = engine.find_nodes(labels=["Person"], limit=10)
+# Add relationships
+tracker.add_relationship(
+    source_id="dataset_1",
+    target_id="dataset_2",
+    relationship_type="derived_from"
+)
 ```
 
-### Step 6: Save and Load Graphs
-
-#### Old Way
+**After:**
 ```python
-# Save graph
-cid = kg.save()
+# Track nodes (entities)
+tracker.track_node(
+    node_id="dataset_1",
+    node_type="dataset",
+    metadata={"name": "users"}
+)
 
-# Load graph
-kg2 = IPLDKnowledgeGraph(storage)
-kg2.load(cid)
+# Track links (relationships)
+tracker.track_link(
+    source_id="dataset_1",
+    target_id="dataset_2",
+    relationship_type="derived_from"
+)
 ```
 
-#### New Way
+### Step 4: Update Analysis Code
+
+**Before:**
 ```python
-# Save graph
-cid = engine.save_graph()
-
-# Load graph
-engine2 = GraphEngine(storage_backend=backend)
-engine2.load_graph(cid)
+# Old embedded analysis
+tracker.analyze_downstream_impact("dataset_1")
+tracker.calculate_metrics()
 ```
 
-### Step 7: Cleanup Resources
-
-#### Old Way
+**After:**
 ```python
-# No explicit cleanup needed
+# New separate analyzers
+from ipfs_datasets_py.knowledge_graphs.lineage import ImpactAnalyzer, LineageMetrics
+
+# Impact analysis
+analyzer = ImpactAnalyzer(tracker)
+impact = analyzer.analyze_downstream_impact("dataset_1")
+
+# Metrics
+metrics = LineageMetrics(tracker.graph)
+stats = metrics.compute_basic_stats()
 ```
 
-#### New Way
+### Step 5: Update Visualization
+
+**Before:**
 ```python
-# Close driver when done
-driver.close()
-
-# Or use context manager (recommended)
-with GraphDatabase.driver("ipfs://localhost:5001") as driver:
-    with driver.session() as session:
-        # Do work here
-        pass
-# Automatically closes
+# Old visualization was embedded
+tracker.visualize(output_path="lineage.png")
 ```
 
----
-
-## API Mapping Reference
-
-### Classes
-
-| Legacy API | New API | Notes |
-|------------|---------|-------|
-| `IPLDKnowledgeGraph` | `GraphEngine` | Core graph operations |
-| `Entity` | `Node` or `storage.Entity` | Node in graph |
-| `Relationship` | `Relationship` | Edge in graph |
-| `IPLDStorage` | `IPLDBackend` | Storage layer |
-| N/A | `GraphDatabase` | Driver factory |
-| N/A | `IPFSSession` | Session management |
-| N/A | `Result` | Query results |
-| N/A | `Record` | Single result row |
-
-### Methods
-
-| Legacy Method | New Method | Notes |
-|---------------|------------|-------|
-| `kg.add_entity(entity)` | `engine.create_node(labels, properties)` | Create node |
-| `kg.get_entity(id)` | `engine.get_node(id)` | Get node by ID |
-| `kg.get_entities_by_type(type)` | `engine.find_nodes(labels=[type])` | Find by label |
-| `kg.add_relationship(rel)` | `engine.create_relationship(...)` | Create relationship |
-| `kg.get_relationship(id)` | `engine.get_relationship(id)` | Get relationship |
-| `kg.save()` | `engine.save_graph()` | Save entire graph |
-| `kg.load(cid)` | `engine.load_graph(cid)` | Load graph |
-| `kg.export_to_car(path)` | `backend.export_car(cid)` | Export to CAR file |
-
----
-
-## Common Patterns
-
-### Pattern 1: Batch Node Creation
-
+**After:**
 ```python
-# Old way
-entities = []
-for data in batch_data:
-    entity = Entity(entity_type="Person", name=data["name"])
-    kg.add_entity(entity)
-    entities.append(entity)
+# New separate visualization
+from ipfs_datasets_py.knowledge_graphs.lineage import visualize_lineage
 
-# New way
-nodes = []
-for data in batch_data:
-    node = engine.create_node(
-        labels=["Person"],
-        properties={"name": data["name"]}
-    )
-    nodes.append(node)
+# Static visualization
+visualize_lineage(tracker, "lineage.png", renderer="networkx")
+
+# Interactive visualization
+visualize_lineage(tracker, "lineage.html", renderer="plotly")
 ```
-
-### Pattern 2: Graph Traversal
-
-```python
-# Old way
-related = kg.get_related_entities(entity_id, relationship_type="KNOWS")
-
-# New way (Phase 1 - manual)
-node = engine.get_node(node_id)
-# Traverse relationships manually for now
-# Phase 2 will add Cypher: MATCH (n)-[:KNOWS]->(m) RETURN m
-```
-
-### Pattern 3: Updating Nodes
-
-```python
-# Old way
-entity = kg.get_entity(entity_id)
-entity.properties["age"] = 31
-kg.update_entity(entity)
-
-# New way
-engine.update_node(node_id, {"age": 31})
-```
-
-### Pattern 4: Deleting Nodes
-
-```python
-# Old way
-kg.remove_entity(entity_id)
-
-# New way
-engine.delete_node(node_id)
-```
-
----
 
 ## Feature Comparison
 
-| Feature | Legacy API | New API (Phase 1) | New API (Phase 2+) |
-|---------|------------|-------------------|-------------------|
-| Entity/Node creation | ✅ | ✅ | ✅ |
-| Relationship creation | ✅ | ✅ | ✅ |
-| IPLD storage | ✅ | ✅ | ✅ |
-| LRU caching | ❌ | ✅ | ✅ |
-| Neo4j compatibility | ❌ | ✅ | ✅ |
-| Cypher queries | ❌ | ❌ | ✅ (Phase 2) |
-| ACID transactions | ❌ | Partial | ✅ (Phase 3) |
-| Graph traversal | ✅ | Manual | ✅ (Phase 2) |
-| Vector integration | ✅ | Planned | ✅ (Phase 4) |
-| JSON-LD support | ❌ | Planned | ✅ (Phase 4) |
-| CAR import/export | ✅ | ✅ | ✅ |
+### New Features
 
----
+The new `lineage/` package includes features not in the old modules:
 
-## Breaking Changes
+**Enhanced Analysis:**
+- `SemanticAnalyzer` - Relationship categorization and similarity
+- `BoundaryDetector` - Automatic boundary detection
+- `ConfidenceScorer` - Uncertainty propagation
 
-### 1. Entity vs Node
+**Visualization:**
+- Multiple rendering engines (NetworkX, Plotly)
+- Interactive HTML visualizations
+- Customizable layouts
 
-**Change**: `Entity` objects are now `Node` objects with different structure.
+**Metrics:**
+- Comprehensive graph statistics
+- Impact analysis
+- Dependency analysis
+- Critical node identification
 
-**Impact**: Code that directly accesses `entity.id`, `entity.type`, etc. needs updates.
+### Removed Features
 
-**Migration**:
+Some rarely-used features were not migrated:
+- Legacy XML export (use JSON instead)
+- Obsolete database connectors (use modern APIs)
+
+If you need these features, please file an issue.
+
+## Examples
+
+### Complete Migration Example
+
+**Before (Old API):**
 ```python
-# Old
-entity.id  # string ID
-entity.type  # string type
-entity.properties  # dict
+from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import (
+    CrossDocumentLineageTracker
+)
 
-# New
-node.id  # string ID
-node.labels  # list of strings (not single type)
-node._properties  # dict (use node.get(key) instead)
+# Create tracker
+tracker = CrossDocumentLineageTracker()
+
+# Track data pipeline
+tracker.track_entity("raw_data", "dataset")
+tracker.track_entity("cleaned_data", "dataset")
+tracker.add_relationship("raw_data", "cleaned_data", "derived_from")
+
+# Get lineage
+lineage = tracker.get_lineage("raw_data", "cleaned_data")
+
+# Visualize
+tracker.visualize("lineage.png")
 ```
 
-### 2. Relationship Source/Target
-
-**Change**: Relationships use `start_node` and `end_node` instead of `source_id` and `target_id`.
-
-**Migration**:
+**After (New API):**
 ```python
-# Old
-rel.source_id
-rel.target_id
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    LineageTracker,
+    visualize_lineage
+)
 
-# New
-rel.start_node
-rel.end_node
+# Create tracker
+tracker = LineageTracker()
+
+# Track data pipeline
+tracker.track_node("raw_data", "dataset")
+tracker.track_node("cleaned_data", "dataset")
+tracker.track_link("raw_data", "cleaned_data", "derived_from")
+
+# Get lineage
+path = tracker.find_lineage_path("raw_data", "cleaned_data")
+
+# Visualize (with more options)
+visualize_lineage(tracker, "lineage.html", renderer="plotly")
 ```
 
-### 3. Storage Initialization
-
-**Change**: Storage initialization is different.
-
-**Migration**:
-```python
-# Old
-from ipfs_datasets_py.data_transformation.ipld.storage import IPLDStorage
-storage = IPLDStorage(ipfs_host="localhost", ipfs_port=5001)
-
-# New
-from ipfs_datasets_py.knowledge_graphs.storage import IPLDBackend
-backend = IPLDBackend(cache_capacity=1000)
-```
-
----
-
-## Troubleshooting
-
-### Issue: "Module 'ipld' is deprecated" Warning
-
-**Solution**: This is expected. Migrate to the new API to remove the warning.
-
-### Issue: "AttributeError: 'Node' object has no attribute 'type'"
-
-**Solution**: Use `node.labels` instead of `node.type`. Labels is a list.
+### Advanced Features Example
 
 ```python
-# Old
-if entity.type == "Person":
-    ...
+from ipfs_datasets_py.knowledge_graphs.lineage import (
+    EnhancedLineageTracker,
+    ImpactAnalyzer,
+    LineageMetrics,
+    visualize_lineage
+)
 
-# New
-if "Person" in node.labels:
-    ...
+# Create enhanced tracker
+tracker = EnhancedLineageTracker()
+
+# Track with automatic boundary detection
+tracker.track_node("ds_prod", "dataset", metadata={"system": "production"})
+tracker.track_node("ds_analytics", "dataset", metadata={"system": "analytics"})
+tracker.track_link_with_analysis(
+    "ds_prod", "ds_analytics", "replicated_to",
+    auto_detect_boundary=True  # Automatically detects system boundary
+)
+
+# Analyze impact
+analyzer = ImpactAnalyzer(tracker)
+impact = analyzer.analyze_downstream_impact("ds_prod")
+print(f"Total downstream entities: {impact['total_downstream']}")
+
+# Get metrics
+metrics = LineageMetrics(tracker.graph)
+stats = metrics.compute_basic_stats()
+print(f"Graph density: {stats['density']:.2%}")
+
+# Find critical nodes
+critical = analyzer.find_critical_nodes(threshold=3)
+for node in critical:
+    print(f"Critical: {node['node_id']} ({node['connections']} connections)")
+
+# Visualize
+visualize_lineage(tracker, "lineage_interactive.html", renderer="plotly")
 ```
 
-### Issue: "Cannot import GraphDatabase"
+## Deprecation Timeline
 
-**Solution**: Ensure you're using the correct import path:
-
-```python
-from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
-```
-
-### Issue: "Graph not persisting to IPFS"
-
-**Solution**: Ensure you provide a storage backend to GraphEngine:
-
-```python
-backend = IPLDBackend(cache_capacity=1000)
-engine = GraphEngine(storage_backend=backend)
-```
-
----
+- **Now**: New API available, old modules still work
+- **Month 3**: Old modules show deprecation warnings
+- **Month 6**: Old modules archived, adapters provided
+- **Month 12**: Old modules removed
 
 ## Getting Help
 
-### Documentation
+- **Documentation**: See module docstrings in `lineage/` package
+- **Examples**: Check `tests/unit/knowledge_graphs/lineage/` for examples
+- **Issues**: File issues on GitHub for migration problems
 
-- **Refactoring Plan**: `docs/KNOWLEDGE_GRAPHS_NEO4J_REFACTORING_PLAN.md`
-- **Implementation Roadmap**: `docs/KNOWLEDGE_GRAPHS_IMPLEMENTATION_ROADMAP.md`
-- **Quick Reference**: `docs/KNOWLEDGE_GRAPHS_QUICK_REFERENCE.md`
-- **Feature Matrix**: `docs/KNOWLEDGE_GRAPHS_FEATURE_MATRIX.md`
+## FAQ
 
-### Examples
+**Q: Will my existing code break?**
+A: No. Old modules remain unchanged. You can migrate gradually.
 
-Check the `examples/` directory for working examples:
-- Simple graph creation
-- Neo4j driver usage
-- IPLD persistence
-- Batch operations
+**Q: What if I can't migrate yet?**
+A: Old modules will work for at least 6 months with deprecation warnings after 3 months.
 
-### Community
+**Q: Is the new API compatible?**
+A: The new API is similar but not identical. Use this guide to migrate.
 
-- **GitHub Issues**: Report bugs or request features
-- **Pull Requests**: Contribute improvements
-- **Discussions**: Ask questions and share use cases
+**Q: Are there performance differences?**
+A: The new implementation is generally faster due to better structure.
 
----
+**Q: Can I use both old and new APIs?**
+A: Yes, but not recommended. Choose one approach per project.
 
-## Migration Checklist
-
-Use this checklist to track your migration progress:
-
-- [ ] Review migration guide
-- [ ] Update imports to new API
-- [ ] Replace `IPLDKnowledgeGraph` with `GraphEngine`
-- [ ] Replace `Entity` with `Node` creation
-- [ ] Update `Relationship` creation
-- [ ] Update node queries
-- [ ] Update relationship queries
-- [ ] Add driver/session management
-- [ ] Test with sample data
-- [ ] Run full test suite
-- [ ] Update documentation
-- [ ] Deploy to production
-
----
-
-## Version History
-
-- **v1.0 (2026-02-15)**: Initial migration guide
-  - Phase 1 complete (driver API, storage integration)
-  - Legacy API deprecated with warnings
-  - Migration patterns documented
-
----
-
-**Questions?** Open an issue on GitHub or check the documentation!
+**Q: What about my existing data?**
+A: Data structures (LineageNode, LineageLink) are compatible. You can load old data with the new API.
