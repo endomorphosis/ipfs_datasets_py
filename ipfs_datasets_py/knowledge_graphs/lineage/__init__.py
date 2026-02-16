@@ -57,6 +57,10 @@ from .metrics import (
     DependencyAnalyzer,
 )
 
+# Deprecated aliases for backward compatibility
+CrossDocumentLineageEnhancer = EnhancedLineageTracker
+DetailedLineageIntegrator = LineageMetrics
+
 __all__ = [
     # Core types
     'LineageNode',
@@ -81,6 +85,9 @@ __all__ = [
     'LineageMetrics',
     'ImpactAnalyzer',
     'DependencyAnalyzer',
+    # Deprecated aliases
+    'CrossDocumentLineageEnhancer',
+    'DetailedLineageIntegrator',
 ]
 
 # Version info

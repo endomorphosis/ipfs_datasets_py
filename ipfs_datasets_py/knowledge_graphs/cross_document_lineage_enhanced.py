@@ -44,6 +44,7 @@ from ipfs_datasets_py.knowledge_graphs.lineage import (
 
 # Deprecated aliases
 CrossDocumentLineageEnhancer = EnhancedLineageTracker
+DetailedLineageIntegrator = LineageMetrics  # Maps to metrics functionality
 
 __all__ = [
     'SemanticAnalyzer',
@@ -56,4 +57,5 @@ __all__ = [
     'DependencyAnalyzer',
     # Deprecated aliases
     'CrossDocumentLineageEnhancer',
+    'DetailedLineageIntegrator',
 ]

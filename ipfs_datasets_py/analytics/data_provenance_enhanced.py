@@ -4166,7 +4166,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Check if cross-document lineage module is available
             try:
-                from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import EnhancedLineageTracker
+                from ipfs_datasets_py.knowledge_graphs.lineage import EnhancedLineageTracker
                 lineage_available = True
             except ImportError:
                 self.logger.warning("cross_document_lineage module not available")
@@ -5987,7 +5987,7 @@ class EnhancedProvenanceManager(BaseProvenanceManager):
         try:
             # Check if cross-document lineage enhanced module is available
             try:
-                from ipfs_datasets_py.cross_document_lineage_enhanced import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
+                from ipfs_datasets_py.knowledge_graphs.lineage import CrossDocumentLineageEnhancer, DetailedLineageIntegrator
                 enhanced_lineage_available = True
             except ImportError:
                 self.logger.warning("Enhanced cross-document lineage module not available, using basic functionality")
