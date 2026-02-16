@@ -59,6 +59,7 @@ jobs:
       id: checkout
       uses: actions/checkout@v5
         with:
+        with:
         fetch-depth: 0
         clean: false
       continue-on-error: true
@@ -73,6 +74,7 @@ jobs:
     - name: Retry checkout in fresh workspace
       if: steps.checkout.outcome == 'failure'
       uses: actions/checkout@v5
+        with:
         with:
         fetch-depth: 0
         clean: false
