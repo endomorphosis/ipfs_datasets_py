@@ -265,7 +265,6 @@ jobs:
       image: python:3.12-slim
       options: --user root
     environment: staging
-    environment: staging
     
     steps:
     - name: Clean workspace
@@ -305,7 +304,6 @@ jobs:
     container:
       image: python:3.12-slim
       options: --user root
-    environment: production
     environment: production
     
     steps:

@@ -91,7 +91,7 @@ jobs:
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
-        name: benchmark-results-py${{ matrix.python-version }}
+        name: benchmark-results-py3.12
         path: benchmark_results.json
     
     - name: Performance regression check
