@@ -23,7 +23,7 @@ from .input_detector import (
     detect_input,
     detect_format,
 )
-from .processor_registry import (
+from .registry import (
     ProcessorRegistry,
     ProcessorEntry,
     get_global_registry,
