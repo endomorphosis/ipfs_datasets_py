@@ -146,7 +146,7 @@ class UnifiedQueryEngine:
         vector_store: Optional[Any] = None,
         llm_processor: Optional[Any] = None,
         enable_caching: bool = True,
-        default_budgets: str = 'moderate'
+        default_budgets: str = 'safe'
     ):
         self.backend = backend
         self.vector_store = vector_store

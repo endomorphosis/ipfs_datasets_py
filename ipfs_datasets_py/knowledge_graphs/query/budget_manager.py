@@ -198,7 +198,7 @@ class BudgetManager:
     
     def create_preset_budgets(
         self, 
-        preset: str = 'moderate',
+        preset: str = 'safe',
         max_results: int = 100,
         **overrides
     ) -> ExecutionBudgets:
