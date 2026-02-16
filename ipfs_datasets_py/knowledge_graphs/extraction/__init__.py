@@ -73,11 +73,11 @@ from .entities import Entity
 from .relationships import Relationship
 from .graph import KnowledgeGraph
 
-# Extractor imports (Task 3.5a - KnowledgeGraphExtractor)
+# Extractor imports (Task 3.5a - KnowledgeGraphExtractor, Task 3.5b - WithValidation)
 from .extractor import KnowledgeGraphExtractor
+from .validator import KnowledgeGraphExtractorWithValidation
 
 # Future imports (will be uncommented as modules are created):
-# from .validator import KnowledgeGraphExtractorWithValidation
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
 
@@ -103,10 +103,10 @@ __all__ = [
     'Relationship',
     'KnowledgeGraph',  # Task 3.4 ✅
     'KnowledgeGraphExtractor',  # Task 3.5a ✅
-    # 'KnowledgeGraphExtractorWithValidation',  # Task 3.5b
+    'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
 ]
 
 
 __version__ = '0.1.0'
-__phase__ = 'Phase 3 Task 3.5a - KnowledgeGraphExtractor Extracted'
+__phase__ = 'Phase 3 Task 3.5b - KnowledgeGraphExtractorWithValidation Extracted'
 __status__ = 'In Development'
