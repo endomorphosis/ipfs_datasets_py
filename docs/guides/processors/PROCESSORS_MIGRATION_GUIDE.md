@@ -210,9 +210,9 @@ def migrate_imports(file_content):
 
 ### Questions?
 
-- See: `docs/PROCESSORS_PHASES_1_7_COMPLETE.md` for full details
-- See: `docs/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md` for original plan
-- See: `docs/PROCESSORS_REFACTORING_QUICK_REFERENCE.md` for quick lookup
+- See: `../archive/processors/phase_reports/PROCESSORS_PHASES_1_7_COMPLETE.md` for full details
+- See: `../archive/processors/planning/PROCESSORS_COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md` for original plan
+- See: `PROCESSORS_REFACTORING_QUICK_REFERENCE.md` for quick lookup
 
 ### Issues?
 

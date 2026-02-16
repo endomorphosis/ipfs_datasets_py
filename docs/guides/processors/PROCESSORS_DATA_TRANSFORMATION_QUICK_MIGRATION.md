@@ -141,7 +141,7 @@ You have **6 months** to migrate your code.
 
 ## Need Help?
 
-- **Full Migration Guide**: See `docs/PROCESSORS_DATA_TRANSFORMATION_MIGRATION_GUIDE_V2.md`
+- **Full Migration Guide**: See `PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md`
 - **Architecture Documentation**: See `docs/PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md`
 - **Integration Plan**: See `docs/PROCESSORS_DATA_TRANSFORMATION_INTEGRATION_PLAN_V2.md`
 
