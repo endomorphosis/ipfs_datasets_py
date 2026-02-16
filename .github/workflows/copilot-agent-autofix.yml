@@ -1,3 +1,12 @@
+# Copilot Agent Auto-Healing Workflow
+#
+# Purpose: Automatically detect and fix workflow failures using GitHub Copilot
+# Triggers: Workflow run completion (monitors 19 workflows), manual dispatch
+# Duration: ~30-60 minutes (depends on complexity)
+# Maintainer: DevOps team
+# Dependencies: GitHub Copilot, gh CLI, self-hosted runners
+# Related: issue-to-draft-pr.yml, workflow-health-check.yml
+
 name: Copilot Agent Auto-Healing
 
 'on':

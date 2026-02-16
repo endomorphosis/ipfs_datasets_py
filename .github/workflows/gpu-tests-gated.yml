@@ -1,3 +1,12 @@
+# GPU-Enabled Tests Workflow
+#
+# Purpose: Run GPU-accelerated tests with hardware acceleration validation
+# Triggers: Push to main, PRs (on relevant paths), manual dispatch
+# Duration: ~30-40 minutes
+# Maintainer: AI/ML team
+# Dependencies: GPU runners (CUDA), Python 3.12, PyTorch
+# Related: gpu-tests.yml, test-datasets-runner.yml
+
 name: GPU-Enabled Tests (with Runner Gating)
 
 on:
@@ -57,8 +66,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: System Information
@@ -192,8 +200,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -228,8 +235,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Build GPU Docker Image

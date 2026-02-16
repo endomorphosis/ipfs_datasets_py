@@ -1,3 +1,12 @@
+# MCP Integration Tests Workflow
+#
+# Purpose: Comprehensive integration testing for Model Context Protocol endpoints
+# Triggers: Push to main, PRs, manual dispatch
+# Duration: ~25-35 minutes
+# Maintainer: MCP team
+# Dependencies: Python 3.12, MCP server, self-hosted runners
+# Related: mcp-dashboard-tests.yml, mcp-tools-monitoring.yml
+
 name: MCP Endpoints Integration Tests
 
 on:
@@ -59,8 +68,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -117,8 +125,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -178,8 +185,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -236,8 +242,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -439,8 +444,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Architecture Info

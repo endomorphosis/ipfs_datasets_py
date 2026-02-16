@@ -1,3 +1,12 @@
+# PDF Processing Pipeline CI/CD Workflow
+#
+# Purpose: Test PDF processing, GraphRAG integration, and MCP server endpoints
+# Triggers: Push to main/develop, PRs, manual dispatch
+# Duration: ~35-45 minutes
+# Maintainer: Document processing team
+# Dependencies: Python 3.12, PDF tools, GraphRAG, MCP server
+# Related: graphrag-production-ci.yml, mcp-integration-tests.yml
+
 name: PDF Processing Pipeline CI/CD
 
 on:
@@ -62,7 +71,8 @@ jobs:
         apt-get install -y git curl
     
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Setup GitHub CLI and P2P Cache
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -151,7 +161,8 @@ jobs:
         apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
     
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install Python dependencies
       run: |
         python --version
@@ -236,7 +247,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install system dependencies
       run: |
         apt-get update
@@ -279,7 +291,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -314,7 +327,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -353,7 +367,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install security scanning tools
       run: |
         python --version
@@ -391,7 +406,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Build Docker image
       run: |
         docker build -t ipfs-datasets-pdf:test .
@@ -422,7 +438,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Test package installation
       run: |
         python --version

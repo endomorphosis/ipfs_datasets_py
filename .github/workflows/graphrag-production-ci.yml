@@ -1,3 +1,12 @@
+# GraphRAG Production CI/CD Workflow
+#
+# Purpose: Continuous integration and deployment for GraphRAG document processing
+# Triggers: Push to main/develop, PRs, weekly schedule
+# Duration: ~30-40 minutes
+# Maintainer: AI/ML team
+# Dependencies: Python 3.12, GraphRAG dependencies, self-hosted runners
+# Related: mcp-integration-tests.yml, pdf_processing_ci.yml
+
 name: GraphRAG Production CI/CD
 
 on:
@@ -67,8 +76,7 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v5
-      with:
+    - uses: actions/checkout@v5      with:
         submodules: false
         clean: true
     
@@ -175,8 +183,7 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v5
-      with:
+    - uses: actions/checkout@v5      with:
         submodules: false
         clean: true
     
@@ -230,8 +237,7 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5
-      with:
+      uses: actions/checkout@v5      with:
         submodules: false
     
     - name: Log in to Container Registry
@@ -289,8 +295,7 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5
-      with:
+      uses: actions/checkout@v5      with:
         submodules: false
     
     - name: Configure kubectl
@@ -330,8 +335,7 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5
-      with:
+      uses: actions/checkout@v5      with:
         submodules: false
     
     - name: Configure kubectl

@@ -50,8 +50,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -112,8 +111,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -171,8 +169,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: Set up Docker Buildx
@@ -269,8 +266,7 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
+        uses: actions/checkout@v5        with:
           submodules: false
       
       - name: System Info
