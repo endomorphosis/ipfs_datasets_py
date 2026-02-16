@@ -245,6 +245,105 @@ class BaseVectorStore(ABC):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit."""
         return await self.close()
+    
+    # IPLD/IPFS Integration Methods (optional, subclasses can implement)
+    
+    async def export_to_ipld(self, collection_name: Optional[str] = None) -> Optional[str]:
+        """Export collection to IPLD format.
+        
+        Args:
+            collection_name: Name of the collection to export
+            
+        Returns:
+            Root CID of the exported collection, or None if not supported
+            
+        Note:
+            This is an optional method. Subclasses should override if they
+            support IPLD export. Default implementation returns None.
+        """
+        logger.warning(f"{self.__class__.__name__} does not support IPLD export")
+        return None
+    
+    async def import_from_ipld(self, root_cid: str, 
+                              collection_name: Optional[str] = None) -> bool:
+        """Import collection from IPLD CID.
+        
+        Args:
+            root_cid: Root CID of the collection to import
+            collection_name: Name for the imported collection
+            
+        Returns:
+            True if import successful, False otherwise
+            
+        Note:
+            This is an optional method. Subclasses should override if they
+            support IPLD import. Default implementation returns False.
+        """
+        logger.warning(f"{self.__class__.__name__} does not support IPLD import")
+        return False
+    
+    async def export_to_car(self, output_path: str,
+                           collection_name: Optional[str] = None) -> bool:
+        """Export collection to CAR (Content Addressable aRchive) file.
+        
+        Args:
+            output_path: Path to write the CAR file
+            collection_name: Name of the collection to export
+            
+        Returns:
+            True if export successful, False otherwise
+            
+        Note:
+            This is an optional method. Subclasses should override if they
+            support CAR export. Default implementation returns False.
+        """
+        logger.warning(f"{self.__class__.__name__} does not support CAR export")
+        return False
+    
+    async def import_from_car(self, car_path: str,
+                             collection_name: Optional[str] = None) -> bool:
+        """Import collection from CAR file.
+        
+        Args:
+            car_path: Path to the CAR file to import
+            collection_name: Name for the imported collection
+            
+        Returns:
+            True if import successful, False otherwise
+            
+        Note:
+            This is an optional method. Subclasses should override if they
+            support CAR import. Default implementation returns False.
+        """
+        logger.warning(f"{self.__class__.__name__} does not support CAR import")
+        return False
+    
+    async def get_store_info(self) -> Dict[str, Any]:
+        """Get vector store metadata and statistics.
+        
+        Returns:
+            Dictionary containing store information including:
+            - store_type: Type of vector store
+            - collections: List of collection names
+            - total_vectors: Total number of vectors across all collections
+            - dimension: Vector dimension (if uniform)
+            - metrics: Performance and usage metrics
+            
+        Note:
+            Subclasses should override to provide store-specific information.
+            Default implementation provides basic information.
+        """
+        collections = await self.list_collections()
+        
+        return {
+            'store_type': self.__class__.__name__,
+            'collections': collections,
+            'total_collections': len(collections),
+            'default_collection': self.collection_name,
+            'dimension': self.dimension,
+            'distance_metric': self.distance_metric,
+            'config': self.config.to_dict() if hasattr(self.config, 'to_dict') else {},
+        }
 
 
 class VectorStoreError(Exception):
