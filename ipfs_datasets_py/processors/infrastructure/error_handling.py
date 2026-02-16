@@ -7,7 +7,7 @@ and circuit breaker patterns for robust processor operation.
 
 from __future__ import annotations
 
-import asyncio
+import anyio
 import logging
 import threading
 from enum import Enum
@@ -294,7 +294,7 @@ class RetryWithBackoff:
                 )
                 
                 # Wait with backoff
-                await asyncio.sleep(backoff)
+                await anyio.sleep(backoff)
                 backoff = min(backoff * self.config.backoff_multiplier, self.config.max_backoff)
                 
             except Exception as e:
@@ -317,7 +317,7 @@ class RetryWithBackoff:
                     f"Retrying in {backoff:.1f}s..."
                 )
                 
-                await asyncio.sleep(backoff)
+                await anyio.sleep(backoff)
                 backoff = min(backoff * self.config.backoff_multiplier, self.config.max_backoff)
         
         # Should not reach here, but just in case
