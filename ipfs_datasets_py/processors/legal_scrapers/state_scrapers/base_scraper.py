@@ -510,3 +510,273 @@ class BaseStateScraper(ABC):
             return await self._generic_scrape(code_name, code_url, citation_format, max_sections)
         
         return statutes
+    
+    # ========================================================================
+    # Common Crawl Integration Methods (Phase 11 Task 11.3)
+    # ========================================================================
+    
+    async def scrape_from_common_crawl(
+        self,
+        url: str,
+        dataset_name: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Scrape content from Common Crawl archives via HuggingFace datasets.
+        
+        This method queries Common Crawl indexes to find archived versions
+        of legal websites, then fetches the content from WARC files.
+        
+        Args:
+            url: URL to scrape from Common Crawl
+            dataset_name: HuggingFace dataset name (e.g., "endomorphosis/common_crawl_state_index")
+            
+        Returns:
+            Scraped content or None if not found
+            
+        Example:
+            content = await scraper.scrape_from_common_crawl(
+                "https://legislature.example.gov/code.html",
+                dataset_name="endomorphosis/common_crawl_state_index"
+            )
+        """
+        try:
+            # Import Common Crawl scraper
+            from ..common_crawl_scraper import CommonCrawlLegalScraper
+            
+            # Create scraper instance
+            cc_scraper = CommonCrawlLegalScraper()
+            
+            # Scrape the URL using Common Crawl
+            result = await cc_scraper.scrape_url(
+                url,
+                enable_graphrag=False,  # Just get content
+                enable_logic=False
+            )
+            
+            if result.success and result.content:
+                self.logger.info(f"Retrieved content from Common Crawl for: {url}")
+                return result.content
+            else:
+                self.logger.warning(f"No Common Crawl content found for: {url}")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Error scraping from Common Crawl: {e}")
+            return None
+    
+    async def query_warc_file(
+        self,
+        warc_url: str,
+        offset: int,
+        length: int
+    ) -> Optional[str]:
+        """
+        Query a WARC file directly using offset and range.
+        
+        This method retrieves content from a Common Crawl WARC file
+        using byte offset and length for efficient partial file access.
+        
+        Args:
+            warc_url: S3 URL to WARC file
+            offset: Byte offset in file
+            length: Number of bytes to read
+            
+        Returns:
+            WARC record content or None
+            
+        Example:
+            content = await scraper.query_warc_file(
+                "s3://commoncrawl/crawl-data/CC-MAIN-2024-10/segments/.../warc.gz",
+                offset=123456,
+                length=5000
+            )
+        """
+        try:
+            from ...web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+            
+            # Create engine instance
+            engine = CommonCrawlSearchEngine()
+            
+            # Fetch WARC segment
+            content = await engine.fetch_warc_segment(
+                warc_url=warc_url,
+                offset=offset,
+                length=length
+            )
+            
+            if content:
+                self.logger.info(f"Retrieved WARC content (offset={offset}, length={length})")
+                return content
+            else:
+                self.logger.warning("Empty WARC content retrieved")
+                return None
+                
+        except Exception as e:
+            self.logger.error(f"Error querying WARC file: {e}")
+            return None
+    
+    async def extract_with_graphrag(
+        self,
+        content: str,
+        extract_rules: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Extract structured data from legal content using GraphRAG.
+        
+        This method uses GraphRAG to extract entities, relationships,
+        and legal rules from raw legal text content.
+        
+        Args:
+            content: Raw HTML or text content
+            extract_rules: Whether to extract legal rules
+            
+        Returns:
+            Dictionary with extracted data (entities, relationships, rules)
+            
+        Example:
+            results = await scraper.extract_with_graphrag(
+                html_content,
+                extract_rules=True
+            )
+            rules = results.get('rules', [])
+        """
+        try:
+            from ...specialized.graphrag import UnifiedGraphRAGProcessor
+            
+            # Create GraphRAG processor
+            graphrag = UnifiedGraphRAGProcessor()
+            
+            # Extract entities and relationships
+            extraction_result = await graphrag.process_content(
+                content,
+                extract_entities=True,
+                extract_relationships=True
+            )
+            
+            result = {
+                'entities': extraction_result.get('entities', []),
+                'relationships': extraction_result.get('relationships', []),
+                'rules': []
+            }
+            
+            # Extract legal rules if requested
+            if extract_rules:
+                rules = await graphrag.extract_legal_rules(content)
+                result['rules'] = rules
+            
+            self.logger.info(
+                f"Extracted {len(result['entities'])} entities, "
+                f"{len(result['relationships'])} relationships, "
+                f"{len(result['rules'])} rules"
+            )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Error extracting with GraphRAG: {e}")
+            return {'entities': [], 'relationships': [], 'rules': []}
+    
+    async def scrape_with_fallbacks(
+        self,
+        url: str,
+        use_common_crawl: bool = True,
+        use_graphrag: bool = False
+    ) -> Optional[NormalizedStatute]:
+        """
+        Scrape a statute with graceful fallbacks through multiple methods.
+        
+        This method attempts to scrape using the following fallback chain:
+        1. Common Crawl (if enabled)
+        2. Direct HTTP request
+        3. Playwright (if available)
+        
+        Args:
+            url: URL to scrape
+            use_common_crawl: Whether to try Common Crawl first
+            use_graphrag: Whether to use GraphRAG for extraction
+            
+        Returns:
+            NormalizedStatute or None
+            
+        Example:
+            statute = await scraper.scrape_with_fallbacks(
+                "https://legislature.example.gov/statute.html",
+                use_common_crawl=True,
+                use_graphrag=True
+            )
+        """
+        content = None
+        method_used = None
+        
+        # Try 1: Common Crawl
+        if use_common_crawl:
+            try:
+                content = await self.scrape_from_common_crawl(url)
+                if content:
+                    method_used = "common_crawl"
+            except Exception as e:
+                self.logger.warning(f"Common Crawl failed: {e}")
+        
+        # Try 2: Direct HTTP
+        if not content:
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.get(url)
+                    if response.status_code == 200:
+                        content = response.text
+                        method_used = "http"
+            except Exception as e:
+                self.logger.warning(f"HTTP request failed: {e}")
+        
+        # Try 3: Playwright (if available)
+        if not content:
+            try:
+                from playwright.async_api import async_playwright
+                async with async_playwright() as p:
+                    browser = await p.chromium.launch()
+                    page = await browser.new_page()
+                    await page.goto(url, wait_until="networkidle")
+                    content = await page.content()
+                    await browser.close()
+                    method_used = "playwright"
+            except Exception as e:
+                self.logger.warning(f"Playwright failed: {e}")
+        
+        if not content:
+            self.logger.error(f"All fallback methods failed for: {url}")
+            return None
+        
+        # Extract with GraphRAG if requested
+        extracted_data = {}
+        if use_graphrag:
+            extracted_data = await self.extract_with_graphrag(content)
+        
+        # Parse content to create NormalizedStatute
+        # This is a simplified parser - real implementation would be more sophisticated
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # Extract basic information
+        title = soup.find('title')
+        title_text = title.get_text().strip() if title else "Unknown"
+        
+        # Try to extract section number from URL or title
+        section_number = self._extract_section_number(url) or self._extract_section_number(title_text)
+        
+        # Create normalized statute
+        statute = NormalizedStatute(
+            state_code=self.state_code,
+            state_name=self.state_name,
+            statute_id=section_number or url.split('/')[-1],
+            section_number=section_number,
+            short_title=title_text,
+            full_text=soup.get_text()[:10000],  # Limit text length
+            source_url=url,
+            legal_area=self._identify_legal_area(title_text),
+            metadata=StatuteMetadata()
+        )
+        
+        self.logger.info(f"Scraped statute using {method_used}: {statute.statute_id}")
+        
+        return statute
