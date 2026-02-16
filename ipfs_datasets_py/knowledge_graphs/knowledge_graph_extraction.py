@@ -50,6 +50,36 @@ except ImportError:
     get_accelerate_status = lambda: {"available": False}
 
 
+# DEPRECATION NOTICE
+# ==================
+# This module is being refactored into a modular structure under the extraction/ package.
+# While all classes remain available here for backward compatibility, we recommend using
+# the new imports for future code:
+#
+# NEW (recommended):
+#   from ipfs_datasets_py.knowledge_graphs.extraction import (
+#       Entity, Relationship, KnowledgeGraph,
+#       KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+#   )
+#
+# OLD (still supported):
+#   from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+#       Entity, Relationship, KnowledgeGraph,
+#       KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+#   )
+#
+# The extraction/ package provides:
+# - extraction/entities.py: Entity class
+# - extraction/relationships.py: Relationship class
+# - extraction/graph.py: KnowledgeGraph class
+# - extraction/extractor.py: KnowledgeGraphExtractor class
+# - extraction/validator.py: KnowledgeGraphExtractorWithValidation class
+#
+# This file will be maintained for backward compatibility but will eventually become
+# a thin wrapper that re-exports from the extraction/ package.
+# ==================
+
+
 @dataclass
 class Entity:
     """Represents an entity in a knowledge graph.
