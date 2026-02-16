@@ -10,7 +10,7 @@ Provides utilities for profiling processor performance:
 
 import time
 import psutil
-import asyncio
+import anyio
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import logging
 import time
-import asyncio
+import anyio
 from typing import Union, Optional, Any
 from pathlib import Path
 from dataclasses import dataclass, field
