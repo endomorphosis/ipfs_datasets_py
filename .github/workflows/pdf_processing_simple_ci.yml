@@ -47,18 +47,18 @@ jobs:
     
     - name: Checkout code
       uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
-        with:
+      with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
     - name: Cache dependencies
       uses: actions/cache@v3
-        with:
+      with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
@@ -106,12 +106,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
-        with:
+      with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
@@ -153,12 +153,12 @@ jobs:
     
     - name: Checkout code
       uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
-        with:
+      with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
