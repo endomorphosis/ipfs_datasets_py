@@ -635,3 +635,220 @@ class TestKnowledgeGraphIntegration:
                 assert source_id in kg.entities or rel.source_entity is not None
             if target_id:
                 assert target_id in kg.entities or rel.target_entity is not None
+
+
+# Additional tests for helper functions and edge cases
+class TestKnowledgeGraphHelperFunctions:
+    """Test helper functions in knowledge_graph_extraction module."""
+    
+    def test_entity_properties_update(self, sample_entity):
+        """
+        GIVEN an entity with properties
+        WHEN updating properties
+        THEN properties are updated correctly
+        """
+        # GIVEN
+        entity = sample_entity
+        initial_props = entity.properties.copy() if entity.properties else {}
+        
+        # WHEN
+        if entity.properties is None:
+            entity.properties = {}
+        entity.properties["new_key"] = "new_value"
+        
+        # THEN
+        assert "new_key" in entity.properties
+        assert entity.properties["new_key"] == "new_value"
+    
+    def test_relationship_confidence_bounds(self):
+        """
+        GIVEN relationship with various confidence values
+        WHEN creating relationships
+        THEN confidence is stored correctly
+        """
+        # Test low confidence
+        rel_low = Relationship.create(Entity(name="A"), Entity(name="B"), "test",
+            confidence=0.1
+        )
+        assert rel_low.confidence == 0.1
+        
+        # Test high confidence
+        rel_high = Relationship.create(Entity(name="C"), Entity(name="D"), "test",
+            confidence=0.99
+        )
+        assert rel_high.confidence == 0.99
+    
+    def test_knowledge_graph_empty_operations(self, empty_knowledge_graph):
+        """
+        GIVEN an empty knowledge graph
+        WHEN performing operations
+        THEN handles empty state gracefully
+        """
+        # GIVEN
+        kg = empty_knowledge_graph
+        
+        # WHEN/THEN - Should not raise errors
+        assert len(kg.entities) == 0
+        assert len(kg.relationships) == 0
+        
+        # Try to get non-existent entity
+        result = kg.get_entity_by_id("nonexistent")
+        assert result is None
+    
+    def test_knowledge_graph_add_multiple_entities(self, empty_knowledge_graph):
+        """
+        GIVEN an empty knowledge graph
+        WHEN adding multiple entities
+        THEN all entities are stored
+        """
+        # GIVEN
+        kg = empty_knowledge_graph
+        
+        # WHEN
+        for i in range(5):
+            entity = Entity(name=f"Entity{i}", entity_type="test")
+            kg.add_entity(entity)
+        
+        # THEN
+        assert len(kg.entities) == 5
+    
+    def test_entity_serialization_with_none_values(self):
+        """
+        GIVEN entity with None values
+        WHEN serializing
+        THEN handles None correctly
+        """
+        # GIVEN
+        entity = Entity(
+            name="Test",
+            entity_type="test",
+            source_text=None,
+            properties=None
+        )
+        
+        # WHEN
+        entity_dict = entity.to_dict()
+        
+        # THEN
+        assert "source_text" not in entity_dict
+        # properties should be empty dict or None
+        assert entity_dict.get("properties") is None or entity_dict.get("properties") == {}
+    
+    def test_relationship_serialization_with_properties(self):
+        """
+        GIVEN relationship with properties
+        WHEN serializing
+        THEN properties are included
+        """
+        # GIVEN
+        rel = Relationship.create(Entity(name="A"), Entity(name="B"), "test",
+            properties={"key1": "value1", "key2": 123}
+        )
+        
+        # WHEN
+        rel_dict = rel.to_dict()
+        
+        # THEN
+        assert "properties" in rel_dict
+        assert rel_dict["properties"]["key1"] == "value1"
+        assert rel_dict["properties"]["key2"] == 123
+
+
+class TestKnowledgeGraphEdgeCases:
+    """Test edge cases and error handling."""
+    
+    def test_entity_with_empty_name(self):
+        """
+        GIVEN entity with empty name
+        WHEN creating entity
+        THEN entity is created
+        """
+        # GIVEN/WHEN
+        entity = Entity(name="", entity_type="test")
+        
+        # THEN
+        assert entity.name == ""
+        assert entity.entity_type == "test"
+    
+    def test_knowledge_graph_to_dict_comprehensive(self, populated_knowledge_graph):
+        """
+        GIVEN a populated knowledge graph
+        WHEN serializing
+        THEN all fields are present
+        """
+        # GIVEN
+        kg = populated_knowledge_graph
+        
+        # WHEN
+        kg_dict = kg.to_dict()
+        
+        # THEN
+        assert "name" in kg_dict
+        assert "entities" in kg_dict
+        assert "relationships" in kg_dict
+        assert isinstance(kg_dict["entities"], list)
+        assert isinstance(kg_dict["relationships"], list)
+    
+    def test_extractor_with_empty_text(self, basic_extractor):
+        """
+        GIVEN empty text
+        WHEN extracting knowledge graph
+        THEN returns empty or minimal graph
+        """
+        # GIVEN
+        text = ""
+        
+        # WHEN
+        kg = basic_extractor.extract_knowledge_graph(text)
+        
+        # THEN
+        assert kg is not None
+        assert isinstance(kg, KnowledgeGraph)
+    
+    def test_extractor_with_whitespace_only(self, basic_extractor):
+        """
+        GIVEN text with only whitespace
+        WHEN extracting knowledge graph
+        THEN handles gracefully
+        """
+        # GIVEN
+        text = "   \n\t   "
+        
+        # WHEN
+        kg = basic_extractor.extract_knowledge_graph(text)
+        
+        # THEN
+        assert kg is not None
+        assert isinstance(kg, KnowledgeGraph)
+    
+    def test_knowledge_graph_merge_entities(self, empty_knowledge_graph):
+        """
+        GIVEN two sets of entities
+        WHEN adding to knowledge graph
+        THEN entities are combined
+        """
+        # GIVEN
+        kg = empty_knowledge_graph
+        
+        # WHEN
+        kg.add_entity(Entity(name="Entity1", entity_type="type1"))
+        kg.add_entity(Entity(name="Entity2", entity_type="type2"))
+        
+        # THEN
+        assert len(kg.entities) == 2
+    
+    def test_relationship_with_same_source_target(self):
+        """
+        GIVEN relationship where source equals target
+        WHEN creating self-referential relationship
+        THEN relationship is created
+        """
+        # GIVEN
+        entity = Entity(name="SelfRef", entity_type="test")
+        
+        # WHEN
+        rel = Relationship.create(entity, entity, "self_reference")
+        
+        # THEN
+        assert rel.source_entity == rel.target_entity
+        assert rel.source_entity == entity
