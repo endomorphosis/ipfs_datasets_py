@@ -39,6 +39,24 @@ from .core import (
     LineageTracker,
 )
 
+from .enhanced import (
+    SemanticAnalyzer,
+    BoundaryDetector,
+    ConfidenceScorer,
+    EnhancedLineageTracker,
+)
+
+from .visualization import (
+    LineageVisualizer,
+    visualize_lineage,
+)
+
+from .metrics import (
+    LineageMetrics,
+    ImpactAnalyzer,
+    DependencyAnalyzer,
+)
+
 __all__ = [
     # Core types
     'LineageNode',
@@ -51,6 +69,18 @@ __all__ = [
     # Core classes
     'LineageGraph',
     'LineageTracker',
+    # Enhanced features
+    'SemanticAnalyzer',
+    'BoundaryDetector',
+    'ConfidenceScorer',
+    'EnhancedLineageTracker',
+    # Visualization
+    'LineageVisualizer',
+    'visualize_lineage',
+    # Metrics and analysis
+    'LineageMetrics',
+    'ImpactAnalyzer',
+    'DependencyAnalyzer',
 ]
 
 # Version info
