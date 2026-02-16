@@ -1,202 +1,423 @@
 name: PR Completion Monitor with Copilot Auto-Fix
-true:
+
+on:
   pull_request:
-    types:
-    - opened
-    - reopened
-    - synchronize
-    - ready_for_review
+    types: [opened, reopened, synchronize, ready_for_review]
   schedule:
-  - cron: 0 */2 * * *
+    # Run every 2 hours to check all open PRs
+    - cron: '0 */2 * * *'
   workflow_dispatch:
     inputs:
       pr_number:
-        description: Specific PR number to check
+        description: 'Specific PR number to check'
         required: false
         type: string
       force_fix:
-        description: Force fix even if PR appears complete
+        description: 'Force fix even if PR appears complete'
         required: false
         default: false
         type: boolean
+
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: write
   issues: write
   actions: read
+
 env:
   PYTHON_VERSION: '3.12'
+
 jobs:
   check-pr-completion:
-    runs-on:
-    - self-hosted
-    - linux
-    - x64
-    timeout-minutes: 45
+    runs-on: [self-hosted, linux, x64]
+    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Verify Python installation
-      run: "python3 --version || python --version\necho \"\u2705 Python is available\"\n"
-    - name: Install dependencies
-      run: 'python3 -m pip install --user --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --user
-        --upgrade pip || true
-
-        pip install --user requests --break-system-packages 2>/dev/null || pip install --user requests || true
-
-        '
-    - name: Load runner secrets (optional)
-      run: '# Optional: Load secrets from runner machine for future use
-
-        # Secrets are stored in /etc/github-runner-secrets/secrets.json
-
-        # See .github/workflows/SECRETS-MANAGEMENT.md for setup instructions
-
-        python3 scripts/load_runner_secrets.py --export || true
-
-
-        # Note: This workflow now uses Copilot CLI instead of external LLM APIs
-
-        # No API keys required - uses GitHub Copilot CLI integration
-
-        '
-    - name: Install GitHub CLI
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: "if ! command -v gh &> /dev/null; then\n  echo \"Installing GitHub CLI...\"\n  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg\
-        \ | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg\n  echo \"deb [arch=$(dpkg --print-architecture)\
-        \ signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main\" | sudo\
-        \ tee /etc/apt/sources.list.d/github-cli.list > /dev/null\n  sudo apt update\n  sudo apt install gh -y\nfi\n\n# Install\
-        \ GitHub Copilot CLI extension if not present\nif ! gh extension list | grep -q \"gh-copilot\"; then\n  echo \"Installing\
-        \ GitHub Copilot CLI extension...\"\n  gh extension install github/gh-copilot || true\nfi\n"
-    - name: Get PR list to check
-      id: get_prs
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: "if [ -n \"${{ github.event.inputs.pr_number }}\" ]; then\n  # Specific PR requested\n  echo \"pr_numbers=${{ github.event.inputs.pr_number\
-        \ }}\" >> $GITHUB_OUTPUT\nelif [ \"${{ github.event_name }}\" = \"pull_request\" ]; then\n  # Current PR from event\n\
-        \  echo \"pr_numbers=${{ github.event.pull_request.number }}\" >> $GITHUB_OUTPUT\nelse\n  # Get all open PRs for scheduled\
-        \ run\n  PR_LIST=$(gh pr list --state open --json number --jq '.[].number' | tr '\\n' ',' | sed 's/,$//')\n  echo\
-        \ \"pr_numbers=${PR_LIST}\" >> $GITHUB_OUTPUT\nfi\n\necho \"PRs to check: $(cat $GITHUB_OUTPUT | grep pr_numbers |\
-        \ cut -d= -f2)\"\n"
-    - name: Check PR completion and invoke Copilot if needed
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PR_NUMBERS: ${{ steps.get_prs.outputs.pr_numbers }}
-        FORCE_FIX: ${{ github.event.inputs.force_fix }}
-      run: "python3 << 'EOF'\nimport os\nimport sys\nimport json\nimport subprocess\nimport time\nfrom typing import Dict,\
-        \ List, Any, Optional\n\n# Configuration\nPR_NUMBERS = os.environ.get('PR_NUMBERS', '').split(',')\nPR_NUMBERS = [pr.strip()\
-        \ for pr in PR_NUMBERS if pr.strip()]\nFORCE_FIX = os.environ.get('FORCE_FIX', 'false').lower() == 'true'\n\ndef run_command(cmd:\
-        \ List[str]) -> Dict[str, Any]:\n    \"\"\"Run a command and return result.\"\"\"\n    try:\n        result = subprocess.run(\n\
-        \            cmd,\n            capture_output=True,\n            text=True,\n            timeout=30\n        )\n \
-        \       return {\n            'success': result.returncode == 0,\n            'stdout': result.stdout,\n         \
-        \   'stderr': result.stderr\n        }\n    except Exception as e:\n        return {\n            'success': False,\n\
-        \            'error': str(e)\n        }\n\ndef get_pr_details(pr_number: str) -> Optional[Dict[str, Any]]:\n    \"\
-        \"\"Get PR details using gh CLI.\"\"\"\n    result = run_command([\n        'gh', 'pr', 'view', pr_number,\n     \
-        \   '--json', 'number,title,body,isDraft,state,comments,labels'\n    ])\n    \n    if result['success']:\n       \
-        \ try:\n            return json.loads(result['stdout'])\n        except json.JSONDecodeError:\n            print(f\"\
-        \u274C Failed to parse PR {pr_number} data\")\n            return None\n    return None\n\ndef check_pr_completion_with_copilot(pr_details:\
-        \ Dict[str, Any]) -> Dict[str, Any]:\n    \"\"\"\n    Use GitHub Copilot CLI to check if PR objective is complete.\n\
-        \    \n    Returns dict with 'is_complete', 'confidence', 'reason'\n    \"\"\"\n    pr_number = pr_details['number']\n\
-        \    title = pr_details['title']\n    body = pr_details.get('body', '')\n    \n    # Add project root to Python path\n\
-        \    sys.path.insert(0, os.path.abspath('.'))\n    \n    try:\n        # Import Copilot CLI class\n        from ipfs_datasets_py.utils.copilot_cli\
-        \ import CopilotCLI\n        \n        # Initialize Copilot CLI\n        copilot = CopilotCLI()\n        \n      \
-        \  # Check if installed\n        if not copilot.installed:\n            print(\"\u26A0\uFE0F  Copilot CLI not installed,\
-        \ attempting to install...\")\n            install_result = copilot.install()\n            if not install_result.get('success'):\n\
-        \                print(f\"\u26A0\uFE0F  Failed to install Copilot CLI: {install_result.get('error')}\")\n        \
-        \        return heuristic_completion_check(pr_details)\n        \n        # Create analysis prompt as code comment\
-        \ for Copilot to explain\n        analysis_request = \"# PR Completion Analysis Request\\\\n\"\n        analysis_request\
-        \ += \"#\\\\n\"\n        analysis_request += \"# Analyze this Pull Request and determine if task objectives are complete:\\\
-        \\n\"\n        analysis_request += f\"# PR #{pr_number}: {title}\\\\n\"\n        analysis_request += \"#\\\\n\"\n\
-        \        analysis_request += \"# Description:\\\\n\"\n        analysis_request += f\"# {body[:1500]}\\\\n\"\n    \
-        \    analysis_request += \"#\\\\n\"\n        analysis_request += \"# Question: Is this PR complete? Consider:\\\\\
-        n\"\n        analysis_request += \"# - Incomplete if: in progress, WIP, draft, uncompleted TODOs, ongoing work\\\\\
-        n\"\n        analysis_request += \"# - Complete if: all objectives met, no TODOs, work is done, tests passing\\\\\
-        n\"\n        analysis_request += \"#\\\\n\"\n        analysis_request += '# Respond with JSON: {\"is_complete\": true/false,\
-        \ \"confidence\": 0-100, \"reason\": \"explanation\"}\\\\n'\n        \n        # Use Copilot's explain_code to analyze\
-        \ the PR\n        result = copilot.explain_code(analysis_request)\n        \n        if result.get('success'):\n \
-        \           explanation = result.get('explanation', '')\n            \n            # Try to extract JSON from Copilot's\
-        \ response\n            try:\n                # Look for JSON in the response\n                import re\n       \
-        \         json_pattern = r'\\\\{[^}]*\"is_complete\"[^}]*\\\\}'\n                json_match = re.search(json_pattern,\
-        \ explanation, re.DOTALL)\n                if json_match:\n                    analysis = json.loads(json_match.group(0))\n\
-        \                    print(f\"\u2705 Copilot CLI analysis for PR #{pr_number}: {analysis}\")\n                   \
-        \ return analysis\n                else:\n                    # Parse Copilot's natural language response\n      \
-        \              is_complete = not any(word in explanation.lower() for word in \n                                  \
-        \       ['incomplete', 'not complete', 'in progress', 'wip', 'todo'])\n                    confidence = 70 if is_complete\
-        \ else 75\n                    return {\n                        'is_complete': is_complete,\n                   \
-        \     'confidence': confidence,\n                        'reason': explanation[:200]\n                    }\n    \
-        \        except (json.JSONDecodeError, AttributeError) as e:\n                print(f\"\u26A0\uFE0F  Could not parse\
-        \ Copilot response as JSON: {e}\")\n                # Fallback: analyze the text response\n                is_complete\
-        \ = 'complete' in explanation.lower() and 'not complete' not in explanation.lower()\n                return {\n  \
-        \                  'is_complete': is_complete,\n                    'confidence': 65,\n                    'reason':\
-        \ explanation[:200]\n                }\n        else:\n            print(f\"\u26A0\uFE0F  Copilot CLI failed: {result.get('error')}\"\
-        )\n            return heuristic_completion_check(pr_details)\n    \n    except ImportError as e:\n        print(f\"\
-        \u26A0\uFE0F  Could not import Copilot CLI: {e}\")\n        return heuristic_completion_check(pr_details)\n    except\
-        \ Exception as e:\n        print(f\"\u26A0\uFE0F  Copilot CLI check failed: {e}, using heuristic\")\n        return\
-        \ heuristic_completion_check(pr_details)\n\ndef heuristic_completion_check(pr_details: Dict[str, Any]) -> Dict[str,\
-        \ Any]:\n    \"\"\"Simple heuristic check without LLM.\"\"\"\n    title = pr_details['title'].lower()\n    body =\
-        \ pr_details.get('body', '').lower()\n    is_draft = pr_details.get('isDraft', False)\n    \n    # Check for incomplete\
-        \ indicators\n    incomplete_indicators = [\n        'wip', 'work in progress', 'draft', 'in progress',\n        'todo',\
-        \ '- [ ]', 'not complete', 'incomplete',\n        'needs work', 'under development'\n    ]\n    \n    is_incomplete\
-        \ = any(indicator in title or indicator in body \n                       for indicator in incomplete_indicators)\n\
-        \    \n    if is_draft:\n        return {\n            'is_complete': False,\n            'confidence': 90,\n    \
-        \        'reason': 'PR is marked as draft'\n        }\n    elif is_incomplete:\n        return {\n            'is_complete':\
-        \ False,\n            'confidence': 70,\n            'reason': 'Found incomplete indicators in title/description'\n\
-        \        }\n    else:\n        return {\n            'is_complete': True,\n            'confidence': 60,\n       \
-        \     'reason': 'No obvious incomplete indicators found'\n        }\n\ndef check_copilot_already_invoked(pr_details:\
-        \ Dict[str, Any]) -> bool:\n    \"\"\"Check if Copilot was already invoked on this PR.\"\"\"\n    comments = pr_details.get('comments',\
-        \ [])\n    \n    for comment in comments:\n        body = comment.get('body', '').lower()\n        if '@copilot' in\
-        \ body or '@github-copilot' in body:\n            # Check if comment is recent (within last 2 hours)\n           \
-        \ # For simplicity, just check if any copilot mention exists\n            return True\n    \n    return False\n\n\
-        def invoke_copilot_on_pr(pr_number: str, reason: str) -> bool:\n    \"\"\"Invoke Copilot CLI tool on the PR.\"\"\"\
-        \n    print(f\"\\n{'='*80}\")\n    print(f\"\U0001F916 Invoking Copilot on PR #{pr_number}\")\n    print(f\"\U0001F4DD\
-        \ Reason: {reason}\")\n    print(f\"{'='*80}\\n\")\n    \n    # Use the copilot auto-fix script\n    result = run_command([\n\
-        \        'python3',\n        'scripts/copilot_auto_fix_all_prs.py',\n        '--pr', pr_number\n    ])\n    \n   \
-        \ if result['success']:\n        print(f\"\u2705 Successfully invoked Copilot on PR #{pr_number}\")\n        print(result['stdout'])\n\
-        \        return True\n    else:\n        print(f\"\u274C Failed to invoke Copilot on PR #{pr_number}\")\n        print(result.get('stderr',\
-        \ result.get('error', 'Unknown error')))\n        return False\n\ndef main():\n    \"\"\"Main execution function.\"\
-        \"\"\n    print(\"\U0001F50D PR Completion Monitor Starting...\")\n    print(f\"\U0001F4CB Checking {len(PR_NUMBERS)}\
-        \ PR(s): {', '.join(PR_NUMBERS)}\")\n    print()\n    \n    stats = {\n        'total': len(PR_NUMBERS),\n       \
-        \ 'complete': 0,\n        'incomplete': 0,\n        'invoked': 0,\n        'skipped': 0,\n        'failed': 0\n  \
-        \  }\n    \n    for pr_number in PR_NUMBERS:\n        print(f\"\\n{'='*80}\")\n        print(f\"Analyzing PR #{pr_number}\"\
-        )\n        print(f\"{'='*80}\")\n        \n        # Get PR details\n        pr_details = get_pr_details(pr_number)\n\
-        \        if not pr_details:\n            print(f\"\u274C Could not get details for PR #{pr_number}\")\n          \
-        \  stats['failed'] += 1\n            continue\n        \n        print(f\"\U0001F4C4 Title: {pr_details['title']}\"\
-        )\n        print(f\"\U0001F4CA State: {pr_details['state']} {'(Draft)' if pr_details.get('isDraft') else ''}\")\n\
-        \        \n        # Check if already being worked on by Copilot\n        if not FORCE_FIX and check_copilot_already_invoked(pr_details):\n\
-        \            print(f\"\u2705 Copilot already working on PR #{pr_number} - skipping\")\n            stats['skipped']\
-        \ += 1\n            continue\n        \n        # Check completion with Copilot CLI\n        completion_status = check_pr_completion_with_copilot(pr_details)\n\
-        \        \n        is_complete = completion_status.get('is_complete', True)\n        confidence = completion_status.get('confidence',\
-        \ 0)\n        reason = completion_status.get('reason', 'Unknown')\n        \n        print(f\"\U0001F3AF Completion\
-        \ Status: {'Complete' if is_complete else 'Incomplete'}\")\n        print(f\"\U0001F4CA Confidence: {confidence}%\"\
-        )\n        print(f\"\U0001F4A1 Reason: {reason}\")\n        \n        if is_complete and not FORCE_FIX:\n        \
-        \    print(f\"\u2705 PR #{pr_number} appears complete - no action needed\")\n            stats['complete'] += 1\n\
-        \            continue\n        \n        # PR is incomplete - invoke Copilot\n        stats['incomplete'] += 1\n \
-        \       \n        if invoke_copilot_on_pr(pr_number, reason):\n            stats['invoked'] += 1\n        else:\n\
-        \            stats['failed'] += 1\n        \n        # Add delay between PRs to avoid rate limiting\n        if pr_number\
-        \ != PR_NUMBERS[-1]:\n            print(\"\\n\u23F3 Waiting 30 seconds before next PR...\")\n            time.sleep(30)\n\
-        \    \n    # Print summary\n    print(f\"\\n{'='*80}\")\n    print(\"\U0001F4CA Summary\")\n    print(f\"{'='*80}\"\
-        )\n    print(f\"Total PRs checked:        {stats['total']}\")\n    print(f\"Complete PRs:             {stats['complete']}\"\
-        )\n    print(f\"Incomplete PRs:           {stats['incomplete']}\")\n    print(f\"Copilot invoked:          {stats['invoked']}\"\
-        )\n    print(f\"Skipped (already working): {stats['skipped']}\")\n    print(f\"Failed:                   {stats['failed']}\"\
-        )\n    print(f\"{'='*80}\\n\")\n    \n    # Exit with error if any failures\n    if stats['failed'] > 0:\n       \
-        \ sys.exit(1)\n\nif __name__ == '__main__':\n    main()\nEOF\n"
-    - name: Create summary
-      if: always()
-      run: "echo \"## \U0001F916 PR Completion Monitor Results\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"The PR completion monitor has finished checking PRs for completion status.\" >> $GITHUB_STEP_SUMMARY\necho\
-        \ \"\" >> $GITHUB_STEP_SUMMARY\necho \"### Configuration\" >> $GITHUB_STEP_SUMMARY\necho \"- **Trigger**: ${{ github.event_name\
-        \ }}\" >> $GITHUB_STEP_SUMMARY\necho \"- **PRs Checked**: ${{ steps.get_prs.outputs.pr_numbers }}\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"\" >> $GITHUB_STEP_SUMMARY\necho \"### What This Workflow Does\" >> $GITHUB_STEP_SUMMARY\necho \"1. \U0001F50D\
-        \ Analyzes PR title and description using GitHub Copilot CLI\" >> $GITHUB_STEP_SUMMARY\necho \"2. \U0001F4CA Determines\
-        \ if the task objective has been completed\" >> $GITHUB_STEP_SUMMARY\necho \"3. \U0001F916 Invokes Copilot CLI tool\
-        \ on incomplete PRs\" >> $GITHUB_STEP_SUMMARY\necho \"4. \u267B\uFE0F  Continues until PRs appear complete\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"\" >> $GITHUB_STEP_SUMMARY\necho \"**Uses:** GitHub Copilot CLI (integrated in ipfs_datasets_py package)\"\
-        \ >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"Check the workflow logs for detailed results.\"\
-        \ >> $GITHUB_STEP_SUMMARY\n"
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Verify Python installation
+        run: |
+          python3 --version || python --version
+          echo "✅ Python is available"
+      
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --user --upgrade pip --break-system-packages 2>/dev/null || python3 -m pip install --user --upgrade pip || true
+          pip install --user requests --break-system-packages 2>/dev/null || pip install --user requests || true
+      
+      - name: Load runner secrets (optional)
+        run: |
+          # Optional: Load secrets from runner machine for future use
+          # Secrets are stored in /etc/github-runner-secrets/secrets.json
+          # See .github/workflows/SECRETS-MANAGEMENT.md for setup instructions
+          python3 scripts/load_runner_secrets.py --export || true
+          
+          # Note: This workflow now uses Copilot CLI instead of external LLM APIs
+          # No API keys required - uses GitHub Copilot CLI integration
+      
+      - name: Install GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! command -v gh &> /dev/null; then
+            echo "Installing GitHub CLI..."
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh -y
+          fi
+          
+          # Install GitHub Copilot CLI extension if not present
+          if ! gh extension list | grep -q "gh-copilot"; then
+            echo "Installing GitHub Copilot CLI extension..."
+            gh extension install github/gh-copilot || true
+          fi
+      
+      - name: Get PR list to check
+        id: get_prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.inputs.pr_number }}" ]; then
+            # Specific PR requested
+            echo "pr_numbers=${{ github.event.inputs.pr_number }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            # Current PR from event
+            echo "pr_numbers=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          else
+            # Get all open PRs for scheduled run
+            PR_LIST=$(gh pr list --state open --json number --jq '.[].number' | tr '\n' ',' | sed 's/,$//')
+            echo "pr_numbers=${PR_LIST}" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "PRs to check: $(cat $GITHUB_OUTPUT | grep pr_numbers | cut -d= -f2)"
+      
+      - name: Check PR completion and invoke Copilot if needed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBERS: ${{ steps.get_prs.outputs.pr_numbers }}
+          FORCE_FIX: ${{ github.event.inputs.force_fix }}
+          # This workflow uses GitHub Copilot CLI (integrated in ipfs_datasets_py)
+          # No external API keys required - Copilot CLI uses GitHub authentication
+        run: |
+          python3 << 'EOF'
+          import os
+          import sys
+          import json
+          import subprocess
+          import time
+          from typing import Dict, List, Any, Optional
+          
+          # Configuration
+          PR_NUMBERS = os.environ.get('PR_NUMBERS', '').split(',')
+          PR_NUMBERS = [pr.strip() for pr in PR_NUMBERS if pr.strip()]
+          FORCE_FIX = os.environ.get('FORCE_FIX', 'false').lower() == 'true'
+          
+          def run_command(cmd: List[str]) -> Dict[str, Any]:
+              """Run a command and return result."""
+              try:
+                  result = subprocess.run(
+                      cmd,
+                      capture_output=True,
+                      text=True,
+                      timeout=30
+                  )
+                  return {
+                      'success': result.returncode == 0,
+                      'stdout': result.stdout,
+                      'stderr': result.stderr
+                  }
+              except Exception as e:
+                  return {
+                      'success': False,
+                      'error': str(e)
+                  }
+          
+          def get_pr_details(pr_number: str) -> Optional[Dict[str, Any]]:
+              """Get PR details using gh CLI."""
+              result = run_command([
+                  'gh', 'pr', 'view', pr_number,
+                  '--json', 'number,title,body,isDraft,state,comments,labels'
+              ])
+              
+              if result['success']:
+                  try:
+                      return json.loads(result['stdout'])
+                  except json.JSONDecodeError:
+                      print(f"❌ Failed to parse PR {pr_number} data")
+                      return None
+              return None
+          
+          def check_pr_completion_with_copilot(pr_details: Dict[str, Any]) -> Dict[str, Any]:
+              """
+              Use GitHub Copilot CLI to check if PR objective is complete.
+              
+              Returns dict with 'is_complete', 'confidence', 'reason'
+              """
+              pr_number = pr_details['number']
+              title = pr_details['title']
+              body = pr_details.get('body', '')
+              
+              # Add project root to Python path
+              sys.path.insert(0, os.path.abspath('.'))
+              
+              try:
+                  # Import Copilot CLI class
+                  from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
+                  
+                  # Initialize Copilot CLI
+                  copilot = CopilotCLI()
+                  
+                  # Check if installed
+                  if not copilot.installed:
+                      print("⚠️  Copilot CLI not installed, attempting to install...")
+                      install_result = copilot.install()
+                      if not install_result.get('success'):
+                          print(f"⚠️  Failed to install Copilot CLI: {install_result.get('error')}")
+                          return heuristic_completion_check(pr_details)
+                  
+                  # Create analysis prompt as code comment for Copilot to explain
+                  analysis_request = "# PR Completion Analysis Request\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Analyze this Pull Request and determine if task objectives are complete:\\n"
+                  analysis_request += f"# PR #{pr_number}: {title}\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Description:\\n"
+                  analysis_request += f"# {body[:1500]}\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += "# Question: Is this PR complete? Consider:\\n"
+                  analysis_request += "# - Incomplete if: in progress, WIP, draft, uncompleted TODOs, ongoing work\\n"
+                  analysis_request += "# - Complete if: all objectives met, no TODOs, work is done, tests passing\\n"
+                  analysis_request += "#\\n"
+                  analysis_request += '# Respond with JSON: {"is_complete": true/false, "confidence": 0-100, "reason": "explanation"}\\n'
+                  
+                  # Use Copilot's explain_code to analyze the PR
+                  result = copilot.explain_code(analysis_request)
+                  
+                  if result.get('success'):
+                      explanation = result.get('explanation', '')
+                      
+                      # Try to extract JSON from Copilot's response
+                      try:
+                          # Look for JSON in the response
+                          import re
+                          json_pattern = r'\\{[^}]*"is_complete"[^}]*\\}'
+                          json_match = re.search(json_pattern, explanation, re.DOTALL)
+                          if json_match:
+                              analysis = json.loads(json_match.group(0))
+                              print(f"✅ Copilot CLI analysis for PR #{pr_number}: {analysis}")
+                              return analysis
+                          else:
+                              # Parse Copilot's natural language response
+                              is_complete = not any(word in explanation.lower() for word in 
+                                                   ['incomplete', 'not complete', 'in progress', 'wip', 'todo'])
+                              confidence = 70 if is_complete else 75
+                              return {
+                                  'is_complete': is_complete,
+                                  'confidence': confidence,
+                                  'reason': explanation[:200]
+                              }
+                      except (json.JSONDecodeError, AttributeError) as e:
+                          print(f"⚠️  Could not parse Copilot response as JSON: {e}")
+                          # Fallback: analyze the text response
+                          is_complete = 'complete' in explanation.lower() and 'not complete' not in explanation.lower()
+                          return {
+                              'is_complete': is_complete,
+                              'confidence': 65,
+                              'reason': explanation[:200]
+                          }
+                  else:
+                      print(f"⚠️  Copilot CLI failed: {result.get('error')}")
+                      return heuristic_completion_check(pr_details)
+              
+              except ImportError as e:
+                  print(f"⚠️  Could not import Copilot CLI: {e}")
+                  return heuristic_completion_check(pr_details)
+              except Exception as e:
+                  print(f"⚠️  Copilot CLI check failed: {e}, using heuristic")
+                  return heuristic_completion_check(pr_details)
+          
+          def heuristic_completion_check(pr_details: Dict[str, Any]) -> Dict[str, Any]:
+              """Simple heuristic check without LLM."""
+              title = pr_details['title'].lower()
+              body = pr_details.get('body', '').lower()
+              is_draft = pr_details.get('isDraft', False)
+              
+              # Check for incomplete indicators
+              incomplete_indicators = [
+                  'wip', 'work in progress', 'draft', 'in progress',
+                  'todo', '- [ ]', 'not complete', 'incomplete',
+                  'needs work', 'under development'
+              ]
+              
+              is_incomplete = any(indicator in title or indicator in body 
+                                 for indicator in incomplete_indicators)
+              
+              if is_draft:
+                  return {
+                      'is_complete': False,
+                      'confidence': 90,
+                      'reason': 'PR is marked as draft'
+                  }
+              elif is_incomplete:
+                  return {
+                      'is_complete': False,
+                      'confidence': 70,
+                      'reason': 'Found incomplete indicators in title/description'
+                  }
+              else:
+                  return {
+                      'is_complete': True,
+                      'confidence': 60,
+                      'reason': 'No obvious incomplete indicators found'
+                  }
+          
+          def check_copilot_already_invoked(pr_details: Dict[str, Any]) -> bool:
+              """Check if Copilot was already invoked on this PR."""
+              comments = pr_details.get('comments', [])
+              
+              for comment in comments:
+                  body = comment.get('body', '').lower()
+                  if '@copilot' in body or '@github-copilot' in body:
+                      # Check if comment is recent (within last 2 hours)
+                      # For simplicity, just check if any copilot mention exists
+                      return True
+              
+              return False
+          
+          def invoke_copilot_on_pr(pr_number: str, reason: str) -> bool:
+              """Invoke Copilot CLI tool on the PR."""
+              print(f"\n{'='*80}")
+              print(f"🤖 Invoking Copilot on PR #{pr_number}")
+              print(f"📝 Reason: {reason}")
+              print(f"{'='*80}\n")
+              
+              # Use the copilot auto-fix script
+              result = run_command([
+                  'python3',
+                  'scripts/copilot_auto_fix_all_prs.py',
+                  '--pr', pr_number
+              ])
+              
+              if result['success']:
+                  print(f"✅ Successfully invoked Copilot on PR #{pr_number}")
+                  print(result['stdout'])
+                  return True
+              else:
+                  print(f"❌ Failed to invoke Copilot on PR #{pr_number}")
+                  print(result.get('stderr', result.get('error', 'Unknown error')))
+                  return False
+          
+          def main():
+              """Main execution function."""
+              print("🔍 PR Completion Monitor Starting...")
+              print(f"📋 Checking {len(PR_NUMBERS)} PR(s): {', '.join(PR_NUMBERS)}")
+              print()
+              
+              stats = {
+                  'total': len(PR_NUMBERS),
+                  'complete': 0,
+                  'incomplete': 0,
+                  'invoked': 0,
+                  'skipped': 0,
+                  'failed': 0
+              }
+              
+              for pr_number in PR_NUMBERS:
+                  print(f"\n{'='*80}")
+                  print(f"Analyzing PR #{pr_number}")
+                  print(f"{'='*80}")
+                  
+                  # Get PR details
+                  pr_details = get_pr_details(pr_number)
+                  if not pr_details:
+                      print(f"❌ Could not get details for PR #{pr_number}")
+                      stats['failed'] += 1
+                      continue
+                  
+                  print(f"📄 Title: {pr_details['title']}")
+                  print(f"📊 State: {pr_details['state']} {'(Draft)' if pr_details.get('isDraft') else ''}")
+                  
+                  # Check if already being worked on by Copilot
+                  if not FORCE_FIX and check_copilot_already_invoked(pr_details):
+                      print(f"✅ Copilot already working on PR #{pr_number} - skipping")
+                      stats['skipped'] += 1
+                      continue
+                  
+                  # Check completion with Copilot CLI
+                  completion_status = check_pr_completion_with_copilot(pr_details)
+                  
+                  is_complete = completion_status.get('is_complete', True)
+                  confidence = completion_status.get('confidence', 0)
+                  reason = completion_status.get('reason', 'Unknown')
+                  
+                  print(f"🎯 Completion Status: {'Complete' if is_complete else 'Incomplete'}")
+                  print(f"📊 Confidence: {confidence}%")
+                  print(f"💡 Reason: {reason}")
+                  
+                  if is_complete and not FORCE_FIX:
+                      print(f"✅ PR #{pr_number} appears complete - no action needed")
+                      stats['complete'] += 1
+                      continue
+                  
+                  # PR is incomplete - invoke Copilot
+                  stats['incomplete'] += 1
+                  
+                  if invoke_copilot_on_pr(pr_number, reason):
+                      stats['invoked'] += 1
+                  else:
+                      stats['failed'] += 1
+                  
+                  # Add delay between PRs to avoid rate limiting
+                  if pr_number != PR_NUMBERS[-1]:
+                      print("\n⏳ Waiting 30 seconds before next PR...")
+                      time.sleep(30)
+              
+              # Print summary
+              print(f"\n{'='*80}")
+              print("📊 Summary")
+              print(f"{'='*80}")
+              print(f"Total PRs checked:        {stats['total']}")
+              print(f"Complete PRs:             {stats['complete']}")
+              print(f"Incomplete PRs:           {stats['incomplete']}")
+              print(f"Copilot invoked:          {stats['invoked']}")
+              print(f"Skipped (already working): {stats['skipped']}")
+              print(f"Failed:                   {stats['failed']}")
+              print(f"{'='*80}\n")
+              
+              # Exit with error if any failures
+              if stats['failed'] > 0:
+                  sys.exit(1)
+          
+          if __name__ == '__main__':
+              main()
+          EOF
+      
+      - name: Create summary
+        if: always()
+        run: |
+          echo "## 🤖 PR Completion Monitor Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The PR completion monitor has finished checking PRs for completion status." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **PRs Checked**: ${{ steps.get_prs.outputs.pr_numbers }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### What This Workflow Does" >> $GITHUB_STEP_SUMMARY
+          echo "1. 🔍 Analyzes PR title and description using GitHub Copilot CLI" >> $GITHUB_STEP_SUMMARY
+          echo "2. 📊 Determines if the task objective has been completed" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🤖 Invokes Copilot CLI tool on incomplete PRs" >> $GITHUB_STEP_SUMMARY
+          echo "4. ♻️  Continues until PRs appear complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Uses:** GitHub Copilot CLI (integrated in ipfs_datasets_py package)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the workflow logs for detailed results." >> $GITHUB_STEP_SUMMARY
