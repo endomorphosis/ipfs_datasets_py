@@ -4,17 +4,19 @@ Cypher Function Library
 This module implements essential Cypher functions for Neo4j compatibility.
 
 Categories:
-- Math: abs, ceil, floor, round, sqrt, sign, rand
+- Math: abs, ceil, floor, round, sqrt, sign, rand, sin, cos, tan, log, exp, pi, e
 - Spatial: point, distance
 - Temporal: date, datetime, timestamp, duration
+- List: range, head, tail, last, reverse, size
+- Introspection: type, id, properties, labels, keys
 
-Phase 2 Implementation (15 functions)
+Phase 2 Implementation (38 functions - Path A completion)
 """
 
 import math
 import random
 from datetime import date, datetime, timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class Point:
@@ -375,11 +377,469 @@ def fn_duration(value: str) -> timedelta:
 
 
 # ============================================================================
+# List Functions
+# ============================================================================
+
+def fn_range(start: int, end: int, step: int = 1) -> List[int]:
+    """
+    Generate a range of integers.
+    
+    Args:
+        start: Start value (inclusive)
+        end: End value (exclusive)
+        step: Step size (default: 1)
+        
+    Returns:
+        List of integers from start to end (exclusive)
+        
+    Example:
+        range(0, 5) → [0, 1, 2, 3, 4]
+        range(0, 10, 2) → [0, 2, 4, 6, 8]
+        range(5, 0, -1) → [5, 4, 3, 2, 1]
+    """
+    if start is None or end is None:
+        return None
+    return list(range(start, end, step))
+
+
+def fn_head(lst: List) -> Any:
+    """
+    Get the first element of a list.
+    
+    Args:
+        lst: Input list
+        
+    Returns:
+        First element, or None if list is empty
+        
+    Example:
+        head([1, 2, 3]) → 1
+        head([]) → None
+        head(None) → None
+    """
+    if lst is None or not lst:
+        return None
+    return lst[0]
+
+
+def fn_tail(lst: List) -> List:
+    """
+    Get all but the first element of a list.
+    
+    Args:
+        lst: Input list
+        
+    Returns:
+        List with all elements except the first, or empty list
+        
+    Example:
+        tail([1, 2, 3]) → [2, 3]
+        tail([1]) → []
+        tail([]) → []
+    """
+    if lst is None:
+        return None
+    if len(lst) <= 1:
+        return []
+    return lst[1:]
+
+
+def fn_last(lst: List) -> Any:
+    """
+    Get the last element of a list.
+    
+    Args:
+        lst: Input list
+        
+    Returns:
+        Last element, or None if list is empty
+        
+    Example:
+        last([1, 2, 3]) → 3
+        last([]) → None
+        last(None) → None
+    """
+    if lst is None or not lst:
+        return None
+    return lst[-1]
+
+
+def fn_reverse(obj: Union[List, str]) -> Union[List, str]:
+    """
+    Reverse a list or string.
+    
+    Args:
+        obj: Input list or string
+        
+    Returns:
+        Reversed list or string
+        
+    Example:
+        reverse([1, 2, 3]) → [3, 2, 1]
+        reverse("hello") → "olleh"
+        reverse([]) → []
+        reverse(None) → None
+    """
+    if obj is None:
+        return None
+    if isinstance(obj, str):
+        return obj[::-1]
+    return list(reversed(obj))
+
+
+def fn_size(obj: Union[List, str, Dict]) -> int:
+    """
+    Get the size/length of a collection.
+    
+    Args:
+        obj: Input list, string, or map
+        
+    Returns:
+        Size of the collection
+        
+    Example:
+        size([1, 2, 3]) → 3
+        size("hello") → 5
+        size({a: 1, b: 2}) → 2
+        size(None) → None
+    """
+    if obj is None:
+        return None
+    return len(obj)
+
+
+# ============================================================================
+# Introspection Functions
+# ============================================================================
+
+def fn_type(relationship: Any) -> str:
+    """
+    Get the type of a relationship.
+    
+    Args:
+        relationship: Relationship object
+        
+    Returns:
+        Relationship type as string
+        
+    Example:
+        type(r) → "KNOWS" (where r is a KNOWS relationship)
+    """
+    if relationship is None:
+        return None
+    if hasattr(relationship, 'type'):
+        return relationship.type
+    return None
+
+
+def fn_id(entity: Any) -> str:
+    """
+    Get the ID of a node or relationship.
+    
+    Args:
+        entity: Node or Relationship object
+        
+    Returns:
+        Entity ID
+        
+    Example:
+        id(n) → "bafybeiabc123..."
+    """
+    if entity is None:
+        return None
+    if hasattr(entity, 'id'):
+        return entity.id
+    return None
+
+
+def fn_properties(entity: Any) -> Dict:
+    """
+    Get all properties of a node or relationship.
+    
+    Args:
+        entity: Node or Relationship object
+        
+    Returns:
+        Dictionary of all properties
+        
+    Example:
+        properties(n) → {name: "Alice", age: 30}
+    """
+    if entity is None:
+        return None
+    if hasattr(entity, 'properties'):
+        return dict(entity.properties)
+    if hasattr(entity, '__dict__'):
+        # Filter out private attributes
+        return {k: v for k, v in entity.__dict__.items() if not k.startswith('_')}
+    return {}
+
+
+def fn_labels(node: Any) -> List[str]:
+    """
+    Get the labels of a node.
+    
+    Args:
+        node: Node object
+        
+    Returns:
+        List of label strings
+        
+    Example:
+        labels(n) → ["Person", "Employee"]
+    """
+    if node is None:
+        return None
+    if hasattr(node, 'labels'):
+        return list(node.labels)
+    return []
+
+
+def fn_keys(obj: Union[Dict, Any]) -> List[str]:
+    """
+    Get the keys/property names of a map or entity.
+    
+    Args:
+        obj: Dictionary, Node, or Relationship
+        
+    Returns:
+        List of key names
+        
+    Example:
+        keys({a: 1, b: 2}) → ["a", "b"]
+        keys(n) → ["name", "age"]
+    """
+    if obj is None:
+        return None
+    if isinstance(obj, dict):
+        return list(obj.keys())
+    if hasattr(obj, 'properties'):
+        return list(obj.properties.keys())
+    if hasattr(obj, '__dict__'):
+        return [k for k in obj.__dict__.keys() if not k.startswith('_')]
+    return []
+
+
+# ============================================================================
+# Extended Math Functions
+# ============================================================================
+
+def fn_sin(n: Union[int, float]) -> float:
+    """
+    Return the sine of a number (in radians).
+    
+    Args:
+        n: Input number in radians
+        
+    Returns:
+        Sine of n
+        
+    Example:
+        sin(0) → 0.0
+        sin(pi()/2) → 1.0
+    """
+    if n is None:
+        return None
+    return math.sin(n)
+
+
+def fn_cos(n: Union[int, float]) -> float:
+    """
+    Return the cosine of a number (in radians).
+    
+    Args:
+        n: Input number in radians
+        
+    Returns:
+        Cosine of n
+        
+    Example:
+        cos(0) → 1.0
+        cos(pi()) → -1.0
+    """
+    if n is None:
+        return None
+    return math.cos(n)
+
+
+def fn_tan(n: Union[int, float]) -> float:
+    """
+    Return the tangent of a number (in radians).
+    
+    Args:
+        n: Input number in radians
+        
+    Returns:
+        Tangent of n
+        
+    Example:
+        tan(0) → 0.0
+    """
+    if n is None:
+        return None
+    return math.tan(n)
+
+
+def fn_asin(n: Union[int, float]) -> float:
+    """
+    Return the arc sine of a number.
+    
+    Args:
+        n: Input number (must be between -1 and 1)
+        
+    Returns:
+        Arc sine in radians
+        
+    Example:
+        asin(1) → π/2
+    """
+    if n is None:
+        return None
+    return math.asin(n)
+
+
+def fn_acos(n: Union[int, float]) -> float:
+    """
+    Return the arc cosine of a number.
+    
+    Args:
+        n: Input number (must be between -1 and 1)
+        
+    Returns:
+        Arc cosine in radians
+        
+    Example:
+        acos(1) → 0
+    """
+    if n is None:
+        return None
+    return math.acos(n)
+
+
+def fn_atan(n: Union[int, float]) -> float:
+    """
+    Return the arc tangent of a number.
+    
+    Args:
+        n: Input number
+        
+    Returns:
+        Arc tangent in radians
+        
+    Example:
+        atan(0) → 0
+    """
+    if n is None:
+        return None
+    return math.atan(n)
+
+
+def fn_atan2(y: Union[int, float], x: Union[int, float]) -> float:
+    """
+    Return the arc tangent of y/x in radians.
+    
+    Args:
+        y: Y coordinate
+        x: X coordinate
+        
+    Returns:
+        Arc tangent of y/x in radians
+        
+    Example:
+        atan2(1, 1) → π/4
+    """
+    if y is None or x is None:
+        return None
+    return math.atan2(y, x)
+
+
+def fn_log(n: Union[int, float]) -> float:
+    """
+    Return the natural logarithm (base e) of a number.
+    
+    Args:
+        n: Input number (must be positive)
+        
+    Returns:
+        Natural logarithm of n
+        
+    Example:
+        log(e()) → 1.0
+    """
+    if n is None:
+        return None
+    return math.log(n)
+
+
+def fn_log10(n: Union[int, float]) -> float:
+    """
+    Return the base-10 logarithm of a number.
+    
+    Args:
+        n: Input number (must be positive)
+        
+    Returns:
+        Base-10 logarithm of n
+        
+    Example:
+        log10(100) → 2.0
+    """
+    if n is None:
+        return None
+    return math.log10(n)
+
+
+def fn_exp(n: Union[int, float]) -> float:
+    """
+    Return e raised to the power of a number.
+    
+    Args:
+        n: Input number
+        
+    Returns:
+        e^n
+        
+    Example:
+        exp(1) → e
+        exp(0) → 1.0
+    """
+    if n is None:
+        return None
+    return math.exp(n)
+
+
+def fn_pi() -> float:
+    """
+    Return the value of π (pi).
+    
+    Returns:
+        Value of π
+        
+    Example:
+        pi() → 3.141592653589793
+    """
+    return math.pi
+
+
+def fn_e() -> float:
+    """
+    Return the value of e (Euler's number).
+    
+    Returns:
+        Value of e
+        
+    Example:
+        e() → 2.718281828459045
+    """
+    return math.e
+
+
+# ============================================================================
 # Function Registry
 # ============================================================================
 
 FUNCTION_REGISTRY = {
-    # Math functions
+    # Math functions (basic)
     'abs': fn_abs,
     'ceil': fn_ceil,
     'floor': fn_floor,
@@ -387,6 +847,22 @@ FUNCTION_REGISTRY = {
     'sqrt': fn_sqrt,
     'sign': fn_sign,
     'rand': fn_rand,
+    
+    # Math functions (trigonometric)
+    'sin': fn_sin,
+    'cos': fn_cos,
+    'tan': fn_tan,
+    'asin': fn_asin,
+    'acos': fn_acos,
+    'atan': fn_atan,
+    'atan2': fn_atan2,
+    
+    # Math functions (logarithmic and exponential)
+    'log': fn_log,
+    'log10': fn_log10,
+    'exp': fn_exp,
+    'pi': fn_pi,
+    'e': fn_e,
     
     # Spatial functions
     'point': fn_point,
@@ -397,6 +873,21 @@ FUNCTION_REGISTRY = {
     'datetime': fn_datetime,
     'timestamp': fn_timestamp,
     'duration': fn_duration,
+    
+    # List functions
+    'range': fn_range,
+    'head': fn_head,
+    'tail': fn_tail,
+    'last': fn_last,
+    'reverse': fn_reverse,
+    'size': fn_size,
+    
+    # Introspection functions
+    'type': fn_type,
+    'id': fn_id,
+    'properties': fn_properties,
+    'labels': fn_labels,
+    'keys': fn_keys,
 }
 
 
