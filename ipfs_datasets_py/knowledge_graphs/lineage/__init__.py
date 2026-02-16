@@ -34,6 +34,11 @@ from .types import (
     LineageSubgraph,
 )
 
+from .core import (
+    LineageGraph,
+    LineageTracker,
+)
+
 __all__ = [
     # Core types
     'LineageNode',
@@ -43,6 +48,9 @@ __all__ = [
     'LineageTransformationDetail',
     'LineageVersion',
     'LineageSubgraph',
+    # Core classes
+    'LineageGraph',
+    'LineageTracker',
 ]
 
 # Version info
