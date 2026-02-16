@@ -3,6 +3,12 @@ Integration tests for Knowledge Graphs extraction and query workflow
 
 Tests the complete pipeline from text extraction through knowledge graph
 construction to querying, validating Phase 3 & 4 refactoring integration.
+
+NOTE: Some tests use mock objects for demonstrating workflow patterns. For real integration
+testing with actual extraction and query code, these should be supplemented with tests using
+the safe_importer pattern (see tests/unit/test_graphrag_integrator_unit.py for examples).
+
+Following GIVEN-WHEN-THEN format as per repository standards.
 """
 import pytest
 import sys

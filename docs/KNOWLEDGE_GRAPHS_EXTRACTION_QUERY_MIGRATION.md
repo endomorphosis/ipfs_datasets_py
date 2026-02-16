@@ -139,6 +139,8 @@ kg = extractor.extract_knowledge_graph(text, extraction_temperature=0.5)
 
 ## Resources
 
+**Note:** This guide replaces the removed `KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md`. All references to that file should now point to `KNOWLEDGE_GRAPHS_EXTRACTION_QUERY_MIGRATION.md`.
+
 - **Extraction API:** `KNOWLEDGE_GRAPHS_EXTRACTION_API.md` - Complete API reference
 - **Query API:** `KNOWLEDGE_GRAPHS_QUERY_API.md` - Query system documentation
 - **Usage Examples:** `KNOWLEDGE_GRAPHS_USAGE_EXAMPLES.md` - 17 comprehensive examples

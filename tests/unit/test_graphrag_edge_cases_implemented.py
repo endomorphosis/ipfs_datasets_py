@@ -1,9 +1,18 @@
 """
 Implemented edge case tests for GraphRAG Integrator
 
+NOTE: This file contains legacy/stub tests using mock objects to validate expected behavior patterns.
+The tests define mock implementations and assert on those mocks, so they don't exercise production code.
+For production-focused GraphRAG coverage, see tests/unit_tests/pdf_processing_.
+
+These tests are useful for documenting expected API behavior and edge case handling,
+but should be supplemented with actual integration tests using real GraphRAG implementation.
+
 This file implements the 25 edge case test stubs from test_graphrag_integrator_unit.py
 with actual test logic. Tests cover depth validation, entity ID validation, graph structure,
 subgraph completeness, performance, and error handling.
+
+Following GIVEN-WHEN-THEN format as per repository standards.
 """
 import pytest
 import sys
@@ -17,6 +26,9 @@ from tests.conftest import *
 # Add test directory to path for imports
 test_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, test_dir)
+
+# Mark as legacy stub tests - covered by production tests elsewhere
+pytestmark = pytest.mark.skip(reason="Legacy GraphRAG stub tests with mocks only; covered by tests/unit_tests/pdf_processing_")
 
 
 class TestGraphRAGEdgeCases:

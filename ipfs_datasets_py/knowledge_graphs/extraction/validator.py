@@ -95,7 +95,8 @@ class KnowledgeGraphExtractorWithValidation:
             )
             self.validator_available = True
         except ImportError:
-            print("Warning: SPARQLValidator not available. Validation will be disabled.")
+            import warnings
+            warnings.warn("SPARQLValidator not available. Validation will be disabled.", ImportWarning)
             self.validator = None
             self.validator_available = False
 
@@ -547,8 +548,6 @@ class KnowledgeGraphExtractorWithValidation:
         # Parse entity corrections
         if "entities" in corrections:
             for entity_id, entity_correction in corrections["entities"].items():
-                # TODO entity_name is not referenced anywhere. See if we need it.
-                entity_name = entity_correction.get("entity_name", "")
                 suggestions = entity_correction.get("suggestions", "")
 
                 # Process suggestions to extract corrections
@@ -591,8 +590,7 @@ class KnowledgeGraphExtractorWithValidation:
                         entity_properties[prop] = correction
 
             # Add the corrected entity
-            # TODO corrected_entity is not reference anywhere. See if we need it.
-            corrected_entity = corrected_kg.add_entity(
+            corrected_kg.add_entity(
                 entity_type=entity.entity_type if hasattr(entity, "entity_type") else "entity",
                 name=entity.name if hasattr(entity, "name") else "Unknown",
                 properties=entity_properties,

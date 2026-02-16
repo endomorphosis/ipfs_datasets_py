@@ -8,7 +8,6 @@ Following GIVEN-WHEN-THEN format as per repository standards.
 """
 
 import pytest
-import json
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
     Relationship,
