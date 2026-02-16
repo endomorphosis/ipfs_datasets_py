@@ -27,6 +27,11 @@ on:
     # Run dashboard tests daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
@@ -52,6 +57,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Docker Buildx
@@ -114,6 +120,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Docker Buildx
@@ -173,6 +180,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Docker Buildx
@@ -271,6 +279,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: System Info

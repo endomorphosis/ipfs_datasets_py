@@ -1,3 +1,12 @@
+# GPU-Enabled Tests Workflow
+#
+# Purpose: Run GPU-accelerated tests with hardware acceleration validation
+# Triggers: Push to main, PRs (on relevant paths), manual dispatch
+# Duration: ~30-40 minutes
+# Maintainer: AI/ML team
+# Dependencies: GPU runners (CUDA), Python 3.12, PyTorch
+# Related: gpu-tests.yml, test-datasets-runner.yml
+
 name: GPU-Enabled Tests (with Runner Gating)
 
 on:
@@ -24,6 +33,11 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   PYTHON_VERSION: '3.12'
@@ -54,6 +68,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: System Information
@@ -183,11 +198,13 @@ jobs:
     needs: [check-x64-runner]
     if: ${{ needs.check-x64-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Docker Buildx
@@ -217,12 +234,14 @@ jobs:
     needs: [check-gpu-runner]
     if: ${{ needs.check-gpu-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64, gpu]
+    timeout-minutes: 30
     continue-on-error: true
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Build GPU Docker Image
@@ -264,6 +283,7 @@ jobs:
     needs: [check-gpu-runner, check-x64-runner, gpu-tests, cpu-tests, gpu-docker-tests]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
       - name: Generate Test Summary

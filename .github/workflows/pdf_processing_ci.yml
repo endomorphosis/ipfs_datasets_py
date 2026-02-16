@@ -1,3 +1,12 @@
+# PDF Processing Pipeline CI/CD Workflow
+#
+# Purpose: Test PDF processing, GraphRAG integration, and MCP server endpoints
+# Triggers: Push to main/develop, PRs, manual dispatch
+# Duration: ~35-45 minutes
+# Maintainer: Document processing team
+# Dependencies: Python 3.12, PDF tools, GraphRAG, MCP server
+# Related: graphrag-production-ci.yml, mcp-integration-tests.yml
+
 name: PDF Processing Pipeline CI/CD
 
 on:
@@ -20,6 +29,11 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   PYTHON_VERSION: '3.12'
@@ -38,6 +52,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
     container:
       image: python:3.12-slim
       options: --user root
@@ -56,38 +71,51 @@ jobs:
         apt-get install -y git curl
     
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Setup GitHub CLI and P2P Cache
+      id: gh_setup
+      uses: nick-invision/retry@v3
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         ENABLE_P2P_CACHE: true
-      run: |
-        # Install gh CLI for API caching
-        apt-get install -y ca-certificates gnupg
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-          dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
-        chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
-          tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-        apt-get update
-        apt-get install -y gh
-        
-        # Authenticate
-        echo "$GH_TOKEN" | gh auth login --with-token
-        gh auth status
-        
-        # Check rate limit
-        RATE_LIMIT=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "0")
-        echo "GitHub API Rate Limit: $RATE_LIMIT remaining"
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        retry_on: error
+        command: |
+          # Install gh CLI for API caching
+          apt-get install -y ca-certificates gnupg
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+            dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
+            tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt-get update
+          apt-get install -y gh
+          
+          # Authenticate
+          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth status
+          
+          # Check rate limit
+          RATE_LIMIT=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "0")
+          echo "GitHub API Rate Limit: $RATE_LIMIT remaining"
     
     - name: Install Python dependencies
-      run: |
-        python --version
-        python -m pip install --upgrade pip
-        pip install flake8 black isort mypy
-        pip install -r requirements.txt
+      id: pip_install
+      uses: nick-invision/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        retry_on: error
+        command: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install flake8 black isort mypy
+          pip install -r requirements.txt
     
     - name: Run Black formatter check
       run: |
@@ -121,6 +149,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
     container:
       image: python:3.12-slim
       options: --user root
@@ -144,7 +173,8 @@ jobs:
         apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
     
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install Python dependencies
       run: |
         python --version
@@ -222,13 +252,15 @@ jobs:
     needs: [check-runner, unit-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install system dependencies
       run: |
         apt-get update
@@ -264,13 +296,15 @@ jobs:
     needs: [check-runner, unit-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -298,13 +332,15 @@ jobs:
     needs: [check-runner, integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -339,10 +375,12 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Install security scanning tools
       run: |
         python --version
@@ -376,10 +414,12 @@ jobs:
     needs: [check-runner, integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Build Docker image
       run: |
         docker build -t ipfs-datasets-pdf:test .
@@ -406,10 +446,12 @@ jobs:
     needs: [check-runner, integration-tests, mcp-server-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
     - uses: actions/checkout@v5
-    
+        with:
+          fetch-depth: 1    
     - name: Test package installation
       run: |
         python --version
@@ -466,6 +508,7 @@ jobs:
     needs: [check-runner, lint-and-format, unit-tests, integration-tests, mcp-server-tests]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
     - name: Notify success

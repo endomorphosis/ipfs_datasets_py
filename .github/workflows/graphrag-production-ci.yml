@@ -1,3 +1,12 @@
+# GraphRAG Production CI/CD Workflow
+#
+# Purpose: Continuous integration and deployment for GraphRAG document processing
+# Triggers: Push to main/develop, PRs, weekly schedule
+# Duration: ~30-40 minutes
+# Maintainer: AI/ML team
+# Dependencies: Python 3.12, GraphRAG dependencies, self-hosted runners
+# Related: mcp-integration-tests.yml, pdf_processing_ci.yml
+
 name: GraphRAG Production CI/CD
 
 on:
@@ -13,6 +22,11 @@ permissions:
   issues: write
   actions: read
   packages: write
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   REGISTRY: ghcr.io
@@ -30,6 +44,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     strategy:
       matrix:
         python-version: ['3.12']
@@ -62,16 +77,23 @@ jobs:
         git config --global --add safe.directory '*'
     
     - uses: actions/checkout@v5
-      with:
+        with:
+          fetch-depth: 1
         submodules: false
         clean: true
     
     - name: Set up Python
-      run: |
-        # Use system python3 on self-hosted runner
-        python3 --version
-        # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
-        python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
+      id: python_setup
+      uses: nick-invision/retry@v3
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        retry_on: error
+        command: |
+          # Use system python3 on self-hosted runner
+          python3 --version
+          # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
+          python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
     
     - name: Setup GitHub CLI and P2P Cache
       env:
@@ -144,6 +166,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
     steps:
     - name: Clean workspace (fix permissions)
       run: |
@@ -169,7 +192,8 @@ jobs:
         git config --global --add safe.directory '*'
     
     - uses: actions/checkout@v5
-      with:
+        with:
+          fetch-depth: 1
         submodules: false
         clean: true
     
@@ -201,6 +225,7 @@ jobs:
     needs: [check-runner, test, security]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
@@ -223,7 +248,8 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-      with:
+        with:
+          fetch-depth: 1
         submodules: false
     
     - name: Log in to Container Registry
@@ -261,6 +287,7 @@ jobs:
     needs: [check-runner, build]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/develop' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -281,7 +308,8 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-      with:
+        with:
+          fetch-depth: 1
         submodules: false
     
     - name: Configure kubectl
@@ -301,6 +329,7 @@ jobs:
     needs: [check-runner, build]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && startsWith(github.ref, 'refs/tags/v') }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -321,7 +350,8 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-      with:
+        with:
+          fetch-depth: 1
         submodules: false
     
     - name: Configure kubectl

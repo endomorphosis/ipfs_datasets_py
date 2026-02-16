@@ -26,6 +26,11 @@ on:
     # Run CLI error monitoring daily at 4 AM UTC
     - cron: '0 4 * * *'
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
@@ -47,6 +52,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Install dependencies
@@ -101,6 +107,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Install dependencies
@@ -174,6 +181,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Install dependencies
@@ -249,6 +257,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Install dependencies

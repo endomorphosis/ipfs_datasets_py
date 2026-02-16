@@ -23,6 +23,11 @@ on:
   pull_request:
     branches: [main, develop]
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   actions: read
@@ -92,6 +97,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Python
@@ -183,6 +189,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up Docker Buildx
@@ -292,6 +299,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Set up test environment

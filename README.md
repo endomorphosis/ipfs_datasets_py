@@ -7,6 +7,13 @@
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
 [![Tests](https://img.shields.io/badge/tests-4400%2B-brightgreen)](./tests/)
 
+### Critical Workflow Status
+
+![Docker Build](https://github.com/endomorphosis/ipfs_datasets_py/workflows/Docker%20Build%20and%20Test%20(Multi-Platform)/badge.svg)
+![GraphRAG CI](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GraphRAG%20Production%20CI%2FCD/badge.svg)
+![MCP Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/MCP%20Endpoints%20Integration%20Tests/badge.svg)
+![GPU Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GPU-Enabled%20Tests/badge.svg)
+
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
 
 ## 🎉 Recent Updates (v1.0+)

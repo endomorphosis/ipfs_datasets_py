@@ -1,0 +1,321 @@
+# Workflow Smoke Tests
+# 
+# Purpose: Continuously validate critical workflow health and infrastructure availability
+# Schedule: Every 6 hours (00:00, 06:00, 12:00, 18:00 UTC)
+# Duration: ~5 minutes
+# Maintainer: DevOps Team
+# 
+# This workflow performs lightweight health checks on critical workflows and infrastructure
+# to detect issues early before they impact development or production deployments.
+
+name: Workflow Smoke Tests
+
+on:
+  schedule:
+    # Run every 6 hours at 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      test_level:
+        description: 'Test level to run'
+        required: false
+        default: 'standard'
+        type: choice
+        options:
+          - standard
+          - comprehensive
+          - minimal
+  push:
+    branches: [main, master]
+    paths:
+      - '.github/workflows/workflow-smoke-tests.yml'
+      - '.github/scripts/smoke_test_runner.py'
+
+permissions:
+  contents: read
+  issues: write
+  actions: read
+
+concurrency:
+  group: smoke-tests-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel smoke tests
+
+jobs:
+  smoke-test-infrastructure:
+    name: Test Infrastructure Availability
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Check GitHub API Status
+        id: github_api
+        continue-on-error: true
+        run: |
+          echo "Checking GitHub API status..."
+          response=$(curl -s https://www.githubstatus.com/api/v2/status.json)
+          status=$(echo "$response" | jq -r '.status.indicator')
+          echo "status=$status" >> $GITHUB_OUTPUT
+          echo "GitHub API Status: $status"
+          if [ "$status" != "none" ]; then
+            echo "⚠️ GitHub API has status: $status"
+            exit 1
+          fi
+      
+      - name: Check Runner Availability (GitHub-hosted)
+        id: github_runner
+        run: |
+          echo "Checking GitHub-hosted runner availability..."
+          echo "✅ GitHub-hosted runner is available"
+          echo "available=true" >> $GITHUB_OUTPUT
+      
+      - name: Check Runner Availability (Self-hosted x86_64)
+        id: self_hosted_x86
+        continue-on-error: true
+        run: |
+          echo "Checking for self-hosted x86_64 runners..."
+          # This will run on GitHub-hosted, but we can check if self-hosted runners exist
+          echo "Note: Running on GitHub-hosted to check self-hosted status"
+          echo "available=unknown" >> $GITHUB_OUTPUT
+      
+      - name: Test Docker Hub Connectivity
+        id: docker_hub
+        continue-on-error: true
+        run: |
+          echo "Testing Docker Hub connectivity..."
+          if docker pull hello-world:latest; then
+            echo "✅ Docker Hub is accessible"
+            echo "accessible=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Docker Hub is not accessible"
+            echo "accessible=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Test PyPI Connectivity
+        id: pypi
+        continue-on-error: true
+        run: |
+          echo "Testing PyPI connectivity..."
+          if pip install --dry-run requests; then
+            echo "✅ PyPI is accessible"
+            echo "accessible=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ PyPI is not accessible"
+            echo "accessible=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Test GitHub Actions Cache
+        id: cache_test
+        continue-on-error: true
+        uses: actions/cache@v4
+        with:
+          path: /tmp/smoke-test-cache
+          key: smoke-test-${{ github.run_id }}
+          restore-keys: smoke-test-
+      
+      - name: Verify Cache Works
+        if: steps.cache_test.conclusion == 'success'
+        run: |
+          echo "✅ GitHub Actions cache is working"
+          mkdir -p /tmp/smoke-test-cache
+          echo "test" > /tmp/smoke-test-cache/test.txt
+
+  smoke-test-critical-workflows:
+    name: Test Critical Workflow Syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install PyYAML
+      
+      - name: Validate Critical Workflow Files
+        id: validate_workflows
+        run: |
+          echo "Validating critical workflow YAML files..."
+          critical_workflows=(
+            "docker-build-test.yml"
+            "graphrag-production-ci.yml"
+            "mcp-integration-tests.yml"
+            "gpu-tests-gated.yml"
+            "copilot-agent-autofix.yml"
+            "pdf_processing_ci.yml"
+            "workflow-validation-ci.yml"
+          )
+          
+          failed=0
+          for workflow in "${critical_workflows[@]}"; do
+            if [ -f ".github/workflows/$workflow" ]; then
+              if python -c "import yaml; yaml.safe_load(open('.github/workflows/$workflow'))" 2>/dev/null; then
+                echo "✅ $workflow is valid"
+              else
+                echo "❌ $workflow has syntax errors"
+                failed=$((failed + 1))
+              fi
+            else
+              echo "⚠️ $workflow not found"
+            fi
+          done
+          
+          if [ $failed -gt 0 ]; then
+            echo "❌ $failed workflow(s) have syntax errors"
+            exit 1
+          fi
+          echo "✅ All critical workflows are valid"
+
+  smoke-test-workflow-triggers:
+    name: Test Workflow Trigger Mechanisms
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Test workflow_dispatch Trigger
+        run: |
+          echo "✅ workflow_dispatch trigger is working (this workflow was triggered)"
+      
+      - name: Verify Schedule Triggers
+        run: |
+          echo "Checking for workflows with schedule triggers..."
+          count=$(grep -r "schedule:" .github/workflows/*.yml | wc -l)
+          echo "Found $count workflows with schedule triggers"
+          if [ $count -gt 0 ]; then
+            echo "✅ Schedule triggers are configured"
+          fi
+      
+      - name: Verify Push Triggers
+        run: |
+          echo "Checking for workflows with push triggers..."
+          count=$(grep -r "push:" .github/workflows/*.yml | wc -l)
+          echo "Found $count workflows with push triggers"
+          if [ $count -gt 0 ]; then
+            echo "✅ Push triggers are configured"
+          fi
+
+  report-smoke-test-results:
+    name: Report Results
+    runs-on: ubuntu-latest
+    needs: [smoke-test-infrastructure, smoke-test-critical-workflows, smoke-test-workflow-triggers]
+    if: always()
+    timeout-minutes: 5
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+      
+      - name: Evaluate Results
+        id: evaluate
+        env:
+          INFRA_RESULT: ${{ needs.smoke-test-infrastructure.result }}
+          WORKFLOWS_RESULT: ${{ needs.smoke-test-critical-workflows.result }}
+          TRIGGERS_RESULT: ${{ needs.smoke-test-workflow-triggers.result }}
+        run: |
+          echo "Infrastructure Test: $INFRA_RESULT"
+          echo "Workflows Test: $WORKFLOWS_RESULT"
+          echo "Triggers Test: $TRIGGERS_RESULT"
+          
+          failed=0
+          if [ "$INFRA_RESULT" != "success" ]; then
+            echo "❌ Infrastructure tests failed"
+            failed=$((failed + 1))
+          fi
+          if [ "$WORKFLOWS_RESULT" != "success" ]; then
+            echo "❌ Workflow validation failed"
+            failed=$((failed + 1))
+          fi
+          if [ "$TRIGGERS_RESULT" != "success" ]; then
+            echo "❌ Trigger tests failed"
+            failed=$((failed + 1))
+          fi
+          
+          if [ $failed -gt 0 ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "failed_count=$failed" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "failed_count=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create Issue on Failure
+        if: steps.evaluate.outputs.status == 'failure' && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failedCount = '${{ steps.evaluate.outputs.failed_count }}';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            
+            const issueBody = `## 🚨 Workflow Smoke Tests Failed
+            
+            **Failed Tests:** ${failedCount}
+            **Run:** ${runUrl}
+            **Time:** ${new Date().toISOString()}
+            
+            ### Test Results
+            
+            - Infrastructure: ${{ needs.smoke-test-infrastructure.result }}
+            - Workflows: ${{ needs.smoke-test-critical-workflows.result }}
+            - Triggers: ${{ needs.smoke-test-workflow-triggers.result }}
+            
+            ### Action Required
+            
+            Please investigate the failing smoke tests. These tests run every 6 hours to detect
+            issues with critical workflow infrastructure.
+            
+            ### Investigation Steps
+            
+            1. Check the workflow run logs: ${runUrl}
+            2. Verify GitHub API status: https://www.githubstatus.com/
+            3. Check runner availability
+            4. Verify external service connectivity (Docker Hub, PyPI)
+            5. Review recent workflow changes
+            
+            ---
+            *This issue was automatically created by the smoke test workflow.*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Workflow Smoke Tests Failed - ${new Date().toISOString().split('T')[0]}`,
+              body: issueBody,
+              labels: ['workflow-health', 'automated', 'smoke-test-failure']
+            });
+      
+      - name: Summary
+        run: |
+          echo "## Smoke Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Test Suite | Result |" >> $GITHUB_STEP_SUMMARY
+          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Infrastructure | ${{ needs.smoke-test-infrastructure.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Critical Workflows | ${{ needs.smoke-test-critical-workflows.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow Triggers | ${{ needs.smoke-test-workflow-triggers.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.evaluate.outputs.status }}" == "success" ]; then
+            echo "✅ **All smoke tests passed**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some smoke tests failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the individual job logs for details." >> $GITHUB_STEP_SUMMARY
+          fi

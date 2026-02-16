@@ -16,6 +16,11 @@ on:
       - '.github/workflows/**'
       - '.github/scripts/**'
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   issues: write
@@ -37,6 +42,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Install dependencies
         run: |

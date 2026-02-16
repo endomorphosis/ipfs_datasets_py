@@ -18,6 +18,11 @@ on:
         type: boolean
         default: false
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   monitor:
     uses: ./.github/workflows/templates/pr-monitoring-template.yml

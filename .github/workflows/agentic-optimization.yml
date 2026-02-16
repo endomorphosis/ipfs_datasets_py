@@ -47,6 +47,11 @@ on:
   issues:
     types: [labeled]
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check-trigger:
     runs-on: ubuntu-latest
