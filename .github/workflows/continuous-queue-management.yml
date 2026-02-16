@@ -296,21 +296,31 @@ jobs:
           EOF
 
       - name: Generate Queue Status Summary
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          MAX_AGENTS: ${{ env.MAX_CONCURRENT_AGENTS }}
+          TOTAL_PRS: ${{ steps.analyze.outputs.total_prs }}
+          INCOMPLETE_PRS: ${{ steps.analyze.outputs.incomplete_prs }}
+          TOTAL_ISSUES: ${{ steps.analyze.outputs.total_issues }}
+          ACTIONABLE_ISSUES: ${{ steps.analyze.outputs.actionable_issues }}
+          ACTIVE_AGENTS: ${{ steps.analyze.outputs.active_agents }}
+          AVAILABLE_SLOTS: ${{ steps.analyze.outputs.available_slots }}
+          STRATEGY: ${{ steps.analyze.outputs.strategy }}
         run: |
           echo "## 📊 Queue Status Analysis" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
-          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Max Concurrent Agents:** ${{ env.MAX_CONCURRENT_AGENTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${EVENT_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "**Max Concurrent Agents:** ${MAX_AGENTS}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Current Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total PRs:** ${{ steps.analyze.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Incomplete PRs:** ${{ steps.analyze.outputs.incomplete_prs }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total Issues:** ${{ steps.analyze.outputs.total_issues }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Actionable Issues:** ${{ steps.analyze.outputs.actionable_issues }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Active Agents:** ${{ steps.analyze.outputs.active_agents }}/${{ env.MAX_CONCURRENT_AGENTS }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Available Slots:** ${{ steps.analyze.outputs.available_slots }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Strategy:** ${{ steps.analyze.outputs.strategy }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs:** ${TOTAL_PRS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Incomplete PRs:** ${INCOMPLETE_PRS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Issues:** ${TOTAL_ISSUES}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actionable Issues:** ${ACTIONABLE_ISSUES}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Active Agents:** ${ACTIVE_AGENTS}/${MAX_AGENTS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Available Slots:** ${AVAILABLE_SLOTS}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Strategy:** ${STRATEGY}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
   process-pr-queue:
@@ -346,10 +356,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          REPO_OWNER: ${{ github.repository_owner }}
         run: |
-          echo "🤖 Processing PR #${{ matrix.pr_number }} with enhanced monitor"
+          echo "🤖 Processing PR #${PR_NUMBER} with enhanced monitor"
           
-          CMD_ARGS="--notification-user ${{ github.repository_owner }} --pr-number ${{ matrix.pr_number }}"
+          CMD_ARGS="--notification-user ${REPO_OWNER} --pr-number ${PR_NUMBER}"
           
           if [ "$DRY_RUN" = "true" ]; then
             CMD_ARGS="$CMD_ARGS --dry-run"
@@ -395,11 +407,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+          ISSUE_NUMBER: ${{ matrix.issue_number }}
         run: |
-          echo "🎫 Processing Issue #${{ matrix.issue_number }} with Copilot Coding Agent"
+          echo "🎫 Processing Issue #${ISSUE_NUMBER} with Copilot Coding Agent"
           
           # Get issue details
-          ISSUE_DATA=$(gh issue view ${{ matrix.issue_number }} --json title,body,labels,author)
+          ISSUE_DATA=$(gh issue view ${ISSUE_NUMBER} --json title,body,labels,author)
           ISSUE_TITLE=$(echo "$ISSUE_DATA" | jq -r '.title')
           ISSUE_BODY=$(echo "$ISSUE_DATA" | jq -r '.body // ""')
           
@@ -542,17 +555,21 @@ jobs:
     
     steps:
       - name: Generate Comprehensive Report
+        env:
+          RUN_ID: ${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+          TOTAL_PRS: ${{ needs.analyze-queue-status.outputs.total_prs }}
         run: |
           echo "# 🤖 Continuous Queue Management Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** ${RUN_ID}" >> $GITHUB_STEP_SUMMARY
           echo "**Workflow:** Continuous PR and Issue Queue Management" >> $GITHUB_STEP_SUMMARY
-          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${EVENT_NAME}" >> $GITHUB_STEP_SUMMARY
           echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           echo "## 📊 Queue Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Total PRs:** ${{ needs.analyze-queue-status.outputs.total_prs }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total PRs:** ${TOTAL_PRS}" >> $GITHUB_STEP_SUMMARY
           echo "- **Incomplete PRs:** ${{ needs.analyze-queue-status.outputs.incomplete_prs }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Total Issues:** ${{ needs.analyze-queue-status.outputs.total_issues }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Actionable Issues:** ${{ needs.analyze-queue-status.outputs.actionable_issues }}" >> $GITHUB_STEP_SUMMARY
