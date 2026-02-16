@@ -1,41 +1,107 @@
 """
 Knowledge graph extraction package.
 
-This package will contain refactored extraction functionality from
-knowledge_graph_extraction.py (2,969 lines).
+This package contains refactored extraction functionality from
+knowledge_graph_extraction.py (2,969 lines), split into focused modules.
 
-CURRENT STATUS: Planning phase
-- Structure defined but not yet populated
-- Original file remains in place to avoid breaking changes
-- Migration will happen gradually as test coverage improves
+CURRENT STATUS: Active development (Phase 3 Task 3.2)
+- types.py: Shared types and imports ✅
+- entities.py: Entity class (planned)
+- relationships.py: Relationship class (planned)
+- graph.py: KnowledgeGraph class (planned)
+- extractor.py: Extraction logic (planned)
+- validator.py: Validation and SPARQL (planned)
+- wikipedia.py: Wikipedia integration (planned)
 
-Future structure:
-- entities.py: Entity and relationship definitions
-- extractors.py: Extraction algorithms
-- analyzers.py: Semantic analysis
-- builders.py: Graph construction
+Package Structure:
+```
+extraction/
+├── __init__.py        # Public API exports
+├── types.py           # Shared types and imports ✅
+├── entities.py        # Entity class (~380 lines)
+├── relationships.py   # Relationship class (~420 lines)
+├── graph.py           # KnowledgeGraph container (~510 lines)
+├── extractor.py       # Main extraction logic (~620 lines)
+├── validator.py       # Validation & SPARQL (~390 lines)
+└── wikipedia.py       # Wikipedia integration (~310 lines)
+```
 
-For now, use the original module:
-    from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
-        KnowledgeGraphExtractor
-    )
+Backward Compatibility:
+The original knowledge_graph_extraction.py file will remain in place
+with imports from this package, ensuring zero breaking changes.
+
+Usage (after migration):
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import (
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor
+)
+```
+
+Legacy usage (still supported):
+```python
+from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+    Entity,
+    Relationship,
+    KnowledgeGraph,
+    KnowledgeGraphExtractor
+)
+```
 """
 
-import warnings
+# Import shared types for package-wide use
+from .types import (
+    EntityID,
+    RelationshipID,
+    EntityType,
+    RelationshipType,
+    DEFAULT_CONFIDENCE,
+    MIN_CONFIDENCE,
+    MAX_CONFIDENCE,
+    HAVE_TRACER,
+    HAVE_ACCELERATE,
+    WikipediaKnowledgeGraphTracer,
+    AccelerateManager,
+    is_accelerate_available,
+    get_accelerate_status,
+)
 
-_MIGRATION_MESSAGE = """
-The extraction/ package is currently in planning phase.
-
-Please continue using:
-    from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import ...
-
-Migration will occur gradually over the next few months.
-See docs/MIGRATION_GUIDE.md for details.
-"""
-
-def _show_migration_notice():
-    """Show migration notice."""
-    warnings.warn(_MIGRATION_MESSAGE, FutureWarning, stacklevel=3)
+# Future imports (will be uncommented as modules are created):
+# from .entities import Entity
+# from .relationships import Relationship
+# from .graph import KnowledgeGraph
+# from .extractor import KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
+# from .validator import validate_with_sparql
+# from .wikipedia import extract_from_wikipedia
 
 
-__all__ = []
+__all__ = [
+    # Types (available now)
+    'EntityID',
+    'RelationshipID',
+    'EntityType',
+    'RelationshipType',
+    'DEFAULT_CONFIDENCE',
+    'MIN_CONFIDENCE',
+    'MAX_CONFIDENCE',
+    'HAVE_TRACER',
+    'HAVE_ACCELERATE',
+    'WikipediaKnowledgeGraphTracer',
+    'AccelerateManager',
+    'is_accelerate_available',
+    'get_accelerate_status',
+    
+    # Classes (will be added as modules are created)
+    # 'Entity',
+    # 'Relationship',
+    # 'KnowledgeGraph',
+    # 'KnowledgeGraphExtractor',
+    # 'KnowledgeGraphExtractorWithValidation',
+]
+
+
+__version__ = '0.1.0'
+__phase__ = 'Phase 3 Task 3.2 - Package Structure'
+__status__ = 'In Development'
