@@ -35,8 +35,9 @@ warnings.warn(
 try:
     from ipfs_datasets_py.processors.specialized.web_archive import (
         AdvancedWebArchiver,
-        ArchiveConfig,
-        ArchiveResult,
+        ArchivingConfig,
+        WebResource,
+        ArchiveCollection,
     )
 except ImportError as e:
     # Create stubs if import fails
@@ -47,14 +48,18 @@ except ImportError as e:
                 "Please install web archiving dependencies."
             )
     
-    class ArchiveConfig:
+    class ArchivingConfig:
         pass
     
-    class ArchiveResult:
+    class WebResource:
+        pass
+    
+    class ArchiveCollection:
         pass
 
 __all__ = [
     'AdvancedWebArchiver',
-    'ArchiveConfig',
-    'ArchiveResult',
+    'ArchivingConfig',
+    'WebResource',
+    'ArchiveCollection',
 ]

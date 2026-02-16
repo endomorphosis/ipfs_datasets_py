@@ -6,12 +6,14 @@ Common Crawl integration, WARC file handling, and distributed web scraping.
 
 from .advanced_archiving import (
     AdvancedWebArchiver,
-    ArchiveConfig,
-    ArchiveResult,
+    ArchivingConfig,
+    WebResource,
+    ArchiveCollection,
 )
 
 __all__ = [
     'AdvancedWebArchiver',
-    'ArchiveConfig',
-    'ArchiveResult',
+    'ArchivingConfig',
+    'WebResource',
+    'ArchiveCollection',
 ]
