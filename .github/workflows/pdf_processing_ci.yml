@@ -26,8 +26,17 @@ env:
   PYTEST_TIMEOUT: '300'  # 5 minutes
 
 jobs:
+  # Check if self-hosted runners are available
+  check-runner:
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+
   lint-and-format:
     name: Code Quality Checks
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
@@ -46,7 +55,7 @@ jobs:
         apt-get update
         apt-get install -y git curl
     
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Setup GitHub CLI and P2P Cache
       env:
@@ -109,6 +118,8 @@ jobs:
 
   unit-tests:
     name: Unit Tests
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
@@ -132,7 +143,7 @@ jobs:
         apt-get update
         apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
     
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Install Python dependencies
       run: |
@@ -199,7 +210,7 @@ jobs:
         }
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -208,14 +219,15 @@ jobs:
 
   integration-tests:
     name: Integration Tests
+    needs: [check-runner, unit-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: unit-tests
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Install system dependencies
       run: |
@@ -249,14 +261,15 @@ jobs:
 
   mcp-server-tests:
     name: MCP Server Tests
+    needs: [check-runner, unit-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: unit-tests
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Install dependencies
       run: |
@@ -282,15 +295,15 @@ jobs:
 
   performance-tests:
     name: Performance Tests
+    needs: [check-runner, integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
     container:
       image: python:3.12-slim
       options: --user root
-    needs: integration-tests
-    if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Install dependencies
       run: |
@@ -323,10 +336,12 @@ jobs:
 
   security-scan:
     name: Security Scan
+    needs: [check-runner]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Install security scanning tools
       run: |
@@ -358,11 +373,12 @@ jobs:
 
   docker-tests:
     name: Docker Tests
+    needs: [check-runner, integration-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
-    needs: integration-tests
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Build Docker image
       run: |
@@ -387,12 +403,12 @@ jobs:
 
   deployment-tests:
     name: Deployment Tests
+    needs: [check-runner, integration-tests, mcp-server-tests]
+    if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
-    needs: [integration-tests, mcp-server-tests]
-    if: github.ref == 'refs/heads/main'
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     
     - name: Test package installation
       run: |
@@ -447,9 +463,9 @@ jobs:
 
   notify-status:
     name: Notify Status
-    runs-on: [self-hosted, linux, x64]
-    needs: [lint-and-format, unit-tests, integration-tests, mcp-server-tests]
+    needs: [check-runner, lint-and-format, unit-tests, integration-tests, mcp-server-tests]
     if: always()
+    runs-on: ubuntu-latest
     
     steps:
     - name: Notify success

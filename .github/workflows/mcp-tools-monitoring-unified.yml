@@ -1,0 +1,50 @@
+name: MCP Tools Error Monitoring (Unified)
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/tools/**'
+      - 'ipfs_datasets_py/mcp_tools/**'
+      - '.github/workflows/mcp-tools-monitoring-unified.yml'
+      - '.github/workflows/templates/error-monitoring-template.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_py/mcp_server/tools/**'
+      - 'ipfs_datasets_py/mcp_tools/**'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Tool category to test (or "all")'
+        required: true
+        default: 'all'
+        type: string
+      test_mode:
+        description: 'Test mode'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - category
+  schedule:
+    # Run MCP tools monitoring daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+# Call the unified error monitoring template
+jobs:
+  mcp-tools-monitoring:
+    uses: ./.github/workflows/templates/error-monitoring-template.yml
+    with:
+      service_name: "MCP Tools"
+      service_type: "mcp-tools"
+      watch_paths: "ipfs_datasets_py/mcp_server/tools/,ipfs_datasets_py/mcp_tools/"
+      test_mode: ${{ github.event.inputs.test_mode || 'comprehensive' }}
+      cron_schedule: "0 6 * * *"
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

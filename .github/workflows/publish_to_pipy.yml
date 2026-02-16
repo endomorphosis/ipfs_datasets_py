@@ -32,7 +32,7 @@ jobs:
           git clean -ffdx 2>/dev/null || true
         continue-on-error: true
       
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: false
       

@@ -1,0 +1,252 @@
+name: Self-Hosted Runner Validation (Unified)
+
+on:
+  workflow_dispatch:
+    inputs:
+      architecture:
+        description: 'Runner architecture to validate'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - x64
+          - arm64
+      validation_level:
+        description: 'Validation level'
+        required: true
+        default: 'basic'
+        type: choice
+        options:
+          - quick
+          - basic
+          - comprehensive
+          - extended
+  schedule:
+    # Run daily at 6 AM UTC to validate runner health
+    - cron: '0 6 * * *'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+      - '.github/scripts/**'
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  # Check x64 runner availability
+  check-runner-x64:
+    if: ${{ inputs.architecture == 'all' || inputs.architecture == 'x64' || github.event_name != 'workflow_dispatch' }}
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,x64"
+      skip_if_unavailable: true
+
+  # Check arm64 runner availability
+  check-runner-arm64:
+    if: ${{ inputs.architecture == 'all' || inputs.architecture == 'arm64' || github.event_name != 'workflow_dispatch' }}
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: "self-hosted,linux,arm64"
+      skip_if_unavailable: true
+
+  # Main validation job with matrix strategy
+  validate-runner:
+    needs: [check-runner-x64, check-runner-arm64]
+    if: ${{ !cancelled() }}
+    strategy:
+      matrix:
+        arch: [x64, arm64]
+        include:
+          - arch: x64
+            check_job: check-runner-x64
+          - arch: arm64
+            check_job: check-runner-arm64
+      fail-fast: false
+    
+    runs-on: [self-hosted, linux, ${{ matrix.arch }}]
+    timeout-minutes: 30
+    name: Validate ${{ matrix.arch }} Runner
+    
+    # Skip if runners not available for this architecture
+    if: |
+      !cancelled() && 
+      (
+        (matrix.arch == 'x64' && needs.check-runner-x64.outputs.should_run == 'true') ||
+        (matrix.arch == 'arm64' && needs.check-runner-arm64.outputs.should_run == 'true')
+      )
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: System Information
+        run: |
+          echo "## 🖥️ ${{ matrix.arch }} Runner Information" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Hardware" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: $(uname -m)" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS**: $(cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Kernel**: $(uname -r)" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU**: $(lscpu | grep 'Model name' | cut -d: -f2 | xargs || echo 'N/A')" >> $GITHUB_STEP_SUMMARY
+          echo "- **CPU Cores**: $(nproc)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory**: $(free -h | grep Mem | awk '{print $2}')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Disk**: $(df -h / | tail -1 | awk '{print $2}')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Environment Validation
+        run: |
+          echo "### 🔍 Environment Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Python
+          if command -v python3 &> /dev/null; then
+            PY_VER=$(python3 --version)
+            echo "- ✅ Python: $PY_VER" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Python: Not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Docker
+          if command -v docker &> /dev/null; then
+            DOCKER_VER=$(docker --version)
+            echo "- ✅ Docker: $DOCKER_VER" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Docker: Not found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Git
+          if command -v git &> /dev/null; then
+            GIT_VER=$(git --version)
+            echo "- ✅ Git: $GIT_VER" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Git: Not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Basic Performance Tests
+        if: ${{ inputs.validation_level != 'quick' || github.event_name != 'workflow_dispatch' }}
+        run: |
+          echo "### ⚡ Performance Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # CPU test
+          echo "- **CPU Test**: Running..." >> $GITHUB_STEP_SUMMARY
+          START=$(date +%s%3N)
+          python3 -c "import math; [math.sqrt(i) for i in range(1000000)]"
+          END=$(date +%s%3N)
+          ELAPSED=$((END - START))
+          echo "  - Completed in ${ELAPSED}ms" >> $GITHUB_STEP_SUMMARY
+          
+          # Memory test
+          echo "- **Memory Test**: Available $(free -h | grep Mem | awk '{print $7}')" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comprehensive Validation
+        if: ${{ inputs.validation_level == 'comprehensive' || inputs.validation_level == 'extended' }}
+        run: |
+          echo "### 🔬 Comprehensive Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Disk I/O test
+          echo "- **Disk I/O Test**: Running..." >> $GITHUB_STEP_SUMMARY
+          START=$(date +%s%3N)
+          dd if=/dev/zero of=/tmp/test.img bs=1M count=100 2>&1 | tail -1
+          rm -f /tmp/test.img
+          END=$(date +%s%3N)
+          ELAPSED=$((END - START))
+          echo "  - Completed in ${ELAPSED}ms" >> $GITHUB_STEP_SUMMARY
+          
+          # Network test
+          if ping -c 3 8.8.8.8 &> /dev/null; then
+            echo "- ✅ Network: Reachable" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⚠️ Network: Limited connectivity" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Docker Validation
+        if: ${{ (inputs.validation_level == 'comprehensive' || inputs.validation_level == 'extended') && success() }}
+        continue-on-error: true
+        run: |
+          echo "### 🐳 Docker Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if command -v docker &> /dev/null; then
+            # Test docker run
+            if docker run --rm hello-world &> /dev/null; then
+              echo "- ✅ Docker run: Working" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ Docker run: Failed" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            # Check docker compose
+            if command -v docker-compose &> /dev/null; then
+              echo "- ✅ Docker Compose: $(docker-compose --version)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ⚠️ Docker Compose: Not installed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "- ⚠️ Docker not available for testing" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Extended Tests
+        if: ${{ inputs.validation_level == 'extended' }}
+        run: |
+          echo "### 🧪 Extended Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Python package availability
+          echo "- **Python Packages**:" >> $GITHUB_STEP_SUMMARY
+          for pkg in pip setuptools wheel; do
+            if python3 -c "import $pkg" 2>/dev/null; then
+              echo "  - ✅ $pkg" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  - ❌ $pkg" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+          
+          # Build tools
+          echo "- **Build Tools**:" >> $GITHUB_STEP_SUMMARY
+          for tool in make gcc g++; do
+            if command -v $tool &> /dev/null; then
+              echo "  - ✅ $tool" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "  - ❌ $tool" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+      - name: Validation Summary
+        if: always()
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Validation Complete for ${{ matrix.arch }}**" >> $GITHUB_STEP_SUMMARY
+          echo "- Level: ${{ inputs.validation_level || 'scheduled' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Status: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
+  # Summary job
+  validation-summary:
+    needs: [validate-runner]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# 📊 Runner Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation Level**: ${{ inputs.validation_level || 'scheduled' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Architecture**: ${{ inputs.architecture || 'all' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.validate-runner.result }}" == "success" ]; then
+            echo "✅ **All validations passed successfully**" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.validate-runner.result }}" == "skipped" ]; then
+            echo "⏭️ **Validation skipped** (runners not available)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Some validations failed**" >> $GITHUB_STEP_SUMMARY
+          fi

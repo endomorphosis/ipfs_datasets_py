@@ -2,6 +2,26 @@
 
 This directory contains all GitHub Actions workflows for the repository, including the **Auto-Healing System** and **Issue-to-Draft-PR System** that automatically resolve issues using GitHub Copilot Agent.
 
+## 📋 Workflow Improvement Plan
+
+**NEW:** A comprehensive improvement plan for all GitHub Actions workflows is now available!
+
+- 📊 **[Visual Summary](IMPROVEMENT_VISUAL_SUMMARY.md)** - At-a-glance overview with ASCII diagrams
+- 📖 **[Full Improvement Plan](COMPREHENSIVE_IMPROVEMENT_PLAN.md)** - Complete 6-phase plan (216 hours, 6-9 weeks)
+- ⚡ **[Quick Reference](IMPROVEMENT_QUICK_REFERENCE.md)** - Quick wins, critical issues, common commands
+- ✅ **[Implementation Checklist](IMPLEMENTATION_CHECKLIST.md)** - Detailed task breakdown for all phases
+
+**Key Improvements Planned:**
+- 🔧 Eliminate single points of failure (self-hosted runner fallbacks)
+- 🔄 Consolidate duplicate workflows (9 → 3 workflows)
+- 🔒 Add security scanning and explicit permissions
+- 📊 Implement comprehensive monitoring and health dashboard
+- 📚 Complete documentation for all workflows
+
+**Status:** 🔄 Planning Phase | **Priority:** High | **Target:** 2026-04-15
+
+---
+
 ## 🚨 IMPORTANT: Self-Hosted Runner Authentication
 
 **If workflows are failing with authentication errors**, you need to configure persistent GitHub CLI authentication on your self-hosted runners.
@@ -591,12 +611,24 @@ jobs:
 
 ## Quick Links
 
+### Workflow Improvement Plan
+- 📋 [Comprehensive Improvement Plan](COMPREHENSIVE_IMPROVEMENT_PLAN.md) - Full 6-phase plan
+- ⚡ [Quick Reference Guide](IMPROVEMENT_QUICK_REFERENCE.md) - Quick wins and critical issues
+- ✅ [Implementation Checklist](IMPLEMENTATION_CHECKLIST.md) - Detailed task breakdown
+
+### Auto-Healing System
 - 📖 [Full Documentation](README-copilot-autohealing.md)
 - 🚀 [Quickstart Guide](QUICKSTART-copilot-autohealing.md)
 - ⚙️ [Configuration](workflow-auto-fix-config.yml)
 - 📊 [View Metrics](../scripts/analyze_autohealing_metrics.py)
 - 🔍 [View Auto-Healing PRs](../../pulls?q=is%3Apr+label%3Aauto-healing)
 - 🤖 [Copilot CLI Integration](./COPILOT-CLI-INTEGRATION.md)
+
+### Architecture & Maintenance
+- 🏗️ [Architecture Overview](ARCHITECTURE.md)
+- 🔧 [Maintenance Guide](MAINTENANCE.md)
+- 🔐 [Secrets Management](SECRETS-MANAGEMENT.md)
+- 🧪 [Testing Guide](TESTING_GUIDE.md)
 
 ---
 

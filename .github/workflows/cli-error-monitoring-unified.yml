@@ -1,0 +1,47 @@
+name: CLI Tools Error Monitoring (Unified)
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ipfs_datasets_cli.py'
+      - 'ipfs-datasets'
+      - 'scripts/cli/**'
+      - 'ipfs_datasets_py/error_reporting/**'
+      - '.github/workflows/cli-error-monitoring-unified.yml'
+      - '.github/workflows/templates/error-monitoring-template.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'scripts/cli/**'
+      - 'ipfs_datasets_cli.py'
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Test mode to run'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - basic
+          - comprehensive
+          - stress
+  schedule:
+    # Run CLI error monitoring daily at 4 AM UTC
+    - cron: '0 4 * * *'
+
+permissions:
+  contents: read
+
+# Call the unified error monitoring template
+jobs:
+  cli-tools-monitoring:
+    uses: ./.github/workflows/templates/error-monitoring-template.yml
+    with:
+      service_name: "CLI Tools"
+      service_type: "cli"
+      watch_paths: "ipfs_datasets_cli.py,scripts/cli/"
+      test_mode: ${{ github.event.inputs.test_mode || 'comprehensive' }}
+      cron_schedule: "0 4 * * *"
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
