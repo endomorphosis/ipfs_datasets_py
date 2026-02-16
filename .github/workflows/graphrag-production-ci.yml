@@ -36,11 +36,11 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-      with:
+    with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
-  test:
+      test:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
@@ -85,7 +85,7 @@ jobs:
     - name: Set up Python
       id: python_setup
       uses: nick-invision/retry@v3
-        with:
+      with:
         timeout_minutes: 5
         max_attempts: 3
         retry_on: error
@@ -157,12 +157,12 @@ jobs:
     - name: Upload coverage to Codecov
       if: hashFiles('test-results/coverage.xml') != ''
       uses: codecov/codecov-action@v4
-        with:
+      with:
         file: ./test-results/coverage.xml
         flags: unittests
         name: codecov-umbrella
 
-  security:
+        security:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
@@ -193,7 +193,7 @@ jobs:
     
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1
+        fetch-depth: 1
         submodules: false
         clean: true
     
@@ -215,7 +215,7 @@ jobs:
     
     - name: Upload security scan results
       uses: actions/upload-artifact@v4
-        with:
+      with:
         name: security-reports
         path: |
           bandit-report.json
@@ -248,13 +248,13 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+      with:
+        fetch-depth: 1
         submodules: false
     
     - name: Log in to Container Registry
       uses: docker/login-action@v3
-        with:
+      with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -262,7 +262,7 @@ jobs:
     - name: Extract metadata
       id: meta
       uses: docker/metadata-action@v5
-        with:
+      with:
         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
         tags: |
           type=ref,event=branch
@@ -273,7 +273,7 @@ jobs:
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
-        with:
+      with:
         context: .
         push: true
         tags: ${{ steps.meta.outputs.tags }}
@@ -308,8 +308,8 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+      with:
+        fetch-depth: 1
         submodules: false
     
     - name: Configure kubectl
@@ -350,8 +350,8 @@ jobs:
     
     - name: Checkout repository
       uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+      with:
+        fetch-depth: 1
         submodules: false
     
     - name: Configure kubectl
