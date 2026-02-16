@@ -21,6 +21,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import uuid
 
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
+
 # Optional imports for media processing
 try:
     import whisper
@@ -152,6 +154,7 @@ class AdvancedMediaProcessor:
             except Exception as e:
                 self.logger.warning(f"Failed to initialize speech recognition: {e}")
     
+    @monitor
     async def process_media_file(
         self,
         file_path: str,

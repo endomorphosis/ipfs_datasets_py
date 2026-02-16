@@ -69,6 +69,7 @@ from ipfs_datasets_py.monitoring import MonitoringSystem
 from ipfs_datasets_py.processors.pdf_processor import PDFProcessor
 from ipfs_datasets_py.processors.llm_optimizer import LLMOptimizer
 from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
 
 logger = logging.getLogger(__name__)
@@ -507,6 +508,7 @@ class BatchProcessor:
             'start_time': datetime.now().isoformat()
         }
     
+    @monitor
     async def process_batch(self,
                            pdf_paths: List[Union[str, Path]],
                            batch_metadata: Optional[Dict[str, Any]] = None,
