@@ -229,5 +229,420 @@ class TestSemanticValidator:
         assert isinstance(result, ValidationResult)
 
 
+class TestAdvancedSHACLConstraints:
+    """Test advanced SHACL constraints added in Path C."""
+    
+    def test_class_constraint(self):
+        """Test sh:class constraint validation."""
+        # GIVEN a validator with class constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "knows",
+                "class": "Person"
+            }
+        }
+        
+        # WHEN validating correct class
+        data = {
+            "@type": "Person",
+            "knows": {"@type": "Person", "name": "Bob"}
+        }
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_class_constraint_wrong_type(self):
+        """Test sh:class detects wrong type."""
+        # GIVEN a validator with class constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "knows",
+                "class": "Person"
+            }
+        }
+        
+        # WHEN validating wrong class
+        data = {
+            "@type": "Person",
+            "knows": {"@type": "Organization", "name": "Acme"}
+        }
+        result = validator.validate(data, shape)
+        
+        # THEN should have error
+        assert not result.valid
+        assert any("wrong class" in err for err in result.errors)
+    
+    def test_pattern_constraint(self):
+        """Test sh:pattern regex constraint."""
+        # GIVEN a validator with pattern constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "email",
+                "pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            }
+        }
+        
+        # WHEN validating valid email
+        data = {"@type": "Person", "email": "alice@example.com"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_pattern_constraint_invalid(self):
+        """Test sh:pattern detects invalid pattern."""
+        # GIVEN a validator with pattern constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "email",
+                "pattern": r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            }
+        }
+        
+        # WHEN validating invalid email
+        data = {"@type": "Person", "email": "not-an-email"}
+        result = validator.validate(data, shape)
+        
+        # THEN should have error
+        assert not result.valid
+        assert any("pattern" in err for err in result.errors)
+    
+    def test_in_constraint(self):
+        """Test sh:in enumeration constraint."""
+        # GIVEN a validator with in constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "status",
+                "in": ["active", "inactive", "pending"]
+            }
+        }
+        
+        # WHEN validating valid value
+        data = {"@type": "User", "status": "active"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_in_constraint_invalid(self):
+        """Test sh:in detects invalid value."""
+        # GIVEN a validator with in constraint
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "status",
+                "in": ["active", "inactive", "pending"]
+            }
+        }
+        
+        # WHEN validating invalid value
+        data = {"@type": "User", "status": "unknown"}
+        result = validator.validate(data, shape)
+        
+        # THEN should have error
+        assert not result.valid
+        assert any("not in allowed values" in err for err in result.errors)
+    
+    def test_node_constraint(self):
+        """Test sh:node nested shape constraint."""
+        # GIVEN a validator with nested shape constraint
+        validator = SHACLValidator()
+        address_shape = {
+            "property": {
+                "path": "city",
+                "minCount": 1
+            }
+        }
+        person_shape = {
+            "property": {
+                "path": "address",
+                "node": address_shape
+            }
+        }
+        
+        # WHEN validating with valid nested data
+        data = {
+            "@type": "Person",
+            "address": {
+                "@type": "Address",
+                "city": "New York"
+            }
+        }
+        result = validator.validate(data, person_shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_node_constraint_invalid(self):
+        """Test sh:node detects nested validation errors."""
+        # GIVEN a validator with nested shape constraint
+        validator = SHACLValidator()
+        address_shape = {
+            "property": {
+                "path": "city",
+                "minCount": 1
+            }
+        }
+        person_shape = {
+            "property": {
+                "path": "address",
+                "node": address_shape
+            }
+        }
+        
+        # WHEN validating with invalid nested data
+        data = {
+            "@type": "Person",
+            "address": {
+                "@type": "Address"
+                # Missing required city
+            }
+        }
+        result = validator.validate(data, person_shape)
+        
+        # THEN should have nested error
+        assert not result.valid
+        assert any("nested validation" in err for err in result.errors)
+    
+    def test_min_max_length(self):
+        """Test sh:minLength and sh:maxLength constraints."""
+        # GIVEN a validator with length constraints
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "username",
+                "minLength": 3,
+                "maxLength": 20
+            }
+        }
+        
+        # WHEN validating valid length
+        data = {"@type": "User", "username": "alice123"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_min_length_violation(self):
+        """Test sh:minLength detects too short values."""
+        # GIVEN a validator with minLength
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "username",
+                "minLength": 3
+            }
+        }
+        
+        # WHEN validating too short value
+        data = {"@type": "User", "username": "ab"}
+        result = validator.validate(data, shape)
+        
+        # THEN should have error
+        assert not result.valid
+        assert any("minLength" in err for err in result.errors)
+    
+    def test_min_max_inclusive(self):
+        """Test sh:minInclusive and sh:maxInclusive constraints."""
+        # GIVEN a validator with numeric range
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "age",
+                "minInclusive": 0,
+                "maxInclusive": 120
+            }
+        }
+        
+        # WHEN validating valid age
+        data = {"@type": "Person", "age": 30}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_max_inclusive_violation(self):
+        """Test sh:maxInclusive detects out of range values."""
+        # GIVEN a validator with maxInclusive
+        validator = SHACLValidator()
+        shape = {
+            "property": {
+                "path": "age",
+                "maxInclusive": 120
+            }
+        }
+        
+        # WHEN validating out of range value
+        data = {"@type": "Person", "age": 150}
+        result = validator.validate(data, shape)
+        
+        # THEN should have error
+        assert not result.valid
+        assert any("maxInclusive" in err for err in result.errors)
+
+
+class TestSHACLShapeComposition:
+    """Test SHACL shape composition (sh:and, sh:or, sh:not)."""
+    
+    def test_and_composition_valid(self):
+        """Test sh:and with all conditions satisfied."""
+        # GIVEN a validator with AND composition
+        validator = SHACLValidator()
+        shape = {
+            "and": [
+                {
+                    "property": {
+                        "path": "name",
+                        "minCount": 1
+                    }
+                },
+                {
+                    "property": {
+                        "path": "age",
+                        "minInclusive": 18
+                    }
+                }
+            ]
+        }
+        
+        # WHEN validating data satisfying all AND conditions
+        data = {"@type": "Person", "name": "Alice", "age": 25}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_and_composition_invalid(self):
+        """Test sh:and detects when any condition fails."""
+        # GIVEN a validator with AND composition
+        validator = SHACLValidator()
+        shape = {
+            "and": [
+                {
+                    "property": {
+                        "path": "name",
+                        "minCount": 1
+                    }
+                },
+                {
+                    "property": {
+                        "path": "age",
+                        "minInclusive": 18
+                    }
+                }
+            ]
+        }
+        
+        # WHEN validating data with one failing condition
+        data = {"@type": "Person", "name": "Bob", "age": 15}
+        result = validator.validate(data, shape)
+        
+        # THEN should be invalid
+        assert not result.valid
+    
+    def test_or_composition_valid(self):
+        """Test sh:or with at least one condition satisfied."""
+        # GIVEN a validator with OR composition
+        validator = SHACLValidator()
+        shape = {
+            "or": [
+                {
+                    "property": {
+                        "path": "email",
+                        "minCount": 1
+                    }
+                },
+                {
+                    "property": {
+                        "path": "phone",
+                        "minCount": 1
+                    }
+                }
+            ]
+        }
+        
+        # WHEN validating data with one OR condition satisfied
+        data = {"@type": "Person", "email": "alice@example.com"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_or_composition_invalid(self):
+        """Test sh:or detects when no conditions are satisfied."""
+        # GIVEN a validator with OR composition
+        validator = SHACLValidator()
+        shape = {
+            "or": [
+                {
+                    "property": {
+                        "path": "email",
+                        "minCount": 1
+                    }
+                },
+                {
+                    "property": {
+                        "path": "phone",
+                        "minCount": 1
+                    }
+                }
+            ]
+        }
+        
+        # WHEN validating data with no OR conditions satisfied
+        data = {"@type": "Person", "name": "Bob"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be invalid
+        assert not result.valid
+        assert any("None of the OR conditions" in err for err in result.errors)
+    
+    def test_not_composition_valid(self):
+        """Test sh:not with condition not satisfied."""
+        # GIVEN a validator with NOT composition
+        validator = SHACLValidator()
+        shape = {
+            "not": {
+                "property": {
+                    "path": "blocked",
+                    "hasValue": True
+                }
+            }
+        }
+        
+        # WHEN validating data that doesn't match NOT condition
+        data = {"@type": "User", "name": "Alice"}
+        result = validator.validate(data, shape)
+        
+        # THEN should be valid
+        assert result.valid
+    
+    def test_severity_levels(self):
+        """Test different severity levels (Violation, Warning, Info)."""
+        # GIVEN a validator with different severity levels
+        validator = SHACLValidator()
+        shape = {
+            "severity": "Warning",
+            "property": {
+                "path": "deprecated_field",
+                "maxCount": 0
+            }
+        }
+        
+        # WHEN validating with a violation
+        data = {"@type": "Entity", "deprecated_field": "value"}
+        result = validator.validate(data, shape)
+        
+        # THEN should have warning instead of error
+        assert len(result.warnings) > 0
+        assert any("Warning" in warn for warn in result.warnings)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

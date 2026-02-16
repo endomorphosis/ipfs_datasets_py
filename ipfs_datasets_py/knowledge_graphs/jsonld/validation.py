@@ -143,13 +143,58 @@ class SHACLValidator:
             result.add_warning("No shape provided and could not auto-detect")
             return result
         
+        # Get severity level (default to Violation)
+        severity = shape.get("severity", "Violation")
+        
+        # Handle shape composition: sh:and
+        if "and" in shape:
+            and_shapes = shape["and"]
+            if not isinstance(and_shapes, list):
+                and_shapes = [and_shapes]
+            
+            for and_shape in and_shapes:
+                and_result = self.validate(data, and_shape)
+                if not and_result.valid:
+                    result.valid = False
+                    for error in and_result.errors:
+                        self._add_error_with_severity(result, error, severity)
+        
+        # Handle shape composition: sh:or
+        if "or" in shape:
+            or_shapes = shape["or"]
+            if not isinstance(or_shapes, list):
+                or_shapes = [or_shapes]
+            
+            or_valid = False
+            or_errors = []
+            for or_shape in or_shapes:
+                or_result = self.validate(data, or_shape)
+                if or_result.valid:
+                    or_valid = True
+                    break
+                else:
+                    or_errors.extend(or_result.errors)
+            
+            if not or_valid:
+                error_msg = f"None of the OR conditions satisfied: {'; '.join(or_errors)}"
+                self._add_error_with_severity(result, error_msg, severity)
+        
+        # Handle shape composition: sh:not
+        if "not" in shape:
+            not_shape = shape["not"]
+            not_result = self.validate(data, not_shape)
+            if not_result.valid:
+                error_msg = "Data matches a NOT condition (should not match)"
+                self._add_error_with_severity(result, error_msg, severity)
+        
         # Validate target class
         if "targetClass" in shape:
             target_class = shape["targetClass"]
             data_type = data.get("@type", "")
             if isinstance(data_type, str):
                 if data_type != target_class and not data_type.endswith(target_class):
-                    result.add_error(f"Type mismatch: expected {target_class}, got {data_type}")
+                    error_msg = f"Type mismatch: expected {target_class}, got {data_type}"
+                    self._add_error_with_severity(result, error_msg, severity)
         
         # Validate property constraints
         if "property" in shape:
@@ -158,15 +203,30 @@ class SHACLValidator:
                 properties = [properties]
             
             for prop_constraint in properties:
-                self._validate_property_constraint(data, prop_constraint, result)
+                self._validate_property_constraint(data, prop_constraint, result, severity)
         
         return result
+    
+    def _add_error_with_severity(self, result: ValidationResult, message: str, severity: str) -> None:
+        """
+        Add an error or warning based on severity level.
+        
+        Args:
+            result: ValidationResult to update
+            message: Error/warning message
+            severity: Severity level (Violation, Warning, Info)
+        """
+        if severity == "Warning" or severity == "Info":
+            result.add_warning(f"[{severity}] {message}")
+        else:
+            result.add_error(f"[{severity}] {message}")
     
     def _validate_property_constraint(
         self,
         data: Dict[str, Any],
         constraint: Dict[str, Any],
-        result: ValidationResult
+        result: ValidationResult,
+        severity: str = "Violation"
     ) -> None:
         """
         Validate a property constraint.
@@ -175,8 +235,12 @@ class SHACLValidator:
             data: Data to validate
             constraint: Property constraint
             result: ValidationResult to update
+            severity: Severity level for violations
         """
         path = constraint.get("path", "")
+        
+        # Override severity if specified in constraint
+        constraint_severity = constraint.get("severity", severity)
         
         # Check minCount
         if "minCount" in constraint:
@@ -185,13 +249,15 @@ class SHACLValidator:
             
             if value is None:
                 if min_count > 0:
-                    result.add_error(f"Property {path} is required (minCount={min_count})")
+                    error_msg = f"Property {path} is required (minCount={min_count})"
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
             elif isinstance(value, list):
                 if len(value) < min_count:
-                    result.add_error(
+                    error_msg = (
                         f"Property {path} has {len(value)} values, "
                         f"but requires at least {min_count}"
                     )
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
         
         # Check maxCount
         if "maxCount" in constraint:
@@ -200,10 +266,11 @@ class SHACLValidator:
             
             if value is not None and isinstance(value, list):
                 if len(value) > max_count:
-                    result.add_error(
+                    error_msg = (
                         f"Property {path} has {len(value)} values, "
                         f"but allows at most {max_count}"
                     )
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
         
         # Check datatype
         if "datatype" in constraint:
@@ -212,10 +279,117 @@ class SHACLValidator:
             
             if value is not None:
                 if not self._check_datatype(value, expected_type):
-                    result.add_error(
+                    error_msg = (
                         f"Property {path} has wrong datatype: "
                         f"expected {expected_type}"
                     )
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:class constraint
+        if "class" in constraint:
+            expected_class = constraint["class"]
+            value = data.get(path)
+            
+            if value is not None:
+                if isinstance(value, dict):
+                    value_type = value.get("@type", "")
+                    if value_type != expected_class and not value_type.endswith(expected_class):
+                        error_msg = (
+                            f"Property {path} value has wrong class: "
+                            f"expected {expected_class}, got {value_type}"
+                        )
+                        self._add_error_with_severity(result, error_msg, constraint_severity)
+                elif isinstance(value, list):
+                    for item in value:
+                        if isinstance(item, dict):
+                            item_type = item.get("@type", "")
+                            if item_type != expected_class and not item_type.endswith(expected_class):
+                                error_msg = (
+                                    f"Property {path} list item has wrong class: "
+                                    f"expected {expected_class}, got {item_type}"
+                                )
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:pattern constraint (regex)
+        if "pattern" in constraint:
+            import re
+            pattern = constraint["pattern"]
+            value = data.get(path)
+            
+            if value is not None:
+                values_to_check = [value] if not isinstance(value, list) else value
+                for val in values_to_check:
+                    if isinstance(val, str):
+                        if not re.match(pattern, val):
+                            error_msg = f"Property {path} value '{val}' does not match pattern {pattern}"
+                            self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:in constraint (enumeration)
+        if "in" in constraint:
+            allowed_values = constraint["in"]
+            value = data.get(path)
+            
+            if value is not None:
+                values_to_check = [value] if not isinstance(value, list) else value
+                for val in values_to_check:
+                    if val not in allowed_values:
+                        error_msg = f"Property {path} value '{val}' not in allowed values: {allowed_values}"
+                        self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:node constraint (nested shape)
+        if "node" in constraint:
+            nested_shape = constraint["node"]
+            value = data.get(path)
+            
+            if value is not None:
+                values_to_check = [value] if not isinstance(value, list) else value
+                for val in values_to_check:
+                    if isinstance(val, dict):
+                        nested_result = self.validate(val, nested_shape)
+                        if not nested_result.valid:
+                            for error in nested_result.errors:
+                                error_msg = f"Property {path} nested validation: {error}"
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:minLength and sh:maxLength
+        if "minLength" in constraint or "maxLength" in constraint:
+            value = data.get(path)
+            if value is not None:
+                values_to_check = [value] if not isinstance(value, list) else value
+                for val in values_to_check:
+                    if isinstance(val, str):
+                        if "minLength" in constraint:
+                            min_length = constraint["minLength"]
+                            if len(val) < min_length:
+                                error_msg = (
+                                    f"Property {path} value length {len(val)} is less than minLength {min_length}"
+                                )
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
+                        if "maxLength" in constraint:
+                            max_length = constraint["maxLength"]
+                            if len(val) > max_length:
+                                error_msg = (
+                                    f"Property {path} value length {len(val)} exceeds maxLength {max_length}"
+                                )
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
+        
+        # Check sh:minInclusive and sh:maxInclusive
+        if "minInclusive" in constraint or "maxInclusive" in constraint:
+            value = data.get(path)
+            if value is not None:
+                values_to_check = [value] if not isinstance(value, list) else value
+                for val in values_to_check:
+                    if isinstance(val, (int, float)):
+                        if "minInclusive" in constraint:
+                            min_val = constraint["minInclusive"]
+                            if val < min_val:
+                                error_msg = f"Property {path} value {val} is less than minInclusive {min_val}"
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
+                        if "maxInclusive" in constraint:
+                            max_val = constraint["maxInclusive"]
+                            if val > max_val:
+                                error_msg = f"Property {path} value {val} exceeds maxInclusive {max_val}"
+                                self._add_error_with_severity(result, error_msg, constraint_severity)
     
     def _check_datatype(self, value: Any, expected_type: str) -> bool:
         """

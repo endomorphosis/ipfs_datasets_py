@@ -11,11 +11,25 @@ from typing import Any, Dict, List, Optional, Union
 
 class VocabularyType(Enum):
     """Supported vocabulary types."""
+    # Core vocabularies (original 5)
     SCHEMA_ORG = "https://schema.org/"
     FOAF = "http://xmlns.com/foaf/0.1/"
     DUBLIN_CORE = "http://purl.org/dc/terms/"
     SKOS = "http://www.w3.org/2004/02/skos/core#"
     WIKIDATA = "https://www.wikidata.org/wiki/"
+    
+    # Additional semantic web vocabularies (7+ new)
+    RDF = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    RDFS = "http://www.w3.org/2000/01/rdf-schema#"
+    OWL = "http://www.w3.org/2002/07/owl#"
+    PROV = "http://www.w3.org/ns/prov#"
+    ORG = "http://www.w3.org/ns/org#"
+    VCARD = "http://www.w3.org/2006/vcard/ns#"
+    DCAT = "http://www.w3.org/ns/dcat#"
+    TIME = "http://www.w3.org/2006/time#"
+    GEO = "http://www.w3.org/2003/01/geo/wgs84_pos#"
+    
+    # Custom vocabulary support
     CUSTOM = "custom"
 
 

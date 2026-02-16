@@ -27,6 +27,7 @@ class ContextExpander:
     def __init__(self):
         """Initialize the context expander."""
         self.built_in_contexts: Dict[str, Dict[str, Any]] = {
+            # Core vocabularies (original 5)
             VocabularyType.SCHEMA_ORG.value: {
                 "@vocab": "https://schema.org/"
             },
@@ -38,6 +39,37 @@ class ContextExpander:
             },
             VocabularyType.SKOS.value: {
                 "@vocab": "http://www.w3.org/2004/02/skos/core#"
+            },
+            VocabularyType.WIKIDATA.value: {
+                "@vocab": "https://www.wikidata.org/wiki/"
+            },
+            # Additional semantic web vocabularies (7+ new)
+            VocabularyType.RDF.value: {
+                "@vocab": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+            },
+            VocabularyType.RDFS.value: {
+                "@vocab": "http://www.w3.org/2000/01/rdf-schema#"
+            },
+            VocabularyType.OWL.value: {
+                "@vocab": "http://www.w3.org/2002/07/owl#"
+            },
+            VocabularyType.PROV.value: {
+                "@vocab": "http://www.w3.org/ns/prov#"
+            },
+            VocabularyType.ORG.value: {
+                "@vocab": "http://www.w3.org/ns/org#"
+            },
+            VocabularyType.VCARD.value: {
+                "@vocab": "http://www.w3.org/2006/vcard/ns#"
+            },
+            VocabularyType.DCAT.value: {
+                "@vocab": "http://www.w3.org/ns/dcat#"
+            },
+            VocabularyType.TIME.value: {
+                "@vocab": "http://www.w3.org/2006/time#"
+            },
+            VocabularyType.GEO.value: {
+                "@vocab": "http://www.w3.org/2003/01/geo/wgs84_pos#"
             }
         }
     

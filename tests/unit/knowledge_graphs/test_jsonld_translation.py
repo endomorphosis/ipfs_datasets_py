@@ -447,5 +447,173 @@ class TestIPLDGraph:
         assert graph.metadata["version"] == "1.0"
 
 
+class TestExpandedVocabularies:
+    """Test new vocabulary types added in Path C."""
+    
+    def test_all_vocabulary_types_defined(self):
+        """Test that all 14 vocabulary types are defined."""
+        # GIVEN the VocabularyType enum
+        # WHEN checking count
+        vocab_types = [v for v in VocabularyType if v != VocabularyType.CUSTOM]
+        
+        # THEN should have at least 13 vocabularies (excluding CUSTOM)
+        assert len(vocab_types) >= 13
+    
+    def test_rdf_vocabulary(self):
+        """Test RDF vocabulary context expansion."""
+        # GIVEN an expander with RDF vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.RDF.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("type", context)
+        
+        # THEN it should use RDF namespace
+        assert term == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    
+    def test_rdfs_vocabulary(self):
+        """Test RDFS vocabulary context expansion."""
+        # GIVEN an expander with RDFS vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.RDFS.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("label", context)
+        
+        # THEN it should use RDFS namespace
+        assert term == "http://www.w3.org/2000/01/rdf-schema#label"
+    
+    def test_owl_vocabulary(self):
+        """Test OWL vocabulary context expansion."""
+        # GIVEN an expander with OWL vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.OWL.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("Class", context)
+        
+        # THEN it should use OWL namespace
+        assert term == "http://www.w3.org/2002/07/owl#Class"
+    
+    def test_prov_vocabulary(self):
+        """Test PROV (provenance) vocabulary."""
+        # GIVEN an expander with PROV vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.PROV.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("wasGeneratedBy", context)
+        
+        # THEN it should use PROV namespace
+        assert term == "http://www.w3.org/ns/prov#wasGeneratedBy"
+    
+    def test_org_vocabulary(self):
+        """Test ORG vocabulary for organizations."""
+        # GIVEN an expander with ORG vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.ORG.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("Organization", context)
+        
+        # THEN it should use ORG namespace
+        assert term == "http://www.w3.org/ns/org#Organization"
+    
+    def test_vcard_vocabulary(self):
+        """Test VCARD vocabulary for contact information."""
+        # GIVEN an expander with VCARD vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.VCARD.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("email", context)
+        
+        # THEN it should use VCARD namespace
+        assert term == "http://www.w3.org/2006/vcard/ns#email"
+    
+    def test_dcat_vocabulary(self):
+        """Test DCAT vocabulary for datasets."""
+        # GIVEN an expander with DCAT vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.DCAT.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("Dataset", context)
+        
+        # THEN it should use DCAT namespace
+        assert term == "http://www.w3.org/ns/dcat#Dataset"
+    
+    def test_time_vocabulary(self):
+        """Test TIME vocabulary for temporal information."""
+        # GIVEN an expander with TIME vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.TIME.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("Instant", context)
+        
+        # THEN it should use TIME namespace
+        assert term == "http://www.w3.org/2006/time#Instant"
+    
+    def test_geo_vocabulary(self):
+        """Test GEO vocabulary for geographic information."""
+        # GIVEN an expander with GEO vocabulary
+        expander = ContextExpander()
+        context = JSONLDContext(vocab=VocabularyType.GEO.value)
+        
+        # WHEN expanding a term
+        term = expander._expand_term("lat", context)
+        
+        # THEN it should use GEO namespace
+        assert term == "http://www.w3.org/2003/01/geo/wgs84_pos#lat"
+    
+    def test_mixed_vocabulary_context(self):
+        """Test using multiple vocabularies with prefixes."""
+        # GIVEN a context with multiple vocabulary prefixes
+        context = JSONLDContext(
+            vocab=VocabularyType.SCHEMA_ORG.value,
+            prefixes={
+                "rdf": VocabularyType.RDF.value,
+                "rdfs": VocabularyType.RDFS.value,
+                "owl": VocabularyType.OWL.value,
+                "prov": VocabularyType.PROV.value,
+                "geo": VocabularyType.GEO.value
+            }
+        )
+        expander = ContextExpander()
+        
+        # WHEN expanding prefixed terms
+        rdf_type = expander._expand_term("rdf:type", context)
+        rdfs_label = expander._expand_term("rdfs:label", context)
+        geo_lat = expander._expand_term("geo:lat", context)
+        
+        # THEN all should be properly expanded
+        assert rdf_type == "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+        assert rdfs_label == "http://www.w3.org/2000/01/rdf-schema#label"
+        assert geo_lat == "http://www.w3.org/2003/01/geo/wgs84_pos#lat"
+    
+    def test_jsonld_with_prov_vocabulary(self):
+        """Test converting JSON-LD with provenance vocabulary."""
+        # GIVEN a translator and JSON-LD with PROV vocabulary
+        translator = JSONLDTranslator()
+        jsonld = {
+            "@context": {
+                "@vocab": VocabularyType.PROV.value
+            },
+            "@type": "Entity",
+            "wasGeneratedBy": {
+                "@type": "Activity",
+                "startedAtTime": "2024-01-01T00:00:00Z"
+            }
+        }
+        
+        # WHEN converting to IPLD
+        graph = translator.jsonld_to_ipld(jsonld)
+        
+        # THEN should have entities and relationships
+        assert len(graph.entities) == 2
+        assert len(graph.relationships) == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
