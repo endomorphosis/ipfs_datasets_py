@@ -364,3 +364,220 @@ class HealthMonitor:
             health for health in system_health.processor_health.values()
             if health.is_degraded()
         ]
+
+
+# Global metrics storage for @monitor decorator
+_PROCESSOR_METRICS: dict[str, dict] = {}
+
+
+def monitor(func):
+    """
+    Decorator to monitor processor method execution.
+    
+    Automatically tracks:
+    - Execution time (latency)
+    - Success/failure counts
+    - Error messages
+    - Call frequency
+    
+    Supports both sync and async functions.
+    
+    Usage:
+        >>> @monitor
+        ... async def process_document(self, doc):
+        ...     return await self._process(doc)
+        
+        >>> @monitor
+        ... def process_sync(self, doc):
+        ...     return self._process(doc)
+    
+    The decorator extracts the processor name from the class and method,
+    and records metrics that can be queried via get_processor_metrics().
+    """
+    import functools
+    import time
+    import inspect
+    from datetime import datetime
+    
+    # Check if the function is async
+    is_async = inspect.iscoroutinefunction(func)
+    
+    if is_async:
+        @functools.wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            # Extract processor name (class.method)
+            if args and hasattr(args[0], '__class__'):
+                processor_name = f"{args[0].__class__.__name__}.{func.__name__}"
+            else:
+                processor_name = func.__name__
+            
+            # Initialize metrics if needed
+            if processor_name not in _PROCESSOR_METRICS:
+                _PROCESSOR_METRICS[processor_name] = {
+                    'total_calls': 0,
+                    'successful_calls': 0,
+                    'failed_calls': 0,
+                    'total_time': 0.0,
+                    'last_success': None,
+                    'last_failure': None,
+                    'last_error': None,
+                    'errors': []
+                }
+            
+            metrics = _PROCESSOR_METRICS[processor_name]
+            metrics['total_calls'] += 1
+            
+            start_time = time.time()
+            error_occurred = False
+            error_msg = None
+            
+            try:
+                result = await func(*args, **kwargs)
+                metrics['successful_calls'] += 1
+                metrics['last_success'] = datetime.now()
+                return result
+            except Exception as e:
+                error_occurred = True
+                error_msg = str(e)
+                metrics['failed_calls'] += 1
+                metrics['last_failure'] = datetime.now()
+                metrics['last_error'] = error_msg
+                metrics['errors'].append({
+                    'timestamp': datetime.now().isoformat(),
+                    'error': error_msg
+                })
+                # Keep only last 10 errors
+                if len(metrics['errors']) > 10:
+                    metrics['errors'] = metrics['errors'][-10:]
+                raise
+            finally:
+                elapsed = time.time() - start_time
+                metrics['total_time'] += elapsed
+                
+                # Log if slow (>5 seconds)
+                if elapsed > 5.0:
+                    logger.warning(
+                        f"{processor_name} took {elapsed:.2f}s "
+                        f"({'failed' if error_occurred else 'succeeded'})"
+                    )
+        
+        return async_wrapper
+    else:
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            # Extract processor name (class.method)
+            if args and hasattr(args[0], '__class__'):
+                processor_name = f"{args[0].__class__.__name__}.{func.__name__}"
+            else:
+                processor_name = func.__name__
+            
+            # Initialize metrics if needed
+            if processor_name not in _PROCESSOR_METRICS:
+                _PROCESSOR_METRICS[processor_name] = {
+                    'total_calls': 0,
+                    'successful_calls': 0,
+                    'failed_calls': 0,
+                    'total_time': 0.0,
+                    'last_success': None,
+                    'last_failure': None,
+                    'last_error': None,
+                    'errors': []
+                }
+            
+            metrics = _PROCESSOR_METRICS[processor_name]
+            metrics['total_calls'] += 1
+            
+            start_time = time.time()
+            error_occurred = False
+            error_msg = None
+            
+            try:
+                result = func(*args, **kwargs)
+                metrics['successful_calls'] += 1
+                metrics['last_success'] = datetime.now()
+                return result
+            except Exception as e:
+                error_occurred = True
+                error_msg = str(e)
+                metrics['failed_calls'] += 1
+                metrics['last_failure'] = datetime.now()
+                metrics['last_error'] = error_msg
+                metrics['errors'].append({
+                    'timestamp': datetime.now().isoformat(),
+                    'error': error_msg
+                })
+                # Keep only last 10 errors
+                if len(metrics['errors']) > 10:
+                    metrics['errors'] = metrics['errors'][-10:]
+                raise
+            finally:
+                elapsed = time.time() - start_time
+                metrics['total_time'] += elapsed
+                
+                # Log if slow (>5 seconds)
+                if elapsed > 5.0:
+                    logger.warning(
+                        f"{processor_name} took {elapsed:.2f}s "
+                        f"({'failed' if error_occurred else 'succeeded'})"
+                    )
+        
+        return sync_wrapper
+
+
+def get_processor_metrics(processor_name: Optional[str] = None) -> dict:
+    """
+    Get metrics for monitored processors.
+    
+    Args:
+        processor_name: Specific processor name, or None for all
+        
+    Returns:
+        Dictionary of metrics
+    """
+    if processor_name:
+        return _PROCESSOR_METRICS.get(processor_name, {})
+    return _PROCESSOR_METRICS.copy()
+
+
+def reset_processor_metrics(processor_name: Optional[str] = None):
+    """
+    Reset metrics for monitored processors.
+    
+    Args:
+        processor_name: Specific processor name, or None for all
+    """
+    if processor_name:
+        if processor_name in _PROCESSOR_METRICS:
+            del _PROCESSOR_METRICS[processor_name]
+    else:
+        _PROCESSOR_METRICS.clear()
+
+
+def get_monitoring_summary() -> dict:
+    """
+    Get summary of all monitored processors.
+    
+    Returns:
+        Dictionary with summary statistics
+    """
+    summary = {
+        'total_processors': len(_PROCESSOR_METRICS),
+        'total_calls': sum(m['total_calls'] for m in _PROCESSOR_METRICS.values()),
+        'total_successes': sum(m['successful_calls'] for m in _PROCESSOR_METRICS.values()),
+        'total_failures': sum(m['failed_calls'] for m in _PROCESSOR_METRICS.values()),
+        'processors': {}
+    }
+    
+    for name, metrics in _PROCESSOR_METRICS.items():
+        total = metrics['total_calls']
+        success_rate = metrics['successful_calls'] / total if total > 0 else 0.0
+        avg_time = metrics['total_time'] / total if total > 0 else 0.0
+        
+        summary['processors'][name] = {
+            'calls': total,
+            'success_rate': round(success_rate, 3),
+            'avg_time': round(avg_time, 3),
+            'last_error': metrics['last_error']
+        }
+    
+    return summary

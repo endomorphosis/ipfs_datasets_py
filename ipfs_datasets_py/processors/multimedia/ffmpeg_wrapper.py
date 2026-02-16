@@ -13,6 +13,16 @@ import re
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 
+# Import monitoring decorator from infrastructure
+try:
+    from ..infrastructure.monitoring import monitor
+    MONITORING_AVAILABLE = True
+except ImportError:
+    # Fallback if monitoring not available
+    def monitor(func):
+        return func
+    MONITORING_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -198,6 +208,7 @@ class FFmpegWrapper:
         if not FFMPEG_AVAILABLE:
             logger.warning("FFmpeg wrapper initialized without ffmpeg-python library")
     
+    @monitor
     async def convert_video(self, 
                           input_path: str,
                           output_path: str,
@@ -501,6 +512,7 @@ class FFmpegWrapper:
         return result
 
 
+    @monitor
     async def extract_audio(self, input_path: str, output_path: str, **kwargs) -> Dict[str, Any]:
         """
         Extract audio tracks from video files with format conversion and quality control.

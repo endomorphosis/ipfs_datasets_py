@@ -47,7 +47,7 @@ import pickle
 # Import GraphRAG components
 try:
     from ipfs_datasets_py.enhanced_multimodal_processor import ProcessedContentBatch, ProcessedContent
-    from ipfs_datasets_py.processors.graphrag.website_system import WebsiteGraphRAGSystem
+    from ipfs_datasets_py.processors.specialized.graphrag.website_system import WebsiteGraphRAGSystem
     from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import KnowledgeGraph, Entity, Relationship
 except ImportError:
     # Fallback for testing

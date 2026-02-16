@@ -20,6 +20,16 @@ try:
 except ImportError:
     raise ImportError("pydantic required for MediaProcessor. Please install it with 'pip install pydantic'.")
 
+# Import monitoring decorator from infrastructure
+try:
+    from ..infrastructure.monitoring import monitor
+    MONITORING_AVAILABLE = True
+except ImportError:
+    # Fallback if monitoring not available
+    def monitor(func):
+        return func
+    MONITORING_AVAILABLE = False
+
 
 from .ytdlp_wrapper import YtDlpWrapper, YTDLP_AVAILABLE
 from .ffmpeg_wrapper import FFmpegWrapper, FFMPEG_AVAILABLE
@@ -301,6 +311,7 @@ class MediaProcessor:
                 self.logger.error("No multimedia backends available - cannot perform operations")
             raise RuntimeError("No multimedia backends available - cannot perform operations")
     
+    @monitor
     async def download_and_convert(self,
                                  url: str,
                                  output_format: str = "mp4",

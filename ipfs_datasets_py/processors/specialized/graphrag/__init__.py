@@ -45,6 +45,16 @@ except ImportError as e:
     SearchResult = None
     _website_available = False
 
+try:
+    from .adapter import GraphRAGAdapter, create_graphrag_adapter_from_dataset
+    _adapter_available = True
+except ImportError as e:
+    import warnings
+    warnings.warn(f"GraphRAG adapter unavailable: {e}", ImportWarning)
+    GraphRAGAdapter = None
+    create_graphrag_adapter_from_dataset = None
+    _adapter_available = False
+
 __all__ = [
     'UnifiedGraphRAGProcessor',
     'GraphRAGConfiguration',
@@ -53,4 +63,6 @@ __all__ = [
     'GraphRAGFactory',
     'WebsiteGraphRAGSystem',
     'SearchResult',
+    'GraphRAGAdapter',
+    'create_graphrag_adapter_from_dataset',
 ]

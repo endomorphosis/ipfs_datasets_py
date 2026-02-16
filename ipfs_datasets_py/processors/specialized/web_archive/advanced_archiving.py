@@ -25,6 +25,8 @@ from pathlib import Path
 import uuid
 import hashlib
 
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
+
 # Optional imports
 try:
     import requests
@@ -209,6 +211,7 @@ class AdvancedWebArchiver:
             "User-Agent": self.config.user_agent
         })
     
+    @monitor
     async def archive_website(
         self,
         urls: Union[str, List[str]],

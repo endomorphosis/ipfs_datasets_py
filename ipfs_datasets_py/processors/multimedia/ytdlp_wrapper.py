@@ -13,6 +13,16 @@ import uuid
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Literal
 
+# Import monitoring decorator from infrastructure
+try:
+    from ..infrastructure.monitoring import monitor
+    MONITORING_AVAILABLE = True
+except ImportError:
+    # Fallback if monitoring not available
+    def monitor(func):
+        return func
+    MONITORING_AVAILABLE = False
+
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +280,7 @@ class YtDlpWrapper:
         self.logger: logging.Logger = logger
         self.downloads = {}  # Track active downloads
 
+    @monitor
     async def download_video(self, 
                            url: str,
                            output_path: Optional[str] = None,
@@ -1193,6 +1204,7 @@ class YtDlpWrapper:
             'total_failed': len(failed_downloads)
         }
     
+    @monitor
     async def batch_download(self,
                            urls: List[str],
                            output_dir: Optional[str] = None,

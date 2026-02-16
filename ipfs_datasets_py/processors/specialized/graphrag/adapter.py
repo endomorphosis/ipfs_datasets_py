@@ -13,7 +13,7 @@ The adapter:
 
 Usage:
     # Old code continues to work
-    from ipfs_datasets_py.processors.graphrag.adapter import GraphRAGAdapter
+    from ipfs_datasets_py.processors.specialized.graphrag.adapter import GraphRAGAdapter
     
     adapter = GraphRAGAdapter(backend, vector_store, graph_store)
     result = adapter.query(

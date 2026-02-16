@@ -27,6 +27,7 @@ from pathlib import Path
 # Base imports
 from ipfs_datasets_py.processors.multimodal_processor import ProcessedContent, ProcessedContentBatch
 from ipfs_datasets_py.content_discovery import ContentAsset, ContentManifest
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 
 # Optional imports for enhanced functionality
 try:
@@ -126,6 +127,7 @@ class EnhancedMultiModalProcessor:
         
         logger.info(f"Enhanced processor initialized with capabilities: {self.available_processors}")
     
+    @monitor
     async def process_content(
         self,
         content: str,
@@ -198,6 +200,7 @@ class EnhancedMultiModalProcessor:
                 'error': str(e)
             }
 
+    @monitor
     def process_enhanced_content_batch(
         self,
         content_manifest: ContentManifest,
