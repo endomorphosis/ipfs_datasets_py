@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   approve-optimization:
+    timeout-minutes: 45
     if: |
       (github.event_name == 'pull_request_review' && 
        github.event.review.state == 'approved' &&
@@ -50,17 +51,22 @@ jobs:
       
       - name: Run final validation
         id: validate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           echo "Running final validation..."
           
           # Get list of changed Python files
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            PR_NUMBER=${{ github.event.inputs.pr_number }}
+          if [ "${EVENT_NAME}" == "workflow_dispatch" ]; then
+            FINAL_PR_NUMBER=${INPUT_PR_NUMBER}
           else
-            PR_NUMBER=${{ github.event.pull_request.number }}
+            FINAL_PR_NUMBER=${PR_NUMBER}
           fi
           
-          gh pr view $PR_NUMBER --json files --jq '.files[].path' | \
+          gh pr view ${FINAL_PR_NUMBER} --json files --jq '.files[].path' | \
             grep '\.py$' > changed_files.txt || true
           
           VALIDATION_FAILED=0

@@ -84,21 +84,31 @@ jobs:
     
     steps:
       - name: Debug workflow trigger information
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          WORKFLOW_RUN_EVENT: ${{ github.event.workflow_run.event }}
+          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          IS_WORKFLOW_DISPATCH: ${{ github.event_name == 'workflow_dispatch' }}
+          CONCLUSION_IS_FAILURE: ${{ github.event.workflow_run.conclusion == 'failure' }}
+          NAME_NO_AUTO_HEALING: ${{ !contains(github.event.workflow_run.name, 'Auto-Healing') }}
+          NAME_NO_AUTO_FIX: ${{ !contains(github.event.workflow_run.name, 'Auto-Fix') }}
         run: |
           echo "## 🔍 Workflow Trigger Debug Information" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Event Information" >> $GITHUB_STEP_SUMMARY
-          echo "- **Event Name**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow Run Conclusion**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow Run Event**: ${{ github.event.workflow_run.event }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow Run Name**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Workflow Run ID**: ${{ github.event.workflow_run.id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event Name**: ${EVENT_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Conclusion**: ${WORKFLOW_RUN_CONCLUSION}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Event**: ${WORKFLOW_RUN_EVENT}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run Name**: ${WORKFLOW_RUN_NAME}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow Run ID**: ${WORKFLOW_RUN_ID}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Condition Checks" >> $GITHUB_STEP_SUMMARY
-          echo "- **Is workflow_dispatch**: ${{ github.event_name == 'workflow_dispatch' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Conclusion is failure**: ${{ github.event.workflow_run.conclusion == 'failure' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Name doesn't contain Auto-Healing**: ${{ !contains(github.event.workflow_run.name, 'Auto-Healing') }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Name doesn't contain Auto-Fix**: ${{ !contains(github.event.workflow_run.name, 'Auto-Fix') }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Is workflow_dispatch**: ${IS_WORKFLOW_DISPATCH}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Conclusion is failure**: ${CONCLUSION_IS_FAILURE}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Healing**: ${NAME_NO_AUTO_HEALING}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Name doesn't contain Auto-Fix**: ${NAME_NO_AUTO_FIX}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "✅ **This workflow is running because all conditions were met**" >> $GITHUB_STEP_SUMMARY
       
@@ -141,19 +151,22 @@ jobs:
         id: check_duplicate
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_RUN_ID: ${{ github.event.inputs.run_id }}
+          INPUT_WORKFLOW_NAME: ${{ github.event.inputs.workflow_name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -x  # Enable debug mode
           
           # Get the run ID we're checking
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            if [ -n "${{ github.event.inputs.run_id }}" ]; then
-              RUN_ID="${{ github.event.inputs.run_id }}"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            if [ -n "${INPUT_RUN_ID}" ]; then
+              RUN_ID="${INPUT_RUN_ID}"
             else
-              WORKFLOW_NAME="${{ github.event.inputs.workflow_name }}"
-              RUN_ID=$(gh run list --workflow="$WORKFLOW_NAME" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' 2>&1 || echo "")
+              RUN_ID=$(gh run list --workflow="${INPUT_WORKFLOW_NAME}" --status=failure --limit=1 --json databaseId --jq '.[0].databaseId' 2>&1 || echo "")
             fi
           else
-            RUN_ID="${{ github.event.workflow_run.id }}"
+            RUN_ID="${WORKFLOW_RUN_ID}"
           fi
           
           echo "Checking RUN_ID: $RUN_ID"

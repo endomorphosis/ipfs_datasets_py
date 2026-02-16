@@ -37,6 +37,7 @@ jobs:
   # GPU tests on self-hosted runner
   gpu-tests:
     runs-on: [self-hosted, linux, x64, gpu]
+    timeout-minutes: 60
     # Skip if runner not available
     if: ${{ !cancelled() }}
     continue-on-error: false
@@ -174,6 +175,7 @@ jobs:
   # CPU-only tests on self-hosted runner
   cpu-tests:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 45
     
     steps:
       - name: Checkout repository
@@ -207,6 +209,7 @@ jobs:
   # Docker tests with GPU support
   gpu-docker-tests:
     runs-on: [self-hosted, linux, x64, gpu]
+    timeout-minutes: 90
     if: ${{ !cancelled() }}
     continue-on-error: true
     
@@ -254,6 +257,7 @@ jobs:
   # Test summary
   test-summary:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
     needs: [gpu-tests, cpu-tests, gpu-docker-tests]
     if: always()
     

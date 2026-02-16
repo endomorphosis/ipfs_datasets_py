@@ -27,6 +27,7 @@ permissions:
 jobs:
   assign-to-copilot:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     if: >
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
