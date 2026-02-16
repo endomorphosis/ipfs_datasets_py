@@ -47,6 +47,18 @@ except ImportError:
 # Bridges for cross-store migration
 from .bridges import create_bridge, VectorStoreBridge
 
+# Manager and high-level API
+from .manager import VectorStoreManager
+from .api import (
+    create_vector_store,
+    add_texts_to_store,
+    search_texts,
+    migrate_collection,
+    export_collection_to_ipfs,
+    import_collection_from_ipfs,
+    create_manager
+)
+
 __all__ = [
     # Base classes and errors
     'BaseVectorStore',
@@ -77,5 +89,14 @@ __all__ = [
     # Bridges
     'create_bridge',
     'VectorStoreBridge',
+    # Manager and API
+    'VectorStoreManager',
+    'create_vector_store',
+    'add_texts_to_store',
+    'search_texts',
+    'migrate_collection',
+    'export_collection_to_ipfs',
+    'import_collection_from_ipfs',
+    'create_manager',
 ]
 
