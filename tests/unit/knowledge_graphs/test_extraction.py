@@ -200,8 +200,8 @@ class TestRelationship:
         
         # THEN
         assert isinstance(rel_dict, dict)
-        assert "source_entity" in rel_dict
-        assert "target_entity" in rel_dict
+        assert "source" in rel_dict  # API uses "source" not "source_entity"
+        assert "target" in rel_dict  # API uses "target" not "target_entity"
         assert rel_dict["relationship_type"] == sample_relationship.relationship_type
         assert rel_dict["confidence"] == sample_relationship.confidence
     
@@ -213,14 +213,14 @@ class TestRelationship:
         """
         # GIVEN
         rel_data = {
-            "source_entity": {
+            "source": {  # API uses "source" not "source_entity"
                 "entity_id": "e1",
                 "entity_type": "person",
                 "name": "John",
                 "properties": {},
                 "confidence": 1.0
             },
-            "target_entity": {
+            "target": {  # API uses "target" not "target_entity"
                 "entity_id": "e2",
                 "entity_type": "organization",
                 "name": "Microsoft",
@@ -257,8 +257,8 @@ class TestKnowledgeGraph:
         
         # THEN
         assert kg.entities == {}
-        assert kg.relationships == []
-        assert kg.metadata == {}
+        assert kg.relationships == {}  # Dict not List
+        assert hasattr(kg, 'name')  # Has a name attribute
     
     def test_add_entity(self, empty_knowledge_graph, sample_entity):
         """
@@ -328,7 +328,8 @@ class TestKnowledgeGraph:
         
         # THEN
         assert len(kg.relationships) == 1
-        assert sample_relationship in kg.relationships
+        # Check relationship is in dict
+        assert sample_relationship.relationship_id in kg.relationships
     
     def test_get_entity(self, populated_knowledge_graph, sample_entities):
         """
@@ -341,7 +342,7 @@ class TestKnowledgeGraph:
         entity = sample_entities[0]
         
         # WHEN
-        retrieved = kg.get_entity(entity.entity_id)
+        retrieved = kg.get_entity_by_id(entity.entity_id)  # Actual method name
         
         # THEN
         assert retrieved == entity
@@ -353,7 +354,7 @@ class TestKnowledgeGraph:
         THEN returns None
         """
         # WHEN
-        result = empty_knowledge_graph.get_entity("nonexistent_id")
+        result = empty_knowledge_graph.get_entity_by_id("nonexistent_id")  # Actual method name
         
         # THEN
         assert result is None
@@ -388,7 +389,7 @@ class TestKnowledgeGraph:
         entity = sample_entities[0]
         
         # WHEN
-        relationships = kg.get_relationships_for_entity(entity.entity_id)
+        relationships = kg.get_relationships_by_entity(entity)  # Actual method name, takes Entity not ID
         
         # THEN
         assert isinstance(relationships, list)
@@ -413,7 +414,7 @@ class TestKnowledgeGraph:
         assert isinstance(kg_dict, dict)
         assert "entities" in kg_dict
         assert "relationships" in kg_dict
-        assert "metadata" in kg_dict
+        assert "name" in kg_dict  # Has name field
         assert isinstance(kg_dict["entities"], list)
         assert isinstance(kg_dict["relationships"], list)
     
@@ -484,7 +485,7 @@ class TestKnowledgeGraphExtractor:
         
         # THEN
         assert extractor is not None
-        assert hasattr(extractor, 'extract')
+        assert hasattr(extractor, 'extract_knowledge_graph')  # Actual method name
     
     def test_extract_with_simple_text(self, basic_extractor, simple_text):
         """
@@ -493,7 +494,7 @@ class TestKnowledgeGraphExtractor:
         THEN returns KnowledgeGraph instance
         """
         # WHEN
-        kg = basic_extractor.extract(simple_text)
+        kg = basic_extractor.extract_knowledge_graph(simple_text)  # Actual method name
         
         # THEN
         assert isinstance(kg, KnowledgeGraph)
@@ -508,7 +509,7 @@ class TestKnowledgeGraphExtractor:
         empty_text = ""
         
         # WHEN
-        kg = basic_extractor.extract(empty_text)
+        kg = basic_extractor.extract_knowledge_graph(empty_text)  # Actual method name
         
         # THEN
         assert isinstance(kg, KnowledgeGraph)
@@ -523,7 +524,7 @@ class TestKnowledgeGraphExtractor:
         """
         # WHEN/THEN
         try:
-            kg = basic_extractor.extract(None)
+            kg = basic_extractor.extract_knowledge_graph(None)  # Actual method name
             # If it succeeds, should return empty graph
             assert isinstance(kg, KnowledgeGraph)
         except (TypeError, AttributeError):
@@ -537,12 +538,12 @@ class TestKnowledgeGraphExtractor:
         THEN returns valid graph structure
         """
         # WHEN
-        kg = basic_extractor.extract(sample_text)
+        kg = basic_extractor.extract_knowledge_graph(sample_text)  # Actual method name
         
         # THEN
         assert isinstance(kg, KnowledgeGraph)
         assert isinstance(kg.entities, dict)
-        assert isinstance(kg.relationships, list)
+        assert isinstance(kg.relationships, dict)  # Dict not list
         # All entities should have required attributes
         for entity_id, entity in kg.entities.items():
             assert hasattr(entity, 'entity_id')
@@ -564,7 +565,8 @@ class TestKnowledgeGraphExtractorWithValidation:
         
         # THEN
         assert extractor is not None
-        assert isinstance(extractor, KnowledgeGraphExtractor)
+        # Validation extractor has its own interface
+        assert hasattr(extractor, 'extract_knowledge_graph')
     
     def test_extract_with_validation(self, validation_extractor, simple_text):
         """
@@ -573,7 +575,7 @@ class TestKnowledgeGraphExtractorWithValidation:
         THEN returns validated knowledge graph
         """
         # WHEN
-        kg = validation_extractor.extract(simple_text)
+        kg = validation_extractor.extract_knowledge_graph(simple_text)  # Actual method name
         
         # THEN
         assert isinstance(kg, KnowledgeGraph)
@@ -598,7 +600,7 @@ class TestKnowledgeGraphIntegration:
         extractor = KnowledgeGraphExtractor()
         
         # WHEN
-        kg = extractor.extract(sample_text)
+        kg = extractor.extract_knowledge_graph(sample_text)  # Actual method name
         
         # THEN
         # Should have some entities (exact number depends on NLP)
@@ -622,12 +624,14 @@ class TestKnowledgeGraphIntegration:
         """
         # GIVEN
         extractor = KnowledgeGraphExtractor()
-        kg = extractor.extract(sample_text)
+        kg = extractor.extract_knowledge_graph(sample_text)  # Actual method name
         
         # WHEN/THEN
-        for rel in kg.relationships:
+        for rel_id, rel in kg.relationships.items():  # Dict not list
             # Source and target entities should exist in graph
-            source_id = rel.source_entity.entity_id
-            target_id = rel.target_entity.entity_id
-            assert source_id in kg.entities or rel.source_entity is not None
-            assert target_id in kg.entities or rel.target_entity is not None
+            source_id = rel.source_entity.entity_id if rel.source_entity else None
+            target_id = rel.target_entity.entity_id if rel.target_entity else None
+            if source_id:
+                assert source_id in kg.entities or rel.source_entity is not None
+            if target_id:
+                assert target_id in kg.entities or rel.target_entity is not None
