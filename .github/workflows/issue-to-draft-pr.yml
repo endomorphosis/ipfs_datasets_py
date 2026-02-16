@@ -224,63 +224,181 @@ jobs:
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         ISSUE_AUTHOR: ${{ steps.get_issue.outputs.issue_author }}
-      run: "ISSUE_NUMBER=\"${{ steps.get_issue.outputs.issue_number }}\"\nBRANCH_NAME=\"${{ steps.generate_details.outputs.branch_name\
-        \ }}\"\nPR_TITLE=\"${{ steps.generate_details.outputs.pr_title }}\"\nDEFAULT_BRANCH=\"${{ steps.create_branch.outputs.default_branch\
-        \ }}\"\n\n# Create PR body\n# Export outputs to environment variables\nISSUE_NUMBER=\"${{ steps.get_issue.outputs.issue_number\
-        \ }}\"\nISSUE_TITLE=\"${{ steps.get_issue.outputs.issue_title }}\"\n# ISSUE_AUTHOR is available as $ISSUE_AUTHOR via\
-        \ env (see above)\ncat > /tmp/pr_body.md <<'PR_EOF'\n## \U0001F916 Automated Issue Resolution\n\nThis PR addresses\
-        \ issue #$ISSUE_NUMBER.\n\n### Related Issue\n\nFixes #$ISSUE_NUMBER\n### Issue Summary\n\n**Title**: $ISSUE_TITLE\n\
-        **Author**: @$ISSUE_AUTHOR\n\n### Original Issue Description\n\nPR_EOF\n\n# Add issue body\ncat /tmp/issue_body.txt\
-        \ >> /tmp/pr_body.md\n\ncat >> /tmp/pr_body.md << 'PR_EOF'\n\n### Analysis\n\nPR_EOF\n\n# Add analysis\npython3 -c\
-        \ \"\nimport json\nwith open('/tmp/issue_analysis.json') as f:\n    data = json.load(f)\n    print('- **Categories**:\
-        \ ' + ', '.join(data['categories']))\n    print('- **Complexity**: ' + data['complexity'])\n    print('- **Keywords**:\
-        \ ' + ', '.join(data.get('keywords', [])[:5]))\n\" >> /tmp/pr_body.md\n\ncat >> /tmp/pr_body.md << 'PR_EOF'\n\n###\
-        \ What This PR Does\n\nThis is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.\n\
-        \nGitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary changes.\n\n\
-        Focus on:\n- Understanding the problem described in the issue\n- Implementing a minimal, surgical fix\n- Adding or\
-        \ updating tests as appropriate\n- Following the existing code style and patterns\n- Documenting any significant changes\n\
-        \n### Task Checklist\n\n- [ ] Analyze the issue requirements\n- [ ] Implement the solution\n- [ ] Add/update tests\n\
-        - [ ] Update documentation if needed\n- [ ] Verify the fix works as expected\n\n---\n\n\U0001F916 **Auto-generated\
-        \ by**: Issue-to-Draft-PR Workflow\n**Issue**: #${{ steps.get_issue.outputs.issue_number }}\n**Workflow Run**: [${{\
-        \ github.run_id }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\nPR_EOF\n\n# Create\
-        \ draft PR\nset +e  # Don't exit on error\nPR_URL=$(gh pr create \\\n  --draft \\\n  --title \"$PR_TITLE\" \\\n  --body-file\
-        \ /tmp/pr_body.md \\\n  --base \"$DEFAULT_BRANCH\" \\\n  --head \"$BRANCH_NAME\" 2>&1)\nPR_CREATE_EXIT=$?\nset -e\
-        \  # Re-enable exit on error\n\nif [ $PR_CREATE_EXIT -eq 0 ]; then\n  PR_NUMBER=$(echo \"$PR_URL\" | grep -oP '\\\
-        d+$')\n  echo \"pr_url=$PR_URL\" >> $GITHUB_OUTPUT\n  echo \"pr_number=$PR_NUMBER\" >> $GITHUB_OUTPUT\n  echo \"\u2705\
-        \ Successfully created PR #$PR_NUMBER\"\n  \n  # Invoke Copilot using the verified dual method (draft PR + @copilot\
-        \ trigger)\n  # This is the ONLY method with 100% success rate\n  echo \"Invoking GitHub Copilot on PR #$PR_NUMBER\
-        \ using verified dual method...\"\n  \n  # Always use the JSON context file which safely contains issue details\n\
-        \  # The issue analysis JSON is created earlier and contains sanitized data\n  if [ -f \"/tmp/issue_analysis.json\"\
-        \ ]; then\n    # Read issue details from JSON\n    ISSUE_TITLE=$(jq -r '.title // \"Implement solution\"' /tmp/issue_analysis.json)\n\
-        \    ISSUE_BODY=$(jq -r '.body // \"See issue for details\"' /tmp/issue_analysis.json | head -c 500)\n    \n    python3\
-        \ scripts/invoke_copilot_on_pr.py \\\n      --pr \"$PR_NUMBER\" \\\n      --instruction \"Please implement a solution\
-        \ for issue #$ISSUE_NUMBER: $ISSUE_TITLE. Details: $ISSUE_BODY. Review the full issue description in the PR and implement\
-        \ minimal, surgical changes.\" \\\n      || echo \"\u26A0\uFE0F  Copilot invocation failed, check logs\"\n  else\n\
-        \    # Fallback to basic instruction without user-controlled content\n    python3 scripts/invoke_copilot_on_pr.py\
-        \ \\\n      --pr \"$PR_NUMBER\" \\\n      --instruction \"Please implement a solution for this issue. Review the full\
-        \ issue description in the PR and implement minimal, surgical changes.\" \\\n      || echo \"\u26A0\uFE0F  Copilot\
-        \ invocation failed, check logs\"\n  fi\n  \n  # Link PR back to issue\n  gh issue comment \"$ISSUE_NUMBER\" --repo\
-        \ ${{ github.repository }} --body \"\U0001F916 **Automatic Draft PR Created**\n\nA draft PR has been created to address\
-        \ this issue: #$PR_NUMBER\n\nGitHub Copilot has been assigned and will implement the solution automatically.\n\n**PR**:\
-        \ $PR_URL\n**Branch**: \\`$BRANCH_NAME\\`\n\nYou can monitor the progress in the draft PR. The PR will be ready for\
-        \ review once Copilot completes the implementation.\"\n  \n  echo \"\" >> $GITHUB_STEP_SUMMARY\n  echo \"## \u2705\
-        \ Draft PR Created Successfully\" >> $GITHUB_STEP_SUMMARY\n  echo \"\" >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F517\
-        \ **Issue**: #$ISSUE_NUMBER\" >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F517 **PR**: $PR_URL\" >> $GITHUB_STEP_SUMMARY\n\
-        \  echo \"\U0001F522 **PR Number**: #$PR_NUMBER\" >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F33F **Branch**: \\`$BRANCH_NAME\\\
-        `\" >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F916 **Status**: GitHub Copilot invoked via verified dual method (draft\
-        \ PR + @copilot trigger)\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F Could not create PR automatically\
-        \ (permission denied or other error)\"\n  echo \"Error: $PR_URL\"\n  echo \"pr_url=\" >> $GITHUB_OUTPUT\n  echo \"\
-        pr_number=\" >> $GITHUB_OUTPUT\n  \n  # Update issue with manual PR creation instructions\n  gh issue comment \"$ISSUE_NUMBER\"\
-        \ --repo ${{ github.repository }} --body \"\u26A0\uFE0F **Automatic PR creation failed**\n\nThe branch has been created:\
-        \ \\`$BRANCH_NAME\\`\n\n**To create the PR manually**:\n1. Go to: https://github.com/${{ github.repository }}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME\n\
-        2. Click 'Create pull request'\n3. Mark it as a draft\n4. Use the invoke_copilot_on_pr.py script to invoke GitHub\
-        \ Copilot:\n   \\`\\`\\`bash\n   python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>\n   \\`\\`\\`\n\n**Or enable\
-        \ automatic PR creation**:\n1. Go to Settings \u2192 Actions \u2192 General \u2192 Workflow permissions\n2. Select\
-        \ 'Read and write permissions'\n3. Check 'Allow GitHub Actions to create and approve pull requests'\"\n  \n  echo\
-        \ \"\" >> $GITHUB_STEP_SUMMARY\n  echo \"## \u26A0\uFE0F PR Creation Failed\" >> $GITHUB_STEP_SUMMARY\n  echo \"\"\
-        \ >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F517 **Issue**: #$ISSUE_NUMBER\" >> $GITHUB_STEP_SUMMARY\n  echo \"\U0001F33F\
-        \ **Branch**: \\`$BRANCH_NAME\\`\" >> $GITHUB_STEP_SUMMARY\n  echo \"\u26A0\uFE0F **Note**: See issue for manual PR\
-        \ creation steps\" >> $GITHUB_STEP_SUMMARY\nfi\n"
+        ISSUE_NUMBER_ENV: ${{ steps.get_issue.outputs.issue_number }}
+        ISSUE_TITLE_ENV: ${{ steps.get_issue.outputs.issue_title }}
+        BRANCH_NAME_ENV: ${{ steps.generate_details.outputs.branch_name }}
+        PR_TITLE_ENV: ${{ steps.generate_details.outputs.pr_title }}
+        DEFAULT_BRANCH_ENV: ${{ steps.create_branch.outputs.default_branch }}
+        REPO_FULL: ${{ github.repository }}
+        RUN_ID: ${{ github.run_id }}
+      run: |
+        ISSUE_NUMBER="$ISSUE_NUMBER_ENV"
+        BRANCH_NAME="$BRANCH_NAME_ENV"
+        PR_TITLE="$PR_TITLE_ENV"
+        DEFAULT_BRANCH="$DEFAULT_BRANCH_ENV"
+        
+        # Create PR body
+        ISSUE_TITLE="$ISSUE_TITLE_ENV"
+        # ISSUE_AUTHOR is available as $ISSUE_AUTHOR via env (see above)
+        cat > /tmp/pr_body.md <<'PR_EOF'
+        ## 🤖 Automated Issue Resolution
+        
+        This PR addresses issue #${ISSUE_NUMBER}.
+        
+        ### Related Issue
+        
+        Fixes #${ISSUE_NUMBER}
+        ### Issue Summary
+        
+        **Title**: ${ISSUE_TITLE}
+        **Author**: @${ISSUE_AUTHOR}
+        
+        ### Original Issue Description
+        
+        PR_EOF
+        
+        # Add issue body
+        cat /tmp/issue_body.txt >> /tmp/pr_body.md
+        
+        cat >> /tmp/pr_body.md << 'PR_EOF'
+        
+        ### Analysis
+        
+        PR_EOF
+        
+        # Add analysis
+        python3 -c "
+        import json
+        with open('/tmp/issue_analysis.json') as f:
+            data = json.load(f)
+            print('- **Categories**: ' + ', '.join(data['categories']))
+            print('- **Complexity**: ' + data['complexity'])
+            print('- **Keywords**: ' + ', '.join(data.get('keywords', [])[:5]))
+        " >> /tmp/pr_body.md
+        
+        cat >> /tmp/pr_body.md <<PR_EOF
+        
+        ### What This PR Does
+        
+        This is a draft PR that will be automatically updated by GitHub Copilot to resolve the issue.
+        
+        GitHub Copilot will be invoked automatically using the Copilot CLI tool to implement the necessary changes.
+        
+        Focus on:
+        - Understanding the problem described in the issue
+        - Implementing a minimal, surgical fix
+        - Adding or updating tests as appropriate
+        - Following the existing code style and patterns
+        - Documenting any significant changes
+        
+        ### Task Checklist
+        
+        - [ ] Analyze the issue requirements
+        - [ ] Implement the solution
+        - [ ] Add/update tests
+        - [ ] Update documentation if needed
+        - [ ] Verify the fix works as expected
+        
+        ---
+        
+        🤖 **Auto-generated by**: Issue-to-Draft-PR Workflow
+        **Issue**: #${ISSUE_NUMBER}
+        **Workflow Run**: [${RUN_ID}](https://github.com/${REPO_FULL}/actions/runs/${RUN_ID})
+        PR_EOF
+        
+        # Create draft PR
+        set +e  # Don't exit on error
+        PR_URL=$(gh pr create \
+          --draft \
+          --title "$PR_TITLE" \
+          --body-file /tmp/pr_body.md \
+          --base "$DEFAULT_BRANCH" \
+          --head "$BRANCH_NAME" 2>&1)
+        PR_CREATE_EXIT=$?
+        set -e  # Re-enable exit on error
+        
+        if [ $PR_CREATE_EXIT -eq 0 ]; then
+          PR_NUMBER=$(echo "$PR_URL" | grep -oP '\d+$')
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "✅ Successfully created PR #$PR_NUMBER"
+          
+          # Invoke Copilot using the verified dual method (draft PR + @copilot trigger)
+          # This is the ONLY method with 100% success rate
+          echo "Invoking GitHub Copilot on PR #$PR_NUMBER using verified dual method..."
+          
+          # Always use the JSON context file which safely contains issue details
+          # The issue analysis JSON is created earlier and contains sanitized data
+          if [ -f "/tmp/issue_analysis.json" ]; then
+            # Read issue details from JSON and export as environment variables to avoid injection
+            export COPILOT_ISSUE_TITLE=$(jq -r '.issue_title // "Implement solution"' /tmp/issue_analysis.json)
+            export COPILOT_ISSUE_BODY=$(jq -r '.body // "See issue for details"' /tmp/issue_analysis.json | head -c 500)
+            
+            # Use environment variables in Python call to prevent injection
+            python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --instruction "Please implement a solution for issue #${ISSUE_NUMBER}. Review the full issue description in the PR and implement minimal, surgical changes." \
+              || echo "⚠️  Copilot invocation failed, check logs"
+          else
+            # Fallback to basic instruction without user-controlled content
+            python3 scripts/invoke_copilot_on_pr.py \
+              --pr "$PR_NUMBER" \
+              --instruction "Please implement a solution for this issue. Review the full issue description in the PR and implement minimal, surgical changes." \
+              || echo "⚠️  Copilot invocation failed, check logs"
+          fi
+          
+          # Link PR back to issue
+          gh issue comment "$ISSUE_NUMBER" --repo ${REPO_FULL} --body "🤖 **Automatic Draft PR Created**
+        
+        A draft PR has been created to address this issue: #$PR_NUMBER
+        
+        GitHub Copilot has been assigned and will implement the solution automatically.
+        
+        **PR**: $PR_URL
+        **Branch**: \`$BRANCH_NAME\`
+        
+        You can monitor the progress in the draft PR. The PR will be ready for review once Copilot completes the implementation."
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Draft PR Created Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **PR**: $PR_URL" >> $GITHUB_STEP_SUMMARY
+          echo "🔢 **PR Number**: #$PR_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "🤖 **Status**: GitHub Copilot invoked via verified dual method (draft PR + @copilot trigger)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "⚠️ Could not create PR automatically (permission denied or other error)"
+          echo "Error: $PR_URL"
+          echo "pr_url=" >> $GITHUB_OUTPUT
+          echo "pr_number=" >> $GITHUB_OUTPUT
+          
+          # Update issue with manual PR creation instructions
+          gh issue comment "$ISSUE_NUMBER" --repo ${REPO_FULL} --body "⚠️ **Automatic PR creation failed**
+        
+        The branch has been created: \`$BRANCH_NAME\`
+        
+        **To create the PR manually**:
+        1. Go to: https://github.com/${REPO_FULL}/compare/${DEFAULT_BRANCH}...$BRANCH_NAME
+        2. Click 'Create pull request'
+        3. Mark it as a draft
+        4. Use the invoke_copilot_on_pr.py script to invoke GitHub Copilot:
+           \`\`\`bash
+           python3 scripts/invoke_copilot_on_pr.py --pr <PR_NUMBER>
+           \`\`\`
+        
+        **Or enable automatic PR creation**:
+        1. Go to Settings → Actions → General → Workflow permissions
+        2. Select 'Read and write permissions'
+        3. Check 'Allow GitHub Actions to create and approve pull requests'"
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ PR Creation Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Issue**: #$ISSUE_NUMBER" >> $GITHUB_STEP_SUMMARY
+          echo "🌿 **Branch**: \`$BRANCH_NAME\`" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Note**: See issue for manual PR creation steps" >> $GITHUB_STEP_SUMMARY
+        fi
     - name: Summary
       if: always()
       env:
