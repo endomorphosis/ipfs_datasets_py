@@ -81,9 +81,15 @@ jobs:
         uses: docker/setup-buildx-action@v3
       
       - name: Build minimal test image
-        run: |
-          echo "🔨 Building Docker image for x86_64..."
-          docker build -t ipfs-datasets-py:test-x86 -f docker/Dockerfile.minimal-test .
+        id: docker_build
+        uses: nick-invision/retry@v3
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_on: error
+          command: |
+            echo "🔨 Building Docker image for x86_64..."
+            docker build -t ipfs-datasets-py:test-x86 -f docker/Dockerfile.minimal-test .
       
       - name: Test Docker container
         run: |

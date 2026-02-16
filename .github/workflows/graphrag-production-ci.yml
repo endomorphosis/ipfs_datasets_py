@@ -81,11 +81,17 @@ jobs:
         clean: true
     
     - name: Set up Python
-      run: |
-        # Use system python3 on self-hosted runner
-        python3 --version
-        # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
-        python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
+      id: python_setup
+      uses: nick-invision/retry@v3
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        retry_on: error
+        command: |
+          # Use system python3 on self-hosted runner
+          python3 --version
+          # Python 3.12+ requires --break-system-packages to override PEP 668 externally-managed-environment protection
+          python3 -m pip install --break-system-packages --upgrade pip || python3 -m pip install --user --upgrade pip
     
     - name: Setup GitHub CLI and P2P Cache
       env:

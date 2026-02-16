@@ -74,36 +74,48 @@ jobs:
         with:
           fetch-depth: 1    
     - name: Setup GitHub CLI and P2P Cache
+      id: gh_setup
+      uses: nick-invision/retry@v3
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         ENABLE_P2P_CACHE: true
-      run: |
-        # Install gh CLI for API caching
-        apt-get install -y ca-certificates gnupg
-        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
-          dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
-        chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
-          tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-        apt-get update
-        apt-get install -y gh
-        
-        # Authenticate
-        echo "$GH_TOKEN" | gh auth login --with-token
-        gh auth status
-        
-        # Check rate limit
-        RATE_LIMIT=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "0")
-        echo "GitHub API Rate Limit: $RATE_LIMIT remaining"
+      with:
+        timeout_minutes: 5
+        max_attempts: 3
+        retry_on: error
+        command: |
+          # Install gh CLI for API caching
+          apt-get install -y ca-certificates gnupg
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | \
+            dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg 2>/dev/null
+          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | \
+            tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt-get update
+          apt-get install -y gh
+          
+          # Authenticate
+          echo "$GH_TOKEN" | gh auth login --with-token
+          gh auth status
+          
+          # Check rate limit
+          RATE_LIMIT=$(gh api rate_limit --jq '.resources.core.remaining' 2>/dev/null || echo "0")
+          echo "GitHub API Rate Limit: $RATE_LIMIT remaining"
     
     - name: Install Python dependencies
-      run: |
-        python --version
-        python -m pip install --upgrade pip
-        pip install flake8 black isort mypy
-        pip install -r requirements.txt
+      id: pip_install
+      uses: nick-invision/retry@v3
+      with:
+        timeout_minutes: 10
+        max_attempts: 3
+        retry_on: error
+        command: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install flake8 black isort mypy
+          pip install -r requirements.txt
     
     - name: Run Black formatter check
       run: |
