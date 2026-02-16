@@ -76,7 +76,8 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v5      with:
+    - uses: actions/checkout@v5
+        with:
         submodules: false
         clean: true
     
@@ -189,7 +190,8 @@ jobs:
       run: |
         git config --global --add safe.directory '*'
     
-    - uses: actions/checkout@v5      with:
+    - uses: actions/checkout@v5
+        with:
         submodules: false
         clean: true
     
@@ -243,7 +245,8 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5      with:
+      uses: actions/checkout@v5
+        with:
         submodules: false
     
     - name: Log in to Container Registry
@@ -301,7 +304,8 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5      with:
+      uses: actions/checkout@v5
+        with:
         submodules: false
     
     - name: Configure kubectl
@@ -341,7 +345,8 @@ jobs:
         git config --global --add safe.directory '*'
     
     - name: Checkout repository
-      uses: actions/checkout@v5      with:
+      uses: actions/checkout@v5
+        with:
         submodules: false
     
     - name: Configure kubectl
