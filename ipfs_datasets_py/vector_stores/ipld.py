@@ -1,6 +1,32 @@
 """
-IPLD Vector Store Module
+IPLD Vector Store Module - DEPRECATED
 
+**DEPRECATED:** This module is deprecated as of version 2.0.0 and will be removed in version 3.0.0.
+Please use `ipfs_datasets_py.vector_stores.ipld_vector_store.IPLDVectorStore` instead.
+
+Migration Guide:
+    Old usage:
+        from ipfs_datasets_py.vector_stores.ipld import IPLDVectorStore
+        store = IPLDVectorStore(dimension=768, metric="cosine")
+
+    New usage:
+        from ipfs_datasets_py.vector_stores import IPLDVectorStore
+        from ipfs_datasets_py.vector_stores.config import create_ipld_config
+        
+        config = create_ipld_config("my_collection", dimension=768)
+        store = IPLDVectorStore(config)
+
+The new implementation provides:
+- Full BaseVectorStore interface compatibility
+- Router integration (auto-embeddings, auto-IPFS)
+- Better performance with FAISS backend
+- Cross-store migration capabilities
+- Comprehensive testing and documentation
+- Production-ready features (monitoring, caching, etc.)
+
+For more information, see: docs/IPLD_VECTOR_STORE_EXAMPLES.md
+
+Original docstring:
 Provides a class for storing and retrieving embedding vectors using IPLD.
 This module implements efficient vector storage with IPLD and vector
 similarity search capabilities.
@@ -15,6 +41,7 @@ Features:
 - Serialization to/from CAR files
 """
 
+import warnings
 import os
 import json
 import numpy as np
@@ -23,6 +50,15 @@ import logging
 from typing import Dict, List, Any, Optional, Union, Tuple, Set, TypeVar, Generic
 from collections import defaultdict
 from dataclasses import dataclass
+
+# Issue deprecation warning
+warnings.warn(
+    "ipfs_datasets_py.vector_stores.ipld is deprecated and will be removed in version 3.0.0. "
+    "Please use ipfs_datasets_py.vector_stores.ipld_vector_store.IPLDVectorStore instead. "
+    "See docs/IPLD_VECTOR_STORE_EXAMPLES.md for migration guide.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
 from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 from ipfs_datasets_py.processors.storage.ipld.dag_pb import create_dag_node, parse_dag_node
