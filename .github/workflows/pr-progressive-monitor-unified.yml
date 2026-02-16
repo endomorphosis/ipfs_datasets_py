@@ -1,40 +1,42 @@
 name: PR Progressive Assignment Monitor (Unified)
+
 permissions:
   contents: read
-true:
+
+on:
   pull_request:
-    types:
-    - opened
-    - reopened
-    - synchronize
-    - ready_for_review
+    types: [opened, reopened, synchronize, ready_for_review]
+  # schedule:
+  #   - cron: '*/10 * * * *'  # Every 10 minutes (disabled by default)
   workflow_dispatch:
     inputs:
       pr_number:
-        description: Specific PR number to check (leave empty for all)
+        description: 'Specific PR number to check (leave empty for all)'
         required: false
         type: string
       force_reassign:
-        description: Force reassignment even if Copilot already working
+        description: 'Force reassignment even if Copilot already working'
         required: false
         default: false
         type: boolean
       dry_run:
-        description: Dry run mode (show what would be done)
+        description: 'Dry run mode (show what would be done)'
         required: false
         default: false
         type: boolean
+
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
 jobs:
   monitor:
-    timeout-minutes: 30
     uses: ./.github/workflows/templates/pr-monitoring-template.yml
     with:
-      monitoring_mode: progressive
+      monitoring_mode: 'progressive'
       pr_number: ${{ inputs.pr_number || '' }}
       force_action: ${{ inputs.force_reassign || false }}
       dry_run: ${{ inputs.dry_run || false }}
-      schedule_interval: Manual trigger only
+      schedule_interval: 'Manual trigger only'
     secrets: inherit
