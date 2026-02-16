@@ -333,16 +333,69 @@ class HybridSearchEngine:
         return fused_results
     
     def _get_query_embedding(self, query: str) -> Any:
-        """Get embedding for query text."""
-        # Placeholder - would call actual embedding model
-        logger.warning("Using placeholder embedding method")
-        return None
+        """
+        Get embedding for query text.
+        
+        Args:
+            query: Query text to embed
+            
+        Returns:
+            Query embedding vector (or None if unavailable)
+        """
+        if self.vector_store is None:
+            logger.debug("No vector store available for embedding")
+            return None
+        
+        try:
+            # Try to get embedding from vector store
+            if hasattr(self.vector_store, 'embed_query'):
+                return self.vector_store.embed_query(query)
+            elif hasattr(self.vector_store, 'get_embedding'):
+                return self.vector_store.get_embedding(query)
+            else:
+                logger.warning("Vector store does not support embedding generation")
+                return None
+        except Exception as e:
+            logger.error(f"Failed to generate embedding: {e}")
+            return None
     
     def _get_neighbors(self, node_id: str, rel_types: Optional[List[str]] = None) -> List[str]:
-        """Get neighbors of a node from the graph backend."""
-        # Placeholder - would call actual backend method
-        logger.warning("Using placeholder neighbor retrieval")
-        return []
+        """
+        Get neighbors of a node from the graph backend.
+        
+        Args:
+            node_id: Node identifier
+            rel_types: Optional relationship types to filter by
+            
+        Returns:
+            List of neighbor node IDs
+        """
+        try:
+            # Try different backend methods
+            if hasattr(self.backend, 'get_neighbors'):
+                neighbors = self.backend.get_neighbors(node_id, rel_types=rel_types)
+                if isinstance(neighbors, list):
+                    return neighbors
+            
+            if hasattr(self.backend, 'get_relationships'):
+                # Get all relationships for this node
+                rels = self.backend.get_relationships(node_id)
+                neighbors = []
+                for rel in rels:
+                    # Filter by relationship type if specified
+                    if rel_types is None or rel.get('type') in rel_types:
+                        # Add target node if it's not the source
+                        target = rel.get('target') or rel.get('end_node')
+                        if target and target != node_id:
+                            neighbors.append(target)
+                return neighbors
+            
+            logger.debug(f"Backend does not support neighbor retrieval for node {node_id}")
+            return []
+            
+        except Exception as e:
+            logger.warning(f"Failed to get neighbors for {node_id}: {e}")
+            return []
     
     def clear_cache(self) -> None:
         """Clear the result cache."""
