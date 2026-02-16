@@ -42,11 +42,19 @@ except ImportError:
     
     @dataclass
     class EmbeddingResult:
-        """Fallback EmbeddingResult."""
-        text: str
+        """Fallback EmbeddingResult.
+
+        This mirrors the interface of the real EmbeddingResult used throughout
+        the codebase, exposing both ``chunk_id`` and ``content`` attributes,
+        while remaining backwards compatible with the older fallback that used
+        ``text`` instead of ``content`` and did not define ``chunk_id``.
+        """
         vector: List[float]
+        text: Optional[str] = None
         metadata: Optional[Dict[str, Any]] = None
         id: Optional[str] = None
+        chunk_id: Optional[str] = None
+        content: Optional[str] = None
     
     @dataclass  
     class SearchResult:

@@ -8,7 +8,7 @@ from typing import Optional
 import logging
 
 from ..base import BaseVectorStore
-from .base_bridge.py import VectorStoreBridge, SimpleBridge
+from .base_bridge import VectorStoreBridge, SimpleBridge
 
 logger = logging.getLogger(__name__)
 
