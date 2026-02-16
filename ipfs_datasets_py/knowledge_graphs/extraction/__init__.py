@@ -4,11 +4,11 @@ Knowledge graph extraction package.
 This package contains refactored extraction functionality from
 knowledge_graph_extraction.py (2,969 lines), split into focused modules.
 
-CURRENT STATUS: Active development (Phase 3 Task 3.3)
+CURRENT STATUS: Active development (Phase 3 Task 3.4)
 - types.py: Shared types and imports ✅
 - entities.py: Entity class ✅ EXTRACTED
 - relationships.py: Relationship class ✅ EXTRACTED
-- graph.py: KnowledgeGraph class (planned)
+- graph.py: KnowledgeGraph class ✅ EXTRACTED
 - extractor.py: Extraction logic (planned)
 - validator.py: Validation and SPARQL (planned)
 - wikipedia.py: Wikipedia integration (planned)
@@ -68,12 +68,12 @@ from .types import (
     get_accelerate_status,
 )
 
-# Import core classes (Task 3.3 - Entity & Relationship)
+# Import core classes (Task 3.3 - Entity & Relationship, Task 3.4 - KnowledgeGraph)
 from .entities import Entity
 from .relationships import Relationship
+from .graph import KnowledgeGraph
 
 # Future imports (will be uncommented as modules are created):
-# from .graph import KnowledgeGraph
 # from .extractor import KnowledgeGraphExtractor, KnowledgeGraphExtractorWithValidation
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
@@ -95,15 +95,15 @@ __all__ = [
     'is_accelerate_available',
     'get_accelerate_status',
     
-    # Classes (Task 3.3 - Entity & Relationship extracted)
+    # Classes (Task 3.3 - Entity & Relationship, Task 3.4 - KnowledgeGraph)
     'Entity',
     'Relationship',
-    # 'KnowledgeGraph',  # Task 3.4
+    'KnowledgeGraph',  # Task 3.4 ✅
     # 'KnowledgeGraphExtractor',  # Task 3.5
     # 'KnowledgeGraphExtractorWithValidation',  # Task 3.5
 ]
 
 
 __version__ = '0.1.0'
-__phase__ = 'Phase 3 Task 3.3 - Entity & Relationship Extracted'
+__phase__ = 'Phase 3 Task 3.4 - KnowledgeGraph Extracted'
 __status__ = 'In Development'
