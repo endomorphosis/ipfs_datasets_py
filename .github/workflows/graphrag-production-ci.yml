@@ -40,7 +40,7 @@ jobs:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
-      test:
+  test:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
@@ -162,7 +162,7 @@ jobs:
         flags: unittests
         name: codecov-umbrella
 
-        security:
+  security:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
