@@ -71,8 +71,8 @@ jobs:
         apt-get install -y git curl
     
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1
     - name: Setup GitHub CLI and P2P Cache
       id: gh_setup
       uses: nick-invision/retry@v3
@@ -173,8 +173,8 @@ jobs:
         apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
     
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+      fetch-depth: 1    
     - name: Install Python dependencies
       run: |
         python --version
@@ -259,8 +259,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1    
     - name: Install system dependencies
       run: |
         apt-get update
@@ -303,8 +303,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -339,8 +339,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+      fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -379,8 +379,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1    
     - name: Install security scanning tools
       run: |
         python --version
@@ -418,8 +418,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1    
     - name: Build Docker image
       run: |
         docker build -t ipfs-datasets-pdf:test .
@@ -450,8 +450,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1    
+      with:
+        fetch-depth: 1    
     - name: Test package installation
       run: |
         python --version

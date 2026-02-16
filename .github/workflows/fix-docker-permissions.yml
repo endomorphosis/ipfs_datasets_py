@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Docker Permission Diagnostics
@@ -130,7 +130,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Apply Docker Permission Fix
@@ -168,7 +168,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Test Basic Docker Commands
