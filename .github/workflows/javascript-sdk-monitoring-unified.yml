@@ -41,7 +41,7 @@ permissions:
 jobs:
   javascript-sdk-monitoring:
     uses: ./.github/workflows/templates/error-monitoring-template.yml
-      with:
+    with:
       service_name: "JavaScript SDK"
       service_type: "javascript"
       watch_paths: "ipfs_datasets_py/static/js/"

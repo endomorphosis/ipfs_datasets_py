@@ -45,7 +45,7 @@ concurrency:
 jobs:
   mcp-tools-monitoring:
     uses: ./.github/workflows/templates/error-monitoring-template.yml
-      with:
+    with:
       service_name: "MCP Tools"
       service_type: "mcp-tools"
       watch_paths: "ipfs_datasets_py/mcp_server/tools/,ipfs_datasets_py/mcp_tools/"

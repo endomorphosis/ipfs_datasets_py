@@ -43,7 +43,7 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-      with:
+    with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
@@ -71,7 +71,7 @@ jobs:
         apt-get install -y git curl
     
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Setup GitHub CLI and P2P Cache
       id: gh_setup
@@ -173,7 +173,7 @@ jobs:
         apt-get install -y git curl tesseract-ocr tesseract-ocr-eng
     
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Install Python dependencies
       run: |
@@ -259,7 +259,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Install system dependencies
       run: |
@@ -303,7 +303,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Install dependencies
       run: |
@@ -339,7 +339,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Install dependencies
       run: |
@@ -379,7 +379,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Install security scanning tools
       run: |
@@ -418,7 +418,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Build Docker image
       run: |
@@ -450,7 +450,7 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-        with:
+      with:
           fetch-depth: 1    
     - name: Test package installation
       run: |

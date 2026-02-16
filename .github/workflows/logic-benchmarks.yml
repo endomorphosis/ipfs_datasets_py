@@ -34,12 +34,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-   with:
+      with:
         fetch-depth: 1
     
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
-        with:
+      with:
         python-version: '3.12'
         cache: 'pip'
     

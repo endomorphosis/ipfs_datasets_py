@@ -36,7 +36,7 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-      with:
+    with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
@@ -77,9 +77,10 @@ jobs:
         git config --global --add safe.directory '*'
     
     - uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
+      with:
+        fetch-depth: 1
         submodules: false
+        clean: true
         clean: true
     
     - name: Set up Python
