@@ -16,11 +16,21 @@ Modules:
 - executor: Query execution engine
 - formatter: Result formatting
 - cache: Query caching
+
+Type annotations:
+All modules provide full type hints for IDE support and static analysis.
 """
+
+from typing import TYPE_CHECKING
 
 # Re-export main classes for convenience
 from ipfs_datasets_py.processors.query_engine import QueryEngine
 
+# Type exports
 __all__ = [
     'QueryEngine',
 ]
+
+# Type checking support
+if TYPE_CHECKING:
+    from typing import Any, Dict, List, Optional, Union

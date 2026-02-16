@@ -17,7 +17,12 @@ Modules:
 - context: Context management
 - summarizer: Text summarization
 - multimodal: Multi-modal content handling
+
+Type annotations:
+All modules provide full type hints for IDE support and static analysis.
 """
+
+from typing import TYPE_CHECKING
 
 # Re-export main classes for convenience
 from ipfs_datasets_py.processors.llm_optimizer import (
@@ -30,6 +35,7 @@ from ipfs_datasets_py.processors.llm_optimizer import (
     ChunkOptimizer,
 )
 
+# Type exports
 __all__ = [
     'LLMOptimizer',
     'LLMChunk',
@@ -39,3 +45,7 @@ __all__ = [
     'TextProcessor',
     'ChunkOptimizer',
 ]
+
+# Type checking support
+if TYPE_CHECKING:
+    from typing import Any, Dict, List, Optional, Union
