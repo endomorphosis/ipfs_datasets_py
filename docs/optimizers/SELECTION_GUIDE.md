@@ -140,8 +140,8 @@ python -m ipfs_datasets_py.optimizers.agentic.cli stats
 
 ## Additional Resources
 
-- **Framework Improvements:** [OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md](../../OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md)
-- **Quick Start:** [OPTIMIZER_IMPROVEMENTS_QUICKSTART.md](../../OPTIMIZER_IMPROVEMENTS_QUICKSTART.md)
+- **Framework Improvements:** [OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md](../archive/root_status_reports/OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md)
+- **Quick Start:** [OPTIMIZER_IMPROVEMENTS_QUICKSTART.md](../archive/root_status_reports/OPTIMIZER_IMPROVEMENTS_QUICKSTART.md)
 - **Agentic Docs:** [optimizers/agentic/](../../ipfs_datasets_py/optimizers/agentic/)
 
 ---
