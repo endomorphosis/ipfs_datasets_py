@@ -123,7 +123,7 @@ def query_knowledge_graph(
         # pdf_tools/pdf_query_knowledge_graph.
         # Import unified processor (recommended) with fallback to legacy
         try:
-            from ipfs_datasets_py.processors.graphrag.unified_graphrag import (
+            from ipfs_datasets_py.processors.specialized.graphrag.unified_graphrag import (
                 UnifiedGraphRAGProcessor,
                 GraphRAGConfiguration
             )

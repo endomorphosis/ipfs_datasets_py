@@ -8,7 +8,7 @@ import pytest
 from unittest.mock import Mock, MagicMock, patch
 import warnings
 
-from ipfs_datasets_py.processors.graphrag.adapter import (
+from ipfs_datasets_py.processors.specialized.graphrag.adapter import (
     GraphRAGAdapter,
     create_graphrag_adapter_from_dataset
 )
