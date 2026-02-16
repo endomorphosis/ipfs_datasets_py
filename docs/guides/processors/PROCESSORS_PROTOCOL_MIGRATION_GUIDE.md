@@ -642,7 +642,7 @@ kg["entities"].append(entity_dict)
 
 ## Support
 
-- **Documentation:** See `docs/PROCESSORS_*` files
+- **Documentation:** See `PROCESSORS_*` files
 - **Examples:** Check `examples/processors/` directory
 - **Issues:** Report migration issues on GitHub
 

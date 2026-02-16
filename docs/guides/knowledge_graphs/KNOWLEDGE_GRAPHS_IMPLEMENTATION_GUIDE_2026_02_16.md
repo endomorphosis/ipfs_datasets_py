@@ -777,7 +777,7 @@ Please migrate to the new lineage package:
 
     from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker
 
-See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.
+See KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.
 """
 
 import warnings
@@ -786,7 +786,7 @@ warnings.warn(
     "cross_document_lineage is deprecated. "
     "Use 'from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker' instead. "
     "This module will be removed in version 2.0 (6 months). "
-    "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.",
+    "See KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.",
     DeprecationWarning,
     stacklevel=2
 )

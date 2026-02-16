@@ -296,8 +296,8 @@ print("✓ Migration successful!")
 
 ## Additional Resources
 
-- **Master Refactoring Plan:** `docs/KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md`
-- **Implementation Guide:** `docs/KNOWLEDGE_GRAPHS_IMPLEMENTATION_GUIDE_2026_02_16.md`
+- **Master Refactoring Plan:** `../archive/knowledge_graphs/planning/KNOWLEDGE_GRAPHS_MASTER_REFACTORING_PLAN_2026_02_16.md`
+- **Implementation Guide:** `KNOWLEDGE_GRAPHS_IMPLEMENTATION_GUIDE_2026_02_16.md`
 - **Test Examples:** `tests/unit/knowledge_graphs/lineage/`
 
 ---

@@ -2,12 +2,18 @@
 
 This directory contains historical project reports, completion summaries, and status updates documenting the evolution of the IPFS Datasets Python project.
 
-## Contents (40 files)
+## Contents (44+ files)
 
 ### Phase Completion Reports
 - **Phase 2-8 Completion Summaries** - Major milestone reports
 - **Integration Status Reports** - Feature integration tracking
 - **Final Verification Reports** - Project validation documentation
+
+### Validation & Coverage Reports (Added 2026-02-16)
+- **coverage_phase1.json** - Phase 1 test coverage data (1.1MB)
+- **validation_results.json** - Comprehensive validation results (143KB)
+- **infrastructure_validation_report.json** - Infrastructure validation status
+- **production_readiness_report.json** - Production readiness assessment
 
 ### Feature Reports
 - **GraphRAG Implementation** - Knowledge graph integration reports
@@ -36,6 +42,8 @@ Reports are organized chronologically and by feature area. File naming follows t
 
 The most recent comprehensive report is:
 - **DOCUMENTATION_REFACTORING_2026_01_31.md** - January 31, 2026
+- **infrastructure_validation_report.json** - February 10, 2026 (validation status)
+- **production_readiness_report.json** - February 10, 2026 (readiness assessment)
 
 ## Usage
 

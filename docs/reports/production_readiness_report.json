@@ -1,26 +1,25 @@
 {
-  "timestamp": "2026-01-27T00:02:45.917671",
+  "timestamp": "2026-02-10T04:27:49.724202",
   "overall_status": "NOT_READY",
-  "readiness_score": 81.42857142857143,
+  "readiness_score": 57.14285714285714,
   "summary": {
-    "FAIL": 1,
-    "PASS": 5,
-    "WARNING": 1
+    "FAIL": 3,
+    "PASS": 4
   },
   "results": [
     {
       "name": "Python Dependencies",
       "status": "FAIL",
-      "message": "Missing required packages: sqlalchemy, asyncpg",
+      "message": "Missing required packages: redis",
       "details": null,
       "remediation": "Run: pip install -e '.[all]'"
     },
     {
       "name": "System Dependencies",
-      "status": "PASS",
-      "message": "All required system commands are available",
+      "status": "FAIL",
+      "message": "Missing system commands: docker-compose",
       "details": null,
-      "remediation": null
+      "remediation": "Install missing system packages"
     },
     {
       "name": "Configuration Files",
@@ -31,10 +30,10 @@
     },
     {
       "name": "Security Configuration",
-      "status": "WARNING",
-      "message": "Security issues found: Default credentials found in database initialization",
+      "status": "PASS",
+      "message": "Security configuration looks good",
       "details": null,
-      "remediation": "Review and update default credentials and sensitive values"
+      "remediation": null
     },
     {
       "name": "Docker Configuration",
@@ -45,15 +44,15 @@
     },
     {
       "name": "API Endpoints",
-      "status": "PASS",
-      "message": "Enterprise API file exists",
+      "status": "FAIL",
+      "message": "Enterprise API file not found",
       "details": null,
-      "remediation": null
+      "remediation": "Implement enterprise_api.py with FastAPI endpoints"
     },
     {
       "name": "Test Coverage",
       "status": "PASS",
-      "message": "Found 28 test files",
+      "message": "Found 30 test files",
       "details": null,
       "remediation": null
     }

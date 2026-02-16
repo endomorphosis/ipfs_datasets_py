@@ -324,9 +324,9 @@ python -m ipfs_datasets_py.processors.cli benchmark your_file.pdf
 ### Getting Help
 
 #### Documentation
-- **Migration Guide:** `docs/PROCESSORS_PROTOCOL_MIGRATION_GUIDE.md`
+- **Migration Guide:** `PROCESSORS_PROTOCOL_MIGRATION_GUIDE.md`
 - **Async Summary:** `docs/PROCESSORS_ASYNC_COMPLETE_SUMMARY.md`
-- **Quick Reference:** `docs/PROCESSORS_QUICK_REFERENCE.md`
+- **Quick Reference:** `PROCESSORS_QUICK_REFERENCE.md`
 
 #### Examples
 - **Basic Async:** `examples/processors/08_async_processing.py`
