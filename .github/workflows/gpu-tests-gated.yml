@@ -24,6 +24,11 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   PYTHON_VERSION: '3.12'
@@ -183,6 +188,7 @@ jobs:
     needs: [check-x64-runner]
     if: ${{ needs.check-x64-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
       - name: Checkout repository
@@ -217,6 +223,7 @@ jobs:
     needs: [check-gpu-runner]
     if: ${{ needs.check-gpu-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64, gpu]
+    timeout-minutes: 30
     continue-on-error: true
     
     steps:
@@ -264,6 +271,7 @@ jobs:
     needs: [check-gpu-runner, check-x64-runner, gpu-tests, cpu-tests, gpu-docker-tests]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
       - name: Generate Test Summary

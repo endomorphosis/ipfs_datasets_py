@@ -50,12 +50,17 @@ permissions:
   issues: write
   actions: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false  # Don't cancel auto-healing runs
+
 env:
   PYTHON_VERSION: '3.12'
 
 jobs:
   autofix-with-copilot-agent:
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root

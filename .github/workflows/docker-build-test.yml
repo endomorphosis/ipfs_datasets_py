@@ -28,6 +28,11 @@ permissions:
   contents: read
   packages: write
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   REGISTRY: ghcr.io
@@ -53,6 +58,7 @@ jobs:
     needs: [check-runner-x64]
     if: ${{ needs.check-runner-x64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -111,6 +117,7 @@ jobs:
     needs: [check-runner-x64]
     if: ${{ needs.check-runner-x64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
       - name: System information
@@ -166,6 +173,7 @@ jobs:
     needs: [check-runner-arm64]
     if: ${{ needs.check-runner-arm64.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, arm64]
+    timeout-minutes: 30
     
     steps:
       - name: System information
@@ -221,6 +229,7 @@ jobs:
     needs: [check-runner-x64]
     if: ${{ needs.check-runner-x64.outputs.should_run == 'true' && (github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/main') }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
@@ -286,6 +295,7 @@ jobs:
     needs: [check-runner-x64, check-runner-arm64, test-github-x86, test-self-hosted-x86, test-self-hosted-arm64]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
       - name: Generate summary

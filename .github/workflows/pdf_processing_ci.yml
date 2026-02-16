@@ -20,6 +20,11 @@ on:
 permissions:
   contents: read
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   PYTHON_VERSION: '3.12'
@@ -38,6 +43,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 10
     container:
       image: python:3.12-slim
       options: --user root
@@ -121,6 +127,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 15
     container:
       image: python:3.12-slim
       options: --user root
@@ -222,6 +229,7 @@ jobs:
     needs: [check-runner, unit-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -264,6 +272,7 @@ jobs:
     needs: [check-runner, unit-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -298,6 +307,7 @@ jobs:
     needs: [check-runner, integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -339,6 +349,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
     
     steps:
     - uses: actions/checkout@v5
@@ -376,6 +387,7 @@ jobs:
     needs: [check-runner, integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
     - uses: actions/checkout@v5
@@ -406,6 +418,7 @@ jobs:
     needs: [check-runner, integration-tests, mcp-server-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && github.ref == 'refs/heads/main' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     
     steps:
     - uses: actions/checkout@v5
@@ -466,6 +479,7 @@ jobs:
     needs: [check-runner, lint-and-format, unit-tests, integration-tests, mcp-server-tests]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
     - name: Notify success

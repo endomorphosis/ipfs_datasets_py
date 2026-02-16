@@ -29,6 +29,11 @@ permissions:
   contents: read
   packages: write
   actions: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+
 
 env:
   PYTHON_VERSION: '3.12'
@@ -47,6 +52,7 @@ jobs:
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -104,6 +110,7 @@ jobs:
     needs: [check-runner, basic-integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -164,6 +171,7 @@ jobs:
     needs: [check-runner, basic-integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'tools-only' || github.event.inputs.test_scope == 'comprehensive') }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -221,6 +229,7 @@ jobs:
     needs: [check-runner, basic-integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() && (github.event.inputs.test_scope == 'performance' || github.event_name == 'schedule') }}
     runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
@@ -419,6 +428,7 @@ jobs:
     needs: [check-runner, basic-integration-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' && !cancelled() }}
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     continue-on-error: true
     strategy:
       matrix:
@@ -478,6 +488,7 @@ jobs:
     needs: [check-runner, basic-integration-tests, comprehensive-integration-tests, tools-integration-tests, performance-integration-tests, multi-arch-integration-tests]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     
     steps:
       - name: Download Test Results
