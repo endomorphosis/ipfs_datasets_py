@@ -48,6 +48,7 @@ else:
 from ipfs_datasets_py.processors.storage.ipld import IPLDStorage
 from ipfs_datasets_py.audit import AuditLogger
 from ipfs_datasets_py.monitoring import MonitoringSystem, monitor_context
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
 try:
     from ipfs_datasets_py.processors.graphrag_integrator import GraphRAGIntegrator, KnowledgeGraph, Entity
 except ImportError as e:
@@ -539,6 +540,7 @@ class PDFProcessor:
         return validated_args.pdf_path, validated_args.metadata
 
 
+    @monitor
     async def process_pdf(self, 
                          pdf_path: Union[str, Path], 
                          metadata: Optional[dict[str, Any]] = None) -> dict[str, Any]:

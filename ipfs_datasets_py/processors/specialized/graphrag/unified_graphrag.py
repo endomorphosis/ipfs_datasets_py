@@ -33,6 +33,9 @@ try:
 except ImportError:
     ANYIO_AVAILABLE = False
 
+# Import monitoring decorator
+from ipfs_datasets_py.processors.infrastructure.monitoring import monitor
+
 logger = logging.getLogger(__name__)
 
 
@@ -166,6 +169,7 @@ class UnifiedGraphRAGProcessor:
         
         logger.info(f"UnifiedGraphRAGProcessor initialized (mode={self.config.processing_mode})")
     
+    @monitor
     async def process_website(
         self,
         url: str,
@@ -374,6 +378,7 @@ class UnifiedGraphRAGProcessor:
         result.quality_score = 0.8
         result.completeness_score = 0.9
     
+    @monitor
     async def process_multiple_websites(
         self,
         urls: List[str],
