@@ -97,6 +97,13 @@ from .types import (
     ValidationResult,
     VocabularyType
 )
+# Phase C: RDF Serialization - NEW
+from .rdf_serializer import (
+    TurtleSerializer,
+    TurtleParser,
+    jsonld_to_turtle,
+    turtle_to_jsonld
+)
 
 __all__ = [
     # Translator
@@ -114,6 +121,11 @@ __all__ = [
     "TranslationOptions",
     "ValidationResult",
     "VocabularyType",
+    # RDF Serialization
+    "TurtleSerializer",
+    "TurtleParser",
+    "jsonld_to_turtle",
+    "turtle_to_jsonld",
 ]
 
 # Version info
