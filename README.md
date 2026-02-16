@@ -59,25 +59,6 @@ pip install -e ".[all]"  # All features
 pip install -e ".[ml]"   # ML/AI features only
 ```
 
-#### Optional: Z3 / CVC5 / Lean / Coq theorem provers
-
-Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
-
-- Manual best-effort installer:
-	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
-
-- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
-	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
-	- Fine-grained toggles:
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
-
-Notes:
-- Lean installs via `elan` into your user home.
-- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
-
 ### Basic Usage
 
 ```python
@@ -235,6 +216,25 @@ kg = extractor.extract_knowledge_graph(text)
 print(f"Entities: {kg.entities}")
 print(f"Relationships: {kg.relationships}")
 ```
+
+#### Optional: Z3 / CVC5 / Lean / Coq theorem provers
+
+Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
+
+- Manual best-effort installer:
+	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
+
+- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
+	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
+	- Fine-grained toggles:
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
+
+Notes:
+- Lean installs via `elan` into your user home.
+- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
 
 ## 🤖 MCP Server
 
