@@ -43,7 +43,7 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
+      with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
@@ -107,7 +107,7 @@ jobs:
     - name: Install Python dependencies
       id: pip_install
       uses: nick-invision/retry@v3
-      with:
+        with:
         timeout_minutes: 10
         max_attempts: 3
         retry_on: error
@@ -182,7 +182,7 @@ jobs:
     
     - name: Cache dependencies
       uses: actions/cache@v3
-      with:
+        with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
@@ -241,7 +241,7 @@ jobs:
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
-      with:
+        with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
@@ -285,7 +285,7 @@ jobs:
     - name: Upload integration test artifacts
       if: failure()
       uses: actions/upload-artifact@v4
-      with:
+        with:
         name: integration-test-artifacts
         path: |
           tests/fixtures/test_output/
@@ -365,7 +365,7 @@ jobs:
     - name: Upload benchmark results
       if: always() && hashFiles('benchmark_results.json') != ''
       uses: actions/upload-artifact@v4
-      with:
+        with:
         name: benchmark-results
         path: benchmark_results.json
         if-no-files-found: warn
@@ -402,7 +402,7 @@ jobs:
     
     - name: Upload security reports
       uses: actions/upload-artifact@v4
-      with:
+        with:
         name: security-reports
         path: |
           bandit_report.json

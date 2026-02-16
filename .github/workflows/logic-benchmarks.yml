@@ -34,18 +34,18 @@ jobs:
     
     steps:
     - uses: actions/checkout@v5
-      with:
+   with:
         fetch-depth: 1
     
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
-      with:
+        with:
         python-version: '3.12'
         cache: 'pip'
     
     - name: Cache pip packages
       uses: actions/cache@v3
-      with:
+        with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-3.12-${{ hashFiles('requirements.txt', 'setup.py') }}
         restore-keys: |
@@ -98,7 +98,7 @@ jobs:
     
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
-      with:
+        with:
         name: benchmark-results-py3.12
         path: benchmark_results.json
     
@@ -142,7 +142,7 @@ jobs:
     - name: Comment PR with results
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
-      with:
+        with:
         script: |
           const fs = require('fs');
           const results = JSON.parse(fs.readFileSync('benchmark_results.json', 'utf8'));

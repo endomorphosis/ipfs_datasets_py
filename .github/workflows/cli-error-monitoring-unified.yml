@@ -42,7 +42,7 @@ permissions:
 jobs:
   cli-tools-monitoring:
     uses: ./.github/workflows/templates/error-monitoring-template.yml
-    with:
+      with:
       service_name: "CLI Tools"
       service_type: "cli"
       watch_paths: "ipfs_datasets_cli.py,scripts/cli/"

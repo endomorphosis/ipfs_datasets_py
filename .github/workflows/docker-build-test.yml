@@ -51,14 +51,14 @@ jobs:
   # Check if x64 runners are available
   check-runner-x64:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
+      with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
   
   # Check if ARM64 runners are available
   check-runner-arm64:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
+      with:
       runner_labels: "self-hosted,linux,arm64"
       skip_if_unavailable: true
 

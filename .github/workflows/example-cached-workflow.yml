@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Setup Python
@@ -117,7 +117,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Setup Python
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Setup Python
@@ -252,7 +252,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Setup Python
@@ -306,7 +306,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Setup Python

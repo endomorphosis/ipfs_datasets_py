@@ -52,7 +52,7 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
+      with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 

@@ -42,7 +42,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
 
       - name: Build Docker image on self-hosted runner
@@ -94,7 +94,7 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
 
       - name: Build Docker image on GitHub runner

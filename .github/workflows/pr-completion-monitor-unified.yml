@@ -28,7 +28,7 @@ concurrency:
 jobs:
   monitor:
     uses: ./.github/workflows/templates/pr-monitoring-template.yml
-    with:
+      with:
       monitoring_mode: 'completion'
       pr_number: ${{ inputs.pr_number || '' }}
       force_action: ${{ inputs.force_fix || false }}

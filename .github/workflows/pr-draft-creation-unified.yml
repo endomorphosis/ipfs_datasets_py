@@ -26,7 +26,7 @@ concurrency:
 jobs:
   monitor:
     uses: ./.github/workflows/templates/pr-monitoring-template.yml
-    with:
+      with:
       monitoring_mode: 'draft-creation'
       max_drafts: ${{ inputs.max_drafts || 3 }}
       dry_run: ${{ inputs.dry_run || false }}

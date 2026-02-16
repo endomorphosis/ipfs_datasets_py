@@ -33,7 +33,7 @@ concurrency:
 jobs:
   monitor:
     uses: ./.github/workflows/templates/pr-monitoring-template.yml
-    with:
+      with:
       monitoring_mode: 'progressive'
       pr_number: ${{ inputs.pr_number || '' }}
       force_action: ${{ inputs.force_reassign || false }}
