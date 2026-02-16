@@ -1,8 +1,13 @@
 {
-  "timestamp": "2026-01-27T00:02:47.217072",
-  "status": "PASS",
-  "errors": [],
-  "warnings": [],
+  "timestamp": "2026-02-10T04:27:49.850109",
+  "status": "FAIL",
+  "errors": [
+    "Required environment variable DATABASE_DIR not found in .env.example"
+  ],
+  "warnings": [
+    "docker-compose not available for validation",
+    "kubectl not available for validation"
+  ],
   "checks_run": [
     "docker_compose_config",
     "kubernetes_manifests",
