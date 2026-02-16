@@ -1,334 +1,258 @@
 name: CLI Tools Error Monitoring
-
-on:
+true:
   push:
-    branches: [main, develop]
+    branches:
+    - main
+    - develop
     paths:
-      - 'ipfs_datasets_cli.py'
-      - 'ipfs-datasets'
-      - 'scripts/cli/**'
-      - 'ipfs_datasets_py/error_reporting/**'
-      - '.github/workflows/cli-error-monitoring.yml'
+    - ipfs_datasets_cli.py
+    - ipfs-datasets
+    - scripts/cli/**
+    - ipfs_datasets_py/error_reporting/**
+    - .github/workflows/cli-error-monitoring.yml
   pull_request:
-    branches: [main, develop]
+    branches:
+    - main
+    - develop
   workflow_dispatch:
     inputs:
       test_mode:
-        description: 'Test mode to run'
+        description: Test mode to run
         required: true
-        default: 'comprehensive'
+        default: comprehensive
         type: choice
         options:
-          - basic
-          - comprehensive
-          - stress
+        - basic
+        - comprehensive
+        - stress
   schedule:
-    # Run CLI error monitoring daily at 4 AM UTC
-    - cron: '0 4 * * *'
-
-
+  - cron: 0 4 * * *
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
   issues: write
   actions: read
-
 env:
   PYTHON_VERSION: '3.12'
   ERROR_REPORTING_ENABLED: 'true'
-
 jobs:
-  # Basic CLI functionality tests
   cli-smoke-tests:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git
-          pip install --upgrade pip
-          pip install -e .[test]
-      
-      - name: Test CLI Basic Commands
-        id: basic_tests
-        continue-on-error: true
-        run: |
-          echo "🧪 Testing basic CLI commands..."
-          
-          # Test help command
-          ./ipfs-datasets --help || echo "help_failed=true" >> $GITHUB_OUTPUT
-          
-          # Test info status command
-          ./ipfs-datasets info status || echo "status_failed=true" >> $GITHUB_OUTPUT
-          
-          # Test list categories
-          python ipfs_datasets_cli.py --list-categories || echo "categories_failed=true" >> $GITHUB_OUTPUT
-      
-      - name: Capture CLI Errors
-        if: steps.basic_tests.outputs.help_failed == 'true' || steps.basic_tests.outputs.status_failed == 'true' || steps.basic_tests.outputs.categories_failed == 'true'
-        run: |
-          echo "CLI_ERRORS_DETECTED=true" >> $GITHUB_ENV
-          echo "## ⚠️ CLI Errors Detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Basic CLI commands failed. Auto-healing will be triggered." >> $GITHUB_STEP_SUMMARY
-      
-      - name: Upload CLI Test Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cli-smoke-test-logs
-          path: |
-            *.log
-            /tmp/*.log
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Install dependencies
+      run: 'apt-get update
 
-  # Comprehensive CLI tests with error capture
+        apt-get install -y git
+
+        pip install --upgrade pip
+
+        pip install -e .[test]
+
+        '
+    - name: Test CLI Basic Commands
+      id: basic_tests
+      continue-on-error: true
+      run: "echo \"\U0001F9EA Testing basic CLI commands...\"\n\n# Test help command\n./ipfs-datasets --help || echo \"help_failed=true\"\
+        \ >> $GITHUB_OUTPUT\n\n# Test info status command\n./ipfs-datasets info status || echo \"status_failed=true\" >> $GITHUB_OUTPUT\n\
+        \n# Test list categories\npython ipfs_datasets_cli.py --list-categories || echo \"categories_failed=true\" >> $GITHUB_OUTPUT\n"
+    - name: Capture CLI Errors
+      if: steps.basic_tests.outputs.help_failed == 'true' || steps.basic_tests.outputs.status_failed == 'true' || steps.basic_tests.outputs.categories_failed
+        == 'true'
+      run: "echo \"CLI_ERRORS_DETECTED=true\" >> $GITHUB_ENV\necho \"## \u26A0\uFE0F CLI Errors Detected\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"\" >> $GITHUB_STEP_SUMMARY\necho \"Basic CLI commands failed. Auto-healing will be triggered.\" >> $GITHUB_STEP_SUMMARY\n"
+    - name: Upload CLI Test Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cli-smoke-test-logs
+        path: '*.log
+
+          /tmp/*.log
+
+          '
   cli-comprehensive-tests:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
     needs: cli-smoke-tests
-    if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch') }}
-    
+    if: ${{ !cancelled() && (github.event.inputs.test_mode == 'comprehensive' || github.event_name != 'workflow_dispatch')
+      }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git gh curl
-          pip install --upgrade pip
-          pip install -e .[test,all]
-      
-      - name: Test Enhanced CLI
-        id: enhanced_cli
-        continue-on-error: true
-        run: |
-          echo "🔧 Testing enhanced CLI..."
-          mkdir -p test-results
-          
-          # Test enhanced CLI tool listing
-          python scripts/cli/enhanced_cli.py --list-categories > test-results/enhanced-cli-categories.log 2>&1 || echo "enhanced_cli_failed=true" >> $GITHUB_OUTPUT
-          
-          # Test tool execution
-          python scripts/cli/enhanced_cli.py dataset_tools --help > test-results/enhanced-cli-dataset-tools.log 2>&1 || echo "dataset_tools_failed=true" >> $GITHUB_OUTPUT
-      
-      - name: Test MCP CLI
-        id: mcp_cli
-        continue-on-error: true
-        run: |
-          echo "🎛️ Testing MCP CLI..."
-          
-          # Test MCP CLI basic commands
-          python scripts/cli/mcp_cli.py --help > test-results/mcp-cli-help.log 2>&1 || echo "mcp_cli_failed=true" >> $GITHUB_OUTPUT
-      
-      - name: Test Integrated CLI
-        id: integrated_cli
-        continue-on-error: true
-        run: |
-          echo "🔗 Testing integrated CLI..."
-          
-          python scripts/cli/integrated_cli.py --version > test-results/integrated-cli-version.log 2>&1 || echo "integrated_cli_failed=true" >> $GITHUB_OUTPUT
-      
-      - name: Analyze CLI Failures
-        if: steps.enhanced_cli.outputs.enhanced_cli_failed == 'true' || steps.mcp_cli.outputs.mcp_cli_failed == 'true' || steps.integrated_cli.outputs.integrated_cli_failed == 'true'
-        run: |
-          echo "## ❌ CLI Test Failures Detected" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Failed Components" >> $GITHUB_STEP_SUMMARY
-          
-          [ "${{ steps.enhanced_cli.outputs.enhanced_cli_failed }}" = "true" ] && echo "- Enhanced CLI" >> $GITHUB_STEP_SUMMARY
-          [ "${{ steps.mcp_cli.outputs.mcp_cli_failed }}" = "true" ] && echo "- MCP CLI" >> $GITHUB_STEP_SUMMARY
-          [ "${{ steps.integrated_cli.outputs.integrated_cli_failed }}" = "true" ] && echo "- Integrated CLI" >> $GITHUB_STEP_SUMMARY
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Auto-healing workflow will be triggered to fix these issues." >> $GITHUB_STEP_SUMMARY
-      
-      - name: Upload Comprehensive Test Logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cli-comprehensive-test-logs
-          path: test-results/
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Install dependencies
+      run: 'apt-get update
 
-  # CLI error reporting integration test
+        apt-get install -y git gh curl
+
+        pip install --upgrade pip
+
+        pip install -e .[test,all]
+
+        '
+    - name: Test Enhanced CLI
+      id: enhanced_cli
+      continue-on-error: true
+      run: "echo \"\U0001F527 Testing enhanced CLI...\"\nmkdir -p test-results\n\n# Test enhanced CLI tool listing\npython\
+        \ scripts/cli/enhanced_cli.py --list-categories > test-results/enhanced-cli-categories.log 2>&1 || echo \"enhanced_cli_failed=true\"\
+        \ >> $GITHUB_OUTPUT\n\n# Test tool execution\npython scripts/cli/enhanced_cli.py dataset_tools --help > test-results/enhanced-cli-dataset-tools.log\
+        \ 2>&1 || echo \"dataset_tools_failed=true\" >> $GITHUB_OUTPUT\n"
+    - name: Test MCP CLI
+      id: mcp_cli
+      continue-on-error: true
+      run: "echo \"\U0001F39B\uFE0F Testing MCP CLI...\"\n\n# Test MCP CLI basic commands\npython scripts/cli/mcp_cli.py --help\
+        \ > test-results/mcp-cli-help.log 2>&1 || echo \"mcp_cli_failed=true\" >> $GITHUB_OUTPUT\n"
+    - name: Test Integrated CLI
+      id: integrated_cli
+      continue-on-error: true
+      run: "echo \"\U0001F517 Testing integrated CLI...\"\n\npython scripts/cli/integrated_cli.py --version > test-results/integrated-cli-version.log\
+        \ 2>&1 || echo \"integrated_cli_failed=true\" >> $GITHUB_OUTPUT\n"
+    - name: Analyze CLI Failures
+      if: steps.enhanced_cli.outputs.enhanced_cli_failed == 'true' || steps.mcp_cli.outputs.mcp_cli_failed == 'true' || steps.integrated_cli.outputs.integrated_cli_failed
+        == 'true'
+      run: "echo \"## \u274C CLI Test Failures Detected\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho\
+        \ \"### Failed Components\" >> $GITHUB_STEP_SUMMARY\n\n[ \"${{ steps.enhanced_cli.outputs.enhanced_cli_failed }}\"\
+        \ = \"true\" ] && echo \"- Enhanced CLI\" >> $GITHUB_STEP_SUMMARY\n[ \"${{ steps.mcp_cli.outputs.mcp_cli_failed }}\"\
+        \ = \"true\" ] && echo \"- MCP CLI\" >> $GITHUB_STEP_SUMMARY\n[ \"${{ steps.integrated_cli.outputs.integrated_cli_failed\
+        \ }}\" = \"true\" ] && echo \"- Integrated CLI\" >> $GITHUB_STEP_SUMMARY\n\necho \"\" >> $GITHUB_STEP_SUMMARY\necho\
+        \ \"Auto-healing workflow will be triggered to fix these issues.\" >> $GITHUB_STEP_SUMMARY\n"
+    - name: Upload Comprehensive Test Logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: cli-comprehensive-test-logs
+        path: test-results/
   cli-error-reporting-test:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
     needs: cli-smoke-tests
     if: ${{ !cancelled() }}
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git
-          pip install --upgrade pip
-          pip install -e .[test]
-      
-      - name: Test CLI Error Reporter
-        run: |
-          echo "📊 Testing CLI error reporter..."
-          python -c "
-          from ipfs_datasets_py.error_reporting.cli_error_reporter import CLIErrorReporter
-          
-          # Test error reporter instantiation
-          reporter = CLIErrorReporter()
-          print('✅ CLI Error Reporter initialized successfully')
-          
-          # Test error formatting
-          try:
-              raise ValueError('Test CLI error')
-          except Exception as e:
-              error_report = reporter.format_cli_error(
-                  error=e,
-                  command='ipfs-datasets',
-                  args=['test', 'command'],
-                  logs='Test log output'
-              )
-              
-              assert 'source' in error_report
-              assert error_report['source'] == 'cli_tool'
-              assert 'error_type' in error_report
-              assert 'stack_trace' in error_report
-              
-              print('✅ Error formatting working correctly')
-          
-          # Test GitHub issue body generation
-          issue_body = reporter.create_github_issue_body(error_report)
-          assert 'CLI Tool Error Report' in issue_body
-          assert error_report['command'] in issue_body
-          
-          print('✅ GitHub issue body generation working')
-          print('✅ All CLI error reporter tests passed')
-          "
-      
-      - name: Test Error Reporter Integration
-        env:
-          ERROR_REPORTING_ENABLED: 'false'
-        run: |
-          echo "🔗 Testing error reporter integration..."
-          python -c "
-          import sys
-          
-          # Test that error reporter is installed in CLI
-          from ipfs_datasets_cli import install_cli_error_handler
-          
-          # Should not fail even with error reporting disabled
-          install_cli_error_handler()
-          print('✅ Error reporter integration test passed')
-          " || echo "Integration test completed"
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Install dependencies
+      run: 'apt-get update
 
-  # Stress test CLI with multiple operations
+        apt-get install -y git
+
+        pip install --upgrade pip
+
+        pip install -e .[test]
+
+        '
+    - name: Test CLI Error Reporter
+      run: "echo \"\U0001F4CA Testing CLI error reporter...\"\npython -c \"\nfrom ipfs_datasets_py.error_reporting.cli_error_reporter\
+        \ import CLIErrorReporter\n\n# Test error reporter instantiation\nreporter = CLIErrorReporter()\nprint('\u2705 CLI\
+        \ Error Reporter initialized successfully')\n\n# Test error formatting\ntry:\n    raise ValueError('Test CLI error')\n\
+        except Exception as e:\n    error_report = reporter.format_cli_error(\n        error=e,\n        command='ipfs-datasets',\n\
+        \        args=['test', 'command'],\n        logs='Test log output'\n    )\n    \n    assert 'source' in error_report\n\
+        \    assert error_report['source'] == 'cli_tool'\n    assert 'error_type' in error_report\n    assert 'stack_trace'\
+        \ in error_report\n    \n    print('\u2705 Error formatting working correctly')\n\n# Test GitHub issue body generation\n\
+        issue_body = reporter.create_github_issue_body(error_report)\nassert 'CLI Tool Error Report' in issue_body\nassert\
+        \ error_report['command'] in issue_body\n\nprint('\u2705 GitHub issue body generation working')\nprint('\u2705 All\
+        \ CLI error reporter tests passed')\n\"\n"
+    - name: Test Error Reporter Integration
+      env:
+        ERROR_REPORTING_ENABLED: 'false'
+      run: "echo \"\U0001F517 Testing error reporter integration...\"\npython -c \"\nimport sys\n\n# Test that error reporter\
+        \ is installed in CLI\nfrom ipfs_datasets_cli import install_cli_error_handler\n\n# Should not fail even with error\
+        \ reporting disabled\ninstall_cli_error_handler()\nprint('\u2705 Error reporter integration test passed')\n\" || echo\
+        \ \"Integration test completed\"\n"
   cli-stress-test:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 45
     container:
       image: python:3.12-slim
       options: --user root
     needs: cli-comprehensive-tests
     if: ${{ !cancelled() && github.event.inputs.test_mode == 'stress' }}
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git
-          pip install --upgrade pip
-          pip install -e .[test,all]
-      
-      - name: Stress Test CLI Commands
-        continue-on-error: true
-        run: |
-          echo "⚡ Running CLI stress tests..."
-          
-          # Run multiple CLI commands in sequence
-          for i in {1..10}; do
-            echo "Iteration $i..."
-            ./ipfs-datasets --help > /dev/null 2>&1 || echo "Iteration $i failed"
-            python scripts/cli/enhanced_cli.py --list-categories > /dev/null 2>&1 || echo "Enhanced CLI iteration $i failed"
-            sleep 1
-          done
-          
-          echo "✅ Stress test completed"
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Install dependencies
+      run: 'apt-get update
 
-  # Generate comprehensive test summary
+        apt-get install -y git
+
+        pip install --upgrade pip
+
+        pip install -e .[test,all]
+
+        '
+    - name: Stress Test CLI Commands
+      continue-on-error: true
+      run: "echo \"\u26A1 Running CLI stress tests...\"\n\n# Run multiple CLI commands in sequence\nfor i in {1..10}; do\n\
+        \  echo \"Iteration $i...\"\n  ./ipfs-datasets --help > /dev/null 2>&1 || echo \"Iteration $i failed\"\n  python scripts/cli/enhanced_cli.py\
+        \ --list-categories > /dev/null 2>&1 || echo \"Enhanced CLI iteration $i failed\"\n  sleep 1\ndone\n\necho \"\u2705\
+        \ Stress test completed\"\n"
   cli-monitoring-summary:
-    runs-on: [self-hosted, linux, x64]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 30
     container:
       image: python:3.12-slim
       options: --user root
-    needs: [cli-smoke-tests, cli-comprehensive-tests, cli-error-reporting-test]
+    needs:
+    - cli-smoke-tests
+    - cli-comprehensive-tests
+    - cli-error-reporting-test
     if: always()
-    
     steps:
-      - name: Generate CLI Monitoring Summary
-        run: |
-          echo "## 🔧 CLI Tools Error Monitoring Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Suite Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Suite | Status | Description |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|--------|-------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Smoke Tests | ${{ needs.cli-smoke-tests.result }} | Basic CLI functionality |" >> $GITHUB_STEP_SUMMARY
-          echo "| Comprehensive Tests | ${{ needs.cli-comprehensive-tests.result }} | All CLI tool variations |" >> $GITHUB_STEP_SUMMARY
-          echo "| Error Reporting Test | ${{ needs.cli-error-reporting-test.result }} | Error capture and reporting |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Add analysis
-          echo "### Analysis" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.cli-smoke-tests.result }}" = "success" ]; then
-            echo "✅ **Smoke Tests**: Basic CLI functionality is working" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Smoke Tests**: Critical CLI issues detected - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [ "${{ needs.cli-comprehensive-tests.result }}" = "success" ]; then
-            echo "✅ **Comprehensive Tests**: All CLI tools are functional" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **Comprehensive Tests**: Some CLI tools have issues - auto-healing triggered" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [ "${{ needs.cli-error-reporting-test.result }}" = "success" ]; then
-            echo "✅ **Error Reporting**: CLI error capture is working correctly" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **Error Reporting**: Issues with error capture system" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "- Failed workflows will trigger auto-healing via copilot-agent-autofix" >> $GITHUB_STEP_SUMMARY
-          echo "- GitHub issues will be created automatically for detected failures" >> $GITHUB_STEP_SUMMARY
-          echo "- Draft PRs will be generated with Copilot integration" >> $GITHUB_STEP_SUMMARY
+    - name: Generate CLI Monitoring Summary
+      run: "echo \"## \U0001F527 CLI Tools Error Monitoring Results\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"### Test Suite Results\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"| Test Suite |\
+        \ Status | Description |\" >> $GITHUB_STEP_SUMMARY\necho \"|------------|--------|-------------|\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"| Smoke Tests | ${{ needs.cli-smoke-tests.result }} | Basic CLI functionality |\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"| Comprehensive Tests | ${{ needs.cli-comprehensive-tests.result }} | All CLI tool variations |\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"| Error Reporting Test | ${{ needs.cli-error-reporting-test.result }} | Error capture and reporting |\" >>\
+        \ $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\n# Add analysis\necho \"### Analysis\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"\" >> $GITHUB_STEP_SUMMARY\n\nif [ \"${{ needs.cli-smoke-tests.result }}\" = \"success\" ]; then\n  echo \"\
+        \u2705 **Smoke Tests**: Basic CLI functionality is working\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u274C **Smoke\
+        \ Tests**: Critical CLI issues detected - auto-healing triggered\" >> $GITHUB_STEP_SUMMARY\nfi\n\nif [ \"${{ needs.cli-comprehensive-tests.result\
+        \ }}\" = \"success\" ]; then\n  echo \"\u2705 **Comprehensive Tests**: All CLI tools are functional\" >> $GITHUB_STEP_SUMMARY\n\
+        else\n  echo \"\u26A0\uFE0F **Comprehensive Tests**: Some CLI tools have issues - auto-healing triggered\" >> $GITHUB_STEP_SUMMARY\n\
+        fi\n\nif [ \"${{ needs.cli-error-reporting-test.result }}\" = \"success\" ]; then\n  echo \"\u2705 **Error Reporting**:\
+        \ CLI error capture is working correctly\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u26A0\uFE0F **Error Reporting**:\
+        \ Issues with error capture system\" >> $GITHUB_STEP_SUMMARY\nfi\n\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"###\
+        \ Next Steps\" >> $GITHUB_STEP_SUMMARY\necho \"- Failed workflows will trigger auto-healing via copilot-agent-autofix\"\
+        \ >> $GITHUB_STEP_SUMMARY\necho \"- GitHub issues will be created automatically for detected failures\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"- Draft PRs will be generated with Copilot integration\" >> $GITHUB_STEP_SUMMARY\n"

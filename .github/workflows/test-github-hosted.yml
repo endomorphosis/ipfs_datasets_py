@@ -1,64 +1,48 @@
 name: Test PR Review with GitHub-Hosted Runner
-
-on:
+true:
   workflow_dispatch:
     inputs:
       pr_number:
-        description: 'PR number to analyze'
+        description: PR number to analyze
         required: true
         type: string
-
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
   pull-requests: write
   issues: read
-
 env:
   PYTHON_VERSION: '3.12'
-
 jobs:
   test-github-hosted:
-    runs-on: ubuntu-latest  # Use GitHub-hosted runner instead of self-hosted
-    
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install PyYAML requests
-      
-      - name: Get PR details
-        id: get_pr
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER="${{ github.event.inputs.pr_number }}"
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          
-          # Get PR details
-          PR_DATA=$(gh pr view "$PR_NUMBER" --json title,body,number,author,isDraft,state)
-          
-          PR_TITLE=$(echo "$PR_DATA" | python -c "import sys, json; print(json.load(sys.stdin)['title'])")
-          echo "pr_title=$PR_TITLE" >> $GITHUB_OUTPUT
-          
-          echo "✅ Successfully accessed PR #$PR_NUMBER: $PR_TITLE"
-      
-      - name: Test completed
-        run: |
-          echo "✅ GitHub-hosted runner works without permission errors!"
-          echo "PR #${{ steps.get_pr.outputs.pr_number }}: ${{ steps.get_pr.outputs.pr_title }}"
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: pip
+    - name: Install dependencies
+      run: 'python -m pip install --upgrade pip
+
+        pip install PyYAML requests
+
+        '
+    - name: Get PR details
+      id: get_pr
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "PR_NUMBER=\"${{ github.event.inputs.pr_number }}\"\necho \"pr_number=$PR_NUMBER\" >> $GITHUB_OUTPUT\n\n# Get PR\
+        \ details\nPR_DATA=$(gh pr view \"$PR_NUMBER\" --json title,body,number,author,isDraft,state)\n\nPR_TITLE=$(echo \"\
+        $PR_DATA\" | python -c \"import sys, json; print(json.load(sys.stdin)['title'])\")\necho \"pr_title=$PR_TITLE\" >>\
+        \ $GITHUB_OUTPUT\n\necho \"\u2705 Successfully accessed PR #$PR_NUMBER: $PR_TITLE\"\n"
+    - name: Test completed
+      run: "echo \"\u2705 GitHub-hosted runner works without permission errors!\"\necho \"PR #${{ steps.get_pr.outputs.pr_number\
+        \ }}: ${{ steps.get_pr.outputs.pr_title }}\"\n"

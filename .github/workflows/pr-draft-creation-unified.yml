@@ -1,10 +1,9 @@
 name: PR Draft Creation Monitor (Unified)
 permissions:
   contents: read
-
-on:
+true:
   schedule:
-    - cron: '*/10 * * * *'  # Every 10 minutes
+  - cron: '*/10 * * * *'
   workflow_dispatch:
     inputs:
       max_drafts:
@@ -13,22 +12,20 @@ on:
         type: number
         default: 3
       dry_run:
-        description: 'Dry run mode (no actual changes)'
+        description: Dry run mode (no actual changes)
         required: false
         type: boolean
         default: false
-
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   monitor:
+    timeout-minutes: 30
     uses: ./.github/workflows/templates/pr-monitoring-template.yml
     with:
-      monitoring_mode: 'draft-creation'
+      monitoring_mode: draft-creation
       max_drafts: ${{ inputs.max_drafts || 3 }}
       dry_run: ${{ inputs.dry_run || false }}
-      schedule_interval: 'Every 10 minutes'
+      schedule_interval: Every 10 minutes
     secrets: inherit

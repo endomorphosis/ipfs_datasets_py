@@ -1,316 +1,219 @@
-# GPU-Enabled Tests Workflow
-#
-# Purpose: Run GPU-accelerated tests with hardware acceleration validation
-# Triggers: Push to main, PRs (on relevant paths), manual dispatch
-# Duration: ~30-40 minutes
-# Maintainer: AI/ML team
-# Dependencies: GPU runners (CUDA), Python 3.12, PyTorch
-# Related: gpu-tests.yml, test-datasets-runner.yml
-
 name: GPU-Enabled Tests (with Runner Gating)
-
-on:
+true:
   push:
-    branches: [main, develop]
+    branches:
+    - main
+    - develop
     paths:
-      - 'ipfs_datasets_py/**'
-      - 'tests/**'
-      - '.github/workflows/gpu-tests.yml'
+    - ipfs_datasets_py/**
+    - tests/**
+    - .github/workflows/gpu-tests.yml
   pull_request:
-    branches: [main, develop]
+    branches:
+    - main
+    - develop
   workflow_dispatch:
     inputs:
       test_suite:
-        description: 'Test suite to run'
+        description: Test suite to run
         required: true
-        default: 'gpu'
+        default: gpu
         type: choice
         options:
-          - gpu
-          - cpu
-          - all
-
+        - gpu
+        - cpu
+        - all
 permissions:
   contents: read
   actions: read
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
-
-
 env:
   PYTHON_VERSION: '3.12'
-
 jobs:
-  # Check if GPU runners are available
   check-gpu-runner:
-    uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
-      runner_labels: "self-hosted,linux,x64,gpu"
-      skip_if_unavailable: true
-  
-  # Check if standard x64 runners are available
-  check-x64-runner:
-    uses: ./.github/workflows/templates/check-runner-availability.yml
-    with:
-      runner_labels: "self-hosted,linux,x64"
-      skip_if_unavailable: true
-
-  # GPU tests on self-hosted runner
-  gpu-tests:
-    needs: [check-gpu-runner]
-    if: ${{ needs.check-gpu-runner.outputs.should_run == 'true' }}
-    runs-on: [self-hosted, linux, x64, gpu]
-    timeout-minutes: 60
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: System Information
-        run: |
-          echo "## 🎮 GPU Runner Information" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Hardware" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### CUDA" >> $GITHUB_STEP_SUMMARY
-          echo "- CUDA Version: $(nvidia-smi | grep "CUDA Version" | awk '{print $9}')" >> $GITHUB_STEP_SUMMARY
-          echo "- GPU Count: $(nvidia-smi --list-gpus | wc -l)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .[test]
-          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-          pip install pytest pytest-cov pytest-xdist
-      
-      - name: Verify GPU Access
-        run: |
-          python -c "
-          import torch
-          print(f'PyTorch version: {torch.__version__}')
-          print(f'CUDA available: {torch.cuda.is_available()}')
-          print(f'CUDA version: {torch.version.cuda}')
-          print(f'GPU count: {torch.cuda.device_count()}')
-          if torch.cuda.is_available():
-              for i in range(torch.cuda.device_count()):
-                  print(f'GPU {i}: {torch.cuda.get_device_name(i)}')
-                  print(f'  Memory: {torch.cuda.get_device_properties(i).total_memory / 1024**3:.2f} GB')
-          "
-      
-      - name: Test MCP GPU Tools
-        run: |
-          echo "🔧 Testing MCP GPU-enabled tools..."
-          python -c "
-          import torch
-          from ipfs_datasets_py.mcp_server.tools import get_all_tools
-          
-          print(f'CUDA Available: {torch.cuda.is_available()}')
-          if torch.cuda.is_available():
-              print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB')
-          
-          # Test GPU-specific MCP tools
-          tools = get_all_tools()
-          gpu_tools = [name for name in tools.keys() if 'gpu' in name.lower() or 'cuda' in name.lower()]
-          print(f'GPU-enabled MCP tools: {gpu_tools}')
-          "
-      
-      - name: Run GPU Tests
-        run: |
-          # Create GPU test results directory
-          mkdir -p gpu_test_results
-          
-          # Run comprehensive GPU tests
-          pytest tests/ -v \
-            -m "gpu" \
-            --cov=ipfs_datasets_py \
-            --cov-report=xml:gpu_test_results/coverage.xml \
-            --cov-report=term \
-            --junit-xml=gpu_test_results/gpu-test-results.xml \
-            --tb=short \
-            --maxfail=5 \
-            || echo "Some GPU tests failed, but continuing..."
-          
-          # Test specific GPU functionalities
-          python -c "
-          import sys
-          import torch
-          import numpy as np
-          from pathlib import Path
-          
-          # Test GPU memory allocation
-          try:
-              if torch.cuda.is_available():
-                  # Test memory allocation
-                  x = torch.randn(1000, 1000, device='cuda')
-                  y = torch.randn(1000, 1000, device='cuda')
-                  z = torch.matmul(x, y)
-                  print('✅ GPU matrix operations successful')
-                  
-                  # Test memory cleanup
-                  del x, y, z
-                  torch.cuda.empty_cache()
-                  print('✅ GPU memory cleanup successful')
-              else:
-                  print('⚠️ CUDA not available, skipping GPU-specific tests')
-          except Exception as e:
-              print(f'❌ GPU test failed: {e}')
-              sys.exit(1)
-          "
-        env:
-          CUDA_VISIBLE_DEVICES: "0,1"
-          PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
-          CUDA_LAUNCH_BLOCKING: "1"
-      
-      - name: Upload GPU Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: gpu-test-results
-          path: |
-            gpu_test_results/gpu-test-results.xml
-            gpu_test_results/coverage.xml
-      
-      - name: GPU Memory Summary
-        if: always()
-        run: |
-          echo "## 📊 GPU Memory Usage" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-
-  # CPU-only tests on self-hosted runner
-  cpu-tests:
-    needs: [check-x64-runner]
-    if: ${{ needs.check-x64-runner.outputs.should_run == 'true' }}
-    runs-on: [self-hosted, linux, x64]
     timeout-minutes: 30
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build CPU Test Docker Image
-        run: |
-          docker build -f docker/Dockerfile.cpu-tests -t ipfs-datasets-cpu-tests:latest .
-      
-      - name: Run CPU Tests in Docker
-        run: |
-          docker run --rm \
-            -v $(pwd)/test-results:/app/test-results \
-            ipfs-datasets-cpu-tests:latest
-      
-      - name: Upload CPU Test Results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: cpu-test-results
-          path: |
-            test-results/cpu-test-results.xml
-            test-results/coverage.xml
-
-  # Docker tests with GPU support
-  gpu-docker-tests:
-    needs: [check-gpu-runner]
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: self-hosted,linux,x64,gpu
+      skip_if_unavailable: true
+  check-x64-runner:
+    timeout-minutes: 20
+    uses: ./.github/workflows/templates/check-runner-availability.yml
+    with:
+      runner_labels: self-hosted,linux,x64
+      skip_if_unavailable: true
+  gpu-tests:
+    needs:
+    - check-gpu-runner
     if: ${{ needs.check-gpu-runner.outputs.should_run == 'true' }}
-    runs-on: [self-hosted, linux, x64, gpu]
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    - gpu
+    timeout-minutes: 60
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: System Information
+      run: "echo \"## \U0001F3AE GPU Runner Information\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho\
+        \ \"### Hardware\" >> $GITHUB_STEP_SUMMARY\necho \"\\`\\`\\`\" >> $GITHUB_STEP_SUMMARY\nnvidia-smi --query-gpu=name,driver_version,memory.total\
+        \ --format=csv,noheader >> $GITHUB_STEP_SUMMARY\necho \"\\`\\`\\`\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"### CUDA\" >> $GITHUB_STEP_SUMMARY\necho \"- CUDA Version: $(nvidia-smi | grep \"CUDA Version\" | awk '{print\
+        \ $9}')\" >> $GITHUB_STEP_SUMMARY\necho \"- GPU Count: $(nvidia-smi --list-gpus | wc -l)\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"\" >> $GITHUB_STEP_SUMMARY\n"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: pip
+    - name: Install dependencies
+      run: 'python -m pip install --upgrade pip
+
+        pip install -e .[test]
+
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+        pip install pytest pytest-cov pytest-xdist
+
+        '
+    - name: Verify GPU Access
+      run: "python -c \"\nimport torch\nprint(f'PyTorch version: {torch.__version__}')\nprint(f'CUDA available: {torch.cuda.is_available()}')\n\
+        print(f'CUDA version: {torch.version.cuda}')\nprint(f'GPU count: {torch.cuda.device_count()}')\nif torch.cuda.is_available():\n\
+        \    for i in range(torch.cuda.device_count()):\n        print(f'GPU {i}: {torch.cuda.get_device_name(i)}')\n    \
+        \    print(f'  Memory: {torch.cuda.get_device_properties(i).total_memory / 1024**3:.2f} GB')\n\"\n"
+    - name: Test MCP GPU Tools
+      run: "echo \"\U0001F527 Testing MCP GPU-enabled tools...\"\npython -c \"\nimport torch\nfrom ipfs_datasets_py.mcp_server.tools\
+        \ import get_all_tools\n\nprint(f'CUDA Available: {torch.cuda.is_available()}')\nif torch.cuda.is_available():\n \
+        \   print(f'GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB')\n\n# Test GPU-specific\
+        \ MCP tools\ntools = get_all_tools()\ngpu_tools = [name for name in tools.keys() if 'gpu' in name.lower() or 'cuda'\
+        \ in name.lower()]\nprint(f'GPU-enabled MCP tools: {gpu_tools}')\n\"\n"
+    - name: Run GPU Tests
+      run: "# Create GPU test results directory\nmkdir -p gpu_test_results\n\n# Run comprehensive GPU tests\npytest tests/\
+        \ -v \\\n  -m \"gpu\" \\\n  --cov=ipfs_datasets_py \\\n  --cov-report=xml:gpu_test_results/coverage.xml \\\n  --cov-report=term\
+        \ \\\n  --junit-xml=gpu_test_results/gpu-test-results.xml \\\n  --tb=short \\\n  --maxfail=5 \\\n  || echo \"Some\
+        \ GPU tests failed, but continuing...\"\n\n# Test specific GPU functionalities\npython -c \"\nimport sys\nimport torch\n\
+        import numpy as np\nfrom pathlib import Path\n\n# Test GPU memory allocation\ntry:\n    if torch.cuda.is_available():\n\
+        \        # Test memory allocation\n        x = torch.randn(1000, 1000, device='cuda')\n        y = torch.randn(1000,\
+        \ 1000, device='cuda')\n        z = torch.matmul(x, y)\n        print('\u2705 GPU matrix operations successful')\n\
+        \        \n        # Test memory cleanup\n        del x, y, z\n        torch.cuda.empty_cache()\n        print('\u2705\
+        \ GPU memory cleanup successful')\n    else:\n        print('\u26A0\uFE0F CUDA not available, skipping GPU-specific\
+        \ tests')\nexcept Exception as e:\n    print(f'\u274C GPU test failed: {e}')\n    sys.exit(1)\n\"\n"
+      env:
+        CUDA_VISIBLE_DEVICES: 0,1
+        PYTORCH_CUDA_ALLOC_CONF: max_split_size_mb:512
+        CUDA_LAUNCH_BLOCKING: '1'
+    - name: Upload GPU Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: gpu-test-results
+        path: 'gpu_test_results/gpu-test-results.xml
+
+          gpu_test_results/coverage.xml
+
+          '
+    - name: GPU Memory Summary
+      if: always()
+      run: "echo \"## \U0001F4CA GPU Memory Usage\" >> $GITHUB_STEP_SUMMARY\necho \"\\`\\`\\`\" >> $GITHUB_STEP_SUMMARY\n\
+        nvidia-smi --query-gpu=index,name,memory.used,memory.total --format=csv >> $GITHUB_STEP_SUMMARY\necho \"\\`\\`\\`\"\
+        \ >> $GITHUB_STEP_SUMMARY\n"
+  cpu-tests:
+    needs:
+    - check-x64-runner
+    if: ${{ needs.check-x64-runner.outputs.should_run == 'true' }}
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    timeout-minutes: 30
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    - name: Build CPU Test Docker Image
+      run: 'docker build -f docker/Dockerfile.cpu-tests -t ipfs-datasets-cpu-tests:latest .
+
+        '
+    - name: Run CPU Tests in Docker
+      run: "docker run --rm \\\n  -v $(pwd)/test-results:/app/test-results \\\n  ipfs-datasets-cpu-tests:latest\n"
+    - name: Upload CPU Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cpu-test-results
+        path: 'test-results/cpu-test-results.xml
+
+          test-results/coverage.xml
+
+          '
+  gpu-docker-tests:
+    needs:
+    - check-gpu-runner
+    if: ${{ needs.check-gpu-runner.outputs.should_run == 'true' }}
+    runs-on:
+    - self-hosted
+    - linux
+    - x64
+    - gpu
     timeout-minutes: 30
     continue-on-error: true
-    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-          submodules: false
-      
-      - name: Build GPU Docker Image
-        run: |
-          docker build -t ipfs-datasets-py:gpu-test \
-            -f docker/Dockerfile.gpu \
-            --build-arg CUDA_VERSION=12.0.0 \
-            --build-arg PYTHON_VERSION=3.12 \
-            .
-      
-      - name: Test GPU in Docker
-        run: |
-          docker run --rm --gpus all ipfs-datasets-py:gpu-test python -c "
-          import torch
-          assert torch.cuda.is_available(), 'CUDA not available in container'
-          print(f'✅ GPU accessible in Docker')
-          print(f'GPU Count: {torch.cuda.device_count()}')
-          for i in range(torch.cuda.device_count()):
-              print(f'GPU {i}: {torch.cuda.get_device_name(i)}')
-          "
-      
-      - name: Run Tests in GPU Container
-        run: |
-          docker run --rm --gpus all \
-            -v $(pwd)/tests:/app/tests \
-            -v $(pwd)/test_results:/app/test_results \
-            ipfs-datasets-py:gpu-test \
-            pytest /app/tests -v -m "gpu" \
-              --junit-xml=/app/test_results/docker-gpu-tests.xml \
-              || echo "Some Docker GPU tests failed"
-      
-      - name: Cleanup
-        if: always()
-        run: |
-          docker rmi ipfs-datasets-py:gpu-test || true
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+        submodules: false
+    - name: Build GPU Docker Image
+      run: "docker build -t ipfs-datasets-py:gpu-test \\\n  -f docker/Dockerfile.gpu \\\n  --build-arg CUDA_VERSION=12.0.0\
+        \ \\\n  --build-arg PYTHON_VERSION=3.12 \\\n  .\n"
+    - name: Test GPU in Docker
+      run: "docker run --rm --gpus all ipfs-datasets-py:gpu-test python -c \"\nimport torch\nassert torch.cuda.is_available(),\
+        \ 'CUDA not available in container'\nprint(f'\u2705 GPU accessible in Docker')\nprint(f'GPU Count: {torch.cuda.device_count()}')\n\
+        for i in range(torch.cuda.device_count()):\n    print(f'GPU {i}: {torch.cuda.get_device_name(i)}')\n\"\n"
+    - name: Run Tests in GPU Container
+      run: "docker run --rm --gpus all \\\n  -v $(pwd)/tests:/app/tests \\\n  -v $(pwd)/test_results:/app/test_results \\\n\
+        \  ipfs-datasets-py:gpu-test \\\n  pytest /app/tests -v -m \"gpu\" \\\n    --junit-xml=/app/test_results/docker-gpu-tests.xml\
+        \ \\\n    || echo \"Some Docker GPU tests failed\"\n"
+    - name: Cleanup
+      if: always()
+      run: 'docker rmi ipfs-datasets-py:gpu-test || true
 
-  # Test summary
+        '
   test-summary:
-    needs: [check-gpu-runner, check-x64-runner, gpu-tests, cpu-tests, gpu-docker-tests]
+    needs:
+    - check-gpu-runner
+    - check-x64-runner
+    - gpu-tests
+    - cpu-tests
+    - gpu-docker-tests
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
     steps:
-      - name: Generate Test Summary
-        run: |
-          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Runner Availability" >> $GITHUB_STEP_SUMMARY
-          echo "| Runner Type | Available | Workflow Action |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------------|-----------|-----------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| GPU Runner (x64 + gpu) | ${{ needs.check-gpu-runner.outputs.runners_available }} | ${{ needs.check-gpu-runner.outputs.should_run == 'true' && 'Ran' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Standard Runner (x64) | ${{ needs.check-x64-runner.outputs.runners_available }} | ${{ needs.check-x64-runner.outputs.should_run == 'true' && 'Ran' || 'Skipped' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "| Test Suite | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|------------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| GPU Tests | ${{ needs.gpu-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| CPU Tests | ${{ needs.cpu-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Docker GPU Tests | ${{ needs.gpu-docker-tests.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.gpu-tests.result }}" = "success" ]; then
-            echo "✅ GPU tests passed on self-hosted runner" >> $GITHUB_STEP_SUMMARY
-          elif [ "${{ needs.gpu-tests.result }}" = "skipped" ]; then
-            echo "⏭️ GPU tests skipped (runner not available)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**Note:** GPU tests require self-hosted runners with GPU hardware." >> $GITHUB_STEP_SUMMARY
-            echo "The workflow skipped gracefully instead of failing." >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ GPU tests failed or had errors" >> $GITHUB_STEP_SUMMARY
-          fi
+    - name: Generate Test Summary
+      run: "echo \"## \U0001F9EA Test Results Summary\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"\
+        ### Runner Availability\" >> $GITHUB_STEP_SUMMARY\necho \"| Runner Type | Available | Workflow Action |\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"|-------------|-----------|-----------------|\" >> $GITHUB_STEP_SUMMARY\necho \"| GPU Runner (x64 + gpu) |\
+        \ ${{ needs.check-gpu-runner.outputs.runners_available }} | ${{ needs.check-gpu-runner.outputs.should_run == 'true'\
+        \ && 'Ran' || 'Skipped' }} |\" >> $GITHUB_STEP_SUMMARY\necho \"| Standard Runner (x64) | ${{ needs.check-x64-runner.outputs.runners_available\
+        \ }} | ${{ needs.check-x64-runner.outputs.should_run == 'true' && 'Ran' || 'Skipped' }} |\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"\" >> $GITHUB_STEP_SUMMARY\necho \"### Test Results\" >> $GITHUB_STEP_SUMMARY\necho \"| Test Suite | Status\
+        \ |\" >> $GITHUB_STEP_SUMMARY\necho \"|------------|--------|\" >> $GITHUB_STEP_SUMMARY\necho \"| GPU Tests | ${{\
+        \ needs.gpu-tests.result }} |\" >> $GITHUB_STEP_SUMMARY\necho \"| CPU Tests | ${{ needs.cpu-tests.result }} |\" >>\
+        \ $GITHUB_STEP_SUMMARY\necho \"| Docker GPU Tests | ${{ needs.gpu-docker-tests.result }} |\" >> $GITHUB_STEP_SUMMARY\n\
+        echo \"\" >> $GITHUB_STEP_SUMMARY\n\nif [ \"${{ needs.gpu-tests.result }}\" = \"success\" ]; then\n  echo \"\u2705\
+        \ GPU tests passed on self-hosted runner\" >> $GITHUB_STEP_SUMMARY\nelif [ \"${{ needs.gpu-tests.result }}\" = \"\
+        skipped\" ]; then\n  echo \"\u23ED\uFE0F GPU tests skipped (runner not available)\" >> $GITHUB_STEP_SUMMARY\n  echo\
+        \ \"\" >> $GITHUB_STEP_SUMMARY\n  echo \"**Note:** GPU tests require self-hosted runners with GPU hardware.\" >> $GITHUB_STEP_SUMMARY\n\
+        \  echo \"The workflow skipped gracefully instead of failing.\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u274C GPU\
+        \ tests failed or had errors\" >> $GITHUB_STEP_SUMMARY\nfi\n"

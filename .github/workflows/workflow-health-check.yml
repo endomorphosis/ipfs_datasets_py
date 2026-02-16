@@ -1,195 +1,100 @@
 name: Workflow Health Check
-
-on:
+true:
   schedule:
-    # Run daily at 6 AM UTC
-    - cron: '0 6 * * *'
+  - cron: 0 6 * * *
   workflow_dispatch:
     inputs:
       strict_mode:
-        description: 'Treat warnings as errors'
+        description: Treat warnings as errors
         required: false
         default: false
         type: boolean
   pull_request:
     paths:
-      - '.github/workflows/**'
-      - '.github/scripts/**'
-
-
+    - .github/workflows/**
+    - .github/scripts/**
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
   issues: write
-
 env:
   PYTHON_VERSION: '3.12'
-
 jobs:
   validate-workflows:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 20
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
-      
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install PyYAML
-      
-      - name: Run workflow validator
-        id: validate
-        run: |
-          echo "## Workflow Validation Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Validating all workflows..." >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          # Run validator and capture output
-          if [ "${{ github.event.inputs.strict_mode }}" = "true" ]; then
-            python .github/scripts/validate_workflows.py --strict > /tmp/validation_output.txt 2>&1
-            EXIT_CODE=$?
-          else
-            python .github/scripts/validate_workflows.py > /tmp/validation_output.txt 2>&1
-            EXIT_CODE=$?
-          fi
-          
-          # Show summary in step summary
-          tail -50 /tmp/validation_output.txt >> $GITHUB_STEP_SUMMARY
-          
-          # Save full output for artifact
-          cp /tmp/validation_output.txt validation_report.txt
-          
-          # Set output for next steps
-          echo "exit_code=$EXIT_CODE" >> $GITHUB_OUTPUT
-          
-          # Exit with the validator's exit code
-          exit $EXIT_CODE
-        continue-on-error: true
-      
-      - name: Upload validation report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: workflow-validation-report
-          path: validation_report.txt
-          retention-days: 30
-      
-      - name: Create issue for validation failures
-        if: steps.validate.outputs.exit_code != '0' && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Check if there's already an open issue
-          EXISTING_ISSUE=$(gh issue list \
-            --label "workflow-health" \
-            --state open \
-            --json number \
-            --jq '.[0].number' 2>&1 || echo "")
-          
-          if [ -n "$EXISTING_ISSUE" ] && [ "$EXISTING_ISSUE" != "null" ]; then
-            echo "Issue already exists: #$EXISTING_ISSUE"
-            echo "Updating existing issue..."
-            
-            gh issue comment "$EXISTING_ISSUE" --body "## Updated Validation Report
-            
-            Validation run: ${{ github.run_id }}
-            Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-            
-            Status: ❌ Failed
-            
-            See [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
-            
-            Download the [validation report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) artifact for full details."
-          else
-            echo "Creating new issue..."
-            
-            # Extract summary from validation output
-            SUMMARY=$(tail -20 validation_report.txt | head -15)
-            
-            gh issue create \
-              --title "Workflow Health Check Failed" \
-              --label "workflow-health,automated" \
-              --body "## Workflow Validation Failed
-            
-            The automated workflow health check has detected issues with GitHub Actions workflows.
-            
-            **Run ID**: ${{ github.run_id }}
-            **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
-            **Status**: ❌ Failed
-            
-            ### Summary
-            
-            \`\`\`
-            $SUMMARY
-            \`\`\`
-            
-            ### Details
-            
-            See the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for full details and download the validation report artifact.
-            
-            ### Actions Required
-            
-            1. Review the validation report
-            2. Fix any ERROR-level issues
-            3. Consider addressing WARNING-level issues
-            4. Re-run the workflow to verify fixes
-            
-            ### Resources
-            
-            - [Workflow Troubleshooting Guide](https://github.com/${{ github.repository }}/blob/main/.github/workflows/COPILOT_WORKFLOW_TROUBLESHOOTING.md)
-            - [Workflow Validator Script](https://github.com/${{ github.repository }}/blob/main/.github/scripts/validate_workflows.py)
-            
-            ---
-            
-            🤖 This issue was created automatically by the Workflow Health Check system."
-          fi
-      
-      - name: Post success comment
-        if: steps.validate.outputs.exit_code == '0' && github.event_name == 'schedule'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Close any open workflow-health issues
-          OPEN_ISSUES=$(gh issue list \
-            --label "workflow-health" \
-            --state open \
-            --json number \
-            --jq '.[].number')
-          
-          for ISSUE in $OPEN_ISSUES; do
-            if [ -n "$ISSUE" ]; then
-              echo "Closing issue #$ISSUE"
-              gh issue close "$ISSUE" --comment "✅ Workflow health check is now passing. All issues have been resolved.
-              
-              Validation run: ${{ github.run_id }}
-              Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
-            fi
-          done
-      
-      - name: Report status
-        if: always()
-        run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ steps.validate.outputs.exit_code }}" = "0" ]; then
-            echo "✅ **Validation PASSED** - All workflows are healthy!" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ **Validation FAILED** - Issues found in workflows" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Please review the validation report and fix the issues." >> $GITHUB_STEP_SUMMARY
-          fi
+    - name: Checkout repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 1
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: pip
+    - name: Install dependencies
+      run: 'python -m pip install --upgrade pip
+
+        pip install PyYAML
+
+        '
+    - name: Run workflow validator
+      id: validate
+      run: "echo \"## Workflow Validation Report\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\necho \"Validating\
+        \ all workflows...\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\n# Run validator and capture output\n\
+        if [ \"${{ github.event.inputs.strict_mode }}\" = \"true\" ]; then\n  python .github/scripts/validate_workflows.py\
+        \ --strict > /tmp/validation_output.txt 2>&1\n  EXIT_CODE=$?\nelse\n  python .github/scripts/validate_workflows.py\
+        \ > /tmp/validation_output.txt 2>&1\n  EXIT_CODE=$?\nfi\n\n# Show summary in step summary\ntail -50 /tmp/validation_output.txt\
+        \ >> $GITHUB_STEP_SUMMARY\n\n# Save full output for artifact\ncp /tmp/validation_output.txt validation_report.txt\n\
+        \n# Set output for next steps\necho \"exit_code=$EXIT_CODE\" >> $GITHUB_OUTPUT\n\n# Exit with the validator's exit\
+        \ code\nexit $EXIT_CODE\n"
+      continue-on-error: true
+    - name: Upload validation report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: workflow-validation-report
+        path: validation_report.txt
+        retention-days: 30
+    - name: Create issue for validation failures
+      if: steps.validate.outputs.exit_code != '0' && github.event_name == 'schedule'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "# Check if there's already an open issue\nEXISTING_ISSUE=$(gh issue list \\\n  --label \"workflow-health\" \\\n\
+        \  --state open \\\n  --json number \\\n  --jq '.[0].number' 2>&1 || echo \"\")\n\nif [ -n \"$EXISTING_ISSUE\" ] &&\
+        \ [ \"$EXISTING_ISSUE\" != \"null\" ]; then\n  echo \"Issue already exists: #$EXISTING_ISSUE\"\n  echo \"Updating\
+        \ existing issue...\"\n  \n  gh issue comment \"$EXISTING_ISSUE\" --body \"## Updated Validation Report\n  \n  Validation\
+        \ run: ${{ github.run_id }}\n  Date: $(date -u +\"%Y-%m-%d %H:%M:%S UTC\")\n  \n  Status: \u274C Failed\n  \n  See\
+        \ [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.\n\
+        \  \n  Download the [validation report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id\
+        \ }}) artifact for full details.\"\nelse\n  echo \"Creating new issue...\"\n  \n  # Extract summary from validation\
+        \ output\n  SUMMARY=$(tail -20 validation_report.txt | head -15)\n  \n  gh issue create \\\n    --title \"Workflow\
+        \ Health Check Failed\" \\\n    --label \"workflow-health,automated\" \\\n    --body \"## Workflow Validation Failed\n\
+        \  \n  The automated workflow health check has detected issues with GitHub Actions workflows.\n  \n  **Run ID**: ${{\
+        \ github.run_id }}\n  **Date**: $(date -u +\"%Y-%m-%d %H:%M:%S UTC\")\n  **Status**: \u274C Failed\n  \n  ### Summary\n\
+        \  \n  \\`\\`\\`\n  $SUMMARY\n  \\`\\`\\`\n  \n  ### Details\n  \n  See the [workflow run](${{ github.server_url }}/${{\
+        \ github.repository }}/actions/runs/${{ github.run_id }}) for full details and download the validation report artifact.\n\
+        \  \n  ### Actions Required\n  \n  1. Review the validation report\n  2. Fix any ERROR-level issues\n  3. Consider\
+        \ addressing WARNING-level issues\n  4. Re-run the workflow to verify fixes\n  \n  ### Resources\n  \n  - [Workflow\
+        \ Troubleshooting Guide](https://github.com/${{ github.repository }}/blob/main/.github/workflows/COPILOT_WORKFLOW_TROUBLESHOOTING.md)\n\
+        \  - [Workflow Validator Script](https://github.com/${{ github.repository }}/blob/main/.github/scripts/validate_workflows.py)\n\
+        \  \n  ---\n  \n  \U0001F916 This issue was created automatically by the Workflow Health Check system.\"\nfi\n"
+    - name: Post success comment
+      if: steps.validate.outputs.exit_code == '0' && github.event_name == 'schedule'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: "# Close any open workflow-health issues\nOPEN_ISSUES=$(gh issue list \\\n  --label \"workflow-health\" \\\n  --state\
+        \ open \\\n  --json number \\\n  --jq '.[].number')\n\nfor ISSUE in $OPEN_ISSUES; do\n  if [ -n \"$ISSUE\" ]; then\n\
+        \    echo \"Closing issue #$ISSUE\"\n    gh issue close \"$ISSUE\" --comment \"\u2705 Workflow health check is now\
+        \ passing. All issues have been resolved.\n    \n    Validation run: ${{ github.run_id }}\n    Date: $(date -u +\"\
+        %Y-%m-%d %H:%M:%S UTC\")\"\n  fi\ndone\n"
+    - name: Report status
+      if: always()
+      run: "echo \"\" >> $GITHUB_STEP_SUMMARY\necho \"---\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\n\
+        if [ \"${{ steps.validate.outputs.exit_code }}\" = \"0\" ]; then\n  echo \"\u2705 **Validation PASSED** - All workflows\
+        \ are healthy!\" >> $GITHUB_STEP_SUMMARY\nelse\n  echo \"\u274C **Validation FAILED** - Issues found in workflows\"\
+        \ >> $GITHUB_STEP_SUMMARY\n  echo \"\" >> $GITHUB_STEP_SUMMARY\n  echo \"Please review the validation report and fix\
+        \ the issues.\" >> $GITHUB_STEP_SUMMARY\nfi\n"
