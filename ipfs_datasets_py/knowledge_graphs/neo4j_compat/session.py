@@ -3,6 +3,11 @@ Session Management for Neo4j Compatibility
 
 This module provides session and transaction management compatible with
 Neo4j's Python driver, backed by IPFS/IPLD storage.
+
+Phase 2 Enhancements:
+- Bookmark support for causal consistency
+- Multi-database selection
+- Advanced session configuration
 """
 
 import logging
@@ -11,6 +16,7 @@ from contextlib import contextmanager
 
 from .result import Result, Record
 from .types import Node, Relationship, Path
+from .bookmarks import Bookmarks, create_bookmark
 
 logger = logging.getLogger(__name__)
 
@@ -130,28 +136,49 @@ class IPFSSession:
     def __init__(
         self,
         driver: 'IPFSDriver',
+        backend: Optional[Any] = None,
         database: Optional[str] = None,
-        default_access_mode: str = "WRITE"
+        default_access_mode: str = "WRITE",
+        bookmarks: Optional[Union[str, List[str], Bookmarks]] = None
     ):
         """
         Initialize a session.
         
         Args:
             driver: Parent driver
+            backend: Database-specific backend (created if None)
             database: Database name (optional, for multi-database support)
             default_access_mode: "READ" or "WRITE"
+            bookmarks: Initial bookmarks for causal consistency (Phase 2)
         """
         self._driver = driver
-        self._database = database
+        self._database = database or "neo4j"
         self._default_access_mode = default_access_mode
         self._closed = False
         self._transaction = None
+        
+        # Use provided backend or get from driver
+        if backend is not None:
+            self.backend = backend
+        else:
+            # Fallback to driver's default backend for backward compatibility
+            self.backend = driver.backend
+        
+        # Bookmark support (Phase 2)
+        if isinstance(bookmarks, Bookmarks):
+            self._bookmarks = bookmarks
+        else:
+            self._bookmarks = Bookmarks(bookmarks)
+        
+        # Last transaction bookmark
+        self._last_bookmark: Optional[str] = None
         
         # Create query executor
         QueryExecutorClass = _get_query_executor()
         self._query_executor = QueryExecutorClass()
         
-        logger.debug("Session created (database=%s, mode=%s)", database, default_access_mode)
+        logger.debug("Session created (database=%s, mode=%s, bookmarks=%d)",
+                    database, default_access_mode, len(self._bookmarks))
     
     def run(
         self,
@@ -323,3 +350,41 @@ class IPFSSession:
     def closed(self) -> bool:
         """Check if session is closed."""
         return self._closed
+    
+    def last_bookmark(self) -> Optional[str]:
+        """
+        Get the last bookmark from this session.
+        
+        Returns:
+            Last bookmark string or None
+        """
+        return self._last_bookmark
+    
+    def last_bookmarks(self) -> List[str]:
+        """
+        Get all bookmarks from this session.
+        
+        Returns:
+            List of bookmark strings
+        """
+        bookmarks = self._bookmarks.get_all()
+        if self._last_bookmark:
+            bookmarks.append(self._last_bookmark)
+        return bookmarks
+    
+    def _update_bookmark(self, transaction_id: str) -> None:
+        """
+        Update the session bookmark after a transaction.
+        
+        Args:
+            transaction_id: Transaction ID to create bookmark from
+        """
+        bookmark = create_bookmark(transaction_id, database=self._database)
+        self._bookmarks.add(bookmark)
+        self._last_bookmark = str(bookmark)
+        logger.debug("Updated bookmark: %s", self._last_bookmark)
+    
+    @property
+    def database(self) -> Optional[str]:
+        """Get the database name for this session."""
+        return self._database

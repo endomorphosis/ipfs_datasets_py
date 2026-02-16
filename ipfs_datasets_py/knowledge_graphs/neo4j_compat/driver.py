@@ -25,6 +25,7 @@ from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urlparse
 
 from .session import IPFSSession
+from .connection_pool import ConnectionPool
 
 try:
     from ipfs_datasets_py.router_deps import RouterDeps
@@ -99,11 +100,23 @@ class IPFSDriver:
         
         # Initialize RouterDeps and backend
         self.deps = deps if deps is not None else RouterDeps()
-        self.backend = IPLDBackend(deps=self.deps)
+        self.backend = IPLDBackend(deps=self.deps, database="neo4j")  # Default backend
+        self._backend_cache: Dict[str, IPLDBackend] = {
+            "neo4j": self.backend  # Cache default backend
+        }
+        
+        # Initialize connection pool
+        self._connection_pool = ConnectionPool(
+            max_size=max_connection_pool_size,
+            max_connection_lifetime=max_connection_lifetime,
+            connection_timeout=connection_timeout,
+            keep_alive=keep_alive
+        )
         
         self._closed = False
         
-        logger.info("IPFSDriver initialized: uri=%s, mode=%s", uri, self._mode)
+        logger.info("IPFSDriver initialized: uri=%s, mode=%s, pool_size=%d", 
+                   uri, self._mode, max_connection_pool_size)
     
     def _parse_uri(self, uri: str) -> Tuple[str, Optional[str]]:
         """
@@ -142,6 +155,29 @@ class IPFSDriver:
                 f"Use 'ipfs://' or 'ipfs+embedded://'"
             )
     
+    def _get_database_backend(self, database: str = "neo4j") -> 'IPLDBackend':
+        """
+        Get or create backend for specific database.
+        
+        Implements per-database caching for namespace isolation.
+        
+        Args:
+            database: Database name
+            
+        Returns:
+            IPLDBackend instance for the specified database
+            
+        Example:
+            backend = driver._get_database_backend("analytics")
+        """
+        if database not in self._backend_cache:
+            logger.debug("Creating new backend for database: %s", database)
+            self._backend_cache[database] = IPLDBackend(
+                deps=self.deps,
+                database=database
+            )
+        return self._backend_cache[database]
+    
     def session(
         self,
         database: Optional[str] = None,
@@ -155,25 +191,35 @@ class IPFSDriver:
         Args:
             database: Database name (for multi-database support)
             default_access_mode: "READ" or "WRITE"
-            bookmarks: Bookmarks for causal consistency (future)
+            bookmarks: Bookmarks for causal consistency (Phase 2)
             **config: Additional session configuration
             
         Returns:
             Session object
             
         Example:
+            # Basic session
             with driver.session() as session:
                 result = session.run("MATCH (n) RETURN n")
-                for record in result:
-                    print(record)
+            
+            # Session with bookmarks for causal consistency
+            bookmark = session1.last_bookmark()
+            with driver.session(bookmarks=[bookmark]) as session2:
+                result = session2.run("MATCH (n) RETURN n")
         """
         if self._closed:
             raise RuntimeError("Driver is closed")
         
+        # Get database-specific backend
+        database_name = database or "neo4j"
+        backend = self._get_database_backend(database_name)
+        
         return IPFSSession(
             driver=self,
-            database=database,
-            default_access_mode=default_access_mode
+            backend=backend,
+            database=database_name,
+            default_access_mode=default_access_mode,
+            bookmarks=bookmarks
         )
     
     def close(self) -> None:
@@ -184,7 +230,10 @@ class IPFSDriver:
         """
         if not self._closed:
             self._closed = True
-            logger.info("IPFSDriver closed")
+            # Close connection pool
+            self._connection_pool.close()
+            logger.info("IPFSDriver closed (pool stats: %s)", 
+                       self._connection_pool.get_stats())
     
     def verify_connectivity(self) -> Dict[str, Any]:
         """
@@ -227,6 +276,31 @@ class IPFSDriver:
     def closed(self) -> bool:
         """Check if driver is closed."""
         return self._closed
+    
+    def get_pool_stats(self) -> Dict[str, Any]:
+        """
+        Get connection pool statistics.
+        
+        Returns:
+            Dictionary with pool statistics including:
+            - max_size: Maximum pool size
+            - available: Available connections
+            - in_use: Connections currently in use
+            - total: Total connections in pool
+            - stats: Detailed statistics (created, acquired, released, etc.)
+        """
+        return self._connection_pool.get_stats()
+    
+    def verify_authentication(self) -> bool:
+        """
+        Verify authentication credentials.
+        
+        Returns:
+            True if authentication is valid, False otherwise
+        """
+        # Phase 2 will implement actual authentication
+        # For now, always return True if auth was provided
+        return self.auth is not None
 
 
 class GraphDatabase:

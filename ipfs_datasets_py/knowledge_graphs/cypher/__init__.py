@@ -69,6 +69,7 @@ from .ast import (
 )
 from .parser import CypherParser, CypherParseError, parse_cypher
 from .compiler import CypherCompiler, CypherCompileError, compile_cypher
+from .functions import FUNCTION_REGISTRY, Point, evaluate_function
 
 __all__ = [
     # Lexer
@@ -118,6 +119,11 @@ __all__ = [
     'CypherCompiler',
     'CypherCompileError',
     'compile_cypher',
+    
+    # Functions (Phase 2 critical)
+    'FUNCTION_REGISTRY',
+    'Point',
+    'evaluate_function',
 ]
 
 __version__ = '0.2.5'  # Phase 2 nearly complete
