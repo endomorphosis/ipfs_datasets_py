@@ -75,7 +75,7 @@ jobs:
         '
     - name: Checkout repository
       uses: actions/checkout@v5
-        with:
+      with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Configure GitHub CLI
@@ -422,7 +422,7 @@ jobs:
     - name: Upload artifacts
       if: always() && steps.analyze_issue.outputs.analysis_complete == 'true'
       uses: actions/upload-artifact@v4
-        with:
+      with:
         name: issue-to-pr-${{ steps.get_issue.outputs.issue_number }}
         path: '/tmp/issue_body.txt
 
