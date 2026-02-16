@@ -8,52 +8,8 @@
 [![Tests](https://img.shields.io/badge/tests-4500%2B-brightgreen)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#)
 
-### Critical Workflow Status
-
-![Docker Build](https://github.com/endomorphosis/ipfs_datasets_py/workflows/Docker%20Build%20and%20Test%20(Multi-Platform)/badge.svg)
-![GraphRAG CI](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GraphRAG%20Production%20CI%2FCD/badge.svg)
-![MCP Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/MCP%20Endpoints%20Integration%20Tests/badge.svg)
-![GPU Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GPU-Enabled%20Tests/badge.svg)
 
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
-
-## 🎉 Recent Updates (February 2026)
-
-### 🚀 IPLD Vector Database - Production Ready
-
-**Complete decentralized vector search infrastructure now available:**
-
-- ✅ **Distributed Sharding:** Horizontal scaling with consistent hashing, 3x replication
-- ✅ **Cross-Store Bridges:** Seamless migration between FAISS, Qdrant, Elasticsearch, and IPLD
-- ✅ **18 MCP Tools:** Full vector operations integration for AI assistants
-- ✅ **Production Features:** Monitoring, caching, circuit breakers, rate limiting
-- ⚡ **High Performance:** 22K vectors/sec ingestion, 48K queries/sec, 45ms p95 latency
-- 📊 **95% Test Coverage:** 150+ tests validating all functionality
-
-See [Vector Stores Documentation](docs/guides/knowledge_graphs/) for details.
-
-### 📚 Knowledge Graphs Phase 3 & 4 Complete
-
-**Major refactoring and enhancement of knowledge graph capabilities:**
-
-- ✅ **Modular Extraction Package:** 6 new modules (types, entities, relationships, graph, extractor, validator)
-- ✅ **225KB Documentation:** Comprehensive guides, API reference, and examples
-- ✅ **110+ New Tests:** Full test coverage with GIVEN-WHEN-THEN format
-- ✅ **100% Backward Compatible:** All existing code continues to work
-- 🔄 **Enhanced Query Engine:** Unified query interface with hybrid search
-
-See [Knowledge Graphs Guides](docs/guides/knowledge_graphs/) for implementation details.
-
-### 📖 Documentation Reorganization
-
-**Cleaner, more organized documentation structure:**
-
-- ✅ **Root Directory:** 58% reduction (50 → 21 files)
-- ✅ **Docs Directory:** 85% reduction (177 → 27 core files)  
-- ✅ **Structured Archives:** Historical reports organized in `docs/archive/`
-- ✅ **Permanent Guides:** 45 guides organized by feature in `docs/guides/`
-
-**Migration Timeline:** Feb 2026 → Aug 2026 (6 months) | **[Details](docs/DEPRECATION_TIMELINE.md)**
 
 ## 📑 Table of Contents
 
@@ -131,87 +87,6 @@ from ipfs_datasets_py.dataset_manager import DatasetManager
 manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
-```
-
-### Vector Database Quick Start
-
-```python
-from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
-from ipfs_datasets_py.vector_stores.config import create_ipld_config
-
-# Create IPLD vector store with distributed sharding
-config = create_ipld_config(
-    use_ipfs_router=True,
-    enable_sharding=True,
-    replication_factor=3
-)
-store = IPLDVectorStore(config)
-
-# Add vectors
-store.add_texts(["Hello world", "IPFS vector search"])
-
-# Search
-results = store.similarity_search("vector search", k=5)
-```
-
-### Knowledge Graph Extraction
-
-```python
-from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
-
-# Extract entities and relationships from text
-extractor = KnowledgeGraphExtractor()
-text = "Alice works at OpenAI. She lives in San Francisco."
-
-# Extract knowledge graph
-kg = extractor.extract_knowledge_graph(text)
-print(f"Entities: {kg.entities}")
-print(f"Relationships: {kg.relationships}")
-```
-
-## 🔌 Router Dependency Injection (Reuse Heavy Clients)
-
-Routers support dependency injection via a shared `RouterDeps` container.
-This lets you reuse the same heavyweight managers/clients (and avoid repeated
-initialization cascades) across multiple modules and even across related repos
-within the same Python process.
-
-```python
-from ipfs_datasets_py.router_deps import RouterDeps
-from ipfs_datasets_py import llm_router, embeddings_router, ipfs_backend_router
-
-deps = RouterDeps()
-
-text = llm_router.generate_text("Write a short summary", deps=deps)
-vecs = embeddings_router.embed_texts(["hello", "world"], deps=deps)
-cid = ipfs_backend_router.add_bytes(b"data", deps=deps)
-```
-
-Notes:
-- Set `IPFS_DATASETS_PY_ROUTER_CACHE=0` to disable in-process caching.
-- You can pass `provider_instance=` (LLM/embeddings) or `backend_instance=` (IPFS)
-	if you want full control over the exact instance being used.
-
-```python
-# Convert any file type to text for GraphRAG
-from ipfs_datasets_py.processors.file_converter import FileConverter
-
-converter = FileConverter()  # Auto-selects best backend
-result = await converter.convert('document.pdf')
-print(result.text)  # Ready for knowledge graph processing
-
-# Or use synchronously
-result = converter.convert_sync('document.pdf')
-```
-
-### Try Demo Scripts
-
-```bash
-# Theorem proving: Website text → Verified formal logic
-python scripts/demo/demonstrate_complete_pipeline.py --test-provers
-
-# GraphRAG: AI-powered PDF processing
-python scripts/demo/demonstrate_graphrag_pdf.py --create-sample
 ```
 
 ## 🔧 CLI Tools
@@ -323,6 +198,42 @@ ipfs-datasets email send --to user@example.com --subject "Report" --body "See at
 
 # Check email status
 ipfs-datasets email status
+```
+
+### Vector Database Quick Start
+
+```python
+from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
+from ipfs_datasets_py.vector_stores.config import create_ipld_config
+
+# Create IPLD vector store with distributed sharding
+config = create_ipld_config(
+    use_ipfs_router=True,
+    enable_sharding=True,
+    replication_factor=3
+)
+store = IPLDVectorStore(config)
+
+# Add vectors
+store.add_texts(["Hello world", "IPFS vector search"])
+
+# Search
+results = store.similarity_search("vector search", k=5)
+```
+
+### Knowledge Graph Extraction
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
+
+# Extract entities and relationships from text
+extractor = KnowledgeGraphExtractor()
+text = "Alice works at OpenAI. She lives in San Francisco."
+
+# Extract knowledge graph
+kg = extractor.extract_knowledge_graph(text)
+print(f"Entities: {kg.entities}")
+print(f"Relationships: {kg.relationships}")
 ```
 
 ## 🤖 MCP Server
