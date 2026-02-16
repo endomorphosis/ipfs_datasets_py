@@ -107,6 +107,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
+          fetch-depth: 1
           submodules: false
       
       - name: Install Python dependencies
@@ -241,11 +242,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -293,6 +297,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Download all test results
         uses: actions/download-artifact@v4

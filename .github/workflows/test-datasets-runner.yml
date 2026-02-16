@@ -22,6 +22,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
       
     - name: System information
       run: |

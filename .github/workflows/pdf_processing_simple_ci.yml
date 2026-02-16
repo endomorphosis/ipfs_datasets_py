@@ -47,11 +47,14 @@ jobs:
     
     - name: Checkout code
       uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
     
     - name: Cache dependencies
       uses: actions/cache@v3
@@ -103,11 +106,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
     
     - name: Install linting tools
       run: |
@@ -147,11 +153,14 @@ jobs:
     
     - name: Checkout code
       uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
     
     - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
     
     - name: Install security tools
       run: |

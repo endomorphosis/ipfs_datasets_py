@@ -34,11 +34,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -110,11 +113,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -163,11 +169,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Install dependencies
         run: |
@@ -239,11 +248,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Test cache interoperability
         run: |
@@ -290,11 +302,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+          with:
+            fetch-depth: 1
       
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
       
       - name: Generate Performance Report
         run: |
