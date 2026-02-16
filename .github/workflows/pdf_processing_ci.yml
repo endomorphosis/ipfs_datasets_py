@@ -43,11 +43,11 @@ jobs:
   # Check if self-hosted runners are available
   check-runner:
     uses: ./.github/workflows/templates/check-runner-availability.yml
-      with:
+    with:
       runner_labels: "self-hosted,linux,x64"
       skip_if_unavailable: true
 
-  lint-and-format:
+      lint-and-format:
     name: Code Quality Checks
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
@@ -72,7 +72,7 @@ jobs:
     
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1
     - name: Setup GitHub CLI and P2P Cache
       id: gh_setup
       uses: nick-invision/retry@v3
@@ -107,7 +107,7 @@ jobs:
     - name: Install Python dependencies
       id: pip_install
       uses: nick-invision/retry@v3
-        with:
+      with:
         timeout_minutes: 10
         max_attempts: 3
         retry_on: error
@@ -174,7 +174,7 @@ jobs:
     
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Install Python dependencies
       run: |
         python --version
@@ -182,7 +182,7 @@ jobs:
     
     - name: Cache dependencies
       uses: actions/cache@v3
-        with:
+      with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
@@ -241,13 +241,13 @@ jobs:
     
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
-        with:
+      with:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
 
-  integration-tests:
+        integration-tests:
     name: Integration Tests
     needs: [check-runner, unit-tests]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
@@ -260,7 +260,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Install system dependencies
       run: |
         apt-get update
@@ -285,7 +285,7 @@ jobs:
     - name: Upload integration test artifacts
       if: failure()
       uses: actions/upload-artifact@v4
-        with:
+      with:
         name: integration-test-artifacts
         path: |
           tests/fixtures/test_output/
@@ -304,7 +304,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -340,7 +340,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Install dependencies
       run: |
         python --version
@@ -365,12 +365,12 @@ jobs:
     - name: Upload benchmark results
       if: always() && hashFiles('benchmark_results.json') != ''
       uses: actions/upload-artifact@v4
-        with:
+      with:
         name: benchmark-results
         path: benchmark_results.json
         if-no-files-found: warn
 
-  security-scan:
+        security-scan:
     name: Security Scan
     needs: [check-runner]
     if: ${{ needs.check-runner.outputs.should_run == 'true' }}
@@ -380,7 +380,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Install security scanning tools
       run: |
         python --version
@@ -402,7 +402,7 @@ jobs:
     
     - name: Upload security reports
       uses: actions/upload-artifact@v4
-        with:
+      with:
         name: security-reports
         path: |
           bandit_report.json
@@ -419,7 +419,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Build Docker image
       run: |
         docker build -t ipfs-datasets-pdf:test .
@@ -451,7 +451,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
       with:
-          fetch-depth: 1    
+      fetch-depth: 1    
     - name: Test package installation
       run: |
         python --version
