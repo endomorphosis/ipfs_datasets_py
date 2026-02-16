@@ -11,6 +11,7 @@ Tests cover:
 """
 
 import pytest
+import json
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from dataclasses import asdict
@@ -42,7 +43,7 @@ except ImportError:
 
 try:
     from ipfs_datasets_py.processors.legal_scrapers.state_scrapers.base_scraper import (
-        BaseScraper,
+        BaseStateScraper,
         NormalizedStatute
     )
     BASE_SCRAPER_AVAILABLE = True
@@ -132,16 +133,20 @@ class TestCommonCrawlLegalScraper:
         assert hasattr(scraper, 'sources')
         assert isinstance(scraper.sources, dict)
     
-    @patch('ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.json.load')
-    @patch('builtins.open')
-    async def test_load_jsonl_sources(self, mock_open, mock_json_load, sample_jsonl_data):
+    @patch('builtins.open', create=True)
+    async def test_load_jsonl_sources(self, mock_open, sample_jsonl_data):
         """Test loading JSONL source files."""
-        mock_json_load.return_value = sample_jsonl_data
+        # Mock file reading line by line (JSONL format)
+        import io
+        jsonl_lines = '\n'.join([json.dumps(item) for item in sample_jsonl_data])
+        mock_open.return_value.__enter__.return_value = io.StringIO(jsonl_lines)
         
         scraper = CommonCrawlLegalScraper()
         await scraper.load_jsonl_sources()
         
-        assert len(scraper.sources) > 0
+        # Check that sources were loaded
+        total_sources = len(scraper.federal_sources) + len(scraper.municipal_sources) + len(scraper.state_sources)
+        assert total_sources > 0
     
     def test_source_metadata_creation(self, sample_jsonl_data):
         """Test LegalSourceMetadata creation."""
@@ -171,8 +176,8 @@ class TestCommonCrawlLegalScraper:
         scraper = CommonCrawlLegalScraper()
         
         # All methods should fail, but not raise exception
-        with patch.object(scraper, '_fetch_from_common_crawl', side_effect=Exception("CC failed")):
-            with patch.object(scraper, '_fetch_from_brave_search', side_effect=Exception("Brave failed")):
+        with patch.object(scraper, '_fetch_common_crawl', side_effect=Exception("CC failed")):
+            with patch.object(scraper, '_fetch_brave_search', side_effect=Exception("Brave failed")):
                 result = await scraper.scrape_url("https://example.com/")
                 
                 # Should return result even if failed
@@ -207,13 +212,13 @@ class TestLegalScraperRegistry:
             description="Test scraper"
         )
         
-        registry.register_scraper(scraper_info)
+        registry.register(scraper_info)
         assert "TestScraper" in registry.scrapers
     
     def test_auto_discovery(self):
         """Test auto-discovery of scrapers."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         # Should find at least some scrapers
         assert len(registry.scrapers) > 0
@@ -221,7 +226,7 @@ class TestLegalScraperRegistry:
     def test_filter_by_type(self):
         """Test filtering scrapers by type."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         federal_scrapers = registry.get_scrapers_by_type(ScraperType.FEDERAL)
         assert isinstance(federal_scrapers, list)
@@ -229,7 +234,7 @@ class TestLegalScraperRegistry:
     def test_filter_by_capability(self):
         """Test filtering scrapers by capability."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         async_scrapers = registry.get_scrapers_by_capability(ScraperCapability.ASYNC_BATCH)
         assert isinstance(async_scrapers, list)
@@ -237,7 +242,7 @@ class TestLegalScraperRegistry:
     def test_find_scraper_for_source(self):
         """Test finding scraper for specific source."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         scraper_class = registry.get_scraper_for_source("https://congress.gov/")
         assert scraper_class is not None
@@ -245,7 +250,7 @@ class TestLegalScraperRegistry:
     def test_create_fallback_chain(self):
         """Test creating fallback chain."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         chain = registry.create_fallback_chain("https://congress.gov/")
         assert isinstance(chain, list)
@@ -254,7 +259,7 @@ class TestLegalScraperRegistry:
     def test_list_scrapers(self):
         """Test listing all scrapers."""
         registry = LegalScraperRegistry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         scrapers = registry.list_scrapers()
         assert isinstance(scrapers, list)
@@ -272,25 +277,27 @@ class TestLegalScraperRegistry:
 # BaseScraper Common Crawl Methods Tests
 # ============================================================================
 
-@pytest.mark.skipif(not BASE_SCRAPER_AVAILABLE, reason="BaseScraper not available")
+@pytest.mark.skipif(not BASE_SCRAPER_AVAILABLE, reason="BaseStateScraper not available")
 class TestBaseScraperCommonCrawl:
-    """Tests for BaseScraper Common Crawl integration."""
+    """Tests for BaseStateScraper Common Crawl integration."""
     
     @pytest.fixture
     def mock_state_scraper(self):
         """Create a mock state scraper for testing."""
-        class MockStateScraper(BaseScraper):
+        class MockStateScraper(BaseStateScraper):
             def __init__(self):
                 self.state_code = "CA"
                 self.state_name = "California"
+                self.logger = logging.getLogger(__name__)
             
-            async def scrape(self, *args, **kwargs):
-                return NormalizedStatute(
-                    statute_id="test",
-                    title="Test",
-                    text="Test text",
-                    citation="Test § 1"
-                )
+            def get_base_url(self) -> str:
+                return "https://legislature.ca.gov/"
+            
+            def get_code_list(self) -> List[Dict[str, str]]:
+                return [{"name": "Penal Code", "url": "https://legislature.ca.gov/penal"}]
+            
+            async def scrape_code(self, code_name: str, code_url: str) -> List[NormalizedStatute]:
+                return []
         
         return MockStateScraper()
     
@@ -431,7 +438,7 @@ class TestPerformance:
     def test_registry_lookup_speed(self, benchmark):
         """Benchmark registry lookup performance."""
         registry = get_registry()
-        registry.discover_scrapers()
+        registry.auto_discover()
         
         def lookup():
             return registry.get_scraper_for_source("https://congress.gov/")

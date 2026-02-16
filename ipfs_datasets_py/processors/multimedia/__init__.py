@@ -37,8 +37,17 @@ ffmpeg.convert_video("input.mp4", "output.webm")
 from ipfs_datasets_py.processors.multimedia import UnifiedConverter
 
 converter = UnifiedConverter()
-text = converter.convert_file("document.pdf")
+result = converter.convert_file("document.pdf")
+if result.success:
+    print(result.text)
+else:
+    print(f"Conversion failed: {result.error}")
 ```
+
+**Note:** UnifiedConverter currently has stub adapters. For production use,
+use the underlying converters directly:
+- `omni_converter_mk2/` for modern format conversion
+- `convert_to_txt_based_on_mime_type/` for legacy async conversion
 
 ## Architecture
 
@@ -95,9 +104,11 @@ except ImportError:
     HAVE_FFMPEG = False
 
 # Import unified converter interface (Phase 9C)
+# Note: Adapters are currently stubs - set to False until implemented
 try:
     from .converters import UnifiedConverter, ConverterRegistry
-    HAVE_CONVERTERS = True
+    # Converters exist but adapters are stubs - mark as unavailable
+    HAVE_CONVERTERS = False
 except ImportError:
     HAVE_CONVERTERS = False
     UnifiedConverter = None

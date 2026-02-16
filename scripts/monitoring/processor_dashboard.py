@@ -4,7 +4,6 @@ Processor Monitoring Dashboard - View real-time processor health and performance
 
 Usage:
     python processor_dashboard.py              # View current metrics
-    python processor_dashboard.py --watch      # Live monitoring
     python processor_dashboard.py --json       # JSON output
 """
 

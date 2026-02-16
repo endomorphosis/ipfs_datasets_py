@@ -16,15 +16,25 @@ from ipfs_datasets_py.processors.multimedia import UnifiedConverter
 
 # Simple usage
 converter = UnifiedConverter()
-text = converter.convert_file("document.pdf")
+result = converter.convert_file("document.pdf")
+if result.success:
+    print(result.text)
+else:
+    print(f"Error: {result.error}")
 
 # With format hint
-text = converter.convert_file("image.png", format="png")
+result = converter.convert_file("image.png", format="png")
 
 # Check available converters
 formats = converter.supported_formats()
 print(f"Supported: {formats}")
 ```
+
+## Note on Current Status
+
+The adapters (_convert_with_omni and _convert_with_legacy) are currently stubs
+and need to be implemented to wire up the actual converter APIs. Until then,
+HAVE_CONVERTERS should be False and users should access the converters directly.
 
 ## Architecture
 

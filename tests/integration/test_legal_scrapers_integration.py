@@ -10,12 +10,15 @@ Tests end-to-end workflows including:
 """
 
 import pytest
-import asyncio
+import anyio
 from unittest.mock import patch, AsyncMock, Mock
 
 # Import components
 try:
-    from ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper import CommonCrawlLegalScraper
+    from ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper import (
+        CommonCrawlLegalScraper,
+        FallbackMethod
+    )
     from ipfs_datasets_py.processors.legal_scrapers.registry import get_registry
     COMPONENTS_AVAILABLE = True
 except ImportError:
@@ -51,12 +54,12 @@ class TestLegalScrapersIntegration:
         scraper = CommonCrawlLegalScraper()
         
         # Mock all methods to fail except last
-        with patch.object(scraper, '_fetch_from_common_crawl', side_effect=Exception("CC failed")):
-            with patch.object(scraper, '_fetch_from_brave_search', side_effect=Exception("Brave failed")):
-                with patch.object(scraper, '_fetch_from_wayback', side_effect=Exception("Wayback failed")):
-                    with patch.object(scraper, '_fetch_from_unified_scraper', return_value="Success"):
+        with patch.object(scraper, '_fetch_common_crawl', side_effect=Exception("CC failed")):
+            with patch.object(scraper, '_fetch_brave_search', side_effect=Exception("Brave failed")):
+                with patch.object(scraper, '_fetch_wayback_machine', side_effect=Exception("Wayback failed")):
+                    with patch.object(scraper, '_fetch_unified_scraper', return_value={"content": "Success"}):
                         result = await scraper.scrape_url("https://example.com/")
-                        assert result.method_used == "unified_scraper"
+                        assert result.method_used == FallbackMethod.UNIFIED_SCRAPER
     
     async def test_graphrag_integration(self):
         """Test GraphRAG extraction integration."""
@@ -64,7 +67,7 @@ class TestLegalScrapersIntegration:
         
         mock_content = "<html><body><p>Legal statute text</p></body></html>"
         
-        with patch.object(scraper, '_fetch_from_common_crawl', return_value=mock_content):
+        with patch.object(scraper, '_fetch_common_crawl', return_value={"content": mock_content}):
             with patch('ipfs_datasets_py.processors.legal_scrapers.common_crawl_scraper.UnifiedGraphRAGProcessor') as mock_graphrag:
                 mock_processor = AsyncMock()
                 mock_processor.extract_entities.return_value = {

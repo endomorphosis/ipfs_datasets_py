@@ -378,8 +378,20 @@ class LegalScraperRegistry:
         logger.info(f"Created fallback chain with {len(chain)} scrapers for: {source}")
         return chain
     
-    def list_scrapers(self) -> str:
-        """Get a formatted list of all registered scrapers."""
+    def list_scrapers(self) -> List[ScraperInfo]:
+        """Get list of all registered scrapers.
+        
+        Returns:
+            List of ScraperInfo objects for all registered scrapers.
+        """
+        return list(self._scrapers.values())
+    
+    def format_scraper_list(self) -> str:
+        """Get a formatted string listing all registered scrapers.
+        
+        Returns:
+            Formatted string representation of all scrapers.
+        """
         lines = ["Registered Legal Scrapers:", "=" * 60]
         
         for scraper_type in ScraperType:
@@ -433,8 +445,12 @@ def get_scraper_for_source(source: str, **kwargs) -> Optional[Type]:
     return get_registry().get_scraper_for_source(source, **kwargs)
 
 
-def list_all_scrapers() -> str:
-    """List all registered scrapers."""
+def list_all_scrapers() -> List[ScraperInfo]:
+    """List all registered scrapers.
+    
+    Returns:
+        List of ScraperInfo objects.
+    """
     return get_registry().list_scrapers()
 
 
@@ -452,7 +468,7 @@ if __name__ == "__main__":
     registry = get_registry()
     
     if args.list:
-        print(registry.list_scrapers())
+        print(registry.format_scraper_list())
     
     elif args.source:
         scraper_class = registry.get_scraper_for_source(args.source)

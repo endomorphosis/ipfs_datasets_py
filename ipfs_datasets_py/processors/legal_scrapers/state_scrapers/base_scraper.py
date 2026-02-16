@@ -549,8 +549,8 @@ class BaseStateScraper(ABC):
             # Scrape the URL using Common Crawl
             result = await cc_scraper.scrape_url(
                 url,
-                enable_graphrag=False,  # Just get content
-                enable_logic=False
+                extract_rules=False,  # Just get content
+                feed_to_logic=False
             )
             
             if result.success and result.content:
@@ -646,23 +646,31 @@ class BaseStateScraper(ABC):
             # Create GraphRAG processor
             graphrag = UnifiedGraphRAGProcessor()
             
-            # Extract entities and relationships
-            extraction_result = await graphrag.process_content(
-                content,
-                extract_entities=True,
-                extract_relationships=True
+            # Use process_website which is the primary API
+            # We pass the content as if it's from a URL
+            extraction_result = await graphrag.process_website(
+                url="inline://content",  # Dummy URL for inline content
+                content_override=content  # Pass content directly
             )
             
             result = {
-                'entities': extraction_result.get('entities', []),
-                'relationships': extraction_result.get('relationships', []),
+                'entities': extraction_result.entities if hasattr(extraction_result, 'entities') else [],
+                'relationships': extraction_result.relationships if hasattr(extraction_result, 'relationships') else [],
                 'rules': []
             }
             
-            # Extract legal rules if requested
-            if extract_rules:
-                rules = await graphrag.extract_legal_rules(content)
-                result['rules'] = rules
+            # Extract legal rules from knowledge graph if available
+            if extract_rules and hasattr(extraction_result, 'knowledge_graph'):
+                # Simple rule extraction: look for entities that represent rules/statutes
+                kg = extraction_result.knowledge_graph
+                if kg and hasattr(kg, 'entities'):
+                    for entity in kg.entities.values():
+                        if entity.type.lower() in ['rule', 'statute', 'law', 'regulation']:
+                            result['rules'].append({
+                                'text': entity.name,
+                                'type': entity.type,
+                                'attributes': entity.attributes if hasattr(entity, 'attributes') else {}
+                            })
             
             self.logger.info(
                 f"Extracted {len(result['entities'])} entities, "
