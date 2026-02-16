@@ -58,7 +58,7 @@ jobs:
     - name: Checkout repository
       id: checkout
       uses: actions/checkout@v5
-        with:
+      with:
         with:
         fetch-depth: 0
         clean: false
@@ -74,8 +74,7 @@ jobs:
     - name: Retry checkout in fresh workspace
       if: steps.checkout.outcome == 'failure'
       uses: actions/checkout@v5
-        with:
-        with:
+      with:
         fetch-depth: 0
         clean: false
         ref: ${{ github.event.pull_request.head.ref || github.ref }}
