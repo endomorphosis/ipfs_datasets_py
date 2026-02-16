@@ -30,11 +30,20 @@ jobs:
       - /var/run/docker.sock:/var/run/docker.sock
     steps:
     - name: Debug issue information
-      run: "echo \"## \U0001F50D Issue to Draft PR Conversion\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"### Event Information\" >> $GITHUB_STEP_SUMMARY\necho \"- **Event Name**: ${{ github.event_name }}\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"- **Issue Number**: ${{ github.event.issue.number || github.event.inputs.issue_number }}\" >> $GITHUB_STEP_SUMMARY\n\
-        echo \"- **Issue Title**: ${{ github.event.issue.title }}\" >> $GITHUB_STEP_SUMMARY\necho \"- **Issue Author**: ${{\
-        \ github.event.issue.user.login }}\" >> $GITHUB_STEP_SUMMARY\necho \"\" >> $GITHUB_STEP_SUMMARY\n"
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      run: |
+        echo "## 🔍 Issue to Draft PR Conversion" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
+        echo "### Event Information" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Event Name**: $EVENT_NAME" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Issue Number**: $ISSUE_NUMBER" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Issue Title**: $ISSUE_TITLE" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **Issue Author**: $ISSUE_AUTHOR" >> "$GITHUB_STEP_SUMMARY"
+        echo "" >> "$GITHUB_STEP_SUMMARY"
     - name: Install GitHub CLI and configure git
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
