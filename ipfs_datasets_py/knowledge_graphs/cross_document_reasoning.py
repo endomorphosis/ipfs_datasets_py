@@ -518,17 +518,44 @@ class CrossDocumentReasoner:
         knowledge_graph: Any
     ) -> Tuple[InformationRelationType, float]:
         """
-        Determine the relation type between two documents regarding an entity.
+        Determine the relation type between two documents regarding a shared entity.
+
+        This method analyzes how two documents are related through a common entity by examining:
+        1. Semantic similarity between documents
+        2. Chronological order (if publication dates available)
+        3. Entity context in each document
+        4. Relationship patterns in the knowledge graph
+
+        The algorithm uses heuristics to classify relationships as SUPPORTING, ELABORATING,
+        CONTRADICTING, or COMPLEMENTARY, with an associated confidence score.
 
         Args:
-            entity_id: The entity ID
+            entity_id: The shared entity ID connecting both documents
             source_doc_id: The source document ID
             target_doc_id: The target document ID
-            documents: List of all documents
-            knowledge_graph: Knowledge graph
+            documents: Complete list of documents being analyzed
+            knowledge_graph: Knowledge graph containing entity and relationship data
 
         Returns:
-            Tuple of (relation_type, connection_strength)
+            Tuple of (relation_type, connection_strength) where:
+            - relation_type: InformationRelationType enum value
+            - connection_strength: Float between 0.0 and 1.0 indicating confidence
+
+        Example:
+            >>> # Two papers discussing "machine learning"
+            >>> relation, strength = self._determine_relation(
+            ...     entity_id="ml_entity_123",
+            ...     source_doc_id="paper_2020",
+            ...     target_doc_id="paper_2022",
+            ...     documents=all_papers,
+            ...     knowledge_graph=kg
+            ... )
+            >>> print(f"Relation: {relation}, Strength: {strength}")
+            Relation: ELABORATING, Strength: 0.75
+
+        Note:
+            Future versions will use LLM-based analysis for more sophisticated
+            relationship determination (see TODO at line 542).
         """
         # Find the documents
         source_doc = next((d for d in documents if d.id == source_doc_id), None)
@@ -578,15 +605,52 @@ class CrossDocumentReasoner:
         reasoning_depth: str
     ) -> List[List[str]]:
         """
-        Generate document traversal paths for reasoning.
+        Generate document traversal paths for multi-document reasoning.
+
+        This method constructs a graph of document connections based on shared entities
+        and generates traversal paths that guide the reasoning process. The path length
+        is determined by the reasoning_depth parameter.
+
+        The algorithm:
+        1. Builds an undirected graph where nodes are documents and edges are entity connections
+        2. Sorts documents by relevance score
+        3. Performs depth-first search (DFS) from the top-k most relevant documents
+        4. Generates paths up to the maximum length specified by reasoning_depth
+
+        Reasoning depth mapping:
+        - "basic": 2-document paths (direct connections)
+        - "moderate": 3-document paths (one intermediate document)
+        - "deep": 5-document paths (up to 3 intermediate documents)
 
         Args:
-            documents: List of documents
-            entity_connections: List of entity-mediated connections
-            reasoning_depth: Reasoning depth
+            documents: Complete list of documents with relevance scores
+            entity_connections: List of entity-mediated connections between documents
+            reasoning_depth: One of "basic", "moderate", or "deep"
 
         Returns:
-            List of document traversal paths (lists of document IDs)
+            List of document traversal paths, where each path is a list of document IDs
+            ordered by traversal. Paths are sorted by the relevance of their starting document.
+
+        Example:
+            >>> connections = [
+            ...     EntityMediatedConnection(
+            ...         entity_id="machine_learning",
+            ...         source_doc_id="paper1",
+            ...         target_doc_id="paper2",
+            ...         ...
+            ...     )
+            ... ]
+            >>> paths = self._generate_traversal_paths(
+            ...     documents=papers,
+            ...     entity_connections=connections,
+            ...     reasoning_depth="moderate"
+            ... )
+            >>> print(paths)
+            [['paper1', 'paper2', 'paper3'], ['paper1', 'paper4'], ...]
+
+        Note:
+            The DFS is limited to avoid cycles - each document appears at most once per path.
+            This ensures paths represent meaningful reasoning chains without redundancy.
         """
         # Build a graph of document connections
         doc_graph = {}
