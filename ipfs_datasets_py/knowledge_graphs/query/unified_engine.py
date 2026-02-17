@@ -535,15 +535,8 @@ class UnifiedQueryEngine:
                 logger.error(f"GraphRAG execution failed: {e}")
                 raise QueryExecutionError(
                     f"Failed to execute GraphRAG query: {e}",
-                    details={'question': question, 'depth': reasoning_depth, 'search_k': search_k}
+                    details={'question': question, 'depth': reasoning_depth, 'k': k}
                 ) from e
-                    items=[],
-                    stats=tracker.get_stats(),
-                    counters=tracker.counters,
-                    query_type='graphrag',
-                    success=False,
-                    error=str(e)
-                )
     
     def _detect_query_type(self, query: str) -> str:
         """

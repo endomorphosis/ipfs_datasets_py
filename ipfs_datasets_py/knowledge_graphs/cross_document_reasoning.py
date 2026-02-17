@@ -181,16 +181,17 @@ class CrossDocumentReasoner:
         reasoning_id = str(uuid.uuid4())
 
         # Start a new reasoning trace
-        trace_id = self.reasoning_tracer.create_trace(
+        trace = self.reasoning_tracer.create_trace(
             query=query,
-            trace_type="cross_document_reasoning",
             metadata={
+                "trace_type": "cross_document_reasoning",
                 "reasoning_depth": reasoning_depth,
                 "max_documents": max_documents,
                 "min_relevance": min_relevance,
-                "max_hops": max_hops
-            }
+                "max_hops": max_hops,
+            },
         )
+        trace_id = trace.trace_id
 
         # Initialize cross-document reasoning object
         cross_doc_reasoning = CrossDocReasoning(
@@ -202,8 +203,7 @@ class CrossDocumentReasoner:
         )
 
         # Step 1: Find relevant documents (either from input or by vector search)
-        self.reasoning_tracer.add_node(
-            trace_id=trace_id,
+        trace.add_node(
             node_type=ReasoningNodeType.QUERY,
             content=query,
             metadata={"reasoning_step": "document_retrieval"}
@@ -223,8 +223,7 @@ class CrossDocumentReasoner:
 
         # Add document nodes to the reasoning trace
         for doc in documents:
-            self.reasoning_tracer.add_node(
-                trace_id=trace_id,
+            trace.add_node(
                 node_type=ReasoningNodeType.DOCUMENT,
                 content=doc.content[:200] + "..." if len(doc.content) > 200 else doc.content,
                 metadata={
@@ -236,8 +235,7 @@ class CrossDocumentReasoner:
             )
 
         # Step 2: Identify entities and extract entity-mediated connections
-        self.reasoning_tracer.add_node(
-            trace_id=trace_id,
+        trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Identifying entity-mediated connections between documents",
             metadata={"reasoning_step": "entity_connection_discovery"}
@@ -254,8 +252,7 @@ class CrossDocumentReasoner:
 
         # Add connection nodes to the reasoning trace
         for conn in entity_connections:
-            self.reasoning_tracer.add_node(
-                trace_id=trace_id,
+            trace.add_node(
                 node_type=ReasoningNodeType.RELATIONSHIP,
                 content=f"Connection through entity '{conn.entity_name}' ({conn.entity_type})",
                 metadata={
@@ -268,8 +265,7 @@ class CrossDocumentReasoner:
             )
 
         # Step 3: Generate traversal paths for reasoning
-        self.reasoning_tracer.add_node(
-            trace_id=trace_id,
+        trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Generating traversal paths for reasoning",
             metadata={"reasoning_step": "traversal_path_generation"}
@@ -285,8 +281,7 @@ class CrossDocumentReasoner:
         cross_doc_reasoning.traversal_paths = traversal_paths
 
         # Step 4: Synthesize answer based on connected information
-        self.reasoning_tracer.add_node(
-            trace_id=trace_id,
+        trace.add_node(
             node_type=ReasoningNodeType.INFERENCE,
             content="Synthesizing answer from connected information",
             metadata={"reasoning_step": "answer_synthesis"}
@@ -305,8 +300,7 @@ class CrossDocumentReasoner:
         cross_doc_reasoning.confidence = confidence
 
         # Add conclusion to the reasoning trace
-        self.reasoning_tracer.add_node(
-            trace_id=trace_id,
+        trace.add_node(
             node_type=ReasoningNodeType.CONCLUSION,
             content=answer,
             metadata={
@@ -340,7 +334,7 @@ class CrossDocumentReasoner:
         }
 
         if return_trace:
-            result["reasoning_trace"] = self.reasoning_tracer.get_trace(trace_id)
+            result["reasoning_trace"] = trace.to_dict()
 
         return result
 

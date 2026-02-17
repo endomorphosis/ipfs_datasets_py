@@ -54,7 +54,7 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     Relationship,
     KnowledgeGraph,
     KnowledgeGraphExtractor,
-    KnowledgeGraphExtractorWithValidation,
+    KnowledgeGraphExtractorWithValidation as _NewKnowledgeGraphExtractorWithValidation,
     
     # Types
     EntityID,
@@ -73,6 +73,21 @@ from ipfs_datasets_py.knowledge_graphs.extraction import (
     is_accelerate_available,
     get_accelerate_status,
 )
+
+
+class KnowledgeGraphExtractorWithValidation(_NewKnowledgeGraphExtractorWithValidation):
+    """Backward-compatible wrapper for legacy API.
+
+    The newer extraction package returns a detailed dict from
+    `extract_knowledge_graph`. The legacy `knowledge_graph_extraction` API
+    historically returned a `KnowledgeGraph` instance.
+    """
+
+    def extract_knowledge_graph(self, *args, **kwargs):  # type: ignore[override]
+        result = super().extract_knowledge_graph(*args, **kwargs)
+        if isinstance(result, dict) and "knowledge_graph" in result:
+            return result["knowledge_graph"]
+        return result
 
 __all__ = [
     # Core classes

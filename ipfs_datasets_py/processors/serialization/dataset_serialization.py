@@ -27,7 +27,7 @@ import numpy as np
 from collections import defaultdict
 from typing import Dict, List, Optional, Tuple, Union, Any, Iterator, Generator, TypeVar, Generic, Set, Callable
 
-from .ipld.storage import IPLDStorage
+from ipfs_datasets_py.processors.storage.ipld.storage import IPLDStorage
 
 # Check for dependencies
 try:

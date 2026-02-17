@@ -19,11 +19,10 @@ logger = logging.getLogger(__name__)
 
 # Try to import spaCy
 try:
-    import spacy
+    import spacy  # type: ignore[import-not-found]
     SPACY_AVAILABLE = True
 except ImportError:
     SPACY_AVAILABLE = False
-    logger.warning("spaCy not available. Install with: pip install spacy")
 
 # Global spaCy model cache
 _SPACY_MODEL: Optional[Any] = None
@@ -81,6 +80,8 @@ def extract_predicates_nlp(
                 return _extract_predicates_spacy(text, nlp)
             except Exception as e:
                 logger.warning(f"spaCy extraction failed: {e}, falling back to regex")
+    elif use_spacy and not SPACY_AVAILABLE:
+        logger.debug("spaCy not installed; using regex predicate extraction")
     
     # Fallback to regex-based extraction
     from .predicate_extractor import extract_predicates

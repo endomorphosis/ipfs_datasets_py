@@ -236,6 +236,38 @@ class KnowledgeGraphExtractorWithValidation:
 
             return error_result
 
+    def validate_against_wikidata(
+        self,
+        entity_name: str,
+        entity_type: str = "entity",
+    ) -> Dict[str, Any]:
+        """Validate a single entity against Wikidata.
+
+        This method exists primarily for backward compatibility with the
+        previous validation API surface.
+        """
+        if not self.validator:
+            return {
+                "valid": False,
+                "reason": "validator_unavailable",
+                "entity_name": entity_name,
+                "entity_type": entity_type,
+            }
+
+        # SPARQLValidator exposes internal lookup helpers; we use them here to
+        # provide a simple compatibility wrapper.
+        wikidata_entity = None
+        lookup = getattr(self.validator, "_get_wikidata_entity", None)
+        if callable(lookup):
+            wikidata_entity = lookup(entity_name, entity_type)
+
+        return {
+            "valid": bool(wikidata_entity),
+            "entity_name": entity_name,
+            "entity_type": entity_type,
+            "wikidata_entity": wikidata_entity,
+        }
+
     def extract_from_wikipedia(
         self,
         page_title: str,

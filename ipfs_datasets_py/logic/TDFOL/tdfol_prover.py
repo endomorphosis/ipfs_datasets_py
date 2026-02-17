@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
 
 from .tdfol_core import (
     BinaryFormula,
@@ -43,29 +43,64 @@ from .tdfol_core import (
 logger = logging.getLogger(__name__)
 
 
-# Try to import CEC native prover
-try:
-    from ipfs_datasets_py.logic.CEC.native.prover_core import (
-        InferenceEngine,
-        InferenceRule,
-    )
-    HAVE_CEC_PROVER = True
-except ImportError:
-    HAVE_CEC_PROVER = False
-    logger.warning("CEC native prover not available")
+if TYPE_CHECKING:
+    from ..integration.tdfol_shadowprover_bridge import ModalLogicType
 
-# Try to import modal tableaux
-try:
-    from ipfs_datasets_py.logic.CEC.native.modal_tableaux import (
-        ModalTableau,
-        TableauProver,
-    )
-    HAVE_MODAL_TABLEAUX = True
-except ImportError:
-    HAVE_MODAL_TABLEAUX = False
-    logger.warning("Modal tableaux not available")
+# Optional provers are loaded lazily to keep imports quiet/deterministic.
+InferenceEngine = None  # type: ignore[assignment]
+InferenceRule = None  # type: ignore[assignment]
+ModalTableau = None  # type: ignore[assignment]
+TableauProver = None  # type: ignore[assignment]
 
-logger = logging.getLogger(__name__)
+HAVE_CEC_PROVER = False
+HAVE_MODAL_TABLEAUX = False
+
+_CEC_IMPORT_ATTEMPTED = False
+_MODAL_TABLEAUX_IMPORT_ATTEMPTED = False
+
+
+def _try_load_cec_prover() -> bool:
+    global _CEC_IMPORT_ATTEMPTED, HAVE_CEC_PROVER, InferenceEngine, InferenceRule
+    if HAVE_CEC_PROVER:
+        return True
+    if _CEC_IMPORT_ATTEMPTED:
+        return False
+    _CEC_IMPORT_ATTEMPTED = True
+    try:
+        from ipfs_datasets_py.logic.CEC.native.prover_core import (  # type: ignore
+            InferenceEngine as _InferenceEngine,
+            InferenceRule as _InferenceRule,
+        )
+
+        InferenceEngine = _InferenceEngine
+        InferenceRule = _InferenceRule
+        HAVE_CEC_PROVER = True
+        return True
+    except Exception:
+        HAVE_CEC_PROVER = False
+        return False
+
+
+def _try_load_modal_tableaux() -> bool:
+    global _MODAL_TABLEAUX_IMPORT_ATTEMPTED, HAVE_MODAL_TABLEAUX, ModalTableau, TableauProver
+    if HAVE_MODAL_TABLEAUX:
+        return True
+    if _MODAL_TABLEAUX_IMPORT_ATTEMPTED:
+        return False
+    _MODAL_TABLEAUX_IMPORT_ATTEMPTED = True
+    try:
+        from ipfs_datasets_py.logic.CEC.native.modal_tableaux import (  # type: ignore
+            ModalTableau as _ModalTableau,
+            TableauProver as _TableauProver,
+        )
+
+        ModalTableau = _ModalTableau
+        TableauProver = _TableauProver
+        HAVE_MODAL_TABLEAUX = True
+        return True
+    except Exception:
+        HAVE_MODAL_TABLEAUX = False
+        return False
 
 
 # ============================================================================
@@ -339,10 +374,10 @@ class TDFOLProver:
         
         # Try to use CEC prover if available
         self.cec_engine = None
-        if HAVE_CEC_PROVER:
+        if _try_load_cec_prover():
             try:
                 self.cec_engine = InferenceEngine()
-                logger.info("CEC inference engine initialized")
+                logger.debug("CEC inference engine initialized")
             except Exception as e:
                 logger.warning(f"Failed to initialize CEC engine: {e}")
     
@@ -423,7 +458,7 @@ class TDFOLProver:
             return result
         
         # Try modal tableaux for modal formulas
-        if self._is_modal_formula(goal) and HAVE_MODAL_TABLEAUX:
+        if self._is_modal_formula(goal) and _try_load_modal_tableaux():
             result = self._modal_tableaux_prove(goal, timeout_ms)
             if result.is_proved():
                 # Cache successful proof

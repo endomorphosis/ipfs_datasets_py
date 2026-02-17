@@ -20,37 +20,24 @@ Main Components:
 - Individual wrappers for each submodule
 """
 
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING
+
 # Note: Native implementation should be imported directly:
 # from ipfs_datasets_py.logic.CEC.native import DCECContainer, TheoremProver, etc.
+#
+# This package intentionally avoids importing optional/heavy wrappers at import time.
+# Many wrappers rely on optional dependencies and/or decorators that emit warnings
+# during import. Use attribute access (or explicit submodule imports) to load them.
 
-from .cec_framework import (
-    CECFramework,
-    FrameworkConfig,
-    ReasoningMode,
-    ReasoningTask
-)
-
-from .dcec_wrapper import (
-    DCECLibraryWrapper,
-    DCECStatement
-)
-
-from .talos_wrapper import (
-    TalosWrapper,
-    ProofAttempt,
-    ProofResult
-)
-
-from .eng_dcec_wrapper import (
-    EngDCECWrapper,
-    ConversionResult
-)
-
-from .shadow_prover_wrapper import (
-    ShadowProverWrapper,
-    ProofTask,
-    ProverStatus
-)
+if TYPE_CHECKING:
+    from .cec_framework import CECFramework, FrameworkConfig, ReasoningMode, ReasoningTask
+    from .dcec_wrapper import DCECLibraryWrapper, DCECStatement
+    from .talos_wrapper import TalosWrapper, ProofAttempt, ProofResult
+    from .eng_dcec_wrapper import EngDCECWrapper, ConversionResult
+    from .shadow_prover_wrapper import ShadowProverWrapper, ProofTask, ProverStatus
 
 __all__ = [
     # Framework
@@ -74,3 +61,38 @@ __all__ = [
     "ProverStatus",
     # Native module available via: from ipfs_datasets_py.logic.CEC.native import ...
 ]
+
+
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    # Framework
+    "CECFramework": (".cec_framework", "CECFramework"),
+    "FrameworkConfig": (".cec_framework", "FrameworkConfig"),
+    "ReasoningMode": (".cec_framework", "ReasoningMode"),
+    "ReasoningTask": (".cec_framework", "ReasoningTask"),
+    # DCEC Library
+    "DCECLibraryWrapper": (".dcec_wrapper", "DCECLibraryWrapper"),
+    "DCECStatement": (".dcec_wrapper", "DCECStatement"),
+    # Talos
+    "TalosWrapper": (".talos_wrapper", "TalosWrapper"),
+    "ProofAttempt": (".talos_wrapper", "ProofAttempt"),
+    "ProofResult": (".talos_wrapper", "ProofResult"),
+    # Eng-DCEC
+    "EngDCECWrapper": (".eng_dcec_wrapper", "EngDCECWrapper"),
+    "ConversionResult": (".eng_dcec_wrapper", "ConversionResult"),
+    # ShadowProver
+    "ShadowProverWrapper": (".shadow_prover_wrapper", "ShadowProverWrapper"),
+    "ProofTask": (".shadow_prover_wrapper", "ProofTask"),
+    "ProverStatus": (".shadow_prover_wrapper", "ProverStatus"),
+}
+
+
+def __getattr__(name: str):
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attr_name = target
+    module = importlib.import_module(module_name, __name__)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value

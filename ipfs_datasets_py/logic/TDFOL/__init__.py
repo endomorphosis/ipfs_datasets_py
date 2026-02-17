@@ -14,6 +14,11 @@ The TDFOL system enables neurosymbolic reasoning combining:
 - Vector-based retrieval
 """
 
+from __future__ import annotations
+
+import importlib
+from typing import TYPE_CHECKING
+
 from .tdfol_core import (
     # Enumerations
     DeonticOperator,
@@ -57,37 +62,20 @@ from .tdfol_core import (
     create_until,
 )
 
-from .tdfol_parser import (
-    TDFOLLexer,
-    TDFOLParser,
-    parse_tdfol,
-    parse_tdfol_safe,
-)
+# Keep package imports quiet/deterministic: do not import optional/heavy submodules
+# (parsers, DCEC integration, prover, cache, rule loaders) at import time.
 
-from .tdfol_dcec_parser import (
-    DCECStringParser,
-    parse_dcec,
-    parse_dcec_safe,
-)
-
-from .tdfol_prover import (
-    ProofResult,
-    ProofStatus,
-    ProofStep,
-    TDFOLProver,
-)
-
-from .tdfol_proof_cache import (
-    TDFOLProofCache,
-    get_global_proof_cache,
-    clear_global_proof_cache,
-    TDFOLProofResult,
-)
-
-from .tdfol_inference_rules import (
-    TDFOLInferenceRule,
-    get_all_tdfol_rules,
-)
+if TYPE_CHECKING:
+    from .tdfol_parser import TDFOLLexer, TDFOLParser, parse_tdfol, parse_tdfol_safe
+    from .tdfol_dcec_parser import DCECStringParser, parse_dcec, parse_dcec_safe
+    from .tdfol_prover import ProofResult, ProofStatus, ProofStep, TDFOLProver
+    from .tdfol_proof_cache import (
+        TDFOLProofCache,
+        get_global_proof_cache,
+        clear_global_proof_cache,
+        TDFOLProofResult,
+    )
+    from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
 
 __all__ = [
     # Enumerations
@@ -160,3 +148,41 @@ __all__ = [
 ]
 
 __version__ = "1.0.0"
+
+
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    # Parser
+    "TDFOLLexer": (".tdfol_parser", "TDFOLLexer"),
+    "TDFOLParser": (".tdfol_parser", "TDFOLParser"),
+    "parse_tdfol": (".tdfol_parser", "parse_tdfol"),
+    "parse_tdfol_safe": (".tdfol_parser", "parse_tdfol_safe"),
+    # DCEC Parser
+    "DCECStringParser": (".tdfol_dcec_parser", "DCECStringParser"),
+    "parse_dcec": (".tdfol_dcec_parser", "parse_dcec"),
+    "parse_dcec_safe": (".tdfol_dcec_parser", "parse_dcec_safe"),
+    # Prover
+    "ProofResult": (".tdfol_prover", "ProofResult"),
+    "ProofStatus": (".tdfol_prover", "ProofStatus"),
+    "ProofStep": (".tdfol_prover", "ProofStep"),
+    "TDFOLProver": (".tdfol_prover", "TDFOLProver"),
+    # Proof Cache
+    "TDFOLProofCache": (".tdfol_proof_cache", "TDFOLProofCache"),
+    "get_global_proof_cache": (".tdfol_proof_cache", "get_global_proof_cache"),
+    "clear_global_proof_cache": (".tdfol_proof_cache", "clear_global_proof_cache"),
+    "TDFOLProofResult": (".tdfol_proof_cache", "TDFOLProofResult"),
+    # Inference Rules
+    "TDFOLInferenceRule": (".tdfol_inference_rules", "TDFOLInferenceRule"),
+    "get_all_tdfol_rules": (".tdfol_inference_rules", "get_all_tdfol_rules"),
+}
+
+
+def __getattr__(name: str):
+    target = _LAZY_EXPORTS.get(name)
+    if target is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attr_name = target
+    module = importlib.import_module(module_name, __name__)
+    value = getattr(module, attr_name)
+    globals()[name] = value
+    return value

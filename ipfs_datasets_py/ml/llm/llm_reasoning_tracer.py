@@ -1014,6 +1014,101 @@ class WikipediaKnowledgeGraphTracer:
         self.traces = {}
         self.validation_results = {}
 
+    def trace_extraction_and_validation(
+        self,
+        page_title: str,
+        extraction_temperature: float = 0.7,
+        structure_temperature: float = 0.5,
+    ) -> str:
+        """Create a trace for a single extraction+validation run.
+
+        This is a compatibility wrapper used by the knowledge graph validation
+        extractor. It stores the run parameters in trace metadata.
+        """
+        trace_id = f"wiki-kg-{uuid.uuid4()}"
+        trace = ReasoningTrace(
+            trace_id=trace_id,
+            query=f"Extract knowledge graph from: {page_title}",
+            metadata={
+                "page_title": page_title,
+                "extraction_temperature": extraction_temperature,
+                "structure_temperature": structure_temperature,
+                "extraction_source": "custom_text",
+            },
+        )
+        self.traces[trace_id] = trace
+        return trace_id
+
+    def update_extraction_and_validation_trace(
+        self,
+        trace_id: str,
+        status: str,
+        knowledge_graph: Any = None,
+        validation_results: Optional[Dict[str, Any]] = None,
+        entity_count: Optional[int] = None,
+        relationship_count: Optional[int] = None,
+        coverage: Optional[float] = None,
+        error: Optional[str] = None,
+    ) -> None:
+        """Update a previously created extraction+validation trace."""
+        trace = self.traces.get(trace_id)
+        if trace is None:
+            return
+
+        trace.metadata["status"] = status
+        if entity_count is not None:
+            trace.metadata["entity_count"] = entity_count
+        if relationship_count is not None:
+            trace.metadata["relationship_count"] = relationship_count
+        if coverage is not None:
+            trace.metadata["coverage"] = coverage
+        if error is not None:
+            trace.metadata["error"] = error
+        if validation_results is not None:
+            self.validation_results[trace_id] = validation_results
+            trace.metadata["validation_results"] = validation_results
+
+    def trace_validation(self, kg_name: str, entity_name: str) -> str:
+        """Create a trace for a knowledge graph validation run.
+
+        Compatibility API used by SPARQLValidator.
+        """
+        trace_id = f"wiki-kg-validation-{uuid.uuid4()}"
+        trace = ReasoningTrace(
+            trace_id=trace_id,
+            query=f"Validate knowledge graph: {kg_name}",
+            metadata={
+                "kg_name": kg_name,
+                "entity_name": entity_name,
+            },
+        )
+        self.traces[trace_id] = trace
+        return trace_id
+
+    def update_validation_trace(
+        self,
+        trace_id: str,
+        status: str,
+        validation_results: Optional[Dict[str, Any]] = None,
+        error: Optional[str] = None,
+        coverage: Optional[float] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        """Update a validation trace created by `trace_validation`."""
+        trace = self.traces.get(trace_id)
+        if trace is None:
+            return
+
+        trace.metadata["status"] = status
+        if coverage is not None:
+            trace.metadata["coverage"] = coverage
+        if error is not None:
+            trace.metadata["error"] = error
+        if metadata:
+            trace.metadata.update(metadata)
+        if validation_results is not None:
+            trace.metadata["validation_results"] = validation_results
+
     def create_extraction_trace(self, document_title: str, text_snippet: str) -> str:
         """
         Create a new extraction trace for a Wikipedia document.
@@ -1030,7 +1125,6 @@ class WikipediaKnowledgeGraphTracer:
         trace = ReasoningTrace(
             trace_id=trace_id,
             query=f"Extract knowledge graph from: {document_title}",
-            timestamp=datetime.datetime.now(),
             metadata={
                 "document_title": document_title,
                 "text_length": len(text_snippet),
@@ -1102,7 +1196,7 @@ class WikipediaKnowledgeGraphTracer:
         # Find the text evidence node to link to
         # In a real implementation, we would find the specific text node
         # that contains this entity
-        text_nodes = [n for n in trace.nodes if n.node_type == ReasoningNodeType.EVIDENCE]
+        text_nodes = [n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.EVIDENCE]
         if text_nodes:
             trace.add_edge(entity_node_id, text_nodes[0].node_id, "extracted_from")
 
@@ -1155,7 +1249,7 @@ class WikipediaKnowledgeGraphTracer:
         trace.add_edge(relationship_node_id, target_entity_id, "target_entity")
 
         # Find the text evidence node to link to
-        text_nodes = [n for n in trace.nodes if n.node_type == ReasoningNodeType.EVIDENCE]
+        text_nodes = [n for n in trace.nodes.values() if n.node_type == ReasoningNodeType.EVIDENCE]
         if text_nodes:
             trace.add_edge(relationship_node_id, text_nodes[0].node_id, "extracted_from")
 

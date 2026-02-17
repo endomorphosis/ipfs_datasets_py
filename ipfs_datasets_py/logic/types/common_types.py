@@ -1,24 +1,27 @@
-"""Common Type Definitions for Logic Module
+"""Common type definitions for the logic module.
 
-This module provides shared enums, protocols, and base types used across
-all logic submodules.
+This module must remain lightweight and free of import-time side effects.
+It provides shared enums, protocols, and small dataclasses used across
+`ipfs_datasets_py.logic.*`.
 """
 
-from enum import Enum
-from typing import TYPE_CHECKING, Protocol, TypeVar, Union, runtime_checkable
+from __future__ import annotations
+
 from dataclasses import dataclass
+from enum import Enum
+from typing import TYPE_CHECKING, Protocol, TypeVar, runtime_checkable
 
 if TYPE_CHECKING:
     from .proof_types import ProofResult
 
 
-# Type aliases for clarity
 ConfidenceScore = float  # Range: 0.0 to 1.0
-ComplexityScore = int    # Range: 0 to 100
+ComplexityScore = int  # Range: 0 to 100
 
 
 class LogicOperator(Enum):
     """Logical operators for building formulas."""
+
     AND = "∧"
     OR = "∨"
     NOT = "¬"
@@ -30,12 +33,14 @@ class LogicOperator(Enum):
 
 class Quantifier(Enum):
     """Quantifiers for first-order logic."""
+
     UNIVERSAL = "∀"  # For all
     EXISTENTIAL = "∃"  # There exists
 
 
 class FormulaType(Enum):
-    """Types of logical formulas."""
+    """High-level categories of logical formulas."""
+
     FOL = "first_order_logic"
     MODAL = "modal_logic"
     TEMPORAL = "temporal_logic"
@@ -46,107 +51,68 @@ class FormulaType(Enum):
     PROPOSITIONAL = "propositional"
 
 
-@dataclass
+@dataclass(slots=True)
 class ComplexityMetrics:
-    """Metrics for formula complexity analysis.
-    
-    PHASE 7 OPTIMIZATION: Using __slots__ for 30-40% memory reduction.
-    """
-    __slots__ = (
-        'quantifier_depth',
-        'nesting_level',
-        'operator_count',
-        'variable_count',
-        'predicate_count',
-        'complexity_score',
-    )
-    
+    """Metrics for formula complexity analysis."""
+
     quantifier_depth: int = 0
     nesting_level: int = 0
     operator_count: int = 0
     variable_count: int = 0
     predicate_count: int = 0
     complexity_score: ComplexityScore = 0
-    
+
     def to_dict(self) -> dict[str, int]:
-        """Convert metrics to dictionary."""
         return {
             "quantifier_depth": self.quantifier_depth,
             "nesting_level": self.nesting_level,
             "operator_count": self.operator_count,
             "variable_count": self.variable_count,
             "predicate_count": self.predicate_count,
-            "complexity_score": self.complexity_score,
+            "complexity_score": int(self.complexity_score),
         }
 
 
 @runtime_checkable
 class Formula(Protocol):
-    """Protocol for logical formulas.
-    
-    Any class implementing this protocol can be used as a logical formula
-    in the logic module, enabling duck typing while maintaining type safety.
-    """
-    
-    def to_string(self) -> str:
-        """Convert formula to string representation."""
-        ...
-    
-    def get_complexity(self) -> ComplexityMetrics:
-        """Get complexity metrics for this formula."""
-        ...
+    """Protocol for logical formula objects."""
+
+    def to_string(self) -> str: ...
+
+    def get_complexity(self) -> ComplexityMetrics: ...
 
 
 @runtime_checkable
 class Prover(Protocol):
-    """Protocol for theorem provers.
-    
-    Any class implementing this protocol can be used as a theorem prover
-    in the logic module.
-    """
-    
-    def prove(self, formula: str, timeout: int = 30) -> "ProofResult":
-        """Attempt to prove the given formula."""
-        ...
-    
-    def get_name(self) -> str:
-        """Get the name of this prover."""
-        ...
+    """Protocol for theorem provers."""
+
+    def prove(self, formula: str, timeout: int = 30) -> "ProofResult": ...
+
+    def get_name(self) -> str: ...
 
 
 @runtime_checkable
 class Converter(Protocol):
-    """Protocol for logic converters.
-    
-    Any class implementing this protocol can convert between logic formats.
-    """
-    
-    def convert(self, formula: str, source_format: str, target_format: str) -> str:
-        """Convert formula from source format to target format."""
-        ...
+    """Protocol for logic converters."""
+
+    def convert(self, formula: str, source_format: str, target_format: str) -> str: ...
 
 
-# Type variables for generic programming
-FormulaT = TypeVar('FormulaT', bound=Formula)
-ProverT = TypeVar('ProverT', bound=Prover)
-ConverterT = TypeVar('ConverterT', bound=Converter)
+FormulaT = TypeVar("FormulaT", bound=Formula)
+ProverT = TypeVar("ProverT", bound=Prover)
+ConverterT = TypeVar("ConverterT", bound=Converter)
 
 
 __all__ = [
-    # Type aliases
     "ConfidenceScore",
     "ComplexityScore",
-    # Enums
     "LogicOperator",
     "Quantifier",
     "FormulaType",
-    # Dataclasses
     "ComplexityMetrics",
-    # Protocols
     "Formula",
     "Prover",
     "Converter",
-    # Type variables
     "FormulaT",
     "ProverT",
     "ConverterT",

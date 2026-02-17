@@ -420,6 +420,9 @@ def _rule_based_entity_extraction(text: str) -> List[Entity]:
 
     # Enhanced patterns for better AI research content extraction
     patterns = [
+        # Generic named person at sentence level (e.g., "Marie Curie was ...")
+        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+was\b", "person", 0.85),
+
         # Person names: Dr./Prof. + proper names (improved)
         (r"(?:Dr\.|Prof\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=\s|$|[.,;:])", "person", 0.9),
         

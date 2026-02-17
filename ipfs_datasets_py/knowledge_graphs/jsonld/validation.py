@@ -251,10 +251,11 @@ class SHACLValidator:
                 if min_count > 0:
                     error_msg = f"Property {path} is required (minCount={min_count})"
                     self._add_error_with_severity(result, error_msg, constraint_severity)
-            elif isinstance(value, list):
-                if len(value) < min_count:
+            else:
+                value_count = len(value) if isinstance(value, list) else 1
+                if value_count < min_count:
                     error_msg = (
-                        f"Property {path} has {len(value)} values, "
+                        f"Property {path} has {value_count} values, "
                         f"but requires at least {min_count}"
                     )
                     self._add_error_with_severity(result, error_msg, constraint_severity)
@@ -263,13 +264,31 @@ class SHACLValidator:
         if "maxCount" in constraint:
             max_count = constraint["maxCount"]
             value = data.get(path)
-            
-            if value is not None and isinstance(value, list):
-                if len(value) > max_count:
+
+            if value is not None:
+                value_count = len(value) if isinstance(value, list) else 1
+                if value_count > max_count:
                     error_msg = (
-                        f"Property {path} has {len(value)} values, "
+                        f"Property {path} has {value_count} values, "
                         f"but allows at most {max_count}"
                     )
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
+
+        # Check hasValue
+        if "hasValue" in constraint:
+            expected_value = constraint["hasValue"]
+            value = data.get(path)
+
+            if value is None:
+                error_msg = f"Property {path} must have value {expected_value}"
+                self._add_error_with_severity(result, error_msg, constraint_severity)
+            elif isinstance(value, list):
+                if expected_value not in value:
+                    error_msg = f"Property {path} must contain value {expected_value}"
+                    self._add_error_with_severity(result, error_msg, constraint_severity)
+            else:
+                if value != expected_value:
+                    error_msg = f"Property {path} must have value {expected_value}"
                     self._add_error_with_severity(result, error_msg, constraint_severity)
         
         # Check datatype

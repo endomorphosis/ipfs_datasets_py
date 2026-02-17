@@ -1,9 +1,8 @@
-"""Translation type definitions.
+"""Translation type definitions (import-safe).
 
-This module defines small, import-safe datatypes used by the logic subsystem.
-
-Do NOT import heavy integration modules here; this file must remain safe to
-import when users do ``import ipfs_datasets_py.logic.api``.
+These datatypes are used by the core logic subsystem and must not import
+`ipfs_datasets_py.logic.integration` (or other heavy optional subsystems) at
+import time.
 """
 
 from __future__ import annotations
@@ -77,35 +76,11 @@ class AbstractLogicFormula:
             "quantifiers": list(self.quantifiers),
             "propositions": list(self.propositions),
             "logical_structure": dict(self.logical_structure),
-            "source_formula_id": getattr(self.source_formula, "formula_id", None) if self.source_formula else None,
+            "source_formula_id": getattr(self.source_formula, "formula_id", None)
+            if self.source_formula
+            else None,
         }
 
-
-__all__ = [
-    "LogicTranslationTarget",
-    "TranslationResult",
-    "AbstractLogicFormula",
-]
-"""
-Translation Type Definitions
-
-This module provides backward-compatible imports for translation-related types.
-Types are still defined in integration/logic_translation_core.py but imported here
-for centralized access and to prevent circular dependencies.
-
-For internal use within the logic module, import from here:
-    from ipfs_datasets_py.logic.types import LogicTranslationTarget, TranslationResult
-
-For external use, the types are still available from their original location:
-    from ipfs_datasets_py.logic.integration.logic_translation_core import TranslationResult
-"""
-
-# Re-export from original location to maintain backward compatibility
-from ..integration.converters.logic_translation_core import (
-    LogicTranslationTarget,
-    TranslationResult,
-    AbstractLogicFormula,
-)
 
 __all__ = [
     "LogicTranslationTarget",

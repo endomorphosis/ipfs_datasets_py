@@ -89,12 +89,14 @@ class KnowledgeGraph:
 
     def add_entity(
         self,
-        entity_type_or_entity: Union[str, Entity],
+        entity_type_or_entity: Union[str, Entity, None] = None,
         name: Optional[str] = None,
         properties: Optional[Dict[str, Any]] = None,
         entity_id: str = None,
         confidence: float = 1.0,
-        source_text: str = None
+        source_text: str = None,
+        entity_type: Optional[str] = None,
+        **_ignored_kwargs: Any,
     ) -> Entity:
         """Add an entity to the knowledge graph.
 
@@ -123,6 +125,10 @@ class KnowledgeGraph:
             entity = kg.add_entity("person", "Bob", properties={"age": 30})
             ```
         """
+        # Backward-compatible alias: allow keyword `entity_type=`
+        if entity_type_or_entity is None and entity_type is not None:
+            entity_type_or_entity = entity_type
+
         # Handle both calling patterns
         if isinstance(entity_type_or_entity, Entity):
             # Called with Entity object: add_entity(entity)
@@ -131,15 +137,18 @@ class KnowledgeGraph:
             # Called with parameters: add_entity(entity_type, name, ...)
             if name is None:
                 raise ValueError("name parameter is required when first argument is entity_type string")
-            
-            entity = Entity(
-                entity_id=entity_id,
-                entity_type=entity_type_or_entity,
-                name=name,
-                properties=properties,
-                confidence=confidence,
-                source_text=source_text
-            )
+
+            entity_kwargs: Dict[str, Any] = {
+                "entity_type": entity_type_or_entity,
+                "name": name,
+                "properties": properties,
+                "confidence": confidence,
+                "source_text": source_text,
+            }
+            if entity_id is not None:
+                entity_kwargs["entity_id"] = entity_id
+
+            entity = Entity(**entity_kwargs)
 
         # Add to graph
         self.entities[entity.entity_id] = entity
@@ -467,6 +476,7 @@ class KnowledgeGraph:
                     entity_type=entity.entity_type,
                     name=entity.name,
                     properties=entity.properties.copy(),
+                    entity_id=entity.entity_id,
                     confidence=entity.confidence,
                     source_text=entity.source_text
                 )
