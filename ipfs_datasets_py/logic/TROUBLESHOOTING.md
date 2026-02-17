@@ -1,9 +1,80 @@
 # Logic Module Troubleshooting Guide
 
+**Version:** 2.0  
 **Last Updated:** 2026-02-17  
 **Purpose:** Solutions to common issues and problems
 
 This guide helps you solve common problems when using the logic module.
+
+---
+
+## Table of Contents
+
+- [Decision Tree](#decision-tree)
+- [Quick Diagnostic](#quick-diagnostic)
+- [Installation Issues](#installation-issues)
+- [Import Errors](#import-errors)
+- [Conversion Errors](#conversion-errors)
+- [Performance Issues](#performance-issues)
+- [Theorem Proving Issues](#theorem-proving-issues)
+- [Feature Detection Issues](#feature-detection-issues)
+- [Testing Issues](#testing-issues)
+- [Common Error Messages](#common-error-messages)
+- [Getting Help](#getting-help)
+- [FAQ](#faq)
+
+---
+
+## Decision Tree
+
+**Start here to quickly diagnose your issue:**
+
+```
+┌─────────────────────────────────────┐
+│  What type of problem are you      │
+│  experiencing?                       │
+└──────────────┬──────────────────────┘
+               │
+    ┌──────────┴──────────┬──────────────────┬─────────────────┐
+    │                     │                  │                 │
+┌───▼────┐         ┌─────▼──────┐    ┌─────▼──────┐   ┌────▼─────┐
+│Import  │         │Conversion  │    │Performance │   │ Proving  │
+│Errors  │         │Errors      │    │Issues      │   │ Issues   │
+└───┬────┘         └─────┬──────┘    └─────┬──────┘   └────┬─────┘
+    │                    │                  │               │
+    │                    │                  │               │
+    │ ModuleNotFound?    │ No result?       │ Slow?         │ Timeout?
+    │ → Install pkg      │ → Check input    │ → Enable      │ → Increase
+    │                    │                  │   cache       │   timeout
+    │                    │                  │               │
+    │ ImportError?       │ Wrong format?    │ Memory?       │ No proof?
+    │ → Check deps       │ → Check docs     │ → Limit       │ → Check
+    │                    │                  │   batch size  │   axioms
+    │                    │                  │               │
+    │ DeprecationWarn?   │ Low confidence?  │ CPU high?     │ Error?
+    │ → Update imports   │ → Install        │ → Reduce      │ → Check
+    │                    │   spaCy/Z3       │   complexity  │   logs
+    │                    │                  │               │
+    │                    │                  │               │
+    └────────────────────┴──────────────────┴───────────────┘
+                         │
+                         ▼
+                 Still not working?
+                         │
+            ┌────────────┴────────────┐
+            │                         │
+    ┌───────▼─────────┐      ┌───────▼────────┐
+    │ Check           │      │ Open GitHub    │
+    │ ERROR_REFERENCE │      │ Issue          │
+    └─────────────────┘      └────────────────┘
+```
+
+**Quick Links by Problem Type:**
+- **Can't install/import?** → [Installation Issues](#installation-issues)
+- **Conversion not working?** → [Conversion Errors](#conversion-errors)
+- **Too slow?** → [Performance Issues](#performance-issues)
+- **Proving fails?** → [Theorem Proving Issues](#theorem-proving-issues)
+- **Unknown error?** → [Common Error Messages](#common-error-messages)
 
 ---
 
@@ -17,6 +88,15 @@ python -m ipfs_datasets_py.logic.common.feature_detection
 
 # Check Python version
 python --version  # Requires Python 3.12+
+
+# Quick health check
+python -c "
+from ipfs_datasets_py.logic.fol import FOLConverter
+converter = FOLConverter()
+result = converter.convert('All cats are animals')
+print('✅ Logic module working!' if result.success else '❌ Issue detected')
+print(f'Features available: {result.metadata}')
+"
 ```
 
 ---
@@ -823,6 +903,23 @@ A: Yes, for FOL/Deontic conversion, caching, and basic theorem proving. See [KNO
 
 ---
 
-**Document Version:** 1.0  
+## Additional Resources
+
+**Comprehensive Documentation:**
+- [ERROR_REFERENCE.md](./ERROR_REFERENCE.md) - Complete error catalog with solutions
+- [PERFORMANCE_TUNING.md](./PERFORMANCE_TUNING.md) - Performance optimization guide
+- [SECURITY_GUIDE.md](./SECURITY_GUIDE.md) - Security best practices
+- [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) - Production deployment
+- [API_VERSIONING.md](./API_VERSIONING.md) - API stability and versioning
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - How to contribute
+
+**Quick References:**
+- [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) - Known limitations and workarounds
+- [FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md) - Fallback behavior details
+- [API_REFERENCE.md](./API_REFERENCE.md) - Complete API documentation
+
+---
+
+**Document Version:** 2.0  
 **Date:** 2026-02-17  
-**Status:** Comprehensive troubleshooting guide for common issues
+**Status:** Comprehensive troubleshooting guide with decision tree and error cross-references
