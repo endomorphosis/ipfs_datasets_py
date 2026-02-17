@@ -422,6 +422,29 @@ class IPFSDatasetsMCPServer:
 
     async def register_tools(self):
         """Register all tools with the MCP server."""
+        # PHASE 4: Register hierarchical tool manager (NEW)
+        # Register only 4 meta-tools instead of 347 individual tools
+        logger.info("Registering hierarchical tool manager (4 meta-tools)")
+        
+        from .hierarchical_tool_manager import (
+            tools_list_categories,
+            tools_list_tools,
+            tools_get_schema,
+            tools_dispatch
+        )
+        
+        # Register the 4 meta-tools for hierarchical access
+        self.mcp.add_tool(tools_list_categories, name="tools_list_categories")
+        self.mcp.add_tool(tools_list_tools, name="tools_list_tools")
+        self.mcp.add_tool(tools_get_schema, name="tools_get_schema")
+        self.mcp.add_tool(tools_dispatch, name="tools_dispatch")
+        
+        logger.info("Hierarchical tool manager registered (4 meta-tools for 51 categories)")
+        
+        # LEGACY: Keep flat tool registration for backward compatibility during transition
+        # TODO Phase 7: Remove this section after verifying hierarchical system works
+        logger.info("Also registering flat tools for backward compatibility")
+        
         # Register tools from the tools directory
         tools_path = Path(__file__).parent / "tools"
 
