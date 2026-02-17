@@ -1,0 +1,55 @@
+{
+  "complaint_type": "dei",
+  "category": "employment",
+  "description": "Generic decision tree for dei complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who is the other party involved?",
+      "field_name": "party_name",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "Please describe the issue.",
+      "field_name": "issue_description",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "When did this occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "What damages did you suffer?",
+      "field_name": "damages",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "issue_description",
+    "date_of_incident",
+    "party_name"
+  ],
+  "optional_fields": [
+    "damages"
+  ]
+}

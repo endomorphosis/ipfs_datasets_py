@@ -1,0 +1,71 @@
+{
+  "complaint_type": "environmental_law",
+  "category": "environmental",
+  "description": "Decision tree for environmental law complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who is violating environmental law?",
+      "field_name": "violating_party",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What type of violation is occurring?",
+      "field_name": "violation_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "pollution",
+        "contamination",
+        "hazardous waste"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "Where is the violation occurring?",
+      "field_name": "location",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "When did you discover the violation?",
+      "field_name": "date_discovered",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "What is the environmental impact?",
+      "field_name": "environmental_impact",
+      "required": false,
+      "depends_on": [
+        "violation_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "violating_party",
+    "date_discovered",
+    "violation_type"
+  ],
+  "optional_fields": [
+    "environmental_impact",
+    "location"
+  ]
+}

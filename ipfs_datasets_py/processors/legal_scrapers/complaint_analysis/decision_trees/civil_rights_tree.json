@@ -1,0 +1,95 @@
+{
+  "complaint_type": "civil_rights",
+  "category": "civil_rights",
+  "description": "Decision tree for civil rights complaints",
+  "root_questions": [
+    "q1",
+    "q2",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who violated your civil rights?",
+      "field_name": "violating_party",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "police",
+        "government",
+        "official",
+        "agency"
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What right was violated?",
+      "field_name": "protected_right",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "speech",
+        "assembly",
+        "religion",
+        "privacy",
+        "due process"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of violation occurred?",
+      "field_name": "violation_type",
+      "required": true,
+      "depends_on": [
+        "protected_right"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "Please describe the incident in detail.",
+      "field_name": "incident_description",
+      "required": true,
+      "depends_on": [
+        "violation_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "When did this occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q6": {
+      "id": "q6",
+      "question": "What damages did you suffer?",
+      "field_name": "damages",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "protected_right",
+    "date_of_incident",
+    "violating_party",
+    "incident_description",
+    "violation_type"
+  ],
+  "optional_fields": [
+    "damages"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "complaint_type": "criminal_defense",
+  "category": "criminal",
+  "description": "Decision tree for criminal defense complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Which law enforcement agency was involved?",
+      "field_name": "law_enforcement_agency",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What type of rights violation occurred?",
+      "field_name": "violation_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "search",
+        "seizure",
+        "miranda",
+        "counsel"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "When were you arrested?",
+      "field_name": "date_of_arrest",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "What charges were filed?",
+      "field_name": "charges",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "Are there any issues with evidence?",
+      "field_name": "evidence_issues",
+      "required": false,
+      "depends_on": [
+        "violation_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "law_enforcement_agency",
+    "violation_type"
+  ],
+  "optional_fields": [
+    "date_of_arrest",
+    "evidence_issues",
+    "charges"
+  ]
+}
