@@ -193,6 +193,22 @@ except ImportError:
     CitationNetwork = None
     HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = False
 
+# Legal GraphRAG - GraphRAG integration for legal search (Enhancement 12 Phase 5)
+try:
+    from .legal_graphrag import (
+        LegalGraphRAG,
+        LegalEntity,
+        LegalRelationship,
+        LegalKnowledgeGraph
+    )
+    HAVE_LEGAL_GRAPHRAG = True
+except ImportError:
+    LegalGraphRAG = None
+    LegalEntity = None
+    LegalRelationship = None
+    LegalKnowledgeGraph = None
+    HAVE_LEGAL_GRAPHRAG = False
+
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
@@ -329,6 +345,13 @@ __all__ = [
     "SearchResultWithCitations",
     "CitationNetwork",
     "HAVE_SEARCH_RESULT_CITATION_EXTRACTOR",
+    
+    # Legal GraphRAG (Enhancement 12 Phase 5)
+    "LegalGraphRAG",
+    "LegalEntity",
+    "LegalRelationship",
+    "LegalKnowledgeGraph",
+    "HAVE_LEGAL_GRAPHRAG",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
