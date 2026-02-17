@@ -169,6 +169,16 @@ except ImportError:
     EnhancedExpandedQuery = None
     HAVE_ENHANCED_QUERY_EXPANDER = False
 
+# Result Filter - Advanced result filtering (Enhancement 12 Phase 3)
+try:
+    from .result_filter import ResultFilter, FilterConfig, FilteredResult
+    HAVE_RESULT_FILTER = True
+except ImportError:
+    ResultFilter = None
+    FilterConfig = None
+    FilteredResult = None
+    HAVE_RESULT_FILTER = False
+
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
@@ -293,6 +303,12 @@ __all__ = [
     "EnhancedQueryExpander",
     "EnhancedExpandedQuery",
     "HAVE_ENHANCED_QUERY_EXPANDER",
+    
+    # Result Filter (Enhancement 12 Phase 3)
+    "ResultFilter",
+    "FilterConfig",
+    "FilteredResult",
+    "HAVE_RESULT_FILTER",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
