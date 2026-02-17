@@ -482,17 +482,63 @@ opam install coq
 
 ---
 
-## Questions?
+## Workarounds for Common Limitations
 
-- **Installation Issues:** See [README.md](./README.md) Optional Dependencies section
-- **Fallback Behaviors:** See above sections for each dependency
-- **Feature Requests:** Open issue on GitHub
-- **Production Readiness:** Use production components (FOL/Deontic converters, caching)
+### No spaCy NLP?
+**Workaround:** Use fallback regex-based extraction
+```python
+converter = FOLConverter(use_fallback=True)  # No spaCy required
+```
+
+### External prover not available?
+**Workaround:** Use built-in native prover
+```python
+from ipfs_datasets_py.logic.TDFOL import TDFOLProver
+prover = TDFOLProver()  # No Z3/Lean/Coq required
+```
+
+### Slow conversions without SymbolicAI?
+**Workaround:** Enable caching to speed up repeated conversions
+```python
+converter = FOLConverter(use_cache=True)  # 14x speedup on repeated formulas
+```
+
+### Memory issues with large datasets?
+**Workaround:** Use batch processing with memory limits
+```python
+results = converter.convert_batch(texts, batch_size=50, parallel=False)
+```
+
+### ZKP module not secure?
+**Workaround:** Use for education/demo only, or wait for v2.0 production ZKP
+```python
+# For production: Use external ZKP libraries
+from zksnark import generate_proof, verify_proof
+```
 
 ---
 
-**For detailed implementation plan, see [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md)**
+## Questions?
 
-**Document Version:** 1.0  
+**For specific issues:**
+- **Installation Issues:** See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
+- **Error Messages:** See [ERROR_REFERENCE.md](./ERROR_REFERENCE.md)
+- **Performance:** See [PERFORMANCE_TUNING.md](./PERFORMANCE_TUNING.md)
+- **Security:** See [SECURITY_GUIDE.md](./SECURITY_GUIDE.md)
+- **Deployment:** See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
+**For planning:**
+- **Detailed Roadmap:** See [PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md](./PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md)
+- **Testing Plan:** See [PHASE8_FINAL_TESTING_PLAN.md](./PHASE8_FINAL_TESTING_PLAN.md)
+- **Advanced Features:** See [ADVANCED_FEATURES_ROADMAP.md](./ADVANCED_FEATURES_ROADMAP.md)
+- **Refactoring Plan:** See [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)
+
+**For contributing:**
+- **How to Contribute:** See [CONTRIBUTING.md](./CONTRIBUTING.md)
+- **API Stability:** See [API_VERSIONING.md](./API_VERSIONING.md)
+
+---
+
+**Document Version:** 2.0  
 **Date:** 2026-02-17  
-**Status:** Official limitations and roadmap document
+**Status:** Official limitations and roadmap document with workarounds
