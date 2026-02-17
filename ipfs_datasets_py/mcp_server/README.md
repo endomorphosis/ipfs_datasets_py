@@ -22,9 +22,47 @@ We are actively working on a comprehensive improvement plan to integrate advance
 - **MCP Server**: Full Model Context Protocol server implementation
 - **Comprehensive Tools**: Access to all IPFS Datasets functionality as MCP tools (370+ tools, 73 categories)
 - **Dual Integration**: Support for both direct IPFS Kit usage and MCP-based integration
-- **P2P Capabilities**: Basic P2P service integration (advanced features coming with MCP++)
+- **Enhanced P2P Capabilities** 🆕: Advanced P2P features with MCP++ integration
+  - Workflow scheduler for distributed task orchestration
+  - Advanced task queue with peer-to-peer execution
+  - Peer registry with discovery and management
+  - Bootstrap helpers for network initialization
+  - Dual-runtime architecture (FastAPI + Trio) for optimal performance
+  - Graceful degradation when MCP++ unavailable
 - **Configuration Options**: Flexible configuration via command line, YAML files, or Python
 - **Python Client**: Easy-to-use Python client for programmatic access
+
+### New P2P Features (Phase 1 Complete) ✅
+
+The MCP server now includes enhanced P2P capabilities through MCP++ integration:
+
+**Import Layer** (5 modules, 20 tests ✅)
+- Graceful imports with availability detection
+- Workflow scheduler wrapper
+- Task queue wrapper
+- Peer registry wrapper  
+- Bootstrap utilities
+
+**Enhanced Service Manager** (+179 lines)
+- Workflow scheduler integration
+- Peer registry integration
+- Bootstrap capabilities
+- Extended state tracking
+
+**Enhanced Registry Adapter** (+231 lines, 19 tests ✅)
+- Runtime detection (FastAPI vs Trio)
+- Runtime metadata on all tools
+- Tool filtering by runtime
+- Registration APIs for Trio-native tools
+
+**Integration Testing** (23 tests ✅)
+- Service manager integration
+- Registry adapter integration
+- End-to-end P2P workflows
+- Backward compatibility validation
+- Error handling
+
+**Total:** 62 tests, 100% passing ✅
 
 ## Installation
 
@@ -95,6 +133,75 @@ async def main():
 asyncio.run(main())
 ```
 
+### Using Enhanced P2P Capabilities 🆕
+
+The MCP server now includes advanced P2P capabilities through MCP++ integration:
+
+```python
+from ipfs_datasets_py.mcp_server.p2p_service_manager import P2PServiceManager
+from ipfs_datasets_py.mcp_server import mcplusplus
+
+# Check MCP++ availability
+caps = mcplusplus.get_capabilities()
+print(f"MCP++ available: {caps['mcplusplus_available']}")
+print(f"Features: {caps['capabilities']}")
+
+# Create P2P service manager with advanced features
+manager = P2PServiceManager(
+    enabled=True,
+    enable_workflow_scheduler=True,  # Enable workflow scheduler
+    enable_peer_registry=True,       # Enable peer discovery
+    enable_bootstrap=True,            # Enable bootstrap
+    bootstrap_nodes=[                 # Optional custom bootstrap nodes
+        "/ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ"
+    ]
+)
+
+# Check available P2P features
+print(f"Capabilities: {manager.get_capabilities()}")
+print(f"Has advanced features: {manager.has_advanced_features()}")
+
+# Access workflow scheduler (if available)
+scheduler = manager.get_workflow_scheduler()
+if scheduler:
+    # Workflow scheduler is available
+    # Can submit P2P workflows
+    pass
+
+# Access peer registry (if available)
+registry = manager.get_peer_registry()
+if registry:
+    # Can discover and connect to peers
+    pass
+```
+
+**Runtime Detection and Tool Filtering:**
+
+```python
+from ipfs_datasets_py.mcp_server.p2p_mcp_registry_adapter import (
+    P2PMCPRegistryAdapter,
+    RUNTIME_TRIO,
+    RUNTIME_FASTAPI
+)
+
+# Create adapter
+adapter = P2PMCPRegistryAdapter(server)
+
+# Register Trio-native tools
+adapter.register_trio_tool("p2p_workflow_submit")
+adapter.register_trio_tool("p2p_task_queue")
+
+# Filter tools by runtime
+trio_tools = adapter.get_trio_tools()
+fastapi_tools = adapter.get_fastapi_tools()
+
+# Get runtime statistics
+stats = adapter.get_runtime_stats()
+print(f"Total tools: {stats['total_tools']}")
+print(f"Trio tools: {stats['trio_tools']}")
+print(f"FastAPI tools: {stats['fastapi_tools']}")
+```
+
 ## Configuration
 
 The server can be configured in several ways:
@@ -119,6 +226,21 @@ server:
 ipfs_kit:
   integration: mcp
   mcp_url: http://localhost:8001
+
+# P2P Configuration (NEW)
+p2p:
+  enabled: true
+  listen_port: 4001
+  queue_path: /tmp/p2p_queue
+  enable_tools: true
+  enable_cache: true
+  # MCP++ Advanced Features
+  enable_workflow_scheduler: true  # Enable P2P workflow scheduler
+  enable_peer_registry: true       # Enable peer discovery
+  enable_bootstrap: true            # Enable bootstrap
+  bootstrap_nodes:                  # Optional custom bootstrap nodes
+    - /ip4/104.131.131.82/tcp/4001/p2p/QmaCpDMGvV2BGHeYERUEnRQAwe3N8SzbUtfsmvsqQLuvuJ
+    - /ip4/104.236.179.241/tcp/4001/p2p/QmSoLPppuBtQSGwKDZT2M73ULpjvfd3aZ6ha4oFGL1KrGM
 ```
 
 ### Programmatic Configuration
