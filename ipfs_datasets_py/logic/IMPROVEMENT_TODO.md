@@ -1,5 +1,7 @@
 # Logic Module — Comprehensive Improvement TODO (Living List)
 
+See also: `EVERGREEN_IMPROVEMENT_PLAN.md` for the single entrypoint “infinite” plan and prioritized refactor tracks.
+
 This is a **living** refactor & improvement backlog for `ipfs_datasets_py.logic/`.
 
 Guiding principles:
