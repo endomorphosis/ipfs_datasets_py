@@ -15,6 +15,7 @@ from .dataset_saver import DatasetSaver
 from .dataset_converter import DatasetConverter
 from .ipfs_pinner import IPFSPinner
 from .ipfs_getter import IPFSGetter
+from .knowledge_graph_manager import KnowledgeGraphManager
 
 __all__ = [
     "DatasetLoader",
@@ -22,4 +23,5 @@ __all__ = [
     "DatasetConverter",
     "IPFSPinner",
     "IPFSGetter",
+    "KnowledgeGraphManager",
 ]

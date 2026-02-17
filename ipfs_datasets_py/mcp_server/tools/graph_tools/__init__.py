@@ -6,7 +6,17 @@ These tools allow AI assistants to work with knowledge graphs through the MCP pr
 """
 
 from .query_knowledge_graph import query_knowledge_graph
+from .graph_create import graph_create
+from .graph_add_entity import graph_add_entity
+from .graph_add_relationship import graph_add_relationship
+from .graph_query_cypher import graph_query_cypher
+from .graph_search_hybrid import graph_search_hybrid
 
 __all__ = [
-    "query_knowledge_graph"
+    "query_knowledge_graph",
+    "graph_create",
+    "graph_add_entity",
+    "graph_add_relationship",
+    "graph_query_cypher",
+    "graph_search_hybrid",
 ]
