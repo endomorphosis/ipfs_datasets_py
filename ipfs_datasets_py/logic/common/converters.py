@@ -300,6 +300,9 @@ class LogicConverter(ABC, Generic[InputType, OutputType]):
         """
         if self._cache is not None:
             stats = self._cache.get_stats()
+            # Backward-compat/stability: callers and tests expect `cache_size`.
+            # BoundedCache reports `size`, so provide both.
+            stats.setdefault("cache_size", stats.get("size", 0))
             stats["cache_enabled"] = self.enable_caching
             stats["cache_type"] = "bounded"
             return stats

@@ -97,6 +97,11 @@ from .bridge_types import (
     ProverRecommendation,
 )
 
+# Explicit bridge conversion aliases to avoid confusion with
+# ipfs_datasets_py.logic.common.converters.ConversionResult/ConversionStatus.
+BridgeConversionStatus = ConversionStatus
+BridgeConversionResult = ConversionResult
+
 from .fol_types import (
     FOLOutputFormat,
     PredicateCategory,
@@ -147,8 +152,10 @@ __all__ = [
     # Bridge types
     "BridgeCapability",
     "ConversionStatus",
+    "BridgeConversionStatus",
     "BridgeMetadata",
     "ConversionResult",
+    "BridgeConversionResult",
     "BridgeConfig",
     "ProverRecommendation",
     # FOL types
