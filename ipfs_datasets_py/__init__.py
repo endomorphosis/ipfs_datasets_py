@@ -44,6 +44,23 @@ _ENABLE_FINANCE_DASHBOARD_IMPORTS = _truthy(
     os.environ.get("IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS")
 )
 
+# Optional dependency import notices.
+#
+# Default behavior: stay quiet on missing optional dependencies so that importing
+# lightweight submodules (e.g. `ipfs_datasets_py.logic.api`) doesn't spam stdout.
+# Set IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS=1 to emit warnings.
+_WARN_OPTIONAL_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_WARN_OPTIONAL_IMPORTS"))
+
+
+def _optional_import_notice(message: str) -> None:
+    if _WARN_OPTIONAL_IMPORTS:
+        try:
+            warnings.warn(message)
+        except Exception:
+            logging.debug(message)
+    else:
+        logging.debug(message)
+
 # File type detection
 if _MINIMAL_IMPORTS:
     HAVE_FILE_DETECTOR = False
@@ -490,10 +507,17 @@ if _MINIMAL_IMPORTS:
     QueryBudgetManager = None
     UnifiedGraphRAGQueryOptimizer = None
 else:
-    from .optimizers.graphrag.query_optimizer_minimal import (
-        GraphRAGQueryOptimizer,
-        GraphRAGQueryStats,
-    )
+    try:
+        from .optimizers.graphrag.query_optimizer_minimal import (
+            GraphRAGQueryOptimizer,
+            GraphRAGQueryStats,
+        )
+    except ImportError as e:
+        _optional_import_notice(
+            f"Minimal RAG query optimizer unavailable due to missing dependencies: {e}"
+        )
+        GraphRAGQueryOptimizer = None
+        GraphRAGQueryStats = None
 
     try:
         from .optimizers.graphrag.query_optimizer import (
@@ -502,8 +526,7 @@ else:
             UnifiedGraphRAGQueryOptimizer,
         )
     except ImportError as e:
-        import warnings
-        warnings.warn(
+        _optional_import_notice(
             f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}"
         )
         # Provide minimal fallbacks
@@ -549,7 +572,6 @@ if _MINIMAL_IMPORTS:
     ReasoningEnhancer = None
 
     HAVE_GRAPHRAG_INTEGRATION = False
-    enhance_dataset_with_llm = None
 else:
     try:
         from .ml.llm.llm_interface import (
@@ -562,8 +584,9 @@ else:
         )
         HAVE_LLM_INTERFACE = True
     except ImportError as e:
-        import warnings
-        warnings.warn(f"LLM interface unavailable due to missing dependencies: {e}")
+        _optional_import_notice(
+            f"LLM interface unavailable due to missing dependencies: {e}"
+        )
         HAVE_LLM_INTERFACE = False
         # Provide minimal fallbacks
         LLMInterface = None
@@ -577,20 +600,16 @@ else:
         from .ml.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
         HAVE_LLM_GRAPHRAG = True
     except ImportError as e:
-        import warnings
-        warnings.warn(
+        _optional_import_notice(
             f"GraphRAG LLM processor unavailable due to missing dependencies: {e}"
         )
         HAVE_LLM_GRAPHRAG = False
         GraphRAGLLMProcessor = None
         ReasoningEnhancer = None
 
-    try:
-        from ipfs_datasets_py.search.graphrag_integration import enhance_dataset_with_llm
-        HAVE_GRAPHRAG_INTEGRATION = True
-    except ImportError:
-        HAVE_GRAPHRAG_INTEGRATION = False
-        enhance_dataset_with_llm = None
+    # IMPORTANT: do not import `ipfs_datasets_py.search` at package import time.
+    # Access `enhance_dataset_with_llm` via module-level __getattr__ (PEP 562).
+    HAVE_GRAPHRAG_INTEGRATION = False
 
 # Security and Audit Components
 if _MINIMAL_IMPORTS:
@@ -763,9 +782,9 @@ def _lazy_import_pdf_symbol(name: str):
             if os.environ.get('IPFS_DATASETS_INSTALL_SYMAI_ROUTER', 'false').lower() == 'true':
                 install_for_component('symai_router')
         except Exception as e:
-            import warnings
-
-            warnings.warn(f"Auto-install for PDF components failed during lazy import: {e}")
+            _optional_import_notice(
+                f"Auto-install for PDF components failed during lazy import: {e}"
+            )
 
     try:
         from .processors import pdf_processing as _pdf_processing
@@ -780,15 +799,32 @@ def _lazy_import_pdf_symbol(name: str):
         globals()[name] = None
         if installer.verbose:
             try:
-                import warnings
-
-                warnings.warn(f"⚠️ {name} unavailable: {e}")
+                _optional_import_notice(f"{name} unavailable: {e}")
             except Exception:
                 pass
         return None
 
 
 def __getattr__(name: str):
+    if name == "enhance_dataset_with_llm":
+        if _MINIMAL_IMPORTS:
+            globals()["enhance_dataset_with_llm"] = None
+            globals()["HAVE_GRAPHRAG_INTEGRATION"] = False
+            return None
+        try:
+            from ipfs_datasets_py.search.graphrag_integration import (
+                enhance_dataset_with_llm as _enhance_dataset_with_llm,
+            )
+
+            globals()["enhance_dataset_with_llm"] = _enhance_dataset_with_llm
+            globals()["HAVE_GRAPHRAG_INTEGRATION"] = True
+            return _enhance_dataset_with_llm
+        except Exception as e:
+            globals()["enhance_dataset_with_llm"] = None
+            globals()["HAVE_GRAPHRAG_INTEGRATION"] = False
+            _optional_import_notice(f"GraphRAG integration unavailable: {e}")
+            return None
+
     # Heavy optional subsystems: keep import-time hermetic; lazy-load on access.
     if name == "search":
         if _MINIMAL_IMPORTS:
@@ -1153,7 +1189,9 @@ except ImportError as e:
     HAVE_WEB_TEXT_EXTRACTOR = False
     WebTextExtractor = None
     if installer.verbose:
-        warnings.warn(f"Web text extractor unavailable due to missing dependencies: {e}")
+        _optional_import_notice(
+            f"Web text extractor unavailable due to missing dependencies: {e}"
+        )
 
 # Proper module aliasing for backward compatibility
 if _MINIMAL_IMPORTS:
@@ -1289,5 +1327,6 @@ except (ImportError, AttributeError) as e:
     validate_against_theorem = None
     
     if installer.verbose:
-        import warnings
-        warnings.warn(f"Finance/Software engineering tools unavailable due to missing dependencies: {e}")
+        _optional_import_notice(
+            f"Finance/Software engineering tools unavailable due to missing dependencies: {e}"
+        )

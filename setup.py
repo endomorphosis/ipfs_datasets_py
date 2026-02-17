@@ -395,8 +395,8 @@ setup(
             'ipfs-datasets=ipfs_datasets_cli:cli_main',
             'ipfs-datasets-cli=ipfs_datasets_cli:cli_main',
             # File converter CLI (Phase 6.4)
-            'file-converter=ipfs_datasets_py.file_converter.cli:main',
-            'fc=ipfs_datasets_py.file_converter.cli:main',
+            'file-converter=ipfs_datasets_py.processors.file_converter.cli:main',
+            'fc=ipfs_datasets_py.processors.file_converter.cli:main',
         ],
     },
     classifiers=[

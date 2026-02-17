@@ -263,6 +263,8 @@ class QueryExecutor:
         # Track intermediate results
         result_set = {}  # variable → values
         final_results = []
+        bindings: List[Dict[str, Any]] = []
+        union_parts: List[Dict[str, Any]] = []
         
         for op in operations:
             op_type = op.get("op")
@@ -293,14 +295,14 @@ class QueryExecutor:
                     filtered_results = []
                     
                     # Get all current variable bindings
-                    if hasattr(self, '_bindings') and self._bindings:
+                    if bindings:
                         # Use bindings from Expand
-                        for binding in self._bindings:
+                        for binding in bindings:
                             # Evaluate expression against this binding
                             result = self._evaluate_compiled_expression(expression, binding)
                             if result:  # If expression evaluates to truthy value
                                 filtered_results.append(binding)
-                        self._bindings = filtered_results
+                        bindings = filtered_results
                     else:
                         # Single variable case
                         for var_name, items in list(result_set.items()):
@@ -389,19 +391,15 @@ class QueryExecutor:
                 
                 # Update result_set with expanded results
                 # Need to restructure result_set to handle multiple variables
-                if new_results:
+                bindings = new_results
+                if bindings:
                     # Merge all variables into result_set
-                    for binding in new_results:
+                    for binding in bindings:
                         for var, val in binding.items():
                             if var not in result_set:
                                 result_set[var] = []
                             if val not in result_set[var]:
                                 result_set[var].append(val)
-                    
-                    # Store bindings for projection
-                    if not hasattr(self, '_bindings'):
-                        self._bindings = []
-                    self._bindings = new_results
                 
                 logger.debug("Expand %s-[%s]->%s: found %d relationships",
                            from_var, rel_var, to_var, len(new_results))
@@ -474,19 +472,15 @@ class QueryExecutor:
                         })
                 
                 # Update result_set with expanded results
-                if new_results:
+                bindings = new_results
+                if bindings:
                     # Merge all variables into result_set
-                    for binding in new_results:
+                    for binding in bindings:
                         for var, val in binding.items():
                             if var not in result_set:
                                 result_set[var] = []
                             if val is not None and val not in result_set[var]:
                                 result_set[var].append(val)
-                    
-                    # Store bindings for projection
-                    if not hasattr(self, '_bindings'):
-                        self._bindings = []
-                    self._bindings = new_results
                 
                 logger.debug("OptionalExpand %s-[%s]->%s: found %d relationships (including NULL rows)",
                            from_var, rel_var, to_var, len(new_results))
@@ -497,8 +491,8 @@ class QueryExecutor:
                 group_by = op.get("group_by", [])
                 
                 # Get all current bindings
-                if hasattr(self, '_bindings') and self._bindings:
-                    data_rows = self._bindings
+                if bindings:
+                    data_rows = bindings
                 else:
                     # Create bindings from result_set
                     data_rows = []
@@ -588,9 +582,7 @@ class QueryExecutor:
                 final_results = []
                 
                 # Mark that we need to merge later
-                if not hasattr(self, '_union_parts'):
-                    self._union_parts = []
-                self._union_parts.append({
+                union_parts.append({
                     'results': first_results,
                     'all': all_flag
                 })
@@ -603,8 +595,8 @@ class QueryExecutor:
                 items = op.get("items", [])
                 
                 # Use bindings if available (from Expand operations)
-                if hasattr(self, '_bindings') and self._bindings:
-                    for binding in self._bindings:
+                if bindings:
+                    for binding in bindings:
                         record_data = {}
                         for item in items:
                             expr = item.get("expression")
@@ -783,16 +775,16 @@ class QueryExecutor:
                     logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
         
         # Handle UNION merging
-        if hasattr(self, '_union_parts') and self._union_parts:
+        if union_parts:
             # Merge all union parts with final_results
             all_parts = []
-            for part in self._union_parts:
+            for part in union_parts:
                 all_parts.extend(part['results'])
             all_parts.extend(final_results)
             
             # Check if we should remove duplicates
             # Use the 'all' flag from the last union (or first if multiple)
-            remove_duplicates = not self._union_parts[0]['all']
+            remove_duplicates = not union_parts[0]['all']
             
             if remove_duplicates:
                 # Remove duplicate records
@@ -810,9 +802,6 @@ class QueryExecutor:
                 # UNION ALL - keep all results
                 final_results = all_parts
                 logger.debug("Union ALL: combined %d total results", len(final_results))
-            
-            # Clean up
-            delattr(self, '_union_parts')
         
         return final_results
     

@@ -18,6 +18,8 @@ Organized into subdirectories:
 
 from typing import TYPE_CHECKING
 
+import os
+
 # Version information
 __version__ = "0.2.0"
 __author__ = "IPFS Datasets Python Team"
@@ -156,25 +158,71 @@ except ImportError:
     ReasoningCapabilities = None
     get_reasoner = None
 
-# SymbolicAI interactive tools
-try:
-    from ..utils.engine_env import autoconfigure_engine_env
-    autoconfigure_engine_env()
-    import symai
-    SYMBOLIC_AI_AVAILABLE = True
-    
-    from .interactive.interactive_fol_constructor import InteractiveFOLConstructor
-    from .interactive.interactive_fol_types import StatementRecord, SessionMetadata
-    from .interactive.interactive_fol_utils import create_interactive_session, demo_interactive_session
-    
-except (ImportError, SystemExit):
-    SYMBOLIC_AI_AVAILABLE = False
-    
-    class _SymbolicAINotAvailable:
-        def __init__(self, *args, **kwargs):
-            raise ImportError("SymbolicAI is not available. Install symai to enable it.")
-    
-    InteractiveFOLConstructor = _SymbolicAINotAvailable
+# SymbolicAI interactive tools (lazy/opt-in)
+#
+# Importing `ipfs_datasets_py.logic.integration` should be deterministic and must
+# not mutate environment at import time. SymbolicAI setup is therefore lazy.
+SYMBOLIC_AI_AVAILABLE = False
+
+
+def enable_symbolicai(*, autoconfigure_env: bool | None = None) -> bool:
+    """Enable SymbolicAI-backed interactive tooling.
+
+    This is intentionally opt-in to avoid import-time side effects.
+
+    Args:
+        autoconfigure_env: If True, calls `autoconfigure_engine_env()` before
+            importing `symai`. If None, controlled by env var
+            `IPFS_DATASETS_SYMBOLICAI_AUTOCONFIGURE`.
+
+    Returns:
+        True if SymbolicAI tooling is available after enabling.
+    """
+
+    global SYMBOLIC_AI_AVAILABLE
+    global InteractiveFOLConstructor, StatementRecord, SessionMetadata
+    global create_interactive_session, demo_interactive_session
+
+    if SYMBOLIC_AI_AVAILABLE:
+        return True
+
+    if autoconfigure_env is None:
+        autoconfigure_env = os.environ.get("IPFS_DATASETS_SYMBOLICAI_AUTOCONFIGURE", "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "y",
+            "on",
+        }
+
+    try:
+        if autoconfigure_env:
+            from ..utils.engine_env import autoconfigure_engine_env
+
+            autoconfigure_engine_env()
+
+        import symai  # noqa: F401
+
+        from .interactive.interactive_fol_constructor import InteractiveFOLConstructor
+        from .interactive.interactive_fol_types import StatementRecord, SessionMetadata
+        from .interactive.interactive_fol_utils import create_interactive_session, demo_interactive_session
+
+        SYMBOLIC_AI_AVAILABLE = True
+        return True
+    except (ImportError, SystemExit):
+        SYMBOLIC_AI_AVAILABLE = False
+        return False
+
+
+class _SymbolicAINotAvailable:
+    def __init__(self, *args, **kwargs):
+        raise ImportError(
+            "SymbolicAI is not available. Install symai and call enable_symbolicai() to enable it."
+        )
+
+
+# Default placeholder; becomes the real class after `enable_symbolicai()`.
+InteractiveFOLConstructor = _SymbolicAINotAvailable
 
 # Configuration
 DEFAULT_CONFIG = {

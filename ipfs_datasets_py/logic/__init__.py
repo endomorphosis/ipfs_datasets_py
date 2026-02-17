@@ -18,7 +18,7 @@ Use integration/ or module-specific imports instead.
 from __future__ import annotations
 import warnings
 
-__all__ = ["integrations", "tools", "integration"]
+__all__ = ["api", "integrations", "tools", "integration"]
 
 
 def __getattr__(name):
@@ -42,5 +42,9 @@ def __getattr__(name):
         # Redirect to integration module
         from . import integration
         return integration
+
+    if name == "api":
+        from . import api
+        return api
     
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -198,7 +198,7 @@ class UnifiedQueryEngine:
         if self._graph_engine is None:
             try:
                 from ipfs_datasets_py.knowledge_graphs.core.query_executor import GraphEngine
-                self._graph_engine = GraphEngine(backend=self.backend)
+                self._graph_engine = GraphEngine(storage_backend=self.backend)
             except ImportError as e:
                 logger.error(f"Failed to load graph engine: {e}")
                 raise
