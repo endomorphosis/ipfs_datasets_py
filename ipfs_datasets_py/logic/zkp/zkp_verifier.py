@@ -121,7 +121,9 @@ class ZKPVerifier:
             
             return True
             
-        except Exception:  # Any structural issue
+        except (AttributeError, TypeError, KeyError) as e:
+            # Proof object doesn't have expected attributes or structure
+            logger.warning(f"Invalid proof structure during validation: {e}")
             return False
     
     def _verify_proof_internal(self, proof: ZKPProof) -> bool:

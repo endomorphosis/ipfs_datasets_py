@@ -169,8 +169,9 @@ class ProofExecutionEngine:
         dirs: List[Path] = []
         try:
             dirs.append(Path.home() / ".local" / "bin")
-        except Exception:
-            pass
+        except (OSError, RuntimeError) as e:
+            # Path.home() can fail if HOME not set or permission issues
+            logger.debug(f"Could not determine home directory: {e}")
         return dirs
 
     def _find_executable(self, name: str, extra: Optional[List[Path]] = None) -> Optional[str]:
@@ -190,7 +191,9 @@ class ProofExecutionEngine:
             try:
                 if c.exists() and os.access(str(c), os.X_OK):
                     return str(c)
-            except Exception:
+            except (OSError, PermissionError) as e:
+                # File system errors checking existence/permissions
+                logger.debug(f"Could not check executable {c}: {e}")
                 continue
         return None
 
@@ -523,7 +526,9 @@ class ProofExecutionEngine:
         proposition_id = None
         try:
             proposition_id = (translation.metadata or {}).get("proposition_id")
-        except Exception:
+        except (AttributeError, TypeError, KeyError) as e:
+            # metadata might be None, not a dict, or missing key
+            logger.debug(f"Could not extract proposition_id from metadata: {e}")
             proposition_id = None
         proposition_id = str(proposition_id or "P")
 

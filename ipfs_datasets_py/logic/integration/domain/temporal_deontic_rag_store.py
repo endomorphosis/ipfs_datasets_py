@@ -389,7 +389,9 @@ class TemporalDeonticRAGStore:
             if norm1 == 0 or norm2 == 0:
                 return 0.0
             return dot_product / (norm1 * norm2)
-        except Exception:
+        except (ValueError, TypeError, AttributeError) as e:
+            # numpy operations can fail if inputs aren't proper arrays
+            logger.debug(f"Could not compute cosine similarity: {e}")
             return 0.0
     
     def _check_formula_conflict(self, formula1: DeonticFormula, formula2: DeonticFormula) -> Optional[str]:
