@@ -50,7 +50,7 @@ class MultiEngineOrchestrator:
     - Performance metrics and monitoring
     
     Example:
-        >>> from ipfs_datasets_py.web_archiving.search_engines import (
+        >>> from ipfs_datasets_py.processors.web_archiving.search_engines import (
         ...     MultiEngineOrchestrator,
         ...     OrchestratorConfig
         ... )

@@ -135,7 +135,7 @@ Coordinates searches across multiple engines with parallel execution and fallbac
 
 **Configuration:**
 ```python
-from ipfs_datasets_py.web_archiving.search_engines import (
+from ipfs_datasets_py.processors.web_archiving.search_engines import (
     MultiEngineOrchestrator,
     OrchestratorConfig,
     SearchEngineConfig
@@ -294,7 +294,7 @@ export GOOGLE_CSE_ID="your_cse_id"
 ### Test Individual Engines
 
 ```python
-from ipfs_datasets_py.web_archiving.search_engines import (
+from ipfs_datasets_py.processors.web_archiving.search_engines import (
     BraveSearchEngine,
     DuckDuckGoSearchEngine,
     SearchEngineConfig
@@ -314,7 +314,7 @@ assert ddg.test_connection()
 ### Test Orchestrator
 
 ```python
-from ipfs_datasets_py.web_archiving.search_engines import (
+from ipfs_datasets_py.processors.web_archiving.search_engines import (
     MultiEngineOrchestrator,
     OrchestratorConfig
 )

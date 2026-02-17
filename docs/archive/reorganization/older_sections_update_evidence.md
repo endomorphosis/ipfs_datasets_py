@@ -54,7 +54,7 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
 # Complete web scraping and archival example
 # Note: These are MCP tool imports for MCP server integration.
 # For direct usage without MCP server, use:
-#   from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+#   from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
 #   from ipfs_datasets_py.data_transformation.multimedia import FFmpegVideoProcessor
 
 from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (
@@ -80,7 +80,7 @@ from ipfs_datasets_py.advanced_web_archiving import AdvancedWebArchiver, Archivi
 #### After:
 ```python
 # Note: This uses the reorganized web_archiving module
-from ipfs_datasets_py.web_archiving import AdvancedWebArchiver, ArchivingConfig
+from ipfs_datasets_py.processors.web_archiving import AdvancedWebArchiver, ArchivingConfig
 ```
 
 **Changes:**

@@ -118,7 +118,7 @@ from ipfs_datasets_py.accelerate_integration
 
 # Web Archiving
 from ipfs_datasets_py.web_archive_tools
-→ from ipfs_datasets_py.web_archiving.web_archive
+→ from ipfs_datasets_py.processors.web_archiving.web_archive
 
 # And many more throughout...
 ```

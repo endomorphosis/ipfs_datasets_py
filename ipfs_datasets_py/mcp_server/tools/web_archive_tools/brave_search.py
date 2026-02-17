@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Import the improved Brave Search client
 try:
-    from ipfs_datasets_py.web_archiving.brave_search_client import (
+    from ipfs_datasets_py.processors.web_archiving.brave_search_client import (
         BraveSearchClient,
         brave_search_cache_stats,
         clear_brave_search_cache

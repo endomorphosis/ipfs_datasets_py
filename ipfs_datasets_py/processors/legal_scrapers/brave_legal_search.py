@@ -39,7 +39,7 @@ from .search_term_generator import SearchTermGenerator, SearchStrategy
 
 # Import Brave Search client
 try:
-    from ipfs_datasets_py.web_archiving.brave_search_client import BraveSearchClient
+    from ipfs_datasets_py.processors.web_archiving.brave_search_client import BraveSearchClient
     HAVE_BRAVE_CLIENT = True
 except ImportError:
     HAVE_BRAVE_CLIENT = False

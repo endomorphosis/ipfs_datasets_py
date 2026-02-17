@@ -62,7 +62,7 @@ User's challenge: **"I don't believe you scanned each and every file individuall
 # Before → After
 from ipfs_datasets_py.mcp_dashboard → from ipfs_datasets_py.dashboards.mcp_dashboard
 from ipfs_datasets_py.cache → from ipfs_datasets_py.caching.cache
-from ipfs_datasets_py.web_archive → from ipfs_datasets_py.web_archiving.web_archive
+from ipfs_datasets_py.web_archive → from ipfs_datasets_py.processors.web_archiving.web_archive
 from ipfs_datasets_py.libp2p_kit → from ipfs_datasets_py.p2p_networking.libp2p_kit
 from ipfs_datasets_py.discord_cli → from ipfs_datasets_py.cli.discord_cli
 from ipfs_datasets_py.graphrag_integration → from ipfs_datasets_py.integrations.graphrag_integration

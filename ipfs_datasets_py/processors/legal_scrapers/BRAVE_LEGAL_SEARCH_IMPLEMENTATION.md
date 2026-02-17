@@ -126,7 +126,7 @@ entities = searcher.search_entities("environmental")
 - Available to AI assistants via MCP protocol
 
 ### 3. Web Archiving
-- Uses `BraveSearchClient` from `ipfs_datasets_py.web_archiving`
+- Uses `BraveSearchClient` from `ipfs_datasets_py.processors.web_archiving`
 - Inherits caching, rate limiting, and error handling
 
 ### 4. Complaint Analysis
@@ -187,7 +187,7 @@ SearchStrategy → BraveLegalSearch → BraveSearchClient → Results
 - **Required**: None (core functionality works standalone)
 - **Optional**: BRAVE_API_KEY for actual searches
 - **Integrates with**:
-  - `ipfs_datasets_py.web_archiving.brave_search_client`
+  - `ipfs_datasets_py.processors.web_archiving.brave_search_client`
   - `ipfs_datasets_py.processors.legal_scrapers.complaint_analysis`
 
 ## Configuration

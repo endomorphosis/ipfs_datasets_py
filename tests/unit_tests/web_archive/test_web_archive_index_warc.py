@@ -3,7 +3,7 @@ import os
 
 
 import pytest
-from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
 
 
 IDX_EXTENSION = ".idx"

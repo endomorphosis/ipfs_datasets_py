@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import pytest
 
-from ipfs_datasets_py.web_archiving.web_archive import WebArchive
+from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchive
 
 
 class TestWebArchiveListArchives:

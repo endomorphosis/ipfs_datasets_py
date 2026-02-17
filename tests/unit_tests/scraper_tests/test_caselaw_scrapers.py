@@ -13,7 +13,7 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from ipfs_datasets_py.web_archiving.scraper_testing_framework import (
+from ipfs_datasets_py.processors.web_archiving.scraper_testing_framework import (
     ScraperTestRunner,
     ScraperDomain,
     ScraperTestResult

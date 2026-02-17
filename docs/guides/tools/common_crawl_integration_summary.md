@@ -94,7 +94,7 @@ ipfs_datasets_py/
 
 ### 1. Python Package API
 
-**Module**: `ipfs_datasets_py.web_archiving`
+**Module**: `ipfs_datasets_py.processors.web_archiving`
 
 **Classes**:
 - `CommonCrawlSearchEngine` - Main wrapper class
@@ -105,7 +105,7 @@ ipfs_datasets_py/
 
 **Example**:
 ```python
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 # Local mode
 engine = CommonCrawlSearchEngine(mode="local")

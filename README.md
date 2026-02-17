@@ -618,7 +618,7 @@ Web scraping and archiving capabilities.
 - **common_crawl.py** - Common Crawl search
 
 ```python
-from ipfs_datasets_py.web_archiving import create_web_archive
+from ipfs_datasets_py.processors.web_archiving import create_web_archive
 
 archive = create_web_archive("https://example.com")
 ```

@@ -53,7 +53,7 @@ pip install -e .
 #### Local Mode (Default)
 
 ```python
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 # Initialize in local mode
 engine = CommonCrawlSearchEngine(mode="local")
@@ -85,7 +85,7 @@ if engine.is_available():
 #### Remote Mode (Connect to Standalone Server)
 
 ```python
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 # Initialize in remote mode
 engine = CommonCrawlSearchEngine(
@@ -100,7 +100,7 @@ results = engine.search_domain("example.com", max_matches=50)
 #### CLI Mode
 
 ```python
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 # Initialize in CLI mode (uses ccindex CLI tool)
 engine = CommonCrawlSearchEngine(mode="cli")

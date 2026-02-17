@@ -45,7 +45,7 @@ class Test{tool_name.title().replace('_', '')}(unittest.TestCase):
         \"\"\"Helper to run async tests.\"\"\"
         return self.loop.run_until_complete(coro)
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_{tool_name}_basic(self, mock_processor_class):
         \"\"\"Test basic functionality of {tool_name}.\"\"\"
         # Setup mock

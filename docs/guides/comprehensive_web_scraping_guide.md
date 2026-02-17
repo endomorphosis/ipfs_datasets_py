@@ -29,7 +29,7 @@ IPFS Datasets Python provides enterprise-grade web scraping and archiving throug
 ### Basic Web Archiving
 
 ```python
-from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive_utils import WebArchiveProcessor
 from archivenow import archivenow
 
 # Initialize processor

@@ -6,7 +6,7 @@ using the WebArchiveProcessor from web_archive.
 import os
 from typing import Dict, List, Any
 
-from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
 
 async def extract_text_from_warc(
     warc_path: str

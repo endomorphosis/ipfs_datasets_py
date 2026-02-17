@@ -42,7 +42,7 @@ Successfully completed comprehensive refactoring of MCP server tools architectur
 1. **legal_dataset_tools/** → `ipfs_datasets_py.legal_scrapers`
 2. **embedding_tools/** → `ipfs_datasets_py.embeddings.core`
 3. **graph_tools/** → `ipfs_datasets_py.processors.graphrag_processor`
-4. **web_archive_tools/** → `ipfs_datasets_py.web_archiving`
+4. **web_archive_tools/** → `ipfs_datasets_py.processors.web_archiving`
 5. **ipfs_tools/** → `ipfs_kit_py`
 6. **dataset_tools/** → HuggingFace datasets
 7. **pdf_tools/** → `ipfs_datasets_py.pdf_processing`

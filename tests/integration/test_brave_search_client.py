@@ -17,7 +17,7 @@ class TestBraveSearchClient:
         """Test that BraveSearchClient can be imported."""
         # GIVEN the web_archiving module
         # WHEN importing BraveSearchClient
-        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
         # THEN the class should be imported successfully
         assert BraveSearchClient is not None
@@ -26,7 +26,7 @@ class TestBraveSearchClient:
         """Test that brave search functions can be imported."""
         # GIVEN the web_archiving module
         # WHEN importing brave search functions
-        from ipfs_datasets_py.web_archiving import (
+        from ipfs_datasets_py.processors.web_archiving import (
             brave_web_search,
             brave_web_search_page,
             brave_search_cache_stats,
@@ -43,7 +43,7 @@ class TestBraveSearchClient:
         """Test that IPFS cache can be imported."""
         # GIVEN the web_archiving module
         # WHEN importing IPFS cache
-        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
         
         # THEN it should be imported (may be None if not available)
         assert HAVE_IPFS_CACHE is not None  # Boolean flag
@@ -53,7 +53,7 @@ class TestBraveSearchClient:
     def test_brave_search_client_initialization(self):
         """Test BraveSearchClient initialization."""
         # GIVEN the BraveSearchClient class
-        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
         # WHEN initializing without API key
         client = BraveSearchClient()
@@ -71,7 +71,7 @@ class TestBraveSearchClient:
     def test_brave_search_client_ipfs_methods(self):
         """Test that client has IPFS cache management methods."""
         # GIVEN a BraveSearchClient instance
-        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
         client = BraveSearchClient()
         
@@ -95,7 +95,7 @@ class TestBraveSearchClient:
     def test_ipfs_cache_stats_when_disabled(self):
         """Test IPFS cache stats when cache is disabled."""
         # GIVEN a BraveSearchClient instance
-        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
         # Ensure IPFS cache is disabled
         os.environ.pop("BRAVE_SEARCH_IPFS_CACHE", None)
@@ -113,7 +113,7 @@ class TestBraveSearchClient:
     def test_ipfs_cache_class_initialization(self):
         """Test BraveSearchIPFSCache class initialization."""
         # GIVEN the BraveSearchIPFSCache class
-        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
         
         if not HAVE_IPFS_CACHE:
             pytest.skip("IPFS cache not available")
@@ -135,7 +135,7 @@ class TestBraveSearchClient:
     def test_ipfs_cache_stats(self):
         """Test IPFS cache stats method."""
         # GIVEN a BraveSearchIPFSCache instance
-        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
         
         if not HAVE_IPFS_CACHE:
             pytest.skip("IPFS cache not available")
@@ -157,7 +157,7 @@ class TestBraveSearchClient:
     def test_ipfs_cache_clear_index(self):
         """Test IPFS cache clear_index method."""
         # GIVEN a BraveSearchIPFSCache instance
-        from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache, HAVE_IPFS_CACHE
         
         if not HAVE_IPFS_CACHE:
             pytest.skip("IPFS cache not available")
@@ -175,7 +175,7 @@ class TestBraveSearchClient:
     def test_brave_search_client_configure(self):
         """Test BraveSearchClient configuration."""
         # GIVEN a BraveSearchClient instance
-        from ipfs_datasets_py.web_archiving import BraveSearchClient
+        from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
         
         client = BraveSearchClient()
         
@@ -191,7 +191,7 @@ class TestBraveSearchClient:
     def test_cache_stats_function(self):
         """Test brave_search_cache_stats function."""
         # GIVEN the cache stats function
-        from ipfs_datasets_py.web_archiving import brave_search_cache_stats
+        from ipfs_datasets_py.processors.web_archiving import brave_search_cache_stats
         
         # WHEN calling cache_stats
         stats = brave_search_cache_stats()
@@ -207,7 +207,7 @@ class TestBraveSearchClient:
     def test_clear_cache_function(self):
         """Test clear_brave_search_cache function."""
         # GIVEN the clear cache function
-        from ipfs_datasets_py.web_archiving import clear_brave_search_cache
+        from ipfs_datasets_py.processors.web_archiving import clear_brave_search_cache
         
         # WHEN calling clear_cache
         result = clear_brave_search_cache()
@@ -221,7 +221,7 @@ class TestBraveSearchClient:
     def test_cache_path_with_custom_env_var(self):
         """Test that custom cache path is respected."""
         # GIVEN a custom cache path environment variable
-        from ipfs_datasets_py.web_archiving.brave_search_client import brave_search_cache_path
+        from ipfs_datasets_py.processors.web_archiving.brave_search_client import brave_search_cache_path
         
         with tempfile.TemporaryDirectory() as tmpdir:
             custom_path = Path(tmpdir) / "custom_cache.json"

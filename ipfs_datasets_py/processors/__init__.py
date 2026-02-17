@@ -61,6 +61,7 @@ __all__ = [
     'patent_scraper',
     'patent_dataset_api',
     'wikipedia_x',
+    'web_archiving',
 
     # PDF processing public surface (lazy via __getattr__)
     'PDFProcessor',

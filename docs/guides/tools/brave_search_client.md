@@ -43,7 +43,7 @@ Environment variables for fine-grained control:
 ### Python Package API
 
 ```python
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 # Initialize client
 client = BraveSearchClient(api_key="your-api-key")
@@ -75,7 +75,7 @@ client.configure(country="uk", safesearch="strict", default_count=20)
 ### Direct Function API
 
 ```python
-from ipfs_datasets_py.web_archiving import (
+from ipfs_datasets_py.processors.web_archiving import (
     brave_web_search,
     brave_web_search_page,
     brave_search_cache_stats,
@@ -142,7 +142,7 @@ The Brave Search client is now available to all web archiving tools:
 
 ```python
 # In your custom web scraping tool
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 class MyWebScraper:
     def __init__(self):
@@ -276,7 +276,7 @@ api = BraveSearchAPI(api_key="key")
 
 **After:**
 ```python
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 client = BraveSearchClient(api_key="key")
 # Now with caching and pagination metadata
