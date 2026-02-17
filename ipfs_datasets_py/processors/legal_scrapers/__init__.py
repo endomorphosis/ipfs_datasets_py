@@ -124,6 +124,14 @@ from .search_term_generator import (
     SearchStrategy,
 )
 
+# Legal Web Archive Search - Unified search with archiving (NEW)
+try:
+    from .legal_web_archive_search import LegalWebArchiveSearch
+    HAVE_WEB_ARCHIVE_SEARCH = True
+except ImportError:
+    LegalWebArchiveSearch = None
+    HAVE_WEB_ARCHIVE_SEARCH = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -200,4 +208,8 @@ __all__ = [
     "SearchTermGenerator",
     "SearchTerm",
     "SearchStrategy",
+    
+    # Legal Web Archive Search (NEW)
+    "LegalWebArchiveSearch",
+    "HAVE_WEB_ARCHIVE_SEARCH",
 ]
