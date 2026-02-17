@@ -2,11 +2,27 @@
 
 This package provides a Model Context Protocol (MCP) server implementation for IPFS Datasets Python, enabling AI models like Claude to interact with IPFS datasets through standardized tools.
 
+## 🚀 MCP++ Integration Project (2026-02-17)
+
+We are actively working on a comprehensive improvement plan to integrate advanced P2P capabilities from the [ipfs_accelerate_py MCP++ module](https://github.com/endomorphosis/ipfs_accelerate_py/tree/main/ipfs_accelerate_py/mcplusplus_module). This will bring:
+
+- **50-70% reduction** in P2P operation latency (from ~200ms to <100ms)
+- **20+ new P2P tools** (workflow scheduler, task queue, peer management)
+- **Dual-runtime architecture** (FastAPI + Trio) for optimal performance
+- **Full backward compatibility** with existing tools
+
+**📖 Documentation:**
+- [**MCP Improvement Plan**](./MCP_IMPROVEMENT_PLAN.md) - Complete roadmap (24KB)
+- [**Architecture Integration**](./ARCHITECTURE_INTEGRATION.md) - Technical design (28KB)
+- [**Implementation Checklist**](./IMPLEMENTATION_CHECKLIST.md) - Task breakdown (15KB)
+- [**Quick Start Guide**](./QUICK_START_GUIDE.md) - Developer onboarding (14KB)
+
 ## Features
 
 - **MCP Server**: Full Model Context Protocol server implementation
-- **Comprehensive Tools**: Access to all IPFS Datasets functionality as MCP tools
+- **Comprehensive Tools**: Access to all IPFS Datasets functionality as MCP tools (370+ tools, 73 categories)
 - **Dual Integration**: Support for both direct IPFS Kit usage and MCP-based integration
+- **P2P Capabilities**: Basic P2P service integration (advanced features coming with MCP++)
 - **Configuration Options**: Flexible configuration via command line, YAML files, or Python
 - **Python Client**: Easy-to-use Python client for programmatic access
 
