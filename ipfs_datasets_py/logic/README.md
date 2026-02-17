@@ -432,9 +432,9 @@ pytest --cov=ipfs_datasets_py.logic.integration --cov-report=html
 
 ### Test Coverage
 
-- **CEC Native Tests:** 418 tests
-- **Integration Tests:** 110 tests
-- **Total:** 528+ comprehensive tests
+- **Module Tests:** 174 tests (94% pass rate)
+- **Rule Tests:** 568+ (CEC: 418, TDFOL: 40+, Integration: 110+)
+- **Total:** 742+ comprehensive tests
 
 ### Test Structure
 
@@ -708,11 +708,11 @@ See repository LICENSE file.
 
 ## Status
 
-✅ **Production Ready**  
-✅ **All 5 Critical Gaps Resolved**  
+✅ **Beta Quality (Core Converters Production-Ready)**  
+✅ **All Critical Gaps Documented**  
 ✅ **13,702+ LOC**  
-✅ **528+ Tests**  
-✅ **127 Inference Rules**  
+✅ **742+ Tests** (174 module + 568+ rule tests)  
+✅ **128 Inference Rules** (41 TDFOL + 87 CEC)  
 ✅ **5 Modal Provers**  
 ✅ **103.8 KB Documentation**
 
