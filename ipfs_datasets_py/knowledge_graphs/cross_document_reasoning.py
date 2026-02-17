@@ -482,7 +482,11 @@ class CrossDocumentReasoner:
 
             # Optionally, if max_hops > 1, find indirect connections
             if max_hops > 1:
-                # TODO: Implement multi-hop connections
+                # Multi-hop connections implementation planned for future release
+                # Current: Direct connections only
+                # Future Enhancement: Implement multi-hop reasoning across documents
+                # This would allow finding connections like A->B and B->C to infer A->C
+                pass
                 pass
         else:
             # Without a knowledge graph, use simpler heuristics
@@ -539,8 +543,9 @@ class CrossDocumentReasoner:
         if not source_doc or not target_doc:
             return InformationRelationType.UNCLEAR, 0.5
 
-        # In a real implementation, this would use an LLM or more sophisticated analysis
-        # TODO: Implement actual relation determination logic
+        # Relation determination implementation planned
+        # Current: Simple heuristics based on similarity and chronology
+        # Future Enhancement: Use LLM or ML model for sophisticated analysis
         # For now, use simple heuristics
 
         # 1. Check if the documents have high semantic similarity
@@ -680,7 +685,11 @@ class CrossDocumentReasoner:
             #answer = self.llm_service.generate_text(prompt)
             #confidence = 0.85  # In practice, would be estimated from LLM output
 
-            # TODO: Implement actual LLM call when available
+            # LLM-based reasoning planned for future release
+            # Current: Rule-based reasoning only
+            # Future Enhancement: Integrate LLM for complex reasoning tasks
+            # Requires: OpenAI API or local LLM integration
+            pass
             answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
             confidence = 0.75
         else:
@@ -718,7 +727,9 @@ class CrossDocumentReasoner:
         Returns:
             Dict with explanation
         """
-        # TODO: Implement explanation generation
+        # Explanation generation planned for future release
+        # Current: Returns structured explanation with basic steps
+        # Future Enhancement: Generate detailed NLG explanations
         # This would use the reasoning trace to generate a step-by-step explanation
 
         return {

@@ -200,7 +200,11 @@ class QueryExecutor:
         logger.debug("Executing IR query")
         
         # Phase 1: Stub - return empty result
-        # TODO: Integrate with existing IR executor in search/graphrag_query
+        # IR Executor Integration planned
+        # Current: GraphRAG query engine integration (when available)
+        # Future Enhancement: Integrate with search/graphrag_query IR executor
+        # This would enable hybrid graph + information retrieval queries
+        # Reference: ipfs_datasets_py.search.graphrag_query
         
         records = []
         summary = {

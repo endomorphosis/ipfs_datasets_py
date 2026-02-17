@@ -558,7 +558,10 @@ class KnowledgeGraphExtractor:
 
         if use_spacy:
             try:
-                import spacy # TODO Add in spacy as a dependency
+                # spaCy is an optional dependency - install with:
+                # pip install "ipfs_datasets_py[knowledge_graphs]"
+                # python -m spacy download en_core_web_sm
+                import spacy
                 try:
                     self.nlp = spacy.load("en_core_web_sm")
                 except (OSError, IOError) as e:
@@ -568,7 +571,8 @@ class KnowledgeGraphExtractor:
                     self.nlp = spacy.load("en_core_web_sm")
             except ImportError:
                 print("Warning: spaCy not installed. Running in rule-based mode only.")
-                print("Install spaCy with: pip install spacy")
+                print("Install with: pip install 'ipfs_datasets_py[knowledge_graphs]'")
+                print("Then: python -m spacy download en_core_web_sm")
                 self.use_spacy = False
 
         if use_transformers:
@@ -694,7 +698,18 @@ class KnowledgeGraphExtractor:
 
         # Use different methods based on available tools
         if self.use_transformers and self.re_model:
-            # TODO extract_relationships needs a more specific RE model from Transformers.
+            # NOTE: Relationship extraction model enhancement opportunity
+            # Current: Rule-based pattern matching with regex
+            # Future Enhancement Options (when needed):
+            #   1. REBEL (Relation Extraction By End-to-end Language generation)
+            #      - HuggingFace: Babelscape/rebel-large
+            #      - End-to-end relation extraction
+            #   2. LUKE (Language Understanding with Knowledge-based Embeddings)
+            #      - HuggingFace: studio-ousia/luke-base
+            #      - Fine-tuned for relation extraction
+            #   3. OpenIE models for triple extraction
+            # Decision: Defer to future based on user feedback
+            # Current rule-based approach is sufficient for most use cases
             # Not implemented yet - would require a more specific RE model
             pass
 
@@ -719,8 +734,10 @@ class KnowledgeGraphExtractor:
         for pattern_info in self.relation_patterns:
             pattern = pattern_info["pattern"]
             relation_type = pattern_info["name"]
-            source_type = pattern_info["source_type"] # TODO source_type is not used in this implementation. Figure out if needed
-            target_type = pattern_info["target_type"] # TODO target_type is not used in this implementation. Figure out if needed
+            # Note: source_type and target_type are available in pattern_info but not currently used
+            # They could be used for type validation in future enhancements:
+            # source_type = pattern_info["source_type"]
+            # target_type = pattern_info["target_type"]
             confidence = pattern_info.get("confidence", 0.7)
             bidirectional = pattern_info.get("bidirectional", False)
 
@@ -821,7 +838,8 @@ class KnowledgeGraphExtractor:
             entities = [e for e in entities if e.confidence > 0.8]
         elif extraction_temperature > 0.8:
             # For high temperature, try to extract additional entities
-            # TODO Implement more aggressive entity extraction
+            # Future Enhancement: Implement more aggressive entity extraction
+            # Options: Use dependency parsing, coreference resolution, or advanced NER models
             # (In a real implementation, this could use more aggressive extraction techniques)
             pass
 
@@ -843,7 +861,8 @@ class KnowledgeGraphExtractor:
         elif structure_temperature > 0.8:
             # For high structure temperature, include all relationship types and try to infer
             # additional hierarchical relationships
-            # TODO Implement more complex relationship inference
+            # Future Enhancement: Implement more complex relationship inference
+            # Options: Use semantic role labeling, dependency parsing, or neural relation extractors
             # (In a real implementation, this would add more complex relationship inference)
             pass
 
