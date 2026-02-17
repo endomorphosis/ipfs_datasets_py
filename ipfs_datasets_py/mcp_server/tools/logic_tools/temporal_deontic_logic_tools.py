@@ -31,6 +31,131 @@ from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 logger = logging.getLogger(__name__)
 
 
+TOOL_VERSION = "1.0.0"
+
+
+async def check_document_consistency(
+    document_text: str,
+    document_id: str = "auto_generated",
+    jurisdiction: str = "Federal",
+    legal_domain: str = "general",
+    temporal_context: str = "current_time",
+) -> Dict[str, Any]:
+    """Check legal document consistency against temporal deontic logic theorems.
+
+    Functions like a legal debugger: extracts deontic formulas and searches for
+    conflicts using RAG-based retrieval over known theorems.
+    """
+
+    from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
+        check_document_consistency_from_parameters,
+    )
+
+    parameters = {
+        "document_text": document_text,
+        "document_id": document_id,
+        "jurisdiction": jurisdiction,
+        "legal_domain": legal_domain,
+        "temporal_context": temporal_context,
+    }
+    return await check_document_consistency_from_parameters(parameters, tool_version=TOOL_VERSION)
+
+
+async def query_theorems(
+    query: str,
+    operator_filter: str = "all",
+    jurisdiction: str = "all",
+    legal_domain: str = "all",
+    limit: int = 10,
+    min_relevance: float = 0.5,
+) -> Dict[str, Any]:
+    """RAG-based semantic search of temporal deontic logic theorems."""
+
+    from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
+        query_theorems_from_parameters,
+    )
+
+    parameters = {
+        "query": query,
+        "operator_filter": operator_filter,
+        "jurisdiction": jurisdiction,
+        "legal_domain": legal_domain,
+        "limit": limit,
+        "min_relevance": min_relevance,
+    }
+    return await query_theorems_from_parameters(parameters, tool_version=TOOL_VERSION)
+
+
+async def bulk_process_caselaw(
+    caselaw_directories: List[str],
+    output_directory: str = "unified_deontic_logic_system",
+    max_concurrent_documents: int = 5,
+    enable_parallel_processing: bool = True,
+    min_precedent_strength: float = 0.5,
+    jurisdictions_filter: Optional[List[str]] = None,
+    legal_domains_filter: Optional[List[str]] = None,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    async_processing: bool = True,
+) -> Dict[str, Any]:
+    """Bulk process caselaw corpora into a unified temporal deontic logic system."""
+
+    from ipfs_datasets_py.logic.integration.temporal_deontic_api import (
+        bulk_process_caselaw_from_parameters,
+    )
+
+    parameters: Dict[str, Any] = {
+        "caselaw_directories": caselaw_directories,
+        "output_directory": output_directory,
+        "max_concurrent_documents": max_concurrent_documents,
+        "enable_parallel_processing": enable_parallel_processing,
+        "min_precedent_strength": min_precedent_strength,
+        "async_processing": async_processing,
+    }
+    if jurisdictions_filter is not None:
+        parameters["jurisdictions_filter"] = jurisdictions_filter
+    if legal_domains_filter is not None:
+        parameters["legal_domains_filter"] = legal_domains_filter
+    if start_date is not None:
+        parameters["start_date"] = start_date
+    if end_date is not None:
+        parameters["end_date"] = end_date
+
+    return await bulk_process_caselaw_from_parameters(parameters, tool_version=TOOL_VERSION)
+
+
+async def add_theorem(
+    operator: str,
+    proposition: str,
+    agent_name: str = "Unspecified Party",
+    jurisdiction: str = "Federal",
+    legal_domain: str = "general",
+    source_case: str = "Test Case",
+    precedent_strength: float = 0.8,
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Add an individual temporal deontic logic theorem to the knowledge base."""
+
+    from ipfs_datasets_py.logic.integration.temporal_deontic_api import add_theorem_from_parameters
+
+    parameters: Dict[str, Any] = {
+        "operator": operator,
+        "proposition": proposition,
+        "agent_name": agent_name,
+        "jurisdiction": jurisdiction,
+        "legal_domain": legal_domain,
+        "source_case": source_case,
+        "precedent_strength": precedent_strength,
+    }
+    if start_date is not None:
+        parameters["start_date"] = start_date
+    if end_date is not None:
+        parameters["end_date"] = end_date
+
+    return await add_theorem_from_parameters(parameters, tool_version=TOOL_VERSION)
+
+
 class CheckDocumentConsistencyTool(ClaudeMCPTool):
     """
     MCP Tool for checking document consistency against temporal deontic logic theorems.
@@ -349,4 +474,18 @@ TEMPORAL_DEONTIC_LOGIC_TOOLS = [
     QueryTheoremsTool(),
     BulkProcessCaselawTool(),
     AddTheoremTool()
+]
+
+
+__all__ = [
+    "TOOL_VERSION",
+    "check_document_consistency",
+    "query_theorems",
+    "bulk_process_caselaw",
+    "add_theorem",
+    "CheckDocumentConsistencyTool",
+    "QueryTheoremsTool",
+    "BulkProcessCaselawTool",
+    "AddTheoremTool",
+    "TEMPORAL_DEONTIC_LOGIC_TOOLS",
 ]
