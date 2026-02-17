@@ -2,11 +2,11 @@
 """
 MCP tool for loading datasets.
 
-This tool handles loading datasets from various sources and formats.
+This is a thin wrapper around the core DatasetLoader class.
+Core implementation: ipfs_datasets_py.core_operations.dataset_loader.DatasetLoader
 """
-import anyio
 import json
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 
 import logging
 
@@ -23,14 +23,7 @@ from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
     parse_json_object,
 )
 
-# Try to import Hugging Face datasets with fallback
-try:
-    from datasets import load_dataset as hf_load_dataset
-    HF_DATASETS_AVAILABLE = True
-except ImportError as e:
-    logger.warning(f"Hugging Face datasets not available: {e}")
-    HF_DATASETS_AVAILABLE = False
-    hf_load_dataset = None
+from ipfs_datasets_py.core_operations import DatasetLoader
 
 async def load_dataset(
     source: str,
@@ -40,32 +33,18 @@ async def load_dataset(
     """
     Load a dataset from a source.
 
-    This tool loads datasets from Hugging Face Hub, local directories, or files.
-    It supports various dataset formats like JSON, CSV, Parquet, and others.
+    This is a thin wrapper around DatasetLoader.load().
+    All business logic is in ipfs_datasets_py.core_operations.dataset_loader
 
     Args:
-        source: Source identifier of the dataset. Can be:
-                - Hugging Face dataset name (e.g., "squad", "glue/mnli")
-                - Local directory path containing dataset files
-                - Local file path (JSON, CSV, Parquet, etc.)
-                - URL to a dataset file
-                NOTE: Python (.py) files are not valid dataset sources.
-        format: Format of the dataset. Supported formats: json, csv, parquet, text, etc.
-                If not provided, format will be auto-detected.
-        options: Additional options for loading the dataset (split, streaming, etc.)
+        source: Source identifier of the dataset
+        format: Format of the dataset
+        options: Additional loading options
 
     Returns:
-        Dict containing:
-        - status: "success" or "error"
-        - dataset_id: Identifier for the loaded dataset
-        - metadata: Dataset metadata including description and features
-        - summary: Dataset summary with record count, schema, source, and format
-        - message: Error message if status is "error"
-
-    Raises:
-        ValueError: If source is a Python file or invalid format
+        Dict containing load results or error information
     """
-    # MCP JSON-string entrypoint (used by unit tests): await load_dataset(json.dumps({...}))
+    # MCP JSON-string entrypoint (used by unit tests)
     if isinstance(source, str) and format is None and options is None:
         data, error = parse_json_object(source)
         if error is not None:
@@ -74,102 +53,30 @@ async def load_dataset(
         if not data.get("source"):
             return mcp_error_response("Missing required field: source", error_type="validation")
 
-        if ipfs_datasets is None:
-            return mcp_error_response("ipfs_datasets backend is not available")
+        # Use core module for legacy ipfs_datasets backend
+        if ipfs_datasets is not None:
+            try:
+                result = ipfs_datasets.load_dataset(
+                    data["source"],
+                    format=data.get("format"),
+                    **(data.get("options") or {}),
+                )
+                payload: Dict[str, Any] = {"status": "success"}
+                if isinstance(result, dict):
+                    payload.update(result)
+                else:
+                    payload["result"] = result
+                return mcp_text_response(payload)
+            except Exception as e:
+                return mcp_text_response({"status": "error", "error": str(e)})
 
-        try:
-            result = ipfs_datasets.load_dataset(
-                data["source"],
-                format=data.get("format"),
-                **(data.get("options") or {}),
-            )
-            payload: Dict[str, Any] = {"status": "success"}
-            if isinstance(result, dict):
-                payload.update(result)
-            else:
-                payload["result"] = result
-            return mcp_text_response(payload)
-        except Exception as e:
-            return mcp_text_response({"status": "error", "error": str(e)})
-
+    # Use core module for all dataset loading
     try:
-        logger.info(f"Loading dataset from {source} with format {format if format else 'auto'}")
-
-        # Input validation - reject Python files and dangerous sources
-        if not source or not isinstance(source, str) or len(source.strip()) == 0:
-            raise ValueError("Source must be a non-empty string")
-            
-        # Reject Python files for security
-        if source.lower().endswith('.py'):
-            raise ValueError(
-                "Python files (.py) are not valid dataset sources. "
-                "Please provide a dataset identifier from Hugging Face Hub, "
-                "a directory path, or a data file (JSON, CSV, Parquet, etc.)"
-            )
-        
-        # Reject other executable files
-        executable_extensions = ['.pyc', '.pyo', '.exe', '.dll', '.so', '.dylib', '.sh', '.bat']
-        if any(source.lower().endswith(ext) for ext in executable_extensions):
-            raise ValueError(f"Executable files are not valid dataset sources: {source}")
-
-        # Default options
-        if options is None:
-            options = {}
-
-        # Check if Hugging Face datasets is available
-        if not HF_DATASETS_AVAILABLE:
-            logger.warning("Hugging Face datasets not available, returning error")
-            return {
-                "status": "error",
-                "message": "Hugging Face datasets library is not available. Please install it with: pip install datasets",
-                "source": source
-            }
-
-        # Load the dataset directly using Hugging Face datasets
-        try:
-            dataset = hf_load_dataset(source, format=format, **options)
-
-            # Hugging Face datasets can return DatasetDict if multiple splits, handle this
-            if isinstance(dataset, dict) and "train" in dataset:
-                # Assuming 'train' split is the primary one for summary purposes
-                dataset_obj = dataset["train"]
-            else:
-                dataset_obj = dataset
-        except Exception as e:
-            logger.error(f"Failed to load dataset: {e}")
-            return {
-                "status": "error",
-                "message": f"Failed to load dataset from {source}: {str(e)}",
-                "source": source
-            }
-
-        # Return summary info
-        info = getattr(dataset_obj, "info", None)
-        metadata = {}
-        if info:
-            # Extract common metadata fields safely
-            metadata = {
-                "description": getattr(info, "description", ""),
-                "citation": getattr(info, "citation", ""),
-                "homepage": getattr(info, "homepage", ""),
-                "license": getattr(info, "license", ""),
-                "version": str(getattr(info, "version", "")),
-                "features": str(getattr(info, "features", ""))
-            }
-        
-        return {
-            "status": "success",
-            "dataset_id": f"dataset_{source}_{id(dataset_obj)}", # Generate unique ID
-            "metadata": metadata,
-            "summary": {
-                "num_records": len(dataset_obj),
-                "schema": str(dataset_obj.features) if hasattr(dataset_obj, "features") else None,
-                "source": source,
-                "format": format if format else "auto-detected"
-            }
-        }
+        loader = DatasetLoader()
+        result = await loader.load(source, format=format, options=options)
+        return result
     except Exception as e:
-        logger.error(f"Error loading dataset: {e}")
+        logger.error(f"Error in load_dataset MCP tool: {e}")
         return {
             "status": "error",
             "message": str(e),
