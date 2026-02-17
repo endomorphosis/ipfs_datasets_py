@@ -279,3 +279,15 @@ def tuck_functions(expression: str) -> str:
     returner = returner.replace("`", " ")
     
     return returner
+
+
+def clean_dcec_expression(text: str) -> str:
+    """Normalize a DCEC/DCEC-like expression string.
+
+    This is a convenience wrapper used by higher-level APIs/tests.
+    It applies the standard cleaning steps in a predictable order.
+    """
+    text = strip_comments(text)
+    text = strip_whitespace(text)
+    text = consolidate_parens(text)
+    return text

@@ -18,7 +18,8 @@ Migration:
 """
 
 import warnings
-from typing import Optional
+from dataclasses import dataclass
+from typing import Any, Optional
 
 # Import from unified location
 from ..common.proof_cache import (
@@ -29,6 +30,21 @@ from ..common.proof_cache import (
 
 # Alias for backward compatibility
 TDFOLProofCache = ProofCache
+
+
+@dataclass
+class TDFOLProofResult:
+    """Backward-compatible proof result container for caching tests.
+
+    This is distinct from `tdfol_prover.ProofResult` (which models a proof
+    attempt). This type represents the cached outcome as used by legacy APIs.
+    """
+
+    is_proved: bool
+    formula: Any
+    method: str
+    proof_steps: list
+    proof_time: float
 
 # Global instance for TDFOL
 _global_proof_cache: Optional[ProofCache] = None
@@ -57,8 +73,20 @@ def get_global_proof_cache() -> ProofCache:
     return _global_proof_cache
 
 
+def clear_global_proof_cache() -> None:
+    """Clear the global TDFOL proof cache.
+
+    This is a backward-compatibility shim. New code should prefer
+    `ipfs_datasets_py.logic.common.proof_cache.get_global_cache().clear()`.
+    """
+    cache = get_global_proof_cache()
+    cache.clear()
+
+
 __all__ = [
     'TDFOLProofCache',
     'CachedProofEntry',
     'get_global_proof_cache',
+    'clear_global_proof_cache',
+    'TDFOLProofResult',
 ]

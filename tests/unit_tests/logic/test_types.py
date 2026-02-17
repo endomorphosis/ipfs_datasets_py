@@ -95,7 +95,8 @@ class TestTypesModuleImports:
         }
         
         assert hasattr(types_module, '__all__')
-        assert set(types_module.__all__) == expected_types
+        # types may export more than the minimum compatibility surface
+        assert expected_types.issubset(set(types_module.__all__))
 
 
 class TestBackwardCompatibility:

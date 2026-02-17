@@ -406,6 +406,47 @@ class TheoremProver:
         return f"TheoremProver(attempts={len(self.proof_attempts)})"
 
 
+class InferenceEngine:
+    """Backward-compatible inference engine API.
+
+    Older callers/tests expect an `InferenceEngine` with `add_assumption()` and
+    `apply_all_rules()`.
+
+    The canonical proving API is `BasicProver`/`TheoremProver`.
+    """
+
+    def __init__(self, max_steps: int = 50):
+        self.max_steps = max_steps
+        self._formulas: List[Formula] = []
+        self._prover = BasicProver(max_steps=max_steps)
+
+    def add_assumption(self, formula: Formula) -> None:
+        self._formulas.append(formula)
+
+    def apply_all_rules(self) -> List[Formula]:
+        """Apply all available rules until saturation (or max_steps).
+
+        Returns the list of derived formulas including assumptions.
+        """
+        derived: List[Formula] = list(self._formulas)
+
+        for _ in range(self.max_steps):
+            new_formulas: List[Formula] = []
+            for rule in self._prover.rules:
+                if rule.can_apply(derived):
+                    for candidate in rule.apply(derived):
+                        candidate_str = candidate.to_string()
+                        if not any(f.to_string() == candidate_str for f in derived):
+                            new_formulas.append(candidate)
+
+            if not new_formulas:
+                break
+
+            derived.extend(new_formulas)
+
+        return derived
+
+
 class Weakening(InferenceRule):
     """Weakening: From P∧Q, derive P∨Q."""
     

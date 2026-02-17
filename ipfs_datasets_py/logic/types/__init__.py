@@ -8,6 +8,8 @@ Moved from various locations during Phase 2 refactoring to centralize type
 definitions and resolve circular import issues.
 """
 
+from __future__ import annotations
+
 # Import and re-export core types for convenience
 from .deontic_types import (
     DeonticOperator,
@@ -24,6 +26,47 @@ from .proof_types import (
     ProofResult,
     ProofStep,
 )
+
+# ---------------------------------------------------------------------------
+# Backward-compatible TDFOL constructors
+# ---------------------------------------------------------------------------
+
+from ..TDFOL.tdfol_core import (
+    Formula,
+    Predicate,
+    Variable,
+    Constant,
+    create_conjunction,
+    create_disjunction,
+    create_negation,
+    create_implication,
+    create_universal,
+    create_existential,
+)
+
+
+def And(left: Formula, right: Formula) -> Formula:
+    return create_conjunction(left, right)
+
+
+def Or(left: Formula, right: Formula) -> Formula:
+    return create_disjunction(left, right)
+
+
+def Not(formula: Formula) -> Formula:
+    return create_negation(formula)
+
+
+def Implies(antecedent: Formula, consequent: Formula) -> Formula:
+    return create_implication(antecedent, consequent)
+
+
+def Forall(variable: Variable, formula: Formula) -> Formula:
+    return create_universal(variable, formula)
+
+
+def Exists(variable: Variable, formula: Formula) -> Formula:
+    return create_existential(variable, formula)
 
 from .translation_types import (
     LogicTranslationTarget,
@@ -78,6 +121,18 @@ __all__ = [
     "LogicTranslationTarget",
     "TranslationResult",
     "AbstractLogicFormula",
+
+    # TDFOL core term/formula helpers (compat)
+    "Formula",
+    "Predicate",
+    "Variable",
+    "Constant",
+    "And",
+    "Or",
+    "Not",
+    "Implies",
+    "Forall",
+    "Exists",
     # Common types
     "LogicOperator",
     "Quantifier",

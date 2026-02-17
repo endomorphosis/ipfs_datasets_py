@@ -46,6 +46,7 @@ from .prover_core import (
     ProofTree,
     ProofAttempt,
     TheoremProver,
+    InferenceEngine,
 )
 
 from .nl_converter import (
@@ -60,6 +61,7 @@ from .dcec_cleaning import (
     check_parens,
     get_matching_close_paren,
     tuck_functions,
+    clean_dcec_expression,
 )
 
 from .dcec_parsing import (
@@ -116,6 +118,7 @@ __all__ = [
     "ProofTree",
     "ProofAttempt",
     "TheoremProver",
+    "InferenceEngine",
     # NL Converter
     "ConversionResult",
     "NaturalLanguageConverter",
@@ -126,6 +129,7 @@ __all__ = [
     "check_parens",
     "get_matching_close_paren",
     "tuck_functions",
+    "clean_dcec_expression",
     # Parsing
     "ParseToken",
     "remove_comments",

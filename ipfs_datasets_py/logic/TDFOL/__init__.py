@@ -81,6 +81,7 @@ from .tdfol_proof_cache import (
     TDFOLProofCache,
     get_global_proof_cache,
     clear_global_proof_cache,
+    TDFOLProofResult,
 )
 
 from .tdfol_inference_rules import (
@@ -136,6 +137,7 @@ __all__ = [
     "TDFOLProofCache",
     "get_global_proof_cache",
     "clear_global_proof_cache",
+    "TDFOLProofResult",
     
     # Inference Rules
     "TDFOLInferenceRule",

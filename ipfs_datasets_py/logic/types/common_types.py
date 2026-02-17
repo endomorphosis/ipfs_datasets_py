@@ -5,8 +5,11 @@ all logic submodules.
 """
 
 from enum import Enum
-from typing import Protocol, TypeVar, Union, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, TypeVar, Union, runtime_checkable
 from dataclasses import dataclass
+
+if TYPE_CHECKING:
+    from .proof_types import ProofResult
 
 
 # Type aliases for clarity
@@ -53,7 +56,7 @@ class ComplexityMetrics:
     predicate_count: int = 0
     complexity_score: ComplexityScore = 0
     
-    def to_dict(self):
+    def to_dict(self) -> dict[str, int]:
         """Convert metrics to dictionary."""
         return {
             "quantifier_depth": self.quantifier_depth,
