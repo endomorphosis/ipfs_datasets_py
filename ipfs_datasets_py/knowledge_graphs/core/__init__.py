@@ -44,7 +44,8 @@ Roadmap:
 """
 
 # Phase 1 implementation complete
-from .query_executor import GraphEngine, QueryExecutor
+from .graph_engine import GraphEngine
+from .query_executor import QueryExecutor
 
 __all__ = [
     "GraphEngine",

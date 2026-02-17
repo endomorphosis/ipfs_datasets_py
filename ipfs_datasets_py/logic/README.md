@@ -469,14 +469,14 @@ python scripts/benchmarks/neurosymbolic_benchmark.py
 
 - **[TDFOL README](./TDFOL/README.md)** - TDFOL module documentation
 - **[CEC System Guide](./CEC/CEC_SYSTEM_GUIDE.md)** - CEC documentation
-- **[Examples README](./examples/neurosymbolic/README.md)** - Example guide
+- **[Examples README](../../examples/neurosymbolic/README.md)** - Example guide
 
 ### Project Documentation
 
-- **[Critical Gaps Resolved](../../CRITICAL_GAPS_RESOLVED.md)** - Implementation summary
-- **[Implementation Summary](../../IMPLEMENTATION_SUMMARY.md)** - Phase 1-2 summary
-- **[Neurosymbolic Architecture Plan](../../NEUROSYMBOLIC_ARCHITECTURE_PLAN.md)** - 12-week roadmap
-- **[SymbolicAI Integration](../../SYMBOLICAI_INTEGRATION_ANALYSIS.md)** - Integration strategy
+- **[Critical Gaps Resolved](../../docs/archive/root_status_reports/CRITICAL_GAPS_RESOLVED.md)** - Implementation summary
+- **[Implementation Summary](../../docs/archive/root_status_reports/IMPLEMENTATION_SUMMARY.md)** - Phase 1-2 summary
+- **[Neurosymbolic Architecture Plan](../../docs/archive/root_status_reports/NEUROSYMBOLIC_ARCHITECTURE_PLAN.md)** - 12-week roadmap
+- **[SymbolicAI Integration](../../docs/archive/root_status_reports/SYMBOLICAI_INTEGRATION_ANALYSIS.md)** - Integration strategy
 
 **Total Documentation:** 103.8 KB
 
