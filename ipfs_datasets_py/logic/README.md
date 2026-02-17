@@ -195,43 +195,28 @@ result2 = expensive_operation("data")  # 0.02ms (48x faster!)
 
 ## Architecture
 
-```
-ipfs_datasets_py/logic/
-├── TDFOL/                          # Temporal Deontic First-Order Logic
-│   ├── tdfol_core.py              # Core formula representation (542 LOC)
-│   ├── tdfol_parser.py            # TDFOL parser (509 LOC)
-│   ├── tdfol_dcec_parser.py       # DCEC s-expression parser (373 LOC)
-│   ├── tdfol_prover.py            # Theorem prover (542 LOC)
-│   ├── tdfol_inference_rules.py   # 40 inference rules (689 LOC)
-│   ├── tdfol_converter.py         # Format converters (414 LOC)
-│   └── README.md                  # TDFOL documentation
-│
-├── CEC/native/                     # Cognitive Event Calculus
-│   ├── prover_core.py             # 87 inference rules (2,884 LOC)
-│   ├── shadow_prover.py           # Modal logic provers (706 LOC)
-│   ├── modal_tableaux.py          # Tableaux algorithm (583 LOC)
-│   ├── grammar_engine.py          # Chart parser (434 LOC)
-│   ├── dcec_english_grammar.py    # English grammar (639 LOC)
-│   └── ...                        # Other CEC components
-│
-└── integration/                    # Neurosymbolic Integration
-    ├── tdfol_cec_bridge.py        # TDFOL ↔ CEC integration (8.7 KB)
-    ├── tdfol_shadowprover_bridge.py  # Modal logic integration (12.1 KB)
-    ├── tdfol_grammar_bridge.py    # NL processing (13.3 KB)
-    └── neurosymbolic_api.py       # Unified API (13.5 KB)
-```
+The logic module consists of several integrated components working together:
 
-### Component Breakdown
+- **TDFOL** - Temporal Deontic First-Order Logic (3,069 LOC)
+- **CEC** - Cognitive Event Calculus with 87 inference rules (9,633 LOC)
+- **Integration Layer** - Bridges between systems (47.6 KB)
+- **Converters** - FOL and Deontic converters with caching
+- **External Provers** - Z3, Lean, Coq integration
 
-| Component | LOC | Purpose | Status |
-|-----------|-----|---------|--------|
-| **TDFOL Module** | 3,069 | Unified logic | ✅ Complete |
-| **CEC Native** | 9,633 | 87 rules + provers | ✅ Complete |
-| **Integration** | 47.6 KB | Bridges | ✅ Complete |
-| **Tests** | 33 KB | 110 integration tests | ✅ Complete |
-| **Examples** | 23 KB | 5 examples | ✅ Complete |
-| **CLI Tools** | 14.2 KB | CLI + benchmarks | ✅ Complete |
-| **Total** | **13,702+ LOC** | **Complete system** | ✅ **Production** |
+**📊 For detailed architecture diagrams and component interactions, see [ARCHITECTURE.md](./ARCHITECTURE.md)**
+
+**📚 For complete API documentation, see [API_REFERENCE.md](./API_REFERENCE.md)**
+
+### Quick Component Overview
+
+| Component | Status | Description |
+|-----------|--------|-------------|
+| **FOL Converter** | ✅ Production | Text → First-Order Logic |
+| **Deontic Converter** | ✅ Production | Legal text → Deontic Logic |
+| **TDFOL Engine** | ✅ Production | 40 inference rules |
+| **CEC Engine** | ✅ Production | 87 inference rules |
+| **Proof Cache** | ✅ Production | 14x speedup validated |
+| **Type System** | ✅ Production | 95%+ coverage (Grade A-) |
 
 ---
 
