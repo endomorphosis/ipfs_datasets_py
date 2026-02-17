@@ -8,7 +8,7 @@ Features:
 - Generate synonyms and alternative phrasings
 - Expand queries with related legal concepts
 - Create multiple search variations
-- Support multiple LLM providers (OpenAI, Anthropic, local models)
+- Support multiple LLM providers via llm_router (OpenRouter, Codex, Copilot, Gemini, Claude, local models, etc.)
 - Cache expanded queries for performance
 
 Usage:
@@ -29,20 +29,13 @@ import json
 
 logger = logging.getLogger(__name__)
 
-# Optional LLM dependencies
+# Import llm_router from the repository
 try:
-    import openai
-    HAVE_OPENAI = True
+    from ipfs_datasets_py import llm_router
+    HAVE_LLM_ROUTER = True
 except ImportError:
-    HAVE_OPENAI = False
-    logger.debug("OpenAI not available for query expansion")
-
-try:
-    import anthropic
-    HAVE_ANTHROPIC = True
-except ImportError:
-    HAVE_ANTHROPIC = False
-    logger.debug("Anthropic not available for query expansion")
+    HAVE_LLM_ROUTER = False
+    logger.warning("llm_router not available - query expansion will use rule-based fallback only")
 
 
 @dataclass
@@ -61,7 +54,7 @@ class ExpandedQuery:
 
 class QueryExpander:
     """
-    Expand legal search queries using LLM-based techniques.
+    Expand legal search queries using LLM-based techniques via llm_router.
     
     Supports multiple expansion strategies:
     1. Synonym expansion - Replace terms with legal synonyms
@@ -69,59 +62,37 @@ class QueryExpander:
     3. Phrasing variations - Rephrase in different ways
     4. Abbreviation expansion - Expand acronyms (EPA -> Environmental Protection Agency)
     
+    Uses the repository's llm_router for unified LLM access, supporting:
+    - OpenRouter, Codex CLI, Copilot CLI/SDK, Gemini CLI, Claude Code/CLI
+    - Local HuggingFace models, ipfs_accelerate_py
+    - Automatic provider selection and fallbacks
+    
     Args:
-        llm_provider: LLM provider to use ("openai", "anthropic", "local", None)
-        api_key: API key for the provider (optional, can use env vars)
-        model: Model name (e.g., "gpt-4", "claude-3-opus")
+        llm_provider: LLM provider to use (optional, uses llm_router auto-detection)
+        model: Model name (optional, uses provider defaults)
         cache_dir: Directory to cache expanded queries
         max_alternatives: Maximum number of alternative queries to generate
+        use_llm: Whether to use LLM (True) or rule-based only (False)
     """
     
     def __init__(
         self,
         llm_provider: Optional[str] = None,
-        api_key: Optional[str] = None,
         model: Optional[str] = None,
         cache_dir: Optional[str] = None,
-        max_alternatives: int = 5
+        max_alternatives: int = 5,
+        use_llm: bool = True
     ):
-        self.llm_provider = llm_provider or os.getenv("LLM_PROVIDER", "openai")
-        self.api_key = api_key or self._get_api_key()
-        self.model = model or self._get_default_model()
+        self.llm_provider = llm_provider or os.getenv("IPFS_DATASETS_PY_LLM_PROVIDER")
+        self.model = model or os.getenv("IPFS_DATASETS_PY_LLM_MODEL")
         self.cache_dir = cache_dir
         self.max_alternatives = max_alternatives
+        self.use_llm = use_llm and HAVE_LLM_ROUTER
         self._cache = {}
         
-        # Initialize LLM client
-        self._client = None
-        if self.llm_provider and self.api_key:
-            self._initialize_client()
-    
-    def _get_api_key(self) -> Optional[str]:
-        """Get API key from environment."""
-        if self.llm_provider == "openai":
-            return os.getenv("OPENAI_API_KEY")
-        elif self.llm_provider == "anthropic":
-            return os.getenv("ANTHROPIC_API_KEY")
-        return None
-    
-    def _get_default_model(self) -> str:
-        """Get default model for provider."""
-        if self.llm_provider == "openai":
-            return "gpt-3.5-turbo"
-        elif self.llm_provider == "anthropic":
-            return "claude-3-sonnet-20240229"
-        return "default"
-    
-    def _initialize_client(self):
-        """Initialize the LLM client."""
-        if self.llm_provider == "openai" and HAVE_OPENAI:
-            openai.api_key = self.api_key
-            self._client = openai
-        elif self.llm_provider == "anthropic" and HAVE_ANTHROPIC:
-            self._client = anthropic.Anthropic(api_key=self.api_key)
-        else:
-            logger.warning(f"LLM provider {self.llm_provider} not available")
+        if not HAVE_LLM_ROUTER:
+            logger.warning("llm_router not available - using rule-based expansion only")
+            self.use_llm = False
     
     def expand_query(
         self,
@@ -146,8 +117,8 @@ class QueryExpander:
         if use_cache and query in self._cache:
             return self._cache[query]
         
-        # If no LLM available, use rule-based expansion
-        if not self._client:
+        # If LLM not enabled or available, use rule-based expansion
+        if not self.use_llm:
             result = self._rule_based_expansion(query)
         else:
             result = self._llm_based_expansion(
@@ -231,20 +202,22 @@ class QueryExpander:
         include_concepts: bool = True
     ) -> ExpandedQuery:
         """
-        LLM-based query expansion using configured provider.
+        LLM-based query expansion using llm_router.
         
-        Generates more sophisticated expansions using natural language understanding.
+        Generates sophisticated expansions using natural language understanding
+        through the repository's unified LLM router.
         """
         prompt = self._build_expansion_prompt(query, include_synonyms, include_concepts)
         
         try:
-            if self.llm_provider == "openai":
-                response = self._openai_expand(prompt)
-            elif self.llm_provider == "anthropic":
-                response = self._anthropic_expand(prompt)
-            else:
-                # Fallback to rule-based
-                return self._rule_based_expansion(query)
+            # Use llm_router.generate() for unified LLM access
+            response = llm_router.generate(
+                prompt=prompt,
+                provider=self.llm_provider,
+                model_name=self.model,
+                temperature=0.7,
+                max_tokens=500
+            )
             
             return self._parse_llm_response(query, response)
         
@@ -280,36 +253,6 @@ Return your response as a JSON object with this structure:
 Generate up to 5 alternatives. Focus on legal terminology and concepts relevant to regulatory and statutory search."""
         
         return prompt
-    
-    def _openai_expand(self, prompt: str) -> str:
-        """Expand using OpenAI API."""
-        if not HAVE_OPENAI or not self._client:
-            raise RuntimeError("OpenAI not available")
-        
-        response = self._client.ChatCompletion.create(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": "You are a legal search expert."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500
-        )
-        
-        return response.choices[0].message.content
-    
-    def _anthropic_expand(self, prompt: str) -> str:
-        """Expand using Anthropic API."""
-        if not HAVE_ANTHROPIC or not self._client:
-            raise RuntimeError("Anthropic not available")
-        
-        message = self._client.messages.create(
-            model=self.model,
-            max_tokens=500,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        
-        return message.content[0].text
     
     def _parse_llm_response(self, original: str, response: str) -> ExpandedQuery:
         """Parse LLM response into ExpandedQuery."""
