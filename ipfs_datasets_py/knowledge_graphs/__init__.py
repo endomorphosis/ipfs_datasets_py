@@ -14,12 +14,27 @@ New API Quick Start:
     
     driver = GraphDatabase.driver("ipfs://localhost:5001")
     with driver.session() as session:
-        # Use Neo4j-compatible API
-        pass
+        # Use Neo4j-compatible API for your operations
+        # Example: session.run("CREATE (n:Person {name: 'Alice'}) RETURN n")
+        pass  # Replace with your graph operations
     driver.close()
 """
 
 import warnings
+
+# Import custom exceptions for convenient access
+from .exceptions import (
+    KnowledgeGraphError,
+    ExtractionError,
+    EntityExtractionError,
+    RelationshipExtractionError,
+    ValidationError,
+    QueryError,
+    QueryParseError,
+    QueryExecutionError,
+    EntityNotFoundError,
+    RelationshipNotFoundError,
+)
 
 # Compatibility imports - emit warnings
 def _deprecated_import(name, new_location):
@@ -39,6 +54,17 @@ try:
     from .storage import IPLDBackend, LRUCache, Entity, Relationship
     
     __all__ = [
+        # Exceptions (new)
+        'KnowledgeGraphError',
+        'ExtractionError',
+        'EntityExtractionError',
+        'RelationshipExtractionError',
+        'ValidationError',
+        'QueryError',
+        'QueryParseError',
+        'QueryExecutionError',
+        'EntityNotFoundError',
+        'RelationshipNotFoundError',
         # New API (recommended)
         'GraphDatabase',
         'IPFSDriver', 

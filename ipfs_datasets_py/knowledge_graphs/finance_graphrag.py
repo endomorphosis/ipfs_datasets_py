@@ -33,7 +33,8 @@ else:
         GraphRAGIntegration = None  # type: ignore[assignment]
         GRAPHRAG_AVAILABLE = False
 
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import (
+# Import from new extraction package
+from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
     KnowledgeGraph,
     Relationship,

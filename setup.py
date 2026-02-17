@@ -165,6 +165,13 @@ setup(
             'nltk>=3.8.1',
             'symbolicai>=0.13.1',
         ],
+        # Knowledge graphs - entity extraction and graph database
+        'knowledge_graphs': [
+            'spacy>=3.0.0',
+            # Note: After installing spacy, download the model:
+            # python -m spacy download en_core_web_sm
+            'transformers>=4.30.0',  # Optional: for advanced relation extraction
+        ],
         # Optional but recommended dependencies
         'ipld': [
             'ipld-car>=0.0.1',  # Only 0.0.1 available on PyPI

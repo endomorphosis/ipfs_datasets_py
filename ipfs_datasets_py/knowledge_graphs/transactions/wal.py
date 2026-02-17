@@ -15,6 +15,14 @@ from .types import (
     IsolationLevel, OperationType
 )
 
+# Import custom exceptions
+from ..exceptions import (
+    TransactionError,
+    StorageError,
+    SerializationError,
+    DeserializationError
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -97,9 +105,18 @@ class WriteAheadLog:
             
             return cid
             
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Failed to serialize WAL entry: {e}")
+            raise SerializationError(
+                f"Failed to serialize WAL entry: {e}",
+                details={'txn_id': str(entry.txn_id), 'operation': entry.operation.operation_type.value}
+            ) from e
         except Exception as e:
             logger.error(f"Failed to append WAL entry: {e}")
-            raise
+            raise TransactionError(
+                f"Failed to append WAL entry: {e}",
+                details={'txn_id': str(entry.txn_id)}
+            ) from e
     
     def read(self, from_cid: Optional[str] = None) -> Iterator[WALEntry]:
         """
@@ -144,9 +161,15 @@ class WriteAheadLog:
                 # Move to previous entry
                 current_cid = entry.prev_wal_cid
                 
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                logger.warning(f"Failed to read WAL entry {current_cid} (continuing): {e}")
+                break
             except Exception as e:
                 logger.error(f"Failed to read WAL entry {current_cid}: {e}")
-                break
+                raise DeserializationError(
+                    f"Failed to deserialize WAL entry: {e}",
+                    details={'cid': str(current_cid)}
+                ) from e
     
     def compact(self, checkpoint_cid: str) -> str:
         """
@@ -192,9 +215,15 @@ class WriteAheadLog:
             
             return checkpoint_entry_cid
             
+        except SerializationError:
+            # Re-raise serialization errors
+            raise
         except Exception as e:
             logger.error(f"Failed to compact WAL: {e}")
-            raise
+            raise TransactionError(
+                f"Failed to compact WAL: {e}",
+                details={'entry_count': self._entry_count, 'threshold': self.compaction_threshold}
+            ) from e
     
     def recover(self, wal_head_cid: Optional[str] = None) -> List[Operation]:
         """
@@ -247,9 +276,15 @@ class WriteAheadLog:
             
             return operations_to_replay
             
+        except DeserializationError:
+            # Re-raise deserialization errors
+            raise
         except Exception as e:
             logger.error(f"Failed to recover from WAL: {e}")
-            raise
+            raise TransactionError(
+                f"Failed to recover from WAL: {e}",
+                details={'wal_head': str(self.wal_head_cid) if self.wal_head_cid else None}
+            ) from e
     
     def get_transaction_history(self, txn_id: str) -> List[WALEntry]:
         """
@@ -277,6 +312,9 @@ class WriteAheadLog:
             
             return entries
             
+        except DeserializationError as e:
+            logger.warning(f"Deserialization error in transaction history (returning partial): {e}")
+            return entries  # Return what we have so far
         except Exception as e:
             logger.error(f"Failed to get transaction history: {e}")
             return []
@@ -340,6 +378,9 @@ class WriteAheadLog:
             logger.info(f"WAL verification passed: {entry_count} entries")
             return True
             
+        except DeserializationError as e:
+            logger.error(f"WAL verification failed (deserialization): {e}")
+            return False
         except Exception as e:
             logger.error(f"WAL verification failed: {e}")
             return False

@@ -48,9 +48,25 @@ class SchemaChecker:
             print(f"Found {len(report.issues)} compatibility issues")
     """
     
-    def __init__(self):
-        """Initialize schema checker."""
-        pass
+    def __init__(self, custom_rules: Optional[Dict[str, Any]] = None):
+        """Initialize schema checker.
+        
+        Args:
+            custom_rules: Optional custom schema compatibility rules.
+                         If None, uses default rules.
+        """
+        self.custom_rules = custom_rules or {}
+        self.logger = logging.getLogger(__name__)
+        
+        # Default compatibility rules
+        self.supported_index_types = {
+            'BTREE', 'RANGE', 'FULLTEXT', 'VECTOR'
+        }
+        self.supported_constraint_types = {
+            'UNIQUENESS', 'UNIQUE', 'NODE_KEY', 'EXIST', 'NODE_PROPERTY_EXISTENCE'
+        }
+        
+        self.logger.debug("SchemaChecker initialized with %d custom rules", len(self.custom_rules))
     
     def check_schema(self, schema: SchemaData) -> CompatibilityReport:
         """
@@ -71,8 +87,8 @@ class SchemaChecker:
             
             # Check if index type is supported
             if index_type in ['BTREE', 'RANGE']:
-                # Supported
-                pass
+                # Fully supported - no action needed
+                pass  # No-op for supported index types
             elif index_type in ['FULLTEXT']:
                 report.warnings.append(f"Full-text index '{index.get('name')}' is supported")
             elif index_type in ['VECTOR']:
@@ -91,8 +107,8 @@ class SchemaChecker:
             
             # Check if constraint type is supported
             if constraint_type in ['UNIQUENESS', 'UNIQUE']:
-                # Supported
-                pass
+                # Fully supported - no action needed
+                pass  # No-op for supported constraint types
             elif constraint_type in ['NODE_KEY']:
                 report.warnings.append(f"Node key constraint '{constraint.get('name')}' supported as unique constraint")
             elif constraint_type in ['EXIST', 'NODE_PROPERTY_EXISTENCE']:

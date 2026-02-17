@@ -48,8 +48,12 @@ logger = logging.getLogger(__name__)
 
 
 class CypherCompileError(Exception):
-    """Exception raised when compilation fails."""
-    pass
+    """Exception raised when Cypher compilation fails.
+    
+    This exception is raised when the compiler encounters invalid AST nodes,
+    unsupported Cypher features, or semantic errors during compilation.
+    """
+    pass  # Simple exception class - no custom attributes needed
 
 
 class CypherCompiler:
@@ -379,8 +383,10 @@ class CypherCompiler:
         
         elif isinstance(expr, UnaryOpNode):
             if expr.operator.upper() == 'NOT':
-                # NOT operation - would need negation support
-                pass
+                # NOT operation - negation support planned for future release
+                # TODO(future): Implement NOT operator compilation
+                # Would require: Negation operation in IR, filter negation logic
+                pass  # Intentionally empty - future enhancement placeholder
     
     def _compile_return(self, ret: ReturnClause):
         """
@@ -500,8 +506,10 @@ class CypherCompiler:
                     self.operations.append(op)
                 
                 elif isinstance(element, RelationshipPattern):
-                    # Would need to track start/end nodes
-                    pass
+                    # Relationship creation in CREATE clause
+                    # TODO(future): Implement relationship creation compilation
+                    # Would need to track start/end nodes from pattern matching context
+                    pass  # Intentionally empty - future enhancement placeholder
     
     def _compile_delete(self, delete: DeleteClause):
         """

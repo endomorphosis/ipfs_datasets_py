@@ -23,8 +23,8 @@ from dataclasses import dataclass, field
 from collections import defaultdict, Counter
 import uuid
 
-# Import base classes
-from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity, Relationship, KnowledgeGraph
+# Import base classes from new extraction package
+from ipfs_datasets_py.knowledge_graphs.extraction import Entity, Relationship, KnowledgeGraph
 
 
 logger = logging.getLogger(__name__)

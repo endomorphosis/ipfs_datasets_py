@@ -551,7 +551,13 @@ class KnowledgeGraphExtractorWithValidation:
                 suggestions = entity_correction.get("suggestions", "")
 
                 # Process suggestions to extract corrections
-                # # TODO This is simplified - in a real implementation, more sophisticated . SO WE'RE GUNNA MAKE IT MORE SOPHISTICATED DAMNIT!
+                # Validation sophistication enhancement planned
+                # Current: Simplified entity extraction validation
+                # Future Enhancement: Implement more sophisticated validation:
+                #   - Cross-reference with ontologies
+                #   - Validate entity type hierarchies
+                #   - Check entity property constraints
+                #   - Validate using external knowledge bases
                 # parsing of the suggestion text would be needed
                 if isinstance(suggestions, dict):
                     # Structured suggestions

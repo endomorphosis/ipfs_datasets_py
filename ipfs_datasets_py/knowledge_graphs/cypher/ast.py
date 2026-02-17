@@ -305,8 +305,13 @@ class RelationshipPattern(ASTNode):
 
 @dataclass
 class ExpressionNode(ASTNode):
-    """Base class for expression nodes."""
-    pass
+    """Base class for expression nodes in Cypher AST.
+    
+    This is an abstract base class for all expression nodes (literals, variables,
+    binary operations, unary operations, etc.). Concrete expression types inherit
+    from this class.
+    """
+    pass  # Abstract base class - no additional attributes
 
 
 @dataclass

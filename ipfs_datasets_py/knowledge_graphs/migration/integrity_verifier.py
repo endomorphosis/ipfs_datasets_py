@@ -52,9 +52,24 @@ class IntegrityVerifier:
             print(f"Verification failed: {len(report.errors)} errors")
     """
     
-    def __init__(self):
-        """Initialize integrity verifier."""
-        pass
+    def __init__(self, strict_mode: bool = False):
+        """Initialize integrity verifier.
+        
+        Args:
+            strict_mode: If True, any mismatch causes verification to fail.
+                        If False, minor differences are reported as warnings.
+        """
+        self.strict_mode = strict_mode
+        self.logger = logging.getLogger(__name__)
+        
+        # Verification thresholds
+        self.tolerance = {
+            'node_count': 0 if strict_mode else 0.01,  # 1% tolerance in non-strict mode
+            'relationship_count': 0 if strict_mode else 0.01,
+            'property_match': 0.95 if strict_mode else 0.90,  # 95% or 90% property match required
+        }
+        
+        self.logger.debug("IntegrityVerifier initialized (strict_mode=%s)", strict_mode)
     
     def verify(self, source: GraphData, target: GraphData) -> VerificationReport:
         """

@@ -14,6 +14,7 @@ Architecture:
 import logging
 import time
 import uuid
+import asyncio
 from typing import Dict, List, Optional, Set, Any
 
 from .types import (
@@ -29,6 +30,14 @@ from .types import (
 from .wal import WriteAheadLog
 from ..core.query_executor import GraphEngine
 from ..storage.ipld_backend import IPLDBackend
+
+# Import custom exceptions
+from ..exceptions import (
+    TransactionError,
+    TransactionConflictError,
+    TransactionAbortedError as TransactionAbortedException,
+    TransactionTimeoutError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -248,12 +257,30 @@ class TransactionManager:
             logger.warning(f"Transaction {transaction.txn_id} aborted: {e}")
             raise
             
+        except ConflictError:
+            # Re-raise conflict errors
+            raise
+        except TransactionAbortedError:
+            # Re-raise abort errors
+            raise
+        except (TimeoutError, asyncio.TimeoutError) as e:
+            # Transaction timeout
+            transaction.state = TransactionState.FAILED
+            del self._active_transactions[transaction.txn_id]
+            logger.error(f"Transaction {transaction.txn_id} timed out: {e}")
+            raise TransactionTimeoutError(
+                f"Transaction timed out: {e}",
+                details={'txn_id': str(transaction.txn_id), 'duration': time.time() - transaction.start_time}
+            ) from e
         except Exception as e:
             # Failed, rollback
             transaction.state = TransactionState.FAILED
             del self._active_transactions[transaction.txn_id]
             logger.error(f"Transaction {transaction.txn_id} failed: {e}")
-            raise
+            raise TransactionError(
+                f"Transaction failed: {e}",
+                details={'txn_id': str(transaction.txn_id), 'operations': len(transaction.operations)}
+            ) from e
     
     def rollback(self, transaction: Transaction):
         """
@@ -358,10 +385,15 @@ class TransactionManager:
             if self.graph_engine._enable_persistence and self.graph_engine._storage:
                 # Save current graph state
                 return self.graph_engine.save_graph()
+        except (AttributeError, KeyError, ValueError) as e:
+            logger.warning(f"Failed to capture snapshot (expected errors): {e}")
+            return None
         except Exception as e:
-            logger.warning(f"Failed to capture snapshot: {e}")
-        
-        return None
+            logger.error(f"Unexpected error capturing snapshot: {e}")
+            raise TransactionError(
+                f"Failed to capture transaction snapshot: {e}",
+                details={'operations': len(transaction.operations) if transaction else 0}
+            ) from e
     
     def recover(self):
         """
