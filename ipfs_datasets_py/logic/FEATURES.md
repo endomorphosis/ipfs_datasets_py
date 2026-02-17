@@ -1,25 +1,32 @@
 # Logic Module - Comprehensive Features Documentation
 
 **Version:** 2.0  
-**Last Updated:** 2026-02-14  
-**Status:** Production Ready ✅
+**Last Updated:** 2026-02-17  
+**Status:** Beta (Core Converters Production-Ready) ⚠️
 
 ---
 
 ## 🎉 Integration Status Summary
 
-**Phase 5 Achievement:** All 6 core features are now integrated in the unified converters!
+**Feature Integration in Unified Converters:**
 
-| Feature | FOL Converter | Deontic Converter | Status |
-|---------|---------------|-------------------|---------|
-| 🗄️ Caching | ✅ `use_cache=True` | ✅ `use_cache=True` | Complete |
-| ⚡ Batch Processing | ✅ `convert_batch()` | ✅ `convert_batch()` | Complete |
-| 🤖 ML Confidence | ✅ `use_ml=True` | ✅ `use_ml=True` | Complete |
-| 🧠 NLP Integration | ✅ `use_nlp=True` | ⚠️ Regex only | FOL: Complete, Deontic: TODO |
-| 🌐 IPFS | ✅ `use_ipfs=True` | ✅ `use_ipfs=True` | Complete |
-| 📊 Monitoring | ✅ `enable_monitoring=True` | ✅ `enable_monitoring=True` | Complete |
+| Feature | FOL Converter | Deontic Converter | Status | Notes |
+|---------|---------------|-------------------|---------|-------|
+| 🗄️ Caching | ✅ Production | ✅ Production | Complete | 14x speedup validated |
+| ⚡ Batch Processing | ✅ Production | ✅ Production | Complete | 2-8x speedup |
+| 🤖 ML Confidence | ⚠️ Fallback | ⚠️ Fallback | Heuristic | XGBoost not integrated, uses heuristics |
+| 🧠 NLP Integration | ✅ spaCy | ❌ Regex only | Partial | Deontic needs spaCy integration |
+| 🌐 IPFS | ✅ Production | ✅ Production | Complete | Distributed caching works |
+| 📊 Monitoring | ⚠️ Skeleton | ⚠️ Skeleton | Stub | API defined, implementation needed |
 
-**Overall Integration: 92% Complete** (11 of 12 module features)
+**Overall Integration: 67% Production-Ready** (4/6 features fully production, 2/6 fallback/skeleton)
+
+**Key Changes from Previous:**
+- ML Confidence: Updated to reflect heuristic fallback (XGBoost not integrated)
+- Monitoring: Updated to reflect skeleton-only status
+- Overall: Changed from "92% Complete" to "67% Production-Ready" for accuracy
+
+**See [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) for detailed fallback behaviors.**
 
 ### How to Use All Features
 
