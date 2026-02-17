@@ -149,6 +149,16 @@ except ImportError:
     common = None
     HAVE_COMMON_MODULE = False
 
+# Query Expander - LLM-based query expansion (NEW - Enhancement 9)
+try:
+    from .query_expander import QueryExpander, ExpandedQuery, expand_query
+    HAVE_QUERY_EXPANDER = True
+except ImportError:
+    QueryExpander = None
+    ExpandedQuery = None
+    expand_query = None
+    HAVE_QUERY_EXPANDER = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -237,4 +247,10 @@ __all__ = [
     # Shared components module (NEW - Enhancement 7)
     "common",
     "HAVE_COMMON_MODULE",
+    
+    # Query Expander (NEW - Enhancement 9)
+    "QueryExpander",
+    "ExpandedQuery",
+    "expand_query",
+    "HAVE_QUERY_EXPANDER",
 ]
