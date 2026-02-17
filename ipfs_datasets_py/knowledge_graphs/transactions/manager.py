@@ -28,7 +28,7 @@ from .types import (
     TransactionAbortedError,
 )
 from .wal import WriteAheadLog
-from ..core.query_executor import GraphEngine
+from ..core.graph_engine import GraphEngine
 from ..storage.ipld_backend import IPLDBackend
 
 # Import custom exceptions

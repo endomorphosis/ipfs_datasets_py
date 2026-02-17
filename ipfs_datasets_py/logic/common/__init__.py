@@ -46,6 +46,17 @@ from .proof_cache import (
     get_global_cache,
 )
 
+from .feature_detection import (
+    FeatureDetector,
+    warn_optional_imports_enabled,
+    minimal_imports_enabled,
+    optional_import_notice,
+    clear_feature_detection_cache,
+    is_module_available,
+    require_module,
+    import_optional_module,
+)
+
 __all__ = [
     # Error classes
     "LogicError",
@@ -76,4 +87,13 @@ __all__ = [
     "ProofCache",
     "CachedProofResult",
     "get_global_cache",
+    # Feature detection
+    "FeatureDetector",
+    "warn_optional_imports_enabled",
+    "minimal_imports_enabled",
+    "optional_import_notice",
+    "clear_feature_detection_cache",
+    "is_module_available",
+    "require_module",
+    "import_optional_module",
 ]
