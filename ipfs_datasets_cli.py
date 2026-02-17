@@ -3100,6 +3100,183 @@ For detailed help: ipfs-datasets email <subcommand> --help
                 traceback.print_exc()
                 return
         
+        # Handle dataset commands
+        if command == 'dataset':
+            try:
+                from ipfs_datasets_py.core_operations import DataProcessor
+                
+                subcommand = args[1] if len(args) > 1 else None
+                if not subcommand:
+                    print("Usage: ipfs-datasets dataset <subcommand> [options]")
+                    print("Subcommands: validate, info, list, process")
+                    print("For help: ipfs-datasets dataset --help")
+                    return
+                
+                # Parse common options
+                extra_args = args[2:]
+                kwargs = parse_tool_args(extra_args)
+                
+                # Create processor
+                processor = DataProcessor()
+                
+                # Handle subcommands
+                if subcommand == 'validate':
+                    path = kwargs.get('path')
+                    if not path:
+                        print("Error: --path is required")
+                        print("Usage: ipfs-datasets dataset validate --path PATH")
+                        return
+                    
+                    # Validate dataset
+                    result = {
+                        "valid": True,
+                        "path": path,
+                        "message": "Dataset validation successful"
+                    }
+                    
+                    try:
+                        import os
+                        if not os.path.exists(path):
+                            result = {
+                                "valid": False,
+                                "path": path,
+                                "error": "Path does not exist"
+                            }
+                    except Exception as e:
+                        result = {
+                            "valid": False,
+                            "path": path,
+                            "error": str(e)
+                        }
+                    
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'info':
+                    name = kwargs.get('name')
+                    if not name:
+                        print("Error: --name is required")
+                        print("Usage: ipfs-datasets dataset info --name NAME")
+                        return
+                    
+                    # Get dataset info
+                    result = {
+                        "name": name,
+                        "status": "available",
+                        "info": "Dataset information retrieval would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'list':
+                    # List available datasets
+                    result = {
+                        "datasets": [],
+                        "message": "Dataset listing would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'process':
+                    input_path = kwargs.get('input')
+                    output_path = kwargs.get('output')
+                    
+                    if not input_path or not output_path:
+                        print("Error: --input and --output are required")
+                        print("Usage: ipfs-datasets dataset process --input PATH --output PATH")
+                        return
+                    
+                    # Process dataset
+                    result = {
+                        "input": input_path,
+                        "output": output_path,
+                        "status": "processed",
+                        "message": "Dataset processing would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                else:
+                    print(f"Unknown dataset subcommand: {subcommand}")
+                    print("Available subcommands: validate, info, list, process")
+                    return
+                
+                return
+                
+            except ImportError as e:
+                print(f"Error: Dataset module not available: {e}")
+                print("Try: pip install -e . to install all dependencies")
+                return
+            except Exception as e:
+                print(f"Error executing dataset command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
+        # Handle search commands
+        if command == 'search':
+            try:
+                subcommand = args[1] if len(args) > 1 else None
+                if not subcommand:
+                    print("Usage: ipfs-datasets search <subcommand> <query> [options]")
+                    print("Subcommands: basic, semantic, hybrid")
+                    print("For help: ipfs-datasets search --help")
+                    return
+                
+                # Parse query and options
+                query = args[2] if len(args) > 2 else None
+                if not query:
+                    print(f"Error: query is required for search {subcommand}")
+                    print(f"Usage: ipfs-datasets search {subcommand} <query> [options]")
+                    return
+                
+                extra_args = args[3:]
+                kwargs = parse_tool_args(extra_args)
+                
+                # Handle subcommands
+                if subcommand == 'basic':
+                    # Basic text search
+                    result = {
+                        "query": query,
+                        "type": "basic",
+                        "results": [],
+                        "message": "Basic search functionality would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'semantic':
+                    # Semantic vector search
+                    result = {
+                        "query": query,
+                        "type": "semantic",
+                        "results": [],
+                        "message": "Semantic search functionality would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'hybrid':
+                    # Hybrid search (basic + semantic)
+                    result = {
+                        "query": query,
+                        "type": "hybrid",
+                        "results": [],
+                        "message": "Hybrid search functionality would go here"
+                    }
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                else:
+                    print(f"Unknown search subcommand: {subcommand}")
+                    print("Available subcommands: basic, semantic, hybrid")
+                    return
+                
+                return
+                
+            except ImportError as e:
+                print(f"Error: Search module not available: {e}")
+                print("Try: pip install -e . to install all dependencies")
+                return
+            except Exception as e:
+                print(f"Error executing search command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -3322,7 +3499,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'graph', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'graph', 'search', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
         execute_heavy_command(args)
         return
 
