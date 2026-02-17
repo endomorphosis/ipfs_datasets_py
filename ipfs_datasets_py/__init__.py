@@ -314,71 +314,23 @@ except Exception:
 
 if _MINIMAL_IMPORTS:
     HAVE_UNIXFS = False
-    UnixFSHandler = None
-    FixedSizeChunker = None
-    RabinChunker = None
 else:
-    try:
-        from .integrations.unixfs_integration import UnixFSHandler, FixedSizeChunker, RabinChunker
-        HAVE_UNIXFS = True
-    except ImportError:
-        HAVE_UNIXFS = False
-        UnixFSHandler = None
-        FixedSizeChunker = None
-        RabinChunker = None
+    # Avoid importing UnixFS integration at package import time.
+    HAVE_UNIXFS = False
 
 if _MINIMAL_IMPORTS:
-    WebArchiveProcessor = None
-    CommonCrawlSearchEngine = None
-    create_search_engine = None
     HAVE_WEB_ARCHIVE = False
     HAVE_COMMON_CRAWL = False
 else:
-    try:
-        from .web_archive import WebArchiveProcessor
-        from .web_archiving import CommonCrawlSearchEngine, create_search_engine
-        HAVE_WEB_ARCHIVE = True
-        HAVE_COMMON_CRAWL = True
-    except ImportError:
-        WebArchiveProcessor = None
-        CommonCrawlSearchEngine = None
-        create_search_engine = None
-        HAVE_WEB_ARCHIVE = False
-        HAVE_COMMON_CRAWL = False
+    # Avoid importing web-archiving subsystems at package import time.
+    HAVE_WEB_ARCHIVE = False
+    HAVE_COMMON_CRAWL = False
 
 if _MINIMAL_IMPORTS:
     HAVE_UNIFIED_SCRAPER = False
-    UnifiedWebScraper = None
-    ScraperConfig = None
-    ScraperMethod = None
-    ScraperResult = None
-    scrape_url = None
-    scrape_urls = None
-    scrape_url_async = None
-    scrape_urls_async = None
 else:
-    try:
-        from .unified_web_scraper import (
-            UnifiedWebScraper,
-            ScraperConfig,
-            ScraperMethod,
-            ScraperResult,
-            scrape_url,
-            scrape_urls,
-            scrape_url_async,
-            scrape_urls_async,
-        )
-        HAVE_UNIFIED_SCRAPER = True
-    except ImportError:
-        HAVE_UNIFIED_SCRAPER = False
-        UnifiedWebScraper = None
-        ScraperConfig = None
-        ScraperMethod = None
-        ScraperResult = None
-        scrape_url = None
-        scrape_urls = None
-        scrape_url_async = None
-        scrape_urls_async = None
+    # Avoid importing unified scraper subsystem at package import time.
+    HAVE_UNIFIED_SCRAPER = False
 
 if _MINIMAL_IMPORTS:
     HAVE_VECTOR_TOOLS = False
@@ -806,6 +758,108 @@ def _lazy_import_pdf_symbol(name: str):
 
 
 def __getattr__(name: str):
+    if name in {"UnixFSHandler", "FixedSizeChunker", "RabinChunker"}:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            globals()["HAVE_UNIXFS"] = False
+            return None
+        try:
+            from .integrations.unixfs_integration import (
+                UnixFSHandler as _UnixFSHandler,
+                FixedSizeChunker as _FixedSizeChunker,
+                RabinChunker as _RabinChunker,
+            )
+
+            globals()["UnixFSHandler"] = _UnixFSHandler
+            globals()["FixedSizeChunker"] = _FixedSizeChunker
+            globals()["RabinChunker"] = _RabinChunker
+            globals()["HAVE_UNIXFS"] = True
+            return globals()[name]
+        except Exception as e:
+            globals()["UnixFSHandler"] = None
+            globals()["FixedSizeChunker"] = None
+            globals()["RabinChunker"] = None
+            globals()["HAVE_UNIXFS"] = False
+            _optional_import_notice(f"UnixFS integration unavailable: {e}")
+            return None
+
+    if name in {"WebArchiveProcessor", "CommonCrawlSearchEngine", "create_search_engine"}:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            globals()["HAVE_WEB_ARCHIVE"] = False
+            globals()["HAVE_COMMON_CRAWL"] = False
+            return None
+        try:
+            from .web_archive import WebArchiveProcessor as _WebArchiveProcessor
+            from .web_archiving import (
+                CommonCrawlSearchEngine as _CommonCrawlSearchEngine,
+                create_search_engine as _create_search_engine,
+            )
+
+            globals()["WebArchiveProcessor"] = _WebArchiveProcessor
+            globals()["CommonCrawlSearchEngine"] = _CommonCrawlSearchEngine
+            globals()["create_search_engine"] = _create_search_engine
+            globals()["HAVE_WEB_ARCHIVE"] = True
+            globals()["HAVE_COMMON_CRAWL"] = True
+            return globals()[name]
+        except Exception as e:
+            globals()["WebArchiveProcessor"] = None
+            globals()["CommonCrawlSearchEngine"] = None
+            globals()["create_search_engine"] = None
+            globals()["HAVE_WEB_ARCHIVE"] = False
+            globals()["HAVE_COMMON_CRAWL"] = False
+            _optional_import_notice(f"Web archive subsystem unavailable: {e}")
+            return None
+
+    if name in {
+        "UnifiedWebScraper",
+        "ScraperConfig",
+        "ScraperMethod",
+        "ScraperResult",
+        "scrape_url",
+        "scrape_urls",
+        "scrape_url_async",
+        "scrape_urls_async",
+    }:
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            globals()["HAVE_UNIFIED_SCRAPER"] = False
+            return None
+        try:
+            from .unified_web_scraper import (
+                UnifiedWebScraper as _UnifiedWebScraper,
+                ScraperConfig as _ScraperConfig,
+                ScraperMethod as _ScraperMethod,
+                ScraperResult as _ScraperResult,
+                scrape_url as _scrape_url,
+                scrape_urls as _scrape_urls,
+                scrape_url_async as _scrape_url_async,
+                scrape_urls_async as _scrape_urls_async,
+            )
+
+            globals()["UnifiedWebScraper"] = _UnifiedWebScraper
+            globals()["ScraperConfig"] = _ScraperConfig
+            globals()["ScraperMethod"] = _ScraperMethod
+            globals()["ScraperResult"] = _ScraperResult
+            globals()["scrape_url"] = _scrape_url
+            globals()["scrape_urls"] = _scrape_urls
+            globals()["scrape_url_async"] = _scrape_url_async
+            globals()["scrape_urls_async"] = _scrape_urls_async
+            globals()["HAVE_UNIFIED_SCRAPER"] = True
+            return globals()[name]
+        except Exception as e:
+            globals()["UnifiedWebScraper"] = None
+            globals()["ScraperConfig"] = None
+            globals()["ScraperMethod"] = None
+            globals()["ScraperResult"] = None
+            globals()["scrape_url"] = None
+            globals()["scrape_urls"] = None
+            globals()["scrape_url_async"] = None
+            globals()["scrape_urls_async"] = None
+            globals()["HAVE_UNIFIED_SCRAPER"] = False
+            _optional_import_notice(f"Unified web scraper unavailable: {e}")
+            return None
+
     if name == "enhance_dataset_with_llm":
         if _MINIMAL_IMPORTS:
             globals()["enhance_dataset_with_llm"] = None
