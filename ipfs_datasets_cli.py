@@ -275,6 +275,18 @@ Commands:
       create     Create vector embeddings
       search     Search vectors
       
+    graph        Knowledge graph operations
+      create     Initialize a knowledge graph database
+      add-entity Add an entity to the graph
+      add-rel    Add a relationship between entities
+      query      Execute a Cypher query
+      search     Hybrid search (semantic + keyword)
+      tx-begin   Begin a transaction
+      tx-commit  Commit a transaction
+      tx-rollback Rollback a transaction
+      index      Create an index
+      constraint Add a constraint
+      
     finance      Financial analysis and data pipelines
       stock      Fetch stock market data
       news       Scrape financial news (AP, Reuters, Bloomberg)
@@ -339,6 +351,9 @@ Examples:
     ipfs-datasets mcp start
     ipfs-datasets tools categories
     ipfs-datasets dataset load ./data.json
+    ipfs-datasets graph create --driver-url ipfs://localhost:5001
+    ipfs-datasets graph add-entity --id person1 --type Person --props '{"name":"Alice"}'
+    ipfs-datasets graph query --cypher "MATCH (n) RETURN n LIMIT 10"
     
 For detailed help on a specific command:
     ipfs-datasets [command] --help
@@ -2919,6 +2934,172 @@ For detailed help: ipfs-datasets email <subcommand> --help
                 traceback.print_exc()
                 return
         
+        # Handle knowledge graph commands
+        if command == 'graph':
+            try:
+                import asyncio
+                from ipfs_datasets_py.core_operations import KnowledgeGraphManager
+                
+                subcommand = args[1] if len(args) > 1 else None
+                if not subcommand:
+                    print("Usage: ipfs-datasets graph <subcommand> [options]")
+                    print("Subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint")
+                    print("For help: ipfs-datasets graph --help")
+                    return
+                
+                # Parse common options
+                driver_url = None
+                extra_args = args[2:]
+                kwargs = parse_tool_args(extra_args)
+                
+                # Get driver URL from kwargs or default
+                driver_url = kwargs.pop('driver_url', kwargs.pop('driver-url', None)) or "ipfs://localhost:5001"
+                
+                # Create manager
+                manager = KnowledgeGraphManager(driver_url=driver_url)
+                
+                # Handle subcommands
+                if subcommand == 'create':
+                    result = anyio.run(manager.create_graph)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'add-entity':
+                    entity_id = kwargs.get('id', kwargs.get('entity_id'))
+                    entity_type = kwargs.get('type', kwargs.get('entity_type'))
+                    properties = kwargs.get('props', kwargs.get('properties', {}))
+                    
+                    if not entity_id or not entity_type:
+                        print("Error: --id and --type are required")
+                        print("Usage: ipfs-datasets graph add-entity --id ID --type TYPE [--props JSON]")
+                        return
+                    
+                    # Parse properties if it's a JSON string
+                    if isinstance(properties, str):
+                        try:
+                            properties = json.loads(properties)
+                        except:
+                            print(f"Warning: Could not parse properties as JSON: {properties}")
+                            properties = {}
+                    
+                    result = anyio.run(manager.add_entity, entity_id, entity_type, properties)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand in ['add-rel', 'add-relationship']:
+                    source_id = kwargs.get('source', kwargs.get('source_id'))
+                    target_id = kwargs.get('target', kwargs.get('target_id'))
+                    rel_type = kwargs.get('type', kwargs.get('rel_type'))
+                    properties = kwargs.get('props', kwargs.get('properties', {}))
+                    
+                    if not source_id or not target_id or not rel_type:
+                        print("Error: --source, --target, and --type are required")
+                        print("Usage: ipfs-datasets graph add-rel --source ID1 --target ID2 --type TYPE [--props JSON]")
+                        return
+                    
+                    # Parse properties if it's a JSON string
+                    if isinstance(properties, str):
+                        try:
+                            properties = json.loads(properties)
+                        except:
+                            properties = {}
+                    
+                    result = anyio.run(manager.add_relationship, source_id, target_id, rel_type, properties)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'query':
+                    cypher = kwargs.get('cypher', kwargs.get('query'))
+                    parameters = kwargs.get('params', kwargs.get('parameters', {}))
+                    
+                    if not cypher:
+                        print("Error: --cypher is required")
+                        print("Usage: ipfs-datasets graph query --cypher 'MATCH (n) RETURN n LIMIT 10' [--params JSON]")
+                        return
+                    
+                    # Parse parameters if it's a JSON string
+                    if isinstance(parameters, str):
+                        try:
+                            parameters = json.loads(parameters)
+                        except:
+                            parameters = {}
+                    
+                    result = anyio.run(manager.query_cypher, cypher, parameters)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'search':
+                    query = kwargs.get('query', kwargs.get('q'))
+                    search_type = kwargs.get('type', 'hybrid')
+                    limit = int(kwargs.get('limit', 10))
+                    
+                    if not query:
+                        print("Error: --query is required")
+                        print("Usage: ipfs-datasets graph search --query 'search text' [--type hybrid|semantic|keyword] [--limit N]")
+                        return
+                    
+                    result = anyio.run(manager.search_hybrid, query, search_type, limit)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'tx-begin':
+                    result = anyio.run(manager.transaction_begin)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'tx-commit':
+                    tx_id = kwargs.get('tx_id', kwargs.get('id'))
+                    if not tx_id:
+                        print("Error: --tx-id is required")
+                        print("Usage: ipfs-datasets graph tx-commit --tx-id ID")
+                        return
+                    result = anyio.run(manager.transaction_commit, tx_id)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'tx-rollback':
+                    tx_id = kwargs.get('tx_id', kwargs.get('id'))
+                    if not tx_id:
+                        print("Error: --tx-id is required")
+                        print("Usage: ipfs-datasets graph tx-rollback --tx-id ID")
+                        return
+                    result = anyio.run(manager.transaction_rollback, tx_id)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'index':
+                    label = kwargs.get('label')
+                    property_key = kwargs.get('property', kwargs.get('prop'))
+                    
+                    if not label or not property_key:
+                        print("Error: --label and --property are required")
+                        print("Usage: ipfs-datasets graph index --label LABEL --property PROP")
+                        return
+                    
+                    result = anyio.run(manager.create_index, label, property_key)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                elif subcommand == 'constraint':
+                    label = kwargs.get('label')
+                    property_key = kwargs.get('property', kwargs.get('prop'))
+                    constraint_type = kwargs.get('type', 'unique')
+                    
+                    if not label or not property_key:
+                        print("Error: --label and --property are required")
+                        print("Usage: ipfs-datasets graph constraint --label LABEL --property PROP [--type unique|exists]")
+                        return
+                    
+                    result = anyio.run(manager.add_constraint, label, property_key, constraint_type)
+                    print_result(result, "json" if json_output else "pretty")
+                    
+                else:
+                    print(f"Unknown graph subcommand: {subcommand}")
+                    print("Available subcommands: create, add-entity, add-rel, query, search, tx-begin, tx-commit, tx-rollback, index, constraint")
+                
+                return
+                
+            except ImportError as e:
+                print(f"Error: Knowledge graph module not available: {e}")
+                print("Try: pip install -e . to install all dependencies")
+                return
+            except Exception as e:
+                print(f"Error executing graph command: {e}")
+                import traceback
+                traceback.print_exc()
+                return
+        
         print(f"Command '{' '.join(args)}' requires full system - importing modules...")
         
         # For complex operations, import the full original functionality
@@ -3141,7 +3322,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'graph', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
         execute_heavy_command(args)
         return
 
