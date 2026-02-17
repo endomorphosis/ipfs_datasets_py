@@ -18,6 +18,9 @@ from .brave_search_client import (
     clear_brave_search_cache
 )
 
+# Import search engines module
+from . import search_engines
+
 # Try to import IPFS cache (may not be available without ipfshttpclient)
 try:
     from .brave_search_ipfs_cache import BraveSearchIPFSCache
@@ -42,4 +45,5 @@ __all__ = [
     'clear_brave_search_cache',
     'BraveSearchIPFSCache',
     'HAVE_IPFS_CACHE',
+    'search_engines',
 ]
