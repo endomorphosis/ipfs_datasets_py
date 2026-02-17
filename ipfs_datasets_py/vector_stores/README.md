@@ -1,156 +1,126 @@
-# Vector Stores - Multi-Backend Vector Database Support
+# Vector Stores - IPLD/IPFS-Native Vector Search
 
-This module provides comprehensive vector database implementations for storing and searching embeddings in the IPFS Datasets Python library.
+Unified interface for multiple vector database backends with IPLD/IPFS-native content-addressed storage.
 
 ## Overview
 
-The vector_stores module offers unified interfaces and implementations for multiple vector database backends, enabling efficient storage, indexing, and similarity search of high-dimensional embeddings.
+This package provides a comprehensive vector storage solution combining:
 
-## Supported Vector Stores
+- **Content-Addressed Storage**: IPLD/IPFS-native storage with CIDs
+- **Fast Similarity Search**: FAISS backend for efficient vector search
+- **Router Integration**: Automatic embeddings generation and IPFS operations
+- **Cross-Store Migration**: Seamless data movement between vector stores
+- **Multi-Store Management**: Unified interface for multiple store types
 
-### QdrantVectorStore (`qdrant_store.py`)
-High-performance vector search engine optimized for production deployments.
+## Supported Stores
 
-**Features:**
-- Native support for filtering and metadata
-- Distributed clustering capabilities
-- Real-time indexing and search
-- Advanced query optimization
-- Automatic index management
+1. **IPLDVectorStore** ⭐ NEW - IPLD/IPFS-native with content addressing
+2. **FAISSVectorStore** - Fast similarity search with FAISS
+3. **QdrantVectorStore** - Qdrant vector database
+4. **ElasticsearchVectorStore** - Elasticsearch backend
 
-### FAISSVectorStore (`faiss_store.py`)
-Facebook AI Similarity Search - optimized for speed and memory efficiency.
+## Quick Start
 
-**Features:**
-- Multiple index types (Flat, IVF, HNSW)
-- GPU acceleration support
-- Quantization for memory optimization
-- Batch operations for large datasets
-- Index serialization and persistence
-
-### ElasticsearchVectorStore (`elasticsearch_store.py`)
-Enterprise-grade search with vector capabilities.
-
-**Features:**
-- Full-text and vector hybrid search
-- Advanced filtering and aggregations
-- Scalable cluster support
-- Rich query DSL
-- Real-time analytics
-
-### BaseVectorStore (`base.py`)
-Abstract base class defining the common interface for all vector stores.
-
-**Interface Methods:**
-- `add_vectors()` - Store vectors with metadata
-- `search()` - Similarity search with filtering
-- `delete()` - Remove vectors by ID
-- `update()` - Update vector metadata
-- `get_stats()` - Retrieve store statistics
-
-## Usage Examples
-
-### Basic Vector Storage
 ```python
-from ipfs_datasets_py.vector_stores import QdrantVectorStore
+from ipfs_datasets_py.vector_stores import create_vector_store, add_texts_to_store, search_texts
 
-# Initialize store
-store = QdrantVectorStore(
-    host="localhost",
-    port=6333,
-    collection_name="documents"
+# Create IPLD store with router integration
+store = await create_vector_store(
+    "ipld",
+    "documents",
+    dimension=768,
+    use_embeddings_router=True,  # Auto-generate embeddings
+    use_ipfs_router=True          # Store to IPFS
 )
 
-# Add vectors
-await store.add_vectors(
-    vectors=embeddings,
-    metadata=document_metadata,
-    ids=document_ids
-)
+await store.create_collection()
 
-# Search for similar vectors
-results = await store.search(
-    query_vector=query_embedding,
-    limit=10,
-    filter_conditions={"category": "research"}
-)
+# Add texts (embeddings auto-generated)
+texts = ["IPFS is great", "Content addressing is powerful"]
+ids = await add_texts_to_store(store, texts)
+
+# Search (query embedding auto-generated)
+results = await search_texts(store, "What is IPFS?", top_k=5)
+
+# Export to IPFS
+cid = await store.export_to_ipld()
+print(f"Collection at: ipfs://{cid}")
 ```
 
-### Multi-Store Configuration
-```python
-from ipfs_datasets_py.vector_stores import FAISSVectorStore, QdrantVectorStore
+## Key Features
 
-# Configure multiple stores for different use cases
-fast_store = FAISSVectorStore(index_type="Flat")  # Speed optimized
-production_store = QdrantVectorStore()  # Feature rich
+### Content-Addressed Storage
+
+```python
+from ipfs_datasets_py.vector_stores import IPLDVectorStore, create_ipld_config
+
+config = create_ipld_config("documents", 768, use_ipfs_router=True)
+store = IPLDVectorStore(config)
+
+# Vectors stored with CIDs
+ids = await store.add_embeddings(embeddings)
+
+# Export entire collection
+root_cid = await store.export_to_ipld()
+
+# Import from any CID
+await store.import_from_ipld(root_cid, "restored")
 ```
 
-### Hybrid Search (Elasticsearch)
+### Cross-Store Migration
+
 ```python
-from ipfs_datasets_py.vector_stores import ElasticsearchVectorStore
+from ipfs_datasets_py.vector_stores import migrate_collection
 
-store = ElasticsearchVectorStore(
-    hosts=["localhost:9200"],
-    index_name="hybrid_search"
-)
-
-# Combine text and vector search
-results = await store.hybrid_search(
-    query_text="machine learning",
-    query_vector=embedding,
-    text_weight=0.3,
-    vector_weight=0.7
-)
+# Migrate between any stores
+count = await migrate_collection(faiss_store, ipld_store, "documents")
 ```
 
-## Configuration
+### Multi-Store Management
 
-Each vector store supports extensive configuration options:
+```python
+from ipfs_datasets_py.vector_stores import create_manager
 
-### Common Parameters
-- **Connection settings** - Host, port, authentication
-- **Index configuration** - Dimension, metric, parameters
-- **Performance tuning** - Batch size, timeouts, retries
-- **Security settings** - SSL, authentication, access control
+manager = create_manager()
+manager.register_store("ipld", create_ipld_config("docs", 768))
+manager.register_store("faiss", create_faiss_config("docs", 768))
 
-### Store-Specific Options
-- **Qdrant**: Collection settings, payload indexing, quantization
-- **FAISS**: Index type, training parameters, GPU settings
-- **Elasticsearch**: Mapping configuration, analyzer settings, cluster options
+# Search across stores
+results = await manager.search_all(query_vector, stores=["ipld", "faiss"])
+```
 
-## Performance Considerations
+## Documentation
 
-### Choosing the Right Store
-- **FAISS**: Best for read-heavy workloads, local deployments
-- **Qdrant**: Optimal for production with metadata filtering
-- **Elasticsearch**: Ideal for hybrid text/vector search scenarios
+- **[Usage Examples](../../docs/IPLD_VECTOR_STORE_EXAMPLES.md)** - Complete guide
+- **[Architecture](../../docs/IPLD_VECTOR_STORE_ARCHITECTURE.md)** - System design
+- **[Quick Start](../../docs/IPLD_VECTOR_STORE_QUICKSTART.md)** - Developer guide
 
-### Optimization Tips
-- Use appropriate index types for your data size and query patterns
-- Configure batch sizes based on available memory
-- Enable quantization for large-scale deployments
-- Implement connection pooling for high-throughput scenarios
+## Testing
 
-## Integration
+```bash
+pytest tests/unit/vector_stores/ -v
+```
 
-The vector stores integrate with other IPFS Datasets components:
+## Migration Guide
 
-- **Embeddings module** - Stores generated embeddings
-- **Search module** - Provides search backend capabilities  
-- **GraphRAG module** - Supports retrieval operations
-- **IPLD module** - Content-addressed vector storage
+**Old IPLD implementation:**
+```python
+from ipfs_datasets_py.vector_stores.ipld import IPLDVectorStore
+```
 
-## Dependencies
+**New IPLD implementation:**
+```python
+from ipfs_datasets_py.vector_stores import IPLDVectorStore, create_ipld_config
 
-- `qdrant-client` - Qdrant vector database client
-- `faiss-cpu` or `faiss-gpu` - FAISS similarity search
-- `elasticsearch` - Elasticsearch client (optional)
-- `numpy` - Numerical operations
-- `asyncio` - Asynchronous operations
+config = create_ipld_config("collection", 768)
+store = IPLDVectorStore(config)
+```
 
-## See Also
+## Requirements
 
-- [Embeddings Module](../embeddings/README.md) - Generate embeddings for storage
-- [Search Module](../search/README.md) - Search and retrieval operations
-- [GraphRAG Optimizers](../optimizers/graphrag/README.md) - Graph-enhanced retrieval
-- [Performance Optimization Guide](../../docs/performance_optimization.md) - Detailed optimization strategies
+- Python 3.12+
+- numpy, anyio
+- faiss-cpu (recommended)
+- ipld-car (optional for CAR files)
+
+See [Usage Examples](../../docs/IPLD_VECTOR_STORE_EXAMPLES.md) for complete documentation.

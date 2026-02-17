@@ -1,0 +1,83 @@
+{
+  "complaint_type": "healthcare",
+  "category": "healthcare",
+  "description": "Decision tree for healthcare complaints",
+  "root_questions": [
+    "q1",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who was the healthcare provider?",
+      "field_name": "healthcare_provider",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What facility did this occur at?",
+      "field_name": "facility_name",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of negligence or malpractice occurred?",
+      "field_name": "type_of_negligence",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "misdiagnosis",
+        "surgical error",
+        "medication error"
+      ]
+    },
+    "q4": {
+      "id": "q4",
+      "question": "Please describe what happened.",
+      "field_name": "incident_description",
+      "required": true,
+      "depends_on": [
+        "type_of_negligence"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "When did this occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q6": {
+      "id": "q6",
+      "question": "What injuries or harm resulted?",
+      "field_name": "injuries_sustained",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "healthcare_provider",
+    "date_of_incident",
+    "incident_description",
+    "type_of_negligence"
+  ],
+  "optional_fields": [
+    "facility_name",
+    "injuries_sustained"
+  ]
+}

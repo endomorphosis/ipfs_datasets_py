@@ -242,7 +242,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Set up Python
@@ -297,7 +297,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
-          with:
+        with:
             fetch-depth: 1
       
       - name: Download all test results

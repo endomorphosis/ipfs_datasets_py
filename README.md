@@ -5,28 +5,11 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/)
 [![Production Ready](https://img.shields.io/badge/status-production%20ready-green)](#)
 [![MCP Compatible](https://img.shields.io/badge/MCP-compatible-purple)](https://modelcontextprotocol.io)
-[![Tests](https://img.shields.io/badge/tests-4400%2B-brightgreen)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-4500%2B-brightgreen)](./tests/)
+[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](#)
 
-### Critical Workflow Status
-
-![Docker Build](https://github.com/endomorphosis/ipfs_datasets_py/workflows/Docker%20Build%20and%20Test%20(Multi-Platform)/badge.svg)
-![GraphRAG CI](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GraphRAG%20Production%20CI%2FCD/badge.svg)
-![MCP Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/MCP%20Endpoints%20Integration%20Tests/badge.svg)
-![GPU Tests](https://github.com/endomorphosis/ipfs_datasets_py/workflows/GPU-Enabled%20Tests/badge.svg)
 
 **IPFS Datasets Python** is a comprehensive platform for decentralized AI data processing, combining mathematical theorem proving, AI-powered document intelligence, multimedia processing, and knowledge graph operations—all on decentralized IPFS infrastructure.
-
-## 🎉 Recent Updates (v1.0+)
-
-**Architecture Consolidation Complete!** We've unified and organized the codebase:
-
-- ✅ **GraphRAG Unified:** 7 implementations → 1 `UnifiedGraphRAGProcessor` (~170KB eliminated)
-- ✅ **Clean Architecture:** Three-tier separation (User APIs, Transformation, IPFS Backend)
-- ✅ **Organized Modules:** Multimedia in `processors/`, serialization in `data_transformation/serialization/`
-- ✅ **Backward Compatible:** All legacy imports work with deprecation warnings until v2.0 (6-month window)
-- 📚 **[Migration Guide Available](docs/MIGRATION_GUIDE_V2.md)** - Comprehensive v1.x → v2.0 upgrade guide
-
-**Migration Timeline:** Feb 2026 → Aug 2026 (6 months) | **[Details](docs/DEPRECATION_TIMELINE.md)**
 
 ## 📑 Table of Contents
 
@@ -43,12 +26,13 @@
 
 ## ✨ Key Features
 
+- 🗄️ **IPLD Vector Database** - Production-ready distributed vector search with sharding and replication
 - 🔬 **Mathematical Theorem Proving** - Convert legal text to verified formal logic (Z3, CVC5, Lean 4, Coq)
 - 🧬 **GraphRAG Ontology Optimizer** - AI-powered multi-agent system for knowledge graph optimization
 - 📄 **GraphRAG Document Processing** - AI-powered PDF analysis with knowledge graphs
+- 🕸️ **Knowledge Graph Intelligence** - Modular extraction package with cross-document reasoning
 - 📝 **Universal File Conversion** - Convert any file type to text for AI processing
 - 🎬 **Universal Media Processing** - Download and process from 1000+ platforms (yt-dlp + FFmpeg)
-- 🕸️ **Knowledge Graph Intelligence** - Cross-document reasoning with semantic search
 - 🌐 **Decentralized Storage** - IPFS-native with content addressing (ipfs_kit_py)
 - ⚡ **Hardware Acceleration** - 2-20x speedup with multi-backend support (ipfs_accelerate_py)
 - 🤖 **MCP Server** - 200+ tools for AI assistants (Claude, ChatGPT, etc.)
@@ -75,25 +59,6 @@ pip install -e ".[all]"  # All features
 pip install -e ".[ml]"   # ML/AI features only
 ```
 
-#### Optional: Z3 / CVC5 / Lean / Coq theorem provers
-
-Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
-
-- Manual best-effort installer:
-	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
-
-- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
-	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
-	- Fine-grained toggles:
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
-		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
-
-Notes:
-- Lean installs via `elan` into your user home.
-- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
-
 ### Basic Usage
 
 ```python
@@ -103,51 +68,6 @@ from ipfs_datasets_py.dataset_manager import DatasetManager
 manager = DatasetManager()
 dataset = manager.load_dataset("squad", split="train[:1000]")
 manager.save_dataset(dataset, "output/processed_data.parquet")
-```
-
-## 🔌 Router Dependency Injection (Reuse Heavy Clients)
-
-Routers support dependency injection via a shared `RouterDeps` container.
-This lets you reuse the same heavyweight managers/clients (and avoid repeated
-initialization cascades) across multiple modules and even across related repos
-within the same Python process.
-
-```python
-from ipfs_datasets_py.router_deps import RouterDeps
-from ipfs_datasets_py import llm_router, embeddings_router, ipfs_backend_router
-
-deps = RouterDeps()
-
-text = llm_router.generate_text("Write a short summary", deps=deps)
-vecs = embeddings_router.embed_texts(["hello", "world"], deps=deps)
-cid = ipfs_backend_router.add_bytes(b"data", deps=deps)
-```
-
-Notes:
-- Set `IPFS_DATASETS_PY_ROUTER_CACHE=0` to disable in-process caching.
-- You can pass `provider_instance=` (LLM/embeddings) or `backend_instance=` (IPFS)
-	if you want full control over the exact instance being used.
-
-```python
-# Convert any file type to text for GraphRAG
-from ipfs_datasets_py.processors.file_converter import FileConverter
-
-converter = FileConverter()  # Auto-selects best backend
-result = await converter.convert('document.pdf')
-print(result.text)  # Ready for knowledge graph processing
-
-# Or use synchronously
-result = converter.convert_sync('document.pdf')
-```
-
-### Try Demo Scripts
-
-```bash
-# Theorem proving: Website text → Verified formal logic
-python scripts/demo/demonstrate_complete_pipeline.py --test-provers
-
-# GraphRAG: AI-powered PDF processing
-python scripts/demo/demonstrate_graphrag_pdf.py --create-sample
 ```
 
 ## 🔧 CLI Tools
@@ -261,6 +181,61 @@ ipfs-datasets email send --to user@example.com --subject "Report" --body "See at
 ipfs-datasets email status
 ```
 
+### Vector Database Quick Start
+
+```python
+from ipfs_datasets_py.vector_stores.ipld_vector_store import IPLDVectorStore
+from ipfs_datasets_py.vector_stores.config import create_ipld_config
+
+# Create IPLD vector store with distributed sharding
+config = create_ipld_config(
+    use_ipfs_router=True,
+    enable_sharding=True,
+    replication_factor=3
+)
+store = IPLDVectorStore(config)
+
+# Add vectors
+store.add_texts(["Hello world", "IPFS vector search"])
+
+# Search
+results = store.similarity_search("vector search", k=5)
+```
+
+### Knowledge Graph Extraction
+
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
+
+# Extract entities and relationships from text
+extractor = KnowledgeGraphExtractor()
+text = "Alice works at OpenAI. She lives in San Francisco."
+
+# Extract knowledge graph
+kg = extractor.extract_knowledge_graph(text)
+print(f"Entities: {kg.entities}")
+print(f"Relationships: {kg.relationships}")
+```
+
+#### Optional: Z3 / CVC5 / Lean / Coq theorem provers
+
+Z3, CVC5, Lean, and Coq are external system tools (not Python packages). `ipfs_datasets_py` can use them for symbolic proof execution when installed.
+
+- Manual best-effort installer:
+	- `ipfs-datasets-install-provers --yes --z3 --cvc5 --lean --coq`
+
+- Auto-run after `setup.py` install/develop (enabled by default; set to `0` to disable):
+	- `IPFS_DATASETS_PY_AUTO_INSTALL_PROVERS=1` (set `0` to disable)
+	- Fine-grained toggles:
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_Z3=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_CVC5=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_LEAN=1`
+		- `IPFS_DATASETS_PY_AUTO_INSTALL_COQ=1`
+
+Notes:
+- Lean installs via `elan` into your user home.
+- Z3/CVC5/Coq installation depends on your OS/package manager; auto-install may require root (apt) or manual steps.
+
 ## 🤖 MCP Server
 
 The Model Context Protocol (MCP) server provides **200+ tools** across **50+ categories** for AI assistant integration.
@@ -284,10 +259,10 @@ ipfs-datasets mcp start
 The MCP server provides tools in these categories:
 
 - **dataset_tools** - Load, process, and manage datasets
+- **vector_tools** - IPLD vector store operations (add, search, migrate)
 - **web_archive_tools** - Web scraping, yt-dlp, Common Crawl
-- **vector_tools** - Vector embeddings and similarity search
 - **pdf_tools** - PDF processing and GraphRAG
-- **knowledge_graph_tools** - Entity extraction and graph operations
+- **knowledge_graph_tools** - Entity extraction and graph operations  
 - **ipfs_tools** - IPFS operations (add, get, pin, cat)
 - **p2p_tools** - Distributed computing and workflows
 - **cache_tools** - Caching strategies

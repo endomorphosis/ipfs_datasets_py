@@ -515,8 +515,8 @@ chmod +w output/
 ## Additional Resources
 
 - **Selection Guide:** `docs/optimizers/SELECTION_GUIDE.md`
-- **Implementation Details:** `OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md`
-- **Quick Start:** `OPTIMIZER_IMPROVEMENTS_QUICKSTART.md`
+- **Implementation Details:** `docs/archive/root_status_reports/OPTIMIZER_FRAMEWORK_IMPROVEMENTS.md`
+- **Quick Start:** `docs/archive/root_status_reports/OPTIMIZER_IMPROVEMENTS_QUICKSTART.md`
 - **API Documentation:** See each optimizer's README
 
 ---

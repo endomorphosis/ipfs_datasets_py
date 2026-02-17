@@ -1,0 +1,141 @@
+{
+  "complaint_type": "housing",
+  "category": "housing",
+  "description": "Decision tree for housing complaints",
+  "root_questions": [
+    "q1",
+    "q2",
+    "q3"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who is the landlord or property owner?",
+      "field_name": "landlord_name",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "landlord",
+        "owner",
+        "property manager"
+      ]
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What is the address of the property?",
+      "field_name": "property_address",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "address",
+        "property",
+        "location"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What type of issue are you experiencing?",
+      "field_name": "issue_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "discrimination",
+        "eviction",
+        "harassment",
+        "repair"
+      ]
+    },
+    "q4": {
+      "id": "q4",
+      "question": "Can you describe the specific incident or action that occurred?",
+      "field_name": "incident_description",
+      "required": true,
+      "depends_on": [
+        "issue_type"
+      ],
+      "follow_ups": [],
+      "keywords": [
+        "affordable housing",
+        "eviction",
+        "fair housing",
+        "familial status",
+        "housing authority",
+        "housing choice voucher",
+        "housing discrimination",
+        "landlord",
+        "lease",
+        "public housing",
+        "reasonable accommodation",
+        "reasonable modification",
+        "rental",
+        "section 8",
+        "source of income",
+        "tenant"
+      ]
+    },
+    "q5": {
+      "id": "q5",
+      "question": "When did this incident occur?",
+      "field_name": "date_of_incident",
+      "required": true,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q6": {
+      "id": "q6",
+      "question": "Were there any witnesses to this incident?",
+      "field_name": "witnesses",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q7": {
+      "id": "q7",
+      "question": "Have you filed any prior complaints about this issue?",
+      "field_name": "prior_complaints",
+      "required": false,
+      "depends_on": [
+        "incident_description"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q8": {
+      "id": "q8",
+      "question": "If this involves discrimination, what protected class are you a member of?",
+      "field_name": "protected_class",
+      "required": false,
+      "depends_on": [
+        "issue_type"
+      ],
+      "follow_ups": [],
+      "keywords": [
+        "race",
+        "gender",
+        "disability",
+        "religion"
+      ]
+    }
+  },
+  "required_fields": [
+    "issue_type",
+    "date_of_incident",
+    "incident_description",
+    "landlord_name",
+    "property_address"
+  ],
+  "optional_fields": [
+    "witnesses",
+    "protected_class",
+    "prior_complaints"
+  ]
+}

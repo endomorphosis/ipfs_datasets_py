@@ -66,15 +66,16 @@ jobs:
     if: ${{ !cancelled() }}
     strategy:
       matrix:
-        arch: [x64, arm64]
         include:
           - arch: x64
             check_job: check-runner-x64
+            runs_on: [self-hosted, linux, x64]
           - arch: arm64
             check_job: check-runner-arm64
+            runs_on: [self-hosted, linux, arm64]
       fail-fast: false
     
-    runs-on: [self-hosted, linux, ${{ matrix.arch }}]
+    runs-on: ${{ matrix.runs_on }}
     timeout-minutes: 30
     name: Validate ${{ matrix.arch }} Runner
     

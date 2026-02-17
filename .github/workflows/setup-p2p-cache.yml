@@ -91,58 +91,7 @@ jobs:
           echo "::notice::📡 Peer discovery enabled for ${GITHUB_REPOSITORY}"
           
           # Test P2P cache functionality
-          python3 << 'PYEOF'
-import os
-import sys
-
-try:
-    # Import P2P cache modules
-    from ipfs_datasets_py.cache import GitHubAPICache
-    from ipfs_datasets_py.p2p_peer_registry import P2PPeerRegistry
-    
-    print("✓ P2P cache modules imported successfully")
-    
-    # Initialize cache with P2P and peer discovery
-    cache = GitHubAPICache(
-        cache_dir=os.environ.get('P2P_CACHE_DIR'),
-        enable_p2p=True,
-        enable_peer_discovery=True,
-        github_repo=os.environ.get('GITHUB_REPOSITORY'),
-        max_cache_size=int(os.environ.get('GITHUB_CACHE_SIZE', 5000))
-    )
-    
-    print("✓ P2P cache initialized successfully")
-    
-    # Check if peer registry is active
-    if hasattr(cache, '_peer_registry') and cache._peer_registry:
-        print("✓ Peer discovery is active")
-        
-        # Try to discover peers (non-blocking)
-        try:
-            peers = cache._peer_registry.discover_peers(max_peers=5)
-            print(f"✓ Discovered {len(peers)} peer(s)")
-            
-            if peers:
-                print("📡 Active peers:")
-                for peer in peers[:3]:  # Show max 3 peers
-                    peer_id = peer.get('peer_id', 'unknown')[:12]
-                    print(f"  - {peer_id}...")
-        except Exception as e:
-            print(f"⚠ Peer discovery pending: {e}")
-    else:
-        print("⚠ Peer discovery not enabled")
-    
-    print("\n::notice::✅ P2P cache is ready and will reduce API calls")
-    sys.exit(0)
-    
-except ImportError as e:
-    print(f"::warning::⚠️ P2P cache modules not available: {e}")
-    print("::notice::Will fall back to standard caching")
-    sys.exit(0)
-except Exception as e:
-    print(f"::error::❌ P2P cache initialization failed: {e}")
-    sys.exit(1)
-PYEOF
+          python3 .github/scripts/test_p2p_cache.py
           
           PYRESULT=$?
           if [ $PYRESULT -eq 0 ]; then
@@ -163,13 +112,13 @@ PYEOF
           echo "  - Python Version: ${{ inputs.python-version }}"
           
           # Save configuration for use in other steps
-          cat > /tmp/p2p-cache-config.env << EOF
-ENABLE_P2P_CACHE=${{ inputs.enable-p2p }}
-GITHUB_CACHE_SIZE=${{ inputs.cache-size }}
-GITHUB_REPOSITORY=${{ github.repository }}
-P2P_LISTEN_PORT=9000
-ENABLE_PEER_DISCOVERY=true
-EOF
+          {
+            echo "ENABLE_P2P_CACHE=${{ inputs.enable-p2p }}"
+            echo "GITHUB_CACHE_SIZE=${{ inputs.cache-size }}"
+            echo "GITHUB_REPOSITORY=${{ github.repository }}"
+            echo "P2P_LISTEN_PORT=9000"
+            echo "ENABLE_PEER_DISCOVERY=true"
+          } > /tmp/p2p-cache-config.env
           
           echo "::notice::✅ Cache configuration saved"
           echo "::endgroup::"

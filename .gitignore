@@ -70,3 +70,18 @@ sql_configs.yaml
 # Demo and debug output directories
 unified_deontic_logic_system_demo/
 unified_deontic_logic_system/
+
+# Root directory artifacts (prevent future clutter)
+# Session status reports should go directly to docs/archive/root_status_reports/
+/*SESSION*.md
+/*PHASE*.md
+/*PRIORITY*.md
+/*OPTIMIZER*.md
+/*PROCESSOR*.md
+/*PROJECT_COMPLETE.md
+/*COMPREHENSIVE*.md
+# Validation reports should go to docs/reports/
+/coverage_phase*.json
+/validation_results*.json
+/infrastructure_validation_report*.json
+/production_readiness_report*.json

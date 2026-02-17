@@ -1,0 +1,72 @@
+{
+  "complaint_type": "intellectual_property",
+  "category": "intellectual_property",
+  "description": "Decision tree for intellectual property complaints",
+  "root_questions": [
+    "q1",
+    "q2"
+  ],
+  "questions": {
+    "q1": {
+      "id": "q1",
+      "question": "Who is infringing on your intellectual property?",
+      "field_name": "infringing_party",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q2": {
+      "id": "q2",
+      "question": "What type of IP is involved?",
+      "field_name": "ip_type",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": [
+        "patent",
+        "trademark",
+        "copyright",
+        "trade secret"
+      ]
+    },
+    "q3": {
+      "id": "q3",
+      "question": "What is the registration number, if applicable?",
+      "field_name": "registration_number",
+      "required": false,
+      "depends_on": [
+        "ip_type"
+      ],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q4": {
+      "id": "q4",
+      "question": "When did you discover the infringement?",
+      "field_name": "date_of_infringement",
+      "required": true,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    },
+    "q5": {
+      "id": "q5",
+      "question": "What are your estimated damages?",
+      "field_name": "damages_estimate",
+      "required": false,
+      "depends_on": [],
+      "follow_ups": [],
+      "keywords": []
+    }
+  },
+  "required_fields": [
+    "date_of_infringement",
+    "ip_type",
+    "infringing_party"
+  ],
+  "optional_fields": [
+    "damages_estimate",
+    "registration_number"
+  ]
+}
