@@ -106,6 +106,7 @@ from .brave_legal_search import (
     create_legal_search,
     search_legal,
 )
+from .multi_engine_legal_search import MultiEngineLegalSearch
 from .knowledge_base_loader import (
     LegalKnowledgeBase,
     FederalEntity,
@@ -158,6 +159,99 @@ except ImportError:
     ExpandedQuery = None
     expand_query = None
     HAVE_QUERY_EXPANDER = False
+
+# Enhanced Query Expander - Enhanced with legal synonyms and relationships (Enhancement 12 Phase 2)
+try:
+    from .enhanced_query_expander import EnhancedQueryExpander, EnhancedExpandedQuery
+    HAVE_ENHANCED_QUERY_EXPANDER = True
+except ImportError:
+    EnhancedQueryExpander = None
+    EnhancedExpandedQuery = None
+    HAVE_ENHANCED_QUERY_EXPANDER = False
+
+# Result Filter - Advanced result filtering (Enhancement 12 Phase 3)
+try:
+    from .result_filter import ResultFilter, FilterConfig, FilteredResult
+    HAVE_RESULT_FILTER = True
+except ImportError:
+    ResultFilter = None
+    FilterConfig = None
+    FilteredResult = None
+    HAVE_RESULT_FILTER = False
+
+# Search Result Citation Extractor - Enhanced citation extraction (Enhancement 12 Phase 4)
+try:
+    from .search_result_citation_extractor import (
+        SearchResultCitationExtractor,
+        SearchResultWithCitations,
+        CitationNetwork
+    )
+    HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = True
+except ImportError:
+    SearchResultCitationExtractor = None
+    SearchResultWithCitations = None
+    CitationNetwork = None
+    HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = False
+
+# Legal GraphRAG - GraphRAG integration for legal search (Enhancement 12 Phase 5)
+try:
+    from .legal_graphrag import (
+        LegalGraphRAG,
+        LegalEntity,
+        LegalRelationship,
+        LegalKnowledgeGraph
+    )
+    HAVE_LEGAL_GRAPHRAG = True
+except ImportError:
+    LegalGraphRAG = None
+    LegalEntity = None
+    LegalRelationship = None
+    LegalKnowledgeGraph = None
+    HAVE_LEGAL_GRAPHRAG = False
+
+# Multi-Language Support - I18n for legal search (Enhancement 12 Phase 6)
+try:
+    from .multilanguage_support import (
+        MultiLanguageSupport,
+        LanguageConfig,
+        TranslationResult
+    )
+    HAVE_MULTILANGUAGE_SUPPORT = True
+except ImportError:
+    MultiLanguageSupport = None
+    LanguageConfig = None
+    TranslationResult = None
+    HAVE_MULTILANGUAGE_SUPPORT = False
+
+# Regulation Version Tracker - Historical tracking (Enhancement 12 Phase 7)
+try:
+    from .regulation_version_tracker import (
+        RegulationVersionTracker,
+        RegulationVersion,
+        RegulationChange
+    )
+    HAVE_REGULATION_VERSION_TRACKER = True
+except ImportError:
+    RegulationVersionTracker = None
+    RegulationVersion = None
+    RegulationChange = None
+    HAVE_REGULATION_VERSION_TRACKER = False
+
+# Legal Report Generator - Automated reports (Enhancement 12 Phase 8)
+try:
+    from .legal_report_generator import (
+        LegalSearchReportGenerator,
+        LegalSearchReport,
+        ReportConfig,
+        ReportSection
+    )
+    HAVE_LEGAL_REPORT_GENERATOR = True
+except ImportError:
+    LegalSearchReportGenerator = None
+    LegalSearchReport = None
+    ReportConfig = None
+    ReportSection = None
+    HAVE_LEGAL_REPORT_GENERATOR = False
 
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
@@ -246,6 +340,7 @@ __all__ = [
     
     # Brave Legal Search
     "BraveLegalSearch",
+    "MultiEngineLegalSearch",  # Multi-engine search
     "create_legal_search",
     "search_legal",
     "LegalKnowledgeBase",
@@ -277,6 +372,49 @@ __all__ = [
     "ExpandedQuery",
     "expand_query",
     "HAVE_QUERY_EXPANDER",
+    
+    # Enhanced Query Expander (Enhancement 12 Phase 2)
+    "EnhancedQueryExpander",
+    "EnhancedExpandedQuery",
+    "HAVE_ENHANCED_QUERY_EXPANDER",
+    
+    # Result Filter (Enhancement 12 Phase 3)
+    "ResultFilter",
+    "FilterConfig",
+    "FilteredResult",
+    "HAVE_RESULT_FILTER",
+    
+    # Search Result Citation Extractor (Enhancement 12 Phase 4)
+    "SearchResultCitationExtractor",
+    "SearchResultWithCitations",
+    "CitationNetwork",
+    "HAVE_SEARCH_RESULT_CITATION_EXTRACTOR",
+    
+    # Legal GraphRAG (Enhancement 12 Phase 5)
+    "LegalGraphRAG",
+    "LegalEntity",
+    "LegalRelationship",
+    "LegalKnowledgeGraph",
+    "HAVE_LEGAL_GRAPHRAG",
+    
+    # Multi-Language Support (Enhancement 12 Phase 6)
+    "MultiLanguageSupport",
+    "LanguageConfig",
+    "TranslationResult",
+    "HAVE_MULTILANGUAGE_SUPPORT",
+    
+    # Regulation Version Tracker (Enhancement 12 Phase 7)
+    "RegulationVersionTracker",
+    "RegulationVersion",
+    "RegulationChange",
+    "HAVE_REGULATION_VERSION_TRACKER",
+    
+    # Legal Report Generator (Enhancement 12 Phase 8)
+    "LegalSearchReportGenerator",
+    "LegalSearchReport",
+    "ReportConfig",
+    "ReportSection",
+    "HAVE_LEGAL_REPORT_GENERATOR",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
