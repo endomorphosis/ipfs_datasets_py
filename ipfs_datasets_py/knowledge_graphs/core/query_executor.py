@@ -488,7 +488,7 @@ class QueryExecutor:
 
 
 
-class GraphEngine:
+class _LegacyGraphEngine:
     """
     Core graph engine for node and relationship operations.
     
