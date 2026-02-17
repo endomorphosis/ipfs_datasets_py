@@ -36,7 +36,15 @@ try:
     from .server import start_server, start_stdio_server, IPFSDatasetsMCPServer
 except ImportError:
     # Fallback to simplified implementation if modelcontextprotocol is not available
-    from .simple_server import start_simple_server as start_server
+    try:
+        from .simple_server import start_simple_server as start_server
+    except ImportError:
+        # If neither server is available, provide placeholder
+        def start_server(*args, **kwargs):
+            raise ImportError(
+                "MCP server dependencies not installed. "
+                "Install with: pip install anyio mcp flask"
+            )
     start_stdio_server = None
     IPFSDatasetsMCPServer = None
 
@@ -53,6 +61,9 @@ try:
 except ImportError:
     SimpleIPFSDatasetsMCPServer = None
 
+# MCP++ integration is always importable (with graceful fallback)
+from . import mcplusplus
+
 __version__ = "0.1.0"
 __all__ = [
     "start_server",
@@ -62,5 +73,6 @@ __all__ = [
     "IPFSDatasetsMCPClient",
     "Configs",
     "configs",
-    "load_config_from_yaml"
+    "load_config_from_yaml",
+    "mcplusplus",
 ]

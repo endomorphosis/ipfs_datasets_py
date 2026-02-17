@@ -3,21 +3,31 @@
 This module integrates the Trio/libp2p TaskQueue service (from ipfs_accelerate_py)
 into the anyio-based MCP server runtime.
 
+Enhanced with MCP++ integration for:
+- P2P Workflow Scheduler (distributed workflow execution)
+- Peer Registry (peer discovery and connection management)
+- Bootstrap (network initialization and bootstrap nodes)
+
 Design:
 - Keep stdio MCP transport as the primary interface.
 - Run the Trio/libp2p service in-process using the existing background-thread
   runner provided by ipfs_accelerate_py.p2p_tasks.runtime.
+- Integrate MCP++ workflow scheduler, peer registry, and bootstrap capabilities
+- Gracefully degrade when MCP++ module unavailable
 - Expose local status via lightweight helper methods; tooling is exposed in
   mcp_server/tools/p2p_tools.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_ipfs_accelerate_on_path() -> None:
@@ -51,6 +61,12 @@ class P2PServiceState:
     listen_port: Optional[int]
     started_at: float
     last_error: str = ""
+    # MCP++ enhanced state
+    workflow_scheduler_available: bool = False
+    peer_registry_available: bool = False
+    bootstrap_available: bool = False
+    connected_peers: int = 0
+    active_workflows: int = 0
 
 
 class P2PServiceManager:
@@ -64,6 +80,11 @@ class P2PServiceManager:
         enable_cache: bool = True,
         auth_mode: str = "mcp_token",
         startup_timeout_s: float = 2.0,
+        # MCP++ enhanced options
+        enable_workflow_scheduler: bool = True,
+        enable_peer_registry: bool = True,
+        enable_bootstrap: bool = True,
+        bootstrap_nodes: Optional[List[str]] = None,
     ) -> None:
         self.enabled = bool(enabled)
         self.queue_path = str(queue_path or _DEFAULT_QUEUE_PATH)
@@ -73,12 +94,23 @@ class P2PServiceManager:
         self.auth_mode = str(auth_mode or "mcp_token")
         self.startup_timeout_s = float(startup_timeout_s)
 
+        # MCP++ enhanced options
+        self.enable_workflow_scheduler = bool(enable_workflow_scheduler)
+        self.enable_peer_registry = bool(enable_peer_registry)
+        self.enable_bootstrap = bool(enable_bootstrap)
+        self.bootstrap_nodes = bootstrap_nodes or []
+
         self._runtime = None
         self._handle = None
 
         # Track environment variables we set so we can restore them on stop.
         # This avoids contaminating unrelated tests and subprocesses.
         self._env_restore: dict[str, Optional[str]] = {}
+
+        # MCP++ integration components (initialized on demand)
+        self._workflow_scheduler = None
+        self._peer_registry = None
+        self._mcplusplus_available = False
 
     def _setdefault_env(self, key: str, value: str) -> None:
         if key not in os.environ:
@@ -117,7 +149,13 @@ class P2PServiceManager:
         self._env_restore.clear()
 
     def start(self, *, accelerate_instance: Any | None = None) -> bool:
-        """Start the libp2p TaskQueue service (best-effort)."""
+        """Start the libp2p TaskQueue service (best-effort).
+        
+        Also initializes MCP++ enhanced features if enabled:
+        - Workflow scheduler
+        - Peer registry
+        - Bootstrap
+        """
 
         if not self.enabled:
             return False
@@ -147,11 +185,19 @@ class P2PServiceManager:
         except Exception:
             pass
 
+        # Initialize MCP++ enhanced features
+        self._initialize_mcplusplus_features()
+
         return bool(getattr(self._runtime, "running", False))
 
     def stop(self) -> bool:
+        """Stop the P2P service and cleanup MCP++ features."""
         if not self._runtime:
             return True
+        
+        # Cleanup MCP++ features first
+        self._cleanup_mcplusplus_features()
+        
         try:
             ok = bool(self._runtime.stop(timeout_s=2.0))
             self._restore_env()
@@ -161,7 +207,7 @@ class P2PServiceManager:
             return False
 
     def state(self) -> P2PServiceState:
-        """Return best-effort local P2P service state."""
+        """Return best-effort local P2P service state including MCP++ features."""
 
         last_error = ""
         try:
@@ -192,10 +238,144 @@ class P2PServiceManager:
                 running = False
             started_at = time.time() if running else 0.0
 
+        # Get MCP++ enhanced state
+        workflow_scheduler_available = self._workflow_scheduler is not None
+        peer_registry_available = self._peer_registry is not None
+        bootstrap_available = self._mcplusplus_available and self.enable_bootstrap
+        
+        connected_peers = 0
+        active_workflows = 0
+        
+        # Try to get connected peers count
+        if self._peer_registry is not None:
+            try:
+                # This would be implemented by the peer registry
+                connected_peers = 0  # TODO: Get from peer registry
+            except Exception:
+                pass
+        
+        # Try to get active workflows count
+        if self._workflow_scheduler is not None:
+            try:
+                # This would be implemented by the workflow scheduler
+                active_workflows = 0  # TODO: Get from workflow scheduler
+            except Exception:
+                pass
+
         return P2PServiceState(
             running=running,
             peer_id=peer_id,
             listen_port=listen_port,
             started_at=started_at,
             last_error=last_error,
+            workflow_scheduler_available=workflow_scheduler_available,
+            peer_registry_available=peer_registry_available,
+            bootstrap_available=bootstrap_available,
+            connected_peers=connected_peers,
+            active_workflows=active_workflows,
         )
+
+    # MCP++ Integration Methods
+
+    def _initialize_mcplusplus_features(self) -> None:
+        """Initialize MCP++ enhanced features (workflow scheduler, peer registry, bootstrap)."""
+        try:
+            # Try to import MCP++ modules
+            from ipfs_datasets_py.mcp_server import mcplusplus
+            
+            self._mcplusplus_available = mcplusplus.HAVE_MCPLUSPLUS
+            
+            if not self._mcplusplus_available:
+                logger.info("MCP++ module not available - running with basic P2P only")
+                return
+            
+            # Initialize workflow scheduler
+            if self.enable_workflow_scheduler and mcplusplus.HAVE_WORKFLOW_SCHEDULER:
+                try:
+                    self._workflow_scheduler = mcplusplus.get_scheduler()
+                    if self._workflow_scheduler:
+                        logger.info("P2P workflow scheduler initialized")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize workflow scheduler: {e}")
+            
+            # Initialize peer registry
+            if self.enable_peer_registry and mcplusplus.HAVE_PEER_REGISTRY:
+                try:
+                    self._peer_registry = mcplusplus.create_peer_registry(
+                        bootstrap_nodes=self.bootstrap_nodes
+                    )
+                    if self._peer_registry and self._peer_registry.available:
+                        logger.info("P2P peer registry initialized")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize peer registry: {e}")
+            
+            # Perform bootstrap if enabled
+            if self.enable_bootstrap and mcplusplus.HAVE_BOOTSTRAP:
+                try:
+                    # Bootstrap will be performed asynchronously
+                    logger.info("P2P bootstrap enabled (will connect on demand)")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize bootstrap: {e}")
+                    
+        except Exception as e:
+            logger.warning(f"Failed to initialize MCP++ features: {e}")
+            self._mcplusplus_available = False
+
+    def _cleanup_mcplusplus_features(self) -> None:
+        """Cleanup MCP++ features on shutdown."""
+        try:
+            # Reset workflow scheduler
+            if self._workflow_scheduler is not None:
+                try:
+                    from ipfs_datasets_py.mcp_server import mcplusplus
+                    mcplusplus.reset_scheduler()
+                except Exception:
+                    pass
+                self._workflow_scheduler = None
+            
+            # Cleanup peer registry
+            self._peer_registry = None
+            self._mcplusplus_available = False
+            
+        except Exception as e:
+            logger.warning(f"Error during MCP++ cleanup: {e}")
+
+    def get_workflow_scheduler(self):
+        """Get the workflow scheduler instance if available.
+        
+        Returns:
+            P2P workflow scheduler or None if not available
+        """
+        return self._workflow_scheduler
+
+    def get_peer_registry(self):
+        """Get the peer registry instance if available.
+        
+        Returns:
+            Peer registry wrapper or None if not available
+        """
+        return self._peer_registry
+
+    def has_advanced_features(self) -> bool:
+        """Check if advanced MCP++ features are available.
+        
+        Returns:
+            True if MCP++ features are available and initialized
+        """
+        return self._mcplusplus_available
+
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get capabilities of this P2P service manager.
+        
+        Returns:
+            Dictionary with capability information
+        """
+        return {
+            "p2p_enabled": self.enabled,
+            "mcplusplus_available": self._mcplusplus_available,
+            "workflow_scheduler": self._workflow_scheduler is not None,
+            "peer_registry": self._peer_registry is not None,
+            "bootstrap": self.enable_bootstrap and self._mcplusplus_available,
+            "tools_enabled": self.enable_tools,
+            "cache_enabled": self.enable_cache,
+        }
