@@ -403,14 +403,14 @@ class TurtleParser:
         if obj_str == "false":
             return False
         
-        # Number
+        # Try parsing as number
         try:
             if "." in obj_str or "e" in obj_str.lower():
                 return float(obj_str)
             else:
                 return int(obj_str)
         except ValueError:
-            pass
+            pass  # Not a number - fall through to return as string
         
         return obj_str
 

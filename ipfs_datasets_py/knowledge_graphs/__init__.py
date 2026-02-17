@@ -14,8 +14,9 @@ New API Quick Start:
     
     driver = GraphDatabase.driver("ipfs://localhost:5001")
     with driver.session() as session:
-        # Use Neo4j-compatible API
-        pass
+        # Use Neo4j-compatible API for your operations
+        # Example: session.run("CREATE (n:Person {name: 'Alice'}) RETURN n")
+        pass  # Replace with your graph operations
     driver.close()
 """
 

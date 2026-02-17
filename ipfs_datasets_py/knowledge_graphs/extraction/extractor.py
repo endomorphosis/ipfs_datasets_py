@@ -727,8 +727,8 @@ class KnowledgeGraphExtractor:
             #   3. OpenIE models for triple extraction
             # Decision: Defer to future based on user feedback
             # Current rule-based approach is sufficient for most use cases
-            # Not implemented yet - would require a more specific RE model
-            pass
+            # TODO(future): Implement neural relationship extraction when needed
+            pass  # Intentionally empty - future enhancement placeholder
 
         # Use rule-based relationship extraction
         relationships.extend(self._rule_based_relationship_extraction(text, entity_map))
@@ -864,8 +864,8 @@ class KnowledgeGraphExtractor:
             # For high temperature, try to extract additional entities
             # Future Enhancement: Implement more aggressive entity extraction
             # Options: Use dependency parsing, coreference resolution, or advanced NER models
-            # (In a real implementation, this could use more aggressive extraction techniques)
-            pass
+            # TODO(future): Add aggressive extraction with spaCy dependency parsing
+            pass  # Intentionally empty - future enhancement placeholder
 
         # Add entities to the knowledge graph
         for entity in entities:
@@ -887,8 +887,8 @@ class KnowledgeGraphExtractor:
             # additional hierarchical relationships
             # Future Enhancement: Implement more complex relationship inference
             # Options: Use semantic role labeling, dependency parsing, or neural relation extractors
-            # (In a real implementation, this would add more complex relationship inference)
-            pass
+            # TODO(future): Add complex relationship inference with SRL
+            pass  # Intentionally empty - future enhancement placeholder
 
         # Add relationships to the knowledge graph
         for rel in relationships:

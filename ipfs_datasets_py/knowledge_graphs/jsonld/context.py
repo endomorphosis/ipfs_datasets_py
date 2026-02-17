@@ -181,8 +181,16 @@ class ContextCompactor:
     """
     
     def __init__(self):
-        """Initialize the context compactor."""
-        pass
+        """Initialize the context compactor.
+        
+        Note: This is intentionally minimal. The compactor is currently stateless
+        and performs operations directly on the data and context provided to
+        the compact() method.
+        
+        Future Enhancement: Could add caching for frequently used contexts or
+        optimization flags for different compaction strategies.
+        """
+        pass  # Intentionally empty - stateless compactor
     
     def compact(self, data: Any, context: JSONLDContext) -> Dict[str, Any]:
         """

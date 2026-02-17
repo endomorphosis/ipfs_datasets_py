@@ -87,8 +87,8 @@ class SchemaChecker:
             
             # Check if index type is supported
             if index_type in ['BTREE', 'RANGE']:
-                # Supported
-                pass
+                # Fully supported - no action needed
+                pass  # No-op for supported index types
             elif index_type in ['FULLTEXT']:
                 report.warnings.append(f"Full-text index '{index.get('name')}' is supported")
             elif index_type in ['VECTOR']:
@@ -107,8 +107,8 @@ class SchemaChecker:
             
             # Check if constraint type is supported
             if constraint_type in ['UNIQUENESS', 'UNIQUE']:
-                # Supported
-                pass
+                # Fully supported - no action needed
+                pass  # No-op for supported constraint types
             elif constraint_type in ['NODE_KEY']:
                 report.warnings.append(f"Node key constraint '{constraint.get('name')}' supported as unique constraint")
             elif constraint_type in ['EXIST', 'NODE_PROPERTY_EXISTENCE']:

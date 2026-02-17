@@ -486,8 +486,8 @@ class CrossDocumentReasoner:
                 # Current: Direct connections only
                 # Future Enhancement: Implement multi-hop reasoning across documents
                 # This would allow finding connections like A->B and B->C to infer A->C
-                pass
-                pass
+                # TODO(future): Implement multi-hop graph traversal for indirect connections
+                pass  # Intentionally empty - future enhancement placeholder
         else:
             # Without a knowledge graph, use simpler heuristics
             # For example, look for matching entity names in the entities lists
@@ -689,7 +689,8 @@ class CrossDocumentReasoner:
             # Current: Rule-based reasoning only
             # Future Enhancement: Integrate LLM for complex reasoning tasks
             # Requires: OpenAI API or local LLM integration
-            pass
+            # TODO(future): Integrate LLM API (OpenAI, Anthropic, or local model)
+            pass  # Intentionally empty - future enhancement placeholder
             answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
             confidence = 0.75
         else:

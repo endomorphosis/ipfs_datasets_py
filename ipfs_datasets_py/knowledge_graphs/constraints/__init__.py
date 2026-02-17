@@ -199,8 +199,17 @@ class ExistenceConstraint:
         return None
     
     def register(self, entity: Dict[str, Any]):
-        """Register entity (no-op for existence constraint)."""
-        pass
+        """Register entity with this constraint.
+        
+        Note: This is intentionally a no-op. Property existence constraints are
+        validated lazily at check time rather than eagerly at registration time.
+        This allows for flexible entity creation workflows where properties may
+        be added after initial registration.
+        
+        Args:
+            entity: Entity to register (unused)
+        """
+        pass  # Intentionally empty - validation is lazy
 
 
 class TypeConstraint:
@@ -270,8 +279,16 @@ class TypeConstraint:
         return None
     
     def register(self, entity: Dict[str, Any]):
-        """Register entity (no-op for type constraint)."""
-        pass
+        """Register entity with this constraint.
+        
+        Note: This is intentionally a no-op. Type constraints are validated
+        lazily at check time rather than eagerly at registration time. This
+        allows for flexible entity creation and modification workflows.
+        
+        Args:
+            entity: Entity to register (unused)
+        """
+        pass  # Intentionally empty - validation is lazy
 
 
 class CustomConstraint:
@@ -328,8 +345,16 @@ class CustomConstraint:
         return None
     
     def register(self, entity: Dict[str, Any]):
-        """Register entity (no-op for custom constraint)."""
-        pass
+        """Register entity with this constraint.
+        
+        Note: This is intentionally a no-op. Custom constraints are validated
+        lazily at check time rather than eagerly at registration time. This
+        allows constraints to be evaluated in context with the latest entity state.
+        
+        Args:
+            entity: Entity to register (unused)
+        """
+        pass  # Intentionally empty - validation is lazy
 
 
 class ConstraintManager:
