@@ -73,10 +73,42 @@ class BTreeNode:
     
     def _split_child(self, index: int):
         """
-        Split a full child node.
-        
+        Split a full child node in the B-tree to maintain balance.
+
+        When a child node reaches maximum capacity (max_keys), it must be split to
+        maintain the B-tree invariant that all nodes are at most max_keys full.
+        This operation promotes the middle key to the parent and creates a new sibling.
+
+        Algorithm:
+        1. Create a new sibling node with same properties (leaf/internal)
+        2. Find the middle key (mid = max_keys // 2)
+        3. Move second half of keys (mid+1 onwards) to new sibling
+        4. If leaf node: move corresponding entries
+        5. If internal node: move corresponding children pointers
+        6. Promote middle key to parent at the specified index
+        7. Insert new sibling as next child after promoted key
+
+        Complexity: O(t) where t is the minimum degree of the B-tree
+
         Args:
-            index: Index of child to split
+            index: Position in parent's children array where the full child resides
+                   (0-based index, must be valid index into self.children)
+
+        Example:
+            Consider a B-tree node with max_keys=5 and a full child at index 1:
+            
+            Parent: [10, 20, 30]
+            Child[1]: [11, 12, 13, 14, 15]  # Full! (5 keys)
+            
+            After _split_child(1):
+            
+            Parent: [10, 13, 20, 30]  # Middle key 13 promoted
+            Child[1]: [11, 12]        # First half
+            Child[2]: [14, 15]        # Second half (new sibling)
+
+        Note:
+            This method assumes the parent node has space for an additional key.
+            The caller (typically insert_non_full) must ensure parent is not full.
         """
         full_child = self.children[index]
         new_child = BTreeNode(is_leaf=full_child.is_leaf, max_keys=full_child.max_keys)

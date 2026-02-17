@@ -133,14 +133,53 @@ class FullTextIndex:
     
     def _calculate_score(self, entity_id: str, query_tokens: List[str]) -> float:
         """
-        Calculate TF-IDF score for entity.
+        Calculate TF-IDF relevance score for an entity given query tokens.
+
+        Uses the classic TF-IDF (Term Frequency-Inverse Document Frequency) ranking
+        function to measure how relevant an entity's indexed text is to a query.
+
+        Formula:
+            score = Σ (TF(term) × IDF(term)) for each query term
         
+        Where:
+        - TF (Term Frequency): 1.0 if term appears in entity (simplified binary)
+        - IDF (Inverse Document Frequency): log((N + 1) / (df + 1))
+          - N = total number of indexed documents
+          - df = number of documents containing the term
+        
+        Higher scores indicate better matches. Rare terms that appear in few documents
+        contribute more to the score (higher IDF), while common terms contribute less.
+
         Args:
-            entity_id: Entity ID
-            query_tokens: Query tokens
-            
+            entity_id: ID of the entity being scored
+            query_tokens: Tokenized query terms (lowercased, stop words removed)
+
         Returns:
-            Score
+            Non-negative float score. Typical range: 0.0 to 10.0 for single-term queries,
+            higher for multi-term queries. Zero means no matching terms found.
+
+        Example:
+            >>> # Entity "Python" indexed with text "Python programming language"
+            >>> score = self._calculate_score(
+            ...     entity_id="entity_python",
+            ...     query_tokens=["python", "programming"]
+            ... )
+            >>> print(f"Score: {score:.2f}")
+            Score: 8.45
+            >>> 
+            >>> # Query with no matches
+            >>> score = self._calculate_score(
+            ...     entity_id="entity_python",
+            ...     query_tokens=["javascript", "node"]
+            ... )
+            >>> print(f"Score: {score:.2f}")
+            Score: 0.00
+
+        Note:
+            This is a simplified TF-IDF implementation. Production systems might use:
+            - Sublinear TF scaling: 1 + log(term_freq)
+            - Length normalization: divide by document length
+            - BM25 algorithm for better ranking
         """
         score = 0.0
         
