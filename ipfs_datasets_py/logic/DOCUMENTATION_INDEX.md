@@ -1,7 +1,7 @@
 # Logic Module Documentation Index
 
-**Last Updated:** 2026-02-14  
-**Status:** Consolidated and Organized
+**Last Updated:** 2026-02-17  
+**Status:** Consolidated and Organized (Refactoring in Progress)
 
 This index provides a comprehensive guide to all documentation in the logic module, organized by purpose and audience.
 
@@ -11,6 +11,7 @@ This index provides a comprehensive guide to all documentation in the logic modu
 
 - [Getting Started](#getting-started)
 - [Architecture & Design](#architecture--design)
+- [Current Refactoring](#current-refactoring-status)
 - [API Reference](#api-reference)
 - [Development Guides](#development-guides)
 - [Historical Records](#historical-records)
@@ -112,6 +113,28 @@ from ipfs_datasets_py.logic.CEC import CEC_wrapper
 
 ---
 
+## Current Refactoring Status
+
+### Active Planning Documents (2026-02-17)
+
+| Document | Purpose | Status |
+|----------|---------|--------|
+| **[COMPREHENSIVE_REFACTORING_PLAN.md](./COMPREHENSIVE_REFACTORING_PLAN.md)** 🆕 | **Master refactoring plan** - 5-phase plan for documentation consolidation and code polish | 🔄 ACTIVE |
+| **[VERIFIED_STATUS_REPORT.md](./VERIFIED_STATUS_REPORT.md)** 🆕 | **Ground truth status** - Verified metrics and implementation status | ✅ Current |
+| **[IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md)** 🆕 | **Execution roadmap** - Prioritized action items from all planning docs | 🔄 ACTIVE |
+| [PROJECT_STATUS.md](./PROJECT_STATUS.md) | Overall project status (60% complete, Phase 6 done, Phase 7 at 55%) | ✅ Current |
+| [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) | Detailed P0/P1/P2 backlog (477 lines, 16 refactor slices) | 📋 Reference |
+| [integration/TODO.md](./integration/TODO.md) | Integration-specific Phase 2 tasks | 📋 Reference |
+
+### Refactoring Objectives
+
+1. **Documentation Consolidation** - Reduce 48→30 files, eliminate redundancy
+2. **Complete Unfinished Work** - Phase 7 Parts 2+4 (optional), P0 critical items
+3. **Add Missing Documentation** - API versioning, deployment guide, error reference
+4. **Polish and Validation** - Final quality pass, verify all claims
+
+---
+
 ## Development Guides
 
 ### Contributing & Development
@@ -119,17 +142,21 @@ from ipfs_datasets_py.logic.CEC import CEC_wrapper
 | Document | Purpose |
 |----------|---------|
 | [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) | Current implementation status by module |
+| [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) | Honest assessment of limitations and workarounds |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) | Common issues and solutions |
+| [FALLBACK_BEHAVIORS.md](./FALLBACK_BEHAVIORS.md) | Graceful degradation when dependencies missing |
 | [docs/archive/README.md](./docs/archive/README.md) | Historical archive index |
 
 ### Planning Documents (Reference)
 
 | Document | Status | Use |
 |----------|--------|-----|
-| [REFACTORING_PLAN.md](./REFACTORING_PLAN.md) | ⚠️ Historical | Original 7-phase plan (COMPLETED) |
-| [ENHANCED_REFACTORING_PLAN.md](./ENHANCED_REFACTORING_PLAN.md) | ⚠️ Historical | Enhanced planning document (COMPLETED) |
-| [PHASE6_REORGANIZATION_PLAN.md](./PHASE6_REORGANIZATION_PLAN.md) | ⚠️ Historical | Module reorganization plan (COMPLETED) |
+| [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md) | 📋 Reference | Original comprehensive plan (964 lines) |
+| [PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md](./PHASE7_PERFORMANCE_OPTIMIZATION_PLAN.md) | 📋 Active | Performance optimization roadmap (Parts 2+4 remaining) |
+| [PHASE8_FINAL_TESTING_PLAN.md](./PHASE8_FINAL_TESTING_PLAN.md) | 📋 Future | Comprehensive testing plan (410+ tests, >95% coverage) |
+| [ADVANCED_FEATURES_ROADMAP.md](./ADVANCED_FEATURES_ROADMAP.md) | 📋 Future | Future enhancements roadmap |
 
-**Note:** Planning documents are kept for reference but all phases are now complete.
+**Note:** See IMPLEMENTATION_ROADMAP.md for prioritized execution order of all planning items.
 
 ---
 
@@ -141,10 +168,12 @@ All phase completion reports have been archived to maintain repository cleanline
 
 | Report | Location | Completion Date |
 |--------|----------|-----------------|
-| Phase 6 Reports | [docs/archive/PHASE_REPORTS/](./docs/archive/PHASE_REPORTS/) | 2026-02-14 |
-| Phase 7 Reports | [docs/archive/PHASE_REPORTS/](./docs/archive/PHASE_REPORTS/) | 2026-02-14 |
+| Phase 1-5 Reports | [docs/archive/](./docs/archive/) | 2026-02-13/14 |
+| Phase 6 Completion | [docs/archive/phases/PHASE_6_COMPLETION_SUMMARY.md](./docs/archive/phases/) | 2026-02-14 |
+| Phase 7 Session | [docs/archive/phases/PHASE_7_SESSION_SUMMARY.md](./docs/archive/phases/) | 2026-02-17 |
+| Final Status (Pre-refactor) | [docs/archive/phases/FINAL_STATUS_REPORT.md](./docs/archive/phases/) | 2026-02-17 |
+| Analysis Summary | [docs/archive/phases/ANALYSIS_SUMMARY.md](./docs/archive/phases/) | 2026-02-17 |
 | Session Notes | [docs/archive/SESSIONS/](./docs/archive/SESSIONS/) | 2026-02-13/14 |
-| Refactoring Status | [docs/archive/](./docs/archive/) | Various |
 
 ### Session History
 
@@ -303,17 +332,19 @@ If you find:
 
 ### Documentation Statistics
 
-- **Total Documentation:** ~200 KB
-- **Active Documents:** 10 primary + 8 module-specific READMEs
-- **Archived Documents:** 40+ historical records
-- **Code Coverage:** 94% pass rate, 174+ tests
-- **Type Coverage:** 100% (95/95 functions in typed modules)
+- **Total Documentation:** ~200 KB (48 markdown files)
+- **Active Documents:** 10 primary + 8 module-specific READMEs + 6 planning docs
+- **Archived Documents:** 40+ historical records in docs/archive/
+- **Test Coverage:** 790+ tests (94% pass rate), 10,200+ repo-wide
+- **Type Coverage:** 95%+ (Grade A-)
+- **Phase Status:** Phase 6 100%, Phase 7 55% (Parts 1+3 complete)
 
 ### Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02-14 | Initial consolidated index created |
+| 1.1 | 2026-02-17 | Added refactoring status, updated with current planning docs, archived phase reports |
 
 ---
 
