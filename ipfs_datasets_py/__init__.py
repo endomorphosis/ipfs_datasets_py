@@ -7,6 +7,8 @@ with automated dependency installation for full functionality.
 
 __version__ = "0.2.0"
 
+import importlib
+import importlib.util
 import logging
 import os
 import warnings
@@ -66,21 +68,11 @@ def _optional_import_notice(message: str) -> None:
     else:
         logging.debug(message)
 
-# File type detection
-if _MINIMAL_IMPORTS:
-    HAVE_FILE_DETECTOR = False
-    FileTypeDetector = None
-    DetectionMethod = None
-    DetectionStrategy = None
-else:
-    try:
-        from .file_detector import FileTypeDetector, DetectionMethod, DetectionStrategy
-        HAVE_FILE_DETECTOR = True
-    except ImportError:
-        HAVE_FILE_DETECTOR = False
-        FileTypeDetector = None
-        DetectionMethod = None
-        DetectionStrategy = None
+# File type detection (lazy; see __getattr__)
+HAVE_FILE_DETECTOR = False
+FileTypeDetector = None
+DetectionMethod = None
+DetectionStrategy = None
 
 def _dedupe_root_logging_handlers() -> None:
     """
@@ -240,80 +232,25 @@ else:
     HAVE_ACCELERATE_MANAGER = False
 
 # Optional SyMAI engine router registration
-try:
-    if os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }:
-        from .utils.symai_ipfs_engine import register_ipfs_symai_engines
+# NOTE: import-time engine registration is intentionally disabled.
+# Use `ipfs_datasets_py.initialize(register_symai_engines=True)` instead.
 
-        register_ipfs_symai_engines()
-except Exception:
-    pass
+HAVE_DATASET_SERIALIZATION = False
+DatasetSerializer = None
+GraphDataset = None
+GraphNode = None
+VectorAugmentedGraphDataset = None
+dataset_serialization = None  # type: ignore
 
-if _MINIMAL_IMPORTS:
-    HAVE_DATASET_SERIALIZATION = False
-    DatasetSerializer = None
-    GraphDataset = None
-    GraphNode = None
-    VectorAugmentedGraphDataset = None
-    dataset_serialization = None  # type: ignore
+HAVE_DATASET_MANAGER = False
+DatasetManager = None
 
-    HAVE_DATASET_MANAGER = False
-    DatasetManager = None
+HAVE_CAR_CONVERSION = False
+DataInterchangeUtils = None
+car_conversion = None  # type: ignore
 
-    HAVE_CAR_CONVERSION = False
-    DataInterchangeUtils = None
-    car_conversion = None  # type: ignore
-else:
-    try:
-        from .data_transformation.serialization.dataset_serialization import (
-            DatasetSerializer,
-            GraphDataset,
-            GraphNode,
-            VectorAugmentedGraphDataset,
-        )
-        HAVE_DATASET_SERIALIZATION = True
-    except ImportError:
-        HAVE_DATASET_SERIALIZATION = False
-        DatasetSerializer = None
-        GraphDataset = None
-        GraphNode = None
-        VectorAugmentedGraphDataset = None
-
-    # Expose the module itself for `from ipfs_datasets_py import dataset_serialization`.
-    try:
-        from .data_transformation.serialization import dataset_serialization as dataset_serialization  # type: ignore
-    except Exception:
-        dataset_serialization = None  # type: ignore
-
-    try:
-        from .dataset_manager import DatasetManager
-        HAVE_DATASET_MANAGER = True
-    except ImportError:
-        HAVE_DATASET_MANAGER = False
-        DatasetManager = None
-
-    try:
-        from .data_transformation.serialization.car_conversion import DataInterchangeUtils
-        HAVE_CAR_CONVERSION = True
-    except ImportError:
-        HAVE_CAR_CONVERSION = False
-        DataInterchangeUtils = None
-
-    # Expose the module itself for `from ipfs_datasets_py import car_conversion`.
-    try:
-        from .data_transformation import car_conversion as car_conversion  # type: ignore
-    except Exception:
-        car_conversion = None  # type: ignore
-
-# Expose Jsonnet helpers for `from ipfs_datasets_py import jsonnet_utils`.
-try:
-    from . import jsonnet_utils as jsonnet_utils  # type: ignore
-except Exception:
-    jsonnet_utils = None  # type: ignore
+# Expose Jsonnet helpers for `from ipfs_datasets_py import jsonnet_utils` (lazy; see __getattr__).
+jsonnet_utils = None  # type: ignore
 
 if _MINIMAL_IMPORTS:
     HAVE_UNIXFS = False
@@ -480,12 +417,8 @@ FibonacciHeap = None
 calculate_hamming_distance = None
 get_scheduler = None
 
-# Check for IPFS capability (prefer router entrypoint)
-try:
-    from . import ipfs_backend_router as _ipfs_backend_router
-    HAVE_IPFS = True
-except Exception:
-    HAVE_IPFS = False
+# Check for IPFS capability without importing the module.
+HAVE_IPFS = importlib.util.find_spec(f"{__name__}.ipfs_backend_router") is not None
 
 if _MINIMAL_IMPORTS:
     HAVE_IPLD_CAR = False
@@ -502,41 +435,14 @@ if _MINIMAL_IMPORTS:
     HAVE_ARCHIVENOW = False
     HAVE_IPWB = False
 else:
-    try:
-        import ipld_car
-        HAVE_IPLD_CAR = True
-    except ImportError:
-        HAVE_IPLD_CAR = False
-
-    try:
-        from ipld_dag_pb import PBNode, PBLink
-        HAVE_IPLD_DAG_PB = True
-    except ImportError:
-        HAVE_IPLD_DAG_PB = False
-
-    try:
-        import pyarrow as pa
-        HAVE_ARROW = True
-    except ImportError:
-        HAVE_ARROW = False
-
-    try:
-        from datasets import Dataset
-        HAVE_HUGGINGFACE = True
-    except ImportError:
-        HAVE_HUGGINGFACE = False
-
-    try:
-        import archivenow  # type: ignore
-        HAVE_ARCHIVENOW = True
-    except ImportError:
-        HAVE_ARCHIVENOW = False
-
-    try:
-        import ipwb  # type: ignore
-        HAVE_IPWB = True
-    except ImportError:
-        HAVE_IPWB = False
+    # Avoid importing these optional deps at package import time.
+    # Use __getattr__ for actual symbol import.
+    HAVE_IPLD_CAR = importlib.util.find_spec("ipld_car") is not None
+    HAVE_IPLD_DAG_PB = importlib.util.find_spec("ipld_dag_pb") is not None
+    HAVE_ARROW = importlib.util.find_spec("pyarrow") is not None
+    HAVE_HUGGINGFACE = importlib.util.find_spec("datasets") is not None
+    HAVE_ARCHIVENOW = importlib.util.find_spec("archivenow") is not None
+    HAVE_IPWB = importlib.util.find_spec("ipwb") is not None
 
 # PDF Processing Components
 #
@@ -545,8 +451,6 @@ else:
 # which makes unrelated imports (and pytest collection) slow and side-effectful.
 #
 # Instead, expose these symbols via module-level lazy import.
-import os
-
 HAVE_PDF_PROCESSOR = False
 HAVE_MULTI_ENGINE_OCR = False
 HAVE_LLM_OPTIMIZER = False
@@ -614,6 +518,193 @@ def _lazy_import_pdf_symbol(name: str):
 
 
 def __getattr__(name: str):
+    if name in {"FileTypeDetector", "DetectionMethod", "DetectionStrategy"}:
+        global HAVE_FILE_DETECTOR
+        if _MINIMAL_IMPORTS:
+            globals()["FileTypeDetector"] = None
+            globals()["DetectionMethod"] = None
+            globals()["DetectionStrategy"] = None
+            HAVE_FILE_DETECTOR = False
+            return globals()[name]
+        try:
+            from .file_detector import (
+                FileTypeDetector as _FileTypeDetector,
+                DetectionMethod as _DetectionMethod,
+                DetectionStrategy as _DetectionStrategy,
+            )
+
+            globals()["FileTypeDetector"] = _FileTypeDetector
+            globals()["DetectionMethod"] = _DetectionMethod
+            globals()["DetectionStrategy"] = _DetectionStrategy
+            HAVE_FILE_DETECTOR = True
+            return globals()[name]
+        except Exception as e:
+            globals()["FileTypeDetector"] = None
+            globals()["DetectionMethod"] = None
+            globals()["DetectionStrategy"] = None
+            HAVE_FILE_DETECTOR = False
+            _optional_import_notice(f"File detector unavailable: {e}")
+            return globals()[name]
+
+    if name in {
+        "DatasetSerializer",
+        "GraphDataset",
+        "GraphNode",
+        "VectorAugmentedGraphDataset",
+        "dataset_serialization",
+    }:
+        global HAVE_DATASET_SERIALIZATION
+        if _MINIMAL_IMPORTS:
+            globals()[name] = None
+            HAVE_DATASET_SERIALIZATION = False
+            return globals()[name]
+        try:
+            from .data_transformation.serialization.dataset_serialization import (
+                DatasetSerializer as _DatasetSerializer,
+                GraphDataset as _GraphDataset,
+                GraphNode as _GraphNode,
+                VectorAugmentedGraphDataset as _VectorAugmentedGraphDataset,
+            )
+
+            globals()["DatasetSerializer"] = _DatasetSerializer
+            globals()["GraphDataset"] = _GraphDataset
+            globals()["GraphNode"] = _GraphNode
+            globals()["VectorAugmentedGraphDataset"] = _VectorAugmentedGraphDataset
+            HAVE_DATASET_SERIALIZATION = True
+
+            if globals().get("dataset_serialization") is None:
+                try:
+                    from .data_transformation.serialization import dataset_serialization as _dataset_serialization  # type: ignore
+
+                    globals()["dataset_serialization"] = _dataset_serialization
+                except Exception:
+                    globals()["dataset_serialization"] = None  # type: ignore
+
+            return globals()[name]
+        except Exception as e:
+            globals()["DatasetSerializer"] = None
+            globals()["GraphDataset"] = None
+            globals()["GraphNode"] = None
+            globals()["VectorAugmentedGraphDataset"] = None
+            globals()["dataset_serialization"] = None  # type: ignore
+            HAVE_DATASET_SERIALIZATION = False
+            _optional_import_notice(f"Dataset serialization unavailable: {e}")
+            return globals()[name]
+
+    if name == "DatasetManager":
+        global HAVE_DATASET_MANAGER
+        if _MINIMAL_IMPORTS:
+            globals()["DatasetManager"] = None
+            HAVE_DATASET_MANAGER = False
+            return None
+        try:
+            from .dataset_manager import DatasetManager as _DatasetManager
+
+            globals()["DatasetManager"] = _DatasetManager
+            HAVE_DATASET_MANAGER = True
+            return _DatasetManager
+        except Exception as e:
+            globals()["DatasetManager"] = None
+            HAVE_DATASET_MANAGER = False
+            _optional_import_notice(f"DatasetManager unavailable: {e}")
+            return None
+
+    if name in {"DataInterchangeUtils", "car_conversion"}:
+        global HAVE_CAR_CONVERSION
+        if _MINIMAL_IMPORTS:
+            globals()["DataInterchangeUtils"] = None
+            globals()["car_conversion"] = None  # type: ignore
+            HAVE_CAR_CONVERSION = False
+            return globals()[name]
+        try:
+            from .data_transformation.serialization.car_conversion import DataInterchangeUtils as _DataInterchangeUtils
+
+            globals()["DataInterchangeUtils"] = _DataInterchangeUtils
+            HAVE_CAR_CONVERSION = True
+
+            if globals().get("car_conversion") is None:
+                try:
+                    from .data_transformation import car_conversion as _car_conversion  # type: ignore
+
+                    globals()["car_conversion"] = _car_conversion  # type: ignore
+                except Exception:
+                    globals()["car_conversion"] = None  # type: ignore
+
+            return globals()[name]
+        except Exception as e:
+            globals()["DataInterchangeUtils"] = None
+            globals()["car_conversion"] = None  # type: ignore
+            HAVE_CAR_CONVERSION = False
+            _optional_import_notice(f"CAR conversion unavailable: {e}")
+            return globals()[name]
+
+    if name == "jsonnet_utils":
+        if _MINIMAL_IMPORTS:
+            globals()["jsonnet_utils"] = None  # type: ignore
+            return None
+        try:
+            mod = importlib.import_module(f"{__name__}.jsonnet_utils")
+            globals()["jsonnet_utils"] = mod  # type: ignore
+            return mod
+        except Exception as e:
+            globals()["jsonnet_utils"] = None  # type: ignore
+            _optional_import_notice(f"jsonnet_utils unavailable: {e}")
+            return None
+
+    if name in {"PBNode", "PBLink"}:
+        if _MINIMAL_IMPORTS:
+            globals()["PBNode"] = None
+            globals()["PBLink"] = None
+            globals()["HAVE_IPLD_DAG_PB"] = False
+            return globals()[name]
+        try:
+            from ipld_dag_pb import PBNode as _PBNode, PBLink as _PBLink
+
+            globals()["PBNode"] = _PBNode
+            globals()["PBLink"] = _PBLink
+            globals()["HAVE_IPLD_DAG_PB"] = True
+            return globals()[name]
+        except Exception as e:
+            globals()["PBNode"] = None
+            globals()["PBLink"] = None
+            globals()["HAVE_IPLD_DAG_PB"] = False
+            _optional_import_notice(f"ipld-dag-pb unavailable: {e}")
+            return globals()[name]
+
+    if name == "pa":
+        if _MINIMAL_IMPORTS:
+            globals()["pa"] = None  # type: ignore
+            globals()["HAVE_ARROW"] = False
+            return None
+        try:
+            import pyarrow as _pa
+
+            globals()["pa"] = _pa  # type: ignore
+            globals()["HAVE_ARROW"] = True
+            return _pa
+        except Exception as e:
+            globals()["pa"] = None  # type: ignore
+            globals()["HAVE_ARROW"] = False
+            _optional_import_notice(f"pyarrow unavailable: {e}")
+            return None
+
+    if name == "Dataset":
+        if _MINIMAL_IMPORTS:
+            globals()["Dataset"] = None
+            globals()["HAVE_HUGGINGFACE"] = False
+            return None
+        try:
+            from datasets import Dataset as _Dataset
+
+            globals()["Dataset"] = _Dataset
+            globals()["HAVE_HUGGINGFACE"] = True
+            return _Dataset
+        except Exception as e:
+            globals()["Dataset"] = None
+            globals()["HAVE_HUGGINGFACE"] = False
+            _optional_import_notice(f"datasets unavailable: {e}")
+            return None
+
     if name in {"UnixFSHandler", "FixedSizeChunker", "RabinChunker"}:
         if _MINIMAL_IMPORTS:
             globals()[name] = None
