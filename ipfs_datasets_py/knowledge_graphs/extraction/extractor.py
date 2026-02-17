@@ -561,9 +561,9 @@ class KnowledgeGraphExtractor:
                 import spacy # TODO Add in spacy as a dependency
                 try:
                     self.nlp = spacy.load("en_core_web_sm")
-                except:
+                except (OSError, IOError) as e:
                     # If the model is not available, download it
-                    print("Downloading spaCy model...")
+                    print(f"spaCy model not found ({e}), downloading...")
                     spacy.cli.download("en_core_web_sm")
                     self.nlp = spacy.load("en_core_web_sm")
             except ImportError:

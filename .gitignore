@@ -85,3 +85,7 @@ unified_deontic_logic_system/
 /validation_results*.json
 /infrastructure_validation_report*.json
 /production_readiness_report*.json
+# Backup files
+*.backup
+*.bak
+*~

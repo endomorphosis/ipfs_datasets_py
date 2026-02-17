@@ -715,7 +715,8 @@ class QueryExecutor:
                                             value = obj.properties[prop_name]
                                         elif hasattr(obj, prop_name):
                                             value = getattr(obj, prop_name)
-                                except:
+                                except (AttributeError, KeyError, TypeError) as e:
+                                    # Property access failed, use None as fallback
                                     value = None
                             else:
                                 # Simple alias like "count"

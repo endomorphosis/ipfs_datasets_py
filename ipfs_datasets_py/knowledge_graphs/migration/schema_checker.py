@@ -48,9 +48,25 @@ class SchemaChecker:
             print(f"Found {len(report.issues)} compatibility issues")
     """
     
-    def __init__(self):
-        """Initialize schema checker."""
-        pass
+    def __init__(self, custom_rules: Optional[Dict[str, Any]] = None):
+        """Initialize schema checker.
+        
+        Args:
+            custom_rules: Optional custom schema compatibility rules.
+                         If None, uses default rules.
+        """
+        self.custom_rules = custom_rules or {}
+        self.logger = logging.getLogger(__name__)
+        
+        # Default compatibility rules
+        self.supported_index_types = {
+            'BTREE', 'RANGE', 'FULLTEXT', 'VECTOR'
+        }
+        self.supported_constraint_types = {
+            'UNIQUENESS', 'UNIQUE', 'NODE_KEY', 'EXIST', 'NODE_PROPERTY_EXISTENCE'
+        }
+        
+        self.logger.debug("SchemaChecker initialized with %d custom rules", len(self.custom_rules))
     
     def check_schema(self, schema: SchemaData) -> CompatibilityReport:
         """
