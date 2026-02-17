@@ -17,6 +17,7 @@ Key Features:
 
 import re
 import requests
+import logging
 from typing import Dict, List, Any, Optional
 
 # Import extraction package components
@@ -24,8 +25,18 @@ from .entities import Entity
 from .relationships import Relationship
 from .graph import KnowledgeGraph
 
+# Import custom exceptions
+from ..exceptions import (
+    EntityExtractionError,
+    RelationshipExtractionError,
+    ValidationError
+)
+
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 
@@ -664,10 +675,16 @@ class KnowledgeGraphExtractor:
 
                     entities.append(entity)
 
-            except Exception as e:
-                print(f"Warning: Error in transformers NER: {e}")
+            except (ImportError, AttributeError, ValueError) as e:
+                logger.warning(f"Transformers NER failed: {e}. Falling back to rule-based extraction.")
                 # Fall back to rule-based extraction
                 entities.extend(_rule_based_entity_extraction(text))
+            except Exception as e:
+                # Unexpected error - wrap in EntityExtractionError
+                raise EntityExtractionError(
+                    f"Failed to extract entities using transformers: {e}",
+                    details={'text_length': len(text), 'use_transformers': True}
+                ) from e
         else:
             # Use rule-based entity extraction
             entities.extend(_rule_based_entity_extraction(text))
@@ -768,9 +785,16 @@ class KnowledgeGraphExtractor:
 
                         relationships.append(rel)
             
-            except Exception as e:
-                # Skip problematic patterns and continue
+            except (re.error, ValueError) as e:
+                # Pattern matching error - log and skip this pattern
+                logger.warning(f"Skipping problematic relationship pattern '{pattern_info.get('name', 'unknown')}': {e}")
                 continue
+            except Exception as e:
+                # Unexpected error in relationship extraction
+                raise RelationshipExtractionError(
+                    f"Failed to extract relationships using pattern '{pattern_info.get('name', 'unknown')}': {e}",
+                    details={'pattern': pattern_info.get('pattern', ''), 'text_length': len(text)}
+                ) from e
 
         return relationships
 
@@ -1185,8 +1209,9 @@ class KnowledgeGraphExtractor:
 
             return kg
 
-        except Exception as e:
-            error_msg = f"Error extracting knowledge graph from Wikipedia: {e}"
+        except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
+            error_msg = f"Network error extracting knowledge graph from Wikipedia '{title}': {e}"
+            logger.error(error_msg)
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
                 self.tracer.update_extraction_trace(
@@ -1194,6 +1219,21 @@ class KnowledgeGraphExtractor:
                     status="failed",
                     error=error_msg
                 )
+            # Re-raise as EntityExtractionError
+            raise EntityExtractionError(error_msg, details={'wikipedia_title': title, 'trace_id': trace_id}) from e
+        
+        except Exception as e:
+            error_msg = f"Unexpected error extracting knowledge graph from Wikipedia '{title}': {e}"
+            logger.error(error_msg)
+            # Update trace with error if tracer is enabled
+            if self.use_tracer and self.tracer and trace_id:
+                self.tracer.update_extraction_trace(
+                    trace_id=trace_id,
+                    status="failed",
+                    error=error_msg
+                )
+            # Re-raise as EntityExtractionError
+            raise EntityExtractionError(error_msg, details={'wikipedia_title': title, 'trace_id': trace_id}) from e
             raise RuntimeError(error_msg)
 
     def validate_against_wikidata(self, kg: KnowledgeGraph, entity_name: str) -> Dict[str, Any]:
@@ -1376,14 +1416,15 @@ class KnowledgeGraphExtractor:
 
             return result
 
-        except Exception as e:
+        except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
             error_result = {
-                "error": f"Error validating against Wikidata: {e}",
+                "error": f"Network error validating against Wikidata: {e}",
                 "coverage": 0.0,
                 "missing_relationships": [],
                 "additional_relationships": [],
                 "entity_mapping": {}
             }
+            logger.error(f"Wikidata validation network error: {e}")
 
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
@@ -1395,6 +1436,31 @@ class KnowledgeGraphExtractor:
                 )
 
             return error_result
+        
+        except Exception as e:
+            error_result = {
+                "error": f"Unexpected error validating against Wikidata: {e}",
+                "coverage": 0.0,
+                "missing_relationships": [],
+                "additional_relationships": [],
+                "entity_mapping": {}
+            }
+            logger.error(f"Wikidata validation error: {e}")
+
+            # Update trace with error if tracer is enabled
+            if self.use_tracer and self.tracer and trace_id:
+                self.tracer.update_validation_trace(
+                    trace_id=trace_id,
+                    status="failed",
+                    error=str(e),
+                    validation_results=error_result
+                )
+
+            # Wrap in ValidationError
+            raise ValidationError(
+                f"Failed to validate knowledge graph against Wikidata: {e}",
+                details={'trace_id': trace_id, 'entity_name': kg.entities.get(list(kg.entities.keys())[0]).name if kg.entities else 'unknown'}
+            ) from e
 
     def _get_wikidata_id(self, entity_name: str) -> Optional[str]:
         """
@@ -1425,7 +1491,11 @@ class KnowledgeGraphExtractor:
             else:
                 return None
 
-        except Exception:
+        except (requests.RequestException, ValueError) as e:
+            logger.debug(f"Could not retrieve Wikidata ID for '{entity_name}': {e}")
+            return None
+        except Exception as e:
+            logger.warning(f"Unexpected error getting Wikidata ID for '{entity_name}': {e}")
             return None
 
     def _get_wikidata_statements(self, entity_id: str) -> List[Dict[str, Any]]:
@@ -1492,9 +1562,15 @@ class KnowledgeGraphExtractor:
 
             return statements
 
-        except Exception as e:
-            print(f"Error querying Wikidata: {e}")
+        except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
+            logger.error(f"Network error querying Wikidata for entity '{entity_id}': {e}")
             return []
+        except Exception as e:
+            logger.error(f"Unexpected error querying Wikidata for entity '{entity_id}': {e}")
+            raise ValidationError(
+                f"Failed to query Wikidata statements for entity '{entity_id}': {e}",
+                details={'entity_id': entity_id}
+            ) from e
 
 
 
@@ -1577,14 +1653,27 @@ class KnowledgeGraphExtractor:
 
             return result
 
+        except EntityExtractionError:
+            # Re-raise our custom exceptions
+            raise
+        except ValidationError:
+            # Re-raise validation errors
+            raise
         except Exception as e:
             error_result = {
-                "error": f"Error extracting and validating graph: {e}",
+                "error": f"Unexpected error extracting and validating graph from '{page_title}': {e}",
                 "knowledge_graph": None,
                 "validation": {"error": str(e)},
                 "coverage": 0.0,
                 "metrics": {}
             }
+            logger.error(f"Extract and validate failed for '{page_title}': {e}")
+            # Wrap in EntityExtractionError
+            raise EntityExtractionError(
+                f"Failed to extract and validate knowledge graph from Wikipedia page '{page_title}': {e}",
+                details={'page_title': page_title, 'extraction_temperature': extraction_temperature, 
+                        'structure_temperature': structure_temperature}
+            ) from e
 
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
