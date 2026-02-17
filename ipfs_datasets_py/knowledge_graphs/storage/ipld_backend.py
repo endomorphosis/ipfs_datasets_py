@@ -20,6 +20,14 @@ except ImportError:
     HAVE_ROUTER = False
     RouterDeps = None  # type: ignore
 
+# Import custom exceptions
+from ..exceptions import (
+    StorageError,
+    IPLDStorageError,
+    SerializationError,
+    DeserializationError
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -197,27 +205,47 @@ class IPLDBackend:
         pin = pin if pin is not None else self.pin_by_default
         backend = self._get_backend()
         
-        # Convert data to bytes
-        if isinstance(data, str):
-            data_bytes = data.encode('utf-8')
-        elif isinstance(data, (dict, list)):
-            data_bytes = json.dumps(data, separators=(',', ':')).encode('utf-8')
-        elif isinstance(data, bytes):
-            data_bytes = data
-        else:
-            raise TypeError(f"Unsupported data type: {type(data)}")
-        
-        # Store using ipfs_backend_router
-        if codec == "raw":
-            cid = backend.add_bytes(data_bytes, pin=pin)
-        else:
-            # Use block_put for dag-json and other codecs
-            cid = backend.block_put(data_bytes, codec=codec)
-            if pin:
-                backend.pin(cid)
-        
-        logger.debug("Stored data with CID: %s (pinned=%s)", cid, pin)
-        return cid
+        try:
+            # Convert data to bytes
+            if isinstance(data, str):
+                data_bytes = data.encode('utf-8')
+            elif isinstance(data, (dict, list)):
+                data_bytes = json.dumps(data, separators=(',', ':')).encode('utf-8')
+            elif isinstance(data, bytes):
+                data_bytes = data
+            else:
+                raise TypeError(f"Unsupported data type: {type(data)}")
+            
+            # Store using ipfs_backend_router
+            if codec == "raw":
+                cid = backend.add_bytes(data_bytes, pin=pin)
+            else:
+                # Use block_put for dag-json and other codecs
+                cid = backend.block_put(data_bytes, codec=codec)
+                if pin:
+                    backend.pin(cid)
+            
+            logger.debug("Stored data with CID: %s (pinned=%s)", cid, pin)
+            return cid
+            
+        except (json.JSONDecodeError, TypeError, UnicodeEncodeError) as e:
+            logger.error(f"Failed to serialize data: {e}")
+            raise SerializationError(
+                f"Failed to serialize data for IPFS storage: {e}",
+                details={'data_type': type(data).__name__, 'codec': codec}
+            ) from e
+        except (ConnectionError, TimeoutError, OSError) as e:
+            logger.error(f"IPFS connection error: {e}")
+            raise IPLDStorageError(
+                f"IPFS connection failed: {e}",
+                details={'backend': self.backend_name, 'operation': 'store'}
+            ) from e
+        except Exception as e:
+            logger.error(f"Failed to store on IPFS: {e}")
+            raise StorageError(
+                f"Failed to store data on IPFS: {e}",
+                details={'backend': self.backend_name, 'codec': codec}
+            ) from e
     
     def retrieve(self, cid: str) -> bytes:
         """
@@ -244,10 +272,35 @@ class IPLDBackend:
         try:
             # Try block_get first (works for all codecs)
             data = backend.block_get(cid)
+        except (AttributeError, KeyError) as e:
+            logger.debug("block_get failed (expected), trying cat: %s", e)
+            # Fallback to cat for compatibility
+            try:
+                data = backend.cat(cid)
+            except (ConnectionError, TimeoutError, OSError) as e:
+                logger.error(f"IPFS connection error retrieving {cid}: {e}")
+                raise IPLDStorageError(
+                    f"IPFS connection failed: {e}",
+                    details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
+                ) from e
+            except Exception as e:
+                logger.error(f"Failed to retrieve CID {cid}: {e}")
+                raise StorageError(
+                    f"Failed to retrieve data from IPFS: {e}",
+                    details={'backend': self.backend_name, 'cid': cid}
+                ) from e
+        except (ConnectionError, TimeoutError, OSError) as e:
+            logger.error(f"IPFS connection error: {e}")
+            raise IPLDStorageError(
+                f"IPFS connection failed: {e}",
+                details={'backend': self.backend_name, 'cid': cid}
+            ) from e
         except Exception as e:
-            logger.debug("block_get failed, trying cat: %s", e)
-            # Fallback to cat
-            data = backend.cat(cid)
+            logger.error(f"Failed to retrieve from IPFS: {e}")
+            raise StorageError(
+                f"Failed to retrieve data from IPFS: {e}",
+                details={'backend': self.backend_name, 'cid': cid}
+            ) from e
         
         # Store in cache
         if self._cache:
