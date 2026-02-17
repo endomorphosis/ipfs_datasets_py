@@ -6,6 +6,7 @@ using natural language queries. It combines:
 - Knowledge base lookup (federal/state/local entities)
 - Search term generation (optimized for Brave Search API)
 - Result aggregation and filtering
+- Query result caching for performance
 
 Example:
     >>> from ipfs_datasets_py.processors.legal_scrapers.brave_legal_search import BraveLegalSearch
@@ -13,7 +14,7 @@ Example:
     >>> # Initialize
     >>> searcher = BraveLegalSearch(api_key="your_brave_api_key")
     >>> 
-    >>> # Search with natural language
+    >>> # Search with natural language (uses cache if available)
     >>> results = searcher.search("EPA regulations on water pollution in California")
     >>> 
     >>> # View results
@@ -26,6 +27,8 @@ from typing import Dict, List, Optional, Any
 from pathlib import Path
 import json
 import os
+import hashlib
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +70,16 @@ class BraveLegalSearch:
         self,
         api_key: Optional[str] = None,
         knowledge_base_dir: Optional[str] = None,
-        cache_enabled: bool = True
+        cache_enabled: bool = True,
+        cache_ttl: int = 3600  # 1 hour default
     ):
         """Initialize the Brave Legal Search system.
         
         Args:
             api_key: Brave Search API key (or set BRAVE_API_KEY env var)
             knowledge_base_dir: Directory containing JSONL files (default: same as this module)
-            cache_enabled: Whether to enable search result caching
+            cache_enabled: Whether to enable query result caching (default: True)
+            cache_ttl: Cache time-to-live in seconds (default: 3600 = 1 hour)
         """
         # Initialize knowledge base
         if knowledge_base_dir is None:
@@ -109,6 +114,11 @@ class BraveLegalSearch:
                     logger.warning(f"Failed to initialize Brave Search client: {e}")
         else:
             logger.warning("Brave Search client not available - limited functionality")
+        
+        # Initialize query result cache
+        self.cache_enabled = cache_enabled
+        self.cache_ttl = cache_ttl
+        self._query_cache: Dict[str, Dict[str, Any]] = {}
     
     def search(
         self,
@@ -134,8 +144,19 @@ class BraveLegalSearch:
                 - search_terms: Generated search terms
                 - results: Search results (if execute_search=True)
                 - metadata: Additional metadata
+                - cache_hit: Whether results came from cache
         """
         logger.info(f"Processing query: {query}")
+        
+        # Check cache first
+        cache_key = None
+        if self.cache_enabled and execute_search:
+            cache_key = self._generate_cache_key(query, max_results, country, lang)
+            cached_result = self._get_from_cache(cache_key)
+            if cached_result:
+                logger.info(f"Cache hit for query: {query}")
+                cached_result['cache_hit'] = True
+                return cached_result
         
         # Step 1: Process query intent
         intent = self.query_processor.process(query)
@@ -164,7 +185,8 @@ class BraveLegalSearch:
             'metadata': {
                 'kb_stats': self.knowledge_base.get_statistics(),
                 'brave_client_available': self.brave_client is not None
-            }
+            },
+            'cache_hit': False
         }
         
         # Step 3: Execute search if requested and client available
@@ -207,6 +229,10 @@ class BraveLegalSearch:
         
         elif execute_search and not self.brave_client:
             result['error'] = "Brave Search client not available - set BRAVE_API_KEY environment variable"
+        
+        # Cache the result if caching is enabled
+        if self.cache_enabled and execute_search and cache_key:
+            self._add_to_cache(cache_key, result)
         
         return result
     
@@ -337,6 +363,89 @@ class BraveLegalSearch:
             return {'municipal': self.knowledge_base.search_municipal(query)}
         else:
             return self.knowledge_base.search_all(query)
+    
+    def _generate_cache_key(self, query: str, max_results: int, country: str, lang: str) -> str:
+        """Generate a cache key for a query.
+        
+        Args:
+            query: Query string
+            max_results: Max results
+            country: Country code
+            lang: Language code
+            
+        Returns:
+            Cache key string
+        """
+        # Create a unique key based on query parameters
+        key_data = f"{query}:{max_results}:{country}:{lang}"
+        return hashlib.md5(key_data.encode()).hexdigest()
+    
+    def _get_from_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
+        """Get a result from cache if available and not expired.
+        
+        Args:
+            cache_key: Cache key
+            
+        Returns:
+            Cached result or None
+        """
+        if cache_key not in self._query_cache:
+            return None
+        
+        cached = self._query_cache[cache_key]
+        
+        # Check if expired
+        if time.time() - cached['timestamp'] > self.cache_ttl:
+            # Remove expired entry
+            del self._query_cache[cache_key]
+            return None
+        
+        return cached['result']
+    
+    def _add_to_cache(self, cache_key: str, result: Dict[str, Any]) -> None:
+        """Add a result to the cache.
+        
+        Args:
+            cache_key: Cache key
+            result: Result to cache
+        """
+        self._query_cache[cache_key] = {
+            'result': result,
+            'timestamp': time.time()
+        }
+    
+    def clear_cache(self) -> int:
+        """Clear the query result cache.
+        
+        Returns:
+            Number of entries cleared
+        """
+        count = len(self._query_cache)
+        self._query_cache.clear()
+        logger.info(f"Cleared {count} cache entries")
+        return count
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get cache statistics.
+        
+        Returns:
+            Dict with cache statistics
+        """
+        total_entries = len(self._query_cache)
+        expired_entries = 0
+        current_time = time.time()
+        
+        for cached in self._query_cache.values():
+            if current_time - cached['timestamp'] > self.cache_ttl:
+                expired_entries += 1
+        
+        return {
+            'enabled': self.cache_enabled,
+            'total_entries': total_entries,
+            'expired_entries': expired_entries,
+            'active_entries': total_entries - expired_entries,
+            'cache_ttl': self.cache_ttl
+        }
 
 
 def create_legal_search(
