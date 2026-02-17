@@ -7,12 +7,14 @@ extracting key information needed to generate effective search terms:
 - Entity mentions (agencies, departments)
 - Legal domains (housing, employment, civil rights, etc.)
 
-It leverages the complaint_analysis module for keyword extraction and categorization.
+It leverages shared components from the common module for keyword extraction
+and categorization.
 
 SHARED COMPONENTS:
-This module uses shared components from complaint_analysis:
+This module uses shared components from common/:
 - get_keywords() - Legal domain keyword registry (see ../SHARED_COMPONENTS.md)
 - LegalPatternExtractor - Legal concept and pattern extraction
+- get_registered_types() - Complaint type registry
 These components are shared across multiple systems in legal_scrapers.
 """
 
@@ -23,19 +25,31 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
-# Import complaint analysis components for reuse
+# Import shared components from common/ module
 # NOTE: These are SHARED components used by multiple systems in legal_scrapers.
 # See ../SHARED_COMPONENTS.md for documentation on shared component usage.
 try:
-    from .complaint_analysis import (
+    from .common import (
         get_keywords,           # Shared: Legal domain keyword registry
         get_registered_types,   # Shared: List of all registered complaint types
         LegalPatternExtractor   # Shared: Legal pattern and concept extraction
     )
-    HAVE_COMPLAINT_ANALYSIS = True
+    HAVE_SHARED_COMPONENTS = True
 except ImportError:
-    HAVE_COMPLAINT_ANALYSIS = False
-    logger.warning("complaint_analysis module not available for query processing")
+    HAVE_SHARED_COMPONENTS = False
+    logger.warning("common/ shared components not available for query processing")
+
+# Backward compatibility: try complaint_analysis if common/ not found
+if not HAVE_SHARED_COMPONENTS:
+    try:
+        from .complaint_analysis import (
+            get_keywords,
+            get_registered_types,
+            LegalPatternExtractor
+        )
+        HAVE_SHARED_COMPONENTS = True
+    except ImportError:
+        logger.error("Neither common/ nor complaint_analysis available")
 
 
 # US state codes and names

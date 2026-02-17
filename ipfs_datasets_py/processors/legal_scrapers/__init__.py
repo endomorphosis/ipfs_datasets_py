@@ -140,6 +140,15 @@ except ImportError:
     CommonCrawlIndexLoader = None
     HAVE_CC_INDEX_LOADER = False
 
+# Shared components module (NEW - Enhancement 7)
+# These components are used by both Brave Legal Search and Complaint Analysis
+try:
+    from . import common
+    HAVE_COMMON_MODULE = True
+except ImportError:
+    common = None
+    HAVE_COMMON_MODULE = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -224,4 +233,8 @@ __all__ = [
     # Common Crawl Index Loader (NEW)
     "CommonCrawlIndexLoader",
     "HAVE_CC_INDEX_LOADER",
+    
+    # Shared components module (NEW - Enhancement 7)
+    "common",
+    "HAVE_COMMON_MODULE",
 ]

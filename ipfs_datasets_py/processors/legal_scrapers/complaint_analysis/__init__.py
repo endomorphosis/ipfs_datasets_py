@@ -20,26 +20,40 @@ Example:
     >>> analyzer = ComplaintAnalyzer(complaint_type='housing')
     >>> result = analyzer.analyze(document_text)
     >>> print(f"Risk: {result['risk_level']}, Categories: {result['categories']}")
+
+Note:
+    Shared components (keywords, legal_patterns, base, complaint_types) have been
+    extracted to legal_scrapers/common/ for reuse by Brave Legal Search.
+    They are re-exported here for full backward compatibility.
 """
 
+# Import shared components from common/ (re-exported for backward compatibility)
+from ..common import (
+    get_keywords,
+    get_type_specific_keywords,
+    register_keywords,
+    COMPLAINT_KEYWORDS,
+    LegalPatternExtractor,
+    BaseComplaintAnalyzer as BaseKeywordRegistry,  # Alias for backward compat
+    BaseRiskScorer,
+    get_registered_types,
+)
+
+# Import local implementations that wrap or use common components
 from .base import (
     BaseLegalPatternExtractor,
-    BaseKeywordRegistry,
-    BaseRiskScorer
 )
+
+# Re-import to maintain existing import paths
 from .legal_patterns import (
-    LegalPatternExtractor, 
     LEGAL_TERMS_REGISTRY, 
     COMPLAINT_LEGAL_TERMS,
     register_legal_terms,
     get_legal_terms
 )
+
 from .keywords import (
     KeywordRegistry,
-    get_keywords,
-    get_type_specific_keywords,
-    register_keywords,
-    COMPLAINT_KEYWORDS,
     EVIDENCE_KEYWORDS,
     LEGAL_AUTHORITY_KEYWORDS,
     APPLICABILITY_KEYWORDS
