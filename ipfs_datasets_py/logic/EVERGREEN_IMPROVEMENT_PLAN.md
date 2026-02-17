@@ -16,10 +16,14 @@ This document is intentionally **never “done”**. It defines continuous loops
 
 This plan is an index + prioritization layer over existing detail documents:
 
-- `IMPROVEMENT_TODO.md` — long-form backlog and acceptance criteria
-- `COMPREHENSIVE_REFACTORING_PLAN.md` — narrative refactor program and doc consolidation strategy
-- `PROJECT_STATUS.md` — current status snapshot (may need periodic verification)
+- `VERIFIED_STATUS_REPORT_2026.md` — verified current status (single source of truth)
+- `PROJECT_STATUS.md` — current status snapshot (will be updated with verified metrics)
 - `ARCHITECTURE.md`, `FEATURES.md`, `KNOWN_LIMITATIONS.md`, `MIGRATION_GUIDE.md`
+- `integration/TODO.md` — integration-specific Phase 2 tasks
+
+**Archived (Historical Reference Only):**
+- `docs/archive/planning/ARCHIVED_IMPROVEMENT_TODO.md` — original long-form backlog
+- `docs/archive/planning/ARCHIVED_COMPREHENSIVE_REFACTORING_PLAN.md` — original refactor program
 
 ## Guardrails (Non-Negotiable)
 
