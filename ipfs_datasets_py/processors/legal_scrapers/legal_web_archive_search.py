@@ -51,7 +51,7 @@ except ImportError:
 
 # Import web archiving components
 try:
-    from ipfs_datasets_py.web_archiving.web_archive import WebArchive
+    from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchive
     HAVE_WEB_ARCHIVE = True
 except ImportError:
     HAVE_WEB_ARCHIVE = False

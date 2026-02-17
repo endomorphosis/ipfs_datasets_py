@@ -6,7 +6,7 @@ import os
 # assert os.path.exists('web_archive.py'), "web_archive.py does not exist at the specified directory."
 # assert os.path.exists('web_archive_stubs.md'), "Documentation for web_archive.py does not exist at the specified directory."
 
-from ipfs_datasets_py.web_archiving.web_archive import (
+from ipfs_datasets_py.processors.web_archiving.web_archive import (
     WebArchive,
     WebArchiveProcessor,
     _is_valid_http_url,

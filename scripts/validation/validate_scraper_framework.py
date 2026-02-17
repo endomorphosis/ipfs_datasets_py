@@ -19,7 +19,7 @@ def test_imports():
     print("=" * 70)
     
     try:
-        from ipfs_datasets_py.web_archiving.scraper_testing_framework import (
+        from ipfs_datasets_py.processors.web_archiving.scraper_testing_framework import (
             ScraperDomain,
             ScraperValidator,
             ScraperTestResult,

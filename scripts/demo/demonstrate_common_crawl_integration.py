@@ -17,7 +17,7 @@ def demo_local_mode():
     print("=" * 60)
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # Initialize in local mode (default)
         print("\n1. Initializing CommonCrawlSearchEngine in local mode...")
@@ -51,7 +51,7 @@ def demo_remote_mode():
     print("=" * 60)
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # Initialize in remote mode (requires MCP server)
         print("\n1. Initializing CommonCrawlSearchEngine in remote mode...")
@@ -84,7 +84,7 @@ def demo_cli_mode():
     print("=" * 60)
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         print("\n1. Initializing CommonCrawlSearchEngine in CLI mode...")
         engine = CommonCrawlSearchEngine(mode="cli")

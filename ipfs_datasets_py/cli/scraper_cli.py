@@ -34,7 +34,7 @@ import anyio
 from pathlib import Path
 from typing import List
 
-from ipfs_datasets_py.web_archiving.unified_web_scraper import (
+from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     UnifiedWebScraper,
     ScraperConfig,
     ScraperMethod,

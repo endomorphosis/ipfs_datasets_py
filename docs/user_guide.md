@@ -366,7 +366,7 @@ IPFS Datasets Python provides comprehensive web scraping and archiving capabilit
 Archive websites directly to IPFS with decentralized access:
 
 ```python
-from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive_utils import WebArchiveProcessor
 
 processor = WebArchiveProcessor()
 
@@ -940,7 +940,7 @@ For additional examples and tutorials, check out the `examples/` directory in th
   # Correct imports
   from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
   from ipfs_datasets_py.caching.cache import GitHubAPICache
-  from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+  from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
   ```
 
 ### Error Handling

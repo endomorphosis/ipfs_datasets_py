@@ -151,7 +151,7 @@ The system is ready for production use with:
   # Correct imports
   from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
   from ipfs_datasets_py.caching.cache import GitHubAPICache
-  from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+  from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
   ```
 
 ### Error Handling

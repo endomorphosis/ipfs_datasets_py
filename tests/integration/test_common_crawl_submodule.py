@@ -28,7 +28,7 @@ class TestCommonCrawlIntegration:
         """Test that the integration module can be imported."""
         # GIVEN the ipfs_datasets_py package
         # WHEN importing the common_crawl_integration module
-        from ipfs_datasets_py.web_archiving import common_crawl_integration
+        from ipfs_datasets_py.processors.web_archiving import common_crawl_integration
         
         # THEN the module should be imported successfully
         assert common_crawl_integration is not None
@@ -39,7 +39,7 @@ class TestCommonCrawlIntegration:
         """Test that the CommonCrawlSearchEngine class can be imported."""
         # GIVEN the web_archiving module
         # WHEN importing CommonCrawlSearchEngine
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # THEN the class should be imported successfully
         assert CommonCrawlSearchEngine is not None
@@ -47,7 +47,7 @@ class TestCommonCrawlIntegration:
     def test_create_search_engine_function(self):
         """Test the create_search_engine convenience function."""
         # GIVEN the web_archiving module
-        from ipfs_datasets_py.web_archiving import create_search_engine
+        from ipfs_datasets_py.processors.web_archiving import create_search_engine
         
         # WHEN creating a search engine instance
         engine = create_search_engine()
@@ -62,7 +62,7 @@ class TestCommonCrawlIntegration:
     def test_search_engine_initialization(self):
         """Test CommonCrawlSearchEngine initialization."""
         # GIVEN the CommonCrawlSearchEngine class
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # WHEN initializing with default parameters
         engine = CommonCrawlSearchEngine()

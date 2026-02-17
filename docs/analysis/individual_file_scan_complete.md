@@ -49,16 +49,16 @@ Created custom Python script to scan ALL 300 files for:
    - Updated: File path reference with deprecation note
 
 6. `docs/comprehensive_web_scraping_guide.md`
-   - Updated: `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated: `from ipfs_datasets_py.processors.web_archiving.web_archive_utils` → `from ipfs_datasets_py.processors.web_archiving.web_archive_utils`
 
 7. `docs/migration_docs/MODULE_CREATION_SUMMARY.md`
-   - Updated: `from ipfs_datasets_py.web_archiving.web_archive` → `from ipfs_datasets_py.web_archiving.web_archive`
+   - Updated: `from ipfs_datasets_py.processors.web_archiving.web_archive` → `from ipfs_datasets_py.processors.web_archiving.web_archive`
 
 8. `docs/user_guide.md`
-   - Updated: `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated: `from ipfs_datasets_py.processors.web_archiving.web_archive_utils` → `from ipfs_datasets_py.processors.web_archiving.web_archive_utils`
 
 9. `docs/tutorials/web_archive_tutorial.md`
-   - Updated (2x): `from ipfs_datasets_py.web_archiving.web_archive_utils` → `from ipfs_datasets_py.web_archiving.web_archive_utils`
+   - Updated (2x): `from ipfs_datasets_py.processors.web_archiving.web_archive_utils` → `from ipfs_datasets_py.processors.web_archiving.web_archive_utils`
 
 ### Batch 3 (Commit 73f3628) - 9 files
 10. `docs/GITHUB_ACTIONS_INFRASTRUCTURE.md`
@@ -94,7 +94,7 @@ Created custom Python script to scan ALL 300 files for:
 - ✅ `from ipfs_datasets_py.dashboards.mcp_dashboard` → `from ipfs_datasets_py.dashboards.mcp_dashboard` (2 files)
 - ✅ `from ipfs_datasets_py.caching.cache` → `from ipfs_datasets_py.caching.cache` (2 files, 11 instances)
 - ✅ `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` → `from ipfs_datasets_py.p2p_networking.p2p_peer_registry` (1 file, 4 instances)
-- ✅ `from ipfs_datasets_py.web_archiving.web_archive*` → `from ipfs_datasets_py.web_archiving.web_archive*` (4 files, 5 instances)
+- ✅ `from ipfs_datasets_py.processors.web_archiving.web_archive*` → `from ipfs_datasets_py.processors.web_archiving.web_archive*` (4 files, 5 instances)
 - ✅ `from ipfs_datasets_py.p2p_networking.libp2p_kit` → `from ipfs_datasets_py.p2p_networking.libp2p_kit` (2 files, 5 instances)
 
 ### File Path Updates

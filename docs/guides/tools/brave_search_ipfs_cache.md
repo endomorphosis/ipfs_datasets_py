@@ -85,7 +85,7 @@ export BRAVE_SEARCH_IPFS_INDEX_PATH=/path/to/index.json
 ### Python API
 
 ```python
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 # Initialize client with IPFS caching enabled
 # (requires BRAVE_SEARCH_IPFS_CACHE=1 environment variable)
@@ -113,7 +113,7 @@ pins = client.ipfs_cache_list_pins()  # List all pins
 ### Direct IPFS Cache API
 
 ```python
-from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache
+from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache
 
 # Initialize IPFS cache
 cache = BraveSearchIPFSCache()
@@ -170,7 +170,7 @@ import os
 os.environ["BRAVE_SEARCH_IPFS_CACHE"] = "1"
 os.environ["BRAVE_SEARCH_IPFS_PIN"] = "1"
 
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 client = BraveSearchClient()
 results = client.search("test")  # Uses IPFS cache
@@ -354,7 +354,7 @@ export BRAVE_SEARCH_IPFS_PIN=1
 
 # Archive search results permanently
 python -c "
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 client = BraveSearchClient()
 
 # These results will be pinned and archived
@@ -364,7 +364,7 @@ for topic in ['AI', 'quantum computing', 'CRISPR']:
 "
 
 # List archived searches
-from ipfs_datasets_py.web_archiving import BraveSearchIPFSCache
+from ipfs_datasets_py.processors.web_archiving import BraveSearchIPFSCache
 cache = BraveSearchIPFSCache()
 pins = cache.list_pins()
 print(f"Total pinned entries: {pins['count']}")
@@ -391,7 +391,7 @@ ipfs id
 
 **Check**:
 ```python
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 client = BraveSearchClient()
 stats = client.ipfs_cache_stats()

@@ -76,14 +76,14 @@ All imports have been updated to reflect the new structure:
 from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
 from ipfs_datasets_py.caching.cache import GitHubAPICache
 from ipfs_datasets_py.cli.discord_cli import main
-from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
 from ipfs_datasets_py.knowledge_graph_extraction import Entity
 
 # ✅ NEW (After Refactoring)
 from ipfs_datasets_py.dashboards.mcp_dashboard import MCPDashboard
 from ipfs_datasets_py.caching.cache import GitHubAPICache
 from ipfs_datasets_py.cli.discord_cli import main
-from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
 from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity
 ```
 

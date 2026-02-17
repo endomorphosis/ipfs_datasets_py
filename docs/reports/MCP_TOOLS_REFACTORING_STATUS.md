@@ -65,7 +65,7 @@ async def mcp_tool_function(**kwargs):
 5. **`legal_dataset_tools/`** ✅ - Imports from `ipfs_datasets_py.legal_scrapers`
 6. **`embedding_tools/`** ✅ - Imports from `ipfs_datasets_py.embeddings.core`
 7. **`graph_tools/`** ✅ - Imports from `ipfs_datasets_py.processors.graphrag_processor`
-8. **`web_archive_tools/`** ✅ - Imports from `ipfs_datasets_py.web_archiving.web_archive`
+8. **`web_archive_tools/`** ✅ - Imports from `ipfs_datasets_py.processors.web_archiving.web_archive`
 9. **`ipfs_tools/`** ✅ - Imports from `ipfs_kit_py`
 10. **`dataset_tools/`** ✅ - Imports from Hugging Face `datasets`
 11. **`pdf_tools/`** ✅ - Imports from `ipfs_datasets_py.pdf_processing`

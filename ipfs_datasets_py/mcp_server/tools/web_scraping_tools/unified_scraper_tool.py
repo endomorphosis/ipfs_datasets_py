@@ -8,7 +8,7 @@ allowing AI assistants to scrape web content with automatic fallback mechanisms.
 import logging
 from typing import Dict, List, Optional, Any, Literal
 
-from ipfs_datasets_py.web_archiving.unified_web_scraper import (
+from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
     UnifiedWebScraper,
     ScraperConfig,
     ScraperMethod,

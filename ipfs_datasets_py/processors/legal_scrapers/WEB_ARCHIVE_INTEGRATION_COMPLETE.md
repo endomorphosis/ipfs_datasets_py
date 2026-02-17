@@ -284,7 +284,7 @@ Unified results include:
 - Standard Python libraries
 
 ### Optional (Enhanced Features)
-- `ipfs_datasets_py.web_archiving.web_archive` - For archiving results
+- `ipfs_datasets_py.processors.web_archiving.web_archive` - For archiving results
 - `cdx_toolkit` - For Common Crawl searches
 - `requests` - For HTTP requests
 

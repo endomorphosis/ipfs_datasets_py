@@ -69,7 +69,7 @@ async def test_web_archive_tools():
             return {"status": "success", "message": "Metadata extracted (mock)", "metadata": {"title": "Example Page", "description": "Sample description"}}
 
     # Modify the original WebArchiveProcessor to use our mock
-    import ipfs_datasets_py.web_archiving.web_archive_utils
+    import ipfs_datasets_py.processors.web_archiving.web_archive_utils
     original_processor = ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor
     ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor = MockWebArchiveProcessor
 

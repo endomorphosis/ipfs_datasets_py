@@ -244,7 +244,7 @@ theorem = await logic.create_theorem(rules)
 
 **With Common Crawl:**
 ```python
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 cc_engine = CommonCrawlSearchEngine()
 results = await cc_engine.search_domain("www.federalregister.gov")

@@ -38,7 +38,7 @@ async def search_common_crawl_advanced(
             - error: Error message (if failed)
     """
     try:
-        from ipfs_datasets_py.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
         
         # Initialize search engine
         engine = CommonCrawlSearchEngine(master_db_path=master_db_path)
@@ -103,7 +103,7 @@ async def fetch_warc_record_advanced(
             - error: Error message (if failed)
     """
     try:
-        from ipfs_datasets_py.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
         
         # Initialize search engine
         engine = CommonCrawlSearchEngine()
@@ -162,7 +162,7 @@ async def list_common_crawl_collections_advanced() -> Dict[str, Any]:
             - error: Error message (if failed)
     """
     try:
-        from ipfs_datasets_py.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
         
         # Initialize search engine
         engine = CommonCrawlSearchEngine()
@@ -208,7 +208,7 @@ async def get_common_crawl_collection_info_advanced(
             - error: Error message (if failed)
     """
     try:
-        from ipfs_datasets_py.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving.common_crawl_integration import CommonCrawlSearchEngine
         
         # Initialize search engine
         engine = CommonCrawlSearchEngine()

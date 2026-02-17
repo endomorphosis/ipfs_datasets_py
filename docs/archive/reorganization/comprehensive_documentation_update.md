@@ -113,8 +113,8 @@ from ipfs_datasets_py.knowledge_graphs.knowledge_graph_extraction import Entity
 from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import LineageTracker
 
 # Web Archiving
-from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
-from ipfs_datasets_py.web_archiving.unified_web_scraper import UnifiedScraper
+from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
+from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedScraper
 
 # P2P Networking
 from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import P2PWorkflowScheduler

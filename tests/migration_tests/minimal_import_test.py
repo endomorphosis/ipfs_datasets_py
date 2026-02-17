@@ -14,10 +14,10 @@ print("=== MINIMAL IMPORT TEST ===")
 # Test 1: Direct module import without going through __init__.py
 print("Testing direct web_archive import...")
 try:
-    import ipfs_datasets_py.web_archiving.web_archive_utils
+    import ipfs_datasets_py.processors.web_archiving.web_archive_utils
     print("✓ web_archive module imported")
 
-    from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+    from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
     print("✓ WebArchiveProcessor class imported")
 
     processor = WebArchiveProcessor()

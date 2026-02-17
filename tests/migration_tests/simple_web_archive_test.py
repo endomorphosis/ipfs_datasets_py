@@ -16,7 +16,7 @@ def test_web_archive_integration():
 
     # Test basic functionality first
     try:
-        from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+        from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
         processor = WebArchiveProcessor()
         print("✓ WebArchiveProcessor imported successfully")
 

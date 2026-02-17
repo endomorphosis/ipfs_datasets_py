@@ -56,7 +56,7 @@
 
 #### `__init__.py` ✅
 - **Added import statements** for new modules:
-  - `from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor`
+  - `from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor`
   - `from ipfs_datasets_py.vector_tools import VectorSimilarityCalculator`
   - `from ipfs_datasets_py.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor`
 - **Added feature flags**:
@@ -112,7 +112,7 @@ ipfs_datasets_py/
 
 ### Web Archive Processing
 ```python
-from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
 
 processor = WebArchiveProcessor()
 html = "<html><body><h1>Title</h1><p>Content</p></body></html>"

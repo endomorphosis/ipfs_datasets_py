@@ -298,9 +298,9 @@ from ipfs_datasets_py.simple_crawler import SimpleWebCrawler
 from ipfs_datasets_py.unified_web_scraper import UnifiedScraper
 
 # New
-from ipfs_datasets_py.web_archiving.web_archive import create_web_archive, WebArchive
-from ipfs_datasets_py.web_archiving.simple_crawler import SimpleWebCrawler
-from ipfs_datasets_py.web_archiving.unified_web_scraper import UnifiedScraper
+from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive, WebArchive
+from ipfs_datasets_py.processors.web_archiving.simple_crawler import SimpleWebCrawler
+from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import UnifiedScraper
 ```
 
 ### P2P Networking
@@ -399,7 +399,7 @@ All new module structures have been tested:
 ```bash
 ✓ from ipfs_datasets_py.data_transformation import car_conversion
 ✓ from ipfs_datasets_py.knowledge_graphs import knowledge_graph_extraction
-✓ from ipfs_datasets_py.web_archiving import web_archive
+✓ from ipfs_datasets_py.processors.web_archiving import web_archive
 ✓ from ipfs_datasets_py.p2p_networking import p2p_workflow_scheduler
 ✓ from ipfs_datasets_py.reasoning import deontological_reasoning
 ✓ from ipfs_datasets_py.data_transformation.ipfs_formats import ipfs_multiformats

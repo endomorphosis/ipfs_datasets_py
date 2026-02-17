@@ -24,7 +24,7 @@ async def demo_basic_web_scraping():
     print("="*70)
     
     try:
-        from ipfs_datasets_py.web_archiving import WebTextExtractor
+        from ipfs_datasets_py.processors.web_archiving import WebTextExtractor
         
         print("\n🌐 Initializing web scraper...")
         extractor = WebTextExtractor()
@@ -63,7 +63,7 @@ async def demo_unified_web_scraper():
     print("   Multi-strategy scraping with fallbacks")
     
     example_code = '''
-from ipfs_datasets_py.web_archiving import UnifiedWebScraper
+from ipfs_datasets_py.processors.web_archiving import UnifiedWebScraper
 
 scraper = UnifiedWebScraper(
     strategies=["beautifulsoup", "selenium", "requests"],
@@ -109,7 +109,7 @@ async def demo_brave_search():
     
     example_code = '''
 import os
-from ipfs_datasets_py.web_archiving import BraveSearchClient
+from ipfs_datasets_py.processors.web_archiving import BraveSearchClient
 
 # Set API key
 os.environ['BRAVE_API_KEY'] = 'your_api_key_here'
@@ -158,7 +158,7 @@ async def demo_common_crawl():
     print("   Access billions of archived web pages")
     
     example_code = '''
-from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
 
 engine = CommonCrawlSearchEngine()
 
@@ -203,7 +203,7 @@ async def demo_wayback_machine():
     print("\n⏰ Wayback Machine Access")
     
     example_code = '''
-from ipfs_datasets_py.web_archiving import WaybackMachineClient
+from ipfs_datasets_py.processors.web_archiving import WaybackMachineClient
 
 client = WaybackMachineClient()
 
@@ -301,7 +301,7 @@ async def demo_scraper_framework():
     print("\n🧪 Scraper Testing & Validation")
     
     example_code = '''
-from ipfs_datasets_py.web_archiving import ScraperTestingFramework
+from ipfs_datasets_py.processors.web_archiving import ScraperTestingFramework
 
 framework = ScraperTestingFramework()
 

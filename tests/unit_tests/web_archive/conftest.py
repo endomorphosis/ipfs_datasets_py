@@ -24,7 +24,7 @@ try:
 except ImportError as e:
     raise ImportError(f"Required module not found: {e.name}.")
 
-from ipfs_datasets_py.web_archiving.web_archive import (
+from ipfs_datasets_py.processors.web_archiving.web_archive import (
     WebArchive, 
     WebArchiveProcessor, 
     create_web_archive,

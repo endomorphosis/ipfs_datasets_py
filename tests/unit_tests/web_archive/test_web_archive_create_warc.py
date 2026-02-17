@@ -1,6 +1,6 @@
 import pytest
 
-from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
 
 
 class TestWebArchiveProcessorCreateWarc:
@@ -67,7 +67,7 @@ class TestWebArchiveProcessorCreateWarc:
             - Return dict contains urls list matching input
         """
         try:
-            from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+            from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
             from datetime import datetime
             
             processor = WebArchiveProcessor()
@@ -102,7 +102,7 @@ class TestWebArchiveProcessorCreateWarc:
             - Return dict contains creation_date in ISO 8601 format
         """
         try:
-            from ipfs_datasets_py.web_archiving.web_archive import WebArchiveProcessor
+            from ipfs_datasets_py.processors.web_archiving.web_archive import WebArchiveProcessor
             from datetime import datetime
             import re
             

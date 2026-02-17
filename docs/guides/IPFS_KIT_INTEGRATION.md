@@ -259,7 +259,7 @@ embeddings = manager.load_embeddings(cid)
 Store web scraping results:
 
 ```python
-from ipfs_datasets_py.web_archiving import WebArchiveProcessor
+from ipfs_datasets_py.processors.web_archiving import WebArchiveProcessor
 
 processor = WebArchiveProcessor()
 

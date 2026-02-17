@@ -33,7 +33,7 @@ from typing import Dict, List, Optional, Any
 from pathlib import Path
 
 from .brave_legal_search import BraveLegalSearch
-from ipfs_datasets_py.web_archiving.search_engines import (
+from ipfs_datasets_py.processors.web_archiving.search_engines import (
     MultiEngineOrchestrator,
     OrchestratorConfig,
     SearchEngineConfig,

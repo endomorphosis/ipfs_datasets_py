@@ -178,7 +178,7 @@ from ipfs_datasets_py.mcp_server.tools.web_archive_tools import (...)
 # ✅ Correct MCP import path
 
 # Alternative direct import noted
-from ipfs_datasets_py.web_archiving.web_archive import create_web_archive
+from ipfs_datasets_py.processors.web_archiving.web_archive import create_web_archive
 # ✅ Correct reorganized import path
 ```
 
@@ -362,7 +362,7 @@ from ipfs_datasets_py.rag import GraphRAGQueryEngine
 **Patterns verified:**
 - `from ipfs_datasets_py.dashboards.*` ✅
 - `from ipfs_datasets_py.caching.*` ✅
-- `from ipfs_datasets_py.web_archiving.*` ✅
+- `from ipfs_datasets_py.processors.web_archiving.*` ✅
 - `from ipfs_datasets_py.p2p_networking.*` ✅
 - `from ipfs_datasets_py.integrations.*` ✅
 - `from ipfs_datasets_py.mcp_server.*` ✅

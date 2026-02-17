@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 # Try to import comprehensive web scraping system
 try:
-    from ipfs_datasets_py.web_archiving.unified_web_scraper import (
+    from ipfs_datasets_py.processors.web_archiving.unified_web_scraper import (
         UnifiedWebScraper, ScraperConfig, ScraperMethod
     )
     WEB_SCRAPER_AVAILABLE = True

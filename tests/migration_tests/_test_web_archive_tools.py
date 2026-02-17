@@ -26,7 +26,7 @@ try:
         create_warc, index_warc, extract_dataset_from_cdxj,
         extract_text_from_warc, extract_links_from_warc, extract_metadata_from_warc
     )
-    from ipfs_datasets_py.web_archiving.web_archive_utils import WebArchiveProcessor
+    from ipfs_datasets_py.processors.web_archiving.web_archive_utils import WebArchiveProcessor
     print("Successfully imported web archive tools")
     WEB_ARCHIVE_TOOLS_AVAILABLE = True
 except ImportError as e:
@@ -62,44 +62,44 @@ class WebArchiveToolsTest(unittest.TestCase):
 
     # Sync wrapper methods for unittest  
     @pytest.mark.skip(reason="Async test method - use pytest directly")
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_create_warc_sync(self, mock_processor_class):
         """Sync wrapper for test_create_warc."""
         pass
 
     @pytest.mark.skip(reason="Async test method - use pytest directly")
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_index_warc_sync(self, mock_processor_class):
         """Sync wrapper for test_index_warc."""
         pass
 
     @pytest.mark.skip(reason="Async test method - use pytest directly")
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_extract_dataset_from_cdxj_sync(self, mock_processor_class):
         """Sync wrapper for test_extract_dataset_from_cdxj."""
         pass
 
     @pytest.mark.skip(reason="Async test method - use pytest directly")
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_extract_text_from_warc_sync(self, mock_processor_class):
         """Sync wrapper for test_extract_text_from_warc."""
         pass
 
     @pytest.mark.skip(reason="Async test method - use pytest directly")  
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_extract_links_from_warc_sync(self, mock_processor_class):
         """Sync wrapper for test_extract_links_from_warc."""
         pass
 
     @pytest.mark.skip(reason="Async test method - use pytest directly")
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     def test_extract_metadata_from_warc_sync(self, mock_processor_class):
         """Sync wrapper for test_extract_metadata_from_warc."""
         pass
 
     # Async test implementations
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_create_warc_async(self, mock_processor_class):
         """Test create_warc tool."""
         # Set up mock
@@ -120,7 +120,7 @@ class WebArchiveToolsTest(unittest.TestCase):
             "https://example.com", str(self.warc_path), None
         )
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_index_warc_async(self, mock_processor_class):
         """Test index_warc tool."""
         # Set up mock
@@ -141,7 +141,7 @@ class WebArchiveToolsTest(unittest.TestCase):
             str(self.warc_path), str(self.cdxj_path), None
         )
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_extract_dataset_from_cdxj_async(self, mock_processor_class):
         """Test extract_dataset_from_cdxj tool."""
         # Set up mock
@@ -161,7 +161,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         self.assertEqual(result["dataset"], sample_dataset)
         mock_processor.extract_dataset_from_cdxj.assert_called_once()
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_extract_text_from_warc_async(self, mock_processor_class):
         """Test extract_text_from_warc tool."""
         # Set up mock
@@ -182,7 +182,7 @@ class WebArchiveToolsTest(unittest.TestCase):
             str(self.warc_path)
         )
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_extract_links_from_warc_async(self, mock_processor_class):
         """Test extract_links_from_warc tool."""
         # Set up mock
@@ -201,7 +201,7 @@ class WebArchiveToolsTest(unittest.TestCase):
         self.assertEqual(result["links"], sample_links)
         mock_processor.extract_links_from_warc.assert_called_once()
 
-    @patch('ipfs_datasets_py.web_archiving.web_archive_utils.WebArchiveProcessor')
+    @patch('ipfs_datasets_py.processors.web_archiving.web_archive_utils.WebArchiveProcessor')
     async def _test_extract_metadata_from_warc_async(self, mock_processor_class):
         """Test extract_metadata_from_warc tool."""
         # Set up mock

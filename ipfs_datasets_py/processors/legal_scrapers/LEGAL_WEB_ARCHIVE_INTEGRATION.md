@@ -366,7 +366,7 @@ The system handles various error conditions:
 - Basic Python standard library
 
 ### Optional
-- `ipfs_datasets_py.web_archiving.web_archive` (for archiving)
+- `ipfs_datasets_py.processors.web_archiving.web_archive` (for archiving)
 - `cdx_toolkit` (for Common Crawl searches)
 - `requests` (for HTTP requests)
 

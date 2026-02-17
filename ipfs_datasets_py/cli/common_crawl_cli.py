@@ -80,7 +80,7 @@ def handle_search_command(args):
     
     # Execute search
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # Initialize engine based on mode
         engine_kwargs = {"mode": mode}
@@ -164,7 +164,7 @@ def handle_collections_command(args):
             i += 1
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         engine_kwargs = {"mode": mode}
         if endpoint:
@@ -231,7 +231,7 @@ def handle_fetch_command(args):
             i += 1
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         engine_kwargs = {"mode": mode}
         if endpoint:
@@ -299,7 +299,7 @@ def handle_info_command(args):
             i += 1
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         engine_kwargs = {"mode": mode}
         if endpoint:
@@ -339,7 +339,7 @@ def handle_config_command(args):
     json_output = '--json' in args
     
     try:
-        from ipfs_datasets_py.web_archiving import CommonCrawlSearchEngine
+        from ipfs_datasets_py.processors.web_archiving import CommonCrawlSearchEngine
         
         # Show current configuration
         engine = CommonCrawlSearchEngine()
