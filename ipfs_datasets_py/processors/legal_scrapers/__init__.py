@@ -160,6 +160,15 @@ except ImportError:
     expand_query = None
     HAVE_QUERY_EXPANDER = False
 
+# Enhanced Query Expander - Enhanced with legal synonyms and relationships (Enhancement 12 Phase 2)
+try:
+    from .enhanced_query_expander import EnhancedQueryExpander, EnhancedExpandedQuery
+    HAVE_ENHANCED_QUERY_EXPANDER = True
+except ImportError:
+    EnhancedQueryExpander = None
+    EnhancedExpandedQuery = None
+    HAVE_ENHANCED_QUERY_EXPANDER = False
+
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
@@ -279,6 +288,11 @@ __all__ = [
     "ExpandedQuery",
     "expand_query",
     "HAVE_QUERY_EXPANDER",
+    
+    # Enhanced Query Expander (Enhancement 12 Phase 2)
+    "EnhancedQueryExpander",
+    "EnhancedExpandedQuery",
+    "HAVE_ENHANCED_QUERY_EXPANDER",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
