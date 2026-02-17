@@ -235,6 +235,8 @@ class QueryProcessor:
     def _extract_jurisdictions(self, query: str) -> List[str]:
         """Extract jurisdictions (federal, state codes) from query.
         
+        Enhanced to detect more jurisdiction patterns and abbreviations.
+        
         Args:
             query: Query text
             
@@ -244,14 +246,57 @@ class QueryProcessor:
         jurisdictions = []
         query_lower = query.lower()
         
-        # Check for federal
-        if re.search(r'\b(federal|nationwide|national|us|united states)\b', query_lower):
-            jurisdictions.append('federal')
+        # Check for federal indicators
+        federal_patterns = [
+            r'\b(federal|nationwide|national)\b',
+            r'\b(us|u\.s\.|united states)\b',
+            r'\b(federal government)\b',
+        ]
         
-        # Check for state mentions
+        for pattern in federal_patterns:
+            if re.search(pattern, query_lower):
+                jurisdictions.append('federal')
+                break  # Only add once
+        
+        # Check for state mentions (full names and abbreviations)
         for code, name in US_STATES.items():
-            if name.lower() in query_lower or f" {code.lower()} " in f" {query_lower} ":
+            # Check full state name
+            if name.lower() in query_lower:
                 jurisdictions.append(code)
+            # Check state code (with word boundaries to avoid false matches)
+            elif re.search(rf'\b{code.lower()}\b', query_lower):
+                jurisdictions.append(code)
+        
+        # Enhanced: Check for multi-state patterns
+        multi_state_patterns = [
+            r'\ball states\b',
+            r'\bevery state\b',
+            r'\bmultiple states\b',
+            r'\bacross states\b',
+        ]
+        
+        for pattern in multi_state_patterns:
+            if re.search(pattern, query_lower):
+                # Add a marker for multi-state queries
+                if 'multi-state' not in jurisdictions:
+                    jurisdictions.append('multi-state')
+                break
+        
+        # Enhanced: Check for regional patterns
+        regional_patterns = {
+            'northeast': ['ME', 'NH', 'VT', 'MA', 'RI', 'CT', 'NY', 'NJ', 'PA'],
+            'southeast': ['DE', 'MD', 'VA', 'WV', 'KY', 'NC', 'SC', 'TN', 'GA', 'FL', 'AL', 'MS', 'AR', 'LA'],
+            'midwest': ['OH', 'IN', 'IL', 'MI', 'WI', 'MN', 'IA', 'MO', 'ND', 'SD', 'NE', 'KS'],
+            'southwest': ['OK', 'TX', 'NM', 'AZ'],
+            'west': ['CO', 'WY', 'MT', 'ID', 'UT', 'NV', 'WA', 'OR', 'CA', 'AK', 'HI'],
+        }
+        
+        for region, states in regional_patterns.items():
+            if region in query_lower:
+                # Add regional marker
+                if f'region-{region}' not in jurisdictions:
+                    jurisdictions.append(f'region-{region}')
+                break
         
         return list(set(jurisdictions))
     
@@ -290,6 +335,9 @@ class QueryProcessor:
     def _extract_agencies(self, query: str) -> List[str]:
         """Extract federal agency mentions from query.
         
+        Enhanced to use more comprehensive pattern matching and
+        known agency variations.
+        
         Args:
             query: Query text
             
@@ -299,16 +347,42 @@ class QueryProcessor:
         agencies = []
         query_lower = query.lower()
         
-        # Check for known federal entities
+        # Check for known federal entities (primary method)
         for acronym, full_name in FEDERAL_ENTITIES.items():
             if acronym in query_lower or full_name.lower() in query_lower:
                 agencies.append(full_name)
         
-        # Look for "department of X" pattern
-        dept_pattern = r'\bdepartment of ([a-z\s]+)\b'
-        matches = re.finditer(dept_pattern, query_lower)
-        for match in matches:
-            agencies.append(f"Department of {match.group(1).title()}")
+        # Enhanced: Check for common agency name patterns
+        agency_patterns = [
+            (r'\b(department of ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(office of ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(bureau of ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(agency for ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(administration for ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(commission on ([a-z\s]+))\b', lambda m: m.group(1).title()),
+            (r'\b(center for ([a-z\s]+))\b', lambda m: m.group(1).title()),
+        ]
+        
+        for pattern, formatter in agency_patterns:
+            matches = re.finditer(pattern, query_lower)
+            for match in matches:
+                agency_name = formatter(match)
+                if agency_name not in agencies:
+                    agencies.append(agency_name)
+        
+        # Enhanced: Check for state-level agency indicators
+        state_agency_patterns = [
+            r'\b(state ([a-z]+) (department|agency|office|bureau))\b',
+            r'\b([a-z]+) state (department|agency|office)\b',
+        ]
+        
+        for pattern in state_agency_patterns:
+            matches = re.finditer(pattern, query_lower)
+            for match in matches:
+                # Add as potential state agency (will be filtered by jurisdiction)
+                agency_name = match.group(0).title()
+                if agency_name not in agencies:
+                    agencies.append(agency_name)
         
         return list(set(agencies))
     
