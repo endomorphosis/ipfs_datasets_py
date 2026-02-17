@@ -60,6 +60,14 @@ from .brave_legal_search_tools import (
     brave_legal_search_explain_tool,
     brave_legal_search_entities_tool
 )
+from .legal_web_archive_tools import (
+    LEGAL_WEB_ARCHIVE_TOOLS,
+    register_legal_web_archive_tools,
+    legal_web_archive_search_tool,
+    legal_search_archives_only_tool,
+    legal_archive_results_tool,
+    legal_get_archive_stats_tool
+)
 
 __all__ = [
     # US Code tools
@@ -129,4 +137,12 @@ __all__ = [
     "brave_legal_search_generate_terms_tool",
     "brave_legal_search_explain_tool",
     "brave_legal_search_entities_tool",
+    
+    # Legal Web Archive tools (NEW)
+    "LEGAL_WEB_ARCHIVE_TOOLS",
+    "register_legal_web_archive_tools",
+    "legal_web_archive_search_tool",
+    "legal_search_archives_only_tool",
+    "legal_archive_results_tool",
+    "legal_get_archive_stats_tool",
 ]
