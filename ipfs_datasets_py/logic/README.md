@@ -15,6 +15,7 @@
 ## Quick Links
 
 📚 **Documentation:**
+- [Quick Start](./QUICKSTART.md) - 5-minute getting started guide
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
 - [User Guide](./UNIFIED_CONVERTER_GUIDE.md) - Getting started guide
 - [Architecture](./ARCHITECTURE.md) - System architecture
