@@ -1,7 +1,7 @@
 # Logic Module - Complete Neurosymbolic Reasoning System
 
 [![Status](https://img.shields.io/badge/status-beta-yellow)](https://github.com/endomorphosis/ipfs_datasets_py)
-[![Tests](https://img.shields.io/badge/tests-174-blue)](./tests/)
+[![Tests](https://img.shields.io/badge/tests-790%2B-blue)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-green)](./tests/)
 [![Rules](https://img.shields.io/badge/inference--rules-128-orange)](./INFERENCE_RULES_INVENTORY.md)
 [![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
@@ -27,7 +27,7 @@ The IPFS Datasets Python logic module provides a **complete neurosymbolic reason
 ✅ **5 Modal Logic Provers** (K/S4/S5/D/Cognitive)  
 ✅ **Grammar-Based NL Processing** (100+ lexicon, 50+ rules)  
 ✅ **Multi-Format Parsing** (TDFOL, DCEC, Natural Language)  
-✅ **174 Comprehensive Tests** (164 passing, 94% pass rate) + 568+ rule tests  
+✅ **790+ Logic Tests** (Phase 6 completion) + 10,200+ repo-wide tests  
 ✅ **Production Converters** (FOL/Deontic 100% complete)  
 🆕 **Unified Converters** (14x cache speedup, batch processing)  
 🆕 **ZKP Simulation** (demo/educational - see limitations)  
