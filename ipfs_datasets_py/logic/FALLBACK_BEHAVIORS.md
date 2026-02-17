@@ -673,6 +673,168 @@ Install recommended dependencies for better performance.
 
 ---
 
+## ImportError Handler Patterns
+
+### Overview
+
+The logic module uses **110+ ImportError handlers** across **54 files** for graceful degradation. This section documents the patterns and ensures consistency.
+
+### Handler Statistics
+
+| Dependency Type | Handler Count | Purpose |
+|----------------|---------------|---------|
+| **beartype** | 20 handlers | Optional type checking decorator |
+| **SymbolicAI/symai** | 15+ handlers | Symbolic manipulation (70+ modules use fallbacks) |
+| **IPFS** | 4 handlers | Distributed caching |
+| **Z3** | 2 handlers | SMT solving |
+| **spaCy** | 1 handler | NLP extraction |
+| **ML Models** | 1 handler | Confidence scoring |
+| **Other** | 67+ handlers | Various optional integrations |
+
+### Standard Patterns
+
+#### Pattern 1: Optional Decorator (beartype)
+```python
+try:
+    from beartype import beartype  # type: ignore
+except ImportError:  # pragma: no cover
+    def beartype(func):  # type: ignore
+        """Fallback when beartype not installed."""
+        return func
+```
+**Usage:** 20 files  
+**Purpose:** Type checking at runtime (optional)  
+**Fallback:** Returns function unchanged
+
+#### Pattern 2: Optional Feature with Logging
+```python
+try:
+    from symai import Expression
+    SYMBOLICAI_AVAILABLE = True
+except ImportError:
+    SYMBOLICAI_AVAILABLE = False
+    logger.warning("SymbolicAI not available, using fallback implementation")
+    
+    class Expression:
+        """Mock for development without SymbolicAI."""
+        pass
+```
+**Usage:** 15+ files  
+**Purpose:** Feature detection with graceful degradation  
+**Fallback:** Mock classes with basic functionality
+
+#### Pattern 3: Optional Enhancement
+```python
+try:
+    import spacy
+    NLP_AVAILABLE = True
+except ImportError:
+    NLP_AVAILABLE = False
+    # Use regex fallback in code
+```
+**Usage:** 10+ files  
+**Purpose:** Enhancement that's not critical  
+**Fallback:** Alternative implementation
+
+#### Pattern 4: Conditional Import with Multiple Attempts
+```python
+try:
+    from ipfshttpclient import connect
+except ImportError:
+    try:
+        from ipfsapi import connect
+    except ImportError:
+        connect = None
+        logger.info("IPFS not available, using local cache only")
+```
+**Usage:** 4 files  
+**Purpose:** Try multiple package names/versions  
+**Fallback:** Graceful feature degradation
+
+### Consistency Guidelines
+
+**DO:**
+- ✅ Use specific `ImportError` (not bare `Exception`)
+- ✅ Log at appropriate level (warning for major features, debug for minor)
+- ✅ Provide functional fallback (mock class or alternative implementation)
+- ✅ Set `*_AVAILABLE` flag for feature detection
+- ✅ Document the fallback behavior in comments
+
+**DON'T:**
+- ❌ Catch `Exception` for imports (too broad)
+- ❌ Silent failures without logging
+- ❌ Fallbacks that raise errors later
+- ❌ Missing documentation about the fallback
+
+### Files by Dependency
+
+**SymbolicAI (15+ files):**
+- `integration/symbolic/*` (primary users)
+- `integration/domain/symbolic_contracts.py`
+- `integration/converters/semantic_converter.py`
+- Most bridge implementations
+
+**beartype (20 files):**
+- All CEC modules (10 files)
+- Integration reasoning modules (5 files)
+- Domain-specific modules (5 files)
+
+**IPFS (4 files):**
+- `integration/caching/ipfs_proof_cache.py`
+- `integration/caching/ipld_logic_storage.py`
+- `TDFOL/tdfol_prover.py`
+- `TDFOL/tdfol_dcec_parser.py`
+
+**Z3 (2 files):**
+- `external_provers/smt/z3_prover_bridge.py`
+- `external_provers/__init__.py`
+
+### Testing ImportError Handlers
+
+**Manual Testing:**
+```bash
+# Test without SymbolicAI
+pip uninstall symbolicai -y
+python -c "from ipfs_datasets_py.logic.fol import FOLConverter; c = FOLConverter(); print(c.convert('P').output)"
+
+# Test feature detection
+python -m ipfs_datasets_py.logic.common.feature_detection
+
+# Verify fallback behavior
+python -c "from ipfs_datasets_py.logic.integration.symbolic import symbolic_logic_primitives; print('Fallback works!')"
+```
+
+**Automated Testing:**
+- Mock imports in tests using `unittest.mock.patch`
+- Test both available and missing scenarios
+- Verify `*_AVAILABLE` flags work correctly
+- Ensure fallback implementations provide expected API
+
+### Common Issues
+
+**Issue:** Inconsistent logging levels
+- **Fix:** Use `warning` for major features, `debug` for minor
+
+**Issue:** Fallback raises AttributeError later
+- **Fix:** Provide full API in mock classes
+
+**Issue:** No way to detect if feature available
+- **Fix:** Always set `*_AVAILABLE` flag
+
+### Maintenance
+
+When adding new optional dependencies:
+
+1. **Add ImportError handler** following Pattern 2
+2. **Set availability flag** (`FEATURE_AVAILABLE`)
+3. **Log appropriately** (warning for major, debug for minor)
+4. **Provide functional fallback** (mock class or alternative)
+5. **Update feature_detection.py** to detect it
+6. **Document in this file** under appropriate section
+7. **Add to KNOWN_LIMITATIONS.md** if it limits functionality
+
+---
+
 ## Related Documentation
 
 - **[README.md](./README.md)** - Main module documentation
