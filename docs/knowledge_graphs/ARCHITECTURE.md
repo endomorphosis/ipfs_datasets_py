@@ -837,53 +837,126 @@ transformed = processor.transform(kg, format="rdf")
 
 ## Future Enhancements
 
-### Planned Features
+### v2.1.0 - Query Language Enhancements (Q2 2026)
 
-**1. Distributed Query Execution**
-- Query federation across multiple graphs
+**1. NOT Operator in Cypher**
+- **Module:** `cypher/compiler.py:387`
+- **Description:** Full compilation support for NOT operator in WHERE clauses
+- **Impact:** More expressive query filtering, improved Neo4j compatibility
+- **Architecture Changes:** 
+  - Extend AST node types for negation
+  - Update compiler visitor pattern
+  - Add query plan optimization for NOT
+
+**2. Relationship Creation via Cypher**
+- **Module:** `cypher/compiler.py:510`
+- **Description:** CREATE clause for dynamic relationship creation
+- **Impact:** Graph modification capabilities, write-heavy workloads
+- **Architecture Changes:**
+  - Transaction-aware relationship creation
+  - Rollback support for failed creates
+  - Validation of relationship types and properties
+
+### v2.5.0 - Advanced Extraction Pipeline (Q3-Q4 2026)
+
+**3. Neural Relationship Extraction**
+- **Module:** `extraction/extractor.py:733`
+- **Description:** Deep learning models (BERT/RoBERTa) for relationship extraction
+- **Architecture Impact:**
+  - New `NeuralExtractor` component in extraction pipeline
+  - Model loading and caching subsystem
+  - GPU acceleration support
+- **Performance:** 85-90% precision (vs current 75-80%)
+- **Dependencies:** transformers, torch, CUDA (optional)
+
+**4. spaCy Dependency Parsing for Aggressive Extraction**
+- **Module:** `extraction/extractor.py:870`
+- **Description:** Full dependency tree analysis for complex sentence structures
+- **Architecture Impact:**
+  - Extended `RelationshipExtractor` with dependency mode
+  - Parse tree caching for performance
+  - Configurable aggressiveness levels
+- **Benefits:** Extract from subordinate clauses, passive voice, complex structures
+
+**5. Semantic Role Labeling (SRL) Integration**
+- **Module:** `extraction/extractor.py:893`
+- **Description:** Advanced SRL for implicit relationship discovery
+- **Architecture Impact:**
+  - New `SRLExtractor` component
+  - Role-to-relationship mapping configuration
+  - Integration with AllenNLP or spaCy SRL
+- **Benefits:** Understand agent, patient, theme roles for accurate relationships
+
+### v3.0.0 - Cross-Document Intelligence (Q1 2027)
+
+**6. Multi-Hop Graph Traversal**
+- **Module:** `cross_document_reasoning.py:483`
+- **Description:** Indirect connection discovery via graph algorithms
+- **Architecture Impact:**
+  - New `GraphTraversalEngine` component
+  - Algorithms: BFS, DFS, shortest path, PageRank
+  - Configurable hop limits and scoring functions
+- **Use Cases:** Friend-of-friend, influence networks, citation chains
+
+**7. LLM Integration for Advanced Reasoning**
+- **Module:** `cross_document_reasoning.py:686`
+- **Description:** Large Language Model API for semantic reasoning
+- **Architecture Impact:**
+  - New `LLMReasoningEngine` abstraction layer
+  - Provider adapters (OpenAI, Anthropic, local models)
+  - Token budget management and caching
+  - Fallback to traditional methods on failure
+- **Capabilities:**
+  - Complex query interpretation
+  - Semantic similarity beyond embeddings
+  - Natural language explanations for results
+  - Zero-shot entity/relationship classification
+
+### Long-Term Research Directions (v3.5+)
+
+**8. Distributed Query Execution**
+- Query federation across multiple IPFS-stored graphs
 - Parallel execution on distributed nodes
 - Result aggregation and ranking
-- **Timeline:** Phase 5 (6-9 months)
+- **Timeline:** Q3 2027 (9-12 months)
 
-**2. Advanced Caching Strategies**
+**9. Advanced Caching Strategies**
 - Predictive prefetching based on query patterns
 - Smart cache warming for popular queries
 - Distributed cache synchronization
-- **Timeline:** Phase 4 (3-6 months)
+- **Timeline:** Q2 2027 (6-9 months)
 
-**3. Real-Time Graph Updates**
+**10. Real-Time Graph Updates**
 - Streaming updates to knowledge graphs
 - Incremental re-indexing
-- Change notification system
-- **Timeline:** Phase 6 (9-12 months)
+- Change notification system via pub/sub
+- **Timeline:** Q4 2027 (12-15 months)
 
-**4. Federated Graph Queries**
+**11. Federated Graph Queries**
 - Query across organization boundaries
-- Decentralized graph discovery
-- Privacy-preserving queries
-- **Timeline:** Phase 7 (12+ months)
+- Decentralized graph discovery via IPFS
+- Privacy-preserving queries with differential privacy
+- **Timeline:** Q1 2028 (15-18 months)
 
-### Research Directions
+### Implementation Priority
 
-**Neural Relationship Extraction:**
-- Deep learning models for relationship detection
-- Transfer learning from pre-trained models
-- Active learning for labeling efficiency
+| Feature | Priority | Complexity | User Demand |
+|---------|----------|------------|-------------|
+| NOT Operator | High | Low | High |
+| Relationship Creation | High | Medium | High |
+| Neural Extraction | Medium | High | Medium |
+| SRL Integration | Medium | High | Low |
+| Multi-hop Traversal | High | Medium | High |
+| LLM Integration | High | High | Very High |
+| Distributed Queries | Low | Very High | Medium |
 
-**Multi-hop Reasoning:**
-- Complex path queries (beyond simple traversal)
-- Probabilistic reasoning over graphs
-- Explainable inference chains
+### Design Principles for Future Work
 
-**Graph Compression:**
-- Entity deduplication and merging
-- Relationship pruning and simplification
-- Lossy compression for large-scale graphs
-
-**Cross-lingual Knowledge Graphs:**
-- Multi-language entity linking
-- Translation of relationships
-- Unified knowledge representation
+1. **Backward Compatibility:** All enhancements maintain existing APIs
+2. **Graceful Degradation:** Features fail gracefully if dependencies unavailable
+3. **Performance Budget:** New features meet <100ms query latency target
+4. **Extensibility:** Plugin architecture for custom implementations
+5. **Testing:** 80%+ test coverage required for all new features
 
 ---
 

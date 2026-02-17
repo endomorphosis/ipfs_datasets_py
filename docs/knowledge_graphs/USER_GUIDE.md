@@ -1352,6 +1352,122 @@ kg = system.process_directory("documents/", "final_knowledge_graph.json")
 
 ---
 
+## 11. Future Roadmap
+
+### Planned Enhancements (v2.1-3.0)
+
+The following features are planned for future releases based on user feedback and emerging requirements:
+
+#### v2.1.0 - Enhanced Query Capabilities (Q2 2026)
+
+**1. NOT Operator Support in Cypher**
+- **Location:** `cypher/compiler.py:387`
+- **Description:** Full support for NOT operator in WHERE clauses
+- **Benefits:** More expressive query filtering
+- **Timeline:** Q2 2026
+- **Example:**
+  ```python
+  # Future capability
+  query = "MATCH (p:Person) WHERE NOT p.age > 30 RETURN p"
+  ```
+
+**2. Relationship Creation in Cypher**
+- **Location:** `cypher/compiler.py:510`
+- **Description:** CREATE clause support for dynamic relationship creation
+- **Benefits:** Graph modification capabilities via Cypher
+- **Timeline:** Q2 2026
+- **Example:**
+  ```python
+  # Future capability
+  query = "MATCH (a:Person), (b:Person) CREATE (a)-[:KNOWS]->(b)"
+  ```
+
+#### v2.5.0 - Advanced Extraction (Q3-Q4 2026)
+
+**3. Neural Relationship Extraction**
+- **Location:** `extraction/extractor.py:733`
+- **Description:** Deep learning models for relationship extraction
+- **Benefits:** Higher precision on complex relationships
+- **Timeline:** Q3 2026
+- **Models:** BERT, RoBERTa, or custom transformers
+
+**4. Aggressive Extraction with spaCy Dependency Parsing**
+- **Location:** `extraction/extractor.py:870`
+- **Description:** Full dependency tree analysis for complex sentences
+- **Benefits:** Extract relationships from complex syntactic structures
+- **Timeline:** Q3 2026
+
+**5. Semantic Role Labeling (SRL) for Relationship Inference**
+- **Location:** `extraction/extractor.py:893`
+- **Description:** Advanced SRL for implicit relationship discovery
+- **Benefits:** Understand agent, patient, theme roles
+- **Timeline:** Q4 2026
+- **Libraries:** AllenNLP, spaCy SRL extensions
+
+#### v3.0.0 - Cross-Document Intelligence (Q1 2027)
+
+**6. Multi-Hop Graph Traversal**
+- **Location:** `cross_document_reasoning.py:483`
+- **Description:** Indirect connection discovery across documents
+- **Benefits:** Find non-obvious relationships (friend-of-friend, transitive)
+- **Timeline:** Q1 2027
+- **Algorithms:** BFS, DFS, PageRank, community detection
+
+**7. LLM Integration for Advanced Reasoning**
+- **Location:** `cross_document_reasoning.py:686`
+- **Description:** Large Language Model API integration
+- **Benefits:** Advanced semantic understanding and reasoning
+- **Timeline:** Q1 2027
+- **Providers:** OpenAI, Anthropic, or local models (Llama, Mistral)
+- **Use Cases:**
+  - Complex query interpretation
+  - Semantic similarity beyond embeddings
+  - Natural language explanations
+  - Zero-shot entity/relationship classification
+
+### Feature Request Process
+
+**How to Request a Feature:**
+1. Check existing roadmap above
+2. Open a GitHub issue with label `enhancement`
+3. Provide:
+   - Use case description
+   - Expected behavior
+   - Example code/queries
+   - Performance requirements
+
+**Priority Criteria:**
+- User demand (votes/comments)
+- Implementation complexity
+- Compatibility with existing API
+- Performance impact
+
+### Experimental Features
+
+Some features may be available as experimental APIs before full release:
+
+```python
+from ipfs_datasets_py.knowledge_graphs.experimental import (
+    NeuralExtractor,  # v2.5.0-alpha
+    SRLRelationshipExtractor,  # v2.5.0-alpha
+    LLMReasoningEngine,  # v3.0.0-alpha
+)
+
+# Enable experimental features at your own risk
+extractor = NeuralExtractor(model="roberta-base", experimental=True)
+```
+
+**Note:** Experimental APIs may change between versions without deprecation warnings.
+
+### Deprecation Policy
+
+- Features marked deprecated in v2.x will be removed in v3.0
+- Minimum 6-month deprecation notice
+- Migration guides provided for all breaking changes
+- See [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) for details
+
+---
+
 ## Further Reading
 
 - [API_REFERENCE.md](API_REFERENCE.md) - Complete API documentation
