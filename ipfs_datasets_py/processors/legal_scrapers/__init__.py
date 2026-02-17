@@ -209,6 +209,50 @@ except ImportError:
     LegalKnowledgeGraph = None
     HAVE_LEGAL_GRAPHRAG = False
 
+# Multi-Language Support - I18n for legal search (Enhancement 12 Phase 6)
+try:
+    from .multilanguage_support import (
+        MultiLanguageSupport,
+        LanguageConfig,
+        TranslationResult
+    )
+    HAVE_MULTILANGUAGE_SUPPORT = True
+except ImportError:
+    MultiLanguageSupport = None
+    LanguageConfig = None
+    TranslationResult = None
+    HAVE_MULTILANGUAGE_SUPPORT = False
+
+# Regulation Version Tracker - Historical tracking (Enhancement 12 Phase 7)
+try:
+    from .regulation_version_tracker import (
+        RegulationVersionTracker,
+        RegulationVersion,
+        RegulationChange
+    )
+    HAVE_REGULATION_VERSION_TRACKER = True
+except ImportError:
+    RegulationVersionTracker = None
+    RegulationVersion = None
+    RegulationChange = None
+    HAVE_REGULATION_VERSION_TRACKER = False
+
+# Legal Report Generator - Automated reports (Enhancement 12 Phase 8)
+try:
+    from .legal_report_generator import (
+        LegalSearchReportGenerator,
+        LegalSearchReport,
+        ReportConfig,
+        ReportSection
+    )
+    HAVE_LEGAL_REPORT_GENERATOR = True
+except ImportError:
+    LegalSearchReportGenerator = None
+    LegalSearchReport = None
+    ReportConfig = None
+    ReportSection = None
+    HAVE_LEGAL_REPORT_GENERATOR = False
+
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
@@ -352,6 +396,25 @@ __all__ = [
     "LegalRelationship",
     "LegalKnowledgeGraph",
     "HAVE_LEGAL_GRAPHRAG",
+    
+    # Multi-Language Support (Enhancement 12 Phase 6)
+    "MultiLanguageSupport",
+    "LanguageConfig",
+    "TranslationResult",
+    "HAVE_MULTILANGUAGE_SUPPORT",
+    
+    # Regulation Version Tracker (Enhancement 12 Phase 7)
+    "RegulationVersionTracker",
+    "RegulationVersion",
+    "RegulationChange",
+    "HAVE_REGULATION_VERSION_TRACKER",
+    
+    # Legal Report Generator (Enhancement 12 Phase 8)
+    "LegalSearchReportGenerator",
+    "LegalSearchReport",
+    "ReportConfig",
+    "ReportSection",
+    "HAVE_LEGAL_REPORT_GENERATOR",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
