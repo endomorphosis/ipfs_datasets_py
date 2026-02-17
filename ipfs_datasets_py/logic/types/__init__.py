@@ -27,15 +27,11 @@ from .proof_types import (
     ProofStep,
 )
 
-# ---------------------------------------------------------------------------
-# Backward-compatible TDFOL constructors
-# ---------------------------------------------------------------------------
-
 from ..TDFOL.tdfol_core import (
-    Formula,
-    Predicate,
-    Variable,
-    Constant,
+    Formula as TDFOLFormula,
+    Predicate as TDFOLPredicate,
+    Variable as TDFOLVariable,
+    Constant as TDFOLConstant,
     create_conjunction,
     create_disjunction,
     create_negation,
@@ -43,6 +39,12 @@ from ..TDFOL.tdfol_core import (
     create_universal,
     create_existential,
 )
+
+
+Formula = TDFOLFormula
+Predicate = TDFOLPredicate
+Variable = TDFOLVariable
+Constant = TDFOLConstant
 
 
 def And(left: Formula, right: Formula) -> Formula:
@@ -81,7 +83,7 @@ from .common_types import (
     ConfidenceScore,
     ComplexityScore,
     ComplexityMetrics,
-    Formula,
+    Formula as FormulaProtocol,
     Prover,
     Converter,
 )
@@ -98,7 +100,7 @@ from .bridge_types import (
 from .fol_types import (
     FOLOutputFormat,
     PredicateCategory,
-    Predicate,
+    Predicate as FOLPredicate,
     FOLFormula,
     FOLConversionResult,
     PredicateExtraction,
@@ -140,7 +142,6 @@ __all__ = [
     "ConfidenceScore",
     "ComplexityScore",
     "ComplexityMetrics",
-    "Formula",
     "Prover",
     "Converter",
     # Bridge types
@@ -153,7 +154,7 @@ __all__ = [
     # FOL types
     "FOLOutputFormat",
     "PredicateCategory",
-    "Predicate",
+    "FOLPredicate",
     "FOLFormula",
     "FOLConversionResult",
     "PredicateExtraction",
