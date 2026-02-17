@@ -179,6 +179,20 @@ except ImportError:
     FilteredResult = None
     HAVE_RESULT_FILTER = False
 
+# Search Result Citation Extractor - Enhanced citation extraction (Enhancement 12 Phase 4)
+try:
+    from .search_result_citation_extractor import (
+        SearchResultCitationExtractor,
+        SearchResultWithCitations,
+        CitationNetwork
+    )
+    HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = True
+except ImportError:
+    SearchResultCitationExtractor = None
+    SearchResultWithCitations = None
+    CitationNetwork = None
+    HAVE_SEARCH_RESULT_CITATION_EXTRACTOR = False
+
 # HuggingFace API search (Enhancement 11 Part 1)
 try:
     from .huggingface_api_search import HuggingFaceAPISearch
@@ -309,6 +323,12 @@ __all__ = [
     "FilterConfig",
     "FilteredResult",
     "HAVE_RESULT_FILTER",
+    
+    # Search Result Citation Extractor (Enhancement 12 Phase 4)
+    "SearchResultCitationExtractor",
+    "SearchResultWithCitations",
+    "CitationNetwork",
+    "HAVE_SEARCH_RESULT_CITATION_EXTRACTOR",
     
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
