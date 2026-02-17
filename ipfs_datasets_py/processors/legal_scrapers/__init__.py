@@ -7,11 +7,17 @@ Core implementations for scraping legal datasets from various sources including:
 - State Laws
 - Municipal Laws
 - RECAP Archive (court documents)
+- Brave Legal Search (natural language search for legal rules)
 
 This module provides the core scraping logic that can be used by:
 - CLI tools (ipfs-datasets)
 - MCP server tools
 - Direct Python imports
+
+New Features:
+- Natural language legal search using Brave Search API
+- Knowledge base of 21,000+ federal, state, and municipal entities
+- Intelligent search term generation from queries
 """
 
 # Import main scraper modules using relative imports
@@ -94,6 +100,30 @@ from .ipfs_storage_integration import (
     list_ipfs_datasets,
 )
 
+# Brave Legal Search - Natural language search for legal rules and regulations
+from .brave_legal_search import (
+    BraveLegalSearch,
+    create_legal_search,
+    search_legal,
+)
+from .knowledge_base_loader import (
+    LegalKnowledgeBase,
+    FederalEntity,
+    StateEntity,
+    MunicipalEntity,
+    load_knowledge_base,
+    get_global_knowledge_base,
+)
+from .query_processor import (
+    QueryProcessor,
+    QueryIntent,
+)
+from .search_term_generator import (
+    SearchTermGenerator,
+    SearchTerm,
+    SearchStrategy,
+)
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -154,4 +184,20 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_municipal_codes_from_parameters",
+    
+    # Brave Legal Search
+    "BraveLegalSearch",
+    "create_legal_search",
+    "search_legal",
+    "LegalKnowledgeBase",
+    "FederalEntity",
+    "StateEntity",
+    "MunicipalEntity",
+    "load_knowledge_base",
+    "get_global_knowledge_base",
+    "QueryProcessor",
+    "QueryIntent",
+    "SearchTermGenerator",
+    "SearchTerm",
+    "SearchStrategy",
 ]
