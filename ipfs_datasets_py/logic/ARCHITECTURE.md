@@ -1,23 +1,132 @@
 # Logic Module Architecture
 
-**Date:** 2026-02-14  
-**Status:** Production-Ready  
+**Date:** 2026-02-17 (Updated)  
+**Status:** Beta (Core Converters Production-Ready)  
 **Version:** 2.0 (Post-Unification)
 
 This document provides comprehensive visual documentation of the logic module architecture, including module dependencies, data flows, and component interactions.
+
+> **Note:** This architecture document shows the complete planned system. See the [Component Status Matrix](#component-status-matrix) section for actual implementation status of each component.
 
 ---
 
 ## Table of Contents
 
-1. [Module Overview](#module-overview)
-2. [Module Dependency Graph](#module-dependency-graph)
-3. [Converter Architecture](#converter-architecture)
-4. [Unified Cache Architecture](#unified-cache-architecture)
-5. [Data Flow Diagrams](#data-flow-diagrams)
-6. [Integration Layer](#integration-layer)
-7. [Zero-Knowledge Proof System](#zero-knowledge-proof-system)
-8. [Component Interactions](#component-interactions)
+1. [Component Status Matrix](#component-status-matrix) ⭐ **NEW**
+2. [Module Overview](#module-overview)
+3. [Module Dependency Graph](#module-dependency-graph)
+4. [Converter Architecture](#converter-architecture)
+5. [Unified Cache Architecture](#unified-cache-architecture)
+6. [Data Flow Diagrams](#data-flow-diagrams)
+7. [Integration Layer](#integration-layer)
+8. [Zero-Knowledge Proof System](#zero-knowledge-proof-system)
+9. [Component Interactions](#component-interactions)
+
+---
+
+## Component Status Matrix
+
+This section documents the **actual implementation status** of each component vs. the planned architecture shown in this document.
+
+### Production-Ready Components ✅
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **FOL Converter** | ✅ Production | 100% complete, 742+ tests, 14x cache speedup |
+| **Deontic Converter** | ✅ Production | 95% complete, comprehensive deontic logic support |
+| **TDFOL Core** | ✅ Production | 95% complete, 41 inference rules |
+| **CEC Prover** | ✅ Production | 87 inference rules, 418 tests |
+| **Proof Cache** | ✅ Production | 14x validated speedup, TTL + size limits |
+| **Type System** | ✅ Production | Grade A-, 95%+ coverage |
+| **ML Confidence** | ✅ Production | Heuristic fallback, 70-75% accuracy |
+
+### Beta/Working Components ⚠️
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **Z3 Bridge** | ⚠️ Beta | Requires Z3 installation (optional dependency) |
+| **Lean Bridge** | ⚠️ Beta | Requires Lean 4 installation (optional) |
+| **Coq Bridge** | ⚠️ Beta | Requires Coq installation (optional) |
+| **SymbolicAI Integration** | ⚠️ Beta | Optional dep, graceful fallback to native Python |
+| **spaCy NLP** | ⚠️ Beta | Optional dep, regex fallback available |
+| **Monitoring System** | ⚠️ Beta | Skeleton implementation, basic metrics only |
+
+### Simulation/Demo Components 🎓
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| **ZKP System** | 🎓 Simulation | **NOT cryptographically secure** - educational only |
+| **ShadowProver** | 🎓 Demo | Proof-of-concept implementation |
+| **GF Grammar Parser** | 🎓 Demo | Partial implementation for research |
+
+### Optional Dependencies Architecture
+
+The module uses graceful degradation with 70+ fallback handlers:
+
+```
+┌─────────────────────────────────────────┐
+│         Logic Module Core               │
+│   (Always Available - Zero Deps)        │
+├─────────────────────────────────────────┤
+│ • FOL/Deontic Converters (regex)        │
+│ • TDFOL/CEC Provers (native Python)     │
+│ • Proof Cache (local filesystem)        │
+│ • 128 Inference Rules                   │
+│ • Type System                           │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│     Optional Enhancements Layer         │
+│   (Graceful Fallback if Missing)        │
+├─────────────────────────────────────────┤
+│ SymbolicAI → 5-10x speedup (70+ uses)   │
+│ Z3 Solver → SMT solving                 │
+│ spaCy NLP → 15-20% better accuracy      │
+│ XGBoost/LightGBM → ML confidence        │
+│ IPFS Client → Distributed caching       │
+└─────────────────────────────────────────┘
+              ↓
+┌─────────────────────────────────────────┐
+│    External Theorem Provers Layer       │
+│   (Requires Manual Installation)        │
+├─────────────────────────────────────────┤
+│ Lean 4 → Advanced theorem proving       │
+│ Coq → Formal verification              │
+│ CVC5 → SMT solving                     │
+└─────────────────────────────────────────┘
+```
+
+### Component Implementation Percentages
+
+| Layer | Completion | Notes |
+|-------|------------|-------|
+| **Core Logic** | 95-100% | FOL, Deontic, TDFOL, CEC fully implemented |
+| **Caching** | 100% | Proof cache + bounded cache complete |
+| **Optional Enhancements** | 70% | All fallbacks work, integrations partial |
+| **External Bridges** | 60% | Work when installed, not required |
+| **ZKP/Privacy** | 15% | Simulation only, needs real implementation |
+| **Monitoring** | 25% | Skeleton only, needs metrics implementation |
+
+### Deferred to Future Versions
+
+The following planned components are **not yet implemented** or are **incomplete**:
+
+**v1.1 (Next Release):**
+- Complete monitoring system with Prometheus metrics
+- Enhanced ML confidence with XGBoost integration
+- Performance optimizations for large-scale batch processing
+
+**v1.5:**
+- Production ZKP system with py_ecc and Groth16 zkSNARKs
+- Complete bridge implementations (abstract method implementations)
+- Enhanced symbolic logic fallback implementations
+
+**v2.0:**
+- Full multi-prover orchestration
+- Distributed proof caching with IPFS
+- Advanced privacy-preserving computation
+
+See [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) for detailed information about limitations and [ROADMAP.md](./docs/ROADMAP.md) for planned improvements.
 
 ---
 
