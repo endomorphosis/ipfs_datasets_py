@@ -2,6 +2,13 @@
 
 This document is intended to be an “infinite TODO list”: a continuously-extendable backlog for improving `ipfs_datasets_py.ipfs_datasets_py.knowledge_graphs`.
 
+## Status (2026-02-17)
+
+- ✅ `tests/unit/knowledge_graphs` passes in the workspace venv (`621 passed`).
+- ✅ Expression evaluation extracted to `core/expression_evaluator.py` (+ unit tests).
+- ✅ IR execution loop extracted to `core/ir_executor.py`.
+- ✅ Added regression tests for legacy shim imports.
+
 ## Scope
 
 In scope:
@@ -29,7 +36,7 @@ Out of scope (unless explicitly pulled in by a task):
 
 ## Observed Hotspots (why this backlog exists)
 
-- `core/query_executor.py` contains **both** `QueryExecutor` and `GraphEngine` plus a large amount of expression evaluation logic.
+- `core/query_executor.py` historically contained **both** `QueryExecutor` and `GraphEngine` plus a large amount of expression evaluation logic.
 - `QueryExecutor` uses **dynamic instance state** (e.g. `_bindings`, `_union_parts`) created mid-execution. This complicates reentrancy, concurrency, and testability.
 - Two different “graph engines” concepts appear:
   - `core/query_executor.GraphEngine` for node/relationship CRUD and traversal
@@ -62,7 +69,7 @@ Out of scope (unless explicitly pulled in by a task):
 
 ## P0 — Reliability
 
-- [ ] **P0 / query** Make `QueryExecutor` execution **stateless per call** (no lingering `_bindings` / `_union_parts` across calls).
+- [x] **P0 / query** Make `QueryExecutor` execution **stateless per call** (no lingering `_bindings` / `_union_parts` across calls).
   - Acceptance: running two queries in the same executor instance can’t leak data between runs; concurrency-safe by design.
 
 ---
@@ -93,7 +100,7 @@ Out of scope (unless explicitly pulled in by a task):
 
 ## 3) Query Execution (`core/` + `cypher/`)
 
-- [ ] **P0** Extract expression evaluation into a standalone evaluator module.
+- [x] **P0** Extract expression evaluation into a standalone evaluator module.
   - Acceptance: evaluator is unit-tested for property access, functions, CASE, comparisons, IN, CONTAINS, STARTS/ENDS.
 
 - [ ] **P0** Make `QueryExecutor` return structured errors (exception types) instead of silently swallowing and returning empty results.

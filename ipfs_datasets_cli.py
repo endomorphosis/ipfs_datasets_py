@@ -467,6 +467,14 @@ def execute_heavy_command(args):
                 search_args = ["--json", *search_args]
             sys.exit(search_main(search_args))
 
+        if command == "p2p-networking":
+            from ipfs_datasets_py.p2p_networking.cli import main as p2p_net_main
+
+            p2p_args = list(args[1:])
+            if json_output:
+                p2p_args = ["--json", *p2p_args]
+            sys.exit(p2p_net_main(p2p_args))
+
         if command == "logic":
             from ipfs_datasets_py.logic.cli import main as logic_main
 
@@ -3531,7 +3539,7 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'workflow-automation', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'workflow-automation', 'p2p-networking', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
         heavy_args = list(args)
         if json_output and '--json' not in heavy_args:
             heavy_args = ['--json', *heavy_args]
