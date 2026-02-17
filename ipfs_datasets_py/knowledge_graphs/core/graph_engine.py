@@ -13,9 +13,12 @@ Design notes:
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from ..neo4j_compat.types import Node, Relationship
+
+if TYPE_CHECKING:
+    from ..storage.ipld_backend import IPLDBackend
 
 logger = logging.getLogger(__name__)
 
