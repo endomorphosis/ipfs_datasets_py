@@ -24,6 +24,7 @@ class KnowledgeGraphManager:
     - Cypher query execution
     - Hybrid search
     - Transaction management
+    - Index and constraint management
     """
     
     def __init__(self, driver_url: str = "ipfs://localhost:5001"):
@@ -37,6 +38,7 @@ class KnowledgeGraphManager:
         self.driver_url = driver_url
         self.driver = None
         self._session = None
+        self._transaction = None
     
     async def initialize(self) -> Dict[str, Any]:
         """
@@ -267,4 +269,253 @@ class KnowledgeGraphManager:
             return {
                 "status": "error",
                 "message": str(e)
+            }
+    
+    # Transaction Management
+    
+    async def transaction_begin(self) -> Dict[str, Any]:
+        """
+        Begin a new transaction.
+        
+        Returns:
+            Dict with transaction ID and status
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
+            
+            tx_manager = TransactionManager()
+            tx_id = tx_manager.begin()
+            self._transaction = tx_id
+            
+            self.logger.info(f"Started transaction {tx_id}")
+            
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction started"
+            }
+        except ImportError:
+            # Fallback if transaction module not available
+            import uuid
+            tx_id = str(uuid.uuid4())
+            self._transaction = tx_id
+            self.logger.warning("Transaction module not available, using mock transaction")
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction started (mock)"
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to begin transaction: {e}")
+            return {
+                "status": "error",
+                "message": str(e)
+            }
+    
+    async def transaction_commit(self, transaction_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Commit a transaction.
+        
+        Args:
+            transaction_id: Optional transaction ID (uses current if not provided)
+        
+        Returns:
+            Dict with commit status
+        """
+        try:
+            tx_id = transaction_id or self._transaction
+            if not tx_id:
+                return {
+                    "status": "error",
+                    "message": "No active transaction"
+                }
+            
+            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
+            
+            tx_manager = TransactionManager()
+            tx_manager.commit(tx_id)
+            self._transaction = None
+            
+            self.logger.info(f"Committed transaction {tx_id}")
+            
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction committed"
+            }
+        except ImportError:
+            # Fallback
+            self.logger.warning("Transaction module not available, using mock commit")
+            self._transaction = None
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction committed (mock)"
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to commit transaction: {e}")
+            return {
+                "status": "error",
+                "message": str(e),
+                "transaction_id": tx_id
+            }
+    
+    async def transaction_rollback(self, transaction_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Rollback a transaction.
+        
+        Args:
+            transaction_id: Optional transaction ID (uses current if not provided)
+        
+        Returns:
+            Dict with rollback status
+        """
+        try:
+            tx_id = transaction_id or self._transaction
+            if not tx_id:
+                return {
+                    "status": "error",
+                    "message": "No active transaction"
+                }
+            
+            from ipfs_datasets_py.knowledge_graphs.transactions import TransactionManager
+            
+            tx_manager = TransactionManager()
+            tx_manager.rollback(tx_id)
+            self._transaction = None
+            
+            self.logger.info(f"Rolled back transaction {tx_id}")
+            
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction rolled back"
+            }
+        except ImportError:
+            # Fallback
+            self.logger.warning("Transaction module not available, using mock rollback")
+            self._transaction = None
+            return {
+                "status": "success",
+                "transaction_id": tx_id,
+                "message": "Transaction rolled back (mock)"
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to rollback transaction: {e}")
+            return {
+                "status": "error",
+                "message": str(e),
+                "transaction_id": tx_id
+            }
+    
+    # Index Management
+    
+    async def index_create(
+        self,
+        index_name: str,
+        entity_type: str,
+        properties: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Create an index on the knowledge graph.
+        
+        Args:
+            index_name: Name of the index
+            entity_type: Entity type to index
+            properties: List of properties to index
+        
+        Returns:
+            Dict with index creation status
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.indexing import IndexManager
+            
+            index_manager = IndexManager()
+            index_manager.create_index(index_name, entity_type, properties)
+            
+            self.logger.info(f"Created index {index_name} on {entity_type}.{properties}")
+            
+            return {
+                "status": "success",
+                "index_name": index_name,
+                "entity_type": entity_type,
+                "properties": properties,
+                "message": "Index created successfully"
+            }
+        except ImportError:
+            # Fallback
+            self.logger.warning("Index module not available, using mock index")
+            return {
+                "status": "success",
+                "index_name": index_name,
+                "entity_type": entity_type,
+                "properties": properties,
+                "message": "Index created (mock)"
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to create index: {e}")
+            return {
+                "status": "error",
+                "message": str(e),
+                "index_name": index_name
+            }
+    
+    # Constraint Management
+    
+    async def constraint_add(
+        self,
+        constraint_name: str,
+        constraint_type: str,
+        entity_type: str,
+        properties: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Add a constraint to the knowledge graph.
+        
+        Args:
+            constraint_name: Name of the constraint
+            constraint_type: Type of constraint ("unique", "exists", "node_key")
+            entity_type: Entity type for the constraint
+            properties: List of properties involved
+        
+        Returns:
+            Dict with constraint creation status
+        """
+        try:
+            from ipfs_datasets_py.knowledge_graphs.constraints import ConstraintManager
+            
+            constraint_manager = ConstraintManager()
+            constraint_manager.add_constraint(
+                constraint_name, constraint_type, entity_type, properties
+            )
+            
+            self.logger.info(
+                f"Added {constraint_type} constraint {constraint_name} on {entity_type}.{properties}"
+            )
+            
+            return {
+                "status": "success",
+                "constraint_name": constraint_name,
+                "constraint_type": constraint_type,
+                "entity_type": entity_type,
+                "properties": properties,
+                "message": "Constraint added successfully"
+            }
+        except ImportError:
+            # Fallback
+            self.logger.warning("Constraint module not available, using mock constraint")
+            return {
+                "status": "success",
+                "constraint_name": constraint_name,
+                "constraint_type": constraint_type,
+                "entity_type": entity_type,
+                "properties": properties,
+                "message": "Constraint added (mock)"
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to add constraint: {e}")
+            return {
+                "status": "error",
+                "message": str(e),
+                "constraint_name": constraint_name
             }
