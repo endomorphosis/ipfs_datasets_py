@@ -706,7 +706,7 @@ else:
 - **[FEATURES.md](./FEATURES.md)** - Complete feature catalog
 - **[UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md)** - Converter architecture
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common issues and solutions
-- **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)** - Future improvements
+- **[EVERGREEN_IMPROVEMENT_PLAN.md](./EVERGREEN_IMPROVEMENT_PLAN.md)** - Ongoing improvements backlog
 
 ---
 
