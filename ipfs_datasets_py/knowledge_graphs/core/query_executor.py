@@ -1947,3 +1947,7 @@ class GraphEngine:
         logger.debug("Found %d paths from %s to %s", 
                     len(paths), start_node_id, end_node_id)
         return paths
+
+
+# Backwards compatibility: re-export GraphEngine from the extracted module.
+from .graph_engine import GraphEngine as GraphEngine
