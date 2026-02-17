@@ -13,6 +13,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
+from ..exceptions import QueryExecutionError, QueryParseError
 from ..neo4j_compat.result import Result, Record
 from ..neo4j_compat.types import Node, Relationship, Path
 from .expression_evaluator import (
@@ -152,10 +153,14 @@ class QueryExecutor:
             Result object
         """
         logger.info("Executing Cypher query: %s", query[:50])
+
+        raise_on_error = bool(options.get("raise_on_error", False))
         
         try:
             # Import parser and compiler
             from ..cypher import CypherParser, CypherCompiler
+            from ..cypher.compiler import CypherCompileError
+            from ..cypher.parser import CypherParseError
             
             # Parse query to AST
             parser = CypherParser()
@@ -178,14 +183,52 @@ class QueryExecutor:
             }
             
             return Result(records, summary=summary)
-            
-        except Exception as e:
-            logger.error("Cypher execution failed: %s", e)
-            # Return error as empty result with error info
+
+        except CypherParseError as e:
+            query_error = QueryParseError(str(e), details={"stage": "parse"})
+            if raise_on_error:
+                raise query_error from e
+
+            logger.error("Cypher parse failed: %s", e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
-                "error": str(e)
+                "error": str(e),
+                "error_type": "parse",
+                "error_stage": "parse",
+                "error_class": type(query_error).__name__,
+            }
+            return Result([], summary=summary)
+
+        except CypherCompileError as e:
+            query_error = QueryParseError(str(e), details={"stage": "compile"})
+            if raise_on_error:
+                raise query_error from e
+
+            logger.error("Cypher compile failed: %s", e)
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e),
+                "error_type": "parse",
+                "error_stage": "compile",
+                "error_class": type(query_error).__name__,
+            }
+            return Result([], summary=summary)
+
+        except Exception as e:
+            query_error = QueryExecutionError(str(e), details={"stage": "execute"})
+            if raise_on_error:
+                raise query_error from e
+
+            logger.error("Cypher execution failed: %s", e)
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e),
+                "error_type": "execution",
+                "error_stage": "execute",
+                "error_class": type(query_error).__name__,
             }
             return Result([], summary=summary)
     

@@ -61,11 +61,10 @@ For Production Use:
     DO NOT use this module for security-critical applications.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 from dataclasses import dataclass
-import hashlib
-import json
-import time
+import importlib
+import warnings
 
 __all__ = [
     'ZKPProof',  # Kept for backward compatibility
@@ -80,15 +79,21 @@ __all__ = [
     'create_implication_circuit',
 ]
 
-# WARNING: Import prints a warning to prevent accidental production use
-import warnings
-warnings.warn(
+_SIMULATION_WARNING = (
     "⚠️  WARNING: ipfs_datasets_py.logic.zkp is a SIMULATION module, NOT cryptographically secure! "
     "Do not use for production systems requiring real zero-knowledge proofs. "
-    "See KNOWN_LIMITATIONS.md for details.",
-    UserWarning,
-    stacklevel=2
+    "See KNOWN_LIMITATIONS.md for details."
 )
+
+_WARNED = False
+
+
+def _warn_once() -> None:
+    global _WARNED
+    if _WARNED:
+        return
+    _WARNED = True
+    warnings.warn(_SIMULATION_WARNING, UserWarning, stacklevel=3)
 
 # Version
 __version__ = '0.1.0'
@@ -116,6 +121,10 @@ class ZKPProof:
     metadata: Dict[str, Any]
     timestamp: float
     size_bytes: int
+
+    def __post_init__(self) -> None:
+        # Emit once on actual usage (construction), not at import-time.
+        _warn_once()
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert proof to dictionary format."""
@@ -144,13 +153,54 @@ class ZKPError(Exception):
     pass
 
 
-# Import main components - must come after ZKPProof and ZKPError definitions
-from .zkp_prover import ZKPProver  # noqa: E402
-from .zkp_verifier import ZKPVerifier  # noqa: E402
-from .circuits import ZKPCircuit, create_implication_circuit  # noqa: E402
+def __getattr__(name: str):
+    # Only warn on use of the simulated API (not on import).
+    if name in {
+        "ZKPProver",
+        "SimulatedZKPProver",
+        "ZKPVerifier",
+        "SimulatedZKPVerifier",
+        "ZKPCircuit",
+        "SimulatedZKPCircuit",
+        "create_implication_circuit",
+    }:
+        _warn_once()
 
-# Aliases with correct naming (Simulated prefix)
+    if name in {"ZKPProver", "SimulatedZKPProver"}:
+        mod = importlib.import_module(f"{__name__}.zkp_prover")
+        value = getattr(mod, "ZKPProver")
+        globals()["ZKPProver"] = value
+        globals()["SimulatedZKPProver"] = value
+        return globals()[name]
+
+    if name in {"ZKPVerifier", "SimulatedZKPVerifier"}:
+        mod = importlib.import_module(f"{__name__}.zkp_verifier")
+        value = getattr(mod, "ZKPVerifier")
+        globals()["ZKPVerifier"] = value
+        globals()["SimulatedZKPVerifier"] = value
+        return globals()[name]
+
+    if name in {"ZKPCircuit", "SimulatedZKPCircuit", "create_implication_circuit"}:
+        mod = importlib.import_module(f"{__name__}.circuits")
+        if name == "create_implication_circuit":
+            value = getattr(mod, "create_implication_circuit")
+            globals()[name] = value
+            return value
+        value = getattr(mod, "ZKPCircuit")
+        globals()["ZKPCircuit"] = value
+        globals()["SimulatedZKPCircuit"] = value
+        return globals()[name]
+
+    if name == "SimulatedZKPProof":
+        globals()[name] = ZKPProof
+        return ZKPProof
+
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
+
+def __dir__():
+    return sorted(set(globals().keys()) | set(__all__))
+
+
+# Alias with correct naming (Simulated prefix)
 SimulatedZKPProof = ZKPProof  # Same class, clearer name
-SimulatedZKPProver = ZKPProver  # Same class, clearer name
-SimulatedZKPVerifier = ZKPVerifier  # Same class, clearer name
-SimulatedZKPCircuit = ZKPCircuit  # Same class, clearer name
