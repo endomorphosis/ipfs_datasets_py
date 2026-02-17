@@ -21,6 +21,20 @@ New API Quick Start:
 
 import warnings
 
+# Import custom exceptions for convenient access
+from .exceptions import (
+    KnowledgeGraphError,
+    ExtractionError,
+    EntityExtractionError,
+    RelationshipExtractionError,
+    ValidationError,
+    QueryError,
+    QueryParseError,
+    QueryExecutionError,
+    EntityNotFoundError,
+    RelationshipNotFoundError,
+)
+
 # Compatibility imports - emit warnings
 def _deprecated_import(name, new_location):
     """Helper to create deprecated import warnings."""
@@ -39,6 +53,17 @@ try:
     from .storage import IPLDBackend, LRUCache, Entity, Relationship
     
     __all__ = [
+        # Exceptions (new)
+        'KnowledgeGraphError',
+        'ExtractionError',
+        'EntityExtractionError',
+        'RelationshipExtractionError',
+        'ValidationError',
+        'QueryError',
+        'QueryParseError',
+        'QueryExecutionError',
+        'EntityNotFoundError',
+        'RelationshipNotFoundError',
         # New API (recommended)
         'GraphDatabase',
         'IPFSDriver', 
