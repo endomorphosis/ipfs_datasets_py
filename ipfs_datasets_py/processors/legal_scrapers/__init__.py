@@ -106,6 +106,7 @@ from .brave_legal_search import (
     create_legal_search,
     search_legal,
 )
+from .multi_engine_legal_search import MultiEngineLegalSearch
 from .knowledge_base_loader import (
     LegalKnowledgeBase,
     FederalEntity,
@@ -246,6 +247,7 @@ __all__ = [
     
     # Brave Legal Search
     "BraveLegalSearch",
+    "MultiEngineLegalSearch",  # Multi-engine search
     "create_legal_search",
     "search_legal",
     "LegalKnowledgeBase",

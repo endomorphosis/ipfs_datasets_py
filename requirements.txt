@@ -131,6 +131,10 @@ selenium>=4.15.0  # Browser automation for dynamic content
 scrapy>=2.11.0  # Advanced web scraping framework
 aiohttp>=3.8.0  # Async HTTP client for web archiving
 
+# Multi-engine search support (Enhancement 12)
+duckduckgo-search>=6.0.0  # DuckDuckGo search API (no key required)
+google-api-python-client>=2.100.0  # Google Custom Search Engine API
+
 # Add these one by one after basic setup works:
 datasets>=2.10.0,<3.0.0
 huggingface-hub>=0.34.0,<1.0.0
