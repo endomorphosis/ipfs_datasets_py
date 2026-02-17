@@ -1,34 +1,39 @@
 # Logic Module - Complete Neurosymbolic Reasoning System
 
-[![Status](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/endomorphosis/ipfs_datasets_py)
-[![Tests](https://img.shields.io/badge/tests-528%2B-blue)](./tests/)
-[![Rules](https://img.shields.io/badge/inference--rules-127-orange)](./TDFOL/)
+[![Status](https://img.shields.io/badge/status-beta-yellow)](https://github.com/endomorphosis/ipfs_datasets_py)
+[![Tests](https://img.shields.io/badge/tests-174-blue)](./tests/)
+[![Coverage](https://img.shields.io/badge/coverage-94%25-green)](./tests/)
+[![Rules](https://img.shields.io/badge/inference--rules-128-orange)](./INFERENCE_RULES_INVENTORY.md)
 [![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
 
-> **🎉 NEW:** Unified Converter Architecture + Zero-Knowledge Proofs!  
-> See [UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md) and [zkp/README.md](./zkp/README.md) for details.
+> **🎉 NEW:** Unified Converter Architecture (Production-Ready)  
+> See [UNIFIED_CONVERTER_GUIDE.md](./UNIFIED_CONVERTER_GUIDE.md) for details.
+> 
+> ⚠️ **NOTE:** ZKP module is simulation-only for demonstration. See [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) for details.
 
 ## Overview
 
 The IPFS Datasets Python logic module provides a **complete neurosymbolic reasoning system** combining:
 
 - **Temporal Deontic First-Order Logic (TDFOL)** - Unified logic representation
-- **Cognitive Event Calculus (CEC)** - 87 production-tested inference rules
+- **Cognitive Event Calculus (CEC)** - Production-tested inference framework
 - **Modal Logic Provers** - K, S4, S5, D, Cognitive Calculus
 - **Grammar-Based NL** - Natural language understanding with 100+ lexicon entries
 - **Unified API** - Single interface for all capabilities
 
 ### Key Features
 
-✅ **127 Inference Rules** (40 TDFOL + 87 CEC)  
+✅ **128 Inference Rules** (41 TDFOL + 87 CEC) - See [INFERENCE_RULES_INVENTORY.md](./INFERENCE_RULES_INVENTORY.md)  
 ✅ **5 Modal Logic Provers** (K/S4/S5/D/Cognitive)  
 ✅ **Grammar-Based NL Processing** (100+ lexicon, 50+ rules)  
 ✅ **Multi-Format Parsing** (TDFOL, DCEC, Natural Language)  
-✅ **528+ Comprehensive Tests**  
-✅ **Production-Ready** (2-4x faster than Java CEC)  
+✅ **174 Comprehensive Tests** (164 passing, 94% pass rate) + 568+ rule tests  
+✅ **Production Converters** (FOL/Deontic 100% complete)  
 🆕 **Unified Converters** (14x cache speedup, batch processing)  
-🆕 **Zero-Knowledge Proofs** (privacy-preserving theorem proving)  
+🆕 **ZKP Simulation** (demo/educational - see limitations)  
 🆕 **Utility Monitoring** (48x cache speedup for utilities)
+
+**For limitations and optional dependencies, see [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md)**
 
 ---
 
@@ -37,12 +42,27 @@ The IPFS Datasets Python logic module provides a **complete neurosymbolic reason
 ### Installation
 
 ```bash
-# Install with logic module
+# Core installation (no optional dependencies)
 pip install -e ".[logic]"
 
-# Or install with all features
+# With optional enhancements
+pip install -e ".[logic-full]"  # Includes SymbolicAI, Z3, spaCy, ML models
+
+# Or install all features
 pip install -e ".[all]"
 ```
+
+### Optional Dependencies
+
+The logic module gracefully degrades when optional dependencies are missing:
+
+- **Core Features (Always Available):** FOL/Deontic conversion, basic theorem proving, caching, type system ✅
+- **SymbolicAI (70+ modules):** Advanced symbolic manipulation (5-10x faster), optional
+- **Z3 Solver:** Automated SMT solving, falls back to native prover
+- **spaCy:** NLP for FOL extraction (15-20% accuracy boost), falls back to regex
+- **Lean/Coq:** Interactive proof development, requires separate installation
+
+See [KNOWN_LIMITATIONS.md](./KNOWN_LIMITATIONS.md) for detailed fallback behaviors.
 
 ### Basic Usage
 
@@ -412,9 +432,9 @@ pytest --cov=ipfs_datasets_py.logic.integration --cov-report=html
 
 ### Test Coverage
 
-- **CEC Native Tests:** 418 tests
-- **Integration Tests:** 110 tests
-- **Total:** 528+ comprehensive tests
+- **Module Tests:** 174 tests (94% pass rate)
+- **Rule Tests:** 568+ (CEC: 418, TDFOL: 40+, Integration: 110+)
+- **Total:** 742+ comprehensive tests
 
 ### Test Structure
 
@@ -688,11 +708,11 @@ See repository LICENSE file.
 
 ## Status
 
-✅ **Production Ready**  
-✅ **All 5 Critical Gaps Resolved**  
+✅ **Beta Quality (Core Converters Production-Ready)**  
+✅ **All Critical Gaps Documented**  
 ✅ **13,702+ LOC**  
-✅ **528+ Tests**  
-✅ **127 Inference Rules**  
+✅ **742+ Tests** (174 module + 568+ rule tests)  
+✅ **128 Inference Rules** (41 TDFOL + 87 CEC)  
 ✅ **5 Modal Provers**  
 ✅ **103.8 KB Documentation**
 

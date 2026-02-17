@@ -26,7 +26,9 @@ try:
     from symai.strategy import contract
     try:
         from symai.strategy import LLMDataModel
-    except Exception:
+    except (ImportError, AttributeError) as e:
+        # LLMDataModel not available in all SymbolicAI versions
+        logger.debug(f"LLMDataModel not available, using BaseModel fallback: {e}")
         LLMDataModel = BaseModel
     SYMBOLIC_AI_AVAILABLE = True
 except (ImportError, SystemExit):

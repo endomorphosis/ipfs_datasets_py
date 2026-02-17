@@ -1,45 +1,64 @@
 """
-Zero-Knowledge Proof (ZKP) Module for Private Logic Verification.
+Zero-Knowledge Proof (ZKP) SIMULATION Module - Educational/Demo Only.
 
-This module provides privacy-preserving theorem proving capabilities,
-allowing proofs to be generated and verified without revealing the
-underlying axioms or logic formulas.
+⚠️ WARNING: This is a SIMULATED ZKP system for educational and demonstration
+purposes ONLY. It is NOT cryptographically secure and should NOT be used in
+production systems requiring real zero-knowledge proofs.
 
-Key Components:
-    - ZKPProver: Generate zero-knowledge proofs for logic theorems
-    - ZKPVerifier: Verify proofs without seeing private data
-    - ZKPCircuit: Define logic circuits for proof generation
+What this module provides:
+    - Educational demonstration of ZKP concepts
+    - Fast simulation for prototyping (<0.1ms)
+    - Simple API showing how ZKP systems work
+    - Mock proofs using hash-based commitments
 
-Use Cases:
-    1. Private theorem proving (prove without revealing axioms)
-    2. Confidential compliance verification
-    3. Secure multi-party logic computation
-    4. Privacy-preserving IPFS proof storage
+What this module does NOT provide:
+    - Real cryptographic security
+    - Actual zkSNARKs (Groth16, PLONK, etc.)
+    - Production-ready zero-knowledge proofs
+    - Integration with py_ecc or other crypto libraries
+
+For production ZKP, you need:
+    - Integrate py_ecc library with Groth16 zkSNARKs
+    - Implement proper trusted setup
+    - Use real circuit compilation
+    - Add cryptographic security validations
+
+Key Components (Simulated):
+    - SimulatedZKPProver: Generate mock proofs for demonstration
+    - SimulatedZKPVerifier: Verify mock proofs
+    - SimulatedZKPCircuit: Mock circuit definitions
+
+Use Cases (Educational Only):
+    1. Learning ZKP concepts and workflows
+    2. Prototyping ZKP-enabled systems
+    3. Testing application logic with mock proofs
+    4. Educational demonstrations
 
 Example:
-    >>> from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+    >>> from ipfs_datasets_py.logic.zkp import SimulatedZKPProver, SimulatedZKPVerifier
     >>> 
-    >>> # Prove theorem without revealing axioms
-    >>> prover = ZKPProver()
+    >>> # SIMULATION - NOT cryptographically secure!
+    >>> prover = SimulatedZKPProver()
     >>> proof = prover.generate_proof(
     ...     theorem="Q",
     ...     private_axioms=["P", "P -> Q"]
     ... )
     >>> 
-    >>> # Verify without seeing axioms
-    >>> verifier = ZKPVerifier()
-    >>> assert verifier.verify_proof(proof)
+    >>> # Verify mock proof
+    >>> verifier = SimulatedZKPVerifier()
+    >>> assert verifier.verify_proof(proof)  # Mock verification
+    >>> 
+    >>> print("⚠️  This is a SIMULATION - not cryptographically secure!")
 
-Performance:
-    - Proof Size: ~200-500 bytes
-    - Proving Time: <1 second
-    - Verification Time: <10ms
-    - Security: 128-bit equivalent
+Performance (Simulation):
+    - Proof Size: ~160 bytes (mock commitment)
+    - Proving Time: <0.1ms (no real cryptography)
+    - Verification Time: <0.01ms (simple hash check)
+    - Security: NONE - simulation only!
 
-Note:
-    This is a simulated ZKP system for demonstration. For production use
-    with real cryptographic security, integrate py_ecc library with
-    Groth16 zkSNARKs.
+For Production Use:
+    See KNOWN_LIMITATIONS.md for roadmap to real ZKP integration.
+    DO NOT use this module for security-critical applications.
 """
 
 from typing import List, Dict, Any, Optional
@@ -49,13 +68,27 @@ import json
 import time
 
 __all__ = [
-    'ZKPProof',
-    'ZKPProver',
-    'ZKPVerifier',
-    'ZKPCircuit',
+    'ZKPProof',  # Kept for backward compatibility
+    'SimulatedZKPProof',  # New name reflecting simulation
+    'ZKPProver',  # Deprecated - use SimulatedZKPProver
+    'SimulatedZKPProver',  # Correct name
+    'ZKPVerifier',  # Deprecated - use SimulatedZKPVerifier
+    'SimulatedZKPVerifier',  # Correct name
+    'ZKPCircuit',  # Deprecated - use SimulatedZKPCircuit
+    'SimulatedZKPCircuit',  # Correct name
     'ZKPError',
     'create_implication_circuit',
 ]
+
+# WARNING: Import prints a warning to prevent accidental production use
+import warnings
+warnings.warn(
+    "⚠️  WARNING: ipfs_datasets_py.logic.zkp is a SIMULATION module, NOT cryptographically secure! "
+    "Do not use for production systems requiring real zero-knowledge proofs. "
+    "See KNOWN_LIMITATIONS.md for details.",
+    UserWarning,
+    stacklevel=2
+)
 
 # Version
 __version__ = '0.1.0'
@@ -64,10 +97,15 @@ __version__ = '0.1.0'
 @dataclass
 class ZKPProof:
     """
-    Zero-knowledge proof for a logic theorem.
+    SIMULATED Zero-Knowledge Proof - Educational/Demo Only.
+    
+    ⚠️  WARNING: This is NOT a cryptographically secure proof!
+    It uses simple hash-based commitments for demonstration purposes.
+    
+    For production ZKP, integrate py_ecc library with real zkSNARKs.
     
     Attributes:
-        proof_data: Cryptographic proof data
+        proof_data: Mock proof data (hash-based, not cryptographic)
         public_inputs: Public information (theorem statement)
         metadata: Additional proof metadata
         timestamp: When proof was generated
@@ -110,3 +148,9 @@ class ZKPError(Exception):
 from .zkp_prover import ZKPProver  # noqa: E402
 from .zkp_verifier import ZKPVerifier  # noqa: E402
 from .circuits import ZKPCircuit, create_implication_circuit  # noqa: E402
+
+# Aliases with correct naming (Simulated prefix)
+SimulatedZKPProof = ZKPProof  # Same class, clearer name
+SimulatedZKPProver = ZKPProver  # Same class, clearer name
+SimulatedZKPVerifier = ZKPVerifier  # Same class, clearer name
+SimulatedZKPCircuit = ZKPCircuit  # Same class, clearer name

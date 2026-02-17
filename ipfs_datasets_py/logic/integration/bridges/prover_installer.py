@@ -124,7 +124,8 @@ def ensure_coq(*, yes: bool, strict: bool) -> bool:
                     timeout=5,
                 )
                 return probe.returncode == 0
-            except Exception:
+            except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
+                logger.debug(f"Could not check sudo access: {e}")
                 return False
 
         if have_apt:

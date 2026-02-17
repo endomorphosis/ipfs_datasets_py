@@ -178,7 +178,9 @@ class BaseProverBridge(ABC):
         try:
             self.to_target_format(formula)
             return True
-        except Exception:
+        except (NotImplementedError, ValueError, TypeError, AttributeError) as e:
+            # Conversion failed due to unsupported formula or not implemented
+            logger.debug(f"Formula not supported: {e}")
             return False
     
     def __repr__(self) -> str:
