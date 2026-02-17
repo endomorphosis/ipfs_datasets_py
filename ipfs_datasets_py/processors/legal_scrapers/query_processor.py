@@ -338,6 +338,9 @@ class QueryProcessor:
     def _categorize_legal_domain(self, query: str) -> List[str]:
         """Categorize query into legal domains (housing, employment, etc.).
         
+        Uses all 14 registered complaint types from complaint_analysis for
+        comprehensive categorization.
+        
         Args:
             query: Query text
             
@@ -354,25 +357,88 @@ class QueryProcessor:
             except Exception as e:
                 logger.debug(f"Error categorizing legal domain: {e}")
         
+        # Enhanced: Use all 14 registered complaint types for better matching
+        if HAVE_COMPLAINT_ANALYSIS:
+            try:
+                from .complaint_analysis import get_registered_types, get_keywords
+                
+                # Get all registered types and their keywords
+                all_types = get_registered_types()
+                matches = self._match_to_complaint_types(query, all_types)
+                domains.extend(matches)
+                
+            except Exception as e:
+                logger.debug(f"Error using complaint types registry: {e}")
+        
         # Fallback: keyword-based categorization
-        query_lower = query.lower()
-        
-        domain_keywords = {
-            'housing': ['housing', 'tenant', 'landlord', 'rent', 'eviction', 'fair housing'],
-            'employment': ['employment', 'workplace', 'discrimination', 'wrongful termination', 'eeoc'],
-            'civil_rights': ['civil rights', 'discrimination', 'equal protection', 'voting rights'],
-            'consumer': ['consumer', 'fraud', 'deceptive', 'false advertising', 'ftc'],
-            'environmental': ['environmental', 'pollution', 'epa', 'clean air', 'clean water'],
-            'healthcare': ['healthcare', 'medical', 'hipaa', 'patient rights', 'malpractice'],
-            'immigration': ['immigration', 'visa', 'asylum', 'deportation', 'uscis'],
-            'tax': ['tax', 'irs', 'tax court', 'tax penalty'],
-        }
-        
-        for domain, keywords in domain_keywords.items():
-            if any(keyword in query_lower for keyword in keywords):
-                domains.append(domain)
+        if not domains:
+            query_lower = query.lower()
+            
+            domain_keywords = {
+                'housing': ['housing', 'tenant', 'landlord', 'rent', 'eviction', 'fair housing'],
+                'employment': ['employment', 'workplace', 'discrimination', 'wrongful termination', 'eeoc'],
+                'civil_rights': ['civil rights', 'discrimination', 'equal protection', 'voting rights'],
+                'consumer': ['consumer', 'fraud', 'deceptive', 'false advertising', 'ftc'],
+                'environmental': ['environmental', 'pollution', 'epa', 'clean air', 'clean water'],
+                'healthcare': ['healthcare', 'medical', 'hipaa', 'patient rights', 'malpractice'],
+                'immigration': ['immigration', 'visa', 'asylum', 'deportation', 'uscis'],
+                'tax': ['tax', 'irs', 'tax court', 'tax penalty'],
+            }
+            
+            for domain, keywords in domain_keywords.items():
+                if any(keyword in query_lower for keyword in keywords):
+                    domains.append(domain)
         
         return list(set(domains))
+    
+    def _match_to_complaint_types(self, query: str, complaint_types: List[str]) -> List[str]:
+        """Match query to complaint types using type-specific keywords.
+        
+        This method uses the complaint_analysis keyword registry to check
+        each complaint type's keywords against the query, providing more
+        accurate categorization than simple keyword matching.
+        
+        Args:
+            query: Query text
+            complaint_types: List of complaint type names to check
+            
+        Returns:
+            List of matching complaint types
+        """
+        if not HAVE_COMPLAINT_ANALYSIS:
+            return []
+        
+        try:
+            from .complaint_analysis import get_keywords
+            
+            matches = []
+            query_lower = query.lower()
+            
+            # Minimum keyword matches required (threshold)
+            MATCH_THRESHOLD = 2
+            
+            for complaint_type in complaint_types:
+                # Get type-specific keywords for more precise matching
+                keywords = get_keywords('complaint', complaint_type=complaint_type)
+                
+                if not keywords:
+                    continue
+                
+                # Count matches
+                match_count = sum(1 for kw in keywords if kw.lower() in query_lower)
+                
+                # Add to results if meets threshold
+                if match_count >= MATCH_THRESHOLD:
+                    matches.append(complaint_type)
+                elif match_count == 1 and len(keywords) < 10:
+                    # Lower threshold for types with fewer keywords
+                    matches.append(complaint_type)
+            
+            return matches
+            
+        except Exception as e:
+            logger.debug(f"Error matching complaint types: {e}")
+            return []
     
     def _determine_scope(self, intent: QueryIntent) -> str:
         """Determine the scope of the query (federal, state, local, mixed).
