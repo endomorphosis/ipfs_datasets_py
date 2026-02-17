@@ -22,11 +22,20 @@ from .workflow_tools import (
     get_assigned_workflows
 )
 
+from .enhanced_workflow_tools import (
+    enhanced_workflow_management,
+    enhanced_batch_processing,
+    enhanced_data_pipeline,
+)
+
 __all__ = [
     "execute_workflow",
     "batch_process_datasets",
     "schedule_workflow",
     "get_workflow_status",
+    "enhanced_workflow_management",
+    "enhanced_batch_processing",
+    "enhanced_data_pipeline",
     "initialize_p2p_scheduler",
     "schedule_p2p_workflow",
     "get_next_p2p_workflow",
