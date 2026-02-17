@@ -1,188 +1,213 @@
 # ipfs_datasets_py/mcp_server/tools/workflow_tools/enhanced_workflow_tools.py
-"""
-Enhanced workflow orchestration and pipeline management tools.
-Migrated and enhanced from a legacy tooling codebase with production features.
+"""Enhanced workflow orchestration and pipeline management tools.
+
+This module intentionally keeps MCP-specific glue thin.
+Core workflow types/services live in `ipfs_datasets_py.workflow_automation`.
+
+NOTE: The current MCP server's dynamic importer registers *functions* (not
+tool classes). For that reason, this file provides function wrappers with
+the same names as the tool classes.
 """
 
+from __future__ import annotations
+
 import anyio
-import json
-import uuid
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union
-from enum import Enum
-from dataclasses import dataclass, asdict
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from ipfs_datasets_py.workflow_automation.enhanced_workflows import (
+    MockWorkflowService,
+    StepStatus,
+    WorkflowDefinition,
+    WorkflowStatus,
+    WorkflowStep,
+    get_default_workflow_service,
+)
 
 from ..tool_wrapper import EnhancedBaseMCPTool
 from ...validators import EnhancedParameterValidator
 from ...monitoring import EnhancedMetricsCollector
 
-logger = logging.getLogger(__name__)
 
-class WorkflowStatus(Enum):
-    """Workflow execution status."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    PAUSED = "paused"
+_WORKFLOW_SERVICE: MockWorkflowService = get_default_workflow_service()
 
-class StepStatus(Enum):
-    """Individual step status."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    SKIPPED = "skipped"
 
-@dataclass
-class WorkflowStep:
-    """Individual workflow step definition."""
-    id: str
-    name: str
-    type: str
-    parameters: Dict[str, Any]
-    dependencies: List[str] = None
-    timeout: int = 3600  # 1 hour default
-    retry_count: int = 0
-    max_retries: int = 3
-    status: StepStatus = StepStatus.PENDING
-    start_time: Optional[datetime] = None
-    end_time: Optional[datetime] = None
-    error: Optional[str] = None
-    result: Optional[Dict[str, Any]] = None
+async def enhanced_workflow_management(
+    action: str,
+    workflow_id: Optional[str] = None,
+    workflow_definition: Optional[Dict[str, Any]] = None,
+    execution_params: Optional[Dict[str, Any]] = None,
+    status_filter: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create, execute, and monitor enhanced workflows.
 
-@dataclass
-class WorkflowDefinition:
-    """Complete workflow definition."""
-    id: str
-    name: str
-    description: str
-    steps: List[WorkflowStep]
-    status: WorkflowStatus = WorkflowStatus.PENDING
-    created_at: datetime = None
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    metadata: Dict[str, Any] = None
-    error: Optional[str] = None
+    Args:
+        action: One of `create`, `execute`, `get_status`, `list`, `cancel`, `pause`, `resume`.
+        workflow_id: Workflow identifier (required for `execute`, `get_status`, `cancel`, `pause`, `resume`).
+        workflow_definition: Workflow definition (required for `create`).
+        execution_params: Optional execution parameters (used by `execute`).
+        status_filter: Optional workflow status filter (used by `list`).
 
-class MockWorkflowService:
-    """Mock workflow service for development and testing."""
-    
-    def __init__(self):
-        self.workflows = {}
-        self.execution_history = []
-    
-    async def create_workflow(self, definition: Dict[str, Any]) -> Dict[str, Any]:
-        """Create a new workflow."""
-        workflow_id = str(uuid.uuid4())
-        workflow = WorkflowDefinition(
-            id=workflow_id,
-            name=definition.get("name", f"Workflow_{workflow_id[:8]}"),
-            description=definition.get("description", ""),
-            steps=[
-                WorkflowStep(
-                    id=step.get("id", str(uuid.uuid4())),
-                    name=step.get("name", f"Step_{i}"),
-                    type=step.get("type"),
-                    parameters=step.get("parameters", {}),
-                    dependencies=step.get("dependencies", []),
-                    timeout=step.get("timeout", 3600),
-                    max_retries=step.get("max_retries", 3)
-                ) for i, step in enumerate(definition.get("steps", []))
-            ],
-            created_at=datetime.now(),
-            metadata=definition.get("metadata", {})
+    Returns:
+        A dict with the requested action result.
+    """
+
+    if action == "create":
+        if workflow_definition is None:
+            raise ValueError("workflow_definition is required for action=create")
+        result = await _WORKFLOW_SERVICE.create_workflow(workflow_definition)
+        return {
+            "action": "create",
+            "workflow_created": True,
+            "workflow_id": result["workflow_id"],
+            "status": result["status"],
+            "steps_count": result["steps_count"],
+            "created_at": result["created_at"],
+        }
+
+    if action == "execute":
+        if not workflow_id:
+            raise ValueError("workflow_id is required for action=execute")
+        result = await _WORKFLOW_SERVICE.execute_workflow(
+            workflow_id, execution_params=execution_params or {}
         )
-        
-        self.workflows[workflow_id] = workflow
         return {
+            "action": "execute",
             "workflow_id": workflow_id,
-            "status": workflow.status.value,
-            "created_at": workflow.created_at.isoformat(),
-            "steps_count": len(workflow.steps)
+            "execution_id": result["execution_id"],
+            "status": result["status"],
+            "execution_time": result["execution_time"],
+            "steps_completed": result["steps_completed"],
+            "steps_failed": result["steps_failed"],
         }
-    
-    async def execute_workflow(self, workflow_id: str, execution_params: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Execute a workflow."""
-        if workflow_id not in self.workflows:
-            raise ValueError(f"Workflow {workflow_id} not found")
-        
-        workflow = self.workflows[workflow_id]
-        workflow.status = WorkflowStatus.RUNNING
-        workflow.started_at = datetime.now()
-        
-        # Mock execution
-        await anyio.sleep(0.1)  # Simulate processing time
-        
-        # Mock successful execution
-        for step in workflow.steps:
-            step.status = StepStatus.COMPLETED
-            step.start_time = datetime.now()
-            step.end_time = datetime.now() + timedelta(seconds=1)
-            step.result = {"success": True, "processed_items": 100}
-        
-        workflow.status = WorkflowStatus.COMPLETED
-        workflow.completed_at = datetime.now()
-        
-        execution_record = {
-            "workflow_id": workflow_id,
-            "execution_id": str(uuid.uuid4()),
-            "status": workflow.status.value,
-            "execution_time": (workflow.completed_at - workflow.started_at).total_seconds(),
-            "steps_completed": len([s for s in workflow.steps if s.status == StepStatus.COMPLETED]),
-            "steps_failed": len([s for s in workflow.steps if s.status == StepStatus.FAILED])
-        }
-        self.execution_history.append(execution_record)
-        
-        return execution_record
-    
-    async def get_workflow_status(self, workflow_id: str) -> Dict[str, Any]:
-        """Get workflow status."""
-        if workflow_id not in self.workflows:
-            raise ValueError(f"Workflow {workflow_id} not found")
-        
-        workflow = self.workflows[workflow_id]
+
+    if action == "get_status":
+        if not workflow_id:
+            raise ValueError("workflow_id is required for action=get_status")
+        result = await _WORKFLOW_SERVICE.get_workflow_status(workflow_id)
+        return {"action": "get_status", **result}
+
+    if action == "list":
+        result = await _WORKFLOW_SERVICE.list_workflows(status_filter=status_filter)
+        return {"action": "list", **result}
+
+    if action in {"cancel", "pause", "resume"}:
+        if not workflow_id:
+            raise ValueError(f"workflow_id is required for action={action}")
         return {
+            "action": action,
             "workflow_id": workflow_id,
-            "name": workflow.name,
-            "status": workflow.status.value,
-            "created_at": workflow.created_at.isoformat() if workflow.created_at else None,
-            "started_at": workflow.started_at.isoformat() if workflow.started_at else None,
-            "completed_at": workflow.completed_at.isoformat() if workflow.completed_at else None,
-            "steps": [
-                {
-                    "id": step.id,
-                    "name": step.name,
-                    "type": step.type,
-                    "status": step.status.value,
-                    "start_time": step.start_time.isoformat() if step.start_time else None,
-                    "end_time": step.end_time.isoformat() if step.end_time else None,
-                    "error": step.error
-                } for step in workflow.steps
-            ]
+            "success": True,
+            "message": f"Workflow {action} operation completed",
         }
-    
-    async def list_workflows(self, status_filter: Optional[str] = None) -> Dict[str, Any]:
-        """List all workflows."""
-        workflows = list(self.workflows.values())
-        
-        if status_filter:
-            workflows = [w for w in workflows if w.status.value == status_filter]
-        
-        return {
-            "workflows": [
-                {
-                    "id": w.id,
-                    "name": w.name,
-                    "status": w.status.value,
-                    "created_at": w.created_at.isoformat() if w.created_at else None,
-                    "steps_count": len(w.steps)
-                } for w in workflows
-            ],
-            "total_count": len(workflows)
+
+    raise ValueError(f"Unknown action: {action}")
+
+
+async def enhanced_batch_processing(
+    operation_type: str,
+    data_source: Dict[str, Any],
+    output_config: Dict[str, Any],
+    processing_params: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Execute a large-scale batch processing operation (mock implementation)."""
+
+    processing_params = processing_params or {}
+    batch_size = processing_params.get("batch_size", 100)
+    parallel_workers = processing_params.get("parallel_workers", 4)
+    total_items = 5000
+
+    await anyio.sleep(0.2)
+
+    return {
+        "operation_type": operation_type,
+        "processing_completed": True,
+        "total_items": total_items,
+        "processed_items": total_items,
+        "failed_items": 12,
+        "batch_size": batch_size,
+        "parallel_workers": parallel_workers,
+        "processing_time_seconds": 145.8,
+        "throughput_items_per_second": total_items / 145.8,
+        "memory_peak_mb": processing_params.get("memory_limit_mb", 1024) * 0.8,
+        "checkpoints_created": total_items // processing_params.get("checkpoint_interval", 50),
+        "output_location": output_config["destination"],
+        "output_size_mb": 256.7,
+        "compression_ratio": 0.75
+        if output_config.get("compression", "none") != "none"
+        else 1.0,
+    }
+
+
+async def enhanced_data_pipeline(
+    pipeline_config: Dict[str, Any],
+    execution_options: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Execute an ETL-style data pipeline (mock implementation)."""
+
+    execution_options = execution_options or {}
+    pipeline_name = pipeline_config["name"]
+    extract_config = pipeline_config["extract"]
+    transform_steps = pipeline_config.get("transform", [])
+    load_config = pipeline_config["load"]
+
+    await anyio.sleep(0.3)
+
+    extracted_records = 10000
+    extraction_time = 25.4
+    transformed_records = extracted_records - 150
+    transformation_time = 45.6
+    loaded_records = transformed_records
+    load_time = 18.2
+    total_time = extraction_time + transformation_time + load_time
+
+    result: Dict[str, Any] = {
+        "pipeline_name": pipeline_name,
+        "execution_completed": True,
+        "total_execution_time": total_time,
+        "phases": {
+            "extract": {
+                "records_extracted": extracted_records,
+                "execution_time": extraction_time,
+                "source_type": extract_config["source_type"],
+            },
+            "transform": {
+                "records_input": extracted_records,
+                "records_output": transformed_records,
+                "records_filtered": extracted_records - transformed_records,
+                "execution_time": transformation_time,
+                "steps_executed": len(transform_steps),
+            },
+            "load": {
+                "records_loaded": loaded_records,
+                "execution_time": load_time,
+                "destination_type": load_config["destination_type"],
+                "write_mode": load_config.get("write_mode", "append"),
+            },
+        },
+        "data_quality": {
+            "validation_enabled": execution_options.get("validate_data", True),
+            "quality_score": 0.95,
+            "data_completeness": 0.98,
+            "schema_compliance": 1.0,
+            "duplicate_rate": 0.02,
+        },
+        "performance_metrics": {
+            "throughput_records_per_second": extracted_records / total_time,
+            "memory_peak_mb": 512.3,
+            "cpu_usage_percent": 65.2,
+            "io_operations": 1250,
+        },
+    }
+
+    if execution_options.get("create_backup"):
+        result["backup"] = {
+            "backup_created": True,
+            "backup_location": f"/backups/{pipeline_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            "backup_size_mb": 125.8,
         }
+
+    return result
 
 class EnhancedWorkflowManagementTool(EnhancedBaseMCPTool):
     """Enhanced tool for workflow creation and management."""
@@ -197,7 +222,7 @@ class EnhancedWorkflowManagementTool(EnhancedBaseMCPTool):
             metrics_collector=metrics_collector or EnhancedMetricsCollector()
         )
         
-        self.workflow_service = workflow_service or MockWorkflowService()
+        self.workflow_service = workflow_service or _WORKFLOW_SERVICE
         
         self.input_schema = {
             "type": "object",
@@ -540,8 +565,13 @@ class EnhancedDataPipelineTool(EnhancedBaseMCPTool):
         
         return result
 
-# Export the enhanced tools
 __all__ = [
+    # Function-based MCP tools (registered by dynamic importer)
+    "enhanced_workflow_management",
+    "enhanced_batch_processing",
+    "enhanced_data_pipeline",
+
+    # Classes retained for compatibility / direct instantiation
     "EnhancedWorkflowManagementTool",
     "EnhancedBatchProcessingTool", 
     "EnhancedDataPipelineTool",

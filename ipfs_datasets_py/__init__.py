@@ -44,6 +44,11 @@ _ENABLE_FINANCE_DASHBOARD_IMPORTS = _truthy(
     os.environ.get("IPFS_DATASETS_PY_ENABLE_FINANCE_DASHBOARD_IMPORTS")
 )
 
+# LLM-related imports are opt-in.
+# Default behavior: importing the package should not import transformers/LLM stacks
+# or search/GraphRAG integrations.
+_ENABLE_LLM_IMPORTS = _truthy(os.environ.get("IPFS_DATASETS_PY_ENABLE_LLM_IMPORTS"))
+
 # Optional dependency import notices.
 #
 # Default behavior: stay quiet on missing optional dependencies so that importing
@@ -207,17 +212,15 @@ HAVE_LOAD_DATASET = False
 load_dataset = None
 
 
-# Use conditional imports to handle missing modules gracefully
-try:
-    # Core components for Phase 1
-    from .data_transformation.ipld.storage import IPLDStorage, IPLDSchema
-    from .data_transformation.ipld.optimized_codec import (
-        OptimizedEncoder, OptimizedDecoder, BatchProcessor,
-        create_batch_processor, optimize_node_structure
-    )
-    HAVE_IPLD = True
-except ImportError:
-    HAVE_IPLD = False
+# IPLD components (lazy; see __getattr__).
+HAVE_IPLD = False
+IPLDStorage = None
+IPLDSchema = None
+OptimizedEncoder = None
+OptimizedDecoder = None
+BatchProcessor = None
+create_batch_processor = None
+optimize_node_structure = None
 
 # Import accelerate integration (graceful fallback if not available)
 if _MINIMAL_IMPORTS:
@@ -406,39 +409,13 @@ else:
         HAVE_FASTAPI = False
         fastapi_app = None
 
-if _MINIMAL_IMPORTS:
-    HAVE_GRAPHRAG_PROCESSOR = False
-    UnifiedGraphRAGProcessor = None
-    GraphRAGConfiguration = None
-    GraphRAGResult = None
-    GraphRAGProcessor = None
-    MockGraphRAGProcessor = None
-else:
-    # GraphRAG processors - Unified implementation recommended
-    UnifiedGraphRAGProcessor = None
-    GraphRAGConfiguration = None
-    GraphRAGResult = None
-    GraphRAGProcessor = None
-    MockGraphRAGProcessor = None
-    HAVE_GRAPHRAG_PROCESSOR = False
-    
-    try:
-        # Import unified GraphRAG processor (recommended)
-        from .processors.graphrag.unified_graphrag import (
-            UnifiedGraphRAGProcessor,
-            GraphRAGConfiguration,
-            GraphRAGResult
-        )
-        HAVE_GRAPHRAG_PROCESSOR = True
-    except ImportError as e:
-        logging.debug(f"UnifiedGraphRAGProcessor unavailable: {e}")
-    
-    try:
-        # Legacy imports with deprecation warnings (backward compatibility)
-        from .processors.graphrag_processor import GraphRAGProcessor, MockGraphRAGProcessor
-        HAVE_GRAPHRAG_PROCESSOR = True
-    except ImportError as e:
-        logging.debug(f"Legacy GraphRAGProcessor unavailable: {e}")
+# GraphRAG processors (lazy; see __getattr__).
+HAVE_GRAPHRAG_PROCESSOR = False
+UnifiedGraphRAGProcessor = None
+GraphRAGConfiguration = None
+GraphRAGResult = None
+GraphRAGProcessor = None
+MockGraphRAGProcessor = None
 
 if _MINIMAL_IMPORTS:
     HAVE_KNN = False
@@ -451,178 +428,57 @@ else:
         HAVE_KNN = False
         IPFSKnnIndex = None
 
-# RAG optimizer components
-if _MINIMAL_IMPORTS:
-    GraphRAGQueryOptimizer = None
-    GraphRAGQueryStats = None
-    QueryRewriter = None
-    QueryBudgetManager = None
-    UnifiedGraphRAGQueryOptimizer = None
-else:
-    try:
-        from .optimizers.graphrag.query_optimizer_minimal import (
-            GraphRAGQueryOptimizer,
-            GraphRAGQueryStats,
-        )
-    except ImportError as e:
-        _optional_import_notice(
-            f"Minimal RAG query optimizer unavailable due to missing dependencies: {e}"
-        )
-        GraphRAGQueryOptimizer = None
-        GraphRAGQueryStats = None
-
-    try:
-        from .optimizers.graphrag.query_optimizer import (
-            QueryRewriter,
-            QueryBudgetManager,
-            UnifiedGraphRAGQueryOptimizer,
-        )
-    except ImportError as e:
-        _optional_import_notice(
-            f"Advanced RAG query optimizer unavailable due to missing dependencies: {e}"
-        )
-        # Provide minimal fallbacks
-        QueryRewriter = None
-        QueryBudgetManager = None
-        UnifiedGraphRAGQueryOptimizer = None
+# RAG optimizer components (lazy; see __getattr__).
+GraphRAGQueryOptimizer = None
+GraphRAGQueryStats = None
+QueryRewriter = None
+QueryBudgetManager = None
+UnifiedGraphRAGQueryOptimizer = None
 
 
-if _MINIMAL_IMPORTS:
-    HAVE_KG_EXTRACTION = False
-    KnowledgeGraph = None
-    KnowledgeGraphExtractor = None
-    Entity = None
-    Relationship = None
-else:
-    try:
-        from .knowledge_graph_extraction import (
-            KnowledgeGraph,
-            KnowledgeGraphExtractor,
-            Entity,
-            Relationship,
-        )
-        HAVE_KG_EXTRACTION = True
-    except ImportError:
-        HAVE_KG_EXTRACTION = False
-        KnowledgeGraph = None
-        KnowledgeGraphExtractor = None
-        Entity = None
-        Relationship = None
+# Knowledge graph extraction (lazy; see __getattr__).
+HAVE_KG_EXTRACTION = False
+KnowledgeGraph = None
+KnowledgeGraphExtractor = None
+Entity = None
+Relationship = None
 
-# LLM Integration Components
-if _MINIMAL_IMPORTS:
-    HAVE_LLM_INTERFACE = False
-    LLMInterface = None
-    MockLLMInterface = None
-    LLMConfig = None
-    PromptTemplate = None
-    LLMInterfaceFactory = None
-    GraphRAGPromptTemplates = None
+# LLM Integration Components (lazy + opt-in; see __getattr__).
+HAVE_LLM_INTERFACE = False
+LLMInterface = None
+MockLLMInterface = None
+LLMConfig = None
+PromptTemplate = None
+LLMInterfaceFactory = None
+GraphRAGPromptTemplates = None
 
-    HAVE_LLM_GRAPHRAG = False
-    GraphRAGLLMProcessor = None
-    ReasoningEnhancer = None
+HAVE_LLM_GRAPHRAG = False
+GraphRAGLLMProcessor = None
+ReasoningEnhancer = None
 
-    HAVE_GRAPHRAG_INTEGRATION = False
-else:
-    try:
-        from .ml.llm.llm_interface import (
-            LLMInterface,
-            MockLLMInterface,
-            LLMConfig,
-            PromptTemplate,
-            LLMInterfaceFactory,
-            GraphRAGPromptTemplates,
-        )
-        HAVE_LLM_INTERFACE = True
-    except ImportError as e:
-        _optional_import_notice(
-            f"LLM interface unavailable due to missing dependencies: {e}"
-        )
-        HAVE_LLM_INTERFACE = False
-        # Provide minimal fallbacks
-        LLMInterface = None
-        MockLLMInterface = None
-        LLMConfig = None
-        PromptTemplate = None
-        LLMInterfaceFactory = None
-        GraphRAGPromptTemplates = None
+HAVE_GRAPHRAG_INTEGRATION = False
 
-    try:
-        from .ml.llm.llm_graphrag import GraphRAGLLMProcessor, ReasoningEnhancer
-        HAVE_LLM_GRAPHRAG = True
-    except ImportError as e:
-        _optional_import_notice(
-            f"GraphRAG LLM processor unavailable due to missing dependencies: {e}"
-        )
-        HAVE_LLM_GRAPHRAG = False
-        GraphRAGLLMProcessor = None
-        ReasoningEnhancer = None
+# Security and Audit Components (lazy; see __getattr__).
+HAVE_AUDIT = False
+AuditLogger = None
+AuditEvent = None
+AuditLevel = None
+AuditCategory = None
+IntrusionDetection = None
+SecurityAlertManager = None
+AdaptiveSecurityManager = None
+ResponseRule = None
+ResponseAction = None
 
-    # IMPORTANT: do not import `ipfs_datasets_py.search` at package import time.
-    # Access `enhance_dataset_with_llm` via module-level __getattr__ (PEP 562).
-    HAVE_GRAPHRAG_INTEGRATION = False
-
-# Security and Audit Components
-if _MINIMAL_IMPORTS:
-    HAVE_AUDIT = False
-    AuditLogger = None
-    AuditEvent = None
-    AuditLevel = None
-    AuditCategory = None
-    IntrusionDetection = None
-    SecurityAlertManager = None
-    AdaptiveSecurityManager = None
-    ResponseRule = None
-    ResponseAction = None
-else:
-    try:
-        from ipfs_datasets_py.audit import (
-            AuditLogger,
-            AuditEvent,
-            AuditLevel,
-            AuditCategory,
-            IntrusionDetection,
-            SecurityAlertManager,
-            AdaptiveSecurityManager,
-            ResponseRule,
-            ResponseAction,
-        )
-        HAVE_AUDIT = True
-    except ImportError:
-        HAVE_AUDIT = False
-
-# P2P Workflow Scheduler
-if _MINIMAL_IMPORTS:
-    HAVE_P2P_WORKFLOW_SCHEDULER = False
-    P2PWorkflowScheduler = None
-    WorkflowDefinition = None
-    WorkflowTag = None
-    MerkleClock = None
-    FibonacciHeap = None
-    calculate_hamming_distance = None
-    get_scheduler = None
-else:
-    try:
-        from ipfs_datasets_py.p2p_networking.p2p_workflow_scheduler import (
-            P2PWorkflowScheduler,
-            WorkflowDefinition,
-            WorkflowTag,
-            MerkleClock,
-            FibonacciHeap,
-            calculate_hamming_distance,
-            get_scheduler,
-        )
-        HAVE_P2P_WORKFLOW_SCHEDULER = True
-    except ImportError:
-        HAVE_P2P_WORKFLOW_SCHEDULER = False
-        P2PWorkflowScheduler = None
-        WorkflowDefinition = None
-        WorkflowTag = None
-        MerkleClock = None
-        FibonacciHeap = None
-        calculate_hamming_distance = None
-        get_scheduler = None
+# P2P Workflow Scheduler (lazy; see __getattr__).
+HAVE_P2P_WORKFLOW_SCHEDULER = False
+P2PWorkflowScheduler = None
+WorkflowDefinition = None
+WorkflowTag = None
+MerkleClock = None
+FibonacciHeap = None
+calculate_hamming_distance = None
+get_scheduler = None
 
 # Check for IPFS capability (prefer router entrypoint)
 try:
@@ -1222,40 +1078,17 @@ if HAVE_PDF_PROCESSING:
         'BatchProcessor'
     ])
 
-# Web Text Extraction
-try:
-    from .web_archiving.web_text_extractor import (
-        WebTextExtractor,
-        WebTextExtractionResult,
-        extract_website_text,
-        extract_multiple_websites,
-        save_website_text
-    )
-    HAVE_WEB_TEXT_EXTRACTOR = True
-    __all__.extend([
-        'WebTextExtractor',
-        'WebTextExtractionResult', 
-        'extract_website_text',
-        'extract_multiple_websites',
-        'save_website_text'
-    ])
-except ImportError as e:
-    HAVE_WEB_TEXT_EXTRACTOR = False
-    WebTextExtractor = None
-    if installer.verbose:
-        _optional_import_notice(
-            f"Web text extractor unavailable due to missing dependencies: {e}"
-        )
+# Web Text Extraction (lazy; see __getattr__).
+HAVE_WEB_TEXT_EXTRACTOR = False
+WebTextExtractor = None
+WebTextExtractionResult = None
+extract_website_text = None
+extract_multiple_websites = None
+save_website_text = None
 
-# Proper module aliasing for backward compatibility
-if _MINIMAL_IMPORTS:
-    llm = None  # type: ignore
-    rag = None  # type: ignore
-else:
-    try:
-        from . import llm
-    except ImportError:
-        llm = None  # type: ignore
+# Proper module aliasing for backward compatibility (lazy; see __getattr__).
+llm = None  # type: ignore
+rag = None  # type: ignore
 
 # Direct aliases without polluting sys.modules
 try:
