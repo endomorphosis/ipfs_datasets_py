@@ -159,6 +159,30 @@ except ImportError:
     expand_query = None
     HAVE_QUERY_EXPANDER = False
 
+# HuggingFace API search (Enhancement 11 Part 1)
+try:
+    from .huggingface_api_search import HuggingFaceAPISearch
+    HAVE_HF_API_SEARCH = True
+except ImportError:
+    HuggingFaceAPISearch = None
+    HAVE_HF_API_SEARCH = False
+
+# Parallel web archiver (Enhancement 11 Part 2)
+try:
+    from .parallel_web_archiver import (
+        ParallelWebArchiver,
+        ArchiveResult,
+        ArchiveProgress,
+        archive_urls
+    )
+    HAVE_PARALLEL_ARCHIVER = True
+except ImportError:
+    ParallelWebArchiver = None
+    ArchiveResult = None
+    ArchiveProgress = None
+    archive_urls = None
+    HAVE_PARALLEL_ARCHIVER = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -253,4 +277,15 @@ __all__ = [
     "ExpandedQuery",
     "expand_query",
     "HAVE_QUERY_EXPANDER",
+    
+    # HuggingFace API search (Enhancement 11 Part 1)
+    "HuggingFaceAPISearch",
+    "HAVE_HF_API_SEARCH",
+    
+    # Parallel web archiver (Enhancement 11 Part 2)
+    "ParallelWebArchiver",
+    "ArchiveResult",
+    "ArchiveProgress",
+    "archive_urls",
+    "HAVE_PARALLEL_ARCHIVER",
 ]
