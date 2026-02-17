@@ -30,7 +30,7 @@ Usage:
 """
 
 import logging
-from typing import List, Dict, Optional, Any, Tuple
+from typing import List, Dict, Optional, Any, Tuple, Union
 from dataclasses import dataclass, field
 
 # Optional language detection and translation imports

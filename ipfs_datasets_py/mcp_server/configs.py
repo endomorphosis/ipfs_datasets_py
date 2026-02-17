@@ -56,6 +56,21 @@ class Configs:
     ipfs_kit_integration: str = field(default="direct", metadata={"description": "Integration method for ipfs_kit_py ('direct' or 'mcp')"})
     ipfs_kit_mcp_url: Optional[str] = field(default=None, metadata={"description": "URL of the ipfs_kit_py MCP server (if using 'mcp' integration)"})
 
+    # MCP++ / libp2p TaskQueue integration
+    p2p_enabled: bool = field(default=False, metadata={"description": "Enable in-process libp2p TaskQueue service"})
+    p2p_listen_port: Optional[int] = field(default=None, metadata={"description": "Optional listen port for P2P service"})
+    p2p_queue_path: str = field(
+        default_factory=lambda: os.path.join(os.path.expanduser("~"), ".cache", "ipfs_datasets_py", "task_queue.duckdb"),
+        metadata={"description": "DuckDB path for TaskQueue persistence"},
+    )
+    p2p_enable_tools: bool = field(default=True, metadata={"description": "Enable remote tool calls over P2P"})
+    p2p_enable_cache: bool = field(default=True, metadata={"description": "Enable shared TTL cache over P2P"})
+    p2p_auth_mode: str = field(
+        default="mcp_token",
+        metadata={"description": "Auth mode for P2P messages: 'shared_token' or 'mcp_token'"},
+    )
+    p2p_startup_timeout_s: float = field(default=2.0, metadata={"description": "Startup wait timeout for P2P service"})
+
     @property
     def ROOT_DIR(self) -> Path:
         """The root directory of the project."""

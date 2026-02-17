@@ -420,6 +420,53 @@ class IPFSDatasetsMCPServer:
         # Dictionary to store registered tools
         self.tools = {}
 
+        # Optional in-process libp2p TaskQueue/cache service
+        try:
+            from .p2p_service_manager import P2PServiceManager
+
+            self.p2p = P2PServiceManager(
+                enabled=bool(getattr(self.configs, "p2p_enabled", False)),
+                queue_path=str(getattr(self.configs, "p2p_queue_path", "")),
+                listen_port=getattr(self.configs, "p2p_listen_port", None),
+                enable_tools=bool(getattr(self.configs, "p2p_enable_tools", True)),
+                enable_cache=bool(getattr(self.configs, "p2p_enable_cache", True)),
+                auth_mode=str(getattr(self.configs, "p2p_auth_mode", "mcp_token")),
+                startup_timeout_s=float(getattr(self.configs, "p2p_startup_timeout_s", 2.0)),
+            )
+        except Exception:
+            self.p2p = None
+
+    async def validate_p2p_message(self, msg: dict) -> bool:
+        """Optional hook used by the P2P service to validate messages.
+
+        The upstream P2P service first checks shared-token auth. If that fails and
+        this hook exists, it may be consulted as a fallback.
+
+        Current implementation supports the in-process auth tools' mock token
+        validation to unify P2P auth with the MCP server's session/token model.
+        """
+
+        try:
+            auth_mode = str(getattr(self.configs, "p2p_auth_mode", "mcp_token") or "mcp_token").strip().lower()
+        except Exception:
+            auth_mode = "mcp_token"
+
+        if auth_mode == "shared_token":
+            return False
+
+        token = msg.get("token")
+        if not token or not isinstance(token, str):
+            return False
+
+        # NOTE: current auth tools use an in-memory mock token store.
+        try:
+            from ipfs_datasets_py.mcp_server.tools.auth_tools.auth_tools import _mock_auth_service
+
+            res = await _mock_auth_service.validate_token(token)
+            return bool(res.get("valid"))
+        except Exception:
+            return False
+
     async def register_tools(self):
         """Register all tools with the MCP server."""
         # PHASE 4: Register hierarchical tool manager (NEW)
@@ -438,6 +485,12 @@ class IPFSDatasetsMCPServer:
         self.mcp.add_tool(tools_list_tools, name="tools_list_tools")
         self.mcp.add_tool(tools_get_schema, name="tools_get_schema")
         self.mcp.add_tool(tools_dispatch, name="tools_dispatch")
+
+        # Keep the server-side registry in sync for non-FastMCP callers (e.g. P2P adapter).
+        self.tools["tools_list_categories"] = tools_list_categories
+        self.tools["tools_list_tools"] = tools_list_tools
+        self.tools["tools_get_schema"] = tools_get_schema
+        self.tools["tools_dispatch"] = tools_dispatch
         
         logger.info("Hierarchical tool manager registered (4 meta-tools for 51 categories)")
         
@@ -507,6 +560,9 @@ class IPFSDatasetsMCPServer:
         self._register_tools_from_subdir(tools_path / "storage_tools")
         self._register_tools_from_subdir(tools_path / "web_archive_tools")
         self._register_tools_from_subdir(tools_path / "ipfs_cluster_tools")
+
+        # P2P tools (TaskQueue/cache service status and local ops)
+        self._register_tools_from_subdir(tools_path / "p2p_tools")
         
         # Register software engineering tools
         self._register_tools_from_subdir(tools_path / "software_engineering_tools")
@@ -689,9 +745,25 @@ class IPFSDatasetsMCPServer:
         else:
             self.register_ipfs_kit_tools()
 
+        # Start optional in-process P2P service after tool registration.
+        if self.p2p is not None:
+            try:
+                from .p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
+
+                self.p2p.start(accelerate_instance=P2PMCPRegistryAdapter(self))
+            except Exception as e:
+                logger.warning(f"Failed to start P2P service: {e}")
+
         # Start the server in stdio mode
-        await self.mcp.run_stdio_async()
-        logger.info("MCP server started in stdio mode")
+        try:
+            await self.mcp.run_stdio_async()
+            logger.info("MCP server started in stdio mode")
+        finally:
+            if self.p2p is not None:
+                try:
+                    self.p2p.stop()
+                except Exception:
+                    pass
 
     async def start(self, host: str = "0.0.0.0", port: int = 8000):
         """
@@ -710,10 +782,26 @@ class IPFSDatasetsMCPServer:
         else:
             self.register_ipfs_kit_tools()
 
+        # Start optional in-process P2P service after tool registration.
+        if self.p2p is not None:
+            try:
+                from .p2p_mcp_registry_adapter import P2PMCPRegistryAdapter
+
+                self.p2p.start(accelerate_instance=P2PMCPRegistryAdapter(self))
+            except Exception as e:
+                logger.warning(f"Failed to start P2P service: {e}")
+
         # Start the server - FastMCP doesn't support host/port parameters, use stdio mode
         logger.warning("HTTP mode not supported by current FastMCP version, falling back to stdio mode")
-        await self.mcp.run_stdio_async()
-        logger.info(f"MCP server started in stdio mode")
+        try:
+            await self.mcp.run_stdio_async()
+            logger.info("MCP server started in stdio mode")
+        finally:
+            if self.p2p is not None:
+                try:
+                    self.p2p.stop()
+                except Exception:
+                    pass
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
