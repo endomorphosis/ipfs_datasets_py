@@ -442,6 +442,38 @@ def execute_heavy_command(args):
 
         # Heavy command execution logic here
         command = args[0] if args else None
+
+        if command == "alerts":
+            from ipfs_datasets_py.alerts.cli import main as alerts_main
+
+            alerts_args = list(args[1:])
+            if json_output:
+                alerts_args = ["--json", *alerts_args]
+            sys.exit(alerts_main(alerts_args))
+
+        if command == "workflow-automation":
+            from ipfs_datasets_py.workflow_automation.cli import main as wa_main
+
+            wa_args = list(args[1:])
+            if json_output:
+                wa_args = ["--json", *wa_args]
+            sys.exit(wa_main(wa_args))
+
+        if command == "search":
+            from ipfs_datasets_py.search.cli import main as search_main
+
+            search_args = list(args[1:])
+            if json_output:
+                search_args = ["--json", *search_args]
+            sys.exit(search_main(search_args))
+
+        if command == "logic":
+            from ipfs_datasets_py.logic.cli import main as logic_main
+
+            logic_args = list(args[1:])
+            if json_output:
+                logic_args = ["--json", *logic_args]
+            sys.exit(logic_main(logic_args))
         
         if command == "tools":
             subcommand = args[1] if len(args) > 1 else None
@@ -3499,8 +3531,11 @@ def main():
                 return
     
     # For other known command families, use heavy import function
-    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'vector', 'graph', 'search', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
-        execute_heavy_command(args)
+    if args[0] in ['mcp', 'tools', 'ipfs', 'dataset', 'alerts', 'vector', 'graph', 'search', 'logic', 'workflow-automation', 'vscode', 'github', 'gemini', 'claude', 'finance', 'detect-type', 'p2p', 'discord', 'email', 'copilot', 'common-crawl', 'cc']:
+        heavy_args = list(args)
+        if json_output and '--json' not in heavy_args:
+            heavy_args = ['--json', *heavy_args]
+        execute_heavy_command(heavy_args)
         return
 
     # Unknown command
