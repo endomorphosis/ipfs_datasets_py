@@ -65,6 +65,14 @@ except ImportError:
     HAVE_COMMON_CRAWL = False
     logger.warning("Common Crawl search not available")
 
+# Import Common Crawl Index Loader (HuggingFace integration)
+try:
+    from .common_crawl_index_loader import CommonCrawlIndexLoader
+    HAVE_INDEX_LOADER = True
+except ImportError:
+    HAVE_INDEX_LOADER = False
+    logger.warning("Common Crawl Index Loader not available")
+
 
 class LegalWebArchiveSearch:
     """Unified search interface combining legal search with web archiving.
@@ -94,7 +102,9 @@ class LegalWebArchiveSearch:
         api_key: Optional[str] = None,
         knowledge_base_dir: Optional[str] = None,
         archive_dir: Optional[str] = None,
-        auto_archive: bool = False
+        auto_archive: bool = False,
+        index_local_dir: Optional[str] = None,
+        use_hf_indexes: bool = True
     ):
         """Initialize the unified legal web archive search.
         
@@ -103,6 +113,8 @@ class LegalWebArchiveSearch:
             knowledge_base_dir: Directory containing legal entity JSONL files
             archive_dir: Directory for storing archived results
             auto_archive: Whether to automatically archive search results
+            index_local_dir: Local directory for Common Crawl indexes (checked first)
+            use_hf_indexes: Whether to fall back to HuggingFace indexes if local not found
         """
         # Initialize Brave Legal Search
         if HAVE_LEGAL_SEARCH:
@@ -123,6 +135,20 @@ class LegalWebArchiveSearch:
         else:
             self.web_archive = None
             self.archive_enabled = False
+        
+        # Initialize Common Crawl Index Loader (HuggingFace integration)
+        if HAVE_INDEX_LOADER and use_hf_indexes:
+            self.index_loader = CommonCrawlIndexLoader(
+                local_base_dir=index_local_dir,
+                use_hf_fallback=True
+            )
+            self.use_indexes = True
+            logger.info("Common Crawl Index Loader initialized with HuggingFace fallback")
+        else:
+            self.index_loader = None
+            self.use_indexes = False
+            if use_hf_indexes:
+                logger.warning("Common Crawl indexes not available")
         
         self.auto_archive = auto_archive
         self.archive_dir = archive_dir
@@ -472,3 +498,214 @@ class LegalWebArchiveSearch:
             'archived_items_count': len(self.web_archive.archived_items),
             'storage_path': self.web_archive.storage_path
         }
+    
+    def search_with_indexes(
+        self,
+        query: str,
+        jurisdiction_type: Optional[str] = None,
+        state_code: Optional[str] = None,
+        max_results: int = 50
+    ) -> Dict[str, Any]:
+        """Search using pre-loaded Common Crawl indexes for faster lookups.
+        
+        This method uses the HuggingFace-hosted Common Crawl indexes to perform
+        faster searches without hitting the API. Indexes are checked locally first,
+        then downloaded from HuggingFace if needed.
+        
+        Args:
+            query: Natural language query
+            jurisdiction_type: Type of jurisdiction ("federal", "state", "municipal")
+            state_code: Optional 2-letter state code for state searches (e.g., "CA")
+            max_results: Maximum results to return
+            
+        Returns:
+            Dict with search results from indexes
+            
+        Example:
+            >>> searcher = LegalWebArchiveSearch()
+            >>> # Search federal indexes
+            >>> results = searcher.search_with_indexes(
+            ...     "EPA water regulations",
+            ...     jurisdiction_type="federal"
+            ... )
+            >>> # Search California state indexes
+            >>> ca_results = searcher.search_with_indexes(
+            ...     "housing laws",
+            ...     jurisdiction_type="state",
+            ...     state_code="CA"
+            ... )
+        """
+        if not self.use_indexes or not self.index_loader:
+            return {
+                'status': 'error',
+                'error': 'Common Crawl indexes not available. Set use_hf_indexes=True'
+            }
+        
+        # Parse query to understand intent
+        intent = None
+        if self.query_processor:
+            intent = self.query_processor.process(query)
+            
+            # Auto-detect jurisdiction type if not specified
+            if not jurisdiction_type and intent:
+                if 'federal' in intent.jurisdictions or intent.agencies:
+                    jurisdiction_type = 'federal'
+                elif intent.jurisdictions:
+                    jurisdiction_type = 'state'
+                    # Try to extract state code
+                    if not state_code:
+                        for jurisdiction in intent.jurisdictions:
+                            if len(jurisdiction) == 2:  # State code
+                                state_code = jurisdiction
+                                break
+        
+        # Default to federal if not specified
+        if not jurisdiction_type:
+            jurisdiction_type = 'federal'
+        
+        try:
+            # Load appropriate index
+            index_data = None
+            if jurisdiction_type == 'federal':
+                logger.info("Loading federal Common Crawl index (local first, HF fallback)...")
+                index_data = self.index_loader.load_federal_index()
+            elif jurisdiction_type == 'state':
+                if state_code:
+                    logger.info(f"Loading {state_code} state Common Crawl index (local first, HF fallback)...")
+                else:
+                    logger.info("Loading state Common Crawl index (local first, HF fallback)...")
+                index_data = self.index_loader.load_state_index(state_code=state_code)
+            elif jurisdiction_type == 'municipal':
+                logger.info("Loading municipal Common Crawl index (local first, HF fallback)...")
+                index_data = self.index_loader.load_municipal_index()
+            
+            if index_data is None:
+                return {
+                    'status': 'error',
+                    'error': f'Failed to load {jurisdiction_type} index. May still be uploading to HuggingFace.'
+                }
+            
+            # Search within the index
+            results = self._search_within_index(
+                index_data,
+                query,
+                intent,
+                max_results
+            )
+            
+            return {
+                'status': 'success',
+                'query': query,
+                'query_intent': intent.__dict__ if intent else None,
+                'jurisdiction_type': jurisdiction_type,
+                'state_code': state_code,
+                'results': results,
+                'total_results': len(results),
+                'source': 'common_crawl_indexes',
+                'metadata': {
+                    'timestamp': datetime.now().isoformat(),
+                    'index_type': jurisdiction_type,
+                    'used_local_index': self.index_loader._check_local_index(jurisdiction_type) is not None
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to search with indexes: {e}")
+            return {
+                'status': 'error',
+                'error': str(e)
+            }
+    
+    def _search_within_index(
+        self,
+        index_data: Any,
+        query: str,
+        intent: Optional[Any],
+        max_results: int
+    ) -> List[Dict[str, Any]]:
+        """Search within a loaded index for relevant URLs.
+        
+        Args:
+            index_data: Loaded index (DataFrame or HF Dataset)
+            query: Search query
+            intent: Parsed query intent
+            max_results: Maximum results to return
+            
+        Returns:
+            List of matching records from the index
+        """
+        try:
+            import pandas as pd
+            
+            # Convert to DataFrame if needed
+            if hasattr(index_data, 'to_pandas'):
+                df = index_data.to_pandas()
+            elif isinstance(index_data, pd.DataFrame):
+                df = index_data
+            else:
+                logger.error(f"Unsupported index data type: {type(index_data)}")
+                return []
+            
+            # Extract search terms from query
+            search_terms = query.lower().split()
+            if intent and intent.topics:
+                search_terms.extend([t.lower() for t in intent.topics])
+            
+            # Search in URL and title fields
+            if 'url' not in df.columns:
+                logger.error("Index missing 'url' column")
+                return []
+            
+            # Build search mask
+            mask = pd.Series([False] * len(df))
+            for term in search_terms:
+                if 'url' in df.columns:
+                    mask |= df['url'].str.contains(term, case=False, na=False)
+                if 'title' in df.columns:
+                    mask |= df['title'].str.contains(term, case=False, na=False)
+                if 'content' in df.columns:
+                    mask |= df['content'].str.contains(term, case=False, na=False)
+            
+            # Get matching records
+            matches = df[mask].head(max_results)
+            
+            # Convert to list of dicts
+            results = []
+            for _, row in matches.iterrows():
+                result = {
+                    'url': row.get('url', ''),
+                    'title': row.get('title', ''),
+                    'timestamp': row.get('timestamp', ''),
+                    'mime_type': row.get('mime_type', ''),
+                }
+                
+                # Add optional fields if present
+                if 'warc_filename' in row:
+                    result['warc_filename'] = row['warc_filename']
+                if 'warc_offset' in row:
+                    result['warc_offset'] = row['warc_offset']
+                if 'digest' in row:
+                    result['digest'] = row['digest']
+                    
+                results.append(result)
+            
+            logger.info(f"Found {len(results)} matches in index")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error searching within index: {e}")
+            return []
+    
+    def get_index_info(self) -> Dict[str, Any]:
+        """Get information about available Common Crawl indexes.
+        
+        Returns:
+            Dict with index availability and statistics
+        """
+        if not self.use_indexes or not self.index_loader:
+            return {
+                'status': 'disabled',
+                'message': 'Common Crawl indexes not enabled'
+            }
+        
+        return self.index_loader.get_index_info()

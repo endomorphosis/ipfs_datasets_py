@@ -132,6 +132,14 @@ except ImportError:
     LegalWebArchiveSearch = None
     HAVE_WEB_ARCHIVE_SEARCH = False
 
+# Common Crawl Index Loader - HuggingFace integration (NEW)
+try:
+    from .common_crawl_index_loader import CommonCrawlIndexLoader
+    HAVE_CC_INDEX_LOADER = True
+except ImportError:
+    CommonCrawlIndexLoader = None
+    HAVE_CC_INDEX_LOADER = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -212,4 +220,8 @@ __all__ = [
     # Legal Web Archive Search (NEW)
     "LegalWebArchiveSearch",
     "HAVE_WEB_ARCHIVE_SEARCH",
+    
+    # Common Crawl Index Loader (NEW)
+    "CommonCrawlIndexLoader",
+    "HAVE_CC_INDEX_LOADER",
 ]
