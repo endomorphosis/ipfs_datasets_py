@@ -1,0 +1,67 @@
+# Optional Dependencies for Examples
+
+# Core ML/Embeddings (examples 02, 03, 12, 14)
+transformers>=4.30.0
+torch>=2.0.0
+sentence-transformers>=2.2.0
+
+# Vector Stores (example 03)
+faiss-cpu>=1.7.4  # or faiss-gpu for GPU support
+qdrant-client>=1.7.0
+
+# File Processing (examples 04, 07, 09)
+pypdf>=3.0.0
+pymupdf>=1.23.0
+python-docx>=0.8.11
+openpyxl>=3.1.0
+pandoc>=2.3  # System package: apt install pandoc
+
+# PDF OCR (example 07)
+pytesseract>=0.3.10  # Requires: apt install tesseract-ocr
+easyocr>=1.7.0
+# surya-ocr>=0.4.0  # Optional, for best OCR quality
+
+# Multimedia (example 08)
+yt-dlp>=2023.11.0
+ffmpeg-python>=0.2.0  # Requires: apt install ffmpeg
+
+# Web Scraping (examples 10, 11)
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+requests>=2.31.0
+selenium>=4.15.0  # Optional, for JavaScript-heavy sites
+
+# Legal Data (example 10)
+# Brave API requires BRAVE_API_KEY environment variable
+
+# IPFS (example 06)
+ipfshttpclient>=0.8.0a2
+# Requires IPFS daemon: https://docs.ipfs.tech/install/
+
+# Logic & Reasoning (example 13)
+z3-solver>=4.12.0  # Optional, for advanced theorem proving
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+duckdb>=0.9.0
+
+# Progress & Utilities
+tqdm>=4.66.0
+aiohttp>=3.9.0
+
+# Optional Advanced Features
+# neo4j>=5.14.0  # For Neo4j knowledge graphs
+# elasticsearch>=8.11.0  # For Elasticsearch vector store
+# spacy>=3.7.0  # For advanced NER
+# python -m spacy download en_core_web_sm  # After installing spacy
+
+# Installation Profiles
+# Basic (essential examples 01-06):
+#   pip install transformers torch faiss-cpu beautifulsoup4 requests
+#
+# Intermediate (examples 07-14):
+#   pip install -r requirements.txt
+#
+# All features:
+#   pip install -e ".[all]"
