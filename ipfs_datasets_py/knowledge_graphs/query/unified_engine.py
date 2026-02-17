@@ -53,11 +53,20 @@ Usage:
 """
 
 import logging
+import asyncio
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
 
 from .budget_manager import BudgetManager, ExecutionBudgets, ExecutionCounters
 from .hybrid_search import HybridSearchEngine, HybridSearchResult
+
+# Import custom exceptions
+from ..exceptions import (
+    QueryError,
+    QueryParseError,
+    QueryExecutionError,
+    QueryTimeoutError
+)
 
 logger = logging.getLogger(__name__)
 
@@ -284,16 +293,24 @@ class UnifiedQueryEngine:
                     success=True
                 )
                 
+            except (ValueError, SyntaxError) as e:
+                logger.error(f"Cypher query parsing failed: {e}")
+                raise QueryParseError(
+                    f"Failed to parse Cypher query: {e}",
+                    details={'query': query[:100], 'params': params}
+                ) from e
+            except (TimeoutError, asyncio.TimeoutError) as e:
+                logger.error(f"Cypher query timeout: {e}")
+                raise QueryTimeoutError(
+                    f"Cypher query execution timed out: {e}",
+                    details={'query': query[:100]}
+                ) from e
             except Exception as e:
-                logger.error(f"Cypher query failed: {e}")
-                return QueryResult(
-                    items=[],
-                    stats=tracker.get_stats(),
-                    counters=tracker.counters,
-                    query_type='cypher',
-                    success=False,
-                    error=str(e)
-                )
+                logger.error(f"Cypher query execution failed: {e}")
+                raise QueryExecutionError(
+                    f"Failed to execute Cypher query: {e}",
+                    details={'query': query[:100], 'counters': tracker.counters}
+                ) from e
     
     def execute_ir(
         self,
@@ -328,16 +345,24 @@ class UnifiedQueryEngine:
                     success=True
                 )
                 
+            except (ValueError, SyntaxError) as e:
+                logger.error(f"IR query parsing failed: {e}")
+                raise QueryParseError(
+                    f"Failed to parse IR query: {e}",
+                    details={'query': query[:100]}
+                ) from e
+            except (TimeoutError, asyncio.TimeoutError) as e:
+                logger.error(f"IR query timeout: {e}")
+                raise QueryTimeoutError(
+                    f"IR query execution timed out: {e}",
+                    details={'query': query[:100]}
+                ) from e
             except Exception as e:
-                logger.error(f"IR query failed: {e}")
-                return QueryResult(
-                    items=[],
-                    stats=tracker.get_stats(),
-                    counters=tracker.counters,
-                    query_type='ir',
-                    success=False,
-                    error=str(e)
-                )
+                logger.error(f"IR query execution failed: {e}")
+                raise QueryExecutionError(
+                    f"Failed to execute IR query: {e}",
+                    details={'query': query[:100], 'counters': tracker.counters}
+                ) from e
     
     def execute_hybrid(
         self,
@@ -389,16 +414,24 @@ class UnifiedQueryEngine:
                     success=True
                 )
                 
+            except (ValueError, KeyError) as e:
+                logger.error(f"Hybrid search configuration error: {e}")
+                raise QueryExecutionError(
+                    f"Invalid hybrid search configuration: {e}",
+                    details={'query': query, 'k': k, 'vector_weight': vector_weight}
+                ) from e
+            except (TimeoutError, asyncio.TimeoutError) as e:
+                logger.error(f"Hybrid search timeout: {e}")
+                raise QueryTimeoutError(
+                    f"Hybrid search timed out: {e}",
+                    details={'query': query}
+                ) from e
             except Exception as e:
-                logger.error(f"Hybrid search failed: {e}")
-                return QueryResult(
-                    items=[],
-                    stats=tracker.get_stats(),
-                    counters=tracker.counters,
-                    query_type='hybrid',
-                    success=False,
-                    error=str(e)
-                )
+                logger.error(f"Hybrid search execution failed: {e}")
+                raise QueryExecutionError(
+                    f"Failed to execute hybrid search: {e}",
+                    details={'query': query, 'k': k}
+                ) from e
     
     def execute_graphrag(
         self,
@@ -462,12 +495,18 @@ class UnifiedQueryEngine:
                         )
                         confidence = reasoning.get('confidence', 0.5)
                         evidence_chains = reasoning.get('evidence', [])
-                    except Exception as e:
-                        logger.warning(f"LLM reasoning failed: {e}")
+                    except (ImportError, AttributeError, ValueError) as e:
+                        logger.warning(f"LLM reasoning failed (degrading gracefully): {e}")
                         reasoning = {
-                            'answer': "Reasoning unavailable",
+                            'answer': "Reasoning unavailable - using search results only",
                             'error': str(e)
                         }
+                    except Exception as e:
+                        logger.error(f"Unexpected LLM reasoning error: {e}")
+                        raise QueryExecutionError(
+                            f"LLM reasoning failed: {e}",
+                            details={'question': question, 'depth': reasoning_depth}
+                        ) from e
                 
                 return GraphRAGResult(
                     items=search_result.items,
@@ -480,9 +519,24 @@ class UnifiedQueryEngine:
                     confidence=confidence
                 )
                 
+            except QueryExecutionError:
+                # Re-raise query execution errors
+                raise
+            except QueryTimeoutError:
+                # Re-raise timeout errors
+                raise
+            except (TimeoutError, asyncio.TimeoutError) as e:
+                logger.error(f"GraphRAG query timeout: {e}")
+                raise QueryTimeoutError(
+                    f"GraphRAG query timed out: {e}",
+                    details={'question': question, 'depth': reasoning_depth}
+                ) from e
             except Exception as e:
                 logger.error(f"GraphRAG execution failed: {e}")
-                return GraphRAGResult(
+                raise QueryExecutionError(
+                    f"Failed to execute GraphRAG query: {e}",
+                    details={'question': question, 'depth': reasoning_depth, 'search_k': search_k}
+                ) from e
                     items=[],
                     stats=tracker.get_stats(),
                     counters=tracker.counters,
