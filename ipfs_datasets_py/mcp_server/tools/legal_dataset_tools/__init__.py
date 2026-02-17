@@ -6,6 +6,7 @@ These tools allow AI assistants to scrape legal datasets including:
 - State Laws
 - Municipal Laws
 - RECAP Archive (Court Documents)
+- Brave Legal Search (Natural language search for legal rules)
 
 Also includes:
 - IPFS storage integration
@@ -14,6 +15,7 @@ Also includes:
 - Resume capability for interrupted scraping
 - Incremental update tracking
 - Periodic update scheduling for automated data refresh
+- Knowledge base of 21,000+ government entities
 """
 
 from .us_code_scraper import scrape_us_code, get_us_code_titles, search_us_code
@@ -49,6 +51,22 @@ from .state_laws_scheduler import (
     list_schedules,
     run_schedule_now,
     enable_disable_schedule
+)
+from .brave_legal_search_tools import (
+    BRAVE_LEGAL_SEARCH_TOOLS,
+    register_brave_legal_search_tools,
+    brave_legal_search_tool,
+    brave_legal_search_generate_terms_tool,
+    brave_legal_search_explain_tool,
+    brave_legal_search_entities_tool
+)
+from .legal_web_archive_tools import (
+    LEGAL_WEB_ARCHIVE_TOOLS,
+    register_legal_web_archive_tools,
+    legal_web_archive_search_tool,
+    legal_search_archives_only_tool,
+    legal_archive_results_tool,
+    legal_get_archive_stats_tool
 )
 
 __all__ = [
@@ -111,4 +129,20 @@ __all__ = [
     "list_schedules",
     "run_schedule_now",
     "enable_disable_schedule",
+    
+    # Brave Legal Search tools
+    "BRAVE_LEGAL_SEARCH_TOOLS",
+    "register_brave_legal_search_tools",
+    "brave_legal_search_tool",
+    "brave_legal_search_generate_terms_tool",
+    "brave_legal_search_explain_tool",
+    "brave_legal_search_entities_tool",
+    
+    # Legal Web Archive tools (NEW)
+    "LEGAL_WEB_ARCHIVE_TOOLS",
+    "register_legal_web_archive_tools",
+    "legal_web_archive_search_tool",
+    "legal_search_archives_only_tool",
+    "legal_archive_results_tool",
+    "legal_get_archive_stats_tool",
 ]

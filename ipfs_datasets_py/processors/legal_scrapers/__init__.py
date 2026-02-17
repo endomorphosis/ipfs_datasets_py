@@ -7,11 +7,17 @@ Core implementations for scraping legal datasets from various sources including:
 - State Laws
 - Municipal Laws
 - RECAP Archive (court documents)
+- Brave Legal Search (natural language search for legal rules)
 
 This module provides the core scraping logic that can be used by:
 - CLI tools (ipfs-datasets)
 - MCP server tools
 - Direct Python imports
+
+New Features:
+- Natural language legal search using Brave Search API
+- Knowledge base of 21,000+ federal, state, and municipal entities
+- Intelligent search term generation from queries
 """
 
 # Import main scraper modules using relative imports
@@ -94,6 +100,89 @@ from .ipfs_storage_integration import (
     list_ipfs_datasets,
 )
 
+# Brave Legal Search - Natural language search for legal rules and regulations
+from .brave_legal_search import (
+    BraveLegalSearch,
+    create_legal_search,
+    search_legal,
+)
+from .knowledge_base_loader import (
+    LegalKnowledgeBase,
+    FederalEntity,
+    StateEntity,
+    MunicipalEntity,
+    load_knowledge_base,
+    get_global_knowledge_base,
+)
+from .query_processor import (
+    QueryProcessor,
+    QueryIntent,
+)
+from .search_term_generator import (
+    SearchTermGenerator,
+    SearchTerm,
+    SearchStrategy,
+)
+
+# Legal Web Archive Search - Unified search with archiving (NEW)
+try:
+    from .legal_web_archive_search import LegalWebArchiveSearch
+    HAVE_WEB_ARCHIVE_SEARCH = True
+except ImportError:
+    LegalWebArchiveSearch = None
+    HAVE_WEB_ARCHIVE_SEARCH = False
+
+# Common Crawl Index Loader - HuggingFace integration (NEW)
+try:
+    from .common_crawl_index_loader import CommonCrawlIndexLoader
+    HAVE_CC_INDEX_LOADER = True
+except ImportError:
+    CommonCrawlIndexLoader = None
+    HAVE_CC_INDEX_LOADER = False
+
+# Shared components module (NEW - Enhancement 7)
+# These components are used by both Brave Legal Search and Complaint Analysis
+try:
+    from . import common
+    HAVE_COMMON_MODULE = True
+except ImportError:
+    common = None
+    HAVE_COMMON_MODULE = False
+
+# Query Expander - LLM-based query expansion (NEW - Enhancement 9)
+try:
+    from .query_expander import QueryExpander, ExpandedQuery, expand_query
+    HAVE_QUERY_EXPANDER = True
+except ImportError:
+    QueryExpander = None
+    ExpandedQuery = None
+    expand_query = None
+    HAVE_QUERY_EXPANDER = False
+
+# HuggingFace API search (Enhancement 11 Part 1)
+try:
+    from .huggingface_api_search import HuggingFaceAPISearch
+    HAVE_HF_API_SEARCH = True
+except ImportError:
+    HuggingFaceAPISearch = None
+    HAVE_HF_API_SEARCH = False
+
+# Parallel web archiver (Enhancement 11 Part 2)
+try:
+    from .parallel_web_archiver import (
+        ParallelWebArchiver,
+        ArchiveResult,
+        ArchiveProgress,
+        archive_urls
+    )
+    HAVE_PARALLEL_ARCHIVER = True
+except ImportError:
+    ParallelWebArchiver = None
+    ArchiveResult = None
+    ArchiveProgress = None
+    archive_urls = None
+    HAVE_PARALLEL_ARCHIVER = False
+
 __all__ = [
     # Modules
     "federal_register_scraper",
@@ -154,4 +243,49 @@ __all__ = [
     "list_scraping_jobs_from_parameters",
     "scrape_us_code_from_parameters",
     "scrape_municipal_codes_from_parameters",
+    
+    # Brave Legal Search
+    "BraveLegalSearch",
+    "create_legal_search",
+    "search_legal",
+    "LegalKnowledgeBase",
+    "FederalEntity",
+    "StateEntity",
+    "MunicipalEntity",
+    "load_knowledge_base",
+    "get_global_knowledge_base",
+    "QueryProcessor",
+    "QueryIntent",
+    "SearchTermGenerator",
+    "SearchTerm",
+    "SearchStrategy",
+    
+    # Legal Web Archive Search (NEW)
+    "LegalWebArchiveSearch",
+    "HAVE_WEB_ARCHIVE_SEARCH",
+    
+    # Common Crawl Index Loader (NEW)
+    "CommonCrawlIndexLoader",
+    "HAVE_CC_INDEX_LOADER",
+    
+    # Shared components module (NEW - Enhancement 7)
+    "common",
+    "HAVE_COMMON_MODULE",
+    
+    # Query Expander (NEW - Enhancement 9)
+    "QueryExpander",
+    "ExpandedQuery",
+    "expand_query",
+    "HAVE_QUERY_EXPANDER",
+    
+    # HuggingFace API search (Enhancement 11 Part 1)
+    "HuggingFaceAPISearch",
+    "HAVE_HF_API_SEARCH",
+    
+    # Parallel web archiver (Enhancement 11 Part 2)
+    "ParallelWebArchiver",
+    "ArchiveResult",
+    "ArchiveProgress",
+    "archive_urls",
+    "HAVE_PARALLEL_ARCHIVER",
 ]
