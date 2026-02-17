@@ -2,6 +2,8 @@
 
 An extensible framework for analyzing legal complaints across different domains.
 
+> **Note:** Several components in this module are shared with other systems in `legal_scrapers`, particularly the **Brave Legal Search** system. See [SHARED_COMPONENTS.md](../SHARED_COMPONENTS.md) for details.
+
 ## Overview
 
 The `complaint_analysis` module (formerly `hacc_integration`) provides a flexible, registry-based system for analyzing complaints. It's designed to be extended with new complaint types without modifying the core code.
@@ -164,24 +166,36 @@ Keywords: estate, will, probate court, executor, beneficiary, trust, guardianshi
 
 ```
 complaint_analysis/
-├── base.py                    # Abstract base classes
-├── legal_patterns.py          # Legal term extraction with registry
-├── keywords.py                # Keyword management with registry
+├── base.py                    # Abstract base classes (SHARED)
+├── legal_patterns.py          # Legal term extraction with registry (SHARED)
+├── keywords.py                # Keyword management with registry (SHARED)
+├── complaint_types.py         # Complaint type registration (SHARED)
 ├── risk_scoring.py            # Risk assessment
 ├── indexer.py                 # Hybrid document indexing
 ├── analyzer.py                # Unified analysis interface
-├── complaint_types.py         # Complaint type registration
 └── __init__.py                # Public API
 
 Key Classes:
-- BaseLegalPatternExtractor    # Extend for custom pattern extraction
-- BaseKeywordRegistry          # Extend for custom keyword management  
+- BaseLegalPatternExtractor    # Extend for custom pattern extraction (SHARED)
+- BaseKeywordRegistry          # Extend for custom keyword management (SHARED)
 - BaseRiskScorer               # Extend for custom risk models
-- LegalPatternExtractor        # Default implementation
-- KeywordRegistry              # Registry-based keyword manager
+- LegalPatternExtractor        # Default implementation (SHARED)
+- KeywordRegistry              # Registry-based keyword manager (SHARED)
 - ComplaintRiskScorer          # Default risk scorer
 - ComplaintAnalyzer            # High-level interface
 ```
+
+### Shared Components
+
+Several components are shared with other systems (marked with "SHARED" above):
+
+**Used by Brave Legal Search:**
+- `keywords.py` - For legal domain categorization
+- `legal_patterns.py` - For legal concept extraction from queries
+- `base.py` - Abstract interfaces
+- `complaint_types.py` - 14 complaint type definitions
+
+See [../SHARED_COMPONENTS.md](../SHARED_COMPONENTS.md) for complete documentation on shared usage.
 
 ## Registry Pattern
 
