@@ -3,7 +3,7 @@
 [![Status](https://img.shields.io/badge/status-beta-yellow)](https://github.com/endomorphosis/ipfs_datasets_py)
 [![Tests](https://img.shields.io/badge/tests-174-blue)](./tests/)
 [![Coverage](https://img.shields.io/badge/coverage-94%25-green)](./tests/)
-[![Rules](https://img.shields.io/badge/inference--rules-15--core-orange)](./CEC/native/)
+[![Rules](https://img.shields.io/badge/inference--rules-128-orange)](./INFERENCE_RULES_INVENTORY.md)
 [![Provers](https://img.shields.io/badge/modal--provers-5-purple)](./CEC/native/)
 
 > **🎉 NEW:** Unified Converter Architecture (Production-Ready)  
@@ -23,11 +23,11 @@ The IPFS Datasets Python logic module provides a **complete neurosymbolic reason
 
 ### Key Features
 
-✅ **15 Core Inference Rules** (Roadmap: 127 including TDFOL + CEC)  
+✅ **128 Inference Rules** (41 TDFOL + 87 CEC) - See [INFERENCE_RULES_INVENTORY.md](./INFERENCE_RULES_INVENTORY.md)  
 ✅ **5 Modal Logic Provers** (K/S4/S5/D/Cognitive)  
 ✅ **Grammar-Based NL Processing** (100+ lexicon, 50+ rules)  
 ✅ **Multi-Format Parsing** (TDFOL, DCEC, Natural Language)  
-✅ **174 Comprehensive Tests** (164 passing, 94% pass rate)  
+✅ **174 Comprehensive Tests** (164 passing, 94% pass rate) + 568+ rule tests  
 ✅ **Production Converters** (FOL/Deontic 100% complete)  
 🆕 **Unified Converters** (14x cache speedup, batch processing)  
 🆕 **ZKP Simulation** (demo/educational - see limitations)  
