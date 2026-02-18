@@ -338,6 +338,29 @@ class TestLLMIntegration:
         assert answer == "This is the answer."
         assert confidence > 0.7
         mock_client.chat.completions.create.assert_called_once()
+
+    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test_key'})
+    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.LLMRouter')
+    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.openai')
+    def test_llm_does_not_use_router_when_openai_available(self, mock_openai, mock_router_cls):
+        """
+        GIVEN: OpenAI API key and a working OpenAI client
+        WHEN: Generating LLM answer
+        THEN: Does not fall back to LLMRouter
+        """
+        reasoner = CrossDocumentReasoner()
+
+        mock_client = Mock()
+        mock_response = Mock()
+        mock_response.choices = [Mock(message=Mock(content="This is the answer."))]
+        mock_client.chat.completions.create.return_value = mock_response
+        mock_openai.OpenAI.return_value = mock_client
+
+        answer, confidence = reasoner._generate_llm_answer("prompt", "query")
+        assert answer == "This is the answer."
+        assert confidence > 0.7
+
+        mock_router_cls.assert_not_called()
     
     @patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test_key'})
     @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.anthropic')

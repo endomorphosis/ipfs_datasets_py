@@ -20,6 +20,7 @@ to efficiently traverse entity relationships and find relevant connections.
 """
 import logging
 import math
+import os
 import re
 from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
@@ -35,6 +36,11 @@ from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
 from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
     UnifiedGraphRAGQueryOptimizer,
 )
+
+try:
+    from ipfs_datasets_py.ml.llm.llm_router import LLMRouter
+except Exception:
+    LLMRouter = None
 
 
 logger = logging.getLogger(__name__)
@@ -117,7 +123,7 @@ class CrossDocumentReasoner:
         Args:
             query_optimizer: RAG query optimizer for efficient graph traversal
             reasoning_tracer: Tracer for recording reasoning steps
-            llm_service: LLM service for answer generation and reasoning
+            llm_service: Optional LLM router/service from ipfs_datasets_py.ml.llm
             min_connection_strength: Minimum strength for entity-mediated connections
             max_reasoning_depth: Maximum depth for reasoning processes
             enable_contradictions: Whether to look for contradicting information
@@ -125,7 +131,14 @@ class CrossDocumentReasoner:
         """
         self.query_optimizer = query_optimizer or UnifiedGraphRAGQueryOptimizer()
         self.reasoning_tracer = reasoning_tracer or LLMReasoningTracer()
-        self.llm_service = llm_service  # Will be used for answer generation
+        self.llm_service = llm_service  # Typically an LLMRouter instance
+        self._default_llm_router: Optional[Any] = None
+        if self.llm_service is None and LLMRouter is not None:
+            try:
+                self._default_llm_router = LLMRouter()
+                self.llm_service = self._default_llm_router
+            except Exception as exc:
+                logger.warning(f"Failed to initialize default LLMRouter: {exc}")
         self.min_connection_strength = min_connection_strength
         self.max_reasoning_depth = max_reasoning_depth
         self.enable_contradictions = enable_contradictions
@@ -190,6 +203,7 @@ class CrossDocumentReasoner:
         query: str,
         query_embedding: Optional[np.ndarray] = None,
         input_documents: Optional[List[Dict[str, Any]]] = None,
+        documents: Optional[List[Any]] = None,
         vector_store: Optional[Any] = None,
         knowledge_graph: Optional[Any] = None,
         reasoning_depth: str = "moderate",
@@ -227,6 +241,13 @@ class CrossDocumentReasoner:
         """
         self.total_queries += 1
 
+        # Backwards-compatible alias: some callers/tests pass `documents=`.
+        # If they pass `DocumentNode` objects, we keep them as-is and can return
+        # the richer `CrossDocReasoning` object.
+        return_reasoning_object = bool(documents) and isinstance(documents[0], DocumentNode)
+        if input_documents is None and documents is not None and not return_reasoning_object:
+            input_documents = documents
+
         # Create a unique ID for this reasoning process
         reasoning_id = str(uuid.uuid4())
 
@@ -259,14 +280,17 @@ class CrossDocumentReasoner:
             metadata={"reasoning_step": "document_retrieval"}
         )
 
-        documents = self._get_relevant_documents(
-            query=query,
-            query_embedding=query_embedding,
-            input_documents=input_documents,
-            vector_store=vector_store,
-            max_documents=max_documents,
-            min_relevance=min_relevance
-        )
+        if return_reasoning_object:
+            documents = list(documents)
+        else:
+            documents = self._get_relevant_documents(
+                query=query,
+                query_embedding=query_embedding,
+                input_documents=input_documents,
+                vector_store=vector_store,
+                max_documents=max_documents,
+                min_relevance=min_relevance,
+            )
 
         # Add documents to reasoning object
         cross_doc_reasoning.documents = documents
@@ -385,6 +409,9 @@ class CrossDocumentReasoner:
 
         if return_trace:
             result["reasoning_trace"] = trace.to_dict()
+
+        if return_reasoning_object:
+            return cross_doc_reasoning
 
         return result
 
@@ -793,7 +820,8 @@ class CrossDocumentReasoner:
             doc_content[doc.id] = doc.content
 
         # If we have an LLM service, use it to generate the answer
-        if self.llm_service:
+        router = self._get_llm_router()
+        if router:
             # Build prompt with documents and connections
             prompt = f"Question: {query}\n\n"
             prompt += "Relevant documents:\n"
@@ -810,7 +838,7 @@ class CrossDocumentReasoner:
             # LLM-based reasoning using API
             # v3.0.0: Integrated LLM API support (OpenAI, Anthropic, local models)
             try:
-                answer, confidence = self._generate_llm_answer(prompt, query)
+                answer, confidence = self._generate_llm_answer(prompt, query, router)
             except Exception as e:
                 logger.warning(f"LLM generation failed: {e}. Using fallback method.")
                 answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
@@ -940,91 +968,56 @@ class CrossDocumentReasoner:
         else:
             return InformationRelationType.COMPLEMENTARY
     
-    def _generate_llm_answer(self, prompt: str, query: str) -> Tuple[str, float]:
-        """Generate an answer using LLM API.
-        
-        Supports OpenAI, Anthropic Claude, and local HuggingFace models.
-        
-        Args:
-            prompt: The full prompt with context
-            query: The original query
-            
-        Returns:
-            Tuple of (answer, confidence)
-        """
-        import os
-        
-        # Try OpenAI first (if API key is available)
-        openai_key = os.environ.get('OPENAI_API_KEY')
-        if openai_key:
-            try:
-                import openai
-                client = openai.OpenAI(api_key=openai_key)
-                
-                response = client.chat.completions.create(
-                    model="gpt-4",
-                    messages=[
-                        {"role": "system", "content": "You are a helpful assistant that answers questions based on provided documents."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=500
-                )
-                
-                answer = response.choices[0].message.content
-                
-                # Estimate confidence from response (simplified)
-                confidence = 0.85 if len(answer) > 50 else 0.70
-                
-                return answer, confidence
-            
-            except Exception as e:
-                logger.warning(f"OpenAI API call failed: {e}")
-        
-        # Try Anthropic Claude
-        anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
-        if anthropic_key:
-            try:
-                import anthropic
-                client = anthropic.Anthropic(api_key=anthropic_key)
-                
-                message = client.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    max_tokens=500,
-                    messages=[
-                        {"role": "user", "content": prompt}
-                    ]
-                )
-                
-                answer = message.content[0].text
-                confidence = 0.85
-                
-                return answer, confidence
-            
-            except Exception as e:
-                logger.warning(f"Anthropic API call failed: {e}")
-        
-        # Try local HuggingFace model as fallback
-        try:
-            from transformers import pipeline
-            
-            # Use a question-answering or text generation model
-            generator = pipeline("text2text-generation", model="google/flan-t5-base")
-            
-            result = generator(prompt, max_length=200, num_return_sequences=1)
-            answer = result[0]['generated_text']
-            confidence = 0.70  # Lower confidence for local models
-            
-            return answer, confidence
-        
-        except Exception as e:
-            logger.warning(f"Local LLM generation failed: {e}")
-        
+    def _generate_llm_answer(
+        self,
+        prompt: str,
+        query: str,
+        router: Optional[Any] = None
+    ) -> Tuple[str, float]:
+        """Generate an answer using the ipfs_datasets_py.ml.llm router."""
+
+        router = router or self._get_llm_router()
+        if router is not None:
+            messages = [
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant that answers questions based on provided documents.",
+                },
+                {"role": "user", "content": prompt},
+            ]
+            answer = router.route_request(messages=messages, temperature=0.7, max_tokens=500)
+            confidence = 0.85 if len(str(answer or "")) > 50 else 0.70
+            return str(answer or ""), float(confidence)
+
+        logger.warning("LLMRouter unavailable; using rule-based fallback answer.")
+
         # Final fallback: use rule-based answer
         answer = f"Based on the analysis of multiple documents with entity-mediated connections, the answer to '{query}' involves interconnected information across the provided sources."
         confidence = 0.60
         
         return answer, confidence
+
+    def _get_llm_router(self) -> Optional[Any]:
+        """Return an initialized LLMRouter instance if available."""
+
+        service = self.llm_service
+        if service and hasattr(service, "route_request"):
+            return service
+
+        if self._default_llm_router:
+            return self._default_llm_router
+
+        if LLMRouter is None:
+            return None
+
+        try:
+            self._default_llm_router = LLMRouter()
+            self.llm_service = self._default_llm_router
+        except Exception as exc:
+            logger.warning(f"Failed to initialize LLMRouter: {exc}")
+            self._default_llm_router = None
+
+        return self._default_llm_router
 
     def get_statistics(self) -> Dict[str, Any]:
         """
