@@ -136,10 +136,14 @@ class TestNeo4jExporterWithMocking:
     def test_exporter_initialization_without_neo4j(self, mocker):
         """Test exporter initialization when neo4j is not available."""
         # Mock neo4j import to raise ImportError
-        def mock_import(name, *args, **kwargs):
+        import builtins
+
+        real_import = builtins.__import__
+
+        def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
             if name == 'neo4j':
                 raise ImportError("No module named 'neo4j'")
-            return mocker.DEFAULT
+            return real_import(name, globals, locals, fromlist, level)
         
         mocker.patch('builtins.__import__', side_effect=mock_import)
         
@@ -187,10 +191,14 @@ class TestNeo4jExporterWithMocking:
     
     def test_connect_without_neo4j_installed(self, mocker):
         """Test connect raises error when neo4j not installed."""
-        def mock_import(name, *args, **kwargs):
+        import builtins
+
+        real_import = builtins.__import__
+
+        def mock_import(name, globals=None, locals=None, fromlist=(), level=0):
             if name == 'neo4j':
                 raise ImportError("No module named 'neo4j'")
-            return mocker.DEFAULT
+            return real_import(name, globals, locals, fromlist, level)
         
         mocker.patch('builtins.__import__', side_effect=mock_import)
         
