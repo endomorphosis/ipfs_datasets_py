@@ -10,7 +10,7 @@
 
 This roadmap outlines planned features and improvements for the knowledge_graphs module. All dates are estimates and subject to change based on community feedback and priorities.
 
-**Note (2026-02-18):** This roadmap is aspirational. For the most accurate, current view of what’s implemented vs. missing (including known limitations and test coverage), see **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)**.
+**Note (2026-02-18):** This roadmap is aspirational. For the most accurate, current view of what’s implemented vs. missing (including known limitations and test coverage), see **[MASTER_STATUS.md](./MASTER_STATUS.md)**.
 
 ---
 
@@ -42,7 +42,7 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 ### Planned Features
 
 #### 1. NOT Operator Support
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Implement NOT operator in Cypher queries
 
@@ -59,7 +59,7 @@ RETURN p
 - Reduced workaround code
 
 #### 2. CREATE Relationships
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Support relationship creation in Cypher
 

@@ -364,16 +364,16 @@ results = engine.natural_language_query(
 1. Add entry to appropriate priority section
 2. Include location, status, reason, impact, example, timeline, effort
 3. Update ROADMAP.md with the same information
-4. Update FEATURE_MATRIX.md status column
+4. Update MASTER_STATUS.md to reflect the updated deferred feature list/status
 
 ---
 
 ## See Also
 
 - [ROADMAP.md](ROADMAP.md) - Complete development timeline
-- [FEATURE_MATRIX.md](FEATURE_MATRIX.md) - Feature completeness matrix
-- [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) - Current status
-- [COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md](COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) - Comprehensive analysis
+- [MASTER_STATUS.md](./MASTER_STATUS.md) - Current status (single source of truth)
+- [COMPREHENSIVE_ANALYSIS_2026_02_18.md](./COMPREHENSIVE_ANALYSIS_2026_02_18.md) - Comprehensive analysis
+- [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) - Infinite improvement backlog
 
 ---
 

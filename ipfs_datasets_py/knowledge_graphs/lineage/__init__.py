@@ -105,7 +105,7 @@ Please update your imports to use the new lineage package:
     OLD: from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import CrossDocumentLineageTracker
     NEW: from ipfs_datasets_py.knowledge_graphs.lineage import LineageTracker
 
-See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for details.
+See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.
 """
 
 def _show_deprecation_warning():

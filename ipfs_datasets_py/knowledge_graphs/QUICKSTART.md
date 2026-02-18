@@ -212,7 +212,7 @@ for result in results:
 - **Documentation:** [INDEX.md](INDEX.md) - Complete documentation index
 - **Examples:** [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - 40+ examples
 - **Issues:** [GitHub Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
-- **Status:** [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) - Current capabilities
+- **Status:** [MASTER_STATUS.md](./MASTER_STATUS.md) - Current capabilities
 
 ---
 

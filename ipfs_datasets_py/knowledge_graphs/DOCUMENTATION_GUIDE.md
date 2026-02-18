@@ -17,7 +17,7 @@
 → Read [MASTER_STATUS.md](./MASTER_STATUS.md) (single source of truth)
 
 **...check if a feature is implemented**
-→ See [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) or [MASTER_STATUS.md](./MASTER_STATUS.md)
+→ See [MASTER_STATUS.md](./MASTER_STATUS.md)
 
 **...find out what's planned for the future**
 → See [DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md) and [ROADMAP.md](./ROADMAP.md)
@@ -74,11 +74,11 @@
    - **When to read:** Want to understand current state
    - **Update frequency:** After each release or major change
 
-5. **[FEATURE_MATRIX.md](./FEATURE_MATRIX.md)** (8.5KB)
-   - Feature-by-feature status grid
+5. **[MASTER_STATUS.md](./MASTER_STATUS.md)** (17KB)
+   - Feature status and completeness matrix
    - Coverage and priority information
    - **When to read:** Checking specific feature status
-   - **Update frequency:** When features added/changed
+   - **Update frequency:** After each release or major change
 
 6. **[DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md)** (10.2KB)
    - Intentionally incomplete features
@@ -98,9 +98,8 @@
 
 **Priority: MEDIUM** - For maintainers and contributors
 
-8. **[FINAL_REFACTORING_PLAN_2026_02_18.md](./FINAL_REFACTORING_PLAN_2026_02_18.md)** (47KB) **NEW**
-   - Comprehensive analysis and refactoring plan
-   - Consolidates all previous analyses
+8. **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](./COMPREHENSIVE_ANALYSIS_2026_02_18.md)** (47KB) **NEW**
+   - Comprehensive analysis
    - Prioritized action items
    - **When to read:** Planning improvements or refactoring
    - **Update frequency:** Major reviews (quarterly)
@@ -211,7 +210,6 @@ These documents are superseded but kept for historical reference:
 - [ ] Add entry to CHANGELOG_KNOWLEDGE_GRAPHS.md
 
 #### After Feature Addition
-- [ ] Update FEATURE_MATRIX.md (mark feature as complete)
 - [ ] Update MASTER_STATUS.md (feature completeness matrix)
 - [ ] Remove from DEFERRED_FEATURES.md (or mark complete)
 - [ ] Update ROADMAP.md (mark milestone complete)
@@ -221,7 +219,6 @@ These documents are superseded but kept for historical reference:
 
 #### After Feature Deferral
 - [ ] Add to DEFERRED_FEATURES.md with timeline, workaround, effort
-- [ ] Update FEATURE_MATRIX.md (mark as planned with version)
 - [ ] Update ROADMAP.md (add to appropriate version)
 - [ ] Document workaround in relevant module README
 
@@ -318,7 +315,7 @@ print(f"Entities: {len(kg.entities)}")  # Output: Entities: 1
 Use relative links:
 
 ```markdown
-See [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) for complete status.
+See [MASTER_STATUS.md](./MASTER_STATUS.md) for complete status.
 
 For API details, see [docs/knowledge_graphs/EXTRACTION_API.md](../../docs/knowledge_graphs/EXTRACTION_API.md).
 
@@ -337,7 +334,6 @@ Module documentation: [extraction/README.md](./extraction/README.md)
    ```bash
    # Update status
    - MASTER_STATUS.md (feature completeness matrix)
-   - FEATURE_MATRIX.md (mark as complete)
    - CHANGELOG_KNOWLEDGE_GRAPHS.md (add entry)
    
    # Remove from deferred
@@ -390,15 +386,10 @@ Module documentation: [extraction/README.md](./extraction/README.md)
    **Effort:** X-Y hours
    ```
 
-2. **Update FEATURE_MATRIX.md:**
-   ```markdown
-   | Feature Name | 🔴 Not Implemented | vX.X.X | - | 📋 Planned | Low |
-   ```
-
-3. **Update ROADMAP.md:**
+2. **Update ROADMAP.md:**
    Add to appropriate version section with effort estimate
 
-4. **Update MASTER_STATUS.md:**
+3. **Update MASTER_STATUS.md:**
    Add to "Remaining Deferred Features" section
 
 ### Task: Archive Old Documentation
@@ -434,7 +425,7 @@ Module documentation: [extraction/README.md](./extraction/README.md)
 
 ### File Naming
 
-- Use underscores for spaces: `FEATURE_MATRIX.md`
+- Use underscores for spaces: `COMPREHENSIVE_ANALYSIS_2026_02_18.md`
 - Use CAPS for core documentation: `README.md`, `ROADMAP.md`
 - Include dates for time-specific docs: `PLAN_2026_02_18.md`
 - Use descriptive names: `P3_P4_IMPLEMENTATION_COMPLETE.md`
@@ -444,14 +435,14 @@ Module documentation: [extraction/README.md](./extraction/README.md)
 ```
 knowledge_graphs/
 ├── MASTER_STATUS.md (⭐ single source of truth)
+├── COMPREHENSIVE_ANALYSIS_2026_02_18.md (analysis)
+├── IMPROVEMENT_TODO.md (infinite backlog)
 ├── README.md (module overview)
 ├── QUICKSTART.md (getting started)
 ├── INDEX.md (documentation index)
-├── FEATURE_MATRIX.md (feature status)
 ├── DEFERRED_FEATURES.md (planned features)
 ├── ROADMAP.md (development plan)
 ├── CHANGELOG_KNOWLEDGE_GRAPHS.md (version history)
-├── FINAL_REFACTORING_PLAN_2026_02_18.md (analysis)
 ├── DOCUMENTATION_GUIDE.md (this file)
 ├── P3_P4_IMPLEMENTATION_COMPLETE.md (implementation record)
 ├── archive/ (historical documents)

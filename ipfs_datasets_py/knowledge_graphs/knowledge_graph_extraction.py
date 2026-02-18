@@ -33,7 +33,7 @@ The extraction/ package provides a modular structure:
 - extraction/validator.py: KnowledgeGraphExtractorWithValidation class
 
 This file remains only for backward compatibility and will be removed in a future version.
-See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.
+See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration instructions.
 """
 
 import warnings
@@ -42,7 +42,7 @@ import warnings
 warnings.warn(
     "The knowledge_graph_extraction module is deprecated. "
     "Use 'from ipfs_datasets_py.knowledge_graphs.extraction import ...' instead. "
-    "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for details.",
+    "See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.",
     DeprecationWarning,
     stacklevel=2
 )
@@ -117,4 +117,4 @@ __all__ = [
 
 __version__ = '0.1.0-deprecated'
 __deprecated__ = True
-__migration_guide__ = 'docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md'
+__migration_guide__ = 'docs/knowledge_graphs/MIGRATION_GUIDE.md'

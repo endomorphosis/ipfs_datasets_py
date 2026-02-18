@@ -60,16 +60,10 @@ for person in persons:
 ```
 knowledge_graphs/
 ├── README.md (this file)
-<<<<<<< Updated upstream
-├── COMPREHENSIVE_ANALYSIS_2026_02_18.md (⭐ LATEST ANALYSIS)
-├── IMPROVEMENT_TODO.md (⭐ living “infinite backlog”)
-├── INDEX.md (documentation navigation)
-=======
-├── COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md (⭐ comprehensive improvement plan)
+├── MASTER_STATUS.md (⭐ single source of truth)
+├── COMPREHENSIVE_ANALYSIS_2026_02_18.md (⭐ latest analysis)
 ├── IMPROVEMENT_TODO.md (♾️ living “infinite backlog”)
-├── IMPLEMENTATION_STATUS.md (status, coverage, limitations)
-├── INDEX.md (documentation index)
->>>>>>> Stashed changes
+├── INDEX.md (documentation navigation)
 │
 ├── extraction/           # Entity and relationship extraction
 │   ├── README.md        # ✅ Complete documentation
@@ -142,18 +136,7 @@ knowledge_graphs/
 - Increase migration module test coverage (target ≥70% in v2.0.1)
 - Keep tightening error handling + diagnostics in hot paths
 
-<<<<<<< Updated upstream
-For a comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)**.
-=======
-### 📋 Remaining Phases (Planned)
-- **Phase 3:** Code cleanup (16h)
-- **Phase 4:** Documentation (24h)
-- **Phase 5:** Testing >85% coverage (28h)
-- **Phase 6:** Performance optimization (16h)
-- **Phase 7:** Long-term improvements (40h)
-
-**See [COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md](./COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) for the comprehensive plan, and [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) for the living backlog.**
->>>>>>> Stashed changes
+For the comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)**.
 
 ## 🚀 Key Features
 
@@ -344,8 +327,8 @@ This module is part of the IPFS Datasets Python project. See main project LICENS
 
 ## 📞 Support
 
-- **Issues:** Use comprehensive refactoring plan as reference
-- **Documentation:** See /docs/KNOWLEDGE_GRAPHS_* files
+- **Issues:** Include current status + gaps from [MASTER_STATUS.md](./MASTER_STATUS.md)
+- **Documentation:** Start with [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) and [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)
 - **Tests:** See tests/unit/knowledge_graphs/
 
 ---

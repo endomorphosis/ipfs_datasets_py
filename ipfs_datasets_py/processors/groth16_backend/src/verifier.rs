@@ -28,15 +28,16 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     // Validate public inputs format (hex strings for hashes)
     let theorem_hash_hex = &proof.public_inputs[0];
     let axioms_commitment_hex = &proof.public_inputs[1];
-    
+
     if !is_valid_32byte_hex(theorem_hash_hex) || !is_valid_32byte_hex(axioms_commitment_hex) {
         return Ok(false);
     }
 
     // Perform basic validation
-    let version = proof.public_inputs[2].parse::<u32>()
+    let version = proof.public_inputs[2]
+        .parse::<u32>()
         .map_err(|_| anyhow::anyhow!("Invalid circuit version"))?;
-    
+
     if version > 255 {
         return Ok(false);
     }
@@ -51,7 +52,7 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     // 2. Load verification key
     // 3. Call Groth16::<Bn254>::verify(&vk, &public_inputs, &proof)
     // 4. Return verification result from pairing check
-    
+
     // MVP: Accept structurally valid proofs
     Ok(true)
 }
@@ -68,10 +69,8 @@ mod tests {
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
             public_inputs: vec![
-                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260"
-                    .to_string(),
-                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5"
-                    .to_string(),
+                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
                 "1".to_string(),
                 "TDFOL_v1".to_string(),
             ],
@@ -91,7 +90,7 @@ mod tests {
             proof_a: "[1,0]".to_string(),
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
-            public_inputs: vec!["not".to_string(), "enough".to_string()],  // Only 2, need 4
+            public_inputs: vec!["not".to_string(), "enough".to_string()], // Only 2, need 4
             timestamp: 0,
             version: 1,
         };
@@ -109,7 +108,7 @@ mod tests {
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
             public_inputs: vec![
-                "short".to_string(),  // Not 64 hex chars
+                "short".to_string(), // Not 64 hex chars
                 "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
                 "1".to_string(),
                 "TDFOL_v1".to_string(),
@@ -133,7 +132,7 @@ mod tests {
             public_inputs: vec![
                 "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
                 "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "256".to_string(),  // Out of range
+                "256".to_string(), // Out of range
                 "TDFOL_v1".to_string(),
             ],
             timestamp: 0,

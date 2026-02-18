@@ -7,6 +7,7 @@ Tests witness generation, validation, and consistency checking.
 import pytest
 from ipfs_datasets_py.logic.zkp.witness_manager import WitnessManager
 from ipfs_datasets_py.logic.zkp.statement import Statement, Witness
+from ipfs_datasets_py.logic.zkp.circuits import MVPCircuit
 from ipfs_datasets_py.logic.zkp.canonicalization import hash_axioms_commitment
 
 
@@ -311,6 +312,51 @@ class TestWitnessConsistency:
         )
         
         assert not manager.verify_witness_consistency(witness, statement)
+
+
+class TestMVPCircuitConstraintEvaluation:
+    """Direct tests for MVP circuit constraint checking (P4.3)."""
+
+    def test_mvp_circuit_verify_constraints_valid(self):
+        manager = WitnessManager()
+        witness = manager.generate_witness(axioms=["P", "Q"], theorem="R")
+        stmt = manager.create_proof_statement(witness, theorem="R").statement
+
+        circuit = MVPCircuit(circuit_version=stmt.circuit_version)
+        assert circuit.verify_constraints(witness, stmt)
+
+    def test_mvp_circuit_verify_constraints_rejects_noncanonical_witness(self):
+        manager = WitnessManager()
+        witness = manager.generate_witness(axioms=["P", "Q"], theorem="R")
+        stmt = manager.create_proof_statement(witness, theorem="R").statement
+
+        # Tamper witness axioms (introduce duplicates + unsorted); keep stored commitment.
+        tampered = Witness(
+            axioms=["Q", "P", "P"],
+            intermediate_steps=[],
+            axioms_commitment_hex=witness.axioms_commitment_hex,
+            circuit_version=witness.circuit_version,
+            ruleset_id=witness.ruleset_id,
+        )
+
+        circuit = MVPCircuit(circuit_version=stmt.circuit_version)
+        assert not circuit.verify_constraints(tampered, stmt)
+
+    def test_mvp_circuit_verify_constraints_rejects_witness_commitment_mismatch(self):
+        manager = WitnessManager()
+        witness = manager.generate_witness(axioms=["P", "Q"], theorem="R")
+        stmt = manager.create_proof_statement(witness, theorem="R").statement
+
+        tampered = Witness(
+            axioms=witness.axioms,
+            intermediate_steps=[],
+            axioms_commitment_hex="00" * 32,
+            circuit_version=witness.circuit_version,
+            ruleset_id=witness.ruleset_id,
+        )
+
+        circuit = MVPCircuit(circuit_version=stmt.circuit_version)
+        assert not circuit.verify_constraints(tampered, stmt)
 
 
 class TestWitnessCache:

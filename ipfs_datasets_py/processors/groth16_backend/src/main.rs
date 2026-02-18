@@ -126,7 +126,11 @@ fn main() {
     let args = Args::parse();
 
     let exit_code = match args.command {
-        Commands::Prove { input, output, quiet } => {
+        Commands::Prove {
+            input,
+            output,
+            quiet,
+        } => {
             let run = || -> anyhow::Result<()> {
                 let witness_json = read_text_arg(&input)?;
                 let proof = groth16_backend::prove(&witness_json)?;
@@ -177,7 +181,11 @@ fn main() {
                             eprintln!("❌ Proof is INVALID");
                         }
                     }
-                    if is_valid { 0 } else { 1 }
+                    if is_valid {
+                        0
+                    } else {
+                        1
+                    }
                 }
                 Err(err) => {
                     let code = error_code(&err);

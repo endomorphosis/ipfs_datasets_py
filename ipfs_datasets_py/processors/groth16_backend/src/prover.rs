@@ -1,10 +1,10 @@
 // src/prover.rs
 // Groth16 Prover Implementation
 
-use crate::{circuit::MVPCircuit, WitnessInput, ProofOutput};
-use std::time::{SystemTime, UNIX_EPOCH};
-use ark_relations::r1cs::{ConstraintSystem, ConstraintSynthesizer};
+use crate::{circuit::MVPCircuit, ProofOutput, WitnessInput};
 use ark_bn254::Fr;
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn decode_32byte_hex(label: &str, hex_str: &str) -> anyhow::Result<Vec<u8>> {
     if hex_str.len() != 64 {
@@ -20,7 +20,8 @@ fn decode_32byte_hex(label: &str, hex_str: &str) -> anyhow::Result<Vec<u8>> {
 /// Generate Groth16 proof from witness
 pub fn generate_proof(witness: &WitnessInput) -> anyhow::Result<ProofOutput> {
     // Parse hex inputs to bytes
-    let axioms_commitment = decode_32byte_hex("axioms_commitment_hex", &witness.axioms_commitment_hex)?;
+    let axioms_commitment =
+        decode_32byte_hex("axioms_commitment_hex", &witness.axioms_commitment_hex)?;
     let theorem_hash = decode_32byte_hex("theorem_hash_hex", &witness.theorem_hash_hex)?;
 
     // Verify witness structure
@@ -59,10 +60,8 @@ pub fn generate_proof(witness: &WitnessInput) -> anyhow::Result<ProofOutput> {
     // 1. Load proving key
     // 2. Call Groth16::<Bn254>::prove(&pk, circuit, rng)
     // 3. Serialize A, B, C points
-    
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)?
-        .as_secs();
+
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
     let public_inputs = witness_to_public_inputs(witness);
 
@@ -70,13 +69,17 @@ pub fn generate_proof(witness: &WitnessInput) -> anyhow::Result<ProofOutput> {
     // These would be real point coordinates in production
     let proof = ProofOutput {
         schema_version: 1,
-        proof_a: format!("{{ \"x\": \"{}\", \"y\": \"{}\" }}", 
-                        witness.theorem_hash_hex[..16].to_string(),
-                        witness.axioms_commitment_hex[..16].to_string()),
+        proof_a: format!(
+            "{{ \"x\": \"{}\", \"y\": \"{}\" }}",
+            witness.theorem_hash_hex[..16].to_string(),
+            witness.axioms_commitment_hex[..16].to_string()
+        ),
         proof_b: format!("{{ \"x\": [\"1\", \"2\"], \"y\": [\"3\", \"4\"] }}"),
-        proof_c: format!("{{ \"x\": \"{}\", \"y\": \"{}\" }}", 
-                        witness.circuit_version,
-                        witness.private_axioms.len()),
+        proof_c: format!(
+            "{{ \"x\": \"{}\", \"y\": \"{}\" }}",
+            witness.circuit_version,
+            witness.private_axioms.len()
+        ),
         public_inputs,
         timestamp,
         version: witness.circuit_version,
@@ -101,10 +104,10 @@ mod tests {
     #[test]
     fn test_prover_witness_validation() {
         let invalid_witness = WitnessInput {
-            private_axioms: vec![],  // Empty axioms
+            private_axioms: vec![], // Empty axioms
             theorem: "Q".to_string(),
-            axioms_commitment_hex: "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5"
-                .to_string(),
+            axioms_commitment_hex:
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
             theorem_hash_hex: "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260"
                 .to_string(),
             circuit_version: 1,
@@ -120,8 +123,8 @@ mod tests {
         let witness = WitnessInput {
             private_axioms: vec!["P".to_string(), "P -> Q".to_string()],
             theorem: "Q".to_string(),
-            axioms_commitment_hex: "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5"
-                .to_string(),
+            axioms_commitment_hex:
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
             theorem_hash_hex: "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260"
                 .to_string(),
             circuit_version: 1,
@@ -143,8 +146,8 @@ mod tests {
         let witness = WitnessInput {
             private_axioms: vec!["A".to_string()],
             theorem: "B".to_string(),
-            axioms_commitment_hex: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                .to_string(),
+            axioms_commitment_hex:
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
             theorem_hash_hex: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
                 .to_string(),
             circuit_version: 42,

@@ -193,6 +193,29 @@ class TestZKPIntegration:
 
         proof = prover.generate_proof("Q", ["P", "P -> Q"])
         assert verifier.verify_proof(proof)
+
+    @pytest.mark.skipif(
+        os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
+        reason="Groth16 backend is disabled by default",
+    )
+    def test_groth16_deterministic_mode_when_enabled(self):
+        """When GROTH16_BACKEND_DETERMINISTIC=1, the Rust backend should output timestamp=0."""
+        from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as Groth16FFIBackend
+
+        backend = Groth16FFIBackend()
+        if not backend.binary_path:
+            pytest.skip("Groth16 binary not available")
+
+        os.environ["GROTH16_BACKEND_DETERMINISTIC"] = "1"
+        try:
+            prover = ZKPProver(backend="groth16")
+            proof = prover.generate_proof("Q", ["P", "P -> Q"])
+
+            # groth16 backend currently encodes the Rust proof output JSON in proof_data
+            payload = json.loads(proof.proof_data.decode("utf-8"))
+            assert payload.get("timestamp") == 0
+        finally:
+            os.environ.pop("GROTH16_BACKEND_DETERMINISTIC", None)
     
     def test_proof_caching_integration(self):
         """

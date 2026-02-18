@@ -7,6 +7,10 @@ proofs for various logic operations, and MVP circuits for statement proving.
 
 from typing import List, Dict, Any, Tuple
 from dataclasses import dataclass
+from typing import Any, Dict
+
+from .canonicalization import canonicalize_axioms, hash_axioms_commitment
+from .statement import Statement, Witness
 import hashlib
 
 
@@ -335,6 +339,40 @@ class MVPCircuit:
             'num_constraints': self.num_constraints(),
             'description': 'Prove knowledge of axioms matching a commitment',
         }
+
+    def verify_constraints(self, witness: Witness, statement: Statement) -> bool:
+        """Evaluate MVP constraints for the given witness and statement.
+
+        This provides a concrete, non-cryptographic constraint evaluation path
+        for the MVP circuit. It is intentionally strict and fail-closed.
+
+        Constraints (v1):
+        - circuit version matches
+        - ruleset_id matches
+        - SHA256(canonicalize_axioms(witness.axioms)) == statement.axioms_commitment
+        - witness.axioms_commitment_hex matches the same computed commitment
+        """
+        try:
+            if statement.circuit_version != self.circuit_version:
+                return False
+            if witness.circuit_version != statement.circuit_version:
+                return False
+            if witness.ruleset_id != statement.ruleset_id:
+                return False
+
+            canonical_axioms = canonicalize_axioms(witness.axioms)
+            if witness.axioms != canonical_axioms:
+                return False
+            expected_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
+
+            if statement.axioms_commitment != expected_commitment_hex:
+                return False
+            if witness.axioms_commitment_hex != expected_commitment_hex:
+                return False
+
+            return True
+        except (AttributeError, TypeError, ValueError):
+            return False
 
 
 def create_knowledge_of_axioms_circuit(circuit_version: int = 1) -> MVPCircuit:

@@ -6,7 +6,7 @@ pub const AXIOMS_DOMAIN: &[u8] = b"PHASE3C_MVP_AXIOMS_v1";
 
 /// Hash theorem with domain separation
 pub fn hash_theorem(theorem: &[u8]) -> Vec<u8> {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(THEOREM_DOMAIN);
     hasher.update(theorem);
@@ -15,7 +15,7 @@ pub fn hash_theorem(theorem: &[u8]) -> Vec<u8> {
 
 /// Hash axioms with domain separation and canonical ordering
 pub fn hash_axioms(axioms: &[String]) -> Vec<u8> {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(AXIOMS_DOMAIN);
 

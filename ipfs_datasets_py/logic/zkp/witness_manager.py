@@ -13,6 +13,7 @@ from .canonicalization import (
     hash_theorem,
     hash_axioms_commitment,
 )
+from .circuits import MVPCircuit
 
 
 class WitnessManager:
@@ -223,21 +224,9 @@ class WitnessManager:
             >>> assert manager.verify_witness_consistency(witness, statement)
         """
         try:
-            # Check commitment consistency
-            commitment = hash_axioms_commitment(witness.axioms)
-            if commitment.hex() != statement.axioms_commitment:
-                return False
-            
-            # Check circuit version consistency
-            if witness.circuit_version != statement.circuit_version:
-                return False
-            
-            # Check ruleset consistency
-            if witness.ruleset_id != statement.ruleset_id:
-                return False
-            
-            return True
-            
+            circuit = MVPCircuit(circuit_version=statement.circuit_version)
+            return circuit.verify_constraints(witness, statement)
+
         except (AttributeError, TypeError, ValueError):
             return False
     

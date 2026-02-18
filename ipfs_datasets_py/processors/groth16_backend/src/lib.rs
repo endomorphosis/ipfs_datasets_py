@@ -22,10 +22,10 @@ pub struct WitnessInput {
 pub struct ProofOutput {
     #[serde(default = "default_schema_version")]
     pub schema_version: u32,
-    pub proof_a: String,              // Serialized point A
-    pub proof_b: String,              // Serialized point B
-    pub proof_c: String,              // Serialized point C
-    pub public_inputs: Vec<String>,   // 4 public input scalars
+    pub proof_a: String,            // Serialized point A
+    pub proof_b: String,            // Serialized point B
+    pub proof_c: String,            // Serialized point C
+    pub public_inputs: Vec<String>, // 4 public input scalars
     pub timestamp: u64,
     pub version: u32,
 }

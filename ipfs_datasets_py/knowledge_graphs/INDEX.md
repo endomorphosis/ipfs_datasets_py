@@ -48,6 +48,12 @@ New to the knowledge graphs module? Start with these documents in order:
    - Community contribution areas
    - **Read time:** 10-15 minutes
 
+7. **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)** ♾️ INFINITE IMPROVEMENT BACKLOG
+   - Comprehensive, continuously-growing refactor & hardening plan
+   - Prioritized workstreams with acceptance criteria
+   - Safe “first PRs” sequence for incremental improvements
+   - **Read time:** 10-20 minutes
+
 ---
 
 ## 📚 Documentation by Purpose
@@ -280,7 +286,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 ### Document Owners
 - **README.md:** Update as module structure changes
 - **INDEX.md:** Update as documentation structure changes
-- **IMPLEMENTATION_STATUS.md:** Update with each release
+- **MASTER_STATUS.md:** Update with each release
 - **ROADMAP.md:** Update quarterly or as plans change
 - **CHANGELOG_KNOWLEDGE_GRAPHS.md:** Update with each release
 
@@ -297,7 +303,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 ### Finding Information Quickly
 
 **Looking for specific features?**
-- Check [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) - Module status table
+- Check [MASTER_STATUS.md](./MASTER_STATUS.md) - Module status table
 - See [ROADMAP.md](./ROADMAP.md) for planned features
 
 **Looking for code examples?**
@@ -332,7 +338,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 ### Questions About Contributing
 - Read [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md)
 - Review [ROADMAP.md](./ROADMAP.md) for contribution opportunities
-- Check [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for current gaps
+- Check [MASTER_STATUS.md](./MASTER_STATUS.md) for current gaps
 
 ### Questions About Migration
 - See [MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)
@@ -341,7 +347,7 @@ See [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) for 40+ more exam
 
 ### Reporting Issues
 - GitHub Issues: [github.com/endomorphosis/ipfs_datasets_py](https://github.com/endomorphosis/ipfs_datasets_py)
-- Check [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) for known limitations first
+- Check [MASTER_STATUS.md](./MASTER_STATUS.md) for known limitations first
 
 ---
 

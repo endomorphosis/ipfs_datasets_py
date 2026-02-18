@@ -7,7 +7,7 @@ knowledge graphs, including cross-document lineage and SPARQL templates.
 The legacy IPLD knowledge graph API (ipld.py) is deprecated. Please migrate to
 the new Neo4j-compatible API for better features and performance.
 
-See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.
+See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration instructions.
 
 New API Quick Start:
     from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
@@ -42,7 +42,7 @@ def _deprecated_import(name, new_location):
     warnings.warn(
         f"Importing {name} from knowledge_graphs is deprecated. "
         f"Use 'from {new_location} import {name}' instead. "
-        f"See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for details.",
+        f"See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.",
         DeprecationWarning,
         stacklevel=3
     )

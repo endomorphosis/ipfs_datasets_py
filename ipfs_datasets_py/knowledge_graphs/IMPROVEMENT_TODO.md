@@ -33,8 +33,8 @@
 These are the highest-signal improvement opportunities found during a quick pass:
 
 - **Docs drift / broken references**
-  - `README.md` references `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` in the module structure section, but the active directory currently contains `COMPREHENSIVE_ANALYSIS_2026_02_18.md` and other docs.
-  - `ROADMAP.md` still lists features as “Planned” that `MASTER_STATUS.md` marks “Completed early / cancelled” (P1–P4).
+  - Keep `README.md`, `ROADMAP.md`, `INDEX.md`, and `DOCUMENTATION_GUIDE.md` aligned to the canonical docs in this directory.
+  - Periodically re-run a simple internal link audit across `knowledge_graphs/*.md` to catch drift early.
 - **Exception specificity & observability**
   - There are many `except Exception as e:` blocks across the module. Most are probably fine as defensive coding, but many should be narrowed and/or re-raised as `KnowledgeGraphError` subclasses with consistent context.
 - **Migration module remains the main quality gap**
@@ -51,17 +51,17 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream A — Documentation consistency & governance
 
 ### A1. Fix doc drift and broken references (P0)
-- [ ] **Align `README.md` “Module Structure” with actual files** (P0, low risk)
+- [x] **Align `README.md` “Module Structure” with actual files** (P0, low risk)
   - Acceptance: references point to files that exist; structure reflects current docs; no mention of missing plan docs.
-- [ ] **Reconcile `ROADMAP.md` with `MASTER_STATUS.md`** (P0, low risk)
+- [x] **Reconcile `ROADMAP.md` with `MASTER_STATUS.md`** (P0, low risk)
   - Acceptance: P1–P4 sections reflect “completed early” (or clearly marked as historical), and timelines don’t contradict `MASTER_STATUS.md`.
-- [ ] **Run a simple internal link audit** across `knowledge_graphs/*.md` (P1, low risk)
+- [x] **Run a simple internal link audit** across `knowledge_graphs/*.md` (P1, low risk)
   - Acceptance: zero broken intra-module markdown links.
 
 ### A2. Reduce “status doc” sprawl (P1)
-- [ ] **Define which status docs are authoritative vs. archival** (P1, low risk)
+- [x] **Define which status docs are authoritative vs. archival** (P1, low risk)
   - Acceptance: `MASTER_STATUS.md` states what is canonical; other summaries clearly labeled as informational.
-- [ ] **Add/update a short “Docs Map” section** in `DOCUMENTATION_GUIDE.md` (P2, low risk)
+- [x] **Add/update a short “Docs Map” section** in `DOCUMENTATION_GUIDE.md` (P2, low risk)
   - Acceptance: new contributors can find the right doc in <2 minutes.
 
 ### A3. Make deprecations obvious to users (P1)
@@ -200,4 +200,6 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-18: Added `pytest-mock` to test/dev dependencies to provide the `mocker` fixture for knowledge graph migration tests.
 - 2026-02-18: Fixed pytest `INTERNALERROR` in KG suite by making `builtins.__import__` mocking delegate to the real importer for all modules except the targeted optional dependency.
 - 2026-02-18: Restored LLM integration behavior in `cross_document_reasoning.py` (expose patchable `openai`/`anthropic`, prefer OpenAI/Anthropic paths when keys are set, and make `LLMRouter` initialization lazy).
+- 2026-02-18: Fixed knowledge_graphs doc drift: removed merge conflict markers in `README.md`, reconciled `ROADMAP.md` with `MASTER_STATUS.md`, updated `INDEX.md`/`QUICKSTART.md`, and repaired intra-module doc links (link audit passes excluding `archive/`).
+- 2026-02-18: Reduced “status doc” sprawl: clarified canonical vs archived docs in `MASTER_STATUS.md`, updated `DOCUMENTATION_GUIDE.md` maintenance guidance, and removed remaining references to archived status docs from active entry points.
 

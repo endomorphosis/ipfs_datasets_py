@@ -15,7 +15,7 @@ Please migrate to the new Neo4j-compatible API:
     # driver = GraphDatabase.driver("ipfs://localhost:5001")
     # session = driver.session()
 
-For more information, see docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md
+For more information, see docs/knowledge_graphs/MIGRATION_GUIDE.md
 
 ---
 
@@ -57,7 +57,7 @@ import numpy as np
 warnings.warn(
     "The ipfs_datasets_py.knowledge_graphs.ipld module is deprecated and will be removed in a future version. "
     "Please migrate to the new Neo4j-compatible API. "
-    "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration instructions.",
+    "See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration instructions.",
     DeprecationWarning,
     stacklevel=2
 )

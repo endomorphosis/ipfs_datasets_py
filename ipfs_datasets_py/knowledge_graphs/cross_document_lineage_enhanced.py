@@ -10,9 +10,9 @@ Migration Guide:
     OLD: from ipfs_datasets_py.knowledge_graphs.cross_document_lineage_enhanced import SemanticAnalyzer
     NEW: from ipfs_datasets_py.knowledge_graphs.lineage import SemanticAnalyzer
 
-See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for complete migration instructions.
+See docs/knowledge_graphs/MIGRATION_GUIDE.md for complete migration instructions.
 
-This file will be removed in version 2.0 (estimated Q2 2026).
+This file will be removed in a future release.
 """
 
 import warnings
@@ -21,8 +21,8 @@ import warnings
 warnings.warn(
     "cross_document_lineage_enhanced module is deprecated. "
     "Please use 'from ipfs_datasets_py.knowledge_graphs.lineage import ...' instead. "
-    "See docs/KNOWLEDGE_GRAPHS_MIGRATION_GUIDE.md for migration guide. "
-    "This module will be removed in version 2.0.",
+    "See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration guide. "
+    "This module will be removed in a future release.",
     DeprecationWarning,
     stacklevel=2
 )

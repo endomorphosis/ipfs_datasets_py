@@ -2,12 +2,12 @@
 // MVP Groth16 Circuit Implementation with Real Constraints
 
 use ark_ff::PrimeField;
-use ark_r1cs_std::prelude::*;
 use ark_r1cs_std::fields::fp::FpVar;
-use ark_relations::r1cs::{ConstraintSystemRef, ConstraintSynthesizer, SynthesisError};
+use ark_r1cs_std::prelude::*;
+use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 
 /// MVP Circuit for zero-knowledge proofs
-/// 
+///
 /// Constraints:
 /// 1. axioms_bytes: encode private axioms as field elements
 /// 2. theorem_bytes: encode theorem as field elements
@@ -23,8 +23,8 @@ use ark_relations::r1cs::{ConstraintSystemRef, ConstraintSynthesizer, SynthesisE
 pub struct MVPCircuit {
     pub private_axioms: Option<Vec<Vec<u8>>>,
     pub theorem: Option<Vec<u8>>,
-    pub axioms_commitment: Option<Vec<u8>>,  // 32 bytes from SHA256 (public input)
-    pub theorem_hash: Option<Vec<u8>>,       // 32 bytes from SHA256 (public input)
+    pub axioms_commitment: Option<Vec<u8>>, // 32 bytes from SHA256 (public input)
+    pub theorem_hash: Option<Vec<u8>>,      // 32 bytes from SHA256 (public input)
     pub circuit_version: Option<u32>,
     pub ruleset_id: Option<Vec<u8>>,
 }
@@ -48,26 +48,20 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
         let _private_axioms = self
             .private_axioms
             .ok_or(SynthesisError::AssignmentMissing)?;
-        
-        let _theorem = self
-            .theorem
-            .ok_or(SynthesisError::AssignmentMissing)?;
-        
+
+        let _theorem = self.theorem.ok_or(SynthesisError::AssignmentMissing)?;
+
         let axioms_commitment_bytes = self
             .axioms_commitment
             .ok_or(SynthesisError::AssignmentMissing)?;
-        
-        let theorem_hash_bytes = self
-            .theorem_hash
-            .ok_or(SynthesisError::AssignmentMissing)?;
-        
+
+        let theorem_hash_bytes = self.theorem_hash.ok_or(SynthesisError::AssignmentMissing)?;
+
         let circuit_version = self
             .circuit_version
             .ok_or(SynthesisError::AssignmentMissing)?;
-        
-        let _ruleset_id = self
-            .ruleset_id
-            .ok_or(SynthesisError::AssignmentMissing)?;
+
+        let _ruleset_id = self.ruleset_id.ok_or(SynthesisError::AssignmentMissing)?;
 
         // CONSTRAINT 1: Axiom bytes non-empty
         // Check that axioms_commitment is not all zeros
@@ -102,8 +96,9 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
 
         // CONSTRAINT 4: Version as field element
         // Allocate version as private variable to constrain below range
-        let version_var = FpVar::<F>::new_witness(cs.clone(), || Ok(F::from(circuit_version as u32)))?;
-        
+        let version_var =
+            FpVar::<F>::new_witness(cs.clone(), || Ok(F::from(circuit_version as u32)))?;
+
         // Constrain version_var == circuit_version
         let version_const = FpVar::<F>::Constant(F::from(circuit_version as u32));
         version_var.enforce_equal(&version_const)?;
@@ -112,7 +107,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
         // Constrain that version is non-negative (already guaranteed by range check)
         let _zero = FpVar::<F>::Constant(F::ZERO);
         let one = FpVar::<F>::Constant(F::ONE);
-        
+
         // Enforce: version * 1 = version (trivial but prevents empty constraints)
         version_var.enforce_equal(&(version_var.clone() * &one))?;
 
@@ -122,7 +117,7 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
         // 2. Constrain that computed hash == axioms_commitment
         // 3. Use SHA256 gadget to hash theorem inside the circuit
         // 4. Constrain that computed hash == theorem_hash
-        
+
         Ok(())
     }
 }
@@ -138,8 +133,8 @@ mod tests {
         let circuit = MVPCircuit {
             private_axioms: Some(vec![vec![1, 2, 3]]),
             theorem: Some(vec![4, 5, 6]),
-            axioms_commitment: Some(vec![1; 32]),  // Non-zero for test
-            theorem_hash: Some(vec![1; 32]),       // Non-zero for test
+            axioms_commitment: Some(vec![1; 32]), // Non-zero for test
+            theorem_hash: Some(vec![1; 32]),      // Non-zero for test
             circuit_version: Some(1),
             ruleset_id: Some(b"TDFOL_v1".to_vec()),
         };
@@ -154,7 +149,7 @@ mod tests {
         let circuit = MVPCircuit {
             private_axioms: Some(vec![vec![1, 2, 3]]),
             theorem: Some(vec![4, 5, 6]),
-            axioms_commitment: Some(vec![0; 32]),  // All zeros - should fail
+            axioms_commitment: Some(vec![0; 32]), // All zeros - should fail
             theorem_hash: Some(vec![1; 32]),
             circuit_version: Some(1),
             ruleset_id: Some(b"TDFOL_v1".to_vec()),
@@ -172,7 +167,7 @@ mod tests {
             theorem: Some(vec![4, 5, 6]),
             axioms_commitment: Some(vec![1; 32]),
             theorem_hash: Some(vec![1; 32]),
-            circuit_version: Some(256),  // Out of range - should fail
+            circuit_version: Some(256), // Out of range - should fail
             ruleset_id: Some(b"TDFOL_v1".to_vec()),
         };
 
@@ -188,7 +183,7 @@ mod tests {
             theorem: Some(vec![4, 5, 6]),
             axioms_commitment: Some(vec![1; 32]),
             theorem_hash: Some(vec![1; 32]),
-            circuit_version: Some(255),  // Max valid value
+            circuit_version: Some(255), // Max valid value
             ruleset_id: Some(b"TDFOL_v1".to_vec()),
         };
 

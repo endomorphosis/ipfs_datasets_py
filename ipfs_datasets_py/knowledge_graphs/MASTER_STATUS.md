@@ -185,21 +185,25 @@
 
 ## Documentation Status
 
-### Core Documentation (11 files, 119KB)
+### Canonical Documentation (current)
 
-| Document | Purpose | Size | Status |
-|----------|---------|------|--------|
-| **MASTER_STATUS.md** | **Single source of truth** | 10KB | ✅ **New** |
-| **FINAL_REFACTORING_PLAN_2026_02_18.md** | Comprehensive analysis | 47KB | ✅ Current |
-| **DOCUMENTATION_GUIDE.md** | Maintainer guide | 3KB | ✅ New |
-| README.md | Module overview | 11.5KB | ✅ Updated |
-| QUICKSTART.md | Getting started guide | 6KB | ✅ Current |
-| INDEX.md | Documentation navigation | 13KB | ✅ Current |
-| DEFERRED_FEATURES.md | Planned features | 10.2KB | ✅ Updated |
-| ROADMAP.md | Development timeline | 9.8KB | ✅ Current |
-| FEATURE_MATRIX.md | Feature grid | 8.5KB | ✅ Updated |
-| CHANGELOG_KNOWLEDGE_GRAPHS.md | Version history | 8.2KB | ✅ Updated |
-| P3_P4_IMPLEMENTATION_COMPLETE.md | Implementation record | 12KB | ✅ Complete |
+These files are the active, maintained entry points for the module:
+
+| Document | Purpose |
+|----------|---------|
+| **MASTER_STATUS.md** | **Single source of truth for status** |
+| **COMPREHENSIVE_ANALYSIS_2026_02_18.md** | Comprehensive analysis and review findings |
+| **IMPROVEMENT_TODO.md** | Infinite improvement backlog (living TODO) |
+| DOCUMENTATION_GUIDE.md | Maintainer guide / documentation conventions |
+| README.md | Module overview |
+| QUICKSTART.md | Getting started guide |
+| INDEX.md | Documentation navigation |
+| DEFERRED_FEATURES.md | Intentional deferrals and timelines |
+| ROADMAP.md | Development timeline |
+| CHANGELOG_KNOWLEDGE_GRAPHS.md | Version history |
+| P3_P4_IMPLEMENTATION_COMPLETE.md | Implementation record |
+| EXECUTIVE_SUMMARY_FINAL_2026_02_18.md | Summary of the 2026-02-18 review |
+| REFACTORING_COMPLETE_2026_02_18.md | Refactoring completion record |
 
 ### Archived Documentation (17 files, historical)
 
@@ -208,6 +212,9 @@
 Superseded planning documents (no longer current):
 - COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md
 - NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md
+- FINAL_REFACTORING_PLAN_2026_02_18.md
+- FEATURE_MATRIX.md
+- IMPLEMENTATION_STATUS.md
 - EXECUTIVE_SUMMARY_2026_02_18.md
 - ...and 14 more historical documents
 
@@ -437,7 +444,7 @@ reasoning = reasoner.reason_across_documents(
 **Documentation:**
 - Start with [QUICKSTART.md](./QUICKSTART.md)
 - See [INDEX.md](./INDEX.md) for full documentation index
-- Check [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) for feature status
+- Check [MASTER_STATUS.md](./MASTER_STATUS.md) for feature status
 
 **Issues:**
 - Check [DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md) - Feature might be intentionally deferred
