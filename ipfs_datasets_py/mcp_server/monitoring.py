@@ -536,6 +536,278 @@ class EnhancedMetricsCollector:
             except anyio.get_cancelled_exc_class()():
                 pass
 
+class P2PMetricsCollector:
+    """
+    P2P-specific metrics collector for tracking peer discovery, workflows, and bootstrap operations.
+    Integrates with EnhancedMetricsCollector for comprehensive P2P monitoring.
+    """
+    
+    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None):
+        self.base_collector = base_collector or get_metrics_collector()
+        
+        # P2P-specific metrics
+        self.peer_discovery_metrics = {
+            'total_discoveries': 0,
+            'successful_discoveries': 0,
+            'failed_discoveries': 0,
+            'peers_by_source': defaultdict(int),
+            'discovery_times': deque(maxlen=100),
+            'last_discovery': None
+        }
+        
+        self.workflow_metrics = {
+            'total_workflows': 0,
+            'active_workflows': 0,
+            'completed_workflows': 0,
+            'failed_workflows': 0,
+            'workflow_durations': deque(maxlen=100),
+            'workflows_by_status': defaultdict(int),
+            'last_workflow': None
+        }
+        
+        self.bootstrap_metrics = {
+            'total_bootstrap_attempts': 0,
+            'successful_bootstraps': 0,
+            'failed_bootstraps': 0,
+            'bootstrap_methods_used': defaultdict(int),
+            'bootstrap_times': deque(maxlen=100),
+            'last_bootstrap': None
+        }
+        
+        # Dashboard data cache
+        self._dashboard_cache = None
+        self._dashboard_cache_time = None
+        self._cache_ttl = timedelta(seconds=30)
+    
+    def track_peer_discovery(
+        self,
+        source: str,
+        peers_found: int,
+        success: bool,
+        duration_ms: Optional[float] = None
+    ):
+        """Track a peer discovery operation."""
+        self.peer_discovery_metrics['total_discoveries'] += 1
+        
+        if success:
+            self.peer_discovery_metrics['successful_discoveries'] += 1
+            self.peer_discovery_metrics['peers_by_source'][source] += peers_found
+        else:
+            self.peer_discovery_metrics['failed_discoveries'] += 1
+        
+        if duration_ms is not None:
+            self.peer_discovery_metrics['discovery_times'].append(duration_ms)
+        
+        self.peer_discovery_metrics['last_discovery'] = datetime.utcnow()
+        
+        # Update base collector
+        self.base_collector.increment_counter(f'p2p.peer_discovery.{source}', peers_found)
+        if not success:
+            self.base_collector.increment_counter('p2p.peer_discovery.errors')
+    
+    def track_workflow_execution(
+        self,
+        workflow_id: str,
+        status: str,
+        execution_time_ms: Optional[float] = None
+    ):
+        """Track a workflow execution."""
+        self.workflow_metrics['total_workflows'] += 1
+        self.workflow_metrics['workflows_by_status'][status] += 1
+        
+        if status == 'running':
+            self.workflow_metrics['active_workflows'] += 1
+        elif status == 'completed':
+            self.workflow_metrics['completed_workflows'] += 1
+            if self.workflow_metrics['active_workflows'] > 0:
+                self.workflow_metrics['active_workflows'] -= 1
+        elif status == 'failed':
+            self.workflow_metrics['failed_workflows'] += 1
+            if self.workflow_metrics['active_workflows'] > 0:
+                self.workflow_metrics['active_workflows'] -= 1
+        
+        if execution_time_ms is not None:
+            self.workflow_metrics['workflow_durations'].append(execution_time_ms)
+        
+        self.workflow_metrics['last_workflow'] = datetime.utcnow()
+        
+        # Update base collector
+        self.base_collector.increment_counter(f'p2p.workflow.{status}')
+        if execution_time_ms is not None:
+            self.base_collector.record_histogram('p2p.workflow.execution_time_ms', execution_time_ms)
+    
+    def track_bootstrap_operation(
+        self,
+        method: str,
+        success: bool,
+        duration_ms: Optional[float] = None
+    ):
+        """Track a bootstrap operation."""
+        self.bootstrap_metrics['total_bootstrap_attempts'] += 1
+        
+        if success:
+            self.bootstrap_metrics['successful_bootstraps'] += 1
+        else:
+            self.bootstrap_metrics['failed_bootstraps'] += 1
+        
+        self.bootstrap_metrics['bootstrap_methods_used'][method] += 1
+        
+        if duration_ms is not None:
+            self.bootstrap_metrics['bootstrap_times'].append(duration_ms)
+        
+        self.bootstrap_metrics['last_bootstrap'] = datetime.utcnow()
+        
+        # Update base collector
+        self.base_collector.increment_counter(f'p2p.bootstrap.{method}')
+        if not success:
+            self.base_collector.increment_counter('p2p.bootstrap.errors')
+    
+    def get_dashboard_data(self, force_refresh: bool = False) -> Dict[str, Any]:
+        """
+        Get P2P metrics formatted for dashboard display.
+        Results are cached for 30 seconds to reduce overhead.
+        """
+        now = datetime.utcnow()
+        
+        # Return cached data if available and fresh
+        if (not force_refresh and 
+            self._dashboard_cache is not None and 
+            self._dashboard_cache_time is not None and
+            now - self._dashboard_cache_time < self._cache_ttl):
+            return self._dashboard_cache
+        
+        # Calculate averages
+        avg_discovery_time = (
+            sum(self.peer_discovery_metrics['discovery_times']) / 
+            len(self.peer_discovery_metrics['discovery_times'])
+            if self.peer_discovery_metrics['discovery_times'] else 0.0
+        )
+        
+        avg_workflow_duration = (
+            sum(self.workflow_metrics['workflow_durations']) / 
+            len(self.workflow_metrics['workflow_durations'])
+            if self.workflow_metrics['workflow_durations'] else 0.0
+        )
+        
+        avg_bootstrap_time = (
+            sum(self.bootstrap_metrics['bootstrap_times']) / 
+            len(self.bootstrap_metrics['bootstrap_times'])
+            if self.bootstrap_metrics['bootstrap_times'] else 0.0
+        )
+        
+        # Success rates
+        discovery_success_rate = (
+            (self.peer_discovery_metrics['successful_discoveries'] / 
+             self.peer_discovery_metrics['total_discoveries'] * 100)
+            if self.peer_discovery_metrics['total_discoveries'] > 0 else 0.0
+        )
+        
+        bootstrap_success_rate = (
+            (self.bootstrap_metrics['successful_bootstraps'] / 
+             self.bootstrap_metrics['total_bootstrap_attempts'] * 100)
+            if self.bootstrap_metrics['total_bootstrap_attempts'] > 0 else 0.0
+        )
+        
+        workflow_success_rate = (
+            (self.workflow_metrics['completed_workflows'] / 
+             (self.workflow_metrics['completed_workflows'] + self.workflow_metrics['failed_workflows']) * 100)
+            if (self.workflow_metrics['completed_workflows'] + self.workflow_metrics['failed_workflows']) > 0 else 0.0
+        )
+        
+        dashboard_data = {
+            'peer_discovery': {
+                'total': self.peer_discovery_metrics['total_discoveries'],
+                'successful': self.peer_discovery_metrics['successful_discoveries'],
+                'failed': self.peer_discovery_metrics['failed_discoveries'],
+                'success_rate': round(discovery_success_rate, 2),
+                'avg_duration_ms': round(avg_discovery_time, 2),
+                'by_source': dict(self.peer_discovery_metrics['peers_by_source']),
+                'last_discovery': (
+                    self.peer_discovery_metrics['last_discovery'].isoformat()
+                    if self.peer_discovery_metrics['last_discovery'] else None
+                )
+            },
+            'workflows': {
+                'total': self.workflow_metrics['total_workflows'],
+                'active': self.workflow_metrics['active_workflows'],
+                'completed': self.workflow_metrics['completed_workflows'],
+                'failed': self.workflow_metrics['failed_workflows'],
+                'success_rate': round(workflow_success_rate, 2),
+                'avg_duration_ms': round(avg_workflow_duration, 2),
+                'by_status': dict(self.workflow_metrics['workflows_by_status']),
+                'last_workflow': (
+                    self.workflow_metrics['last_workflow'].isoformat()
+                    if self.workflow_metrics['last_workflow'] else None
+                )
+            },
+            'bootstrap': {
+                'total_attempts': self.bootstrap_metrics['total_bootstrap_attempts'],
+                'successful': self.bootstrap_metrics['successful_bootstraps'],
+                'failed': self.bootstrap_metrics['failed_bootstraps'],
+                'success_rate': round(bootstrap_success_rate, 2),
+                'avg_duration_ms': round(avg_bootstrap_time, 2),
+                'by_method': dict(self.bootstrap_metrics['bootstrap_methods_used']),
+                'last_bootstrap': (
+                    self.bootstrap_metrics['last_bootstrap'].isoformat()
+                    if self.bootstrap_metrics['last_bootstrap'] else None
+                )
+            }
+        }
+        
+        # Update cache
+        self._dashboard_cache = dashboard_data
+        self._dashboard_cache_time = now
+        
+        return dashboard_data
+    
+    def get_alert_conditions(self) -> List[Dict[str, Any]]:
+        """Check for P2P-specific alert conditions."""
+        alerts = []
+        
+        # High discovery failure rate
+        if self.peer_discovery_metrics['total_discoveries'] > 10:
+            failure_rate = (
+                self.peer_discovery_metrics['failed_discoveries'] / 
+                self.peer_discovery_metrics['total_discoveries']
+            )
+            if failure_rate > 0.3:  # >30% failure rate
+                alerts.append({
+                    'type': 'warning',
+                    'component': 'peer_discovery',
+                    'message': f'High peer discovery failure rate: {failure_rate*100:.1f}%',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+        
+        # High workflow failure rate
+        total_workflows = (
+            self.workflow_metrics['completed_workflows'] + 
+            self.workflow_metrics['failed_workflows']
+        )
+        if total_workflows > 5:
+            failure_rate = self.workflow_metrics['failed_workflows'] / total_workflows
+            if failure_rate > 0.2:  # >20% failure rate
+                alerts.append({
+                    'type': 'warning',
+                    'component': 'workflows',
+                    'message': f'High workflow failure rate: {failure_rate*100:.1f}%',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+        
+        # High bootstrap failure rate
+        if self.bootstrap_metrics['total_bootstrap_attempts'] > 3:
+            failure_rate = (
+                self.bootstrap_metrics['failed_bootstraps'] / 
+                self.bootstrap_metrics['total_bootstrap_attempts']
+            )
+            if failure_rate > 0.5:  # >50% failure rate
+                alerts.append({
+                    'type': 'critical',
+                    'component': 'bootstrap',
+                    'message': f'High bootstrap failure rate: {failure_rate*100:.1f}%',
+                    'timestamp': datetime.utcnow().isoformat()
+                })
+        
+        return alerts
 
 
 # ✅ BETTER APPROACH
@@ -547,5 +819,16 @@ def get_metrics_collector():
         metrics_collector = EnhancedMetricsCollector()
     return metrics_collector
 
-# Global monitoring instance
+# P2P metrics collector instance
+p2p_metrics_collector = None
+
+def get_p2p_metrics_collector():
+    """Get or create the global P2P metrics collector instance."""
+    global p2p_metrics_collector
+    if p2p_metrics_collector is None:
+        p2p_metrics_collector = P2PMetricsCollector()
+    return p2p_metrics_collector
+
+# Global monitoring instances
 metrics_collector = EnhancedMetricsCollector()
+p2p_metrics_collector = P2PMetricsCollector()
