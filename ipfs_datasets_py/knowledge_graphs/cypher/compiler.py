@@ -383,10 +383,58 @@ class CypherCompiler:
         
         elif isinstance(expr, UnaryOpNode):
             if expr.operator.upper() == 'NOT':
-                # NOT operation - negation support planned for future release
-                # TODO(future): Implement NOT operator compilation
-                # Would require: Negation operation in IR, filter negation logic
-                pass  # Intentionally empty - future enhancement placeholder
+                # NOT operation - compile as negated filter
+                operand = expr.operand
+                
+                # Check if operand is a simple comparison
+                if isinstance(operand, BinaryOpNode):
+                    # Negate the comparison operator
+                    negated_op = self._negate_operator(operand.operator)
+                    if negated_op:
+                        # Create negated filter directly
+                        left_info = self._analyze_expression(operand.left)
+                        
+                        if left_info['type'] == 'property':
+                            # Simple property comparison - use negated operator
+                            right_value = self._compile_expression(operand.right)
+                            op = {
+                                "op": "Filter",
+                                "variable": left_info['variable'],
+                                "property": left_info['property'],
+                                "operator": negated_op,
+                                "value": right_value
+                            }
+                            self.operations.append(op)
+                        else:
+                            # Complex expression - wrap in NOT
+                            op = {
+                                "op": "Filter",
+                                "expression": {
+                                    "op": "NOT",
+                                    "operand": self._compile_expression(operand)
+                                }
+                            }
+                            self.operations.append(op)
+                    else:
+                        # Cannot negate this operator - use NOT wrapper
+                        op = {
+                            "op": "Filter",
+                            "expression": {
+                                "op": "NOT",
+                                "operand": self._compile_expression(operand)
+                            }
+                        }
+                        self.operations.append(op)
+                else:
+                    # Not a simple comparison - wrap entire expression in NOT
+                    op = {
+                        "op": "Filter",
+                        "expression": {
+                            "op": "NOT",
+                            "operand": self._compile_expression(operand)
+                        }
+                    }
+                    self.operations.append(op)
     
     def _compile_return(self, ret: ReturnClause):
         """
@@ -488,7 +536,11 @@ class CypherCompiler:
         Generates CreateNode and CreateRelationship operations.
         """
         for pattern in create.patterns:
-            for element in pattern.elements:
+            # Track node variables as we process the pattern
+            # Pattern elements alternate: node, rel, node, rel, node...
+            prev_node_var = None
+            
+            for i, element in enumerate(pattern.elements):
                 if isinstance(element, NodePattern):
                     props = {}
                     if element.properties:
@@ -497,19 +549,84 @@ class CypherCompiler:
                             for k, v in element.properties.items()
                         }
                     
-                    op = {
-                        "op": "CreateNode",
-                        "variable": element.variable,
-                        "labels": element.labels,
-                        "properties": props
-                    }
-                    self.operations.append(op)
+                    # Only create node if it has a variable (not anonymous)
+                    # or if it's the first/last node in pattern
+                    if element.variable:
+                        op = {
+                            "op": "CreateNode",
+                            "variable": element.variable,
+                            "labels": element.labels,
+                            "properties": props
+                        }
+                        self.operations.append(op)
+                        prev_node_var = element.variable
+                    else:
+                        # Anonymous node - generate variable
+                        anon_var = f"_n{len(self.variables)}"
+                        self.variables[anon_var] = "node"
+                        op = {
+                            "op": "CreateNode",
+                            "variable": anon_var,
+                            "labels": element.labels,
+                            "properties": props
+                        }
+                        self.operations.append(op)
+                        prev_node_var = anon_var
                 
                 elif isinstance(element, RelationshipPattern):
                     # Relationship creation in CREATE clause
-                    # TODO(future): Implement relationship creation compilation
-                    # Would need to track start/end nodes from pattern matching context
-                    pass  # Intentionally empty - future enhancement placeholder
+                    # Need to get the next node (should be at i+1)
+                    if i + 1 < len(pattern.elements) and isinstance(pattern.elements[i + 1], NodePattern):
+                        next_node = pattern.elements[i + 1]
+                        
+                        # Determine end node variable
+                        if next_node.variable:
+                            end_node_var = next_node.variable
+                        else:
+                            # Will be created as anonymous in next iteration
+                            end_node_var = f"_n{len(self.variables) + 1}"
+                        
+                        # Compile relationship properties
+                        rel_props = {}
+                        if element.properties:
+                            rel_props = {
+                                k: self._compile_expression(v)
+                                for k, v in element.properties.items()
+                            }
+                        
+                        # Determine relationship type
+                        rel_type = element.types[0] if element.types else "RELATED_TO"
+                        
+                        # Create relationship operation
+                        rel_var = element.variable or f"_r{len(self.variables)}"
+                        
+                        # Handle relationship direction
+                        if element.direction == 'left':
+                            # Pattern: (a)<-[r]-(b) means relationship from b to a
+                            start_var = end_node_var
+                            end_var = prev_node_var
+                        else:
+                            # Pattern: (a)-[r]->(b) or (a)-[r]-(b)
+                            # Default: relationship from a to b
+                            start_var = prev_node_var
+                            end_var = end_node_var
+                        
+                        op = {
+                            "op": "CreateRelationship",
+                            "variable": rel_var,
+                            "rel_type": rel_type,
+                            "start_variable": start_var,
+                            "end_variable": end_var,
+                            "properties": rel_props
+                        }
+                        self.operations.append(op)
+                        
+                        # Track relationship variable
+                        self.variables[rel_var] = "relationship"
+                    else:
+                        raise CypherCompileError(
+                            "Relationship pattern must be followed by a node pattern in CREATE clause"
+                        )
     
     def _compile_delete(self, delete: DeleteClause):
         """
@@ -592,6 +709,13 @@ class CypherCompiler:
                 "op": expr.operator,
                 "left": self._compile_expression(expr.left),
                 "right": self._compile_expression(expr.right)
+            }
+        
+        elif isinstance(expr, UnaryOpNode):
+            # Handle unary operators like NOT
+            return {
+                "op": expr.operator.upper(),
+                "operand": self._compile_expression(expr.operand)
             }
         
         elif isinstance(expr, ListNode):
@@ -688,6 +812,34 @@ class CypherCompiler:
         }
         
         return expr.name.upper() in aggregation_functions
+    
+    def _negate_operator(self, operator: str) -> Optional[str]:
+        """
+        Get the negated form of a comparison operator.
+        
+        Args:
+            operator: Original comparison operator
+            
+        Returns:
+            Negated operator, or None if cannot be negated simply
+            
+        Examples:
+            > becomes <=
+            >= becomes <
+            = becomes <>
+            <> becomes =
+        """
+        negation_map = {
+            '>': '<=',
+            '>=': '<',
+            '<': '>=',
+            '<=': '>',
+            '=': '<>',
+            '==': '<>',
+            '<>': '=',
+            '!=': '='
+        }
+        return negation_map.get(operator)
     
     def _compile_aggregation(self, func_node: FunctionCallNode) -> Dict[str, Any]:
         """
