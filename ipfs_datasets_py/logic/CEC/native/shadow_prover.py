@@ -15,16 +15,20 @@ ShadowProver supports:
 This is Phase 4D of the native implementation project.
 """
 
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union
 from dataclasses import dataclass, field
 from enum import Enum
 from abc import ABC, abstractmethod
 import logging
 
+from .exceptions import ProvingError
+
 try:
     from beartype import beartype
 except ImportError:
-    def beartype(func):
+    from typing import TypeVar, Callable, Any
+    F = TypeVar('F', bound=Callable[..., Any])
+    def beartype(func: F) -> F:
         return func
 
 logger = logging.getLogger(__name__)
@@ -192,13 +196,13 @@ class KProver(ShadowProver):
     rule and the distribution axiom K: □(P→Q) → (□P→□Q)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize K prover."""
         super().__init__(ModalLogic.K)
         # Lazy import to avoid circular dependency
-        self._tableau_prover = None
+        self._tableau_prover: Optional[Any] = None
     
-    def _get_tableau_prover(self):
+    def _get_tableau_prover(self) -> Optional[Any]:
         """Get tableaux prover instance (lazy initialization)."""
         if self._tableau_prover is None:
             try:
@@ -287,12 +291,12 @@ class S4Prover(ShadowProver):
     - 4: □P → □□P
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize S4 prover."""
         super().__init__(ModalLogic.S4)
-        self._tableau_prover = None
+        self._tableau_prover: Optional[Any] = None
     
-    def _get_tableau_prover(self):
+    def _get_tableau_prover(self) -> Optional[Any]:
         """Get tableaux prover instance (lazy initialization)."""
         if self._tableau_prover is None:
             try:
@@ -371,12 +375,12 @@ class S5Prover(ShadowProver):
     S5 is the strongest normal modal logic for single-agent knowledge.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize S5 prover."""
         super().__init__(ModalLogic.S5)
-        self._tableau_prover = None
+        self._tableau_prover: Optional[Any] = None
     
-    def _get_tableau_prover(self):
+    def _get_tableau_prover(self) -> Optional[Any]:
         """Get tableaux prover instance (lazy initialization)."""
         if self._tableau_prover is None:
             try:
@@ -460,13 +464,13 @@ class CognitiveCalculusProver(ShadowProver):
     Includes axioms for belief revision, knowledge dynamics, etc.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cognitive calculus prover."""
         super().__init__(ModalLogic.S5)  # Base on S5
         self.cognitive_axioms = self._init_cognitive_axioms()
-        self._tableau_prover = None
+        self._tableau_prover: Optional[Any] = None
         
-    def _get_tableau_prover(self):
+    def _get_tableau_prover(self) -> Optional[Any]:
         """Get tableaux prover instance."""
         if self._tableau_prover is None:
             try:
@@ -641,7 +645,7 @@ class ProblemReader:
     Supports various problem file formats used in automated theorem proving.
     """
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     @staticmethod
     def read_problem_file(filepath: str) -> ProblemFile:
         """Read a problem file.
@@ -672,7 +676,7 @@ class ProblemReader:
             )
 
 
-def create_prover(logic: ModalLogic) -> ShadowProver:
+def create_prover(logic: ModalLogic) -> Union[KProver, S4Prover, S5Prover]:
     """Factory function to create a prover for the specified logic.
     
     Args:
@@ -692,9 +696,13 @@ def create_prover(logic: ModalLogic) -> ShadowProver:
     
     prover_class = prover_map.get(logic)
     if not prover_class:
-        raise ValueError(f"Unsupported modal logic: {logic}")
+        raise ProvingError(
+            f"Unsupported modal logic: {logic}",
+            proof_state={"requested_logic": str(logic)},
+            suggestion=f"Use one of the supported modal logics: K, S4, S5"
+        )
     
-    return prover_class()
+    return prover_class()  # type: ignore[return-value,abstract]
 
 
 def create_cognitive_prover() -> CognitiveCalculusProver:

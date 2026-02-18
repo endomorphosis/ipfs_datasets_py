@@ -100,7 +100,7 @@ class ParseToken:
                 self.s_expression += arg + " "
             else:
                 arg.create_s_expression()
-                self.s_expression += arg.s_expression + " "
+                self.s_expression += (arg.s_expression or "") + " "
         
         self.s_expression = self.s_expression.strip()
         self.s_expression += ")"
@@ -123,7 +123,7 @@ class ParseToken:
                 self.f_expression += arg + ","
             else:
                 arg.create_f_expression()
-                self.f_expression += arg.f_expression + ","
+                self.f_expression += (arg.f_expression or "") + ","
         
         self.f_expression = self.f_expression.strip(",")
         self.f_expression += ")"
@@ -248,12 +248,13 @@ def replace_synonyms(args: List[Union[str, ParseToken]]) -> None:
     }
     
     for arg in range(len(args)):
-        if args[arg] in synonym_map.keys():
+        arg_val = args[arg]
+        if isinstance(arg_val, str) and arg_val in synonym_map.keys():
             logger.warning(
-                f"Replaced the common misspelling {args[arg]} with "
-                f"the correct name {synonym_map[args[arg]]}"
+                f"Replaced the common misspelling {arg_val} with "
+                f"the correct name {synonym_map[arg_val]}"
             )
-            args[arg] = synonym_map[args[arg]]
+            args[arg] = synonym_map[arg_val]
 
 
 def prefix_logical_functions(
@@ -307,10 +308,12 @@ def prefix_logical_functions(
             if word == "not":
                 new_token = ParseToken(word, [args[index + 1]])
                 # Assign sorts to the atomics used
-                if args[index + 1] in add_atomics:
-                    add_atomics[args[index + 1]].append("Boolean")
-                else:
-                    add_atomics[args[index + 1]] = ["Boolean"]
+                arg_val = args[index + 1]
+                if isinstance(arg_val, str):
+                    if arg_val in add_atomics:
+                        add_atomics[arg_val].append("Boolean")
+                    else:
+                        add_atomics[arg_val] = ["Boolean"]
                 # Replace infix notation with tokenized representation
                 args = args[:index + 1] + args[index + 2:]
                 args[index] = new_token
@@ -327,15 +330,20 @@ def prefix_logical_functions(
             new_token = ParseToken(word, [args[in1], args[in2]])
             
             # Assign sorts to the atomics used
-            if args[in1] in add_atomics:
-                add_atomics[args[in1]].append("Boolean")
-            else:
-                add_atomics[args[in1]] = ["Boolean"]
+            arg_in1 = args[in1]
+            arg_in2 = args[in2]
             
-            if args[in2] in add_atomics:
-                add_atomics[args[in2]].append("Boolean")
-            else:
-                add_atomics[args[in2]] = ["Boolean"]
+            if isinstance(arg_in1, str):
+                if arg_in1 in add_atomics:
+                    add_atomics[arg_in1].append("Boolean")
+                else:
+                    add_atomics[arg_in1] = ["Boolean"]
+            
+            if isinstance(arg_in2, str):
+                if arg_in2 in add_atomics:
+                    add_atomics[arg_in2].append("Boolean")
+                else:
+                    add_atomics[arg_in2] = ["Boolean"]
             
             # Replace the args used in the token with the token
             args = args[:in1] + args[in2:]
@@ -382,10 +390,12 @@ def prefix_emdas(
             if word == "negate":
                 new_token = ParseToken(word, [args[index + 1]])
                 # Assign sorts to the atomics used
-                if args[index + 1] in add_atomics:
-                    add_atomics[args[index + 1]].append("Numeric")
-                else:
-                    add_atomics[args[index + 1]] = ["Numeric"]
+                arg_val = args[index + 1]
+                if isinstance(arg_val, str):
+                    if arg_val in add_atomics:
+                        add_atomics[arg_val].append("Numeric")
+                    else:
+                        add_atomics[arg_val] = ["Numeric"]
                 # Replace notation with token
                 args = args[:index + 1] + args[index + 2:]
                 args[index] = new_token
@@ -402,15 +412,20 @@ def prefix_emdas(
             new_token = ParseToken(word, [args[in1], args[in2]])
             
             # Assign sorts to the atomics used
-            if args[in1] in add_atomics:
-                add_atomics[args[in1]].append("Numeric")
-            else:
-                add_atomics[args[in1]] = ["Numeric"]
+            arg_in1 = args[in1]
+            arg_in2 = args[in2]
             
-            if args[in2] in add_atomics:
-                add_atomics[args[in2]].append("Numeric")
-            else:
-                add_atomics[args[in2]] = ["Numeric"]
+            if isinstance(arg_in1, str):
+                if arg_in1 in add_atomics:
+                    add_atomics[arg_in1].append("Numeric")
+                else:
+                    add_atomics[arg_in1] = ["Numeric"]
+            
+            if isinstance(arg_in2, str):
+                if arg_in2 in add_atomics:
+                    add_atomics[arg_in2].append("Numeric")
+                else:
+                    add_atomics[arg_in2] = ["Numeric"]
             
             # Replace the args with the token
             args = args[:in1] + args[in2:]

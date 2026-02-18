@@ -2,6 +2,25 @@
 
 A comprehensive neurosymbolic framework for Cognitive Event Calculus reasoning, integrating multiple theorem provers and natural language converters.
 
+---
+
+## 📚 Documentation Navigation
+
+**New to CEC? Start here:**
+- **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-minute tutorial to get started
+- **[STATUS.md](./STATUS.md)** 📊 Implementation status and roadmap
+- **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** 📖 Comprehensive user guide
+
+**For developers:**
+- **[API_REFERENCE.md](./API_REFERENCE.md)** 📚 Complete API documentation
+- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** 💻 Development setup and contribution guide
+
+**Planning & roadmap:**
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Master plan (8 phases, 31 weeks)
+- **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** 📋 Quick reference guide
+
+---
+
 ## Overview
 
 The CEC framework provides a unified Python API for:
@@ -16,11 +35,13 @@ The CEC framework provides a unified Python API for:
 
 The CEC framework now includes a **production-ready native Python 3 implementation** located in `ipfs_datasets_py/logic/CEC/native/`:
 
+- ✅ **81% coverage** of submodule functionality (8,547 LOC)
 - ✅ **2-4x faster** than Java/Python 2 submodules
 - ✅ **Zero external dependencies** (Python 3.12+ only)
-- ✅ **418+ comprehensive tests**
-- ✅ **9,633 lines of production code**
+- ✅ **418+ comprehensive tests** (~80-85% coverage)
 - ✅ **Full type hints and modern Python 3 features**
+
+**See [STATUS.md](./STATUS.md) for detailed implementation status.**
 
 **Quick Start with Native Implementation:**
 ```python
@@ -43,7 +64,11 @@ prover.add_axiom("A")
 result = prover.prove("B")
 ```
 
-**See comprehensive documentation:** [CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)
+**Next steps:**
+- **Beginners:** Start with [QUICKSTART.md](./QUICKSTART.md) for a 5-minute tutorial
+- **Developers:** See [API_REFERENCE.md](./API_REFERENCE.md) for complete API docs
+- **Contributors:** Read [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for development setup
+- **Comprehensive guide:** [CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)
 
 ---
 
@@ -273,21 +298,56 @@ The framework provides graceful degradation:
 - Each operation returns detailed error messages
 - Statistics track success/failure rates
 
+## Documentation Structure
+
+The CEC module has comprehensive documentation organized as follows:
+
+### 📚 User Documentation
+- **[README.md](./README.md)** (this file) - Main entry point and overview
+- **[STATUS.md](./STATUS.md)** - Implementation status, coverage, roadmap ⭐ **Single source of truth**
+- **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute tutorial for beginners
+- **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** - Comprehensive system guide
+- **[MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md)** - Guide for migrating from submodules
+
+### 💻 Developer Documentation
+- **[API_REFERENCE.md](./API_REFERENCE.md)** - Complete API documentation (50+ classes, 100+ examples)
+- **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** - Development setup, testing, contribution workflow
+
+### 🗺️ Planning Documents
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** - Master plan (8 phases, 31 weeks)
+- **[API_INTERFACE_DESIGN.md](./API_INTERFACE_DESIGN.md)** - REST API design (30+ endpoints)
+- **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** - Performance optimization strategy
+- **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** - Multi-language NL support roadmap
+- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** - Additional prover integrations
+- **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** - Quick reference guide
+
+### 📦 Archive
+- **[ARCHIVE/](./ARCHIVE/)** - Historical documentation (superseded by current docs)
+
+---
+
 ## Future Development
 
-Planned enhancements:
-- Native Python implementations of DCEC components
-- Extended natural language support
-- Additional theorem provers
-- Performance optimizations
-- Web API interface
+See [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md) for the complete roadmap.
+
+**Five key development areas:**
+1. ✅ **Native Python implementations** (81% complete - Phase 1-4)
+2. 📋 **Extended NL support** (Planned - Phase 5)
+3. 📋 **Additional theorem provers** (Z3, Vampire, E, Isabelle, Coq - Phase 6)
+4. 📋 **Performance optimizations** (2-4x improvement - Phase 7)
+5. 📋 **API interface** (REST API - Phase 8)
+
+**Current Phase:** Phase 1 - Documentation Consolidation (86% complete)
+
+---
 
 ## Contributing
 
-When contributing to the CEC module:
-1. Follow existing code patterns
-2. Add comprehensive tests
-3. Update documentation
+See [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) for detailed contribution guidelines.
+**Quick guidelines:**
+1. Follow existing code patterns (see [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md))
+2. Add comprehensive tests (90%+ coverage target)
+3. Update documentation (docstrings + markdown)
 4. Ensure backward compatibility
 
 ## References
@@ -303,7 +363,20 @@ See the main repository LICENSE file for details.
 
 ## Support
 
-For issues or questions:
-- Check the test files for usage examples
-- Review component READMEs in submodules
-- Open an issue on GitHub
+**Documentation:**
+- Start with [QUICKSTART.md](./QUICKSTART.md) for a 5-minute tutorial
+- Check [STATUS.md](./STATUS.md) for current implementation status
+- See [API_REFERENCE.md](./API_REFERENCE.md) for complete API documentation
+- Review [CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md) for comprehensive guide
+
+**Questions or Issues:**
+- Check the test files in `tests/unit_tests/logic/CEC/` for usage examples
+- Review component documentation in this folder
+- Open an issue on [GitHub Issues](https://github.com/endomorphosis/ipfs_datasets_py/issues)
+- Start a discussion on [GitHub Discussions](https://github.com/endomorphosis/ipfs_datasets_py/discussions)
+
+---
+
+**Last Updated:** 2026-02-18  
+**Implementation Status:** 81% coverage, production-ready  
+**Phase:** Phase 1 - Documentation Consolidation (86% complete)
