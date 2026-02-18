@@ -18,7 +18,7 @@ Key Features:
 import re
 import requests
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 # Import extraction package components
 from .entities import Entity
@@ -718,25 +718,155 @@ class KnowledgeGraphExtractor:
 
         # Use different methods based on available tools
         if self.use_transformers and self.re_model:
-            # NOTE: Relationship extraction model enhancement opportunity
-            # Current: Rule-based pattern matching with regex
-            # Future Enhancement Options (when needed):
-            #   1. REBEL (Relation Extraction By End-to-end Language generation)
-            #      - HuggingFace: Babelscape/rebel-large
-            #      - End-to-end relation extraction
-            #   2. LUKE (Language Understanding with Knowledge-based Embeddings)
-            #      - HuggingFace: studio-ousia/luke-base
-            #      - Fine-tuned for relation extraction
-            #   3. OpenIE models for triple extraction
-            # Decision: Defer to future based on user feedback
-            # Current rule-based approach is sufficient for most use cases
-            # TODO(future): Implement neural relationship extraction when needed
-            pass  # Intentionally empty - future enhancement placeholder
-
-        # Use rule-based relationship extraction
+            # Neural relationship extraction using transformer models
+            # Implemented in v2.5.0 - Uses REBEL or similar models for end-to-end relation extraction
+            try:
+                neural_relationships = self._neural_relationship_extraction(text, entity_map)
+                relationships.extend(neural_relationships)
+            except Exception as e:
+                logger.warning(f"Neural relationship extraction failed: {e}. Falling back to rule-based.")
+        
+        # Use rule-based relationship extraction (always runs as fallback or primary)
         relationships.extend(self._rule_based_relationship_extraction(text, entity_map))
 
         return relationships
+    
+    def _neural_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
+        """Extract relationships using neural transformer models.
+        
+        This method uses pre-trained transformer models for end-to-end relationship extraction.
+        Supports models like REBEL, LUKE, or other relation extraction models from HuggingFace.
+        
+        Args:
+            text (str): Text to extract relationships from
+            entity_map (Dict): Map from entity names to Entity objects
+            
+        Returns:
+            List[Relationship]: List of extracted relationships with confidence scores
+            
+        Note:
+            Requires transformers library and a loaded relation extraction model.
+            Falls back gracefully if model is not available.
+        """
+        relationships = []
+        
+        if not self.re_model:
+            return relationships
+        
+        try:
+            # Try REBEL-style triplet extraction if available
+            # REBEL outputs triplets in format: (subject, relation, object)
+            from transformers import pipeline
+            
+            # Check if we have a triplet extraction model
+            if hasattr(self.re_model, 'task') and 'text2text' in str(self.re_model.task):
+                # REBEL-style generation model
+                triplets = self.re_model(text, max_length=512)
+                
+                # Parse triplets (format varies by model)
+                # REBEL format: "<triplet> subject <subj> relation <obj> object"
+                if isinstance(triplets, list) and len(triplets) > 0:
+                    generated_text = triplets[0].get('generated_text', '')
+                    parsed_triplets = self._parse_rebel_output(generated_text)
+                    
+                    for subject, relation, obj in parsed_triplets:
+                        # Find matching entities
+                        source_entity = self._find_best_entity_match(subject, entity_map)
+                        target_entity = self._find_best_entity_match(obj, entity_map)
+                        
+                        if source_entity and target_entity and source_entity != target_entity:
+                            rel = Relationship(
+                                relationship_type=relation,
+                                source_entity=source_entity,
+                                target_entity=target_entity,
+                                confidence=0.85,  # Neural models typically have high confidence
+                                source_text=text[:200],  # Context snippet
+                                extraction_method='neural'
+                            )
+                            relationships.append(rel)
+            
+            else:
+                # Classification-based relation extraction
+                # Split text into sentence chunks for processing
+                sentences = text.split('. ')
+                
+                for sentence in sentences[:10]:  # Limit to first 10 sentences for efficiency
+                    if len(sentence.strip()) < 10:
+                        continue
+                    
+                    # Extract relationships from sentence
+                    # This approach works with models trained on datasets like TACRED
+                    try:
+                        result = self.re_model(sentence)
+                        if isinstance(result, list) and len(result) > 0:
+                            top_result = result[0]
+                            relation_label = top_result.get('label', 'related_to')
+                            confidence = top_result.get('score', 0.7)
+                            
+                            # Only include high-confidence relationships
+                            if confidence > 0.6:
+                                # Try to extract entities from the sentence
+                                sentence_entities = [e for e in entity_map.values()
+                                                   if e.name.lower() in sentence.lower()]
+                                
+                                # Create relationships between entities in the sentence
+                                if len(sentence_entities) >= 2:
+                                    rel = Relationship(
+                                        relationship_type=relation_label,
+                                        source_entity=sentence_entities[0],
+                                        target_entity=sentence_entities[1],
+                                        confidence=confidence,
+                                        source_text=sentence,
+                                        extraction_method='neural'
+                                    )
+                                    relationships.append(rel)
+                    except Exception as e:
+                        logger.debug(f"Failed to process sentence with neural model: {e}")
+                        continue
+        
+        except Exception as e:
+            logger.warning(f"Neural relationship extraction encountered an error: {e}")
+            # Return whatever we extracted so far
+        
+        return relationships
+    
+    def _parse_rebel_output(self, generated_text: str) -> List[Tuple[str, str, str]]:
+        """Parse REBEL model output into triplets.
+        
+        Args:
+            generated_text: Generated text from REBEL model
+            
+        Returns:
+            List of (subject, relation, object) tuples
+        """
+        triplets = []
+        
+        try:
+            # REBEL format: "<triplet> subject <subj> relation <obj> object <triplet> ..."
+            # Split by <triplet> marker
+            parts = generated_text.split('<triplet>')
+            
+            for part in parts:
+                if not part.strip():
+                    continue
+                
+                # Extract subject, relation, object
+                if '<subj>' in part and '<obj>' in part:
+                    try:
+                        subject = part.split('<subj>')[0].strip()
+                        rest = part.split('<subj>')[1]
+                        relation = rest.split('<obj>')[0].strip()
+                        obj = rest.split('<obj>')[1].strip()
+                        
+                        if subject and relation and obj:
+                            triplets.append((subject, relation, obj))
+                    except (IndexError, ValueError):
+                        continue
+        
+        except Exception as e:
+            logger.debug(f"Failed to parse REBEL output: {e}")
+        
+        return triplets
 
     def _rule_based_relationship_extraction(self, text: str, entity_map: Dict[str, Entity]) -> List[Relationship]:
         """Extract relationships using rule-based patterns.
@@ -800,6 +930,234 @@ class KnowledgeGraphExtractor:
                 ) from e
 
         return relationships
+    
+    def _aggressive_entity_extraction(self, text: str, existing_entities: List[Entity]) -> List[Entity]:
+        """Extract additional entities using aggressive spaCy techniques.
+        
+        Uses dependency parsing, compound noun extraction, and advanced NER patterns
+        to find entities that might be missed by standard extraction.
+        
+        Args:
+            text: Text to extract from
+            existing_entities: Already extracted entities (to avoid duplicates)
+            
+        Returns:
+            List of additional entities
+        """
+        additional_entities = []
+        
+        if not self.nlp:
+            return additional_entities
+        
+        try:
+            doc = self.nlp(text)
+            existing_names = {e.name.lower() for e in existing_entities}
+            
+            # 1. Extract compound nouns using dependency parsing
+            for chunk in doc.noun_chunks:
+                chunk_text = chunk.text.strip()
+                if len(chunk_text) > 2 and chunk_text.lower() not in existing_names:
+                    # Check if it's a meaningful compound noun
+                    if len(chunk) >= 2 or chunk.root.pos_ in ['PROPN', 'NOUN']:
+                        entity = Entity(
+                            name=chunk_text,
+                            entity_type='concept',
+                            confidence=0.6,
+                            extraction_method='dependency_parsing'
+                        )
+                        additional_entities.append(entity)
+                        existing_names.add(chunk_text.lower())
+            
+            # 2. Extract entities based on syntactic patterns
+            # Look for subjects and objects in sentences
+            for token in doc:
+                # Subject entities
+                if token.dep_ in ['nsubj', 'nsubjpass'] and token.pos_ in ['NOUN', 'PROPN']:
+                    # Get the full noun phrase
+                    subtree = ' '.join([t.text for t in token.subtree])
+                    if len(subtree) > 2 and subtree.lower() not in existing_names:
+                        entity = Entity(
+                            name=subtree.strip(),
+                            entity_type='agent',
+                            confidence=0.65,
+                            extraction_method='syntax_pattern'
+                        )
+                        additional_entities.append(entity)
+                        existing_names.add(subtree.lower())
+                
+                # Object entities
+                elif token.dep_ in ['dobj', 'pobj'] and token.pos_ in ['NOUN', 'PROPN']:
+                    subtree = ' '.join([t.text for t in token.subtree])
+                    if len(subtree) > 2 and subtree.lower() not in existing_names:
+                        entity = Entity(
+                            name=subtree.strip(),
+                            entity_type='object',
+                            confidence=0.65,
+                            extraction_method='syntax_pattern'
+                        )
+                        additional_entities.append(entity)
+                        existing_names.add(subtree.lower())
+            
+            # 3. Extract capitalized phrases (likely proper nouns)
+            for i, token in enumerate(doc):
+                if token.is_title and i + 1 < len(doc):
+                    # Collect consecutive capitalized words
+                    phrase_tokens = [token]
+                    j = i + 1
+                    while j < len(doc) and doc[j].is_title:
+                        phrase_tokens.append(doc[j])
+                        j += 1
+                    
+                    if len(phrase_tokens) >= 2:
+                        phrase = ' '.join([t.text for t in phrase_tokens])
+                        if phrase.lower() not in existing_names:
+                            entity = Entity(
+                                name=phrase,
+                                entity_type='named_entity',
+                                confidence=0.7,
+                                extraction_method='capitalization_pattern'
+                            )
+                            additional_entities.append(entity)
+                            existing_names.add(phrase.lower())
+        
+        except Exception as e:
+            logger.warning(f"Error in aggressive entity extraction: {e}")
+        
+        return additional_entities
+    
+    def _infer_complex_relationships(self, text: str, existing_relationships: List[Relationship],
+                                    entities: List[Entity]) -> List[Relationship]:
+        """Infer complex relationships using semantic role labeling and dependency parsing.
+        
+        Identifies implicit relationships, hierarchical structures, and semantic roles
+        that may not be captured by pattern matching.
+        
+        Args:
+            text: Source text
+            existing_relationships: Already extracted relationships
+            entities: Extracted entities
+            
+        Returns:
+            List of inferred relationships
+        """
+        inferred_relationships = []
+        
+        if not self.nlp:
+            return inferred_relationships
+        
+        try:
+            doc = self.nlp(text)
+            entity_map = {e.name.lower(): e for e in entities}
+            
+            # Track existing relationships to avoid duplicates
+            existing_pairs = {(r.source_id, r.target_id, r.relationship_type) 
+                            for r in existing_relationships}
+            
+            # 1. Infer hierarchical relationships from compound nouns
+            # e.g., "machine learning algorithm" implies "algorithm" is_a "machine learning"
+            for chunk in doc.noun_chunks:
+                if len(list(chunk)) >= 3:
+                    tokens = list(chunk)
+                    # Check if first tokens form a modifier and last is head
+                    modifier = ' '.join([t.text for t in tokens[:-1]])
+                    head = tokens[-1].text
+                    
+                    modifier_entity = entity_map.get(modifier.lower())
+                    head_entity = entity_map.get(head.lower())
+                    
+                    if modifier_entity and head_entity:
+                        rel_key = (head_entity.entity_id, modifier_entity.entity_id, 'subtype_of')
+                        if rel_key not in existing_pairs:
+                            rel = Relationship(
+                                relationship_type='subtype_of',
+                                source_entity=head_entity,
+                                target_entity=modifier_entity,
+                                confidence=0.6,
+                                source_text=chunk.text,
+                                extraction_method='hierarchical_inference'
+                            )
+                            inferred_relationships.append(rel)
+                            existing_pairs.add(rel_key)
+            
+            # 2. Infer relationships from dependency patterns
+            # Agent-Action-Patient patterns
+            for token in doc:
+                if token.pos_ == 'VERB':
+                    # Find subject (agent)
+                    subjects = [child for child in token.children if child.dep_ in ['nsubj', 'nsubjpass']]
+                    # Find object (patient)
+                    objects = [child for child in token.children if child.dep_ in ['dobj', 'pobj']]
+                    
+                    for subj in subjects:
+                        for obj in objects:
+                            subj_text = ' '.join([t.text for t in subj.subtree])
+                            obj_text = ' '.join([t.text for t in obj.subtree])
+                            
+                            subj_entity = entity_map.get(subj_text.lower())
+                            obj_entity = entity_map.get(obj_text.lower())
+                            
+                            if subj_entity and obj_entity:
+                                # Create relationship based on verb
+                                rel_type = token.lemma_ + '_of'  # e.g., "uses" -> "uses_of"
+                                rel_key = (subj_entity.entity_id, obj_entity.entity_id, rel_type)
+                                
+                                if rel_key not in existing_pairs:
+                                    rel = Relationship(
+                                        relationship_type=rel_type,
+                                        source_entity=subj_entity,
+                                        target_entity=obj_entity,
+                                        confidence=0.65,
+                                        source_text=token.sent.text[:100],
+                                        extraction_method='srl_inference'
+                                    )
+                                    inferred_relationships.append(rel)
+                                    existing_pairs.add(rel_key)
+            
+            # 3. Infer transitive relationships
+            # If A relates to B and B relates to C, infer A relates to C (with lower confidence)
+            entity_ids = {e.entity_id for e in entities}
+            relationship_graph = {}
+            
+            for rel in existing_relationships:
+                if rel.source_id not in relationship_graph:
+                    relationship_graph[rel.source_id] = []
+                relationship_graph[rel.source_id].append((rel.target_id, rel.relationship_type))
+            
+            # Look for 2-hop paths
+            for source_id in relationship_graph:
+                for target_id, rel_type1 in relationship_graph.get(source_id, []):
+                    for next_target_id, rel_type2 in relationship_graph.get(target_id, []):
+                        # Avoid cycles
+                        if next_target_id != source_id and next_target_id in entity_ids:
+                            # Infer transitive relationship with reduced confidence
+                            rel_key = (source_id, next_target_id, f'transitive_{rel_type1}')
+                            if rel_key not in existing_pairs:
+                                source_entity = next(e for e in entities if e.entity_id == source_id)
+                                target_entity = next(e for e in entities if e.entity_id == next_target_id)
+                                
+                                rel = Relationship(
+                                    relationship_type=f'transitive_{rel_type1}',
+                                    source_entity=source_entity,
+                                    target_entity=target_entity,
+                                    confidence=0.5,  # Lower confidence for inferred relationships
+                                    source_text='',
+                                    extraction_method='transitive_inference'
+                                )
+                                inferred_relationships.append(rel)
+                                existing_pairs.add(rel_key)
+                                
+                                # Limit transitive relationships to avoid explosion
+                                if len(inferred_relationships) >= 20:
+                                    break
+                    if len(inferred_relationships) >= 20:
+                        break
+                if len(inferred_relationships) >= 20:
+                    break
+        
+        except Exception as e:
+            logger.warning(f"Error in complex relationship inference: {e}")
+        
+        return inferred_relationships
 
     def _find_best_entity_match(self, text: str, entity_map: Dict[str, Entity]) -> Optional[Entity]:
         """
@@ -864,11 +1222,14 @@ class KnowledgeGraphExtractor:
             # Keep only high-confidence entities for low temperature
             entities = [e for e in entities if e.confidence > 0.8]
         elif extraction_temperature > 0.8:
-            # For high temperature, try to extract additional entities
-            # Future Enhancement: Implement more aggressive entity extraction
-            # Options: Use dependency parsing, coreference resolution, or advanced NER models
-            # TODO(future): Add aggressive extraction with spaCy dependency parsing
-            pass  # Intentionally empty - future enhancement placeholder
+            # For high temperature, try to extract additional entities using advanced techniques
+            # v2.5.0: Aggressive entity extraction with spaCy dependency parsing
+            if self.use_spacy and self.nlp:
+                try:
+                    additional_entities = self._aggressive_entity_extraction(text, entities)
+                    entities.extend(additional_entities)
+                except Exception as e:
+                    logger.warning(f"Aggressive entity extraction failed: {e}")
 
         # Add entities to the knowledge graph
         for entity in entities:
@@ -888,10 +1249,13 @@ class KnowledgeGraphExtractor:
         elif structure_temperature > 0.8:
             # For high structure temperature, include all relationship types and try to infer
             # additional hierarchical relationships
-            # Future Enhancement: Implement more complex relationship inference
-            # Options: Use semantic role labeling, dependency parsing, or neural relation extractors
-            # TODO(future): Add complex relationship inference with SRL
-            pass  # Intentionally empty - future enhancement placeholder
+            # v2.5.0: Complex relationship inference with semantic role labeling
+            if self.use_spacy and self.nlp:
+                try:
+                    inferred_relationships = self._infer_complex_relationships(text, relationships, entities)
+                    relationships.extend(inferred_relationships)
+                except Exception as e:
+                    logger.warning(f"Complex relationship inference failed: {e}")
 
         # Add relationships to the knowledge graph
         for rel in relationships:
