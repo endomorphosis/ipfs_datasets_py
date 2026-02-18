@@ -10,7 +10,7 @@
 
 This roadmap outlines planned features and improvements for the knowledge_graphs module. All dates are estimates and subject to change based on community feedback and priorities.
 
-**Note (2026-02-18):** P1–P4 roadmap items (Cypher NOT, CREATE relationships, GraphML/GEXF/Pajek formats, neural/aggressive extraction, multi-hop traversal, LLM integration) were delivered early in **v2.0.0 (PR #1085)**. The sections below are retained for historical context but marked as delivered/cancelled.
+**Note (2026-02-18):** This roadmap is aspirational. For the most accurate, current view of what’s implemented vs. missing (including known limitations and test coverage), see **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)**.
 
 ---
 
@@ -34,7 +34,7 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 
 ---
 
-## Version 2.1.0 (Q2 2026) - Query Enhancement (CANCELLED: delivered in v2.0.0)
+## Version 2.1.0 (Q2 2026) - Query Enhancement
 
 **Target Release:** June 2026  
 **Focus:** Cypher language feature parity
@@ -42,7 +42,7 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 ### Planned Features
 
 #### 1. NOT Operator Support
-**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
+**Status:** Planned  
 **Priority:** High  
 **Description:** Implement NOT operator in Cypher queries
 
@@ -59,7 +59,7 @@ RETURN p
 - Reduced workaround code
 
 #### 2. CREATE Relationships
-**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
+**Status:** Planned  
 **Priority:** High  
 **Description:** Support relationship creation in Cypher
 
