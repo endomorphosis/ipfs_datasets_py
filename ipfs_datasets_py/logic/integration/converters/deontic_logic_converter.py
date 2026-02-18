@@ -21,8 +21,6 @@ from .deontic_logic_core import (
 from ..domain.legal_domain_knowledge import LegalDomainKnowledge, LegalDomain
 from .logic_translation_core import LogicTranslationTarget, LogicTranslator
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Type hints for GraphRAG components (these would be imported from GraphRAG modules)

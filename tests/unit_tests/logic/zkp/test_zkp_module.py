@@ -137,9 +137,8 @@ class TestZKPProver:
             prover.generate_proof(theorem="Q", private_axioms=[])
 
     def test_unknown_backend_rejected(self):
-        prover = ZKPProver(backend="definitely-not-a-backend")
         with pytest.raises(ZKPError, match="Unknown ZKP backend"):
-            prover.generate_proof(theorem="Q", private_axioms=["P"]) 
+            ZKPProver(backend="definitely-not-a-backend")
 
     def test_groth16_backend_fails_closed(self):
         prover = ZKPProver(backend="groth16")
