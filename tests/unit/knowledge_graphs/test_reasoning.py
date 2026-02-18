@@ -380,6 +380,89 @@ class TestCrossDocumentReasoner:
         assert reasoner.total_queries == initial_count + 2
         assert reasoner.total_queries > initial_count
 
+    def test_determine_relation_supporting_when_similar(self):
+        """
+        GIVEN two documents with highly similar content
+        WHEN determining relation between them
+        THEN relation is SUPPORTING with high confidence
+        """
+        # GIVEN
+        reasoner = CrossDocumentReasoner()
+        doc1 = DocumentNode(id="d1", content="Apple was founded in 1976 in California.", source="s1")
+        doc2 = DocumentNode(id="d2", content="Apple was founded in 1976 in California.", source="s2")
+
+        # WHEN
+        relation, strength = reasoner._determine_relation(
+            entity_id="e1",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
+        )
+
+        # THEN
+        assert relation == InformationRelationType.SUPPORTING
+        assert 0.0 <= strength <= 1.0
+        assert strength >= 0.8
+
+    def test_determine_relation_elaborating_when_chronological(self):
+        """
+        GIVEN two documents where the target is published later
+        WHEN determining relation between them
+        THEN relation is ELABORATING regardless of similarity
+        """
+        # GIVEN
+        reasoner = CrossDocumentReasoner()
+        doc1 = DocumentNode(
+            id="d1",
+            content="Topic overview.",
+            source="s1",
+            metadata={"published_date": "2020-01-01"},
+        )
+        doc2 = DocumentNode(
+            id="d2",
+            content="Different content entirely.",
+            source="s2",
+            metadata={"published_date": "2022-01-01"},
+        )
+
+        # WHEN
+        relation, strength = reasoner._determine_relation(
+            entity_id="e1",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
+        )
+
+        # THEN
+        assert relation == InformationRelationType.ELABORATING
+        assert 0.0 <= strength <= 1.0
+
+    def test_determine_relation_complementary_when_dissimilar(self):
+        """
+        GIVEN two documents with low similarity and no chronology info
+        WHEN determining relation between them
+        THEN relation defaults to COMPLEMENTARY
+        """
+        # GIVEN
+        reasoner = CrossDocumentReasoner()
+        doc1 = DocumentNode(id="d1", content="Cats are mammals.", source="s1")
+        doc2 = DocumentNode(id="d2", content="The stock market fluctuates daily.", source="s2")
+
+        # WHEN
+        relation, strength = reasoner._determine_relation(
+            entity_id="e1",
+            source_doc_id="d1",
+            target_doc_id="d2",
+            documents=[doc1, doc2],
+            knowledge_graph=None,
+        )
+
+        # THEN
+        assert relation == InformationRelationType.COMPLEMENTARY
+        assert 0.0 <= strength <= 1.0
+
 
 # Integration tests
 class TestCrossDocumentReasoningIntegration:

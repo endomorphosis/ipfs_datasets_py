@@ -21,6 +21,9 @@ to efficiently traverse entity relationships and find relevant connections.
 import logging
 from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
+import math
+import re
+from collections import Counter
 import numpy as np
 from dataclasses import dataclass, field
 import uuid
@@ -134,6 +137,53 @@ class CrossDocumentReasoner:
         self.avg_document_count = 0
         self.avg_connection_count = 0
         self.avg_confidence = 0.0
+
+    def _compute_document_similarity(self, source_doc: DocumentNode, target_doc: DocumentNode) -> float:
+        """Compute a similarity score between two documents.
+
+        Preference order:
+        1) Cosine similarity over dense vectors if both documents have embeddings.
+        2) Bag-of-words cosine similarity over token counts as a lightweight fallback.
+
+        Returns:
+            Similarity in [0.0, 1.0].
+        """
+        if source_doc.vector is not None and target_doc.vector is not None:
+            try:
+                a = np.asarray(source_doc.vector, dtype=float)
+                b = np.asarray(target_doc.vector, dtype=float)
+                if a.shape == b.shape and a.size > 0:
+                    denom = float(np.linalg.norm(a) * np.linalg.norm(b))
+                    if denom > 0:
+                        sim = float(np.dot(a, b) / denom)
+                        return max(0.0, min(1.0, sim))
+            except Exception:
+                pass
+
+        def tokenize(text: str) -> List[str]:
+            tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
+            stop = {
+                "the", "a", "an", "and", "or", "but", "if", "then", "else",
+                "of", "to", "in", "on", "for", "with", "by", "from", "as",
+                "is", "are", "was", "were", "be", "been", "being",
+            }
+            return [t for t in tokens if len(t) >= 3 and t not in stop]
+
+        src_tokens = tokenize(source_doc.content)
+        tgt_tokens = tokenize(target_doc.content)
+        if not src_tokens or not tgt_tokens:
+            return 0.0
+
+        src_counts = Counter(src_tokens)
+        tgt_counts = Counter(tgt_tokens)
+        common = set(src_counts) & set(tgt_counts)
+        dot = sum(src_counts[t] * tgt_counts[t] for t in common)
+        norm_src = math.sqrt(sum(v * v for v in src_counts.values()))
+        norm_tgt = math.sqrt(sum(v * v for v in tgt_counts.values()))
+        if norm_src == 0.0 or norm_tgt == 0.0:
+            return 0.0
+        sim = dot / (norm_src * norm_tgt)
+        return max(0.0, min(1.0, float(sim)))
 
     def reason_across_documents(
         self,
@@ -571,8 +621,8 @@ class CrossDocumentReasoner:
         # Future Enhancement: Use LLM or ML model for sophisticated analysis
         # For now, use simple heuristics
 
-        # 1. Check if the documents have high semantic similarity
-        doc_similarity = 0.7  # Placeholder - would calculate actual similarity
+        # 1. Check if the documents have semantic similarity
+        doc_similarity = self._compute_document_similarity(source_doc, target_doc)
 
         # 2. Check if one document was published after the other (if timestamp available)
         source_date = source_doc.metadata.get("published_date")
