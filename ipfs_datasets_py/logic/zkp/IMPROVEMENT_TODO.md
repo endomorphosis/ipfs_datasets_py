@@ -21,6 +21,8 @@ The current `ipfs_datasets_py.logic.zkp` package is intentionally a **simulation
 - **Serialization contract:** `ZKPProof.to_dict()` and `ZKPProof.from_dict()` must round-trip.
 - **Simulation honesty:** docs must not claim cryptographic security for the simulated backend.
 - **Test dependencies:** property-based tests require `hypothesis` in dev/test environments.
+- **Canonicalization invariants:** `theorem_hash` must be stable under whitespace/unicode variations.
+- **Caching invariants:** cache keys must be stable under canonicalization (and must not return stale `theorem` strings on cache hits).
 
 ---
 
@@ -148,7 +150,11 @@ This is a separate backend, not a “small patch”.
 - **P0.3** (Docstring audit): Needs review - check for misleading "cryptographic" claims
 
 ### Current State
-- **Code:** 78 tests passing, 80% coverage, production-ready simulation
+- **Code:** simulation backend + canonicalization + witness manager + backend gating
 - **Docs:** Clean, accurate, well-organized (9 active + 5 analysis + 10 archived)
 - **Status:** Module is functional educational simulation, NOT cryptographically secure
 - **Roadmap:** See PRODUCTION_UPGRADE_PATH.md for Groth16 implementation plan
+
+### How to validate locally
+- From `complaint-generator/ipfs_datasets_py`: run `python -m pytest -q tests/unit_tests/logic/zkp`
+- Property tests require `hypothesis` in the active dev/test environment

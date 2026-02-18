@@ -170,9 +170,9 @@ src/verifier.rs (85 lines)✅
 
 **Groth16FFIBackend class (350 LOC)**
 - Binary auto-discovery checklist:
-  1. groth16_backend/target/release/groth16 (project-local)
-  2. /home/barberb/complaint-generator/groth16_backend/target/release/groth16
-  3. ~/.cargo/bin/groth16 (user-global)
+   1. ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16 (canonical, project-local)
+   2. groth16_backend/target/release/groth16 (legacy, repo-root)
+   3. ~/.cargo/bin/groth16 (user-global)
   ✅ Successfully discovers compiled binary
 
 - Subprocess communication:
@@ -333,7 +333,7 @@ All prerequisites complete:
 
 ### Groth16 CLI ✅
 ```bash
-$ /home/barberb/complaint-generator/groth16_backend/target/release/groth16 --help
+$ ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16 --help
 
 Groth16 ZKP Prover/Verifier
 Usage: groth16 <COMMAND>
@@ -456,7 +456,9 @@ Phase 3C.1-3 successfully completed with:
 
 **Next Phase Entry Point:** Implement SHA256 constraints in groth16_backend/src/circuit.rs
 
-**Current Binary Location:** `/home/barberb/complaint-generator/groth16_backend/target/release/groth16`
+**Current Binary Location (canonical):** `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16`
+
+**Legacy Location (still supported):** `groth16_backend/target/release/groth16`
 
 **Test Command:** `pytest ipfs_datasets_py/tests/unit_tests/logic/zkp/ -v`
 

@@ -131,8 +131,8 @@ class Groth16Backend(ZKPBackend):
     
     def _find_groth16_binary() -> Optional[str]:
         - Checks standard locations:
-          1. groth16_backend/target/release/groth16 (project-relative)
-          2. /home/barberb/complaint-generator/groth16_backend/target/release/groth16
+          1. ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16 (canonical, project-local)
+          2. groth16_backend/target/release/groth16 (legacy, repo-root)
           3. ~/.cargo/bin/groth16 (user-global)
         - Returns first match or None
     

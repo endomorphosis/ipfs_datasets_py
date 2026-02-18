@@ -10,6 +10,8 @@
 - **Simulation backend:** fully functional, demo-only, warn-on-use ✅
 - **Backend architecture:** phase A complete (registry + lazy loading + groth16 stub) ✅
 - **Canonicalization:** deterministic text normalization + commitment generation ✅
+- **Theorem hashing:** simulated backend uses canonicalization for stable `theorem_hash` ✅
+- **Caching:** cache keys are canonicalized (whitespace/unicode invariant) ✅
 - **Statement/Witness:** dataclass-based format with field encoding ✅
 - **Witness Manager:** generation, validation, consistency checking ✅
 - **Test suite:** extensive and mostly self-contained.
@@ -17,6 +19,22 @@
   - Prefer documenting *how to run* tests over hard-coding exact counts.
 - **Import safety:** passing (no heavy deps on import) ✅
 - **Docs:** README updated to accurate descriptions ✅
+
+### How to run tests (authoritative)
+
+- From `complaint-generator/ipfs_datasets_py`:
+  - `python -m pytest -q tests/unit_tests/logic/zkp`
+
+---
+
+## Workstreams (keep this “infinite”)
+
+1) **Correctness + contracts** (public inputs, hashes, serialization, robustness)
+2) **Backend architecture** (protocol, registry, lazy imports, dependency gating)
+3) **Determinism + canonicalization** (stable hashing, cache behavior, golden vectors)
+4) **Real ZKP track** (Groth16/PLONK/Halo2, setup artifacts, VK/PK lifecycle)
+5) **Integration track** (EVM verifier, IPFS artifact storage, operational policy)
+6) **Docs + examples** (truthful simulation docs, runnable examples, clear upgrade path)
 
 ---
 
@@ -55,11 +73,9 @@
 - [x] Documented: axiom canonicalization ensures order-independence
 
 ### P1.4 ✅ Proof serialization contract (round-trip stability)
-### P1.5 ⏳ De-duplicate backend protocol definitions
-- [ ] Choose a single source of truth for the backend interface:
-  - Option A: `backends/backend_protocol.py` defines the protocol and `backends/__init__.py` re-exports it
-  - Option B: delete `backends/backend_protocol.py` and keep the protocol only in `backends/__init__.py`
-- [ ] Align protocol fields (e.g., `curve_id`, `backend_id`) and signatures (`metadata: dict[str, Any] | None`).
+### P1.5 ✅ De-duplicate backend protocol definitions
+- [x] Single source of truth: protocol defined in `backends/__init__.py`
+- [x] Backward compatible: `backends/backend_protocol.py` is a re-export
 
 **Acceptance:** There is exactly one backend protocol definition used by all backends + tests.
 
@@ -67,6 +83,12 @@
   - `test_proof_serialization_preserves_fields`: ZKPProof.to_dict() round-trip
   - `test_proof_dict_hex_encoding_stability`: hex encoding reversibility
   - Serialization tests validate all fields preserved
+
+### P1.6 ✅ Canonicalized caching (whitespace/unicode invariant)
+- [x] Cache keys use `canonicalize_theorem()` and `canonicalize_axioms()`
+- [x] Cache hits return a proof whose `public_inputs["theorem"]` matches the current call
+
+**Acceptance:** whitespace-only variations of the same theorem hit cache and do not leak a stale theorem string.
 
 ---
 
@@ -90,6 +112,15 @@
 ### P2.3 ⏳ Make simulated proof structure more explicit
 - [ ] Add detailed comments in `backends/simulated.py` explaining byte ranges
 - [ ] Optional: add tagged fields for clarity
+
+### P2.4 ⏳ Standardize public inputs across backends
+- [ ] Decide and enforce a schema for `public_inputs` across backends:
+  - required: `theorem` (as-provided string)
+  - required: `theorem_hash` (canonicalized)
+  - optional but preferred: `axioms_commitment` (canonicalized)
+- [ ] Ensure Groth16 FFI adapter emits the same key names (where applicable)
+
+**Acceptance:** verifier/tests do not need backend-specific conditionals for key names.
 
 ---
 
@@ -226,7 +257,7 @@
 - [x] Serialization round-trip ✅
 
 ### P8.2 ⏳ Property-based tests
-- [ ] Add/confirm `hypothesis` is installed in dev/test environments.
+- [ ] Ensure `hypothesis` is installed in dev/test environments.
 - [ ] Random axiom orderings → same commitment
 - [ ] Invalid proofs → verification fails
 - [ ] Proof size stability

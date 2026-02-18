@@ -117,7 +117,7 @@ solc --version
 **Compile contracts:**
 ```bash
 # Create output directory
-mkdir -p groth16_backend/compiled_contracts
+mkdir -p ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts
 
 # Compile GrothVerifier.sol
 solc \
@@ -125,11 +125,11 @@ solc \
   --optimize-runs 200 \
   --bin \
   --abi \
-  -o groth16_backend/compiled_contracts/ \
+  -o ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ \
   GrothVerifier.sol
 
 # Verify compilation succeeded
-ls -lah groth16_backend/compiled_contracts/
+ls -lah ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/
 # Should show: GrothVerifier.bin, GrothVerifier.abi, ComplaintRegistry.bin, etc.
 ```
 

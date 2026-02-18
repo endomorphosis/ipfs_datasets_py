@@ -154,9 +154,9 @@
 │   └── pytest.ini ....................................... ✅ Configured
 │
 ├── [RUST CIRCUIT]
-│   ├── groth16_backend/ .............................. ✅ Ready
-│   ├── groth16_backend/Cargo.toml ..................... ✅ Configured
-│   └── groth16_backend/target/release/groth16 ........ ✅ Compiled
+│   ├── ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/ ........ ✅ Ready
+│   ├── ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/Cargo.toml ✅ Configured
+│   └── ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16 ✅ Compiled
 │
 ├── [CONFIGURATION]
 │   ├── config.llm_router.json ......................... ✅ Present

@@ -9,15 +9,19 @@ Target: Begin Rust project setup (Task 3C.1.1)
 
 ```bash
 # From workspace root
-mkdir -p groth16_backend
-cd groth16_backend
-cargo init --name groth16_backend
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
+# If you are creating this from scratch (older docs), this folder used to be
+# created at repo-root as ./groth16_backend. The canonical location is now
+# in-tree under ipfs_datasets_py/.../processors/.
+#
+# Build the binary:
+cargo build --release
 ```
 
 ## PROJECT STRUCTURE (Template)
 
 ```
-groth16_backend/                    (NEW - Rust project)
+ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/  (Rust project)
 ├─ Cargo.toml                       (dependency manifest)
 ├─ src/
 │  ├─ main.rs                       (CLI: prove, verify)

@@ -92,7 +92,8 @@ class Groth16Backend(ZKPBackend):
         if not self.binary_path:
             logger.warning(
                 "Groth16 binary not found. "
-                "Install Rust and run: cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && cargo build --release"
+                "Install Rust and run: cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && cargo build --release "
+                "(legacy docs may refer to ./groth16_backend)"
             )
         elif not os.path.exists(self.binary_path):
             logger.warning(f"Groth16 binary not found at {self.binary_path}")

@@ -22,14 +22,21 @@
 
 **Recent Updates**:
 - ✅ **Code Implementation Complete** (simulation backend functional)
-- ✅ **78 tests passing** with 80% code coverage (not 32 - updated count)
-- ✅ **3 working example scripts** (14 demonstrations total)
+- ✅ Extensive unit-test suite (including property tests; requires `hypothesis` in the dev/test env)
+- ✅ Working example scripts demonstrating ZKP workflows
 - ✅ **API compatibility** (BooleanCircuit alias, backend switching)
 - ✅ **Documentation consolidated** (16 → 9 active files, 7 archived)
 
 **Test Results**:
 - The ZKP test suite is intended to run cleanly in a dev/test environment.
 - Property-based tests use `hypothesis`.
+- Prefer documenting how to run tests over hard-coding exact counts.
+
+Run from `complaint-generator/ipfs_datasets_py`:
+
+```bash
+python -m pytest -q tests/unit_tests/logic/zkp
+```
 
 ## 📚 Documentation Guide
 
