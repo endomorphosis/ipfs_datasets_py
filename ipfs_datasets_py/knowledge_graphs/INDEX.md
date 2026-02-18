@@ -10,19 +10,31 @@
 
 New to the knowledge graphs module? Start with these documents in order:
 
-1. **[README.md](./README.md)** ⭐ START HERE
-   - Module overview and quick start
+1. **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-MINUTE START
+   - Get up and running in 5 minutes
+   - Basic extraction and query examples
+   - Common patterns and tips
+   - **Read time:** 5 minutes
+
+2. **[README.md](./README.md)** ⭐ MODULE OVERVIEW
+   - Complete module overview
    - Directory structure guide
    - Usage patterns and examples
    - **Read time:** 10-15 minutes
 
-2. **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** 📊 CURRENT STATE
+3. **[FEATURE_MATRIX.md](./FEATURE_MATRIX.md)** 📋 WHAT'S IMPLEMENTED
+   - Feature completeness at-a-glance
+   - What works today vs. what's planned
+   - Clear status for every feature
+   - **Read time:** 5 minutes
+
+4. **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** 📊 CURRENT STATE
    - Current implementation status
    - Test coverage by module
    - Known limitations and workarounds
    - **Read time:** 5-10 minutes
 
-3. **[ROADMAP.md](./ROADMAP.md)** 🗺️ FUTURE PLANS
+5. **[ROADMAP.md](./ROADMAP.md)** 🗺️ FUTURE PLANS
    - Development roadmap (v2.0.1 through v3.0.0)
    - Planned features and timelines
    - Community contribution areas
@@ -75,10 +87,15 @@ Tracking status and planning:
 
 | File | Size | Purpose | Status |
 |------|------|---------|--------|
+| **EXECUTIVE_SUMMARY_2026_02_18.md** | 10KB | Executive summary of 2026-02-18 analysis | ✅ Current |
+| **QUICKSTART.md** | 6KB | 5-minute quick start guide | ✅ Current |
 | **README.md** | 11KB | Module overview and quick start | ✅ Current |
-| **INDEX.md** | 9KB | This file - documentation index | ✅ Current |
+| **INDEX.md** | 11KB | This file - documentation index | ✅ Current |
+| **FEATURE_MATRIX.md** | 8KB | Feature completeness matrix | ✅ Current |
 | **IMPLEMENTATION_STATUS.md** | 7KB | Current status and metrics | ✅ Current |
 | **ROADMAP.md** | 10KB | Future development plans | ✅ Current |
+| **DEFERRED_FEATURES.md** | 10KB | Planned features with timelines | ✅ Current |
+| **COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md** | 21KB | Latest comprehensive analysis | ✅ Current |
 | **CHANGELOG_KNOWLEDGE_GRAPHS.md** | 8KB | Version history | ✅ Current |
 | **archive/** | - | Historical documentation | 📦 Archived |
 
