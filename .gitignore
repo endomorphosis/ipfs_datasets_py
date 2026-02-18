@@ -89,3 +89,4 @@ unified_deontic_logic_system/
 *.backup
 *.bak
 *~
+*_stubs.md
