@@ -1,0 +1,52 @@
+{{- if .Values.persistence.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tdfol.fullname" . }}-data
+  labels:
+    {{- include "tdfol.labels" . | nindent 4 }}
+    component: storage
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.data.size }}
+  {{- if (include "tdfol.storageClass" .) }}
+  storageClassName: {{ include "tdfol.storageClass" . }}
+  {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tdfol.fullname" . }}-logs
+  labels:
+    {{- include "tdfol.labels" . | nindent 4 }}
+    component: storage
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.logs.size }}
+  {{- if (include "tdfol.storageClass" .) }}
+  storageClassName: {{ include "tdfol.storageClass" . }}
+  {{- end }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tdfol.fullname" . }}-cache
+  labels:
+    {{- include "tdfol.labels" . | nindent 4 }}
+    component: storage
+spec:
+  accessModes:
+    - {{ .Values.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.persistence.cache.size }}
+  {{- if (include "tdfol.storageClass" .) }}
+  storageClassName: {{ include "tdfol.storageClass" . }}
+  {{- end }}
+{{- end }}

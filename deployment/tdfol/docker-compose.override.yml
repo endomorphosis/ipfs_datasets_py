@@ -1,0 +1,46 @@
+# Docker Compose override for local development
+# This file is automatically merged with docker-compose.yml
+# Use: docker-compose up -d
+
+version: '3.8'
+
+services:
+  tdfol:
+    # Mount source code for live development
+    volumes:
+      - ../../ipfs_datasets_py:/app/ipfs_datasets_py:ro
+      - ../../scripts:/app/scripts:ro
+    
+    # Override command for development mode
+    command: python -m ipfs_datasets_py.mcp_server --reload --debug
+    
+    # Enable debug environment
+    environment:
+      - TDFOL_LOG_LEVEL=DEBUG
+      - TDFOL_DEBUG=true
+      - PYTHONDONTWRITEBYTECODE=1
+    
+    # Expose debugging ports
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+      - "5678:5678"  # debugpy port
+    
+    # Development resource limits (more relaxed)
+    deploy:
+      resources:
+        limits:
+          cpus: '8'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 2G
+  
+  # Disable monitoring services in development
+  prometheus:
+    profiles:
+      - monitoring
+  
+  grafana:
+    profiles:
+      - monitoring
