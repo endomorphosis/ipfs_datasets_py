@@ -206,4 +206,5 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-18: Documented stable “supported imports” in `README.md` (prefer subpackages; legacy shims are explicitly deprecated).
 - 2026-02-18: Reduced accidental public API surface at package root by limiting `knowledge_graphs/__init__.py` `__all__` to exceptions only, while keeping backward-compatible lazy root-level convenience imports with `DeprecationWarning`s (tests added to lock behavior).
 - 2026-02-18: Increased migration test coverage (measured via `ipfs_datasets_py/.coveragerc`) and added edge-case tests for `IPFSImporter` init/connect/import_data paths; migration module coverage now exceeds the 70% target.
+- 2026-02-18: Began C1 exception taxonomy/wrapping work in `migration/` by making `IPFSImporter`/`Neo4jExporter` wrap connection/load failures as `MigrationError` with `raise ... from e`, and updated unit tests to lock in the new behavior.
 

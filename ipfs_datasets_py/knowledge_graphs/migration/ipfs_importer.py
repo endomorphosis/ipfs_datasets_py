@@ -18,6 +18,7 @@ from datetime import datetime
 import time
 
 from .formats import GraphData, NodeData, RelationshipData, MigrationFormat
+from ..exceptions import MigrationError
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +120,7 @@ class IPFSImporter:
             True if connection successful
         """
         if not self._ipfs_available:
-            raise RuntimeError("IPFS graph database not available")
+            raise MigrationError("IPFS graph database not available")
         
         try:
             # For now, use embedded mode for import
@@ -128,15 +129,23 @@ class IPFSImporter:
             logger.info("Connected to IPFS Graph Database")
             return True
         except Exception as e:
-            logger.error("Failed to connect to IPFS Graph Database: %s", e)
-            return False
+            raise MigrationError(
+                "Failed to connect to IPFS Graph Database",
+                details={"database": self.config.database},
+            ) from e
     
     def _close(self) -> None:
         """Close connection."""
         if self._session:
-            self._session.close()
+            try:
+                self._session.close()
+            except Exception as e:
+                logger.warning("Failed to close IPFS session cleanly: %s", e)
         if hasattr(self, '_driver') and self._driver:
-            self._driver.close()
+            try:
+                self._driver.close()
+            except Exception as e:
+                logger.warning("Failed to close IPFS driver cleanly: %s", e)
         logger.info("Closed IPFS Graph Database connection")
     
     def _load_graph_data(self) -> Optional[GraphData]:
@@ -154,11 +163,12 @@ class IPFSImporter:
                 logger.info("Loading graph data from %s", self.config.input_file)
                 return GraphData.load_from_file(self.config.input_file, self.config.input_format)
             except Exception as e:
-                logger.error("Failed to load graph data: %s", e)
-                return None
+                raise MigrationError(
+                    "Failed to load graph data",
+                    details={"input_file": self.config.input_file, "input_format": str(self.config.input_format)},
+                ) from e
         
-        logger.error("No input file or graph data provided")
-        return None
+        raise MigrationError("No input file or graph data provided")
     
     def _validate_graph_data(self, graph_data: GraphData) -> List[str]:
         """
@@ -344,8 +354,7 @@ class IPFSImporter:
             # Load graph data
             graph_data = self._load_graph_data()
             if not graph_data:
-                result.errors.append("Failed to load graph data")
-                return result
+                raise MigrationError("Failed to load graph data")
             
             logger.info("Loaded graph data: %d nodes, %d relationships",
                        graph_data.node_count, graph_data.relationship_count)
@@ -360,9 +369,7 @@ class IPFSImporter:
                         return result
             
             # Connect to database
-            if not self._connect():
-                result.errors.append("Failed to connect to IPFS Graph Database")
-                return result
+            self._connect()
             
             # Import nodes
             logger.info("Importing nodes...")
@@ -390,10 +397,16 @@ class IPFSImporter:
                        result.nodes_imported, result.relationships_imported)
             
             return result
-            
-        except Exception as e:
-            logger.error("Import failed: %s", e)
+
+        except MigrationError as e:
+            logger.error("Import failed: %s", e, exc_info=True)
             result.errors.append(str(e))
+            result.duration_seconds = time.time() - start_time
+            return result
+
+        except Exception as e:
+            logger.error("Import failed unexpectedly: %s", e, exc_info=True)
+            result.errors.append(str(MigrationError("Import failed unexpectedly") ))
             result.duration_seconds = time.time() - start_time
             return result
         

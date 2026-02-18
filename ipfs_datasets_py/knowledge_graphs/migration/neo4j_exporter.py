@@ -18,6 +18,7 @@ from datetime import datetime
 import time
 
 from .formats import GraphData, NodeData, RelationshipData, SchemaData, MigrationFormat
+from ..exceptions import MigrationError
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class Neo4jExporter:
             True if connection successful
         """
         if not self._neo4j_available:
-            raise RuntimeError("neo4j package not installed. Install with: pip install neo4j")
+            raise MigrationError("neo4j package not installed. Install with: pip install neo4j")
         
         try:
             self._driver = self._GraphDatabase.driver(
@@ -134,13 +135,18 @@ class Neo4jExporter:
             logger.info("Connected to Neo4j at %s", self.config.uri)
             return True
         except Exception as e:
-            logger.error("Failed to connect to Neo4j: %s", e)
-            return False
+            raise MigrationError(
+                "Failed to connect to Neo4j",
+                details={"uri": self.config.uri, "database": self.config.database},
+            ) from e
     
     def _close(self) -> None:
         """Close Neo4j connection."""
         if self._driver:
-            self._driver.close()
+            try:
+                self._driver.close()
+            except Exception as e:
+                logger.warning("Failed to close Neo4j driver cleanly: %s", e)
             logger.info("Closed Neo4j connection")
     
     def _export_nodes(self, graph_data: GraphData) -> int:
@@ -325,9 +331,7 @@ class Neo4jExporter:
         
         try:
             # Connect to Neo4j
-            if not self._connect():
-                result.errors.append("Failed to connect to Neo4j")
-                return result
+            self._connect()
             
             # Create graph data
             graph_data = GraphData(metadata={
@@ -365,9 +369,15 @@ class Neo4jExporter:
             
             return result
             
-        except Exception as e:
-            logger.error("Export failed: %s", e)
+        except MigrationError as e:
+            logger.error("Export failed: %s", e, exc_info=True)
             result.errors.append(str(e))
+            result.duration_seconds = time.time() - start_time
+            return result
+
+        except Exception as e:
+            logger.error("Export failed unexpectedly: %s", e, exc_info=True)
+            result.errors.append(str(MigrationError("Export failed unexpectedly")))
             result.duration_seconds = time.time() - start_time
             return result
         
@@ -387,8 +397,7 @@ class Neo4jExporter:
         
         try:
             # Connect and create graph data
-            if not self._connect():
-                return None
+            self._connect()
             
             graph_data = GraphData(metadata={
                 'export_time': datetime.now().isoformat(),
@@ -404,6 +413,9 @@ class Neo4jExporter:
                 self._export_schema(graph_data)
             
             return graph_data
+
+        except MigrationError:
+            return None
             
         finally:
             self._close()

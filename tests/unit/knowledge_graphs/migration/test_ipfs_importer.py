@@ -13,6 +13,8 @@ import os
 import json
 import builtins
 
+from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
+
 from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
     ImportConfig, ImportResult
 )
@@ -134,7 +136,7 @@ class TestIPFSImporterWithMocking:
         
         # If IPFS is not available, connect should raise RuntimeError
         if not importer._ipfs_available:
-            with pytest.raises(RuntimeError, match="IPFS graph database not available"):
+            with pytest.raises(MigrationError, match="IPFS graph database not available"):
                 importer._connect()
     
     def test_load_graph_data_from_config(self, mocker):
@@ -185,10 +187,9 @@ class TestIPFSImporterWithMocking:
         
         config = ImportConfig(input_file="/nonexistent/file.json")
         importer = IPFSImporter(config)
-        
-        loaded_data = importer._load_graph_data()
-        
-        assert loaded_data is None
+
+        with pytest.raises(MigrationError, match="Failed to load graph data"):
+            importer._load_graph_data()
     
     def test_load_graph_data_invalid_json(self, mocker):
         """Test loading invalid JSON file."""
@@ -201,10 +202,9 @@ class TestIPFSImporterWithMocking:
         try:
             config = ImportConfig(input_file=filepath)
             importer = IPFSImporter(config)
-            
-            loaded_data = importer._load_graph_data()
-            
-            assert loaded_data is None
+
+            with pytest.raises(MigrationError, match="Failed to load graph data"):
+                importer._load_graph_data()
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
@@ -219,7 +219,7 @@ class TestIPFSImporterWithMocking:
 
         result = importer.import_data()
         assert result.success is False
-        assert "Failed to load graph data" in result.errors
+        assert any("Failed to load graph data" in e for e in result.errors)
         importer._close.assert_called_once()
 
     def test_import_data_aborts_on_too_many_validation_errors(self, mocker):
@@ -246,12 +246,12 @@ class TestIPFSImporterWithMocking:
         importer = IPFSImporter(ImportConfig(graph_data=graph_data, validate_data=False))
 
         importer._load_graph_data = mocker.MagicMock(return_value=graph_data)
-        importer._connect = mocker.MagicMock(return_value=False)
+        importer._connect = mocker.MagicMock(side_effect=MigrationError("Failed to connect to IPFS Graph Database"))
         importer._close = mocker.MagicMock()
 
         result = importer.import_data()
         assert result.success is False
-        assert "Failed to connect to IPFS Graph Database" in result.errors
+        assert any("Failed to connect to IPFS Graph Database" in e for e in result.errors)
         importer._close.assert_called_once()
 
     def test_import_data_success_path_populates_counts(self, mocker):
@@ -292,8 +292,8 @@ class TestIPFSImporterWithMocking:
 
         # Simulate missing optional dependencies / unavailable backend
         importer._ipfs_available = False
-        
-        with pytest.raises(RuntimeError, match="IPFS graph database not available"):
+
+        with pytest.raises(MigrationError, match="IPFS graph database not available"):
             importer._connect()
 
     def test_init_importerror_marks_ipfs_unavailable(self, monkeypatch):
@@ -333,7 +333,7 @@ class TestIPFSImporterWithMocking:
         assert importer._session is mock_session
 
     def test_connect_failure_returns_false(self, mocker):
-        """Test _connect failure path returns False (and does not raise)."""
+        """Test _connect failure path raises MigrationError."""
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
 
         importer = IPFSImporter(ImportConfig())
@@ -341,14 +341,16 @@ class TestIPFSImporterWithMocking:
         importer._GraphDatabase = mocker.MagicMock()
         importer._GraphDatabase.driver.side_effect = Exception("boom")
 
-        assert importer._connect() is False
+        with pytest.raises(MigrationError, match="Failed to connect to IPFS Graph Database"):
+            importer._connect()
 
     def test_load_graph_data_with_no_inputs_returns_none(self, mocker):
         """Test load behavior when neither file nor graph_data is provided."""
         from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
 
         importer = IPFSImporter(ImportConfig(input_file=None, graph_data=None))
-        assert importer._load_graph_data() is None
+        with pytest.raises(MigrationError, match="No input file or graph data provided"):
+            importer._load_graph_data()
     
     def test_validate_graph_data_valid(self, mocker):
         """Test validation of valid graph data."""

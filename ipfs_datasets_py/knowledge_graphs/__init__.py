@@ -24,6 +24,7 @@ from .exceptions import (
     EntityNotFoundError,
     ExtractionError,
     KnowledgeGraphError,
+    MigrationError,
     QueryError,
     QueryExecutionError,
     QueryParseError,
@@ -43,6 +44,7 @@ __all__ = [
     "QueryError",
     "QueryParseError",
     "QueryExecutionError",
+    "MigrationError",
     "EntityNotFoundError",
     "RelationshipNotFoundError",
 ]

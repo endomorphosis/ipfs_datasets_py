@@ -11,6 +11,7 @@ except ImportError:
 from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import (
     ExportConfig, ExportResult
 )
+from ipfs_datasets_py.knowledge_graphs.exceptions import MigrationError
 
 
 class TestExportConfig:
@@ -185,9 +186,8 @@ class TestNeo4jExporterWithMocking:
         
         config = ExportConfig()
         exporter = Neo4jExporter(config)
-        result = exporter._connect()
-        
-        assert result is False
+        with pytest.raises(MigrationError, match="Failed to connect to Neo4j"):
+            exporter._connect()
     
     def test_connect_without_neo4j_installed(self, mocker):
         """Test connect raises error when neo4j not installed."""
@@ -207,7 +207,7 @@ class TestNeo4jExporterWithMocking:
         config = ExportConfig()
         exporter = Neo4jExporter(config)
         
-        with pytest.raises(RuntimeError, match="neo4j package not installed"):
+        with pytest.raises(MigrationError, match="neo4j package not installed"):
             exporter._connect()
     
     def test_export_nodes_basic(self, mocker):
