@@ -1,6 +1,8 @@
 # `logic/zkp` — Infinite Improvement TODO (Simulation → Production Roadmap)
 
-**Status:** Simulation/Demo only (not cryptographically secure)
+**Status:** Simulation/Demo only (not cryptographically secure)  
+**Last Reviewed:** 2026-02-18  
+**Documentation Refactoring:** Complete (16 → 9 active files)
 
 This file is a living backlog for the ZKP submodule.
 
@@ -124,3 +126,26 @@ This is a separate backend, not a “small patch”.
 - [ ] No new heavy optional deps imported at module import-time.
 - [ ] Verifier rejects malformed inputs without raising.
 - [ ] README is honest about simulation-only security.
+
+---
+
+## Recent Updates (2026-02-18)
+
+### Documentation Refactoring Complete ✅
+- **Archived:** 7 redundant status/completion documents (2,887 lines) to ARCHIVE/
+- **Active docs:** Reduced from 16 → 9 markdown files
+- **README.md:** Fixed misleading "PRODUCTION READY" → "EDUCATIONAL SIMULATION"
+- **Navigation:** Added comprehensive documentation guide to README
+- **Duplication:** Eliminated ~30-40% duplicate content
+- **P0.2:** Mostly complete - README now accurately describes simulation-only nature
+
+### P0 Status Summary
+- **P0.1** (Verifier robustness): Test exists, implementation needs verification
+- **P0.2** (README truth): ✅ COMPLETE - Status changed, warnings added
+- **P0.3** (Docstring audit): Needs review - check for misleading "cryptographic" claims
+
+### Current State
+- **Code:** 78 tests passing, 80% coverage, production-ready simulation
+- **Docs:** Clean, accurate, well-organized (9 active + 5 analysis + 10 archived)
+- **Status:** Module is functional educational simulation, NOT cryptographically secure
+- **Roadmap:** See PRODUCTION_UPGRADE_PATH.md for Groth16 implementation plan

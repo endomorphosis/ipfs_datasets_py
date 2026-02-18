@@ -248,6 +248,8 @@ prover = ZKPProver(enable_caching=True)  # 100x speedup for repeated proofs
 
 ## Examples
 
+**For more examples**, see [EXAMPLES.md](EXAMPLES.md) which contains 14+ demonstrations including working example scripts.
+
 ### Example 1: Syllogism
 
 ```python

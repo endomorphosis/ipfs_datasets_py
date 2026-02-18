@@ -75,25 +75,25 @@ The ZKP module provides zero-knowledge proof capabilities for the logic module, 
 ## Use Cases
 
 ### 1. Private Theorem Proving
-Prove that a theorem follows from axioms without revealing the axioms:
+
+Prove that a theorem follows from axioms without revealing the axioms.
+
+**Example:** See [EXAMPLES.md](EXAMPLES.md) for complete working code.
 
 ```python
 from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
-prover = ZKPProver()
+# Generate proof with private axioms
 proof = prover.generate_proof(
-    theorem="Socrates is mortal",
-    private_axioms=[
-        "Socrates is human",      # Kept private!
-        "All humans are mortal"   # Kept private!
-    ]
+    theorem="Conclusion",
+    private_axioms=["Premise 1", "Premise 2", "Logic rule"]
 )
 
-# Verify without seeing the axioms
-verifier = ZKPVerifier()
+# Verify without seeing axioms
 assert verifier.verify_proof(proof)  # True
-print(f"Proof size: {proof.size_bytes} bytes")  # 256 bytes
 ```
+
+For the classic Socrates example and more, see [EXAMPLES.md](EXAMPLES.md).
 
 ### 2. Confidential Compliance Verification
 Verify regulatory compliance without exposing internal policies:
