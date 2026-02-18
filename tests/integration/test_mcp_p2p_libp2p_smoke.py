@@ -50,7 +50,11 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
         pytest.skip("libp2p compatibility patches unavailable")
 
     from ipfs_accelerate_py.p2p_tasks.mcp_p2p import PROTOCOL_MCP_P2P_V1
-    from ipfs_accelerate_py.p2p_tasks.mcp_p2p_client import MCPRemoteError, MCPP2PClient
+    from ipfs_accelerate_py.p2p_tasks.mcp_p2p_client import (
+        MCPRemoteError,
+        MCPP2PClient,
+        open_libp2p_stream_by_multiaddr,
+    )
     from ipfs_accelerate_py.p2p_tasks.runtime import TaskQueueP2PServiceRuntime
     from ipfs_accelerate_py.p2p_tasks.service import get_local_service_state
 
@@ -91,7 +95,6 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
 
         import inspect
         from multiaddr import Multiaddr
-        from libp2p.peer.peerinfo import info_from_p2p_addr
         from libp2p.tools.async_service import background_trio_service
 
         host_obj = libp2p.new_host()
@@ -101,10 +104,12 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
             await host.get_network().listen(Multiaddr("/ip4/127.0.0.1/tcp/0"))
 
             ma = f"/ip4/127.0.0.1/tcp/{listen_port}/p2p/{peer_id}"
-            peer_info = info_from_p2p_addr(Multiaddr(ma))
-            await host.connect(peer_info)
 
-            stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_MCP_P2P_V1])
+            stream = await open_libp2p_stream_by_multiaddr(
+                host,
+                peer_multiaddr=ma,
+                protocols=[PROTOCOL_MCP_P2P_V1],
+            )
             try:
                 client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
 
@@ -122,7 +127,11 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                     pass
 
             # Start a fresh session for the positive roundtrip.
-            stream = await host.new_stream(peer_info.peer_id, [PROTOCOL_MCP_P2P_V1])
+            stream = await open_libp2p_stream_by_multiaddr(
+                host,
+                peer_multiaddr=ma,
+                protocols=[PROTOCOL_MCP_P2P_V1],
+            )
             try:
                 client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
 
