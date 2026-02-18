@@ -12,6 +12,8 @@ The Knowledge Graphs module provides comprehensive tools for building, querying,
 
 ## 🎯 Quick Start
 
+**New to knowledge graphs?** → See **[QUICKSTART.md](./QUICKSTART.md)** for a 5-minute introduction!
+
 ```python
 # Basic usage - Extract knowledge graph from text
 from ipfs_datasets_py.knowledge_graphs.extraction import KnowledgeGraphExtractor
@@ -30,6 +32,8 @@ persons = kg.get_entities_by_type("person")
 for person in persons:
     print(f"Person: {person.name}")
 ```
+
+**For more examples:** See [QUICKSTART.md](./QUICKSTART.md) and [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md)
 
 ## 📁 Module Structure
 
@@ -149,6 +153,12 @@ knowledge_graphs/
 - **Migration tools:** Import/export between Neo4j and IPFS
 
 ## 📖 Documentation
+
+### Quick Reference
+- **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute quick start guide ⚡
+- **[FEATURE_MATRIX.md](./FEATURE_MATRIX.md)** - What's implemented vs. planned 📋
+- **[DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md)** - Planned features with timelines 📅
+- **[INDEX.md](./INDEX.md)** - Complete documentation index 📚
 
 ### Main Documentation (in /docs)
 - **KNOWLEDGE_GRAPHS_INTEGRATION_GUIDE.md** (37KB) - End-to-end workflows
