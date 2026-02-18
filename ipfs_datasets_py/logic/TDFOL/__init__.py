@@ -76,6 +76,7 @@ if TYPE_CHECKING:
         TDFOLProofResult,
     )
     from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
+    from .nl.tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
 
 __all__ = [
     # Enumerations
@@ -131,6 +132,11 @@ __all__ = [
     "TDFOLInferenceRule",
     "get_all_tdfol_rules",
     
+    # Natural Language Processing (Phase 7)
+    "NLPreprocessor",
+    "ProcessedDocument",
+    "Entity",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -173,6 +179,10 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     # Inference Rules
     "TDFOLInferenceRule": (".tdfol_inference_rules", "TDFOLInferenceRule"),
     "get_all_tdfol_rules": (".tdfol_inference_rules", "get_all_tdfol_rules"),
+    # Natural Language Processing
+    "NLPreprocessor": (".nl.tdfol_nl_preprocessor", "NLPreprocessor"),
+    "ProcessedDocument": (".nl.tdfol_nl_preprocessor", "ProcessedDocument"),
+    "Entity": (".nl.tdfol_nl_preprocessor", "Entity"),
 }
 
 
