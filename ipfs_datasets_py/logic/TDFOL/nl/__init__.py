@@ -15,6 +15,13 @@ if TYPE_CHECKING:
     from .tdfol_nl_patterns import PatternMatcher, PatternMatch, Pattern, PatternType
     from .tdfol_nl_generator import FormulaGenerator, GeneratedFormula
     from .tdfol_nl_context import ContextResolver, Context
+    from .tdfol_nl_api import (
+        NLParser,
+        ParseOptions,
+        ParseResult,
+        parse_natural_language,
+        parse_natural_language_batch,
+    )
 
 __all__ = [
     # Preprocessor
@@ -35,6 +42,13 @@ __all__ = [
     # Context Resolution
     "ContextResolver",
     "Context",
+    
+    # Unified API
+    "NLParser",
+    "ParseOptions",
+    "ParseResult",
+    "parse_natural_language",
+    "parse_natural_language_batch",
 ]
 
 __version__ = "0.1.0"
@@ -59,6 +73,13 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     # Context Resolution
     "ContextResolver": (".tdfol_nl_context", "ContextResolver"),
     "Context": (".tdfol_nl_context", "Context"),
+    
+    # Unified API
+    "NLParser": (".tdfol_nl_api", "NLParser"),
+    "ParseOptions": (".tdfol_nl_api", "ParseOptions"),
+    "ParseResult": (".tdfol_nl_api", "ParseResult"),
+    "parse_natural_language": (".tdfol_nl_api", "parse_natural_language"),
+    "parse_natural_language_batch": (".tdfol_nl_api", "parse_natural_language_batch"),
 }
 
 
