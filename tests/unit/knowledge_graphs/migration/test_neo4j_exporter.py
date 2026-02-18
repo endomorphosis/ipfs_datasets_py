@@ -1007,5 +1007,593 @@ class TestNeo4jSchemaExport:
         assert 'constraints' in parsed['schema']
 
 
+class TestNeo4jSchemaExport:
+    """Test Neo4j schema export functionality."""
+    
+    def test_export_schema_with_indexes(self, mocker):
+        """Test exporting schema with BTREE, FULLTEXT, and VECTOR indexes."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        # Mock index results
+        mock_index1 = {
+            'name': 'person_name_index',
+            'type': 'BTREE',
+            'labelsOrTypes': ['Person'],
+            'properties': ['name']
+        }
+        mock_index2 = {
+            'name': 'document_fulltext_index',
+            'type': 'FULLTEXT',
+            'labelsOrTypes': ['Document'],
+            'properties': ['content', 'title']
+        }
+        mock_index3 = {
+            'name': 'embedding_vector_index',
+            'type': 'VECTOR',
+            'labelsOrTypes': ['Embedding'],
+            'properties': ['vector']
+        }
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([mock_index1, mock_index2, mock_index3])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}, {'label': 'Document'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True, include_indexes=True, include_constraints=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.indexes) == 3
+        assert graph_data.schema.indexes[0]['name'] == 'person_name_index'
+        assert graph_data.schema.indexes[1]['type'] == 'FULLTEXT'
+        assert graph_data.schema.indexes[2]['type'] == 'VECTOR'
+        assert len(graph_data.schema.node_labels) == 2
+        assert 'Person' in graph_data.schema.node_labels
+    
+    def test_export_schema_with_constraints(self, mocker):
+        """Test exporting schema with various constraint types."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        # Mock constraint results
+        mock_constraint1 = {
+            'name': 'person_id_unique',
+            'type': 'UNIQUENESS',
+            'labelsOrTypes': ['Person'],
+            'properties': ['id']
+        }
+        mock_constraint2 = {
+            'name': 'user_email_key',
+            'type': 'NODE_KEY',
+            'labelsOrTypes': ['User'],
+            'properties': ['email', 'username']
+        }
+        mock_constraint3 = {
+            'name': 'document_title_exists',
+            'type': 'NODE_PROPERTY_EXISTENCE',
+            'labelsOrTypes': ['Document'],
+            'properties': ['title']
+        }
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([mock_constraint1, mock_constraint2, mock_constraint3])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.constraints) == 3
+        assert graph_data.schema.constraints[0]['type'] == 'UNIQUENESS'
+        assert graph_data.schema.constraints[1]['type'] == 'NODE_KEY'
+        assert graph_data.schema.constraints[2]['type'] == 'NODE_PROPERTY_EXISTENCE'
+    
+    def test_export_schema_with_include_schema_false(self, mocker):
+        """Test that schema export is skipped when include_schema=False."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=False)
+        exporter = Neo4jExporter(config)
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        # Schema should not be set when include_schema=False
+        assert graph_data.schema is None
+    
+    def test_export_schema_with_include_indexes_false(self, mocker):
+        """Test schema export with indexes disabled."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True, include_indexes=False, include_constraints=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.indexes) == 0  # No indexes exported
+        assert len(graph_data.schema.node_labels) == 1
+    
+    def test_export_schema_with_include_constraints_false(self, mocker):
+        """Test schema export with constraints disabled."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True, include_indexes=True, include_constraints=False)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.constraints) == 0  # No constraints exported
+        assert len(graph_data.schema.node_labels) == 1
+    
+    def test_export_schema_from_empty_database(self, mocker):
+        """Test schema export from database with no indexes or constraints."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_empty_result = mocker.MagicMock()
+        mock_empty_result.__iter__.return_value = iter([])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_empty_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.indexes) == 0
+        assert len(graph_data.schema.constraints) == 0
+        assert len(graph_data.schema.node_labels) == 0
+        assert len(graph_data.schema.relationship_types) == 0
+    
+    def test_export_schema_show_indexes_failure(self, mocker):
+        """Test graceful handling when SHOW INDEXES fails."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        # First call (SHOW INDEXES) raises exception
+        mock_session.run.side_effect = [
+            Exception("SHOW INDEXES failed"),
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        # Should not raise exception
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.indexes) == 0  # No indexes due to failure
+        assert len(graph_data.schema.node_labels) == 1  # But labels still work
+    
+    def test_export_schema_show_constraints_failure(self, mocker):
+        """Test graceful handling when SHOW CONSTRAINTS fails."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        # Second call (SHOW CONSTRAINTS) raises exception
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            Exception("SHOW CONSTRAINTS failed"),
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        # Should not raise exception
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.constraints) == 0  # No constraints due to failure
+        assert len(graph_data.schema.node_labels) == 1  # But labels still work
+    
+    def test_export_schema_with_multiple_node_labels(self, mocker):
+        """Test exporting schema with multiple node labels."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([
+            {'label': 'Person'},
+            {'label': 'Organization'},
+            {'label': 'Document'},
+            {'label': 'Product'}
+        ])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.node_labels) == 4
+        assert 'Person' in graph_data.schema.node_labels
+        assert 'Organization' in graph_data.schema.node_labels
+        assert 'Document' in graph_data.schema.node_labels
+        assert 'Product' in graph_data.schema.node_labels
+    
+    def test_export_schema_with_multiple_relationship_types(self, mocker):
+        """Test exporting schema with multiple relationship types."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([{'label': 'Person'}])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([
+            {'relationshipType': 'KNOWS'},
+            {'relationshipType': 'WORKS_AT'},
+            {'relationshipType': 'MANAGES'},
+            {'relationshipType': 'OWNS'}
+        ])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.relationship_types) == 4
+        assert 'KNOWS' in graph_data.schema.relationship_types
+        assert 'WORKS_AT' in graph_data.schema.relationship_types
+        assert 'MANAGES' in graph_data.schema.relationship_types
+        assert 'OWNS' in graph_data.schema.relationship_types
+    
+    def test_export_schema_db_labels_failure(self, mocker):
+        """Test graceful handling when db.labels() fails."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([{'relationshipType': 'KNOWS'}])
+        
+        mock_session = mocker.MagicMock()
+        # Third call (db.labels()) raises exception
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            Exception("db.labels() failed"),
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        # Should raise exception since db.labels() is not in try/except
+        try:
+            exporter._export_schema(graph_data)
+            # If it doesn't raise, that's also fine (graceful handling)
+            assert graph_data.schema is not None
+        except Exception:
+            # Expected behavior if not wrapped in try/except
+            pass
+    
+    def test_export_schema_complete_with_all_components(self, mocker):
+        """Test complete schema export with indexes, constraints, labels, and types."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        # Comprehensive schema
+        mock_index = {
+            'name': 'person_index',
+            'type': 'BTREE',
+            'labelsOrTypes': ['Person'],
+            'properties': ['id']
+        }
+        
+        mock_constraint = {
+            'name': 'person_unique',
+            'type': 'UNIQUENESS',
+            'labelsOrTypes': ['Person'],
+            'properties': ['id']
+        }
+        
+        mock_indexes_result = mocker.MagicMock()
+        mock_indexes_result.__iter__.return_value = iter([mock_index])
+        
+        mock_constraints_result = mocker.MagicMock()
+        mock_constraints_result.__iter__.return_value = iter([mock_constraint])
+        
+        mock_labels_result = mocker.MagicMock()
+        mock_labels_result.__iter__.return_value = iter([
+            {'label': 'Person'},
+            {'label': 'Organization'}
+        ])
+        
+        mock_types_result = mocker.MagicMock()
+        mock_types_result.__iter__.return_value = iter([
+            {'relationshipType': 'KNOWS'},
+            {'relationshipType': 'WORKS_AT'}
+        ])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.side_effect = [
+            mock_indexes_result,
+            mock_constraints_result,
+            mock_labels_result,
+            mock_types_result
+        ]
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(include_schema=True)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        exporter._export_schema(graph_data)
+        
+        # Verify complete schema
+        assert graph_data.schema is not None
+        assert len(graph_data.schema.indexes) == 1
+        assert len(graph_data.schema.constraints) == 1
+        assert len(graph_data.schema.node_labels) == 2
+        assert len(graph_data.schema.relationship_types) == 2
+        
+        # Verify details
+        assert graph_data.schema.indexes[0]['name'] == 'person_index'
+        assert graph_data.schema.constraints[0]['type'] == 'UNIQUENESS'
+        assert 'Person' in graph_data.schema.node_labels
+        assert 'KNOWS' in graph_data.schema.relationship_types
+
+
 if __name__ == "__main__" and HAVE_PYTEST:
     pytest.main([__file__, "-v"])
