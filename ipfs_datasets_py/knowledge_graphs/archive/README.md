@@ -26,18 +26,18 @@ Session summaries and phase completion reports from the 2026-02-17 refactoring e
 Planning documents that have been superseded by newer plans or completed work. These files served their purpose during the refactoring effort but are no longer needed for current development.
 
 **Recently Archived (2026-02-18):**
-- `COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Previous comprehensive analysis (superseded by NEW version)
+- `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Superseded by FINAL_REFACTORING_PLAN_2026_02_18.md and MASTER_STATUS.md
+- `COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Previous comprehensive analysis (superseded)
 - `COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_FINAL.md` - Superseded by 2026-02-18 analysis
 - `REFACTORING_PHASE_1_SUMMARY.md` - Historical phase 1 summary (moved from root)
 
-**Superseded By:** 
-- `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` (latest independent analysis)
-- `FEATURE_MATRIX.md` (feature completeness at-a-glance)
-- `DEFERRED_FEATURES.md` (planned features documentation)
-- `QUICKSTART.md` (quick start guide)
-- `IMPLEMENTATION_STATUS.md` (current state)
-- `ROADMAP.md` (future plans)
-- `TEST_GUIDE.md` (testing documentation)
+**Superseded By (2026-02-18):**
+- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ **NEW** - Single source of truth for module status
+- **[FINAL_REFACTORING_PLAN_2026_02_18.md](../FINAL_REFACTORING_PLAN_2026_02_18.md)** ⭐ **NEW** - Comprehensive refactoring plan
+- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ **NEW** - Documentation navigation guide
+- `FEATURE_MATRIX.md` - Feature completeness at-a-glance
+- `DEFERRED_FEATURES.md` - Planned features documentation
+- `ROADMAP.md` - Future plans
 
 ---
 
@@ -79,20 +79,24 @@ The refactoring effort (2026-02-17) successfully addressed:
 
 For **current and active** documentation, see:
 
-### Active Files
-- [NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md](../NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) - Latest independent comprehensive analysis
+### Active Core Files (2026-02-18)
+- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ **NEW** - Single source of truth (17KB)
+- **[FINAL_REFACTORING_PLAN_2026_02_18.md](../FINAL_REFACTORING_PLAN_2026_02_18.md)** ⭐ **NEW** - Comprehensive plan (47KB)
+- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ **NEW** - Documentation guide (15KB)
+- [EXECUTIVE_SUMMARY_FINAL_2026_02_18.md](../EXECUTIVE_SUMMARY_FINAL_2026_02_18.md) - Executive summary
+- [P3_P4_IMPLEMENTATION_COMPLETE.md](../P3_P4_IMPLEMENTATION_COMPLETE.md) - P1-P4 implementation record
 - [README.md](../README.md) - Module overview
-- [INDEX.md](../INDEX.md) - Documentation navigation hub
 - [QUICKSTART.md](../QUICKSTART.md) - 5-minute getting started guide
+- [INDEX.md](../INDEX.md) - Documentation navigation hub
 - [FEATURE_MATRIX.md](../FEATURE_MATRIX.md) - Feature completeness matrix
-- [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Current status
-- [ROADMAP.md](../ROADMAP.md) - Development roadmap
 - [DEFERRED_FEATURES.md](../DEFERRED_FEATURES.md) - Planned features
+- [ROADMAP.md](../ROADMAP.md) - Development roadmap
 - [CHANGELOG_KNOWLEDGE_GRAPHS.md](../CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
 - [VALIDATION_REPORT.md](../VALIDATION_REPORT.md) - Cross-reference validation
 
 ### Testing
 - [tests/knowledge_graphs/TEST_GUIDE.md](../../../tests/knowledge_graphs/TEST_GUIDE.md) - Comprehensive testing guide
+- [tests/knowledge_graphs/TEST_STATUS.md](../../../tests/knowledge_graphs/TEST_STATUS.md) - Test coverage status
 - [README.md](../README.md) - Module overview and quick start
 - [INDEX.md](../INDEX.md) - Documentation navigation hub
 - [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Current module status
@@ -126,13 +130,15 @@ However, **do not use archived files for current development decisions**. Always
 ## Questions?
 
 If you need clarification on:
-- **Current status:** See [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md)
+- **Current status:** See [MASTER_STATUS.md](../MASTER_STATUS.md) ⭐
 - **Future plans:** See [ROADMAP.md](../ROADMAP.md)
+- **Which doc to read:** See [DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md) ⭐
 - **How to contribute:** See [CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md)
 - **Historical context:** Read the archived files in this directory
 
 ---
 
 **Archive Created:** 2026-02-17  
+**Last Updated:** 2026-02-18  
 **Archive Purpose:** Historical reference and documentation consolidation  
 **Maintained:** Frozen (no updates to archived content)
