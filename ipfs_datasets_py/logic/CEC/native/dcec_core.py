@@ -150,7 +150,83 @@ class CognitiveOperator(Enum):
 
 
 class LogicalConnective(Enum):
-    """Logical connectives for building complex formulas."""
+    """
+    Logical connectives for building complex formulas.
+    
+    LogicalConnective defines the standard logical operators used to construct compound
+    formulas from simpler ones. These connectives enable propositional and first-order
+    logic reasoning within the DCEC framework.
+    
+    Connectives:
+        AND (∧): Logical conjunction
+            - P ∧ Q is true when both P and Q are true
+            - Commutative: P ∧ Q ≡ Q ∧ P
+            - Associative: (P ∧ Q) ∧ R ≡ P ∧ (Q ∧ R)
+            - Identity: P ∧ True ≡ P
+            
+        OR (∨): Logical disjunction
+            - P ∨ Q is true when at least one of P or Q is true
+            - Commutative: P ∨ Q ≡ Q ∨ P
+            - Associative: (P ∨ Q) ∨ R ≡ P ∨ (Q ∨ R)
+            - Identity: P ∨ False ≡ P
+            
+        NOT (¬): Logical negation
+            - ¬P is true when P is false
+            - Double negation: ¬¬P ≡ P
+            - De Morgan's: ¬(P ∧ Q) ≡ ¬P ∨ ¬Q and ¬(P ∨ Q) ≡ ¬P ∧ ¬Q
+            
+        IMPLIES (→): Material implication
+            - P → Q is false only when P is true and Q is false
+            - Equivalent to: ¬P ∨ Q
+            - Contrapositive: (P → Q) ≡ (¬Q → ¬P)
+            - Not commutative: P → Q ≠ Q → P
+            
+        BICONDITIONAL (↔): Logical equivalence
+            - P ↔ Q is true when P and Q have the same truth value
+            - Equivalent to: (P → Q) ∧ (Q → P)
+            - Commutative: P ↔ Q ≡ Q ↔ P
+            
+        EXISTS (∃): Existential quantifier
+            - ∃x.P(x) is true when P(x) is true for at least one x
+            - Duality: ∃x.P(x) ≡ ¬∀x.¬P(x)
+            - Used in QuantifiedFormula, not ConnectiveFormula
+            
+        FORALL (∀): Universal quantifier
+            - ∀x.P(x) is true when P(x) is true for all x
+            - Duality: ∀x.P(x) ≡ ¬∃x.¬P(x)
+            - Used in QuantifiedFormula, not ConnectiveFormula
+    
+    Precedence (highest to lowest):
+        1. NOT (¬)
+        2. AND (∧)
+        3. OR (∨)
+        4. IMPLIES (→)
+        5. BICONDITIONAL (↔)
+        6. Quantifiers (∃, ∀)
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import LogicalConnective
+        >>> # Using in ConnectiveFormula
+        >>> and_conn = LogicalConnective.AND
+        >>> print(and_conn.value)
+        '∧'
+        >>> 
+        >>> # Common equivalences
+        >>> # P → Q ≡ ¬P ∨ Q
+        >>> # P ∧ (Q ∨ R) ≡ (P ∧ Q) ∨ (P ∧ R)  (distribution)
+        >>> # ¬(P ∧ Q) ≡ ¬P ∨ ¬Q  (De Morgan's law)
+    
+    Usage in Formulas:
+        - ConnectiveFormula uses AND, OR, NOT, IMPLIES, BICONDITIONAL
+        - QuantifiedFormula uses EXISTS, FORALL
+        - See ConnectiveFormula and QuantifiedFormula for usage examples
+    
+    Notes:
+        - Quantifiers (EXISTS, FORALL) bind variables in their scope
+        - Proper parenthesization is important for readability
+        - Some connectives are interdefinable (e.g., → can be defined using ¬ and ∨)
+        - Truth-functional: output determined solely by input truth values
+    """
     AND = "∧"
     OR = "∨"
     NOT = "¬"
@@ -161,7 +237,82 @@ class LogicalConnective(Enum):
 
 
 class TemporalOperator(Enum):
-    """Temporal operators for time-dependent reasoning."""
+    """
+    Temporal operators for time-dependent reasoning.
+    
+    TemporalOperator defines operators for reasoning about time and change in Linear
+    Temporal Logic (LTL) style. These operators enable expressing properties about
+    sequences of states and temporal evolution of formulas.
+    
+    Operators:
+        ALWAYS (□): Globally/always operator
+            - □φ means "φ is true at all time points"
+            - Also called "globally" or "henceforth"
+            - Example: □(safe) - "the system is always safe"
+            - Dual of EVENTUALLY: □φ ≡ ¬◊¬φ
+            
+        EVENTUALLY (◊): Finally/eventually operator
+            - ◊φ means "φ will be true at some future time point"
+            - Also called "finally" or "possibly"
+            - Example: ◊(success) - "success will eventually occur"
+            - Dual of ALWAYS: ◊φ ≡ ¬□¬φ
+            
+        NEXT (X): Next-time operator
+            - Xφ means "φ is true at the next time point"
+            - Also called "neXt"
+            - Example: X(processed) - "the request will be processed next"
+            - No direct dual
+            
+        UNTIL (U): Until operator (binary)
+            - φ U ψ means "φ holds until ψ becomes true"
+            - ψ must eventually become true
+            - φ holds at all time points before ψ
+            - Example: (waiting U served) - "waiting until served"
+            - Strong until (ψ must occur)
+            
+        SINCE (S): Since operator (binary)
+            - φ S ψ means "φ has been true since ψ was true"
+            - Past-time operator (looks backward in time)
+            - Example: (active S started) - "active since started"
+            - Dual of UNTIL in past-time logic
+    
+    Temporal Properties:
+        Safety: □(¬bad) - "something bad never happens"
+        Liveness: ◊(good) - "something good eventually happens"
+        Response: □(request → ◊response) - "every request gets a response"
+        Stability: ◊□φ - "φ eventually becomes permanently true"
+    
+    Operator Relationships:
+        - Duality: □φ ≡ ¬◊¬φ and ◊φ ≡ ¬□¬φ
+        - □φ → φ (T axiom - what's always true is true now)
+        - φ → ◊φ (if true now, then eventually true)
+        - □(φ → ψ) → (□φ → □ψ) (K axiom - distribution)
+        - ◊(φ ∨ ψ) ≡ ◊φ ∨ ◊ψ (EVENTUALLY distributes over OR)
+        - □(φ ∧ ψ) ≡ □φ ∧ □ψ (ALWAYS distributes over AND)
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import TemporalOperator
+        >>> always = TemporalOperator.ALWAYS
+        >>> print(always.value)
+        '□'
+        >>> 
+        >>> # Common temporal patterns
+        >>> # □◊φ - "φ is true infinitely often"
+        >>> # ◊□φ - "φ eventually becomes permanently true"
+        >>> # □(φ → ◊ψ) - "whenever φ, eventually ψ"
+    
+    Usage:
+        - Used in TemporalFormula to express time-dependent properties
+        - Can be combined with deontic operators: □O(φ) - "always obligatory"
+        - Can be nested: □◊φ, ◊□ψ, etc.
+    
+    Notes:
+        - Operators have different semantics in discrete vs continuous time
+        - UNTIL and SINCE are binary (take two formulas)
+        - ALWAYS, EVENTUALLY, NEXT are unary (take one formula)
+        - LTL is decidable but PSPACE-complete
+        - Used for model checking and verification
+    """
     ALWAYS = "□"             # Always/necessarily
     EVENTUALLY = "◊"         # Eventually/possibly
     NEXT = "X"               # Next time point
@@ -171,7 +322,80 @@ class TemporalOperator(Enum):
 
 @dataclass(frozen=True)
 class Sort:
-    """Represents a type/sort in the logic system."""
+    """
+    Represents a type/sort in the logic system.
+    
+    Sort defines a type in the DCEC type system, enabling typed logic reasoning.
+    Sorts can form hierarchies through subtyping relationships, allowing for
+    flexible and structured domain modeling.
+    
+    Args:
+        name (str): The name of the sort/type
+        parent (Optional[Sort]): Optional parent sort for subtyping hierarchy
+            - If None, this is a base sort with no parent
+            - If specified, this sort is a subtype of the parent
+    
+    Attributes:
+        name: The sort's identifier
+        parent: The parent sort (if any) in the type hierarchy
+    
+    Type Hierarchy:
+        Sorts form a tree structure through parent relationships:
+        - Root sorts have parent=None
+        - Child sorts inherit from their parents
+        - Subtyping is transitive: if A <: B and B <: C, then A <: C
+        - Used for type checking and domain constraints
+    
+    Common Sort Hierarchies:
+        Entity (base)
+        ├── Agent
+        │   ├── Human
+        │   └── Organization
+        ├── Object
+        │   ├── PhysicalObject
+        │   └── AbstractObject
+        └── Event
+            ├── Action
+            └── State
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import Sort
+        >>> # Create a base sort
+        >>> entity = Sort("entity")
+        >>> print(entity.name)
+        'entity'
+        >>> 
+        >>> # Create a subsort
+        >>> agent = Sort("agent", parent=entity)
+        >>> human = Sort("human", parent=agent)
+        >>> 
+        >>> # Check subtyping relationships
+        >>> human.is_subtype_of(agent)  # True - human is a kind of agent
+        True
+        >>> human.is_subtype_of(entity)  # True - transitive
+        True
+        >>> agent.is_subtype_of(human)  # False - not a subtype
+        False
+    
+    Methods:
+        is_subtype_of(other: Sort) -> bool:
+            Check if this sort is a subtype of another sort.
+            Returns True if this sort equals other or is a descendant of other.
+            Uses recursive checking up the parent chain.
+    
+    Usage:
+        - Variables are typed with sorts: Variable("x", person_sort)
+        - Functions have argument and return sorts: Function("age", [person_sort], number_sort)
+        - Predicates have argument sorts: Predicate("older_than", [person_sort, person_sort])
+        - Enables type-safe formula construction
+    
+    Notes:
+        - Frozen dataclass: sorts are immutable once created
+        - Equality is structural: two sorts with same name and parent are equal
+        - Subtyping is reflexive: every sort is a subtype of itself
+        - No multiple inheritance: each sort has at most one parent
+        - Used for static type checking in formula construction
+    """
     name: str
     parent: Optional['Sort'] = None
     
@@ -186,7 +410,67 @@ class Sort:
 
 @dataclass(frozen=True)
 class Variable:
-    """Represents a logical variable."""
+    """
+    Represents a logical variable in DCEC formulas.
+    
+    Variable is a typed symbol that can be quantified over or substituted with terms.
+    Variables are fundamental for expressing general statements and performing
+    substitutions in logical formulas.
+    
+    Args:
+        name (str): The variable's identifier (e.g., "x", "y", "agent1")
+        sort (Sort): The type/sort of the variable
+    
+    Attributes:
+        name: The variable's identifier string
+        sort: The type of values this variable can range over
+    
+    Variable Binding:
+        - Free variables: not bound by any quantifier
+        - Bound variables: bound by ∀ or ∃ quantifiers
+        - Scope: the formula range where a quantifier binds a variable
+        - Capture: when substitution incorrectly binds a free variable
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import Variable, Sort
+        >>> # Create a variable
+        >>> person_sort = Sort("person")
+        >>> x = Variable("x", person_sort)
+        >>> print(x)
+        'x:person'
+        >>> 
+        >>> # Variables in quantified formulas
+        >>> # ∀x:person. mortal(x) - "all persons are mortal"
+        >>> # ∃y:number. prime(y) - "there exists a prime number"
+        >>> 
+        >>> # Multiple variables
+        >>> y = Variable("y", person_sort)
+        >>> # ∀x:person. ∃y:person. knows(x, y) - "everyone knows someone"
+    
+    Usage in Formulas:
+        - VariableTerm wraps Variable for use in terms
+        - QuantifiedFormula binds variables with ∀ or ∃
+        - Free variables in formula can be substituted
+        - Bound variables are renamed if needed to avoid capture
+    
+    Common Patterns:
+        - ∀x. P(x) - universal statement about all x
+        - ∃x. P(x) - existential claim about some x
+        - ∀x. ∀y. R(x, y) - nested quantification
+        - ∀x. (P(x) → Q(x)) - conditional for all x
+    
+    Methods:
+        __str__() -> str:
+            Returns string representation in format "name:sort_name"
+            Example: Variable("x", Sort("person")) → "x:person"
+    
+    Notes:
+        - Frozen dataclass: variables are immutable
+        - Equality is structural: same name and sort means equal
+        - Variable names should be unique within their scope
+        - Sort determines what values the variable can take
+        - Used for parameter passing and generalization
+    """
     name: str
     sort: Sort
     
@@ -196,7 +480,89 @@ class Variable:
 
 @dataclass
 class Function:
-    """Represents a function symbol."""
+    """
+    Represents a function symbol in DCEC.
+    
+    Function is a typed symbol that maps terms to terms. Functions have a fixed
+    arity (number of arguments) and specific input/output types. They enable
+    construction of complex terms from simpler ones.
+    
+    Args:
+        name (str): The function's identifier (e.g., "age", "father_of", "add")
+        argument_sorts (List[Sort]): Types of the function's arguments (in order)
+        return_sort (Sort): Type of the value the function returns
+    
+    Attributes:
+        name: The function's identifier
+        argument_sorts: List of input types (length determines arity)
+        return_sort: Output type of the function
+    
+    Function Application:
+        - f(t₁, t₂, ..., tₙ) where f has arity n
+        - Each argument tᵢ must have sort compatible with argument_sorts[i]
+        - Result has sort return_sort
+        - Creates a FunctionTerm when applied to arguments
+    
+    Common Functions:
+        - Constants: zero-arity functions (e.g., "pi": () → real)
+        - Unary: one argument (e.g., "age": person → number)
+        - Binary: two arguments (e.g., "add": (number, number) → number)
+        - n-ary: multiple arguments (e.g., "max": (number, number, number) → number)
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import Function, Sort
+        >>> # Define sorts
+        >>> person = Sort("person")
+        >>> number = Sort("number")
+        >>> 
+        >>> # Unary function: age of a person
+        >>> age = Function("age", [person], number)
+        >>> print(age)
+        'age(person) -> number'
+        >>> print(age.arity())
+        1
+        >>> 
+        >>> # Binary function: sum of two numbers
+        >>> add = Function("add", [number, number], number)
+        >>> print(add.arity())
+        2
+        >>> 
+        >>> # Constant: zero-arity function
+        >>> pi = Function("pi", [], number)
+        >>> print(pi.arity())
+        0
+        >>> 
+        >>> # Function with multiple types
+        >>> lookup = Function("lookup", [person, Sort("string")], Sort("value"))
+    
+    Methods:
+        arity() -> int:
+            Returns the number of arguments the function takes.
+            Equals len(argument_sorts).
+        
+        __str__() -> str:
+            Returns string representation in format:
+            "name(arg1_sort, arg2_sort, ...) -> return_sort"
+    
+    Usage in Terms:
+        - FunctionTerm applies functions to argument terms
+        - Example: FunctionTerm(age, [VariableTerm(x)]) represents age(x)
+        - Type checking ensures argument sorts match
+        - Enables building complex terms compositionally
+    
+    Type Checking:
+        - Number of arguments must match arity
+        - Each argument term's sort must be compatible with corresponding argument_sort
+        - Result term has sort return_sort
+        - ValidationError raised on arity mismatch
+    
+    Notes:
+        - Mutable dataclass (can modify after creation, though not recommended)
+        - Functions are interpreted: meaning given by model/interpretation
+        - Distinguished from predicates (which return bool/truth values)
+        - Can be nested: f(g(x), h(y))
+        - Supports Skolem functions and Herbrand terms
+    """
     name: str
     argument_sorts: List[Sort]
     return_sort: Sort
@@ -212,7 +578,97 @@ class Function:
 
 @dataclass
 class Predicate:
-    """Represents a predicate symbol."""
+    """
+    Represents a predicate symbol in DCEC.
+    
+    Predicate is a typed relation symbol that maps terms to truth values (formulas).
+    Predicates have a fixed arity and specify the types of their arguments. They
+    are the building blocks for atomic formulas.
+    
+    Args:
+        name (str): The predicate's identifier (e.g., "mortal", "older_than", "red")
+        argument_sorts (List[Sort]): Types of the predicate's arguments (in order)
+    
+    Attributes:
+        name: The predicate's identifier
+        argument_sorts: List of argument types (length determines arity)
+    
+    Predicate Application:
+        - P(t₁, t₂, ..., tₙ) where P has arity n
+        - Each argument tᵢ must have sort compatible with argument_sorts[i]
+        - Result is an AtomicFormula (truth value)
+        - Forms the base case for formula construction
+    
+    Common Predicates:
+        - Nullary (0-arity): propositional atoms (e.g., "raining": () - "it is raining")
+        - Unary (1-arity): properties (e.g., "mortal": person - "x is mortal")
+        - Binary (2-arity): relations (e.g., "loves": (person, person) - "x loves y")
+        - n-ary: multi-way relations (e.g., "between": (point, point, point))
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import Predicate, Sort
+        >>> # Define sorts
+        >>> person = Sort("person")
+        >>> number = Sort("number")
+        >>> 
+        >>> # Unary predicate: property of persons
+        >>> mortal = Predicate("mortal", [person])
+        >>> print(mortal)
+        'mortal(person)'
+        >>> print(mortal.arity())
+        1
+        >>> 
+        >>> # Binary predicate: relation between two persons
+        >>> knows = Predicate("knows", [person, person])
+        >>> print(knows.arity())
+        2
+        >>> 
+        >>> # Nullary predicate: propositional atom
+        >>> raining = Predicate("raining", [])
+        >>> print(raining.arity())
+        0
+        >>> 
+        >>> # Mixed-type predicate
+        >>> age_greater = Predicate("age_greater", [person, number])
+        >>> # Usage: age_greater(john, 18) - "John's age is greater than 18"
+    
+    Methods:
+        arity() -> int:
+            Returns the number of arguments the predicate takes.
+            Equals len(argument_sorts).
+        
+        __str__() -> str:
+            Returns string representation in format:
+            "name(arg1_sort, arg2_sort, ...)"
+    
+    Usage in Formulas:
+        - AtomicFormula applies predicates to argument terms
+        - Example: AtomicFormula(mortal, [VariableTerm(x)]) represents mortal(x)
+        - Type checking ensures argument sorts match
+        - Building block for all formulas
+    
+    Common Patterns:
+        - P(x) - unary predicate application
+        - R(x, y) - binary relation
+        - ∀x. P(x) - universal property
+        - ∃x. ∃y. R(x, y) - existential relation
+        - P(x) ∧ Q(x) - conjunction of predicates
+        - ∀x. (P(x) → Q(x)) - implication between predicates
+    
+    Type Checking:
+        - Number of arguments must match arity
+        - Each argument term's sort must be compatible with corresponding argument_sort
+        - ValidationError raised on arity mismatch
+        - Enables static type checking of formulas
+    
+    Notes:
+        - Mutable dataclass (can modify after creation, though not recommended)
+        - Predicates are interpreted: meaning given by model/interpretation
+        - Distinguished from functions (which return terms, not truth values)
+        - Zero-arity predicates are propositional atoms
+        - Supports first-order and higher-order logic
+        - Can represent relations, properties, and propositions
+    """
     name: str
     argument_sorts: List[Sort]
     
