@@ -7,8 +7,12 @@ Verifies zero-knowledge proofs without seeing the private axioms.
 from typing import Dict, Any, Optional
 import hashlib
 import time
+import logging
 
 from . import ZKPProof, ZKPError
+
+# Configure logger
+logger = logging.getLogger(__name__)
 
 
 class ZKPVerifier:
