@@ -61,11 +61,28 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+# Import tool metadata system
+try:
+    from .tool_metadata import (
+        ToolMetadata,
+        ToolMetadataRegistry,
+        get_registry,
+        get_tool_metadata,
+        RUNTIME_FASTAPI,
+        RUNTIME_TRIO,
+        RUNTIME_AUTO
+    )
+    TOOL_METADATA_AVAILABLE = True
+except ImportError:
+    TOOL_METADATA_AVAILABLE = False
+    # Fallback constants
+    RUNTIME_FASTAPI = "fastapi"
+    RUNTIME_TRIO = "trio"
+    RUNTIME_AUTO = "auto"
+
 logger = logging.getLogger(__name__)
 
-# Runtime identifiers
-RUNTIME_FASTAPI = "fastapi"
-RUNTIME_TRIO = "trio"
+# Runtime identifiers (for backward compatibility)
 RUNTIME_UNKNOWN = "unknown"
 
 
@@ -166,6 +183,7 @@ class RuntimeRouter:
         default_runtime: str = RUNTIME_FASTAPI,
         enable_metrics: bool = True,
         enable_memory_tracking: bool = False,
+        metadata_registry: Optional[ToolMetadataRegistry] = None,
     ):
         """
         Initialize the RuntimeRouter.
@@ -174,10 +192,17 @@ class RuntimeRouter:
             default_runtime: Default runtime for tools without metadata
             enable_metrics: Enable performance metrics collection
             enable_memory_tracking: Enable memory usage tracking (adds overhead)
+            metadata_registry: Optional tool metadata registry (uses global if not provided)
         """
         self.default_runtime = default_runtime
         self.enable_metrics = enable_metrics
         self.enable_memory_tracking = enable_memory_tracking
+        
+        # Tool metadata registry
+        if TOOL_METADATA_AVAILABLE:
+            self._metadata_registry = metadata_registry or get_registry()
+        else:
+            self._metadata_registry = None
         
         # Runtime metrics
         self._metrics: Dict[str, RuntimeMetrics] = {
@@ -192,7 +217,7 @@ class RuntimeRouter:
         self._trio_scope = None
         self._is_running = False
         
-        # Tool runtime registry
+        # Tool runtime registry (local cache)
         self._tool_runtimes: Dict[str, str] = {}
         
         logger.info(f"RuntimeRouter initialized with default_runtime={default_runtime}")
@@ -243,10 +268,13 @@ class RuntimeRouter:
         """
         Detect the appropriate runtime for a tool.
         
-        Detection strategy:
-        1. Check if tool has _mcp_runtime attribute
-        2. Check tool_runtimes registry
-        3. Use default_runtime
+        Detection strategy (in order):
+        1. Check local tool_runtimes cache
+        2. Check ToolMetadata registry (if available)
+        3. Check function _mcp_runtime attribute
+        4. Check function module name patterns
+        5. Check function name patterns (p2p_, workflow_, taskqueue_)
+        6. Use default_runtime
         
         Args:
             tool_name: Name of the tool
@@ -259,7 +287,21 @@ class RuntimeRouter:
         if tool_name in self._tool_runtimes:
             return self._tool_runtimes[tool_name]
         
-        # Check tool metadata
+        # Check ToolMetadata registry (Phase 2 enhancement)
+        if self._metadata_registry and TOOL_METADATA_AVAILABLE:
+            metadata = self._metadata_registry.get(tool_name)
+            if metadata and metadata.runtime != RUNTIME_AUTO:
+                self._tool_runtimes[tool_name] = metadata.runtime
+                return metadata.runtime
+        
+        # Check tool metadata function attribute
+        if TOOL_METADATA_AVAILABLE:
+            metadata = get_tool_metadata(tool_func)
+            if metadata and metadata.runtime != RUNTIME_AUTO:
+                self._tool_runtimes[tool_name] = metadata.runtime
+                return metadata.runtime
+        
+        # Check traditional _mcp_runtime attribute
         if hasattr(tool_func, '_mcp_runtime'):
             runtime = tool_func._mcp_runtime
             if runtime in (RUNTIME_FASTAPI, RUNTIME_TRIO):
@@ -272,6 +314,13 @@ class RuntimeRouter:
             if 'mcplusplus' in module_name or 'trio' in module_name:
                 self._tool_runtimes[tool_name] = RUNTIME_TRIO
                 return RUNTIME_TRIO
+        
+        # Check function name patterns for P2P tools
+        tool_name_lower = tool_name.lower()
+        p2p_patterns = ['p2p_', 'workflow', 'taskqueue', 'peer_', 'bootstrap']
+        if any(pattern in tool_name_lower for pattern in p2p_patterns):
+            self._tool_runtimes[tool_name] = RUNTIME_TRIO
+            return RUNTIME_TRIO
         
         # Use default runtime
         runtime = self.default_runtime
@@ -507,6 +556,40 @@ class RuntimeRouter:
             for tool_name, tool_runtime in self._tool_runtimes.items()
             if tool_runtime == runtime
         ]
+    
+    def get_metadata_registry_stats(self) -> Optional[Dict[str, Any]]:
+        """
+        Get statistics from the tool metadata registry.
+        
+        Returns:
+            Registry statistics or None if registry not available
+        """
+        if not self._metadata_registry or not TOOL_METADATA_AVAILABLE:
+            return None
+        
+        return self._metadata_registry.get_statistics()
+    
+    def bulk_register_tools_from_metadata(self) -> int:
+        """
+        Bulk register all tools from metadata registry into router cache.
+        
+        This pre-populates the router's cache with all registered metadata,
+        improving runtime detection performance.
+        
+        Returns:
+            Number of tools registered
+        """
+        if not self._metadata_registry or not TOOL_METADATA_AVAILABLE:
+            return 0
+        
+        count = 0
+        for metadata in self._metadata_registry.list_all():
+            if metadata.runtime != RUNTIME_AUTO:
+                self._tool_runtimes[metadata.name] = metadata.runtime
+                count += 1
+        
+        logger.info(f"Bulk registered {count} tools from metadata registry")
+        return count
     
     @asynccontextmanager
     async def runtime_context(self):
