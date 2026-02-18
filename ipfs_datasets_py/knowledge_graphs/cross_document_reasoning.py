@@ -474,14 +474,16 @@ class CrossDocumentReasoner:
                                         connection_strength=strength
                                     ))
 
-            # Optionally, if max_hops > 1, find indirect connections
-            if max_hops > 1:
-                # Multi-hop connections implementation planned for future release
-                # Current: Direct connections only
-                # Future Enhancement: Implement multi-hop reasoning across documents
-                # This would allow finding connections like A->B and B->C to infer A->C
-                # TODO(future): Implement multi-hop graph traversal for indirect connections
-                pass  # Intentionally empty - future enhancement placeholder
+            # Multi-hop connections for indirect reasoning
+            # v3.0.0: Implemented multi-hop graph traversal
+            if max_hops > 1 and self.graph_engine:
+                try:
+                    indirect_connections = self._find_multi_hop_connections(
+                        documents, max_hops, self.graph_engine
+                    )
+                    connections.extend(indirect_connections)
+                except Exception as e:
+                    logger.warning(f"Multi-hop traversal failed: {e}. Using direct connections only.")
         else:
             # Without a knowledge graph, use simpler heuristics
             # For example, look for matching entity names in the entities lists
@@ -739,18 +741,14 @@ class CrossDocumentReasoner:
 
             prompt += "\nBased on these documents and their connections, please answer the original question."
 
-            # Call LLM
-            #answer = self.llm_service.generate_text(prompt)
-            #confidence = 0.85  # In practice, would be estimated from LLM output
-
-            # LLM-based reasoning planned for future release
-            # Current: Rule-based reasoning only
-            # Future Enhancement: Integrate LLM for complex reasoning tasks
-            # Requires: OpenAI API or local LLM integration
-            # TODO(future): Integrate LLM API (OpenAI, Anthropic, or local model)
-            pass  # Intentionally empty - future enhancement placeholder
-            answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
-            confidence = 0.75
+            # LLM-based reasoning using API
+            # v3.0.0: Integrated LLM API support (OpenAI, Anthropic, local models)
+            try:
+                answer, confidence = self._generate_llm_answer(prompt, query)
+            except Exception as e:
+                logger.warning(f"LLM generation failed: {e}. Using fallback method.")
+                answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
+                confidence = 0.75
         else:
             # Provide a generic answer for the mock implementation
             answer = f"Based on the analysis of {len(documents)} documents with {len(entity_connections)} entity-mediated connections, " + \
@@ -758,6 +756,208 @@ class CrossDocumentReasoner:
                      ", ".join([conn.entity_name for conn in entity_connections[:3]])
             confidence = 0.6
 
+        return answer, confidence
+    
+    def _find_multi_hop_connections(
+        self,
+        documents: List[DocumentNode],
+        max_hops: int,
+        knowledge_graph: Any
+    ) -> List[EntityMediatedConnection]:
+        """Find multi-hop connections between documents using graph traversal.
+        
+        Implements breadth-first and shortest-path algorithms to discover indirect
+        connections between documents mediated by chains of entities.
+        
+        Args:
+            documents: List of document nodes
+            max_hops: Maximum number of hops to traverse
+            knowledge_graph: Knowledge graph to traverse
+            
+        Returns:
+            List of entity-mediated connections found via multi-hop traversal
+        """
+        from collections import deque, defaultdict
+        
+        connections = []
+        doc_id_to_entities = {doc.id: set(doc.entities) for doc in documents}
+        
+        # Build entity relationship graph from knowledge graph
+        entity_graph = defaultdict(list)
+        
+        if hasattr(knowledge_graph, 'relationships'):
+            for rel_id, rel in knowledge_graph.relationships.items():
+                # Bidirectional edges
+                entity_graph[rel.source_id].append((rel.target_id, rel.relationship_type))
+                entity_graph[rel.target_id].append((rel.source_id, rel.relationship_type))
+        
+        # For each pair of documents, find paths between their entities
+        for i, doc1 in enumerate(documents):
+            for j in range(i+1, len(documents)):
+                doc2 = documents[j]
+                
+                # Try to find paths from doc1's entities to doc2's entities
+                for start_entity in doc1.entities[:10]:  # Limit to first 10 entities
+                    if start_entity not in entity_graph:
+                        continue
+                    
+                    # BFS to find shortest paths
+                    queue = deque([(start_entity, [start_entity], [])])
+                    visited = {start_entity}
+                    paths_found = 0
+                    
+                    while queue and paths_found < 3:  # Find up to 3 paths per entity pair
+                        current, path, rel_types = queue.popleft()
+                        
+                        # Check if we've reached the target document
+                        if current in doc2.entities and len(path) >= 2:
+                            # Found a multi-hop connection
+                            path_length = len(path) - 1
+                            
+                            if path_length <= max_hops and path_length > 1:
+                                # Calculate connection strength based on path length
+                                strength = 1.0 / path_length  # Shorter paths = stronger connections
+                                
+                                # Determine relation type based on path
+                                relation_type = self._infer_path_relation(rel_types)
+                                
+                                connection = EntityMediatedConnection(
+                                    entity_id=f"path_{i}_{j}_{paths_found}",
+                                    entity_name=f"Path via {' -> '.join(path[:3])}...",
+                                    entity_type="multi_hop_path",
+                                    source_doc_id=doc1.id,
+                                    target_doc_id=doc2.id,
+                                    relation_type=relation_type,
+                                    connection_strength=strength,
+                                    context={
+                                        'path': path,
+                                        'path_length': path_length,
+                                        'relationship_types': rel_types
+                                    }
+                                )
+                                connections.append(connection)
+                                paths_found += 1
+                        
+                        # Continue BFS if not too deep
+                        if len(path) < max_hops:
+                            for next_entity, rel_type in entity_graph.get(current, []):
+                                if next_entity not in visited:
+                                    visited.add(next_entity)
+                                    new_path = path + [next_entity]
+                                    new_rel_types = rel_types + [rel_type]
+                                    queue.append((next_entity, new_path, new_rel_types))
+        
+        return connections
+    
+    def _infer_path_relation(self, relationship_types: List[str]) -> InformationRelationType:
+        """Infer the overall relationship type from a path of relationships.
+        
+        Args:
+            relationship_types: List of relationship types in the path
+            
+        Returns:
+            Inferred information relation type
+        """
+        # Simple heuristic: if path contains certain relationship types, infer the overall type
+        rel_str = ' '.join(relationship_types).lower()
+        
+        if 'support' in rel_str or 'confirm' in rel_str:
+            return InformationRelationType.SUPPORTING
+        elif 'contradict' in rel_str or 'conflict' in rel_str:
+            return InformationRelationType.CONTRADICTING
+        elif 'detail' in rel_str or 'elaborat' in rel_str:
+            return InformationRelationType.ELABORATING
+        elif 'prereq' in rel_str or 'require' in rel_str:
+            return InformationRelationType.PREREQUISITE
+        elif 'conseq' in rel_str or 'result' in rel_str:
+            return InformationRelationType.CONSEQUENCE
+        else:
+            return InformationRelationType.COMPLEMENTARY
+    
+    def _generate_llm_answer(self, prompt: str, query: str) -> Tuple[str, float]:
+        """Generate an answer using LLM API.
+        
+        Supports OpenAI, Anthropic Claude, and local HuggingFace models.
+        
+        Args:
+            prompt: The full prompt with context
+            query: The original query
+            
+        Returns:
+            Tuple of (answer, confidence)
+        """
+        import os
+        
+        # Try OpenAI first (if API key is available)
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        if openai_key:
+            try:
+                import openai
+                client = openai.OpenAI(api_key=openai_key)
+                
+                response = client.chat.completions.create(
+                    model="gpt-4",
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant that answers questions based on provided documents."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    max_tokens=500
+                )
+                
+                answer = response.choices[0].message.content
+                
+                # Estimate confidence from response (simplified)
+                confidence = 0.85 if len(answer) > 50 else 0.70
+                
+                return answer, confidence
+            
+            except Exception as e:
+                logger.warning(f"OpenAI API call failed: {e}")
+        
+        # Try Anthropic Claude
+        anthropic_key = os.environ.get('ANTHROPIC_API_KEY')
+        if anthropic_key:
+            try:
+                import anthropic
+                client = anthropic.Anthropic(api_key=anthropic_key)
+                
+                message = client.messages.create(
+                    model="claude-3-sonnet-20240229",
+                    max_tokens=500,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                
+                answer = message.content[0].text
+                confidence = 0.85
+                
+                return answer, confidence
+            
+            except Exception as e:
+                logger.warning(f"Anthropic API call failed: {e}")
+        
+        # Try local HuggingFace model as fallback
+        try:
+            from transformers import pipeline
+            
+            # Use a question-answering or text generation model
+            generator = pipeline("text2text-generation", model="google/flan-t5-base")
+            
+            result = generator(prompt, max_length=200, num_return_sequences=1)
+            answer = result[0]['generated_text']
+            confidence = 0.70  # Lower confidence for local models
+            
+            return answer, confidence
+        
+        except Exception as e:
+            logger.warning(f"Local LLM generation failed: {e}")
+        
+        # Final fallback: use rule-based answer
+        answer = f"Based on the analysis of multiple documents with entity-mediated connections, the answer to '{query}' involves interconnected information across the provided sources."
+        confidence = 0.60
+        
         return answer, confidence
 
     def get_statistics(self) -> Dict[str, Any]:
