@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  tdfol:
+    build:
+      context: ../..
+      dockerfile: deployment/tdfol/Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    image: ipfs-datasets/tdfol:latest
+    container_name: tdfol-service
+    restart: unless-stopped
+    
+    ports:
+      - "8080:8080"
+      - "9090:9090"  # Metrics port
+    
+    environment:
+      # Application settings
+      - TDFOL_LOG_LEVEL=${TDFOL_LOG_LEVEL:-INFO}
+      - TDFOL_WORKERS=${TDFOL_WORKERS:-4}
+      - TDFOL_MAX_PROOF_DEPTH=${TDFOL_MAX_PROOF_DEPTH:-100}
+      - TDFOL_CACHE_ENABLED=${TDFOL_CACHE_ENABLED:-true}
+      
+      # Database settings
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///app/data/tdfol.db}
+      
+      # Redis settings (optional)
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      
+      # Monitoring
+      - PROMETHEUS_ENABLED=${PROMETHEUS_ENABLED:-true}
+      - PROMETHEUS_PORT=9090
+    
+    volumes:
+      - tdfol-data:/app/data
+      - tdfol-logs:/app/logs
+      - tdfol-cache:/app/cache
+    
+    networks:
+      - tdfol-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '4'
+          memory: 4G
+        reservations:
+          cpus: '2'
+          memory: 2G
+    
+    depends_on:
+      redis:
+        condition: service_healthy
+  
+  redis:
+    image: redis:7-alpine
+    container_name: tdfol-redis
+    restart: unless-stopped
+    
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - redis-data:/data
+    
+    networks:
+      - tdfol-network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+  
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: tdfol-prometheus
+    restart: unless-stopped
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    
+    ports:
+      - "9091:9090"
+    
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    
+    networks:
+      - tdfol-network
+    
+    depends_on:
+      - tdfol
+  
+  grafana:
+    image: grafana/grafana:latest
+    container_name: tdfol-grafana
+    restart: unless-stopped
+    
+    ports:
+      - "3000:3000"
+    
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana-datasources:/etc/grafana/provisioning/datasources:ro
+    
+    networks:
+      - tdfol-network
+    
+    depends_on:
+      - prometheus
+
+volumes:
+  tdfol-data:
+    driver: local
+  tdfol-logs:
+    driver: local
+  tdfol-cache:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  tdfol-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
