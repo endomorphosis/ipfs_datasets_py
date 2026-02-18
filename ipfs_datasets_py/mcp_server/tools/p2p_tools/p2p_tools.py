@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any, Dict, Optional
+from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata, RUNTIME_TRIO
 
 from ...trio_bridge import run_in_trio
 
@@ -27,6 +28,14 @@ def _ensure_ipfs_accelerate_on_path() -> None:
         pass
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_service",
+    priority=8,
+    timeout_seconds=10.0,
+    mcp_description="Get P2P service status and peer information"
+)
 def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dict[str, Any]:
     """Return local P2P service status and (optionally) recently seen peers."""
 
@@ -54,6 +63,14 @@ def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dic
     return out
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_cache",
+    priority=9,
+    timeout_seconds=5.0,
+    mcp_description="Get value from P2P cache"
+)
 def p2p_cache_get(key: str) -> Dict[str, Any]:
     """Get a value from the shared disk TTL cache (local view)."""
 
@@ -72,6 +89,14 @@ def p2p_cache_get(key: str) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_cache",
+    priority=9,
+    timeout_seconds=5.0,
+    mcp_description="Check if key exists in P2P cache"
+)
 def p2p_cache_has(key: str) -> Dict[str, Any]:
     """Check if a key exists in the shared disk TTL cache (local view)."""
 
@@ -90,6 +115,14 @@ def p2p_cache_has(key: str) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_cache",
+    priority=8,
+    timeout_seconds=10.0,
+    mcp_description="Set value in P2P cache with optional TTL"
+)
 def p2p_cache_set(key: str, value: Any, ttl_s: Optional[float] = None) -> Dict[str, Any]:
     """Set a value in the shared disk TTL cache (local view)."""
 
@@ -108,6 +141,14 @@ def p2p_cache_set(key: str, value: Any, ttl_s: Optional[float] = None) -> Dict[s
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_cache",
+    priority=8,
+    timeout_seconds=5.0,
+    mcp_description="Delete key from P2P cache"
+)
 def p2p_cache_delete(key: str) -> Dict[str, Any]:
     """Delete a key from the shared disk TTL cache (local view)."""
 
@@ -126,6 +167,15 @@ def p2p_cache_delete(key: str) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_task",
+    priority=8,
+    timeout_seconds=30.0,
+    io_intensive=True,
+    mcp_description="Submit task to P2P task queue"
+)
 def p2p_task_submit(task_type: str, payload: Dict[str, Any], model_name: str = "") -> Dict[str, Any]:
     """Submit a task into the durable DuckDB-backed task queue (local)."""
 
@@ -141,6 +191,14 @@ def p2p_task_submit(task_type: str, payload: Dict[str, Any], model_name: str = "
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_task",
+    priority=9,
+    timeout_seconds=10.0,
+    mcp_description="Get task status from P2P queue"
+)
 def p2p_task_get(task_id: str) -> Dict[str, Any]:
     """Get task status/result from the durable DuckDB-backed task queue (local)."""
 
@@ -158,6 +216,14 @@ def p2p_task_get(task_id: str) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_task",
+    priority=8,
+    timeout_seconds=10.0,
+    mcp_description="Delete task from P2P queue"
+)
 def p2p_task_delete(task_id: str) -> Dict[str, Any]:
     """Delete a task row from the queue (local)."""
 
@@ -180,6 +246,14 @@ def _remote_queue(*, peer_id: str = "", multiaddr: str = "") -> Any:
     return RemoteQueue(peer_id=str(peer_id or "").strip(), multiaddr=str(multiaddr or "").strip())
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=8,
+    timeout_seconds=15.0,
+    mcp_description="Get status from remote P2P peer"
+)
 async def p2p_remote_status(
     remote_multiaddr: str = "",
     peer_id: str = "",
@@ -203,6 +277,15 @@ async def p2p_remote_status(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=7,
+    timeout_seconds=60.0,
+    io_intensive=True,
+    mcp_description="Call MCP tool on remote P2P peer"
+)
 async def p2p_remote_call_tool(
     tool_name: str,
     args: Optional[Dict[str, Any]] = None,
@@ -229,6 +312,14 @@ async def p2p_remote_call_tool(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=8,
+    timeout_seconds=10.0,
+    mcp_description="Get value from remote peer cache"
+)
 async def p2p_remote_cache_get(
     key: str,
     remote_multiaddr: str = "",
@@ -248,6 +339,14 @@ async def p2p_remote_cache_get(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=7,
+    timeout_seconds=15.0,
+    mcp_description="Set value in remote peer cache"
+)
 async def p2p_remote_cache_set(
     key: str,
     value: Any,
@@ -274,6 +373,14 @@ async def p2p_remote_cache_set(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=8,
+    timeout_seconds=10.0,
+    mcp_description="Check if key exists in remote peer cache"
+)
 async def p2p_remote_cache_has(
     key: str,
     remote_multiaddr: str = "",
@@ -293,6 +400,14 @@ async def p2p_remote_cache_has(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=7,
+    timeout_seconds=10.0,
+    mcp_description="Delete key from remote peer cache"
+)
 async def p2p_remote_cache_delete(
     key: str,
     remote_multiaddr: str = "",
@@ -312,6 +427,15 @@ async def p2p_remote_cache_delete(
         return {"ok": False, "error": str(e)}
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_remote",
+    priority=7,
+    timeout_seconds=30.0,
+    io_intensive=True,
+    mcp_description="Submit task to remote peer queue"
+)
 async def p2p_remote_submit_task(
     task_type: str,
     model_name: str,

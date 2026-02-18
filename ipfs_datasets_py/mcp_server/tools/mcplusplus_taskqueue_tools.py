@@ -22,6 +22,9 @@ import logging
 from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 
+# Import tool metadata decorator
+from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata, RUNTIME_TRIO
+
 # Import Phase 1 MCP++ wrappers
 try:
     from ipfs_datasets_py.mcp_server.mcplusplus import (
@@ -42,6 +45,16 @@ logger = logging.getLogger(__name__)
 # CORE TASK OPERATIONS (6 tools)
 # ============================================================================
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=8,
+    timeout_seconds=60.0,
+    retry_policy="exponential",
+    io_intensive=True,
+    mcp_description="Submit a task to the P2P task queue for distributed execution"
+)
 async def task_submit(
     task_id: str,
     task_type: str,
@@ -149,6 +162,15 @@ async def task_submit(
 task_submit._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=9,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Get the current status of a submitted task"
+)
 async def task_status(
     task_id: str,
     include_logs: bool = False,
@@ -238,6 +260,15 @@ async def task_status(
 task_status._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=10,
+    timeout_seconds=15.0,
+    io_intensive=False,
+    mcp_description="Cancel a pending or running task"
+)
 async def task_cancel(
     task_id: str,
     reason: Optional[str] = None,
@@ -317,6 +348,15 @@ async def task_cancel(
 task_cancel._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=7,
+    timeout_seconds=30.0,
+    io_intensive=False,
+    mcp_description="List all tasks with optional filtering"
+)
 async def task_list(
     status_filter: Optional[str] = None,
     worker_filter: Optional[str] = None,
@@ -405,6 +445,15 @@ async def task_list(
 task_list._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=8,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Get or update the priority of a task"
+)
 async def task_priority(
     task_id: str,
     new_priority: float,
@@ -476,6 +525,15 @@ async def task_priority(
 task_priority._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=8,
+    timeout_seconds=15.0,
+    io_intensive=False,
+    mcp_description="Retrieve the result of a completed task"
+)
 async def task_result(
     task_id: str,
     include_output: bool = True,
@@ -554,6 +612,15 @@ task_result._mcp_runtime = 'trio'
 # QUEUE MANAGEMENT (5 tools)
 # ============================================================================
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_queue_mgmt",
+    priority=7,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Get comprehensive queue statistics"
+)
 async def queue_stats(
     include_worker_stats: bool = False,
     include_historical: bool = False
@@ -632,6 +699,15 @@ async def queue_stats(
 queue_stats._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_queue_mgmt",
+    priority=9,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Pause task queue processing"
+)
 async def queue_pause(
     reason: Optional[str] = None
 ) -> Dict[str, Any]:
@@ -692,6 +768,15 @@ async def queue_pause(
 queue_pause._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_queue_mgmt",
+    priority=9,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Resume paused task queue processing"
+)
 async def queue_resume(
     reorder_by_priority: bool = True
 ) -> Dict[str, Any]:
@@ -753,6 +838,15 @@ async def queue_resume(
 queue_resume._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_queue_mgmt",
+    priority=10,
+    timeout_seconds=20.0,
+    io_intensive=False,
+    mcp_description="Clear all tasks from the queue"
+)
 async def queue_clear(
     status_filter: Optional[str] = None,
     confirm: bool = False
@@ -825,6 +919,16 @@ async def queue_clear(
 queue_clear._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_taskqueue",
+    priority=8,
+    timeout_seconds=15.0,
+    retry_policy="exponential",
+    io_intensive=False,
+    mcp_description="Retry a failed task"
+)
 async def task_retry(
     task_id: str,
     retry_config: Optional[Dict[str, Any]] = None
@@ -899,6 +1003,15 @@ task_retry._mcp_runtime = 'trio'
 # WORKER MANAGEMENT (3 tools)
 # ============================================================================
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_worker_mgmt",
+    priority=9,
+    timeout_seconds=20.0,
+    io_intensive=False,
+    mcp_description="Register a worker node for task execution"
+)
 async def worker_register(
     worker_id: str,
     capabilities: List[str],
@@ -981,6 +1094,15 @@ async def worker_register(
 worker_register._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_worker_mgmt",
+    priority=9,
+    timeout_seconds=15.0,
+    io_intensive=False,
+    mcp_description="Unregister a worker node"
+)
 async def worker_unregister(
     worker_id: str,
     graceful: bool = True,
@@ -1054,6 +1176,15 @@ async def worker_unregister(
 worker_unregister._mcp_runtime = 'trio'
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_worker_mgmt",
+    priority=7,
+    timeout_seconds=10.0,
+    io_intensive=False,
+    mcp_description="Get status of worker nodes"
+)
 async def worker_status(
     worker_id: str,
     include_tasks: bool = False,

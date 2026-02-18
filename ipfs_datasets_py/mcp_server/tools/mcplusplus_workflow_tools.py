@@ -13,6 +13,9 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
 
+# Import tool metadata decorator
+from ipfs_datasets_py.mcp_server.tool_metadata import tool_metadata, RUNTIME_TRIO
+
 logger = logging.getLogger(__name__)
 
 # Import our MCP++ wrapper from Phase 1
@@ -35,6 +38,17 @@ except ImportError:
     logger.warning("P2P service manager not available")
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=8,
+    timeout_seconds=90.0,
+    retry_policy="exponential",
+    io_intensive=True,
+    cpu_intensive=True,
+    mcp_description="Submit a workflow to the P2P network for distributed execution"
+)
 async def workflow_submit(
     workflow_id: str,
     name: str,
@@ -153,6 +167,15 @@ async def workflow_submit(
         }
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=9,
+    timeout_seconds=15.0,
+    io_intensive=False,
+    mcp_description="Get the current status of a submitted workflow"
+)
 async def workflow_status(
     workflow_id: str,
     include_steps: bool = True,
@@ -242,6 +265,15 @@ async def workflow_status(
         }
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=10,
+    timeout_seconds=20.0,
+    io_intensive=False,
+    mcp_description="Cancel a running or pending workflow"
+)
 async def workflow_cancel(
     workflow_id: str,
     reason: Optional[str] = None,
@@ -311,6 +343,15 @@ async def workflow_cancel(
         }
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=7,
+    timeout_seconds=30.0,
+    io_intensive=False,
+    mcp_description="List all workflows with optional filtering"
+)
 async def workflow_list(
     status_filter: Optional[str] = None,
     peer_filter: Optional[str] = None,
@@ -394,6 +435,15 @@ async def workflow_list(
         }
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=7,
+    timeout_seconds=15.0,
+    io_intensive=False,
+    mcp_description="Get dependency graph for a workflow"
+)
 async def workflow_dependencies(
     workflow_id: str,
     format: str = 'json'
@@ -475,6 +525,15 @@ async def workflow_dependencies(
         }
 
 
+@tool_metadata(
+    runtime=RUNTIME_TRIO,
+    requires_p2p=True,
+    category="p2p_workflow",
+    priority=8,
+    timeout_seconds=20.0,
+    io_intensive=False,
+    mcp_description="Retrieve the result of a completed workflow"
+)
 async def workflow_result(
     workflow_id: str,
     include_outputs: bool = True,
