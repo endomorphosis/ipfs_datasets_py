@@ -115,7 +115,7 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream E — Testing & quality gates
 
 ### E0. Fix the current suite failures (P0)
-- [x] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
+- [ ] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
   - Acceptance: `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` completes without pytest INTERNALERROR; remaining failures are fixed or explicitly documented/xfail.
   - Status (2026-02-18): suite completes cleanly (`800 passed`).
 

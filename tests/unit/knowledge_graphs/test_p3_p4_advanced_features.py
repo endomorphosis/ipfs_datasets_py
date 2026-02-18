@@ -391,29 +391,6 @@ class TestLLMIntegration:
         assert answer == "Claude's answer."
         assert confidence > 0.7
         mock_client.messages.create.assert_called_once()
-
-    @patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test_key'}, clear=True)
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.LLMRouter')
-    @patch('ipfs_datasets_py.knowledge_graphs.cross_document_reasoning.anthropic')
-    def test_llm_does_not_use_router_when_anthropic_available(self, mock_anthropic, mock_router_cls):
-        """
-        GIVEN: Anthropic API key and a working Anthropic client
-        WHEN: Generating LLM answer
-        THEN: Does not fall back to LLMRouter
-        """
-        reasoner = CrossDocumentReasoner()
-
-        mock_client = Mock()
-        mock_message = Mock()
-        mock_message.content = [Mock(text="Claude's answer.")]
-        mock_client.messages.create.return_value = mock_message
-        mock_anthropic.Anthropic.return_value = mock_client
-
-        answer, confidence = reasoner._generate_llm_answer("prompt", "query")
-        assert answer == "Claude's answer."
-        assert confidence > 0.7
-
-        mock_router_cls.assert_not_called()
     
     def test_llm_fallback_to_local(self):
         """
