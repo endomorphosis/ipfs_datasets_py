@@ -110,6 +110,18 @@ if TYPE_CHECKING:
         get_global_dashboard,
         reset_global_dashboard,
     )
+    from .security_validator import (
+        SecurityValidator,
+        SecurityConfig,
+        SecurityLevel,
+        ThreatType,
+        ValidationResult,
+        AuditResult,
+        RateLimiter,
+        create_validator,
+        validate_formula,
+        audit_proof,
+    )
 
 __all__ = [
     # Enumerations
@@ -203,6 +215,18 @@ __all__ = [
     "get_global_dashboard",
     "reset_global_dashboard",
     
+    # Security Validator (Phase 12 Task 12.2)
+    "SecurityValidator",
+    "SecurityConfig",
+    "SecurityLevel",
+    "ThreatType",
+    "ValidationResult",
+    "AuditResult",
+    "RateLimiter",
+    "create_validator",
+    "validate_formula",
+    "audit_proof",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -278,6 +302,17 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "MetricType": (".performance_dashboard", "MetricType"),
     "get_global_dashboard": (".performance_dashboard", "get_global_dashboard"),
     "reset_global_dashboard": (".performance_dashboard", "reset_global_dashboard"),
+    # Security Validator
+    "SecurityValidator": (".security_validator", "SecurityValidator"),
+    "SecurityConfig": (".security_validator", "SecurityConfig"),
+    "SecurityLevel": (".security_validator", "SecurityLevel"),
+    "ThreatType": (".security_validator", "ThreatType"),
+    "ValidationResult": (".security_validator", "ValidationResult"),
+    "AuditResult": (".security_validator", "AuditResult"),
+    "RateLimiter": (".security_validator", "RateLimiter"),
+    "create_validator": (".security_validator", "create_validator"),
+    "validate_formula": (".security_validator", "validate_formula"),
+    "audit_proof": (".security_validator", "audit_proof"),
 }
 
 
