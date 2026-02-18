@@ -621,8 +621,8 @@ class CrossDocumentReasoner:
         # Future Enhancement: Use LLM or ML model for sophisticated analysis
         # For now, use simple heuristics
 
-    # 1. Check if the documents have semantic similarity
-    doc_similarity = self._compute_document_similarity(source_doc, target_doc)
+        # 1. Check if the documents have semantic similarity
+        doc_similarity = self._compute_document_similarity(source_doc, target_doc)
 
         # 2. Check if one document was published after the other (if timestamp available)
         source_date = source_doc.metadata.get("published_date")

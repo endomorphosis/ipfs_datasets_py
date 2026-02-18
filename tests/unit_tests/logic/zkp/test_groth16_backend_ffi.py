@@ -18,8 +18,8 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 
-from ipfs_datasets_py.logic.zkp.backends.groth16 import (
-    Groth16Backend,
+from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import (
+    Groth16Backend as Groth16FFIBackend,
     Groth16BackendFallback,
     Groth16Proof,
 )
@@ -74,24 +74,24 @@ class TestGroth16BackendInitialization:
     
     def test_binary_not_found_warning(self, caplog):
         """Test initialization when binary path not found."""
-        backend = Groth16Backend(binary_path=None)
+        backend = Groth16FFIBackend(binary_path=None)
         assert backend.binary_path is None
     
     def test_explicit_binary_path(self, mock_binary_path):
         """Test initialization with explicit binary path."""
         with patch('os.path.exists', return_value=True):
-            backend = Groth16Backend(binary_path=mock_binary_path)
+            backend = Groth16FFIBackend(binary_path=mock_binary_path)
             assert backend.binary_path == mock_binary_path
     
     def test_timeout_configuration(self):
         """Test timeout configuration."""
-        backend = Groth16Backend(timeout_seconds=60)
+        backend = Groth16FFIBackend(timeout_seconds=60)
         assert backend.timeout_seconds == 60
     
     def test_binary_path_candidates(self):
         """Test discovery in standard locations."""
         # This just verifies the method runs without error
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         # Should not raise even if binary not found
         assert backend is not None
 
@@ -101,13 +101,13 @@ class TestGroth16BackendWitnessValidation:
     
     def test_valid_witness(self, sample_witness):
         """Test valid witness passes validation."""
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         # Should not raise
         backend._validate_witness(sample_witness)
     
     def test_missing_required_fields(self):
         """Test validation rejects missing fields."""
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         invalid = {'theorem': 'Q'}  # Missing all other fields
         
         with pytest.raises(ValueError, match="Missing witness fields"):
@@ -115,7 +115,7 @@ class TestGroth16BackendWitnessValidation:
     
     def test_empty_axioms(self, sample_witness):
         """Test validation rejects empty axioms."""
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         invalid = sample_witness.copy()
         invalid['private_axioms'] = []
         
@@ -124,7 +124,7 @@ class TestGroth16BackendWitnessValidation:
     
     def test_empty_theorem(self, sample_witness):
         """Test validation rejects empty theorem."""
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         invalid = sample_witness.copy()
         invalid['theorem'] = ''
         
@@ -133,7 +133,7 @@ class TestGroth16BackendWitnessValidation:
     
     def test_negative_circuit_version(self, sample_witness):
         """Test validation rejects negative version."""
-        backend = Groth16Backend()
+        backend = Groth16FFIBackend()
         invalid = sample_witness.copy()
         invalid['circuit_version'] = -1
         
@@ -146,7 +146,7 @@ class TestGroth16BackendProofGeneration:
     
     def test_generate_proof_no_binary(self, sample_witness_json):
         """Test error when binary not available."""
-        backend = Groth16Backend(binary_path=None)
+        backend = Groth16FFIBackend(binary_path=None)
         
         with pytest.raises(RuntimeError, match="binary not available"):
             backend.generate_proof(sample_witness_json)
@@ -161,7 +161,7 @@ class TestGroth16BackendProofGeneration:
         mock_result.stdout = sample_proof_json.encode()
         mock_run.return_value = mock_result
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16")
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         proof = backend.generate_proof(sample_witness_json)
         
         assert isinstance(proof, Groth16Proof)
@@ -177,7 +177,7 @@ class TestGroth16BackendProofGeneration:
         mock_result.stderr = b"Circuit constraint violation"
         mock_run.return_value = mock_result
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16")
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         
         with pytest.raises(RuntimeError, match="proof generation failed"):
             backend.generate_proof(sample_witness_json)
@@ -187,7 +187,7 @@ class TestGroth16BackendProofGeneration:
         """Test timeout handling."""
         mock_run.side_effect = subprocess.TimeoutExpired("cmd", 5)
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16", timeout_seconds=5)
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16", timeout_seconds=5)
         
         with pytest.raises(TimeoutError, match="timeout"):
             backend.generate_proof(sample_witness_json)
@@ -198,7 +198,7 @@ class TestGroth16BackendProofVerification:
     
     def test_verify_proof_no_binary(self, sample_proof_json):
         """Test error when binary not available."""
-        backend = Groth16Backend(binary_path=None)
+        backend = Groth16FFIBackend(binary_path=None)
         
         with pytest.raises(RuntimeError, match="binary not available"):
             backend.verify_proof(sample_proof_json)
@@ -210,7 +210,7 @@ class TestGroth16BackendProofVerification:
         mock_result.returncode = 0  # Success
         mock_run.return_value = mock_result
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16")
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         result = backend.verify_proof(sample_proof_json)
         
         assert result is True
@@ -222,7 +222,7 @@ class TestGroth16BackendProofVerification:
         mock_result.returncode = 1  # Failure
         mock_run.return_value = mock_result
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16")
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         result = backend.verify_proof(sample_proof_json)
         
         assert result is False
@@ -232,7 +232,7 @@ class TestGroth16BackendProofVerification:
         """Test timeout during verification."""
         mock_run.side_effect = subprocess.TimeoutExpired("cmd", 5)
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16", timeout_seconds=5)
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16", timeout_seconds=5)
         
         with pytest.raises(TimeoutError, match="timeout"):
             backend.verify_proof(sample_proof_json)
@@ -288,7 +288,7 @@ class TestGroth16BackendInfo:
     
     def test_get_backend_info_no_binary(self):
         """Test info when binary not available."""
-        backend = Groth16Backend(binary_path=None)
+        backend = Groth16FFIBackend(binary_path=None)
         info = backend.get_backend_info()
         
         assert info['name'] == 'Groth16'
@@ -297,7 +297,7 @@ class TestGroth16BackendInfo:
     def test_get_backend_info_with_binary(self):
         """Test info when binary available."""
         with patch('os.path.exists', return_value=True):
-            backend = Groth16Backend(binary_path="/usr/bin/groth16")
+            backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
             info = backend.get_backend_info()
             
             assert info['name'] == 'Groth16'
@@ -378,7 +378,7 @@ class TestGroth16BackendIntegrationWithBinary:
         
         mock_run.side_effect = run_side_effect
         
-        backend = Groth16Backend(binary_path="/usr/bin/groth16")
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         
         # Generate proof
         proof = backend.generate_proof(sample_witness_json)
