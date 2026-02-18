@@ -116,5 +116,335 @@ class TestExportResult:
         assert result.success is False
 
 
+class TestNeo4jExporterWithMocking:
+    """Test Neo4jExporter with mocked Neo4j driver."""
+    
+    def test_exporter_initialization_with_neo4j(self, mocker):
+        """Test exporter initialization when neo4j is available."""
+        # Mock neo4j import
+        mock_graphdb = mocker.MagicMock()
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        
+        assert exporter.config == config
+        assert exporter._neo4j_available is True
+    
+    def test_exporter_initialization_without_neo4j(self, mocker):
+        """Test exporter initialization when neo4j is not available."""
+        # Mock neo4j import to raise ImportError
+        def mock_import(name, *args, **kwargs):
+            if name == 'neo4j':
+                raise ImportError("No module named 'neo4j'")
+            return mocker.DEFAULT
+        
+        mocker.patch('builtins.__import__', side_effect=mock_import)
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        
+        assert exporter._neo4j_available is False
+    
+    def test_connect_success(self, mocker):
+        """Test successful connection to Neo4j."""
+        # Mock Neo4j driver
+        mock_driver = mocker.MagicMock()
+        mock_driver.verify_connectivity.return_value = None
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        result = exporter._connect()
+        
+        assert result is True
+        mock_graphdb.driver.assert_called_once()
+    
+    def test_connect_failure(self, mocker):
+        """Test connection failure to Neo4j."""
+        # Mock Neo4j driver to raise exception
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.side_effect = Exception("Connection failed")
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        result = exporter._connect()
+        
+        assert result is False
+    
+    def test_connect_without_neo4j_installed(self, mocker):
+        """Test connect raises error when neo4j not installed."""
+        def mock_import(name, *args, **kwargs):
+            if name == 'neo4j':
+                raise ImportError("No module named 'neo4j'")
+            return mocker.DEFAULT
+        
+        mocker.patch('builtins.__import__', side_effect=mock_import)
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        
+        with pytest.raises(RuntimeError, match="neo4j package not installed"):
+            exporter._connect()
+    
+    def test_export_nodes_basic(self, mocker):
+        """Test basic node export."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData, NodeData
+        
+        # Mock Neo4j session and results
+        mock_record1 = {'id': 1, 'labels': ['Person'], 'properties': {'name': 'Alice'}}
+        mock_record2 = {'id': 2, 'labels': ['Person'], 'properties': {'name': 'Bob'}}
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter([mock_record1, mock_record2])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_nodes(graph_data)
+        
+        assert count == 2
+        assert len(graph_data.nodes) == 2
+        assert graph_data.nodes[0].id == '1'
+        assert graph_data.nodes[0].labels == ['Person']
+    
+    def test_export_nodes_with_label_filter(self, mocker):
+        """Test node export with label filter."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter([])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(node_labels=["Person", "Organization"])
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_nodes(graph_data)
+        
+        # Verify label filter was used in query
+        mock_session.run.assert_called_once()
+        query = mock_session.run.call_args[0][0]
+        assert "WHERE" in query
+        assert "n:Person" in query or "Person" in query
+    
+    def test_export_nodes_with_batching(self, mocker):
+        """Test node export with batch processing."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        # Create 2500 mock records to test batching (batch_size=1000)
+        mock_records = [
+            {'id': i, 'labels': ['Node'], 'properties': {'index': i}}
+            for i in range(2500)
+        ]
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter(mock_records)
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(batch_size=1000)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_nodes(graph_data)
+        
+        assert count == 2500
+        assert len(graph_data.nodes) == 2500
+    
+    def test_export_nodes_with_progress_callback(self, mocker):
+        """Test node export with progress callback."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_records = [
+            {'id': i, 'labels': ['Node'], 'properties': {}}
+            for i in range(1500)
+        ]
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter(mock_records)
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        callback_called = []
+        def progress_callback(nodes, rels, msg):
+            callback_called.append((nodes, rels, msg))
+        
+        config = ExportConfig(batch_size=1000, progress_callback=progress_callback)
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_nodes(graph_data)
+        
+        assert count == 1500
+        assert len(callback_called) > 0  # Callback should be called during batching
+    
+    def test_export_relationships_basic(self, mocker):
+        """Test basic relationship export."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_records = [
+            {'id': 1, 'type': 'KNOWS', 'start': 1, 'end': 2, 'properties': {'since': 2020}},
+            {'id': 2, 'type': 'WORKS_WITH', 'start': 1, 'end': 3, 'properties': {}}
+        ]
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter(mock_records)
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_relationships(graph_data)
+        
+        assert count == 2
+        assert len(graph_data.relationships) == 2
+        assert graph_data.relationships[0].type == 'KNOWS'
+    
+    def test_export_relationships_with_type_filter(self, mocker):
+        """Test relationship export with type filter."""
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        
+        mock_result = mocker.MagicMock()
+        mock_result.__iter__.return_value = iter([])
+        
+        mock_session = mocker.MagicMock()
+        mock_session.run.return_value = mock_result
+        mock_session.__enter__.return_value = mock_session
+        mock_session.__exit__.return_value = False
+        
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+        
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig(relationship_types=["KNOWS", "WORKS_AT"])
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        graph_data = GraphData()
+        count = exporter._export_relationships(graph_data)
+        
+        # Verify type filter was used in query
+        mock_session.run.assert_called_once()
+        query = mock_session.run.call_args[0][0]
+        assert "WHERE" in query
+        assert "type(r)" in query
+    
+    def test_close_connection(self, mocker):
+        """Test closing Neo4j connection."""
+        mock_driver = mocker.MagicMock()
+        mock_graphdb = mocker.MagicMock()
+        mock_graphdb.driver.return_value = mock_driver
+        
+        mocker.patch.dict('sys.modules', {'neo4j': mocker.MagicMock(GraphDatabase=mock_graphdb)})
+        
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        exporter._driver = mock_driver
+        
+        exporter._close()
+        
+        mock_driver.close.assert_called_once()
+
+
 if __name__ == "__main__" and HAVE_PYTEST:
     pytest.main([__file__, "-v"])
