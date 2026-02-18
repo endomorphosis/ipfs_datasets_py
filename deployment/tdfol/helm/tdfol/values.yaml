@@ -1,0 +1,356 @@
+# Default values for tdfol Helm chart
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ============================================================================
+# Global Settings
+# ============================================================================
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+  storageClass: ""
+
+# ============================================================================
+# Image Configuration
+# ============================================================================
+image:
+  registry: docker.io
+  repository: ipfs-datasets/tdfol
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# ============================================================================
+# Deployment Configuration
+# ============================================================================
+replicaCount: 3
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ============================================================================
+# Service Account
+# ============================================================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# ============================================================================
+# Pod Configuration
+# ============================================================================
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+    - ALL
+
+# ============================================================================
+# Service Configuration
+# ============================================================================
+service:
+  type: ClusterIP
+  port: 8080
+  metricsPort: 9090
+  annotations: {}
+  
+  # NodePort configuration (when service.type is NodePort)
+  nodePort: 30080
+  metricsNodePort: 30090
+  
+  # LoadBalancer configuration (when service.type is LoadBalancer)
+  loadBalancerIP: ""
+  loadBalancerSourceRanges: []
+  externalTrafficPolicy: Local
+
+# ============================================================================
+# Ingress Configuration
+# ============================================================================
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: tdfol.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: tdfol-tls-cert
+      hosts:
+        - tdfol.example.com
+
+# ============================================================================
+# Resource Limits
+# ============================================================================
+resources:
+  limits:
+    cpu: 4000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+# ============================================================================
+# Autoscaling
+# ============================================================================
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+      - type: Pods
+        value: 4
+        periodSeconds: 30
+
+# ============================================================================
+# Probes
+# ============================================================================
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+  successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+  successThreshold: 1
+
+startupProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+  successThreshold: 1
+
+# ============================================================================
+# Persistence
+# ============================================================================
+persistence:
+  enabled: true
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  
+  data:
+    size: 10Gi
+  logs:
+    size: 5Gi
+  cache:
+    size: 5Gi
+
+# ============================================================================
+# Application Configuration
+# ============================================================================
+config:
+  # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  logLevel: INFO
+  
+  # Worker settings
+  workers: 4
+  
+  # Proof settings
+  maxProofDepth: 100
+  maxConcurrentProofs: 10
+  proofTimeout: 300
+  maxFormulaSize: 1000
+  maxMemoryPerProof: 512
+  
+  # Cache settings
+  cacheEnabled: true
+  cacheTTL: 3600
+  
+  # API settings
+  apiHost: "0.0.0.0"
+  apiPort: 8080
+  corsEnabled: true
+  corsOrigins: "*"
+  rateLimit: 100
+  
+  # Database settings
+  databaseUrl: "sqlite:///app/data/tdfol.db"
+  databasePoolSize: 10
+  databaseTimeout: 30
+  
+  # Feature flags
+  nlpEnabled: true
+  countermodelEnabled: true
+  visualizationEnabled: true
+  proofOptimization: true
+  parallelProving: true
+  parallelWorkers: 4
+  
+  # Monitoring
+  prometheusEnabled: true
+  prometheusPort: 9090
+
+# ============================================================================
+# Secrets (should be overridden in production)
+# ============================================================================
+secrets:
+  secretKey: "REPLACE_WITH_YOUR_SECRET_KEY"
+  apiToken: ""
+  databasePassword: ""
+  jwtSecret: "REPLACE_WITH_JWT_SECRET"
+
+# ============================================================================
+# Redis Configuration
+# ============================================================================
+redis:
+  enabled: true
+  image:
+    registry: docker.io
+    repository: redis
+    tag: "7-alpine"
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+    requests:
+      cpu: 500m
+      memory: 256Mi
+  
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+  
+  config:
+    maxmemory: "512mb"
+    maxmemoryPolicy: "allkeys-lru"
+    appendonly: "yes"
+
+# ============================================================================
+# Node Selection
+# ============================================================================
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - tdfol
+        topologyKey: kubernetes.io/hostname
+
+# ============================================================================
+# Pod Disruption Budget
+# ============================================================================
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# ============================================================================
+# Network Policy
+# ============================================================================
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# ============================================================================
+# Monitoring
+# ============================================================================
+monitoring:
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+
+# ============================================================================
+# Environment-specific overrides
+# ============================================================================
+# For development
+dev:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  persistence:
+    data:
+      size: 5Gi
+    logs:
+      size: 2Gi
+    cache:
+      size: 2Gi
+
+# For staging
+staging:
+  replicaCount: 2
+  resources:
+    limits:
+      cpu: 3000m
+      memory: 3Gi
+    requests:
+      cpu: 750m
+      memory: 1.5Gi
+  persistence:
+    data:
+      size: 10Gi
+    logs:
+      size: 5Gi
+    cache:
+      size: 5Gi
+
+# For production (uses defaults above)
+production: {}

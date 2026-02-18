@@ -18,7 +18,9 @@ from ipfs_datasets_py.logic.TDFOL import (
     clear_global_proof_cache,
     parse_tdfol,
     TDFOLProver,
-    TDFOLProofResult
+    TDFOLProofResult,
+    Predicate,
+    Variable
 )
 
 
@@ -39,7 +41,7 @@ class TestTDFOLProofCache:
     def test_cache_miss(self):
         """Test cache miss returns None."""
         cache = TDFOLProofCache()
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         
         result = cache.get(formula, [])
         assert result is None
@@ -47,7 +49,7 @@ class TestTDFOLProofCache:
     def test_cache_hit(self):
         """Test cache hit returns cached result."""
         cache = TDFOLProofCache()
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         
         # Create a proof result
         proof_result = TDFOLProofResult(
@@ -70,16 +72,16 @@ class TestTDFOLProofCache:
     def test_cache_with_axioms(self):
         """Test caching distinguishes between different axiom sets."""
         cache = TDFOLProofCache()
-        formula = parse_tdfol("Q")
+        formula = Predicate("Q", ())
         
         # Cache with axiom P
         result1 = TDFOLProofResult(True, formula, "forward_chaining", [], 0.001)
-        axioms1 = [parse_tdfol("P")]
+        axioms1 = [Predicate("P", ())]
         cache.set(formula, result1, axioms1)
         
         # Cache with different axiom R
         result2 = TDFOLProofResult(False, formula, "forward_chaining", [], 0.001)
-        axioms2 = [parse_tdfol("R")]
+        axioms2 = [Predicate("R", ())]
         cache.set(formula, result2, axioms2)
         
         # Different axioms should give different results
@@ -92,7 +94,7 @@ class TestTDFOLProofCache:
     def test_cache_statistics(self):
         """Test cache statistics tracking."""
         cache = TDFOLProofCache()
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         
         # Initial stats
         stats = cache.get_stats()
@@ -117,7 +119,7 @@ class TestTDFOLProofCache:
     def test_cache_clear(self):
         """Test clearing the cache."""
         cache = TDFOLProofCache()
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         
         # Add to cache
         result = TDFOLProofResult(True, formula, "axiom", [], 0.001)
@@ -143,7 +145,7 @@ class TestTDFOLProofCache:
         """Test TTL expiration removes old entries."""
         # Create cache with 1 second TTL
         cache = TDFOLProofCache(ttl=1)
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         
         # Cache a result
         result = TDFOLProofResult(True, formula, "axiom", [], 0.001)
@@ -165,7 +167,7 @@ class TestTDFOLProofCache:
         
         # Add 3 items
         for i in range(3):
-            formula = parse_tdfol(f"P{i}")
+            formula = Predicate(f"P{i}", ())
             result = TDFOLProofResult(True, formula, "axiom", [], 0.001)
             cache.set(formula, result, [])
         
@@ -175,9 +177,17 @@ class TestTDFOLProofCache:
     
     def test_prover_integration_with_cache(self):
         """Test TDFOLProver uses cache when enabled."""
+        from ipfs_datasets_py.logic.TDFOL import create_implication, TDFOLKnowledgeBase
+        
         clear_global_proof_cache()
-        prover = TDFOLProver(enable_cache=True)
-        formula = parse_tdfol("P -> P")
+        
+        # Create KB with axiom P
+        kb = TDFOLKnowledgeBase()
+        p = Predicate("P", ())
+        kb.add_axiom(p)
+        
+        prover = TDFOLProver(kb, enable_cache=True)
+        formula = p  # Prove P from axiom P
         
         # First proof (cache miss)
         result1 = prover.prove(formula, timeout_ms=1000)
@@ -196,8 +206,15 @@ class TestTDFOLProofCache:
     
     def test_prover_without_cache(self):
         """Test TDFOLProver works without cache."""
-        prover = TDFOLProver(enable_cache=False)
-        formula = parse_tdfol("P -> P")
+        from ipfs_datasets_py.logic.TDFOL import create_implication, TDFOLKnowledgeBase
+        
+        # Create KB with axiom P
+        kb = TDFOLKnowledgeBase()
+        p = Predicate("P", ())
+        kb.add_axiom(p)
+        
+        prover = TDFOLProver(kb, enable_cache=False)
+        formula = p  # Prove P from axiom P
         
         result = prover.prove(formula, timeout_ms=1000)
         assert result.is_proved()
@@ -207,7 +224,7 @@ class TestTDFOLProofCache:
         import threading
         
         cache = TDFOLProofCache()
-        formula = parse_tdfol("P")
+        formula = Predicate("P", ())
         result = TDFOLProofResult(True, formula, "axiom", [], 0.001)
         
         def set_cache():
@@ -234,8 +251,8 @@ class TestTDFOLProofCache:
         """Test cache correctly distinguishes different formulas."""
         cache = TDFOLProofCache()
         
-        formula1 = parse_tdfol("P")
-        formula2 = parse_tdfol("Q")
+        formula1 = Predicate("P", ())
+        formula2 = Predicate("Q", ())
         
         result1 = TDFOLProofResult(True, formula1, "axiom", [], 0.001)
         result2 = TDFOLProofResult(False, formula2, "axiom", [], 0.001)

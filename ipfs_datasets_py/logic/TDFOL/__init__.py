@@ -77,6 +77,51 @@ if TYPE_CHECKING:
     )
     from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
     from .nl.tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
+    from .proof_tree_visualizer import (
+        ProofTreeVisualizer,
+        ProofTreeNode,
+        NodeType,
+        TreeStyle,
+        VerbosityLevel,
+        visualize_proof,
+    )
+    from .formula_dependency_graph import (
+        FormulaDependencyGraph,
+        DependencyNode,
+        DependencyEdge,
+        FormulaType,
+        DependencyType,
+        CircularDependencyError,
+        analyze_proof_dependencies,
+        find_proof_chain,
+    )
+    from .countermodel_visualizer import (
+        CountermodelVisualizer,
+        BoxChars,
+        GraphLayout,
+        create_visualizer,
+    )
+    from .performance_dashboard import (
+        PerformanceDashboard,
+        ProofMetrics,
+        TimeSeriesMetric,
+        AggregatedStats,
+        MetricType,
+        get_global_dashboard,
+        reset_global_dashboard,
+    )
+    from .security_validator import (
+        SecurityValidator,
+        SecurityConfig,
+        SecurityLevel,
+        ThreatType,
+        ValidationResult,
+        AuditResult,
+        RateLimiter,
+        create_validator,
+        validate_formula,
+        audit_proof,
+    )
 
 __all__ = [
     # Enumerations
@@ -137,6 +182,51 @@ __all__ = [
     "ProcessedDocument",
     "Entity",
     
+    # Proof Tree Visualizer (Phase 11)
+    "ProofTreeVisualizer",
+    "ProofTreeNode",
+    "NodeType",
+    "TreeStyle",
+    "VerbosityLevel",
+    "visualize_proof",
+    
+    # Formula Dependency Graph (Phase 11)
+    "FormulaDependencyGraph",
+    "DependencyNode",
+    "DependencyEdge",
+    "FormulaType",
+    "DependencyType",
+    "CircularDependencyError",
+    "analyze_proof_dependencies",
+    "find_proof_chain",
+    
+    # Countermodel Visualizer (Phase 11)
+    "CountermodelVisualizer",
+    "BoxChars",
+    "GraphLayout",
+    "create_visualizer",
+    
+    # Performance Dashboard (Phase 11 Task 11.4)
+    "PerformanceDashboard",
+    "ProofMetrics",
+    "TimeSeriesMetric",
+    "AggregatedStats",
+    "MetricType",
+    "get_global_dashboard",
+    "reset_global_dashboard",
+    
+    # Security Validator (Phase 12 Task 12.2)
+    "SecurityValidator",
+    "SecurityConfig",
+    "SecurityLevel",
+    "ThreatType",
+    "ValidationResult",
+    "AuditResult",
+    "RateLimiter",
+    "create_validator",
+    "validate_formula",
+    "audit_proof",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -183,6 +273,46 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "NLPreprocessor": (".nl.tdfol_nl_preprocessor", "NLPreprocessor"),
     "ProcessedDocument": (".nl.tdfol_nl_preprocessor", "ProcessedDocument"),
     "Entity": (".nl.tdfol_nl_preprocessor", "Entity"),
+    # Proof Tree Visualizer
+    "ProofTreeVisualizer": (".proof_tree_visualizer", "ProofTreeVisualizer"),
+    "ProofTreeNode": (".proof_tree_visualizer", "ProofTreeNode"),
+    "NodeType": (".proof_tree_visualizer", "NodeType"),
+    "TreeStyle": (".proof_tree_visualizer", "TreeStyle"),
+    "VerbosityLevel": (".proof_tree_visualizer", "VerbosityLevel"),
+    "visualize_proof": (".proof_tree_visualizer", "visualize_proof"),
+    # Formula Dependency Graph
+    "FormulaDependencyGraph": (".formula_dependency_graph", "FormulaDependencyGraph"),
+    "DependencyNode": (".formula_dependency_graph", "DependencyNode"),
+    "DependencyEdge": (".formula_dependency_graph", "DependencyEdge"),
+    "FormulaType": (".formula_dependency_graph", "FormulaType"),
+    "DependencyType": (".formula_dependency_graph", "DependencyType"),
+    "CircularDependencyError": (".formula_dependency_graph", "CircularDependencyError"),
+    "analyze_proof_dependencies": (".formula_dependency_graph", "analyze_proof_dependencies"),
+    "find_proof_chain": (".formula_dependency_graph", "find_proof_chain"),
+    # Countermodel Visualizer
+    "CountermodelVisualizer": (".countermodel_visualizer", "CountermodelVisualizer"),
+    "BoxChars": (".countermodel_visualizer", "BoxChars"),
+    "GraphLayout": (".countermodel_visualizer", "GraphLayout"),
+    "create_visualizer": (".countermodel_visualizer", "create_visualizer"),
+    # Performance Dashboard
+    "PerformanceDashboard": (".performance_dashboard", "PerformanceDashboard"),
+    "ProofMetrics": (".performance_dashboard", "ProofMetrics"),
+    "TimeSeriesMetric": (".performance_dashboard", "TimeSeriesMetric"),
+    "AggregatedStats": (".performance_dashboard", "AggregatedStats"),
+    "MetricType": (".performance_dashboard", "MetricType"),
+    "get_global_dashboard": (".performance_dashboard", "get_global_dashboard"),
+    "reset_global_dashboard": (".performance_dashboard", "reset_global_dashboard"),
+    # Security Validator
+    "SecurityValidator": (".security_validator", "SecurityValidator"),
+    "SecurityConfig": (".security_validator", "SecurityConfig"),
+    "SecurityLevel": (".security_validator", "SecurityLevel"),
+    "ThreatType": (".security_validator", "ThreatType"),
+    "ValidationResult": (".security_validator", "ValidationResult"),
+    "AuditResult": (".security_validator", "AuditResult"),
+    "RateLimiter": (".security_validator", "RateLimiter"),
+    "create_validator": (".security_validator", "create_validator"),
+    "validate_formula": (".security_validator", "validate_formula"),
+    "audit_proof": (".security_validator", "audit_proof"),
 }
 
 

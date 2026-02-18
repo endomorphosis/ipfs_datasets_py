@@ -165,6 +165,41 @@ tptp_str = tdfol_to_tptp(formula, name="obligation1")
 print(tptp_str)  # "fof(obligation1, conjecture, obligatory(p(X)))."
 ```
 
+### Visualizing Proofs and Dependencies
+
+```python
+from ipfs_datasets_py.logic.TDFOL import (
+    TDFOLProver,
+    FormulaDependencyGraph,
+    visualize_proof,
+    analyze_proof_dependencies
+)
+
+# Prove a theorem
+prover = TDFOLProver(kb)
+result = prover.prove(goal)
+
+# Visualize proof tree (Task 11.1)
+visualizer = visualize_proof(result)
+visualizer.export_ascii()  # ASCII tree
+visualizer.export_dot("proof.dot")  # GraphViz
+visualizer.export_html("proof.html")  # Interactive HTML
+
+# Analyze formula dependencies (Task 11.2)
+graph = FormulaDependencyGraph(proof_result=result)
+
+# Find critical path
+critical = graph.find_critical_path(axiom, theorem)
+print(f"Shortest proof: {' → '.join(str(f) for f in critical)}")
+
+# Export dependency graph
+graph.export_dot("dependencies.dot", highlight_path=critical)
+graph.export_json("dependencies.json")
+
+# Or use convenience function
+analyze_proof_dependencies(result, output_dir="./output")
+```
+
 ## Formula Types Reference
 
 ### Terms
@@ -533,10 +568,10 @@ pytest tests/unit_tests/logic/TDFOL/ --cov=ipfs_datasets_py.logic.TDFOL
 - 90%+ code coverage  
 - Property-based testing
 
-**Phase 11: Visualization Tools** (2-3 weeks)  
-- Proof tree visualization (ASCII, GraphViz, HTML)  
-- Formula dependency graphs  
-- Interactive visualizations
+**Phase 11: Visualization Tools** (2-3 weeks) ✅ **COMPLETE**
+- ✅ Proof tree visualization (ASCII, GraphViz, HTML) - Task 11.1
+- ✅ Formula dependency graphs - Task 11.2
+- Interactive visualizations (in progress)
 
 **Phase 12: Production Hardening** (2-3 weeks)  
 - Performance optimization and profiling  
@@ -553,7 +588,7 @@ pytest tests/unit_tests/logic/TDFOL/ --cov=ipfs_datasets_py.logic.TDFOL
 3. **Modal Logic:** Integration hooks only, **not fully implemented** (Phase 8)
 4. **Optimization:** Basic proof caching, **no strategy optimization** (Phase 9)
 5. **Testing:** 97 tests only, **needs comprehensive coverage** (Phase 10)
-6. **Visualization:** **None** - needs proof trees and graphs (Phase 11)
+6. **Visualization:** ✅ **Proof trees and dependency graphs complete** (Phase 11.1, 11.2)
 
 ## API Reference
 
