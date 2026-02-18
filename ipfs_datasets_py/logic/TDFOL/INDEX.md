@@ -1,28 +1,49 @@
 # TDFOL Refactoring Documentation Index
-## February 18, 2026 - Version 2.0
+## February 18, 2026 - Version 2.1 (REVISED)
 
 Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactoring documentation hub. This index helps you navigate all planning and implementation documents.
 
 ---
 
+## ⚠️ IMPORTANT: Plan Revised to v2.1
+
+**The refactoring plan has been REVISED** to leverage existing infrastructure:
+- ✅ **MCP Server** (not REST API) - already exists
+- ✅ **External ATPs** (Z3, CVC5, Lean, Coq, SymbolicAI) - already exist
+- ✅ **LLM Router** - already exists
+- ✅ **Docker/Kubernetes** - already exist
+
+**See:** [REVISION_SUMMARY.md](./REVISION_SUMMARY.md) for complete details
+
+---
+
 ## 📚 Documentation Structure
 
-### 🎯 Start Here (Version 2.0 - 2026-02-18)
+### 🎯 Start Here (Version 2.1 - REVISED - 2026-02-18)
 
 **New to TDFOL or the refactoring plan?** Start with these documents in order:
 
-1. **[REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md)** ⭐
-   - **What:** High-level overview of completed work and future plans
+1. **[REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md)** ⭐ **← NEW MASTER**
+   - **What:** High-level overview (REVISED to reflect existing infrastructure)
    - **Who:** Managers, stakeholders, decision-makers
-   - **Status:** 🟢 COMPLETE (Phases 1-12) | 📋 PLANNING (Phases 13-17)
+   - **Status:** 🟢 COMPLETE (Phases 1-12) | 📋 PLANNING (Phases 13-18)
    - **Key Sections:**
      - Current state (19,311 LOC, 765 tests, production-ready)
      - What's complete (Phases 1-12 achievements)
-     - What's next (Phases 13-17: REST API, multi-language, ATPs)
+     - What's next (REVISED: MCP server, llm_router, external ATPs)
      - Success metrics and risk assessment
-     - Investment required (16-22 weeks, 320-440 hours)
+     - Investment required (14-19 weeks, 280-380 hours) ⚡ REDUCED
 
-2. **[STATUS_2026.md](./STATUS_2026.md)** ⭐ **← Single Source of Truth**
+2. **[REVISION_SUMMARY.md](./REVISION_SUMMARY.md)** 📋 **← READ THIS FIRST**
+   - **What:** Explains all changes from v2.0 to v2.1
+   - **Who:** Everyone planning future work
+   - **Content:**
+     - What infrastructure was found
+     - How each phase changed
+     - Timeline and effort savings (2-3 weeks, 40-60 hours)
+     - Benefits of revised approach
+
+3. **[STATUS_2026.md](./STATUS_2026.md)** ⭐ **← Single Source of Truth**
    - **What:** Complete implementation status and metrics
    - **Who:** Everyone - comprehensive reference
    - **Content:**
@@ -30,54 +51,76 @@ Welcome to the TDFOL (Temporal Deontic First-Order Logic) comprehensive refactor
      - Component status (all 15+ modules)
      - Code structure and test coverage
      - All 12 completed phases with deliverables
-     - Future enhancements (Phases 13-17)
+     - Future enhancements (Phases 13-18)
      - Documentation index
 
-3. **[UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** 📖
-   - **What:** Master roadmap with completed and future work
+4. **[UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md](./UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md)** 📖 **← NEW MASTER**
+   - **What:** Master roadmap (REVISED to leverage existing systems)
    - **Who:** Technical leads, architects, project managers
    - **Content:**
-     - Complete timeline (Phases 1-17)
+     - Complete timeline (Phases 1-18, including new Phase 18)
      - Detailed deliverables for each phase
      - Code examples and patterns
-     - Success metrics and risk assessment
+     - Integration with existing infrastructure
      - Resource requirements
 
-4. **[IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)** 🚀
+5. **[IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md)** 🚀
    - **What:** Developer implementation guide
-   - **Who:** Developers implementing Phases 13-17
+   - **Who:** Developers implementing Phases 13-18
    - **Content:**
      - Getting started instructions
      - Development workflow
      - Code style and testing guidelines
-     - Phase-specific implementation guides
+     - Phase-specific implementation guides (to be updated)
      - Common patterns and troubleshooting
 
 ---
 
 ## 🗂️ All Documentation Files
 
-### 📋 Master Planning Documents (Version 2.0 - Feb 18, 2026)
+### 📋 Master Planning Documents (Version 2.1 - REVISED - Feb 18, 2026)
 
 | Document | Purpose | Audience | Size | Priority |
 |----------|---------|----------|------|----------|
-| [STATUS_2026.md](./STATUS_2026.md) | Single source of truth | Everyone | 17.5KB | ⭐ **Reference** |
-| [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md) | Executive summary | Managers | 9.9KB | ⭐ Read First |
-| [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md) | Master roadmap | Tech leads | 41.4KB | 📖 Detailed |
+| [REVISION_SUMMARY.md](./REVISION_SUMMARY.md) | What changed v2.0→v2.1 | Everyone | 7.6KB | ⭐ **Read First** |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_REVISED.md) | Executive summary (REVISED) | Managers | 8.8KB | ⭐ **New Master** |
+| [UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md](./UNIFIED_REFACTORING_ROADMAP_2026_REVISED.md) | Master roadmap (REVISED) | Tech leads | 20.8KB | 📖 **New Master** |
+| [STATUS_2026.md](./STATUS_2026.md) | Single source of truth | Everyone | 17.5KB | 📍 Reference |
 | [IMPLEMENTATION_QUICK_START_2026.md](./IMPLEMENTATION_QUICK_START_2026.md) | Implementation guide | Developers | 20.5KB | 🚀 Developer |
-| **INDEX.md** | This navigation file | Everyone | ~5KB | 📍 Navigation |
+| **INDEX.md** | This navigation file | Everyone | ~7KB | 📍 Navigation |
 
-### 📊 Historical Planning Documents (Version 1.0 - Pre-Feb 18, 2026)
+### 📊 Version History
 
-**Note:** These documents are superseded by Version 2.0 documents above. Kept for historical reference.
+**Version 2.1 (REVISED - Feb 18, 2026):** ✅ CURRENT
+- Revised to leverage existing infrastructure
+- MCP server instead of REST API
+- LLM router integration
+- External ATPs already exist
+- NEW Phase 18: Documentation modernization
+- Timeline reduced: 14-19 weeks (vs 16-22)
+- Effort reduced: 280-380h (vs 320-440h)
+
+**Version 2.0 (Original - Feb 18, 2026):** 🟡 Superseded
+- Original comprehensive plan
+- Assumed new REST API needed
+- Assumed new ATP integrations needed
+- Superseded by v2.1 REVISED
 
 | Document | Status | Notes |
 |----------|--------|-------|
-| [COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) | 🟡 Historical | Original v1.0 plan - superseded by UNIFIED_REFACTORING_ROADMAP_2026.md |
-| [REFACTORING_EXECUTIVE_SUMMARY.md](./REFACTORING_EXECUTIVE_SUMMARY.md) | 🟡 Historical | Original summary - superseded by REFACTORING_EXECUTIVE_SUMMARY_2026.md |
-| [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) | 🟡 Historical | Phase 7 era summary - superseded by _2026.md version |
-| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | 🟡 Historical | Original quick ref - superseded by IMPLEMENTATION_QUICK_START_2026.md |
-| [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md) | 🟡 Historical | Phase 7 era quick ref - superseded by IMPLEMENTATION_QUICK_START_2026.md |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026.md](./REFACTORING_EXECUTIVE_SUMMARY_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
+| [UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md) | 🟡 Superseded | v2.0 - superseded by _REVISED version |
+
+**Version 1.0 (Pre-Feb 18, 2026):** 🟡 Historical
+
+| Document | Status | Notes |
+|----------|--------|-------|
+| [COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_IMPROVEMENT_PLAN.md) | 🟡 Historical | v1.0 - superseded by v2.1 |
+| [REFACTORING_EXECUTIVE_SUMMARY.md](./REFACTORING_EXECUTIVE_SUMMARY.md) | 🟡 Historical | v1.0 summary |
+| [REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md](./REFACTORING_EXECUTIVE_SUMMARY_2026_02_18.md) | 🟡 Historical | Phase 7 era |
+| [QUICK_REFERENCE.md](./QUICK_REFERENCE.md) | 🟡 Historical | v1.0 quick ref |
+| [QUICK_REFERENCE_2026_02_18.md](./QUICK_REFERENCE_2026_02_18.md) | 🟡 Historical | Phase 7 era |
+| [REFACTORING_PLAN_2026_02_18.md](./REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan |
 | [REFACTORING_PLAN_2026_02_18.md](./REFACTORING_PLAN_2026_02_18.md) | 🟡 Historical | Phase 7 era plan - superseded by UNIFIED_REFACTORING_ROADMAP_2026.md |
 
 ### Phase Completion Reports
