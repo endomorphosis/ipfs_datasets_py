@@ -1,578 +1,36 @@
 """
-Test Runner Tool
+Test Runner Tool - Thin MCP Wrapper
 
 Comprehensive test execution and results management for Python projects.
-Migrated from claudes_toolbox with enhanced dataset testing and IPFS integration.
+This is a thin wrapper around core testing functionality.
 """
 
 import json
-import os
-import subprocess
-import tempfile
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict
+from typing import Dict, List, Optional, Any
+from dataclasses import asdict
 import logging
 import anyio
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
-from .base_tool import BaseDevelopmentTool, development_tool_mcp_wrapper
+from .base_tool import BaseDevelopmentTool
 from .config import get_config
+from ipfs_datasets_py.testing import (
+    TestResult,
+    TestSuiteResult,
+    TestRunSummary,
+    TestExecutor,
+    DatasetTestRunner
+)
 
 logger = logging.getLogger(__name__)
 
 
-@dataclass
-class TestResult:
-    """Individual test result."""
-    name: str
-    status: str  # 'passed', 'failed', 'skipped', 'error'
-    duration: float
-    message: Optional[str] = None
-    file_path: Optional[str] = None
-    line_number: Optional[int] = None
-
-
-@dataclass
-class TestSuiteResult:
-    """Results from a test suite run."""
-    suite_name: str
-    tool: str  # 'pytest', 'unittest', 'mypy', 'flake8', etc.
-    status: str  # 'passed', 'failed', 'error'
-    total_tests: int
-    passed: int
-    failed: int
-    skipped: int
-    errors: int
-    duration: float
-    coverage_percentage: Optional[float] = None
-    tests: List[TestResult] = None
-    output: str = ""
-
-    def __post_init__(self):
-        if self.tests is None:
-            self.tests = []
-
-
-@dataclass
-class TestRunSummary:
-    """Complete test run summary."""
-    timestamp: str
-    project_path: str
-    total_suites: int
-    suites_passed: int
-    suites_failed: int
-    total_duration: float
-    overall_status: str
-    suites: List[TestSuiteResult]
-    coverage_report: Optional[Dict[str, Any]] = None
-
-    def __post_init__(self):
-        if self.suites is None:
-            self.suites = []
-
-
-class TestExecutor:
-    """Core test execution functionality."""
-
-    def __init__(self):
-        self.config = get_config().test_runner
-
-    def run_pytest(self, path: Path, coverage: bool = True,
-                   verbose: bool = False) -> TestSuiteResult:
-        """Run pytest test suite."""
-        start_time = time.time()
-
-        cmd = ['python', '-m', 'pytest', str(path)]
-
-        if coverage:
-            cmd.extend(['--cov', str(path), '--cov-report', 'json'])
-
-        if verbose:
-            cmd.append('-v')
-
-        # Add JSON report for parsing
-        json_report_path = tempfile.mktemp(suffix='.json')
-        cmd.extend(['--json-report', f'--json-report-file={json_report_path}'])
-
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.config.timeout_seconds
-            )
-
-            duration = time.time() - start_time
-
-            # Parse JSON report if available
-            tests = []
-            total_tests = 0
-            passed = failed = skipped = errors = 0
-
-            if os.path.exists(json_report_path):
-                try:
-                    with open(json_report_path, 'r') as f:
-                        report_data = json.load(f)
-
-                    # Extract test results
-                    for test in report_data.get('tests', []):
-                        test_result = TestResult(
-                            name=test.get('name', ''),
-                            status=test.get('outcome', 'unknown'),
-                            duration=test.get('duration', 0.0),
-                            message=test.get('message'),
-                            file_path=test.get('file'),
-                            line_number=test.get('line')
-                        )
-                        tests.append(test_result)
-
-                        if test_result.status == 'passed':
-                            passed += 1
-                        elif test_result.status == 'failed':
-                            failed += 1
-                        elif test_result.status == 'skipped':
-                            skipped += 1
-                        else:
-                            errors += 1
-
-                    total_tests = len(tests)
-
-                except Exception as e:
-                    logger.warning(f"Failed to parse pytest JSON report: {e}")
-
-                finally:
-                    # Clean up temp file
-                    try:
-                        os.unlink(json_report_path)
-                    except:
-                        pass
-
-            # Fallback to parsing stdout if JSON report failed
-            if total_tests == 0:
-                total_tests, passed, failed, skipped, errors = self._parse_pytest_output(result.stdout)
-
-            status = "passed" if result.returncode == 0 else "failed"
-
-            return TestSuiteResult(
-                suite_name="pytest",
-                tool="pytest",
-                status=status,
-                total_tests=total_tests,
-                passed=passed,
-                failed=failed,
-                skipped=skipped,
-                errors=errors,
-                duration=duration,
-                tests=tests,
-                output=result.stdout + result.stderr
-            )
-
-        except subprocess.TimeoutExpired:
-            return TestSuiteResult(
-                suite_name="pytest",
-                tool="pytest",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output="Test execution timed out"
-            )
-        except Exception as e:
-            return TestSuiteResult(
-                suite_name="pytest",
-                tool="pytest",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output=f"Error running pytest: {e}"
-            )
-
-    def run_unittest(self, path: Path, verbose: bool = False) -> TestSuiteResult:
-        """Run unittest test suite."""
-        start_time = time.time()
-
-        cmd = ['python', '-m', 'unittest', 'discover']
-        if verbose:
-            cmd.append('-v')
-
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.config.timeout_seconds
-            )
-
-            duration = time.time() - start_time
-
-            # Parse unittest output
-            total_tests, passed, failed, skipped, errors = self._parse_unittest_output(result.stderr)
-
-            status = "passed" if result.returncode == 0 else "failed"
-
-            return TestSuiteResult(
-                suite_name="unittest",
-                tool="unittest",
-                status=status,
-                total_tests=total_tests,
-                passed=passed,
-                failed=failed,
-                skipped=skipped,
-                errors=errors,
-                duration=duration,
-                output=result.stdout + result.stderr
-            )
-
-        except subprocess.TimeoutExpired:
-            return TestSuiteResult(
-                suite_name="unittest",
-                tool="unittest",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output="Test execution timed out"
-            )
-        except Exception as e:
-            return TestSuiteResult(
-                suite_name="unittest",
-                tool="unittest",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output=f"Error running unittest: {e}"
-            )
-
-    def run_mypy(self, path: Path) -> TestSuiteResult:
-        """Run mypy type checking."""
-        start_time = time.time()
-
-        cmd = ['python', '-m', 'mypy', str(path)]
-
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.config.timeout_seconds
-            )
-
-            duration = time.time() - start_time
-
-            # Count errors and warnings in mypy output
-            errors = warnings = 0
-            for line in result.stdout.split('\n'):
-                if ': error:' in line:
-                    errors += 1
-                elif ': warning:' in line:
-                    warnings += 1
-
-            total_checks = errors + warnings
-            passed = 0 if errors > 0 else 1
-
-            status = "passed" if result.returncode == 0 else "failed"
-
-            return TestSuiteResult(
-                suite_name="mypy",
-                tool="mypy",
-                status=status,
-                total_tests=max(1, total_checks),
-                passed=passed,
-                failed=errors,
-                skipped=0,
-                errors=warnings,
-                duration=duration,
-                output=result.stdout + result.stderr
-            )
-
-        except subprocess.TimeoutExpired:
-            return TestSuiteResult(
-                suite_name="mypy",
-                tool="mypy",
-                status="error",
-                total_tests=1,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output="Type checking timed out"
-            )
-        except Exception as e:
-            return TestSuiteResult(
-                suite_name="mypy",
-                tool="mypy",
-                status="error",
-                total_tests=1,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output=f"Error running mypy: {e}"
-            )
-
-    def run_flake8(self, path: Path) -> TestSuiteResult:
-        """Run flake8 linting."""
-        start_time = time.time()
-
-        cmd = ['python', '-m', 'flake8', str(path)]
-
-        try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=self.config.timeout_seconds
-            )
-
-            duration = time.time() - start_time
-
-            # Count violations
-            violations = len([line for line in result.stdout.split('\n') if line.strip()])
-
-            status = "passed" if result.returncode == 0 else "failed"
-            passed = 1 if violations == 0 else 0
-            failed = 1 if violations > 0 else 0
-
-            return TestSuiteResult(
-                suite_name="flake8",
-                tool="flake8",
-                status=status,
-                total_tests=max(1, violations),
-                passed=passed,
-                failed=failed,
-                skipped=0,
-                errors=0,
-                duration=duration,
-                output=result.stdout + result.stderr
-            )
-
-        except subprocess.TimeoutExpired:
-            return TestSuiteResult(
-                suite_name="flake8",
-                tool="flake8",
-                status="error",
-                total_tests=1,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output="Linting timed out"
-            )
-        except Exception as e:
-            return TestSuiteResult(
-                suite_name="flake8",
-                tool="flake8",
-                status="error",
-                total_tests=1,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output=f"Error running flake8: {e}"
-            )
-
-    def _parse_pytest_output(self, output: str) -> Tuple[int, int, int, int, int]:
-        """Parse pytest output for test counts."""
-        # Look for pattern like "5 passed, 2 failed, 1 skipped"
-        import re
-
-        total = passed = failed = skipped = errors = 0
-
-        # Try to find the summary line
-        for line in output.split('\n'):
-            if 'passed' in line or 'failed' in line:
-                # Extract numbers
-                passed_match = re.search(r'(\d+) passed', line)
-                failed_match = re.search(r'(\d+) failed', line)
-                skipped_match = re.search(r'(\d+) skipped', line)
-                error_match = re.search(r'(\d+) error', line)
-
-                if passed_match:
-                    passed = int(passed_match.group(1))
-                if failed_match:
-                    failed = int(failed_match.group(1))
-                if skipped_match:
-                    skipped = int(skipped_match.group(1))
-                if error_match:
-                    errors = int(error_match.group(1))
-
-                total = passed + failed + skipped + errors
-                break
-
-        return total, passed, failed, skipped, errors
-
-    def _parse_unittest_output(self, output: str) -> Tuple[int, int, int, int, int]:
-        """Parse unittest output for test counts."""
-        import re
-
-        total = passed = failed = skipped = errors = 0
-
-        # Look for pattern like "Ran 10 tests in 0.123s"
-        ran_match = re.search(r'Ran (\d+) tests?', output)
-        if ran_match:
-            total = int(ran_match.group(1))
-
-        # Count failures and errors
-        if 'FAILED' in output:
-            # Look for pattern like "FAILED (failures=2, errors=1)"
-            failed_match = re.search(r'failures=(\d+)', output)
-            error_match = re.search(r'errors=(\d+)', output)
-
-            if failed_match:
-                failed = int(failed_match.group(1))
-            if error_match:
-                errors = int(error_match.group(1))
-
-        passed = total - failed - errors - skipped
-
-        return total, passed, failed, skipped, errors
-
-
-class DatasetTestRunner:
-    """Specialized test runner for dataset-related functionality."""
-
-    def __init__(self):
-        self.config = get_config().test_runner
-
-    def run_dataset_integrity_tests(self, path: Path) -> TestSuiteResult:
-        """Run dataset integrity and validation tests."""
-        start_time = time.time()
-
-        try:
-            # Look for dataset test files
-            dataset_test_files = list(path.glob("**/test*dataset*.py")) + \
-                               list(path.glob("**/test*ipfs*.py"))
-
-            if not dataset_test_files:
-                return TestSuiteResult(
-                    suite_name="dataset_integrity",
-                    tool="dataset_tests",
-                    status="skipped",
-                    total_tests=0,
-                    passed=0,
-                    failed=0,
-                    skipped=1,
-                    errors=0,
-                    duration=time.time() - start_time,
-                    output="No dataset test files found"
-                )
-
-            # Run dataset tests with pytest
-            cmd = ['python', '-m', 'pytest', '-v'] + [str(f) for f in dataset_test_files]
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                cwd=path,
-                timeout=self.config.timeout_seconds
-            )
-
-            duration = time.time() - start_time
-
-            # Parse results
-            total_tests, passed, failed, skipped, errors = self._parse_dataset_test_output(result.stdout)
-
-            status = "passed" if result.returncode == 0 else "failed"
-
-            return TestSuiteResult(
-                suite_name="dataset_integrity",
-                tool="dataset_tests",
-                status=status,
-                total_tests=total_tests,
-                passed=passed,
-                failed=failed,
-                skipped=skipped,
-                errors=errors,
-                duration=duration,
-                output=result.stdout + result.stderr
-            )
-
-        except subprocess.TimeoutExpired:
-            return TestSuiteResult(
-                suite_name="dataset_integrity",
-                tool="dataset_tests",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output="Dataset tests timed out"
-            )
-        except Exception as e:
-            return TestSuiteResult(
-                suite_name="dataset_integrity",
-                tool="dataset_tests",
-                status="error",
-                total_tests=0,
-                passed=0,
-                failed=0,
-                skipped=0,
-                errors=1,
-                duration=time.time() - start_time,
-                output=f"Error running dataset tests: {e}"
-            )
-
-    def _parse_dataset_test_output(self, output: str) -> Tuple[int, int, int, int, int]:
-        """Parse dataset test output."""
-        # Similar to pytest parsing
-        import re
-
-        total = passed = failed = skipped = errors = 0
-
-        for line in output.split('\n'):
-            if 'passed' in line or 'failed' in line:
-                passed_match = re.search(r'(\d+) passed', line)
-                failed_match = re.search(r'(\d+) failed', line)
-                skipped_match = re.search(r'(\d+) skipped', line)
-                error_match = re.search(r'(\d+) error', line)
-
-                if passed_match:
-                    passed = int(passed_match.group(1))
-                if failed_match:
-                    failed = int(failed_match.group(1))
-                if skipped_match:
-                    skipped = int(skipped_match.group(1))
-                if error_match:
-                    errors = int(error_match.group(1))
-
-                total = passed + failed + skipped + errors
-                break
-
-        return total, passed, failed, skipped, errors
-
-
 class TestRunner(BaseDevelopmentTool):
     """
-    Comprehensive test runner for Python projects.
-
-    Executes unit tests, type checking, linting, and dataset integrity tests
-    with detailed reporting and results export.
+    Thin MCP wrapper for comprehensive test runner.
+    Delegates to core testing functionality.
     """
 
     def __init__(self):
@@ -582,25 +40,14 @@ class TestRunner(BaseDevelopmentTool):
             category="development"
         )
         self.config = get_config().test_runner
-        self.executor = TestExecutor()
-        self.dataset_runner = DatasetTestRunner()
+        self.executor = TestExecutor(timeout_seconds=self.config.timeout_seconds)
+        self.dataset_runner = DatasetTestRunner(timeout_seconds=self.config.timeout_seconds)
         self.params = {}
 
     async def _execute_core(self, **kwargs) -> Dict[str, Any]:
-        """
-        Core execution logic for the test runner.
-
-        Args:
-            **kwargs: Tool-specific parameters forwarded to run_comprehensive_tests
-
-        Returns:
-            Tool execution result
-        """
-        # Merge kwargs with stored params if any
+        """Core execution logic - delegates to run_comprehensive_tests."""
         merged_kwargs = self.params.copy() if hasattr(self, 'params') else {}
         merged_kwargs.update(kwargs)
-            
-        # Execute the test run and return the results directly
         return await self.run_comprehensive_tests(**merged_kwargs)
 
     async def run_comprehensive_tests(self,
@@ -614,38 +61,16 @@ class TestRunner(BaseDevelopmentTool):
                                     verbose: bool = False,
                                     save_results: bool = True,
                                     output_formats: Optional[List[str]] = None) -> Dict[str, Any]:
-        """
-        Run comprehensive test suite with multiple checkers.
-
-        Args:
-            path: Path to the project directory (default: ".")
-            run_unit_tests: Run unit tests (default: True)
-            run_type_check: Run mypy type checking (default: True)
-            run_linting: Run flake8 linting (default: True)
-            run_dataset_tests: Run dataset integrity tests (default: True)
-            test_framework: Testing framework to use - 'pytest' or 'unittest' (default: "pytest")
-            coverage: Generate coverage report (default: True)
-            verbose: Enable verbose output (default: False)
-            save_results: Save results to files (default: True)
-            output_formats: Output formats for results - ['json', 'markdown'] (default: ['json'])
-
-        Returns:
-            Dictionary containing comprehensive test results and statistics
-        """
+        """Run comprehensive test suite with multiple checkers."""
         try:
-            # Validate inputs
             path = self._validate_path(path)
-
             if output_formats is None:
                 output_formats = ['json']
 
             start_time = time.time()
             timestamp = datetime.now().isoformat()
 
-            # Initialize results
             suites = []
-
-            # Run different test suites in parallel
             tasks = []
 
             if run_unit_tests:
@@ -663,7 +88,6 @@ class TestRunner(BaseDevelopmentTool):
             if run_dataset_tests:
                 tasks.append(self._run_test_suite_async("dataset_tests", path))
 
-            # Execute all test suites
             if tasks:
                 suites = [None] * len(tasks)
 
@@ -678,13 +102,11 @@ class TestRunner(BaseDevelopmentTool):
 
             total_duration = time.time() - start_time
 
-            # Calculate summary statistics
             total_suites = len(suites)
             suites_passed = len([s for s in suites if s.status == "passed"])
             suites_failed = total_suites - suites_passed
             overall_status = "passed" if suites_failed == 0 else "failed"
 
-            # Create test run summary
             summary = TestRunSummary(
                 timestamp=timestamp,
                 project_path=str(path),
@@ -696,7 +118,6 @@ class TestRunner(BaseDevelopmentTool):
                 suites=suites
             )
 
-            # Save results if requested
             saved_files = []
             if save_results:
                 saved_files = await self._save_test_results(summary, path, output_formats)
@@ -710,7 +131,6 @@ class TestRunner(BaseDevelopmentTool):
                 "duration": total_duration
             })
 
-            # Convert to serializable format
             result = asdict(summary)
             result["saved_files"] = saved_files
 
@@ -722,7 +142,7 @@ class TestRunner(BaseDevelopmentTool):
 
     async def _run_test_suite_async(self, suite_type: str, path: Path,
                                    coverage: bool = False, verbose: bool = False) -> TestSuiteResult:
-        """Run a test suite asynchronously."""
+        """Run a test suite asynchronously - delegates to core executors."""
         def run_suite():
             if suite_type == "pytest":
                 return self.executor.run_pytest(path, coverage, verbose)
@@ -743,8 +163,6 @@ class TestRunner(BaseDevelopmentTool):
                                path: Path, formats: List[str]) -> List[str]:
         """Save test results in specified formats."""
         saved_files = []
-
-        # Create results directory
         results_dir = path / "test_results"
         results_dir.mkdir(exist_ok=True)
 
@@ -813,7 +231,8 @@ class TestRunner(BaseDevelopmentTool):
         return '\n'.join(lines)
 
 
-# Create a function that returns the runner instance without decorator first
+# MCP Wrapper Functions
+
 def create_test_runner(path: str = ".",
                      run_unit_tests: bool = True,
                      run_type_check: bool = True,
@@ -824,13 +243,8 @@ def create_test_runner(path: str = ".",
                      verbose: bool = False,
                      save_results: bool = True,
                      output_formats: Optional[List[str]] = None) -> BaseDevelopmentTool:
-    """
-    Create a properly configured TestRunner instance.
-    """
-    # Create a TestRunner instance
+    """Create a properly configured TestRunner instance."""
     runner = TestRunner()
-    
-    # Store parameters for later execution
     runner.params = {
         "path": path,
         "run_unit_tests": run_unit_tests,
@@ -843,7 +257,6 @@ def create_test_runner(path: str = ".",
         "save_results": save_results,
         "output_formats": output_formats
     }
-    
     return runner
 
 
@@ -857,24 +270,7 @@ def run_comprehensive_tests(path: str = ".",
                            verbose: bool = False,
                            save_results: bool = True,
                            output_formats: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Run comprehensive test suite including unit tests, type checking, linting, and dataset tests.
-
-    Args:
-        path: Path to the project directory (default: ".")
-        run_unit_tests: Run unit tests (default: True)
-        run_type_check: Run mypy type checking (default: True)
-        run_linting: Run flake8 linting (default: True)
-        run_dataset_tests: Run dataset integrity tests (default: True)
-        test_framework: Testing framework - 'pytest' or 'unittest' (default: "pytest")
-        coverage: Generate coverage report (default: True)
-        verbose: Enable verbose output (default: False)
-        save_results: Save results to files (default: True)
-        output_formats: Output formats - ['json', 'markdown'] (default: ['json'])
-
-    Returns:
-        Dict containing test results
-    """
+    """Run comprehensive test suite including unit tests, type checking, linting, and dataset tests."""
     test_runner = create_test_runner(
         path=path,
         run_unit_tests=run_unit_tests,
@@ -888,11 +284,9 @@ def run_comprehensive_tests(path: str = ".",
         output_formats=output_formats
     )
     
-    # Execute the test runner and return results
     try:
         try:
             import sniffio
-
             sniffio.current_async_library()
             in_async = True
         except Exception:
@@ -910,7 +304,6 @@ def run_comprehensive_tests(path: str = ".",
 
         return anyio.run(test_runner.execute)
     except Exception as e:
-        # Fallback to error result if execution fails
         return {
             "success": False,
             "error": "execution_error",
@@ -922,23 +315,14 @@ def run_comprehensive_tests(path: str = ".",
         }
 
 
-# Main MCP function
 async def test_runner(**kwargs):
-    """
-    Comprehensive test runner for Python projects.
-
-    Executes unit tests, type checking, linting, and dataset integrity tests
-    with detailed reporting and results export.
-    """
+    """MCP tool function for comprehensive test runner."""
     try:
         path = kwargs.get('path', '.')
         verbose = kwargs.get('verbose', False)
         coverage = kwargs.get('coverage', True)
         
-        runner = TestRunner(
-            name="TestRunner",
-            description="Comprehensive test runner for Python projects"
-        )
+        runner = TestRunner()
         
         result = await runner.execute(
             path=path,
@@ -958,45 +342,3 @@ async def test_runner(**kwargs):
             "tool_type": "development_tool"
         }
 
-
-async def create_test_runner(
-    path: str = ".",
-    verbose: bool = False,
-    coverage: bool = True,
-    run_unit_tests: bool = True,
-    run_type_check: bool = True,
-    run_linting: bool = True,
-    run_dataset_tests: bool = True,
-    test_framework: str = "pytest",
-    save_results: bool = True,
-    output_formats: Optional[List[str]] = None
-):
-    """
-    Create a properly configured TestRunner instance.
-    """
-    try:
-        runner = TestRunner(
-            name="TestRunner",
-            description="Comprehensive test runner for Python projects"
-        )
-        
-        result = await runner.execute(
-            path=path,
-            verbose=verbose,
-            coverage=coverage,
-            run_unit_tests=run_unit_tests,
-            run_type_check=run_type_check,
-            run_linting=run_linting,
-            run_dataset_tests=run_dataset_tests,
-            test_framework=test_framework,
-            save_results=save_results,
-            output_formats=output_formats or ["json"]
-        )
-        
-        return result
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Failed to create test runner: {str(e)}",
-            "tool_type": "development_tool"
-        }
