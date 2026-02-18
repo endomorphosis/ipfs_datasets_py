@@ -418,7 +418,7 @@ class BootstrapSystem:
                 await asyncio.sleep(0.1)  # Simulate network delay
                 
                 # Placeholder logic - would actually connect to node
-                if "bootstrap.libp2p.io" in node.multiaddr:
+                if node.multiaddr.startswith("/dns4/bootstrap.libp2p.io"):
                     # Simulate successful connection
                     attempt.status = BootstrapStatus.SUCCESS
                     attempt.peer_count = 5  # Simulated peer discovery
