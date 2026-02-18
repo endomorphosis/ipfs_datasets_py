@@ -634,7 +634,7 @@ class P2PMetricsCollector:
         # Update base collector
         self.base_collector.increment_counter(f'p2p.workflow.{status}')
         if execution_time_ms is not None:
-            self.base_collector.record_histogram('p2p.workflow.execution_time_ms', execution_time_ms)
+            self.base_collector.observe_histogram('p2p.workflow.execution_time_ms', execution_time_ms)
     
     def track_bootstrap_operation(
         self,
