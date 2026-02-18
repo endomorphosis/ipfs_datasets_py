@@ -42,8 +42,9 @@ These are the highest-signal improvement opportunities found during a quick pass
   - CAR support remains intentionally deferred (see `migration/formats.py`).
 - **Test environment expectations**
   - Some unit tests use the `mocker` fixture (from `pytest-mock`). Ensure it remains part of the test/dev dependency set.
-- **Current failing test set (local observation)**
-  - Running `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` executes most tests but ends with several failures plus a pytest internal error. These should be triaged and either fixed or explicitly marked/xfail with rationale.
+- **Recent suite stability fix**
+  - A pytest `INTERNALERROR` was previously triggered by unsafe mocking of `builtins.__import__` (returning `mocker.DEFAULT` for non-target imports) in `tests/unit/knowledge_graphs/migration/test_neo4j_exporter.py`, which broke pytest internals during failure reporting.
+  - The KG suite now completes cleanly.
 
 ---
 
@@ -114,8 +115,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream E — Testing & quality gates
 
 ### E0. Fix the current suite failures (P0)
-- [ ] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
+- [x] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
   - Acceptance: `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` completes without pytest INTERNALERROR; remaining failures are fixed or explicitly documented/xfail.
+  - Status (2026-02-18): suite completes cleanly (`800 passed`).
 
 ### E1. Migration module coverage (P0)
 - [ ] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
@@ -196,4 +198,6 @@ If you want a high-value sequence that keeps risk low:
 
 - 2026-02-18: Replaced placeholder similarity usage in `cross_document_reasoning.py` with a real similarity computation path and added/validated unit tests.
 - 2026-02-18: Added `pytest-mock` to test/dev dependencies to provide the `mocker` fixture for knowledge graph migration tests.
+- 2026-02-18: Fixed pytest `INTERNALERROR` in KG suite by making `builtins.__import__` mocking delegate to the real importer for all modules except the targeted optional dependency.
+- 2026-02-18: Restored LLM integration behavior in `cross_document_reasoning.py` (expose patchable `openai`/`anthropic`, prefer OpenAI/Anthropic paths when keys are set, and make `LLMRouter` initialization lazy).
 
