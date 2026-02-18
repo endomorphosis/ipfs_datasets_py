@@ -76,7 +76,8 @@ def _try_load_cec_prover() -> bool:
         InferenceRule = _InferenceRule
         HAVE_CEC_PROVER = True
         return True
-    except Exception:
+    except (ImportError, AttributeError, ModuleNotFoundError) as e:
+        logger.debug(f"CEC prover unavailable: {e}")
         HAVE_CEC_PROVER = False
         return False
 
@@ -98,7 +99,8 @@ def _try_load_modal_tableaux() -> bool:
         TableauProver = _TableauProver
         HAVE_MODAL_TABLEAUX = True
         return True
-    except Exception:
+    except (ImportError, AttributeError, ModuleNotFoundError) as e:
+        logger.debug(f"Modal tableaux unavailable: {e}")
         HAVE_MODAL_TABLEAUX = False
         return False
 
@@ -546,9 +548,11 @@ class TDFOLProver:
                                             rule.name,
                                             [formula, formula2]
                                         ))
-                            except:
-                                pass
-                    except Exception as e:
+                            except (AttributeError, TypeError, ValueError) as e:
+                                # Rule application failed for this formula pair
+                                logger.debug(f"Rule {rule.name} failed on formula pair: {e}")
+                                continue
+                    except (AttributeError, TypeError, ValueError) as e:
                         logger.debug(f"Rule {rule.name} failed: {e}")
                         continue
             
