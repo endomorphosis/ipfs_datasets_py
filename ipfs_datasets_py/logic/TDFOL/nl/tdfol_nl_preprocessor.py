@@ -20,16 +20,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Try to import spaCy - it's an optional dependency
-try:
-    import spacy
-    from spacy.tokens import Doc, Token
-    HAVE_SPACY = True
-except ImportError:
-    spacy = None  # type: ignore
-    Doc = None  # type: ignore
-    Token = None  # type: ignore
-    HAVE_SPACY = False
+# Import spaCy from centralized utils
+from .spacy_utils import HAVE_SPACY, spacy, Doc, Token
 
 
 class EntityType(Enum):

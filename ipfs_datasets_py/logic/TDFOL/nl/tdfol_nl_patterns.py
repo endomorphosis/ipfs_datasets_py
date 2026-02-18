@@ -23,18 +23,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
-# Try to import spaCy - it's an optional dependency
-try:
-    import spacy
-    from spacy.matcher import Matcher
-    from spacy.tokens import Doc, Span
-    HAVE_SPACY = True
-except ImportError:
-    spacy = None  # type: ignore
-    Matcher = None  # type: ignore
-    Doc = None  # type: ignore
-    Span = None  # type: ignore
-    HAVE_SPACY = False
+# Import spaCy from centralized utils
+from .spacy_utils import HAVE_SPACY, spacy, Doc, Span, Matcher
 
 
 class PatternType(Enum):
