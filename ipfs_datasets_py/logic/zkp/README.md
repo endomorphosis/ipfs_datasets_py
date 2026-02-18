@@ -10,9 +10,9 @@ The ZKP module provides zero-knowledge proof capabilities for the logic module, 
 
 - **🔐 Private Theorem Proving** - Prove theorems without revealing axioms
 - **✅ Fast Verification** - <10ms verification time
-- **📦 Succinct Proofs** - ~256 bytes per proof (Groth16 size)
-- **🔒 128-bit Security** - Cryptographically secure
-- **🚀 High Performance** - <1 second proving time
+- **📦 Succinct Proofs** - ~160 bytes per proof (simulated)
+- **⚠️ Simulation Only** - Not cryptographically secure
+- **🚀 High Performance** - Fast simulated proving/verification
 - **💾 Caching Support** - Cache proofs for reuse
 
 ## Use Cases
@@ -211,10 +211,10 @@ class ZKPCircuit:
 
 | Metric | Value |
 |--------|-------|
-| Proof Size | 256 bytes |
-| Proving Time | <1 second |
+| Proof Size | ~160 bytes (simulated) |
+| Proving Time | Fast (simulated) |
 | Verification Time | <10ms |
-| Security Level | 128-bit |
+| Security Level | None (simulation only) |
 | Cache Hit Speedup | ~100x |
 
 ## Example: Building Logic Circuits
@@ -246,7 +246,7 @@ circuit = create_implication_circuit(num_premises=3)
 ### Current Implementation
 The current implementation is a **simulated ZKP system** for demonstration purposes. It:
 - Uses SHA-256 hashing to simulate circuit commitments
-- Generates deterministic "proofs" of fixed size (256 bytes)
+- Generates simulated proofs of fixed size (~160 bytes)
 - Provides the correct API and performance characteristics
 - Is suitable for testing and development
 
@@ -303,7 +303,7 @@ cache.store_private_proof(
 Run comprehensive tests:
 
 ```bash
-pytest tests/unit_tests/logic/zkp/test_zkp_module.py -v
+pytest ipfs_datasets_py/tests/unit_tests/logic/zkp/test_zkp_module.py -v
 ```
 
 Test coverage includes:
@@ -323,7 +323,7 @@ Test coverage includes:
 - ❌ Do not use for actual private data
 
 ### Production (with py_ecc)
-- ✅ Cryptographically secure (128-bit)
+- ✅ Cryptographically secure (when implemented as a real backend)
 - ✅ Proven security guarantees
 - ✅ Battle-tested zkSNARK implementation
 - ✅ Suitable for production use with sensitive data

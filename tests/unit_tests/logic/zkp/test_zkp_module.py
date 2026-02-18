@@ -136,6 +136,15 @@ class TestZKPProver:
         with pytest.raises(ZKPError, match="At least one axiom required"):
             prover.generate_proof(theorem="Q", private_axioms=[])
 
+    def test_unknown_backend_rejected(self):
+        with pytest.raises(ZKPError, match="Unknown ZKP backend"):
+            ZKPProver(backend="definitely-not-a-backend")
+
+    def test_groth16_backend_fails_closed(self):
+        prover = ZKPProver(backend="groth16")
+        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+            prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
 
 class TestZKPVerifier:
     """Test ZKPVerifier functionality."""
@@ -174,6 +183,31 @@ class TestZKPVerifier:
         stats = verifier.get_stats()
         assert stats['proofs_verified'] == 1
         assert stats['proofs_rejected'] == 0
+
+    def test_malformed_proof_rejected_without_crash(self):
+        """
+        GIVEN: A malformed/non-ZKP proof object
+        WHEN: Verifying the proof
+        THEN: Verification returns False (does not raise)
+        """
+        verifier = ZKPVerifier()
+
+        class MalformedProof:
+            pass
+
+        assert verifier.verify_proof(MalformedProof()) is False
+
+        stats = verifier.get_stats()
+        assert stats['proofs_verified'] == 0
+        assert stats['proofs_rejected'] == 1
+
+    def test_groth16_verifier_fails_closed(self):
+        prover = ZKPProver()
+        proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
+
+        verifier = ZKPVerifier(backend="groth16")
+        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+            verifier.verify_proof(proof)
 
 
 class TestZKPCircuit:

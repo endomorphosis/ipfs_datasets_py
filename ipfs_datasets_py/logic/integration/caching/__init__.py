@@ -13,7 +13,7 @@ Components:
 - LogicIPLDStorage: IPLD-based logic storage
 """
 
-from .proof_cache import ProofCache, get_global_cache
+from ...common.proof_cache import ProofCache, get_global_cache
 from .ipfs_proof_cache import IPFSProofCache, get_global_ipfs_cache
 from .ipld_logic_storage import LogicIPLDStorage
 

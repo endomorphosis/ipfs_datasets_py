@@ -18,26 +18,45 @@ Migration:
 """
 
 import warnings
-from typing import Optional
+from typing import Any
 
-# Import from unified location
-from ...common.proof_cache import (
-    ProofCache,
-    CachedProofResult as CachedProof,
-    get_global_cache,
-)
-
-# Emit deprecation warning
-warnings.warn(
-    "integration.caching.proof_cache is deprecated. "
-    "Import from ipfs_datasets_py.logic.common.proof_cache instead. "
-    "This shim will be removed in a future version.",
-    DeprecationWarning,
-    stacklevel=2
-)
 
 __all__ = [
-    'ProofCache',
-    'CachedProof',
-    'get_global_cache',
+    "ProofCache",
+    "CachedProof",
+    "get_global_cache",
 ]
+
+
+_DEPRECATION_MESSAGE = (
+    "integration.caching.proof_cache is deprecated. "
+    "Import from ipfs_datasets_py.logic.common.proof_cache instead. "
+    "This shim will be removed in a future version."
+)
+
+
+def __getattr__(name: str) -> Any:
+    if name not in {"ProofCache", "CachedProof", "get_global_cache"}:
+        raise AttributeError(name)
+
+    warnings.warn(
+        _DEPRECATION_MESSAGE,
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
+    from ...common.proof_cache import (
+        ProofCache,
+        CachedProofResult as CachedProof,
+        get_global_cache,
+    )
+
+    if name == "ProofCache":
+        return ProofCache
+    if name == "CachedProof":
+        return CachedProof
+    return get_global_cache
+
+
+def __dir__() -> list[str]:
+    return sorted(list(globals().keys()) + __all__)

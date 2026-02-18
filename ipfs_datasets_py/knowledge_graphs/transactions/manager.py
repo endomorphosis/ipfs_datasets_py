@@ -301,16 +301,55 @@ class TransactionManager:
     
     def _detect_conflicts(self, transaction: Transaction):
         """
-        Detect write-write conflicts.
-        
-        Checks if any entity written by this transaction was also
-        written by another committed transaction since this transaction started.
-        
+        Detect write-write conflicts for ACID transaction isolation.
+
+        Implements optimistic concurrency control by checking if any entities written
+        by this transaction were also modified by other transactions that committed
+        after this transaction started.
+
+        Conflict Detection Rules:
+        1. READ_UNCOMMITTED: No conflict detection (dirty reads allowed)
+        2. READ_COMMITTED: No conflict detection (non-repeatable reads allowed)
+        3. REPEATABLE_READ: Check write-write conflicts only
+        4. SERIALIZABLE: Check write-write conflicts (read-write checked elsewhere)
+
+        A conflict occurs when:
+        - Transaction T1 starts at time t1
+        - Transaction T2 commits at time t2 > t1
+        - Both T1 and T2 write to the same entity E
+        - T1 attempts to commit after T2
+
+        This ensures the isolation property of ACID transactions by preventing
+        lost updates (where T1's writes would overwrite T2's committed changes).
+
         Args:
-            transaction: Transaction to check
+            transaction: The transaction attempting to commit
             
         Raises:
-            ConflictError: If conflicts detected
+            ConflictError: If write-write conflicts detected with details of:
+                - Conflicting entity IDs
+                - Transaction IDs that caused conflicts
+                - Format: "Write-write conflicts detected: [(entity_id, other_txn_id), ...]"
+
+        Example:
+            >>> # Timeline:
+            >>> # t0: txn1 starts, reads entity E1
+            >>> # t1: txn2 starts, reads entity E1
+            >>> # t2: txn1 writes E1 = "value1", commits successfully
+            >>> # t3: txn2 writes E1 = "value2", attempts commit
+            >>> 
+            >>> try:
+            ...     self._detect_conflicts(txn2)
+            ... except ConflictError as e:
+            ...     print(f"Conflict: {e}")
+            ...     # Conflict: Write-write conflicts detected: [('E1', 'txn1')]
+
+        Note:
+            This is a simplified conflict detection suitable for single-node deployments.
+            Distributed systems would need:
+            - Vector clocks or Lamport timestamps
+            - Distributed consensus (Paxos, Raft)
+            - Multi-version concurrency control (MVCC)
         """
         # For READ_UNCOMMITTED and READ_COMMITTED, no conflict detection
         if transaction.isolation_level in (

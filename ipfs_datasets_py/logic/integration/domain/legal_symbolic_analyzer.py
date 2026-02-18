@@ -15,61 +15,77 @@ import re
 from ..converters.deontic_logic_core import DeonticOperator, LegalAgent, TemporalCondition
 from .legal_domain_knowledge import LegalDomain
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Check for SymbolicAI availability
-try:
-    from ..utils.engine_env import autoconfigure_engine_env
-    autoconfigure_engine_env()
+SYMBOLIC_AI_AVAILABLE = False
+_SYMAI_INIT_ATTEMPTED = False
+_SYMAI_EXPRESSION = None
 
-    from ..utils.symai_config import choose_symai_neurosymbolic_engine, ensure_symai_config
 
-    chosen_engine = choose_symai_neurosymbolic_engine()
-    if chosen_engine:
-        # If we're routing through Codex, force-refresh the venv config so a
-        # previously written (and potentially unsupported) model string doesn't
-        # stick around.
-        force_config = bool(chosen_engine.get("model", "").startswith("codex:"))
-        router_enabled = os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "1")
-        ensure_symai_config(
-            neurosymbolic_model=chosen_engine["model"],
-            neurosymbolic_api_key=chosen_engine["api_key"],
-            force=force_config,
-            apply_engine_router=router_enabled.strip().lower() in {"1", "true", "yes", "on"},
-        )
+def _initialize_symbolic_ai() -> bool:
+    """Best-effort initialization of SymbolicAI.
 
-    import symai
-    from symai import Expression
+    Must be import-quiet: no side effects unless an analyzer instance opts in.
+    """
+    global SYMBOLIC_AI_AVAILABLE, _SYMAI_INIT_ATTEMPTED, _SYMAI_EXPRESSION
 
-    # If we are routing via Codex, register the custom engine before any queries.
+    if _SYMAI_INIT_ATTEMPTED:
+        return SYMBOLIC_AI_AVAILABLE
+    _SYMAI_INIT_ATTEMPTED = True
+
     try:
-        if chosen_engine and chosen_engine.get("model", "").startswith("codex:"):
-            from symai.functional import EngineRepository
+        from ..utils.engine_env import autoconfigure_engine_env
 
-            from ipfs_datasets_py.utils.symai_codex_engine import CodexExecNeurosymbolicEngine
+        autoconfigure_engine_env()
 
-            EngineRepository.register(
-                "neurosymbolic",
-                CodexExecNeurosymbolicEngine(),
-                allow_engine_override=True,
+        from ..utils.symai_config import choose_symai_neurosymbolic_engine, ensure_symai_config
+
+        chosen_engine = choose_symai_neurosymbolic_engine()
+        if chosen_engine:
+            force_config = bool(chosen_engine.get("model", "").startswith("codex:"))
+            router_enabled = os.environ.get("IPFS_DATASETS_PY_USE_SYMAI_ENGINE_ROUTER", "1")
+            ensure_symai_config(
+                neurosymbolic_model=chosen_engine["model"],
+                neurosymbolic_api_key=chosen_engine["api_key"],
+                force=force_config,
+                apply_engine_router=router_enabled.strip().lower() in {"1", "true", "yes", "on"},
             )
+
+        from symai import Expression as SymaiExpression
+
+        # If we are routing via Codex, register the custom engine before any queries.
+        try:
+            if chosen_engine and chosen_engine.get("model", "").startswith("codex:"):
+                from symai.functional import EngineRepository
+
+                from ipfs_datasets_py.utils.symai_codex_engine import CodexExecNeurosymbolicEngine
+
+                EngineRepository.register(
+                    "neurosymbolic",
+                    CodexExecNeurosymbolicEngine(),
+                    allow_engine_override=True,
+                )
+        except Exception as e:
+            logger.warning("Failed to register Codex-backed symai engine (%s)", e)
+
+        try:
+            from ipfs_datasets_py.utils.symai_ipfs_engine import register_ipfs_symai_engines
+
+            register_ipfs_symai_engines()
+        except Exception as e:
+            logger.warning("Failed to register IPFS-backed symai engines (%s)", e)
+
+        _SYMAI_EXPRESSION = SymaiExpression
+        SYMBOLIC_AI_AVAILABLE = True
+        logger.info("SymbolicAI initialized for enhanced legal analysis")
+    except (ImportError, SystemExit) as e:
+        SYMBOLIC_AI_AVAILABLE = False
+        logger.debug("SymbolicAI not available (%s)", e)
     except Exception as e:
-        logger.warning("Failed to register Codex-backed symai engine (%s)", e)
+        SYMBOLIC_AI_AVAILABLE = False
+        logger.warning("SymbolicAI initialization failed (%s)", e)
 
-    try:
-        from ipfs_datasets_py.utils.symai_ipfs_engine import register_ipfs_symai_engines
-
-        register_ipfs_symai_engines()
-    except Exception as e:
-        logger.warning("Failed to register IPFS-backed symai engines (%s)", e)
-
-    SYMBOLIC_AI_AVAILABLE = True
-    logger.info("SymbolicAI available for enhanced legal analysis")
-except (ImportError, SystemExit):
-    SYMBOLIC_AI_AVAILABLE = False
-    logger.warning("SymbolicAI not available - using fallback legal analysis")
+    return SYMBOLIC_AI_AVAILABLE
 
 
 @dataclass
@@ -121,7 +137,11 @@ class LegalSymbolicAnalyzer:
     
     def __init__(self):
         """Initialize the legal symbolic analyzer."""
-        self.symbolic_ai_available = SYMBOLIC_AI_AVAILABLE
+        self.symbolic_ai_available = _initialize_symbolic_ai()
+        self._Expression = _SYMAI_EXPRESSION
+
+        if self.symbolic_ai_available and self._Expression is None:
+            self.symbolic_ai_available = False
         
         if self.symbolic_ai_available:
             self._initialize_symbolic_ai()
@@ -196,7 +216,7 @@ Provide structured analysis with confidence scores.
 """
             
             # Get SymbolicAI analysis
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 analysis_prompt,
                 static_context=self.legal_context_text,
             )
@@ -235,7 +255,7 @@ Text: {text}
 Format as structured list with confidence scores.
 """
             
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 extraction_prompt,
                 static_context=f"{self.legal_context_text}\n\n{self.deontic_extractor_text}",
             )
@@ -273,7 +293,7 @@ Text: {text}
 Provide entity names, types (person/organization/government), and roles with confidence scores.
 """
             
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 entity_prompt,
                 static_context=f"{self.legal_context_text}\n\n{self.entity_extractor_text}",
             )
@@ -311,7 +331,7 @@ Text: {text}
 Provide structured temporal information with normalized dates where possible.
 """
             
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 temporal_prompt,
                 static_context=self.legal_context_text,
             )
@@ -475,7 +495,11 @@ class LegalReasoningEngine:
     def __init__(self, analyzer: Optional[LegalSymbolicAnalyzer] = None):
         """Initialize legal reasoning engine."""
         self.analyzer = analyzer or LegalSymbolicAnalyzer()
-        self.symbolic_ai_available = SYMBOLIC_AI_AVAILABLE
+        self.symbolic_ai_available = _initialize_symbolic_ai()
+        self._Expression = _SYMAI_EXPRESSION
+
+        if self.symbolic_ai_available and self._Expression is None:
+            self.symbolic_ai_available = False
         
         if self.symbolic_ai_available:
             self._initialize_reasoning_components()
@@ -534,7 +558,7 @@ Consider standard legal principles like:
 - Compliance obligations
 """
             
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 reasoning_prompt,
                 static_context=self.implication_reasoner_text,
             )
@@ -573,7 +597,7 @@ Identify:
 Provide detailed analysis with confidence scores.
 """
             
-            result = Expression.prompt(
+            result = self._Expression.prompt(
                 consistency_prompt,
                 static_context=self.consistency_checker_text,
             )

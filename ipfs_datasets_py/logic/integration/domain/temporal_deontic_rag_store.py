@@ -33,8 +33,6 @@ except ImportError:
         def embed_text(self, text):
             return np.random.random(768)
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

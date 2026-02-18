@@ -4,14 +4,14 @@ Zero-Knowledge Proof Verifier for Logic Theorems.
 Verifies zero-knowledge proofs without seeing the private axioms.
 """
 
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import hashlib
-import time
 import logging
+import time
 
 from . import ZKPProof, ZKPError
+from .backends import get_backend
 
-# Configure logger
 logger = logging.getLogger(__name__)
 
 
@@ -49,7 +49,7 @@ class ZKPVerifier:
         use py_ecc with Groth16 for real cryptographic verification.
     """
     
-    def __init__(self, security_level: int = 128):
+    def __init__(self, security_level: int = 128, backend: str = "simulated"):
         """
         Initialize ZKP verifier.
         
@@ -57,6 +57,8 @@ class ZKPVerifier:
             security_level: Required security bits (default: 128)
         """
         self.security_level = security_level
+        self.backend = backend
+        self._backend = get_backend(backend)
         self._stats = {
             'proofs_verified': 0,
             'proofs_rejected': 0,
@@ -90,8 +92,8 @@ class ZKPVerifier:
                 self._stats['proofs_rejected'] += 1
                 return False
             
-            # Verify proof cryptographically
-            is_valid = self._verify_proof_internal(proof)
+            # Verify proof via backend
+            is_valid = self._backend.verify_proof(proof)
             
             # Update stats
             verification_time = time.time() - start_time
@@ -129,47 +131,6 @@ class ZKPVerifier:
             # Proof object doesn't have expected attributes or structure
             logger.warning(f"Invalid proof structure during validation: {e}")
             return False
-    
-    def _verify_proof_internal(self, proof: ZKPProof) -> bool:
-        """
-        Internal proof verification (simulated).
-        
-        In production with py_ecc and Groth16, this would:
-        1. Parse proof as curve points (A, B, C)
-        2. Verify pairing equation:
-            e(A, B) = e(α, β) · e(C, δ) · e(public_input, γ)
-        3. Return true if equation holds
-        
-        Real verification takes ~5-10ms with BN254 curve.
-        """
-        # Simulate pairing check
-        # Real verification would check cryptographic pairing equation
-        
-        # Extract components
-        theorem = proof.public_inputs.get('theorem', '')
-        theorem_hash = proof.public_inputs.get('theorem_hash', '')
-        proof_data = proof.proof_data
-        
-        # Verify theorem hash matches
-        expected_hash = hashlib.sha256(theorem.encode()).hexdigest()
-        if theorem_hash != expected_hash:
-            return False
-        
-        # Simulate pairing verification
-        # In reality: verify e(A,B) = e(α,β)·e(C,δ)·e(pub,γ)
-        # Here we just check proof data is well-formed
-        if len(proof_data) < 100 or len(proof_data) > 300:
-            return False
-        
-        # Simulate verification computation (would be pairing check)
-        # Real verification is constant time regardless of circuit size
-        verification_hash = hashlib.sha256(
-            proof_data + theorem.encode()
-        ).digest()
-        
-        # In simulation, we accept all well-formed proofs
-        # Real Groth16 would cryptographically verify the proof
-        return True
     
     def verify_with_public_inputs(
         self,

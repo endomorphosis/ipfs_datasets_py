@@ -26,8 +26,6 @@ from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
 from .document_consistency_checker import DocumentConsistencyChecker
 from .deontic_logic_converter import DeonticLogicConverter, ConversionContext
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

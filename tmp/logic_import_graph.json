@@ -1,0 +1,682 @@
+{
+  "adjacency": {
+    "ipfs_datasets_py.logic.CEC": [
+      "ipfs_datasets_py.logic.cec_framework",
+      "ipfs_datasets_py.logic.dcec_wrapper",
+      "ipfs_datasets_py.logic.eng_dcec_wrapper",
+      "ipfs_datasets_py.logic.shadow_prover_wrapper",
+      "ipfs_datasets_py.logic.talos_wrapper"
+    ],
+    "ipfs_datasets_py.logic.CEC.cec_framework": [
+      "ipfs_datasets_py.logic.CEC.dcec_wrapper",
+      "ipfs_datasets_py.logic.CEC.eng_dcec_wrapper",
+      "ipfs_datasets_py.logic.CEC.shadow_prover_wrapper",
+      "ipfs_datasets_py.logic.CEC.talos_wrapper"
+    ],
+    "ipfs_datasets_py.logic.CEC.dcec_cleaning": [],
+    "ipfs_datasets_py.logic.CEC.dcec_core": [],
+    "ipfs_datasets_py.logic.CEC.dcec_english_grammar": [],
+    "ipfs_datasets_py.logic.CEC.dcec_integration": [],
+    "ipfs_datasets_py.logic.CEC.dcec_namespace": [],
+    "ipfs_datasets_py.logic.CEC.dcec_parsing": [],
+    "ipfs_datasets_py.logic.CEC.dcec_prototypes": [],
+    "ipfs_datasets_py.logic.CEC.dcec_wrapper": [
+      "ipfs_datasets_py.logic.CEC.native"
+    ],
+    "ipfs_datasets_py.logic.CEC.eng_dcec_wrapper": [
+      "ipfs_datasets_py.logic.CEC.native"
+    ],
+    "ipfs_datasets_py.logic.CEC.grammar_engine": [],
+    "ipfs_datasets_py.logic.CEC.modal_tableaux": [],
+    "ipfs_datasets_py.logic.CEC.native": [
+      "ipfs_datasets_py.logic.CEC.dcec_cleaning",
+      "ipfs_datasets_py.logic.CEC.dcec_core",
+      "ipfs_datasets_py.logic.CEC.dcec_english_grammar",
+      "ipfs_datasets_py.logic.CEC.dcec_integration",
+      "ipfs_datasets_py.logic.CEC.dcec_namespace",
+      "ipfs_datasets_py.logic.CEC.dcec_parsing",
+      "ipfs_datasets_py.logic.CEC.dcec_prototypes",
+      "ipfs_datasets_py.logic.CEC.grammar_engine",
+      "ipfs_datasets_py.logic.CEC.modal_tableaux",
+      "ipfs_datasets_py.logic.CEC.nl_converter",
+      "ipfs_datasets_py.logic.CEC.problem_parser",
+      "ipfs_datasets_py.logic.CEC.prover_core",
+      "ipfs_datasets_py.logic.CEC.shadow_prover"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.dcec_cleaning": [],
+    "ipfs_datasets_py.logic.CEC.native.dcec_core": [],
+    "ipfs_datasets_py.logic.CEC.native.dcec_english_grammar": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_core",
+      "ipfs_datasets_py.logic.CEC.native.grammar_engine"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.dcec_integration": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_cleaning",
+      "ipfs_datasets_py.logic.CEC.native.dcec_core",
+      "ipfs_datasets_py.logic.CEC.native.dcec_parsing",
+      "ipfs_datasets_py.logic.CEC.native.dcec_prototypes"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.dcec_namespace": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_core"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.dcec_parsing": [],
+    "ipfs_datasets_py.logic.CEC.native.dcec_prototypes": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_cleaning"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.grammar_engine": [],
+    "ipfs_datasets_py.logic.CEC.native.modal_tableaux": [
+      "ipfs_datasets_py.logic.CEC.native.shadow_prover"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.nl_converter": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_core",
+      "ipfs_datasets_py.logic.CEC.native.dcec_english_grammar",
+      "ipfs_datasets_py.logic.CEC.native.dcec_namespace"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.problem_parser": [
+      "ipfs_datasets_py.logic.CEC.native.shadow_prover"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.prover_core": [
+      "ipfs_datasets_py.logic.CEC.native.dcec_core"
+    ],
+    "ipfs_datasets_py.logic.CEC.native.shadow_prover": [
+      "ipfs_datasets_py.logic.CEC.native.modal_tableaux",
+      "ipfs_datasets_py.logic.CEC.native.problem_parser"
+    ],
+    "ipfs_datasets_py.logic.CEC.nl_converter": [],
+    "ipfs_datasets_py.logic.CEC.problem_parser": [],
+    "ipfs_datasets_py.logic.CEC.prover_core": [],
+    "ipfs_datasets_py.logic.CEC.shadow_prover": [],
+    "ipfs_datasets_py.logic.CEC.shadow_prover_wrapper": [
+      "ipfs_datasets_py.logic.CEC.native"
+    ],
+    "ipfs_datasets_py.logic.CEC.talos_wrapper": [
+      "ipfs_datasets_py.logic.CEC.native"
+    ],
+    "ipfs_datasets_py.logic.TDFOL": [
+      "ipfs_datasets_py.logic.tdfol_core",
+      "ipfs_datasets_py.logic.tdfol_dcec_parser",
+      "ipfs_datasets_py.logic.tdfol_inference_rules",
+      "ipfs_datasets_py.logic.tdfol_parser",
+      "ipfs_datasets_py.logic.tdfol_proof_cache",
+      "ipfs_datasets_py.logic.tdfol_prover"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_converter": [
+      "ipfs_datasets_py.logic.CEC.native",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_parser"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_core": [],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_dcec_parser": [
+      "ipfs_datasets_py.logic.CEC.native",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_parser": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_proof_cache": [
+      "ipfs_datasets_py.logic.common.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.TDFOL.tdfol_prover": [
+      "ipfs_datasets_py.logic.CEC.native.modal_tableaux",
+      "ipfs_datasets_py.logic.CEC.native.prover_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_inference_rules",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_proof_cache",
+      "ipfs_datasets_py.logic.integration.tdfol_shadowprover_bridge"
+    ],
+    "ipfs_datasets_py.logic.api": [
+      "ipfs_datasets_py.logic.common",
+      "ipfs_datasets_py.logic.deontic",
+      "ipfs_datasets_py.logic.fol",
+      "ipfs_datasets_py.logic.types"
+    ],
+    "ipfs_datasets_py.logic.audit_log": [],
+    "ipfs_datasets_py.logic.batch_processing": [
+      "ipfs_datasets_py.logic.fol.text_to_fol",
+      "ipfs_datasets_py.logic.integration.proof_execution_engine"
+    ],
+    "ipfs_datasets_py.logic.benchmarks": [
+      "ipfs_datasets_py.logic.fol.text_to_fol",
+      "ipfs_datasets_py.logic.integration.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.bounded_cache": [],
+    "ipfs_datasets_py.logic.bridge_types": [],
+    "ipfs_datasets_py.logic.cec_framework": [],
+    "ipfs_datasets_py.logic.cli": [
+      "ipfs_datasets_py.logic.api",
+      "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+      "ipfs_datasets_py.logic.integration.domain.temporal_deontic_api"
+    ],
+    "ipfs_datasets_py.logic.common": [
+      "ipfs_datasets_py.logic.bounded_cache",
+      "ipfs_datasets_py.logic.converters",
+      "ipfs_datasets_py.logic.errors",
+      "ipfs_datasets_py.logic.feature_detection",
+      "ipfs_datasets_py.logic.proof_cache",
+      "ipfs_datasets_py.logic.utility_monitor"
+    ],
+    "ipfs_datasets_py.logic.common.bounded_cache": [],
+    "ipfs_datasets_py.logic.common.converters": [
+      "ipfs_datasets_py.logic.common.bounded_cache",
+      "ipfs_datasets_py.logic.common.errors"
+    ],
+    "ipfs_datasets_py.logic.common.errors": [],
+    "ipfs_datasets_py.logic.common.proof_cache": [],
+    "ipfs_datasets_py.logic.common_types": [],
+    "ipfs_datasets_py.logic.config": [],
+    "ipfs_datasets_py.logic.converter": [],
+    "ipfs_datasets_py.logic.converters": [],
+    "ipfs_datasets_py.logic.dcec_wrapper": [],
+    "ipfs_datasets_py.logic.deontic": [
+      "ipfs_datasets_py.logic.converter",
+      "ipfs_datasets_py.logic.legal_text_to_deontic"
+    ],
+    "ipfs_datasets_py.logic.deontic.converter": [
+      "ipfs_datasets_py.logic.batch_processing",
+      "ipfs_datasets_py.logic.common.converters",
+      "ipfs_datasets_py.logic.common.errors",
+      "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.deontic_logic_core",
+      "ipfs_datasets_py.logic.ml_confidence",
+      "ipfs_datasets_py.logic.monitoring",
+      "ipfs_datasets_py.logic.types.common_types",
+      "ipfs_datasets_py.logic.types.deontic_types"
+    ],
+    "ipfs_datasets_py.logic.deontic.legal_text_to_deontic": [
+      "ipfs_datasets_py.logic.deontic.converter"
+    ],
+    "ipfs_datasets_py.logic.deontic.utils.deontic_parser": [],
+    "ipfs_datasets_py.logic.deontic_types": [],
+    "ipfs_datasets_py.logic.e2e_validation": [
+      "ipfs_datasets_py.logic.deontic.utils.deontic_parser",
+      "ipfs_datasets_py.logic.fol.text_to_fol",
+      "ipfs_datasets_py.logic.integration.proof_cache",
+      "ipfs_datasets_py.logic.ml_confidence"
+    ],
+    "ipfs_datasets_py.logic.eng_dcec_wrapper": [],
+    "ipfs_datasets_py.logic.errors": [],
+    "ipfs_datasets_py.logic.external_provers": [
+      "ipfs_datasets_py.logic.formula_analyzer",
+      "ipfs_datasets_py.logic.interactive.coq_prover_bridge",
+      "ipfs_datasets_py.logic.interactive.lean_prover_bridge",
+      "ipfs_datasets_py.logic.neural.symbolicai_prover_bridge",
+      "ipfs_datasets_py.logic.prover_router",
+      "ipfs_datasets_py.logic.smt.cvc5_prover_bridge",
+      "ipfs_datasets_py.logic.smt.smt_prover_interface",
+      "ipfs_datasets_py.logic.smt.z3_prover_bridge"
+    ],
+    "ipfs_datasets_py.logic.external_provers.formula_analyzer": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core"
+    ],
+    "ipfs_datasets_py.logic.external_provers.interactive.coq_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.external_provers.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.external_provers.interactive.lean_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.external_provers.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.external_provers.neural.symbolicai_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.external_provers.proof_cache",
+      "ipfs_datasets_py.logic.integration.symbolic_fol_bridge"
+    ],
+    "ipfs_datasets_py.logic.external_provers.proof_cache": [
+      "ipfs_datasets_py.logic.common.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.external_provers.prover_router": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.external_provers.formula_analyzer",
+      "ipfs_datasets_py.logic.external_provers.interactive.coq_prover_bridge",
+      "ipfs_datasets_py.logic.external_provers.interactive.lean_prover_bridge",
+      "ipfs_datasets_py.logic.external_provers.neural.symbolicai_prover_bridge",
+      "ipfs_datasets_py.logic.external_provers.proof_cache",
+      "ipfs_datasets_py.logic.external_provers.smt.cvc5_prover_bridge",
+      "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge"
+    ],
+    "ipfs_datasets_py.logic.external_provers.smt.cvc5_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.external_provers.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.external_provers.smt.z3_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.external_provers.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.feature_detection": [],
+    "ipfs_datasets_py.logic.fol": [
+      "ipfs_datasets_py.logic.converter",
+      "ipfs_datasets_py.logic.text_to_fol"
+    ],
+    "ipfs_datasets_py.logic.fol.converter": [
+      "ipfs_datasets_py.logic.batch_processing",
+      "ipfs_datasets_py.logic.common.converters",
+      "ipfs_datasets_py.logic.common.errors",
+      "ipfs_datasets_py.logic.fol.utils.fol_parser",
+      "ipfs_datasets_py.logic.fol.utils.nlp_predicate_extractor",
+      "ipfs_datasets_py.logic.fol.utils.predicate_extractor",
+      "ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache",
+      "ipfs_datasets_py.logic.ml_confidence",
+      "ipfs_datasets_py.logic.monitoring",
+      "ipfs_datasets_py.logic.types.common_types",
+      "ipfs_datasets_py.logic.types.fol_types"
+    ],
+    "ipfs_datasets_py.logic.fol.deontic_parser": [],
+    "ipfs_datasets_py.logic.fol.fol_parser": [],
+    "ipfs_datasets_py.logic.fol.logic_formatter": [],
+    "ipfs_datasets_py.logic.fol.predicate_extractor": [],
+    "ipfs_datasets_py.logic.fol.text_to_fol": [
+      "ipfs_datasets_py.logic.fol.converter",
+      "ipfs_datasets_py.logic.fol.utils.fol_parser"
+    ],
+    "ipfs_datasets_py.logic.fol.utils": [
+      "ipfs_datasets_py.logic.fol.deontic_parser",
+      "ipfs_datasets_py.logic.fol.fol_parser",
+      "ipfs_datasets_py.logic.fol.logic_formatter",
+      "ipfs_datasets_py.logic.fol.predicate_extractor"
+    ],
+    "ipfs_datasets_py.logic.fol.utils.fol_parser": [
+      "ipfs_datasets_py.logic.fol.utils.logic_formatter",
+      "ipfs_datasets_py.logic.fol.utils.predicate_extractor"
+    ],
+    "ipfs_datasets_py.logic.fol.utils.logic_formatter": [],
+    "ipfs_datasets_py.logic.fol.utils.nlp_predicate_extractor": [
+      "ipfs_datasets_py.logic.fol.utils.predicate_extractor"
+    ],
+    "ipfs_datasets_py.logic.fol.utils.predicate_extractor": [],
+    "ipfs_datasets_py.logic.fol_types": [],
+    "ipfs_datasets_py.logic.formula_analyzer": [],
+    "ipfs_datasets_py.logic.input_validation": [],
+    "ipfs_datasets_py.logic.integration": [
+      "ipfs_datasets_py.logic.interactive.interactive_fol_constructor",
+      "ipfs_datasets_py.logic.interactive.interactive_fol_types",
+      "ipfs_datasets_py.logic.interactive.interactive_fol_utils"
+    ],
+    "ipfs_datasets_py.logic.integration.TDFOL.tdfol_core": [],
+    "ipfs_datasets_py.logic.integration.TDFOL.tdfol_dcec_parser": [],
+    "ipfs_datasets_py.logic.integration.TDFOL.tdfol_parser": [],
+    "ipfs_datasets_py.logic.integration.TDFOL.tdfol_prover": [],
+    "ipfs_datasets_py.logic.integration.base_prover_bridge": [
+      "ipfs_datasets_py.logic.integration.bridges.base_prover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges": [
+      "ipfs_datasets_py.logic.integration.base_prover_bridge",
+      "ipfs_datasets_py.logic.integration.symbolic_fol_bridge",
+      "ipfs_datasets_py.logic.integration.tdfol_cec_bridge",
+      "ipfs_datasets_py.logic.integration.tdfol_grammar_bridge",
+      "ipfs_datasets_py.logic.integration.tdfol_shadowprover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges.base_prover_bridge": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge": [
+      "ipfs_datasets_py.logic.integration.fol.utils"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge": [
+      "ipfs_datasets_py.logic.CEC.native",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_converter",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_dcec_parser",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.integration.bridges.base_prover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge": [
+      "ipfs_datasets_py.logic.CEC.native",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_converter",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_dcec_parser",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.integration.bridges.base_prover_bridge",
+      "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge": [
+      "ipfs_datasets_py.logic.CEC.native",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.integration.bridges.base_prover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.caching": [
+      "ipfs_datasets_py.logic.integration.ipfs_proof_cache",
+      "ipfs_datasets_py.logic.integration.ipld_logic_storage",
+      "ipfs_datasets_py.logic.integration.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.integration.caching.ipfs_proof_cache": [
+      "ipfs_datasets_py.logic.integration.caching.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.integration.caching.ipld_logic_storage": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.converters.logic_translation_core",
+      "ipfs_datasets_py.logic.integration.data_transformation.ipld.storage",
+      "ipfs_datasets_py.logic.integration.data_transformation.ipld.vector_store"
+    ],
+    "ipfs_datasets_py.logic.integration.caching.proof_cache": [
+      "ipfs_datasets_py.logic.common.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.integration.converters": [
+      "ipfs_datasets_py.logic.integration.deontic_logic_converter",
+      "ipfs_datasets_py.logic.integration.logic_translation_core",
+      "ipfs_datasets_py.logic.integration.modal_logic_extension"
+    ],
+    "ipfs_datasets_py.logic.integration.converters.deontic_logic_converter": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer",
+      "ipfs_datasets_py.logic.integration.converters.logic_translation_core",
+      "ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge",
+      "ipfs_datasets_py.logic.integration.knowledge_graph_extraction"
+    ],
+    "ipfs_datasets_py.logic.integration.converters.deontic_logic_core": [],
+    "ipfs_datasets_py.logic.integration.converters.legal_symbolic_analyzer": [],
+    "ipfs_datasets_py.logic.integration.converters.logic_translation_core": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.security.input_validation",
+      "ipfs_datasets_py.logic.security.rate_limiting"
+    ],
+    "ipfs_datasets_py.logic.integration.converters.modal_logic_extension": [
+      "ipfs_datasets_py.logic.integration.converters.symbolic_fol_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.converters.symbolic_fol_bridge": [],
+    "ipfs_datasets_py.logic.integration.data_transformation.ipld.storage": [],
+    "ipfs_datasets_py.logic.integration.data_transformation.ipld.vector_store": [],
+    "ipfs_datasets_py.logic.integration.demos.demo_temporal_deontic_rag": [
+      "ipfs_datasets_py.logic.integration.demos.document_consistency_checker",
+      "ipfs_datasets_py.logic.integration.demos.temporal_deontic_rag_store",
+      "ipfs_datasets_py.logic.integration.integration.deontic_logic_core"
+    ],
+    "ipfs_datasets_py.logic.integration.demos.document_consistency_checker": [],
+    "ipfs_datasets_py.logic.integration.demos.temporal_deontic_rag_store": [],
+    "ipfs_datasets_py.logic.integration.deontic_logic_converter": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_converter"
+    ],
+    "ipfs_datasets_py.logic.integration.deontic_logic_core": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core"
+    ],
+    "ipfs_datasets_py.logic.integration.deontic_query_engine": [],
+    "ipfs_datasets_py.logic.integration.deontological_reasoning": [],
+    "ipfs_datasets_py.logic.integration.document_consistency_checker": [],
+    "ipfs_datasets_py.logic.integration.domain": [
+      "ipfs_datasets_py.logic.integration.deontic_query_engine",
+      "ipfs_datasets_py.logic.integration.document_consistency_checker",
+      "ipfs_datasets_py.logic.integration.legal_domain_knowledge",
+      "ipfs_datasets_py.logic.integration.legal_symbolic_analyzer",
+      "ipfs_datasets_py.logic.integration.temporal_deontic_api"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.deontic_logic_converter",
+      "ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
+      "ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.deontic_logic_converter": [],
+    "ipfs_datasets_py.logic.integration.domain.deontic_query_engine": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge",
+      "ipfs_datasets_py.logic.security.input_validation",
+      "ipfs_datasets_py.logic.security.rate_limiting"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.document_consistency_checker": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.deontic_logic_converter",
+      "ipfs_datasets_py.logic.integration.domain.deontic_query_engine",
+      "ipfs_datasets_py.logic.integration.domain.proof_execution_engine",
+      "ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.legal_symbolic_analyzer": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.legal_domain_knowledge",
+      "ipfs_datasets_py.logic.integration.utils.engine_env",
+      "ipfs_datasets_py.logic.integration.utils.symai_config"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.proof_execution_engine": [],
+    "ipfs_datasets_py.logic.integration.domain.symbolic_contracts": [
+      "ipfs_datasets_py.logic.integration.domain.symbolic_fol_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.symbolic_fol_bridge": [],
+    "ipfs_datasets_py.logic.integration.domain.temporal_deontic_api": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.caselaw_bulk_processor",
+      "ipfs_datasets_py.logic.integration.domain.document_consistency_checker",
+      "ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store"
+    ],
+    "ipfs_datasets_py.logic.integration.domain.temporal_deontic_rag_store": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.domain.deontic_query_engine",
+      "ipfs_datasets_py.logic.integration.embeddings.base",
+      "ipfs_datasets_py.logic.integration.vector_stores.base"
+    ],
+    "ipfs_datasets_py.logic.integration.embeddings.base": [],
+    "ipfs_datasets_py.logic.integration.fol.utils": [],
+    "ipfs_datasets_py.logic.integration.integration.deontic_logic_core": [],
+    "ipfs_datasets_py.logic.integration.interactive": [
+      "ipfs_datasets_py.logic.integration.interactive_fol_constructor"
+    ],
+    "ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor": [
+      "ipfs_datasets_py.logic.integration.interactive.interactive_fol_types",
+      "ipfs_datasets_py.logic.integration.interactive.interactive_fol_utils",
+      "ipfs_datasets_py.logic.integration.interactive.symbolic_fol_bridge",
+      "ipfs_datasets_py.logic.integration.interactive.symbolic_logic_primitives"
+    ],
+    "ipfs_datasets_py.logic.integration.interactive.interactive_fol_types": [
+      "ipfs_datasets_py.logic.integration.interactive.symbolic_fol_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.interactive.interactive_fol_utils": [
+      "ipfs_datasets_py.logic.integration.interactive.interactive_fol_constructor"
+    ],
+    "ipfs_datasets_py.logic.integration.interactive.symbolic_fol_bridge": [],
+    "ipfs_datasets_py.logic.integration.interactive.symbolic_logic_primitives": [],
+    "ipfs_datasets_py.logic.integration.interactive_fol_constructor": [],
+    "ipfs_datasets_py.logic.integration.ipfs_proof_cache": [],
+    "ipfs_datasets_py.logic.integration.ipld_logic_storage": [],
+    "ipfs_datasets_py.logic.integration.knowledge_graph_extraction": [],
+    "ipfs_datasets_py.logic.integration.legal_domain_knowledge": [],
+    "ipfs_datasets_py.logic.integration.legal_symbolic_analyzer": [],
+    "ipfs_datasets_py.logic.integration.logic_translation_core": [
+      "ipfs_datasets_py.logic.integration.converters.logic_translation_core"
+    ],
+    "ipfs_datasets_py.logic.integration.logic_verification": [
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification"
+    ],
+    "ipfs_datasets_py.logic.integration.logic_verification_types": [
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification_types"
+    ],
+    "ipfs_datasets_py.logic.integration.modal_logic_extension": [
+      "ipfs_datasets_py.logic.integration.converters.modal_logic_extension"
+    ],
+    "ipfs_datasets_py.logic.integration.neurosymbolic": [],
+    "ipfs_datasets_py.logic.integration.neurosymbolic_api": [],
+    "ipfs_datasets_py.logic.integration.neurosymbolic_graphrag": [
+      "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag"
+    ],
+    "ipfs_datasets_py.logic.integration.proof_cache": [
+      "ipfs_datasets_py.logic.integration.caching.proof_cache"
+    ],
+    "ipfs_datasets_py.logic.integration.proof_execution_engine": [],
+    "ipfs_datasets_py.logic.integration.reasoning": [
+      "ipfs_datasets_py.logic.integration.deontological_reasoning",
+      "ipfs_datasets_py.logic.integration.logic_verification",
+      "ipfs_datasets_py.logic.integration.proof_execution_engine"
+    ],
+    "ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning": [
+      "ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types",
+      "ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils"
+    ],
+    "ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_types": [],
+    "ipfs_datasets_py.logic.integration.reasoning.deontological_reasoning_utils": [],
+    "ipfs_datasets_py.logic.integration.reasoning.logic_verification": [
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification_types",
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils"
+    ],
+    "ipfs_datasets_py.logic.integration.reasoning.logic_verification_types": [],
+    "ipfs_datasets_py.logic.integration.reasoning.logic_verification_utils": [
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification",
+      "ipfs_datasets_py.logic.integration.reasoning.logic_verification_types"
+    ],
+    "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine": [
+      "ipfs_datasets_py.logic.integration.caching.proof_cache",
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.converters.logic_translation_core",
+      "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types",
+      "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils",
+      "ipfs_datasets_py.logic.security.input_validation",
+      "ipfs_datasets_py.logic.security.rate_limiting"
+    ],
+    "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types": [],
+    "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_utils": [
+      "ipfs_datasets_py.logic.integration.converters.deontic_logic_core",
+      "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine",
+      "ipfs_datasets_py.logic.integration.reasoning.proof_execution_engine_types"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic": [
+      "ipfs_datasets_py.logic.integration.neurosymbolic_api",
+      "ipfs_datasets_py.logic.integration.neurosymbolic_graphrag",
+      "ipfs_datasets_py.logic.integration.symbolic_logic_primitives"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.embedding_prover": [],
+    "ipfs_datasets_py.logic.integration.symbolic.hybrid_confidence": [],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic": [
+      "ipfs_datasets_py.logic.integration.symbolic.embedding_prover",
+      "ipfs_datasets_py.logic.integration.symbolic.hybrid_confidence",
+      "ipfs_datasets_py.logic.integration.symbolic.reasoning_coordinator"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover": [
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_core"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.hybrid_confidence": [
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_prover"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.reasoning_coordinator": [
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_parser",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic.embedding_prover",
+      "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_api": [
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_core",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_dcec_parser",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_parser",
+      "ipfs_datasets_py.logic.integration.TDFOL.tdfol_prover",
+      "ipfs_datasets_py.logic.integration.symbolic.tdfol_cec_bridge",
+      "ipfs_datasets_py.logic.integration.symbolic.tdfol_grammar_bridge",
+      "ipfs_datasets_py.logic.integration.symbolic.tdfol_shadowprover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag": [
+      "ipfs_datasets_py.logic.TDFOL",
+      "ipfs_datasets_py.logic.integration.neurosymbolic"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic.reasoning_coordinator": [],
+    "ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives": [],
+    "ipfs_datasets_py.logic.integration.symbolic.tdfol_cec_bridge": [],
+    "ipfs_datasets_py.logic.integration.symbolic.tdfol_grammar_bridge": [],
+    "ipfs_datasets_py.logic.integration.symbolic.tdfol_shadowprover_bridge": [],
+    "ipfs_datasets_py.logic.integration.symbolic_contracts": [
+      "ipfs_datasets_py.logic.integration.domain.symbolic_contracts"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic_fol_bridge": [
+      "ipfs_datasets_py.logic.integration.bridges.symbolic_fol_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.symbolic_logic_primitives": [
+      "ipfs_datasets_py.logic.integration.symbolic.symbolic_logic_primitives"
+    ],
+    "ipfs_datasets_py.logic.integration.tdfol_cec_bridge": [
+      "ipfs_datasets_py.logic.integration.bridges.tdfol_cec_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.tdfol_grammar_bridge": [
+      "ipfs_datasets_py.logic.integration.bridges.tdfol_grammar_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.tdfol_shadowprover_bridge": [
+      "ipfs_datasets_py.logic.integration.bridges.tdfol_shadowprover_bridge"
+    ],
+    "ipfs_datasets_py.logic.integration.temporal_deontic_api": [],
+    "ipfs_datasets_py.logic.integration.utils.engine_env": [],
+    "ipfs_datasets_py.logic.integration.utils.symai_config": [],
+    "ipfs_datasets_py.logic.integration.vector_stores.base": [],
+    "ipfs_datasets_py.logic.interactive.coq_prover_bridge": [],
+    "ipfs_datasets_py.logic.interactive.interactive_fol_constructor": [],
+    "ipfs_datasets_py.logic.interactive.interactive_fol_types": [],
+    "ipfs_datasets_py.logic.interactive.interactive_fol_utils": [],
+    "ipfs_datasets_py.logic.interactive.lean_prover_bridge": [],
+    "ipfs_datasets_py.logic.legal_text_to_deontic": [],
+    "ipfs_datasets_py.logic.ml_confidence": [],
+    "ipfs_datasets_py.logic.monitoring": [],
+    "ipfs_datasets_py.logic.neural.symbolicai_prover_bridge": [],
+    "ipfs_datasets_py.logic.phase7_4_benchmarks": [
+      "ipfs_datasets_py.logic.deontic",
+      "ipfs_datasets_py.logic.fol",
+      "ipfs_datasets_py.logic.ml_confidence",
+      "ipfs_datasets_py.logic.zkp"
+    ],
+    "ipfs_datasets_py.logic.proof_cache": [],
+    "ipfs_datasets_py.logic.proof_types": [],
+    "ipfs_datasets_py.logic.prover_router": [],
+    "ipfs_datasets_py.logic.rate_limiting": [],
+    "ipfs_datasets_py.logic.security": [
+      "ipfs_datasets_py.logic.audit_log",
+      "ipfs_datasets_py.logic.input_validation",
+      "ipfs_datasets_py.logic.rate_limiting"
+    ],
+    "ipfs_datasets_py.logic.security.audit_log": [
+      "ipfs_datasets_py.logic.config"
+    ],
+    "ipfs_datasets_py.logic.security.input_validation": [
+      "ipfs_datasets_py.logic.config"
+    ],
+    "ipfs_datasets_py.logic.security.rate_limiting": [
+      "ipfs_datasets_py.logic.config"
+    ],
+    "ipfs_datasets_py.logic.shadow_prover_wrapper": [],
+    "ipfs_datasets_py.logic.smt.cvc5_prover_bridge": [],
+    "ipfs_datasets_py.logic.smt.smt_prover_interface": [],
+    "ipfs_datasets_py.logic.smt.z3_prover_bridge": [],
+    "ipfs_datasets_py.logic.talos_wrapper": [],
+    "ipfs_datasets_py.logic.tdfol_core": [],
+    "ipfs_datasets_py.logic.tdfol_dcec_parser": [],
+    "ipfs_datasets_py.logic.tdfol_inference_rules": [],
+    "ipfs_datasets_py.logic.tdfol_parser": [],
+    "ipfs_datasets_py.logic.tdfol_proof_cache": [],
+    "ipfs_datasets_py.logic.tdfol_prover": [],
+    "ipfs_datasets_py.logic.text_to_fol": [],
+    "ipfs_datasets_py.logic.translation_types": [],
+    "ipfs_datasets_py.logic.types": [
+      "ipfs_datasets_py.logic.bridge_types",
+      "ipfs_datasets_py.logic.common_types",
+      "ipfs_datasets_py.logic.deontic_types",
+      "ipfs_datasets_py.logic.fol_types",
+      "ipfs_datasets_py.logic.proof_types",
+      "ipfs_datasets_py.logic.translation_types"
+    ],
+    "ipfs_datasets_py.logic.types.common_types": [
+      "ipfs_datasets_py.logic.types.proof_types"
+    ],
+    "ipfs_datasets_py.logic.types.deontic_types": [],
+    "ipfs_datasets_py.logic.types.fol_types": [
+      "ipfs_datasets_py.logic.types.common_types"
+    ],
+    "ipfs_datasets_py.logic.types.proof_types": [
+      "ipfs_datasets_py.logic.TDFOL.tdfol_prover"
+    ],
+    "ipfs_datasets_py.logic.types.translation_types": [
+      "ipfs_datasets_py.logic.types.deontic_types"
+    ],
+    "ipfs_datasets_py.logic.utility_monitor": [],
+    "ipfs_datasets_py.logic.zkp": [],
+    "ipfs_datasets_py.logic.zkp.zkp_prover": [
+      "ipfs_datasets_py.logic.zkp"
+    ],
+    "ipfs_datasets_py.logic.zkp.zkp_verifier": [
+      "ipfs_datasets_py.logic.zkp"
+    ]
+  },
+  "namespace": "ipfs_datasets_py.logic",
+  "root": "ipfs_datasets_py/logic"
+}

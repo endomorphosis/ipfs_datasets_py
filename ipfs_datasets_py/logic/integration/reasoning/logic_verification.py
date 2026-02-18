@@ -45,8 +45,6 @@ from .logic_verification_utils import (
 if TYPE_CHECKING:
     from symai import Symbol
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Fallback imports when SymbolicAI is not available

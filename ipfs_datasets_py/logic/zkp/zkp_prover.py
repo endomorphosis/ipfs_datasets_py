@@ -1,25 +1,24 @@
-"""
-Zero-Knowledge Proof Prover for Logic Theorems.
+"""Zero-Knowledge Proof prover.
 
-Generates privacy-preserving proofs that a theorem follows from axioms
-without revealing the axioms themselves.
+Default behavior is a **simulation** backend for demonstration purposes.
+Production-grade proving requires a real backend (see
+`logic/zkp/GROTH16_IMPLEMENTATION_PLAN.md`).
 """
 
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict, Any, Optional
 import hashlib
 import json
 import time
-import secrets
-from dataclasses import dataclass
 
 from . import ZKPProof, ZKPError
+from .backends import get_backend
 
 
 class ZKPProver:
     """
     Generate zero-knowledge proofs for logic theorems.
     
-    This prover creates cryptographic proofs that a theorem can be derived
+    This prover generates **simulated** proofs that a theorem can be derived
     from a set of private axioms, without revealing the axioms themselves.
     
     Features:
@@ -41,14 +40,16 @@ class ZKPProver:
         Proof size: 256 bytes
     
     Note:
-        This is a simulated ZKP prover for demonstration. In production,
-        use py_ecc with Groth16 zkSNARKs for real cryptographic security.
+        This is a simulated ZKP prover for demonstration. It is NOT
+        cryptographically secure. In production, use a real ZKP backend
+        (e.g., Groth16) via a cryptographic library.
     """
     
     def __init__(
         self,
         security_level: int = 128,
         enable_caching: bool = True,
+        backend: str = "simulated",
     ):
         """
         Initialize ZKP prover.
@@ -59,6 +60,8 @@ class ZKPProver:
         """
         self.security_level = security_level
         self.enable_caching = enable_caching
+        self.backend = backend
+        self._backend = get_backend(backend)
         self._proof_cache: Dict[str, ZKPProof] = {}
         self._stats = {
             'proofs_generated': 0,
@@ -109,11 +112,14 @@ class ZKPProver:
             if not private_axioms:
                 raise ZKPError("At least one axiom required")
             
-            # Generate proof
-            proof = self._generate_proof_internal(
+            # Generate proof via backend
+            proof = self._backend.generate_proof(
                 theorem=theorem,
                 private_axioms=private_axioms,
-                metadata=metadata or {},
+                metadata={
+                    **(metadata or {}),
+                    'security_level': self.security_level,
+                },
             )
             
             # Update stats
@@ -129,103 +135,6 @@ class ZKPProver:
             
         except Exception as e:
             raise ZKPError(f"Proof generation failed: {e}")
-    
-    def _generate_proof_internal(
-        self,
-        theorem: str,
-        private_axioms: List[str],
-        metadata: Dict[str, Any],
-    ) -> ZKPProof:
-        """
-        Internal proof generation (simulated).
-        
-        In production, this would use py_ecc with Groth16:
-        1. Convert logic to arithmetic circuit
-        2. Compute witness from axioms
-        3. Generate zkSNARK proof
-        4. Return succinct proof (~200 bytes)
-        """
-        # Simulate circuit construction
-        circuit_hash = self._hash_circuit(theorem, private_axioms)
-        
-        # Simulate witness computation
-        witness = self._compute_witness(private_axioms)
-        
-        # Simulate proof generation (in reality, this would be Groth16)
-        # Real proof would be ~200 bytes with curve points
-        proof_data = self._simulate_groth16_proof(
-            circuit_hash=circuit_hash,
-            witness=witness,
-            theorem=theorem,
-        )
-        
-        # Create proof object
-        proof = ZKPProof(
-            proof_data=proof_data,
-            public_inputs={
-                'theorem': theorem,
-                'theorem_hash': hashlib.sha256(theorem.encode()).hexdigest(),
-            },
-            metadata={
-                **metadata,
-                'security_level': self.security_level,
-                'proof_system': 'Groth16 (simulated)',
-                'num_axioms': len(private_axioms),
-            },
-            timestamp=time.time(),
-            size_bytes=len(proof_data),
-        )
-        
-        return proof
-    
-    def _hash_circuit(self, theorem: str, axioms: List[str]) -> bytes:
-        """Hash the logic circuit (commitment to computation)."""
-        circuit_data = json.dumps({
-            'theorem': theorem,
-            'num_axioms': len(axioms),
-            'axiom_hashes': [
-                hashlib.sha256(a.encode()).hexdigest()
-                for a in axioms
-            ],
-        }, sort_keys=True)
-        return hashlib.sha256(circuit_data.encode()).digest()
-    
-    def _compute_witness(self, axioms: List[str]) -> bytes:
-        """Compute witness (private inputs to circuit)."""
-        witness_data = json.dumps(axioms, sort_keys=True)
-        return hashlib.sha256(witness_data.encode()).digest()
-    
-    def _simulate_groth16_proof(
-        self,
-        circuit_hash: bytes,
-        witness: bytes,
-        theorem: str,
-    ) -> bytes:
-        """
-        Simulate Groth16 proof generation.
-        
-        Real Groth16 proof consists of:
-        - 2 G1 curve points (64 bytes each)
-        - 1 G2 curve point (128 bytes)
-        Total: ~256 bytes
-        """
-        # Combine all inputs
-        proof_inputs = circuit_hash + witness + theorem.encode()
-        
-        # Generate deterministic "proof" (simulation)
-        # Real proof would be actual curve points from zkSNARK
-        proof_hash = hashlib.sha256(proof_inputs).digest()
-        
-        # Simulate proof structure (3 curve points)
-        # In reality: (A, B, C) where A,C ∈ G1, B ∈ G2
-        simulated_proof = (
-            proof_hash +  # Simulate A (G1 point, 64 bytes)
-            secrets.token_bytes(64) +  # Simulate B (G2 point, 128 bytes - using 64 for simplicity)
-            secrets.token_bytes(64)   # Simulate C (G1 point, 64 bytes)
-        )
-        
-        # Simulated Groth16 proof size ~192 bytes
-        return simulated_proof[:256]  # Fixed size like real Groth16
     
     def _compute_cache_key(self, theorem: str, axioms: List[str]) -> str:
         """Compute cache key for proof."""

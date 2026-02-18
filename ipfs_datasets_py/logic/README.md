@@ -15,7 +15,6 @@
 ## Quick Links
 
 📚 **Documentation:**
-- [Quick Start](./QUICKSTART.md) - 5-minute getting started guide
 - [API Reference](./API_REFERENCE.md) - Complete API documentation
 - [User Guide](./UNIFIED_CONVERTER_GUIDE.md) - Getting started guide
 - [Architecture](./ARCHITECTURE.md) - System architecture
@@ -57,7 +56,7 @@ These components are fully tested, stable, and ready for production deployment:
 - **Type System** - 95%+ coverage, mypy validated
 - **Batch Processing** - 100% complete, 2-8x speedup
 
-**API Stability:** Guaranteed backward compatibility ([see policy](./API_VERSIONING.md))
+**API Stability:** Guaranteed backward compatibility — see [API_VERSIONING.md](./API_VERSIONING.md).
 
 ### ⚠️ Beta Features (Use with Caution)
 

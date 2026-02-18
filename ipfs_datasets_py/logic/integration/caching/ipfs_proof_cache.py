@@ -40,7 +40,7 @@ try:
 except ImportError:
     IPFS_AVAILABLE = False
 
-from .proof_cache import ProofCache, CachedProof, get_global_cache
+from ...common.proof_cache import ProofCache, CachedProofResult as CachedProof, get_global_cache
 
 logger = logging.getLogger(__name__)
 

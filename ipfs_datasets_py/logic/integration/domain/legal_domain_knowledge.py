@@ -15,8 +15,6 @@ import json
 
 from ..converters.deontic_logic_core import DeonticOperator, LegalAgent, LegalContext
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
