@@ -5,7 +5,7 @@ This module provides symbol namespace management and statement containers
 for the native DCEC implementation.
 """
 
-from typing import Dict, List, Optional, Set, Any
+from typing import Dict, List, Optional, Set, Any, TypeVar, Callable
 from dataclasses import dataclass, field
 import logging
 
@@ -16,9 +16,10 @@ from .dcec_core import (
 from .exceptions import NamespaceError
 
 try:
-    from beartype import beartype
+    from beartype import beartype  # type: ignore[import-not-found]
 except ImportError:
-    def beartype(func):
+    F = TypeVar('F', bound=Callable[..., Any])
+    def beartype(func: F) -> F:
         return func
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ class DCECNamespace:
     The namespace maintains all declared symbols and ensures type consistency.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty namespace."""
         self.sorts: Dict[str, Sort] = {}
         self.variables: Dict[str, Variable] = {}
@@ -41,7 +42,7 @@ class DCECNamespace:
         # Initialize built-in sorts
         self._init_builtin_sorts()
     
-    def _init_builtin_sorts(self):
+    def _init_builtin_sorts(self) -> None:
         """Initialize built-in DCEC sorts."""
         # Base sorts
         self.add_sort("Entity")
@@ -56,7 +57,7 @@ class DCECNamespace:
         self.add_sort("Obligation", parent="Boolean")
         self.add_sort("Permission", parent="Boolean")
         
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_sort(self, name: str, parent: Optional[str] = None) -> Sort:
         """
         Add a sort to the namespace.
@@ -74,8 +75,8 @@ class DCECNamespace:
         if name in self.sorts:
             raise NamespaceError(
                 f"Duplicate sort name '{name}'",
-                symbol_name=name,
-                existing_symbols=list(self.sorts.keys()),
+                symbol=name,
+                operation="add_sort",
                 suggestion=f"Use a different name or remove the existing sort '{name}' first"
             )
         
@@ -84,8 +85,8 @@ class DCECNamespace:
             if parent not in self.sorts:
                 raise NamespaceError(
                     f"Parent sort '{parent}' does not exist",
-                    symbol_name=parent,
-                    existing_symbols=list(self.sorts.keys()),
+                    symbol=parent,
+                    operation="lookup",
                     suggestion=f"Register sort '{parent}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
                 )
             parent_sort = self.sorts[parent]
@@ -95,12 +96,12 @@ class DCECNamespace:
         logger.debug(f"Added sort: {name}")
         return sort
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def get_sort(self, name: str) -> Optional[Sort]:
         """Get a sort by name."""
         return self.sorts.get(name)
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_variable(self, name: str, sort_name: str) -> Variable:
         """
         Add a variable to the namespace.
@@ -118,16 +119,16 @@ class DCECNamespace:
         if name in self.variables:
             raise NamespaceError(
                 f"Duplicate variable name '{name}'",
-                symbol_name=name,
-                existing_symbols=list(self.variables.keys()),
+                symbol=name,
+                operation="add_variable",
                 suggestion=f"Use a different variable name or remove the existing variable '{name}' first"
             )
         
         if sort_name not in self.sorts:
             raise NamespaceError(
                 f"Sort '{sort_name}' does not exist for variable",
-                symbol_name=sort_name,
-                existing_symbols=list(self.sorts.keys()),
+                symbol=sort_name,
+                operation="lookup",
                 suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
             )
         
@@ -136,12 +137,12 @@ class DCECNamespace:
         logger.debug(f"Added variable: {variable}")
         return variable
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def get_variable(self, name: str) -> Optional[Variable]:
         """Get a variable by name."""
         return self.variables.get(name)
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_function(
         self, 
         name: str, 
@@ -165,8 +166,8 @@ class DCECNamespace:
         if name in self.functions:
             raise NamespaceError(
                 f"Duplicate function name '{name}'",
-                symbol_name=name,
-                existing_symbols=list(self.functions.keys()),
+                symbol=name,
+                operation="add_function",
                 suggestion=f"Use a different function name or remove the existing function '{name}' first"
             )
         
@@ -176,8 +177,8 @@ class DCECNamespace:
             if sort_name not in self.sorts:
                 raise NamespaceError(
                     f"Sort '{sort_name}' does not exist for function argument",
-                    symbol_name=sort_name,
-                    existing_symbols=list(self.sorts.keys()),
+                    symbol=sort_name,
+                    operation="lookup",
                     suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
                 )
             argument_sorts.append(self.sorts[sort_name])
@@ -185,8 +186,8 @@ class DCECNamespace:
         if return_sort_name not in self.sorts:
             raise NamespaceError(
                 f"Return sort '{return_sort_name}' does not exist",
-                symbol_name=return_sort_name,
-                existing_symbols=list(self.sorts.keys()),
+                symbol=return_sort_name,
+                operation="lookup",
                 suggestion=f"Register sort '{return_sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
             )
         
@@ -195,12 +196,12 @@ class DCECNamespace:
         logger.debug(f"Added function: {function}")
         return function
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def get_function(self, name: str) -> Optional[Function]:
         """Get a function by name."""
         return self.functions.get(name)
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_predicate(self, name: str, argument_sort_names: List[str]) -> Predicate:
         """
         Add a predicate to the namespace.
@@ -218,8 +219,8 @@ class DCECNamespace:
         if name in self.predicates:
             raise NamespaceError(
                 f"Duplicate predicate name '{name}'",
-                symbol_name=name,
-                existing_symbols=list(self.predicates.keys()),
+                symbol=name,
+                operation="add_predicate",
                 suggestion=f"Use a different predicate name or remove the existing predicate '{name}' first"
             )
         
@@ -229,8 +230,8 @@ class DCECNamespace:
             if sort_name not in self.sorts:
                 raise NamespaceError(
                     f"Sort '{sort_name}' does not exist for predicate argument",
-                    symbol_name=sort_name,
-                    existing_symbols=list(self.sorts.keys()),
+                    symbol=sort_name,
+                    operation="lookup",
                     suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
                 )
             argument_sorts.append(self.sorts[sort_name])
@@ -240,7 +241,7 @@ class DCECNamespace:
         logger.debug(f"Added predicate: {predicate}")
         return predicate
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def get_predicate(self, name: str) -> Optional[Predicate]:
         """Get a predicate by name."""
         return self.predicates.get(name)
@@ -267,7 +268,7 @@ class DCECContainer:
     similar to the original DCEC_Library DCECContainer.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize an empty DCEC container."""
         self.namespace = DCECNamespace()
         self.statements: List[DCECStatement] = []
@@ -275,7 +276,7 @@ class DCECContainer:
         self.axioms: List[DCECStatement] = []
         self.theorems: List[DCECStatement] = []
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_statement(
         self, 
         formula: Formula, 
@@ -301,8 +302,8 @@ class DCECContainer:
         if label and label in self.statement_labels:
             raise NamespaceError(
                 f"Duplicate statement label '{label}'",
-                symbol_name=label,
-                existing_symbols=list(self.statement_labels.keys()),
+                symbol=label,
+                operation="add_statement",
                 suggestion=f"Use a different label or remove the existing statement with label '{label}' first"
             )
         
@@ -323,12 +324,12 @@ class DCECContainer:
         logger.debug(f"Added statement: {statement}")
         return statement
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def get_statement(self, label: str) -> Optional[DCECStatement]:
         """Get a statement by its label."""
         return self.statement_labels.get(label)
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_theorem(self, formula: Formula, label: Optional[str] = None) -> DCECStatement:
         """
         Add a theorem to prove.
@@ -356,7 +357,7 @@ class DCECContainer:
         """Get all theorems."""
         return self.theorems.copy()
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all statements (but keep the namespace)."""
         self.statements.clear()
         self.statement_labels.clear()
