@@ -60,7 +60,8 @@ for person in persons:
 ```
 knowledge_graphs/
 ├── README.md (this file)
-├── NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md (⭐ LATEST ANALYSIS)
+├── COMPREHENSIVE_ANALYSIS_2026_02_18.md (⭐ LATEST ANALYSIS)
+├── IMPROVEMENT_TODO.md (⭐ living “infinite backlog”)
 ├── INDEX.md (documentation navigation)
 │
 ├── extraction/           # Entity and relationship extraction
@@ -128,25 +129,13 @@ knowledge_graphs/
 
 ## 📊 Current Status
 
-### ✅ Phase 1: Critical Issues (COMPLETE - 2026-02-17)
-- Fixed 3 bare `except:` statements
-- Initialized 2 empty constructors (SchemaChecker, IntegrityVerifier)
-- Removed 3 backup files (260KB)
-- Updated .gitignore
+✅ Production-ready and feature-complete for P1–P4 (see [MASTER_STATUS.md](./MASTER_STATUS.md)).
 
-### 🔄 Phase 2: Code Quality (IN PROGRESS)
-- [ ] Complete deprecation migration
-- [ ] Resolve 23 TODO comments
-- [ ] Improve exception handling (50+ generic catches)
+**Main ongoing improvements:**
+- Increase migration module test coverage (target ≥70% in v2.0.1)
+- Keep tightening error handling + diagnostics in hot paths
 
-### 📋 Remaining Phases (Planned)
-- **Phase 3:** Code cleanup (16h)
-- **Phase 4:** Documentation (24h)
-- **Phase 5:** Testing >85% coverage (28h)
-- **Phase 6:** Performance optimization (16h)
-- **Phase 7:** Long-term improvements (40h)
-
-**See [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md) for complete details.**
+For a comprehensive, continuously-growing improvement plan, see **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)**.
 
 ## 🚀 Key Features
 
@@ -177,9 +166,10 @@ knowledge_graphs/
 
 ### Quick Reference
 - **[QUICKSTART.md](./QUICKSTART.md)** - 5-minute quick start guide ⚡
-- **[FEATURE_MATRIX.md](./FEATURE_MATRIX.md)** - What's implemented vs. planned 📋
+- **[MASTER_STATUS.md](./MASTER_STATUS.md)** - Feature matrix, test coverage, roadmap ⭐
 - **[DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md)** - Planned features with timelines 📅
 - **[INDEX.md](./INDEX.md)** - Complete documentation index 📚
+- **[IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md)** - Living improvement backlog ♾️
 
 ### Main Documentation (in /docs)
 - **KNOWLEDGE_GRAPHS_INTEGRATION_GUIDE.md** (37KB) - End-to-end workflows
@@ -190,7 +180,7 @@ knowledge_graphs/
 
 ### Module Documentation
 - **extraction/README.md** - Extraction package documentation
-- ⚠️ Other subdirectories need READMEs (see refactoring plan)
+- ✅ Each subdirectory includes its own `README.md` (see [INDEX.md](./INDEX.md) for navigation)
 
 ## 🧪 Testing
 
@@ -220,12 +210,10 @@ pytest tests/unit/knowledge_graphs/test_transactions.py
 - ✅ Backup files (REMOVED in Phase 1)
 
 **High Priority (P1):**
-- ❌ Deprecation migration incomplete (knowledge_graph_extraction.py has duplicate code)
-- ❌ 23 TODO comments need resolution
-- ❌ spaCy dependency not in setup.py
-- ❌ 50+ generic exception handlers need improvement
+- Improve migration module test coverage (see [MASTER_STATUS.md](./MASTER_STATUS.md))
+- Continue deprecation cleanups (legacy import shims) without breaking compatibility
 
-**See [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md) for complete list.**
+**See [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) for the comprehensive list.**
 
 ## 🔧 Usage Patterns
 
@@ -321,11 +309,9 @@ See **KNOWLEDGE_GRAPHS_PERFORMANCE_OPTIMIZATION.md** for tuning guidance.
 
 ## 🤝 Contributing
 
-See [REFACTORING_IMPROVEMENT_PLAN.md](./REFACTORING_IMPROVEMENT_PLAN.md) for:
-- Current refactoring status
-- Open tasks and issues
-- Implementation timeline
-- Code quality standards
+See:
+- [MASTER_STATUS.md](./MASTER_STATUS.md) for current status and gaps
+- [IMPROVEMENT_TODO.md](./IMPROVEMENT_TODO.md) for open improvement tasks
 
 ## 📝 License
 
@@ -346,6 +332,5 @@ This module is part of the IPFS Datasets Python project. See main project LICENS
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Refactoring Status:** Phase 1 of 7 complete (14% overall progress)  
-**Next Milestone:** Phase 2 - Deprecation Migration
+**Last Updated:** 2026-02-18  
+**Next Milestone:** v2.0.1 (Q2 2026) - migration test coverage & polish

@@ -1,6 +1,6 @@
 # Knowledge Graphs - Development Roadmap
 
-**Last Updated:** 2026-02-17  
+**Last Updated:** 2026-02-18  
 **Current Version:** 2.0.0  
 **Status:** Active Development
 
@@ -10,6 +10,8 @@
 
 This roadmap outlines planned features and improvements for the knowledge_graphs module. All dates are estimates and subject to change based on community feedback and priorities.
 
+**Note (2026-02-18):** P1–P4 roadmap items (Cypher NOT, CREATE relationships, GraphML/GEXF/Pajek formats, neural/aggressive extraction, multi-hop traversal, LLM integration) were delivered early in **v2.0.0 (PR #1085)**. The sections below are retained for historical context but marked as delivered/cancelled.
+
 ---
 
 ## Version 2.0.1 (Q2 2026) - Bug Fixes & Polish
@@ -18,11 +20,11 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 **Focus:** Production hardening and test coverage
 
 ### Planned Work
-- ✅ Increase migration module test coverage from 40% to 70%+
-- ✅ Add comprehensive error handling tests
-- ✅ Fix any bugs discovered in production deployments
-- ✅ Performance profiling and optimization for large graphs (>100k nodes)
-- ✅ Memory usage optimization for batch operations
+- [ ] Increase migration module test coverage from 40% to 70%+
+- [ ] Add comprehensive error handling tests
+- [ ] Fix any bugs discovered in production deployments
+- [ ] Performance profiling and optimization for large graphs (>100k nodes)
+- [ ] Memory usage optimization for batch operations
 
 ### Success Criteria
 - Migration module test coverage ≥70%
@@ -32,7 +34,7 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 
 ---
 
-## Version 2.1.0 (Q2 2026) - Query Enhancement
+## Version 2.1.0 (Q2 2026) - Query Enhancement (CANCELLED: delivered in v2.0.0)
 
 **Target Release:** June 2026  
 **Focus:** Cypher language feature parity
@@ -40,7 +42,7 @@ This roadmap outlines planned features and improvements for the knowledge_graphs
 ### Planned Features
 
 #### 1. NOT Operator Support
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Implement NOT operator in Cypher queries
 
@@ -57,7 +59,7 @@ RETURN p
 - Reduced workaround code
 
 #### 2. CREATE Relationships
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Support relationship creation in Cypher
 
@@ -91,7 +93,7 @@ RETURN r
 
 ---
 
-## Version 2.2.0 (Q3 2026) - Migration Enhancement
+## Version 2.2.0 (Q3 2026) - Migration Enhancement (CANCELLED: delivered in v2.0.0)
 
 **Target Release:** August 2026  
 **Focus:** Additional data format support
@@ -99,7 +101,7 @@ RETURN r
 ### Planned Features
 
 #### 1. GraphML Format Support
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** Medium  
 **Description:** Import/export GraphML format
 
@@ -107,7 +109,7 @@ RETURN r
 **Target:** Full read/write support
 
 #### 2. GEXF Format Support
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** Medium  
 **Description:** Import/export GEXF (Gephi) format
 
@@ -115,7 +117,7 @@ RETURN r
 **Target:** Full read/write support
 
 #### 3. Pajek Format Support
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** Low  
 **Description:** Import/export Pajek format
 
@@ -141,7 +143,7 @@ RETURN r
 
 ---
 
-## Version 2.5.0 (Q3-Q4 2026) - Advanced Extraction
+## Version 2.5.0 (Q3-Q4 2026) - Advanced Extraction (CANCELLED: delivered in v2.0.0)
 
 **Target Release:** November 2026  
 **Focus:** Machine learning-powered entity/relationship extraction
@@ -149,7 +151,7 @@ RETURN r
 ### Planned Features
 
 #### 1. Neural Relationship Extraction
-**Status:** Experimental  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** Medium  
 **Description:** Use neural networks for relationship extraction
 
@@ -213,7 +215,7 @@ RETURN r
 
 ---
 
-## Version 3.0.0 (Q1 2027) - Advanced Reasoning
+## Version 3.0.0 (Q1 2027) - Advanced Reasoning (CANCELLED: delivered in v2.0.0)
 
 **Target Release:** February 2027  
 **Focus:** Graph reasoning and AI integration
@@ -221,7 +223,7 @@ RETURN r
 ### Planned Features
 
 #### 1. Multi-hop Graph Traversal
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Advanced graph reasoning capabilities
 
@@ -242,7 +244,7 @@ RETURN path, length(path)
 - Graph pattern matching
 
 #### 2. LLM API Integration
-**Status:** Planned  
+**Status:** ✅ Delivered in v2.0.0 (PR #1085)  
 **Priority:** High  
 **Description:** Integration with large language models
 
@@ -353,10 +355,10 @@ We follow [Semantic Versioning](https://semver.org/):
 |---------|-------------|--------|-------|
 | 2.0.0 | 2026-02-17 | ✅ Released | Documentation & Testing |
 | 2.0.1 | May 2026 | 🔄 Planned | Bug Fixes & Polish |
-| 2.1.0 | June 2026 | 🔄 Planned | Query Enhancement |
-| 2.2.0 | August 2026 | 🔄 Planned | Migration Enhancement |
-| 2.5.0 | November 2026 | 🔄 Planned | Advanced Extraction |
-| 3.0.0 | February 2027 | 🔄 Planned | Advanced Reasoning |
+| 2.1.0 | June 2026 | ✅ Cancelled (delivered in 2.0.0) | Query Enhancement |
+| 2.2.0 | August 2026 | ✅ Cancelled (delivered in 2.0.0) | Migration Enhancement |
+| 2.5.0 | November 2026 | ✅ Cancelled (delivered in 2.0.0) | Advanced Extraction |
+| 3.0.0 | February 2027 | ✅ Cancelled (delivered in 2.0.0) | Advanced Reasoning |
 | 3.x | 2027-2028 | 📋 Future | TBD based on feedback |
 
 ---
@@ -370,10 +372,10 @@ We follow [Semantic Versioning](https://semver.org/):
 - numpy, scipy (required)
 - rdflib (optional, for RDF/SPARQL)
 
-### Planned Dependencies
-- transformers (v2.5.0 - neural extraction)
-- AllenNLP (v2.5.0 - SRL)
-- OpenAI/Anthropic SDKs (v3.0.0 - LLM integration)
+### Optional Dependencies (available in v2.0.0)
+- transformers (neural extraction)
+- AllenNLP (SRL; experimental/research)
+- OpenAI/Anthropic SDKs (LLM integration)
 
 ### Deprecation Notices
 - Legacy IPLD API (deprecated in 2.0.0, removal in 3.0.0)
@@ -394,6 +396,6 @@ We value your feedback! Please share thoughts on:
 
 ---
 
-**Last Updated:** 2026-02-17  
-**Next Review:** Q2 2026 (after v2.1.0 release)  
+**Last Updated:** 2026-02-18  
+**Next Review:** Q2 2026 (after v2.0.1 release)  
 **Maintained By:** Knowledge Graphs Team

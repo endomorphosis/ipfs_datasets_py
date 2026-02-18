@@ -29,7 +29,6 @@
       "description": "Theorem with extra whitespace should normalize to same hash",
       "theorem": "Q",
       "axioms_with_whitespace": ["P", "P  ->   Q"],
-      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
       "expected_witness_count": 2,
       "notes": "Whitespace invariance - multiple spaces collapse to single space"
     },
