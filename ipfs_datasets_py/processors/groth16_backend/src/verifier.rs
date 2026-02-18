@@ -53,6 +53,7 @@ mod tests {
     #[test]
     fn test_verifier_validates_public_inputs() {
         let proof = ProofOutput {
+            schema_version: 1,
             proof_a: "[1,0]".to_string(),
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
@@ -76,6 +77,7 @@ mod tests {
     #[test]
     fn test_verifier_rejects_invalid_input_count() {
         let proof = ProofOutput {
+            schema_version: 1,
             proof_a: "[1,0]".to_string(),
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
@@ -92,6 +94,7 @@ mod tests {
     #[test]
     fn test_verifier_rejects_invalid_hex_format() {
         let proof = ProofOutput {
+            schema_version: 1,
             proof_a: "[1,0]".to_string(),
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),
@@ -113,6 +116,7 @@ mod tests {
     #[test]
     fn test_verifier_rejects_invalid_version() {
         let proof = ProofOutput {
+            schema_version: 1,
             proof_a: "[1,0]".to_string(),
             proof_b: "[[1,0],[0,1]]".to_string(),
             proof_c: "[1,0]".to_string(),

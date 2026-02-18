@@ -6,11 +6,22 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use ark_relations::r1cs::{ConstraintSystem, ConstraintSynthesizer};
 use ark_bn254::Fr;
 
+fn decode_32byte_hex(label: &str, hex_str: &str) -> anyhow::Result<Vec<u8>> {
+    if hex_str.len() != 64 {
+        anyhow::bail!("{label} must be 64 hex chars (32 bytes)");
+    }
+    let bytes = hex::decode(hex_str)?;
+    if bytes.len() != 32 {
+        anyhow::bail!("{label} must decode to 32 bytes");
+    }
+    Ok(bytes)
+}
+
 /// Generate Groth16 proof from witness
 pub fn generate_proof(witness: &WitnessInput) -> anyhow::Result<ProofOutput> {
     // Parse hex inputs to bytes
-    let axioms_commitment = hex::decode(&witness.axioms_commitment_hex)?;
-    let theorem_hash = hex::decode(&witness.theorem_hash_hex)?;
+    let axioms_commitment = decode_32byte_hex("axioms_commitment_hex", &witness.axioms_commitment_hex)?;
+    let theorem_hash = decode_32byte_hex("theorem_hash_hex", &witness.theorem_hash_hex)?;
 
     // Verify witness structure
     if witness.private_axioms.is_empty() {

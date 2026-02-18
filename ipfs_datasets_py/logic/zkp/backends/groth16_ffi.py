@@ -92,7 +92,7 @@ class Groth16Backend(ZKPBackend):
         if not self.binary_path:
             logger.warning(
                 "Groth16 binary not found. "
-                "Install Rust and run: cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && cargo build --release "
+                "Install Rust and run: cd ipfs_datasets_py/processors/groth16_backend && cargo build --release "
                 "(legacy docs may refer to ./groth16_backend)"
             )
         elif not os.path.exists(self.binary_path):
@@ -109,11 +109,15 @@ class Groth16Backend(ZKPBackend):
                 return override
 
         # Canonical location (current):
-        #   ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16
+        #   ipfs_datasets_py/processors/groth16_backend/target/release/groth16
         package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
         repo_root = package_root.parent  # .../ipfs_datasets_py
 
         candidates = [
+            # Canonical repo-local location (preferred)
+            repo_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+
+            # Legacy location when the Rust crate lived under the Python package tree
             package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
 
             # Backward-compatible legacy location (older docs/scripts):
@@ -161,8 +165,23 @@ class Groth16Backend(ZKPBackend):
             )
             
             if result.returncode != 0:
+                stdout_text = result.stdout.decode(errors="replace").strip()
+                stderr_text = result.stderr.decode(errors="replace").strip()
+
+                # Prefer a structured error envelope if present on stdout.
+                if stdout_text:
+                    try:
+                        payload = json.loads(stdout_text)
+                        if isinstance(payload, dict) and "error" in payload:
+                            err = payload.get("error") or {}
+                            code = err.get("code", "UNKNOWN")
+                            message = err.get("message", "Groth16 proof generation failed")
+                            raise RuntimeError(f"Groth16 proof generation failed [{code}]: {message}")
+                    except json.JSONDecodeError:
+                        pass
+
                 raise RuntimeError(
-                    f"Groth16 proof generation failed: {result.stderr.decode()}"
+                    f"Groth16 proof generation failed (exit={result.returncode}): {stderr_text or stdout_text}"
                 )
             
             # Parse proof from JSON
@@ -199,8 +218,20 @@ class Groth16Backend(ZKPBackend):
                 timeout=self.timeout_seconds,
             )
             
-            # Exit code 0 = valid, non-zero = invalid
-            return result.returncode == 0
+            # Exit codes (Rust CLI contract):
+            # - 0: valid
+            # - 1: invalid
+            # - 2: error
+            if result.returncode == 0:
+                return True
+            if result.returncode == 1:
+                return False
+
+            stdout_text = result.stdout.decode(errors="replace").strip()
+            stderr_text = result.stderr.decode(errors="replace").strip()
+            raise RuntimeError(
+                f"Groth16 verification failed (exit={result.returncode}): {stderr_text or stdout_text}"
+            )
             
         except subprocess.TimeoutExpired:
             raise TimeoutError(f"Groth16 verification timeout after {self.timeout_seconds}s")
