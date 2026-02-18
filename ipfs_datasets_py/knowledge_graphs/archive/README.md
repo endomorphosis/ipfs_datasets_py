@@ -26,16 +26,26 @@ Session summaries and phase completion reports from the 2026-02-17 refactoring e
 Planning documents that have been superseded by newer plans or completed work. These files served their purpose during the refactoring effort but are no longer needed for current development.
 
 **Recently Archived (2026-02-18):**
-- `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Superseded by FINAL_REFACTORING_PLAN_2026_02_18.md and MASTER_STATUS.md
-- `COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Previous comprehensive analysis (superseded)
-- `COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_FINAL.md` - Superseded by 2026-02-18 analysis
-- `REFACTORING_PHASE_1_SUMMARY.md` - Historical phase 1 summary (moved from root)
+
+*Duplicates removed from main directory (already existed in archive):*
+- `REFACTORING_IMPROVEMENT_PLAN.md` (38KB) - Duplicate of archive/superseded_plans/ version
+- `PHASE_3_4_COMPLETION_SUMMARY.md` (15KB) - Duplicate of archive/refactoring_history/ version
+- `PHASES_1-7_SUMMARY.md` (12KB) - Duplicate of archive/refactoring_history/ version
+- `SESSION_SUMMARY_PHASE3-4.md` (11KB) - Duplicate of archive/refactoring_history/ version
+- `PROGRESS_TRACKER.md` (11KB) - Duplicate of archive/refactoring_history/ version
+
+*Superseded by MASTER_STATUS.md (consolidated):*
+- `IMPLEMENTATION_STATUS.md` → archive/superseded_plans/ - Status now in MASTER_STATUS.md
+- `FEATURE_MATRIX.md` → archive/superseded_plans/ - Feature matrix now in MASTER_STATUS.md
+- `FINAL_REFACTORING_PLAN_2026_02_18.md` → archive/superseded_plans/ - Superseded by COMPREHENSIVE_ANALYSIS_2026_02_18.md
+
+*Historical validation reports:*
+- `VALIDATION_REPORT.md` → archive/refactoring_history/ - Historical validation results
 
 **Superseded By (2026-02-18):**
-- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ **NEW** - Single source of truth for module status
-- **[FINAL_REFACTORING_PLAN_2026_02_18.md](../FINAL_REFACTORING_PLAN_2026_02_18.md)** ⭐ **NEW** - Comprehensive refactoring plan
-- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ **NEW** - Documentation navigation guide
-- `FEATURE_MATRIX.md` - Feature completeness at-a-glance
+- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ - Single source of truth for module status (includes feature matrix, implementation status)
+- **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md)** ⭐ **NEW** - Latest comprehensive analysis
+- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ - Documentation navigation guide
 - `DEFERRED_FEATURES.md` - Planned features documentation
 - `ROADMAP.md` - Future plans
 
@@ -80,19 +90,17 @@ The refactoring effort (2026-02-17) successfully addressed:
 For **current and active** documentation, see:
 
 ### Active Core Files (2026-02-18)
-- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ **NEW** - Single source of truth (17KB)
-- **[FINAL_REFACTORING_PLAN_2026_02_18.md](../FINAL_REFACTORING_PLAN_2026_02_18.md)** ⭐ **NEW** - Comprehensive plan (47KB)
-- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ **NEW** - Documentation guide (15KB)
+- **[MASTER_STATUS.md](../MASTER_STATUS.md)** ⭐ - Single source of truth (17KB)
+- **[COMPREHENSIVE_ANALYSIS_2026_02_18.md](../COMPREHENSIVE_ANALYSIS_2026_02_18.md)** ⭐ **NEW** - Latest comprehensive analysis (22KB)
+- **[DOCUMENTATION_GUIDE.md](../DOCUMENTATION_GUIDE.md)** ⭐ - Documentation guide (15KB)
 - [EXECUTIVE_SUMMARY_FINAL_2026_02_18.md](../EXECUTIVE_SUMMARY_FINAL_2026_02_18.md) - Executive summary
 - [P3_P4_IMPLEMENTATION_COMPLETE.md](../P3_P4_IMPLEMENTATION_COMPLETE.md) - P1-P4 implementation record
 - [README.md](../README.md) - Module overview
 - [QUICKSTART.md](../QUICKSTART.md) - 5-minute getting started guide
 - [INDEX.md](../INDEX.md) - Documentation navigation hub
-- [FEATURE_MATRIX.md](../FEATURE_MATRIX.md) - Feature completeness matrix
 - [DEFERRED_FEATURES.md](../DEFERRED_FEATURES.md) - Planned features
 - [ROADMAP.md](../ROADMAP.md) - Development roadmap
 - [CHANGELOG_KNOWLEDGE_GRAPHS.md](../CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
-- [VALIDATION_REPORT.md](../VALIDATION_REPORT.md) - Cross-reference validation
 
 ### Testing
 - [tests/knowledge_graphs/TEST_GUIDE.md](../../../tests/knowledge_graphs/TEST_GUIDE.md) - Comprehensive testing guide
