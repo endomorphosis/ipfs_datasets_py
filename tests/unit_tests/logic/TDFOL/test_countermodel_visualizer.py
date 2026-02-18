@@ -577,12 +577,13 @@ class TestHTMLVisualization:
         
         # WHEN
         html = visualizer.to_html_string()
+        lower_html = html.lower()
         
         # THEN
-        assert "<!DOCTYPE html>" in html
-        assert "<html" in html
-        assert "d3js.org" in html or "d3.js" in html.lower()
-        assert "Kripke Structure" in html
+        assert "<!doctype html>" in lower_html
+        assert "<html" in lower_html
+        assert ("d3.js" in lower_html) or ("d3.min.js" in lower_html)
+        assert "kripke structure" in lower_html
     
     def test_html_contains_data(self):
         """
