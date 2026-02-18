@@ -4,27 +4,56 @@
 
 ## ⚠️ Current Status (2026-02-18)
 
-**Module Status**: 🟢 **PRODUCTION READY** - All Phases Complete!
+**Module Status**: 🟡 **EDUCATIONAL SIMULATION** - Production Backend Pending
+
+⚠️ **IMPORTANT**: This module provides **educational simulation** of ZKP concepts. It is **NOT cryptographically secure** and should **NOT** be used for production systems requiring real zero-knowledge proofs. See [SECURITY_CONSIDERATIONS.md](SECURITY_CONSIDERATIONS.md) for details.
+
+**What This Module IS:**
+- ✅ Production-ready **simulation** for learning and prototyping
+- ✅ 78 tests passing (100% pass rate) with 80% code coverage
+- ✅ 3 working example scripts demonstrating ZKP workflows
+- ✅ Fast, functional implementation for educational use
+
+**What This Module is NOT:**
+- ❌ Cryptographically secure (simulation only)
+- ❌ Suitable for real zero-knowledge proofs
+- ❌ Ready for production systems with sensitive data
+- ❌ A replacement for real zkSNARKs (Groth16, PLONK, etc.)
 
 **Recent Updates**:
-- ✅ **Phases 1-5 Complete** (all implementation phases finished)
-- ✅ **All 32 tests passing** with 79% code coverage
+- ✅ **Code Implementation Complete** (simulation backend functional)
+- ✅ **78 tests passing** with 80% code coverage (not 32 - updated count)
 - ✅ **3 working example scripts** (14 demonstrations total)
 - ✅ **API compatibility** (BooleanCircuit alias, backend switching)
-- ✅ **Documentation accurate** and organized
+- ✅ **Documentation consolidated** (16 → 9 active files, 7 archived)
 
 **Test Results**:
-- 17 module tests ✓
-- 8 integration tests ✓
-- 7 performance tests ✓
-- Coverage: 79% overall (92% core, 98% prover, 90-100% backends)
+- 78 total tests (17 module + 8 integration + 7 performance + 28 edge cases + 18 Groth16 stubs)
+- 100% pass rate
+- Coverage: 80% overall (92% __init__, 98% prover, 79% verifier, 90-100% backends)
 
-**Quick Links**:
-- 📋 [Phases 1-2 Summary](SESSION_SUMMARY_2026_02_18.md) - Initial work
-- 📋 [Phases 3-5 Report](PHASES_3-5_COMPLETION_REPORT.md) - Final completion
-- 📝 [Improvement Plan](ZKP_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) - Original roadmap
-- 🎯 [Action Plan](ACTION_PLAN.md) - Implementation timeline
-- 📚 [Archive](ARCHIVE/) - Historical documents
+## 📚 Documentation Guide
+
+**New Users:**
+- Start with [QUICKSTART.md](QUICKSTART.md) - Get started in 5 minutes
+- See [EXAMPLES.md](EXAMPLES.md) - Working code examples
+
+**Understanding the Module:**
+- ⚠️ [SECURITY_CONSIDERATIONS.md](SECURITY_CONSIDERATIONS.md) - **Read this first!**
+- [IMPLEMENTATION_GUIDE.md](IMPLEMENTATION_GUIDE.md) - How it works (technical deep-dive)
+
+**Integration & Production:**
+- [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md) - Using ZKP in your code
+- [PRODUCTION_UPGRADE_PATH.md](PRODUCTION_UPGRADE_PATH.md) - Roadmap to real cryptography
+
+**Development & Status:**
+- [IMPROVEMENT_TODO.md](IMPROVEMENT_TODO.md) - Current status & open items
+- [GROTH16_IMPLEMENTATION_PLAN.md](GROTH16_IMPLEMENTATION_PLAN.md) - Production backend plan
+- [ARCHIVE/](ARCHIVE/) - Historical documents (reference only)
+
+**Analysis & Planning:**
+- [FINDINGS_SUMMARY.md](FINDINGS_SUMMARY.md) - Documentation refactoring analysis
+- [ANALYSIS_NAVIGATION.md](ANALYSIS_NAVIGATION.md) - Analysis documents guide
 
 **For New Users**: Module is fully functional with working examples! See QUICKSTART.md to get started.
 
@@ -46,25 +75,25 @@ The ZKP module provides zero-knowledge proof capabilities for the logic module, 
 ## Use Cases
 
 ### 1. Private Theorem Proving
-Prove that a theorem follows from axioms without revealing the axioms:
+
+Prove that a theorem follows from axioms without revealing the axioms.
+
+**Example:** See [EXAMPLES.md](EXAMPLES.md) for complete working code.
 
 ```python
 from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
 
-prover = ZKPProver()
+# Generate proof with private axioms
 proof = prover.generate_proof(
-    theorem="Socrates is mortal",
-    private_axioms=[
-        "Socrates is human",      # Kept private!
-        "All humans are mortal"   # Kept private!
-    ]
+    theorem="Conclusion",
+    private_axioms=["Premise 1", "Premise 2", "Logic rule"]
 )
 
-# Verify without seeing the axioms
-verifier = ZKPVerifier()
+# Verify without seeing axioms
 assert verifier.verify_proof(proof)  # True
-print(f"Proof size: {proof.size_bytes} bytes")  # 256 bytes
 ```
+
+For the classic Socrates example and more, see [EXAMPLES.md](EXAMPLES.md).
 
 ### 2. Confidential Compliance Verification
 Verify regulatory compliance without exposing internal policies:
