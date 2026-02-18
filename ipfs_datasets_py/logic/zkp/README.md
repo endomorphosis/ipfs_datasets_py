@@ -2,6 +2,24 @@
 
 **Privacy-Preserving Theorem Proving for Logic Formulas**
 
+## ⚠️ Current Status (2026-02-18)
+
+**Module Status**: 🟡 Under Refactoring (Analysis Complete, Implementation Needed)
+
+**Quick Links**:
+- 📋 [Refactoring Status](REFACTORING_STATUS_2026_02_18.md) - Honest current state assessment
+- 📝 [Comprehensive Improvement Plan](ZKP_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) - Detailed 5-phase plan
+- 🎯 [Action Plan](ACTION_PLAN.md) - Immediate next steps
+
+**Known Issues**:
+- 🔴 Example scripts have import errors (being fixed)
+- 🔴 API mismatches between docs and code (being fixed)
+- 🔴 Backend integration incomplete (being fixed)
+
+**For New Users**: This module is functional but under active improvement. See [Action Plan](ACTION_PLAN.md) for timeline.
+
+---
+
 ## Overview
 
 The ZKP module provides zero-knowledge proof capabilities for the logic module, enabling privacy-preserving verification of theorems without revealing the underlying axioms or proofs.
