@@ -101,6 +101,15 @@ if TYPE_CHECKING:
         GraphLayout,
         create_visualizer,
     )
+    from .performance_dashboard import (
+        PerformanceDashboard,
+        ProofMetrics,
+        TimeSeriesMetric,
+        AggregatedStats,
+        MetricType,
+        get_global_dashboard,
+        reset_global_dashboard,
+    )
 
 __all__ = [
     # Enumerations
@@ -185,6 +194,15 @@ __all__ = [
     "GraphLayout",
     "create_visualizer",
     
+    # Performance Dashboard (Phase 11 Task 11.4)
+    "PerformanceDashboard",
+    "ProofMetrics",
+    "TimeSeriesMetric",
+    "AggregatedStats",
+    "MetricType",
+    "get_global_dashboard",
+    "reset_global_dashboard",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -252,6 +270,14 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "BoxChars": (".countermodel_visualizer", "BoxChars"),
     "GraphLayout": (".countermodel_visualizer", "GraphLayout"),
     "create_visualizer": (".countermodel_visualizer", "create_visualizer"),
+    # Performance Dashboard
+    "PerformanceDashboard": (".performance_dashboard", "PerformanceDashboard"),
+    "ProofMetrics": (".performance_dashboard", "ProofMetrics"),
+    "TimeSeriesMetric": (".performance_dashboard", "TimeSeriesMetric"),
+    "AggregatedStats": (".performance_dashboard", "AggregatedStats"),
+    "MetricType": (".performance_dashboard", "MetricType"),
+    "get_global_dashboard": (".performance_dashboard", "get_global_dashboard"),
+    "reset_global_dashboard": (".performance_dashboard", "reset_global_dashboard"),
 }
 
 
