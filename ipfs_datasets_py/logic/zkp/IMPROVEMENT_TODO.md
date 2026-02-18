@@ -83,6 +83,8 @@ The simulated prover currently mixes deterministic hashing with random bytes.
 
 This is a separate backend, not a “small patch”.
 
+**Implementation plan:** see `logic/zkp/GROTH16_IMPLEMENTATION_PLAN.md`.
+
 ### P3.1 Architecture: pluggable backends
 - [ ] Define a backend protocol (e.g., `ZKBackend.generate_proof(...)` / `verify_proof(...)`).
 - [ ] Keep simulation as the default backend.
