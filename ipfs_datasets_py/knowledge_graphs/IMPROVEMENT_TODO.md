@@ -2,6 +2,8 @@
 
 **Scope:** This backlog applies to the module at `ipfs_datasets_py/ipfs_datasets_py/knowledge_graphs/`.
 
+**Note on pathing:** Some older references mention `ipfs_datasets_py/ipfs_datasets_py/logic/knowledge_graphs`, but in this checkout the knowledge graphs subsystem lives in `.../knowledge_graphs/` (not under `logic/`).
+
 **Status snapshot (2026-02-18):** The module is already **production-ready** (see `MASTER_STATUS.md` and `COMPREHENSIVE_ANALYSIS_2026_02_18.md`). This document is a *comprehensive, ongoing* list of refactors + polish + hardening tasks to keep improving quality over time.
 
 ---
@@ -16,7 +18,7 @@
 - When changing behavior or public API, update:
   - `MASTER_STATUS.md` (authoritative status)
   - `CHANGELOG_KNOWLEDGE_GRAPHS.md` (user-visible changes)
-  - and any relevant docs under `docs/knowledge_graphs/`
+  - and any relevant docs in this module directory (see `INDEX.md`)
 
 **Primary references (don’t duplicate these):**
 - `MASTER_STATUS.md` (single source of truth)
@@ -35,11 +37,13 @@ These are the highest-signal improvement opportunities found during a quick pass
   - `ROADMAP.md` still lists features as “Planned” that `MASTER_STATUS.md` marks “Completed early / cancelled” (P1–P4).
 - **Exception specificity & observability**
   - There are many `except Exception as e:` blocks across the module. Most are probably fine as defensive coding, but many should be narrowed and/or re-raised as `KnowledgeGraphError` subclasses with consistent context.
-- **One “TODO” is actually a behavior placeholder**
-  - `cross_document_reasoning.py` contains placeholder similarity logic (`doc_similarity = 0.7`) and a note about future LLM-based relation determination. This is not “broken”, but it’s a clear target for real implementation.
 - **Migration module remains the main quality gap**
   - `MASTER_STATUS.md` calls out migration coverage as the primary area to improve (40% → 70%+).
   - CAR support remains intentionally deferred (see `migration/formats.py`).
+- **Test environment expectations**
+  - Some unit tests use the `mocker` fixture (from `pytest-mock`). Ensure it remains part of the test/dev dependency set.
+- **Current failing test set (local observation)**
+  - Running `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` executes most tests but ends with several failures plus a pytest internal error. These should be triaged and either fixed or explicitly marked/xfail with rationale.
 
 ---
 
@@ -96,9 +100,8 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream D — Correctness improvements (targeted)
 
 ### D1. Replace placeholder relation heuristics (P1)
-- [ ] **Implement real semantic similarity** in `cross_document_reasoning.py` (P1, medium risk)
-  - Options: simple TF-IDF cosine similarity, embedding-based similarity (if embeddings module exists), or reuse an existing similarity utility.
-  - Acceptance: similarity is computed from document text/metadata; tests cover at least 3 scenarios (supporting vs contradicting vs unclear).
+- [x] **Implement real semantic similarity** in `cross_document_reasoning.py` (P1, medium risk)
+  - Acceptance: similarity is computed from document text/metadata; tests cover scenarios (e.g., supporting vs elaborating vs complementary).
 - [ ] **Make relation classification deterministic and configurable** (P2, medium risk)
   - Acceptance: thresholds are parameters; results are stable for identical input.
 
@@ -109,6 +112,10 @@ These are the highest-signal improvement opportunities found during a quick pass
 ---
 
 ## Workstream E — Testing & quality gates
+
+### E0. Fix the current suite failures (P0)
+- [ ] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
+  - Acceptance: `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` completes without pytest INTERNALERROR; remaining failures are fixed or explicitly documented/xfail.
 
 ### E1. Migration module coverage (P0)
 - [ ] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
@@ -144,6 +151,8 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 - [ ] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
   - Acceptance: documented optional deps match reality; runtime error messages give exact install commands.
+- [ ] **Keep core test plugins in the test dependency set** (P1, low risk)
+  - Acceptance: `pytest-mock` stays present wherever test dependencies are declared; tests that rely on `mocker` never fail due to missing fixture.
 - [ ] **Improve spaCy model guidance** (P3, low risk)
   - Acceptance: clearer install instructions and graceful fallback when model not present.
 
@@ -180,4 +189,11 @@ If you want a high-value sequence that keeps risk low:
 2. **Migration coverage** (E1) — push coverage toward 70%+.
 3. **Placeholder relation logic** (D1) — implement real similarity + tests.
 4. **Exception narrowing** (C1) — start with a single subpackage (e.g., `migration/` or `storage/`).
+
+---
+
+## Completed (log)
+
+- 2026-02-18: Replaced placeholder similarity usage in `cross_document_reasoning.py` with a real similarity computation path and added/validated unit tests.
+- 2026-02-18: Added `pytest-mock` to test/dev dependencies to provide the `mocker` fixture for knowledge graph migration tests.
 

@@ -28,6 +28,7 @@ def _pick_free_port() -> int:
 
 class FakeRegistry:
     def __init__(self) -> None:
+        self.allow = True
         self.tools = {
             "echo": {
                 "function": self.echo,
@@ -37,7 +38,7 @@ class FakeRegistry:
         }
 
     async def validate_p2p_message(self, msg: dict) -> bool:
-        return True
+        return bool(self.allow)
 
     async def echo(self, *, text: str = "") -> dict:
         return {"text": text}
@@ -75,10 +76,11 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
 
     listen_port = _pick_free_port()
     runtime = TaskQueueP2PServiceRuntime()
+    registry = FakeRegistry()
     handle = runtime.start(
         queue_path=str(tmp_path / "task_queue.duckdb"),
         listen_port=listen_port,
-        accelerate_instance=FakeRegistry(),
+        accelerate_instance=registry,
     )
 
     assert handle.started.wait(2.0) is True
@@ -169,6 +171,30 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                 except Exception:
                     pass
 
+            # Deterministic negative test: authorization gating.
+            registry.allow = False
+            try:
+                stream = await open_libp2p_stream_by_multiaddr(
+                    host,
+                    peer_multiaddr=ma,
+                    protocols=[PROTOCOL_MCP_P2P_V1],
+                )
+                try:
+                    client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
+                    try:
+                        await client.initialize({})
+                        raise AssertionError("expected unauthorized error")
+                    except MCPRemoteError as exc:
+                        assert exc.message == "unauthorized"
+                        assert exc.code == -32001
+                finally:
+                    try:
+                        await stream.close()
+                    except Exception:
+                        pass
+            finally:
+                registry.allow = True
+
             stream = await open_libp2p_stream_by_multiaddr(
                 host,
                 peer_multiaddr=ma,
@@ -190,6 +216,38 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                 except Exception:
                     pass
 
+            # Deterministic notification behavior: no `id` => no response.
+            stream = await open_libp2p_stream_by_multiaddr(
+                host,
+                peer_multiaddr=ma,
+                protocols=[PROTOCOL_MCP_P2P_V1],
+            )
+            try:
+                client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
+
+                # Pre-init notification should not get an `init_required` response.
+                await client.notify("tools/list", {})
+                with trio.move_on_after(0.2) as scope:
+                    await read_u32_framed_json(stream, max_frame_bytes=1024 * 1024)
+                assert scope.cancelled_caught is True
+
+                resp = await client.initialize({})
+                assert (resp or {}).get("result", {}).get("ok") is True
+
+                # Post-init notification should also not yield a response.
+                await client.notify("tools/list", {})
+                with trio.move_on_after(0.2) as scope:
+                    await read_u32_framed_json(stream, max_frame_bytes=1024 * 1024)
+                assert scope.cancelled_caught is True
+
+                tools = await client.tools_list()
+                assert any(t.get("name") == "echo" for t in tools if isinstance(t, dict))
+            finally:
+                try:
+                    await stream.close()
+                except Exception:
+                    pass
+
             # Start a fresh session for the positive roundtrip.
             stream = await open_libp2p_stream_by_multiaddr(
                 host,
@@ -201,6 +259,37 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
 
                 resp = await client.initialize({})
                 assert (resp or {}).get("result", {}).get("ok") is True
+
+                # Deterministic negative test: unknown method after init.
+                try:
+                    await client.request("nope/not-a-method", {})
+                    raise AssertionError("expected method_not_found error")
+                except MCPRemoteError as exc:
+                    assert exc.message == "method_not_found"
+                    assert exc.code == -32601
+
+                # Deterministic negative test: invalid_params for tools/call.
+                try:
+                    await client.request_raw(
+                        {
+                            "jsonrpc": "2.0",
+                            "id": 123,
+                            "method": "tools/call",
+                            "params": [],
+                        }
+                    )
+                    raise AssertionError("expected invalid_params error")
+                except MCPRemoteError as exc:
+                    assert exc.message == "invalid_params"
+                    assert exc.code == -32602
+
+                # Deterministic negative test: unknown tool name.
+                try:
+                    await client.tools_call("definitely_not_a_tool", {"x": 1})
+                    raise AssertionError("expected unknown_tool error")
+                except MCPRemoteError as exc:
+                    assert exc.message == "unknown_tool"
+                    assert exc.code == -32002
 
                 tools = await client.tools_list()
                 assert any(t.get("name") == "echo" for t in tools if isinstance(t, dict))

@@ -133,6 +133,60 @@ def test_mcp_p2p_tools_list_after_initialize() -> None:
     assert len(stream.writes) >= 2
 
 
+def test_mcp_p2p_notifications_do_not_get_responses() -> None:
+    registry = FakeRegistry()
+    init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+    notif = {"jsonrpc": "2.0", "method": "tools/list", "params": {}}
+    lst = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
+    stream = FakeStream([_frame(init), _frame(notif), _frame(lst)])
+
+    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", registry=registry, max_frame_bytes=4096))
+    assert stream.closed is True
+
+    # Expect exactly two responses: initialize ack + tools/list response.
+    data = b"".join(stream.writes)
+    assert data
+    # Parse frames in-order.
+    out: list[dict] = []
+    i = 0
+    while i + 4 <= len(data):
+        ln = struct.unpack(">I", data[i : i + 4])[0]
+        i += 4
+        payload = data[i : i + ln]
+        i += ln
+        out.append(json.loads(payload.decode("utf-8")))
+
+    assert len(out) == 2
+    assert out[0].get("id") == 1
+    assert out[1].get("id") == 2
+
+
+def test_mcp_p2p_unknown_method_notification_is_ignored() -> None:
+    init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+    notif = {"jsonrpc": "2.0", "method": "nope/not-a-method", "params": {}}
+    req = {"jsonrpc": "2.0", "id": 2, "method": "nope/not-a-method", "params": {}}
+    stream = FakeStream([_frame(init), _frame(notif), _frame(req)])
+
+    asyncio.run(handle_mcp_p2p_stream(stream, local_peer_id="peer", max_frame_bytes=4096))
+    assert stream.closed is True
+
+    data = b"".join(stream.writes)
+    out: list[dict] = []
+    i = 0
+    while i + 4 <= len(data):
+        ln = struct.unpack(">I", data[i : i + 4])[0]
+        i += 4
+        payload = data[i : i + ln]
+        i += ln
+        out.append(json.loads(payload.decode("utf-8")))
+
+    # Only initialize response + method_not_found error for the *request*.
+    assert len(out) == 2
+    assert out[0].get("id") == 1
+    assert out[1].get("id") == 2
+    assert out[1].get("error", {}).get("message") == "method_not_found"
+
+
 def test_mcp_p2p_tools_call_after_initialize() -> None:
     registry = FakeRegistry()
     init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
