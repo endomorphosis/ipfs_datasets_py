@@ -15,39 +15,63 @@ Integrating MCP++ capabilities from `ipfs_accelerate_py` into `ipfs_datasets_py/
 
 ## 📊 Progress Dashboard
 
-### Overall Progress: 23% Complete
+### Overall Progress: 32% Complete
 
 | Phase | Status | Progress | Hours | ETA |
 |-------|--------|----------|-------|-----|
 | 0: Planning | ✅ COMPLETE | 100% | 4h | Done |
 | 1: Architecture & Design | ✅ COMPLETE | 100% | 20/20h | Done |
-| 2: Core Infrastructure | ⏳ NEXT | 0% | 0/32h | Week 6 |
+| 2: Core Infrastructure | 🔄 IN PROGRESS | 45% | 14/32h | Week 6 |
 | 3: P2P Integration | ⏳ PLANNED | 0% | 0/32h | Week 10 |
 | 4: Tool Refactoring | ⏳ PLANNED | 0% | 0/20h | Week 12 |
 | 5: Testing & Validation | ⏳ PLANNED | 0% | 0/16h | Week 14 |
 | 6: Documentation & Prod | ⏳ PLANNED | 0% | 0/16h | Week 15 |
-| **TOTAL** | **🔄 23%** | **23%** | **24/120h** | **Week 15** |
+| **TOTAL** | **🔄 32%** | **32%** | **38/120h** | **Week 15** |
 
-## 📅 Current Sprint: Phase 1 - Architecture & Design
+## 📅 Current Sprint: Phase 2 - Core Infrastructure
 
-**Sprint Dates:** 2026-02-18 to 2026-03-04 (2 weeks)  
-**Sprint Goal:** Complete architecture design and create foundation for implementation
+**Sprint Dates:** 2026-02-18 to 2026-03-18 (4 weeks)  
+**Sprint Goal:** Implement core dual-runtime infrastructure
 
 ### Sprint Backlog
 
 #### ✅ Phase 1 COMPLETE (100% - 20 hours)
 
 - [x] **Task 1.1: Architecture Design Document** (6h) ✅
-  - [x] Enhanced RuntimeRouter with Trio nursery integration
-  - [x] Tool metadata schema (ToolMetadata with 11 attributes)
-  - [x] Server lifecycle management (7-step startup/shutdown)
-  - [x] Deployment options (standalone, Docker, Kubernetes)
-  - **Deliverable:** `docs/architecture/DUAL_RUNTIME_ARCHITECTURE.md` (25KB, 600+ lines) ✅
-
 - [x] **Task 1.2: Compatibility Layer** (5h) ✅
-  - [x] Design compatibility shim for existing tools
-  - [x] Create runtime detection utilities
-  - [x] Define configuration migration path
+- [x] **Task 1.3: Testing Strategy** (5h) ✅
+- [x] **Task 1.4: Documentation Planning** (4h) ✅
+
+#### 🔄 Phase 2 IN PROGRESS (45% - 14/32 hours)
+
+- [x] **Task 2.4: Tool Metadata System** (4h) ✅
+  - [x] Created tool_metadata.py (350+ lines)
+  - [x] ToolMetadata dataclass with 11 attributes
+  - [x] ToolMetadataRegistry for central registration
+  - [x] @tool_metadata decorator
+  - **Deliverable:** `mcp_server/tool_metadata.py` ✅
+
+- [x] **Task 2.1: Enhanced RuntimeRouter** (6h) ✅
+  - [x] Integrated with tool_metadata system
+  - [x] Enhanced detection (6-step strategy)
+  - [x] Pattern-based routing (p2p_*, workflow*, etc.)
+  - [x] Bulk registration support
+  - **Deliverable:** Enhanced `runtime_router.py` ✅
+
+- [x] **Task 2.2: TrioMCPServerAdapter** (4h) ✅
+  - [x] Created trio_adapter.py (350+ lines)
+  - [x] TrioServerConfig and TrioMCPServerAdapter
+  - [x] DualServerManager
+  - [x] Health checks and metrics
+  - **Deliverable:** `trio_adapter.py` ✅
+
+- [ ] **Task 2.3: MCP++ Integration** (18h remaining)
+  - [ ] Clone/import MCP++ module
+  - [ ] Integrate Trio server components
+  - [ ] Register 30+ P2P tools
+  - [ ] Test basic P2P functionality
+  - **Deliverable:** MCP++ integration module
+  - **Status:** IN PROGRESS
   - [x] Plan API versioning strategy
   - **Deliverable:** `mcp_server/compat/` module with README ✅
 
