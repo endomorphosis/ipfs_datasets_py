@@ -98,15 +98,6 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
 
     # Load Groth16 backend (requires py_ecc at minimum)
     if backend_norm in {"groth16", "g16"}:
-        try:
-            import py_ecc  # Check minimum requirement
-        except ImportError as e:
-            raise ZKPError(
-                f"Groth16 backend requires py_ecc dependency. "
-                f"Install with: pip install 'ipfs-datasets-py[groth16]'\n"
-                f"Original error: {e}"
-            )
-        
         # Try to load Groth16 backend
         mod = importlib.import_module(f"{__name__}.groth16")
         try:
@@ -115,8 +106,7 @@ def get_backend(backend: str = "simulated") -> ZKBackend:
             return backend_instance
         except NotImplementedError as e:
             raise ZKPError(
-                f"Groth16 backend not yet implemented. "
-                f"Phase C implementation pending. "
+                f"Groth16 backend not yet fully implemented. "
                 f"See PHASE3_GROTH16_STACK_SELECTION.md for roadmap.\n"
                 f"Original error: {e}"
             )
