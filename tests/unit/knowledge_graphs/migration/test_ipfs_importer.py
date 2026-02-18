@@ -214,6 +214,9 @@ class TestIPFSImporterWithMocking:
         
         config = ImportConfig()
         importer = IPFSImporter(config)
+
+        # Simulate missing optional dependencies / unavailable backend
+        importer._ipfs_available = False
         
         with pytest.raises(RuntimeError, match="IPFS graph database not available"):
             importer._connect()

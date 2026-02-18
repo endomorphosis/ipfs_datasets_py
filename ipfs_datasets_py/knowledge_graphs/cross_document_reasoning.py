@@ -462,6 +462,22 @@ class CrossDocumentReasoner:
 
         return documents[:max_documents]
 
+    def find_entity_connections(
+        self,
+        documents: List[DocumentNode],
+        knowledge_graph: Optional[Any] = None,
+        max_hops: int = 2,
+    ) -> List[EntityMediatedConnection]:
+        """Public wrapper for finding entity-mediated connections.
+
+        This is a stable entry-point used by tests and integrations.
+        """
+        return self._find_entity_connections(
+            documents=documents,
+            knowledge_graph=knowledge_graph,
+            max_hops=max_hops,
+        )
+
     def _find_entity_connections(
         self,
         documents: List[DocumentNode],
@@ -526,10 +542,10 @@ class CrossDocumentReasoner:
 
             # Multi-hop connections for indirect reasoning
             # v3.0.0: Implemented multi-hop graph traversal
-            if max_hops > 1 and self.graph_engine:
+            if max_hops > 1 and knowledge_graph:
                 try:
                     indirect_connections = self._find_multi_hop_connections(
-                        documents, max_hops, self.graph_engine
+                        documents, max_hops, knowledge_graph
                     )
                     connections.extend(indirect_connections)
                 except Exception as e:

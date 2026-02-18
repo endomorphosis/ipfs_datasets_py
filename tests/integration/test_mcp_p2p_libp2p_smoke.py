@@ -240,6 +240,12 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                     await read_u32_framed_json(stream, max_frame_bytes=1024 * 1024)
                 assert scope.cancelled_caught is True
 
+                # Unknown method notification should not yield a response either.
+                await client.notify("nope/not-a-method", {})
+                with trio.move_on_after(0.2) as scope:
+                    await read_u32_framed_json(stream, max_frame_bytes=1024 * 1024)
+                assert scope.cancelled_caught is True
+
                 tools = await client.tools_list()
                 assert any(t.get("name") == "echo" for t in tools if isinstance(t, dict))
             finally:
