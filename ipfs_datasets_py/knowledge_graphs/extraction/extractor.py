@@ -1243,7 +1243,7 @@ class KnowledgeGraphExtractor:
             return kg
 
         except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
-            error_msg = f"Network error extracting knowledge graph from Wikipedia '{title}': {e}"
+            error_msg = f"Network error extracting knowledge graph from Wikipedia '{page_title}': {e}"
             logger.error(error_msg)
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
@@ -1253,10 +1253,10 @@ class KnowledgeGraphExtractor:
                     error=error_msg
                 )
             # Re-raise as EntityExtractionError
-            raise EntityExtractionError(error_msg, details={'wikipedia_title': title, 'trace_id': trace_id}) from e
+            raise EntityExtractionError(error_msg, details={'wikipedia_title': page_title, 'trace_id': trace_id}) from e
         
         except Exception as e:
-            error_msg = f"Unexpected error extracting knowledge graph from Wikipedia '{title}': {e}"
+            error_msg = f"Unexpected error extracting knowledge graph from Wikipedia '{page_title}': {e}"
             logger.error(error_msg)
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
@@ -1266,8 +1266,7 @@ class KnowledgeGraphExtractor:
                     error=error_msg
                 )
             # Re-raise as EntityExtractionError
-            raise EntityExtractionError(error_msg, details={'wikipedia_title': title, 'trace_id': trace_id}) from e
-            raise RuntimeError(error_msg)
+            raise EntityExtractionError(error_msg, details={'wikipedia_title': page_title, 'trace_id': trace_id}) from e
 
     def validate_against_wikidata(self, kg: KnowledgeGraph, entity_name: str) -> Dict[str, Any]:
         """

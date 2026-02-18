@@ -99,7 +99,7 @@ import warnings
 
 _DEPRECATION_MESSAGE = """
 The legacy modules cross_document_lineage.py and cross_document_lineage_enhanced.py
-are deprecated and will be removed in 6 months.
+are deprecated and will be removed in a future release.
 
 Please update your imports to use the new lineage package:
     OLD: from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import CrossDocumentLineageTracker

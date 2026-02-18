@@ -11,6 +11,7 @@ except ImportError:
 import tempfile
 import os
 import json
+import builtins
 
 from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import (
     ImportConfig, ImportResult
@@ -207,6 +208,80 @@ class TestIPFSImporterWithMocking:
         finally:
             if os.path.exists(filepath):
                 os.unlink(filepath)
+
+    def test_import_data_returns_error_when_load_fails(self, mocker):
+        """Test import_data returns a failure result when graph data cannot be loaded."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        importer = IPFSImporter(ImportConfig())
+        importer._load_graph_data = mocker.MagicMock(return_value=None)
+        importer._close = mocker.MagicMock()
+
+        result = importer.import_data()
+        assert result.success is False
+        assert "Failed to load graph data" in result.errors
+        importer._close.assert_called_once()
+
+    def test_import_data_aborts_on_too_many_validation_errors(self, mocker):
+        """Test import_data aborts early when validation returns >10 errors."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        graph_data = GraphData(nodes=[NodeData(id="1", labels=["Test"])], relationships=[])
+        importer = IPFSImporter(ImportConfig(graph_data=graph_data, validate_data=True))
+
+        importer._load_graph_data = mocker.MagicMock(return_value=graph_data)
+        importer._validate_graph_data = mocker.MagicMock(return_value=["e"] * 11)
+        importer._close = mocker.MagicMock()
+
+        result = importer.import_data()
+        assert result.success is False
+        assert "Too many validation errors, aborting import" in result.errors
+        importer._close.assert_called_once()
+
+    def test_import_data_returns_error_when_connect_fails(self, mocker):
+        """Test import_data returns a failure result when DB connection fails."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        graph_data = GraphData(nodes=[NodeData(id="1", labels=["Test"])], relationships=[])
+        importer = IPFSImporter(ImportConfig(graph_data=graph_data, validate_data=False))
+
+        importer._load_graph_data = mocker.MagicMock(return_value=graph_data)
+        importer._connect = mocker.MagicMock(return_value=False)
+        importer._close = mocker.MagicMock()
+
+        result = importer.import_data()
+        assert result.success is False
+        assert "Failed to connect to IPFS Graph Database" in result.errors
+        importer._close.assert_called_once()
+
+    def test_import_data_success_path_populates_counts(self, mocker):
+        """Test import_data happy-path sets counts and returns success."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        graph_data = GraphData(
+            nodes=[NodeData(id="1", labels=["Test"])],
+            relationships=[RelationshipData(id="r1", type="KNOWS", start_node="1", end_node="1")],
+        )
+        importer = IPFSImporter(
+            ImportConfig(graph_data=graph_data, validate_data=False, create_indexes=True, create_constraints=True)
+        )
+
+        importer._load_graph_data = mocker.MagicMock(return_value=graph_data)
+        importer._connect = mocker.MagicMock(return_value=True)
+        importer._import_nodes = mocker.MagicMock(return_value=(1, 0))
+        importer._import_relationships = mocker.MagicMock(return_value=(1, 0))
+        importer._import_schema = mocker.MagicMock()
+        importer._close = mocker.MagicMock()
+
+        result = importer.import_data()
+        assert result.success is True
+        assert result.nodes_imported == 1
+        assert result.relationships_imported == 1
+        assert result.nodes_skipped == 0
+        assert result.relationships_skipped == 0
+        assert result.duration_seconds >= 0.0
+        importer._import_schema.assert_called_once()
+        importer._close.assert_called_once()
     
     def test_connect_without_ipfs_available(self, mocker):
         """Test connect raises error when IPFS not available."""
@@ -220,6 +295,60 @@ class TestIPFSImporterWithMocking:
         
         with pytest.raises(RuntimeError, match="IPFS graph database not available"):
             importer._connect()
+
+    def test_init_importerror_marks_ipfs_unavailable(self, monkeypatch):
+        """Test __init__ handles missing optional deps without breaking."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        real_import = builtins.__import__
+
+        def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
+            # Force the optional imports inside IPFSImporter.__init__ to fail,
+            # while delegating all other imports to the real importer.
+            if name.endswith("neo4j_compat") or name.endswith("storage.ipld_backend"):
+                raise ImportError("simulated missing optional dependency")
+            return real_import(name, globals, locals, fromlist, level)
+
+        monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+        importer = IPFSImporter(ImportConfig())
+        assert importer._ipfs_available is False
+
+    def test_connect_success_sets_session(self, mocker):
+        """Test _connect happy-path returns True and sets session."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        config = ImportConfig(database="default")
+        importer = IPFSImporter(config)
+
+        mock_session = mocker.MagicMock()
+        mock_driver = mocker.MagicMock()
+        mock_driver.session.return_value = mock_session
+
+        importer._ipfs_available = True
+        importer._GraphDatabase = mocker.MagicMock()
+        importer._GraphDatabase.driver.return_value = mock_driver
+
+        assert importer._connect() is True
+        assert importer._session is mock_session
+
+    def test_connect_failure_returns_false(self, mocker):
+        """Test _connect failure path returns False (and does not raise)."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        importer = IPFSImporter(ImportConfig())
+        importer._ipfs_available = True
+        importer._GraphDatabase = mocker.MagicMock()
+        importer._GraphDatabase.driver.side_effect = Exception("boom")
+
+        assert importer._connect() is False
+
+    def test_load_graph_data_with_no_inputs_returns_none(self, mocker):
+        """Test load behavior when neither file nor graph_data is provided."""
+        from ipfs_datasets_py.knowledge_graphs.migration.ipfs_importer import IPFSImporter
+
+        importer = IPFSImporter(ImportConfig(input_file=None, graph_data=None))
+        assert importer._load_graph_data() is None
     
     def test_validate_graph_data_valid(self, mocker):
         """Test validation of valid graph data."""

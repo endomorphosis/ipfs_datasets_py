@@ -65,7 +65,7 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Acceptance: new contributors can find the right doc in <2 minutes.
 
 ### A3. Make deprecations obvious to users (P1)
-- [ ] **Centralize the deprecation story** (P1, low risk)
+- [x] **Centralize the deprecation story** (P1, low risk)
   - Acceptance: `__init__.py`, `ipld.py`, `knowledge_graph_extraction.py`, lineage legacy modules all refer to one migration guide path and consistent removal timeline.
 
 ---
@@ -73,9 +73,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream B — Public API surface & deprecation cleanup
 
 ### B1. Define the stable import paths (P1)
-- [ ] **Document “supported imports”** (P1, low risk)
+- [x] **Document “supported imports”** (P1, low risk)
   - Acceptance: docs explicitly recommend `ipfs_datasets_py.knowledge_graphs.extraction`, `...query`, `...neo4j_compat`, etc., and clarify what is legacy.
-- [ ] **Reduce accidental API surface area** created by re-exports (P2, medium risk)
+- [x] **Reduce accidental API surface area** created by re-exports (P2, medium risk)
   - Acceptance: `__all__` lists only intended public symbols; internal modules don’t become “public-by-accident”.
 
 ### B2. Finish “thin wrapper” migration where feasible (P2)
@@ -115,12 +115,12 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream E — Testing & quality gates
 
 ### E0. Fix the current suite failures (P0)
-- [ ] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
+- [x] **Triage and resolve the remaining failures in `tests/unit/knowledge_graphs/`** (P0, medium risk)
   - Acceptance: `pytest -q ipfs_datasets_py/tests/unit/knowledge_graphs/` completes without pytest INTERNALERROR; remaining failures are fixed or explicitly documented/xfail.
   - Status (2026-02-18): suite completes cleanly (`800 passed`).
 
 ### E1. Migration module coverage (P0)
-- [ ] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
+- [x] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
   - Acceptance: adds tests for error handling + edge cases; `pytest` passes; coverage target met.
 - [ ] **Add format-specific “roundtrip” tests** (P1, medium risk)
   - Acceptance: export → import produces equivalent graph for CSV/JSON/RDF (and GraphML/GEXF/Pajek if enabled).
@@ -202,4 +202,8 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-18: Restored LLM integration behavior in `cross_document_reasoning.py` (expose patchable `openai`/`anthropic`, prefer OpenAI/Anthropic paths when keys are set, and make `LLMRouter` initialization lazy).
 - 2026-02-18: Fixed knowledge_graphs doc drift: removed merge conflict markers in `README.md`, reconciled `ROADMAP.md` with `MASTER_STATUS.md`, updated `INDEX.md`/`QUICKSTART.md`, and repaired intra-module doc links (link audit passes excluding `archive/`).
 - 2026-02-18: Reduced “status doc” sprawl: clarified canonical vs archived docs in `MASTER_STATUS.md`, updated `DOCUMENTATION_GUIDE.md` maintenance guidance, and removed remaining references to archived status docs from active entry points.
+- 2026-02-18: Centralized deprecation messaging: updated deprecated modules to point at `docs/knowledge_graphs/MIGRATION_GUIDE.md` and aligned legacy lineage removal wording (“future release”).
+- 2026-02-18: Documented stable “supported imports” in `README.md` (prefer subpackages; legacy shims are explicitly deprecated).
+- 2026-02-18: Reduced accidental public API surface at package root by limiting `knowledge_graphs/__init__.py` `__all__` to exceptions only, while keeping backward-compatible lazy root-level convenience imports with `DeprecationWarning`s (tests added to lock behavior).
+- 2026-02-18: Increased migration test coverage (measured via `ipfs_datasets_py/.coveragerc`) and added edge-case tests for `IPFSImporter` init/connect/import_data paths; migration module coverage now exceeds the 70% target.
 

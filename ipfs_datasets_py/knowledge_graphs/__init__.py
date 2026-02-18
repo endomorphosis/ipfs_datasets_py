@@ -1,104 +1,88 @@
-"""Knowledge graph extraction and reasoning for IPFS Datasets Python.
+"""Knowledge graphs package for IPFS Datasets Python.
 
-This module provides tools for building, querying, and reasoning over
-knowledge graphs, including cross-document lineage and SPARQL templates.
+Prefer importing from stable subpackages:
+    - ipfs_datasets_py.knowledge_graphs.extraction
+    - ipfs_datasets_py.knowledge_graphs.query
+    - ipfs_datasets_py.knowledge_graphs.cypher
+    - ipfs_datasets_py.knowledge_graphs.neo4j_compat
+    - ipfs_datasets_py.knowledge_graphs.storage / transactions / migration
 
-⚠️ MIGRATION NOTICE:
-The legacy IPLD knowledge graph API (ipld.py) is deprecated. Please migrate to
-the new Neo4j-compatible API for better features and performance.
+⚠️ Root-level re-exports from this package are maintained for backward
+compatibility only and may be removed in a future release.
 
 See docs/knowledge_graphs/MIGRATION_GUIDE.md for migration instructions.
-
-New API Quick Start:
-    from ipfs_datasets_py.knowledge_graphs.neo4j_compat import GraphDatabase
-    
-    driver = GraphDatabase.driver("ipfs://localhost:5001")
-    with driver.session() as session:
-        # Use Neo4j-compatible API for your operations
-        # Example: session.run("CREATE (n:Person {name: 'Alice'}) RETURN n")
-        pass  # Replace with your graph operations
-    driver.close()
 """
 
-import warnings
+from __future__ import annotations
 
-# Import custom exceptions for convenient access
+import importlib
+import warnings
+from typing import Any
+
 from .exceptions import (
-    KnowledgeGraphError,
-    ExtractionError,
     EntityExtractionError,
-    RelationshipExtractionError,
-    ValidationError,
-    QueryError,
-    QueryParseError,
-    QueryExecutionError,
     EntityNotFoundError,
+    ExtractionError,
+    KnowledgeGraphError,
+    QueryError,
+    QueryExecutionError,
+    QueryParseError,
+    RelationshipExtractionError,
     RelationshipNotFoundError,
+    ValidationError,
 )
 
-# Compatibility imports - emit warnings
-def _deprecated_import(name, new_location):
-    """Helper to create deprecated import warnings."""
-    warnings.warn(
-        f"Importing {name} from knowledge_graphs is deprecated. "
-        f"Use 'from {new_location} import {name}' instead. "
-        f"See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.",
-        DeprecationWarning,
-        stacklevel=3
-    )
 
-# Re-export new API for convenience
-try:
-    from .neo4j_compat import GraphDatabase, IPFSDriver, IPFSSession
-    from .core import GraphEngine, QueryExecutor
-    from .storage import IPLDBackend, LRUCache, Entity, Relationship
-    
-    __all__ = [
-        # Exceptions (new)
-        'KnowledgeGraphError',
-        'ExtractionError',
-        'EntityExtractionError',
-        'RelationshipExtractionError',
-        'ValidationError',
-        'QueryError',
-        'QueryParseError',
-        'QueryExecutionError',
-        'EntityNotFoundError',
-        'RelationshipNotFoundError',
-        # New API (recommended)
-        'GraphDatabase',
-        'IPFSDriver', 
-        'IPFSSession',
-        'GraphEngine',
-        'QueryExecutor',
-        'IPLDBackend',
-        'LRUCache',
-        'Entity',
-        'Relationship',
-        # Legacy modules (deprecated)
-        'knowledge_graph_extraction',
-        'advanced_knowledge_extractor',
-        'cross_document_lineage',
-        'cross_document_lineage_enhanced',
-        'cross_document_reasoning',
-        'finance_graphrag',
-        'query_knowledge_graph',
-        'sparql_query_templates',
-    ]
-except ImportError as e:
-    # If new modules not fully available yet, just export legacy
+__all__ = [
+    # Public exceptions are stable at the package root.
+    "KnowledgeGraphError",
+    "ExtractionError",
+    "EntityExtractionError",
+    "RelationshipExtractionError",
+    "ValidationError",
+    "QueryError",
+    "QueryParseError",
+    "QueryExecutionError",
+    "EntityNotFoundError",
+    "RelationshipNotFoundError",
+]
+
+
+_DEPRECATED_ROOT_EXPORTS: dict[str, tuple[str, str, str]] = {
+    # name: (module, attr, preferred_import_path)
+    "GraphDatabase": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "GraphDatabase", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
+    "IPFSDriver": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "IPFSDriver", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
+    "IPFSSession": ("ipfs_datasets_py.knowledge_graphs.neo4j_compat", "IPFSSession", "ipfs_datasets_py.knowledge_graphs.neo4j_compat"),
+    "GraphEngine": ("ipfs_datasets_py.knowledge_graphs.core", "GraphEngine", "ipfs_datasets_py.knowledge_graphs.core"),
+    "QueryExecutor": ("ipfs_datasets_py.knowledge_graphs.core", "QueryExecutor", "ipfs_datasets_py.knowledge_graphs.core"),
+    "IPLDBackend": ("ipfs_datasets_py.knowledge_graphs.storage", "IPLDBackend", "ipfs_datasets_py.knowledge_graphs.storage"),
+    "LRUCache": ("ipfs_datasets_py.knowledge_graphs.storage", "LRUCache", "ipfs_datasets_py.knowledge_graphs.storage"),
+    "Entity": ("ipfs_datasets_py.knowledge_graphs.storage", "Entity", "ipfs_datasets_py.knowledge_graphs.storage"),
+    "Relationship": ("ipfs_datasets_py.knowledge_graphs.storage", "Relationship", "ipfs_datasets_py.knowledge_graphs.storage"),
+}
+
+
+def __getattr__(name: str) -> Any:
+    """Lazy, deprecated root-level re-exports.
+
+    This keeps existing imports working (e.g. `from ipfs_datasets_py.knowledge_graphs
+    import GraphDatabase`) while discouraging new usage.
+    """
+
+    if name not in _DEPRECATED_ROOT_EXPORTS:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+    module_name, attr_name, preferred_import = _DEPRECATED_ROOT_EXPORTS[name]
     warnings.warn(
-        f"New knowledge graphs API not fully available: {e}. "
-        f"Only legacy API will be available.",
-        ImportWarning
+        f"Importing '{name}' from '{__name__}' is deprecated. "
+        f"Prefer: 'from {preferred_import} import {attr_name}'. "
+        "See docs/knowledge_graphs/MIGRATION_GUIDE.md for details.",
+        DeprecationWarning,
+        stacklevel=2,
     )
-    __all__ = [
-        'knowledge_graph_extraction',
-        'advanced_knowledge_extractor',
-        'cross_document_lineage',
-        'cross_document_lineage_enhanced',
-        'cross_document_reasoning',
-        'finance_graphrag',
-        'query_knowledge_graph',
-        'sparql_query_templates',
-    ]
+    module = importlib.import_module(module_name)
+    return getattr(module, attr_name)
+
+
+def __dir__() -> list[str]:
+    return sorted(list(globals().keys()) + list(_DEPRECATED_ROOT_EXPORTS.keys()))

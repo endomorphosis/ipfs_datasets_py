@@ -35,6 +35,18 @@ for person in persons:
 
 **For more examples:** See [QUICKSTART.md](./QUICKSTART.md) and [USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md)
 
+## ✅ Supported Imports (Public API)
+
+Prefer importing from these subpackages (stable):
+
+- `ipfs_datasets_py.knowledge_graphs.extraction` (extractors + core graph types)
+- `ipfs_datasets_py.knowledge_graphs.query` (query engines)
+- `ipfs_datasets_py.knowledge_graphs.cypher` (Cypher parsing/compilation)
+- `ipfs_datasets_py.knowledge_graphs.neo4j_compat` (Neo4j-compatible driver/session)
+- `ipfs_datasets_py.knowledge_graphs.storage` / `transactions` / `migration` (backends and utilities)
+
+Legacy modules are still present for backward compatibility but are deprecated (see [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)).
+
 ## 📋 Current Status & Plans
 
 **📌 Module Status:** [MASTER_STATUS.md](./MASTER_STATUS.md) ⭐ - Single source of truth for features, coverage, roadmap  
