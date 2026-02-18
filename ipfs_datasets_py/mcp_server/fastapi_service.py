@@ -92,7 +92,15 @@ except ImportError:
                 self.host = "0.0.0.0"
                 self.port = 8000
                 self.reload = False
-                self.secret_key = "your-secret-key-change-in-production"
+                # CRITICAL: SECRET_KEY must be set via environment variable
+                # Fail fast if not set rather than using insecure default
+                import os
+                if not os.environ.get("SECRET_KEY"):
+                    raise ValueError(
+                        "SECRET_KEY environment variable is required for security. "
+                        "Set it to a strong random value: export SECRET_KEY='your-secret-key-here'"
+                    )
+                self.secret_key = os.environ["SECRET_KEY"]
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
 

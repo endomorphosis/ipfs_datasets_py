@@ -32,7 +32,9 @@ class FastAPISettings(BaseSettings):
     reload: bool = Field(default=True, env="RELOAD")
     
     # Security settings
-    secret_key: str = Field(default="your-secret-key-change-in-production", env="SECRET_KEY")
+    # CRITICAL: SECRET_KEY must be set via environment variable for production
+    # This is required for JWT token signing and session security
+    secret_key: str = Field(env="SECRET_KEY")  # No default - MUST be set in environment
     algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     access_token_expire_minutes: int = Field(default=30, env="ACCESS_TOKEN_EXPIRE_MINUTES")
     

@@ -678,40 +678,21 @@ class IPFSDatasetsMCPServer:
     def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str):
         """
         Register proxy tools that connect to an ipfs_kit_py MCP server.
+        
+        NOTE: This functionality is currently disabled because the required
+        'mcp.client' library does not exist. When proper MCP client support
+        is available, this can be re-enabled.
 
         Args:
             ipfs_kit_mcp_url: URL of the ipfs_kit_py MCP server
         """
-        try:
-            from mcp.client import MCPClient # TODO FIXME This library is hallucinated! It does not exist!
-
-            # Create MCP client
-            client = MCPClient(ipfs_kit_mcp_url)
-
-            # Get available tools from the server
-            tools_info = client.get_tool_list()
-
-            for tool_info in tools_info:
-                tool_name = tool_info["name"]
-
-                # Create proxy function
-                async def proxy_tool(tool_name=tool_name, **kwargs):
-                    try:
-                        result = await client.call_tool(tool_name, kwargs)
-                        return result
-                    except Exception as e:
-                        logger.error(f"Error calling {tool_name}: {e}")
-                        return {"error": str(e)}
-
-                # Register proxy with MCP server
-                self.mcp.add_tool(proxy_tool, name=f"ipfs_kit_{tool_name}")
-                self.tools[f"ipfs_kit_{tool_name}"] = proxy_tool
-                logger.info(f"Registered ipfs_kit proxy tool: ipfs_kit_{tool_name}")
-
-        except ImportError:
-            logger.error("Failed to import modelcontextprotocol.client. Cannot register ipfs_kit MCP client.")
-        except Exception as e:
-            logger.error(f"Error registering ipfs_kit MCP client: {e}")
+        logger.warning(
+            "ipfs_kit MCP proxy registration is currently disabled. "
+            "The 'mcp.client' library is not available. "
+            "Use _register_direct_ipfs_kit_imports() for direct integration instead."
+        )
+        # TODO: Implement proper MCP client integration when library is available
+        # See: https://github.com/endomorphosis/ipfs_datasets_py/issues/XXX
 
     def _register_direct_ipfs_kit_imports(self):
         """Register direct imports of ipfs_kit_py functions."""
