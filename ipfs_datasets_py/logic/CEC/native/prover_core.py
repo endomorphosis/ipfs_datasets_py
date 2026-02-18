@@ -80,7 +80,7 @@ class ModusPonens(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
@@ -107,7 +107,7 @@ class Simplification(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
                 # Add each conjunct
@@ -126,7 +126,7 @@ class ConjunctionIntroduction(InferenceRule):
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
         # Create conjunctions of pairs of formulas
-        results = []
+        results: List[Formula] = []
         for i, f1 in enumerate(formulas):
             for f2 in formulas[i+1:]:
                 conjunction = ConnectiveFormula(LogicalConnective.AND, [f1, f2])
@@ -462,7 +462,7 @@ class Weakening(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
                 # From P∧Q derive P∨Q
@@ -491,32 +491,32 @@ class DeMorgan(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             # ¬(P∧Q) → (¬P∨¬Q)
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) == 1:
                     inner = f.formulas[0]
                     if isinstance(inner, ConnectiveFormula) and inner.connective == LogicalConnective.AND:
-                        negated_parts = [ConnectiveFormula(LogicalConnective.NOT, [sub]) for sub in inner.formulas]
-                        result = ConnectiveFormula(LogicalConnective.OR, negated_parts)
+                        negated_and_parts: List[Formula] = [ConnectiveFormula(LogicalConnective.NOT, [sub]) for sub in inner.formulas]
+                        result = ConnectiveFormula(LogicalConnective.OR, negated_and_parts)
                         results.append(result)
                     # ¬(P∨Q) → (¬P∧¬Q)
                     elif isinstance(inner, ConnectiveFormula) and inner.connective == LogicalConnective.OR:
-                        negated_parts = [ConnectiveFormula(LogicalConnective.NOT, [sub]) for sub in inner.formulas]
-                        result = ConnectiveFormula(LogicalConnective.AND, negated_parts)
+                        negated_or_parts: List[Formula] = [ConnectiveFormula(LogicalConnective.NOT, [sub]) for sub in inner.formulas]
+                        result = ConnectiveFormula(LogicalConnective.AND, negated_or_parts)
                         results.append(result)
             # (¬P∨¬Q) → ¬(P∧Q)
             elif isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.OR:
                 if all(isinstance(sub, ConnectiveFormula) and sub.connective == LogicalConnective.NOT for sub in f.formulas):
-                    inner_parts = [sub.formulas[0] for sub in f.formulas if len(sub.formulas) == 1]
+                    inner_parts = [sub.formulas[0] for sub in f.formulas if isinstance(sub, ConnectiveFormula) and len(sub.formulas) == 1]
                     inner_and = ConnectiveFormula(LogicalConnective.AND, inner_parts)
                     result = ConnectiveFormula(LogicalConnective.NOT, [inner_and])
                     results.append(result)
             # (¬P∧¬Q) → ¬(P∨Q)
             elif isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
                 if all(isinstance(sub, ConnectiveFormula) and sub.connective == LogicalConnective.NOT for sub in f.formulas):
-                    inner_parts = [sub.formulas[0] for sub in f.formulas if len(sub.formulas) == 1]
+                    inner_parts = [sub.formulas[0] for sub in f.formulas if isinstance(sub, ConnectiveFormula) and len(sub.formulas) == 1]
                     inner_or = ConnectiveFormula(LogicalConnective.OR, inner_parts)
                     result = ConnectiveFormula(LogicalConnective.NOT, [inner_or])
                     results.append(result)
@@ -537,7 +537,7 @@ class Commutativity(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and len(f.formulas) == 2:
                 if f.connective in [LogicalConnective.AND, LogicalConnective.OR]:
@@ -569,7 +569,7 @@ class Distribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and len(f.formulas) == 2:
                 # P∨(Q∧R) → (P∨Q)∧(P∨R)
@@ -579,11 +579,11 @@ class Distribution(InferenceRule):
                             p = f.formulas[1-i]  # The other formula
                             q_and_r = sub.formulas
                             if len(q_and_r) >= 2:
-                                distributed = [
+                                distributed_or: List[Formula] = [
                                     ConnectiveFormula(LogicalConnective.OR, [p, q_and_r[0]]),
                                     ConnectiveFormula(LogicalConnective.OR, [p, q_and_r[1]])
                                 ]
-                                result = ConnectiveFormula(LogicalConnective.AND, distributed)
+                                result = ConnectiveFormula(LogicalConnective.AND, distributed_or)
                                 results.append(result)
                 # P∧(Q∨R) → (P∧Q)∨(P∧R)
                 elif f.connective == LogicalConnective.AND:
@@ -592,11 +592,11 @@ class Distribution(InferenceRule):
                             p = f.formulas[1-i]  # The other formula
                             q_or_r = sub.formulas
                             if len(q_or_r) >= 2:
-                                distributed = [
+                                distributed_and: List[Formula] = [
                                     ConnectiveFormula(LogicalConnective.AND, [p, q_or_r[0]]),
                                     ConnectiveFormula(LogicalConnective.AND, [p, q_or_r[1]])
                                 ]
-                                result = ConnectiveFormula(LogicalConnective.OR, distributed)
+                                result = ConnectiveFormula(LogicalConnective.OR, distributed_and)
                                 results.append(result)
         return results
 
@@ -621,7 +621,7 @@ class DisjunctiveSyllogism(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.NOT:
@@ -657,7 +657,7 @@ class ImplicationElimination(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
                 if len(f.formulas) == 2:
@@ -687,7 +687,7 @@ class CutElimination(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
@@ -720,7 +720,7 @@ class DoubleNegation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) == 1:
@@ -746,7 +746,7 @@ class Contraposition(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
                 if len(f.formulas) == 2:
@@ -777,7 +777,7 @@ class HypotheticalSyllogism(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
@@ -814,7 +814,7 @@ class Exportation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
                 if len(f.formulas) == 2:
@@ -864,7 +864,7 @@ class Absorption(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             # P→Q becomes P→(P∧Q)
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
@@ -916,7 +916,7 @@ class Association(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
                 # Re-associate: flatten and rebuild differently
@@ -961,7 +961,7 @@ class Resolution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.OR:
@@ -1015,7 +1015,7 @@ class Transposition(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
                 if len(f.formulas) == 2:
@@ -1047,7 +1047,7 @@ class MaterialImplication(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             # P→Q becomes ¬P∨Q
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
@@ -1089,7 +1089,7 @@ class ClaviusLaw(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES:
                 if len(f.formulas) == 2:
@@ -1123,7 +1123,7 @@ class Idempotence(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective in [LogicalConnective.OR, LogicalConnective.AND]:
                 if len(f.formulas) >= 2:
@@ -1154,7 +1154,7 @@ class BiconditionalIntroduction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
@@ -1185,7 +1185,7 @@ class BiconditionalElimination(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.BICONDITIONAL:
                 if len(f.formulas) == 2:
@@ -1216,7 +1216,7 @@ class ConstructiveDilemma(InferenceRule):
         return has_disjunction and has_implications >= 2
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         
         # Find implications and disjunctions
         implications = [f for f in formulas 
@@ -1271,7 +1271,7 @@ class DestructiveDilemma(InferenceRule):
         return has_neg_disjunction and has_implications >= 2
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         
         implications = [f for f in formulas
                        if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
@@ -1319,7 +1319,7 @@ class TautologyIntroduction(InferenceRule):
         return len(formulas) > 0
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             # For any P, add P∨¬P
             not_f = ConnectiveFormula(LogicalConnective.NOT, [f])
@@ -1378,7 +1378,7 @@ class ConjunctionElimination(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.AND:
                 # Return all conjuncts
@@ -1404,12 +1404,12 @@ class BeliefDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, CognitiveFormula) and f.operator.value == "B":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # B(agent, P∧Q) → B(agent, P)∧B(agent, Q)
-                    beliefs = []
+                    beliefs: List[Formula] = []
                     for subformula in f.formula.formulas:
                         belief = CognitiveFormula(f.operator, f.agent, subformula)
                         beliefs.append(belief)
@@ -1431,7 +1431,7 @@ class KnowledgeImpliesBelief(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, CognitiveFormula) and f.operator.value == "K":
                 # K(agent, P) → B(agent, P)
@@ -1460,7 +1460,7 @@ class BeliefMonotonicity(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
         implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
         
@@ -1498,7 +1498,7 @@ class IntentionCommitment(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
         beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
         
@@ -1538,12 +1538,12 @@ class ObligationDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, DeonticFormula) and f.operator.value == "O":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # O(P∧Q) → O(P)∧O(Q)
-                    obligations = []
+                    obligations: List[Formula] = []
                     for subformula in f.formula.formulas:
                         obligation = DeonticFormula(f.operator, subformula)
                         obligations.append(obligation)
@@ -1570,7 +1570,7 @@ class ObligationImplication(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         obligations = [f for f in formulas if isinstance(f, DeonticFormula) and f.operator.value == "O"]
         implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
         
@@ -1604,7 +1604,7 @@ class PermissionFromNonObligation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) == 1:
@@ -1632,7 +1632,7 @@ class ForbiddenToNotObligatory(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, DeonticFormula) and f.operator.value == "F":
                 # F(P) → ¬O(P)
@@ -1661,12 +1661,12 @@ class AlwaysDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # □(P∧Q) → □P ∧ □Q
-                    always_formulas = []
+                    always_formulas: List[Formula] = []
                     for subformula in f.formula.formulas:
                         always_f = TemporalFormula(f.operator, subformula)
                         always_formulas.append(always_f)
@@ -1693,7 +1693,7 @@ class AlwaysImplication(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
         
         for af1 in always_formulas:
@@ -1723,7 +1723,7 @@ class EventuallyFromAlways(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
                 # □P → ◊P
@@ -1755,7 +1755,7 @@ class BeliefConjunction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
         
         for i, b1 in enumerate(beliefs):
@@ -1787,12 +1787,12 @@ class KnowledgeDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, CognitiveFormula) and f.operator.value == "K":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # K(agent, P∧Q) → K(agent, P)∧K(agent, Q)
-                    knowledge_formulas = []
+                    knowledge_formulas: List[Formula] = []
                     for subformula in f.formula.formulas:
                         knowledge = CognitiveFormula(f.operator, f.agent, subformula)
                         knowledge_formulas.append(knowledge)
@@ -1821,7 +1821,7 @@ class IntentionMeansEnd(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         intentions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "I"]
         beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
         
@@ -1859,7 +1859,7 @@ class PerceptionImpliesKnowledge(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, CognitiveFormula) and f.operator.value == "P":
                 # P(agent, φ) → K(agent, φ)
@@ -1884,7 +1884,7 @@ class ObligationConjunction(InferenceRule):
         return len(obligations) >= 2
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         obligations = [f for f in formulas if isinstance(f, DeonticFormula) and f.operator.value == "O"]
         
         for i, o1 in enumerate(obligations):
@@ -1913,12 +1913,12 @@ class PermissionDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, DeonticFormula) and f.operator.value == "P":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.OR:
                     # P(P∨Q) → P(P)∨P(Q)
-                    permissions = []
+                    permissions: List[Formula] = []
                     for subformula in f.formula.formulas:
                         permission = DeonticFormula(f.operator, subformula)
                         permissions.append(permission)
@@ -1971,12 +1971,12 @@ class NextDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "NEXT":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.AND:
                     # ○(P∧Q) → ○P ∧ ○Q
-                    next_formulas = []
+                    next_formulas: List[Formula] = []
                     for subformula in f.formula.formulas:
                         next_f = TemporalFormula(f.operator, subformula)
                         next_formulas.append(next_f)
@@ -1999,12 +1999,12 @@ class EventuallyDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.OR:
                     # ◊(P∨Q) → ◊P ∨ ◊Q
-                    eventually_formulas = []
+                    eventually_formulas: List[Formula] = []
                     for subformula in f.formula.formulas:
                         eventually_f = TemporalFormula(f.operator, subformula)
                         eventually_formulas.append(eventually_f)
@@ -2026,7 +2026,7 @@ class AlwaysImpliesNext(InferenceRule):
         )
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
                 # □P → ○P
@@ -2050,7 +2050,7 @@ class EventuallyTransitive(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY":
                 if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "EVENTUALLY":
@@ -2075,7 +2075,7 @@ class AlwaysTransitive(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
                 if isinstance(f.formula, TemporalFormula) and f.formula.operator.value == "ALWAYS":
@@ -2106,7 +2106,7 @@ class BeliefNegation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, CognitiveFormula) and f.operator.value == "B":
                 if isinstance(f.formula, ConnectiveFormula) and f.formula.connective == LogicalConnective.NOT:
@@ -2134,7 +2134,7 @@ class KnowledgeConjunction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
         
         for i, k1 in enumerate(knowledge):
@@ -2217,7 +2217,7 @@ class BeliefRevision(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         beliefs = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "B"]
         perceptions = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "P"]
         
@@ -2275,7 +2275,7 @@ class KnowledgeMonotonicity(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         knowledge = [f for f in formulas if isinstance(f, CognitiveFormula) and f.operator.value == "K"]
         implications = [f for f in formulas if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.IMPLIES]
         
@@ -2313,7 +2313,7 @@ class NextImplication(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         next_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "NEXT"]
         
         for nf1 in next_formulas:
@@ -2348,7 +2348,7 @@ class EventuallyImplication(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         eventually_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "EVENTUALLY"]
         always_formulas = [f for f in formulas if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS"]
         
@@ -2378,7 +2378,7 @@ class UntilWeakening(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
                 # P U Q implies ◊Q
@@ -2423,7 +2423,7 @@ class TemporalNegation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ConnectiveFormula) and f.connective == LogicalConnective.NOT:
                 if len(f.formulas) == 1:
@@ -2475,7 +2475,7 @@ class UnitResolution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
                 for f2 in formulas:
@@ -2518,7 +2518,7 @@ class Factoring(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, BinaryFormula) and f.operator.value == "OR":
                 if f.left == f.right:
@@ -2559,7 +2559,7 @@ class NegationIntroduction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             if isinstance(f1, BinaryFormula) and f1.operator.value == "IMPLIES":
                 for f2 in formulas:
@@ -2590,7 +2590,7 @@ class CaseAnalysis(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             if isinstance(f1, BinaryFormula) and f1.operator.value == "OR":
                 for f2 in formulas:
@@ -2617,7 +2617,7 @@ class ProofByContradiction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, BinaryFormula) and f.operator.value == "IMPLIES":
                 if isinstance(f.left, UnaryFormula) and f.left.operator.value == "NOT":
@@ -2662,7 +2662,7 @@ class CommonKnowledgeDistribution(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ModalFormula) and f.operator.value == "C":
                 if isinstance(f.formula, BinaryFormula) and f.formula.operator.value == "AND":
@@ -2680,7 +2680,7 @@ class CommonKnowledgeImpliesKnowledge(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ModalFormula) and f.operator.value == "C":
                 # For any agent, common knowledge implies their knowledge
@@ -2701,7 +2701,7 @@ class CommonKnowledgeMonotonicity(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f1 in formulas:
             if isinstance(f1, ModalFormula) and f1.operator.value == "C":
                 for f2 in formulas:
@@ -2721,7 +2721,7 @@ class CommonKnowledgeNegation(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ModalFormula) and f.operator.value == "C":
                 if isinstance(f.formula, UnaryFormula) and f.formula.operator.value == "NOT":
@@ -2777,7 +2777,7 @@ class TemporallyInducedCommonKnowledge(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "ALWAYS":
                 if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "K":
@@ -2795,7 +2795,7 @@ class TemporalUntilElimination(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, TemporalFormula) and f.operator.value == "UNTIL":
                 # P U Q implies eventually Q
@@ -2816,7 +2816,7 @@ class ModalNecessionIntroduction(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, BinaryFormula) and f.operator.value == "OR":
                 if isinstance(f.right, UnaryFormula) and f.right.operator.value == "NOT":
@@ -2835,7 +2835,7 @@ class DisjunctionCommutes(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, BinaryFormula) and f.operator.value == "OR":
                 # Commute the disjunction
@@ -2853,7 +2853,7 @@ class CommonKnowledgeTransitivity(InferenceRule):
         return False
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         for f in formulas:
             if isinstance(f, ModalFormula) and f.operator.value == "C":
                 if isinstance(f.formula, ModalFormula) and f.formula.operator.value == "C":
@@ -2868,7 +2868,7 @@ class CommonKnowledgeConjunction(InferenceRule):
         return len(ck_formulas) >= 2
     
     def apply(self, formulas: List[Formula]) -> List[Formula]:
-        results = []
+        results: List[Formula] = []
         ck_formulas = [f for f in formulas if isinstance(f, ModalFormula) and f.operator.value == "C"]
         for i, f1 in enumerate(ck_formulas):
             for f2 in ck_formulas[i+1:]:
