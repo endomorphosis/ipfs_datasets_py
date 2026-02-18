@@ -17,6 +17,7 @@ We have created a comprehensive improvement plan to integrate advanced P2P capab
 - [**🎯 Executive Summary**](./MCP_MCPLUSPLUS_EXECUTIVE_SUMMARY.md) - High-level overview (10KB, 5 min read)
 - [**📋 Quick Reference**](./MCP_MCPLUSPLUS_QUICK_REFERENCE.md) - Implementation checklist (10KB, quick scan)
 - [**📚 Complete Plan**](./MCP_MCPLUSPLUS_IMPROVEMENT_PLAN.md) - Detailed roadmap (50KB, comprehensive)
+- [**🎨 Visual Summary**](./MCP_MCPLUSPLUS_VISUAL_SUMMARY.md) - Architecture diagrams (15KB, visual guide)
 
 **Key Features:**
 - **Dual-runtime system** with intelligent tool routing
