@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
-    from .tdfol_nl_patterns import PatternMatcher, PatternMatch
+    from .tdfol_nl_patterns import PatternMatcher, PatternMatch, Pattern, PatternType
     from .tdfol_nl_generator import TDFOLGenerator
     from .tdfol_nl_context import ContextResolver, Context
 
@@ -25,6 +25,8 @@ __all__ = [
     # Pattern Matching
     "PatternMatcher",
     "PatternMatch",
+    "Pattern",
+    "PatternType",
     
     # Formula Generation
     "TDFOLGenerator",
@@ -46,6 +48,8 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     # Pattern Matching
     "PatternMatcher": (".tdfol_nl_patterns", "PatternMatcher"),
     "PatternMatch": (".tdfol_nl_patterns", "PatternMatch"),
+    "Pattern": (".tdfol_nl_patterns", "Pattern"),
+    "PatternType": (".tdfol_nl_patterns", "PatternType"),
     
     # Formula Generation
     "TDFOLGenerator": (".tdfol_nl_generator", "TDFOLGenerator"),
