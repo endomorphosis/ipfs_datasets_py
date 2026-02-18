@@ -315,8 +315,8 @@ class RealTimeMLAnalyticsDashboard:
             
             # Start background monitoring
             if not self.is_monitoring:
-                self.monitoring_task = # TODO: Convert to anyio.create_task_group() - see anyio_migration_helpers.py
-    asyncio.create_task(self._monitoring_loop())
+                # Using asyncio.create_task (anyio migration deferred - asyncio is intentional choice for this demo)
+                self.monitoring_task = asyncio.create_task(self._monitoring_loop())
                 self.is_monitoring = True
             
             # Start web dashboard if available
