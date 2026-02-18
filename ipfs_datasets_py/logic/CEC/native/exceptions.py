@@ -165,7 +165,7 @@ class ConversionError(CECError):
         super().__init__(message, context=context, suggestion=suggestion)
 
 
-class ValidationError(CECError):
+class ValidationError(CECError, ValueError):
     """Raised when formula or input validation fails."""
     
     def __init__(
