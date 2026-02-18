@@ -52,12 +52,24 @@ class SimulatedBackend:
         theorem = proof.public_inputs.get("theorem", "")
         theorem_hash = proof.public_inputs.get("theorem_hash", "")
 
+        # Check required public input keys
+        if "theorem" not in proof.public_inputs or "theorem_hash" not in proof.public_inputs:
+            return False
+
+        # Verify theorem hash matches
         expected_hash = hashlib.sha256(theorem.encode()).hexdigest()
         if theorem_hash != expected_hash:
             return False
 
+        # Check proof data size bounds (simulated Groth16-like)
         if len(proof.proof_data) < 100 or len(proof.proof_data) > 300:
             return False
+
+        # Check metadata sanity (if present)
+        if hasattr(proof, 'metadata') and isinstance(proof.metadata, dict):
+            # Verify proof_system field exists (for clarity)
+            if 'proof_system' not in proof.metadata:
+                return False
 
         return True
 

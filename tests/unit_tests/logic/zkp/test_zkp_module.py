@@ -209,6 +209,75 @@ class TestZKPVerifier:
         with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
             verifier.verify_proof(proof)
 
+    def test_verifier_rejects_missing_public_inputs(self):
+        """
+        GIVEN: A malformed proof with missing public input keys
+        WHEN: Verifying
+        THEN: Verification returns False
+        """
+        verifier = ZKPVerifier()
+        
+        # Create a proof missing theorem hash
+        proof = ZKPProof(
+            proof_data=b'x' * 160,
+            public_inputs={'theorem': 'Q'},  # missing theorem_hash
+            metadata={'proof_system': 'test'},
+            timestamp=0.0,
+            size_bytes=160
+        )
+        
+        assert verifier.verify_proof(proof) is False
+        
+        stats = verifier.get_stats()
+        assert stats['proofs_rejected'] >= 1
+
+    def test_verifier_rejects_inconsistent_theorem_hash(self):
+        """
+        GIVEN: A proof with inconsistent theorem/hash pair
+        WHEN: Verifying
+        THEN: Verification returns False
+        """
+        verifier = ZKPVerifier()
+        
+        # Hash doesn't match theorem
+        proof = ZKPProof(
+            proof_data=b'x' * 160,
+            public_inputs={
+                'theorem': 'Q',
+                'theorem_hash': 'wrong_hash_value'
+            },
+            metadata={'proof_system': 'test'},
+            timestamp=0.0,
+            size_bytes=160
+        )
+        
+        assert verifier.verify_proof(proof) is False
+
+    def test_verifier_rejects_proof_with_bad_metadata(self):
+        """
+        GIVEN: A proof with missing metadata field
+        WHEN: Verifying
+        THEN: Verification returns False (strict checking)
+        """
+        verifier = ZKPVerifier()
+        
+        # Create a proof with metadata missing proof_system
+        proof = ZKPProof(
+            proof_data=b'x' * 160,
+            public_inputs={
+                'theorem': 'Q',
+                'theorem_hash': __import__('hashlib').sha256(b'Q').hexdigest()
+            },
+            metadata={},  # missing proof_system
+            timestamp=0.0,
+            size_bytes=160
+        )
+        
+        # Should reject because metadata is incomplete
+        result = verifier.verify_proof(proof)
+        # Strict mode: fail if proof_system is missing
+        assert result is False
+
 
 class TestZKPCircuit:
     """Test ZKPCircuit functionality."""
@@ -305,6 +374,49 @@ class TestZKPIntegration:
         # Verify restored proof
         verifier = ZKPVerifier()
         assert verifier.verify_proof(restored_proof) == True
+
+    def test_proof_serialization_preserves_fields(self):
+        """
+        GIVEN: ZKP proof with metadata
+        WHEN: Serializing and deserializing
+        THEN: All fields match exactly
+        """
+        prover = ZKPProver()
+        original = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+            metadata={"custom_field": "custom_value"}
+        )
+        
+        # Round-trip
+        proof_dict = original.to_dict()
+        restored = ZKPProof.from_dict(proof_dict)
+        
+        # Check all fields
+        assert restored.proof_data == original.proof_data
+        assert restored.public_inputs == original.public_inputs
+        assert restored.metadata == original.metadata
+        assert restored.timestamp == original.timestamp
+        assert restored.size_bytes == original.size_bytes
+
+    def test_proof_dict_hex_encoding_stability(self):
+        """
+        GIVEN: Proof with binary data
+        WHEN: Serializing to dict (which hex-encodes proof_data)
+        THEN: Hex encoding is stable and reversible
+        """
+        prover = ZKPProver()
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"]
+        )
+        
+        original_bytes = proof.proof_data
+        proof_dict = proof.to_dict()
+        restored = ZKPProof.from_dict(proof_dict)
+        
+        assert restored.proof_data == original_bytes
+        assert proof_dict['proof_data'] == original_bytes.hex()
 
 
 if __name__ == "__main__":

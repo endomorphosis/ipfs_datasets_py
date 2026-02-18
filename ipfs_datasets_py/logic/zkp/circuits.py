@@ -2,7 +2,7 @@
 Zero-Knowledge Proof Circuits for Logic Operations.
 
 Defines arithmetic circuits that can be used to create zero-knowledge
-proofs for various logic operations.
+proofs for various logic operations, and MVP circuits for statement proving.
 """
 
 from typing import List, Dict, Any, Tuple
@@ -294,6 +294,60 @@ class ZKPCircuit:
             f"wires={self.num_wires()})"
         )
 
+# MVP (Minimum Viable Proof) Circuit Support
+# ==========================================
+
+@dataclass
+class MVPCircuit:
+    """
+    Minimum Viable Proof circuit for knowledge-of-axioms.
+    
+    Circuit statement: "I know a set of axioms whose SHA256 commitment matches X."
+    
+    This is a non-cryptographic first implementation.
+    In production, this would be compiled to R1CS / arithmetic constraints.
+    """
+    
+    circuit_version: int = 1
+    circuit_type: str = "knowledge_of_axioms"
+    
+    def num_inputs(self) -> int:
+        """Number of public input field elements."""
+        return 4  # theorem_hash, axioms_commitment, circuit_version, ruleset_id
+    
+    def num_constraints(self) -> int:
+        """Number of constraints in circuit."""
+        return 1  # commitment check constraint
+    
+    def compile(self) -> Dict[str, Any]:
+        """
+        Compile circuit to schema (JSON representation).
+        
+        In production, this would generate R1CS or other constraint format.
+        
+        Returns:
+            Dictionary describing circuit structure
+        """
+        return {
+            'version': self.circuit_version,
+            'type': self.circuit_type,
+            'num_inputs': self.num_inputs(),
+            'num_constraints': self.num_constraints(),
+            'description': 'Prove knowledge of axioms matching a commitment',
+        }
+
+
+def create_knowledge_of_axioms_circuit(circuit_version: int = 1) -> MVPCircuit:
+    """
+    Create a knowledge-of-axioms circuit.
+    
+    Args:
+        circuit_version: Circuit version number (default 1 for MVP)
+    
+    Returns:
+        MVPCircuit instance
+    """
+    return MVPCircuit(circuit_version=circuit_version)
 
 def create_implication_circuit(num_premises: int) -> ZKPCircuit:
     """

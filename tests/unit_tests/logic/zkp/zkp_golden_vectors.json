@@ -11,8 +11,8 @@
       "description": "Classic modus ponens: P, P->Q, therefore Q",
       "theorem": "Q",
       "axioms": ["P", "P -> Q"],
-      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
-      "expected_theorem_hash": "7a3f2d8c6b9e1f4a5d8c2b7e9a1f4d6c8b2e5f7a9d1c3e6f8a0d2f4b6c8d9e",
+      "expected_axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "expected_theorem_hash": "5f1d131d5577733e12fd1bc7bb8a49f7d48fa0cfcc07af54cbe2e949e4c4d2d8",
       "expected_witness_count": 2,
       "notes": "Deterministic hashing - order independent due to axiom canonicalization"
     },
@@ -20,8 +20,8 @@
       "description": "Same axioms as simple_modus_ponens but different order - should produce identical commitment",
       "theorem": "Q",
       "axioms": ["P -> Q", "P"],
-      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
-      "expected_theorem_hash": "7a3f2d8c6b9e1f4a5d8c2b7e9a1f4d6c8b2e5f7a9d1c3e6f8a0d2f4b6c8d9e",
+      "expected_axioms_commitment": "9b5e9c5a5a8b7c87a592287a3a7b55b9cb95329896b8c132ac7e9a5e3ed8a4e6",
+      "expected_theorem_hash": "5f1d131d5577733e12fd1bc7bb8a49f7d48fa0cfcc07af54cbe2e949e4c4d2d8",
       "expected_witness_count": 2,
       "notes": "Order independence - reordered axioms should hash to SAME commitment as simple_modus_ponens"
     },

@@ -4,7 +4,9 @@
 **Last Reviewed:** 2026-02-18  
 **Documentation Refactoring:** Complete (16 → 9 active files)
 
-This file is a living backlog for the ZKP submodule.
+⚡ **Master TODO:** See `TODO_MASTER.md` for comprehensive, phase-by-phase tasks (current state, P0–P11 breakdown, implementation order, success criteria).
+
+This file documents high-level principles and non-negotiable invariants.
 
 The current `ipfs_datasets_py.logic.zkp` package is intentionally a **simulation** that demonstrates workflows and API shapes. It is not a real ZKP system.
 
