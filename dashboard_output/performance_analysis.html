@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TDFOL Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-value {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .stat-unit {
+            color: #888;
+            font-size: 1rem;
+            margin-left: 5px;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            color: #667eea;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .success {
+            color: #10b981;
+            font-weight: 600;
+        }
+        
+        .failure {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            padding: 20px;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 TDFOL Performance Dashboard</h1>
+            <p class="subtitle">Real-time theorem proving performance monitoring and analysis</p>
+        </header>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Proofs</div>
+                <div class="stat-value">65</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Success Rate</div>
+                <div class="stat-value">92.3<span class="stat-unit">%</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Cache Hit Rate</div>
+                <div class="stat-value">30.8<span class="stat-unit">%</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Avg Proof Time</div>
+                <div class="stat-value">154.0<span class="stat-unit">ms</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Median Time</div>
+                <div class="stat-value">88.2<span class="stat-unit">ms</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">P95 Time</div>
+                <div class="stat-value">499.6<span class="stat-unit">ms</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">P99 Time</div>
+                <div class="stat-value">596.8<span class="stat-unit">ms</span></div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-label">Cache Speedup</div>
+                <div class="stat-value">75.4<span class="stat-unit">x</span></div>
+            </div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">Proof Times Over Time</div>
+                <div class="chart-canvas">
+                    <canvas id="proofTimesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Strategy Performance</div>
+                <div class="chart-canvas">
+                    <canvas id="strategyTimesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Strategy Success Rates</div>
+                <div class="chart-canvas">
+                    <canvas id="strategySuccessChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Proof Time Distribution</div>
+                <div class="chart-canvas">
+                    <canvas id="histogramChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Cache Hit/Miss Distribution</div>
+                <div class="chart-canvas">
+                    <canvas id="cacheChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Formula Type Distribution</div>
+                <div class="chart-canvas">
+                    <canvas id="formulaTypeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="chart-title">Strategy Comparison</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Strategy</th>
+                        <th>Count</th>
+                        <th>Success Rate</th>
+                        <th>Cache Hit Rate</th>
+                        <th>Avg Time (ms)</th>
+                        <th>Median Time (ms)</th>
+                        <th>Min Time (ms)</th>
+                        <th>Max Time (ms)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    <tr>
+                        <td><strong>auto</strong></td>
+                        <td>20</td>
+                        <td class="success">100.0%</td>
+                        <td>100.0%</td>
+                        <td>2.93</td>
+                        <td>2.94</td>
+                        <td>1.24</td>
+                        <td>4.46</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>forward</strong></td>
+                        <td>35</td>
+                        <td class="success">85.7%</td>
+                        <td>0.0%</td>
+                        <td>164.65</td>
+                        <td>118.85</td>
+                        <td>61.77</td>
+                        <td>596.81</td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>tableaux</strong></td>
+                        <td>10</td>
+                        <td class="success">100.0%</td>
+                        <td>0.0%</td>
+                        <td>419.00</td>
+                        <td>430.45</td>
+                        <td>332.55</td>
+                        <td>499.58</td>
+                    </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>Generated by TDFOL Performance Dashboard</p>
+            <p>Dashboard started: 2026-02-18 17:47:02</p>
+            <p>Report generated: 2026-02-18 17:47:02</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Configure Chart.js defaults
+        Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        Chart.defaults.color = '#666';
+        
+        // Proof times over time
+        new Chart(document.getElementById('proofTimesChart'), {
+            type: 'line',
+            data: {
+                datasets: [{
+                    label: 'Proof Time (ms)',
+                    data: [{"x": "2026-02-18T17:47:02.608497", "y": 4.458282157509057}, {"x": "2026-02-18T17:47:02.608650", "y": 4.125728075739579}, {"x": "2026-02-18T17:47:02.608704", "y": 3.4132041774233395}, {"x": "2026-02-18T17:47:02.608750", "y": 2.0635508138614687}, {"x": "2026-02-18T17:47:02.608794", "y": 2.213647560073487}, {"x": "2026-02-18T17:47:02.608838", "y": 4.010814119207684}, {"x": "2026-02-18T17:47:02.608884", "y": 1.2449613246067437}, {"x": "2026-02-18T17:47:02.608927", "y": 3.18620152554528}, {"x": "2026-02-18T17:47:02.608954", "y": 2.9144556626585647}, {"x": "2026-02-18T17:47:02.608980", "y": 4.1843443669459095}, {"x": "2026-02-18T17:47:02.609004", "y": 4.127447239753339}, {"x": "2026-02-18T17:47:02.609029", "y": 1.992792480637927}, {"x": "2026-02-18T17:47:02.609054", "y": 1.693731589121359}, {"x": "2026-02-18T17:47:02.609081", "y": 2.4460968002383146}, {"x": "2026-02-18T17:47:02.609109", "y": 3.989460339812506}, {"x": "2026-02-18T17:47:02.609116", "y": 1.8943664443726784}, {"x": "2026-02-18T17:47:02.609122", "y": 1.9228987338647818}, {"x": "2026-02-18T17:47:02.609129", "y": 1.6580023263719825}, {"x": "2026-02-18T17:47:02.609135", "y": 4.162269797659423}, {"x": "2026-02-18T17:47:02.609141", "y": 2.9675157657429394}, {"x": "2026-02-18T17:47:02.609148", "y": 113.31847634525053}, {"x": "2026-02-18T17:47:02.609155", "y": 128.88043015540472}, {"x": "2026-02-18T17:47:02.609161", "y": 141.47401270691626}, {"x": "2026-02-18T17:47:02.609167", "y": 128.63883489246814}, {"x": "2026-02-18T17:47:02.609173", "y": 88.82998269026498}, {"x": "2026-02-18T17:47:02.609179", "y": 126.2393524281733}, {"x": "2026-02-18T17:47:02.609185", "y": 76.9676182132577}, {"x": "2026-02-18T17:47:02.609192", "y": 135.69850119071467}, {"x": "2026-02-18T17:47:02.609198", "y": 61.77136777769013}, {"x": "2026-02-18T17:47:02.609204", "y": 80.8926048644642}, {"x": "2026-02-18T17:47:02.609210", "y": 73.74788223076098}, {"x": "2026-02-18T17:47:02.609215", "y": 64.87625690976569}, {"x": "2026-02-18T17:47:02.609221", "y": 124.24780955059592}, {"x": "2026-02-18T17:47:02.609227", "y": 141.5256419119563}, {"x": "2026-02-18T17:47:02.609233", "y": 90.52411916784419}, {"x": "2026-02-18T17:47:02.609238", "y": 88.2400114925187}, {"x": "2026-02-18T17:47:02.609244", "y": 74.30566661223072}, {"x": "2026-02-18T17:47:02.609250", "y": 144.43256188531996}, {"x": "2026-02-18T17:47:02.609255", "y": 79.27287388129247}, {"x": "2026-02-18T17:47:02.609262", "y": 118.85069265640628}, {"x": "2026-02-18T17:47:02.609267", "y": 72.52784426390807}, {"x": "2026-02-18T17:47:02.609273", "y": 139.6913928887451}, {"x": "2026-02-18T17:47:02.609279", "y": 121.88686865424118}, {"x": "2026-02-18T17:47:02.609290", "y": 75.79272383979145}, {"x": "2026-02-18T17:47:02.609296", "y": 84.89432910804955}, {"x": "2026-02-18T17:47:02.609301", "y": 86.60048479571654}, {"x": "2026-02-18T17:47:02.609307", "y": 128.54684973046938}, {"x": "2026-02-18T17:47:02.609313", "y": 149.51272432080984}, {"x": "2026-02-18T17:47:02.609319", "y": 118.2394246474448}, {"x": "2026-02-18T17:47:02.609325", "y": 71.57161348363043}, {"x": "2026-02-18T17:47:02.609332", "y": 485.5099737816047}, {"x": "2026-02-18T17:47:02.609338", "y": 464.9042862064275}, {"x": "2026-02-18T17:47:02.609344", "y": 370.84156789675615}, {"x": "2026-02-18T17:47:02.609350", "y": 383.0561056317616}, {"x": "2026-02-18T17:47:02.609356", "y": 438.25013814902957}, {"x": "2026-02-18T17:47:02.609362", "y": 434.18795142075646}, {"x": "2026-02-18T17:47:02.609367", "y": 499.583932571495}, {"x": "2026-02-18T17:47:02.609375", "y": 426.7025358604498}, {"x": "2026-02-18T17:47:02.609383", "y": 354.40540139413605}, {"x": "2026-02-18T17:47:02.609388", "y": 332.5490473146233}, {"x": "2026-02-18T17:47:02.609395", "y": 494.95273060020673}, {"x": "2026-02-18T17:47:02.609401", "y": 596.8132818613954}, {"x": "2026-02-18T17:47:02.609406", "y": 574.2925145567583}, {"x": "2026-02-18T17:47:02.609412", "y": 437.0490872883371}, {"x": "2026-02-18T17:47:02.609417", "y": 527.5060499893505}],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Time (ms)'
+                        },
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Strategy times comparison
+        new Chart(document.getElementById('strategyTimesChart'), {
+            type: 'bar',
+            data: {
+                labels: ["auto", "forward", "tableaux"],
+                datasets: [{
+                    label: 'Avg Time (ms)',
+                    data: [2.933488565057318, 164.64607478834714, 418.999094022704],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(237, 100, 166, 0.8)',
+                        'rgba(255, 154, 158, 0.8)',
+                        'rgba(250, 208, 196, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Time (ms)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Strategy success rates
+        new Chart(document.getElementById('strategySuccessChart'), {
+            type: 'bar',
+            data: {
+                labels: ["auto", "forward", "tableaux"],
+                datasets: [{
+                    label: 'Success Rate (%)',
+                    data: [100.0, 85.71428571428571, 100.0],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(168, 85, 247, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Success Rate (%)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Proof time histogram
+        new Chart(document.getElementById('histogramChart'), {
+            type: 'bar',
+            data: {
+                labels: ["1-61", "61-120", "120-180", "180-239", "239-299", "299-359", "359-418", "418-478", "478-537", "537-597"],
+                datasets: [{
+                    label: 'Frequency',
+                    data: [20, 18, 12, 0, 0, 2, 2, 5, 4, 2],
+                    backgroundColor: 'rgba(102, 126, 234, 0.8)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Proof Time Range (ms)'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Cache distribution
+        new Chart(document.getElementById('cacheChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Cache Hits', 'Cache Misses'],
+                datasets: [{
+                    data: [20, 45],
+                    backgroundColor: [
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Formula type distribution
+        new Chart(document.getElementById('formulaTypeChart'), {
+            type: 'pie',
+            data: {
+                labels: ["propositional"],
+                datasets: [{
+                    data: [65],
+                    backgroundColor: [
+                        'rgba(102, 126, 234, 0.8)',
+                        'rgba(118, 75, 162, 0.8)',
+                        'rgba(237, 100, 166, 0.8)',
+                        'rgba(255, 154, 158, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
