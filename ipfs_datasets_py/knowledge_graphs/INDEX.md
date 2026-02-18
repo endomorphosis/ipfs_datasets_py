@@ -10,39 +10,41 @@
 
 New to the knowledge graphs module? Start with these documents in order:
 
-1. **[EXECUTIVE_SUMMARY_FINAL_2026_02_18.md](./EXECUTIVE_SUMMARY_FINAL_2026_02_18.md)** 🎯 2-MINUTE SUMMARY
-   - TL;DR: Module status and key findings
-   - Answers "Is previous work finished?"
-   - Critical metrics at-a-glance
-   - **Read time:** 2-3 minutes
-
-2. **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-MINUTE START
+1. **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-MINUTE START
    - Get up and running in 5 minutes
    - Basic extraction and query examples
    - Common patterns and tips
    - **Read time:** 5 minutes
 
-3. **[README.md](./README.md)** ⭐ MODULE OVERVIEW
+2. **[MASTER_STATUS.md](./MASTER_STATUS.md)** ⭐ **NEW** - SINGLE SOURCE OF TRUTH
+   - **Complete module status in one place**
+   - Feature completeness matrix
+   - Test coverage status
+   - Recent changes and roadmap
+   - Known issues and limitations
+   - **Read time:** 10-15 minutes
+
+3. **[README.md](./README.md)** 📖 MODULE OVERVIEW
    - Complete module overview
    - Directory structure guide
    - Usage patterns and examples
    - **Read time:** 10-15 minutes
 
-4. **[FEATURE_MATRIX.md](./FEATURE_MATRIX.md)** 📋 WHAT'S IMPLEMENTED
-   - Feature completeness at-a-glance
-   - What works today vs. what's planned
-   - Clear status for every feature
-   - **Read time:** 5 minutes
-
-5. **[IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)** 📊 CURRENT STATE
-   - Current implementation status
-   - Test coverage by module
-   - Known limitations and workarounds
+4. **[DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)** 📚 **NEW** - DOC NAVIGATION
+   - **Which document to read for what purpose**
+   - Documentation maintenance guide
+   - Standards and patterns
    - **Read time:** 5-10 minutes
 
+5. **[DEFERRED_FEATURES.md](./DEFERRED_FEATURES.md)** 📋 PLANNED FEATURES
+   - Intentionally incomplete features
+   - Timelines and workarounds
+   - Clear priorities and effort estimates
+   - **Read time:** 10 minutes
+
 6. **[ROADMAP.md](./ROADMAP.md)** 🗺️ FUTURE PLANS
-   - Development roadmap (v2.0.1 through v3.0.0)
-   - Planned features and timelines
+   - Long-term development roadmap
+   - Version timelines
    - Community contribution areas
    - **Read time:** 10-15 minutes
 
@@ -67,9 +69,10 @@ Complete API documentation:
 ### For Contributors
 Contributing to the module:
 
-1. [../../docs/knowledge_graphs/CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md) - Development guidelines (23KB)
-2. [ROADMAP.md](./ROADMAP.md) - Future development plans
-3. [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) - Current state and gaps
+1. [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md) - **NEW** - Documentation maintenance guide
+2. [../../docs/knowledge_graphs/CONTRIBUTING.md](../../docs/knowledge_graphs/CONTRIBUTING.md) - Development guidelines (23KB)
+3. [ROADMAP.md](./ROADMAP.md) - Future development plans
+4. [FINAL_REFACTORING_PLAN_2026_02_18.md](./FINAL_REFACTORING_PLAN_2026_02_18.md) - **NEW** - Comprehensive refactoring plan
 
 ### For Migrators
 Migrating from other systems:
@@ -81,9 +84,10 @@ Migrating from other systems:
 ### For Project Managers
 Tracking status and planning:
 
-1. [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) - Current status and metrics
+1. [MASTER_STATUS.md](./MASTER_STATUS.md) - **NEW** - Single source of truth for module status
 2. [ROADMAP.md](./ROADMAP.md) - Timeline and future plans
 3. [CHANGELOG_KNOWLEDGE_GRAPHS.md](./CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
+4. [P3_P4_IMPLEMENTATION_COMPLETE.md](./P3_P4_IMPLEMENTATION_COMPLETE.md) - P1-P4 implementation record
 
 ---
 
@@ -93,15 +97,17 @@ Tracking status and planning:
 
 | File | Size | Purpose | Status |
 |------|------|---------|--------|
-| **EXECUTIVE_SUMMARY_FINAL_2026_02_18.md** | 9KB | 🎯 Quick 2-minute summary of module status | ✅ Current |
-| **NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md** | 47KB | ⭐ Latest comprehensive analysis (2026-02-18) | ✅ Current |
+| **MASTER_STATUS.md** | 17KB | ⭐ **NEW** - Single source of truth for module status | ✅ Current |
+| **FINAL_REFACTORING_PLAN_2026_02_18.md** | 47KB | ⭐ **NEW** - Comprehensive refactoring & improvement plan | ✅ Current |
+| **DOCUMENTATION_GUIDE.md** | 15KB | 📚 **NEW** - Documentation navigation & maintenance guide | ✅ Current |
+| **EXECUTIVE_SUMMARY_FINAL_2026_02_18.md** | 9KB | 🎯 Executive summary of comprehensive review | ✅ Current |
+| **P3_P4_IMPLEMENTATION_COMPLETE.md** | 12KB | ✅ P1-P4 feature implementation record | ✅ Current |
 | **QUICKSTART.md** | 6KB | 5-minute quick start guide | ✅ Current |
 | **README.md** | 11KB | Module overview and quick start | ✅ Current |
 | **INDEX.md** | 13KB | This file - documentation index | ✅ Current |
 | **FEATURE_MATRIX.md** | 8KB | Feature completeness matrix | ✅ Current |
-| **IMPLEMENTATION_STATUS.md** | 7KB | Current status and metrics | ✅ Current |
-| **ROADMAP.md** | 10KB | Future development plans | ✅ Current |
 | **DEFERRED_FEATURES.md** | 10KB | Planned features with timelines | ✅ Current |
+| **ROADMAP.md** | 10KB | Future development plans | ✅ Current |
 | **CHANGELOG_KNOWLEDGE_GRAPHS.md** | 8KB | Version history | ✅ Current |
 | **VALIDATION_REPORT.md** | 10KB | Cross-reference validation | ✅ Current |
 | **archive/** | - | Historical documentation | 📦 Archived |
