@@ -16,8 +16,6 @@ from pathlib import Path
 from ..converters.deontic_logic_core import DeonticFormula, DeonticRuleSet
 from ..converters.logic_translation_core import TranslationResult, LogicTranslationTarget
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Try to import IPLD components
