@@ -75,11 +75,11 @@ class ParsingError(CECError):
             ...     suggestion="Add closing ')' at end"
             ... )
         """
-        context = {}
+        context: Dict[str, Any] = {}
         if expression is not None:
             context["expression"] = expression
         if position is not None:
-            context["position"] = position
+            context["position"] = position  # type: ignore[assignment]
         if expected is not None:
             context["expected"] = expected
         
@@ -116,11 +116,11 @@ class ProvingError(CECError):
             ...     suggestion="Check premises are available"
             ... )
         """
-        context = {}
+        context: Dict[str, Any] = {}
         if formula is not None:
             context["formula"] = formula
         if proof_step is not None:
-            context["proof_step"] = proof_step
+            context["proof_step"] = proof_step  # type: ignore[assignment]
         if rule is not None:
             context["rule"] = rule
         

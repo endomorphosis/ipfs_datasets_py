@@ -22,7 +22,7 @@ from abc import ABC, abstractmethod
 import logging
 
 try:
-    from beartype import beartype  # type: ignore[import-not-found]
+    from beartype import beartype
 except ImportError:
     from typing import TypeVar, Callable, Any
     F = TypeVar('F', bound=Callable[..., Any])

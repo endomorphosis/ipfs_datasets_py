@@ -152,7 +152,7 @@ class TableauProver:
         """
         self.logic = logic
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def prove(self, goal: str, assumptions: Optional[List[str]] = None) -> Tuple[bool, ModalTableau]:
         """Prove a goal using tableau method.
         
@@ -414,11 +414,11 @@ class ResolutionProver:
     Uses resolution rule: (A∨P) ∧ (¬P∨B) → (A∨B)
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize resolution prover."""
         self.clauses: Set[frozenset] = set()
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def prove(self, goal: str, assumptions: Optional[List[str]] = None) -> Tuple[bool, List[ProofStep]]:
         """Prove a goal using resolution.
         

@@ -49,12 +49,12 @@ class TPTPParser:
     Supports fof() (first-order formula) and cnf() (clause normal form).
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize TPTP parser."""
         self.formulas: List[TPTPFormula] = []
         self.includes: List[str] = []
         
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_file(self, filepath: str) -> ProblemFile:
         """Parse a TPTP problem file.
         
@@ -77,7 +77,7 @@ class TPTPParser:
         except Exception as e:
             raise ValueError(f"Error parsing TPTP file: {e}")
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_string(self, content: str, name: str = "tptp_problem") -> ProblemFile:
         """Parse TPTP format string.
         
@@ -180,7 +180,7 @@ class CustomProblemParser:
     ```
     """
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_file(self, filepath: str) -> ProblemFile:
         """Parse a custom problem file.
         
@@ -199,7 +199,7 @@ class CustomProblemParser:
         except Exception as e:
             raise ValueError(f"Error parsing problem file: {e}")
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_string(self, content: str, name: str = "custom_problem") -> ProblemFile:
         """Parse custom format string.
         
@@ -265,12 +265,12 @@ class ProblemParser:
     Automatically detects format and uses appropriate parser.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize problem parser."""
         self.tptp_parser = TPTPParser()
         self.custom_parser = CustomProblemParser()
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_file(self, filepath: str) -> ProblemFile:
         """Parse a problem file (auto-detects format).
         
@@ -288,7 +288,7 @@ class ProblemParser:
             logger.info(f"Parsing as custom format: {filepath}")
             return self.custom_parser.parse_file(filepath)
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse_string(self, content: str, format_hint: Optional[str] = None) -> ProblemFile:
         """Parse a problem string.
         

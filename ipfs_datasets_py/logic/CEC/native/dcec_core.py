@@ -14,7 +14,9 @@ from abc import ABC, abstractmethod
 try:
     from beartype import beartype
 except ImportError:
-    def beartype(func):
+    from typing import TypeVar, Callable, Any
+    F = TypeVar('F', bound=Callable[..., Any])
+    def beartype(func: F) -> F:
         return func
 
 logger = logging.getLogger(__name__)
@@ -162,7 +164,7 @@ class FunctionTerm(Term):
     function: Function
     arguments: List[Term]
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.arguments) != self.function.arity():
             raise ValueError(f"Function {self.function.name} expects {self.function.arity()} arguments, got {len(self.arguments)}")
     
@@ -209,7 +211,7 @@ class AtomicFormula(Formula):
     predicate: Predicate
     arguments: List[Term]
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if len(self.arguments) != self.predicate.arity():
             raise ValueError(f"Predicate {self.predicate.name} expects {self.predicate.arity()} arguments, got {len(self.arguments)}")
     
@@ -315,7 +317,7 @@ class ConnectiveFormula(Formula):
     connective: LogicalConnective
     formulas: List[Formula]
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.connective == LogicalConnective.NOT and len(self.formulas) != 1:
             raise ValueError("NOT connective requires exactly 1 formula")
         elif self.connective in [LogicalConnective.AND, LogicalConnective.OR] and len(self.formulas) < 2:
@@ -353,7 +355,7 @@ class QuantifiedFormula(Formula):
     variable: Variable
     formula: Formula
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.quantifier not in [LogicalConnective.EXISTS, LogicalConnective.FORALL]:
             raise ValueError(f"Invalid quantifier: {self.quantifier}")
     

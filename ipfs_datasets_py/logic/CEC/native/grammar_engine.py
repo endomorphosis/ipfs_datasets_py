@@ -147,13 +147,13 @@ class GrammarEngine:
     - Bidirectional NL↔Logic conversion
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the grammar engine."""
         self.rules: List[GrammarRule] = []
         self.lexicon: Dict[str, List[LexicalEntry]] = {}
         self.start_category = Category.UTTERANCE
         
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_rule(self, rule: GrammarRule) -> None:
         """Add a grammar rule to the engine.
         
@@ -163,7 +163,7 @@ class GrammarEngine:
         self.rules.append(rule)
         logger.debug(f"Added grammar rule: {rule.name}")
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def add_lexical_entry(self, entry: LexicalEntry) -> None:
         """Add a lexical entry to the lexicon.
         
@@ -175,7 +175,7 @@ class GrammarEngine:
         self.lexicon[entry.word].append(entry)
         logger.debug(f"Added lexical entry: {entry.word} → {entry.category.value}")
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def parse(self, text: str) -> List[ParseNode]:
         """Parse natural language text into parse trees.
         
@@ -255,7 +255,7 @@ class GrammarEngine:
         
         return complete_parses
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def linearize(self, semantic_value: Any, category: Category) -> str:
         """Generate natural language from a semantic value.
         
@@ -292,7 +292,7 @@ class GrammarEngine:
         tokens = text.lower().strip().split()
         return tokens
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def resolve_ambiguity(self, parses: List[ParseNode], strategy: str = "first") -> Optional[ParseNode]:
         """Resolve ambiguous parses using a strategy.
         
@@ -370,7 +370,7 @@ class CompositeGrammar:
 
 # Helper functions for creating common grammar rules
 
-@beartype
+@beartype  # type: ignore[untyped-decorator]
 def make_binary_rule(
     name: str,
     category: Category,
@@ -404,7 +404,7 @@ def make_binary_rule(
     )
 
 
-@beartype
+@beartype  # type: ignore[untyped-decorator]
 def make_unary_rule(
     name: str,
     category: Category,

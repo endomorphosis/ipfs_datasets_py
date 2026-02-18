@@ -294,7 +294,7 @@ TermList = List[Term]
 StringList = List[str]
 
 # Dict types
-FormulaDict = Dict[str, Formula]
+FormulaDict = Dict[str, Formula]  # type: ignore[misc]
 ProofDict = Dict[str, Any]
 
 # Union types

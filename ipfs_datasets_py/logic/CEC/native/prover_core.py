@@ -28,7 +28,9 @@ from .dcec_core import (
 try:
     from beartype import beartype
 except ImportError:
-    def beartype(func):
+    from typing import TypeVar, Callable, Any
+    F = TypeVar('F', bound=Callable[..., Any])
+    def beartype(func: F) -> F:
         return func
 
 logger = logging.getLogger(__name__)
@@ -189,7 +191,7 @@ class ProofState:
                 step_number=i+1
             ))
     
-    def add_formula(self, formula: Formula, rule: str, premises: List[int]):
+    def add_formula(self, formula: Formula, rule: str, premises: List[int]) -> None:
         """Add a newly derived formula."""
         self.derived.append(formula)
         step = ProofStep(
@@ -237,7 +239,7 @@ class BasicProver:
             ConjunctionIntroduction(),
         ]
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def prove(
         self,
         goal: Formula,
@@ -298,8 +300,8 @@ class BasicProver:
         logger.info(f"Could not prove goal in {self.max_steps} steps")
         return state.get_proof_tree(ProofResult.UNKNOWN)
     
-    @beartype
-    def add_rule(self, rule: InferenceRule):
+    @beartype  # type: ignore[untyped-decorator]
+    def add_rule(self, rule: InferenceRule) -> None:
         """Add a custom inference rule."""
         self.rules.append(rule)
         logger.info(f"Added inference rule: {rule.name()}")
@@ -326,7 +328,7 @@ class TheoremProver:
     This class provides a clean API compatible with the TalosWrapper interface.
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the theorem prover."""
         self.prover = BasicProver()
         self.proof_attempts: List[ProofAttempt] = []
@@ -338,7 +340,7 @@ class TheoremProver:
         logger.info("Native theorem prover initialized")
         return True
     
-    @beartype
+    @beartype  # type: ignore[untyped-decorator]
     def prove_theorem(
         self,
         goal: Formula,
