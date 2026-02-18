@@ -264,18 +264,26 @@ class CachedTheoremProver(BaseTheoremProver):
             axioms_str = ";".join(sorted(a.to_string() for a in axioms))
             cache_key = f"{formula_str}|{axioms_str}"
             
-            # Try to get from cache
-            cached = self.cache.get(cache_key, prover_name="cec_native")
-            if cached:
-                # Convert CachedProofResult to CECCachedProofResult
-                if isinstance(cached.metadata, dict):
+            # Try to get from cache (unified cache API)
+            cached = self.cache.get(
+                formula=cache_key,
+                axioms=axioms,
+                prover_name="cec_native"
+            )
+            
+            if cached and cached.result:
+                # The cached.result is our CECCachedProofResult object
+                if isinstance(cached.result, CECCachedProofResult):
+                    return cached.result
+                # Fallback: try to reconstruct from unified cache format
+                elif isinstance(cached.result, dict):
                     return CECCachedProofResult(
-                        is_proved=cached.is_proved,
-                        result=ProofResult(cached.metadata.get('result', 'unknown')),
-                        execution_time=cached.proof_time,
-                        proof_steps=cached.metadata.get('proof_steps', 0),
-                        inference_rules_used=cached.metadata.get('inference_rules_used', []),
-                        error_message=cached.metadata.get('error_message'),
+                        is_proved=cached.result.get('is_proved', False),
+                        result=ProofResult(cached.result.get('result', 'unknown')),
+                        execution_time=cached.result.get('execution_time', 0.0),
+                        proof_steps=cached.result.get('proof_steps', 0),
+                        inference_rules_used=cached.result.get('inference_rules_used', []),
+                        error_message=cached.result.get('error_message'),
                         timestamp=cached.timestamp
                     )
             return None
@@ -299,20 +307,21 @@ class CachedTheoremProver(BaseTheoremProver):
             axioms_str = ";".join(sorted(a.to_string() for a in axioms))
             cache_key = f"{formula_str}|{axioms_str}"
             
-            # Create metadata
-            metadata = {
-                'result': result.result.value,
-                'proof_steps': result.proof_steps,
-                'inference_rules_used': result.inference_rules_used,
-                'error_message': result.error_message,
-            }
+            # Create cached result with embedded metadata
+            cached_result = CECCachedProofResult(
+                is_proved=result.is_proved,
+                result=result.result,
+                proof_steps=result.proof_steps,
+                inference_rules_used=result.inference_rules_used,
+                error_message=result.error_message,
+                execution_time=result.execution_time
+            )
             
-            # Store in cache
+            # Store in cache (unified cache API)
             self.cache.set(
-                cache_key,
-                result.is_proved,
-                result.execution_time,
-                metadata=metadata,
+                formula=cache_key,
+                result=cached_result,
+                axioms=axioms,
                 prover_name="cec_native"
             )
             
