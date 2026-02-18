@@ -74,8 +74,10 @@ class TestGroth16BackendInitialization:
     
     def test_binary_not_found_warning(self, caplog):
         """Test initialization when binary path not found."""
-        backend = Groth16FFIBackend(binary_path=None)
-        assert backend.binary_path is None
+        # Now that Rust binary is compiled, patch to simulate no binary
+        with patch.object(Groth16FFIBackend, '_find_groth16_binary', return_value=None):
+            backend = Groth16FFIBackend(binary_path=None)
+            assert backend.binary_path is None
     
     def test_explicit_binary_path(self, mock_binary_path):
         """Test initialization with explicit binary path."""
@@ -146,10 +148,12 @@ class TestGroth16BackendProofGeneration:
     
     def test_generate_proof_no_binary(self, sample_witness_json):
         """Test error when binary not available."""
-        backend = Groth16FFIBackend(binary_path=None)
-        
-        with pytest.raises(RuntimeError, match="binary not available"):
-            backend.generate_proof(sample_witness_json)
+        # Patch binary discovery to return None
+        with patch.object(Groth16FFIBackend, '_find_groth16_binary', return_value=None):
+            backend = Groth16FFIBackend(binary_path=None)
+            
+            with pytest.raises(RuntimeError, match="binary not available"):
+                backend.generate_proof(sample_witness_json)
     
     @patch('subprocess.run')
     def test_generate_proof_success(self, mock_run, sample_witness_json, 
@@ -198,10 +202,12 @@ class TestGroth16BackendProofVerification:
     
     def test_verify_proof_no_binary(self, sample_proof_json):
         """Test error when binary not available."""
-        backend = Groth16FFIBackend(binary_path=None)
-        
-        with pytest.raises(RuntimeError, match="binary not available"):
-            backend.verify_proof(sample_proof_json)
+        # Patch binary discovery to return None since real binary now exists
+        with patch.object(Groth16FFIBackend, '_find_groth16_binary', return_value=None):
+            backend = Groth16FFIBackend(binary_path=None)
+            
+            with pytest.raises(RuntimeError, match="binary not available"):
+                backend.verify_proof(sample_proof_json)
     
     @patch('subprocess.run')
     def test_verify_proof_valid(self, mock_run, sample_proof_json):
@@ -288,11 +294,13 @@ class TestGroth16BackendInfo:
     
     def test_get_backend_info_no_binary(self):
         """Test info when binary not available."""
-        backend = Groth16FFIBackend(binary_path=None)
-        info = backend.get_backend_info()
-        
-        assert info['name'] == 'Groth16'
-        assert info['status'] == 'not_available'
+        # Patch binary discovery to return None since real binary now exists
+        with patch.object(Groth16FFIBackend, '_find_groth16_binary', return_value=None):
+            backend = Groth16FFIBackend(binary_path=None)
+            info = backend.get_backend_info()
+            
+            assert info['name'] == 'Groth16'
+            assert info['status'] == 'not_available'
     
     def test_get_backend_info_with_binary(self):
         """Test info when binary available."""

@@ -54,6 +54,7 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
         MCPRemoteError,
         MCPP2PClient,
         open_libp2p_stream_by_multiaddr,
+        trio_libp2p_host_listen,
     )
     from ipfs_accelerate_py.p2p_tasks.runtime import TaskQueueP2PServiceRuntime
     from ipfs_accelerate_py.p2p_tasks.service import get_local_service_state
@@ -93,17 +94,29 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
             await trio.sleep(0.05)
         assert peer_id
 
-        import inspect
-        from multiaddr import Multiaddr
-        from libp2p.tools.async_service import background_trio_service
-
-        host_obj = libp2p.new_host()
-        host = await host_obj if inspect.isawaitable(host_obj) else host_obj
-
-        async with background_trio_service(host.get_network()):
-            await host.get_network().listen(Multiaddr("/ip4/127.0.0.1/tcp/0"))
-
+        async with trio_libp2p_host_listen(listen_multiaddr="/ip4/127.0.0.1/tcp/0") as host:
             ma = f"/ip4/127.0.0.1/tcp/{listen_port}/p2p/{peer_id}"
+
+            # Deterministic negative test: invalid jsonrpc version.
+            stream = await open_libp2p_stream_by_multiaddr(
+                host,
+                peer_multiaddr=ma,
+                protocols=[PROTOCOL_MCP_P2P_V1],
+            )
+            try:
+                client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
+                try:
+                    await client.request_raw(
+                        {"jsonrpc": "1.0", "id": 99, "method": "initialize", "params": {}}
+                    )
+                    raise AssertionError("expected invalid_jsonrpc error")
+                except MCPRemoteError as exc:
+                    assert exc.message == "invalid_jsonrpc"
+            finally:
+                try:
+                    await stream.close()
+                except Exception:
+                    pass
 
             stream = await open_libp2p_stream_by_multiaddr(
                 host,
@@ -148,11 +161,6 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                     await stream.close()
                 except Exception:
                     pass
-
-        try:
-            await host.close()
-        except Exception:
-            pass
 
     trio.run(_client_roundtrip)
 
