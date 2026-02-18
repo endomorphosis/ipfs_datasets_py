@@ -25,7 +25,61 @@ logger = logging.getLogger(__name__)
 
 
 class DeonticOperator(Enum):
-    """Deontic operators for normative reasoning."""
+    """
+    Deontic operators for normative reasoning in DCEC.
+    
+    Deontic logic concerns normative concepts such as obligation, permission, and prohibition.
+    These operators enable reasoning about what ought to be, what is permitted, and what is forbidden.
+    
+    Operators:
+        OBLIGATION (O): Represents that something is obligatory
+            - O(φ) means "it is obligatory that φ"
+            - Example: O(pay_taxes) - "it is obligatory to pay taxes"
+        
+        PERMISSION (P): Represents that something is permitted
+            - P(φ) means "it is permitted that φ"  
+            - Example: P(drive_car) - "it is permitted to drive a car"
+        
+        PROHIBITION (F): Represents that something is forbidden
+            - F(φ) means "it is forbidden that φ"
+            - Equivalent to O(¬φ) - obligation not to do φ
+            - Example: F(steal) - "it is forbidden to steal"
+        
+        SUPEREROGATION (S): Represents that something is beyond obligation
+            - S(φ) means "it is supererogatory that φ"
+            - Actions that are good but not obligatory
+            - Example: S(donate_to_charity) - "donating to charity is supererogatory"
+        
+        RIGHT (R): Represents a right
+            - R(φ) means "φ is a right"
+            - Example: R(free_speech) - "free speech is a right"
+        
+        LIBERTY (L): Represents a liberty or privilege
+            - L(φ) means "φ is a liberty/privilege"
+            - Example: L(choose_religion) - "choosing religion is a liberty"
+        
+        POWER (POW): Represents power to bring about something
+            - POW(φ) means "power to bring about φ"
+            - Example: POW(sign_contract) - "power to sign a contract"
+        
+        IMMUNITY (IMM): Represents immunity from something
+            - IMM(φ) means "immunity from φ"
+            - Example: IMM(search_without_warrant) - "immunity from search without warrant"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import DeonticOperator
+        >>> op = DeonticOperator.OBLIGATION
+        >>> print(op.value)
+        'O'
+        >>> op = DeonticOperator.PERMISSION
+        >>> print(op.value)
+        'P'
+    
+    Notes:
+        - Deontic operators can be combined with temporal operators for time-dependent norms
+        - Common relationships: F(φ) ≡ O(¬φ) (forbidden ≡ obligatory not)
+        - Permission is typically the dual of obligation: P(φ) ≡ ¬O(¬φ)
+    """
     OBLIGATION = "O"         # O(φ) - it is obligatory that φ
     PERMISSION = "P"         # P(φ) - it is permitted that φ
     PROHIBITION = "F"        # F(φ) - it is forbidden that φ
@@ -37,7 +91,57 @@ class DeonticOperator(Enum):
 
 
 class CognitiveOperator(Enum):
-    """Cognitive operators for mental state reasoning."""
+    """
+    Cognitive operators for mental state reasoning in DCEC.
+    
+    Cognitive operators enable reasoning about agents' mental states including beliefs,
+    knowledge, intentions, desires, and goals. These are essential for modeling agents'
+    internal states and reasoning about their behavior.
+    
+    Operators:
+        BELIEF (B): Represents that an agent believes something
+            - B(agent, φ) means "agent believes φ"
+            - Beliefs may be false (agents can have incorrect beliefs)
+            - Example: B(john, "it will rain") - "John believes it will rain"
+        
+        KNOWLEDGE (K): Represents that an agent knows something
+            - K(agent, φ) means "agent knows φ"
+            - Knowledge implies truth (K(agent, φ) → φ)
+            - Example: K(mary, "2+2=4") - "Mary knows that 2+2=4"
+        
+        INTENTION (I): Represents that an agent intends to do something
+            - I(agent, φ) means "agent intends φ"
+            - Intentions are directed toward future actions
+            - Example: I(alice, "buy groceries") - "Alice intends to buy groceries"
+        
+        DESIRE (D): Represents that an agent desires something
+            - D(agent, φ) means "agent desires φ"
+            - Desires may conflict and don't always lead to action
+            - Example: D(bob, "eat cake") - "Bob desires to eat cake"
+        
+        GOAL (G): Represents that an agent has a goal
+            - G(agent, φ) means "agent has goal φ"
+            - Goals are persistent states the agent wants to achieve
+            - Example: G(company, "increase profit") - "Company has goal to increase profit"
+    
+    Args (when used in formulas):
+        agent (Term): The agent whose mental state is being represented
+        formula (Formula): The content of the mental state
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import CognitiveOperator, CognitiveFormula
+        >>> op = CognitiveOperator.BELIEF
+        >>> print(op.value)
+        'B'
+        >>> # Creating a cognitive formula (see CognitiveFormula class for full example)
+        >>> # belief_formula = CognitiveFormula(CognitiveOperator.BELIEF, agent_term, content_formula)
+    
+    Notes:
+        - Knowledge is typically treated as justified true belief (K → B and K → truth)
+        - Beliefs and desires can combine to form intentions (BDI model)
+        - Agents can have nested beliefs: B(agent1, B(agent2, φ))
+        - Cognitive operators enable multi-agent reasoning and theory of mind
+    """
     BELIEF = "B"             # B(agent, φ) - agent believes φ
     KNOWLEDGE = "K"          # K(agent, φ) - agent knows φ
     INTENTION = "I"          # I(agent, φ) - agent intends φ
@@ -194,7 +298,50 @@ class FunctionTerm(Term):
 
 
 class Formula(ABC):
-    """Abstract base class for formulas in DCEC."""
+    """
+    Abstract base class for formulas in DCEC.
+    
+    A Formula represents a logical statement in the Deontic Cognitive Event Calculus.
+    Formulas can be combined using logical connectives, quantified over variables,
+    and modified with deontic, cognitive, or temporal operators.
+    
+    All Formula subclasses must implement methods for:
+    - Getting free variables
+    - Substituting variables with terms
+    - Converting to string representation
+    
+    Types of Formulas:
+        - AtomicFormula: Basic predicate applications like P(x, y)
+        - ConnectiveFormula: Formulas combined with logical operators (AND, OR, NOT, IMPLIES, etc.)
+        - QuantifiedFormula: Formulas with quantifiers (∃x.φ or ∀x.φ)
+        - DeonticFormula: Formulas with normative operators (O(φ), P(φ), F(φ))
+        - CognitiveFormula: Formulas about agent mental states (B(a, φ), K(a, φ), I(a, φ))
+        - TemporalFormula: Formulas about time (□φ, ◊φ, Xφ)
+    
+    Abstract Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns all variables that appear free (unbound by quantifiers) in the formula
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes all free occurrences of var with term, returning a new formula
+        
+        to_string() -> str:
+            Returns a string representation of the formula
+    
+    Examples:
+        >>> # See specific subclasses for concrete examples:
+        >>> # - AtomicFormula: P(x, y)
+        >>> # - DeonticFormula: O(pay_taxes)
+        >>> # - CognitiveFormula: B(john, rain)
+        >>> # - TemporalFormula: □(safe)
+        >>> # - ConnectiveFormula: P(x) ∧ Q(x)
+        >>> # - QuantifiedFormula: ∀x.(P(x) → Q(x))
+    
+    Notes:
+        - Formulas are immutable when possible (use dataclasses with frozen=True where applicable)
+        - Free variables in formulas can be bound by quantifiers
+        - Substitution must avoid variable capture (use fresh variables when needed)
+    """
     
     @abstractmethod
     def get_free_variables(self) -> Set[Variable]:
@@ -247,7 +394,73 @@ class AtomicFormula(Formula):
 
 @dataclass
 class DeonticFormula(Formula):
-    """A formula with a deontic operator."""
+    """
+    A formula with a deontic (normative) operator.
+    
+    DeonticFormula represents normative statements about what ought to be, what is permitted,
+    or what is forbidden. It combines a deontic operator with an inner formula, optionally
+    relativized to a specific agent.
+    
+    Deontic formulas enable reasoning about norms, obligations, permissions, rights, and
+    other normative concepts central to legal, ethical, and social reasoning.
+    
+    Args:
+        operator (DeonticOperator): The deontic operator (OBLIGATION, PERMISSION, PROHIBITION, etc.)
+        formula (Formula): The formula that the deontic operator applies to
+        agent (Optional[Term]): Optional agent for agent-relative deontic statements
+            - When provided: O[agent](φ) means "agent is obligated to ensure φ"
+            - When None: O(φ) means "it is obligatory that φ" (general obligation)
+    
+    Attributes:
+        operator: The deontic operator being applied
+        formula: The inner formula being modified
+        agent: Optional agent term for agent-relative deontic statements
+    
+    Common Patterns:
+        - O(φ): "it is obligatory that φ"
+        - P(φ): "it is permitted that φ"
+        - F(φ): "it is forbidden that φ" (equivalent to O(¬φ))
+        - O[agent](action): "agent is obligated to perform action"
+        - P[agent](action): "agent is permitted to perform action"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        ...     DeonticFormula, DeonticOperator, AtomicFormula, Predicate, Sort
+        ... )
+        >>> # Create a predicate for "pay taxes"
+        >>> action_sort = Sort("action")
+        >>> pay_taxes = Predicate("pay_taxes", [])
+        >>> formula = AtomicFormula(pay_taxes, [])
+        >>> 
+        >>> # O(pay_taxes) - "it is obligatory to pay taxes"
+        >>> obligation = DeonticFormula(DeonticOperator.OBLIGATION, formula)
+        >>> print(obligation.to_string())
+        'O(pay_taxes())'
+        >>> 
+        >>> # P(drive_car) - "it is permitted to drive a car"
+        >>> drive = Predicate("drive_car", [])
+        >>> drive_formula = AtomicFormula(drive, [])
+        >>> permission = DeonticFormula(DeonticOperator.PERMISSION, drive_formula)
+        >>> print(permission.to_string())
+        'P(drive_car())'
+    
+    Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns free variables from both the inner formula and the agent term (if present)
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes variable in both inner formula and agent term (if present)
+        
+        to_string() -> str:
+            Returns string representation like "O(φ)" or "O[agent](φ)"
+    
+    Notes:
+        - F(φ) is typically defined as O(¬φ) - forbidden means obligatory not to do
+        - P(φ) is the dual of O: P(φ) ≡ ¬O(¬φ) - permitted means not obligatory not to do
+        - Deontic operators can be combined with temporal operators: □O(φ) - "always obligatory"
+        - Agent-relative deontic statements enable multi-agent normative reasoning
+        - Deontic conflicts occur when O(φ) ∧ O(¬φ) - both φ and ¬φ are obligatory
+    """
     operator: DeonticOperator
     formula: Formula
     agent: Optional[Term] = None  # For agent-relative deontic operators
@@ -274,7 +487,76 @@ class DeonticFormula(Formula):
 
 @dataclass
 class CognitiveFormula(Formula):
-    """A formula with a cognitive operator."""
+    """
+    A formula with a cognitive operator representing an agent's mental state.
+    
+    CognitiveFormula represents statements about what agents believe, know, intend, desire,
+    or have as goals. These formulas enable reasoning about agents' internal mental states
+    and how they relate to actions and the external world.
+    
+    Args:
+        operator (CognitiveOperator): The cognitive operator (BELIEF, KNOWLEDGE, INTENTION, etc.)
+        agent (Term): The agent whose mental state is being described
+        formula (Formula): The content of the mental state (what is believed, known, intended, etc.)
+    
+    Attributes:
+        operator: The cognitive operator being applied
+        agent: The agent term (required - cognitive states always belong to an agent)
+        formula: The inner formula representing the content of the mental state
+    
+    Common Patterns:
+        - B(agent, φ): "agent believes φ"
+        - K(agent, φ): "agent knows φ" (implies truth: K(agent, φ) → φ)
+        - I(agent, action): "agent intends to perform action"
+        - D(agent, state): "agent desires state"
+        - G(agent, goal): "agent has goal"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        ...     CognitiveFormula, CognitiveOperator, AtomicFormula, 
+        ...     Predicate, VariableTerm, Variable, Sort
+        ... )
+        >>> # Create agent and content
+        >>> agent_sort = Sort("agent")
+        >>> agent_var = Variable("john", agent_sort)
+        >>> agent_term = VariableTerm(agent_var)
+        >>> 
+        >>> # Create a formula for "it will rain"
+        >>> rain_pred = Predicate("rain", [])
+        >>> rain_formula = AtomicFormula(rain_pred, [])
+        >>> 
+        >>> # B(john, rain) - "John believes it will rain"
+        >>> belief = CognitiveFormula(CognitiveOperator.BELIEF, agent_term, rain_formula)
+        >>> print(belief.to_string())
+        'B(john:agent, rain())'
+        >>> 
+        >>> # K(mary, 2+2=4) - "Mary knows 2+2=4"
+        >>> mary_term = VariableTerm(Variable("mary", agent_sort))
+        >>> math_pred = Predicate("equals_four", [])
+        >>> math_formula = AtomicFormula(math_pred, [])
+        >>> knowledge = CognitiveFormula(CognitiveOperator.KNOWLEDGE, mary_term, math_formula)
+        >>> print(knowledge.to_string())
+        'K(mary:agent, equals_four())'
+    
+    Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns free variables from both the agent term and the inner formula
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes variable in both agent term and inner formula
+        
+        to_string() -> str:
+            Returns string representation like "B(agent, φ)"
+    
+    Notes:
+        - Knowledge implies truth: if K(agent, φ) then φ must be true
+        - Beliefs don't imply truth: B(agent, φ) doesn't mean φ is true
+        - Agents can have nested beliefs: B(john, B(mary, φ)) - "John believes Mary believes φ"
+        - BDI (Belief-Desire-Intention) model: beliefs + desires → intentions → actions
+        - Cognitive operators enable theory of mind and multi-agent coordination
+        - Common axioms: K(agent, φ) → φ (knowledge implies truth)
+        - Common axioms: K(agent, φ) → B(agent, φ) (knowledge implies belief)
+    """
     operator: CognitiveOperator
     agent: Term
     formula: Formula
@@ -298,7 +580,68 @@ class CognitiveFormula(Formula):
 
 @dataclass
 class TemporalFormula(Formula):
-    """A formula with a temporal operator."""
+    """
+    A formula with a temporal operator for time-dependent reasoning.
+    
+    TemporalFormula represents statements about what is always true, eventually true,
+    true at the next moment, or true at specific time points. These enable reasoning
+    about change over time and temporal relationships between events.
+    
+    Args:
+        operator (TemporalOperator): The temporal operator (ALWAYS, EVENTUALLY, NEXT, UNTIL, SINCE)
+        formula (Formula): The formula that the temporal operator applies to
+        time (Optional[Term]): Optional explicit time point for the temporal statement
+    
+    Attributes:
+        operator: The temporal operator being applied
+        formula: The main formula being temporally modified
+        time: Optional time term for explicit temporal references
+    
+    Common Patterns:
+        - □φ (ALWAYS): "φ is always true" / "necessarily φ"
+        - ◊φ (EVENTUALLY): "φ will eventually be true" / "possibly φ"
+        - Xφ (NEXT): "φ is true at the next moment"
+        - □[t](φ): "φ is always true at time t"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        ...     TemporalFormula, TemporalOperator, AtomicFormula, Predicate
+        ... )
+        >>> # Create a formula for "safe"
+        >>> safe_pred = Predicate("safe", [])
+        >>> safe_formula = AtomicFormula(safe_pred, [])
+        >>> 
+        >>> # □(safe) - "always safe"
+        >>> always_safe = TemporalFormula(TemporalOperator.ALWAYS, safe_formula)
+        >>> print(always_safe.to_string())
+        '□(safe())'
+        >>> 
+        >>> # ◊(success) - "eventually successful"
+        >>> success_pred = Predicate("success", [])
+        >>> success_formula = AtomicFormula(success_pred, [])
+        >>> eventually_success = TemporalFormula(TemporalOperator.EVENTUALLY, success_formula)
+        >>> print(eventually_success.to_string())
+        '◊(success())'
+    
+    Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns free variables from formula and time term (if specified)
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes variable in both formula and time term (if specified)
+        
+        to_string() -> str:
+            Returns string representation like "□φ" or "□[t](φ)"
+    
+    Notes:
+        - □φ and ◊φ are dual: □φ ≡ ¬◊¬φ and ◊φ ≡ ¬□¬φ
+        - Linear Temporal Logic (LTL): uses ALWAYS, EVENTUALLY, NEXT, UNTIL, SINCE
+        - Common axioms: □(φ → ψ) → (□φ → □ψ) - K axiom
+        - Common axioms: □φ → φ - T axiom (reflexivity)
+        - Temporal operators combine with deontic: □O(φ) - "always obligatory that φ"
+        - Liveness property: ◊φ - something good eventually happens
+        - Safety property: □φ - something bad never happens
+    """
     operator: TemporalOperator
     formula: Formula
     time: Optional[Term] = None  # For explicit time points
