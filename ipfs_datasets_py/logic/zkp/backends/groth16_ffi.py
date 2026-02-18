@@ -92,16 +92,34 @@ class Groth16Backend(ZKPBackend):
         if not self.binary_path:
             logger.warning(
                 "Groth16 binary not found. "
-                "Install Rust and run: cd groth16_backend && cargo build --release"
+                "Install Rust and run: cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && cargo build --release"
             )
         elif not os.path.exists(self.binary_path):
             logger.warning(f"Groth16 binary not found at {self.binary_path}")
     
     def _find_groth16_binary(self) -> Optional[str]:
         """Find groth16 binary in standard locations."""
+        # Allow explicit override (useful for CI, dev machines, and when the Rust
+        # crate is located outside of the Python package tree).
+        for env_var in ("IPFS_DATASETS_GROTH16_BINARY", "GROTH16_BINARY"):
+            override = os.environ.get(env_var)
+            if override and Path(override).exists():
+                logger.info(f"Using Groth16 binary from ${env_var}: {override}")
+                return override
+
+        # Canonical location (current):
+        #   ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16
+        package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
+        repo_root = package_root.parent  # .../ipfs_datasets_py
+
         candidates = [
-            Path(__file__).parent.parent.parent.parent / "groth16_backend" / "target" / "release" / "groth16",
-            Path("/home/barberb/complaint-generator/groth16_backend/target/release/groth16"),
+            package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+
+            # Backward-compatible legacy location (older docs/scripts):
+            #   <project-root>/groth16_backend/target/release/groth16
+            repo_root.parent / "groth16_backend" / "target" / "release" / "groth16",
+
+            # If user installed a global binary
             Path.home() / ".cargo" / "bin" / "groth16",
         ]
         

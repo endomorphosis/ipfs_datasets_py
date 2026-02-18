@@ -20,6 +20,7 @@ The current `ipfs_datasets_py.logic.zkp` package is intentionally a **simulation
 - **Verifier robustness:** malformed/foreign proof objects must be rejected (`False`) rather than crashing.
 - **Serialization contract:** `ZKPProof.to_dict()` and `ZKPProof.from_dict()` must round-trip.
 - **Simulation honesty:** docs must not claim cryptographic security for the simulated backend.
+- **Test dependencies:** property-based tests require `hypothesis` in dev/test environments.
 
 ---
 

@@ -361,7 +361,12 @@ class TestGroth16BackendIntegrationWithBinary:
     """
     
     @pytest.mark.skipif(
-        not Path('/home/barberb/complaint-generator/groth16_backend/target/release/groth16').exists(),
+        not (
+            # Canonical current location (in-repo)
+            (Path(__file__).resolve().parents[5] / 'ipfs_datasets_py' / 'ipfs_datasets_py' / 'processors' / 'groth16_backend' / 'target' / 'release' / 'groth16').exists()
+            # Legacy location (older docs/scripts)
+            or (Path(__file__).resolve().parents[5] / 'groth16_backend' / 'target' / 'release' / 'groth16').exists()
+        ),
         reason="Groth16 binary not compiled"
     )
     @patch('subprocess.run')

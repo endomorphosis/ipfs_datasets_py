@@ -13,6 +13,7 @@ from ipfs_datasets_py.logic.zkp import (
     ZKPProof,
     ZKPError,
 )
+from ipfs_datasets_py.logic.zkp.canonicalization import theorem_hash_hex
 
 
 class TestEdgeCases:
@@ -165,6 +166,18 @@ class TestEdgeCases:
         )
         
         assert "\n" in proof.public_inputs['theorem']
+
+    def test_theorem_hash_is_canonicalized_but_theorem_preserved(self):
+        """Theorem text stays as-provided, but theorem_hash is whitespace-stable."""
+        prover = ZKPProver()
+        verifier = ZKPVerifier()
+
+        theorem = "Line 1\n  Line   2\t\tLine 3"
+        proof = prover.generate_proof(theorem=theorem, private_axioms=["axiom"])
+
+        assert proof.public_inputs["theorem"] == theorem
+        assert proof.public_inputs["theorem_hash"] == theorem_hash_hex(theorem)
+        assert verifier.verify_proof(proof) is True
     
     def test_proof_with_no_metadata(self):
         """
@@ -408,17 +421,17 @@ class TestErrorConditions:
     
     def test_groth16_backend_fails_closed_prover(self):
         """
-        GIVEN: Groth16 backend (not implemented)
+        GIVEN: Groth16 backend (fail-closed)
         WHEN: Trying to generate proof
         THEN: Should raise ZKPError
         """
-        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
             prover = ZKPProver(backend="groth16")
             prover.generate_proof("test", ["axiom"])
     
     def test_groth16_backend_fails_closed_verifier(self):
         """
-        GIVEN: Groth16 backend (not implemented)
+        GIVEN: Groth16 backend (fail-closed)
         WHEN: Trying to verify proof
         THEN: Should raise ZKPError
         """
@@ -427,7 +440,7 @@ class TestErrorConditions:
         proof = prover.generate_proof("test", ["axiom"])
         
         # Try to verify with groth16 (should fail)
-        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
             verifier = ZKPVerifier(backend="groth16")
             verifier.verify_proof(proof)
     

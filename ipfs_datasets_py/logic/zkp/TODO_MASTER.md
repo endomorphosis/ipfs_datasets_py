@@ -12,12 +12,9 @@
 - **Canonicalization:** deterministic text normalization + commitment generation ✅
 - **Statement/Witness:** dataclass-based format with field encoding ✅
 - **Witness Manager:** generation, validation, consistency checking ✅
-- **Unit tests:** 129 passing total:
-  - 24 canonicalization tests
-  - 22 witness manager tests
-  - 22 ZKP module tests (including serialization + verifier robustness)
-  - 30+ integration + edge case + performance tests
-  - 1 import quiet regression test
+- **Test suite:** extensive and mostly self-contained.
+  - Property-based tests use `hypothesis` (install in dev/test env).
+  - Prefer documenting *how to run* tests over hard-coding exact counts.
 - **Import safety:** passing (no heavy deps on import) ✅
 - **Docs:** README updated to accurate descriptions ✅
 
@@ -58,6 +55,14 @@
 - [x] Documented: axiom canonicalization ensures order-independence
 
 ### P1.4 ✅ Proof serialization contract (round-trip stability)
+### P1.5 ⏳ De-duplicate backend protocol definitions
+- [ ] Choose a single source of truth for the backend interface:
+  - Option A: `backends/backend_protocol.py` defines the protocol and `backends/__init__.py` re-exports it
+  - Option B: delete `backends/backend_protocol.py` and keep the protocol only in `backends/__init__.py`
+- [ ] Align protocol fields (e.g., `curve_id`, `backend_id`) and signatures (`metadata: dict[str, Any] | None`).
+
+**Acceptance:** There is exactly one backend protocol definition used by all backends + tests.
+
 - [x] Tests added:
   - `test_proof_serialization_preserves_fields`: ZKPProof.to_dict() round-trip
   - `test_proof_dict_hex_encoding_stability`: hex encoding reversibility
@@ -221,6 +226,7 @@
 - [x] Serialization round-trip ✅
 
 ### P8.2 ⏳ Property-based tests
+- [ ] Add/confirm `hypothesis` is installed in dev/test environments.
 - [ ] Random axiom orderings → same commitment
 - [ ] Invalid proofs → verification fails
 - [ ] Proof size stability
@@ -257,6 +263,9 @@
 
 ### P10.1 ⏳ Pin Groth16 stack versions
 - [ ] `pip install ipfs_datasets_py[groth16]`
+
+### P10.1b ⏳ Dev/test dependencies
+- [ ] Add a dev/test extra (or a documented install step) for property tests: `ipfs_datasets_py[test]` includes `hypothesis`.
 
 ### P10.2 ⏳ Version policy for circuits
 - [ ] Versioning: `circuit_id@v<uint64>`

@@ -88,7 +88,7 @@ The Cargo.toml includes:
 After installing Rust:
 
 ```bash
-cd /home/barberb/complaint-generator/groth16_backend
+cd /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
 
 # Download dependencies and compile
 cargo build --release
@@ -205,7 +205,7 @@ Once Rust is installed:
 
 - [ ] `rustc --version` produces output
 - [ ] `cargo --version` produces output
-- [ ] `cd /home/barberb/complaint-generator/groth16_backend`
+- [ ] `cd /home/barberb/complaint-generator/ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend`
 - [ ] `cargo build --release` completes successfully
 - [ ] `./target/release/groth16 --help` shows usage text
 - [ ] `cargo test --lib` passes all unit tests

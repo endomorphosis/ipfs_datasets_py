@@ -10,7 +10,7 @@
 
 **What This Module IS:**
 - ✅ Production-ready **simulation** for learning and prototyping
-- ✅ 78 tests passing (100% pass rate) with 80% code coverage
+- ✅ Large unit-test suite (including property tests; requires `hypothesis` in the dev/test env)
 - ✅ 3 working example scripts demonstrating ZKP workflows
 - ✅ Fast, functional implementation for educational use
 
@@ -28,9 +28,8 @@
 - ✅ **Documentation consolidated** (16 → 9 active files, 7 archived)
 
 **Test Results**:
-- 78 total tests (17 module + 8 integration + 7 performance + 28 edge cases + 18 Groth16 stubs)
-- 100% pass rate
-- Coverage: 80% overall (92% __init__, 98% prover, 79% verifier, 90-100% backends)
+- The ZKP test suite is intended to run cleanly in a dev/test environment.
+- Property-based tests use `hypothesis`.
 
 ## 📚 Documentation Guide
 

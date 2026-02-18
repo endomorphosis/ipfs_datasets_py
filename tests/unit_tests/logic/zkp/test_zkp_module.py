@@ -142,7 +142,7 @@ class TestZKPProver:
 
     def test_groth16_backend_fails_closed(self):
         prover = ZKPProver(backend="groth16")
-        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
             prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
 
 
@@ -206,7 +206,7 @@ class TestZKPVerifier:
         proof = prover.generate_proof(theorem="Q", private_axioms=["P", "P -> Q"])
 
         verifier = ZKPVerifier(backend="groth16")
-        with pytest.raises(ZKPError, match="Groth16 backend is not implemented"):
+        with pytest.raises(ZKPError, match=r"Groth16 backend is (not implemented|disabled by default)"):
             verifier.verify_proof(proof)
 
     def test_verifier_rejects_missing_public_inputs(self):

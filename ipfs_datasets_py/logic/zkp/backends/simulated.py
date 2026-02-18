@@ -17,6 +17,7 @@ import secrets
 import time
 
 from .. import ZKPError, ZKPProof
+from ..canonicalization import normalize_text, theorem_hash_hex
 
 
 @dataclass
@@ -37,7 +38,7 @@ class SimulatedBackend:
             proof_data=proof_data,
             public_inputs={
                 "theorem": theorem,
-                "theorem_hash": hashlib.sha256(theorem.encode()).hexdigest(),
+                "theorem_hash": theorem_hash_hex(theorem),
             },
             metadata={
                 **(metadata or {}),
@@ -57,8 +58,9 @@ class SimulatedBackend:
             return False
 
         # Verify theorem hash matches
-        expected_hash = hashlib.sha256(theorem.encode()).hexdigest()
-        if theorem_hash != expected_hash:
+        expected_hash = theorem_hash_hex(theorem)
+        legacy_hash = hashlib.sha256(theorem.encode()).hexdigest()
+        if theorem_hash not in (expected_hash, legacy_hash):
             return False
 
         # Check proof data size bounds (simulated Groth16-like)
@@ -74,22 +76,24 @@ class SimulatedBackend:
         return True
 
     def _hash_circuit(self, theorem: str, axioms: list[str]) -> bytes:
+        normalized_theorem = normalize_text(theorem)
+        normalized_axioms = [normalize_text(a) for a in axioms]
         circuit_data = json.dumps(
             {
-                "theorem": theorem,
-                "num_axioms": len(axioms),
-                "axiom_hashes": [hashlib.sha256(a.encode()).hexdigest() for a in axioms],
+                "theorem": normalized_theorem,
+                "num_axioms": len(normalized_axioms),
+                "axiom_hashes": [hashlib.sha256(a.encode("utf-8")).hexdigest() for a in normalized_axioms],
             },
             sort_keys=True,
         )
         return hashlib.sha256(circuit_data.encode()).digest()
 
     def _compute_witness(self, axioms: list[str]) -> bytes:
-        witness_data = json.dumps(axioms, sort_keys=True)
+        witness_data = json.dumps([normalize_text(a) for a in axioms], sort_keys=True)
         return hashlib.sha256(witness_data.encode()).digest()
 
     def _simulate_groth16_proof(self, circuit_hash: bytes, witness: bytes, theorem: str) -> bytes:
-        proof_inputs = circuit_hash + witness + theorem.encode()
+        proof_inputs = circuit_hash + witness + normalize_text(theorem).encode("utf-8")
         proof_hash = hashlib.sha256(proof_inputs).digest()
 
         simulated_proof = (
