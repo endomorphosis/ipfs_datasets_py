@@ -20,8 +20,6 @@ from .legal_domain_knowledge import LegalDomain
 from ...security.rate_limiting import RateLimiter
 from ...security.input_validation import InputValidator
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

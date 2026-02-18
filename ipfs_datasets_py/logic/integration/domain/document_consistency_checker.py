@@ -21,8 +21,6 @@ from .temporal_deontic_rag_store import TemporalDeonticRAGStore, ConsistencyResu
 from .proof_execution_engine import ProofExecutionEngine, ProofResult, ProofStatus
 from .deontic_query_engine import DeonticQueryEngine
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
