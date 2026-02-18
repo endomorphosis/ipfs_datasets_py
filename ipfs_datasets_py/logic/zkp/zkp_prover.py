@@ -5,6 +5,7 @@ Production-grade proving requires a real backend (see
 `logic/zkp/GROTH16_IMPLEMENTATION_PLAN.md`).
 """
 
+from dataclasses import replace
 from typing import List, Dict, Any, Optional
 import hashlib
 import json
@@ -12,6 +13,7 @@ import time
 
 from . import ZKPProof, ZKPError
 from .backends import get_backend
+from .canonicalization import canonicalize_axioms, canonicalize_theorem, theorem_hash_hex
 
 
 class ZKPProver:
@@ -104,7 +106,8 @@ class ZKPProver:
             cache_key = self._compute_cache_key(theorem, private_axioms)
             if self.enable_caching and cache_key in self._proof_cache:
                 self._stats['cache_hits'] += 1
-                return self._proof_cache[cache_key]
+                cached = self._proof_cache[cache_key]
+                return self._adapt_cached_proof(cached, theorem)
             
             # Validate inputs
             if not theorem:
@@ -135,12 +138,41 @@ class ZKPProver:
             
         except Exception as e:
             raise ZKPError(f"Proof generation failed: {e}")
+
+    def _adapt_cached_proof(self, proof: ZKPProof, theorem: str) -> ZKPProof:
+        """Return a cached proof adapted to the current call.
+
+        Cache keys are canonicalized, so multiple equivalent theorem strings can
+        map to one cached proof. If the proof carries the original theorem text
+        in public inputs, ensure we return a copy with the current theorem.
+        """
+        try:
+            if not isinstance(proof.public_inputs, dict):
+                return proof
+
+            if "theorem" not in proof.public_inputs:
+                return proof
+
+            if proof.public_inputs.get("theorem") == theorem:
+                return proof
+
+            updated_public_inputs = dict(proof.public_inputs)
+            updated_public_inputs["theorem"] = theorem
+
+            if "theorem_hash" in updated_public_inputs:
+                updated_public_inputs["theorem_hash"] = theorem_hash_hex(theorem)
+
+            return replace(proof, public_inputs=updated_public_inputs)
+        except Exception:
+            return proof
     
     def _compute_cache_key(self, theorem: str, axioms: List[str]) -> str:
         """Compute cache key for proof."""
+        canonical_theorem = canonicalize_theorem(theorem)
+        canonical_axioms = canonicalize_axioms(axioms)
         key_data = json.dumps({
-            'theorem': theorem,
-            'axioms': sorted(axioms),
+            'theorem': canonical_theorem,
+            'axioms': canonical_axioms,
         }, sort_keys=True)
         return hashlib.sha256(key_data.encode()).hexdigest()
     

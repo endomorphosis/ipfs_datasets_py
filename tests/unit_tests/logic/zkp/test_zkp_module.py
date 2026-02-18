@@ -101,6 +101,26 @@ class TestZKPProver:
         assert stats['proofs_generated'] == 1
         assert stats['cache_hits'] == 1
         assert stats['cache_hit_rate'] == 0.5
+
+    def test_proof_caching_whitespace_invariant(self):
+        prover = ZKPProver(enable_caching=True)
+
+        proof1 = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+        )
+
+        # Whitespace-only theorem variations should canonicalize to same cache key.
+        proof2 = prover.generate_proof(
+            theorem="  Q\n",
+            private_axioms=["P", "P -> Q"],
+        )
+
+        stats = prover.get_stats()
+        assert stats['proofs_generated'] == 1
+        assert stats['cache_hits'] == 1
+        assert proof2.public_inputs["theorem"] == "  Q\n"
+        assert proof2.public_inputs["theorem_hash"] == proof1.public_inputs["theorem_hash"]
     
     def test_proof_size_limit(self):
         """
