@@ -2,13 +2,90 @@
 
 ## Overview
 
-This document provides comprehensive code examples for using the ZKP (Zero-Knowledge Proof) module. All examples are self-contained and ready to run.
+This document provides comprehensive code examples for using the ZKP (Zero-Knowledge Proof) module.
+
+**⚠️ IMPORTANT**: The code examples in this document use a **future circuit-based API** that is partially implemented but not the primary interface. For **working examples you can run right now**, see the [Working Examples](#working-examples) section below.
 
 **⚠️ SIMULATION ONLY**: Remember that this module provides educational simulation, not cryptographic security. See [SECURITY_CONSIDERATIONS.md](SECURITY_CONSIDERATIONS.md).
 
+## Working Examples
+
+**Start here!** These are actual Python scripts that work with the current API:
+
+### 1. Basic Demo (`examples/zkp_basic_demo.py`)
+
+Simple theorem proving with private axioms:
+
+```bash
+PYTHONPATH=. python ipfs_datasets_py/logic/zkp/examples/zkp_basic_demo.py
+```
+
+**What it demonstrates**:
+- Simple theorem proving (Socrates syllogism)
+- Logical inference (P AND P->Q => Q)
+- Multiple private axioms (compliance verification)
+
+**Current API Example**:
+```python
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
+
+# Create prover and verifier
+prover = ZKPProver()
+verifier = ZKPVerifier()
+
+# Generate proof for theorem with private axioms
+theorem = "All humans are mortal"
+private_axioms = [
+    "Socrates is human",
+    "If X is human, then X is mortal"
+]
+proof = prover.generate_proof(theorem, private_axioms)
+
+# Verify without learning the axioms
+is_valid = verifier.verify_proof(proof)
+print(f"Proof valid: {is_valid}")
+```
+
+### 2. Advanced Demo (`examples/zkp_advanced_demo.py`)
+
+Advanced features including caching, batching, and performance:
+
+```bash
+PYTHONPATH=. python ipfs_datasets_py/logic/zkp/examples/zkp_advanced_demo.py
+```
+
+**What it demonstrates**:
+- Backend selection (simulated vs groth16)
+- Proof caching (5.7x speedup)
+- Batch proof generation
+- Proof serialization (to_dict/from_dict)
+- Performance profiling
+- Error handling
+
+### 3. IPFS Integration (`examples/zkp_ipfs_integration.py`)
+
+Integration with IPFS for distributed proof storage:
+
+```bash
+PYTHONPATH=. python ipfs_datasets_py/logic/zkp/examples/zkp_ipfs_integration.py
+```
+
+**What it demonstrates**:
+- Storing proofs in IPFS
+- Proof chains with linked CIDs
+- Distributed verification
+- Metadata for proof discovery
+- Best practices for production use
+
+---
+
+## Future API Examples (Circuit-Based)
+
+The examples below demonstrate a **circuit-based API** that is partially implemented. These examples show the intended design but may not work as-is. Use the [Working Examples](#working-examples) above for code you can run today.
+
 ## Table of Contents
 
-1. [Basic Examples](#basic-examples)
+1. [Future Basic Examples](#future-basic-examples)
 2. [Boolean Circuit Examples](#boolean-circuit-examples)
 3. [Arithmetic Circuit Examples](#arithmetic-circuit-examples)
 4. [Advanced Examples](#advanced-examples)
@@ -17,11 +94,15 @@ This document provides comprehensive code examples for using the ZKP (Zero-Knowl
 7. [Performance Examples](#performance-examples)
 8. [Best Practices](#best-practices)
 
-## Basic Examples
+## Future Basic Examples
 
-### Example 1: Your First Zero-Knowledge Proof
+## Future Basic Examples
+
+### Example 1: Your First Zero-Knowledge Proof (Future API)
 
 The simplest possible ZKP - proving knowledge of a secret bit.
+
+**Note**: This example uses the future circuit-based API. See [Working Examples](#working-examples) for code that works today.
 
 ```python
 from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
