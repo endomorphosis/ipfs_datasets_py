@@ -17,7 +17,7 @@ import secrets
 import time
 
 from .. import ZKPError, ZKPProof
-from ..canonicalization import normalize_text, theorem_hash_hex
+from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_hash_hex
 
 
 @dataclass
@@ -34,11 +34,17 @@ class SimulatedBackend:
         witness = self._compute_witness(private_axioms)
         proof_data = self._simulate_groth16_proof(circuit_hash=circuit_hash, witness=witness, theorem=theorem)
 
+        circuit_version = int((metadata or {}).get("circuit_version", 1))
+        ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
+
         return ZKPProof(
             proof_data=proof_data,
             public_inputs={
                 "theorem": theorem,
                 "theorem_hash": theorem_hash_hex(theorem),
+                "axioms_commitment": axioms_commitment_hex(private_axioms),
+                "circuit_version": circuit_version,
+                "ruleset_id": ruleset_id,
             },
             metadata={
                 **(metadata or {}),

@@ -58,6 +58,7 @@ pub fn generate_proof(witness: &WitnessInput) -> anyhow::Result<ProofOutput> {
     // MVP proof structure (placeholder values that follow Groth16 format)
     // These would be real point coordinates in production
     let proof = ProofOutput {
+        schema_version: 1,
         proof_a: format!("{{ \"x\": \"{}\", \"y\": \"{}\" }}", 
                         witness.theorem_hash_hex[..16].to_string(),
                         witness.axioms_commitment_hex[..16].to_string()),

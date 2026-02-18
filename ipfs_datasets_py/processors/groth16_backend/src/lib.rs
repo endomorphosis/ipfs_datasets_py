@@ -20,12 +20,18 @@ pub struct WitnessInput {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProofOutput {
+    #[serde(default = "default_schema_version")]
+    pub schema_version: u32,
     pub proof_a: String,              // Serialized point A
     pub proof_b: String,              // Serialized point B
     pub proof_c: String,              // Serialized point C
     pub public_inputs: Vec<String>,   // 4 public input scalars
     pub timestamp: u64,
     pub version: u32,
+}
+
+fn default_schema_version() -> u32 {
+    1
 }
 
 /// Generate Groth16 proof from witness

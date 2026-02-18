@@ -231,8 +231,8 @@ src/verifier.rs (85 lines)✅
 ✅ Development flexibility (iterate Python while Rust compiles)
 
 ### Why 3 Binary Discovery Locations?
-✅ Project-local: groth16_backend/target/release/groth16
-✅ Absolute path: Full path after cargo build
+✅ Canonical project-local: ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16
+✅ Legacy repo-root: groth16_backend/target/release/groth16
 ✅ ~/.cargo/bin: For cargo install releases
 ✅ Sensible defaults for all common scenarios
 

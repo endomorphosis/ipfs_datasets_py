@@ -8,6 +8,7 @@ integration with other components and realistic use cases.
 Run with: pytest tests/unit_tests/logic/zkp/test_zkp_integration.py -v
 """
 
+import os
 import pytest
 import json
 import hashlib
@@ -169,6 +170,29 @@ class TestZKPIntegration:
         with pytest.raises(ZKPError, match="Groth16"):
             prover_groth = ZKPProver(backend="groth16")
             prover_groth.generate_proof("Test", ["Axiom 1"])
+
+    @pytest.mark.skipif(
+        os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
+        reason="Groth16 backend is disabled by default",
+    )
+    def test_groth16_end_to_end_when_enabled(self):
+        """Runs an end-to-end prove→verify using the Rust Groth16 binary.
+
+        This test is opt-in and will be skipped unless:
+        - IPFS_DATASETS_ENABLE_GROTH16=1 (or true/yes)
+        - A groth16 binary is discoverable (or overridden via env var)
+        """
+        from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as Groth16FFIBackend
+
+        backend = Groth16FFIBackend()
+        if not backend.binary_path:
+            pytest.skip("Groth16 binary not available")
+
+        prover = ZKPProver(backend="groth16")
+        verifier = ZKPVerifier(backend="groth16")
+
+        proof = prover.generate_proof("Q", ["P", "P -> Q"])
+        assert verifier.verify_proof(proof)
     
     def test_proof_caching_integration(self):
         """

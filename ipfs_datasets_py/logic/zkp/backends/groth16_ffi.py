@@ -230,11 +230,17 @@ class Groth16Backend(ZKPBackend):
         
         if witness['circuit_version'] < 0:
             raise ValueError("circuit_version must be non-negative")
+
+        if 'security_level' in witness:
+            sl = witness['security_level']
+            if not isinstance(sl, int) or sl < 0:
+                raise ValueError("security_level must be non-negative int")
     
     def _parse_proof_output(self, proof_data: dict, witness: dict) -> Groth16Proof:
         """Parse proof JSON output from Rust binary."""
         # Extract public inputs from witness
         public_inputs = {
+            'theorem': witness.get('theorem', ''),
             'theorem_hash': witness.get('theorem_hash_hex', ''),
             'axioms_commitment': witness.get('axioms_commitment_hex', ''),
             'circuit_version': witness.get('circuit_version', 0),
@@ -251,9 +257,10 @@ class Groth16Backend(ZKPBackend):
                 'backend': 'groth16',
                 'curve': 'BN254',
                 'version': proof_data.get('version', 1),
+                'security_level': int(witness.get('security_level', 0)),
             },
             timestamp=proof_data.get('timestamp', 0),
-            size_bytes=len(proof_hex) // 2,  # Approximate
+            size_bytes=len(proof_hex),
         )
     
     def get_backend_info(self) -> dict:
@@ -291,6 +298,7 @@ class Groth16BackendFallback(ZKPBackend):
         proof = Groth16Proof(
             proof_data=proof_data,
             public_inputs={
+                'theorem': witness.get('theorem', ''),
                 'theorem_hash': witness['theorem_hash_hex'],
                 'axioms_commitment': witness['axioms_commitment_hex'],
                 'circuit_version': witness['circuit_version'],
@@ -299,6 +307,7 @@ class Groth16BackendFallback(ZKPBackend):
             metadata={
                 'backend': 'groth16_fallback',
                 'note': 'Placeholder proof - Rust binary not available',
+                'security_level': int(witness.get('security_level', 0)),
             },
             timestamp=int(datetime.now().timestamp()),
             size_bytes=len(proof_data),

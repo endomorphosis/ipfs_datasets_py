@@ -24,6 +24,10 @@ enum Commands {
         /// Output proof JSON file
         #[arg(short, long)]
         output: String,
+
+        /// Suppress status messages (stderr)
+        #[arg(long, default_value_t = false)]
+        quiet: bool,
     },
 
     /// Verify a Groth16 proof
@@ -31,6 +35,14 @@ enum Commands {
         /// Input proof JSON file
         #[arg(short, long)]
         proof: String,
+
+        /// Emit a JSON result to stdout (while still using exit codes)
+        #[arg(long, default_value_t = false)]
+        json: bool,
+
+        /// Suppress status messages (stderr)
+        #[arg(long, default_value_t = false)]
+        quiet: bool,
     },
 
     /// Setup trusted parameters
@@ -45,7 +57,7 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Commands::Prove { input, output } => {
+        Commands::Prove { input, output, quiet } => {
             // Read witness from JSON
             let witness_json = if input == "-" {
                 let mut buf = String::new();
@@ -64,11 +76,13 @@ fn main() -> anyhow::Result<()> {
                 print!("{}", proof);
             } else {
                 fs::write(&output, proof)?;
-                eprintln!("✅ Proof written to {}", output);
+                if !quiet {
+                    eprintln!("✅ Proof written to {}", output);
+                }
             }
         }
 
-        Commands::Verify { proof } => {
+        Commands::Verify { proof, json, quiet } => {
             // Read proof from JSON
             let proof_json = if proof == "-" {
                 let mut buf = String::new();
@@ -85,10 +99,20 @@ fn main() -> anyhow::Result<()> {
             // - 0: valid
             // - 1: invalid
             if is_valid {
-                eprintln!("✅ Proof is VALID");
+                if json {
+                    print!("{{\"valid\":true}}\n");
+                }
+                if !quiet {
+                    eprintln!("✅ Proof is VALID");
+                }
                 process::exit(0);
             } else {
-                eprintln!("❌ Proof is INVALID");
+                if json {
+                    print!("{{\"valid\":false}}\n");
+                }
+                if !quiet {
+                    eprintln!("❌ Proof is INVALID");
+                }
                 process::exit(1);
             }
         }

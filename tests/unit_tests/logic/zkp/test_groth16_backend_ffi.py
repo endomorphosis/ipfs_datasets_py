@@ -169,6 +169,7 @@ class TestGroth16BackendProofGeneration:
         proof = backend.generate_proof(sample_witness_json)
         
         assert isinstance(proof, Groth16Proof)
+        assert proof.public_inputs['theorem'] == sample_witness['theorem']
         assert proof.public_inputs['theorem_hash'] == sample_witness['theorem_hash_hex']
         assert proof.public_inputs['axioms_commitment'] == sample_witness['axioms_commitment_hex']
         assert proof.metadata['backend'] == 'groth16'

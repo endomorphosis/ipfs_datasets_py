@@ -21,15 +21,13 @@ When not enabled (default):
 
 from __future__ import annotations
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 import json
 import os
 from typing import Any, Optional
 
 from .. import ZKPError, ZKPProof
-from ..canonicalization import canonicalize_axioms, canonicalize_theorem, hash_axioms_commitment, hash_theorem
+from ..canonicalization import canonicalize_axioms, hash_axioms_commitment, hash_theorem
 
 
 @dataclass
@@ -68,13 +66,15 @@ class Groth16Backend:
         if not private_axioms:
             raise ZKPError("At least one axiom required")
 
-        canonical_theorem = canonicalize_theorem(theorem)
         canonical_axioms = canonicalize_axioms(private_axioms)
         witness = {
             "private_axioms": canonical_axioms,
-            "theorem": canonical_theorem,
+            # Preserve caller-provided theorem text in public inputs.
+            # Hashing is canonicalized by canonicalization.hash_theorem().
+            "theorem": theorem,
             "axioms_commitment_hex": hash_axioms_commitment(canonical_axioms).hex(),
-            "theorem_hash_hex": hash_theorem(canonical_theorem).hex(),
+            "theorem_hash_hex": hash_theorem(theorem).hex(),
+            "security_level": int((metadata or {}).get("security_level", 0)),
             "circuit_version": int((metadata or {}).get("circuit_version", 1)),
             "ruleset_id": str((metadata or {}).get("ruleset_id", "TDFOL_v1")),
         }

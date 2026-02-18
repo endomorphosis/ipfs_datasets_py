@@ -50,6 +50,7 @@ flake8>=6.0.0,<8.0.0
 
 # Data processing
 pyarrow>=15.0.0,<21.0.0; python_version < '3.14'
+datasets>=2.0.0,<4.0.0
 jsonschema>=4.0.0,<5.0.0
 jsonpatch>=1.33
 pydantic>=2.0.0,<3.0.0

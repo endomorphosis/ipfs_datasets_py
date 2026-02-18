@@ -369,7 +369,8 @@ fn load_proving_key(version: u32) -> anyhow::Result<ProvingKey<Bn254>> {
 ## COMPILE AND BUILD
 
 ```bash
-# From groth16_backend/ directory
+# From the Groth16 backend directory
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
 cargo build --release
 
 # Test compilation
@@ -383,10 +384,12 @@ cargo test --lib
 
 ### Task 1: Initialize Rust Project (5 minutes)
 ```bash
-cd /home/barberb/complaint-generator
-mkdir -p groth16_backend
-cd groth16_backend
-cargo init --name groth16_backend
+# Canonical location (in-tree)
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
+
+# Legacy note: older docs created ./groth16_backend at repo-root.
+# The Python wrapper still *can* find that legacy location, but the canonical
+# location is now in-tree under ipfs_datasets_py/.../processors/.
 ```
 
 ### Task 2: Copy Templates (10 minutes)

@@ -298,6 +298,39 @@ class TestZKPVerifier:
         # Strict mode: fail if proof_system is missing
         assert result is False
 
+    def test_verifier_rejects_invalid_theorem_hash_format(self):
+        verifier = ZKPVerifier()
+
+        proof = ZKPProof(
+            proof_data=b"x" * 160,
+            public_inputs={
+                "theorem": "Q",
+                "theorem_hash": "not-hex",
+            },
+            metadata={"proof_system": "test", "security_level": 128},
+            timestamp=0.0,
+            size_bytes=160,
+        )
+
+        assert verifier.verify_proof(proof) is False
+
+    def test_verifier_rejects_invalid_axioms_commitment_format(self):
+        verifier = ZKPVerifier()
+
+        proof = ZKPProof(
+            proof_data=b"x" * 160,
+            public_inputs={
+                "theorem": "Q",
+                "theorem_hash": __import__("hashlib").sha256(b"Q").hexdigest(),
+                "axioms_commitment": "bad",
+            },
+            metadata={"proof_system": "test", "security_level": 128},
+            timestamp=0.0,
+            size_bytes=160,
+        )
+
+        assert verifier.verify_proof(proof) is False
+
 
 class TestZKPCircuit:
     """Test ZKPCircuit functionality."""
