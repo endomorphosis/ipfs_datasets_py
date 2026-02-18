@@ -403,7 +403,7 @@ class ModalTableaux:
         
         if formula.operator == LogicOperator.NOT:
             # ¬¬φ becomes φ
-            world.add_formula(formula.operand, negated=not negated)
+            world.add_formula(formula.formula, negated=not negated)
             proof_steps.append(f"Double negation at world {world_id}")
         
         return [branch]
@@ -431,14 +431,14 @@ class ModalTableaux:
                     accessible = {new_world.id}
                 
                 for acc_world_id in accessible:
-                    branch.worlds[acc_world_id].add_formula(formula.operand, negated=False)
+                    branch.worlds[acc_world_id].add_formula(formula.formula, negated=False)
                 
                 proof_steps.append(f"BOX expansion at world {world_id} to {len(accessible)} worlds")
             else:
                 # ¬□φ: Create new accessible world with ¬φ
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
-                new_world.add_formula(formula.operand, negated=True)
+                new_world.add_formula(formula.formula, negated=True)
                 proof_steps.append(f"Negated BOX: created world {new_world.id}")
         
         elif op == TemporalOperator.EVENTUALLY:  # ◊ (diamond)
@@ -446,7 +446,7 @@ class ModalTableaux:
                 # ◊φ: Create new accessible world with φ
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
-                new_world.add_formula(formula.operand, negated=False)
+                new_world.add_formula(formula.formula, negated=False)
                 proof_steps.append(f"DIAMOND: created world {new_world.id}")
             else:
                 # ¬◊φ: Add ¬φ to all accessible worlds
@@ -457,7 +457,7 @@ class ModalTableaux:
                     accessible = {new_world.id}
                 
                 for acc_world_id in accessible:
-                    branch.worlds[acc_world_id].add_formula(formula.operand, negated=True)
+                    branch.worlds[acc_world_id].add_formula(formula.formula, negated=True)
                 
                 proof_steps.append(f"Negated DIAMOND expansion at world {world_id}")
         
@@ -493,13 +493,13 @@ class ModalTableaux:
                     accessible = {new_world.id}
                 
                 for acc_world_id in accessible:
-                    branch.worlds[acc_world_id].add_formula(formula.operand, negated=False)
+                    branch.worlds[acc_world_id].add_formula(formula.formula, negated=False)
                 
                 proof_steps.append(f"OBLIGATION expansion at world {world_id}")
             else:
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
-                new_world.add_formula(formula.operand, negated=True)
+                new_world.add_formula(formula.formula, negated=True)
                 proof_steps.append(f"Negated OBLIGATION: created world {new_world.id}")
         
         elif op == DeonticOperator.PERMISSION:  # P
@@ -507,7 +507,7 @@ class ModalTableaux:
             if not negated:
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
-                new_world.add_formula(formula.operand, negated=False)
+                new_world.add_formula(formula.formula, negated=False)
                 proof_steps.append(f"PERMISSION: created world {new_world.id}")
             else:
                 accessible = branch.get_accessible_worlds(world_id)
@@ -517,7 +517,7 @@ class ModalTableaux:
                     accessible = {new_world.id}
                 
                 for acc_world_id in accessible:
-                    branch.worlds[acc_world_id].add_formula(formula.operand, negated=True)
+                    branch.worlds[acc_world_id].add_formula(formula.formula, negated=True)
                 
                 proof_steps.append(f"Negated PERMISSION expansion at world {world_id}")
         
@@ -531,13 +531,13 @@ class ModalTableaux:
                     accessible = {new_world.id}
                 
                 for acc_world_id in accessible:
-                    branch.worlds[acc_world_id].add_formula(formula.operand, negated=True)
+                    branch.worlds[acc_world_id].add_formula(formula.formula, negated=True)
                 
                 proof_steps.append(f"FORBIDDEN expansion at world {world_id}")
             else:
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
-                new_world.add_formula(formula.operand, negated=False)
+                new_world.add_formula(formula.formula, negated=False)
                 proof_steps.append(f"Negated FORBIDDEN: created world {new_world.id}")
         
         return [branch]
@@ -557,7 +557,7 @@ class ModalTableaux:
             if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
                 if not negated:
                     # □φ implies φ at current world
-                    branch.worlds[world_id].add_formula(formula.operand, negated=False)
+                    branch.worlds[world_id].add_formula(formula.formula, negated=False)
                     proof_steps.append(f"T-reflexivity: □φ → φ at world {world_id}")
         
         elif self.logic_type == ModalLogicType.S4:
@@ -565,7 +565,7 @@ class ModalTableaux:
             if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
                 if not negated:
                     # Reflexivity
-                    branch.worlds[world_id].add_formula(formula.operand, negated=False)
+                    branch.worlds[world_id].add_formula(formula.formula, negated=False)
                     # Transitivity: propagate □φ through accessible worlds
                     accessible = branch.get_accessible_worlds(world_id)
                     for acc_id in accessible:
@@ -581,7 +581,7 @@ class ModalTableaux:
                 for w_id in branch.worlds:
                     if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
                         if not negated:
-                            branch.worlds[w_id].add_formula(formula.operand, negated=False)
+                            branch.worlds[w_id].add_formula(formula.formula, negated=False)
                 proof_steps.append(f"S5-equivalence: formula at all worlds")
 
 
