@@ -210,4 +210,5 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-18: Continued C1 in `storage/` by tightening `IPLDBackend` error taxonomy (consistent `IPLDStorageError` wrapping, correct serialization/deserialization exception types, add `backend_name` context) and added unit tests for JSON/UTF-8 error wrapping.
 - 2026-02-18: Continued C1 in `core/` by narrowing persistence-related generic catches in the legacy graph engine to `StorageError` (avoids swallowing unrelated exceptions while keeping existing return-on-failure behavior).
 - 2026-02-18: Continued C1 in `extraction/` by narrowing broad exception handlers in `extraction/extractor.py` (typed `EntityExtractionError`/`RelationshipExtractionError` wrapping, fewer generic catches in advanced/neural extraction paths) and verified with extraction-focused tests + full KG unit suite.
+- 2026-02-18: Continued C1 in `transactions/` by narrowing WAL (`transactions/wal.py`) exception handlers (typed `SerializationError`/`DeserializationError`/`TransactionError` wrapping; avoid generic catches where realistic) and verified with transaction unit tests.
 
