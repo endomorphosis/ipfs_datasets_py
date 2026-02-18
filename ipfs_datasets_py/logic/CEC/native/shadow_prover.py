@@ -21,6 +21,8 @@ from enum import Enum
 from abc import ABC, abstractmethod
 import logging
 
+from .exceptions import ProvingError
+
 try:
     from beartype import beartype
 except ImportError:
@@ -694,7 +696,11 @@ def create_prover(logic: ModalLogic) -> Union[KProver, S4Prover, S5Prover]:
     
     prover_class = prover_map.get(logic)
     if not prover_class:
-        raise ValueError(f"Unsupported modal logic: {logic}")
+        raise ProvingError(
+            f"Unsupported modal logic: {logic}",
+            proof_state={"requested_logic": str(logic)},
+            suggestion=f"Use one of the supported modal logics: K, S4, S5"
+        )
     
     return prover_class()  # type: ignore[return-value,abstract]
 

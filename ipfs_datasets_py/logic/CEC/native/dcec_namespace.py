@@ -13,6 +13,7 @@ from .dcec_core import (
     Sort, Variable, Function, Predicate, Formula, DCECStatement,
     DeonticOperator, CognitiveOperator, TemporalOperator
 )
+from .exceptions import NamespaceError
 
 try:
     from beartype import beartype
@@ -71,12 +72,22 @@ class DCECNamespace:
             ValueError: If sort already exists or parent doesn't exist
         """
         if name in self.sorts:
-            raise ValueError(f"Sort '{name}' already exists")
+            raise NamespaceError(
+                f"Duplicate sort name '{name}'",
+                symbol_name=name,
+                existing_symbols=list(self.sorts.keys()),
+                suggestion=f"Use a different name or remove the existing sort '{name}' first"
+            )
         
         parent_sort = None
         if parent:
             if parent not in self.sorts:
-                raise ValueError(f"Parent sort '{parent}' does not exist")
+                raise NamespaceError(
+                    f"Parent sort '{parent}' does not exist",
+                    symbol_name=parent,
+                    existing_symbols=list(self.sorts.keys()),
+                    suggestion=f"Register sort '{parent}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
+                )
             parent_sort = self.sorts[parent]
         
         sort = Sort(name, parent_sort)
@@ -105,10 +116,20 @@ class DCECNamespace:
             ValueError: If variable already exists or sort doesn't exist
         """
         if name in self.variables:
-            raise ValueError(f"Variable '{name}' already exists")
+            raise NamespaceError(
+                f"Duplicate variable name '{name}'",
+                symbol_name=name,
+                existing_symbols=list(self.variables.keys()),
+                suggestion=f"Use a different variable name or remove the existing variable '{name}' first"
+            )
         
         if sort_name not in self.sorts:
-            raise ValueError(f"Sort '{sort_name}' does not exist")
+            raise NamespaceError(
+                f"Sort '{sort_name}' does not exist for variable",
+                symbol_name=sort_name,
+                existing_symbols=list(self.sorts.keys()),
+                suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
+            )
         
         variable = Variable(name, self.sorts[sort_name])
         self.variables[name] = variable
@@ -142,17 +163,32 @@ class DCECNamespace:
             ValueError: If function already exists or sorts don't exist
         """
         if name in self.functions:
-            raise ValueError(f"Function '{name}' already exists")
+            raise NamespaceError(
+                f"Duplicate function name '{name}'",
+                symbol_name=name,
+                existing_symbols=list(self.functions.keys()),
+                suggestion=f"Use a different function name or remove the existing function '{name}' first"
+            )
         
         # Validate sorts
         argument_sorts = []
         for sort_name in argument_sort_names:
             if sort_name not in self.sorts:
-                raise ValueError(f"Sort '{sort_name}' does not exist")
+                raise NamespaceError(
+                    f"Sort '{sort_name}' does not exist for function argument",
+                    symbol_name=sort_name,
+                    existing_symbols=list(self.sorts.keys()),
+                    suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
+                )
             argument_sorts.append(self.sorts[sort_name])
         
         if return_sort_name not in self.sorts:
-            raise ValueError(f"Return sort '{return_sort_name}' does not exist")
+            raise NamespaceError(
+                f"Return sort '{return_sort_name}' does not exist",
+                symbol_name=return_sort_name,
+                existing_symbols=list(self.sorts.keys()),
+                suggestion=f"Register sort '{return_sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
+            )
         
         function = Function(name, argument_sorts, self.sorts[return_sort_name])
         self.functions[name] = function
@@ -180,13 +216,23 @@ class DCECNamespace:
             ValueError: If predicate already exists or sorts don't exist
         """
         if name in self.predicates:
-            raise ValueError(f"Predicate '{name}' already exists")
+            raise NamespaceError(
+                f"Duplicate predicate name '{name}'",
+                symbol_name=name,
+                existing_symbols=list(self.predicates.keys()),
+                suggestion=f"Use a different predicate name or remove the existing predicate '{name}' first"
+            )
         
         # Validate sorts
         argument_sorts = []
         for sort_name in argument_sort_names:
             if sort_name not in self.sorts:
-                raise ValueError(f"Sort '{sort_name}' does not exist")
+                raise NamespaceError(
+                    f"Sort '{sort_name}' does not exist for predicate argument",
+                    symbol_name=sort_name,
+                    existing_symbols=list(self.sorts.keys()),
+                    suggestion=f"Register sort '{sort_name}' first, or use an existing sort: {', '.join(self.sorts.keys())}"
+                )
             argument_sorts.append(self.sorts[sort_name])
         
         predicate = Predicate(name, argument_sorts)
@@ -253,7 +299,12 @@ class DCECContainer:
             ValueError: If label already exists
         """
         if label and label in self.statement_labels:
-            raise ValueError(f"Statement with label '{label}' already exists")
+            raise NamespaceError(
+                f"Duplicate statement label '{label}'",
+                symbol_name=label,
+                existing_symbols=list(self.statement_labels.keys()),
+                suggestion=f"Use a different label or remove the existing statement with label '{label}' first"
+            )
         
         statement = DCECStatement(
             formula=formula,

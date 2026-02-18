@@ -13,6 +13,8 @@ from dataclasses import dataclass
 import re
 import logging
 
+from .exceptions import ParsingError
+
 try:
     from beartype import beartype
 except ImportError:
@@ -75,7 +77,13 @@ class TPTPParser:
         except FileNotFoundError:
             raise FileNotFoundError(f"TPTP file not found: {filepath}")
         except Exception as e:
-            raise ValueError(f"Error parsing TPTP file: {e}")
+            raise ParsingError(
+                f"Error parsing TPTP file: {e}",
+                expression=str(filepath),
+                position=0,
+                expected="valid TPTP format",
+                suggestion="Check TPTP syntax and file format"
+            )
     
     @beartype  # type: ignore[untyped-decorator]
     def parse_string(self, content: str, name: str = "tptp_problem") -> ProblemFile:
@@ -197,7 +205,13 @@ class CustomProblemParser:
         except FileNotFoundError:
             raise FileNotFoundError(f"Problem file not found: {filepath}")
         except Exception as e:
-            raise ValueError(f"Error parsing problem file: {e}")
+            raise ParsingError(
+                f"Error parsing problem file: {e}",
+                expression=str(filepath),
+                position=0,
+                expected="valid problem file format",
+                suggestion="Check problem file syntax and format"
+            )
     
     @beartype  # type: ignore[untyped-decorator]
     def parse_string(self, content: str, name: str = "custom_problem") -> ProblemFile:

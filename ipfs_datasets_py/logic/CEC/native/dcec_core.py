@@ -11,6 +11,8 @@ from dataclasses import dataclass, field
 import logging
 from abc import ABC, abstractmethod
 
+from .exceptions import ValidationError
+
 try:
     from beartype import beartype
 except ImportError:
@@ -166,7 +168,12 @@ class FunctionTerm(Term):
     
     def __post_init__(self) -> None:
         if len(self.arguments) != self.function.arity():
-            raise ValueError(f"Function {self.function.name} expects {self.function.arity()} arguments, got {len(self.arguments)}")
+            raise ValidationError(
+                f"Function arity mismatch for '{self.function.name}'",
+                expected=f"{self.function.arity()} arguments",
+                actual=f"{len(self.arguments)} arguments",
+                suggestion=f"Provide exactly {self.function.arity()} arguments to function '{self.function.name}'"
+            )
     
     def get_sort(self) -> Sort:
         return self.function.return_sort
@@ -213,7 +220,12 @@ class AtomicFormula(Formula):
     
     def __post_init__(self) -> None:
         if len(self.arguments) != self.predicate.arity():
-            raise ValueError(f"Predicate {self.predicate.name} expects {self.predicate.arity()} arguments, got {len(self.arguments)}")
+            raise ValidationError(
+                f"Predicate arity mismatch for '{self.predicate.name}'",
+                expected=f"{self.predicate.arity()} arguments",
+                actual=f"{len(self.arguments)} arguments",
+                suggestion=f"Provide exactly {self.predicate.arity()} arguments to predicate '{self.predicate.name}'"
+            )
     
     def get_free_variables(self) -> Set[Variable]:
         result = set()
@@ -319,11 +331,26 @@ class ConnectiveFormula(Formula):
     
     def __post_init__(self) -> None:
         if self.connective == LogicalConnective.NOT and len(self.formulas) != 1:
-            raise ValueError("NOT connective requires exactly 1 formula")
+            raise ValidationError(
+                f"NOT connective arity mismatch",
+                expected="exactly 1 formula",
+                actual=f"{len(self.formulas)} formulas",
+                suggestion="Provide exactly one formula for NOT operation"
+            )
         elif self.connective in [LogicalConnective.AND, LogicalConnective.OR] and len(self.formulas) < 2:
-            raise ValueError(f"{self.connective.name} connective requires at least 2 formulas")
+            raise ValidationError(
+                f"{self.connective.name} connective arity mismatch",
+                expected="at least 2 formulas",
+                actual=f"{len(self.formulas)} formulas",
+                suggestion=f"Provide at least 2 formulas for {self.connective.name} operation"
+            )
         elif self.connective in [LogicalConnective.IMPLIES, LogicalConnective.BICONDITIONAL] and len(self.formulas) != 2:
-            raise ValueError(f"{self.connective.name} connective requires exactly 2 formulas")
+            raise ValidationError(
+                f"{self.connective.name} connective arity mismatch",
+                expected="exactly 2 formulas",
+                actual=f"{len(self.formulas)} formulas",
+                suggestion=f"Provide exactly 2 formulas for {self.connective.name} operation"
+            )
     
     def get_free_variables(self) -> Set[Variable]:
         result = set()
@@ -357,7 +384,12 @@ class QuantifiedFormula(Formula):
     
     def __post_init__(self) -> None:
         if self.quantifier not in [LogicalConnective.EXISTS, LogicalConnective.FORALL]:
-            raise ValueError(f"Invalid quantifier: {self.quantifier}")
+            raise ValidationError(
+                f"Invalid quantifier",
+                expected="EXISTS or FORALL",
+                actual=str(self.quantifier),
+                suggestion="Use LogicalConnective.EXISTS or LogicalConnective.FORALL as quantifier"
+            )
     
     def get_free_variables(self) -> Set[Variable]:
         result = self.formula.get_free_variables()
