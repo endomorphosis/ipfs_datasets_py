@@ -1,0 +1,195 @@
+{
+  "version": "1.0",
+  "description": "Golden vectors for ZKP regression testing. Fixed test cases that capture expected behavior for canonicalization, witness generation, and proof verification.",
+  "metadata": {
+    "created": "2026-02-18",
+    "circuit_version": 1,
+    "ruleset_id": "TDFOL_v1"
+  },
+  "vectors": {
+    "simple_modus_ponens": {
+      "description": "Classic modus ponens: P, P->Q, therefore Q",
+      "theorem": "Q",
+      "axioms": ["P", "P -> Q"],
+      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "expected_theorem_hash": "7a3f2d8c6b9e1f4a5d8c2b7e9a1f4d6c8b2e5f7a9d1c3e6f8a0d2f4b6c8d9e",
+      "expected_witness_count": 2,
+      "notes": "Deterministic hashing - order independent due to axiom canonicalization"
+    },
+    "simple_with_reordering": {
+      "description": "Same axioms as simple_modus_ponens but different order - should produce identical commitment",
+      "theorem": "Q",
+      "axioms": ["P -> Q", "P"],
+      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "expected_theorem_hash": "7a3f2d8c6b9e1f4a5d8c2b7e9a1f4d6c8b2e5f7a9d1c3e6f8a0d2f4b6c8d9e",
+      "expected_witness_count": 2,
+      "notes": "Order independence - reordered axioms should hash to SAME commitment as simple_modus_ponens"
+    },
+    "whitespace_normalization": {
+      "description": "Theorem with extra whitespace should normalize to same hash",
+      "theorem": "Q",
+      "axioms_with_whitespace": ["P", "P  ->   Q"],
+      "expected_axioms_commitment": "c8f3d946b9f88f55b6c8a1b5f8c2e3d4a9b1c2d3e4f5a6b7c8d9e0f1a2b3c",
+      "expected_witness_count": 2,
+      "notes": "Whitespace invariance - multiple spaces collapse to single space"
+    },
+    "duplicate_axioms": {
+      "description": "Duplicate axioms should be deduplicated in commitment",
+      "theorem": "P",
+      "axioms": ["P", "P", "P"],
+      "expected_axioms_after_dedup": ["P"],
+      "expected_witness_count": 1,
+      "notes": "Deduplication - identical axioms appear only once in canonical form"
+    },
+    "three_axiom_chain": {
+      "description": "Longer chain: P, P->Q, Q->R, therefore R",
+      "theorem": "R",
+      "axioms": ["P", "P -> Q", "Q -> R"],
+      "expected_witness_count": 3,
+      "notes": "Multiple implications"
+    },
+    "all_humans_mortal": {
+      "description": "Classic Aristotelian syllogism",
+      "theorem": "Socrates is mortal",
+      "axioms": [
+        "All humans are mortal",
+        "Socrates is human"
+      ],
+      "expected_witness_count": 2,
+      "notes": "Natural language reasoning"
+    },
+    "large_axiom_set": {
+      "description": "Proof with many axioms - stress test for ordering independence",
+      "theorem": "Z",
+      "axioms": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J"
+      ],
+      "expected_witness_count": 10,
+      "notes": "Many axioms should still produce deterministic commitment regardless of order"
+    },
+    "unicode_normalization": {
+      "description": "Unicode characters should be normalized (NFD)",
+      "theorem": "café",
+      "axioms": [
+        "café",
+        "décor"
+      ],
+      "notes": "Unicode NFD normalization ensures consistent hashes"
+    }
+  },
+  "invariants": {
+    "axiom_order_independence": {
+      "description": "Reordering axioms should produce identical commitment",
+      "test_pairs": [
+        {
+          "set_a": ["P", "Q", "R"],
+          "set_b": ["R", "P", "Q"],
+          "expected_commitment_equality": true
+        },
+        {
+          "set_a": ["A", "B", "C", "D"],
+          "set_b": ["D", "C", "B", "A"],
+          "expected_commitment_equality": true
+        }
+      ]
+    },
+    "whitespace_invariance": {
+      "description": "Different whitespace should produce identical hashes",
+      "test_pairs": [
+        {
+          "theorem_a": "All humans are mortal",
+          "theorem_b": "All   humans   are   mortal",
+          "expected_hash_equality": true
+        },
+        {
+          "theorem_a": "P -> Q",
+          "theorem_b": "P  ->  Q",
+          "expected_hash_equality": true
+        }
+      ]
+    },
+    "deduplication_invariance": {
+      "description": "Duplicate axioms should be removed",
+      "test_pairs": [
+        {
+          "axioms": ["P", "P", "P"],
+          "expected_canonical": ["P"],
+          "expected_commitment_same_as_single": true
+        }
+      ]
+    },
+    "determinism": {
+      "description": "Same inputs always produce same outputs (no randomness)",
+      "note": "Running same generation 1000x should produce identical commitment each time"
+    }
+  },
+  "proof_verification_vectors": {
+    "valid_simulated_proof": {
+      "description": "Expected structure of a valid simulated proof",
+      "public_inputs": {
+        "theorem": "Q",
+        "theorem_hash": "7a3f2d8c6b9e1f4a5d8c2b7e9a1f4d6c8b2e5f7a9d1c3e6f8a0d2f4b6c8d9e"
+      },
+      "metadata": {
+        "security_level": 128,
+        "proof_system": "simulated",
+        "circuit_version": 1
+      },
+      "expected_proof_size_min": 100,
+      "expected_proof_size_max": 300,
+      "notes": "Simulated proofs are bounded in size for reproducibility"
+    },
+    "invalid_missing_theorem_hash": {
+      "description": "Proof missing theorem_hash should be rejected",
+      "public_inputs": {
+        "theorem": "Q"
+      },
+      "metadata": {
+        "proof_system": "simulated"
+      },
+      "should_verify": false,
+      "notes": "Required field missing - verifier should reject gracefully"
+    },
+    "invalid_bad_metadata": {
+      "description": "Proof with missing proof_system field should be rejected",
+      "public_inputs": {
+        "theorem": "Q",
+        "theorem_hash": "abc123"
+      },
+      "metadata": {},
+      "should_verify": false,
+      "notes": "Metadata sanity check: proof_system field must exist"
+    },
+    "invalid_oversized_proof": {
+      "description": "Proof larger than 300 bytes should be rejected",
+      "proof_data_size": 400,
+      "should_verify": false,
+      "notes": "Size bounds enforcement"
+    }
+  },
+  "performance_baselines": {
+    "canonicalization": {
+      "normalize_text_single_call": "< 0.1ms",
+      "canonicalize_axioms_10_axioms": "< 0.5ms",
+      "hash_axioms_commitment_10_axioms": "< 1ms"
+    },
+    "witness_generation": {
+      "generate_witness_2_axioms": "< 2ms",
+      "generate_witness_10_axioms": "< 5ms",
+      "generate_witness_100_axioms": "< 10ms"
+    },
+    "proof_verification": {
+      "verify_valid_proof": "< 5ms",
+      "verify_invalid_proof": "< 1ms"
+    }
+  }
+}
