@@ -3,45 +3,19 @@
 """
 Medical Research MCP Tools for Medicine Dashboard.
 
-This module provides MCP tools for scraping medical research data and
-generating temporal deontic logic theorems for the medicine dashboard.
+This module provides thin MCP wrapper functions that delegate to the core
+business logic in ipfs_datasets_py.scrapers.medical.research_scraper_core.
 """
 
 import logging
 from typing import Dict, List, Optional, Any
-import anyio
 
-try:
-    from ..medical_research_scrapers.pubmed_scraper import PubMedScraper
-    from ..medical_research_scrapers.clinical_trials_scraper import ClinicalTrialsScraper
-except ImportError:
-    PubMedScraper = None
-    ClinicalTrialsScraper = None
-
-try:
-    from ipfs_datasets_py.logic.integration.medical_theorem_framework import (
-        MedicalTheoremGenerator,
-        FuzzyLogicValidator,
-        TimeSeriesTheoremValidator
-    )
-except ImportError:
-    MedicalTheoremGenerator = None
-    FuzzyLogicValidator = None
-    TimeSeriesTheoremValidator = None
-
-try:
-    from ..medical_research_scrapers.biomolecule_discovery import (
-        BiomoleculeDiscoveryEngine,
-        discover_biomolecules_for_target,
-        BiomoleculeType,
-        InteractionType
-    )
-except ImportError:
-    BiomoleculeDiscoveryEngine = None
-    discover_biomolecules_for_target = None
-    BiomoleculeType = None
-    InteractionType = None
-
+from ipfs_datasets_py.scrapers.medical import (
+    MedicalResearchCore,
+    MedicalTheoremCore,
+    BiomoleculeDiscoveryCore,
+    AIDatasetBuilderCore
+)
 
 logger = logging.getLogger(__name__)
 
@@ -75,35 +49,8 @@ def scrape_pubmed_medical_research(
         >>> result = scrape_pubmed_medical_research("diabetes treatment", max_results=50)
         >>> print(f"Found {len(result['articles'])} articles")
     """
-    if PubMedScraper is None:
-        return {
-            "success": False,
-            "error": "PubMedScraper not available",
-            "articles": []
-        }
-    
-    try:
-        scraper = PubMedScraper(email=email)
-        articles = scraper.search_medical_research(
-            query=query,
-            max_results=max_results,
-            research_type=research_type
-        )
-        
-        return {
-            "success": True,
-            "articles": articles,
-            "total_count": len(articles),
-            "query": query,
-            "source": "pubmed"
-        }
-    except Exception as e:
-        logger.error(f"PubMed scraping failed: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "articles": []
-        }
+    core = MedicalResearchCore(email=email)
+    return core.scrape_pubmed_research(query, max_results, research_type)
 
 
 def scrape_clinical_trials(
@@ -137,36 +84,8 @@ def scrape_clinical_trials(
         ...     max_results=30
         ... )
     """
-    if ClinicalTrialsScraper is None:
-        return {
-            "success": False,
-            "error": "ClinicalTrialsScraper not available",
-            "trials": []
-        }
-    
-    try:
-        scraper = ClinicalTrialsScraper()
-        trials = scraper.search_trials(
-            query=query,
-            condition=condition,
-            intervention=intervention,
-            max_results=max_results
-        )
-        
-        return {
-            "success": True,
-            "trials": trials,
-            "total_count": len(trials),
-            "query": query,
-            "source": "clinicaltrials_gov"
-        }
-    except Exception as e:
-        logger.error(f"ClinicalTrials scraping failed: {e}")
-        return {
-            "success": False,
-            "error": str(e),
-            "trials": []
-        }
+    core = MedicalResearchCore()
+    return core.scrape_clinical_trials(query, condition, intervention, max_results)
 
 
 def get_trial_outcomes_for_theorems(nct_id: str) -> Dict[str, Any]:
@@ -183,30 +102,8 @@ def get_trial_outcomes_for_theorems(nct_id: str) -> Dict[str, Any]:
         Dictionary containing trial outcomes, adverse events, and
         population demographics for theorem generation
     """
-    if ClinicalTrialsScraper is None:
-        return {
-            "success": False,
-            "error": "ClinicalTrialsScraper not available"
-        }
-    
-    try:
-        scraper = ClinicalTrialsScraper()
-        outcomes = scraper.get_trial_outcomes(nct_id)
-        demographics = scraper.get_population_demographics(nct_id)
-        
-        return {
-            "success": True,
-            "nct_id": nct_id,
-            "outcomes": outcomes,
-            "demographics": demographics,
-            "source": "clinicaltrials_gov"
-        }
-    except Exception as e:
-        logger.error(f"Failed to get trial outcomes: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = MedicalResearchCore()
+    return core.get_trial_outcomes(nct_id)
 
 
 def generate_medical_theorems_from_trials(
@@ -234,54 +131,8 @@ def generate_medical_theorems_from_trials(
         >>> for theorem in theorems['theorems']:
         ...     print(f"Theorem: {theorem['antecedent']} -> {theorem['consequent']}")
     """
-    if MedicalTheoremGenerator is None:
-        return {
-            "success": False,
-            "error": "MedicalTheoremGenerator not available"
-        }
-    
-    try:
-        generator = MedicalTheoremGenerator()
-        theorems = generator.generate_from_clinical_trial(trial_data, outcomes_data)
-        
-        # Convert theorems to dictionaries for JSON serialization
-        theorem_dicts = []
-        for theorem in theorems:
-            theorem_dicts.append({
-                "theorem_id": theorem.theorem_id,
-                "theorem_type": theorem.theorem_type.value,
-                "antecedent": {
-                    "type": theorem.antecedent.entity_type,
-                    "name": theorem.antecedent.name,
-                    "properties": theorem.antecedent.properties
-                },
-                "consequent": {
-                    "type": theorem.consequent.entity_type,
-                    "name": theorem.consequent.name,
-                    "properties": theorem.consequent.properties
-                },
-                "confidence": theorem.confidence.value,
-                "evidence_sources": theorem.evidence_sources
-            })
-        
-        # Calculate confidence distribution
-        confidence_dist = {}
-        for t in theorems:
-            conf = t.confidence.value
-            confidence_dist[conf] = confidence_dist.get(conf, 0) + 1
-        
-        return {
-            "success": True,
-            "theorems": theorem_dicts,
-            "theorem_count": len(theorems),
-            "confidence_distribution": confidence_dist
-        }
-    except Exception as e:
-        logger.error(f"Theorem generation failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = MedicalTheoremCore()
+    return core.generate_theorems_from_trials(trial_data, outcomes_data)
 
 
 def validate_medical_theorem_fuzzy(
@@ -301,30 +152,8 @@ def validate_medical_theorem_fuzzy(
     Returns:
         Validation result with fuzzy confidence score
     """
-    if FuzzyLogicValidator is None:
-        return {
-            "success": False,
-            "error": "FuzzyLogicValidator not available"
-        }
-    
-    try:
-        validator = FuzzyLogicValidator()
-        
-        # Would reconstruct theorem from theorem_data
-        # For now, return structure
-        return {
-            "success": True,
-            "validated": True,
-            "fuzzy_confidence": 0.75,
-            "validation_method": "fuzzy_logic",
-            "message": "Theorem validation using fuzzy logic"
-        }
-    except Exception as e:
-        logger.error(f"Theorem validation failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = MedicalTheoremCore()
+    return core.validate_theorem_fuzzy(theorem_data, empirical_data)
 
 
 def scrape_biochemical_research(
@@ -346,33 +175,8 @@ def scrape_biochemical_research(
     Returns:
         Dictionary with biochemical research articles
     """
-    if PubMedScraper is None:
-        return {
-            "success": False,
-            "error": "PubMedScraper not available"
-        }
-    
-    try:
-        scraper = PubMedScraper()
-        articles = scraper.scrape_biochemical_research(
-            topic=topic,
-            max_results=max_results,
-            time_range_days=time_range_days
-        )
-        
-        return {
-            "success": True,
-            "articles": articles,
-            "total_count": len(articles),
-            "topic": topic,
-            "source": "pubmed_biochem"
-        }
-    except Exception as e:
-        logger.error(f"Biochemical research scraping failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = MedicalResearchCore()
+    return core.scrape_biochemical_research(topic, max_results, time_range_days)
 
 
 def scrape_population_health_data(
@@ -392,48 +196,8 @@ def scrape_population_health_data(
     Returns:
         Population health data from clinical trials
     """
-    if ClinicalTrialsScraper is None:
-        return {
-            "success": False,
-            "error": "ClinicalTrialsScraper not available"
-        }
-    
-    try:
-        scraper = ClinicalTrialsScraper()
-        
-        # Search for completed trials with the condition
-        trials = scraper.search_trials(
-            query=condition,
-            intervention=intervention,
-            status="Completed",
-            max_results=50
-        )
-        
-        # Collect population demographics from each trial
-        population_data = []
-        for trial in trials[:10]:  # Limit to avoid rate limiting
-            nct_id = trial.get("nct_id")
-            if nct_id:
-                demographics = scraper.get_population_demographics(nct_id)
-                population_data.append({
-                    "nct_id": nct_id,
-                    "trial_title": trial.get("title", ""),
-                    "demographics": demographics
-                })
-        
-        return {
-            "success": True,
-            "condition": condition,
-            "intervention": intervention,
-            "population_data": population_data,
-            "trial_count": len(population_data)
-        }
-    except Exception as e:
-        logger.error(f"Population health data scraping failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = MedicalResearchCore()
+    return core.scrape_population_health_data(condition, intervention)
 
 
 def discover_protein_binders(
@@ -471,60 +235,8 @@ def discover_protein_binders(
         >>> for candidate in result['candidates']:
         ...     print(f"{candidate['name']}: {candidate['confidence_score']:.2f}")
     """
-    if BiomoleculeDiscoveryEngine is None:
-        return {
-            "success": False,
-            "error": "BiomoleculeDiscoveryEngine not available"
-        }
-    
-    try:
-        engine = BiomoleculeDiscoveryEngine(use_rag=True)
-        
-        # Convert interaction_type string to enum
-        interaction = None
-        if interaction_type:
-            try:
-                interaction = InteractionType[interaction_type.upper()]
-            except (KeyError, AttributeError):
-                logger.warning(f"Unknown interaction type: {interaction_type}")
-        
-        # Discover binders
-        candidates = engine.discover_protein_binders(
-            target_protein=target_protein,
-            interaction_type=interaction,
-            min_confidence=min_confidence,
-            max_results=max_results
-        )
-        
-        # Convert to dictionaries
-        candidate_dicts = [
-            {
-                'name': c.name,
-                'biomolecule_type': c.biomolecule_type.value,
-                'uniprot_id': c.uniprot_id,
-                'function': c.function,
-                'confidence_score': c.confidence_score,
-                'evidence_sources': c.evidence_sources,
-                'interactions': c.interactions,
-                'therapeutic_relevance': c.therapeutic_relevance,
-                'metadata': c.metadata
-            }
-            for c in candidates
-        ]
-        
-        return {
-            "success": True,
-            "target": target_protein,
-            "interaction_type": interaction_type,
-            "candidates": candidate_dicts,
-            "total_count": len(candidate_dicts)
-        }
-    except Exception as e:
-        logger.error(f"Protein binder discovery failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = BiomoleculeDiscoveryCore(use_rag=True)
+    return core.discover_protein_binders(target_protein, interaction_type, min_confidence, max_results)
 
 
 def discover_enzyme_inhibitors(
@@ -548,50 +260,8 @@ def discover_enzyme_inhibitors(
     Returns:
         Dictionary containing enzyme inhibitor candidates
     """
-    if BiomoleculeDiscoveryEngine is None:
-        return {
-            "success": False,
-            "error": "BiomoleculeDiscoveryEngine not available"
-        }
-    
-    try:
-        engine = BiomoleculeDiscoveryEngine(use_rag=True)
-        
-        candidates = engine.discover_enzyme_inhibitors(
-            target_enzyme=target_enzyme,
-            enzyme_class=enzyme_class,
-            min_confidence=min_confidence,
-            max_results=max_results
-        )
-        
-        # Convert to dictionaries
-        candidate_dicts = [
-            {
-                'name': c.name,
-                'biomolecule_type': c.biomolecule_type.value,
-                'pubchem_id': c.pubchem_id,
-                'function': c.function,
-                'confidence_score': c.confidence_score,
-                'evidence_sources': c.evidence_sources,
-                'interactions': c.interactions,
-                'metadata': c.metadata
-            }
-            for c in candidates
-        ]
-        
-        return {
-            "success": True,
-            "target_enzyme": target_enzyme,
-            "enzyme_class": enzyme_class,
-            "candidates": candidate_dicts,
-            "total_count": len(candidate_dicts)
-        }
-    except Exception as e:
-        logger.error(f"Enzyme inhibitor discovery failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = BiomoleculeDiscoveryCore(use_rag=True)
+    return core.discover_enzyme_inhibitors(target_enzyme, enzyme_class, min_confidence, max_results)
 
 
 def discover_pathway_biomolecules(
@@ -614,57 +284,8 @@ def discover_pathway_biomolecules(
     Returns:
         Dictionary containing pathway biomolecule candidates
     """
-    if BiomoleculeDiscoveryEngine is None:
-        return {
-            "success": False,
-            "error": "BiomoleculeDiscoveryEngine not available"
-        }
-    
-    try:
-        engine = BiomoleculeDiscoveryEngine(use_rag=True)
-        
-        # Convert biomolecule_types strings to enums
-        types = None
-        if biomolecule_types:
-            types = []
-            for t in biomolecule_types:
-                try:
-                    types.append(BiomoleculeType[t.upper()])
-                except (KeyError, AttributeError):
-                    logger.warning(f"Unknown biomolecule type: {t}")
-        
-        candidates = engine.discover_pathway_biomolecules(
-            pathway_name=pathway_name,
-            biomolecule_types=types,
-            min_confidence=min_confidence,
-            max_results=max_results
-        )
-        
-        # Convert to dictionaries
-        candidate_dicts = [
-            {
-                'name': c.name,
-                'biomolecule_type': c.biomolecule_type.value,
-                'function': c.function,
-                'confidence_score': c.confidence_score,
-                'evidence_sources': c.evidence_sources,
-                'metadata': c.metadata
-            }
-            for c in candidates
-        ]
-        
-        return {
-            "success": True,
-            "pathway_name": pathway_name,
-            "candidates": candidate_dicts,
-            "total_count": len(candidate_dicts)
-        }
-    except Exception as e:
-        logger.error(f"Pathway biomolecule discovery failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = BiomoleculeDiscoveryCore(use_rag=True)
+    return core.discover_pathway_biomolecules(pathway_name, biomolecule_types, min_confidence, max_results)
 
 
 def discover_biomolecules_rag(
@@ -702,51 +323,8 @@ def discover_biomolecules_rag(
         ...     discovery_type="inhibitors"
         ... )
     """
-    if discover_biomolecules_for_target is None:
-        return {
-            "success": False,
-            "error": "Biomolecule discovery not available"
-        }
-    
-    try:
-        candidates = discover_biomolecules_for_target(
-            target=target,
-            discovery_type=discovery_type,
-            max_results=max_results,
-            min_confidence=min_confidence
-        )
-        
-        return {
-            "success": True,
-            "target": target,
-            "discovery_type": discovery_type,
-            "candidates": candidates,
-            "total_count": len(candidates),
-            "message": f"Found {len(candidates)} candidate biomolecules for {target}"
-        }
-    except Exception as e:
-        logger.error(f"RAG biomolecule discovery failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-
-# AI-Powered Dataset Builder Tools
-
-try:
-    from ..medical_research_scrapers.ai_dataset_builder import (
-        build_medical_dataset,
-        analyze_medical_dataset,
-        transform_medical_dataset,
-        generate_synthetic_medical_data
-    )
-except ImportError:
-    logger.warning("AI dataset builder tools not available")
-    build_medical_dataset = None
-    analyze_medical_dataset = None
-    transform_medical_dataset = None
-    generate_synthetic_medical_data = None
+    core = BiomoleculeDiscoveryCore(use_rag=True)
+    return core.discover_biomolecules_simple(target, discovery_type, max_results, min_confidence)
 
 
 def build_dataset_from_scraped_data(
@@ -779,20 +357,8 @@ def build_dataset_from_scraped_data(
         ... )
         >>> print(dataset['metrics']['quality_score'])
     """
-    if not build_medical_dataset:
-        return {
-            "success": False,
-            "error": "AI dataset builder not available"
-        }
-    
-    try:
-        return build_medical_dataset(scraped_data, filter_criteria, model_name)
-    except Exception as e:
-        logger.error(f"Dataset building failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = AIDatasetBuilderCore(model_name=model_name)
+    return core.build_dataset(scraped_data, filter_criteria)
 
 
 def analyze_dataset_with_ai(
@@ -821,20 +387,8 @@ def analyze_dataset_with_ai(
         >>> print(analysis['insights']['ai_analysis'])
         >>> print(f"Quality: {analysis['metrics']['quality_score']}")
     """
-    if not analyze_medical_dataset:
-        return {
-            "success": False,
-            "error": "AI dataset analyzer not available"
-        }
-    
-    try:
-        return analyze_medical_dataset(dataset, model_name)
-    except Exception as e:
-        logger.error(f"Dataset analysis failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = AIDatasetBuilderCore(model_name=model_name)
+    return core.analyze_dataset(dataset)
 
 
 def transform_dataset_with_ai(
@@ -871,20 +425,8 @@ def transform_dataset_with_ai(
         ...     transformation_type='extract_entities'
         ... )
     """
-    if not transform_medical_dataset:
-        return {
-            "success": False,
-            "error": "AI dataset transformer not available"
-        }
-    
-    try:
-        return transform_medical_dataset(dataset, transformation_type, parameters, model_name)
-    except Exception as e:
-        logger.error(f"Dataset transformation failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = AIDatasetBuilderCore(model_name=model_name)
+    return core.transform_dataset(dataset, transformation_type, parameters)
 
 
 def generate_synthetic_dataset(
@@ -920,17 +462,5 @@ def generate_synthetic_dataset(
         ... )
         >>> print(f"Generated {len(synthetic['synthetic_data'])} samples")
     """
-    if not generate_synthetic_medical_data:
-        return {
-            "success": False,
-            "error": "Synthetic data generator not available"
-        }
-    
-    try:
-        return generate_synthetic_medical_data(template_data, num_samples, model_name, temperature)
-    except Exception as e:
-        logger.error(f"Synthetic data generation failed: {e}")
-        return {
-            "success": False,
-            "error": str(e)
-        }
+    core = AIDatasetBuilderCore(model_name=model_name)
+    return core.generate_synthetic_data(template_data, num_samples, temperature)
