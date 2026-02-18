@@ -208,6 +208,47 @@ class TestIntegrityEdgeCases:
         # Should pass regardless of order
         assert report.passed is True
     
+    def test_verify_with_different_labels(self):
+        """Test verification detects label differences."""
+        source_nodes = [
+            NodeData(id="1", labels=["Person"]),
+            NodeData(id="2", labels=["Organization"])
+        ]
+        target_nodes = [
+            NodeData(id="1", labels=["Person"]),
+            NodeData(id="2", labels=["Company"])  # Different label
+        ]
+        
+        source = GraphData(nodes=source_nodes)
+        target = GraphData(nodes=target_nodes)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should detect label differences
+        assert report.checks_performed > 0
+        # Should have warnings about missing/extra labels
+        assert len(report.warnings) > 0
+    
+    def test_verify_with_different_relationship_types(self):
+        """Test verification detects relationship type differences."""
+        nodes = [NodeData(id="1"), NodeData(id="2")]
+        source_rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2")
+        ]
+        target_rels = [
+            RelationshipData(id="1", type="FRIEND_OF", start_node="1", end_node="2")
+        ]
+        
+        source = GraphData(nodes=nodes.copy(), relationships=source_rels)
+        target = GraphData(nodes=nodes.copy(), relationships=target_rels)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should detect relationship type differences
+        assert len(report.warnings) > 0
+    
     def test_verify_with_unicode_properties(self):
         """Test verification with Unicode properties."""
         nodes = [
@@ -256,6 +297,115 @@ class TestIntegrityEdgeCases:
         report = verifier.verify(source, target)
         
         assert report.passed is True
+    
+    def test_verify_statistics_included(self):
+        """Test that statistics are included in report."""
+        nodes = [
+            NodeData(id="1", labels=["Person", "Employee"]),
+            NodeData(id="2", labels=["Person"])
+        ]
+        rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2"),
+            RelationshipData(id="2", type="WORKS_WITH", start_node="1", end_node="2")
+        ]
+        
+        source = GraphData(nodes=nodes, relationships=rels)
+        target = GraphData(nodes=nodes, relationships=rels)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Check that statistics are in the report
+        assert 'source' in report.statistics
+        assert 'target' in report.statistics
+        assert 'node_count' in report.statistics['source']
+        assert 'relationship_count' in report.statistics['source']
+        assert 'label_counts' in report.statistics['source']
+        assert 'relationship_type_counts' in report.statistics['source']
+    
+    def test_verify_with_missing_labels_in_target(self):
+        """Test verification with missing labels in target."""
+        source_nodes = [
+            NodeData(id="1", labels=["Person", "Employee"]),
+            NodeData(id="2", labels=["Person", "Manager"])
+        ]
+        target_nodes = [
+            NodeData(id="1", labels=["Person"]),
+            NodeData(id="2", labels=["Person"])
+        ]
+        
+        source = GraphData(nodes=source_nodes)
+        target = GraphData(nodes=target_nodes)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should detect missing labels
+        assert len(report.warnings) > 0
+        assert any("Missing labels" in w for w in report.warnings)
+    
+    def test_verify_with_extra_labels_in_target(self):
+        """Test verification with extra labels in target."""
+        source_nodes = [
+            NodeData(id="1", labels=["Person"]),
+            NodeData(id="2", labels=["Person"])
+        ]
+        target_nodes = [
+            NodeData(id="1", labels=["Person", "Employee"]),
+            NodeData(id="2", labels=["Person", "Manager"])
+        ]
+        
+        source = GraphData(nodes=source_nodes)
+        target = GraphData(nodes=target_nodes)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should detect extra labels
+        assert len(report.warnings) > 0
+        assert any("Extra labels" in w for w in report.warnings)
+    
+    def test_verify_with_missing_relationship_types(self):
+        """Test verification with missing relationship types in target."""
+        nodes = [NodeData(id="1"), NodeData(id="2")]
+        source_rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2"),
+            RelationshipData(id="2", type="WORKS_WITH", start_node="1", end_node="2")
+        ]
+        target_rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2")
+        ]
+        
+        source = GraphData(nodes=nodes, relationships=source_rels)
+        target = GraphData(nodes=nodes, relationships=target_rels)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should detect missing relationship types
+        assert report.passed is False  # Count mismatch
+        assert report.checks_failed > 0
+    
+    def test_verify_with_extra_relationship_types(self):
+        """Test verification with extra relationship types in target."""
+        nodes = [NodeData(id="1"), NodeData(id="2")]
+        source_rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2")
+        ]
+        target_rels = [
+            RelationshipData(id="1", type="KNOWS", start_node="1", end_node="2"),
+            RelationshipData(id="2", type="WORKS_WITH", start_node="1", end_node="2")
+        ]
+        
+        source = GraphData(nodes=nodes, relationships=source_rels)
+        target = GraphData(nodes=nodes, relationships=target_rels)
+        
+        verifier = IntegrityVerifier()
+        report = verifier.verify(source, target)
+        
+        # Should fail due to count mismatch
+        assert report.passed is False
+        assert report.checks_failed > 0
 
 
 if __name__ == "__main__" and HAVE_PYTEST:
