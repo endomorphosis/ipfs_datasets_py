@@ -77,6 +77,14 @@ if TYPE_CHECKING:
     )
     from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
     from .nl.tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
+    from .proof_tree_visualizer import (
+        ProofTreeVisualizer,
+        ProofTreeNode,
+        NodeType,
+        TreeStyle,
+        VerbosityLevel,
+        visualize_proof,
+    )
 
 __all__ = [
     # Enumerations
@@ -137,6 +145,14 @@ __all__ = [
     "ProcessedDocument",
     "Entity",
     
+    # Proof Tree Visualizer (Phase 11)
+    "ProofTreeVisualizer",
+    "ProofTreeNode",
+    "NodeType",
+    "TreeStyle",
+    "VerbosityLevel",
+    "visualize_proof",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -183,6 +199,13 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "NLPreprocessor": (".nl.tdfol_nl_preprocessor", "NLPreprocessor"),
     "ProcessedDocument": (".nl.tdfol_nl_preprocessor", "ProcessedDocument"),
     "Entity": (".nl.tdfol_nl_preprocessor", "Entity"),
+    # Proof Tree Visualizer
+    "ProofTreeVisualizer": (".proof_tree_visualizer", "ProofTreeVisualizer"),
+    "ProofTreeNode": (".proof_tree_visualizer", "ProofTreeNode"),
+    "NodeType": (".proof_tree_visualizer", "NodeType"),
+    "TreeStyle": (".proof_tree_visualizer", "TreeStyle"),
+    "VerbosityLevel": (".proof_tree_visualizer", "VerbosityLevel"),
+    "visualize_proof": (".proof_tree_visualizer", "visualize_proof"),
 }
 
 
