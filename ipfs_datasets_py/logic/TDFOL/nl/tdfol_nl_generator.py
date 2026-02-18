@@ -18,7 +18,7 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Any
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class GeneratedFormula:
     formula_string: str                  # String representation
     entities: Dict[str, str]             # Extracted entities
     alternatives: List['GeneratedFormula'] = field(default_factory=list)
-    metadata: Dict[str, any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
 
 class FormulaGenerator:
@@ -477,6 +477,6 @@ class FormulaGenerator:
         self._variable_counter += 1
         return var_name
     
-    def reset_variables(self):
+    def reset_variables(self) -> None:
         """Reset variable counter."""
         self._variable_counter = 0

@@ -20,7 +20,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING
+from typing import Any, Dict, List, Optional, Set, Tuple, TYPE_CHECKING, Callable
 
 from .tdfol_core import (
     BinaryFormula,
@@ -76,7 +76,8 @@ def _try_load_cec_prover() -> bool:
         InferenceRule = _InferenceRule
         HAVE_CEC_PROVER = True
         return True
-    except Exception:
+    except (ImportError, AttributeError, ModuleNotFoundError) as e:
+        logger.debug(f"CEC prover unavailable: {e}")
         HAVE_CEC_PROVER = False
         return False
 
@@ -98,7 +99,8 @@ def _try_load_modal_tableaux() -> bool:
         TableauProver = _TableauProver
         HAVE_MODAL_TABLEAUX = True
         return True
-    except Exception:
+    except (ImportError, AttributeError, ModuleNotFoundError) as e:
+        logger.debug(f"Modal tableaux unavailable: {e}")
         HAVE_MODAL_TABLEAUX = False
         return False
 
@@ -546,9 +548,11 @@ class TDFOLProver:
                                             rule.name,
                                             [formula, formula2]
                                         ))
-                            except:
-                                pass
-                    except Exception as e:
+                            except (AttributeError, TypeError, ValueError) as e:
+                                # Rule application failed for this formula pair
+                                logger.debug(f"Rule {rule.name} failed on formula pair: {e}")
+                                continue
+                    except (AttributeError, TypeError, ValueError) as e:
                         logger.debug(f"Rule {rule.name} failed: {e}")
                         continue
             
@@ -678,6 +682,85 @@ class TDFOLProver:
         logger.debug("Using basic modal logic K")
         return ModalLogicType.K
     
+    def _traverse_formula(
+        self,
+        formula: Formula,
+        predicate: Callable[[Formula], bool],
+        depth: int = 0,
+        max_depth: Optional[int] = None,
+        track_depth: bool = False
+    ) -> bool:
+        """
+        Generic formula tree traversal with predicate.
+        
+        This helper method eliminates code duplication by providing a unified
+        way to traverse formula trees with a custom predicate function.
+        
+        Args:
+            formula: Formula to traverse
+            predicate: Function that returns True if condition met
+            depth: Current recursion depth (for depth tracking)
+            max_depth: Maximum depth to traverse (None = unlimited)
+            track_depth: If True, increment depth for matching formulas
+        
+        Returns:
+            True if predicate returns True for any node
+        
+        Example:
+            >>> # Check for deontic operators
+            >>> self._traverse_formula(
+            ...     formula,
+            ...     lambda f: isinstance(f, DeonticFormula)
+            ... )
+        """
+        # Check depth limit
+        if max_depth is not None and depth > max_depth:
+            return False
+        
+        # Check predicate on current formula
+        predicate_match = predicate(formula)
+        
+        # If tracking depth and predicate matches, increment depth
+        new_depth = depth + 1 if (track_depth and predicate_match) else depth
+        
+        # Early return if depth threshold met
+        if track_depth and predicate_match and new_depth >= 2:
+            return True
+        
+        # For non-depth-tracking, return True immediately if predicate matches
+        if not track_depth and predicate_match:
+            return True
+        
+        # Traverse children based on formula type
+        if isinstance(formula, UnaryFormula):
+            return self._traverse_formula(
+                formula.formula, predicate, new_depth, max_depth, track_depth
+            )
+        elif isinstance(formula, (BinaryFormula, BinaryTemporalFormula)):
+            return (
+                self._traverse_formula(
+                    formula.left, predicate, new_depth, max_depth, track_depth
+                ) or
+                self._traverse_formula(
+                    formula.right, predicate, new_depth, max_depth, track_depth
+                )
+            )
+        elif isinstance(formula, QuantifiedFormula):
+            return self._traverse_formula(
+                formula.formula, predicate, new_depth, max_depth, track_depth
+            )
+        elif isinstance(formula, TemporalFormula):
+            return self._traverse_formula(
+                formula.formula, predicate, new_depth, max_depth, track_depth
+            )
+        elif isinstance(formula, DeonticFormula):
+            return self._traverse_formula(
+                formula.formula, predicate, new_depth, max_depth, track_depth
+            )
+        
+        # No children and predicate didn't match
+        return False
+    
     def _has_deontic_operators(self, formula: Formula) -> bool:
         """Check if formula contains deontic operators (O, P, F).
         
@@ -687,19 +770,10 @@ class TDFOLProver:
         Returns:
             True if deontic operators present
         """
-        if isinstance(formula, DeonticFormula):
-            return True
-        if isinstance(formula, BinaryFormula):
-            return self._has_deontic_operators(formula.left) or self._has_deontic_operators(formula.right)
-        if isinstance(formula, BinaryTemporalFormula):
-            return self._has_deontic_operators(formula.left) or self._has_deontic_operators(formula.right)
-        if isinstance(formula, UnaryFormula):
-            return self._has_deontic_operators(formula.formula)
-        if isinstance(formula, QuantifiedFormula):
-            return self._has_deontic_operators(formula.formula)
-        if isinstance(formula, TemporalFormula):
-            return self._has_deontic_operators(formula.formula)
-        return False
+        return self._traverse_formula(
+            formula,
+            lambda f: isinstance(f, DeonticFormula)
+        )
     
     def _has_temporal_operators(self, formula: Formula) -> bool:
         """Check if formula contains temporal operators (□, ◊, X, U, S).
@@ -710,48 +784,27 @@ class TDFOLProver:
         Returns:
             True if temporal operators present
         """
-        if isinstance(formula, TemporalFormula):
-            return True
-        if isinstance(formula, BinaryTemporalFormula):
-            return True
-        if isinstance(formula, BinaryFormula):
-            return self._has_temporal_operators(formula.left) or self._has_temporal_operators(formula.right)
-        if isinstance(formula, UnaryFormula):
-            return self._has_temporal_operators(formula.formula)
-        if isinstance(formula, QuantifiedFormula):
-            return self._has_temporal_operators(formula.formula)
-        if isinstance(formula, DeonticFormula):
-            return self._has_temporal_operators(formula.formula)
-        return False
+        return self._traverse_formula(
+            formula,
+            lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula))
+        )
     
     def _has_nested_temporal(self, formula: Formula, depth: int = 0) -> bool:
         """Check if formula has nested temporal operators (depth >= 2).
         
         Args:
             formula: Formula to check
-            depth: Current nesting depth
+            depth: Current nesting depth (default: 0)
             
         Returns:
             True if nested temporal operators detected
         """
-        if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
-            new_depth = depth + 1
-            if new_depth >= 2:
-                return True
-            
-            if isinstance(formula, TemporalFormula):
-                return self._has_nested_temporal(formula.formula, new_depth)
-            else:  # BinaryTemporalFormula
-                return (self._has_nested_temporal(formula.left, new_depth) or 
-                       self._has_nested_temporal(formula.right, new_depth))
-        
-        if isinstance(formula, BinaryFormula):
-            return (self._has_nested_temporal(formula.left, depth) or 
-                   self._has_nested_temporal(formula.right, depth))
-        if isinstance(formula, UnaryFormula):
-            return self._has_nested_temporal(formula.formula, depth)
-        if isinstance(formula, QuantifiedFormula):
-            return self._has_nested_temporal(formula.formula, depth)
+        return self._traverse_formula(
+            formula,
+            lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula)),
+            depth=depth,
+            track_depth=True
+        )
         if isinstance(formula, DeonticFormula):
             return self._has_nested_temporal(formula.formula, depth)
         
