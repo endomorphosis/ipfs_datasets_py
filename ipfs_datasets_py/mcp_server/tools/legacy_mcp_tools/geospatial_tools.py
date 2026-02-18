@@ -516,7 +516,9 @@ class GeospatialAnalysisTools:
             
             return cluster_key
             
-        except:
+        except (KeyError, ValueError, AttributeError, TypeError) as e:
+            # Return unknown for any clustering errors
+            logger.debug(f"Clustering error: {e}")
             return 'unknown'
     
     def _calculate_distance(self, coord1: List[float], coord2: List[float]) -> float:

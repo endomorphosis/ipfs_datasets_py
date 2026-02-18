@@ -57,7 +57,8 @@ def _has_argparse_parser(content: str) -> bool:
                     if (hasattr(node.value.func, 'attr') and 
                         node.value.func.attr == 'ArgumentParser'):
                         return True
-    except:
+    except (SyntaxError, AttributeError, TypeError):
+        # Return False if AST parsing fails
         return False
     return False
 

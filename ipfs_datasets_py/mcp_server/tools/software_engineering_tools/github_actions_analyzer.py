@@ -146,7 +146,8 @@ def analyze_github_actions(
                                 duration = (updated - created).total_seconds()
                                 durations.append(duration)
                                 total_duration += duration
-                            except:
+                            except (ValueError, AttributeError, TypeError):
+                                # Skip malformed timestamps
                                 pass
                         
                         # Track last run

@@ -372,7 +372,8 @@ def _evaluate_condition(condition: str, context: Dict[str, Any]) -> bool:
         else:
             # For simple boolean conditions
             return context.get(condition.strip(), False)
-    except:
+    except (KeyError, ValueError, AttributeError, TypeError):
+        # Return False for any condition evaluation errors
         return False
 
 

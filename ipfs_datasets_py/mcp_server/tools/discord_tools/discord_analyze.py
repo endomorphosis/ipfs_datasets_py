@@ -449,7 +449,9 @@ def _analyze_time_patterns(messages: List[Dict]) -> Dict[str, Any]:
                 dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
                 hour_counts[dt.hour] += 1
                 day_counts[dt.strftime('%A')] += 1
-            except:
+            except (ValueError, AttributeError, TypeError) as e:
+                # Skip malformed timestamps
+                logger.debug(f"Skipping malformed timestamp '{timestamp}': {e}")
                 pass
     
     return {
