@@ -75,6 +75,7 @@ __all__ = [
     'SimulatedZKPVerifier',  # Correct name
     'ZKPCircuit',  # Deprecated - use SimulatedZKPCircuit
     'SimulatedZKPCircuit',  # Correct name
+    'BooleanCircuit',  # Alias for ZKPCircuit (backward compatibility with docs)
     'ZKPError',
     'create_implication_circuit',
 ]
@@ -162,6 +163,7 @@ def __getattr__(name: str):
         "SimulatedZKPVerifier",
         "ZKPCircuit",
         "SimulatedZKPCircuit",
+        "BooleanCircuit",  # Alias for ZKPCircuit
         "create_implication_circuit",
     }:
         _warn_once()
@@ -180,7 +182,7 @@ def __getattr__(name: str):
         globals()["SimulatedZKPVerifier"] = value
         return globals()[name]
 
-    if name in {"ZKPCircuit", "SimulatedZKPCircuit", "create_implication_circuit"}:
+    if name in {"ZKPCircuit", "SimulatedZKPCircuit", "BooleanCircuit", "create_implication_circuit"}:
         mod = importlib.import_module(f"{__name__}.circuits")
         if name == "create_implication_circuit":
             value = getattr(mod, "create_implication_circuit")
@@ -189,6 +191,7 @@ def __getattr__(name: str):
         value = getattr(mod, "ZKPCircuit")
         globals()["ZKPCircuit"] = value
         globals()["SimulatedZKPCircuit"] = value
+        globals()["BooleanCircuit"] = value  # Alias for backward compatibility with docs
         return globals()[name]
 
     if name == "SimulatedZKPProof":
@@ -202,5 +205,7 @@ def __dir__():
     return sorted(set(globals().keys()) | set(__all__))
 
 
-# Alias with correct naming (Simulated prefix)
+# Aliases with correct naming (Simulated prefix)
 SimulatedZKPProof = ZKPProof  # Same class, clearer name
+
+# BooleanCircuit will be aliased to ZKPCircuit via __getattr__ for backward compatibility
