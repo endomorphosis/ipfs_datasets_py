@@ -92,8 +92,11 @@ class Groth16Backend(ZKPBackend):
         if not self.binary_path:
             logger.warning(
                 "Groth16 binary not found. "
-                "Install Rust and run: cd ipfs_datasets_py/processors/groth16_backend && cargo build --release "
-                "(legacy docs may refer to ./groth16_backend)"
+                "Install Rust and run one of:\n"
+                "  - cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && cargo build --release\n"
+                "  - cd ipfs_datasets_py/processors/groth16_backend && cargo build --release\n"
+                "(legacy docs may refer to ./groth16_backend). "
+                "You can also set IPFS_DATASETS_GROTH16_BINARY or GROTH16_BINARY to an explicit binary path."
             )
         elif not os.path.exists(self.binary_path):
             logger.warning(f"Groth16 binary not found at {self.binary_path}")
@@ -108,21 +111,25 @@ class Groth16Backend(ZKPBackend):
                 logger.info(f"Using Groth16 binary from ${env_var}: {override}")
                 return override
 
-        # Canonical location (current):
-        #   ipfs_datasets_py/processors/groth16_backend/target/release/groth16
-        package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
-        repo_root = package_root.parent  # .../ipfs_datasets_py
+        # Project layout notes:
+        # - In this monorepo, the Rust crate typically lives *inside* the Python
+        #   package tree at: ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/
+        # - Some legacy docs/scripts refer to one of these alternate locations:
+        #   - ipfs_datasets_py/processors/groth16_backend/
+        #   - <repo-root>/groth16_backend/
+        python_package_root = Path(__file__).resolve().parents[3]  # .../ipfs_datasets_py/ipfs_datasets_py
+        monorepo_root = python_package_root.parent  # .../ipfs_datasets_py
 
         candidates = [
-            # Canonical repo-local location (preferred)
-            repo_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+            # Canonical monorepo location (preferred for this repo)
+            python_package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
 
-            # Legacy location when the Rust crate lived under the Python package tree
-            package_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
+            # Alternate location (some checkouts keep processors/ alongside the Python package)
+            monorepo_root / "processors" / "groth16_backend" / "target" / "release" / "groth16",
 
             # Backward-compatible legacy location (older docs/scripts):
             #   <project-root>/groth16_backend/target/release/groth16
-            repo_root.parent / "groth16_backend" / "target" / "release" / "groth16",
+            monorepo_root.parent / "groth16_backend" / "target" / "release" / "groth16",
 
             # If user installed a global binary
             Path.home() / ".cargo" / "bin" / "groth16",

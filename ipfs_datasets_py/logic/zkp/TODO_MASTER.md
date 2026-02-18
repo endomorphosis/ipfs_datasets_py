@@ -12,8 +12,16 @@
 - **Canonicalization:** deterministic text normalization + commitment generation ✅
 - **Theorem hashing:** simulated backend uses canonicalization for stable `theorem_hash` ✅
 - **Caching:** cache keys are canonicalized (whitespace/unicode invariant) ✅
+- **Public inputs:** standardized schema across simulated + groth16-ffi ✅
+- **Verifier input validation:** enforces standardized `public_inputs` (backend-agnostic) ✅
+- **Verifier proof-size validation:** backend-aware bounds (simulated strict; Groth16 allows larger) ✅
 - **Statement/Witness:** dataclass-based format with field encoding ✅
 - **Witness Manager:** generation, validation, consistency checking ✅
+- **Groth16 backend:** Rust FFI adapter is opt-in (fail-closed by default) ✅
+  - Enable with `IPFS_DATASETS_ENABLE_GROTH16=1`
+  - Canonical Rust project location (this repo layout): `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/`
+  - Alternate/legacy locations may exist: `ipfs_datasets_py/processors/groth16_backend/` and `./groth16_backend/`
+  - Binary discovery prefers: `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16`
 - **Test suite:** extensive and mostly self-contained.
   - Property-based tests use `hypothesis` (install in dev/test env).
   - Prefer documenting *how to run* tests over hard-coding exact counts.
@@ -113,12 +121,15 @@
 - [ ] Add detailed comments in `backends/simulated.py` explaining byte ranges
 - [ ] Optional: add tagged fields for clarity
 
-### P2.4 ⏳ Standardize public inputs across backends
-- [ ] Decide and enforce a schema for `public_inputs` across backends:
+### P2.4 ✅ Standardize public inputs across backends
+- [x] Enforced schema for `public_inputs` across backends:
   - required: `theorem` (as-provided string)
-  - required: `theorem_hash` (canonicalized)
-  - optional but preferred: `axioms_commitment` (canonicalized)
-- [ ] Ensure Groth16 FFI adapter emits the same key names (where applicable)
+  - required: `theorem_hash` (canonicalized 32-byte hex)
+  - preferred: `axioms_commitment` (32-byte hex)
+  - preferred: `circuit_version` (non-negative int)
+  - preferred: `ruleset_id` (non-empty str)
+- [x] Verified Groth16 FFI adapter emits the same key names
+- [x] Verifier validates the schema before delegating to backend verification
 
 **Acceptance:** verifier/tests do not need backend-specific conditionals for key names.
 
@@ -262,10 +273,11 @@
 - [ ] Invalid proofs → verification fails
 - [ ] Proof size stability
 
-### P8.3 ⏳ Integration tests (gated, opt-in)
-- [ ] Env flag: `ZKP_INTEGRATION_TESTS=1`
-- [ ] Or pytest marker: `@pytest.mark.integration`
-- [ ] Tests: setup → prove → verify flow
+### P8.3 ✅ Integration tests (gated, opt-in)
+- [x] Added opt-in Groth16 end-to-end prove→verify test
+- [x] Gate conditions:
+  - `IPFS_DATASETS_ENABLE_GROTH16=1` (or true/yes)
+  - Skip if Groth16 binary is not discoverable
 
 ### P8.4 ⏳ Golden vectors (regression prevention)
 - [ ] Stored in `tests/zkp_golden_vectors.json`
@@ -335,7 +347,8 @@
 
 **Phase 3 (Real ZKP, weeks 4–10):**
 - [ ] P5 (Groth16 stack selection + implementation)
-- [ ] P8.3 Integration tests (prove → verify on local chain)
+- [x] P8.3 Integration tests (gated, opt-in; local binary prove→verify)
+- [ ] Add separate local-chain e2e test(s) (prove → on-chain verify) when EVM verifier work lands
 
 **Phase 4 (Production, weeks 10–20):**
 - [ ] P6 (On-chain verifier + registry)
@@ -368,14 +381,14 @@
 ## Recent Sessions Summary
 
 1. **Session 2026-02-18 (Current):**
-   - Completed Phase 1 + Phase 2 implementation
-   - Created: canonicalization.py (6 functions, 24 tests)
-   - Created: witness_manager.py (5 functions, 22 tests)
-   - Enhanced: statement.py (added metadata to Witness/ProofStatement)
-   - Enhanced: circuits.py (added MVPCircuit class)
-   - Enhanced: backends/simulated.py (strengthened verifier validation)
-   - Test result: 129 total tests passing
-   - Phase 1 & 2 substantially complete; Phase 3 (Groth16) to begin
+   - Phase 1–2 baseline complete + follow-ups:
+     - Canonicalized theorem hashing + canonicalized prover caching
+     - Standardized `public_inputs` across backends + verifier enforcement
+     - Groth16 Rust FFI backend is opt-in (fail-closed by default)
+     - Groth16 proof metadata carries `security_level` (unblocks verifier security gate)
+     - Groth16 binary discovery updated to prefer `ipfs_datasets_py/processors/groth16_backend/`
+     - Added gated Groth16 end-to-end test (env+binary presence)
+   - Test result (ZKP unit suite): `202 passed, 3 skipped`
 
 ---
 
