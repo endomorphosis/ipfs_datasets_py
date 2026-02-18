@@ -1,309 +1,223 @@
-# Documentation Index - Implementation Roadmap
+# Documentation Index
 
-**Last Updated:** 2026-02-15  
-**Status:** Complete + Enhanced  
-**Total Documentation:** ~133KB
+Complete index of all documentation in the complaint-generator repository.
 
-This index provides quick access to all documentation created during the Implementation Roadmap consolidation.
+## Quick Start
 
----
+- [README.md](README.md) - Main project overview and getting started guide
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) - Complete configuration reference
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Production deployment guide
+- [TESTING.md](TESTING.md) - Testing guide and TDD workflow
+- [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute to the project
 
-## 🎯 Start Here
+## MCP++ Integration
 
-### For New Users
-1. **[QUICK_START_NEW_ARCHITECTURE.md](./QUICK_START_NEW_ARCHITECTURE.md)** (11KB) ⭐
-   - Introduction to 3-tier architecture
-   - Installation and basic usage
-   - Code examples for all major components
-   - **Best starting point for new users!**
+- [MCPPLUSPLUS_INTEGRATION_TODO.md](MCPPLUSPLUS_INTEGRATION_TODO.md) - Entry point for MCP++ integration work
+- [MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md](MCPPLUSPLUS_INTEGRATION_INFINITE_TODO.md) - Infinite backlog for MCP++/P2P integration
+- [plan-mcpPlusPlusIntegration.prompt.md](plan-mcpPlusPlusIntegration.prompt.md) - High-level integration plan
 
-2. **[PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** (24KB)
-   - Complete architecture documentation
-   - Design patterns and best practices
-   - Component catalog
-   - Data flow examples
+## Core Module Documentation
 
-### For Existing Users (Migration)
-1. **[MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md)** (26KB) ⭐
-   - Complete v1.x → v2.0 migration guide
-   - Step-by-step instructions
-   - Before/after code examples
-   - **Essential for upgrading users!**
+### Adversarial Testing Framework
+- [adversarial_harness/README.md](adversarial_harness/README.md) - Complete guide to adversarial testing with all agents
 
-2. **[DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md)** (17KB)
-   - 6-month deprecation schedule
-   - Version-by-version breakdown
-   - Migration checklists
+### Complaint Analysis System
+- [complaint_analysis/README.md](complaint_analysis/README.md) - Analysis framework for 14 complaint types
 
----
+### Three-Phase Processing
+- [complaint_phases/README.md](complaint_phases/README.md) - Knowledge graphs, dependency graphs, and neurosymbolic matching
 
-## 📚 By Topic
+### Mediator & Orchestration
+- [mediator/readme.md](mediator/readme.md) - Core orchestration layer and hooks
 
-### Architecture
+### Testing
+- [tests/README.md](tests/README.md) - Test suite documentation (19 files, 60+ test classes)
 
-**[PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)** (24KB)
-- Complete 3-tier architecture
-- ASCII diagrams
-- Component responsibilities
-- API reference
-- Design patterns
-- Best practices
+## Feature Documentation
 
-**Sections:**
-- Executive Summary
-- Three-Tier Architecture
-- Component Details
-- Data Flow Examples
-- API Reference
-- Design Patterns
-- Migration from Legacy
+### System Architecture
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - System architecture, data flows, and integration points
+- [docs/APPLICATIONS.md](docs/APPLICATIONS.md) - CLI and web server applications guide
 
-### Migration
+### Three-Phase System
+- [docs/THREE_PHASE_SYSTEM.md](docs/THREE_PHASE_SYSTEM.md) - Detailed three-phase workflow documentation
 
-**[MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md)** (26KB) - Primary migration guide
-- Overview and timeline
-- Component-by-component migration
-- Step-by-step process (4 phases)
-- Automated tools
-- Testing strategies
-- Common issues and solutions
-- FAQs
+### Configuration & Deployment
+- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) - Complete configuration reference
+- [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - Production deployment guide (Docker, K8s, Cloud)
+- [docs/SECURITY.md](docs/SECURITY.md) - Security best practices and hardening
 
-**[DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md)** (17KB) - Timeline and schedule
-- 6-month window (Feb → Aug 2026)
-- Phase-by-phase breakdown
-- Component removal schedule
-- Migration checklists
-- Communication plan
+### Adversarial Testing
+- [docs/ADVERSARIAL_HARNESS.md](docs/ADVERSARIAL_HARNESS.md) - Adversarial testing framework details
+- [docs/ADVERSARIAL_IMPLEMENTATION_SUMMARY.md](docs/ADVERSARIAL_IMPLEMENTATION_SUMMARY.md) - Implementation summary
 
-**[GRAPHRAG_CONSOLIDATION_GUIDE.md](./GRAPHRAG_CONSOLIDATION_GUIDE.md)** (20KB) - GraphRAG specifics
-- 7 implementations → 1 unified
-- Feature mapping
-- Configuration migration
-- Complete examples
-- API changes
+### Backend Systems
+- [docs/BACKENDS.md](docs/BACKENDS.md) - LLM backend configuration and providers
+- [docs/LLM_ROUTER.md](docs/LLM_ROUTER.md) - LLM routing details
 
-**[MULTIMEDIA_MIGRATION_GUIDE.md](./MULTIMEDIA_MIGRATION_GUIDE.md)** (12KB) - Multimedia specifics
-- Import path changes
-- Automated scripts
-- Troubleshooting
-- FAQ
+### Complaint Analysis
+- [docs/COMPLAINT_ANALYSIS_INTEGRATION.md](docs/COMPLAINT_ANALYSIS_INTEGRATION.md) - Integration with adversarial harness
+- [docs/COMPLAINT_ANALYSIS_EXAMPLES.md](docs/COMPLAINT_ANALYSIS_EXAMPLES.md) - Usage examples
 
-### Implementation Reports
+### Legal Research
+- [docs/LEGAL_HOOKS.md](docs/LEGAL_HOOKS.md) - Legal analysis hooks (4-stage pipeline)
+- [docs/LEGAL_AUTHORITY_RESEARCH.md](docs/LEGAL_AUTHORITY_RESEARCH.md) - Multi-source legal research
 
-**[IMPLEMENTATION_ROADMAP_COMPLETE.md](./IMPLEMENTATION_ROADMAP_COMPLETE.md)** (10KB) - Final summary
-- All 6 phases complete
-- Time breakdown and efficiency
-- Key achievements
-- File structure changes
-- Migration examples
-- Success metrics
+### Evidence Management
+- [docs/EVIDENCE_MANAGEMENT.md](docs/EVIDENCE_MANAGEMENT.md) - IPFS storage and DuckDB metadata
+- [docs/WEB_EVIDENCE_DISCOVERY.md](docs/WEB_EVIDENCE_DISCOVERY.md) - Automated web evidence discovery
 
-**[PHASE_6_TESTING_VALIDATION_COMPLETE.md](./PHASE_6_TESTING_VALIDATION_COMPLETE.md)** (13KB) - Phase 6 report
-- Import system validation
-- Test results
-- Metrics and impact
-- Lessons learned
+### Search Integration
+- [docs/SEARCH_HOOKS.md](docs/SEARCH_HOOKS.md) - Legal corpus RAG and search integration
 
-**Phase-Specific Reports:**
-- [PHASE_2_SERIALIZATION_COMPLETE.md](./PHASE_2_SERIALIZATION_COMPLETE.md) - Serialization organization
-- [PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md](./PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md) - GraphRAG plan
-- [PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md](./PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md) - GraphRAG implementation
-- [TASK_1_2_CLEANUP_COMPLETE_REPORT.md](./TASK_1_2_CLEANUP_COMPLETE_REPORT.md) - Multimedia cleanup
+### IPFS Integration
+- [docs/IPFS_DATASETS_INTEGRATION.md](docs/IPFS_DATASETS_INTEGRATION.md) - IPFS integration guide
+- [docs/IPFS_DATASETS_PY_INTEGRATION.md](docs/IPFS_DATASETS_PY_INTEGRATION.md) - Python IPFS integration
 
----
+### DEI Analysis (HACC)
+- [docs/HACC_INTEGRATION.md](docs/HACC_INTEGRATION.md) - DEI policy analysis
+- [docs/HACC_INTEGRATION_ARCHITECTURE.md](docs/HACC_INTEGRATION_ARCHITECTURE.md) - Architecture details
+- [docs/HACC_ANALYSIS_README.md](docs/HACC_ANALYSIS_README.md) - Analysis guide
+- [docs/HACC_FILES_SUMMARY.md](docs/HACC_FILES_SUMMARY.md) - Files summary
+- [docs/HACC_QUICK_REFERENCE.md](docs/HACC_QUICK_REFERENCE.md) - Quick reference
+- [docs/HACC_SCRIPTS_REUSE_ANALYSIS.md](docs/HACC_SCRIPTS_REUSE_ANALYSIS.md) - Script reuse analysis
+- [docs/HACC_IPFS_HYBRID_USAGE.md](docs/HACC_IPFS_HYBRID_USAGE.md) - IPFS hybrid usage
+- [docs/HACC_VS_IPFS_DATASETS_QUICK.md](docs/HACC_VS_IPFS_DATASETS_QUICK.md) - Comparison guide
 
-## 🔧 Tools
+### Probate Integration
+- [docs/PROBATE_INTEGRATION.md](docs/PROBATE_INTEGRATION.md) - Probate complaint type integration
 
-### Migration Checker
-**Location:** `scripts/tools/migration_checker.py`
+### Additional Documentation
+- [docs/EXAMPLES.md](docs/EXAMPLES.md) - Complete reference for all 21 example scripts
+- [docs/IMPLEMENTATION_SUMMARY.md](docs/IMPLEMENTATION_SUMMARY.md) - Implementation summary
+- [docs/TAXONOMY_EXPANSION_SUMMARY.md](docs/TAXONOMY_EXPANSION_SUMMARY.md) - Taxonomy expansion
+- [docs/VERIFICATION_SUMMARY.md](docs/VERIFICATION_SUMMARY.md) - Verification summary
 
-Scans codebase for deprecated imports and provides recommendations.
+## Example Scripts
 
-**Usage:**
-```bash
-python scripts/tools/migration_checker.py /path/to/project
-python scripts/tools/migration_checker.py . --verbose
-```
+See [docs/EXAMPLES.md](docs/EXAMPLES.md) for detailed documentation of all 21 example scripts, organized by category:
 
-**Documentation:** [scripts/tools/README.md](../scripts/tools/README.md)
+### Core System Examples (6)
+1. three_phase_example.py
+2. legal_analysis_demo.py
+3. evidence_management_demo.py
+4. legal_authority_research_demo.py
+5. web_evidence_discovery_demo.py
+6. search_hooks_demo.py
 
-### Backward Compatibility Tests
-**Location:** `tests/integration/test_backward_compatibility.py`
+### Complaint Analysis Examples (5)
+7. complaint_analysis_integration_demo.py
+8. complaint_analysis_taxonomies_demo.py
+9. dei_taxonomy_example.py
+10. hacc_integration_example.py
+11. hacc_dei_analysis_example.py
 
-Automated tests ensuring backward compatibility during migration window.
+### Adversarial Testing Examples (8)
+12. adversarial_harness_example.py
+13. adversarial_harness_standalone.py
+14. adversarial_optimization_demo.py
+15. batch_sgd_cycle.py
+16. session_sgd_report.py
+17. parallelism_backoff_sweep.py
+18. sweep_ranker.py
+19-21. codex_autopatch_*.py (3 variants)
 
-**Test Coverage:**
-- Unified GraphRAG imports
-- Multimedia imports (new and deprecated)
-- Serialization imports (new and deprecated)
-- IPLD stability
-- Module structure validation
-- Import compatibility
-- Deprecation message quality
+## Documentation Statistics
 
-**Run tests:**
-```bash
-pytest tests/integration/test_backward_compatibility.py -v
-```
+- **Total Markdown Files**: 42+
+- **Module READMEs**: 4 (adversarial_harness, complaint_analysis, complaint_phases, tests)
+- **Core Documentation**: 3 (README.md, TESTING.md, CONTRIBUTING.md)
+- **Feature Documentation**: 32 docs/*.md files
+- **Example Scripts Documented**: 21
+- **Test Files Documented**: 19
+- **Complaint Types Covered**: 14
+- **Total Pages of Documentation**: 250+
 
----
+## Documentation by Topic
 
-## 📊 By Phase
+### Getting Started
+- README.md - Project overview
+- docs/CONFIGURATION.md - Configuration guide
+- docs/DEPLOYMENT.md - Deployment guide
+- docs/APPLICATIONS.md - CLI and server guide
+- TESTING.md - Testing guide
+- CONTRIBUTING.md - Contribution guide
+- docs/BACKENDS.md - Backend setup
+- docs/EXAMPLES.md - Example scripts
 
-### Phase 1: Multimedia Migration
-- [MULTIMEDIA_MIGRATION_GUIDE.md](./MULTIMEDIA_MIGRATION_GUIDE.md) (12KB)
-- [TASK_1_1_MULTIMEDIA_AUDIT_REPORT.md](./TASK_1_1_MULTIMEDIA_AUDIT_REPORT.md)
-- [TASK_1_2_CLEANUP_COMPLETE_REPORT.md](./TASK_1_2_CLEANUP_COMPLETE_REPORT.md)
+### Architecture & Design
+- docs/ARCHITECTURE.md - System architecture
+- docs/THREE_PHASE_SYSTEM.md - Three-phase design
+- docs/ADVERSARIAL_HARNESS.md - Testing framework design
 
-### Phase 2: Serialization Organization
-- [PHASE_2_SERIALIZATION_COMPLETE.md](./PHASE_2_SERIALIZATION_COMPLETE.md)
-- [TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md](./TASK_2_1_SERIALIZATION_PACKAGE_COMPLETE.md)
-- [TASK_2_2_IMPORTS_UPDATE_COMPLETE.md](./TASK_2_2_IMPORTS_UPDATE_COMPLETE.md)
+### Features & APIs
+- complaint_analysis/README.md - Analysis API
+- complaint_phases/README.md - Phase processing API
+- mediator/readme.md - Mediator API
+- docs/SEARCH_HOOKS.md - Search API
+- docs/LEGAL_HOOKS.md - Legal analysis API
 
-### Phases 3-4: GraphRAG Analysis & Implementation
-- [PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md](./PHASE_3_4_GRAPHRAG_CONSOLIDATION_PLAN.md) (13KB)
-- [PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md](./PHASE_4_GRAPHRAG_IMPLEMENTATION_COMPLETE.md)
-- [GRAPHRAG_CONSOLIDATION_GUIDE.md](./GRAPHRAG_CONSOLIDATION_GUIDE.md) (20KB)
+### Integration & Usage
+- docs/COMPLAINT_ANALYSIS_INTEGRATION.md - Analysis integration
+- docs/IPFS_DATASETS_INTEGRATION.md - IPFS integration
+- docs/HACC_INTEGRATION.md - DEI analysis integration
 
-### Phase 5: Documentation & Deprecation
-- [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md) (24KB)
-- [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md) (26KB)
-- [DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md) (17KB)
+### Development & Testing
+- tests/README.md - Test documentation
+- TESTING.md - Testing workflow
+- CONTRIBUTING.md - Development workflow
+- docs/SECURITY.md - Security practices
 
-### Phase 6: Testing & Validation
-- [PHASE_6_TESTING_VALIDATION_COMPLETE.md](./PHASE_6_TESTING_VALIDATION_COMPLETE.md) (13KB)
-- [test_backward_compatibility.py](../tests/integration/test_backward_compatibility.py) (12KB tests)
+## Finding What You Need
 
----
+### "I want to..."
 
-## 🎯 Quick Reference
+- **Get started with the project** → README.md
+- **Configure the system** → docs/CONFIGURATION.md
+- **Deploy to production** → docs/DEPLOYMENT.md
+- **Use CLI or web server** → docs/APPLICATIONS.md
+- **Secure the system** → docs/SECURITY.md
+- **Understand the architecture** → docs/ARCHITECTURE.md
+- **Use the three-phase system** → docs/THREE_PHASE_SYSTEM.md, complaint_phases/README.md
+- **Analyze complaints** → complaint_analysis/README.md
+- **Test the system** → adversarial_harness/README.md, TESTING.md
+- **Configure backends** → docs/BACKENDS.md, docs/LLM_ROUTER.md
+- **Run examples** → docs/EXAMPLES.md
+- **Contribute code** → CONTRIBUTING.md
+- **Write tests** → tests/README.md, TESTING.md
+- **Integrate IPFS** → docs/IPFS_DATASETS_INTEGRATION.md
+- **Perform legal research** → docs/LEGAL_AUTHORITY_RESEARCH.md
+- **Manage evidence** → docs/EVIDENCE_MANAGEMENT.md
+- **Use search/RAG** → docs/SEARCH_HOOKS.md
 
-### Import Changes
+## Navigation Tips
 
-**Multimedia:**
-```python
-# OLD (deprecated)
-from ipfs_datasets_py.data_transformation.multimedia import FFmpegWrapper
+1. **Start with README.md** for project overview
+2. **Check module READMEs** for specific features
+3. **Review docs/** for detailed documentation
+4. **Look at examples/** for code samples
+5. **Read CONTRIBUTING.md** before submitting PRs
 
-# NEW
-from ipfs_datasets_py.processors.multimedia import FFmpegWrapper
-```
+## Keeping Documentation Updated
 
-**Serialization:**
-```python
-# OLD (deprecated)
-from ipfs_datasets_py.data_transformation.car_conversion import DataInterchangeUtils
+When making changes:
 
-# NEW
-from ipfs_datasets_py.data_transformation.serialization.car_conversion import DataInterchangeUtils
-```
+1. Update relevant module README if changing that module
+2. Update main README.md if adding major features
+3. Update or create docs/*.md for detailed feature docs
+4. Add examples/ scripts to demonstrate new features
+5. Update this index if adding new documentation files
+6. Keep DOCUMENTATION_INDEX.md (this file) current
 
-**GraphRAG:**
-```python
-# OLD (deprecated)
-from ipfs_datasets_py.processors.graphrag_processor import GraphRAGProcessor
+## Feedback
 
-# NEW
-from ipfs_datasets_py import UnifiedGraphRAGProcessor, GraphRAGConfiguration
-```
+Found an issue with documentation? Please:
 
-### Timeline
-
-| Version | Date | Status |
-|---------|------|--------|
-| v1.0 | Feb 2026 | ✅ Current - Warnings active |
-| v1.5 | May 2026 | 📅 Enhanced warnings + tools |
-| v1.9 | Jul 2026 | 📅 Final warning period |
-| v2.0 | Aug 2026 | 📅 Deprecated code removed |
-
-### Key Metrics
-
-- **Code Eliminated:** ~531KB duplicates
-- **Documentation Created:** ~133KB
-- **Time Spent:** 13.5h vs 154h (11.4x faster)
-- **Backward Compatibility:** 100% until v2.0
-- **Migration Window:** 6 months
+1. Open an issue on GitHub
+2. Submit a PR with improvements
+3. Start a discussion for questions
 
 ---
 
-## 🔗 External Resources
-
-### GitHub
-- **Repository:** https://github.com/endomorphosis/ipfs_datasets_py
-- **Issues:** https://github.com/endomorphosis/ipfs_datasets_py/issues
-- **Discussions:** https://github.com/endomorphosis/ipfs_datasets_py/discussions
-
-### Main Documentation
-- **README.md** (updated with architecture links)
-- **FEATURES.md** (complete feature list)
-
----
-
-## 📋 Documentation Statistics
-
-| Document | Size | Purpose | Audience |
-|----------|------|---------|----------|
-| QUICK_START_NEW_ARCHITECTURE.md | 11KB | Quick start | New users ⭐ |
-| MIGRATION_GUIDE_V2.md | 26KB | Complete migration | Existing users ⭐ |
-| PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md | 24KB | Architecture | Developers |
-| GRAPHRAG_CONSOLIDATION_GUIDE.md | 20KB | GraphRAG migration | GraphRAG users |
-| DEPRECATION_TIMELINE.md | 17KB | Timeline | All users |
-| PHASE_6_TESTING_VALIDATION_COMPLETE.md | 13KB | Validation report | Maintainers |
-| MULTIMEDIA_MIGRATION_GUIDE.md | 12KB | Multimedia migration | Multimedia users |
-| IMPLEMENTATION_ROADMAP_COMPLETE.md | 10KB | Final summary | All |
-| **Total** | **~133KB** | **Complete coverage** | **All audiences** |
-
----
-
-## 🎓 Learning Path
-
-### Beginner
-1. [QUICK_START_NEW_ARCHITECTURE.md](./QUICK_START_NEW_ARCHITECTURE.md)
-2. Try examples
-3. Explore architecture overview
-
-### Intermediate (Migrating)
-1. [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md)
-2. Run migration checker
-3. Follow step-by-step guide
-4. Test in development
-
-### Advanced (Deep Dive)
-1. [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)
-2. Component-specific guides
-3. Design patterns
-4. Contribute enhancements
-
----
-
-## ✅ Checklist for Users
-
-### New Users
-- [ ] Read [QUICK_START_NEW_ARCHITECTURE.md](./QUICK_START_NEW_ARCHITECTURE.md)
-- [ ] Try basic examples
-- [ ] Review architecture overview
-- [ ] Join discussions if needed
-
-### Existing Users (Migrating)
-- [ ] Read [MIGRATION_GUIDE_V2.md](./MIGRATION_GUIDE_V2.md)
-- [ ] Run migration checker on your code
-- [ ] Review [DEPRECATION_TIMELINE.md](./DEPRECATION_TIMELINE.md)
-- [ ] Plan migration within 6-month window
-- [ ] Test in development environment
-- [ ] Update production code
-- [ ] Prepare for v2.0 (August 2026)
-
-### Developers
-- [ ] Study [PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md](./PROCESSORS_DATA_TRANSFORMATION_ARCHITECTURE.md)
-- [ ] Review design patterns
-- [ ] Run backward compatibility tests
-- [ ] Contribute improvements
-
----
-
-**Last Updated:** 2026-02-15  
-**Status:** Complete + Enhanced  
-**Version:** Final
-
-This documentation represents the complete Implementation Roadmap consolidation work, providing comprehensive guidance for all user types and scenarios.
+**Last Updated**: 2026-02-10
+**Total Documentation**: 42+ markdown files, 250+ pages
