@@ -95,6 +95,12 @@ if TYPE_CHECKING:
         analyze_proof_dependencies,
         find_proof_chain,
     )
+    from .countermodel_visualizer import (
+        CountermodelVisualizer,
+        BoxChars,
+        GraphLayout,
+        create_visualizer,
+    )
 
 __all__ = [
     # Enumerations
@@ -173,6 +179,12 @@ __all__ = [
     "analyze_proof_dependencies",
     "find_proof_chain",
     
+    # Countermodel Visualizer (Phase 11)
+    "CountermodelVisualizer",
+    "BoxChars",
+    "GraphLayout",
+    "create_visualizer",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -235,6 +247,11 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "CircularDependencyError": (".formula_dependency_graph", "CircularDependencyError"),
     "analyze_proof_dependencies": (".formula_dependency_graph", "analyze_proof_dependencies"),
     "find_proof_chain": (".formula_dependency_graph", "find_proof_chain"),
+    # Countermodel Visualizer
+    "CountermodelVisualizer": (".countermodel_visualizer", "CountermodelVisualizer"),
+    "BoxChars": (".countermodel_visualizer", "BoxChars"),
+    "GraphLayout": (".countermodel_visualizer", "GraphLayout"),
+    "create_visualizer": (".countermodel_visualizer", "create_visualizer"),
 }
 
 
