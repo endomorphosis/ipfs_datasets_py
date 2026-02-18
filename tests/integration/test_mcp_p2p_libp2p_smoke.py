@@ -1,7 +1,9 @@
 import json
+import struct
 import socket
 import sys
 from pathlib import Path
+import os
 
 import pytest
 
@@ -49,7 +51,7 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
     if not ensure_libp2p_compatible():
         pytest.skip("libp2p compatibility patches unavailable")
 
-    from ipfs_accelerate_py.p2p_tasks.mcp_p2p import PROTOCOL_MCP_P2P_V1
+    from ipfs_accelerate_py.p2p_tasks.mcp_p2p import PROTOCOL_MCP_P2P_V1, read_u32_framed_json
     from ipfs_accelerate_py.p2p_tasks.mcp_p2p_client import (
         MCPRemoteError,
         MCPP2PClient,
@@ -112,6 +114,55 @@ def test_mcp_p2p_end_to_end_smoke(monkeypatch, tmp_path):
                     raise AssertionError("expected invalid_jsonrpc error")
                 except MCPRemoteError as exc:
                     assert exc.message == "invalid_jsonrpc"
+            finally:
+                try:
+                    await stream.close()
+                except Exception:
+                    pass
+
+            # Deterministic negative test: per-stream frame rate limit.
+            prev_max_frames = os.environ.get("IPFS_ACCELERATE_PY_MCP_P2P_MAX_FRAMES")
+            os.environ["IPFS_ACCELERATE_PY_MCP_P2P_MAX_FRAMES"] = "2"
+            try:
+                stream = await open_libp2p_stream_by_multiaddr(
+                    host,
+                    peer_multiaddr=ma,
+                    protocols=[PROTOCOL_MCP_P2P_V1],
+                )
+                try:
+                    client = MCPP2PClient(stream, max_frame_bytes=1024 * 1024)
+                    await client.initialize({})
+                    await client.tools_list()
+                    try:
+                        await client.request("tools/list", {})
+                        raise AssertionError("expected rate_limited error")
+                    except MCPRemoteError as exc:
+                        assert exc.message == "rate_limited"
+                        assert exc.code == -32010
+                finally:
+                    try:
+                        await stream.close()
+                    except Exception:
+                        pass
+            finally:
+                if prev_max_frames is None:
+                    os.environ.pop("IPFS_ACCELERATE_PY_MCP_P2P_MAX_FRAMES", None)
+                else:
+                    os.environ["IPFS_ACCELERATE_PY_MCP_P2P_MAX_FRAMES"] = prev_max_frames
+
+            # Deterministic negative test: oversize frame header -> frame_too_large.
+            stream = await open_libp2p_stream_by_multiaddr(
+                host,
+                peer_multiaddr=ma,
+                protocols=[PROTOCOL_MCP_P2P_V1],
+            )
+            try:
+                # Server default max_frame_bytes is 1 MiB; claim a larger payload.
+                await stream.write(struct.pack(">I", 2 * 1024 * 1024))
+                resp, err = await read_u32_framed_json(stream, max_frame_bytes=1024 * 1024)
+                assert err is None
+                assert resp and resp.get("error", {}).get("message") == "frame_too_large"
+                assert resp.get("error", {}).get("code") == -32003
             finally:
                 try:
                     await stream.close()
