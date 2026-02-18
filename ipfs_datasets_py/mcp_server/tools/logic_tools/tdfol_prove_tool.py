@@ -198,18 +198,15 @@ class TDFOLProveTool(ClaudeMCPTool):
             for axiom_str in axioms:
                 axiom = parse_tdfol_safe(axiom_str)
                 if axiom:
-                    kb.add_formula(axiom)
+                    kb.add_axiom(axiom)
             
             # Create prover
             prover = TDFOLProver(kb)
             
-            # Prove formula
+            # Prove formula (note: TDFOLProver doesn't expose strategy, max_depth, or use_cache params)
             proof_result = prover.prove(
                 parsed_formula,
-                strategy=strategy if strategy != "auto" else None,
-                timeout_ms=timeout_ms,
-                max_depth=max_depth,
-                use_cache=use_cache
+                timeout_ms=timeout_ms
             )
             
             result = {

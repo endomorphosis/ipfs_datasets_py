@@ -194,7 +194,7 @@ class TDFOLConvertTool(ClaudeMCPTool):
                 converted = converter.convert(parsed)
             elif target_format == "fol":
                 converter = TDFOLToFOLConverter()
-                converted = converter.convert(parsed, preserve_semantics=preserve_semantics)
+                converted = converter.convert(parsed)  # Note: FOL converter doesn't take preserve_semantics param
             elif target_format == "tptp":
                 converter = TDFOLToTPTPConverter()
                 converted = converter.convert(parsed)
