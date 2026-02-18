@@ -115,6 +115,7 @@ Use this checklist as a systematic audit.
 ### `logic/zkp/`
 - [ ] ZKP APIs are stable and documented.
 - [ ] Verification is deterministic and has golden tests.
+- [ ] Track all ZKP work in `logic/zkp/IMPROVEMENT_TODO.md`.
 
 ---
 

@@ -19,7 +19,7 @@ class ZKPProver:
     """
     Generate zero-knowledge proofs for logic theorems.
     
-    This prover creates cryptographic proofs that a theorem can be derived
+    This prover generates **simulated** proofs that a theorem can be derived
     from a set of private axioms, without revealing the axioms themselves.
     
     Features:
@@ -41,8 +41,9 @@ class ZKPProver:
         Proof size: 256 bytes
     
     Note:
-        This is a simulated ZKP prover for demonstration. In production,
-        use py_ecc with Groth16 zkSNARKs for real cryptographic security.
+        This is a simulated ZKP prover for demonstration. It is NOT
+        cryptographically secure. In production, use a real ZKP backend
+        (e.g., Groth16) via a cryptographic library.
     """
     
     def __init__(
@@ -212,8 +213,8 @@ class ZKPProver:
         # Combine all inputs
         proof_inputs = circuit_hash + witness + theorem.encode()
         
-        # Generate deterministic "proof" (simulation)
-        # Real proof would be actual curve points from zkSNARK
+        # Generate simulated "proof" bytes.
+        # Real proof would be actual curve points from a zkSNARK backend.
         proof_hash = hashlib.sha256(proof_inputs).digest()
         
         # Simulate proof structure (3 curve points)

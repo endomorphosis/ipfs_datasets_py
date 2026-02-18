@@ -175,6 +175,23 @@ class TestZKPVerifier:
         assert stats['proofs_verified'] == 1
         assert stats['proofs_rejected'] == 0
 
+    def test_malformed_proof_rejected_without_crash(self):
+        """
+        GIVEN: A malformed/non-ZKP proof object
+        WHEN: Verifying the proof
+        THEN: Verification returns False (does not raise)
+        """
+        verifier = ZKPVerifier()
+
+        class MalformedProof:
+            pass
+
+        assert verifier.verify_proof(MalformedProof()) is False
+
+        stats = verifier.get_stats()
+        assert stats['proofs_verified'] == 0
+        assert stats['proofs_rejected'] == 1
+
 
 class TestZKPCircuit:
     """Test ZKPCircuit functionality."""
