@@ -2,6 +2,24 @@
 
 This package provides a Model Context Protocol (MCP) server implementation for IPFS Datasets Python, enabling AI models like Claude to interact with IPFS datasets through standardized tools.
 
+## ⚠️ Production Status (2026-02-18)
+
+**CRITICAL: This server is NOT production-ready until Phase 1 security issues are resolved.**
+
+We have identified **5 critical security vulnerabilities** that must be fixed before any production deployment:
+- Hardcoded secret keys (2 instances)
+- Bare exception handlers masking failures (14+ files)
+- Hallucinated library imports causing crashes
+- Subprocess calls without input sanitization
+- Sensitive data exposed in error reports
+
+**📋 Refactoring Plan Documentation:**
+- [**🔴 Executive Summary**](./REFACTORING_EXECUTIVE_SUMMARY_2026.md) - Critical issues overview (10KB, 5 min read)
+- [**📋 Implementation Checklist**](./IMPLEMENTATION_CHECKLIST_2026.md) - Task-by-task checklist (21KB, daily tracking)
+- [**📚 Comprehensive Plan**](./COMPREHENSIVE_REFACTORING_PLAN_2026.md) - Detailed 6-phase roadmap (45KB, complete guide)
+
+**Timeline:** Phase 1 (Security) MUST complete in 2 weeks before any other work.
+
 ## 🚀 MCP++ Integration Project (2026-02-18)
 
 We have created a comprehensive improvement plan to integrate advanced P2P capabilities from the [ipfs_accelerate_py MCP++ module](https://github.com/endomorphosis/ipfs_accelerate_py/tree/main/ipfs_accelerate_py/mcplusplus_module). This will bring:
