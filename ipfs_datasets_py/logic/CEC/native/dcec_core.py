@@ -274,8 +274,8 @@ class FunctionTerm(Term):
         if len(self.arguments) != self.function.arity():
             raise ValidationError(
                 f"Function arity mismatch for '{self.function.name}'",
-                expected=f"{self.function.arity()} arguments",
-                actual=f"{len(self.arguments)} arguments",
+                value=len(self.arguments),
+                expected_type=f"{self.function.arity()} arguments",
                 suggestion=f"Provide exactly {self.function.arity()} arguments to function '{self.function.name}'"
             )
     
@@ -369,8 +369,8 @@ class AtomicFormula(Formula):
         if len(self.arguments) != self.predicate.arity():
             raise ValidationError(
                 f"Predicate arity mismatch for '{self.predicate.name}'",
-                expected=f"{self.predicate.arity()} arguments",
-                actual=f"{len(self.arguments)} arguments",
+                value=len(self.arguments),
+                expected_type=f"{self.predicate.arity()} arguments",
                 suggestion=f"Provide exactly {self.predicate.arity()} arguments to predicate '{self.predicate.name}'"
             )
     
@@ -668,7 +668,75 @@ class TemporalFormula(Formula):
 
 @dataclass
 class ConnectiveFormula(Formula):
-    """A formula built from logical connectives."""
+    """
+    A formula built from logical connectives.
+    
+    ConnectiveFormula represents compound formulas built using logical operators like
+    AND, OR, NOT, IMPLIES, and BICONDITIONAL. These are the building blocks for
+    constructing complex logical statements from simpler formulas.
+    
+    Args:
+        connective (LogicalConnective): The logical operator (AND, OR, NOT, IMPLIES, BICONDITIONAL)
+        formulas (List[Formula]): The list of sub-formulas being combined
+            - NOT: exactly 1 formula
+            - AND, OR: at least 2 formulas
+            - IMPLIES, BICONDITIONAL: exactly 2 formulas
+    
+    Attributes:
+        connective: The logical connective being applied
+        formulas: List of sub-formulas
+    
+    Common Patterns:
+        - P ∧ Q (AND): "P and Q"
+        - P ∨ Q (OR): "P or Q"
+        - ¬P (NOT): "not P"
+        - P → Q (IMPLIES): "if P then Q" / "P implies Q"
+        - P ↔ Q (BICONDITIONAL): "P if and only if Q"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        ...     ConnectiveFormula, LogicalConnective, AtomicFormula, Predicate
+        ... )
+        >>> # Create predicates
+        >>> p_pred = Predicate("P", [])
+        >>> q_pred = Predicate("Q", [])
+        >>> p = AtomicFormula(p_pred, [])
+        >>> q = AtomicFormula(q_pred, [])
+        >>> 
+        >>> # P ∧ Q - "P and Q"
+        >>> and_formula = ConnectiveFormula(LogicalConnective.AND, [p, q])
+        >>> print(and_formula.to_string())
+        '(P() ∧ Q())'
+        >>> 
+        >>> # ¬P - "not P"
+        >>> not_formula = ConnectiveFormula(LogicalConnective.NOT, [p])
+        >>> print(not_formula.to_string())
+        '¬(P())'
+        >>> 
+        >>> # P → Q - "if P then Q"
+        >>> implies_formula = ConnectiveFormula(LogicalConnective.IMPLIES, [p, q])
+        >>> print(implies_formula.to_string())
+        '(P() → Q())'
+    
+    Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns union of free variables from all sub-formulas
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes variable in all sub-formulas
+        
+        to_string() -> str:
+            Returns string representation with appropriate syntax for each connective
+    
+    Raises:
+        ValidationError: If arity requirements are not met for the connective
+    
+    Notes:
+        - Connectives follow standard logical precedence: NOT > AND > OR > IMPLIES
+        - AND and OR can take more than 2 arguments for convenience
+        - Parentheses are added in string representation to avoid ambiguity
+        - Formulas can be nested arbitrarily: (P ∧ Q) ∨ (R ∧ S)
+    """
     connective: LogicalConnective
     formulas: List[Formula]
     
@@ -676,22 +744,22 @@ class ConnectiveFormula(Formula):
         if self.connective == LogicalConnective.NOT and len(self.formulas) != 1:
             raise ValidationError(
                 f"NOT connective arity mismatch",
-                expected="exactly 1 formula",
-                actual=f"{len(self.formulas)} formulas",
+                value=len(self.formulas),
+                expected_type="exactly 1 formula",
                 suggestion="Provide exactly one formula for NOT operation"
             )
         elif self.connective in [LogicalConnective.AND, LogicalConnective.OR] and len(self.formulas) < 2:
             raise ValidationError(
                 f"{self.connective.name} connective arity mismatch",
-                expected="at least 2 formulas",
-                actual=f"{len(self.formulas)} formulas",
+                value=len(self.formulas),
+                expected_type="at least 2 formulas",
                 suggestion=f"Provide at least 2 formulas for {self.connective.name} operation"
             )
         elif self.connective in [LogicalConnective.IMPLIES, LogicalConnective.BICONDITIONAL] and len(self.formulas) != 2:
             raise ValidationError(
                 f"{self.connective.name} connective arity mismatch",
-                expected="exactly 2 formulas",
-                actual=f"{len(self.formulas)} formulas",
+                value=len(self.formulas),
+                expected_type="exactly 2 formulas",
                 suggestion=f"Provide exactly 2 formulas for {self.connective.name} operation"
             )
     
@@ -720,7 +788,73 @@ class ConnectiveFormula(Formula):
 
 @dataclass
 class QuantifiedFormula(Formula):
-    """A formula with quantifiers."""
+    """
+    A formula with quantifiers (∃ or ∀).
+    
+    QuantifiedFormula represents formulas with existential (∃) or universal (∀) quantification
+    over variables. Quantifiers bind variables and are fundamental for expressing general
+    statements and existence claims in first-order logic.
+    
+    Args:
+        quantifier (LogicalConnective): Either EXISTS (∃) or FORALL (∀)
+        variable (Variable): The variable being quantified (bound variable)
+        formula (Formula): The scope of the quantifier
+    
+    Attributes:
+        quantifier: The type of quantification (EXISTS or FORALL)
+        variable: The bound variable
+        formula: The formula in the scope of the quantifier
+    
+    Common Patterns:
+        - ∃x.P(x): "there exists an x such that P(x)"
+        - ∀x.P(x): "for all x, P(x)"
+        - ∀x.(P(x) → Q(x)): "for all x, if P(x) then Q(x)"
+        - ∃x.(P(x) ∧ Q(x)): "there exists an x such that P(x) and Q(x)"
+    
+    Examples:
+        >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import (
+        ...     QuantifiedFormula, LogicalConnective, AtomicFormula, 
+        ...     Predicate, Variable, VariableTerm, Sort
+        ... )
+        >>> # Create a variable and predicate
+        >>> person_sort = Sort("person")
+        >>> x = Variable("x", person_sort)
+        >>> mortal_pred = Predicate("mortal", [person_sort])
+        >>> 
+        >>> # Create P(x) where P is "mortal"
+        >>> x_term = VariableTerm(x)
+        >>> mortal_x = AtomicFormula(mortal_pred, [x_term])
+        >>> 
+        >>> # ∀x.mortal(x) - "all persons are mortal"
+        >>> forall_mortal = QuantifiedFormula(LogicalConnective.FORALL, x, mortal_x)
+        >>> print(forall_mortal.to_string())
+        '∀x:person.(mortal(x:person))'
+        >>> 
+        >>> # ∃x.mortal(x) - "there exists a mortal person"
+        >>> exists_mortal = QuantifiedFormula(LogicalConnective.EXISTS, x, mortal_x)
+        >>> print(exists_mortal.to_string())
+        '∃x:person.(mortal(x:person))'
+    
+    Methods:
+        get_free_variables() -> Set[Variable]:
+            Returns free variables in the formula scope, excluding the bound variable
+        
+        substitute(var: Variable, term: Term) -> Formula:
+            Substitutes variable in the scope, avoiding capture of the bound variable
+        
+        to_string() -> str:
+            Returns string representation like "∀x.φ" or "∃x.φ"
+    
+    Raises:
+        ValidationError: If quantifier is not EXISTS or FORALL
+    
+    Notes:
+        - Bound variables are not free: in ∀x.P(x), x is not a free variable
+        - Substitution avoids variable capture (requires alpha-conversion in complete impl)
+        - Quantifier scope extends as far right as possible: ∀x.P(x) ∧ Q(x) means ∀x.(P(x) ∧ Q(x))
+        - Nested quantifiers: ∀x.∃y.P(x,y) - "for all x there exists y such that P(x,y)"
+        - Quantifier duality: ¬∀x.P(x) ≡ ∃x.¬P(x) and ¬∃x.P(x) ≡ ∀x.¬P(x)
+    """
     quantifier: LogicalConnective  # EXISTS or FORALL
     variable: Variable
     formula: Formula
@@ -729,8 +863,8 @@ class QuantifiedFormula(Formula):
         if self.quantifier not in [LogicalConnective.EXISTS, LogicalConnective.FORALL]:
             raise ValidationError(
                 f"Invalid quantifier",
-                expected="EXISTS or FORALL",
-                actual=str(self.quantifier),
+                value=str(self.quantifier),
+                expected_type="EXISTS or FORALL",
                 suggestion="Use LogicalConnective.EXISTS or LogicalConnective.FORALL as quantifier"
             )
     
