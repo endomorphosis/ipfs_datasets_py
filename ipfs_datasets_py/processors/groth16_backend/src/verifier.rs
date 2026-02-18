@@ -3,6 +3,16 @@
 
 use crate::ProofOutput;
 
+fn is_valid_32byte_hex(hex_str: &str) -> bool {
+    if hex_str.len() != 64 {
+        return false;
+    }
+    match hex::decode(hex_str) {
+        Ok(bytes) => bytes.len() == 32,
+        Err(_) => false,
+    }
+}
+
 /// Verify Groth16 proof
 pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     // Validate proof structure
@@ -19,8 +29,8 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     let theorem_hash_hex = &proof.public_inputs[0];
     let axioms_commitment_hex = &proof.public_inputs[1];
     
-    if theorem_hash_hex.len() != 64 || axioms_commitment_hex.len() != 64 {
-        return Ok(false);  // Invalid hex format
+    if !is_valid_32byte_hex(theorem_hash_hex) || !is_valid_32byte_hex(axioms_commitment_hex) {
+        return Ok(false);
     }
 
     // Perform basic validation

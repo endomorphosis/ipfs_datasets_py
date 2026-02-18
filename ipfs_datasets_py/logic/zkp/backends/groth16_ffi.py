@@ -165,8 +165,17 @@ class Groth16Backend(ZKPBackend):
             )
             
             if result.returncode != 0:
-                stdout_text = result.stdout.decode(errors="replace").strip()
-                stderr_text = result.stderr.decode(errors="replace").strip()
+                def _coerce_stream_to_text(stream) -> str:
+                    if stream is None:
+                        return ""
+                    if isinstance(stream, (bytes, bytearray)):
+                        return stream.decode(errors="replace").strip()
+                    if isinstance(stream, str):
+                        return stream.strip()
+                    return ""
+
+                stdout_text = _coerce_stream_to_text(getattr(result, "stdout", None))
+                stderr_text = _coerce_stream_to_text(getattr(result, "stderr", None))
 
                 # Prefer a structured error envelope if present on stdout.
                 if stdout_text:
@@ -227,8 +236,17 @@ class Groth16Backend(ZKPBackend):
             if result.returncode == 1:
                 return False
 
-            stdout_text = result.stdout.decode(errors="replace").strip()
-            stderr_text = result.stderr.decode(errors="replace").strip()
+            def _coerce_stream_to_text(stream) -> str:
+                if stream is None:
+                    return ""
+                if isinstance(stream, (bytes, bytearray)):
+                    return stream.decode(errors="replace").strip()
+                if isinstance(stream, str):
+                    return stream.strip()
+                return ""
+
+            stdout_text = _coerce_stream_to_text(getattr(result, "stdout", None))
+            stderr_text = _coerce_stream_to_text(getattr(result, "stderr", None))
             raise RuntimeError(
                 f"Groth16 verification failed (exit={result.returncode}): {stderr_text or stdout_text}"
             )
