@@ -23,8 +23,6 @@ import math
 import re
 from typing import Dict, List, Any, Optional, Tuple
 from enum import Enum
-import math
-import re
 from collections import Counter
 import numpy as np
 from dataclasses import dataclass, field
@@ -40,54 +38,6 @@ from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
 
 
 logger = logging.getLogger(__name__)
-
-
-_TOKEN_RE = re.compile(r"[A-Za-z0-9]+")
-
-
-def _tokenize_for_similarity(text: str) -> List[str]:
-    return [t.lower() for t in _TOKEN_RE.findall(text or "")]
-
-
-def _cosine_similarity_tf(text_a: str, text_b: str) -> float:
-    """Compute a simple cosine similarity on token term-frequency vectors.
-
-    This is intentionally dependency-free (no sklearn) and deterministic.
-    Returns a float in [0.0, 1.0].
-    """
-    tokens_a = _tokenize_for_similarity(text_a)
-    tokens_b = _tokenize_for_similarity(text_b)
-
-    if not tokens_a or not tokens_b:
-        return 0.0
-
-    tf_a: Dict[str, int] = {}
-    for token in tokens_a:
-        tf_a[token] = tf_a.get(token, 0) + 1
-
-    tf_b: Dict[str, int] = {}
-    for token in tokens_b:
-        tf_b[token] = tf_b.get(token, 0) + 1
-
-    # dot product over intersection
-    dot = 0.0
-    for token, count_a in tf_a.items():
-        count_b = tf_b.get(token)
-        if count_b:
-            dot += float(count_a * count_b)
-
-    norm_a = math.sqrt(sum(float(v * v) for v in tf_a.values()))
-    norm_b = math.sqrt(sum(float(v * v) for v in tf_b.values()))
-    if norm_a == 0.0 or norm_b == 0.0:
-        return 0.0
-
-    sim = dot / (norm_a * norm_b)
-    # Numeric safety
-    if sim < 0.0:
-        return 0.0
-    if sim > 1.0:
-        return 1.0
-    return sim
 
 
 class InformationRelationType(Enum):
@@ -671,13 +621,8 @@ class CrossDocumentReasoner:
         # Future Enhancement: Use LLM or ML model for sophisticated analysis
         # For now, use simple heuristics
 
-<<<<<<< Updated upstream
-        # 1. Check if the documents have semantic similarity
-        doc_similarity = self._compute_document_similarity(source_doc, target_doc)
-=======
-        # 1. Check if the documents have high semantic similarity
-        doc_similarity = _cosine_similarity_tf(source_doc.content, target_doc.content)
->>>>>>> Stashed changes
+    # 1. Check if the documents have semantic similarity
+    doc_similarity = self._compute_document_similarity(source_doc, target_doc)
 
         # 2. Check if one document was published after the other (if timestamp available)
         source_date = source_doc.metadata.get("published_date")
