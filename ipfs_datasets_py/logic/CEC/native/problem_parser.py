@@ -16,7 +16,9 @@ import logging
 try:
     from beartype import beartype
 except ImportError:
-    def beartype(func):
+    from typing import TypeVar, Callable, Any
+    F = TypeVar('F', bound=Callable[..., Any])
+    def beartype(func: F) -> F:
         return func
 
 from .shadow_prover import ProblemFile, ModalLogic
