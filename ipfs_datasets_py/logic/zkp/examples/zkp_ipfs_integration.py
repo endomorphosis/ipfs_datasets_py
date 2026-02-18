@@ -4,18 +4,26 @@ ZKP IPFS Integration Demo
 
 This script demonstrates how to integrate ZKP proofs with IPFS storage,
 including:
-- Storing proofs in IPFS
+- Storing proofs in IPFS (simulated)
 - Retrieving and verifying proofs from IPFS
-- Creating a verifiable proof chain
+- Creating verifiable proof chains
 - Best practices for distributed proof systems
 
 ⚠️ EDUCATIONAL USE ONLY: Simulation for learning, not cryptographically secure.
+
+How to run:
+    # From repository root:
+    PYTHONPATH=. python ipfs_datasets_py/logic/zkp/examples/zkp_ipfs_integration.py
+    
+    # Or install package first:
+    pip install -e .
+    python ipfs_datasets_py/logic/zkp/examples/zkp_ipfs_integration.py
 """
 
 import json
 import hashlib
 from typing import Dict, Any, List
-from ipfs_datasets_py.logic.zkp import BooleanCircuit, ZKPProver, ZKPVerifier
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier, ZKPProof
 
 
 class MockIPFSClient:
@@ -23,11 +31,12 @@ class MockIPFSClient:
     
     def __init__(self):
         self.storage = {}  # CID -> data
+        self.pin_set = set()
     
     def add_json(self, data: dict) -> str:
         """Add JSON data and return CID."""
         json_str = json.dumps(data, sort_keys=True)
-        cid = hashlib.sha256(json_str.encode()).hexdigest()[:46]  # Simulate CID
+        cid = "Qm" + hashlib.sha256(json_str.encode()).hexdigest()[:44]  # Simulate CID
         self.storage[cid] = data
         return cid
     
@@ -38,329 +47,249 @@ class MockIPFSClient:
         return self.storage[cid]
     
     def pin(self, cid: str):
-        """Pin CID (mock - already stored)."""
+        """Pin CID to ensure persistence."""
         if cid not in self.storage:
-            raise KeyError(f"CID not found: {cid}")
-        print(f"  Pinned: {cid}")
-
-
-class ZKPIPFSBridge:
-    """Bridge between ZKP proofs and IPFS storage."""
+            raise KeyError(f"Cannot pin non-existent CID: {cid}")
+        self.pin_set.add(cid)
+        return True
     
-    def __init__(self, ipfs_client=None):
-        self.ipfs = ipfs_client or MockIPFSClient()
-        self.proof_chain = []
-    
-    def store_proof(self, proof: Dict[str, Any], verification_key: Any, 
-                    metadata: Dict[str, Any] = None) -> str:
-        """
-        Store proof and verification key in IPFS.
-        
-        Args:
-            proof: ZKP proof dictionary
-            verification_key: Verification key for the proof
-            metadata: Optional metadata (description, timestamp, etc.)
-        
-        Returns:
-            IPFS CID of stored proof
-        """
-        # Package proof with verification key and metadata
-        package = {
-            'proof': proof,
-            'verification_key': verification_key,
-            'metadata': metadata or {}
-        }
-        
-        # Store in IPFS
-        cid = self.ipfs.add_json(package)
-        
-        # Pin to ensure persistence
-        self.ipfs.pin(cid)
-        
-        # Track in chain
-        self.proof_chain.append(cid)
-        
-        return cid
-    
-    def retrieve_proof(self, cid: str) -> Dict[str, Any]:
-        """
-        Retrieve proof package from IPFS.
-        
-        Args:
-            cid: IPFS CID of the proof
-        
-        Returns:
-            Proof package (proof + verification_key + metadata)
-        """
-        return self.ipfs.get_json(cid)
-    
-    def verify_from_ipfs(self, cid: str, expected_public_inputs: List) -> bool:
-        """
-        Retrieve and verify proof from IPFS.
-        
-        Args:
-            cid: IPFS CID of the proof
-            expected_public_inputs: Expected public input values
-        
-        Returns:
-            True if proof is valid
-        """
-        # Retrieve proof package
-        package = self.retrieve_proof(cid)
-        
-        # Extract components
-        proof = package['proof']
-        verification_key = package['verification_key']
-        
-        # Verify
-        verifier = ZKPVerifier(verification_key)
-        return verifier.verify_proof(proof, expected_public_inputs)
-    
-    def create_proof_chain(self, proofs_with_vks: List[tuple]) -> List[str]:
-        """
-        Create a chain of proofs stored in IPFS.
-        
-        Args:
-            proofs_with_vks: List of (proof, verification_key, metadata) tuples
-        
-        Returns:
-            List of CIDs forming the proof chain
-        """
-        cids = []
-        for i, (proof, vk, metadata) in enumerate(proofs_with_vks):
-            # Add reference to previous proof in chain
-            if cids:
-                metadata['previous_cid'] = cids[-1]
-            metadata['chain_index'] = i
-            
-            cid = self.store_proof(proof, vk, metadata)
-            cids.append(cid)
-        
-        return cids
+    def is_pinned(self, cid: str) -> bool:
+        """Check if CID is pinned."""
+        return cid in self.pin_set
 
 
 def demo_basic_storage():
-    """Demo 1: Basic proof storage and retrieval."""
+    """Demo 1: Basic proof storage and retrieval from IPFS."""
     print("\n" + "="*60)
     print("Demo 1: Basic Proof Storage in IPFS")
     print("="*60)
     
     # Create proof
-    circuit = BooleanCircuit()
-    w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-    circuit.add_gate('AND', [w1, w2], w3)
-    circuit.set_private_input(w1)
-    circuit.set_private_input(w2)
-    circuit.set_public_input(w3)
+    prover = ZKPProver()
+    proof = prover.generate_proof(
+        theorem="Transaction is valid",
+        private_axioms=["Sender has funds", "Signature is valid"],
+        metadata={"transaction_id": "tx_12345"}
+    )
     
-    prover = ZKPProver(circuit)
-    witness = {w1: True, w2: True}
-    proof = prover.generate_proof(witness, [True])
-    vk = prover.get_verification_key()
+    # Initialize mock IPFS client
+    ipfs = MockIPFSClient()
     
-    # Store in IPFS
-    bridge = ZKPIPFSBridge()
-    metadata = {
-        'description': 'AND gate proof',
-        'circuit_type': 'boolean',
-        'timestamp': '2026-02-18T00:00:00Z'
-    }
-    cid = bridge.store_proof(proof, vk, metadata)
+    # Convert proof to dict and store in IPFS
+    proof_dict = proof.to_dict()
+    cid = ipfs.add_json(proof_dict)
+    ipfs.pin(cid)
     
-    print(f"\n✓ Proof stored in IPFS")
-    print(f"  CID: {cid}")
-    print(f"  Metadata: {metadata['description']}")
+    print(f"\n✓ Proof generated ({proof.size_bytes} bytes)")
+    print(f"✓ Stored in IPFS with CID: {cid[:20]}...")
+    print(f"✓ Proof pinned for persistence")
     
-    # Retrieve and verify
-    is_valid = bridge.verify_from_ipfs(cid, expected_public_inputs=[True])
+    # Retrieve and verify from IPFS
+    retrieved_dict = ipfs.get_json(cid)
+    retrieved_proof = ZKPProof.from_dict(retrieved_dict)
+    
+    verifier = ZKPVerifier()
+    is_valid = verifier.verify_proof(retrieved_proof)
     
     print(f"\n✓ Proof retrieved from IPFS")
     print(f"✓ Verification result: {is_valid}")
+    print(f"✓ Proof metadata: {retrieved_proof.metadata.get('transaction_id')}")
 
 
 def demo_proof_chain():
-    """Demo 2: Create a chain of proofs."""
+    """Demo 2: Create a chain of proofs in IPFS."""
     print("\n" + "="*60)
     print("Demo 2: Proof Chain in IPFS")
     print("="*60)
     
-    # Create multiple related proofs
-    circuit = BooleanCircuit()
-    w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-    circuit.add_gate('AND', [w1, w2], w3)
-    circuit.set_private_input(w1)
-    circuit.set_private_input(w2)
-    circuit.set_public_input(w3)
+    ipfs = MockIPFSClient()
+    prover = ZKPProver()
     
-    prover = ZKPProver(circuit)
-    vk = prover.get_verification_key()
+    # Create a chain of related proofs
+    chain_cids = []
+    proofs_data = [
+        ("Block 1 is valid", ["Previous block hash is valid", "Transactions are valid"]),
+        ("Block 2 is valid", ["Previous block 1 is valid", "Transactions are valid"]),
+        ("Block 3 is valid", ["Previous block 2 is valid", "Transactions are valid"]),
+    ]
     
-    # Generate 5 proofs in sequence
-    proofs_with_vks = []
-    for i in range(5):
-        witness = {w1: True, w2: i % 2 == 0}
-        expected = [i % 2 == 0]
-        proof = prover.generate_proof(witness, expected)
+    print("\nCreating proof chain:")
+    for i, (theorem, axioms) in enumerate(proofs_data, 1):
+        # Generate proof
+        metadata = {"block_number": i, "chain_position": i}
         
-        metadata = {
-            'description': f'Proof #{i+1} in chain',
-            'step': i + 1
-        }
-        proofs_with_vks.append((proof, vk, metadata))
-    
-    # Create chain in IPFS
-    bridge = ZKPIPFSBridge()
-    chain_cids = bridge.create_proof_chain(proofs_with_vks)
-    
-    print(f"\n✓ Created proof chain with {len(chain_cids)} proofs")
-    for i, cid in enumerate(chain_cids):
-        print(f"  Proof {i+1}: {cid}")
-    
-    # Verify chain integrity
-    print(f"\n✓ Verifying chain integrity...")
-    for i, cid in enumerate(chain_cids):
-        package = bridge.retrieve_proof(cid)
-        metadata = package['metadata']
+        # Link to previous proof
+        if chain_cids:
+            metadata["previous_proof_cid"] = chain_cids[-1]
         
-        # Check chain index
-        assert metadata['chain_index'] == i, f"Chain index mismatch at {i}"
+        proof = prover.generate_proof(theorem, axioms, metadata)
         
-        # Check previous reference (except first)
-        if i > 0:
-            assert metadata['previous_cid'] == chain_cids[i-1], f"Chain broken at {i}"
+        # Store in IPFS
+        proof_dict = proof.to_dict()
+        cid = ipfs.add_json(proof_dict)
+        ipfs.pin(cid)
+        chain_cids.append(cid)
         
-        print(f"  ✓ Proof {i+1} chain link verified")
+        print(f"  Block {i}: {cid[:20]}...")
     
-    print(f"\n✓ Complete chain verified!")
+    print(f"\n✓ Created proof chain with {len(chain_cids)} blocks")
+    print(f"✓ All proofs stored and pinned in IPFS")
+    
+    # Verify the chain
+    verifier = ZKPVerifier()
+    print("\nVerifying chain:")
+    for i, cid in enumerate(chain_cids, 1):
+        proof_dict = ipfs.get_json(cid)
+        proof = ZKPProof.from_dict(proof_dict)
+        is_valid = verifier.verify_proof(proof)
+        print(f"  Block {i}: {'✓' if is_valid else '✗'} Valid")
+    
+    print(f"\n✓ All {len(chain_cids)} proofs in chain verified!")
 
 
 def demo_distributed_verification():
-    """Demo 3: Distributed proof verification."""
+    """Demo 3: Distributed proof verification scenario."""
     print("\n" + "="*60)
-    print("Demo 3: Distributed Proof Verification")
+    print("Demo 3: Distributed Verification")
     print("="*60)
     
-    # Prover generates proof
-    print("\n[Prover] Generating proof...")
-    circuit = BooleanCircuit()
-    w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-    circuit.add_gate('OR', [w1, w2], w3)
-    circuit.set_private_input(w1)
-    circuit.set_private_input(w2)
-    circuit.set_public_input(w3)
+    # Simulate multiple parties with separate IPFS nodes
+    print("\nScenario: Three parties verifying same proof")
+    print("-" * 60)
     
-    prover = ZKPProver(circuit)
-    witness = {w1: True, w2: False}
-    proof = prover.generate_proof(witness, [True])
-    vk = prover.get_verification_key()
+    # Party A generates and publishes proof
+    print("\nParty A (Prover):")
+    prover = ZKPProver()
+    proof = prover.generate_proof(
+        theorem="Property X holds",
+        private_axioms=["Secret evidence A", "Secret evidence B"],
+        metadata={"party": "A", "purpose": "compliance"}
+    )
     
-    # Prover stores in IPFS
-    bridge = ZKPIPFSBridge()
-    cid = bridge.store_proof(proof, vk, {'prover': 'Alice'})
-    print(f"  Stored at CID: {cid}")
+    ipfs_a = MockIPFSClient()
+    cid = ipfs_a.add_json(proof.to_dict())
+    print(f"  ✓ Generated proof")
+    print(f"  ✓ Published to IPFS: {cid[:20]}...")
     
-    # Share CID with verifiers (Bob and Charlie)
-    print(f"\n[Prover] Sharing CID with verifiers: {cid}")
+    # Party B retrieves and verifies
+    print("\nParty B (Verifier #1):")
+    ipfs_b = MockIPFSClient()
+    ipfs_b.storage[cid] = ipfs_a.storage[cid]  # Simulate IPFS replication
     
-    # Bob verifies
-    print("\n[Verifier Bob] Retrieving and verifying...")
-    bob_bridge = ZKPIPFSBridge(bridge.ipfs)  # Same IPFS network
-    bob_valid = bob_bridge.verify_from_ipfs(cid, [True])
-    print(f"  Bob's verification: {'✓ Valid' if bob_valid else '✗ Invalid'}")
+    proof_dict_b = ipfs_b.get_json(cid)
+    proof_b = ZKPProof.from_dict(proof_dict_b)
+    verifier_b = ZKPVerifier()
+    is_valid_b = verifier_b.verify_proof(proof_b)
+    print(f"  ✓ Retrieved proof from IPFS")
+    print(f"  ✓ Verification: {is_valid_b}")
     
-    # Charlie verifies
-    print("\n[Verifier Charlie] Retrieving and verifying...")
-    charlie_bridge = ZKPIPFSBridge(bridge.ipfs)  # Same IPFS network
-    charlie_valid = charlie_bridge.verify_from_ipfs(cid, [True])
-    print(f"  Charlie's verification: {'✓ Valid' if charlie_valid else '✗ Invalid'}")
+    # Party C also verifies independently
+    print("\nParty C (Verifier #2):")
+    ipfs_c = MockIPFSClient()
+    ipfs_c.storage[cid] = ipfs_a.storage[cid]  # Simulate IPFS replication
     
-    print(f"\n✓ Distributed verification complete")
-    print(f"✓ Multiple verifiers independently confirmed proof")
+    proof_dict_c = ipfs_c.get_json(cid)
+    proof_c = ZKPProof.from_dict(proof_dict_c)
+    verifier_c = ZKPVerifier()
+    is_valid_c = verifier_c.verify_proof(proof_c)
+    print(f"  ✓ Retrieved proof from IPFS")
+    print(f"  ✓ Verification: {is_valid_c}")
+    
+    print(f"\n✓ Distributed verification successful!")
+    print(f"✓ All parties verified independently without sharing secrets")
 
 
-def demo_proof_metadata():
-    """Demo 4: Rich metadata with proofs."""
+def demo_rich_metadata():
+    """Demo 4: Proofs with rich metadata for discovery."""
     print("\n" + "="*60)
-    print("Demo 4: Proof Metadata and Search")
+    print("Demo 4: Rich Metadata for Proof Discovery")
     print("="*60)
     
-    # Create proofs with rich metadata
-    circuit = BooleanCircuit()
-    w1, w2, w3 = [circuit.add_wire() for _ in range(3)]
-    circuit.add_gate('AND', [w1, w2], w3)
-    circuit.set_private_input(w1)
-    circuit.set_private_input(w2)
-    circuit.set_public_input(w3)
+    ipfs = MockIPFSClient()
+    prover = ZKPProver()
     
-    prover = ZKPProver(circuit)
-    vk = prover.get_verification_key()
-    bridge = ZKPIPFSBridge()
+    # Generate proofs with detailed metadata
+    proof_metadata = [
+        {
+            "type": "compliance",
+            "standard": "GDPR",
+            "organization": "Acme Corp",
+            "auditor": "External Auditor",
+            "date": "2026-02-18",
+            "tags": ["privacy", "data-protection", "EU"]
+        },
+        {
+            "type": "compliance",
+            "standard": "HIPAA",
+            "organization": "Health Corp",
+            "auditor": "Healthcare Auditor",
+            "date": "2026-02-18",
+            "tags": ["healthcare", "privacy", "US"]
+        },
+        {
+            "type": "financial",
+            "standard": "SOX",
+            "organization": "Finance Corp",
+            "auditor": "Financial Auditor",
+            "date": "2026-02-18",
+            "tags": ["finance", "accounting", "US"]
+        },
+    ]
     
-    # Store proofs with different metadata
-    proof_database = []
-    for i in range(3):
-        witness = {w1: True, w2: True}
-        proof = prover.generate_proof(witness, [True])
+    proof_cids = {}
+    print("\nStoring proofs with metadata:")
+    for meta in proof_metadata:
+        proof = prover.generate_proof(
+            theorem=f"{meta['organization']} complies with {meta['standard']}",
+            private_axioms=[f"Internal policy {i}" for i in range(3)],
+            metadata=meta
+        )
         
-        metadata = {
-            'prover': f'User{i+1}',
-            'purpose': ['compliance', 'audit', 'verification'][i],
-            'timestamp': f'2026-02-18T{i:02d}:00:00Z',
-            'tags': ['important', 'reviewed'] if i == 1 else ['standard']
-        }
+        cid = ipfs.add_json(proof.to_dict())
+        ipfs.pin(cid)
+        proof_cids[cid] = meta
         
-        cid = bridge.store_proof(proof, vk, metadata)
-        proof_database.append((cid, metadata))
+        print(f"  {meta['standard']}: {cid[:20]}... (tags: {', '.join(meta['tags'][:2])})")
     
-    print(f"\n✓ Stored {len(proof_database)} proofs with metadata")
+    print(f"\n✓ Stored {len(proof_cids)} proofs with rich metadata")
     
-    # Search by metadata
-    print(f"\nSearching for proofs with 'compliance' purpose:")
-    for cid, metadata in proof_database:
-        if metadata['purpose'] == 'compliance':
-            print(f"  Found: {cid}")
-            print(f"    Prover: {metadata['prover']}")
-            print(f"    Time: {metadata['timestamp']}")
+    # Query by metadata (simulated search)
+    print("\nQuerying proofs by tag 'privacy':")
+    for cid, meta in proof_cids.items():
+        if "privacy" in meta.get("tags", []):
+            print(f"  Found: {meta['standard']} - {meta['organization']}")
     
-    print(f"\nSearching for proofs with 'reviewed' tag:")
-    for cid, metadata in proof_database:
-        if 'reviewed' in metadata['tags']:
-            print(f"  Found: {cid}")
-            print(f"    Prover: {metadata['prover']}")
-            print(f"    Purpose: {metadata['purpose']}")
+    print("\n✓ Metadata enables discovery and categorization")
 
 
 def demo_best_practices():
-    """Demo 5: Best practices for ZKP+IPFS."""
+    """Demo 5: Best practices summary."""
     print("\n" + "="*60)
-    print("Demo 5: Best Practices")
+    print("Demo 5: Best Practices for IPFS + ZKP")
     print("="*60)
     
-    print("\n✓ Best Practices for ZKP + IPFS Integration:")
-    print("\n1. Always include verification key with proof")
-    print("   • Enables anyone to verify")
-    print("   • No trust in storage layer needed")
+    practices = [
+        ("✓ Always pin proofs", "Ensures persistence in IPFS network"),
+        ("✓ Include metadata", "Enables discovery and verification context"),
+        ("✓ Link proofs in chains", "Creates verifiable audit trails"),
+        ("✓ Serialize to JSON", "Standard format for interoperability"),
+        ("✓ Store CIDs separately", "Keep reference list for retrieval"),
+        ("✓ Verify after retrieval", "Always validate proofs from IPFS"),
+        ("✓ Use content addressing", "CID ensures data integrity"),
+        ("✓ Consider proof size", "Smaller proofs = lower storage cost"),
+    ]
     
-    print("\n2. Add rich metadata")
-    print("   • Prover identity")
-    print("   • Timestamp")
-    print("   • Purpose/context")
-    print("   • Tags for searchability")
+    print("\nKey practices for production systems:\n")
+    for i, (practice, description) in enumerate(practices, 1):
+        print(f"{i}. {practice}")
+        print(f"   → {description}\n")
     
-    print("\n3. Use proof chains for related proofs")
-    print("   • Link proofs with CID references")
-    print("   • Maintain verifiable history")
-    print("   • Enable audit trails")
-    
-    print("\n4. Pin important proofs")
-    print("   • Ensure availability")
-    print("   • Prevent garbage collection")
-    print("   • Use pinning services for critical proofs")
-    
-    print("\n5. Verify locally before trusting")
-    print("   • Don't trust IPFS content blindly")
-    print("   • Always verify proof after retrieval")
-    print("   • Check metadata matches expectations")
+    print("Additional considerations:")
+    print("  • Use real IPFS client (ipfshttpclient) in production")
+    print("  • Implement proper error handling for network issues")
+    print("  • Consider IPFS cluster for high availability")
+    print("  • Monitor pin status and re-pin if needed")
+    print("  • Use IPNS for mutable proof indices")
 
 
 def main():
@@ -369,32 +298,31 @@ def main():
     print("ZKP + IPFS INTEGRATION DEMO")
     print("="*60)
     print("\n⚠️  WARNING: Educational simulation only!")
-    print("   • ZKP module is not cryptographically secure")
-    print("   • Using mock IPFS (no actual IPFS connection)")
-    print("   • For demonstration purposes only")
+    print("   • Uses mock IPFS client (no real IPFS connection)")
+    print("   • ZKP is simulated (not cryptographically secure)")
+    print("   • See SECURITY_CONSIDERATIONS.md for details")
     
     # Run demos
     demo_basic_storage()
     demo_proof_chain()
     demo_distributed_verification()
-    demo_proof_metadata()
+    demo_rich_metadata()
     demo_best_practices()
     
     print("\n" + "="*60)
     print("IPFS Integration Demos Complete!")
     print("="*60)
     print("\nKey takeaways:")
-    print("  • ZKP proofs can be stored immutably in IPFS")
-    print("  • Verification keys enable trustless verification")
-    print("  • Proof chains create verifiable audit trails")
-    print("  • Rich metadata enables search and organization")
-    print("  • Best practices ensure reliability")
-    
-    print("\nFor production:")
+    print("  • ZKP proofs can be stored in IPFS as JSON")
+    print("  • Content addressing ensures proof integrity")
+    print("  • Proofs can form verifiable chains")
+    print("  • Multiple parties can verify independently")
+    print("  • Rich metadata enables discovery")
+    print("\nNext steps:")
     print("  • Use real IPFS client (ipfshttpclient)")
-    print("  • Use real cryptographic ZKP library")
-    print("  • See PRODUCTION_UPGRADE_PATH.md")
-    print("  • Consider pinning services (Pinata, Web3.Storage)")
+    print("  • Upgrade to real Groth16 backend")
+    print("  • Read PRODUCTION_UPGRADE_PATH.md")
+    print("  • Read INTEGRATION_GUIDE.md")
 
 
 if __name__ == '__main__':
