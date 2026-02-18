@@ -26,16 +26,18 @@ Session summaries and phase completion reports from the 2026-02-17 refactoring e
 Planning documents that have been superseded by newer plans or completed work. These files served their purpose during the refactoring effort but are no longer needed for current development.
 
 **Recently Archived (2026-02-18):**
-- `COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_FINAL.md` - Superseded by new 2026-02-18 analysis
+- `COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` - Previous comprehensive analysis (superseded by NEW version)
+- `COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_FINAL.md` - Superseded by 2026-02-18 analysis
 - `REFACTORING_PHASE_1_SUMMARY.md` - Historical phase 1 summary (moved from root)
 
 **Superseded By:** 
-- `COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` (latest comprehensive analysis)
+- `NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md` (latest independent analysis)
 - `FEATURE_MATRIX.md` (feature completeness at-a-glance)
 - `DEFERRED_FEATURES.md` (planned features documentation)
 - `QUICKSTART.md` (quick start guide)
 - `IMPLEMENTATION_STATUS.md` (current state)
 - `ROADMAP.md` (future plans)
+- `TEST_GUIDE.md` (testing documentation)
 
 ---
 
@@ -78,6 +80,19 @@ The refactoring effort (2026-02-17) successfully addressed:
 For **current and active** documentation, see:
 
 ### Active Files
+- [NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md](../NEW_COMPREHENSIVE_IMPROVEMENT_PLAN_2026_02_18.md) - Latest independent comprehensive analysis
+- [README.md](../README.md) - Module overview
+- [INDEX.md](../INDEX.md) - Documentation navigation hub
+- [QUICKSTART.md](../QUICKSTART.md) - 5-minute getting started guide
+- [FEATURE_MATRIX.md](../FEATURE_MATRIX.md) - Feature completeness matrix
+- [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Current status
+- [ROADMAP.md](../ROADMAP.md) - Development roadmap
+- [DEFERRED_FEATURES.md](../DEFERRED_FEATURES.md) - Planned features
+- [CHANGELOG_KNOWLEDGE_GRAPHS.md](../CHANGELOG_KNOWLEDGE_GRAPHS.md) - Version history
+- [VALIDATION_REPORT.md](../VALIDATION_REPORT.md) - Cross-reference validation
+
+### Testing
+- [tests/knowledge_graphs/TEST_GUIDE.md](../../../tests/knowledge_graphs/TEST_GUIDE.md) - Comprehensive testing guide
 - [README.md](../README.md) - Module overview and quick start
 - [INDEX.md](../INDEX.md) - Documentation navigation hub
 - [IMPLEMENTATION_STATUS.md](../IMPLEMENTATION_STATUS.md) - Current module status
