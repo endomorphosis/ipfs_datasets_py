@@ -85,6 +85,16 @@ if TYPE_CHECKING:
         VerbosityLevel,
         visualize_proof,
     )
+    from .formula_dependency_graph import (
+        FormulaDependencyGraph,
+        DependencyNode,
+        DependencyEdge,
+        FormulaType,
+        DependencyType,
+        CircularDependencyError,
+        analyze_proof_dependencies,
+        find_proof_chain,
+    )
 
 __all__ = [
     # Enumerations
@@ -153,6 +163,16 @@ __all__ = [
     "VerbosityLevel",
     "visualize_proof",
     
+    # Formula Dependency Graph (Phase 11)
+    "FormulaDependencyGraph",
+    "DependencyNode",
+    "DependencyEdge",
+    "FormulaType",
+    "DependencyType",
+    "CircularDependencyError",
+    "analyze_proof_dependencies",
+    "find_proof_chain",
+    
     # Utility Functions
     "create_always",
     "create_conjunction",
@@ -206,6 +226,15 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "TreeStyle": (".proof_tree_visualizer", "TreeStyle"),
     "VerbosityLevel": (".proof_tree_visualizer", "VerbosityLevel"),
     "visualize_proof": (".proof_tree_visualizer", "visualize_proof"),
+    # Formula Dependency Graph
+    "FormulaDependencyGraph": (".formula_dependency_graph", "FormulaDependencyGraph"),
+    "DependencyNode": (".formula_dependency_graph", "DependencyNode"),
+    "DependencyEdge": (".formula_dependency_graph", "DependencyEdge"),
+    "FormulaType": (".formula_dependency_graph", "FormulaType"),
+    "DependencyType": (".formula_dependency_graph", "DependencyType"),
+    "CircularDependencyError": (".formula_dependency_graph", "CircularDependencyError"),
+    "analyze_proof_dependencies": (".formula_dependency_graph", "analyze_proof_dependencies"),
+    "find_proof_chain": (".formula_dependency_graph", "find_proof_chain"),
 }
 
 
