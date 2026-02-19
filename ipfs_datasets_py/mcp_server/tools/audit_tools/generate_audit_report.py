@@ -17,7 +17,7 @@ from ipfs_datasets_py.audit.audit_reporting import AuditReportGenerator
 
 try:
     from ipfs_datasets_py import ipfs_datasets as ipfs_datasets  # type: ignore
-except Exception:
+except (ImportError, ModuleNotFoundError):
     ipfs_datasets = None  # type: ignore
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (

@@ -666,7 +666,7 @@ def lint_python_codebase(path: str = ".",
 
             sniffio.current_async_library()
             in_async = True
-        except Exception:
+        except (ImportError, ModuleNotFoundError, AttributeError):
             in_async = False
 
         if in_async:

@@ -36,7 +36,7 @@ try:  # pragma: no cover
         login,
     )
 
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     # Fallback implementation (kept dependency-light for tests/mocks).
     import concurrent.futures as cf
     import logging
@@ -51,7 +51,7 @@ except Exception:  # pragma: no cover
     try:
         from huggingface_hub import HfApi, CommitInfo, login  # type: ignore
         from huggingface_hub.errors import HfHubHTTPError  # type: ignore
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
 
         def login(*_args: Any, **_kwargs: Any) -> None:  # type: ignore
             return None
@@ -80,7 +80,7 @@ except Exception:  # pragma: no cover
 
     try:
         import tqdm  # type: ignore
-    except Exception:
+    except (ImportError, ModuleNotFoundError):
 
         class _TqdmNoOp:  # pragma: no cover
             def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -413,7 +413,7 @@ __all__ = [
 try:
     from huggingface_hub import login, HfApi, CommitInfo  # type: ignore
     from huggingface_hub.errors import HfHubHTTPError  # type: ignore
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     # Optional dependency: tests mock the API layer, so we only need import safety.
     def login(*args: Any, **kwargs: Any) -> None:  # type: ignore
         return None
@@ -446,7 +446,7 @@ except Exception:  # pragma: no cover
 
 try:
     import tqdm  # type: ignore
-except Exception:  # pragma: no cover
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     class _TqdmNoOp:  # pragma: no cover
         def __init__(self, *args: Any, **kwargs: Any) -> None:
             pass

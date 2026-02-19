@@ -47,7 +47,7 @@ class FFmpegUtilsCompatibility:
         try:
             path = Path(file_path)
             return path.exists() and path.is_file()
-        except Exception:
+        except (OSError, PermissionError):
             return False
     
     def validate_output_path(self, output_path: str) -> bool:
@@ -56,7 +56,7 @@ class FFmpegUtilsCompatibility:
             path = Path(output_path)
             parent = path.parent
             return parent.exists() and parent.is_dir()
-        except Exception:
+        except (OSError, PermissionError):
             return False
     
     async def probe_media_info(self, file_path: str) -> Dict[str, Any]:

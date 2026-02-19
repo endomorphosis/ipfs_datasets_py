@@ -137,7 +137,7 @@ class CodebaseSearchEngine:
                     continue
 
             return 'utf-8'  # Default fallback
-        except Exception:
+        except (OSError, IOError):
             return 'utf-8'
 
     def _compile_search_pattern(self, pattern: str, case_insensitive: bool,

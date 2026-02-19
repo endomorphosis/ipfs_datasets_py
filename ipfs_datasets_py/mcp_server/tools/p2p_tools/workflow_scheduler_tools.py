@@ -24,11 +24,8 @@ def _ensure_ipfs_accelerate_on_path() -> None:
         candidate = submodule_root / "ipfs_accelerate_py"
         if candidate.exists() and str(candidate) not in sys.path:
             sys.path.insert(0, str(candidate))
-    except Exception:
+    except (OSError, ValueError):
         pass
-
-
-_SCHEDULER: Any = None
 
 
 def _reset_scheduler_for_test() -> None:
@@ -72,12 +69,12 @@ def _coerce_tags(tag_strings: Optional[List[str]], WorkflowTag: Any) -> List[Any
             try:
                 hit = WorkflowTag(c)
                 break
-            except Exception:
+            except (ValueError, KeyError):
                 pass
             try:
                 hit = WorkflowTag[c]
                 break
-            except Exception:
+            except (ValueError, KeyError):
                 pass
 
         if hit is None:

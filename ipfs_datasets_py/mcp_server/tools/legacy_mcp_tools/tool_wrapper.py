@@ -75,7 +75,7 @@ class FunctionTool(ClaudeMCPTool):
             if required:
                 schema["required"] = required
             return schema
-        except Exception:
+        except (TypeError, ValueError):
             return {"type": "object", "properties": {}}
 
     async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -135,8 +135,5 @@ def wrap_function_as_tool(*args, **kwargs) -> Union[FunctionTool, Callable]:
                 setattr(function, "__mcp_tool_description__", description)
             if tags:
                 setattr(function, "__mcp_tool_tags__", tags)
-        except Exception:
+        except AttributeError:
             pass
-        return function
-
-    return decorator

@@ -24,7 +24,7 @@ def _ensure_ipfs_accelerate_on_path() -> None:
         candidate = submodule_root / "ipfs_accelerate_py"
         if candidate.exists() and str(candidate) not in sys.path:
             sys.path.insert(0, str(candidate))
-    except Exception:
+    except (OSError, ValueError):
         pass
 
 
@@ -57,7 +57,7 @@ def p2p_service_status(include_peers: bool = True, peers_limit: int = 50) -> Dic
             from ipfs_accelerate_py.p2p_tasks.service import list_known_peers
 
             out["peers"] = list_known_peers(alive_only=True, limit=int(peers_limit))
-        except Exception:
+        except (ImportError, ModuleNotFoundError, RuntimeError):
             out["peers"] = []
 
     return out

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from ipfs_datasets_py.analysis import CrossDocumentAnalyzer  # type: ignore
-except Exception:
+except (ImportError, ModuleNotFoundError):
     CrossDocumentAnalyzer = None  # type: ignore
 
 from ipfs_datasets_py.mcp_server.tools.mcp_helpers import (
