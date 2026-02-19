@@ -311,7 +311,12 @@ class UnifiedQueryEngine:
                 logger.error(f"Cypher query execution failed: {e}")
                 raise QueryExecutionError(
                     f"Failed to execute Cypher query: {e}",
-                    details={'query': query[:100], 'counters': tracker.counters}
+                    details={
+                        'query': query[:100],
+                        'counters': tracker.counters,
+                        'error': str(e),
+                        'error_class': type(e).__name__,
+                    }
                 ) from e
     
     def execute_ir(
@@ -375,6 +380,8 @@ class UnifiedQueryEngine:
                         'ir_type': type(ir).__name__,
                         'ir_preview': str(ir)[:100],
                         'counters': tracker.counters,
+                        'error': str(e),
+                        'error_class': type(e).__name__,
                     }
                 ) from e
     
@@ -446,7 +453,12 @@ class UnifiedQueryEngine:
                 logger.error(f"Hybrid search execution failed: {e}")
                 raise QueryExecutionError(
                     f"Failed to execute hybrid search: {e}",
-                    details={'query': query, 'k': k}
+                    details={
+                        'query': query,
+                        'k': k,
+                        'error': str(e),
+                        'error_class': type(e).__name__,
+                    }
                 ) from e
     
     def execute_graphrag(
@@ -521,7 +533,12 @@ class UnifiedQueryEngine:
                         logger.error(f"Unexpected LLM reasoning error: {e}")
                         raise QueryExecutionError(
                             f"LLM reasoning failed: {e}",
-                            details={'question': question, 'depth': reasoning_depth}
+                            details={
+                                'question': question,
+                                'depth': reasoning_depth,
+                                'error': str(e),
+                                'error_class': type(e).__name__,
+                            }
                         ) from e
                 
                 return GraphRAGResult(
@@ -553,7 +570,13 @@ class UnifiedQueryEngine:
                 logger.error(f"GraphRAG execution failed: {e}")
                 raise QueryExecutionError(
                     f"Failed to execute GraphRAG query: {e}",
-                    details={'question': question, 'depth': reasoning_depth, 'k': k}
+                    details={
+                        'question': question,
+                        'depth': reasoning_depth,
+                        'k': k,
+                        'error': str(e),
+                        'error_class': type(e).__name__,
+                    }
                 ) from e
     
     def _detect_query_type(self, query: str) -> str:
