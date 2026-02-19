@@ -17,6 +17,13 @@ from .propositional import (
     ModusPonens,
     Simplification,
     ConjunctionIntroduction,
+    Weakening,
+    DeMorgan,
+    DoubleNegation,
+    DisjunctiveSyllogism,
+    Contraposition,
+    HypotheticalSyllogism,
+    ImplicationElimination,
 )
 
 __all__ = [
@@ -27,4 +34,11 @@ __all__ = [
     'ModusPonens',
     'Simplification',
     'ConjunctionIntroduction',
+    'Weakening',
+    'DeMorgan',
+    'DoubleNegation',
+    'DisjunctiveSyllogism',
+    'Contraposition',
+    'HypotheticalSyllogism',
+    'ImplicationElimination',
 ]
