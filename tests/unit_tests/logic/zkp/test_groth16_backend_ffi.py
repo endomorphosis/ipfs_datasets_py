@@ -173,6 +173,30 @@ class TestGroth16BackendProofGeneration:
         assert proof.public_inputs['theorem_hash'] == sample_witness['theorem_hash_hex']
         assert proof.public_inputs['axioms_commitment'] == sample_witness['axioms_commitment_hex']
         assert proof.metadata['backend'] == 'groth16'
+
+    @patch('subprocess.run')
+    def test_generate_proof_passes_seed_to_cli(self, mock_run, sample_witness_json, sample_proof_json):
+        """When a seed is provided, the wrapper must pass --seed to the Rust CLI."""
+        mock_result = MagicMock()
+        mock_result.returncode = 0
+        mock_result.stdout = sample_proof_json.encode()
+        mock_result.stderr = b""
+        mock_run.return_value = mock_result
+
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
+        backend.generate_proof(sample_witness_json, seed=42)
+
+        called_cmd = mock_run.call_args[0][0]
+        assert called_cmd == [
+            "/usr/bin/groth16",
+            "prove",
+            "--input",
+            "/dev/stdin",
+            "--output",
+            "/dev/stdout",
+            "--seed",
+            "42",
+        ]
     
     @patch('subprocess.run')
     def test_generate_proof_subprocess_error(self, mock_run, sample_witness_json):

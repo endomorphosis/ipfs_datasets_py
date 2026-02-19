@@ -88,7 +88,7 @@ def _parse_validated_error_envelope(stdout_or_stderr_text: str) -> Optional[tupl
 class ZKPBackend(Protocol):
     """Protocol for ZKP backend implementations."""
     
-    def generate_proof(self, witness_json: str) -> ZKPProof:
+    def generate_proof(self, witness_json: str, seed: Optional[int] = None) -> ZKPProof:
         """Generate a zero-knowledge proof."""
         ...
     
@@ -205,12 +205,13 @@ class Groth16Backend(ZKPBackend):
         
         return None
     
-    def generate_proof(self, witness_json: str) -> ZKPProof:
+    def generate_proof(self, witness_json: str, seed: Optional[int] = None) -> ZKPProof:
         """
         Generate Groth16 proof from witness.
         
         Args:
             witness_json: Serialized MVPWitness as JSON string
+            seed: Optional deterministic seed passed through to the Rust CLI as `--seed <u64>`
             
         Returns:
             Groth16Proof object with cryptographic proof
@@ -224,11 +225,20 @@ class Groth16Backend(ZKPBackend):
         # Validate witness before sending to Rust
         witness = json.loads(witness_json)
         self._validate_witness(witness)
+
+        if seed is not None:
+            if not isinstance(seed, int):
+                raise ValueError("seed must be an int")
+            if seed < 0 or seed >= 2**64:
+                raise ValueError("seed must fit in u64")
         
         try:
             # Call Rust binary with witness
+            cmd = [self.binary_path, "prove", "--input", "/dev/stdin", "--output", "/dev/stdout"]
+            if seed is not None:
+                cmd.extend(["--seed", str(seed)])
             result = subprocess.run(
-                [self.binary_path, "prove", "--input", "/dev/stdin", "--output", "/dev/stdout"],
+                cmd,
                 input=witness_json.encode(),
                 capture_output=True,
                 timeout=self.timeout_seconds,
@@ -400,7 +410,7 @@ class Groth16BackendFallback(ZKPBackend):
     Generates placeholder proofs for testing FFI integration.
     """
     
-    def generate_proof(self, witness_json: str) -> ZKPProof:
+    def generate_proof(self, witness_json: str, seed: Optional[int] = None) -> ZKPProof:
         """Generate placeholder proof (for testing)."""
         witness = json.loads(witness_json)
         
