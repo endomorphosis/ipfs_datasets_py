@@ -40,6 +40,21 @@ from .tdfol_core import (
     Variable,
 )
 
+# Import proving strategies
+try:
+    from .strategies import (
+        ProverStrategy,
+        ForwardChainingStrategy,
+        ModalTableauxStrategy,
+        CECDelegateStrategy,
+        StrategySelector,
+    )
+    HAVE_STRATEGIES = True
+except ImportError:
+    HAVE_STRATEGIES = False
+    ProverStrategy = None  # type: ignore
+    StrategySelector = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -339,13 +354,20 @@ class UntilUnfoldingRule:
 class TDFOLProver:
     """Theorem prover for TDFOL formulas."""
     
-    def __init__(self, kb: Optional[TDFOLKnowledgeBase] = None, enable_cache: bool = True):
+    def __init__(
+        self,
+        kb: Optional[TDFOLKnowledgeBase] = None,
+        enable_cache: bool = True,
+        strategy: Optional['ProverStrategy'] = None
+    ):
         """
         Initialize the prover with a knowledge base.
         
         Args:
             kb: Knowledge base with axioms and theorems
             enable_cache: Whether to enable proof caching for performance
+            strategy: Optional custom proving strategy. If None, uses automatic
+                      strategy selection via StrategySelector.
         """
         self.kb = kb or TDFOLKnowledgeBase()
         self.enable_cache = enable_cache
@@ -362,7 +384,7 @@ class TDFOLProver:
         else:
             self.proof_cache = None
         
-        # Import and initialize all TDFOL rules (40 rules)
+        # Import and initialize all TDFOL rules (40 rules) for backward compatibility
         try:
             from .tdfol_inference_rules import get_all_tdfol_rules
             self.tdfol_rules = get_all_tdfol_rules()
@@ -374,7 +396,46 @@ class TDFOLProver:
         self.temporal_rules = [r for r in self.tdfol_rules if 'Temporal' in r.name]
         self.deontic_rules = [r for r in self.tdfol_rules if 'Deontic' in r.name or 'Permission' in r.name or 'Obligation' in r.name or 'Prohibition' in r.name]
         
-        # Try to use CEC prover if available
+        # Initialize proving strategies
+        if HAVE_STRATEGIES:
+            if strategy is not None:
+                # Use custom strategy
+                self.strategy = strategy
+                self.selector = None
+                logger.info(f"Using custom proving strategy: {strategy.name}")
+            else:
+                # Use automatic strategy selection
+                try:
+                    strategies = [
+                        ForwardChainingStrategy(
+                            rules=self.tdfol_rules,
+                            max_iterations=100
+                        ),
+                        ModalTableauxStrategy(),
+                        CECDelegateStrategy(),
+                    ]
+                    self.selector = StrategySelector(strategies)
+                    self.strategy = None
+                    logger.info("Using automatic strategy selection (StrategySelector)")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize StrategySelector: {e}")
+                    # Fallback to legacy behavior
+                    self.selector = None
+                    self.strategy = None
+        else:
+            logger.warning("Proving strategies not available, using legacy proving methods")
+            self.selector = None
+            self.strategy = None
+        
+        # Try to use CEC prover if available (for legacy path only)
+        self.cec_engine = None
+        if not HAVE_STRATEGIES or self.selector is None:
+            if _try_load_cec_prover():
+                try:
+                    self.cec_engine = InferenceEngine()
+                    logger.debug("CEC inference engine initialized (legacy)")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize CEC engine: {e}")
         self.cec_engine = None
         if _try_load_cec_prover():
             try:
@@ -406,6 +467,11 @@ class TDFOLProver:
     def prove(self, goal: Formula, timeout_ms: int = 5000) -> ProofResult:
         """
         Prove a formula using available methods.
+        
+        This method uses the strategy pattern for proving. If a custom strategy
+        was provided at initialization, it uses that strategy. Otherwise, it uses
+        the StrategySelector to automatically choose the best strategy based on
+        the formula characteristics.
         
         Args:
             goal: Formula to prove
@@ -451,374 +517,34 @@ class TDFOLProver:
                 self.proof_cache.set(goal, result, list(self.kb.axioms))
             return result
         
-        # Try forward chaining with TDFOL rules
-        result = self._forward_chaining(goal, timeout_ms)
-        if result.is_proved():
-            # Cache successful proof
-            if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
-            return result
-        
-        # Try modal tableaux for modal formulas
-        if self._is_modal_formula(goal) and _try_load_modal_tableaux():
-            result = self._modal_tableaux_prove(goal, timeout_ms)
-            if result.is_proved():
-                # Cache successful proof
-                if self.proof_cache is not None:
-                    self.proof_cache.set(goal, result, list(self.kb.axioms))
-                return result
-        
-        # Try CEC prover for compatible formulas
-        if self.cec_engine:
-            result = self._cec_prove(goal, timeout_ms)
-            if result.is_proved():
-                # Cache successful proof
-                if self.proof_cache is not None:
-                    self.proof_cache.set(goal, result, list(self.kb.axioms))
-                return result
-        
-        # Could not prove
-        return ProofResult(
-            status=ProofStatus.UNKNOWN,
-            formula=goal,
-            time_ms=(time.time() - start_time) * 1000,
-            method="exhausted",
-            message="Could not prove formula with available methods"
-        )
-    
-    def _forward_chaining(self, goal: Formula, timeout_ms: int) -> ProofResult:
-        """Forward chaining with TDFOL inference rules."""
-        import time
-        start_time = time.time()
-        
-        derived = set(self.kb.axioms + self.kb.theorems)
-        proof_steps = []
-        
-        # Iteratively apply rules until goal is derived or no progress
-        max_iterations = 100
-        for iteration in range(max_iterations):
-            if (time.time() - start_time) * 1000 > timeout_ms:
-                return ProofResult(
-                    status=ProofStatus.TIMEOUT,
-                    formula=goal,
-                    time_ms=(time.time() - start_time) * 1000,
-                    method="forward_chaining"
-                )
-            
-            # Check if goal is derived
-            if goal in derived:
-                return ProofResult(
-                    status=ProofStatus.PROVED,
-                    formula=goal,
-                    proof_steps=proof_steps,
-                    time_ms=(time.time() - start_time) * 1000,
-                    method="forward_chaining"
-                )
-            
-            # Apply all TDFOL rules
-            new_formulas = set()
-            for formula in list(derived):
-                # Try each rule
-                for rule in self.tdfol_rules:
-                    try:
-                        # Single-formula rules
-                        if rule.can_apply(formula):
-                            new_formula = rule.apply(formula)
-                            if new_formula not in derived:
-                                new_formulas.add(new_formula)
-                                proof_steps.append(ProofStep(
-                                    new_formula,
-                                    f"Applied {rule.name}",
-                                    rule.name,
-                                    [formula]
-                                ))
-                        
-                        # Two-formula rules (try with other derived formulas)
-                        for formula2 in list(derived):
-                            if formula == formula2:
-                                continue
-                            try:
-                                if rule.can_apply(formula, formula2):
-                                    new_formula = rule.apply(formula, formula2)
-                                    if new_formula not in derived:
-                                        new_formulas.add(new_formula)
-                                        proof_steps.append(ProofStep(
-                                            new_formula,
-                                            f"Applied {rule.name}",
-                                            rule.name,
-                                            [formula, formula2]
-                                        ))
-                            except (AttributeError, TypeError, ValueError) as e:
-                                # Rule application failed for this formula pair
-                                logger.debug(f"Rule {rule.name} failed on formula pair: {e}")
-                                continue
-                    except (AttributeError, TypeError, ValueError) as e:
-                        logger.debug(f"Rule {rule.name} failed: {e}")
-                        continue
-            
-            # No progress made
-            if not new_formulas:
-                break
-            
-            derived.update(new_formulas)
-        
-        return ProofResult(
-            status=ProofStatus.UNKNOWN,
-            formula=goal,
-            proof_steps=proof_steps,
-            time_ms=(time.time() - start_time) * 1000,
-            method="forward_chaining",
-            message="Forward chaining exhausted without proving goal"
-        )
-    
-    def _is_modal_formula(self, formula: Formula) -> bool:
-        """Check if formula contains modal operators."""
-        if isinstance(formula, (DeonticFormula, TemporalFormula, BinaryTemporalFormula)):
-            return True
-        if isinstance(formula, BinaryFormula):
-            return self._is_modal_formula(formula.left) or self._is_modal_formula(formula.right)
-        if isinstance(formula, UnaryFormula):
-            return self._is_modal_formula(formula.formula)
-        if isinstance(formula, QuantifiedFormula):
-            return self._is_modal_formula(formula.formula)
-        return False
-    
-    def _modal_tableaux_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
-        """Prove using modal tableaux method via ShadowProver bridge.
-        
-        This method integrates with ShadowProver to leverage specialized
-        modal logic provers (K, S4, S5, D) for modal formulas.
-        
-        Args:
-            goal: Modal formula to prove
-            timeout_ms: Timeout in milliseconds
-            
-        Returns:
-            Proof result with modal tableaux details
-        """
-        import time
-        start_time = time.time()
-        
-        try:
-            # Import bridge
-            from ..integration.tdfol_shadowprover_bridge import (
-                TDFOLShadowProverBridge, ModalLogicType
-            )
-            
-            # Create bridge instance
-            bridge = TDFOLShadowProverBridge()
-            
-            if not bridge.available:
-                logger.debug("ShadowProver bridge not available")
-                return ProofResult(
-                    status=ProofStatus.UNKNOWN,
-                    formula=goal,
-                    time_ms=(time.time() - start_time) * 1000,
-                    method="modal_tableaux",
-                    message="ShadowProver not available"
-                )
-            
-            # Select appropriate modal logic system based on operators
-            logic_type = self._select_modal_logic_type(goal)
-            
-            logger.debug(f"Using modal logic system: {logic_type.value}")
-            
-            # Attempt proof via ShadowProver bridge
-            result = bridge.prove_with_shadowprover(goal, logic_type, timeout_ms)
-            
-            # Update timing information
-            result.time_ms = (time.time() - start_time) * 1000
-            
-            if result.is_proved():
-                logger.info(f"Modal tableaux proof successful using {logic_type.value}")
+        # Use strategy pattern if available
+        if HAVE_STRATEGIES and (self.selector is not None or self.strategy is not None):
+            # Select strategy
+            if self.strategy is not None:
+                # Use custom strategy
+                strategy = self.strategy
+                logger.debug(f"Using custom strategy: {strategy.name}")
             else:
-                logger.debug(f"Modal tableaux proof failed: {result.message}")
+                # Auto-select strategy
+                strategy = self.selector.select_strategy(goal, self.kb)
+                logger.debug(f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})")
+            
+            # Prove using strategy
+            result = strategy.prove(goal, self.kb, timeout_ms)
+            
+            # Cache successful proof
+            if result.is_proved() and self.proof_cache is not None:
+                self.proof_cache.set(goal, result, list(self.kb.axioms))
             
             return result
-            
-        except Exception as e:
-            logger.error(f"Modal tableaux proving failed: {e}", exc_info=True)
-            return ProofResult(
-                status=ProofStatus.ERROR,
-                formula=goal,
-                time_ms=(time.time() - start_time) * 1000,
-                method="modal_tableaux",
-                message=f"Error in modal tableaux proving: {e}"
-            )
-    
-    def _select_modal_logic_type(self, formula: Formula) -> 'ModalLogicType':
-        """Select appropriate modal logic system for formula.
         
-        Selection logic:
-        - Deontic operators (O, P, F) → D logic (serial accessibility)
-        - Knowledge/belief → S5 (equivalence relation)
-        - Temporal with nesting → S4 (reflexive + transitive)
-        - Basic modal → K (minimal modal logic)
-        
-        Args:
-            formula: Formula to analyze
-            
-        Returns:
-            Most appropriate modal logic type
-        """
-        from ..integration.tdfol_shadowprover_bridge import ModalLogicType
-        
-        # Check for deontic operators
-        if self._has_deontic_operators(formula):
-            logger.debug("Deontic operators detected, using D logic")
-            return ModalLogicType.D
-        
-        # Check for temporal operators with nesting
-        if self._has_nested_temporal(formula):
-            logger.debug("Nested temporal operators detected, using S4 logic")
-            return ModalLogicType.S4
-        
-        # Check for simple temporal (always/eventually)
-        if self._has_temporal_operators(formula):
-            logger.debug("Temporal operators detected, using S4 logic")
-            return ModalLogicType.S4
-        
-        # Default to basic modal logic K
-        logger.debug("Using basic modal logic K")
-        return ModalLogicType.K
-    
-    def _traverse_formula(
-        self,
-        formula: Formula,
-        predicate: Callable[[Formula], bool],
-        depth: int = 0,
-        max_depth: Optional[int] = None,
-        track_depth: bool = False
-    ) -> bool:
-        """
-        Generic formula tree traversal with predicate.
-        
-        This helper method eliminates code duplication by providing a unified
-        way to traverse formula trees with a custom predicate function.
-        
-        Args:
-            formula: Formula to traverse
-            predicate: Function that returns True if condition met
-            depth: Current recursion depth (for depth tracking)
-            max_depth: Maximum depth to traverse (None = unlimited)
-            track_depth: If True, increment depth for matching formulas
-        
-        Returns:
-            True if predicate returns True for any node
-        
-        Example:
-            >>> # Check for deontic operators
-            >>> self._traverse_formula(
-            ...     formula,
-            ...     lambda f: isinstance(f, DeonticFormula)
-            ... )
-        """
-        # Check depth limit
-        if max_depth is not None and depth > max_depth:
-            return False
-        
-        # Check predicate on current formula
-        predicate_match = predicate(formula)
-        
-        # If tracking depth and predicate matches, increment depth
-        new_depth = depth + 1 if (track_depth and predicate_match) else depth
-        
-        # Early return if depth threshold met
-        if track_depth and predicate_match and new_depth >= 2:
-            return True
-        
-        # For non-depth-tracking, return True immediately if predicate matches
-        if not track_depth and predicate_match:
-            return True
-        
-        # Traverse children based on formula type
-        if isinstance(formula, UnaryFormula):
-            return self._traverse_formula(
-                formula.formula, predicate, new_depth, max_depth, track_depth
-            )
-        elif isinstance(formula, (BinaryFormula, BinaryTemporalFormula)):
-            return (
-                self._traverse_formula(
-                    formula.left, predicate, new_depth, max_depth, track_depth
-                ) or
-                self._traverse_formula(
-                    formula.right, predicate, new_depth, max_depth, track_depth
-                )
-            )
-        elif isinstance(formula, QuantifiedFormula):
-            return self._traverse_formula(
-                formula.formula, predicate, new_depth, max_depth, track_depth
-            )
-        elif isinstance(formula, TemporalFormula):
-            return self._traverse_formula(
-                formula.formula, predicate, new_depth, max_depth, track_depth
-            )
-        elif isinstance(formula, DeonticFormula):
-            return self._traverse_formula(
-                formula.formula, predicate, new_depth, max_depth, track_depth
-            )
-        
-        # No children and predicate didn't match
-        return False
-    
-    def _has_deontic_operators(self, formula: Formula) -> bool:
-        """Check if formula contains deontic operators (O, P, F).
-        
-        Args:
-            formula: Formula to check
-            
-        Returns:
-            True if deontic operators present
-        """
-        return self._traverse_formula(
-            formula,
-            lambda f: isinstance(f, DeonticFormula)
-        )
-    
-    def _has_temporal_operators(self, formula: Formula) -> bool:
-        """Check if formula contains temporal operators (□, ◊, X, U, S).
-        
-        Args:
-            formula: Formula to check
-            
-        Returns:
-            True if temporal operators present
-        """
-        return self._traverse_formula(
-            formula,
-            lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula))
-        )
-    
-    def _has_nested_temporal(self, formula: Formula, depth: int = 0) -> bool:
-        """Check if formula has nested temporal operators (depth >= 2).
-        
-        Args:
-            formula: Formula to check
-            depth: Current nesting depth (default: 0)
-            
-        Returns:
-            True if nested temporal operators detected
-        """
-        return self._traverse_formula(
-            formula,
-            lambda f: isinstance(f, (TemporalFormula, BinaryTemporalFormula)),
-            depth=depth,
-            track_depth=True
-        )
-        if isinstance(formula, DeonticFormula):
-            return self._has_nested_temporal(formula.formula, depth)
-        
-        return False
-    
-    def _cec_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
-        """Prove using CEC inference engine."""
-        # This would convert TDFOL to DCEC and use CEC prover
-        # For now, return unknown
+        # Fallback: strategies not available
+        logger.error("Strategies not available - cannot prove formula")
         return ProofResult(
-            status=ProofStatus.UNKNOWN,
+            status=ProofStatus.ERROR,
             formula=goal,
-            method="cec_prover",
-            message="CEC prover integration not yet implemented"
+            method="error",
+            message="Proving strategies not available. Please ensure strategies module is properly installed."
         )
     
     def add_axiom(self, formula: Formula, name: Optional[str] = None) -> None:

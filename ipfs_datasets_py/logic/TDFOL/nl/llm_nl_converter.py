@@ -8,13 +8,14 @@ This module implements a hybrid approach for NL→TDFOL conversion:
 4. Best result selection based on confidence scores
 """
 
-import hashlib
 import json
 import logging
 import time
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple
+
+from .cache_utils import create_cache_cid
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,15 @@ class LLMParseResult:
 
 
 class LLMResponseCache:
-    """Simple in-memory cache for LLM responses."""
+    """
+    In-memory cache for LLM responses using IPFS CIDs.
+    
+    This cache uses IPFS Content Identifiers (CIDs) as keys, ensuring:
+    - Content-addressed storage (deterministic keys)
+    - IPFS-compatible format (can be persisted to IPFS)
+    - Verifiable cache entries (CID contains hash metadata)
+    - Future-proof design (supports distributed caching)
+    """
     
     def __init__(self, max_size: int = 1000):
         self.cache: Dict[str, Tuple[str, float]] = {}
@@ -70,9 +79,35 @@ class LLMResponseCache:
         self.misses = 0
     
     def _make_key(self, text: str, provider: str, prompt_hash: str) -> str:
-        """Create cache key from text and parameters."""
-        combined = f"{text}|{provider}|{prompt_hash}"
-        return hashlib.sha256(combined.encode()).hexdigest()
+        """
+        Create IPFS CID cache key using multiformats.
+        
+        Generates a deterministic Content Identifier (CID) from cache parameters.
+        The CID is created using:
+        - Canonical JSON serialization (sorted keys, compact format)
+        - SHA2-256 hashing
+        - CIDv1 with base32 encoding
+        
+        Args:
+            text: Input text to cache
+            provider: LLM provider name
+            prompt_hash: Hash of the prompt template
+        
+        Returns:
+            CIDv1 string in base32 format (e.g., 'bafkreig...')
+        
+        Example:
+            >>> cache = LLMResponseCache()
+            >>> key = cache._make_key("hello", "openai", "abc123")
+            >>> assert key.startswith("bafk")  # CIDv1 base32
+        """
+        cache_data = {
+            "text": text,
+            "provider": provider,
+            "prompt_hash": prompt_hash,
+            "version": "1.0"  # Schema version for future compatibility
+        }
+        return create_cache_cid(cache_data)
     
     def get(self, text: str, provider: str, prompt_hash: str) -> Optional[Tuple[str, float]]:
         """Get cached response if available."""
@@ -299,11 +334,13 @@ class LLMNLConverter:
         # Build prompt
         operator_hints = get_operator_hints_for_text(text)
         prompt = build_conversion_prompt(text, include_examples=True, operator_hints=operator_hints)
-        prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
+        
+        # Create prompt hash using IPFS CID (shorter version for readability)
+        prompt_cid = create_cache_cid({"prompt": prompt})[:16]
         
         # Check cache
         if self.llm_cache:
-            cached = self.llm_cache.get(text, provider or "default", prompt_hash)
+            cached = self.llm_cache.get(text, provider or "default", prompt_cid)
             if cached:
                 formula, confidence = cached
                 return formula, confidence, True
@@ -327,7 +364,7 @@ class LLMNLConverter:
         
         # Cache result
         if self.llm_cache:
-            self.llm_cache.put(text, provider or "default", prompt_hash, formula, confidence)
+            self.llm_cache.put(text, provider or "default", prompt_cid, formula, confidence)
         
         return formula, confidence, False
     
