@@ -4,6 +4,7 @@ Tests for Workstream I improvements:
   - extraction._entity_helpers extraction
   - core._legacy_graph_engine extraction
   - query/__init__ naming normalization (import + docstring)
+  - cross_document_types extraction from cross_document_reasoning
 
 Tests follow GIVEN-WHEN-THEN format per repository standards.
 """
@@ -364,3 +365,154 @@ class TestQueryModuleNamingGuide:
         assert callable(UnifiedQueryEngine)
         assert callable(HybridSearchEngine)
         assert callable(BudgetManager)
+
+
+class TestCrossDocumentTypesExtraction:
+    """Dataclasses and enum moved from cross_document_reasoning.py to cross_document_types.py."""
+
+    def test_types_importable_from_new_module(self):
+        """
+        GIVEN: cross_document_types module
+        WHEN: Importing all four public types
+        THEN: They are importable and are the expected kind (Enum / dataclass)
+        """
+        # GIVEN / WHEN
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import (
+            InformationRelationType,
+            DocumentNode,
+            EntityMediatedConnection,
+            CrossDocReasoning,
+        )
+        from enum import Enum
+        import dataclasses
+
+        # THEN
+        assert issubclass(InformationRelationType, Enum)
+        assert dataclasses.is_dataclass(DocumentNode)
+        assert dataclasses.is_dataclass(EntityMediatedConnection)
+        assert dataclasses.is_dataclass(CrossDocReasoning)
+
+    def test_types_still_importable_from_reasoning_module(self):
+        """
+        GIVEN: cross_document_reasoning module (backward compat)
+        WHEN: Importing types from the old location
+        THEN: They are the same objects as in cross_document_types
+        """
+        # GIVEN / WHEN
+        from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import (
+            InformationRelationType as A1,
+            DocumentNode as A2,
+            EntityMediatedConnection as A3,
+            CrossDocReasoning as A4,
+        )
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import (
+            InformationRelationType as B1,
+            DocumentNode as B2,
+            EntityMediatedConnection as B3,
+            CrossDocReasoning as B4,
+        )
+
+        # THEN – same objects (not duplicates)
+        assert A1 is B1
+        assert A2 is B2
+        assert A3 is B3
+        assert A4 is B4
+
+    def test_information_relation_type_members(self):
+        """
+        GIVEN: InformationRelationType enum
+        WHEN: Checking its members
+        THEN: All expected relation categories are present
+        """
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import (
+            InformationRelationType,
+        )
+
+        expected = {
+            "COMPLEMENTARY", "SUPPORTING", "CONTRADICTING", "ELABORATING",
+            "PREREQUISITE", "CONSEQUENCE", "ALTERNATIVE", "UNCLEAR",
+        }
+        actual = {m.name for m in InformationRelationType}
+        assert actual == expected
+
+    def test_document_node_instantiation(self):
+        """
+        GIVEN: DocumentNode dataclass
+        WHEN: Instantiated with required fields only
+        THEN: Defaults populate optional fields correctly
+        """
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import DocumentNode
+
+        node = DocumentNode(id="doc1", content="Hello world", source="test.txt")
+
+        assert node.id == "doc1"
+        assert node.content == "Hello world"
+        assert node.source == "test.txt"
+        assert node.metadata == {}
+        assert node.vector is None
+        assert node.relevance_score == 0.0
+        assert node.entities == []
+
+    def test_entity_mediated_connection_instantiation(self):
+        """
+        GIVEN: EntityMediatedConnection dataclass
+        WHEN: Instantiated with required fields
+        THEN: All fields are stored correctly
+        """
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import (
+            EntityMediatedConnection,
+            InformationRelationType,
+        )
+
+        conn = EntityMediatedConnection(
+            entity_id="e1",
+            entity_name="Alice",
+            entity_type="person",
+            source_doc_id="doc1",
+            target_doc_id="doc2",
+            relation_type=InformationRelationType.SUPPORTING,
+            connection_strength=0.9,
+        )
+
+        assert conn.entity_name == "Alice"
+        assert conn.relation_type == InformationRelationType.SUPPORTING
+        assert conn.connection_strength == 0.9
+        assert conn.context == {}
+
+    def test_cross_doc_reasoning_instantiation(self):
+        """
+        GIVEN: CrossDocReasoning dataclass
+        WHEN: Instantiated with required fields only
+        THEN: Defaults are applied and lists are empty
+        """
+        from ipfs_datasets_py.knowledge_graphs.cross_document_types import CrossDocReasoning
+
+        reasoning = CrossDocReasoning(id="r1", query="What is X?")
+
+        assert reasoning.id == "r1"
+        assert reasoning.query == "What is X?"
+        assert reasoning.reasoning_depth == "moderate"
+        assert reasoning.documents == []
+        assert reasoning.entity_connections == []
+        assert reasoning.traversal_paths == []
+        assert reasoning.answer is None
+        assert reasoning.confidence == 0.0
+
+    def test_cross_document_reasoning_file_size_reduced(self):
+        """
+        GIVEN: cross_document_reasoning.py
+        WHEN: Counting lines
+        THEN: File is shorter than the original 1244 lines
+        """
+        import importlib.util
+
+        spec = importlib.util.find_spec(
+            "ipfs_datasets_py.knowledge_graphs.cross_document_reasoning"
+        )
+        assert spec is not None
+        with open(spec.origin) as f:
+            lines = f.readlines()
+        assert len(lines) < 1244, (
+            f"cross_document_reasoning.py has {len(lines)} lines; "
+            "expected fewer than original 1244 after type extraction"
+        )

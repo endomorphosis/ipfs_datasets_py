@@ -191,8 +191,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 ## Workstream I — Codebase hygiene (ongoing)
 
-- [ ] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
+- [x] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
   - Candidates: `extraction/extractor.py`, `core/query_executor.py`, `cross_document_reasoning.py`.
+  - Status (2026-02-19): ✅ DONE – Three god-module reductions completed: (a) `extraction/extractor.py` 1760→1624 lines via `extraction/_entity_helpers.py`; (b) `core/query_executor.py` 1189→545 lines via `core/_legacy_graph_engine.py`; (c) `cross_document_reasoning.py` 1244→1196 lines by extracting `InformationRelationType`, `DocumentNode`, `EntityMediatedConnection`, `CrossDocReasoning` into new `cross_document_types.py`. All three preserve backward-compatible imports. Tests in `test_workstream_i.py` (27 tests) verify both import paths and object identity.
 - [x] **Improve typing at boundaries** (P2, low risk)
   - Acceptance: fewer `Any` at public edges; core dataclasses or Protocols for key interfaces.
   - Status (2026-02-19): ✅ DONE – Created `core/types.py` with: type aliases `GraphProperties`, `NodeLabels`, `CID`; TypedDicts `GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`; structural Protocols `StorageBackend` and `GraphEngineProtocol`. All exported from `core/__init__.py`.
@@ -278,3 +279,4 @@ If you want a high-value sequence that keeps risk low:
 
 
 
+- 2026-02-19: I.1d (god module) – Extracted `InformationRelationType`, `DocumentNode`, `EntityMediatedConnection`, `CrossDocReasoning` from `cross_document_reasoning.py` (1244→1196 lines) into new `cross_document_types.py`; re-exported for backward compat; 7 new tests in `test_workstream_i.py::TestCrossDocumentTypesExtraction`.

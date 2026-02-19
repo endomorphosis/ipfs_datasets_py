@@ -23,15 +23,19 @@ import math
 import os
 import re
 from typing import Dict, List, Any, Optional, Tuple
-from enum import Enum
 from collections import Counter
 import numpy as np
-from dataclasses import dataclass, field
 import uuid
 
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
+)
+from ipfs_datasets_py.knowledge_graphs.cross_document_types import (
+    InformationRelationType,
+    DocumentNode,
+    EntityMediatedConnection,
+    CrossDocReasoning,
 )
 
 _UNIFIED_OPT_IMPORT_ERROR: Optional[BaseException] = None
@@ -72,58 +76,6 @@ except ImportError:
 
 
 logger = logging.getLogger(__name__)
-
-
-class InformationRelationType(Enum):
-    """Types of relations between pieces of information across documents."""
-    COMPLEMENTARY = "complementary"     # Information that adds to or extends other information
-    SUPPORTING = "supporting"           # Information that confirms or backs up other information
-    CONTRADICTING = "contradicting"     # Information that conflicts with other information
-    ELABORATING = "elaborating"         # Information that provides more detail on other information
-    PREREQUISITE = "prerequisite"       # Information needed to understand other information
-    CONSEQUENCE = "consequence"         # Information that follows from other information
-    ALTERNATIVE = "alternative"         # Information that provides a different perspective
-    UNCLEAR = "unclear"                 # Relationship cannot be determined
-
-
-@dataclass
-class DocumentNode:
-    """Represents a document or chunk of text in the reasoning process."""
-    id: str
-    content: str
-    source: str
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    vector: Optional[np.ndarray] = None
-    relevance_score: float = 0.0
-    entities: List[str] = field(default_factory=list)
-
-
-@dataclass
-class EntityMediatedConnection:
-    """Represents a connection between documents mediated by an entity."""
-    entity_id: str
-    entity_name: str
-    entity_type: str
-    source_doc_id: str
-    target_doc_id: str
-    relation_type: InformationRelationType
-    connection_strength: float
-    context: Dict[str, Any] = field(default_factory=dict)
-
-
-@dataclass
-class CrossDocReasoning:
-    """Represents a cross-document reasoning process."""
-    id: str
-    query: str
-    query_embedding: Optional[np.ndarray] = None
-    documents: List[DocumentNode] = field(default_factory=list)
-    entity_connections: List[EntityMediatedConnection] = field(default_factory=list)
-    traversal_paths: List[List[str]] = field(default_factory=list)
-    reasoning_depth: str = "moderate"  # "basic", "moderate", or "deep"
-    answer: Optional[str] = None
-    confidence: float = 0.0
-    reasoning_trace_id: Optional[str] = None
 
 
 class CrossDocumentReasoner:
