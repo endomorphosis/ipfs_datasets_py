@@ -345,6 +345,15 @@ def tool_metadata(
         ...     return "workflow-123"
     """
     def decorator(func: Callable) -> Callable:
+        """Inner decorator that registers metadata and attaches it to *func*.
+
+        Args:
+            func: The tool function to annotate.
+
+        Returns:
+            The original *func* with ``_mcp_metadata`` and convenience
+            attributes attached.
+        """
         # Get function name
         tool_name = func.__name__
         

@@ -35,6 +35,13 @@ class ToolCategory:
     """Represents a category of tools."""
     
     def __init__(self, name: str, path: Path, description: str = ""):
+        """Initialise a tool category backed by a directory on disk.
+
+        Args:
+            name: Short category identifier (e.g. ``"dataset_tools"``).
+            path: Filesystem path to the directory that contains the tool modules.
+            description: Optional human-readable description of the category.
+        """
         self.name = name
         self.path = path
         self.description = description

@@ -47,6 +47,7 @@ class EnhancedParameterValidator:
     SUPPORTED_DATA_EXTENSIONS = {'.parquet', '.arrow', '.feather', '.hdf5', '.h5'}
     
     def __init__(self):
+        """Initialise the validator with an empty cache and zeroed performance counters."""
         self.validation_cache: Dict[str, bool] = {}
         self.performance_metrics = {
             'validations_performed': 0,

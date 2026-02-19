@@ -73,12 +73,14 @@ except ImportError:
             """Fallback embeddings implementation when dependencies are missing."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class BaseVectorStore:  # type: ignore[too-many-public-methods]
             """Fallback vector store base class."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class QdrantVectorStore(BaseVectorStore):
@@ -91,12 +93,14 @@ except ImportError:
             """Fallback MCP server implementation."""
 
             def __init__(self, *args: Any, **kwargs: Any) -> None:
+                """No-op constructor; real implementation requires optional dependencies."""
                 pass
 
         class FastAPISettings:
             """Fallback FastAPI settings with safe defaults."""
 
             def __init__(self) -> None:
+                """Initialise settings with defaults; SECRET_KEY is required at runtime."""
                 self.app_name = "IPFS Datasets API"
                 self.app_version = "1.0.0"
                 self.debug = False
@@ -155,21 +159,25 @@ rate_limit_storage: Dict[str, Dict[str, Any]] = {}
 
 # Pydantic models for API
 class TokenResponse(BaseModel):
+    """Response body returned by authentication endpoints."""
     access_token: str
     token_type: str = "bearer"
     expires_in: int
 
 class UserCredentials(BaseModel):
+    """Credentials submitted by the client to obtain a JWT token."""
     username: str
     password: str
 
 class EmbeddingGenerationRequest(BaseModel):
+    """Request body for the /embeddings/generate endpoint."""
     text: Union[str, List[str]]
     model: str = "sentence-transformers/all-MiniLM-L6-v2"
     normalize: bool = True
     batch_size: Optional[int] = 32
     
 class VectorSearchRequest(BaseModel):
+    """Request body for the /search/vector endpoint."""
     query: Union[str, List[float]]
     top_k: int = Field(default=10, ge=1, le=100)
     collection_name: str
@@ -177,39 +185,46 @@ class VectorSearchRequest(BaseModel):
     include_metadata: bool = True
     
 class AnalysisRequest(BaseModel):
+    """Request body for vector analysis endpoints (clustering, quality, etc.)."""
     vectors: List[List[float]]
     analysis_type: str = Field(..., pattern="^(clustering|quality|similarity|drift)$")
     parameters: Optional[Dict[str, Any]] = None
 
 # Additional Pydantic models
 class DatasetLoadRequest(BaseModel):
+    """Request body for loading a dataset from a source."""
     source: str
     format: Optional[str] = None
     options: Optional[Dict[str, Any]] = None
 
 class DatasetProcessRequest(BaseModel):
+    """Request body for applying transformation operations to a dataset."""
     dataset_source: Union[str, Dict[str, Any]]
     operations: List[Dict[str, Any]]
     output_id: Optional[str] = None
 
 class DatasetSaveRequest(BaseModel):
+    """Request body for persisting a dataset to a destination."""
     dataset_data: Union[str, Dict[str, Any]]
     destination: str
     format: Optional[str] = "json"
     options: Optional[Dict[str, Any]] = None
 
 class IPFSPinRequest(BaseModel):
+    """Request body for pinning content to IPFS."""
     content_source: Union[str, Dict[str, Any]]
     recursive: bool = True
     wrap_with_directory: bool = False
     hash_algo: str = "sha2-256"
 
 class WorkflowRequest(BaseModel):
+    """Request body for submitting a multi-step workflow."""
     workflow_name: str
     steps: List[Dict[str, Any]]
     parameters: Optional[Dict[str, Any]] = None
 
 class VectorIndexRequest(BaseModel):
+    """Request body for creating or updating a vector index."""
     vectors: List[List[float]]
     dimension: Optional[int] = None
     metric: str = "cosine"

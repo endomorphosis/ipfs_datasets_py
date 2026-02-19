@@ -369,6 +369,14 @@ class RuntimeRouter:
         Returns:
             Runtime identifier (RUNTIME_FASTAPI or RUNTIME_TRIO)
         """
+        # Guard: if no callable provided, fall back to name-based detection only.
+        if tool_func is None:
+            tool_name_lower = (tool_name or "").lower()
+            p2p_patterns = ['p2p_', 'workflow', 'taskqueue', 'peer_', 'bootstrap']
+            if any(p in tool_name_lower for p in p2p_patterns):
+                return RUNTIME_TRIO
+            return self.default_runtime
+
         # Check cached registry first
         if tool_name in self._tool_runtimes:
             return self._tool_runtimes[tool_name]

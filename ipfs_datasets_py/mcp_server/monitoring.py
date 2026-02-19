@@ -54,6 +54,12 @@ class EnhancedMetricsCollector:
     """
     
     def __init__(self, enabled: bool = True, retention_hours: int = 24):
+        """Initialise the metrics collector with optional retention settings.
+
+        Args:
+            enabled: When False the collector records no data (useful in tests).
+            retention_hours: How many hours of metric history to retain in memory.
+        """
         self.enabled = enabled
         self.retention_hours = retention_hours
         self.start_time = datetime.utcnow()
@@ -917,6 +923,13 @@ class P2PMetricsCollector:
     """
     
     def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None):
+        """Initialise the P2P metrics collector.
+
+        Args:
+            base_collector: Underlying :class:`EnhancedMetricsCollector` to use.
+                If *None*, the global instance returned by :func:`get_metrics_collector`
+                is used.
+        """
         self.base_collector = base_collector or get_metrics_collector()
         
         # P2P-specific metrics
@@ -1728,6 +1741,12 @@ class P2PMetricsCollector:
 metrics_collector = None
 
 def get_metrics_collector():
+    """Get or create the global :class:`EnhancedMetricsCollector` singleton.
+
+    Returns:
+        The global :class:`EnhancedMetricsCollector` instance, creating it on
+        first call.
+    """
     global metrics_collector
     if metrics_collector is None:
         metrics_collector = EnhancedMetricsCollector()
