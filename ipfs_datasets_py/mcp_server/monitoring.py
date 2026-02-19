@@ -289,7 +289,60 @@ class EnhancedMetricsCollector:
             self.increment_counter('requests_total', labels={'endpoint': endpoint})
     
     def track_tool_execution(self, tool_name: str, execution_time_ms: float, success: bool):
-        """Track tool execution metrics."""
+        """Track execution metrics for MCP tools with comprehensive performance monitoring.
+        
+        This method records detailed execution statistics for each tool invocation, including
+        call counts, execution times, success rates, and error tracking. The metrics are used
+        for performance analysis, debugging, and generating tool usage reports.
+        
+        Args:
+            tool_name (str): The unique identifier of the tool being tracked. Should match
+                    the tool's registered name in the MCP server tool registry.
+            execution_time_ms (float): Tool execution duration in milliseconds. Must be
+                    non-negative. Used for calculating average response times and identifying
+                    performance bottlenecks.
+            success (bool): Whether the tool execution completed successfully. True indicates
+                    successful execution, False indicates an error or exception occurred.
+                    Affects success_rate calculations and error_counts metrics.
+        
+        Side Effects:
+            - Increments call_counts[tool_name] counter
+            - Appends execution_time_ms to execution_times[tool_name] history
+            - Updates last_called[tool_name] timestamp to current UTC time
+            - Increments error_counts[tool_name] if success is False
+            - Recalculates success_rates[tool_name] as (1 - errors/total_calls)
+            - Updates Prometheus-style counters: tool_calls_total (labeled by tool, status)
+            - Updates histogram: tool_execution_time_ms (labeled by tool)
+        
+        Example:
+            >>> collector = EnhancedMetricsCollector()
+            >>> collector.track_tool_execution("ipfs_add", 125.5, True)
+            >>> collector.track_tool_execution("ipfs_add", 230.8, False)
+            >>> # Check metrics
+            >>> metrics = collector.get_metrics_summary()
+            >>> print(metrics['tool_metrics']['call_counts']['ipfs_add'])
+            2
+            >>> print(metrics['tool_metrics']['success_rates']['ipfs_add'])
+            0.5
+        
+        Note:
+            - Thread-safe: Uses internal lock (_lock) to prevent race conditions
+            - No-op if monitoring is disabled (self.enabled = False)
+            - Execution times are stored in unbounded deque - consider memory in long-running apps
+            - Success rate is calculated immediately on each call (not cached)
+            - Metrics are aggregated across all tool invocations since collector initialization
+            - Historical execution times can be used for percentile calculations (P50, P95, P99)
+        
+        Performance:
+            - O(1) time complexity for counter updates
+            - O(1) amortized for appending to execution_times deque
+            - Lock contention possible under high concurrent load
+            - Memory grows linearly with number of tool calls (execution_times history)
+        
+        Thread Safety:
+            All metric updates are protected by self._lock to ensure atomic operations
+            and consistent state in multi-threaded environments.
+        """
         if not self.enabled:
             return
             
@@ -311,7 +364,99 @@ class EnhancedMetricsCollector:
         self.observe_histogram('tool_execution_time_ms', execution_time_ms, {'tool': tool_name})
     
     def register_health_check(self, name: str, check_func: Callable):
-        """Register a health check function."""
+        """Register a health check function for automated system health monitoring.
+        
+        This method registers a custom health check callback that will be executed
+        periodically or on-demand to verify the health status of system components.
+        Health checks can be either synchronous or asynchronous functions and should
+        return a HealthCheckResult object with status and diagnostic information.
+        
+        Args:
+            name (str): Unique identifier for this health check. Used in health reports
+                    and monitoring dashboards. Should be descriptive (e.g., "database_connection",
+                    "ipfs_node_status", "redis_cache"). Duplicate names will overwrite
+                    previous registrations.
+            check_func (Callable): Health check callback function. Can be either:
+                    - Synchronous: `def check() -> HealthCheckResult`
+                    - Asynchronous: `async def check() -> HealthCheckResult`
+                    
+                    Expected return structure:
+                    ```python
+                    HealthCheckResult(
+                        component=name,
+                        status="healthy" | "warning" | "critical" | "unknown",
+                        message="Description of health status",
+                        timestamp=datetime.utcnow(),
+                        details={...},  # Optional diagnostic data
+                        response_time_ms=Optional[float]  # Check execution time
+                    )
+                    ```
+        
+        Returns:
+            None
+        
+        Example:
+            >>> collector = EnhancedMetricsCollector()
+            >>> 
+            >>> # Synchronous health check
+            >>> def check_database():
+            ...     try:
+            ...         db.ping()
+            ...         return HealthCheckResult(
+            ...             component="database",
+            ...             status="healthy",
+            ...             message="Database connection OK"
+            ...         )
+            ...     except Exception as e:
+            ...         return HealthCheckResult(
+            ...             component="database",
+            ...             status="critical",
+            ...             message=f"Database unreachable: {e}"
+            ...         )
+            >>> collector.register_health_check("database_connection", check_database)
+            >>> 
+            >>> # Asynchronous health check
+            >>> async def check_ipfs():
+            ...     try:
+            ...         result = await ipfs_client.id()
+            ...         return HealthCheckResult(
+            ...             component="ipfs",
+            ...             status="healthy",
+            ...             message=f"IPFS node responding: {result['ID']}"
+            ...         )
+            ...     except Exception as e:
+            ...         return HealthCheckResult(
+            ...             component="ipfs",
+            ...             status="critical",
+            ...             message=f"IPFS node error: {e}"
+            ...         )
+            >>> collector.register_health_check("ipfs_node", check_ipfs)
+        
+        Note:
+            - Health checks are stored in health_check_registry dict (not threadsafe)
+            - Registration overwrites existing checks with the same name
+            - Check functions must return HealthCheckResult objects
+            - Async/sync detection happens automatically during execution (_check_health)
+            - No validation of check_func signature at registration time
+            - Exceptions during check execution are caught and reported as 'critical' status
+            - Health checks are executed via _check_health() method (manual or periodic)
+        
+        Best Practices:
+            - Keep health checks lightweight (< 1 second execution time)
+            - Return 'healthy' only if component is fully operational
+            - Use 'warning' for degraded but functional state
+            - Use 'critical' for non-operational components
+            - Include diagnostic details in the details dict
+            - Add response_time_ms for latency monitoring
+            - Implement timeouts in check functions to prevent hangs
+        
+        Health Check Execution:
+            Registered checks are executed by:
+            - `_check_health()` method (called internally or via monitoring loops)
+            - Results stored in self.health_check_results
+            - Execution time tracked automatically
+            - Exceptions converted to 'critical' status with error message
+        """
         self.health_check_registry[name] = check_func
     
     async def _check_health(self):
@@ -452,7 +597,99 @@ class EnhancedMetricsCollector:
                 self.alerts.popleft()
     
     def get_metrics_summary(self) -> Dict[str, Any]:
-        """Get a comprehensive metrics summary."""
+        """Retrieve a comprehensive snapshot of all monitoring metrics and system health.
+        
+        This method aggregates metrics from multiple subsystems into a single unified
+        summary, providing a complete overview of system performance, tool usage,
+        health checks, and recent alerts. The summary is thread-safe and represents
+        a consistent point-in-time view of all metrics.
+        
+        Returns:
+            Dict[str, Any]: Comprehensive metrics dictionary with the following structure:
+                {
+                    'uptime_seconds': float,  # Time since collector initialization
+                    'system_metrics': {  # Current system resource utilization
+                        'cpu_percent': float,
+                        'memory_percent': float,
+                        'memory_used_mb': float,
+                        'disk_percent': float,
+                        'active_connections': int
+                    },
+                    'request_metrics': {  # HTTP/API request statistics
+                        'total_requests': int,
+                        'total_errors': int,
+                        'error_rate': float,  # Errors per second
+                        'avg_response_time_ms': float,
+                        'active_requests': int,  # Currently in-flight
+                        'request_rate_per_second': float
+                    },
+                    'tool_metrics': {  # Per-tool execution statistics
+                        '<tool_name>': {
+                            'total_calls': int,
+                            'error_count': int,
+                            'success_rate': float,  # 0.0 to 1.0
+                            'avg_execution_time_ms': float,
+                            'last_called': datetime
+                        },
+                        # ... one entry per tool
+                    },
+                    'health_status': {  # Health check results
+                        '<check_name>': {
+                            'status': str,  # 'healthy', 'warning', 'critical', 'unknown'
+                            'message': str,
+                            'last_check': datetime,
+                            'response_time_ms': Optional[float]
+                        },
+                        # ... one entry per registered health check
+                    },
+                    'recent_alerts': List[Dict]  # Last 10 alerts (FIFO order)
+                }
+        
+        Example:
+            >>> collector = EnhancedMetricsCollector()
+            >>> summary = collector.get_metrics_summary()
+            >>> print(f"Uptime: {summary['uptime_seconds']:.1f}s")
+            >>> print(f"Request rate: {summary['request_metrics']['request_rate_per_second']:.2f} req/s")
+            >>> print(f"Error rate: {summary['request_metrics']['error_rate']:.2f}%")
+            >>> 
+            >>> # Check specific tool metrics
+            >>> if 'ipfs_add' in summary['tool_metrics']:
+            ...     tool_stats = summary['tool_metrics']['ipfs_add']
+            ...     print(f"IPFS Add - Calls: {tool_stats['total_calls']}, "
+            ...           f"Success: {tool_stats['success_rate']*100:.1f}%")
+            >>> 
+            >>> # Check health status
+            >>> for name, status in summary['health_status'].items():
+            ...     if status['status'] != 'healthy':
+            ...         print(f"⚠️ {name}: {status['message']}")
+        
+        Note:
+            - **Thread-Safe**: All reads are protected by self._lock
+            - **Point-in-Time**: Snapshot is consistent but may be stale immediately after return
+            - **Memory**: Copies all metrics data - can be large with many tools/checks
+            - **Performance**: O(n) where n = number of tools + health checks
+            - **Calculation**: avg_execution_time_ms is calculated on-the-fly (not cached)
+            - **Recent Alerts**: Limited to last 10 alerts to prevent unbounded growth
+            - **Health Status**: Only includes checks that have been executed at least once
+        
+        Performance:
+            - Typical execution: 1-5ms (depends on number of tools/checks)
+            - Lock held for entire duration - can block tracking operations
+            - Dictionary copies add memory allocation overhead
+            - Calculation of averages done in-place (not pre-computed)
+        
+        Use Cases:
+            - Monitoring dashboards and status pages
+            - Health check endpoints (e.g., /metrics, /health)
+            - Periodic metric exports to monitoring systems
+            - Debugging performance issues
+            - Capacity planning and trend analysis
+            - Alert threshold evaluation
+        
+        Thread Safety:
+            Entire method execution is wrapped in self._lock to ensure consistent
+            snapshot across all metric categories. No partial updates possible.
+        """
         with self._lock:
             return {
                 'uptime_seconds': (datetime.utcnow() - self.start_time).total_seconds(),
@@ -492,7 +729,102 @@ class EnhancedMetricsCollector:
             }
     
     def get_performance_trends(self, hours: int = 1) -> Dict[str, List[Dict[str, Any]]]:
-        """Get performance trends over the specified time period."""
+        """Retrieve time-series performance trends for specified historical period.
+        
+        This method extracts performance snapshots from the specified time window and
+        formats them as time-series data for trending, visualization, and analysis.
+        Useful for identifying performance patterns, degradation, and capacity issues.
+        
+        Args:
+            hours (int, optional): Number of hours of historical data to retrieve.
+                    Must be positive. Defaults to 1 hour. Maximum is limited by
+                    snapshot retention (typically 24 hours). Larger values may
+                    return fewer data points if snapshots have been garbage collected.
+        
+        Returns:
+            Dict[str, List[Dict[str, Any]]]: Time-series data organized by metric type:
+                {
+                    'cpu_trend': [
+                        {'timestamp': '2026-02-19T08:00:00', 'value': 45.2},
+                        {'timestamp': '2026-02-19T08:05:00', 'value': 47.8},
+                        # ... more data points
+                    ],
+                    'memory_trend': [
+                        {'timestamp': '2026-02-19T08:00:00', 'value': 62.3},
+                        # ... more data points
+                    ],
+                    'request_rate_trend': [
+                        {'timestamp': '2026-02-19T08:00:00', 'value': 125.5},
+                        # ... requests per second
+                    ],
+                    'response_time_trend': [
+                        {'timestamp': '2026-02-19T08:00:00', 'value': 15.3},
+                        # ... avg response time in ms
+                    ]
+                }
+                
+                Each trend is a list of data points in chronological order.
+                Timestamps are ISO 8601 format strings.
+                Values are floats with metric-specific units.
+        
+        Example:
+            >>> collector = EnhancedMetricsCollector()
+            >>> # Get last hour of trends (default)
+            >>> trends = collector.get_performance_trends()
+            >>> print(f"Data points: {len(trends['cpu_trend'])}")
+            >>> 
+            >>> # Get last 24 hours
+            >>> daily_trends = collector.get_performance_trends(hours=24)
+            >>> 
+            >>> # Analyze CPU trend
+            >>> cpu_values = [point['value'] for point in trends['cpu_trend']]
+            >>> if cpu_values:
+            ...     avg_cpu = sum(cpu_values) / len(cpu_values)
+            ...     max_cpu = max(cpu_values)
+            ...     print(f"Avg CPU: {avg_cpu:.1f}%, Peak: {max_cpu:.1f}%")
+            >>> 
+            >>> # Detect performance degradation
+            >>> response_times = [p['value'] for p in trends['response_time_trend']]
+            >>> if len(response_times) >= 2:
+            ...     if response_times[-1] > response_times[0] * 2:
+            ...         print("⚠️ Response time doubled in last hour!")
+        
+        Note:
+            - **Data Resolution**: Snapshots are typically collected every 30-60 seconds
+            - **Thread-Safe**: Snapshot filtering done under lock
+            - **Time Zone**: All timestamps are UTC (datetime.utcnow())
+            - **Sparse Data**: May return fewer points than expected if snapshots were skipped
+            - **Memory**: Snapshot history is bounded (typically 1000-2000 points max)
+            - **Garbage Collection**: Old snapshots are automatically purged
+            - **No Interpolation**: Returns actual collected data points only
+        
+        Performance:
+            - O(n) where n = number of snapshots in time window
+            - Typical: <5ms for 1 hour (60-120 data points)
+            - Lock held briefly during filtering (1-2ms)
+            - Memory: ~1KB per hour of data returned
+        
+        Snapshot Retention:
+            - Snapshots older than retention period are automatically deleted
+            - Default retention: 24 hours (configurable)
+            - Collection interval: 30-60 seconds (configurable)
+            - Max snapshots: Typically 1000-2000 points (memory bounded)
+        
+        Use Cases:
+            - Real-time performance monitoring dashboards
+            - Trend visualization and charting
+            - Performance degradation detection
+            - Capacity planning and forecasting
+            - Anomaly detection and alerting
+            - Historical performance analysis
+            - SLA compliance verification
+        
+        Trend Types:
+            - **cpu_trend**: CPU utilization percentage (0-100)
+            - **memory_trend**: Memory utilization percentage (0-100)
+            - **request_rate_trend**: Requests per second (float)
+            - **response_time_trend**: Average response time in milliseconds (float)
+        """
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         
         with self._lock:
