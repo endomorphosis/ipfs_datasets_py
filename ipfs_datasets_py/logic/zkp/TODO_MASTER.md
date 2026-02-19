@@ -275,8 +275,8 @@
 - [x] Reference implementation: `logic/zkp/legal_theorem_semantics.py`
 - [x] Unit tests: `tests/unit_tests/logic/zkp/test_legal_theorem_semantics.py`
 
-### P7.2 ⏳ Compile legal theorems to arithmetic circuits
-- [ ] Theorem + axioms → R1CS
+### P7.2 ✅ Compile legal theorems to arithmetic circuits
+- [x] Theorem + axioms → R1CS (Groth16 circuit), including bounded trace constraints as field operations
 
 ### P7.3 ✅ Threat model for legal proofs
 - [x] Document: adversary capabilities, protections, failure modes (`logic/zkp/THREAT_MODEL.md`)
