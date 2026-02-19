@@ -54,20 +54,60 @@ The Groth16 end-to-end test(s) are **skipped** unless Groth16 is enabled and the
 python -m pytest -q tests/unit_tests/logic/zkp/test_zkp_integration.py
 ```
 
-## 3. Trusted Setup Artifacts (Not Yet Implemented)
+## 3. Trusted Setup Artifacts (Rust CLI)
 
 Groth16 requires circuit-specific setup artifacts:
 
 - Proving key (PK)
 - Verification key (VK)
 
-**Current state:** the repo does not yet define a stable, production artifact lifecycle for PK/VK generation, storage, and rotation.
+**Current state:** the Rust backend can generate PK/VK artifacts and a small stdout-friendly manifest. A production-grade artifact lifecycle (signing, rotation, publication) is still a policy/process decision and is tracked in the master backlog.
 
-**Planned work:** see `PRODUCTION_UPGRADE_PATH.md` and the master backlog.
+### 3.1 Generate PK/VK artifacts
 
-### 3.1 Trusted setup ceremony notes (operational)
+From the Groth16 backend crate root:
 
-When Groth16 setup/parameter generation is implemented, treat it as a security-critical ceremony:
+```bash
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
+
+# Writes artifacts under: ./artifacts/v1/
+# Emits a JSON manifest to stdout.
+./target/release/groth16 setup --version 1 > artifacts/v1/manifest.json
+```
+
+Deterministic (reproducible) setup is available via `--seed`:
+
+```bash
+./target/release/groth16 setup --version 1 --seed 123 > artifacts/v1/manifest.json
+```
+
+Artifacts written under `artifacts/v<version>/`:
+
+- `proving_key.bin`
+- `verifying_key.bin`
+- `manifest.json` (your redirected stdout)
+
+### 3.2 Export a versioned Solidity wrapper (VK hash binding)
+
+This repository currently treats `vk_hash_hex = sha256(verifying_key.bin)` as the on-chain/off-chain identifier for a VK.
+
+You can generate a versioned Solidity wrapper that embeds this hash and the circuit version:
+
+```bash
+./target/release/groth16 export-solidity \
+  --verifying-key artifacts/v1/verifying_key.bin \
+  --version 1 \
+  --out artifacts/v1/GrothVerifierV1.sol
+```
+
+Notes:
+
+- The generated contract inherits from `GrothVerifier.sol` and adds `VK_HASH` + `CIRCUIT_VERSION` constants.
+- `export-solidity` does not (yet) regenerate the underlying verifier’s VK constants from `verifying_key.bin`; end-to-end on-chain verification is still tracked under Phase P6.
+
+### 3.3 Trusted setup ceremony notes (operational)
+
+When Groth16 setup/parameter generation is used to produce production artifacts, treat it as a security-critical ceremony:
 
 - **Multiparty contributions:** prefer an MPC ceremony where multiple independent contributors add entropy.
 - **Transcript:** keep a signed, append-only transcript of contributions (inputs, outputs, hashes, timestamps).
@@ -145,7 +185,7 @@ Acceptance check:
 
 Verification keys (VK) are typically safe to distribute publicly.
 
-## 5. On-Chain Registration (Not Yet Implemented)
+## 5. On-Chain Registration (In progress)
 
 If verifying on-chain, you will need:
 
