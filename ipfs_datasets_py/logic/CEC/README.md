@@ -17,8 +17,12 @@ A comprehensive neurosymbolic framework for Cognitive Event Calculus reasoning, 
 - **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** 💻 Development setup and contribution guide
 
 **Planning & roadmap:**
-- **[UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** 🎯 **MASTER ROADMAP** - Complete 5-enhancement plan (Phases 3-8)
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Detailed plan (8 phases, 26 weeks)
+- **[CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md](./CEC_REFACTORING_AND_IMPROVEMENT_PLAN_2026.md)** 🎯 **NEW: Code Quality Roadmap** - Comprehensive plan (12-16 weeks, 90-120h)
+- **[CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md](./CEC_REFACTORING_EXECUTIVE_SUMMARY_2026.md)** 📊 **NEW: Executive Summary** - High-level overview, ROI analysis
+- **[CEC_REFACTORING_QUICK_REFERENCE_2026.md](./CEC_REFACTORING_QUICK_REFERENCE_2026.md)** 📋 **NEW: Quick Reference** - Implementation guide with commands
+- **[VISUAL_REFACTORING_ROADMAP_2026.md](./VISUAL_REFACTORING_ROADMAP_2026.md)** 📈 **NEW: Visual Roadmap** - Mermaid diagrams and timelines
+- **[UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** 🎯 Feature Roadmap - Complete 5-enhancement plan (Phases 3-8)
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Legacy plan (8 phases, 26 weeks)
 - **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** ⚡ Phase 7 performance strategy
 - **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** 🌍 Phase 5 multi-language plan
 - **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** 🔬 Phase 6 prover integration
