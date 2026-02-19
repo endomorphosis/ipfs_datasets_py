@@ -45,33 +45,32 @@ class TestServerInitialization:
         assert IPFSDatasetsMCPServer is not None
         assert callable(IPFSDatasetsMCPServer)
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_server_initialization_basic(self, mock_fastmcp):
+    def test_server_initialization_basic(self):
         """
         Test basic server initialization.
         
-        GIVEN: Mocked FastMCP
+        GIVEN: Mocked FastMCP and P2P
         WHEN: Server is initialized
         THEN: Server should be created with required attributes
         """
-        # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        
-        # WHEN
+        # GIVEN - Import first, then patch
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
         
-        # THEN
-        assert hasattr(server, 'tools')
-        assert hasattr(server, 'mcp')
-        assert hasattr(server, 'configs')
-        assert isinstance(server.tools, dict)
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # THEN
+                    assert hasattr(server, 'tools')
+                    assert hasattr(server, 'mcp')
+                    assert hasattr(server, 'configs')
+                    assert isinstance(server.tools, dict)
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_server_tools_dict_initialization(self, mock_fastmcp):
+    def test_server_tools_dict_initialization(self):
         """
         Test that tools dictionary is properly initialized.
         
@@ -79,24 +78,25 @@ class TestServerInitialization:
         WHEN: Server is initialized
         THEN: Tools dict should be empty
         """
-        # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        
-        # WHEN
+        # GIVEN - Import first, then patch
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
         
-        # THEN
-        assert len(server.tools) == 0
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # THEN
+                    assert len(server.tools) == 0
 
 
 class TestToolManagement:
     """Tests for tool management functionality."""
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_add_tool_to_registry(self, mock_fastmcp):
+    def test_add_tool_to_registry(self):
         """
         Test adding a tool to the registry.
         
@@ -105,25 +105,26 @@ class TestToolManagement:
         THEN: Tool should appear in registry
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
-        
-        # WHEN
-        def sample_tool():
-            return "result"
-        
-        server.tools["sample_tool"] = sample_tool
-        
-        # THEN
-        assert "sample_tool" in server.tools
-        assert server.tools["sample_tool"] == sample_tool
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # WHEN
+                    def sample_tool():
+                        return "result"
+                    
+                    server.tools["sample_tool"] = sample_tool
+                    
+                    # THEN
+                    assert "sample_tool" in server.tools
+                    assert server.tools["sample_tool"] == sample_tool
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_multiple_tools_registration(self, mock_fastmcp):
+    def test_multiple_tools_registration(self):
         """
         Test registering multiple tools.
         
@@ -132,32 +133,33 @@ class TestToolManagement:
         THEN: All should be in registry
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
-        
-        # WHEN
-        tools = {
-            "tool1": lambda: "result1",
-            "tool2": lambda: "result2",
-            "tool3": lambda: "result3"
-        }
-        server.tools.update(tools)
-        
-        # THEN
-        assert len(server.tools) == 3
-        for name in tools:
-            assert name in server.tools
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # WHEN
+                    tools = {
+                        "tool1": lambda: "result1",
+                        "tool2": lambda: "result2",
+                        "tool3": lambda: "result3"
+                    }
+                    server.tools.update(tools)
+                    
+                    # THEN
+                    assert len(server.tools) == 3
+                    for name in tools:
+                        assert name in server.tools
 
 
 class TestConfiguration:
     """Tests for server configuration."""
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_custom_config_usage(self, mock_fastmcp):
+    def test_custom_config_usage(self):
         """
         Test that custom configuration is used.
         
@@ -166,22 +168,23 @@ class TestConfiguration:
         THEN: Server should use custom config
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
+        from ipfs_datasets_py.mcp_server import server as server_module
+        from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+        
         custom_config = Mock()
         custom_config.p2p_enabled = False
         
-        # WHEN
-        from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer(server_configs=custom_config)
-        
-        # THEN
-        assert server.configs is custom_config
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer(server_configs=custom_config)
+                    
+                    # THEN
+                    assert server.configs is custom_config
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    @patch('ipfs_datasets_py.mcp_server.server.configs')
-    def test_default_config_fallback(self, mock_default_config, mock_fastmcp):
+    def test_default_config_fallback(self):
         """
         Test that default config is used when none provided.
         
@@ -190,23 +193,25 @@ class TestConfiguration:
         THEN: Default config should be used
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        
-        # WHEN
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
         
-        # THEN
-        assert server.configs == mock_default_config
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch.object(server_module, 'configs') as mock_default_config:
+                    with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                        # WHEN
+                        mock_fastmcp.return_value = MagicMock()
+                        server = IPFSDatasetsMCPServer()
+                        
+                        # THEN
+                        assert server.configs == mock_default_config
 
 
 class TestP2PIntegration:
     """Tests for P2P service integration."""
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_p2p_disabled_when_import_fails(self, mock_fastmcp):
+    def test_p2p_disabled_when_import_fails(self):
         """
         Test P2P gracefully disabled when unavailable.
         
@@ -215,20 +220,20 @@ class TestP2PIntegration:
         THEN: p2p should be None
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        
-        # WHEN
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
         
-        # THEN
-        assert server.p2p is None
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # THEN
+                    assert server.p2p is None
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    @patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager')
-    def test_p2p_initialized_when_available(self, mock_p2p_manager, mock_fastmcp):
+    def test_p2p_initialized_when_available(self):
         """
         Test P2P initialization when available.
         
@@ -237,9 +242,8 @@ class TestP2PIntegration:
         THEN: P2P should be initialized
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        mock_p2p_instance = Mock()
-        mock_p2p_manager.return_value = mock_p2p_instance
+        from ipfs_datasets_py.mcp_server import server as server_module
+        from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         
         custom_config = Mock()
         custom_config.p2p_enabled = True
@@ -250,13 +254,18 @@ class TestP2PIntegration:
         custom_config.p2p_auth_mode = "mcp_token"
         custom_config.p2p_startup_timeout_s = 2.0
         
-        # WHEN
-        from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        server = IPFSDatasetsMCPServer(server_configs=custom_config)
+        mock_p2p_instance = Mock()
         
-        # THEN
-        assert server.p2p == mock_p2p_instance
-        mock_p2p_manager.assert_called_once()
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', return_value=mock_p2p_instance) as mock_p2p_manager:
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer(server_configs=custom_config)
+                    
+                    # THEN
+                    assert server.p2p == mock_p2p_instance
+                    mock_p2p_manager.assert_called_once()
 
 
 class TestErrorHandling:
@@ -270,16 +279,17 @@ class TestErrorHandling:
         WHEN: Server tries to initialize
         THEN: ImportError should be raised
         """
-        # GIVEN & WHEN & THEN
-        with patch('ipfs_datasets_py.mcp_server.server.FastMCP', None):
-            with patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False):
-                from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+        # GIVEN
+        from ipfs_datasets_py.mcp_server import server as server_module
+        from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
+        
+        with patch.object(server_module, 'FastMCP', None):
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                # WHEN & THEN
                 with pytest.raises(ImportError, match="MCP dependency is not available"):
                     server = IPFSDatasetsMCPServer()
     
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    def test_p2p_exception_handled_gracefully(self, mock_fastmcp):
+    def test_p2p_exception_handled_gracefully(self):
         """
         Test that P2P exceptions are handled gracefully.
         
@@ -288,25 +298,26 @@ class TestErrorHandling:
         THEN: Server continues with p2p=None
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
-        
-        # WHEN
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=Exception("P2P error")):
-            server = IPFSDatasetsMCPServer()
         
-        # THEN
-        assert server.p2p is None
-        assert server.mcp is not None  # Server still functional
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=Exception("P2P error")):
+                    # WHEN
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # THEN
+                    assert server.p2p is None
+                    assert server.mcp is not None  # Server still functional
 
 
 class TestAsyncFunctionality:
     """Tests for async functionality."""
     
     @pytest.mark.asyncio
-    @patch('ipfs_datasets_py.mcp_server.server.FastMCP')
-    @patch('ipfs_datasets_py.mcp_server.server.ERROR_REPORTING_AVAILABLE', False)
-    async def test_validate_p2p_message_exists(self, mock_fastmcp):
+    async def test_validate_p2p_message_exists(self):
         """
         Test that validate_p2p_message method exists.
         
@@ -315,24 +326,27 @@ class TestAsyncFunctionality:
         THEN: Method should exist and be callable
         """
         # GIVEN
-        mock_fastmcp.return_value = MagicMock()
+        from ipfs_datasets_py.mcp_server import server as server_module
         from ipfs_datasets_py.mcp_server.server import IPFSDatasetsMCPServer
         
-        with patch('ipfs_datasets_py.mcp_server.server.P2PServiceManager', side_effect=ImportError):
-            server = IPFSDatasetsMCPServer()
-        
-        # WHEN & THEN
-        assert hasattr(server, 'validate_p2p_message')
-        assert callable(server.validate_p2p_message)
-        
-        # Try calling it
-        result = await server.validate_p2p_message({"test": "message"})
-        assert isinstance(result, bool)
+        with patch.object(server_module, 'FastMCP') as mock_fastmcp:
+            with patch.object(server_module, 'ERROR_REPORTING_AVAILABLE', False):
+                with patch('ipfs_datasets_py.mcp_server.p2p_service_manager.P2PServiceManager', side_effect=ImportError):
+                    mock_fastmcp.return_value = MagicMock()
+                    server = IPFSDatasetsMCPServer()
+                    
+                    # WHEN & THEN
+                    assert hasattr(server, 'validate_p2p_message')
+                    assert callable(server.validate_p2p_message)
+                    
+                    # Try calling it
+                    result = await server.validate_p2p_message({"test": "message"})
+                    assert isinstance(result, bool)
 
 
 # Summary:
-# - 6 test classes with 17 test methods
+# - 6 test classes with 13 test methods
 # - Tests cover: initialization, tool management, configuration, P2P, error handling, async
 # - All use GIVEN-WHEN-THEN format
 # - Comprehensive mocking to isolate units
-# - Phase 3 Week 7 progress: 17/40-50 tests implemented
+# - Phase 3 Week 7 progress: 13/40-50 tests implemented (26-32%)
