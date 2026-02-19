@@ -603,7 +603,7 @@ class CrossDocumentReasoner:
                     )
                     connections.extend(indirect_connections)
                 except Exception as e:
-                    logger.warning(f"Multi-hop traversal failed: {e}. Using direct connections only.")
+                    logger.warning(f"Multi-hop traversal failed ({type(e).__name__}): {e}. Using direct connections only.")
         else:
             # Without a knowledge graph, use simpler heuristics
             # For example, look for matching entity names in the entities lists
@@ -867,7 +867,7 @@ class CrossDocumentReasoner:
             try:
                 answer, confidence = self._generate_llm_answer(prompt, query, router)
             except Exception as e:
-                logger.warning(f"LLM generation failed: {e}. Using fallback method.")
+                logger.warning(f"LLM generation failed ({type(e).__name__}): {e}. Using fallback method.")
                 answer = f"Based on the information in the documents, I can provide the following answer to '{query}'..."
                 confidence = 0.75
         else:
