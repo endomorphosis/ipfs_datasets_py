@@ -256,12 +256,10 @@ class TransactionManager:
             del self._active_transactions[transaction.txn_id]
             logger.warning(f"Transaction {transaction.txn_id} aborted: {e}")
             raise
-            
-        except ConflictError:
-            # Re-raise conflict errors
-            raise
         except TransactionAbortedError:
             # Re-raise abort errors
+            raise
+        except TransactionError:
             raise
         except (TimeoutError, asyncio.TimeoutError) as e:
             # Transaction timeout
@@ -421,17 +419,25 @@ class TransactionManager:
             CID of graph snapshot, or None if unavailable
         """
         try:
-            if self.graph_engine._enable_persistence and self.graph_engine._storage:
-                # Save current graph state
-                return self.graph_engine.save_graph()
-        except (AttributeError, KeyError, ValueError) as e:
-            logger.warning(f"Failed to capture snapshot (expected errors): {e}")
+            if not getattr(self.graph_engine, "_enable_persistence", False):
+                return None
+
+            storage = getattr(self.graph_engine, "storage", None)
+            if storage is None:
+                return None
+
+            # Save current graph state
+            return self.graph_engine.save_graph()
+        except TransactionError:
+            raise
+        except (AttributeError, KeyError, TypeError, ValueError) as e:
+            logger.warning(f"Failed to capture snapshot (degrading gracefully): {e}")
             return None
         except Exception as e:
             logger.error(f"Unexpected error capturing snapshot: {e}")
             raise TransactionError(
                 f"Failed to capture transaction snapshot: {e}",
-                details={'operations': len(transaction.operations) if transaction else 0}
+                details={'graph_engine_type': type(self.graph_engine).__name__}
             ) from e
     
     def recover(self):

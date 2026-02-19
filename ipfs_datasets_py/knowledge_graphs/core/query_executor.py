@@ -13,7 +13,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..exceptions import QueryExecutionError, QueryParseError, StorageError
+from ..exceptions import QueryError, QueryExecutionError, QueryParseError, StorageError
 from ..neo4j_compat.result import Result, Record
 from ..neo4j_compat.types import Node, Relationship, Path
 from .expression_evaluator import (
@@ -212,6 +212,38 @@ class QueryExecutor:
                 "error": str(e),
                 "error_type": "parse",
                 "error_stage": "compile",
+                "error_class": type(query_error).__name__,
+            }
+            return Result([], summary=summary)
+
+        except QueryError as e:
+            if raise_on_error:
+                raise
+
+            logger.error("Cypher execution failed: %s", e)
+            error_type = "parse" if isinstance(e, QueryParseError) else "execution"
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e),
+                "error_type": error_type,
+                "error_stage": "execute",
+                "error_class": type(e).__name__,
+            }
+            return Result([], summary=summary)
+
+        except StorageError as e:
+            query_error = QueryExecutionError(str(e), details={"stage": "execute"})
+            if raise_on_error:
+                raise query_error from e
+
+            logger.error("Cypher execution failed: %s", e)
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e),
+                "error_type": "execution",
+                "error_stage": "execute",
                 "error_class": type(query_error).__name__,
             }
             return Result([], summary=summary)

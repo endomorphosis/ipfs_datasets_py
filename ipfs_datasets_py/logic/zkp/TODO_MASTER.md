@@ -301,8 +301,8 @@
 ### P9.3 ✅ Create `logic/zkp/THREAT_MODEL.md`
 - [x] Adversary, assumptions, failure modes
 
-### P9.4 ⏳ Create `logic/zkp/SETUP_GUIDE.md`
-- [ ] Step-by-step: trusted setup, artifact storage, on-chain registration
+### P9.4 ✅ Create `logic/zkp/SETUP_GUIDE.md`
+- [x] Step-by-step: trusted setup, artifact storage, on-chain registration
 
 ---
 
