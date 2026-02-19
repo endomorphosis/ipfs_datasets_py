@@ -35,8 +35,11 @@
 Run from `complaint-generator/ipfs_datasets_py`:
 
 ```bash
-# Property-based tests require hypothesis
-python -m pip install -U hypothesis
+# Dev/test dependencies (includes `hypothesis` for property-based tests)
+python -m pip install -e ".[test]"
+
+# If you don't want an editable install, install hypothesis directly instead:
+# python -m pip install -U hypothesis
 
 python -m pytest -q tests/unit_tests/logic/zkp
 ```

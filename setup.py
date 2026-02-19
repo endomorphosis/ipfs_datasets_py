@@ -220,6 +220,7 @@ setup(
             'pytest-xdist>=3.8.0',
             'pytest-parallel>=0.1.1',
             'pytest-benchmark>=4.0.0',
+            'hypothesis>=6.0.0',
         ],
         # PDF processing dependencies
         'pdf': [
