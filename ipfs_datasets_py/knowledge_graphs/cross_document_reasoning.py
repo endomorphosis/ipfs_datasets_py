@@ -39,17 +39,17 @@ from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
 
 try:
     from ipfs_datasets_py.ml.llm.llm_router import LLMRouter
-except Exception:
+except ImportError:
     LLMRouter = None
 
 try:
     import openai  # type: ignore
-except Exception:
+except ImportError:
     openai = None
 
 try:
     import anthropic  # type: ignore
-except Exception:
+except ImportError:
     anthropic = None
 
 
@@ -174,7 +174,7 @@ class CrossDocumentReasoner:
                     if denom > 0:
                         sim = float(np.dot(a, b) / denom)
                         return max(0.0, min(1.0, sim))
-            except Exception:
+            except (TypeError, ValueError, AttributeError, FloatingPointError, np.linalg.LinAlgError):
                 pass
 
         def tokenize(text: str) -> List[str]:

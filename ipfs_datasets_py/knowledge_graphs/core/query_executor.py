@@ -13,7 +13,7 @@ import logging
 import re
 from typing import Any, Dict, List, Optional
 
-from ..exceptions import QueryError, QueryExecutionError, QueryParseError, StorageError
+from ..exceptions import KnowledgeGraphError, QueryError, QueryExecutionError, QueryParseError, StorageError
 from ..neo4j_compat.result import Result, Record
 from ..neo4j_compat.types import Node, Relationship, Path
 from .expression_evaluator import (
@@ -245,6 +245,22 @@ class QueryExecutor:
                 "error_type": "execution",
                 "error_stage": "execute",
                 "error_class": type(query_error).__name__,
+            }
+            return Result([], summary=summary)
+
+        except KnowledgeGraphError as e:
+            if raise_on_error:
+                raise
+
+            # Keep the original error type in summary rather than losing taxonomy.
+            logger.error("Cypher execution failed: %s", e)
+            summary = {
+                "query_type": "Cypher",
+                "query": query[:100],
+                "error": str(e),
+                "error_type": "execution",
+                "error_stage": "execute",
+                "error_class": type(e).__name__,
             }
             return Result([], summary=summary)
 

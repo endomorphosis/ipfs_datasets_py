@@ -239,6 +239,34 @@ class TestZKPIntegration:
         # Cache should have been hit
         assert stats2['cache_hits'] > stats1['cache_hits']
         assert stats2['proofs_generated'] == stats1['proofs_generated']
+
+    def test_proof_caching_respects_seed_metadata(self):
+        """Cache key must differ across different seeds.
+
+        This matters for Groth16 determinism: if a caller requests a different
+        seed, we must not return an unrelated cached proof.
+        """
+        prover = ZKPProver(enable_caching=True, backend="simulated")
+
+        theorem = "Seeded theorem"
+        axioms = ["Axiom A", "Axiom B"]
+
+        prover.generate_proof(theorem, axioms, metadata={"seed": 1})
+        stats_after_first = prover.get_stats()
+        assert stats_after_first["proofs_generated"] == 1
+        assert stats_after_first["cache_hits"] == 0
+
+        # Same seed: should hit cache.
+        prover.generate_proof(theorem, axioms, metadata={"seed": 1})
+        stats_same_seed = prover.get_stats()
+        assert stats_same_seed["proofs_generated"] == 1
+        assert stats_same_seed["cache_hits"] == 1
+
+        # Different seed: should not hit cache.
+        prover.generate_proof(theorem, axioms, metadata={"seed": 2})
+        stats_diff_seed = prover.get_stats()
+        assert stats_diff_seed["proofs_generated"] == 2
+        assert stats_diff_seed["cache_hits"] == 1
     
     def test_metadata_propagation(self):
         """

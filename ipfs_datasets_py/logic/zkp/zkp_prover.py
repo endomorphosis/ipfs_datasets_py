@@ -103,7 +103,7 @@ class ZKPProver:
         
         try:
             # Check cache
-            cache_key = self._compute_cache_key(theorem, private_axioms)
+            cache_key = self._compute_cache_key(theorem, private_axioms, metadata)
             if self.enable_caching and cache_key in self._proof_cache:
                 self._stats['cache_hits'] += 1
                 cached = self._proof_cache[cache_key]
@@ -166,14 +166,37 @@ class ZKPProver:
         except Exception:
             return proof
     
-    def _compute_cache_key(self, theorem: str, axioms: List[str]) -> str:
-        """Compute cache key for proof."""
+    def _compute_cache_key(
+        self,
+        theorem: str,
+        axioms: List[str],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """Compute cache key for proof.
+
+        The cache key must include any caller-controlled inputs that can change
+        the produced proof (e.g., Groth16 `seed`, circuit versioning).
+        """
         canonical_theorem = canonicalize_theorem(theorem)
         canonical_axioms = canonicalize_axioms(axioms)
-        key_data = json.dumps({
-            'theorem': canonical_theorem,
-            'axioms': canonical_axioms,
-        }, sort_keys=True)
+
+        meta_ctx: Dict[str, Any] = {
+            # Prover-level security setting is always applied downstream.
+            'security_level': self.security_level,
+        }
+        if metadata:
+            for key in ("seed", "circuit_version", "ruleset_id"):
+                if key in metadata:
+                    meta_ctx[key] = metadata.get(key)
+
+        key_data = json.dumps(
+            {
+                'theorem': canonical_theorem,
+                'axioms': canonical_axioms,
+                'meta': meta_ctx,
+            },
+            sort_keys=True,
+        )
         return hashlib.sha256(key_data.encode()).hexdigest()
     
     def get_stats(self) -> Dict[str, Any]:

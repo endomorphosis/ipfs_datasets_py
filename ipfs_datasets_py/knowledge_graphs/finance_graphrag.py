@@ -29,7 +29,7 @@ else:
         from ipfs_datasets_py.processors.graphrag.integration import GraphRAGIntegration
 
         GRAPHRAG_AVAILABLE = True
-    except Exception:  # pragma: no cover
+    except ImportError:  # pragma: no cover
         GraphRAGIntegration = None  # type: ignore[assignment]
         GRAPHRAG_AVAILABLE = False
 
