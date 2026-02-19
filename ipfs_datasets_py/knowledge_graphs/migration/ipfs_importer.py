@@ -128,6 +128,8 @@ class IPFSImporter:
             self._session = self._driver.session(database=self.config.database)
             logger.info("Connected to IPFS Graph Database")
             return True
+        except MigrationError:
+            raise
         except Exception as e:
             raise MigrationError(
                 "Failed to connect to IPFS Graph Database",
@@ -162,6 +164,8 @@ class IPFSImporter:
             try:
                 logger.info("Loading graph data from %s", self.config.input_file)
                 return GraphData.load_from_file(self.config.input_file, self.config.input_format)
+            except MigrationError:
+                raise
             except Exception as e:
                 raise MigrationError(
                     "Failed to load graph data",
@@ -406,7 +410,14 @@ class IPFSImporter:
 
         except Exception as e:
             logger.error("Import failed unexpectedly: %s", e, exc_info=True)
-            result.errors.append(str(MigrationError("Import failed unexpectedly") ))
+            result.errors.append(
+                str(
+                    MigrationError(
+                        "Import failed unexpectedly",
+                        details={"error": str(e), "error_class": type(e).__name__},
+                    )
+                )
+            )
             result.duration_seconds = time.time() - start_time
             return result
         
