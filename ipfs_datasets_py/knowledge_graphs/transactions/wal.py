@@ -5,6 +5,7 @@ Provides persistent transaction logging on IPLD for crash recovery
 and ACID guarantees.
 """
 
+import asyncio
 import json
 import logging
 from typing import Iterator, List, Optional, Dict, Any
@@ -125,6 +126,8 @@ class WriteAheadLog:
                 f"Failed to append WAL entry due to storage error: {e}",
                 details={'txn_id': str(entry.txn_id)}
             ) from e
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             logger.error(f"Failed to append WAL entry: {e}")
             raise TransactionError(
@@ -190,6 +193,8 @@ class WriteAheadLog:
                     f"Failed to deserialize WAL entry due to storage error: {e}",
                     details={'cid': str(current_cid)}
                 ) from e
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 logger.error(f"Failed to read WAL entry {current_cid}: {e}")
                 raise TransactionError(
@@ -249,6 +254,8 @@ class WriteAheadLog:
             # Re-raise serialization errors
             raise
         except TransactionError:
+            raise
+        except asyncio.CancelledError:
             raise
         except Exception as e:
             logger.error(f"Failed to compact WAL: {e}")
@@ -318,6 +325,8 @@ class WriteAheadLog:
             raise
         except TransactionError:
             raise
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             logger.error(f"Failed to recover from WAL: {e}")
             raise TransactionError(
@@ -358,6 +367,8 @@ class WriteAheadLog:
         except DeserializationError as e:
             logger.warning(f"Deserialization error in transaction history (returning partial): {e}")
             return entries  # Return what we have so far
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             logger.error(f"Failed to get transaction history: {e}")
             return []
@@ -424,6 +435,8 @@ class WriteAheadLog:
         except DeserializationError as e:
             logger.error(f"WAL verification failed (deserialization): {e}")
             return False
+        except asyncio.CancelledError:
+            raise
         except Exception as e:
             logger.error(f"WAL verification failed: {e}")
             return False
