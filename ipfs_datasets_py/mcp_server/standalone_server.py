@@ -152,13 +152,15 @@ class MinimalMCPServer:
                             'parameters': parameters
                         })
                 return jsonify({
-                    "error": str(e),
+                    "error": "Tool execution failed",
+                    "details": "An error occurred while executing the requested tool.",
                     "success": False
                 }), 500
             except (ValueError, TypeError) as e:
                 logger.error(f"Invalid parameters: {e}", exc_info=True)
                 return jsonify({
-                    "error": f"Invalid parameters: {e}",
+                    "error": "Invalid parameters",
+                    "details": "One or more parameters are missing or have an invalid format.",
                     "success": False
                 }), 400
             except Exception as e:
@@ -174,7 +176,8 @@ class MinimalMCPServer:
                         })
                 
                 return jsonify({
-                    "error": str(e),
+                    "error": "Internal server error",
+                    "details": "An unexpected error occurred while processing the request.",
                     "success": False
                 }), 500
         
