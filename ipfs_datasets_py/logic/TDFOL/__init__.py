@@ -85,7 +85,7 @@ if TYPE_CHECKING:
         clear_global_proof_cache,
         TDFOLProofResult,
     )
-    from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
+    from .inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
     from .nl.tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
     from .proof_tree_visualizer import (
         ProofTreeVisualizer,

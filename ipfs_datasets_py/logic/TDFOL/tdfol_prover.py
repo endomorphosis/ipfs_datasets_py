@@ -348,7 +348,7 @@ class TDFOLProver:
         
         # Import and initialize all TDFOL rules (40 rules) for backward compatibility
         try:
-            from .tdfol_inference_rules import get_all_tdfol_rules
+            from .inference_rules import get_all_tdfol_rules
             self.tdfol_rules = get_all_tdfol_rules()
             logger.info(f"Loaded {len(self.tdfol_rules)} TDFOL inference rules")
         except Exception as e:

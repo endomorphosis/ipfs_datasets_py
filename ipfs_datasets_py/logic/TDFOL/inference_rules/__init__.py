@@ -186,4 +186,100 @@ __all__ = [
     'PermissionTemporalWeakeningRule',
     'AlwaysObligationDistributionRule',
     'FutureObligationPersistenceRule',
+    
+    # Utility function
+    'get_all_tdfol_rules',
 ]
+
+
+def get_all_tdfol_rules():
+    """
+    Get all TDFOL inference rules (60 total).
+    
+    Returns a list containing one instance of each of the 60 inference rules
+    organized across propositional logic, first-order logic, temporal logic,
+    deontic logic, and combined temporal-deontic logic.
+    
+    Returns:
+        List[TDFOLInferenceRule]: List of all 60 inference rule instances
+        
+    Example:
+        >>> from ipfs_datasets_py.logic.TDFOL.inference_rules import get_all_tdfol_rules
+        >>> rules = get_all_tdfol_rules()
+        >>> len(rules)
+        60
+        >>> assert any(isinstance(r, ModusPonensRule) for r in rules)
+    """
+    from typing import List
+    
+    return [
+        # Propositional Logic (13 rules)
+        ModusPonensRule(),
+        ModusTollensRule(),
+        DisjunctiveSyllogismRule(),
+        HypotheticalSyllogismRule(),
+        ConjunctionIntroductionRule(),
+        ConjunctionEliminationLeftRule(),
+        ConjunctionEliminationRightRule(),
+        DisjunctionIntroductionLeftRule(),
+        DoubleNegationEliminationRule(),
+        DoubleNegationIntroductionRule(),
+        ContrapositionRule(),
+        DeMorganAndRule(),
+        DeMorganOrRule(),
+        
+        # First-Order Logic (2 rules)
+        UniversalInstantiationRule(),
+        ExistentialGeneralizationRule(),
+        
+        # Temporal Logic (20 rules)
+        TemporalKAxiomRule(),
+        TemporalTAxiomRule(),
+        TemporalS4AxiomRule(),
+        TemporalS5AxiomRule(),
+        EventuallyIntroductionRule(),
+        AlwaysNecessitationRule(),
+        UntilUnfoldingRule(),
+        UntilInductionRule(),
+        EventuallyExpansionRule(),
+        AlwaysDistributionRule(),
+        AlwaysEventuallyExpansionRule(),
+        EventuallyAlwaysContractionRule(),
+        UntilReleaseDualityRule(),
+        WeakUntilExpansionRule(),
+        NextDistributionRule(),
+        EventuallyAggregationRule(),
+        TemporalInductionRule(),
+        UntilInductionStepRule(),
+        ReleaseCoinductionRule(),
+        EventuallyDistributionRule(),
+        
+        # Deontic Logic (16 rules)
+        DeonticKAxiomRule(),
+        DeonticDAxiomRule(),
+        ProhibitionEquivalenceRule(),
+        PermissionNegationRule(),
+        ObligationConsistencyRule(),
+        PermissionIntroductionRule(),
+        DeonticNecessitationRule(),
+        ProhibitionFromObligationRule(),
+        ObligationWeakeningRule(),
+        PermissionStrengtheningRule(),
+        ProhibitionContrapositionRule(),
+        DeonticDistributionRule(),
+        PermissionProhibitionDualityRule(),
+        ObligationPermissionImplicationRule(),
+        ContraryToDutyRule(),
+        DeonticDetachmentRule(),
+        
+        # Combined Temporal-Deontic (9 rules)
+        TemporalObligationPersistenceRule(),
+        DeonticTemporalIntroductionRule(),
+        UntilObligationRule(),
+        AlwaysPermissionRule(),
+        EventuallyForbiddenRule(),
+        ObligationEventuallyRule(),
+        PermissionTemporalWeakeningRule(),
+        AlwaysObligationDistributionRule(),
+        FutureObligationPersistenceRule(),
+    ]
