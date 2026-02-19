@@ -213,14 +213,15 @@
   - Store PK in IPFS, VK hash on-chain
 - [ ] Reproducibility test
 
-### P5.3 ⏳ Implement proof generation (real Groth16)
-- [ ] `Groth16Backend.generate_proof()`: full Groth16 prover
-- [ ] Load PK, compile witness, invoke prover
-- [ ] Return proof + public inputs
+### P5.3 ✅ Implement proof generation (real Groth16; opt-in)
+- [x] `Groth16Backend.generate_proof()` implemented (gated) in `logic/zkp/backends/groth16.py` delegating to Rust FFI in `logic/zkp/backends/groth16_ffi.py`
+- [x] Prover invocation: load PK, build witness, invoke Rust binary, validate proof output schema
+- [x] Integration coverage: gated end-to-end prove→verify test in `tests/unit_tests/logic/zkp/test_zkp_integration.py`
 
-### P5.4 ⏳ Implement proof verification (real Groth16)
-- [ ] `Groth16Backend.verify_proof()`: full Groth16 verifier
-- [ ] Load VK, verify proof deterministically
+### P5.4 ✅ Implement proof verification (real Groth16; opt-in)
+- [x] `Groth16Backend.verify_proof()` implemented (gated) in `logic/zkp/backends/groth16.py` delegating to Rust FFI in `logic/zkp/backends/groth16_ffi.py`
+- [x] Verifier invocation: load VK, invoke Rust verifier, validate error envelope / proof schema
+- [x] Integration coverage: gated end-to-end prove→verify test in `tests/unit_tests/logic/zkp/test_zkp_integration.py`
 
 ### P5.5 ✅ Circuit versioning + registration (off-chain)
 - [x] Registry: (circuit_id, version) → VK hash (see `logic/zkp/vk_registry.py`)
