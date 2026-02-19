@@ -141,7 +141,7 @@ class WikipediaExtractionMixin:
             # Add metadata about the source
             kg.name = f"wikipedia_{page_title}"
 
-            # Add the Wikiepdia page as a source entity
+            # Add the Wikipedia page as a source entity
             page_entity = Entity(
                 entity_type="wikipedia_page",
                 name=page_title,
@@ -632,32 +632,20 @@ class WikipediaExtractionMixin:
             # Re-raise validation errors
             raise
         except (ValueError, KeyError, TypeError, IndexError, AttributeError) as e:
-            error_result = {
-                "error": f"Unexpected error extracting and validating graph from '{page_title}': {e}",
-                "knowledge_graph": None,
-                "validation": {"error": str(e)},
-                "coverage": 0.0,
-                "metrics": {}
-            }
             logger.error(f"Extract and validate failed for '{page_title}': {e}")
-            # Wrap in EntityExtractionError
-            raise EntityExtractionError(
-                f"Failed to extract and validate knowledge graph from Wikipedia page '{page_title}': {e}",
-                details={'page_title': page_title, 'extraction_temperature': extraction_temperature, 
-                        'structure_temperature': structure_temperature}
-            ) from e
-
             # Update trace with error if tracer is enabled
             if self.use_tracer and self.tracer and trace_id:
-                error_result["trace_id"] = trace_id
-
                 self.tracer.update_extraction_and_validation_trace(
                     trace_id=trace_id,
                     status="failed",
                     error=str(e)
                 )
-
-            return error_result
+            # Wrap in EntityExtractionError
+            raise EntityExtractionError(
+                f"Failed to extract and validate knowledge graph from Wikipedia page '{page_title}': {e}",
+                details={'page_title': page_title, 'extraction_temperature': extraction_temperature,
+                        'structure_temperature': structure_temperature}
+            ) from e
 
 
 __all__ = ["WikipediaExtractionMixin"]

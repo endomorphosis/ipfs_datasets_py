@@ -30,6 +30,7 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    UnionClause,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -110,10 +111,8 @@ class CypherCompiler:
         except (AttributeError, IndexError, KeyError, TypeError, ValueError) as e:
             raise CypherCompileError(f"Compilation error: {e}") from e
     
-    def _compile_clause(self, clause):
+    def _compile_clause(self, clause: Any) -> None:
         """Compile a single clause."""
-        from .ast import UnionClause
-        
         if isinstance(clause, MatchClause):
             self._compile_match(clause)
         elif isinstance(clause, WhereClause):
@@ -131,7 +130,7 @@ class CypherCompiler:
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
-    def _compile_match(self, match: MatchClause):
+    def _compile_match(self, match: MatchClause) -> None:
         """
         Compile MATCH or OPTIONAL MATCH clause.
         
@@ -151,7 +150,7 @@ class CypherCompiler:
         if match.where:
             self._compile_where(match.where)
     
-    def _compile_pattern(self, pattern: PatternNode, is_optional: bool = False):
+    def _compile_pattern(self, pattern: PatternNode, is_optional: bool = False) -> None:
         """
         Compile a graph pattern.
         
@@ -227,7 +226,7 @@ class CypherCompiler:
                                                       is_optional=is_optional,
                                                       target_labels=target_labels)
     
-    def _compile_node_pattern(self, node: NodePattern, default_var: str = None, is_optional: bool = False):
+    def _compile_node_pattern(self, node: NodePattern, default_var: Optional[str] = None, is_optional: bool = False) -> None:
         """
         Compile node pattern.
         
@@ -294,7 +293,7 @@ class CypherCompiler:
         end_var: str,
         is_optional: bool = False,
         target_labels: Optional[List[str]] = None
-    ):
+    ) -> None:
         """
         Compile relationship pattern.
         
@@ -336,7 +335,7 @@ class CypherCompiler:
         
         self.operations.append(op)
     
-    def _compile_where(self, where: WhereClause):
+    def _compile_where(self, where: WhereClause) -> None:
         """
         Compile WHERE clause.
         
@@ -344,7 +343,7 @@ class CypherCompiler:
         """
         self._compile_where_expression(where.expression)
     
-    def _compile_where_expression(self, expr):
+    def _compile_where_expression(self, expr: Any) -> None:
         """Compile WHERE expression into filter operations."""
         if isinstance(expr, BinaryOpNode):
             if expr.operator.upper() in ('AND', 'OR'):
@@ -436,7 +435,7 @@ class CypherCompiler:
                     }
                     self.operations.append(op)
     
-    def _compile_return(self, ret: ReturnClause):
+    def _compile_return(self, ret: ReturnClause) -> None:
         """
         Compile RETURN clause.
         
@@ -529,7 +528,7 @@ class CypherCompiler:
             }
             self.operations.append(op)
     
-    def _compile_create(self, create: CreateClause):
+    def _compile_create(self, create: CreateClause) -> None:
         """
         Compile CREATE clause.
         
@@ -628,7 +627,7 @@ class CypherCompiler:
                             "Relationship pattern must be followed by a node pattern in CREATE clause"
                         )
     
-    def _compile_delete(self, delete: DeleteClause):
+    def _compile_delete(self, delete: DeleteClause) -> None:
         """
         Compile DELETE clause.
         
@@ -643,7 +642,7 @@ class CypherCompiler:
                 }
                 self.operations.append(op)
     
-    def _compile_set(self, set_clause: SetClause):
+    def _compile_set(self, set_clause: SetClause) -> None:
         """
         Compile SET clause.
         
@@ -662,14 +661,12 @@ class CypherCompiler:
                 }
                 self.operations.append(op)
     
-    def _compile_union(self, union_clause):
+    def _compile_union(self, union_clause: UnionClause) -> None:
         """
         Compile UNION or UNION ALL clause.
         
         Generates Union operation to combine result sets.
         """
-        from .ast import UnionClause
-        
         op = {
             "op": "Union",
             "all": union_clause.all  # True for UNION ALL, False for UNION

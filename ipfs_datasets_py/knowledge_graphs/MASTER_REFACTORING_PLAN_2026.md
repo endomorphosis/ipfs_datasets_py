@@ -124,7 +124,7 @@ All P0 items (broken code, test-blocking failures, INTERNALERROR) are resolved.
 
 #### 3.2.1 Migration Module Test Coverage (40% → 70%+)
 
-**Status:** 🔄 In progress (partial gap already closed)  
+**Status:** ✅ DONE (2026-02-19) — coverage raised to 83%  
 **File:** `migration/` package  
 **Effort:** 8–12 hours  
 **Risk:** Low
@@ -142,8 +142,8 @@ All P0 items (broken code, test-blocking failures, INTERNALERROR) are resolved.
 
 #### 3.2.2 `ipld.py` Module Relocation
 
-**Status:** 🔴 Not started  
-**File:** `ipld.py` (1425 lines, root level)  
+**Status:** ✅ DONE (2026-02-19) — docstring updated with clear explanation of relationship to `storage/ipld_backend.py` (legacy primitive layer vs. recommended backend)  
+**File:** `ipld.py` (1425 lines, root level — file content unchanged, docstring clarified)  
 **Effort:** 4–6 hours  
 **Risk:** Medium (import-path change)
 
@@ -158,8 +158,8 @@ All P0 items (broken code, test-blocking failures, INTERNALERROR) are resolved.
 
 #### 3.2.3 Wikipedia Extraction Methods — Extract from `extractor.py`
 
-**Status:** 🔴 Not started  
-**File:** `extraction/extractor.py` (1624 lines)  
+**Status:** ✅ DONE (2026-02-19) — created `extraction/_wikipedia_helpers.py` with `WikipediaExtractionMixin`; `extractor.py` 1624→988 lines  
+**File:** `extraction/extractor.py` (now 988 lines)  
 **Target:** `extraction/_wikipedia_helpers.py`  
 **Effort:** 3–4 hours  
 **Risk:** Low
@@ -177,8 +177,8 @@ Methods `validate_against_wikidata` (~225 lines, line 1174), `_get_wikidata_id` 
 
 #### 3.3.1 `advanced_knowledge_extractor.py` Relocation
 
-**Status:** 🔴 Not started  
-**File:** `advanced_knowledge_extractor.py` (751 lines, root level)  
+**Status:** ✅ DONE (2026-02-19) — created `extraction/advanced.py`; root file replaced with deprecation shim  
+**File:** `extraction/advanced.py` (canonical), `advanced_knowledge_extractor.py` (shim)  
 **Effort:** 2–3 hours  
 **Risk:** Low
 
@@ -192,7 +192,7 @@ This file contains `AdvancedKnowledgeExtractor` — logically part of the `extra
 
 #### 3.3.2 Extraction Validation Split
 
-**Status:** 🔴 Not started  
+**Status:** 🟡 Deferred — `extraction/validator.py` (670 lines) contains a single class (`KnowledgeGraphExtractorWithValidation`) not clearly separable into SPARQL/schema/metrics concerns without substantial refactoring. Marked for future review when concerns become clearer.  
 **File:** `extraction/validator.py` (670 lines)  
 **Effort:** 3–4 hours  
 **Risk:** Low
@@ -203,7 +203,7 @@ This file contains `AdvancedKnowledgeExtractor` — logically part of the `extra
 
 #### 3.3.3 Cypher Module Further Type Annotation
 
-**Status:** 🔴 Not started  
+**Status:** ✅ DONE (2026-02-19) — added `-> None`, `-> Any` return annotations to all untyped `compiler.py` methods; `UnionClause` added to top-level imports  
 **Files:** `cypher/parser.py`, `cypher/compiler.py`  
 **Effort:** 4–6 hours  
 **Risk:** Low
@@ -214,7 +214,7 @@ Several internal functions still use implicit `Any` where more specific types co
 
 #### 3.3.4 Lineage Module Optional-Dependency Guard
 
-**Status:** 🔴 Not started  
+**Status:** ✅ DONE (2026-02-19) — added `pytest.importorskip("networkx")` to `test_core.py`, `test_enhanced.py`, `test_metrics.py`; 11 FAILED → 0 FAILED  
 **Files:** `lineage/core.py`, `lineage/enhanced.py`, `lineage/metrics.py` (line 1 raises if NetworkX absent)  
 **Effort:** 2–3 hours  
 **Risk:** Low
@@ -227,8 +227,8 @@ Currently tests fail with `ImportError: NetworkX is required` instead of being s
 
 #### 3.3.5 `cross_document_reasoning.py` Further Reduction
 
-**Status:** 🔴 Not started  
-**File:** `cross_document_reasoning.py` (1196 lines)  
+**Status:** ✅ DONE (2026-02-19) — created `_reasoning_helpers.py` with `ReasoningHelpersMixin`; 1196→876 lines  
+**File:** `cross_document_reasoning.py` (now 876 lines)  
 **Effort:** 4–5 hours  
 **Risk:** Low–Medium
 

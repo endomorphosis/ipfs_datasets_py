@@ -19,6 +19,21 @@ For more information, see docs/knowledge_graphs/MIGRATION_GUIDE.md
 
 ---
 
+**Relationship to other IPLD modules:**
+
+``knowledge_graphs/storage/ipld_backend.py``
+    The *current* storage backend.  Provides ``IPLDBackend`` which implements
+    the ``StorageBackend`` Protocol and is the recommended way to interact with
+    IPLD-backed graphs from new code.  Use this for all new development.
+
+``knowledge_graphs/ipld.py`` (this file)
+    A *legacy* low-level IPLD primitives layer that predates the structured
+    Neo4j-compat API.  It uses raw IPLD DAG nodes and a content-addressed
+    block store directly.  New code should use ``storage/ipld_backend.py``
+    instead; this file is retained only for backward compatibility.
+
+---
+
 LEGACY DOCUMENTATION:
 
 Provides a class for representing and storing knowledge graphs using IPLD.
