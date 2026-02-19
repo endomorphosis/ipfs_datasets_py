@@ -54,7 +54,7 @@ def _ensure_ipfs_accelerate_on_path() -> None:
                 candidate = submodule_root / "ipfs_accelerate_py"
                 if candidate.exists() and str(candidate) not in sys.path:
                         sys.path.insert(0, str(candidate))
-        except Exception:
+        except (OSError, ValueError):
                 pass
 
 
@@ -258,7 +258,7 @@ class P2PServiceManager:
             # Fallback: infer from runtime thread.
             try:
                 running = bool(getattr(self._runtime, "running", False))
-            except Exception:
+            except AttributeError:
                 running = False
             started_at = time.time() if running else 0.0
         except Exception as e:
@@ -266,7 +266,7 @@ class P2PServiceManager:
             # Fallback: infer from runtime thread.
             try:
                 running = bool(getattr(self._runtime, "running", False))
-            except Exception:
+            except AttributeError:
                 running = False
             started_at = time.time() if running else 0.0
 
@@ -287,7 +287,7 @@ class P2PServiceManager:
             peers = list_known_peers(alive_only=True, limit=1000)
             if isinstance(peers, list):
                 connected_peers = len(peers)
-        except Exception:
+        except (ImportError, ModuleNotFoundError):
             pass
         
         # Try to get active workflows count
@@ -295,7 +295,7 @@ class P2PServiceManager:
             try:
                 # This would be implemented by the workflow scheduler
                 active_workflows = 0  # TODO: Get from workflow scheduler
-            except Exception:
+            except AttributeError:
                 pass
 
         return P2PServiceState(
@@ -365,7 +365,7 @@ class P2PServiceManager:
                 try:
                     from ipfs_datasets_py.mcp_server import mcplusplus
                     mcplusplus.reset_scheduler()
-                except Exception:
+                except (ImportError, AttributeError):
                     pass
                 self._workflow_scheduler = None
             

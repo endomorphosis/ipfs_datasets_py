@@ -401,5 +401,67 @@ class TestServerContextCleanup:
         pass
 
 
+# ---------------------------------------------------------------------------
+# get_tool and execute_tool
+# ---------------------------------------------------------------------------
+
+class TestServerContextToolExecution:
+    """Test get_tool and execute_tool on a live ServerContext."""
+
+    def test_get_tool_returns_none_for_unqualified_name(self):
+        """
+        GIVEN: A ServerContext with no tool registered under simple name
+        WHEN: get_tool('simple_name') is called (no dot separator)
+        THEN: Returns None (simple names not supported without category prefix)
+        """
+        with ServerContext() as ctx:
+            result = ctx.get_tool("simple_name")
+            assert result is None
+
+    def test_get_tool_returns_none_for_unknown_qualified_name(self):
+        """
+        GIVEN: A ServerContext
+        WHEN: get_tool('nonexistent_cat.nonexistent_tool') is called
+        THEN: Returns None
+        """
+        with ServerContext() as ctx:
+            result = ctx.get_tool("nonexistent_cat.nonexistent_tool")
+            assert result is None
+
+    def test_execute_tool_raises_for_missing_tool(self):
+        """
+        GIVEN: A ServerContext with no tool under 'cat.missing_tool'
+        WHEN: execute_tool('cat.missing_tool') is called
+        THEN: ToolNotFoundError is raised
+        """
+        from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+        with ServerContext() as ctx:
+            with pytest.raises(ToolNotFoundError):
+                ctx.execute_tool("cat.missing_tool")
+
+    def test_set_and_get_current_context(self):
+        """
+        GIVEN: A ServerContext
+        WHEN: set_current_context then get_current_context are called in same thread
+        THEN: get_current_context returns the same context object
+        """
+        with ServerContext() as ctx:
+            set_current_context(ctx)
+            retrieved = get_current_context()
+            assert retrieved is ctx
+
+    def test_get_current_context_without_set_returns_none_or_context(self):
+        """
+        GIVEN: No context set in current thread
+        WHEN: get_current_context() is called
+        THEN: Returns None (or default) without raising
+        """
+        # Clear any existing context first
+        set_current_context(None)  # type: ignore[arg-type]
+        result = get_current_context()
+        # Just assert no exception raised; value may be None or a new context
+        assert result is None or isinstance(result, ServerContext)
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])

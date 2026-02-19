@@ -575,7 +575,9 @@ class ServerContext:
             # Extract category and tool name if needed
             if '.' in tool_name:
                 category, name = tool_name.split('.', 1)
-                return self._tool_manager.get_tool(category, name)
+                cat = self._tool_manager.categories.get(category)
+                if cat is not None:
+                    return cat.get_tool(name)
         return None
     
     def execute_tool(self, tool_name: str, **kwargs) -> Any:
