@@ -322,6 +322,7 @@ mod tests {
         let witness = WitnessInput {
             private_axioms: vec!["P".to_string(), "P -> Q".to_string()],
             theorem: "Q".to_string(),
+            intermediate_steps: vec![],
             axioms_commitment_hex:
                 "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
             theorem_hash_hex: "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260"
