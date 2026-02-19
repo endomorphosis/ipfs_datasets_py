@@ -309,7 +309,7 @@
 ## P10 — Dependency Management & Versioning
 
 ### P10.1 ⏳ Pin Groth16 stack versions
-- [ ] `pip install ipfs_datasets_py[groth16]`
+- [x] `pip install ipfs_datasets_py[groth16]`
 
 ### P10.1b ⏳ Dev/test dependencies
 - [x] Add a dev/test extra (or a documented install step) for property tests: `ipfs_datasets_py[test]` includes `hypothesis`.
