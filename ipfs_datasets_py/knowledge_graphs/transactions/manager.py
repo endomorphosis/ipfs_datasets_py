@@ -277,7 +277,7 @@ class TransactionManager:
             logger.error(f"Transaction {transaction.txn_id} failed: {e}")
             raise TransactionError(
                 f"Transaction failed: {e}",
-                details={'txn_id': str(transaction.txn_id), 'operations': len(transaction.operations)}
+                details={'txn_id': str(transaction.txn_id), 'operations': len(transaction.operations), 'error': str(e), 'error_class': type(e).__name__}
             ) from e
     
     def rollback(self, transaction: Transaction):
@@ -437,7 +437,7 @@ class TransactionManager:
             logger.error(f"Unexpected error capturing snapshot: {e}")
             raise TransactionError(
                 f"Failed to capture transaction snapshot: {e}",
-                details={'graph_engine_type': type(self.graph_engine).__name__}
+                details={'graph_engine_type': type(self.graph_engine).__name__, 'error': str(e), 'error_class': type(e).__name__}
             ) from e
     
     def recover(self):

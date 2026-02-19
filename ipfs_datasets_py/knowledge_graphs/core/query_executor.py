@@ -233,7 +233,7 @@ class QueryExecutor:
             return Result([], summary=summary)
 
         except StorageError as e:
-            query_error = QueryExecutionError(str(e), details={"stage": "execute"})
+            query_error = QueryExecutionError(str(e), details={"stage": "execute", "error": str(e), "error_class": type(e).__name__})
             if raise_on_error:
                 raise query_error from e
 
@@ -265,7 +265,7 @@ class QueryExecutor:
             return Result([], summary=summary)
 
         except Exception as e:
-            query_error = QueryExecutionError(str(e), details={"stage": "execute"})
+            query_error = QueryExecutionError(str(e), details={"stage": "execute", "error": str(e), "error_class": type(e).__name__})
             if raise_on_error:
                 raise query_error from e
 

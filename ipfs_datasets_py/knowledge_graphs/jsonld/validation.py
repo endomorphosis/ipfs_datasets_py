@@ -88,10 +88,10 @@ class SchemaValidator:
         except KnowledgeGraphError:
             raise
         except (schema_error, ref_resolution_error, TypeError, ValueError, KeyError) as e:
-            result.add_error(f"Validation error: {str(e)}")
+            result.add_error(f"Validation error ({type(e).__name__}): {str(e)}")
         except Exception as e:
             # Defensive fallback: preserve ValidationResult semantics.
-            result.add_error(f"Validation error: {str(e)}")
+            result.add_error(f"Validation error ({type(e).__name__}): {str(e)}")
         
         return result
     
