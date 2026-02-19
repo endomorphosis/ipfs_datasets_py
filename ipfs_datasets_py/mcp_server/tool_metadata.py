@@ -30,6 +30,8 @@ Usage:
     print(f"Runtime: {metadata.runtime}")
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field, asdict
 from typing import Any, Callable, Dict, List, Optional, Set
 import logging
@@ -262,12 +264,37 @@ class ToolMetadataRegistry:
         self._by_category.clear()
 
 
-# Global registry instance
+# Global registry instance (deprecated - use ServerContext instead)
 _global_registry = ToolMetadataRegistry()
 
 
-def get_registry() -> ToolMetadataRegistry:
-    """Get the global tool metadata registry."""
+def get_registry(context: Optional["ServerContext"] = None) -> ToolMetadataRegistry:
+    """Get the tool metadata registry.
+    
+    Args:
+        context: Optional ServerContext. If provided, returns the context's
+                metadata_registry. Otherwise, falls back to the global instance
+                for backward compatibility.
+    
+    Returns:
+        ToolMetadataRegistry instance
+        
+    Note:
+        The global instance is deprecated. New code should use ServerContext.
+        
+    Example:
+        >>> # New code (recommended):
+        >>> with ServerContext() as ctx:
+        ...     registry = get_registry(ctx)
+        
+        >>> # Legacy code (still works):
+        >>> registry = get_registry()
+    """
+    # If context provided, use it (new pattern)
+    if context is not None:
+        return context.metadata_registry
+    
+    # Fallback to global for backward compatibility (deprecated)
     return _global_registry
 
 

@@ -286,6 +286,19 @@ class ServerContext:
             raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
         return self._workflow_scheduler
     
+    @workflow_scheduler.setter
+    def workflow_scheduler(self, scheduler: Optional[Any]) -> None:
+        """Set the workflow scheduler.
+        
+        Args:
+            scheduler: Workflow scheduler instance
+        """
+        if not self._entered:
+            raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
+        with self._lock:
+            self._workflow_scheduler = scheduler
+            logger.debug("Workflow scheduler updated")
+    
     def get_vector_store(self, name: str) -> Optional[Any]:
         """
         Get a vector store by name.

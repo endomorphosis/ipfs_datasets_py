@@ -410,11 +410,37 @@ class HierarchicalToolManager:
 
 
 # Create global instance (can be overridden for testing)
+# NOTE: This global is deprecated - use ServerContext instead
 _global_manager: Optional[HierarchicalToolManager] = None
 
 
-def get_tool_manager() -> HierarchicalToolManager:
-    """Get the global hierarchical tool manager instance."""
+def get_tool_manager(context: Optional["ServerContext"] = None) -> HierarchicalToolManager:
+    """Get the hierarchical tool manager instance.
+    
+    Args:
+        context: Optional ServerContext. If provided, returns the context's
+                tool_manager. Otherwise, falls back to the global instance
+                for backward compatibility.
+    
+    Returns:
+        HierarchicalToolManager instance
+        
+    Note:
+        The global instance is deprecated. New code should use ServerContext.
+        
+    Example:
+        >>> # New code (recommended):
+        >>> with ServerContext() as ctx:
+        ...     manager = get_tool_manager(ctx)
+        
+        >>> # Legacy code (still works):
+        >>> manager = get_tool_manager()
+    """
+    # If context provided, use it (new pattern)
+    if context is not None:
+        return context.tool_manager
+    
+    # Fallback to global for backward compatibility (deprecated)
     global _global_manager
     if _global_manager is None:
         _global_manager = HierarchicalToolManager()
