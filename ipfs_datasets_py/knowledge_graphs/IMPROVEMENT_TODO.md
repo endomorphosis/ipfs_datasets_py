@@ -191,8 +191,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 ## Workstream I — Codebase hygiene (ongoing)
 
-- [ ] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
+- [x] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
   - Candidates: `extraction/extractor.py`, `core/query_executor.py`, `cross_document_reasoning.py`.
+  - Status (2026-02-19): ✅ DONE – Three god-module reductions completed: (a) `extraction/extractor.py` 1760→1624 lines via `extraction/_entity_helpers.py`; (b) `core/query_executor.py` 1189→545 lines via `core/_legacy_graph_engine.py`; (c) `cross_document_reasoning.py` 1244→1196 lines by extracting `InformationRelationType`, `DocumentNode`, `EntityMediatedConnection`, `CrossDocReasoning` into new `cross_document_types.py`. All three preserve backward-compatible imports. Tests in `test_workstream_i.py` (27 tests) verify both import paths and object identity.
 - [x] **Improve typing at boundaries** (P2, low risk)
   - Acceptance: fewer `Any` at public edges; core dataclasses or Protocols for key interfaces.
   - Status (2026-02-19): ✅ DONE – Created `core/types.py` with: type aliases `GraphProperties`, `NodeLabels`, `CID`; TypedDicts `GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`; structural Protocols `StorageBackend` and `GraphEngineProtocol`. All exported from `core/__init__.py`.
@@ -278,3 +279,11 @@ If you want a high-value sequence that keeps risk low:
 
 
 
+- 2026-02-19: I.1d (god module) – Extracted `InformationRelationType`, `DocumentNode`, `EntityMediatedConnection`, `CrossDocReasoning` from `cross_document_reasoning.py` (1244→1196 lines) into new `cross_document_types.py`; re-exported for backward compat; 7 new tests in `test_workstream_i.py::TestCrossDocumentTypesExtraction`.
+- 2026-02-19: Sprint 1 (3.3.4) – Added `pytest.importorskip("networkx")` to `lineage/test_core.py`, `test_enhanced.py`, `test_metrics.py`; 11 test failures → 0 (clean skips).
+- 2026-02-19: Sprint 1 (3.2.1) – Added `TestIntegrityVerifierSample` (5 tests, `verify_sample` lines 182-214) and `TestNeo4jExporterExportMethod` (9 tests, `export()` + `export_to_graph_data()` lines 331-431); migration coverage 83%.
+- 2026-02-19: Sprint 2 (3.2.3) – Extracted Wikipedia/Wikidata methods into `extraction/_wikipedia_helpers.py` as `WikipediaExtractionMixin`; `extractor.py` 1624→988 lines; `KnowledgeGraphExtractor(WikipediaExtractionMixin)`.
+- 2026-02-19: Sprint 2 (3.3.1) – Relocated `AdvancedKnowledgeExtractor` to `extraction/advanced.py`; root `advanced_knowledge_extractor.py` replaced with deprecation shim; `extraction/__init__.py` exports new location.
+- 2026-02-19: Sprint 3 (3.2.2) – Clarified `ipld.py` module docstring with explicit relationship to `storage/ipld_backend.py` (legacy primitive layer vs. recommended backend).
+- 2026-02-19: Sprint 3 (3.3.5) – Extracted 5 methods from `cross_document_reasoning.py` into `_reasoning_helpers.py` as `ReasoningHelpersMixin`; 1196→876 lines; `CrossDocumentReasoner(ReasoningHelpersMixin)`.
+- 2026-02-19: Sprint 4 (3.3.3) – Added `-> None` / `-> Any` return type annotations to 9 untyped methods in `cypher/compiler.py`; imported `UnionClause` at top-level (removed inline import); all 42 Cypher tests pass.

@@ -192,6 +192,7 @@ These files are the active, maintained entry points for the module:
 | Document | Purpose |
 |----------|---------|
 | **MASTER_STATUS.md** | **Single source of truth for status** |
+| **MASTER_REFACTORING_PLAN_2026.md** | ⭐ **Consolidated refactoring & improvement plan** |
 | **COMPREHENSIVE_ANALYSIS_2026_02_18.md** | Comprehensive analysis and review findings |
 | **IMPROVEMENT_TODO.md** | Infinite improvement backlog (living TODO) |
 | DOCUMENTATION_GUIDE.md | Maintainer guide / documentation conventions |

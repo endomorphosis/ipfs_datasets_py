@@ -77,6 +77,14 @@ from .graph import KnowledgeGraph
 from .extractor import KnowledgeGraphExtractor
 from .validator import KnowledgeGraphExtractorWithValidation
 
+# Advanced extractor (Workstream I — relocated from package root)
+from .advanced import (
+    AdvancedKnowledgeExtractor,
+    ExtractionContext,
+    EntityCandidate,
+    RelationshipCandidate,
+)
+
 # Future imports (will be uncommented as modules are created):
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
@@ -104,6 +112,11 @@ __all__ = [
     'KnowledgeGraph',  # Task 3.4 ✅
     'KnowledgeGraphExtractor',  # Task 3.5a ✅
     'KnowledgeGraphExtractorWithValidation',  # Task 3.5b ✅
+    # Advanced extractor (Workstream I — relocated from package root)
+    'AdvancedKnowledgeExtractor',
+    'ExtractionContext',
+    'EntityCandidate',
+    'RelationshipCandidate',
 ]
 
 
