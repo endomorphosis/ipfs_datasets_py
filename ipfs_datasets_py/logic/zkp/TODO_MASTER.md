@@ -322,14 +322,14 @@
 
 ### P10.2 ⏳ Version policy for circuits
 - [x] Versioning: `circuit_id@v<uint64>`
-- [ ] Backward compat: old versions stay verifiable
+- [x] Backward compat: old versions stay verifiable
 
 ---
 
 ## P11 — Operational Best Practices
 
 ### P11.1 ⏳ Trusted setup ceremony notes
-- [ ] Documentation, checksums, multi-party option
+- [x] Documentation, checksums, multi-party option
 
 ### P11.2 ⏳ Artifact lifecycle
 - [ ] IPFS + pinning + HTTPS backup

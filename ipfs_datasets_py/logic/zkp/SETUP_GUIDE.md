@@ -65,6 +65,21 @@ Groth16 requires circuit-specific setup artifacts:
 
 **Planned work:** see `PRODUCTION_UPGRADE_PATH.md` and the master backlog.
 
+### 3.1 Trusted setup ceremony notes (operational)
+
+When Groth16 setup/parameter generation is implemented, treat it as a security-critical ceremony:
+
+- **Multiparty contributions:** prefer an MPC ceremony where multiple independent contributors add entropy.
+- **Transcript:** keep a signed, append-only transcript of contributions (inputs, outputs, hashes, timestamps).
+- **Checksums everywhere:** publish SHA-256 (or similar) checksums for:
+  - circuit source / constraints (R1CS)
+  - proving key (PK)
+  - verifying key (VK)
+  - any generated Solidity verifier artifacts
+- **Reproducible verification:** ensure third parties can independently verify the transcript and that the final VK matches the transcript output.
+- **Key hygiene:** treat PK material as sensitive operational data; restrict access and log usage.
+- **Versioning:** bind ceremony outputs to `circuit_id@v<uint64>` so older VKs remain discoverable and verifiable.
+
 ## 4. Artifact Storage (Not Yet Implemented)
 
 A production system should define:

@@ -1,6 +1,10 @@
 import pytest
 
-from ipfs_datasets_py.logic.zkp.statement import format_circuit_ref, parse_circuit_ref
+from ipfs_datasets_py.logic.zkp.statement import (
+    format_circuit_ref,
+    parse_circuit_ref,
+    parse_circuit_ref_lenient,
+)
 
 
 U64_MAX = (1 << 64) - 1
@@ -15,6 +19,21 @@ def test_parse_circuit_ref_valid_cases():
 @pytest.mark.parametrize(
     "value",
     [
+        None,
+        123,
+        1.5,
+        True,
+        object(),
+    ],
+)
+def test_parse_circuit_ref_rejects_non_str(value):
+    with pytest.raises(TypeError):
+        parse_circuit_ref(value)  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
         "",
         "no_version",
         "@v1",
@@ -22,6 +41,8 @@ def test_parse_circuit_ref_valid_cases():
         "c@v-1",
         "c@v+1",
         "c@v1.0",
+        "c@v1 ",
+        "c@v 1",
         "c@v01x",
         "c@v1@v2",
         f"c@v{U64_MAX + 1}",
@@ -31,6 +52,19 @@ def test_parse_circuit_ref_valid_cases():
 def test_parse_circuit_ref_rejects_invalid(value: str):
     with pytest.raises((ValueError, TypeError)):
         parse_circuit_ref(value)
+
+
+def test_parse_circuit_ref_lenient_accepts_legacy_unversioned():
+    assert parse_circuit_ref_lenient("knowledge_of_axioms") == ("knowledge_of_axioms", 1)
+
+
+def test_parse_circuit_ref_lenient_delegates_to_strict_parser():
+    assert parse_circuit_ref_lenient("knowledge_of_axioms@v2") == ("knowledge_of_axioms", 2)
+
+
+def test_parse_circuit_ref_lenient_rejects_legacy_with_at_sign():
+    with pytest.raises(ValueError):
+        parse_circuit_ref_lenient("bad@id")
 
 
 def test_format_circuit_ref_round_trip():

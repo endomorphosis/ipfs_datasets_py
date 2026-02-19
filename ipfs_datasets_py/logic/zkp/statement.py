@@ -50,6 +50,32 @@ def parse_circuit_ref(circuit_ref: str) -> tuple[str, int]:
     return circuit_id, version
 
 
+def parse_circuit_ref_lenient(circuit_ref: str, legacy_default_version: int = 1) -> tuple[str, int]:
+    """Parse a circuit reference, accepting legacy unversioned identifiers.
+
+    - Preferred format: `circuit_id@v<uint64>` (parsed via `parse_circuit_ref`)
+    - Legacy format: `circuit_id` (interpreted as `circuit_id@v<legacy_default_version>`)
+    """
+    if not isinstance(circuit_ref, str):
+        raise TypeError("circuit_ref must be a str")
+
+    if circuit_ref == "":
+        raise ValueError("circuit_ref cannot be empty")
+
+    if "@v" in circuit_ref:
+        return parse_circuit_ref(circuit_ref)
+
+    if "@" in circuit_ref:
+        raise ValueError("legacy circuit_id must not contain @")
+
+    if not isinstance(legacy_default_version, int) or isinstance(legacy_default_version, bool):
+        raise TypeError("legacy_default_version must be an int")
+    if legacy_default_version < 0 or legacy_default_version > _U64_MAX:
+        raise ValueError("legacy_default_version must be in uint64 range")
+
+    return circuit_ref, legacy_default_version
+
+
 def format_circuit_ref(circuit_id: str, version: int) -> str:
     """Format a circuit reference string using the version policy."""
     if not isinstance(circuit_id, str):
