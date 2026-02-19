@@ -72,7 +72,7 @@
 
 ### P1.2 ✅ Warning policy (warn-on-use, not on import)
 - [x] Verified: `import ipfs_datasets_py.logic.zkp` emits no warnings
-- [x] Test passing: `test_logic_zkp_import_quiet.py` ensures import quietness
+- [x] Test passing: `tests/unit_tests/logic/zkp/test_optional_dependencies.py` ensures import quietness
 
 ### P1.3 ✅ Determinism policy for simulated proofs
 - [x] Decision: Witness-based determinism for MVP circuit
