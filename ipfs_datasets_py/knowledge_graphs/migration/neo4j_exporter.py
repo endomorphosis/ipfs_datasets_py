@@ -134,6 +134,8 @@ class Neo4jExporter:
             self._driver.verify_connectivity()
             logger.info("Connected to Neo4j at %s", self.config.uri)
             return True
+        except MigrationError:
+            raise
         except Exception as e:
             raise MigrationError(
                 "Failed to connect to Neo4j",
@@ -377,7 +379,14 @@ class Neo4jExporter:
 
         except Exception as e:
             logger.error("Export failed unexpectedly: %s", e, exc_info=True)
-            result.errors.append(str(MigrationError("Export failed unexpectedly")))
+            result.errors.append(
+                str(
+                    MigrationError(
+                        "Export failed unexpectedly",
+                        details={"error": str(e), "error_class": type(e).__name__},
+                    )
+                )
+            )
             result.duration_seconds = time.time() - start_time
             return result
         

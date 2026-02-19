@@ -32,6 +32,15 @@ RUNTIME_FASTAPI = "fastapi"
 RUNTIME_TRIO = "trio"
 RUNTIME_UNKNOWN = "unknown"
 
+# Hierarchical tool manager meta-tools. When these are the only tools exposed by
+# the host server, callers must discover and dispatch via the hierarchical system.
+HIERARCHICAL_META_TOOL_NAMES: Set[str] = {
+    "tools_list_categories",
+    "tools_list_tools",
+    "tools_get_schema",
+    "tools_dispatch",
+}
+
 
 class P2PMCPRegistryAdapter:
     """Adapter for exposing MCP tools to P2P services with dual-runtime support.
@@ -86,10 +95,13 @@ class P2PMCPRegistryAdapter:
         out: Dict[str, Dict[str, Any]] = {}
         host_tools = getattr(self._host, "tools", None)
         
-        # Phase 2 Week 5: If no flat tools, use hierarchical discovery
-        if not isinstance(host_tools, dict) or len(host_tools) <= 4:
-            # Only hierarchical meta-tools present, discover all tools
-            logger.debug("Using hierarchical tool discovery (Phase 2 Week 5 enhancement)")
+        # Phase 2 Week 5: If the host only exposes hierarchical meta-tools,
+        # fall back to hierarchical discovery. Do not fall back just because
+        # the registry is small (unit tests commonly register 1-3 tools).
+        if not isinstance(host_tools, dict):
+            return out
+        if host_tools and set(host_tools.keys()).issubset(HIERARCHICAL_META_TOOL_NAMES):
+            logger.debug("Using hierarchical tool discovery (meta-tools only)")
             return self._get_hierarchical_tools()
 
         # Legacy: Process flat tools if available (backward compatibility)
