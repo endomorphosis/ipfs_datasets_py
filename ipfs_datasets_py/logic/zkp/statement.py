@@ -174,6 +174,7 @@ class Witness:
     """
     
     axioms: List[str]  # Private axiom set
+    theorem: str | None = None  # Optional: theorem being proven (P7/P7.2)
     intermediate_steps: List[str] = None  # Optional: proof steps
     axioms_commitment_hex: str = None  # Commitment to axiom set
     circuit_version: int = 1  # Circuit spec version
@@ -187,6 +188,7 @@ class Witness:
         """Convert to dictionary (WARNING: reveals private data!)."""
         return {
             'axioms': self.axioms,
+            'theorem': self.theorem,
             'intermediate_steps': self.intermediate_steps,
             'axioms_commitment_hex': self.axioms_commitment_hex,
             'circuit_version': self.circuit_version,
@@ -198,6 +200,7 @@ class Witness:
         """Create from dictionary."""
         return cls(
             axioms=data['axioms'],
+            theorem=data.get('theorem'),
             intermediate_steps=data.get('intermediate_steps', []),
             axioms_commitment_hex=data.get('axioms_commitment_hex'),
             circuit_version=data.get('circuit_version', 1),

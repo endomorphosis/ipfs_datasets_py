@@ -14,6 +14,7 @@ from .canonicalization import (
     hash_axioms_commitment,
 )
 from .circuits import MVPCircuit
+from .legal_theorem_semantics import derive_tdfol_v1_trace
 
 
 class WitnessManager:
@@ -86,9 +87,18 @@ class WitnessManager:
         # Generate commitment
         axioms_commitment = hash_axioms_commitment(canonical_axioms)
         
+        # Optionally derive a constraint-friendly trace for semantics circuits.
+        #
+        # For `circuit_version >= 2` we interpret `TDFOL_v1` as the MVP Horn
+        # fragment (facts + implications) defined in `legal_theorem_semantics`.
+        if circuit_version >= 2 and ruleset_id == "TDFOL_v1" and intermediate_steps is None:
+            trace = derive_tdfol_v1_trace(canonical_axioms, theorem)
+            intermediate_steps = trace or []
+
         # Create witness
         witness = Witness(
             axioms=canonical_axioms,
+            theorem=theorem,
             intermediate_steps=intermediate_steps or [],
             axioms_commitment_hex=axioms_commitment.hex(),
             circuit_version=circuit_version,

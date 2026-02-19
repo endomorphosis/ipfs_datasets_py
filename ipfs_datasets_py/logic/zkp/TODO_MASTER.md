@@ -269,9 +269,11 @@
 
 ## P7 — Legal Theorem Semantics (Phase E: Real Use Case)
 
-### P7.1 ⏳ Define "legal theorem" constraint system
-- [ ] Choose logic: TDFOL, CEC, or simpler
-- [ ] Document: what "theorem holds" means formally
+### P7.1 ✅ Define "legal theorem" constraint system
+- [x] Choose logic (MVP): `TDFOL_v1` as a propositional Horn fragment (facts + implications)
+- [x] Document: what "theorem holds" means formally (see `logic/zkp/LEGAL_THEOREM_SEMANTICS.md`)
+- [x] Reference implementation: `logic/zkp/legal_theorem_semantics.py`
+- [x] Unit tests: `tests/unit_tests/logic/zkp/test_legal_theorem_semantics.py`
 
 ### P7.2 ⏳ Compile legal theorems to arithmetic circuits
 - [ ] Theorem + axioms → R1CS

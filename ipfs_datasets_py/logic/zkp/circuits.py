@@ -10,7 +10,9 @@ from dataclasses import dataclass
 from typing import Any, Dict
 
 from .canonicalization import canonicalize_axioms, hash_axioms_commitment
+from .canonicalization import hash_theorem
 from .statement import Statement, Witness
+from .legal_theorem_semantics import parse_tdfol_v1_axiom, parse_tdfol_v1_theorem
 import hashlib
 
 
@@ -386,6 +388,110 @@ def create_knowledge_of_axioms_circuit(circuit_version: int = 1) -> MVPCircuit:
         MVPCircuit instance
     """
     return MVPCircuit(circuit_version=circuit_version)
+
+
+@dataclass
+class TDFOLv1DerivationCircuit:
+    """Constraint evaluation for the `TDFOL_v1` MVP semantics (P7.2).
+
+    This is still a *non-cryptographic* constraint checker implemented in
+    Python, but it defines a witness structure that is designed to be compiled
+    to arithmetic constraints later.
+
+    Witness requirements (v2):
+    - witness.axioms: canonicalized axioms
+    - witness.theorem: theorem atom (string)
+    - witness.intermediate_steps: derivation trace of atoms (strings)
+
+    Public statement requirements:
+    - statement.theorem_hash == hash_theorem(witness.theorem)
+    - statement.axioms_commitment == hash_axioms_commitment(witness.axioms)
+    - statement.ruleset_id == 'TDFOL_v1'
+    - statement.circuit_version == 2
+    """
+
+    circuit_version: int = 2
+    circuit_type: str = "tdfol_v1_horn_derivation"
+
+    def num_inputs(self) -> int:
+        return 4
+
+    def compile(self) -> Dict[str, Any]:
+        return {
+            'version': self.circuit_version,
+            'type': self.circuit_type,
+            'num_inputs': self.num_inputs(),
+            'description': 'Prove theorem holds under TDFOL_v1 Horn-fragment semantics using a derivation trace',
+        }
+
+    def verify_constraints(self, witness: Witness, statement: Statement) -> bool:
+        try:
+            if statement.circuit_version != self.circuit_version:
+                return False
+            if witness.circuit_version != statement.circuit_version:
+                return False
+            if statement.ruleset_id != "TDFOL_v1":
+                return False
+            if witness.ruleset_id != statement.ruleset_id:
+                return False
+
+            if not witness.theorem:
+                return False
+
+            theorem_atom = parse_tdfol_v1_theorem(witness.theorem)
+            if statement.theorem_hash != hash_theorem(theorem_atom).hex():
+                return False
+
+            canonical_axioms = canonicalize_axioms(witness.axioms)
+            if witness.axioms != canonical_axioms:
+                return False
+            expected_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
+            if statement.axioms_commitment != expected_commitment_hex:
+                return False
+            if witness.axioms_commitment_hex != expected_commitment_hex:
+                return False
+
+            # Validate the derivation trace.
+            #
+            # Rules:
+            # - Each trace entry must be an atom.
+            # - Facts (axioms without antecedent) are initially known.
+            # - For any derived atom X that is not a fact, there must exist an axiom (P -> X)
+            #   with P already known.
+            if witness.intermediate_steps is None or len(witness.intermediate_steps) == 0:
+                return False
+
+            parsed_axioms = [parse_tdfol_v1_axiom(a) for a in canonical_axioms]
+            facts = {ax.consequent for ax in parsed_axioms if ax.antecedent is None}
+            implications = [ax for ax in parsed_axioms if ax.antecedent is not None]
+
+            known = set(facts)
+            seen = set()
+
+            for raw_step in witness.intermediate_steps:
+                step = parse_tdfol_v1_theorem(raw_step)
+
+                # Keep trace strictly additive.
+                if step in seen:
+                    return False
+                seen.add(step)
+
+                if step not in known:
+                    # Must be justified by some implication whose antecedent is already known.
+                    ok = False
+                    for ax in implications:
+                        assert ax.antecedent is not None
+                        if ax.consequent == step and ax.antecedent in known:
+                            ok = True
+                            break
+                    if not ok:
+                        return False
+                    known.add(step)
+
+            return theorem_atom in known
+
+        except Exception:
+            return False
 
 def create_implication_circuit(num_premises: int) -> ZKPCircuit:
     """

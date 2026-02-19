@@ -114,3 +114,40 @@ def evaluate_tdfol_v1_holds(private_axioms: Iterable[str], theorem: str) -> bool
                 changed = True
 
     return goal in known
+
+
+def derive_tdfol_v1_trace(private_axioms: Iterable[str], theorem: str) -> list[str] | None:
+    """Return a deterministic derivation trace for `theorem`, or None if not derivable.
+
+    The trace is a list of atoms in the order they become known. Facts appear
+    first (in sorted order), followed by derived atoms obtained via modus ponens
+    until fixpoint.
+
+    This trace is designed to be constraint-friendly (P7.2): it can be treated
+    as the witness for a bounded forward-chaining circuit.
+    """
+
+    axioms = [parse_tdfol_v1_axiom(a) for a in private_axioms]
+    goal = parse_tdfol_v1_theorem(theorem)
+
+    facts = sorted({a.consequent for a in axioms if a.antecedent is None})
+    known: Set[str] = set(facts)
+
+    implications: list[HornAxiom] = [a for a in axioms if a.antecedent is not None]
+    implications.sort(key=lambda ax: (ax.antecedent or "", ax.consequent))
+
+    trace: list[str] = list(facts)
+
+    changed = True
+    while changed:
+        changed = False
+        for ax in implications:
+            assert ax.antecedent is not None
+            if ax.antecedent in known and ax.consequent not in known:
+                known.add(ax.consequent)
+                trace.append(ax.consequent)
+                changed = True
+
+    if goal in known:
+        return trace
+    return None

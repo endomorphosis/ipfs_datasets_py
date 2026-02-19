@@ -67,3 +67,16 @@ This does not yet implement:
 - Proof objects / derivation traces
 - `CEC_v1` semantics
 - Compilation to R1CS (tracked in P7.2)
+
+## P7.2 compilation approach (bounded trace)
+
+To compile this fragment to an arithmetic circuit, we treat a **derivation trace** as the witness.
+
+- Private witness: an ordered list of atoms that become known.
+- Constraints: each new atom must be justified by either a fact axiom or by applying an implication whose antecedent is already known.
+
+This repository implements the constraint evaluation path for this in:
+
+- `logic/zkp/circuits.py` (`TDFOLv1DerivationCircuit`)
+
+This is still a Python constraint checker (not a Groth16/R1CS implementation yet), but it pins down the exact witness shape and rules that an eventual R1CS circuit must enforce.
