@@ -148,11 +148,7 @@ class Neo4jExporter:
             try:
                 self._driver.close()
             except Exception as e:
-                logger.warning(
-                    "Failed to close Neo4j driver cleanly (%s): %s",
-                    type(e).__name__,
-                    e,
-                )
+                logger.warning("Failed to close Neo4j driver cleanly: %s", e)
             logger.info("Closed Neo4j connection")
     
     def _export_nodes(self, graph_data: GraphData) -> int:
@@ -295,11 +291,7 @@ class Neo4jExporter:
                         schema.indexes.append(index_info)
                     logger.info("Exported %d indexes", len(schema.indexes))
                 except Exception as e:
-                    logger.warning(
-                        "Could not export indexes (%s): %s",
-                        type(e).__name__,
-                        e,
-                    )
+                    logger.warning("Could not export indexes: %s", e)
             
             # Get constraints
             if self.config.include_constraints:
@@ -315,11 +307,7 @@ class Neo4jExporter:
                         schema.constraints.append(constraint_info)
                     logger.info("Exported %d constraints", len(schema.constraints))
                 except Exception as e:
-                    logger.warning(
-                        "Could not export constraints (%s): %s",
-                        type(e).__name__,
-                        e,
-                    )
+                    logger.warning("Could not export constraints: %s", e)
             
             # Get node labels
             result = session.run("CALL db.labels()")
