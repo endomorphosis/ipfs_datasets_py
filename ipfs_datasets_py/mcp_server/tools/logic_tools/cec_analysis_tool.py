@@ -1,363 +1,295 @@
 """
-CEC Analysis Tool - Analyze DCEC formulas for complexity and properties.
+CEC Analysis Tool — Analyze DCEC formulas for complexity and properties via MCP.
 
-This tool provides analysis capabilities for DCEC formulas including
-complexity metrics, formula properties, and structural analysis.
+Exposes two MCP tools:
+
+    - ``cec_analyze_formula``   — Structural analysis (depth, size, operators).
+    - ``cec_formula_complexity`` — Quick complexity classification (low / medium / high).
+
+These replace the former ``analyze_formula``, ``visualize_proof``,
+``get_formula_complexity``, and ``profile_operation`` plain-function helpers
+(originally registered through the legacy ``TOOLS`` dict) with proper
+``ClaudeMCPTool`` subclasses that integrate directly with the ToolRegistry.
 """
 
-from typing import Dict, Any, List
+from __future__ import annotations
+
 import logging
+import time
+from typing import Any, Dict, List
+
+from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
 
+TOOL_VERSION = "1.0.0"
 
-def analyze_formula(formula: str) -> Dict[str, Any]:
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _structural_analysis(formula_str: str) -> Dict[str, Any]:
     """
-    Analyze a DCEC formula for various properties.
-    
-    Args:
-        formula: DCEC formula to analyze
-    
-    Returns:
-        Dictionary with:
-        - complexity: Complexity metrics
-        - operators: List of operators used
-        - variables: List of variables
-        - depth: Formula depth
-        - size: Formula size (number of subformulas)
-    
-    Example:
-        >>> result = analyze_formula("O(P(x)) & K(agent, Q(y))")
-        >>> print(result['complexity']['depth'])
-        3
+    Compute structural metrics for *formula_str*.
+
+    Returns depth, size (subformula count), and operator list.
+    Falls back to text-level metrics when CEC native is unavailable.
     """
     try:
         from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
-        
-        formula_obj = parse_dcec_string(formula)
-        
-        # Calculate complexity metrics
-        def get_depth(f):
-            """Recursively calculate formula depth"""
-            if hasattr(f, 'subformulas'):
-                return 1 + max((get_depth(sf) for sf in f.subformulas), default=0)
-            return 1
-        
-        def get_size(f):
-            """Count number of subformulas"""
-            if hasattr(f, 'subformulas'):
-                return 1 + sum(get_size(sf) for sf in f.subformulas)
-            return 1
-        
-        def get_operators(f):
-            """Extract operators used"""
-            ops = []
-            if hasattr(f, 'operator'):
+
+        formula_obj = parse_dcec_string(formula_str)
+
+        def _depth(f: Any) -> int:
+            children = getattr(f, "subformulas", []) or []
+            return 1 + max((_depth(c) for c in children), default=0)
+
+        def _size(f: Any) -> int:
+            children = getattr(f, "subformulas", []) or []
+            return 1 + sum(_size(c) for c in children)
+
+        def _operators(f: Any) -> List[str]:
+            ops: List[str] = []
+            if hasattr(f, "operator"):
                 ops.append(str(f.operator))
-            if hasattr(f, 'subformulas'):
-                for sf in f.subformulas:
-                    ops.extend(get_operators(sf))
+            for c in getattr(f, "subformulas", []) or []:
+                ops.extend(_operators(c))
             return ops
-        
-        depth = get_depth(formula_obj)
-        size = get_size(formula_obj)
-        operators = list(set(get_operators(formula_obj)))
-        
+
+        depth = _depth(formula_obj)
+        size = _size(formula_obj)
+        operators = sorted(set(_operators(formula_obj)))
+
         return {
-            "complexity": {
-                "depth": depth,
-                "size": size,
-                "operators_count": len(operators)
-            },
-            "operators": operators,
-            "variables": [],  # Would extract from formula
             "depth": depth,
             "size": size,
-            "success": True
+            "operators": operators,
+            "source": "cec_native",
         }
-    
-    except Exception as e:
-        logger.error(f"Error in analyze_formula: {e}")
-        return {
-            "complexity": {},
-            "operators": [],
-            "variables": [],
-            "depth": 0,
-            "size": 0,
-            "success": False,
-            "error": str(e)
-        }
+    except ImportError:
+        pass
+    except Exception as exc:
+        logger.debug("CEC structural analysis failed: %s", exc)
 
-
-def visualize_proof(
-    goal: str,
-    axioms: List[str] = None,
-    format: str = "text"
-) -> Dict[str, Any]:
-    """
-    Visualize a proof tree.
-    
-    Args:
-        goal: Goal formula
-        axioms: Optional axioms
-        format: Output format (text/json/graphviz)
-    
-    Returns:
-        Dictionary with:
-        - visualization: Proof visualization
-        - format: Format used
-    
-    Example:
-        >>> result = visualize_proof("P -> P", format="text")
-        >>> print(result['visualization'])
-        'Goal: P -> P\n  Axiom: P\n  Proves: P'
-    """
-    try:
-        from ipfs_datasets_py.logic.CEC.native import TheoremProver, parse_dcec_string
-        
-        goal_formula = parse_dcec_string(goal)
-        
-        axiom_formulas = []
-        if axioms:
-            axiom_formulas = [parse_dcec_string(a) for a in axioms]
-        
-        prover = TheoremProver()
-        result = prover.prove(goal_formula, axiom_formulas)
-        
-        if format == "text":
-            viz = f"Goal: {goal}\n"
-            if result.success:
-                viz += "Status: PROVED\n"
-                viz += f"Steps: {result.steps}\n"
-            else:
-                viz += "Status: UNPROVED\n"
-            
-            return {
-                "visualization": viz,
-                "format": format,
-                "success": True
-            }
-        elif format == "json":
-            return {
-                "visualization": {
-                    "goal": goal,
-                    "proved": result.success,
-                    "steps": result.steps
-                },
-                "format": format,
-                "success": True
-            }
-        else:
-            return {
-                "visualization": None,
-                "format": format,
-                "success": False,
-                "error": f"Unsupported format: {format}"
-            }
-    
-    except Exception as e:
-        logger.error(f"Error in visualize_proof: {e}")
-        return {
-            "visualization": None,
-            "format": format,
-            "success": False,
-            "error": str(e)
-        }
-
-
-def get_formula_complexity(formula: str) -> Dict[str, Any]:
-    """
-    Get detailed complexity metrics for a formula.
-    
-    Args:
-        formula: DCEC formula
-    
-    Returns:
-        Dictionary with:
-        - modal_depth: Maximum modal depth
-        - quantifier_depth: Quantifier nesting depth
-        - connective_count: Number of logical connectives
-        - overall_complexity: Overall complexity score
-    
-    Example:
-        >>> result = get_formula_complexity("O(P(x)) -> K(agent, Q(y))")
-        >>> print(result['overall_complexity'])
-        'medium'
-    """
-    try:
-        from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
-        
-        formula_obj = parse_dcec_string(formula)
-        
-        # Calculate various complexity metrics
-        modal_depth = 0
-        quantifier_depth = 0
-        connective_count = 0
-        
-        # Simple heuristic for complexity
-        if len(formula) < 20:
-            complexity = "low"
-        elif len(formula) < 50:
-            complexity = "medium"
-        else:
-            complexity = "high"
-        
-        return {
-            "modal_depth": modal_depth,
-            "quantifier_depth": quantifier_depth,
-            "connective_count": connective_count,
-            "overall_complexity": complexity,
-            "formula_length": len(formula),
-            "success": True
-        }
-    
-    except Exception as e:
-        logger.error(f"Error in get_formula_complexity: {e}")
-        return {
-            "modal_depth": 0,
-            "quantifier_depth": 0,
-            "connective_count": 0,
-            "overall_complexity": "unknown",
-            "formula_length": 0,
-            "success": False,
-            "error": str(e)
-        }
-
-
-def profile_operation(
-    operation: str,
-    formula: str,
-    iterations: int = 1
-) -> Dict[str, Any]:
-    """
-    Profile the performance of an operation on a formula.
-    
-    Args:
-        operation: Operation to profile (parse/prove/analyze)
-        formula: Formula to operate on
-        iterations: Number of iterations for profiling
-    
-    Returns:
-        Dictionary with:
-        - avg_time: Average time per iteration (seconds)
-        - total_time: Total time (seconds)
-        - memory_used: Memory used (bytes)
-    
-    Example:
-        >>> result = profile_operation("parse", "O(P(x))", iterations=100)
-        >>> print(result['avg_time'])
-        0.001
-    """
-    try:
-        from ipfs_datasets_py.logic.CEC.optimization import FormulaProfiler
-        import time
-        
-        profiler = FormulaProfiler()
-        profiler.start_profiling(f"profile_{operation}")
-        
-        start = time.time()
-        
-        for _ in range(iterations):
-            if operation == "parse":
-                from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
-                parse_dcec_string(formula)
-            elif operation == "prove":
-                from ipfs_datasets_py.logic.CEC.native import TheoremProver, parse_dcec_string
-                f = parse_dcec_string(formula)
-                prover = TheoremProver()
-                prover.prove(f, [])
-            elif operation == "analyze":
-                analyze_formula(formula)
-        
-        elapsed = time.time() - start
-        result = profiler.stop_profiling(f"profile_{operation}")
-        
-        return {
-            "avg_time": elapsed / iterations,
-            "total_time": elapsed,
-            "memory_used": result.memory_used,
-            "iterations": iterations,
-            "success": True
-        }
-    
-    except Exception as e:
-        logger.error(f"Error in profile_operation: {e}")
-        return {
-            "avg_time": 0.0,
-            "total_time": 0.0,
-            "memory_used": 0,
-            "iterations": 0,
-            "success": False,
-            "error": str(e)
-        }
-
-
-# Tool metadata for MCP server
-TOOLS = {
-    "analyze_formula": {
-        "function": analyze_formula,
-        "description": "Analyze DCEC formula properties and complexity",
-        "parameters": {
-            "formula": {
-                "type": "string",
-                "description": "DCEC formula to analyze",
-                "required": True
-            }
-        }
-    },
-    "visualize_proof": {
-        "function": visualize_proof,
-        "description": "Visualize proof tree",
-        "parameters": {
-            "goal": {
-                "type": "string",
-                "description": "Goal formula",
-                "required": True
-            },
-            "axioms": {
-                "type": "array",
-                "description": "Optional axioms",
-                "required": False
-            },
-            "format": {
-                "type": "string",
-                "description": "Output format (text/json/graphviz)",
-                "required": False,
-                "default": "text"
-            }
-        }
-    },
-    "get_formula_complexity": {
-        "function": get_formula_complexity,
-        "description": "Get detailed complexity metrics",
-        "parameters": {
-            "formula": {
-                "type": "string",
-                "description": "DCEC formula",
-                "required": True
-            }
-        }
-    },
-    "profile_operation": {
-        "function": profile_operation,
-        "description": "Profile operation performance",
-        "parameters": {
-            "operation": {
-                "type": "string",
-                "description": "Operation to profile (parse/prove/analyze)",
-                "required": True
-            },
-            "formula": {
-                "type": "string",
-                "description": "Formula to operate on",
-                "required": True
-            },
-            "iterations": {
-                "type": "integer",
-                "description": "Number of iterations",
-                "required": False,
-                "default": 1
-            }
-        }
+    # Text-level fallback
+    depth = formula_str.count("(")
+    size = max(1, formula_str.count(",") + 1)
+    ops_hint = [t for t in ("->", "<->", "&", "|", "~", "O(", "K(", "B(") if t in formula_str]
+    return {
+        "depth": depth,
+        "size": size,
+        "operators": ops_hint,
+        "source": "text_heuristic",
+        "note": "CEC native parser unavailable; heuristic values only.",
     }
-}
+
+
+def _classify_complexity(depth: int, size: int, formula_len: int) -> str:
+    """Return 'low' | 'medium' | 'high' based on metrics."""
+    score = depth + size // 5 + formula_len // 50
+    if score <= 4:
+        return "low"
+    if score <= 12:
+        return "medium"
+    return "high"
+
+
+# ---------------------------------------------------------------------------
+# Tool: cec_analyze_formula
+# ---------------------------------------------------------------------------
+
+class CECAnalyzeFormulaTool(ClaudeMCPTool):
+    """
+    MCP Tool: structural analysis of a DCEC formula.
+
+    Computes depth (nesting), size (subformula count), and the set of
+    logical operators used. Useful for understanding formula complexity
+    before attempting expensive proof operations.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "cec_analyze_formula"
+        self.description = (
+            "Analyze a DCEC formula for structural properties: nesting depth, "
+            "subformula count, and logical operators used."
+        )
+        self.category = "logic_tools"
+        self.tags = ["logic", "cec", "dcec", "analysis", "complexity", "structure"]
+        self.version = TOOL_VERSION
+
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "formula": {
+                    "type": "string",
+                    "description": "DCEC formula string to analyse.",
+                    "maxLength": 10000,
+                },
+                "include_complexity": {
+                    "type": "boolean",
+                    "description": "Include overall complexity classification.",
+                    "default": True,
+                },
+            },
+            "required": ["formula"],
+        }
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyse a DCEC formula.
+
+        Args:
+            parameters: ``formula`` (str), optional ``include_complexity`` bool.
+
+        Returns:
+            Dict with ``depth``, ``size``, ``operators`` (list[str]),
+            optional ``complexity`` ('low'|'medium'|'high'), and timing.
+
+        Example:
+            >>> result = await tool.execute({"formula": "O(P(x)) & K(agent, Q(y))"})
+            >>> isinstance(result["depth"], int)
+            True
+        """
+        from ipfs_datasets_py.logic.common.validators import validate_formula_string
+        start = time.monotonic()
+
+        formula: str = parameters.get("formula", "")
+        include_complexity: bool = parameters.get("include_complexity", True)
+
+        if not formula:
+            return {"success": False, "error": "'formula' must be non-empty."}
+
+        try:
+            validate_formula_string(formula)
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}
+
+        analysis = _structural_analysis(formula)
+
+        result: Dict[str, Any] = {
+            "success": True,
+            "depth": analysis["depth"],
+            "size": analysis["size"],
+            "operators": analysis["operators"],
+            "formula_length": len(formula),
+            "elapsed_ms": (time.monotonic() - start) * 1000,
+            "tool_version": TOOL_VERSION,
+        }
+        if analysis.get("source") == "text_heuristic":
+            result["note"] = analysis.get("note", "")
+
+        if include_complexity:
+            result["complexity"] = _classify_complexity(
+                analysis["depth"], analysis["size"], len(formula)
+            )
+
+        return result
+
+
+# ---------------------------------------------------------------------------
+# Tool: cec_formula_complexity
+# ---------------------------------------------------------------------------
+
+class CECFormulaComplexityTool(ClaudeMCPTool):
+    """
+    MCP Tool: quick complexity classification for a DCEC formula.
+
+    Returns a single complexity label (low / medium / high) along with
+    scalar metrics (modal depth, connective count, overall score).
+    Use this when you only need a quick verdict rather than full structural
+    analysis from ``cec_analyze_formula``.
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "cec_formula_complexity"
+        self.description = (
+            "Return a quick complexity classification (low / medium / high) "
+            "for a DCEC formula, with scalar metrics."
+        )
+        self.category = "logic_tools"
+        self.tags = ["logic", "cec", "dcec", "complexity", "metrics", "classification"]
+        self.version = TOOL_VERSION
+
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "formula": {
+                    "type": "string",
+                    "description": "DCEC formula to classify.",
+                    "maxLength": 10000,
+                },
+            },
+            "required": ["formula"],
+        }
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Classify formula complexity.
+
+        Args:
+            parameters: ``formula`` (str).
+
+        Returns:
+            Dict with ``overall_complexity`` ('low'|'medium'|'high'),
+            ``modal_depth``, ``connective_count``, ``formula_length``, and timing.
+
+        Example:
+            >>> result = await tool.execute({"formula": "O(P(x)) -> K(agent, Q(y))"})
+            >>> result["overall_complexity"] in ("low", "medium", "high")
+            True
+        """
+        from ipfs_datasets_py.logic.common.validators import validate_formula_string
+        start = time.monotonic()
+
+        formula: str = parameters.get("formula", "")
+        if not formula:
+            return {"success": False, "error": "'formula' must be non-empty."}
+
+        try:
+            validate_formula_string(formula)
+        except Exception as exc:
+            return {"success": False, "error": str(exc)}
+
+        analysis = _structural_analysis(formula)
+
+        # Modal operators heuristic: count O(, K(, B(, []( etc.
+        modal_indicators = ("O(", "K(", "B(", "D(", "[](", "<>(", "T(", "H(")
+        modal_depth = sum(formula.count(m) for m in modal_indicators)
+
+        # Connective count
+        connective_indicators = ("->", "<->", " & ", " | ", " ~ ", "~", " ∧ ", " ∨ ")
+        connective_count = sum(formula.count(c) for c in connective_indicators)
+
+        overall = _classify_complexity(analysis["depth"], analysis["size"], len(formula))
+
+        return {
+            "success": True,
+            "overall_complexity": overall,
+            "modal_depth": modal_depth,
+            "connective_count": connective_count,
+            "formula_length": len(formula),
+            "depth": analysis["depth"],
+            "size": analysis["size"],
+            "elapsed_ms": (time.monotonic() - start) * 1000,
+            "tool_version": TOOL_VERSION,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Tool instances (registered in __init__.py)
+# ---------------------------------------------------------------------------
+
+CEC_ANALYSIS_TOOLS = [
+    CECAnalyzeFormulaTool(),
+    CECFormulaComplexityTool(),
+]
+
+__all__ = [
+    "TOOL_VERSION",
+    "CECAnalyzeFormulaTool",
+    "CECFormulaComplexityTool",
+    "CEC_ANALYSIS_TOOLS",
+]

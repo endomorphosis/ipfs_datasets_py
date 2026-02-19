@@ -1,268 +1,272 @@
 """
-CEC Prove Tool - Theorem proving for DCEC formulas.
+CEC Prove Tool — Theorem proving for DCEC formulas via MCP.
 
-This tool provides theorem proving capabilities for DCEC formulas using
-multiple prover backends with automatic selection.
+Exposes two MCP tools:
+
+    - ``cec_prove``          — Prove a DCEC theorem given a goal and optional axioms.
+    - ``cec_check_theorem``  — Quickly check whether a formula is a tautology.
+
+These replace the former ``prove_dcec`` and ``check_theorem`` plain functions
+(originally registered through the legacy ``TOOLS`` dict) with proper
+``ClaudeMCPTool`` subclasses that integrate directly with the ToolRegistry.
 """
 
-from typing import Dict, Any, Optional, List
+from __future__ import annotations
+
 import logging
+import time
+from typing import Any, Dict, List, Optional
+
+from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
 
+TOOL_VERSION = "1.0.0"
 
-def prove_dcec(
-    goal: str,
-    axioms: Optional[List[str]] = None,
-    strategy: str = "auto",
-    timeout: int = 30
-) -> Dict[str, Any]:
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _try_prove(goal: str, axioms: List[str], strategy: str, timeout: int) -> Dict[str, Any]:
     """
-    Prove a DCEC theorem.
-    
-    Args:
-        goal: Goal formula to prove
-        axioms: Optional list of axiom formulas
-        strategy: Proving strategy (auto/z3/vampire/e_prover)
-        timeout: Timeout in seconds
-    
-    Returns:
-        Dictionary with:
-        - proved: Whether goal was proved
-        - prover_used: Which prover was used
-        - proof_steps: Number of proof steps
-        - execution_time: Time taken in seconds
-    
-    Example:
-        >>> result = prove_dcec("P(x) -> P(x)", strategy="auto")
-        >>> print(result['proved'])
-        True
+    Attempt to prove *goal* using the CEC prover stack.
+
+    Falls back gracefully when optional prover dependencies are missing.
     """
     try:
         from ipfs_datasets_py.logic.CEC.provers import ProverManager, ProverStrategy
         from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
-        
-        # Parse goal
+
         goal_formula = parse_dcec_string(goal)
-        
-        # Parse axioms if provided
-        axiom_formulas = []
-        if axioms:
-            for axiom in axioms:
-                axiom_formulas.append(parse_dcec_string(axiom))
-        
-        # Get strategy enum
-        if strategy == "auto":
-            prover_strategy = ProverStrategy.AUTO
-        elif strategy == "z3":
-            prover_strategy = ProverStrategy.Z3
-        elif strategy == "vampire":
-            prover_strategy = ProverStrategy.VAMPIRE
-        elif strategy == "e_prover":
-            prover_strategy = ProverStrategy.E_PROVER
-        else:
-            prover_strategy = ProverStrategy.AUTO
-        
-        # Prove
+        axiom_formulas = [parse_dcec_string(a) for a in axioms]
+
+        strategy_map = {
+            "auto": ProverStrategy.AUTO,
+            "z3": ProverStrategy.Z3,
+            "vampire": ProverStrategy.VAMPIRE,
+            "e_prover": ProverStrategy.E_PROVER,
+        }
+        prover_strategy = strategy_map.get(strategy, ProverStrategy.AUTO)
+
         manager = ProverManager()
         result = manager.prove(
             formula=goal_formula,
             axioms=axiom_formulas,
             strategy=prover_strategy,
-            timeout=timeout
+            timeout=timeout,
         )
-        
         return {
             "proved": result.success,
             "prover_used": result.prover_name,
             "proof_steps": result.steps,
             "execution_time": result.time_taken,
-            "success": True
         }
-    
-    except Exception as e:
-        logger.error(f"Error in prove_dcec: {e}")
+    except ImportError:
+        # Prover stack not available — return inconclusive
         return {
             "proved": False,
-            "prover_used": None,
+            "prover_used": "unavailable",
             "proof_steps": 0,
             "execution_time": 0.0,
-            "success": False,
-            "error": str(e)
+            "note": "CEC prover stack not installed (optional dependency).",
         }
-
-
-def check_theorem(
-    formula: str,
-    axioms: Optional[List[str]] = None
-) -> Dict[str, Any]:
-    """
-    Check if a formula is a theorem (tautology).
-    
-    Args:
-        formula: Formula to check
-        axioms: Optional axioms to assume
-    
-    Returns:
-        Dictionary with:
-        - is_theorem: Whether formula is a theorem
-        - counterexample: Counterexample if not a theorem
-    
-    Example:
-        >>> result = check_theorem("P(x) | ~P(x)")
-        >>> print(result['is_theorem'])
-        True
-    """
-    try:
-        from ipfs_datasets_py.logic.CEC.provers import ProverManager
-        from ipfs_datasets_py.logic.CEC.native import parse_dcec_string
-        
-        formula_obj = parse_dcec_string(formula)
-        
-        axiom_objs = []
-        if axioms:
-            axiom_objs = [parse_dcec_string(a) for a in axioms]
-        
-        manager = ProverManager()
-        result = manager.prove(formula_obj, axiom_objs)
-        
+    except Exception as exc:
+        logger.warning("Prover error for goal=%r: %s", goal, exc)
         return {
-            "is_theorem": result.success,
-            "counterexample": result.counterexample if hasattr(result, 'counterexample') else None,
-            "success": True
-        }
-    
-    except Exception as e:
-        logger.error(f"Error in check_theorem: {e}")
-        return {
-            "is_theorem": False,
-            "counterexample": None,
-            "success": False,
-            "error": str(e)
+            "proved": False,
+            "prover_used": "error",
+            "proof_steps": 0,
+            "execution_time": 0.0,
+            "error": str(exc),
         }
 
 
-def get_proof_tree(
-    goal: str,
-    axioms: Optional[List[str]] = None
-) -> Dict[str, Any]:
+# ---------------------------------------------------------------------------
+# Tool: cec_prove
+# ---------------------------------------------------------------------------
+
+class CECProveTool(ClaudeMCPTool):
     """
-    Get proof tree for a theorem.
-    
-    Args:
-        goal: Goal to prove
-        axioms: Optional axioms
-    
-    Returns:
-        Dictionary with:
-        - tree: Proof tree structure
-        - depth: Tree depth
-        - nodes: Number of nodes
-    
-    Example:
-        >>> result = get_proof_tree("P(x) -> P(x)")
-        >>> print(result['depth'])
-        2
+    MCP Tool: prove a DCEC theorem given a goal and optional axioms.
+
+    Attempts proof using the CEC prover stack (Z3, Vampire, or E-Prover).
+    Returns gracefully when the optional prover dependencies are not installed.
     """
-    try:
-        from ipfs_datasets_py.logic.CEC.native import TheoremProver, parse_dcec_string
-        
-        goal_formula = parse_dcec_string(goal)
-        
-        axiom_formulas = []
-        if axioms:
-            axiom_formulas = [parse_dcec_string(a) for a in axioms]
-        
-        prover = TheoremProver()
-        result = prover.prove(goal_formula, axiom_formulas)
-        
-        if result.success and result.proof_tree:
-            return {
-                "tree": result.proof_tree.to_dict(),
-                "depth": result.proof_tree.depth,
-                "nodes": result.proof_tree.node_count,
-                "success": True
-            }
-        else:
-            return {
-                "tree": None,
-                "depth": 0,
-                "nodes": 0,
-                "success": False,
-                "error": "Proof failed or no tree available"
-            }
-    
-    except Exception as e:
-        logger.error(f"Error in get_proof_tree: {e}")
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "cec_prove"
+        self.description = (
+            "Prove a DCEC (Deontic Cognitive Event Calculus) theorem given a goal "
+            "formula and optional axioms. Returns proof status, prover used, and "
+            "step count."
+        )
+        self.category = "logic_tools"
+        self.tags = ["logic", "cec", "dcec", "prove", "theorem", "prover"]
+        self.version = TOOL_VERSION
+
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "goal": {
+                    "type": "string",
+                    "description": "Goal formula to prove (DCEC notation).",
+                },
+                "axioms": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional axiom formulas.",
+                    "default": [],
+                    "maxItems": 50,
+                },
+                "strategy": {
+                    "type": "string",
+                    "description": "Proving strategy.",
+                    "enum": ["auto", "z3", "vampire", "e_prover"],
+                    "default": "auto",
+                },
+                "timeout": {
+                    "type": "integer",
+                    "description": "Timeout in seconds (1–300).",
+                    "default": 30,
+                    "minimum": 1,
+                    "maximum": 300,
+                },
+            },
+            "required": ["goal"],
+        }
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Prove a DCEC formula.
+
+        Args:
+            parameters: ``goal``, optional ``axioms``, ``strategy``, ``timeout``.
+
+        Returns:
+            Dict with ``proved`` bool, ``prover_used``, ``proof_steps``,
+            ``execution_time``, and timing.
+
+        Example:
+            >>> result = await tool.execute({"goal": "P(x) -> P(x)"})
+            >>> isinstance(result["proved"], bool)
+            True
+        """
+        from ipfs_datasets_py.logic.common.validators import (
+            validate_formula_string, validate_axiom_list,
+        )
+        start = time.monotonic()
+
+        goal = parameters.get("goal", "")
+        axioms: List[str] = parameters.get("axioms", [])
+        strategy: str = parameters.get("strategy", "auto")
+        timeout: int = int(parameters.get("timeout", 30))
+
+        # Validate inputs
+        try:
+            validate_formula_string(goal)
+            validate_axiom_list(axioms)
+        except Exception as exc:
+            return {"success": False, "error": str(exc), "proved": False}
+
+        prover_result = _try_prove(goal, axioms, strategy, timeout)
+        prover_result["success"] = "error" not in prover_result
+        prover_result["elapsed_ms"] = (time.monotonic() - start) * 1000
+        prover_result["tool_version"] = TOOL_VERSION
+        return prover_result
+
+
+# ---------------------------------------------------------------------------
+# Tool: cec_check_theorem
+# ---------------------------------------------------------------------------
+
+class CECCheckTheoremTool(ClaudeMCPTool):
+    """
+    MCP Tool: quickly check whether a DCEC formula is a tautology.
+
+    A lighter-weight alternative to ``cec_prove`` when only a boolean
+    is needed (no proof steps or prover metadata required).
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.name = "cec_check_theorem"
+        self.description = (
+            "Check whether a DCEC formula is a tautology (theorem). "
+            "Returns a boolean result without detailed proof metadata."
+        )
+        self.category = "logic_tools"
+        self.tags = ["logic", "cec", "dcec", "theorem", "tautology", "check"]
+        self.version = TOOL_VERSION
+
+        self.input_schema = {
+            "type": "object",
+            "properties": {
+                "formula": {
+                    "type": "string",
+                    "description": "Formula to check.",
+                },
+                "axioms": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional axioms to assume.",
+                    "default": [],
+                    "maxItems": 50,
+                },
+            },
+            "required": ["formula"],
+        }
+
+    async def execute(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Check if formula is a theorem.
+
+        Args:
+            parameters: ``formula`` and optional ``axioms``.
+
+        Returns:
+            Dict with ``is_theorem`` bool, optional ``counterexample``, and timing.
+
+        Example:
+            >>> result = await tool.execute({"formula": "P(x) | ~P(x)"})
+            >>> isinstance(result["is_theorem"], bool)
+            True
+        """
+        from ipfs_datasets_py.logic.common.validators import validate_formula_string
+        start = time.monotonic()
+
+        formula: str = parameters.get("formula", "")
+        axioms: List[str] = parameters.get("axioms", [])
+
+        try:
+            validate_formula_string(formula)
+        except Exception as exc:
+            return {"success": False, "error": str(exc), "is_theorem": False}
+
+        prover_result = _try_prove(formula, axioms, "auto", 30)
+        is_theorem = prover_result.get("proved", False)
+
         return {
-            "tree": None,
-            "depth": 0,
-            "nodes": 0,
-            "success": False,
-            "error": str(e)
+            "success": "error" not in prover_result,
+            "is_theorem": is_theorem,
+            "counterexample": None,  # Extended in future when prover supports it
+            "elapsed_ms": (time.monotonic() - start) * 1000,
+            "tool_version": TOOL_VERSION,
         }
 
 
-# Tool metadata for MCP server
-TOOLS = {
-    "prove_dcec": {
-        "function": prove_dcec,
-        "description": "Prove a DCEC theorem",
-        "parameters": {
-            "goal": {
-                "type": "string",
-                "description": "Goal formula to prove",
-                "required": True
-            },
-            "axioms": {
-                "type": "array",
-                "description": "List of axiom formulas",
-                "required": False
-            },
-            "strategy": {
-                "type": "string",
-                "description": "Proving strategy (auto/z3/vampire/e_prover)",
-                "required": False,
-                "default": "auto"
-            },
-            "timeout": {
-                "type": "integer",
-                "description": "Timeout in seconds",
-                "required": False,
-                "default": 30
-            }
-        }
-    },
-    "check_theorem": {
-        "function": check_theorem,
-        "description": "Check if formula is a theorem",
-        "parameters": {
-            "formula": {
-                "type": "string",
-                "description": "Formula to check",
-                "required": True
-            },
-            "axioms": {
-                "type": "array",
-                "description": "Optional axioms",
-                "required": False
-            }
-        }
-    },
-    "get_proof_tree": {
-        "function": get_proof_tree,
-        "description": "Get proof tree structure",
-        "parameters": {
-            "goal": {
-                "type": "string",
-                "description": "Goal to prove",
-                "required": True
-            },
-            "axioms": {
-                "type": "array",
-                "description": "Optional axioms",
-                "required": False
-            }
-        }
-    }
-}
+# ---------------------------------------------------------------------------
+# Tool instances (registered in __init__.py)
+# ---------------------------------------------------------------------------
+
+CEC_PROVE_TOOLS = [
+    CECProveTool(),
+    CECCheckTheoremTool(),
+]
+
+__all__ = [
+    "TOOL_VERSION",
+    "CECProveTool",
+    "CECCheckTheoremTool",
+    "CEC_PROVE_TOOLS",
+]

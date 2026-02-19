@@ -13,9 +13,13 @@ from .tdfol_convert_tool import TDFOL_CONVERT_TOOLS
 from .tdfol_visualize_tool import tools as TDFOL_VISUALIZE_TOOLS
 from .tdfol_kb_tool import tools as TDFOL_KB_TOOLS
 from .cec_inference_tool import CEC_INFERENCE_TOOLS
+from .cec_prove_tool import CEC_PROVE_TOOLS
+from .cec_parse_tool import CEC_PARSE_TOOLS
+from .cec_analysis_tool import CEC_ANALYSIS_TOOLS
 from .logic_capabilities_tool import LOGIC_CAPABILITIES_TOOLS
+from .logic_graphrag_tool import LOGIC_GRAPHRAG_TOOLS
 
-# Combine all logic tools
+# Combine all logic tools (24 tools across 10 tool groups)
 ALL_LOGIC_TOOLS = (
     TEMPORAL_DEONTIC_LOGIC_TOOLS +
     TDFOL_PARSE_TOOLS +
@@ -24,7 +28,11 @@ ALL_LOGIC_TOOLS = (
     TDFOL_VISUALIZE_TOOLS +
     TDFOL_KB_TOOLS +
     CEC_INFERENCE_TOOLS +
-    LOGIC_CAPABILITIES_TOOLS
+    CEC_PROVE_TOOLS +
+    CEC_PARSE_TOOLS +
+    CEC_ANALYSIS_TOOLS +
+    LOGIC_CAPABILITIES_TOOLS +
+    LOGIC_GRAPHRAG_TOOLS
 )
 
 __all__ = [
@@ -35,7 +43,11 @@ __all__ = [
     "TDFOL_VISUALIZE_TOOLS",
     "TDFOL_KB_TOOLS",
     "CEC_INFERENCE_TOOLS",
+    "CEC_PROVE_TOOLS",
+    "CEC_PARSE_TOOLS",
+    "CEC_ANALYSIS_TOOLS",
     "LOGIC_CAPABILITIES_TOOLS",
+    "LOGIC_GRAPHRAG_TOOLS",
     "ALL_LOGIC_TOOLS",
     "check_document_consistency",
     "query_theorems",
