@@ -20,7 +20,7 @@
 - **Groth16 backend:** Rust FFI adapter is opt-in (fail-closed by default) ✅
   - Enable with `IPFS_DATASETS_ENABLE_GROTH16=1`
   - Canonical Rust project location (this repo layout): `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/`
-  - Alternate/legacy locations may exist: `ipfs_datasets_py/processors/groth16_backend/` and `./groth16_backend/`
+  - Alternate/legacy location may exist (older docs): `./groth16_backend/`
   - Binary discovery prefers: `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/target/release/groth16`
 - **Test suite:** extensive and mostly self-contained.
   - Property-based tests use `hypothesis` (install in dev/test env).
