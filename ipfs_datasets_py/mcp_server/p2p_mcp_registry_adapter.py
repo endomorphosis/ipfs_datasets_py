@@ -135,6 +135,107 @@ class P2PMCPRegistryAdapter:
         
         return out
     
+    def _get_tool_manager_safely(self):
+        """Get hierarchical tool manager with safe import handling."""
+        try:
+            from .hierarchical_tool_manager import get_tool_manager
+            manager = get_tool_manager()
+            if manager is None:
+                logger.warning("Hierarchical tool manager not available")
+            return manager
+        except Exception as e:
+            logger.error(f"Error getting tool manager: {e}")
+            return None
+    
+    def _discover_categories(self, manager):
+        """Discover all available categories from the tool manager."""
+        import asyncio
+        
+        # Check if we're in a running event loop
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                logger.debug("Cannot discover hierarchical tools in running loop context")
+                return []
+        except RuntimeError:
+            pass
+        
+        # Run async list_categories
+        categories_result = asyncio.run(manager.list_categories())
+        
+        # Extract category names from result
+        if isinstance(categories_result, dict) and "categories" in categories_result:
+            category_list = categories_result["categories"]
+            categories = [cat.get("name") or cat.get("category") for cat in category_list if isinstance(cat, dict)]
+        else:
+            categories = []
+        
+        logger.debug(f"Discovering tools from {len(categories)} categories")
+        return categories
+    
+    def _build_tool_wrapper(self, category: str, tool_name: str, description: str = ""):
+        """Build a callable wrapper for tool dispatch."""
+        def make_tool_wrapper(cat, name):
+            async def wrapper(**kwargs):
+                from .hierarchical_tool_manager import tools_dispatch
+                return await tools_dispatch(
+                    category=cat,
+                    tool_name=name,
+                    **kwargs
+                )
+            wrapper.__name__ = name
+            wrapper.__doc__ = description
+            return wrapper
+        
+        return make_tool_wrapper(category, tool_name)
+    
+    def _process_category_tools(self, manager, category: str, out: Dict[str, Dict[str, Any]]):
+        """Process all tools in a given category and add to output dict."""
+        import asyncio
+        
+        try:
+            # Get tools in this category (async operation)
+            cat_tools_result = asyncio.run(manager.list_tools(category))
+            
+            # Extract tools list
+            if isinstance(cat_tools_result, dict) and "tools" in cat_tools_result:
+                cat_tools = cat_tools_result["tools"]
+            else:
+                return
+            
+            for tool_info in cat_tools:
+                tool_name = tool_info.get("name")
+                if not tool_name:
+                    continue
+                
+                try:
+                    # Create wrapper function
+                    fn = self._build_tool_wrapper(
+                        category, 
+                        tool_name, 
+                        tool_info.get("description", "")
+                    )
+                    
+                    # Build tool descriptor
+                    out[str(tool_name)] = {
+                        "function": fn,
+                        "description": tool_info.get("description", ""),
+                        "input_schema": tool_info.get("input_schema", {}),
+                        "runtime": self._default_runtime,
+                        "runtime_metadata": {
+                            "is_async": True,
+                            "is_trio_native": False,
+                            "requires_trio_context": False,
+                            "category": category,
+                            "hierarchical": True,
+                        },
+                    }
+                except Exception as e:
+                    logger.debug(f"Error creating wrapper for {tool_name}: {e}")
+                    
+        except Exception as e:
+            logger.debug(f"Error processing category {category}: {e}")
+    
     def _get_hierarchical_tools(self) -> Dict[str, Dict[str, Any]]:
         """Get all tools from hierarchical tool manager.
         
@@ -148,96 +249,18 @@ class P2PMCPRegistryAdapter:
         out: Dict[str, Dict[str, Any]] = {}
         
         try:
-            # Import here to avoid circular dependency
-            from .hierarchical_tool_manager import get_tool_manager
-            import asyncio
-            
-            manager = get_tool_manager()
+            # Get tool manager safely
+            manager = self._get_tool_manager_safely()
             if manager is None:
-                logger.warning("Hierarchical tool manager not available")
                 return out
             
-            # Get all categories (this is async, need to handle it)
+            # Discover all categories
             try:
-                # Try to run in existing event loop or create new one
-                try:
-                    loop = asyncio.get_event_loop()
-                    if loop.is_running():
-                        # Can't use asyncio.run in running loop, create task
-                        # For now, return empty and log warning
-                        logger.debug("Cannot discover hierarchical tools in running loop context")
-                        return out
-                except RuntimeError:
-                    pass
+                categories = self._discover_categories(manager)
                 
-                # Run async list_categories
-                categories_result = asyncio.run(manager.list_categories())
-                
-                # Extract category names from result
-                if isinstance(categories_result, dict) and "categories" in categories_result:
-                    category_list = categories_result["categories"]
-                    categories = [cat.get("name") or cat.get("category") for cat in category_list if isinstance(cat, dict)]
-                else:
-                    categories = []
-                
-                logger.debug(f"Discovering tools from {len(categories)} categories")
-                
-                # Iterate through each category
+                # Process each category
                 for category in categories:
-                    try:
-                        # Get tools in this category (also async)
-                        cat_tools_result = asyncio.run(manager.list_tools(category))
-                        
-                        # Extract tools list
-                        if isinstance(cat_tools_result, dict) and "tools" in cat_tools_result:
-                            cat_tools = cat_tools_result["tools"]
-                        else:
-                            continue
-                        
-                        for tool_info in cat_tools:
-                            tool_name = tool_info.get("name")
-                            if not tool_name:
-                                continue
-                            
-                            # Get the actual callable using dispatch
-                            try:
-                                # The hierarchical system provides callables through dispatch
-                                # We create a wrapper that calls tools_dispatch
-                                def make_tool_wrapper(cat, name):
-                                    async def wrapper(**kwargs):
-                                        from .hierarchical_tool_manager import tools_dispatch
-                                        return await tools_dispatch(
-                                            category=cat,
-                                            tool_name=name,
-                                            **kwargs
-                                        )
-                                    wrapper.__name__ = name
-                                    wrapper.__doc__ = tool_info.get("description", "")
-                                    return wrapper
-                                
-                                fn = make_tool_wrapper(category, tool_name)
-                                
-                                # Build tool descriptor
-                                out[str(tool_name)] = {
-                                    "function": fn,
-                                    "description": tool_info.get("description", ""),
-                                    "input_schema": tool_info.get("input_schema", {}),
-                                    "runtime": self._default_runtime,
-                                    "runtime_metadata": {
-                                        "is_async": True,  # Dispatch is always async
-                                        "is_trio_native": False,
-                                        "requires_trio_context": False,
-                                        "category": category,
-                                        "hierarchical": True,
-                                    },
-                                }
-                            except Exception as e:
-                                logger.debug(f"Error creating wrapper for {tool_name}: {e}")
-                                continue
-                                
-                    except Exception as e:
-                        logger.debug(f"Error processing category {category}: {e}")
-                        continue
+                    self._process_category_tools(manager, category, out)
                 
                 logger.info(f"Discovered {len(out)} tools through hierarchical system")
                 

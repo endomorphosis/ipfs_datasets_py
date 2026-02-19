@@ -662,21 +662,8 @@ class P2PMetricsCollector:
         if not success:
             self.base_collector.increment_counter('p2p.bootstrap.errors')
     
-    def get_dashboard_data(self, force_refresh: bool = False) -> Dict[str, Any]:
-        """
-        Get P2P metrics formatted for dashboard display.
-        Results are cached for 30 seconds to reduce overhead.
-        """
-        now = datetime.utcnow()
-        
-        # Return cached data if available and fresh
-        if (not force_refresh and 
-            self._dashboard_cache is not None and 
-            self._dashboard_cache_time is not None and
-            now - self._dashboard_cache_time < self._cache_ttl):
-            return self._dashboard_cache
-        
-        # Calculate averages
+    def _calculate_average_times(self) -> Dict[str, float]:
+        """Calculate average times for discovery, workflow, and bootstrap."""
         avg_discovery_time = (
             sum(self.peer_discovery_metrics['discovery_times']) / 
             len(self.peer_discovery_metrics['discovery_times'])
@@ -695,7 +682,14 @@ class P2PMetricsCollector:
             if self.bootstrap_metrics['bootstrap_times'] else 0.0
         )
         
-        # Success rates
+        return {
+            'discovery': avg_discovery_time,
+            'workflow': avg_workflow_duration,
+            'bootstrap': avg_bootstrap_time
+        }
+    
+    def _calculate_success_rates(self) -> Dict[str, float]:
+        """Calculate success rates for discovery, workflow, and bootstrap."""
         discovery_success_rate = (
             (self.peer_discovery_metrics['successful_discoveries'] / 
              self.peer_discovery_metrics['total_discoveries'] * 100)
@@ -714,13 +708,21 @@ class P2PMetricsCollector:
             if (self.workflow_metrics['completed_workflows'] + self.workflow_metrics['failed_workflows']) > 0 else 0.0
         )
         
-        dashboard_data = {
+        return {
+            'discovery': discovery_success_rate,
+            'workflow': workflow_success_rate,
+            'bootstrap': bootstrap_success_rate
+        }
+    
+    def _build_dashboard_data(self, avg_times: Dict[str, float], success_rates: Dict[str, float]) -> Dict[str, Any]:
+        """Build the complete dashboard data structure."""
+        return {
             'peer_discovery': {
                 'total': self.peer_discovery_metrics['total_discoveries'],
                 'successful': self.peer_discovery_metrics['successful_discoveries'],
                 'failed': self.peer_discovery_metrics['failed_discoveries'],
-                'success_rate': round(discovery_success_rate, 2),
-                'avg_duration_ms': round(avg_discovery_time, 2),
+                'success_rate': round(success_rates['discovery'], 2),
+                'avg_duration_ms': round(avg_times['discovery'], 2),
                 'by_source': dict(self.peer_discovery_metrics['peers_by_source']),
                 'last_discovery': (
                     self.peer_discovery_metrics['last_discovery'].isoformat()
@@ -732,8 +734,8 @@ class P2PMetricsCollector:
                 'active': self.workflow_metrics['active_workflows'],
                 'completed': self.workflow_metrics['completed_workflows'],
                 'failed': self.workflow_metrics['failed_workflows'],
-                'success_rate': round(workflow_success_rate, 2),
-                'avg_duration_ms': round(avg_workflow_duration, 2),
+                'success_rate': round(success_rates['workflow'], 2),
+                'avg_duration_ms': round(avg_times['workflow'], 2),
                 'by_status': dict(self.workflow_metrics['workflows_by_status']),
                 'last_workflow': (
                     self.workflow_metrics['last_workflow'].isoformat()
@@ -744,8 +746,8 @@ class P2PMetricsCollector:
                 'total_attempts': self.bootstrap_metrics['total_bootstrap_attempts'],
                 'successful': self.bootstrap_metrics['successful_bootstraps'],
                 'failed': self.bootstrap_metrics['failed_bootstraps'],
-                'success_rate': round(bootstrap_success_rate, 2),
-                'avg_duration_ms': round(avg_bootstrap_time, 2),
+                'success_rate': round(success_rates['bootstrap'], 2),
+                'avg_duration_ms': round(avg_times['bootstrap'], 2),
                 'by_method': dict(self.bootstrap_metrics['bootstrap_methods_used']),
                 'last_bootstrap': (
                     self.bootstrap_metrics['last_bootstrap'].isoformat()
@@ -753,6 +755,25 @@ class P2PMetricsCollector:
                 )
             }
         }
+    
+    def get_dashboard_data(self, force_refresh: bool = False) -> Dict[str, Any]:
+        """
+        Get P2P metrics formatted for dashboard display.
+        Results are cached for 30 seconds to reduce overhead.
+        """
+        now = datetime.utcnow()
+        
+        # Return cached data if available and fresh
+        if (not force_refresh and 
+            self._dashboard_cache is not None and 
+            self._dashboard_cache_time is not None and
+            now - self._dashboard_cache_time < self._cache_ttl):
+            return self._dashboard_cache
+        
+        # Calculate metrics
+        avg_times = self._calculate_average_times()
+        success_rates = self._calculate_success_rates()
+        dashboard_data = self._build_dashboard_data(avg_times, success_rates)
         
         # Update cache
         self._dashboard_cache = dashboard_data

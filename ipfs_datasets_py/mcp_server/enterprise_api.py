@@ -418,19 +418,30 @@ class EnterpriseGraphRAGAPI:
         return app
     
     def _setup_routes(self, app: FastAPI):
-        """Setup API routes"""
+        """
+        Setup all API routes.
         
-        # Authentication dependency
+        This method orchestrates the setup of all API route groups by delegating
+        to specialized helper methods for better organization and maintainability.
+        """
+        # Setup authentication dependency (used across all route groups)
         async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(self.security)):
             return await self.auth_manager.authenticate(credentials.credentials)
         
-        # Health check
+        # Setup all route groups
+        self._setup_health_and_auth_routes(app)
+        self._setup_core_api_routes(app, get_current_user)
+        self._setup_search_routes(app, get_current_user)
+        self._setup_analytics_routes(app, get_current_user)
+    
+    def _setup_health_and_auth_routes(self, app: FastAPI):
+        """Setup health check and authentication routes"""
+        
         @app.get("/health")
         async def health_check():
             """Health check endpoint"""
             return {"status": "healthy", "timestamp": datetime.now().isoformat()}
         
-        # Authentication
         @app.post("/auth/login")
         async def login(username: str, password: str):
             """Login and get access token"""
@@ -443,8 +454,10 @@ class EnterpriseGraphRAGAPI:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid credentials"
                 )
+    
+    def _setup_core_api_routes(self, app: FastAPI, get_current_user):
+        """Setup core API routes for website processing and job management"""
         
-        # Website processing
         @app.post("/api/v1/process-website")
         async def process_website(
             request: WebsiteProcessingRequest,
@@ -452,14 +465,8 @@ class EnterpriseGraphRAGAPI:
             user: User = Depends(get_current_user)
         ):
             """Submit website for GraphRAG processing"""
-            
-            # Check rate limits
             await self.rate_limiter.check_limits(user.user_id, "website_processing")
-            
-            # Submit processing job
             job_id = await self.job_manager.submit_job(user.user_id, request)
-            
-            # Start background processing
             background_tasks.add_task(self.job_manager.process_job, job_id, request)
             
             return {
@@ -469,35 +476,30 @@ class EnterpriseGraphRAGAPI:
                 "estimated_completion": datetime.now() + timedelta(minutes=30)
             }
         
-        # Job status
         @app.get("/api/v1/jobs/{job_id}")
         async def get_job_status(
             job_id: str,
             user: User = Depends(get_current_user)
         ):
             """Get processing job status"""
-            
             await self.rate_limiter.check_limits(user.user_id, "status")
-            
             job_status = self.job_manager.get_job_status(job_id)
             if not job_status:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Job not found"
                 )
-            
             return job_status
         
-        # User jobs
         @app.get("/api/v1/jobs")
         async def get_user_jobs(user: User = Depends(get_current_user)):
             """Get all jobs for current user"""
-            
             await self.rate_limiter.check_limits(user.user_id, "status")
-            
             return self.job_manager.get_user_jobs(user.user_id)
+    
+    def _setup_search_routes(self, app: FastAPI, get_current_user):
+        """Setup search routes for processed content"""
         
-        # Search processed content
         @app.post("/api/v1/search/{job_id}")
         async def search_content(
             job_id: str,
@@ -505,7 +507,6 @@ class EnterpriseGraphRAGAPI:
             user: User = Depends(get_current_user)
         ):
             """Search processed website content"""
-            
             await self.rate_limiter.check_limits(user.user_id, "search")
             
             # Check if job is completed and result available
@@ -518,7 +519,6 @@ class EnterpriseGraphRAGAPI:
             
             # Get GraphRAG system for this job
             if job_id not in self.graphrag_systems:
-                # In a real implementation, reconstruct from saved result
                 raise HTTPException(
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="GraphRAG system not available for search"
@@ -542,12 +542,13 @@ class EnterpriseGraphRAGAPI:
                 search_time_ms=search_time_ms,
                 content_types_searched=request.content_types or ["all"]
             )
+    
+    def _setup_analytics_routes(self, app: FastAPI, get_current_user):
+        """Setup analytics routes for system and content monitoring"""
         
-        # System analytics (admin only)
         @app.get("/api/v1/admin/analytics")
         async def get_system_analytics(user: User = Depends(get_current_user)):
             """Get system analytics (admin only)"""
-            
             if "admin" not in user.roles:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
@@ -563,14 +564,12 @@ class EnterpriseGraphRAGAPI:
                 "uptime": "operational"
             }
         
-        # Content analytics
         @app.get("/api/v1/analytics/{job_id}")
         async def get_content_analytics(
             job_id: str,
             user: User = Depends(get_current_user)
         ):
             """Get detailed analytics for processed content"""
-            
             result = self.job_manager.job_results.get(job_id)
             if not result:
                 raise HTTPException(
