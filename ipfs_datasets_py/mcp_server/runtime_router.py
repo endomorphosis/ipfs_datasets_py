@@ -61,6 +61,8 @@ from dataclasses import dataclass, field
 from threading import RLock
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from .exceptions import RuntimeRoutingError, RuntimeNotFoundError, RuntimeExecutionError
+
 # Import tool metadata system
 try:
     from .tool_metadata import (
@@ -335,8 +337,10 @@ class RuntimeRouter:
         if self._trio_nursery:
             try:
                 self._trio_nursery.cancel_scope.cancel()
+            except RuntimeRoutingError as e:
+                logger.warning(f"Runtime error cancelling Trio nursery: {e}")
             except Exception as e:
-                logger.warning(f"Error cancelling Trio nursery: {e}")
+                logger.warning(f"Unexpected error cancelling Trio nursery: {e}")
             finally:
                 self._trio_nursery = None
                 self._trio_scope = None
@@ -473,10 +477,14 @@ class RuntimeRouter:
             
             return result
             
+        except RuntimeExecutionError as e:
+            error = True
+            logger.error(f"Runtime execution error for tool '{tool_name}' on {runtime}: {e}")
+            raise
         except Exception as e:
             error = True
-            logger.error(f"Error routing tool '{tool_name}' to {runtime}: {e}")
-            raise
+            logger.error(f"Unexpected error routing tool '{tool_name}' to {runtime}: {e}")
+            raise RuntimeExecutionError(f"Failed to route tool '{tool_name}' to {runtime}: {e}")
             
         finally:
             # Record metrics

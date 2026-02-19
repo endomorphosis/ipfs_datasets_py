@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 
+from .exceptions import HealthCheckError, MonitoringError, MetricsCollectionError
+
 logger = logging.getLogger(__name__)
 
 @dataclass
@@ -144,8 +146,11 @@ class EnhancedMetricsCollector:
                 
             except anyio.get_cancelled_exc_class()():
                 break
+            except MetricsCollectionError as e:
+                logger.error(f"Metrics collection error in monitoring loop: {e}")
+                await anyio.sleep(60)
             except Exception as e:
-                logger.error(f"Error in monitoring loop: {e}")
+                logger.error(f"Unexpected error in monitoring loop: {e}")
                 await anyio.sleep(60)
     
     async def _cleanup_loop(self):
@@ -215,8 +220,12 @@ class EnhancedMetricsCollector:
                 for metric_name, value in self.system_metrics.items():
                     self.timeseries[metric_name].append(MetricData(value))
                     
-        except Exception as e:
+        except MetricsCollectionError as e:
             logger.error(f"Error collecting system metrics: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error collecting system metrics: {e}")
+            raise MetricsCollectionError(f"Failed to collect system metrics: {e}")
     
     def increment_counter(self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None):
         """Increment a counter metric."""
