@@ -1,0 +1,541 @@
+{
+  "summary": {
+    "total_tools": 311,
+    "compliance_score": 20.26,
+    "by_level": {
+      "needs_review": 96,
+      "needs_refactoring": 152,
+      "exemplary": 15,
+      "compliant": 48
+    },
+    "compliant_count": 63,
+    "needs_attention_count": 248
+  },
+  "category_statistics": {
+    "root": {
+      "total": 9,
+      "compliant": 0
+    },
+    "graph_tools": {
+      "total": 11,
+      "compliant": 11
+    },
+    "discord_tools": {
+      "total": 4,
+      "compliant": 1
+    },
+    "ipfs_tools": {
+      "total": 3,
+      "compliant": 1
+    },
+    "p2p_tools": {
+      "total": 2,
+      "compliant": 1
+    },
+    "analysis_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "cli": {
+      "total": 2,
+      "compliant": 0
+    },
+    "dataset_tools": {
+      "total": 11,
+      "compliant": 6
+    },
+    "workflow_tools": {
+      "total": 2,
+      "compliant": 1
+    },
+    "cache_tools": {
+      "total": 2,
+      "compliant": 1
+    },
+    "web_archive_tools": {
+      "total": 18,
+      "compliant": 6
+    },
+    "session_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "geospatial_tools": {
+      "total": 1,
+      "compliant": 1
+    },
+    "background_task_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "monitoring_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "logic_tools": {
+      "total": 9,
+      "compliant": 0
+    },
+    "index_management_tools": {
+      "total": 1,
+      "compliant": 1
+    },
+    "p2p_workflow_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "legal_dataset_tools": {
+      "total": 32,
+      "compliant": 9
+    },
+    "software_engineering_tools": {
+      "total": 11,
+      "compliant": 0
+    },
+    "functions": {
+      "total": 1,
+      "compliant": 0
+    },
+    "embedding_tools": {
+      "total": 9,
+      "compliant": 0
+    },
+    "vector_store_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "search_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "investigation_tools": {
+      "total": 5,
+      "compliant": 0
+    },
+    "rate_limiting_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "data_processing_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "provenance_tools": {
+      "total": 2,
+      "compliant": 1
+    },
+    "development_tools": {
+      "total": 15,
+      "compliant": 0
+    },
+    "web_scraping_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "dashboard_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "file_detection_tools": {
+      "total": 3,
+      "compliant": 2
+    },
+    "auth_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "media_tools": {
+      "total": 9,
+      "compliant": 1
+    },
+    "ipfs_cluster_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "vector_tools": {
+      "total": 5,
+      "compliant": 3
+    },
+    "storage_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "sparse_embedding_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "alert_tools": {
+      "total": 1,
+      "compliant": 0
+    },
+    "finance_data_tools": {
+      "total": 5,
+      "compliant": 1
+    },
+    "legacy_mcp_tools": {
+      "total": 32,
+      "compliant": 1
+    },
+    "bespoke_tools": {
+      "total": 7,
+      "compliant": 1
+    },
+    "file_converter_tools": {
+      "total": 8,
+      "compliant": 0
+    },
+    "security_tools": {
+      "total": 1,
+      "compliant": 1
+    },
+    "admin_tools": {
+      "total": 2,
+      "compliant": 0
+    },
+    "audit_tools": {
+      "total": 3,
+      "compliant": 3
+    },
+    "medical_research_scrapers": {
+      "total": 5,
+      "compliant": 0
+    },
+    "email_tools": {
+      "total": 3,
+      "compliant": 0
+    },
+    "pdf_tools": {
+      "total": 8,
+      "compliant": 2
+    },
+    "lizardperson_argparse_programs": {
+      "total": 39,
+      "compliant": 7
+    },
+    "lizardpersons_function_tools": {
+      "total": 9,
+      "compliant": 1
+    }
+  },
+  "top_issues": [
+    {
+      "issue": "Docstring doesn't explain core module usage",
+      "count": 164
+    },
+    {
+      "issue": "Exceeds maximum line count",
+      "count": 152
+    },
+    {
+      "issue": "Missing imports from core modules",
+      "count": 139
+    },
+    {
+      "issue": "Missing error handling",
+      "count": 77
+    },
+    {
+      "issue": "Missing module docstring",
+      "count": 75
+    },
+    {
+      "issue": "Exceeds acceptable line count",
+      "count": 22
+    },
+    {
+      "issue": "High complexity score",
+      "count": 2
+    }
+  ],
+  "thick_tools": [
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/mcplusplus_taskqueue_tools.py",
+      "category": "root",
+      "lines": 1264,
+      "issues": [
+        "Exceeds maximum line count (1264 > 200)"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/mcplusplus_peer_tools.py",
+      "category": "root",
+      "lines": 792,
+      "issues": [
+        "Exceeds maximum line count (792 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legal_dataset_tools/municipal_law_database_scrapers/hugging_face_pipeline.py",
+      "category": "legal_dataset_tools",
+      "lines": 734,
+      "issues": [
+        "Exceeds maximum line count (734 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/dashboard_tools/tdfol_performance_tool.py",
+      "category": "dashboard_tools",
+      "lines": 703,
+      "issues": [
+        "Exceeds maximum line count (703 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/mcplusplus_workflow_tools.py",
+      "category": "root",
+      "lines": 659,
+      "issues": [
+        "Exceeds maximum line count (659 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/github_cli_server_tools.py",
+      "category": "development_tools",
+      "lines": 637,
+      "issues": [
+        "Exceeds maximum line count (637 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/data_ingestion_tools.py",
+      "category": "investigation_tools",
+      "lines": 632,
+      "issues": [
+        "Exceeds maximum line count (632 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_store_tools/enhanced_vector_store_tools.py",
+      "category": "vector_store_tools",
+      "lines": 613,
+      "issues": [
+        "Exceeds maximum line count (613 > 200)",
+        "Missing module docstring"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legacy_mcp_tools/temporal_deontic_logic_tools.py",
+      "category": "legacy_mcp_tools",
+      "lines": 607,
+      "issues": [
+        "Exceeds maximum line count (607 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/session_tools/enhanced_session_tools.py",
+      "category": "session_tools",
+      "lines": 603,
+      "issues": [
+        "Exceeds maximum line count (603 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/codebase_search.py",
+      "category": "development_tools",
+      "lines": 598,
+      "issues": [
+        "Exceeds maximum line count (598 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/legacy_mcp_tools/legal_dataset_mcp_tools.py",
+      "category": "legacy_mcp_tools",
+      "lines": 598,
+      "issues": [
+        "Exceeds maximum line count (598 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/finance_data_tools/embedding_correlation.py",
+      "category": "finance_data_tools",
+      "lines": 596,
+      "issues": [
+        "Exceeds maximum line count (596 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/development_tools/linting_tools.py",
+      "category": "development_tools",
+      "lines": 595,
+      "issues": [
+        "Exceeds maximum line count (595 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/investigation_tools/geospatial_analysis_tools.py",
+      "category": "investigation_tools",
+      "lines": 586,
+      "issues": [
+        "Exceeds maximum line count (586 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/vector_tools/vector_store_management.py",
+      "category": "vector_tools",
+      "lines": 581,
+      "issues": [
+        "Exceeds maximum line count (581 > 200)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/monitoring_tools/enhanced_monitoring_tools.py",
+      "category": "monitoring_tools",
+      "lines": 579,
+      "issues": [
+        "Exceeds maximum line count (579 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/storage_tools/storage_tools.py",
+      "category": "storage_tools",
+      "lines": 575,
+      "issues": [
+        "Exceeds maximum line count (575 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Missing module docstring"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/background_task_tools/enhanced_background_task_tools.py",
+      "category": "background_task_tools",
+      "lines": 561,
+      "issues": [
+        "Exceeds maximum line count (561 > 200)",
+        "Missing imports from core modules (ipfs_datasets_py.*)",
+        "Docstring doesn't explain core module usage"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/web_archive_tools/brave_search.py",
+      "category": "web_archive_tools",
+      "lines": 552,
+      "issues": [
+        "Exceeds maximum line count (552 > 200)"
+      ]
+    }
+  ],
+  "exemplary_tools": [
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_transaction_begin.py",
+      "category": "graph_tools",
+      "lines": 33,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_create.py",
+      "category": "graph_tools",
+      "lines": 33,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_transaction_rollback.py",
+      "category": "graph_tools",
+      "lines": 38,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_transaction_commit.py",
+      "category": "graph_tools",
+      "lines": 38,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_query_cypher.py",
+      "category": "graph_tools",
+      "lines": 40,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_add_entity.py",
+      "category": "graph_tools",
+      "lines": 43,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_index_create.py",
+      "category": "graph_tools",
+      "lines": 44,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_search_hybrid.py",
+      "category": "graph_tools",
+      "lines": 44,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_add_relationship.py",
+      "category": "graph_tools",
+      "lines": 47,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    },
+    {
+      "file": "ipfs_datasets_py/mcp_server/tools/graph_tools/graph_constraint_add.py",
+      "category": "graph_tools",
+      "lines": 47,
+      "core_modules": [
+        "from ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations",
+        "ipfs_datasets_py.core_operations.knowledge_graph_manager.KnowledgeGraphManager"
+      ]
+    }
+  ]
+}
