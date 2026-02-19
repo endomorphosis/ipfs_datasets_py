@@ -168,9 +168,13 @@ setup(
         # Knowledge graphs - entity extraction and graph database
         'knowledge_graphs': [
             'spacy>=3.0.0',
-            # Note: After installing spacy, download the model:
-            # python -m spacy download en_core_web_sm
-            'transformers>=4.30.0',  # Optional: for advanced relation extraction
+            # After installing spacy, download the NLP model:
+            #   python -m spacy download en_core_web_sm
+            'numpy>=1.21.0',           # Required for cross-document vector similarity
+            'transformers>=4.30.0',    # Optional: transformer-based NER/relation extraction
+            'openai>=1.0.0',           # Optional: LLM-enhanced cross-document reasoning
+            'anthropic>=0.20.0',       # Optional: Anthropic LLM for reasoning
+            'networkx>=2.8.0',         # Required for lineage graph analytics
         ],
         # Optional but recommended dependencies
         'ipld': [

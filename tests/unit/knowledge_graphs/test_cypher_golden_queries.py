@@ -348,3 +348,16 @@ class TestParserErrors:
         # WHEN / THEN
         with pytest.raises(Exception):
             parser.parse("MATCH (n:Person RETURN n")
+
+    def test_invalid_characters_raise_cypher_parse_error(self):
+        """
+        GIVEN: A query containing characters invalid in Cypher ('!', '@', '#')
+        WHEN: Parsed
+        THEN: CypherParseError is raised (not bare SyntaxError from the lexer)
+        """
+        # GIVEN
+        parser = CypherParser()
+
+        # WHEN / THEN – lexer SyntaxError is now wrapped by parser
+        with pytest.raises(CypherParseError):
+            parser.parse("MATCH (n) WHERE n.x = @bad RETURN n")

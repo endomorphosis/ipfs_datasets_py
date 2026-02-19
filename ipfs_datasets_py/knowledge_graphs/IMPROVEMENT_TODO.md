@@ -79,8 +79,9 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Acceptance: `__all__` lists only intended public symbols; internal modules don’t become “public-by-accident”.
 
 ### B2. Finish “thin wrapper” migration where feasible (P2)
-- [ ] **Minimize duplicated legacy code in `knowledge_graph_extraction.py`** (P2, medium risk)
+- [x] **Minimize duplicated legacy code in `knowledge_graph_extraction.py`** (P2, medium risk)
   - Acceptance: legacy module becomes a lightweight shim importing from `extraction/` and raising deprecation warnings; no behavior divergence.
+  - Status (2026-02-19): ✅ DONE – `knowledge_graph_extraction.py` is already a 120-line thin shim: it re-exports from `extraction/`, raises `DeprecationWarning` on import, and overrides `extract_knowledge_graph()` for backward API compatibility. Verified by `test_optional_deps.py::TestLegacyShim`.
 
 ---
 
@@ -93,8 +94,9 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Acceptance: errors include the operation (“import”, “query”, “commit”), relevant IDs, and a short remediation hint.
 
 ### C2. Observability (P2)
-- [ ] **Make logging consistent across subpackages** (P2, medium risk)
+- [x] **Make logging consistent across subpackages** (P2, medium risk)
   - Acceptance: consistent logger names; no noisy warnings in normal operation; debug logs available for troubleshooting.
+  - Status (2026-02-19): ✅ DONE – All modules use `logging.getLogger(__name__)`; replaced `print()` calls in `extraction/extractor.py` (spaCy/transformers absent warnings) with `logger.warning()` to keep optional-dep messages in the logging system, not stdout.
 
 ---
 
@@ -129,22 +131,25 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Status (2026-02-19): ✅ DONE – added 13 roundtrip tests to `tests/unit/knowledge_graphs/migration/test_formats.py` (7 for DAG_JSON, 6 for JSON_LINES); all 56 format tests pass. GraphML/GEXF/Pajek roundtrips already existed in `TestFormatConversions`.
 
 ### E2. Fuzz / property-based tests (P2)
-- [ ] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
+- [x] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
   - Acceptance: parser never crashes; invalid input yields `QueryParseError`.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_cypher_fuzz.py` with 67 tests across 7 classes (truncated queries, malformed syntax, large inputs, Unicode, reserved words, valid edge cases, lexer stress). Fixed bug: parser now catches `SyntaxError` from lexer and re-raises as `CypherParseError`. All 67 fuzz tests pass.
 - [ ] **Property tests for WAL** (P2, medium risk)
   - Acceptance: random sequences of operations preserve invariants; crash-recovery tests validate correctness.
 
 ### E3. Optional dependency test matrix (P2)
-- [ ] **Explicitly test with/without optional deps** (P2, low risk)
-  - Acceptance: CI (or local test scripts) can run “minimal” and “full” configs; skips are intentional and documented.
+- [x] **Explicitly test with/without optional deps** (P2, low risk)
+  - Acceptance: CI (or local test scripts) can run "minimal" and "full" configs; skips are intentional and documented.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_optional_deps.py` with 11 tests verifying graceful degradation without spaCy/transformers and confirming core imports always work; all 11 pass.
 
 ---
 
 ## Workstream F — Performance & memory
 
 ### F1. Profiling and benchmarks (P2)
-- [ ] **Add a small benchmark harness** (P2, low risk)
+- [x] **Add a small benchmark harness** (P2, low risk)
   - Acceptance: benchmark scripts document baseline performance for extraction + query + migration.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` tests covering extraction speed (<5ms/doc), Cypher parse+compile (<1ms/query), GraphEngine CRUD (<0.5ms/op), and DAG-JSON/JSON-Lines roundtrip (<50ms/100 nodes). Can also be run standalone: `python tests/.../test_benchmarks.py`.
 
 ### F2. Large-graph behavior (P2)
 - [ ] **Memory optimization in batch operations** (P2, medium risk)
@@ -154,12 +159,14 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 ## Workstream G — Dependency management & packaging ergonomics
 
-- [ ] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
+- [x] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
   - Acceptance: documented optional deps match reality; runtime error messages give exact install commands.
+  - Status (2026-02-19): ✅ DONE – Updated `setup.py` `knowledge_graphs` extras to include `numpy`, `openai`, `anthropic`, and `networkx` (all used in cross_document_reasoning.py and lineage/). Error messages in `extractor.py` now use `logger.warning()` with exact install commands.
 - [ ] **Keep core test plugins in the test dependency set** (P1, low risk)
   - Acceptance: `pytest-mock` stays present wherever test dependencies are declared; tests that rely on `mocker` never fail due to missing fixture.
-- [ ] **Improve spaCy model guidance** (P3, low risk)
+- [x] **Improve spaCy model guidance** (P3, low risk)
   - Acceptance: clearer install instructions and graceful fallback when model not present.
+  - Status (2026-02-19): ✅ DONE – `extractor.py` now uses `logger.warning()` with combined install+model-download instructions (single message, not 3 separate prints). The existing graceful fallback to rule-based mode was already in place.
 
 ---
 
@@ -240,3 +247,11 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: Implemented D1 (configurable relation thresholds) in `cross_document_reasoning.py` by adding four new constructor parameters (`relation_similarity_threshold`, `relation_supporting_strength`, `relation_elaborating_strength`, `relation_complementary_strength`) to `CrossDocumentReasoner`; `_determine_relation` now uses these instead of hard-coded literals; verified with 5 new tests in `test_reasoning.py::TestConfigurableRelationThresholds` (23 passed).
 - 2026-02-19: Implemented D2 (golden query fixtures) by creating `tests/unit/knowledge_graphs/test_cypher_golden_queries.py` with 18 tests covering MATCH/WHERE/RETURN/CREATE IR patterns and parse-error behavior; all 18 pass.
 - 2026-02-19: Implemented E1 (format roundtrip tests) by adding `TestDagJsonRoundtrip` (7 tests) and `TestJsonLinesRoundtrip` (6 tests) to `tests/unit/knowledge_graphs/migration/test_formats.py`; all 56 format tests pass.
+- 2026-02-19: B2 confirmed DONE – `knowledge_graph_extraction.py` is already a 120-line thin shim; documented in IMPROVEMENT_TODO.md.
+- 2026-02-19: C2 – Replaced `print()` calls in `extraction/extractor.py` with `logger.warning()` for spaCy/transformers absent messages; all modules consistently use `logging.getLogger(__name__)`.
+- 2026-02-19: Fixed lexer bug (C1): `CypherParser.parse()` now wraps `SyntaxError` from the lexer in `CypherParseError`, so callers always receive a consistent exception type.
+- 2026-02-19: E2 – Created `tests/unit/knowledge_graphs/test_cypher_fuzz.py` with 67 tests (truncated queries, malformed syntax, large inputs, Unicode, reserved words, valid edge cases, lexer stress); all 67 pass.
+- 2026-02-19: E3 – Created `tests/unit/knowledge_graphs/test_optional_deps.py` with 11 tests verifying graceful degradation without optional deps; all 11 pass.
+- 2026-02-19: F1 – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` benchmark tests (extraction, Cypher parse/compile, GraphEngine CRUD, migration roundtrip); all 10 pass.
+- 2026-02-19: G – Updated `setup.py` `knowledge_graphs` extras to add `numpy`, `openai`, `anthropic`, `networkx` (deps used in cross_document_reasoning.py and lineage/); also improved spaCy install guidance in error messages.
+

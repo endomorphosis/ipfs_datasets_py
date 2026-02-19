@@ -246,13 +246,15 @@ class KnowledgeGraphExtractor:
                     self.nlp = spacy.load("en_core_web_sm")
                 except (OSError, IOError) as e:
                     # If the model is not available, download it
-                    print(f"spaCy model not found ({e}), downloading...")
+                    logger.warning("spaCy model 'en_core_web_sm' not found (%s) — downloading...", e)
                     spacy.cli.download("en_core_web_sm")
                     self.nlp = spacy.load("en_core_web_sm")
             except ImportError:
-                print("Warning: spaCy not installed. Running in rule-based mode only.")
-                print("Install with: pip install 'ipfs_datasets_py[knowledge_graphs]'")
-                print("Then: python -m spacy download en_core_web_sm")
+                logger.warning(
+                    "spaCy not installed — running in rule-based mode only. "
+                    "Install with: pip install 'ipfs_datasets_py[knowledge_graphs]' "
+                    "then run: python -m spacy download en_core_web_sm"
+                )
                 self.use_spacy = False
 
         if use_transformers:
@@ -262,8 +264,10 @@ class KnowledgeGraphExtractor:
                 self.re_model = pipeline("text-classification",
                                         model="Rajkumar-Murugesan/roberta-base-finetuned-tacred-relation")
             except ImportError:
-                print("Warning: transformers not installed. Running without Transformer models.")
-                print("Install transformers with: pip install transformers")
+                logger.warning(
+                    "transformers not installed — running without transformer models. "
+                    "Install with: pip install transformers"
+                )
                 self.use_transformers = False
 
         # Initialize relation patterns
