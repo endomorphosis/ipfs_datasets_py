@@ -565,6 +565,6 @@ Phase 3E: Layer 2 Scaling
 - **Phase 3C.7 Execution:** [PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md](PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md)
 - **Cost Analysis:** [PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md](PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md)
 - **Future Roadmap:** [PHASE3D_4_PLUS_ROADMAP.md](PHASE3D_4_PLUS_ROADMAP.md)
-- **Smart Contracts:** [GrothVerifier.sol](GrothVerifier.sol)
+- **Smart Contracts:** [GrothVerifier.sol](../ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol)
 - **Python Integration:** [eth_integration.py](eth_integration.py)
 - **Tests:** [test_eth_integration.py](test_eth_integration.py)

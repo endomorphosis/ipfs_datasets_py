@@ -140,8 +140,8 @@
 │   └── PHASE3C5_GOLDEN_VECTOR_COMPLETION.md ............. ✅ Done
 │
 ├── [SMART CONTRACTS - Solidity]
-│   ├── GrothVerifier.sol ................................ ✅ Ready
-│   └── groth16_backend/compiled_contracts/ .............. ⏳ To compile
+│   ├── ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol ..... ✅ Ready
+│   └── ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ ....... ⏳ To compile
 │
 ├── [PYTHON INTEGRATION]
 │   ├── eth_integration.py ............................... ✅ Ready
@@ -192,7 +192,7 @@ Use this checklist to track Sepolia deployment progress:
 
 ### Stage 2: Contract Compilation (10 min)
 - [ ] Install solc: `pip install solc-select && solc-select install 0.8.19`
-- [ ] Compile GrothVerifier.sol: `solc --optimize --bin --abi GrothVerifier.sol`
+- [ ] Compile GrothVerifier.sol: `cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend && solc --optimize --optimize-runs 200 --bin --abi -o ./compiled_contracts contracts/GrothVerifier.sol`
 - [ ] Verify bytecode size < 24KB
 - [ ] Check ABI and bytecode files generated
 
@@ -409,7 +409,7 @@ Community size            Emerging    Large       Large       Growing
 ### Key Files for Phase 3C.7
 - [PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md](PHASE3C7_SEPOLIA_DEPLOYMENT_EXECUTION.md) - Main guide
 - [PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md](PHASE3C6_COST_ANALYSIS_AND_ARCHITECTURE.md) - Cost details
-- [GrothVerifier.sol](GrothVerifier.sol) - Smart contract
+- [GrothVerifier.sol](../ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol) - Smart contract
 - [eth_integration.py](eth_integration.py) - Integration code
 - [test_eth_integration.py](test_eth_integration.py) - Tests
 

@@ -126,7 +126,7 @@ solc \
   --bin \
   --abi \
   -o ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ \
-  GrothVerifier.sol
+  ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol
 
 # Verify compilation succeeded
 ls -lah ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/
@@ -476,7 +476,7 @@ Mar 3-10               → Mainnet deployment
 - [ ] Private key secured (not committed to git)
 - [ ] Python environment activated
 - [ ] solc-select installed
-- [ ] GrothVerifier.sol present in current directory
+- [ ] GrothVerifier.sol present at ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol
 - [ ] deploy_sepolia.py script ready
 - [ ] sepolia_config.json template created
 

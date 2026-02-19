@@ -97,25 +97,20 @@ solc-select install 0.8.19
 solc-select use 0.8.19
 
 # Compile contracts
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
+mkdir -p ./compiled_contracts
+
 solc --optimize --optimize-runs 200 \
-    groth16_backend/contracts/GrothVerifier.sol \
-    --output-dir groth16_backend/contracts/build/ \
-    --overwrite
+    --bin --abi \
+    -o ./compiled_contracts/ \
+    contracts/GrothVerifier.sol
 
-# Extract ABI and bytecode
-python -c "
-import json
-import os
-
-build_dir = 'groth16_backend/contracts/build/'
-for f in os.listdir(build_dir):
-    if f.endswith('.json'):
-        with open(os.path.join(build_dir, f)) as fh:
-            data = json.load(fh)
-            if 'abi' in data and 'evm' in data:
-                print(f'Found: {f}')
-"
-```
+# You should now have (among others):
+# - compiled_contracts/GrothVerifier.bin
+# - compiled_contracts/GrothVerifier.abi
+# - compiled_contracts/ComplaintRegistry.bin
+# - compiled_contracts/ComplaintRegistry.abi
+cd -```
 
 ---
 
@@ -136,11 +131,10 @@ def deploy_verifier():
     print(f"Block: {w3.eth.block_number}")
     
     # Load compiled contract
-    with open("groth16_backend/contracts/build/GrothVerifier.json") as f:
-        contract_data = json.load(f)
-    
-    abi = contract_data["abi"]
-    bytecode = contract_data["evm"]["bytecode"]["object"]
+    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/GrothVerifier.abi") as f:
+        abi = json.load(f)
+    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/GrothVerifier.bin") as f:
+        bytecode = "0x" + f.read().strip()
     
     # Create contract factory
     Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
@@ -214,11 +208,10 @@ def deploy_registry(verifier_address):
     w3 = Web3(Web3.HTTPProvider(SEPOLIA_CONFIG.rpc_url))
     
     # Load compiled contract
-    with open("groth16_backend/contracts/build/ComplaintRegistry.json") as f:
-        contract_data = json.load(f)
-    
-    abi = contract_data["abi"]
-    bytecode = contract_data["evm"]["bytecode"]["object"]
+    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.abi") as f:
+        abi = json.load(f)
+    with open("ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/compiled_contracts/ComplaintRegistry.bin") as f:
+        bytecode = "0x" + f.read().strip()
     
     # Create contract factory
     Contract = w3.eth.contract(abi=abi, bytecode=bytecode)
