@@ -46,6 +46,13 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
 from dataclasses import dataclass, field
 
+from .exceptions import (
+    ToolNotFoundError,
+    ToolExecutionError,
+    ServerStartupError,
+    ConfigurationError,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -646,13 +653,13 @@ class ServerContext:
         """
         tool = self.get_tool(tool_name)
         if not tool:
-            raise ValueError(f"Tool not found: {tool_name}")
+            raise ToolNotFoundError(tool_name)
         
         try:
             return tool(**kwargs)
         except Exception as e:
             logger.error(f"Tool execution failed: {tool_name}", exc_info=True)
-            raise RuntimeError(f"Tool execution failed: {e}") from e
+            raise ToolExecutionError(tool_name, e)
 
 
 @contextmanager
