@@ -6,7 +6,7 @@ between Neo4j and IPFS Graph Database.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Any, Optional
+from typing import Callable, Dict, Iterator, List, Any, Optional, Tuple, Type
 from enum import Enum
 import json
 import xml.etree.ElementTree as ET
@@ -117,6 +117,105 @@ class SchemaData:
         )
 
 
+# ---------------------------------------------------------------------------
+# Format plugin registry (H2)
+# ---------------------------------------------------------------------------
+
+#: Type alias for a save handler: (graph_data, filepath) -> None
+_SaveHandler = Callable[["GraphData", str], None]
+#: Type alias for a load handler: filepath -> GraphData
+_LoadHandler = Callable[[str], "GraphData"]
+
+class _FormatRegistry:
+    """
+    Registry mapping :class:`MigrationFormat` values to save/load callables.
+
+    Third-party code can call :func:`register_format` to add new formats
+    without modifying this file.  Built-in handlers are registered at module
+    load time by :func:`_register_builtin_formats` (called at end of file).
+
+    Example — adding a custom format::
+
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import (
+            MigrationFormat, register_format,
+        )
+
+        def _save_csv(graph, filepath):
+            ...
+
+        def _load_csv(filepath):
+            ...
+
+        register_format(MigrationFormat.CSV, _save_csv, _load_csv)
+    """
+
+    def __init__(self) -> None:
+        self._save: Dict[MigrationFormat, _SaveHandler] = {}
+        self._load: Dict[MigrationFormat, _LoadHandler] = {}
+
+    def register(
+        self,
+        fmt: MigrationFormat,
+        save: _SaveHandler,
+        load: _LoadHandler,
+    ) -> None:
+        """Register save + load handlers for *fmt*."""
+        self._save[fmt] = save
+        self._load[fmt] = load
+
+    def save(self, graph: "GraphData", filepath: str, fmt: MigrationFormat) -> None:
+        """Invoke the registered save handler, or raise :exc:`NotImplementedError`."""
+        handler = self._save.get(fmt)
+        if handler is None:
+            raise NotImplementedError(
+                f"No save handler registered for format {fmt.value!r}. "
+                "Call register_format() to add one."
+            )
+        handler(graph, filepath)
+
+    def load(self, filepath: str, fmt: MigrationFormat) -> "GraphData":
+        """Invoke the registered load handler, or raise :exc:`NotImplementedError`."""
+        handler = self._load.get(fmt)
+        if handler is None:
+            raise NotImplementedError(
+                f"No load handler registered for format {fmt.value!r}. "
+                "Call register_format() to add one."
+            )
+        return handler(filepath)
+
+    def registered_formats(self) -> List[MigrationFormat]:
+        """Return formats that have both save and load handlers."""
+        return [f for f in self._save if f in self._load]
+
+
+#: Module-level singleton registry.
+_format_registry = _FormatRegistry()
+
+
+def register_format(
+    fmt: MigrationFormat,
+    save: _SaveHandler,
+    load: _LoadHandler,
+) -> None:
+    """Register save + load handlers for a :class:`MigrationFormat`.
+
+    Args:
+        fmt: The format enum value to register.
+        save: Callable ``(GraphData, filepath: str) -> None``.
+        load: Callable ``(filepath: str) -> GraphData``.
+
+    Example::
+
+        register_format(MigrationFormat.MY_FORMAT, my_save, my_load)
+    """
+    _format_registry.register(fmt, save, load)
+
+
+def registered_formats() -> List[MigrationFormat]:
+    """Return the list of formats that have registered handlers."""
+    return _format_registry.registered_formats()
+
+
 @dataclass
 class GraphData:
     """Complete graph data for migration."""
@@ -156,77 +255,109 @@ class GraphData:
         return cls.from_dict(data)
     
     def save_to_file(self, filepath: str, format: MigrationFormat = MigrationFormat.DAG_JSON) -> None:
-        """Save to file in specified format."""
-        if format == MigrationFormat.DAG_JSON or format == MigrationFormat.JSON_LINES:
-            with open(filepath, 'w') as f:
-                if format == MigrationFormat.DAG_JSON:
-                    f.write(self.to_json(indent=2))
-                else:  # JSON_LINES
-                    # Write nodes
-                    for node in self.nodes:
-                        f.write(json.dumps({'type': 'node', 'data': node.to_dict()}) + '\n')
-                    # Write relationships
-                    for rel in self.relationships:
-                        f.write(json.dumps({'type': 'relationship', 'data': rel.to_dict()}) + '\n')
-                    # Write schema
-                    if self.schema:
-                        f.write(json.dumps({'type': 'schema', 'data': self.schema.to_dict()}) + '\n')
-        
-        elif format == MigrationFormat.GRAPHML:
-            self._save_to_graphml(filepath)
-        
-        elif format == MigrationFormat.GEXF:
-            self._save_to_gexf(filepath)
-        
-        elif format == MigrationFormat.PAJEK:
-            self._save_to_pajek(filepath)
-        
-        elif format == MigrationFormat.CAR:
-            raise NotImplementedError(f"CAR format requires IPLD CAR library integration (planned for future)")
-        
-        else:
-            raise NotImplementedError(f"Format {format} not yet implemented")
-    
+        """Save to file in specified format.
+
+        Uses the pluggable format registry.  Built-in formats (DAG_JSON,
+        JSON_LINES, GRAPHML, GEXF, PAJEK) are always available.  Third-party
+        formats must be registered via :func:`register_format` first.
+        """
+        _format_registry.save(self, filepath, format)
+
     @classmethod
     def load_from_file(cls, filepath: str, format: MigrationFormat = MigrationFormat.DAG_JSON) -> 'GraphData':
-        """Load from file in specified format."""
-        if format == MigrationFormat.DAG_JSON:
-            with open(filepath, 'r') as f:
-                return cls.from_json(f.read())
-        
-        elif format == MigrationFormat.JSON_LINES:
-            nodes = []
-            relationships = []
-            schema = None
-            
-            with open(filepath, 'r') as f:
-                for line in f:
-                    if not line.strip():
-                        continue
-                    obj = json.loads(line)
-                    if obj['type'] == 'node':
-                        nodes.append(NodeData.from_dict(obj['data']))
-                    elif obj['type'] == 'relationship':
-                        relationships.append(RelationshipData.from_dict(obj['data']))
-                    elif obj['type'] == 'schema':
-                        schema = SchemaData.from_dict(obj['data'])
-            
-            return cls(nodes=nodes, relationships=relationships, schema=schema)
-        
-        elif format == MigrationFormat.GRAPHML:
-            return cls._load_from_graphml(filepath)
-        
-        elif format == MigrationFormat.GEXF:
-            return cls._load_from_gexf(filepath)
-        
-        elif format == MigrationFormat.PAJEK:
-            return cls._load_from_pajek(filepath)
-        
-        elif format == MigrationFormat.CAR:
-            raise NotImplementedError(f"CAR format requires IPLD CAR library integration (planned for future)")
-        
-        else:
-            raise NotImplementedError(f"Format {format} not yet implemented")
+        """Load from file in specified format.
+
+        Uses the pluggable format registry.  Built-in formats are always
+        available; additional formats must be registered via
+        :func:`register_format`.
+        """
+        return _format_registry.load(filepath, format)
+
+    def iter_nodes_chunked(self, chunk_size: int = 500) -> Iterator[List[NodeData]]:
+        """Yield node lists in chunks for memory-efficient processing.
+
+        Useful when exporting very large graphs: instead of materialising the
+        entire node list at once the caller can process one chunk at a time.
+
+        Args:
+            chunk_size: Maximum number of nodes per chunk (default 500).
+
+        Yields:
+            Lists of :class:`NodeData` of length ≤ *chunk_size*.
+
+        Example::
+
+            for chunk in graph.iter_nodes_chunked(1000):
+                write_nodes_to_stream(chunk)
+        """
+        for i in range(0, len(self.nodes), chunk_size):
+            yield self.nodes[i : i + chunk_size]
+
+    def iter_relationships_chunked(self, chunk_size: int = 500) -> Iterator[List[RelationshipData]]:
+        """Yield relationship lists in chunks for memory-efficient processing.
+
+        Args:
+            chunk_size: Maximum number of relationships per chunk (default 500).
+
+        Yields:
+            Lists of :class:`RelationshipData` of length ≤ *chunk_size*.
+
+        Example::
+
+            for chunk in graph.iter_relationships_chunked(1000):
+                write_rels_to_stream(chunk)
+        """
+        for i in range(0, len(self.relationships), chunk_size):
+            yield self.relationships[i : i + chunk_size]
+
+    def export_streaming(
+        self,
+        filepath: str,
+        chunk_size: int = 500,
+    ) -> Tuple[int, int]:
+        """Export graph to JSON-Lines using chunked streaming (F2).
+
+        Avoids building the full serialised string in memory: each node and
+        relationship is serialised and flushed to disk one chunk at a time.
+        This is the recommended path for graphs with > 10 000 nodes.
+
+        Args:
+            filepath: Destination file path.
+            chunk_size: Number of records to serialise per write call.
+
+        Returns:
+            Tuple of (nodes_written, relationships_written).
+
+        Example::
+
+            nodes_written, rels_written = graph.export_streaming("large_graph.jsonl")
+        """
+        nodes_written = 0
+        rels_written = 0
+
+        with open(filepath, "w", buffering=65536) as f:
+            for chunk in self.iter_nodes_chunked(chunk_size):
+                lines = [
+                    json.dumps({"type": "node", "data": node.to_dict()})
+                    for node in chunk
+                ]
+                f.write("\n".join(lines) + "\n")
+                nodes_written += len(chunk)
+
+            for chunk in self.iter_relationships_chunked(chunk_size):
+                lines = [
+                    json.dumps({"type": "relationship", "data": rel.to_dict()})
+                    for rel in chunk
+                ]
+                f.write("\n".join(lines) + "\n")
+                rels_written += len(chunk)
+
+            if self.schema:
+                f.write(
+                    json.dumps({"type": "schema", "data": self.schema.to_dict()}) + "\n"
+                )
+
+        return nodes_written, rels_written
     
     @property
     def node_count(self) -> int:
@@ -708,3 +839,85 @@ class GraphData:
                     ))
         
         return cls(nodes=nodes, relationships=relationships)
+
+
+# ---------------------------------------------------------------------------
+# Built-in format handler registration
+# ---------------------------------------------------------------------------
+
+def _builtin_save_dag_json(graph: GraphData, filepath: str) -> None:
+    with open(filepath, "w") as f:
+        f.write(graph.to_json(indent=2))
+
+
+def _builtin_load_dag_json(filepath: str) -> GraphData:
+    with open(filepath, "r") as f:
+        return GraphData.from_json(f.read())
+
+
+def _builtin_save_json_lines(graph: GraphData, filepath: str) -> None:
+    with open(filepath, "w") as f:
+        for node in graph.nodes:
+            f.write(json.dumps({"type": "node", "data": node.to_dict()}) + "\n")
+        for rel in graph.relationships:
+            f.write(json.dumps({"type": "relationship", "data": rel.to_dict()}) + "\n")
+        if graph.schema:
+            f.write(json.dumps({"type": "schema", "data": graph.schema.to_dict()}) + "\n")
+
+
+def _builtin_load_json_lines(filepath: str) -> GraphData:
+    nodes: List[NodeData] = []
+    relationships: List[RelationshipData] = []
+    schema = None
+    with open(filepath, "r") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            obj = json.loads(line)
+            if obj["type"] == "node":
+                nodes.append(NodeData.from_dict(obj["data"]))
+            elif obj["type"] == "relationship":
+                relationships.append(RelationshipData.from_dict(obj["data"]))
+            elif obj["type"] == "schema":
+                schema = SchemaData.from_dict(obj["data"])
+    return GraphData(nodes=nodes, relationships=relationships, schema=schema)
+
+
+def _builtin_save_car(_graph: GraphData, _filepath: str) -> None:
+    raise NotImplementedError(
+        "CAR format requires IPLD CAR library integration (planned for future). "
+        "See DEFERRED_FEATURES.md for rationale."
+    )
+
+
+def _builtin_load_car(_filepath: str) -> GraphData:
+    raise NotImplementedError(
+        "CAR format requires IPLD CAR library integration (planned for future). "
+        "See DEFERRED_FEATURES.md for rationale."
+    )
+
+
+def _register_builtin_formats() -> None:
+    """Register all built-in save/load handlers into the global registry."""
+    register_format(MigrationFormat.DAG_JSON, _builtin_save_dag_json, _builtin_load_dag_json)
+    register_format(MigrationFormat.JSON_LINES, _builtin_save_json_lines, _builtin_load_json_lines)
+    register_format(MigrationFormat.CAR, _builtin_save_car, _builtin_load_car)
+    register_format(
+        MigrationFormat.GRAPHML,
+        lambda g, p: g._save_to_graphml(p),
+        lambda p: GraphData._load_from_graphml(p),
+    )
+    register_format(
+        MigrationFormat.GEXF,
+        lambda g, p: g._save_to_gexf(p),
+        lambda p: GraphData._load_from_gexf(p),
+    )
+    register_format(
+        MigrationFormat.PAJEK,
+        lambda g, p: g._save_to_pajek(p),
+        lambda p: GraphData._load_from_pajek(p),
+    )
+
+
+# Register built-in handlers at import time.
+_register_builtin_formats()

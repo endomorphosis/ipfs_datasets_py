@@ -46,10 +46,33 @@ Roadmap:
 # Phase 1 implementation complete
 from .graph_engine import GraphEngine
 from .query_executor import QueryExecutor
+from .types import (
+    GraphProperties,
+    NodeLabels,
+    CID,
+    GraphStats,
+    NodeRecord,
+    RelationshipRecord,
+    WALStats,
+    QuerySummary,
+    StorageBackend,
+    GraphEngineProtocol,
+)
 
 __all__ = [
     "GraphEngine",
     "QueryExecutor",
+    # Type utilities
+    "GraphProperties",
+    "NodeLabels",
+    "CID",
+    "GraphStats",
+    "NodeRecord",
+    "RelationshipRecord",
+    "WALStats",
+    "QuerySummary",
+    "StorageBackend",
+    "GraphEngineProtocol",
 ]
 
 # Version info

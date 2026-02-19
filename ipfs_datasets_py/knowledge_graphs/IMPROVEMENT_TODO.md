@@ -79,22 +79,26 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Acceptance: `__all__` lists only intended public symbols; internal modules don’t become “public-by-accident”.
 
 ### B2. Finish “thin wrapper” migration where feasible (P2)
-- [ ] **Minimize duplicated legacy code in `knowledge_graph_extraction.py`** (P2, medium risk)
+- [x] **Minimize duplicated legacy code in `knowledge_graph_extraction.py`** (P2, medium risk)
   - Acceptance: legacy module becomes a lightweight shim importing from `extraction/` and raising deprecation warnings; no behavior divergence.
+  - Status (2026-02-19): ✅ DONE – `knowledge_graph_extraction.py` is already a 120-line thin shim: it re-exports from `extraction/`, raises `DeprecationWarning` on import, and overrides `extract_knowledge_graph()` for backward API compatibility. Verified by `test_optional_deps.py::TestLegacyShim`.
 
 ---
 
 ## Workstream C — Error handling, logging, and diagnosability
 
 ### C1. Exception taxonomy and wrapping (P1)
-- [ ] **Replace broad `except Exception` with narrower exception types where realistic** (P1, medium risk)
+- [x] **Replace broad `except Exception` with narrower exception types where realistic** (P1, medium risk)
   - Acceptance: fewer generic catches; when generic catches remain, they re-raise a `KnowledgeGraphError` subclass with original exception attached (`raise ... from e`).
-- [ ] **Standardize error messages and context payload** (P2, low risk)
-  - Acceptance: errors include the operation (“import”, “query”, “commit”), relevant IDs, and a short remediation hint.
+  - Status (2026-02-19): ✅ SUBSTANTIALLY DONE – All remaining `except Exception` blocks across the module now either (a) re-raise a typed `KnowledgeGraphError` subclass via `raise ... from e`, or (b) are guarded by earlier `except asyncio.CancelledError: raise` / typed-catch clauses so the generic catch is truly the last resort. See the 15+ entries in the Completed log for full details.
+- [x] **Standardize error messages and context payload** (P2, low risk)
+  - Acceptance: errors include the operation ("import", "query", "commit"), relevant IDs, and a short remediation hint.
+  - Status (2026-02-19): ✅ DONE – Added `operation`, `error_class`, and `remediation` fields to key error raises in `extraction/extractor.py` (NER/RE failures) and `migration/ipfs_importer.py` (connect/load failures). All modules now consistently populate `details` with `operation` + `remediation` hints.
 
 ### C2. Observability (P2)
-- [ ] **Make logging consistent across subpackages** (P2, medium risk)
+- [x] **Make logging consistent across subpackages** (P2, medium risk)
   - Acceptance: consistent logger names; no noisy warnings in normal operation; debug logs available for troubleshooting.
+  - Status (2026-02-19): ✅ DONE – All modules use `logging.getLogger(__name__)`; replaced `print()` calls in `extraction/extractor.py` (spaCy/transformers absent warnings) with `logger.warning()` to keep optional-dep messages in the logging system, not stdout.
 
 ---
 
@@ -103,12 +107,14 @@ These are the highest-signal improvement opportunities found during a quick pass
 ### D1. Replace placeholder relation heuristics (P1)
 - [x] **Implement real semantic similarity** in `cross_document_reasoning.py` (P1, medium risk)
   - Acceptance: similarity is computed from document text/metadata; tests cover scenarios (e.g., supporting vs elaborating vs complementary).
-- [ ] **Make relation classification deterministic and configurable** (P2, medium risk)
+- [x] **Make relation classification deterministic and configurable** (P2, medium risk)
   - Acceptance: thresholds are parameters; results are stable for identical input.
+  - Status (2026-02-19): ✅ DONE – added `relation_similarity_threshold`, `relation_supporting_strength`, `relation_elaborating_strength`, `relation_complementary_strength` constructor parameters to `CrossDocumentReasoner`; all four defaults preserved; verified with 5 new unit tests in `test_reasoning.py::TestConfigurableRelationThresholds`.
 
 ### D2. Query engine correctness hardening (P2)
-- [ ] **Add “golden query” fixtures** for Cypher parsing/compilation (P2, low risk)
+- [x] **Add “golden query” fixtures** for Cypher parsing/compilation (P2, low risk)
   - Acceptance: key query patterns compile to expected IR and execute correctly.
+  - Status (2026-02-19): ✅ DONE – created `tests/unit/knowledge_graphs/test_cypher_golden_queries.py` with 18 tests covering MATCH, WHERE, RETURN, CREATE patterns and parse-error paths; all 18 pass.
 
 ---
 
@@ -122,53 +128,64 @@ These are the highest-signal improvement opportunities found during a quick pass
 ### E1. Migration module coverage (P0)
 - [x] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
   - Acceptance: adds tests for error handling + edge cases; `pytest` passes; coverage target met.
-- [ ] **Add format-specific “roundtrip” tests** (P1, medium risk)
+- [x] **Add format-specific “roundtrip” tests** (P1, medium risk)
   - Acceptance: export → import produces equivalent graph for CSV/JSON/RDF (and GraphML/GEXF/Pajek if enabled).
+  - Status (2026-02-19): ✅ DONE – added 13 roundtrip tests to `tests/unit/knowledge_graphs/migration/test_formats.py` (7 for DAG_JSON, 6 for JSON_LINES); all 56 format tests pass. GraphML/GEXF/Pajek roundtrips already existed in `TestFormatConversions`.
 
 ### E2. Fuzz / property-based tests (P2)
-- [ ] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
+- [x] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
   - Acceptance: parser never crashes; invalid input yields `QueryParseError`.
-- [ ] **Property tests for WAL** (P2, medium risk)
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_cypher_fuzz.py` with 67 tests across 7 classes (truncated queries, malformed syntax, large inputs, Unicode, reserved words, valid edge cases, lexer stress). Fixed bug: parser now catches `SyntaxError` from lexer and re-raises as `CypherParseError`. All 67 fuzz tests pass.
+- [x] **Property tests for WAL** (P2, medium risk)
   - Acceptance: random sequences of operations preserve invariants; crash-recovery tests validate correctness.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_wal_invariants.py` with 23 tests across 10 invariant classes: append-only CID uniqueness, chain integrity, reverse-chronological read order, recovery (committed/aborted), empty WAL safety, compaction, stats, cycle detection, transaction history filtering, integrity validation. All 23 pass.
 
 ### E3. Optional dependency test matrix (P2)
-- [ ] **Explicitly test with/without optional deps** (P2, low risk)
-  - Acceptance: CI (or local test scripts) can run “minimal” and “full” configs; skips are intentional and documented.
+- [x] **Explicitly test with/without optional deps** (P2, low risk)
+  - Acceptance: CI (or local test scripts) can run "minimal" and "full" configs; skips are intentional and documented.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_optional_deps.py` with 11 tests verifying graceful degradation without spaCy/transformers and confirming core imports always work; all 11 pass.
 
 ---
 
 ## Workstream F — Performance & memory
 
 ### F1. Profiling and benchmarks (P2)
-- [ ] **Add a small benchmark harness** (P2, low risk)
+- [x] **Add a small benchmark harness** (P2, low risk)
   - Acceptance: benchmark scripts document baseline performance for extraction + query + migration.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` tests covering extraction speed (<5ms/doc), Cypher parse+compile (<1ms/query), GraphEngine CRUD (<0.5ms/op), and DAG-JSON/JSON-Lines roundtrip (<50ms/100 nodes). Can also be run standalone: `python tests/.../test_benchmarks.py`.
 
 ### F2. Large-graph behavior (P2)
-- [ ] **Memory optimization in batch operations** (P2, medium risk)
+- [x] **Memory optimization in batch operations** (P2, medium risk)
   - Acceptance: streaming/chunking paths exist for large imports/exports; no unbounded accumulation.
+  - Status (2026-02-19): ✅ DONE – Added `GraphData.iter_nodes_chunked()`, `GraphData.iter_relationships_chunked()` (both default chunk_size=500), and `GraphData.export_streaming()` to `migration/formats.py`. The streaming export uses 64KB write buffers and processes one chunk at a time, avoiding unbounded string accumulation.
 
 ---
 
 ## Workstream G — Dependency management & packaging ergonomics
 
-- [ ] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
+- [x] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
   - Acceptance: documented optional deps match reality; runtime error messages give exact install commands.
-- [ ] **Keep core test plugins in the test dependency set** (P1, low risk)
+  - Status (2026-02-19): ✅ DONE – Updated `setup.py` `knowledge_graphs` extras to include `numpy`, `openai`, `anthropic`, and `networkx` (all used in cross_document_reasoning.py and lineage/). Error messages in `extractor.py` now use `logger.warning()` with exact install commands.
+- [x] **Keep core test plugins in the test dependency set** (P1, low risk)
   - Acceptance: `pytest-mock` stays present wherever test dependencies are declared; tests that rely on `mocker` never fail due to missing fixture.
-- [ ] **Improve spaCy model guidance** (P3, low risk)
+  - Status (2026-02-19): ✅ DONE – Added `pytest-mock>=3.12.0` to `setup.py` `test` extras (was already in `requirements.txt` but not in `setup.py[test]`).
+- [x] **Improve spaCy model guidance** (P3, low risk)
   - Acceptance: clearer install instructions and graceful fallback when model not present.
+  - Status (2026-02-19): ✅ DONE – `extractor.py` now uses `logger.warning()` with combined install+model-download instructions (single message, not 3 separate prints). The existing graceful fallback to rule-based mode was already in place.
 
 ---
 
 ## Workstream H — Migration formats and extensibility
 
 ### H1. CAR support (deferred; keep as optional) (P3)
-- [ ] **Decide on CAR library strategy** (P3, high risk)
+- [x] **Decide on CAR library strategy** (P3, high risk)
   - Acceptance: documented recommendation; either implement or keep deferred with a clear rationale.
+  - Status (2026-02-19): ✅ DONE – Updated `DEFERRED_FEATURES.md` Section 6 with a detailed decision: keep CAR deferred until `ipld-car` ≥ 1.0 ships, with full rationale and a code example showing how third parties can plug in CAR support via `register_format()` without modifying core.
 
 ### H2. Format plugin architecture (optional) (P3)
-- [ ] **Make import/export formats pluggable** (P3, medium risk)
-  - Acceptance: adding a new format doesn’t require editing a large if/else chain; tests cover registry.
+- [x] **Make import/export formats pluggable** (P3, medium risk)
+  - Acceptance: adding a new format doesn't require editing a large if/else chain; tests cover registry.
+  - Status (2026-02-19): ✅ DONE – Replaced the `if/elif` chain in `save_to_file()`/`load_from_file()` with a `_FormatRegistry` singleton + `register_format()` public API. Built-in handlers (DAG_JSON, JSON_LINES, GRAPHML, GEXF, PAJEK, CAR) registered at import time. Third-party formats can be registered without modifying core. Exported from `migration/__init__.py`.
 
 ---
 
@@ -176,10 +193,12 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 - [ ] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
   - Candidates: `extraction/extractor.py`, `core/query_executor.py`, `cross_document_reasoning.py`.
-- [ ] **Improve typing at boundaries** (P2, low risk)
+- [x] **Improve typing at boundaries** (P2, low risk)
   - Acceptance: fewer `Any` at public edges; core dataclasses or Protocols for key interfaces.
-- [ ] **Normalize naming and terminology** across docs and code (P3, low risk)
+  - Status (2026-02-19): ✅ DONE – Created `core/types.py` with: type aliases `GraphProperties`, `NodeLabels`, `CID`; TypedDicts `GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`; structural Protocols `StorageBackend` and `GraphEngineProtocol`. All exported from `core/__init__.py`.
+- [x] **Normalize naming and terminology** across docs and code (P3, low risk)
   - Acceptance: “GraphEngine/QueryExecutor/UnifiedQueryEngine” roles are unambiguous.
+  - Status (2026-02-19): ✅ DONE – Added a Component role guide to `query/__init__.py` module docstring that defines the three layers (GraphEngine = CRUD store, QueryExecutor = Cypher compiler/executor, UnifiedQueryEngine = full orchestration), their responsibilities, and a typical call-chain diagram.
 
 ---
 
@@ -234,3 +253,28 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: Continued C1/C2 in `core/query_executor.py` by preserving underlying exception details (`error`, `error_class`) in `QueryExecutionError.details` for unexpected execution failures (without changing the existing summary `error_class`); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_query_executor_error_metadata.py` (2 passed).
 - 2026-02-19: Continued C2 in `cross_document_reasoning.py` by improving fallback warning logs to include underlying exception class names (no behavior changes); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_reasoning.py` (18 passed).
 - 2026-02-19: Continued C2 in `core/graph_engine.py` by including the underlying exception class name in graph save/load failure logs (no behavior changes); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_graph_engine.py` (29 passed).
+- 2026-02-19: Implemented D1 (configurable relation thresholds) in `cross_document_reasoning.py` by adding four new constructor parameters (`relation_similarity_threshold`, `relation_supporting_strength`, `relation_elaborating_strength`, `relation_complementary_strength`) to `CrossDocumentReasoner`; `_determine_relation` now uses these instead of hard-coded literals; verified with 5 new tests in `test_reasoning.py::TestConfigurableRelationThresholds` (23 passed).
+- 2026-02-19: Implemented D2 (golden query fixtures) by creating `tests/unit/knowledge_graphs/test_cypher_golden_queries.py` with 18 tests covering MATCH/WHERE/RETURN/CREATE IR patterns and parse-error behavior; all 18 pass.
+- 2026-02-19: Implemented E1 (format roundtrip tests) by adding `TestDagJsonRoundtrip` (7 tests) and `TestJsonLinesRoundtrip` (6 tests) to `tests/unit/knowledge_graphs/migration/test_formats.py`; all 56 format tests pass.
+- 2026-02-19: B2 confirmed DONE – `knowledge_graph_extraction.py` is already a 120-line thin shim; documented in IMPROVEMENT_TODO.md.
+- 2026-02-19: C2 – Replaced `print()` calls in `extraction/extractor.py` with `logger.warning()` for spaCy/transformers absent messages; all modules consistently use `logging.getLogger(__name__)`.
+- 2026-02-19: Fixed lexer bug (C1): `CypherParser.parse()` now wraps `SyntaxError` from the lexer in `CypherParseError`, so callers always receive a consistent exception type.
+- 2026-02-19: E2 – Created `tests/unit/knowledge_graphs/test_cypher_fuzz.py` with 67 tests (truncated queries, malformed syntax, large inputs, Unicode, reserved words, valid edge cases, lexer stress); all 67 pass.
+- 2026-02-19: E3 – Created `tests/unit/knowledge_graphs/test_optional_deps.py` with 11 tests verifying graceful degradation without optional deps; all 11 pass.
+- 2026-02-19: F1 – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` benchmark tests (extraction, Cypher parse/compile, GraphEngine CRUD, migration roundtrip); all 10 pass.
+- 2026-02-19: G – Updated `setup.py` `knowledge_graphs` extras to add `numpy`, `openai`, `anthropic`, `networkx` (deps used in cross_document_reasoning.py and lineage/); also improved spaCy install guidance in error messages.
+- 2026-02-19: C1 (error message standardization) – Added `operation`, `error_class`, and `remediation` fields to broad exception wrappers in `extraction/extractor.py` and `migration/ipfs_importer.py`.
+- 2026-02-19: E2 (WAL invariant tests) – Created `tests/unit/knowledge_graphs/test_wal_invariants.py` with 23 tests covering 10 WAL invariants (append-only, chain integrity, read order, recovery, empty WAL, compaction, stats, cycle detection, tx history, integrity); all 23 pass.
+- 2026-02-19: F2 (streaming export) – Added `GraphData.iter_nodes_chunked()`, `iter_relationships_chunked()`, and `export_streaming()` to `migration/formats.py` for memory-efficient large-graph export.
+- 2026-02-19: G (pytest-mock) – Added `pytest-mock>=3.12.0` to `setup.py` `test` extras.
+- 2026-02-19: H1 (CAR strategy) – Updated `DEFERRED_FEATURES.md` Section 6 with detailed decision rationale + plugin example.
+- 2026-02-19: H2 (pluggable formats) – Replaced if/elif chain in `save_to_file`/`load_from_file` with `_FormatRegistry` + `register_format()` API; registered 6 built-in handlers at import time; exported from `migration/__init__.py`.
+- 2026-02-19: C1 (final) – All remaining `except Exception` blocks now re-raise typed `KnowledgeGraphError` subclasses with `raise ... from e`; marked C1 as substantially complete.
+- 2026-02-19: I.1a (god module) – Extracted 4 module-level helper functions from `extraction/extractor.py` (1760→1624 lines) into new `extraction/_entity_helpers.py`; re-imported for compat.
+- 2026-02-19: I.1b (god module) – Extracted `_LegacyGraphEngine` class from `core/query_executor.py` (1189→545 lines) into new `core/_legacy_graph_engine.py`; re-imported for compat.
+- 2026-02-19: I.1c (god module) – Renamed `example_usage()` → `_example_usage()` in `cross_document_reasoning.py` to reduce accidental public surface.
+- 2026-02-19: I.2 (typing) – Created `core/types.py` with type aliases (`GraphProperties`, `NodeLabels`, `CID`), TypedDicts (`GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`), and Protocols (`StorageBackend`, `GraphEngineProtocol`); exported from `core/__init__.py`.
+- 2026-02-19: I.3 (naming) – Added component role guide to `query/__init__.py` module docstring defining GraphEngine/QueryExecutor/UnifiedQueryEngine layers with call-chain diagram.
+
+
+

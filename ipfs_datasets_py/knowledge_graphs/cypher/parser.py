@@ -101,7 +101,10 @@ class CypherParser:
         # Handle both string and token list inputs
         if isinstance(query, str):
             lexer = CypherLexer()
-            self.tokens = lexer.tokenize(query)
+            try:
+                self.tokens = lexer.tokenize(query)
+            except SyntaxError as e:
+                raise CypherParseError(f"Lexer error: {e}") from e
         else:
             self.tokens = query
         

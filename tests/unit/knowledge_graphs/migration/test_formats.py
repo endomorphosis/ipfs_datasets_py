@@ -773,5 +773,355 @@ class TestSchemaAndMetadata:
         assert "KNOWS" in loaded_graph.schema.relationship_types
 
 
+
 if __name__ == "__main__" and HAVE_PYTEST:
     pytest.main([__file__, "-v"])
+
+
+# ---------------------------------------------------------------------------
+# E1: Format-specific roundtrip tests (DAG_JSON and JSON_LINES)
+# ---------------------------------------------------------------------------
+
+class TestDagJsonRoundtrip:
+    """
+    Roundtrip tests for DAG-JSON format (E1 – Workstream E).
+
+    Each test saves a GraphData instance to a temporary file then loads it
+    back and asserts that the in-memory representation is equivalent.
+    """
+
+    def _make_full_graph(self) -> GraphData:
+        """Return a graph with nodes, relationships and schema."""
+        nodes = [
+            NodeData(id="1", labels=["Person"], properties={"name": "Alice", "age": 30}),
+            NodeData(id="2", labels=["Person", "Employee"], properties={"name": "Bob", "role": "engineer"}),
+            NodeData(id="3", labels=["Organization"], properties={"name": "Acme", "founded": 1990}),
+        ]
+        rels = [
+            RelationshipData(id="r1", type="KNOWS", start_node="1", end_node="2", properties={"since": 2020}),
+            RelationshipData(id="r2", type="WORKS_AT", start_node="2", end_node="3", properties={"years": 3}),
+        ]
+        schema = SchemaData(
+            node_labels=["Person", "Employee", "Organization"],
+            relationship_types=["KNOWS", "WORKS_AT"],
+        )
+        return GraphData(nodes=nodes, relationships=rels, schema=schema,
+                         metadata={"version": "2.0", "source": "test"})
+
+    def test_dag_json_roundtrip_preserves_node_count(self):
+        """
+        GIVEN: A graph with 3 nodes
+        WHEN: Saved to DAG-JSON and reloaded
+        THEN: The loaded graph has 3 nodes
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            assert len(loaded.nodes) == 3
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_relationship_count(self):
+        """
+        GIVEN: A graph with 2 relationships
+        WHEN: Saved to DAG-JSON and reloaded
+        THEN: The loaded graph has 2 relationships
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            assert len(loaded.relationships) == 2
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_node_properties(self):
+        """
+        GIVEN: A node with properties {name: 'Alice', age: 30}
+        WHEN: Graph saved to DAG-JSON and reloaded
+        THEN: The loaded node has the same properties
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            alice = next(n for n in loaded.nodes if n.id == "1")
+            assert alice.properties["name"] == "Alice"
+            assert alice.properties["age"] == 30
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_multi_label_nodes(self):
+        """
+        GIVEN: A node with labels ['Person', 'Employee']
+        WHEN: Graph saved to DAG-JSON and reloaded
+        THEN: Both labels are preserved
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            bob = next(n for n in loaded.nodes if n.id == "2")
+            assert "Person" in bob.labels
+            assert "Employee" in bob.labels
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_relationship_properties(self):
+        """
+        GIVEN: A relationship with properties {since: 2020}
+        WHEN: Graph saved to DAG-JSON and reloaded
+        THEN: The relationship property is preserved
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            knows = next(r for r in loaded.relationships if r.id == "r1")
+            assert knows.type == "KNOWS"
+            assert knows.properties["since"] == 2020
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_schema(self):
+        """
+        GIVEN: A graph with a schema containing node labels and relationship types
+        WHEN: Saved to DAG-JSON and reloaded
+        THEN: The schema is preserved
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            assert loaded.schema is not None
+            assert "Person" in loaded.schema.node_labels
+            assert "KNOWS" in loaded.schema.relationship_types
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_preserves_metadata(self):
+        """
+        GIVEN: A graph with metadata {version: '2.0', source: 'test'}
+        WHEN: Saved to DAG-JSON and reloaded
+        THEN: The metadata is preserved
+        """
+        # GIVEN
+        graph = self._make_full_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            assert loaded.metadata.get("version") == "2.0"
+            assert loaded.metadata.get("source") == "test"
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_dag_json_roundtrip_empty_graph(self):
+        """
+        GIVEN: An empty graph (no nodes or relationships)
+        WHEN: Saved to DAG-JSON and reloaded
+        THEN: The loaded graph is also empty
+        """
+        # GIVEN
+        graph = GraphData()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.DAG_JSON)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.DAG_JSON)
+            # THEN
+            assert len(loaded.nodes) == 0
+            assert len(loaded.relationships) == 0
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+
+class TestJsonLinesRoundtrip:
+    """
+    Roundtrip tests for JSON_LINES format (E1 – Workstream E).
+
+    JSON Lines writes one record per line; these tests verify full
+    equivalence after a save → load cycle.
+    """
+
+    def _make_graph(self) -> GraphData:
+        nodes = [
+            NodeData(id="10", labels=["Movie"], properties={"title": "Inception", "year": 2010}),
+            NodeData(id="11", labels=["Director"], properties={"name": "Nolan"}),
+        ]
+        rels = [
+            RelationshipData(id="e1", type="DIRECTED", start_node="11", end_node="10",
+                             properties={"role": "director"}),
+        ]
+        schema = SchemaData(node_labels=["Movie", "Director"], relationship_types=["DIRECTED"])
+        return GraphData(nodes=nodes, relationships=rels, schema=schema)
+
+    def test_jsonlines_roundtrip_preserves_node_count(self):
+        """
+        GIVEN: A graph with 2 nodes
+        WHEN: Saved to JSON_LINES and reloaded
+        THEN: The loaded graph has 2 nodes
+        """
+        # GIVEN
+        graph = self._make_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            assert len(loaded.nodes) == 2
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_jsonlines_roundtrip_preserves_relationship_type(self):
+        """
+        GIVEN: A relationship of type 'DIRECTED'
+        WHEN: Graph saved to JSON_LINES and reloaded
+        THEN: The relationship type is preserved
+        """
+        # GIVEN
+        graph = self._make_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            assert loaded.relationships[0].type == "DIRECTED"
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_jsonlines_roundtrip_preserves_node_properties(self):
+        """
+        GIVEN: A node with properties {title: 'Inception', year: 2010}
+        WHEN: Graph saved to JSON_LINES and reloaded
+        THEN: Node properties are preserved
+        """
+        # GIVEN
+        graph = self._make_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            movie = next(n for n in loaded.nodes if n.id == "10")
+            assert movie.properties["title"] == "Inception"
+            assert movie.properties["year"] == 2010
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_jsonlines_roundtrip_preserves_relationship_properties(self):
+        """
+        GIVEN: A relationship with properties {role: 'director'}
+        WHEN: Graph saved to JSON_LINES and reloaded
+        THEN: Relationship properties are preserved
+        """
+        # GIVEN
+        graph = self._make_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            directed = next(r for r in loaded.relationships if r.type == "DIRECTED")
+            assert directed.properties["role"] == "director"
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_jsonlines_roundtrip_preserves_schema(self):
+        """
+        GIVEN: A graph with schema containing node_labels and relationship_types
+        WHEN: Saved to JSON_LINES and reloaded
+        THEN: The schema is preserved
+        """
+        # GIVEN
+        graph = self._make_graph()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            assert loaded.schema is not None
+            assert "Movie" in loaded.schema.node_labels
+            assert "DIRECTED" in loaded.schema.relationship_types
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+
+    def test_jsonlines_roundtrip_empty_graph(self):
+        """
+        GIVEN: An empty graph (no nodes, no relationships)
+        WHEN: Saved to JSON_LINES and reloaded
+        THEN: The loaded graph is also empty
+        """
+        # GIVEN
+        graph = GraphData()
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.jsonl') as f:
+            filepath = f.name
+        try:
+            # WHEN
+            graph.save_to_file(filepath, MigrationFormat.JSON_LINES)
+            loaded = GraphData.load_from_file(filepath, MigrationFormat.JSON_LINES)
+            # THEN
+            assert len(loaded.nodes) == 0
+            assert len(loaded.relationships) == 0
+        finally:
+            if os.path.exists(filepath):
+                os.unlink(filepath)
+

@@ -36,153 +36,17 @@ from ..exceptions import (
 # Import the Wikipedia knowledge graph tracer for enhanced tracing capabilities
 from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
 
+# Helper functions extracted to a focused module (Workstream I — reduce god modules).
+# They are re-imported here so existing callers are unaffected.
+from ._entity_helpers import (  # noqa: F401 (re-exported for backward compat)
+    _map_spacy_entity_type,
+    _map_transformers_entity_type,
+    _rule_based_entity_extraction,
+    _string_similarity,
+)
+
 # Set up logging
 logger = logging.getLogger(__name__)
-
-
-
-
-# Helper Functions
-
-def _map_spacy_entity_type(spacy_type: str) -> str:
-    """Map spaCy entity labels to our normalized entity types."""
-    mapping = {
-        'PERSON': 'person',
-        'PER': 'person',
-        'ORG': 'organization',
-        'GPE': 'location',
-        'LOC': 'location',
-        'FAC': 'location',
-        'DATE': 'date',
-        'TIME': 'time',
-        'EVENT': 'event',
-        'PRODUCT': 'product',
-        'WORK_OF_ART': 'work',
-        'LAW': 'law',
-        'LANGUAGE': 'language',
-        'PERCENT': 'number',
-        'MONEY': 'number',
-        'QUANTITY': 'number',
-        'ORDINAL': 'number',
-        'CARDINAL': 'number',
-        'NORP': 'group',
-    }
-    return mapping.get(spacy_type, 'entity')
-
-
-def _map_transformers_entity_type(transformers_type: str) -> str:
-    """Map HuggingFace NER tags (e.g. B-PER/I-ORG) to normalized entity types."""
-    tag = transformers_type
-    if '-' in tag:
-        tag = tag.split('-', 1)[1]
-
-    tag = tag.upper()
-    mapping = {
-        'PER': 'person',
-        'PERSON': 'person',
-        'ORG': 'organization',
-        'GPE': 'location',
-        'LOC': 'location',
-        'DATE': 'date',
-        'TIME': 'time',
-        'MISC': 'entity',
-    }
-    return mapping.get(tag, 'entity')
-
-
-def _rule_based_entity_extraction(text: str) -> List[Entity]:
-    """Extract entities using lightweight regex patterns.
-
-    This is the default extraction path when spaCy/transformers are unavailable.
-    """
-    entities: List[Entity] = []
-    entity_names_seen: set[tuple[str, str]] = set()
-
-    patterns: List[tuple[str, str, float]] = [
-        # Simple full names (e.g. "Marie Curie")
-        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\b", 'person', 0.8),
-        # Titles
-        (r"(?:Dr\.|Prof\.)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})(?=\s|$|[.,;:])", 'person', 0.9),
-        # Person names
-        (r"Principal\s+Investigator:\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})", 'person', 0.95),
-        # Organizations (AI)
-        (r"(Google\s+DeepMind|OpenAI|Anthropic|Microsoft\s+Research|Meta\s+AI|IBM\s+Research)", 'organization', 0.95),
-        (r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Institute|Research|Lab|Laboratory|Center|University)", 'organization', 0.85),
-        # Fields / techniques
-        (r"\b((?:artificial\s+intelligence|machine\s+learning|deep\s+learning|neural\s+networks?|computer\s+vision|natural\s+language\s+processing|reinforcement\s+learning))\b", 'field', 0.95),
-        (r"\b((?:transformer\s+architectures?|attention\s+mechanisms?|self-supervised\s+learning|few-shot\s+learning|cross-modal\s+reasoning))\b", 'field', 0.9),
-        (r"\b((?:physics-informed\s+neural\s+networks?|graph\s+neural\s+networks?|generative\s+models?))\b", 'field', 0.9),
-        # Technology/tools (heuristic)
-        (r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:framework|platform|system|technology|tool|algorithm)s?\b", 'technology', 0.8),
-        # Projects
-        (r"Project\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?):?\s+", 'project', 0.9),
-        # Medical/healthcare
-        (r"\b((?:medical\s+)?(?:image\s+analysis|radiology|pathology|healthcare|diagnosis|medical\s+AI))\b", 'field', 0.9),
-        # Conferences
-        (r"\b(NeurIPS|ICML|ICLR|AAAI|IJCAI|NIPS)\b", 'conference', 0.95),
-        # Years/timeframes
-        (r"\b(20[0-9]{2}(?:-20[0-9]{2})?)\b", 'date', 0.8),
-        # Locations
-        (r"\b(?:in|at|from|to|headquartered\s+in)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?(?:,\s*[A-Z][A-Z])?)\b", 'location', 0.8),
-    ]
-
-    for pattern, entity_type, confidence in patterns:
-        flags = re.IGNORECASE if entity_type in ['field', 'technology'] else 0
-
-        for match in re.finditer(pattern, text, flags):
-            name = match.group(1).strip()
-
-            name = re.sub(r'\s+', ' ', name)
-            name = name.strip('.,;:')
-
-            if not name or len(name) < 2:
-                continue
-
-            name_key = (name.lower(), entity_type)
-            if name_key in entity_names_seen:
-                continue
-            entity_names_seen.add(name_key)
-
-            if name.lower() in {'timeline', 'the', 'and', 'our', 'this', 'that', 'with', 'from'}:
-                continue
-
-            start_pos = max(0, match.start() - 20)
-            end_pos = min(len(text), match.end() + 20)
-            source_snippet = text[start_pos:end_pos].replace('\\n', ' ').strip()
-
-            entities.append(
-                Entity(
-                    entity_type=entity_type,
-                    name=name,
-                    confidence=confidence,
-                    source_text=source_snippet,
-                )
-            )
-
-    return entities
-
-
-def _string_similarity(str1: str, str2: str) -> float:
-    """Calculate similarity between two strings.
-
-    Args:
-        str1 (str): First string
-        str2 (str): Second string
-
-    Returns:
-        float: Similarity score (0-1)
-    """
-    # Simple Jaccard similarity on words
-    words1 = set(str1.lower().split())
-    words2 = set(str2.lower().split())
-
-    if not words1 or not words2:
-        return 0.0
-
-    intersection = words1.intersection(words2)
-    union = words1.union(words2)
-
-    return len(intersection) / len(union)
 
 
 # Main Extractor Class
@@ -246,13 +110,15 @@ class KnowledgeGraphExtractor:
                     self.nlp = spacy.load("en_core_web_sm")
                 except (OSError, IOError) as e:
                     # If the model is not available, download it
-                    print(f"spaCy model not found ({e}), downloading...")
+                    logger.warning("spaCy model 'en_core_web_sm' not found (%s) — downloading...", e)
                     spacy.cli.download("en_core_web_sm")
                     self.nlp = spacy.load("en_core_web_sm")
             except ImportError:
-                print("Warning: spaCy not installed. Running in rule-based mode only.")
-                print("Install with: pip install 'ipfs_datasets_py[knowledge_graphs]'")
-                print("Then: python -m spacy download en_core_web_sm")
+                logger.warning(
+                    "spaCy not installed — running in rule-based mode only. "
+                    "Install with: pip install 'ipfs_datasets_py[knowledge_graphs]' "
+                    "then run: python -m spacy download en_core_web_sm"
+                )
                 self.use_spacy = False
 
         if use_transformers:
@@ -262,8 +128,10 @@ class KnowledgeGraphExtractor:
                 self.re_model = pipeline("text-classification",
                                         model="Rajkumar-Murugesan/roberta-base-finetuned-tacred-relation")
             except ImportError:
-                print("Warning: transformers not installed. Running without Transformer models.")
-                print("Install transformers with: pip install transformers")
+                logger.warning(
+                    "transformers not installed — running without transformer models. "
+                    "Install with: pip install transformers"
+                )
                 self.use_transformers = False
 
         # Initialize relation patterns
@@ -352,7 +220,14 @@ class KnowledgeGraphExtractor:
                 # Unexpected error - wrap in EntityExtractionError
                 raise EntityExtractionError(
                     f"Failed to extract entities using transformers: {e}",
-                    details={'text_length': len(text), 'use_transformers': True}
+                    details={
+                        'operation': 'entity_extraction',
+                        'text_length': len(text),
+                        'use_transformers': True,
+                        'error_class': type(e).__name__,
+                        'remediation': "Check that the transformers pipeline is loaded correctly; "
+                                       "fall back with use_transformers=False.",
+                    }
                 ) from e
         else:
             # Use rule-based entity extraction
@@ -498,7 +373,14 @@ class KnowledgeGraphExtractor:
         except Exception as e:
             raise RelationshipExtractionError(
                 f"Neural relationship extraction failed: {e}",
-                details={"text_length": len(text), "entity_count": len(entity_map)}
+                details={
+                    'operation': 'relationship_extraction',
+                    'text_length': len(text),
+                    'entity_count': len(entity_map),
+                    'error_class': type(e).__name__,
+                    'remediation': "Check that the NER/RE pipeline is loaded; "
+                                   "set use_transformers=False to use rule-based extraction.",
+                }
             ) from e
         
         return relationships

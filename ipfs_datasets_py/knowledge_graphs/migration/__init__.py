@@ -45,7 +45,9 @@ from .formats import (
     NodeData,
     RelationshipData,
     SchemaData,
-    MigrationFormat
+    MigrationFormat,
+    register_format,
+    registered_formats,
 )
 
 __all__ = [
@@ -73,4 +75,7 @@ __all__ = [
     'RelationshipData',
     'SchemaData',
     'MigrationFormat',
+    # Format registry
+    'register_format',
+    'registered_formats',
 ]

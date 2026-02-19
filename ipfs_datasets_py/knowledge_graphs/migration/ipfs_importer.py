@@ -120,7 +120,13 @@ class IPFSImporter:
             True if connection successful
         """
         if not self._ipfs_available:
-            raise MigrationError("IPFS graph database not available")
+            raise MigrationError(
+                "IPFS graph database not available",
+                details={
+                    'operation': 'connect',
+                    'remediation': "Install ipfs_kit_py and ensure an IPFS node is running.",
+                }
+            )
         
         try:
             # For now, use embedded mode for import
@@ -133,7 +139,12 @@ class IPFSImporter:
         except Exception as e:
             raise MigrationError(
                 "Failed to connect to IPFS Graph Database",
-                details={"database": self.config.database},
+                details={
+                    'operation': 'connect',
+                    'database': self.config.database,
+                    'error_class': type(e).__name__,
+                    'remediation': "Verify IPFS node is running and the database name is correct.",
+                },
             ) from e
     
     def _close(self) -> None:
@@ -169,7 +180,13 @@ class IPFSImporter:
             except Exception as e:
                 raise MigrationError(
                     "Failed to load graph data",
-                    details={"input_file": self.config.input_file, "input_format": str(self.config.input_format)},
+                    details={
+                        'operation': 'load_graph_data',
+                        'input_file': self.config.input_file,
+                        'input_format': str(self.config.input_format),
+                        'error_class': type(e).__name__,
+                        'remediation': "Check that the file exists and the format matches its content.",
+                    },
                 ) from e
         
         raise MigrationError("No input file or graph data provided")

@@ -502,3 +502,126 @@ class TestCrossDocumentReasoningIntegration:
         assert isinstance(result, dict)
         # Result should have key fields
         assert any(key in result for key in ["answer", "documents", "confidence"])
+
+
+
+class TestConfigurableRelationThresholds:
+    """Tests for D1: configurable relation classification thresholds."""
+
+    def test_default_relation_thresholds_stored(self):
+        """
+        GIVEN: A CrossDocumentReasoner with default parameters
+        WHEN: Inspecting threshold attributes
+        THEN: The default values are stored on the instance
+        """
+        # GIVEN / WHEN
+        reasoner = CrossDocumentReasoner()
+
+        # THEN
+        assert reasoner.relation_similarity_threshold == 0.8
+        assert reasoner.relation_supporting_strength == 0.85
+        assert reasoner.relation_elaborating_strength == 0.75
+        assert reasoner.relation_complementary_strength == 0.7
+
+    def test_custom_relation_thresholds_stored(self):
+        """
+        GIVEN: A CrossDocumentReasoner with custom threshold parameters
+        WHEN: Inspecting threshold attributes
+        THEN: The custom values are stored on the instance
+        """
+        # GIVEN / WHEN
+        reasoner = CrossDocumentReasoner(
+            relation_similarity_threshold=0.9,
+            relation_supporting_strength=0.95,
+            relation_elaborating_strength=0.8,
+            relation_complementary_strength=0.6,
+        )
+
+        # THEN
+        assert reasoner.relation_similarity_threshold == 0.9
+        assert reasoner.relation_supporting_strength == 0.95
+        assert reasoner.relation_elaborating_strength == 0.8
+        assert reasoner.relation_complementary_strength == 0.6
+
+    def test_custom_similarity_threshold_changes_classification(self):
+        """
+        GIVEN: Two documents with moderate similarity (~0.6–0.7)
+        WHEN: One reasoner uses default threshold (0.8) and another uses 0.5
+        THEN: The stricter reasoner classifies as COMPLEMENTARY, the lenient one as SUPPORTING
+        """
+        # GIVEN – use documents with distinct but overlapping content
+        doc1 = DocumentNode(
+            id="d1",
+            content="machine learning algorithms data patterns training",
+            source="s1",
+        )
+        doc2 = DocumentNode(
+            id="d2",
+            content="machine learning models data features prediction",
+            source="s2",
+        )
+
+        strict_reasoner = CrossDocumentReasoner(relation_similarity_threshold=0.95)
+        lenient_reasoner = CrossDocumentReasoner(relation_similarity_threshold=0.01)
+
+        # WHEN
+        strict_rel, _ = strict_reasoner._determine_relation(
+            entity_id="e", source_doc_id="d1", target_doc_id="d2",
+            documents=[doc1, doc2], knowledge_graph=None,
+        )
+        lenient_rel, _ = lenient_reasoner._determine_relation(
+            entity_id="e", source_doc_id="d1", target_doc_id="d2",
+            documents=[doc1, doc2], knowledge_graph=None,
+        )
+
+        # THEN – strict should fall back to COMPLEMENTARY; lenient should be SUPPORTING
+        assert strict_rel == InformationRelationType.COMPLEMENTARY
+        assert lenient_rel == InformationRelationType.SUPPORTING
+
+    def test_custom_elaborating_strength_reflected_in_result(self):
+        """
+        GIVEN: A chronological document pair and a custom elaborating_strength of 0.5
+        WHEN: _determine_relation is called
+        THEN: The returned strength equals the custom value (0.5)
+        """
+        # GIVEN
+        doc1 = DocumentNode(
+            id="d1", content="overview.", source="s1",
+            metadata={"published_date": "2020-01-01"},
+        )
+        doc2 = DocumentNode(
+            id="d2", content="follow-up.", source="s2",
+            metadata={"published_date": "2023-01-01"},
+        )
+        reasoner = CrossDocumentReasoner(relation_elaborating_strength=0.5)
+
+        # WHEN
+        rel_type, strength = reasoner._determine_relation(
+            entity_id="e", source_doc_id="d1", target_doc_id="d2",
+            documents=[doc1, doc2], knowledge_graph=None,
+        )
+
+        # THEN
+        assert rel_type == InformationRelationType.ELABORATING
+        assert strength == pytest.approx(0.5)
+
+    def test_custom_complementary_strength_reflected_in_result(self):
+        """
+        GIVEN: Two dissimilar documents and a custom complementary_strength of 0.3
+        WHEN: _determine_relation is called
+        THEN: The returned strength equals the custom value (0.3)
+        """
+        # GIVEN
+        doc1 = DocumentNode(id="d1", content="Cats are independent animals.", source="s1")
+        doc2 = DocumentNode(id="d2", content="The economy grew by three percent.", source="s2")
+        reasoner = CrossDocumentReasoner(relation_complementary_strength=0.3)
+
+        # WHEN
+        rel_type, strength = reasoner._determine_relation(
+            entity_id="e", source_doc_id="d1", target_doc_id="d2",
+            documents=[doc1, doc2], knowledge_graph=None,
+        )
+
+        # THEN
+        assert rel_type == InformationRelationType.COMPLEMENTARY
+        assert strength == pytest.approx(0.3)

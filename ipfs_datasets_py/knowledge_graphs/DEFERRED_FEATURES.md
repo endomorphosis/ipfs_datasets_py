@@ -130,17 +130,32 @@ save_to_file(graph, "output.csv", format="csv")
 
 ### 6. CAR Format Support
 
-**Status:** 🔴 Not Implemented  
-**Location:** `migration/formats.py:171, :198`  
-**Current State:** Raises `NotImplementedError`  
-**Reason for Deferral:** Requires IPLD CAR library integration
+**Status:** 🔴 Intentionally Deferred (P3 — No Change Planned Before v3.0)
+**Location:** `migration/formats.py` — `_builtin_save_car` / `_builtin_load_car`
+**Current State:** Raises `NotImplementedError` with an informative message.
+**Reason for Deferral:** The Python IPLD CAR ecosystem has two candidates:
+  - `ipld-car` (PyPI) — only 0.0.1 available; API unstable.
+  - `py-car` / `dag-cbor` + custom streaming — requires significant integration work.
 
-**Impact:**
-- **Low** - Affects IPFS-native workflows
-- Workaround: Use IPLD backend directly
+**Decision (2026-02-19):** Keep CAR deferred. Rationale:
+1. The existing format registry (`register_format`) makes it easy to add CAR support as a plugin without modifying this file.
+2. DAG-JSON and JSON-Lines cover all current IPFS-native use cases.
+3. Re-evaluate when `ipld-car` reaches v1.0 or a stable community library emerges.
+4. Any third party can add CAR support without a core change:
+   ```python
+   from ipfs_datasets_py.knowledge_graphs.migration.formats import (
+       MigrationFormat, register_format,
+   )
+   def _save_car(graph, filepath): ...
+   def _load_car(filepath): ...
+   register_format(MigrationFormat.CAR, _save_car, _load_car)
+   ```
 
-**Timeline:** v2.2.0 (August 2026)  
-**Effort:** 10-12 hours (CAR format is complex)
+**Impact:** Low — affects only workflows that specifically need `.car` files.
+**Workaround:** Use IPLD backend directly, or use DAG-JSON then convert with an external CAR tool (e.g., `car` CLI from `go-car`).
+
+**Timeline:** Not scheduled — revisit when ipld-car ≥ 1.0 is available on PyPI.
+**Effort when ready:** 8-12 hours (streaming CAR writer/reader + tests).
 
 ---
 
