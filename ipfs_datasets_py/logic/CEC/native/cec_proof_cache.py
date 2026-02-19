@@ -348,10 +348,10 @@ class CachedTheoremProver(BaseTheoremProver):
             }
             
             # Add cache-specific stats if available
-            if self.cache and hasattr(self.cache, 'get_statistics'):
-                cache_stats = self.cache.get_statistics()
+            if self.cache and hasattr(self.cache, 'get_stats'):
+                cache_stats = self.cache.get_stats()
                 stats.update({
-                    'cache_size': cache_stats.get('size', 0),
+                    'cache_size': cache_stats.get('cache_size', 0),
                     'cache_maxsize': cache_stats.get('maxsize', 0),
                 })
             

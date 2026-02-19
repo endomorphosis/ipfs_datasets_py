@@ -444,9 +444,11 @@ class TestProofCachingValidation:
     def test_cache_hit_provides_speedup(self):
         """
         GIVEN a cached proof
-        WHEN proving the same theorem twice
+        WHEN proving the same theorem twice with CachedTheoremProver
         THEN second proof should be faster (cache hit)
         """
+        from ipfs_datasets_py.logic.CEC.native.cec_proof_cache import CachedTheoremProver
+        
         namespace = DCECNamespace()
         p = namespace.add_predicate("P", [])
         q = namespace.add_predicate("Q", [])
@@ -455,15 +457,20 @@ class TestProofCachingValidation:
         f_q = AtomicFormula(q, [])
         impl = ConnectiveFormula(LogicalConnective.IMPLIES, [f_p, f_q])
         
-        prover = TheoremProver()
+        # Use CachedTheoremProver to actually test caching behavior
+        prover = CachedTheoremProver()
         
         # First proof
         attempt1 = prover.prove_theorem(goal=f_q, axioms=[impl, f_p])
         
-        # Second proof (should use cache if available)
+        # Second proof (should use cache)
         attempt2 = prover.prove_theorem(goal=f_q, axioms=[impl, f_p])
         
         assert attempt1.result == attempt2.result
+        
+        # Verify cache was actually used
+        stats = prover.get_cache_statistics()
+        assert stats['cache_hits'] >= 1, "Expected at least one cache hit"
     
     def test_cache_invalidation_on_new_axiom(self):
         """
