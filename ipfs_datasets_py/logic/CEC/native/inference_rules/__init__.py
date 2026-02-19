@@ -42,6 +42,15 @@ from .temporal import (
     TemporalUntilElimination,
     TemporalNegation,
 )
+from .deontic import (
+    ObligationDistribution,
+    ObligationImplication,
+    PermissionFromNonObligation,
+    ObligationConjunction,
+    PermissionDistribution,
+    ObligationConsistency,
+    ProhibitionEquivalence,
+)
 
 __all__ = [
     # Base
@@ -74,4 +83,12 @@ __all__ = [
     'SinceWeakening',
     'TemporalUntilElimination',
     'TemporalNegation',
+    # Deontic
+    'ObligationDistribution',
+    'ObligationImplication',
+    'PermissionFromNonObligation',
+    'ObligationConjunction',
+    'PermissionDistribution',
+    'ObligationConsistency',
+    'ProhibitionEquivalence',
 ]
