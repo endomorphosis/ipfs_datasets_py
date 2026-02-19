@@ -103,12 +103,14 @@ These are the highest-signal improvement opportunities found during a quick pass
 ### D1. Replace placeholder relation heuristics (P1)
 - [x] **Implement real semantic similarity** in `cross_document_reasoning.py` (P1, medium risk)
   - Acceptance: similarity is computed from document text/metadata; tests cover scenarios (e.g., supporting vs elaborating vs complementary).
-- [ ] **Make relation classification deterministic and configurable** (P2, medium risk)
+- [x] **Make relation classification deterministic and configurable** (P2, medium risk)
   - Acceptance: thresholds are parameters; results are stable for identical input.
+  - Status (2026-02-19): ✅ DONE – added `relation_similarity_threshold`, `relation_supporting_strength`, `relation_elaborating_strength`, `relation_complementary_strength` constructor parameters to `CrossDocumentReasoner`; all four defaults preserved; verified with 5 new unit tests in `test_reasoning.py::TestConfigurableRelationThresholds`.
 
 ### D2. Query engine correctness hardening (P2)
-- [ ] **Add “golden query” fixtures** for Cypher parsing/compilation (P2, low risk)
+- [x] **Add “golden query” fixtures** for Cypher parsing/compilation (P2, low risk)
   - Acceptance: key query patterns compile to expected IR and execute correctly.
+  - Status (2026-02-19): ✅ DONE – created `tests/unit/knowledge_graphs/test_cypher_golden_queries.py` with 18 tests covering MATCH, WHERE, RETURN, CREATE patterns and parse-error paths; all 18 pass.
 
 ---
 
@@ -122,8 +124,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 ### E1. Migration module coverage (P0)
 - [x] **Raise migration coverage from ~40% → 70%+** (P0, low risk)
   - Acceptance: adds tests for error handling + edge cases; `pytest` passes; coverage target met.
-- [ ] **Add format-specific “roundtrip” tests** (P1, medium risk)
+- [x] **Add format-specific “roundtrip” tests** (P1, medium risk)
   - Acceptance: export → import produces equivalent graph for CSV/JSON/RDF (and GraphML/GEXF/Pajek if enabled).
+  - Status (2026-02-19): ✅ DONE – added 13 roundtrip tests to `tests/unit/knowledge_graphs/migration/test_formats.py` (7 for DAG_JSON, 6 for JSON_LINES); all 56 format tests pass. GraphML/GEXF/Pajek roundtrips already existed in `TestFormatConversions`.
 
 ### E2. Fuzz / property-based tests (P2)
 - [ ] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
@@ -234,3 +237,6 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: Continued C1/C2 in `core/query_executor.py` by preserving underlying exception details (`error`, `error_class`) in `QueryExecutionError.details` for unexpected execution failures (without changing the existing summary `error_class`); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_query_executor_error_metadata.py` (2 passed).
 - 2026-02-19: Continued C2 in `cross_document_reasoning.py` by improving fallback warning logs to include underlying exception class names (no behavior changes); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_reasoning.py` (18 passed).
 - 2026-02-19: Continued C2 in `core/graph_engine.py` by including the underlying exception class name in graph save/load failure logs (no behavior changes); verified with `./.venv/bin/python -m pytest -q tests/unit/knowledge_graphs/test_graph_engine.py` (29 passed).
+- 2026-02-19: Implemented D1 (configurable relation thresholds) in `cross_document_reasoning.py` by adding four new constructor parameters (`relation_similarity_threshold`, `relation_supporting_strength`, `relation_elaborating_strength`, `relation_complementary_strength`) to `CrossDocumentReasoner`; `_determine_relation` now uses these instead of hard-coded literals; verified with 5 new tests in `test_reasoning.py::TestConfigurableRelationThresholds` (23 passed).
+- 2026-02-19: Implemented D2 (golden query fixtures) by creating `tests/unit/knowledge_graphs/test_cypher_golden_queries.py` with 18 tests covering MATCH/WHERE/RETURN/CREATE IR patterns and parse-error behavior; all 18 pass.
+- 2026-02-19: Implemented E1 (format roundtrip tests) by adding `TestDagJsonRoundtrip` (7 tests) and `TestJsonLinesRoundtrip` (6 tests) to `tests/unit/knowledge_graphs/migration/test_formats.py`; all 56 format tests pass.

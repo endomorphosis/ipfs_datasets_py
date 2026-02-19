@@ -143,7 +143,11 @@ class CrossDocumentReasoner:
         min_connection_strength: float = 0.6,
         max_reasoning_depth: int = 3,
         enable_contradictions: bool = True,
-        entity_match_threshold: float = 0.85
+        entity_match_threshold: float = 0.85,
+        relation_similarity_threshold: float = 0.8,
+        relation_supporting_strength: float = 0.85,
+        relation_elaborating_strength: float = 0.75,
+        relation_complementary_strength: float = 0.7,
     ):
         """
         Initialize the cross-document reasoner.
@@ -156,6 +160,14 @@ class CrossDocumentReasoner:
             max_reasoning_depth: Maximum depth for reasoning processes
             enable_contradictions: Whether to look for contradicting information
             entity_match_threshold: Threshold for matching entities across documents
+            relation_similarity_threshold: Similarity score above which two documents
+                are classified as SUPPORTING each other (default 0.8).
+            relation_supporting_strength: Connection strength assigned to SUPPORTING
+                relations (default 0.85).
+            relation_elaborating_strength: Connection strength assigned to ELABORATING
+                relations (chronological order; default 0.75).
+            relation_complementary_strength: Connection strength assigned to
+                COMPLEMENTARY relations (default fallback; default 0.7).
         """
         if query_optimizer is not None:
             self.query_optimizer = query_optimizer
@@ -170,6 +182,10 @@ class CrossDocumentReasoner:
         self.max_reasoning_depth = max_reasoning_depth
         self.enable_contradictions = enable_contradictions
         self.entity_match_threshold = entity_match_threshold
+        self.relation_similarity_threshold = relation_similarity_threshold
+        self.relation_supporting_strength = relation_supporting_strength
+        self.relation_elaborating_strength = relation_elaborating_strength
+        self.relation_complementary_strength = relation_complementary_strength
 
         # Statistics
         self.total_queries = 0
@@ -708,15 +724,15 @@ class CrossDocumentReasoner:
         if chronological:
             # Later document might elaborate on or contradict earlier one
             relation_type = InformationRelationType.ELABORATING
-            strength = 0.75
-        elif doc_similarity > 0.8:
+            strength = self.relation_elaborating_strength
+        elif doc_similarity > self.relation_similarity_threshold:
             # Very similar documents likely supporting each other
             relation_type = InformationRelationType.SUPPORTING
-            strength = 0.85
+            strength = self.relation_supporting_strength
         else:
             # Default to complementary for different documents
             relation_type = InformationRelationType.COMPLEMENTARY
-            strength = 0.7
+            strength = self.relation_complementary_strength
 
         return relation_type, strength
 
