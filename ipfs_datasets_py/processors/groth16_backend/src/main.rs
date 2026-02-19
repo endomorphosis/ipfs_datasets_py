@@ -57,6 +57,14 @@ enum Commands {
         /// Circuit version
         #[arg(short, long)]
         version: u32,
+
+        /// Seed for deterministic setup (optional)
+        #[arg(long)]
+        seed: Option<u64>,
+
+        /// Suppress status messages (stderr)
+        #[arg(long, default_value_t = false)]
+        quiet: bool,
     },
 }
 
@@ -205,10 +213,12 @@ fn main() {
             }
         }
 
-        Commands::Setup { version } => {
+        Commands::Setup { version, seed, quiet } => {
             let run = || -> anyhow::Result<()> {
-                eprintln!("Setting up trusted parameters for v{}...", version);
-                let manifest_json = groth16_backend::setup(version)?;
+                if !quiet {
+                    eprintln!("Setting up trusted parameters for v{}...", version);
+                }
+                let manifest_json = groth16_backend::setup(version, seed)?;
                 // Keep stdout JSON-only.
                 print!("{}", manifest_json);
                 Ok(())
@@ -220,7 +230,9 @@ fn main() {
                     let code = error_code(&err);
                     let message = format!("{:#}", err);
                     emit_error_json_to_stdout(code, &message);
-                    eprintln!("ERROR[{code}]: {message}");
+                    if !quiet {
+                        eprintln!("ERROR[{code}]: {message}");
+                    }
                     2
                 }
             }

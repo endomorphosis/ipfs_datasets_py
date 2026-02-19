@@ -207,11 +207,11 @@
 - [x] Policy: fail-closed by default; enable via `IPFS_DATASETS_ENABLE_GROTH16=1`
 - [x] Rationale document in GROTH16_IMPLEMENTATION_PLAN.md section 8
 
-### P5.2 ⏳ Implement trusted setup ceremony (circuit-specific)
-- [ ] For MVP circuit v1:
-  - Run setup → PK + VK
-  - Store PK in IPFS, VK hash on-chain
-- [ ] Reproducibility test
+### P5.2 ✅ Implement trusted setup ceremony (circuit-specific)
+- [x] For MVP circuit v1: run setup → PK + VK (Rust CLI: `groth16 setup --version <n>`)
+- [x] Emit JSON manifest including `vk_hash_hex` (SHA256 of canonical VK bytes)
+- [x] Reproducibility test: seeded setup produces stable `vk_hash_hex`
+- [ ] Artifact storage + registry: store PK in IPFS and register `vk_hash_hex` on-chain (see P6)
 
 ### P5.3 ✅ Implement proof generation (real Groth16; opt-in)
 - [x] `Groth16Backend.generate_proof()` implemented (gated) in `logic/zkp/backends/groth16.py` delegating to Rust FFI in `logic/zkp/backends/groth16_ffi.py`
