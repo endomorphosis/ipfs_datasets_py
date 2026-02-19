@@ -12,6 +12,61 @@ import hashlib
 import json
 
 
+_U64_MAX = (1 << 64) - 1
+
+
+def parse_circuit_ref(circuit_ref: str) -> tuple[str, int]:
+    """Parse a circuit reference string.
+
+    Version policy: `circuit_id@v<uint64>`.
+
+    Returns:
+        (circuit_id, version)
+    """
+    if not isinstance(circuit_ref, str):
+        raise TypeError("circuit_ref must be a str")
+
+    if circuit_ref == "":
+        raise ValueError("circuit_ref cannot be empty")
+
+    circuit_id, sep, version_part = circuit_ref.partition("@v")
+    if sep != "@v":
+        raise ValueError("circuit_ref must be of the form circuit_id@v<uint64>")
+
+    if circuit_id == "":
+        raise ValueError("circuit_id cannot be empty")
+    if "@" in circuit_id:
+        raise ValueError("circuit_id must not contain '@'")
+
+    if version_part == "":
+        raise ValueError("circuit_ref version is missing")
+    if not version_part.isdecimal():
+        raise ValueError("circuit_ref version must be an unsigned base-10 integer")
+
+    version = int(version_part)
+    if version < 0 or version > _U64_MAX:
+        raise ValueError("circuit_ref version must be in uint64 range")
+
+    return circuit_id, version
+
+
+def format_circuit_ref(circuit_id: str, version: int) -> str:
+    """Format a circuit reference string using the version policy."""
+    if not isinstance(circuit_id, str):
+        raise TypeError("circuit_id must be a str")
+    if circuit_id == "":
+        raise ValueError("circuit_id cannot be empty")
+    if "@" in circuit_id:
+        raise ValueError("circuit_id must not contain '@'")
+
+    if not isinstance(version, int) or isinstance(version, bool):
+        raise TypeError("version must be an int")
+    if version < 0 or version > _U64_MAX:
+        raise ValueError("version must be in uint64 range")
+
+    return f"{circuit_id}@v{version}"
+
+
 @dataclass
 class Statement:
     """
@@ -142,6 +197,7 @@ class ProofStatement:
         return {
             'statement': self.statement.to_dict(),
             'circuit_id': self.circuit_id,
+            'circuit_ref': format_circuit_ref(self.circuit_id, int(self.statement.circuit_version)),
             'proof_type': self.proof_type,
             'witness_count': self.witness_count,
         }

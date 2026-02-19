@@ -1,11 +1,11 @@
 # logic/zkp — Comprehensive Improvement & Refactoring Master TODO
 
-**Last Updated:** 2026-02-19 (Phase 1–2 Complete)  
+**Last Updated:** 2026-02-18 (Phase 1–2 Complete)  
 **Purpose:** Single source of truth for all ZKP module improvements, from immediate safety/correctness fixes through production Groth16 integration.
 
 ---
 
-## Current State Snapshot (Post-Phase 1)
+## Current State Snapshot (Post-Phase 2)
 
 - **Simulation backend:** fully functional, demo-only, warn-on-use ✅
 - **Backend architecture:** phase A complete (registry + lazy loading + groth16 stub) ✅
@@ -142,9 +142,9 @@
   - `normalize_text(text: str) -> str`: Unicode NFD + whitespace normalization
   - `canonicalize_theorem(text: str) -> str`: normalized theorem
   - `canonicalize_axioms(axioms: List[str]) -> List[str]`: sorted + deduplicated
-  - `hash_theorem(text: str) -> bytes`: SHA256 of theory
+  - `hash_theorem(text: str) -> bytes`: SHA256 of theorem
   - `hash_axioms_commitment(axioms: List[str]) -> bytes`: SHA256 of sorted axioms (order-independent)
-- [x] Tests (24 total):
+- [x] Tests:
   - reordering axioms → same commitment ✅
   - whitespace variations → same commitment ✅
   - Unicode normalization → stable ✅
@@ -184,7 +184,7 @@
   - `WitnessManager.generate_witness(axioms, theorem, ...)`: generates witness
   - Returns: `Witness` with canonicalized axioms + commitment
   - Witness validated against expected values
-- [x] Tests (22 total):
+- [x] Tests:
   - witness generation (basic, deduplication, sorting) ✅
   - witness validation (structure, axiom count, commitment consistency) ✅
   - proof statement creation (includes theorem hash + axioms commitment) ✅
@@ -308,14 +308,20 @@
 
 ## P10 — Dependency Management & Versioning
 
-### P10.1 ⏳ Pin Groth16 stack versions
-- [x] `pip install ipfs_datasets_py[groth16]`
+### P10.1 ⏳ Optional deps for Groth16 (Python + Rust)
+- [ ] Add a `groth16` extra in `setup.py` for Groth16 FFI glue dependencies (e.g., `jsonschema`).
+- [ ] Document install paths:
+  - Editable/dev: `pip install -e ".[groth16]"`
+  - Released package: `pip install ipfs_datasets_py[groth16]` (once published)
+- [ ] Keep runtime gating fail-closed by default; require `IPFS_DATASETS_ENABLE_GROTH16=1`.
 
 ### P10.1b ⏳ Dev/test dependencies
-- [x] Add a dev/test extra (or a documented install step) for property tests: `ipfs_datasets_py[test]` includes `hypothesis`.
+- [ ] Add/verify a documented install path for property tests (Hypothesis):
+  - Either include `hypothesis` in the `test` extra in `setup.py`,
+  - Or explicitly document `pip install -r requirements.txt` for test/dev environments.
 
 ### P10.2 ⏳ Version policy for circuits
-- [ ] Versioning: `circuit_id@v<uint64>`
+- [x] Versioning: `circuit_id@v<uint64>`
 - [ ] Backward compat: old versions stay verifiable
 
 ---
@@ -347,7 +353,7 @@
 - [x] P4.3 Finalization: full circuit constraint verification
 - [x] P8.2 Property-based tests (axiom ordering, proof sizes)
 - [x] P8.4 Golden vectors (fixed regression test cases)
-- [ ] P9.1 README updates (setup guide, examples)
+- [x] P9.1 README updates (setup guide, examples)
 
 **Phase 3 (Real ZKP, weeks 4–10):**
 - [ ] P5 (Groth16 stack selection + implementation)
@@ -366,7 +372,7 @@
 - **Phase 1 ↔ Phase 2:** None; independent
 - **Phase 2 → Phase 3:** MVP circuit finalized before real Groth16
 - **Phase 3 → Phase 4:** Working Groth16 before on-chain
-- **Phase 4 → Phase 5:** Circuit design before legal semantics
+- **Production → Legal semantics:** Circuit design before legal semantics
 
 ---
 
@@ -392,7 +398,7 @@
      - Groth16 proof metadata carries `security_level` (unblocks verifier security gate)
      - Groth16 binary discovery updated to prefer `ipfs_datasets_py/processors/groth16_backend/`
      - Added gated Groth16 end-to-end test (env+binary presence)
-   - Test result (ZKP unit suite): `202 passed, 3 skipped`
+   - Test verification: run `python -m pytest -q tests/unit_tests/logic/zkp`
 
 ---
 
