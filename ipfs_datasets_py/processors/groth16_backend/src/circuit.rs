@@ -51,10 +51,30 @@ impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
         let _private_axioms = self.private_axioms.ok_or(SynthesisError::AssignmentMissing)?;
         let _theorem = self.theorem.ok_or(SynthesisError::AssignmentMissing)?;
 
-        let axioms_commitment_bytes = self.axioms_commitment.ok_or(SynthesisError::AssignmentMissing)?;
+        let axioms_commitment_bytes = self
+            .axioms_commitment
+            .ok_or(SynthesisError::AssignmentMissing)?;
         let theorem_hash_bytes = self.theorem_hash.ok_or(SynthesisError::AssignmentMissing)?;
         let circuit_version = self.circuit_version.ok_or(SynthesisError::AssignmentMissing)?;
         let ruleset_id = self.ruleset_id.ok_or(SynthesisError::AssignmentMissing)?;
+
+        // Fail fast on invalid assignments rather than relying on unsatisfied
+        // constraints later. Unit tests expect `generate_constraints` to error.
+        if axioms_commitment_bytes.len() != 32 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if theorem_hash_bytes.len() != 32 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if axioms_commitment_bytes.iter().all(|b| *b == 0) {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if theorem_hash_bytes.iter().all(|b| *b == 0) {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if ruleset_id.is_empty() {
+            return Err(SynthesisError::AssignmentMissing);
+        }
 
         if circuit_version > 255 {
             return Err(SynthesisError::AssignmentMissing);
