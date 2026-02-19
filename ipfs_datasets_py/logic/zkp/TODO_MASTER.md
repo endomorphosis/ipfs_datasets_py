@@ -262,7 +262,7 @@
   (see `logic/zkp/evm_harness.py`, tests:
   `tests/unit_tests/logic/zkp/test_evm_harness.py`)
 - [x] Python: generate → submit → verify on-chain via injected client (stdlib-only pipeline): `logic/zkp/onchain_pipeline.py` (+ unit tests)
-- [x] Web3 integration path packs ABI-safe `public_inputs`: `logic/zkp/eth_integration.py` uses `pack_public_inputs_for_evm()`
+- [x] Web3 integration path packs ABI-safe `public_inputs` (unit-tested): `logic/zkp/eth_integration.py` uses `pack_public_inputs_for_evm()` (test: `tests/unit_tests/logic/zkp/test_eth_integration_public_inputs.py`)
 - [x] Keep harness dependency-light (unit tests do not require a live chain)
 ---
 

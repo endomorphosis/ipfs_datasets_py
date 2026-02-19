@@ -11,6 +11,8 @@ Architecture:
   - TransactionMonitor: Track confirmation and finality
 """
 
+from __future__ import annotations
+
 import json
 import time
 import logging
@@ -27,11 +29,9 @@ try:
     from web3.contract import Contract
     from web3.exceptions import BlockNotFound
     from web3.types import Address, TxHash, BlockIdentifier
-except ModuleNotFoundError as e:  # pragma: no cover
-    raise ImportError(
-        "Optional dependency 'web3' is required for ipfs_datasets_py.logic.zkp.eth_integration. "
-        "Install it (e.g. `pip install web3`) to use EthereumProofClient."
-    ) from e
+except ModuleNotFoundError:  # pragma: no cover
+    Web3 = None  # type: ignore[assignment]
+    BlockNotFound = Exception  # type: ignore[assignment]
 
 
 logger = logging.getLogger(__name__)
@@ -91,6 +91,11 @@ class EthereumProofClient:
     
     def __init__(self, config: EthereumConfig):
         """Initialize Ethereum client."""
+        if Web3 is None:  # pragma: no cover
+            raise ImportError(
+                "Optional dependency 'web3' is required for EthereumProofClient. "
+                "Install it (e.g. `pip install web3`) to use on-chain verification features."
+            )
         self.config = config
         self.w3 = Web3(Web3.HTTPProvider(config.rpc_url))
         
