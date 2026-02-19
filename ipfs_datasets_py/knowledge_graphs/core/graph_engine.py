@@ -364,7 +364,7 @@ class GraphEngine:
             )
             return cid
         except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
-            logger.error("Failed to save graph: %s", e)
+            logger.error("Failed to save graph (%s): %s", type(e).__name__, e)
             return None
 
     def load_graph(self, root_cid: str) -> bool:
@@ -406,7 +406,12 @@ class GraphEngine:
             )
             return True
         except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
-            logger.error("Failed to load graph from %s: %s", root_cid, e)
+            logger.error(
+                "Failed to load graph from %s (%s): %s",
+                root_cid,
+                type(e).__name__,
+                e,
+            )
             return False
 
     def get_relationships(
