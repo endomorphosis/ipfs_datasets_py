@@ -222,9 +222,9 @@
 - [ ] `Groth16Backend.verify_proof()`: full Groth16 verifier
 - [ ] Load VK, verify proof deterministically
 
-### P5.5 ⏳ Circuit versioning + registration
-- [ ] Registry: (circuit_id, version) → VK hash
-- [ ] Support multiple versions concurrently
+### P5.5 ✅ Circuit versioning + registration (off-chain)
+- [x] Registry: (circuit_id, version) → VK hash (see `logic/zkp/vk_registry.py`)
+- [x] Support multiple versions concurrently (unit-tested)
 
 ---
 
