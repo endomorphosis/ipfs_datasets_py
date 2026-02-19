@@ -312,7 +312,7 @@
 - [ ] `pip install ipfs_datasets_py[groth16]`
 
 ### P10.1b ⏳ Dev/test dependencies
-- [ ] Add a dev/test extra (or a documented install step) for property tests: `ipfs_datasets_py[test]` includes `hypothesis`.
+- [x] Add a dev/test extra (or a documented install step) for property tests: `ipfs_datasets_py[test]` includes `hypothesis`.
 
 ### P10.2 ⏳ Version policy for circuits
 - [ ] Versioning: `circuit_id@v<uint64>`

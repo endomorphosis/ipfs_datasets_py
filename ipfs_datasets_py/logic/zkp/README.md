@@ -35,6 +35,9 @@
 Run from `complaint-generator/ipfs_datasets_py`:
 
 ```bash
+# Property-based tests require hypothesis
+python -m pip install -U hypothesis
+
 python -m pytest -q tests/unit_tests/logic/zkp
 ```
 
