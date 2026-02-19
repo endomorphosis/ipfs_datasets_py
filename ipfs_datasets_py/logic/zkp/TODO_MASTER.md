@@ -328,14 +328,14 @@
 
 ## P11 — Operational Best Practices
 
-### P11.1 ⏳ Trusted setup ceremony notes
-- [x] Documentation, checksums, multi-party option
+### P11.1 ✅ Trusted setup ceremony notes
+- [x] Documentation, checksums, multi-party option (see `logic/zkp/SETUP_GUIDE.md`)
 
-### P11.2 ⏳ Artifact lifecycle
-- [ ] IPFS + pinning + HTTPS backup
+### P11.2 ✅ Artifact lifecycle
+- [x] IPFS + pinning + HTTPS backup (documented in `logic/zkp/SETUP_GUIDE.md`)
 
-### P11.3 ⏳ Monitoring & metrics
-- [ ] Prove time, verify latency, failure alerts
+### P11.3 ✅ Monitoring & metrics
+- [x] Prove time, verify latency, failure alerts (documented in `logic/zkp/SETUP_GUIDE.md`)
 
 ---
 

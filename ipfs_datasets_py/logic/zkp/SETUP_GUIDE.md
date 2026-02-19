@@ -80,13 +80,70 @@ When Groth16 setup/parameter generation is implemented, treat it as a security-c
 - **Key hygiene:** treat PK material as sensitive operational data; restrict access and log usage.
 - **Versioning:** bind ceremony outputs to `circuit_id@v<uint64>` so older VKs remain discoverable and verifiable.
 
-## 4. Artifact Storage (Not Yet Implemented)
+## 4. Artifact Lifecycle (Operational Policy)
 
-A production system should define:
+The repo does not yet automate PK/VK generation, publication, and rotation, but production deployments still need an artifact lifecycle.
 
-- Integrity checks (hashes/checksums)
-- Storage and pinning policy (e.g., IPFS + pinning + backups)
-- Access controls for PK material
+Minimum policy (what to decide and document):
+
+- Artifact inventory per `circuit_id@v<uint64>` (PK, VK, circuit description, verifier artifacts)
+- Integrity verification (hashes + an optional signing workflow)
+- Storage and pinning (IPFS CIDs + pinned replicas)
+- HTTPS backup (S3/MinIO or similar) as a second durable copy
+- Access controls and audit trail for PK material
+- Retention and deprecation rules (keep old versions verifiable)
+
+### 4.1 Recommended artifact layout
+
+Keep a per-version directory keyed by `circuit_id@v<uint64>`:
+
+- `manifest.json` (authoritative metadata)
+- `manifest.sha256` (hash of `manifest.json`)
+- `manifest.sig` (optional: signature over `manifest.sha256`)
+- `vk.json` (or backend-specific VK format)
+- `pk.bin` / `pk.json` (backend-specific; treat as sensitive)
+- `circuit.json` / `r1cs.bin` (backend-specific circuit representation)
+
+At minimum, `manifest.json` should include:
+
+- `circuit_ref` (e.g., `mvp@v1`)
+- `backend` / `proof_system` (e.g., `groth16`)
+- SHA-256 checksums for each artifact file
+- IPFS CID(s) (if published) for each artifact file
+- creation timestamp and operator identity (or a reference to the ceremony transcript)
+
+### 4.2 IPFS publication + pinning
+
+If artifacts are published to IPFS:
+
+- Add each artifact (or a directory wrapper) to IPFS and record the CID(s).
+- Pin the CID(s) in at least two independent places (e.g., IPFS Cluster + a pinning service).
+- Treat pinning as part of “release”: if it isn’t pinned, it isn’t reliably available.
+
+Operational notes:
+
+- Prefer CIDv1 where possible.
+- Record CID(s) in the manifest (and sign the manifest if you have a signing workflow).
+- Never overwrite content at an existing CID; publish new CIDs for new versions.
+
+### 4.3 HTTPS/S3 backup (second durable copy)
+
+Keep a second copy outside IPFS:
+
+- Store `manifest.json` + all artifacts in an object store (S3/MinIO) or HTTPS-served blob storage.
+- Enable immutability / versioning on the bucket if available.
+
+Acceptance check:
+
+- You can reconstruct the full artifact set for a given `circuit_ref` from either IPFS (via CIDs + pins) or HTTPS/S3 (via stored files), and in both cases verify checksums match the manifest.
+
+### 4.4 Access controls (PK material)
+
+- Treat proving keys (PK) as sensitive operational data.
+- Restrict PK read access (least privilege) and log access.
+- Encrypt PK at rest if stored outside a protected host/environment.
+
+Verification keys (VK) are typically safe to distribute publicly.
 
 ## 5. On-Chain Registration (Not Yet Implemented)
 
@@ -96,3 +153,40 @@ If verifying on-chain, you will need:
 - A registry/policy contract to manage circuit versions and VK hashes
 
 This is tracked in the backlog under Phase P6.
+## 6. Monitoring & Metrics (Operational)
+
+The Python prover/verifier already track basic counters and timing:
+
+- Prover: `ZKPProver.get_stats()`
+  - `proofs_generated`, `total_proving_time`, `avg_proving_time`
+  - `cache_hits`, `cache_hit_rate`
+- Verifier: `ZKPVerifier.get_stats()`
+  - `proofs_verified`, `proofs_rejected`, `total_verification_time`, `avg_verification_time`
+  - `acceptance_rate`
+
+### 6.1 What to alert on
+
+- Rejection spikes: sudden increases in `proofs_rejected` or a sustained drop in `acceptance_rate`.
+- Latency regressions: `avg_proving_time` or `avg_verification_time` rising above your SLO.
+- Backend errors: the verifier logs a warning on backend verification exceptions (fail-closed).
+
+### 6.2 Minimal instrumentation pattern
+
+In a service loop, periodically emit these stats to logs or your metrics system:
+
+```python
+prover_stats = prover.get_stats()
+verifier_stats = verifier.get_stats()
+
+logger.info(
+    "zkp_metrics",
+    extra={
+        "zkp_prover": prover_stats,
+        "zkp_verifier": verifier_stats,
+        "backend": {"prover": prover.backend, "verifier": verifier.backend},
+    },
+)
+```
+
+Keep metrics backend-agnostic: the same counters should remain meaningful for both simulated and real Groth16 backends.
+
