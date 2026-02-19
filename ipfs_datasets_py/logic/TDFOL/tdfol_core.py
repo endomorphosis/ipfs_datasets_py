@@ -468,6 +468,102 @@ class TDFOLKnowledgeBase:
 
 
 # ============================================================================
+# Expansion Rules for Tableaux/Proof Search
+# ============================================================================
+
+
+@dataclass(frozen=True)
+class ExpansionContext:
+    """
+    Context for formula expansion in tableaux-based proof search.
+    
+    This provides information needed to expand formulas in a specific
+    proof context (e.g., which world we're in, what assumptions hold).
+    """
+    formula: Formula
+    negated: bool = False
+    world_id: int = 0
+    assumptions: List[Formula] = field(default_factory=list)
+    options: Dict[str, Any] = field(default_factory=dict)
+
+
+class ExpansionResult:
+    """
+    Result of expanding a formula in tableaux-based proof search.
+    
+    An expansion may produce:
+    - Linear expansion: single branch with multiple formulas added
+    - Branching expansion: multiple branches (for OR, negated AND, etc.)
+    """
+    
+    def __init__(self, branches: Optional[List[List[Tuple[Formula, bool]]]] = None):
+        """
+        Initialize expansion result.
+        
+        Args:
+            branches: List of branches, where each branch is a list of (formula, negated) pairs
+                     If None or single branch, this is a linear expansion
+        """
+        self.branches = branches if branches is not None else []
+        self.is_branching = len(self.branches) > 1
+    
+    @classmethod
+    def linear(cls, *formulas_with_polarity: Tuple[Formula, bool]) -> 'ExpansionResult':
+        """Create a linear expansion (no branching)."""
+        return cls([list(formulas_with_polarity)])
+    
+    @classmethod
+    def branching(cls, *branches: List[Tuple[Formula, bool]]) -> 'ExpansionResult':
+        """Create a branching expansion."""
+        return cls(list(branches))
+
+
+class ExpansionRule(ABC):
+    """
+    Abstract base class for formula expansion rules in tableaux-based proof search.
+    
+    Expansion rules define how to decompose complex formulas into simpler subformulas
+    during proof search. This is the foundation for both:
+    - Modal tableaux (ModalTableauxStrategy)
+    - Inference rule application (TDFOLInferenceRules)
+    
+    Example:
+        # AND expansion: φ ∧ ψ expands to φ, ψ (linear)
+        # OR expansion: φ ∨ ψ expands to [φ] | [ψ] (branching)
+    """
+    
+    @abstractmethod
+    def can_expand(self, formula: Formula, negated: bool = False) -> bool:
+        """
+        Check if this rule can expand the given formula.
+        
+        Args:
+            formula: The formula to potentially expand
+            negated: Whether the formula is negated in the current context
+        
+        Returns:
+            True if this rule applies to the formula
+        """
+        pass
+    
+    @abstractmethod
+    def expand(self, context: ExpansionContext) -> ExpansionResult:
+        """
+        Expand the formula according to this rule.
+        
+        Args:
+            context: Expansion context with formula and other information
+        
+        Returns:
+            ExpansionResult with branches (may be linear or branching)
+        """
+        pass
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}"
+
+
+# ============================================================================
 # Utility Functions
 # ============================================================================
 

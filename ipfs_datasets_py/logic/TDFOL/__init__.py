@@ -46,6 +46,11 @@ from .tdfol_core import (
     # Knowledge Base
     TDFOLKnowledgeBase,
     
+    # Expansion Rules (Phase 1 refactoring)
+    ExpansionContext,
+    ExpansionResult,
+    ExpansionRule,
+    
     # Utility Functions
     create_always,
     create_conjunction,
@@ -149,6 +154,11 @@ __all__ = [
     
     # Knowledge Base
     "TDFOLKnowledgeBase",
+    
+    # Expansion Rules (Phase 1 refactoring)
+    "ExpansionContext",
+    "ExpansionResult",
+    "ExpansionRule",
     
     # Parser
     "TDFOLLexer",
