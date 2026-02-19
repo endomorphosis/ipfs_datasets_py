@@ -24,6 +24,37 @@ from ..canonicalization import axioms_commitment_hex, normalize_text, theorem_ha
 class SimulatedBackend:
     backend_id: str = "simulated"
 
+
+    def _simulated_proof_layout_metadata(self) -> dict[str, Any]:
+        magic = b"SIMZKP\x00\x01"
+        return {
+            "format": "SIMZKP/1",
+            "byte_length": 160,
+            "magic_hex": magic.hex(),
+            "segments": [
+                {"tag": "magic", "offset": 0, "length": 8},
+                {
+                    "tag": "proof_hash",
+                    "offset": 8,
+                    "length": 32,
+                    "description": "SHA256(circuit_hash || witness || normalize_text(theorem))",
+                },
+                {
+                    "tag": "circuit_hash",
+                    "offset": 40,
+                    "length": 32,
+                    "description": "SHA256(circuit metadata derived from theorem + axioms)",
+                },
+                {
+                    "tag": "witness",
+                    "offset": 72,
+                    "length": 32,
+                    "description": "SHA256(canonicalized axioms JSON)",
+                },
+                {"tag": "padding", "offset": 104, "length": 56, "description": "random bytes"},
+            ],
+        }
+
     def generate_proof(self, theorem: str, private_axioms: list[str], metadata: dict) -> ZKPProof:
         if not theorem:
             raise ZKPError("Theorem cannot be empty")
@@ -37,6 +68,10 @@ class SimulatedBackend:
         circuit_version = int((metadata or {}).get("circuit_version", 1))
         ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
 
+
+        output_metadata = {**(metadata or {})}
+        output_metadata.setdefault("simulated_proof_layout", self._simulated_proof_layout_metadata())
+
         return ZKPProof(
             proof_data=proof_data,
             public_inputs={
@@ -47,7 +82,7 @@ class SimulatedBackend:
                 "ruleset_id": ruleset_id,
             },
             metadata={
-                **(metadata or {}),
+                **output_metadata,
                 "proof_system": "Groth16 (simulated)",
                 "num_axioms": len(private_axioms),
             },

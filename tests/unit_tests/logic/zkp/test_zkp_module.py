@@ -66,6 +66,35 @@ class TestZKPProver:
         assert isinstance(proof.proof_data, (bytes, bytearray))
         assert len(proof.proof_data) == 160
         assert proof.proof_data[:8] == b"SIMZKP\x00\x01"
+
+
+    def test_simulated_proof_metadata_includes_layout_tags(self):
+        prover = ZKPProver(backend="simulated")
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+        )
+
+        layout = proof.metadata.get("simulated_proof_layout")
+        assert isinstance(layout, dict)
+        assert layout.get("format") == "SIMZKP/1"
+        assert layout.get("byte_length") == 160
+        assert layout.get("magic_hex") == proof.proof_data[:8].hex()
+
+        segments = layout.get("segments")
+        assert isinstance(segments, list)
+        tags = {seg.get("tag"): seg for seg in segments if isinstance(seg, dict)}
+
+        assert tags["magic"]["offset"] == 0
+        assert tags["magic"]["length"] == 8
+        assert tags["proof_hash"]["offset"] == 8
+        assert tags["proof_hash"]["length"] == 32
+        assert tags["circuit_hash"]["offset"] == 40
+        assert tags["circuit_hash"]["length"] == 32
+        assert tags["witness"]["offset"] == 72
+        assert tags["witness"]["length"] == 32
+        assert tags["padding"]["offset"] == 104
+        assert tags["padding"]["length"] == 56
     
     def test_proof_privacy(self):
         """
