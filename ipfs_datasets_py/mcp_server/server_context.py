@@ -165,7 +165,7 @@ class ServerContext:
                 self._cleanup()
                 raise ServerStartupError(f"Server initialization failed: {e}")
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[Exception], exc_tb: Optional[Any]) -> None:
         """
         Exit context and clean up resources.
         
@@ -192,21 +192,21 @@ class ServerContext:
             finally:
                 self._entered = False
     
-    def _initialize_metadata_registry(self):
+    def _initialize_metadata_registry(self) -> None:
         """Initialize tool metadata registry."""
         from ipfs_datasets_py.mcp_server.tool_metadata import ToolMetadataRegistry
         
         self._metadata_registry = ToolMetadataRegistry()
         logger.debug("Tool metadata registry initialized")
     
-    def _initialize_tool_manager(self):
+    def _initialize_tool_manager(self) -> None:
         """Initialize hierarchical tool manager."""
         from ipfs_datasets_py.mcp_server.hierarchical_tool_manager import HierarchicalToolManager
         
         self._tool_manager = HierarchicalToolManager()
         logger.debug("Hierarchical tool manager initialized")
     
-    def _initialize_p2p_services(self):
+    def _initialize_p2p_services(self) -> None:
         """Initialize P2P services."""
         try:
             # Import P2P service manager if available
@@ -217,7 +217,7 @@ class ServerContext:
             logger.warning(f"P2P services not available: {e}")
             self._p2p_services = None
     
-    def _initialize_workflow_scheduler(self):
+    def _initialize_workflow_scheduler(self) -> None:
         """Initialize workflow scheduler."""
         try:
             # Initialize scheduler if needed
@@ -227,7 +227,7 @@ class ServerContext:
             logger.warning(f"Failed to initialize workflow scheduler: {e}")
             self._workflow_scheduler = None
     
-    def _cleanup(self):
+    def _cleanup(self) -> None:
         """Clean up all managed resources."""
         # Run custom cleanup handlers
         for handler in self._cleanup_handlers:
@@ -687,7 +687,7 @@ class ServerContext:
 
 
 @contextmanager
-def create_server_context(config: Optional[ServerConfig] = None):
+def create_server_context(config: Optional[ServerConfig] = None) -> ServerContext:
     """
     Context manager for creating and managing a server context.
     
@@ -714,7 +714,7 @@ def create_server_context(config: Optional[ServerConfig] = None):
 _thread_local_context = threading.local()
 
 
-def set_current_context(context: Optional[ServerContext]):
+def set_current_context(context: Optional[ServerContext]) -> None:
     """Set the current server context in thread-local storage for implicit access.
     
     This function stores a ServerContext instance in thread-local storage, enabling

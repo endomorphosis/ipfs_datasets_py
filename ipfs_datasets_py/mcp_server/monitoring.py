@@ -113,7 +113,7 @@ class EnhancedMetricsCollector:
         # Don't start monitoring automatically during import
         # It will be started when needed via start_monitoring() method
     
-    def _start_monitoring(self):
+    def _start_monitoring(self) -> None:
         """Start background monitoring tasks."""
         if self._monitoring_started:
             return
@@ -130,12 +130,12 @@ class EnhancedMetricsCollector:
         spawn_system_task(self._cleanup_loop)
         self._monitoring_started = True
     
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """Public method to start monitoring when an event loop is available."""
         if self.enabled:
             self._start_monitoring()
     
-    async def _monitoring_loop(self):
+    async def _monitoring_loop(self) -> None:
         """Main monitoring loop that collects system metrics."""
         while True:
             try:
@@ -156,7 +156,7 @@ class EnhancedMetricsCollector:
                 logger.error(f"Unexpected error in monitoring loop: {e}", exc_info=True)
                 await anyio.sleep(60)
     
-    async def _cleanup_loop(self):
+    async def _cleanup_loop(self) -> None:
         """Clean up old metrics data."""
         while True:
             try:
@@ -174,7 +174,7 @@ class EnhancedMetricsCollector:
                 logger.error(f"Error in cleanup loop: {e}", exc_info=True)
                 await anyio.sleep(3600)
     
-    async def _collect_system_metrics(self):
+    async def _collect_system_metrics(self) -> None:
         """Collect system performance metrics."""
         try:
             # CPU and memory
@@ -238,7 +238,7 @@ class EnhancedMetricsCollector:
             logger.error(f"Unexpected error collecting system metrics: {e}", exc_info=True)
             raise MetricsCollectionError(f"Failed to collect system metrics: {e}")
     
-    def increment_counter(self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None):
+    def increment_counter(self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None) -> None:
         """Increment a counter metric."""
         if not self.enabled:
             return
@@ -250,7 +250,7 @@ class EnhancedMetricsCollector:
                 labeled_name = f"{name}_{self._serialize_labels(labels)}"
                 self.counters[labeled_name] += value
     
-    def set_gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None):
+    def set_gauge(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         """Set a gauge metric value."""
         if not self.enabled:
             return
@@ -262,7 +262,7 @@ class EnhancedMetricsCollector:
                 labeled_name = f"{name}_{self._serialize_labels(labels)}"
                 self.gauges[labeled_name] = value
     
-    def observe_histogram(self, name: str, value: float, labels: Optional[Dict[str, str]] = None):
+    def observe_histogram(self, name: str, value: float, labels: Optional[Dict[str, str]] = None) -> None:
         """Add an observation to a histogram."""
         if not self.enabled:
             return
@@ -316,7 +316,7 @@ class EnhancedMetricsCollector:
             self.observe_histogram('request_duration_ms', duration_ms, {'endpoint': endpoint})
             self.increment_counter('requests_total', labels={'endpoint': endpoint})
     
-    def track_tool_execution(self, tool_name: str, execution_time_ms: float, success: bool):
+    def track_tool_execution(self, tool_name: str, execution_time_ms: float, success: bool) -> None:
         """Track execution metrics for MCP tools with comprehensive performance monitoring.
         
         This method records detailed execution statistics for each tool invocation, including
@@ -391,7 +391,7 @@ class EnhancedMetricsCollector:
         self.increment_counter('tool_calls_total', labels={'tool': tool_name, 'status': 'success' if success else 'error'})
         self.observe_histogram('tool_execution_time_ms', execution_time_ms, {'tool': tool_name})
     
-    def register_health_check(self, name: str, check_func: Callable):
+    def register_health_check(self, name: str, check_func: Callable) -> None:
         """Register a health check function for automated system health monitoring.
         
         This method registers a custom health check callback that will be executed
@@ -487,7 +487,7 @@ class EnhancedMetricsCollector:
         """
         self.health_check_registry[name] = check_func
     
-    async def _check_health(self):
+    async def _check_health(self) -> None:
         """Run all registered health checks."""
         for name, check_func in self.health_check_registry.items():
             try:
@@ -536,7 +536,7 @@ class EnhancedMetricsCollector:
                     details={'error': str(e)}
                 )
     
-    async def _check_alerts(self):
+    async def _check_alerts(self) -> None:
         """Check for alert conditions and generate alerts."""
         alerts_triggered = []
         
@@ -619,7 +619,7 @@ class EnhancedMetricsCollector:
         """Serialize labels for metric naming."""
         return "_".join(f"{k}_{v}" for k, v in sorted(labels.items()))
     
-    async def _cleanup_old_data(self):
+    async def _cleanup_old_data(self) -> None:
         """Clean up old metric data based on retention policy."""
         cutoff_time = datetime.utcnow() - timedelta(hours=self.retention_hours)
         
@@ -894,7 +894,7 @@ class EnhancedMetricsCollector:
             ]
         }
     
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Shutdown monitoring tasks."""
         if self.monitoring_task:
             self.monitoring_task.cancel()
@@ -959,7 +959,7 @@ class P2PMetricsCollector:
         peers_found: int,
         success: bool,
         duration_ms: Optional[float] = None
-    ):
+    ) -> None:
         """Track peer discovery operations for P2P network monitoring.
         
         This method records metrics for peer discovery attempts, tracking success rates,
@@ -1071,7 +1071,7 @@ class P2PMetricsCollector:
         workflow_id: str,
         status: str,
         execution_time_ms: Optional[float] = None
-    ):
+    ) -> None:
         """Track P2P workflow execution lifecycle and performance metrics.
         
         This method monitors the execution state and performance of distributed P2P
@@ -1195,7 +1195,7 @@ class P2PMetricsCollector:
         method: str,
         success: bool,
         duration_ms: Optional[float] = None
-    ):
+    ) -> None:
         """Track P2P network bootstrap operations and connection establishment.
         
         This method monitors bootstrap attempts to the P2P network, tracking success

@@ -501,7 +501,7 @@ class IPFSDatasetsMCPServer:
             logger.warning(f"Unexpected error validating token: {e}", exc_info=True)
             return False
 
-    async def register_tools(self):
+    async def register_tools(self) -> None:
         """Register all tools with the MCP server."""
         if self.mcp is None:
             raise ImportError(
@@ -540,7 +540,7 @@ class IPFSDatasetsMCPServer:
         logger.info(f"Tool registration complete: {len(self.tools)} meta-tools registered")
         logger.info("All 373 individual tools available through hierarchical discovery")
 
-    def _register_tools_from_subdir(self, subdir_path: Path):
+    def _register_tools_from_subdir(self, subdir_path: Path) -> None:
         """
         Register all tools from a subdirectory.
 
@@ -676,7 +676,7 @@ class IPFSDatasetsMCPServer:
         else:
             return sync_wrapper
 
-    async def register_ipfs_kit_tools(self, ipfs_kit_mcp_url: Optional[str] = None):
+    async def register_ipfs_kit_tools(self, ipfs_kit_mcp_url: Optional[str] = None) -> None:
         """
         Register tools from ipfs_kit_py.
 
@@ -693,7 +693,7 @@ class IPFSDatasetsMCPServer:
         else:
             self._register_direct_ipfs_kit_imports()
 
-    async def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str):
+    async def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str) -> None:
         """
         Register proxy tools that connect to an ipfs_kit_py MCP server.
         
@@ -747,7 +747,7 @@ class IPFSDatasetsMCPServer:
         except Exception as e:
             logger.error(f"Unexpected error registering ipfs_kit MCP client: {e}", exc_info=True)
 
-    def _register_direct_ipfs_kit_imports(self):
+    def _register_direct_ipfs_kit_imports(self) -> None:
         """Register direct imports of ipfs_kit_py functions."""
         try:
             # Import ipfs_kit_py functions
@@ -768,7 +768,7 @@ class IPFSDatasetsMCPServer:
         except Exception as e:
             logger.error(f"Unexpected error registering direct ipfs_kit functions: {e}", exc_info=True)
 
-    async def start_stdio(self):
+    async def start_stdio(self) -> None:
         """
         Start the MCP server in stdio mode for VS Code integration.
         """
@@ -856,7 +856,7 @@ class IPFSDatasetsMCPServer:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
 
 
-def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
+def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None) -> None:
     """
     Start the IPFS Datasets MCP server in stdio mode for VS Code integration.
 
@@ -886,7 +886,7 @@ def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
         traceback.print_exc()
 
 
-def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Optional[str] = None):
+def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Optional[str] = None) -> None:
     """
     Start the IPFS Datasets MCP server in HTTP mode (legacy).
 
@@ -944,7 +944,7 @@ class Args(pydantic.BaseModel):
             config=namespace.config
         )
 
-def main():
+def main() -> None:
     """Command-line entry point."""
     parser = argparse.ArgumentParser(description="IPFS Datasets MCP Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind the server to")

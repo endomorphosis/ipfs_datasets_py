@@ -376,7 +376,7 @@ class P2PServiceManager:
         except Exception as e:
             logger.warning(f"Error during MCP++ cleanup: {e}")
 
-    def get_workflow_scheduler(self):
+    def get_workflow_scheduler(self) -> Optional[Any]:
         """Get the workflow scheduler instance if available.
         
         Returns:
@@ -384,7 +384,7 @@ class P2PServiceManager:
         """
         return self._workflow_scheduler
 
-    def get_peer_registry(self):
+    def get_peer_registry(self) -> Optional[Any]:
         """Get the peer registry instance if available.
         
         Returns:

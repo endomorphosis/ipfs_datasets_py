@@ -838,7 +838,7 @@ class ToolRegistry:
         return True
 
 
-def initialize_laion_tools(registry: ToolRegistry = None, embedding_service=None):
+def initialize_laion_tools(registry: Optional[ToolRegistry] = None, embedding_service: Optional[Any] = None) -> Optional[List[Any]]:
     """Initialize and register all LAION embedding tools with the tool registry.
 
     This function performs comprehensive initialization of all available tools in the LAION
