@@ -27,6 +27,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .exceptions import (
+    P2PServiceError,
+    P2PConnectionError,
+    P2PAuthenticationError,
+    ConfigurationError,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -144,8 +151,10 @@ class P2PServiceManager:
                     os.environ.pop(key, None)
                 else:
                     os.environ[key] = prior
-            except Exception:
-                pass
+            except ConfigurationError as e:
+                logger.warning(f"Configuration error restoring environment variable {key}: {e}")
+            except Exception as e:
+                logger.warning(f"Unexpected error restoring environment variable {key}: {e}", exc_info=True)
         self._env_restore.clear()
 
     def start(self, *, accelerate_instance: Any | None = None) -> bool:
@@ -166,8 +175,11 @@ class P2PServiceManager:
 
         try:
             from ipfs_accelerate_py.p2p_tasks.runtime import TaskQueueP2PServiceRuntime
-        except Exception:
-            # ipfs_accelerate_py may not be importable in some deployments.
+        except ImportError as e:
+            logger.warning(f"ipfs_accelerate_py not available: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error importing TaskQueueP2PServiceRuntime: {e}", exc_info=True)
             return False
 
         if self._runtime is None:
@@ -182,8 +194,10 @@ class P2PServiceManager:
         # Best-effort wait for startup.
         try:
             self._handle.started.wait(timeout=max(0.0, self.startup_timeout_s))
-        except Exception:
-            pass
+        except P2PConnectionError as e:
+            logger.error(f"P2P connection error during startup: {e}")
+        except Exception as e:
+            logger.warning(f"Unexpected error waiting for P2P startup: {e}", exc_info=True)
 
         # Initialize MCP++ enhanced features
         self._initialize_mcplusplus_features()
@@ -202,7 +216,12 @@ class P2PServiceManager:
             ok = bool(self._runtime.stop(timeout_s=2.0))
             self._restore_env()
             return ok
-        except Exception:
+        except P2PServiceError as e:
+            logger.error(f"P2P service error during stop: {e}")
+            self._restore_env()
+            return False
+        except Exception as e:
+            logger.error(f"Unexpected error stopping P2P service: {e}", exc_info=True)
             self._restore_env()
             return False
 
@@ -212,8 +231,12 @@ class P2PServiceManager:
         last_error = ""
         try:
             last_error = str(getattr(self._runtime, "last_error", "") or "") if self._runtime else ""
-        except Exception:
-            last_error = ""
+        except P2PServiceError as e:
+            logger.warning(f"P2P service error getting last error: {e}")
+            last_error = str(e)
+        except Exception as e:
+            logger.warning(f"Unexpected error getting last error: {e}", exc_info=True)
+            last_error = str(e)
 
         running = False
         peer_id = ""
@@ -230,7 +253,16 @@ class P2PServiceManager:
             peer_id = str(st.get("peer_id") or "")
             listen_port = st.get("listen_port") if isinstance(st.get("listen_port"), int) else None
             started_at = float(st.get("started_at") or 0.0)
-        except Exception:
+        except P2PServiceError as e:
+            logger.warning(f"P2P service error getting state: {e}")
+            # Fallback: infer from runtime thread.
+            try:
+                running = bool(getattr(self._runtime, "running", False))
+            except Exception:
+                running = False
+            started_at = time.time() if running else 0.0
+        except Exception as e:
+            logger.warning(f"Unexpected error getting service state: {e}", exc_info=True)
             # Fallback: infer from runtime thread.
             try:
                 running = bool(getattr(self._runtime, "running", False))

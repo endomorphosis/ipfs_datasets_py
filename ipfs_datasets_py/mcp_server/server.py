@@ -102,6 +102,15 @@ except ImportError as e:
 
 from .configs import Configs, configs
 from .logger import logger
+from .exceptions import (
+    ToolNotFoundError,
+    ToolExecutionError,
+    ToolRegistrationError,
+    ValidationError as MCPValidationError,
+    ConfigurationError,
+    ServerStartupError,
+    P2PServiceError
+)
 
 from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 
@@ -409,8 +418,10 @@ class IPFSDatasetsMCPServer:
             try:
                 error_reporter.install_global_handler()
                 logger.info("Error reporting enabled - runtime errors will be reported to GitHub")
+            except ConfigurationError as e:
+                logger.warning(f"Configuration error installing error reporter: {e}")
             except Exception as e:
-                logger.warning(f"Failed to install error reporter: {e}")
+                logger.warning(f"Unexpected error installing error reporter: {e}", exc_info=True)
 
         # Initialize MCP server (optional dependency).
         # Allow constructing the server without MCP installed so tests/utilities
@@ -438,7 +449,14 @@ class IPFSDatasetsMCPServer:
                 auth_mode=str(getattr(self.configs, "p2p_auth_mode", "mcp_token")),
                 startup_timeout_s=float(getattr(self.configs, "p2p_startup_timeout_s", 2.0)),
             )
-        except Exception:
+        except P2PServiceError as e:
+            logger.warning(f"P2P service initialization failed: {e}")
+            self.p2p = None
+        except ConfigurationError as e:
+            logger.error(f"P2P service configuration error: {e}")
+            self.p2p = None
+        except Exception as e:
+            logger.warning(f"Unexpected error initializing P2P service: {e}", exc_info=True)
             self.p2p = None
 
     async def validate_p2p_message(self, msg: dict) -> bool:
@@ -453,7 +471,11 @@ class IPFSDatasetsMCPServer:
 
         try:
             auth_mode = str(getattr(self.configs, "p2p_auth_mode", "mcp_token") or "mcp_token").strip().lower()
-        except Exception:
+        except ConfigurationError as e:
+            logger.error(f"Configuration error accessing auth_mode: {e}")
+            auth_mode = "mcp_token"
+        except Exception as e:
+            logger.warning(f"Unexpected error accessing auth_mode: {e}", exc_info=True)
             auth_mode = "mcp_token"
 
         if auth_mode == "shared_token":
@@ -469,7 +491,14 @@ class IPFSDatasetsMCPServer:
 
             res = await _mock_auth_service.validate_token(token)
             return bool(res.get("valid"))
-        except Exception:
+        except ToolNotFoundError as e:
+            logger.error(f"Auth tool not found: {e}")
+            return False
+        except ToolExecutionError as e:
+            logger.error(f"Token validation execution failed: {e}", exc_info=e.original_error)
+            return False
+        except Exception as e:
+            logger.warning(f"Unexpected error validating token: {e}", exc_info=True)
             return False
 
     async def register_tools(self):
@@ -709,10 +738,14 @@ class IPFSDatasetsMCPServer:
                 self.tools[f"ipfs_kit_{tool_name}"] = proxy_tool
                 logger.info(f"Registered ipfs_kit proxy tool: ipfs_kit_{tool_name}")
 
-        except ImportError:
-            logger.error("Failed to import MCP client dependency. Cannot register ipfs_kit MCP client.")
+        except ImportError as e:
+            logger.error(f"Failed to import MCP client dependency: {e}")
+        except P2PServiceError as e:
+            logger.error(f"P2P service error registering ipfs_kit MCP client: {e}")
+        except ToolRegistrationError as e:
+            logger.error(f"Tool registration error for ipfs_kit MCP client: {e}")
         except Exception as e:
-            logger.error(f"Error registering ipfs_kit MCP client: {e}")
+            logger.error(f"Unexpected error registering ipfs_kit MCP client: {e}", exc_info=True)
 
     def _register_direct_ipfs_kit_imports(self):
         """Register direct imports of ipfs_kit_py functions."""
@@ -728,10 +761,12 @@ class IPFSDatasetsMCPServer:
                     self.tools[f"ipfs_kit_{func_name}"] = func
                     logger.info(f"Registered direct ipfs_kit tool: ipfs_kit_{func_name}")
 
-        except ImportError:
-            logger.error("Failed to import ipfs_kit_py. Cannot register direct ipfs_kit functions.")
+        except ImportError as e:
+            logger.error(f"Failed to import ipfs_kit_py: {e}")
+        except ToolRegistrationError as e:
+            logger.error(f"Tool registration error for direct ipfs_kit functions: {e}")
         except Exception as e:
-            logger.error(f"Error registering direct ipfs_kit functions: {e}")
+            logger.error(f"Unexpected error registering direct ipfs_kit functions: {e}", exc_info=True)
 
     async def start_stdio(self):
         """
@@ -759,12 +794,20 @@ class IPFSDatasetsMCPServer:
         try:
             await self.mcp.run_stdio_async()
             logger.info("MCP server started in stdio mode")
+        except ServerStartupError as e:
+            logger.error(f"Server startup failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error running MCP server: {e}", exc_info=True)
+            raise
         finally:
             if self.p2p is not None:
                 try:
                     self.p2p.stop()
-                except Exception:
-                    pass
+                except P2PServiceError as e:
+                    logger.warning(f"Error stopping P2P service: {e}")
+                except Exception as e:
+                    logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
 
     async def start(self, host: str = "0.0.0.0", port: int = 8000):
         """
@@ -797,12 +840,20 @@ class IPFSDatasetsMCPServer:
         try:
             await self.mcp.run_stdio_async()
             logger.info("MCP server started in stdio mode")
+        except ServerStartupError as e:
+            logger.error(f"Server startup failed: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error running MCP server: {e}", exc_info=True)
+            raise
         finally:
             if self.p2p is not None:
                 try:
                     self.p2p.stop()
-                except Exception:
-                    pass
+                except P2PServiceError as e:
+                    logger.warning(f"Error stopping P2P service: {e}")
+                except Exception as e:
+                    logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
 
 
 def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
@@ -827,8 +878,11 @@ def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
         anyio.run(server.start_stdio)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
+    except ServerStartupError as e:
+        logger.error(f"Server startup failed: {e}")
+        traceback.print_exc()
     except Exception as e:
-        logger.error(f"Error starting stdio server: {e}")
+        logger.error(f"Unexpected error starting stdio server: {e}", exc_info=True)
         traceback.print_exc()
 
 
@@ -856,8 +910,11 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
         anyio.run(server.start, host, port)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
+    except ServerStartupError as e:
+        logger.error(f"Server startup failed: {e}")
+        traceback.print_exc()
     except Exception as e:
-        logger.error(f"Error starting server: {e}")
+        logger.error(f"Unexpected error starting server: {e}", exc_info=True)
         traceback.print_exc()
 
 class Args(pydantic.BaseModel):
@@ -917,8 +974,14 @@ def main():
             anyio.run(server.start, host, port)
         except KeyboardInterrupt:
             logger.info("Server stopped by user")
+        except ServerStartupError as e:
+            logger.error(f"Server startup failed: {e}")
+            traceback.print_exc()
+        except ConfigurationError as e:
+            logger.error(f"Configuration error: {e}")
+            traceback.print_exc()
         except Exception as e:
-            logger.error(f"Error starting server: {e}")
+            logger.error(f"Unexpected error starting server: {e}", exc_info=True)
             traceback.print_exc()
     else:
         # Use default configuration
@@ -926,8 +989,11 @@ def main():
             start_server(args.host, args.port, args.ipfs_kit_mcp_url)
         except KeyboardInterrupt:
             logger.info("Server stopped by user")
+        except ServerStartupError as e:
+            logger.error(f"Server startup failed: {e}")
+            traceback.print_exc()
         except Exception as e:
-            logger.error(f"Error starting server: {e}")
+            logger.error(f"Unexpected error starting server: {e}", exc_info=True)
             traceback.print_exc()
 
 
