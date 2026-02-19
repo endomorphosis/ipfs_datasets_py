@@ -109,7 +109,11 @@ class IPFSImporter:
             self._IPLDBackend = IPLDBackend
             self._ipfs_available = True
         except ImportError as e:
-            logger.warning("IPFS graph database components not available: %s", e)
+            logger.warning(
+                "IPFS graph database components not available (%s): %s",
+                type(e).__name__,
+                e,
+            )
             self._ipfs_available = False
     
     def _connect(self) -> bool:
@@ -142,12 +146,20 @@ class IPFSImporter:
             try:
                 self._session.close()
             except Exception as e:
-                logger.warning("Failed to close IPFS session cleanly: %s", e)
+                logger.warning(
+                    "Failed to close IPFS session cleanly (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
         if hasattr(self, '_driver') and self._driver:
             try:
                 self._driver.close()
             except Exception as e:
-                logger.warning("Failed to close IPFS driver cleanly: %s", e)
+                logger.warning(
+                    "Failed to close IPFS driver cleanly (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
         logger.info("Closed IPFS Graph Database connection")
     
     def _load_graph_data(self) -> Optional[GraphData]:

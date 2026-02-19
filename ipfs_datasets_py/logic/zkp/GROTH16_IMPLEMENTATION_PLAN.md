@@ -242,6 +242,20 @@ Implementation options:
 
 **Recommendation for production:** prioritize a mature prover/verifier implementation, even if the prover is not pure Python.
 
+### 8.1 Rationale (this repo's approach)
+
+This repo is already set up around a **Rust Groth16 backend invoked from Python** (CLI/subprocess), which is the most pragmatic way to get to production-grade Groth16 while keeping the Python surface area stable.
+
+Why this approach:
+- **Mature cryptography implementations**: Rust ecosystems (e.g., arkworks-based stacks) tend to be better maintained and easier to audit than rolling a full Groth16 stack in pure Python.
+- **EVM compatibility as a first-class target**: BN254-oriented tooling and serialization conventions are well-trodden on the Rust side, matching the on-chain verification direction.
+- **Dependency hygiene**: Python stays import-quiet and lightweight; heavy crypto lives behind an opt-in binary.
+- **Operational ergonomics**: a standalone binary is easy to pin/version, deploy in containers, and run on ephemeral workers that fetch artifacts (PK/VK) from IPFS.
+- **Clear contract boundary**: a strict CLI + JSON contract makes failure modes explicit (exit codes + error envelope) and keeps the prover/verifier behavior testable with golden vectors.
+
+What to avoid for production (unless you're willing to maintain it):
+- A Python-first Groth16 implementation that re-creates curve/arithmetic/prover logic in userland without strong test vectors and audit coverage.
+
 ---
 
 ## 9) Deliverables Checklist

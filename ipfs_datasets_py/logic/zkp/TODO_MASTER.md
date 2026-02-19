@@ -205,7 +205,7 @@
 ### P5.1 ✅ Select & evaluate Groth16 prover stack
 - [x] Decision: repo-supported path is Rust Groth16 backend (opt-in) under `processors/groth16_backend/`
 - [x] Policy: fail-closed by default; enable via `IPFS_DATASETS_ENABLE_GROTH16=1`
-- [ ] Rationale document in GROTH16_IMPLEMENTATION_PLAN.md section 8
+- [x] Rationale document in GROTH16_IMPLEMENTATION_PLAN.md section 8
 
 ### P5.2 ⏳ Implement trusted setup ceremony (circuit-specific)
 - [ ] For MVP circuit v1:
@@ -293,7 +293,7 @@
 
 ### P9.1 ✅ Update `logic/zkp/README.md`
 - [x] Add section: "Production Setup Checklist"
-- [ ] Example: ephemeral peer workflow
+- [x] Example: ephemeral peer workflow
 
 ### P9.2 ✅ Keep `IMPROVEMENT_TODO.md` in sync
 - [x] Linked to this master todo

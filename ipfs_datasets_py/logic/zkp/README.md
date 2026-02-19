@@ -151,6 +151,42 @@ downloaded_proof = ZKPProof.from_dict(ipfs_client.get_json(ipfs_hash))
 verifier.verify_proof(downloaded_proof)
 ```
 
+### 5. Ephemeral Peer Proving Workflow (Concept)
+This pattern is useful when you want to generate proofs on short-lived workers ("peer provers") while keeping verification easy and reproducible.
+
+**High-level flow:**
+1. A worker fetches proving artifacts (e.g., PK) from IPFS by CID.
+2. The worker generates a proof locally (simulation today; Groth16 is opt-in).
+3. The worker publishes the proof + public inputs (or a CID) and then shuts down.
+4. Anyone can verify the proof (off-chain now; on-chain in later phases).
+
+```python
+# Conceptual sketch. The IPFS client + artifact fetching are integration-specific.
+from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier, ZKPProof
+
+# Worker: generate a proof
+prover = ZKPProver()
+proof = prover.generate_proof(
+    theorem="Q",
+    private_axioms=["P", "P -> Q"],
+    metadata={
+        # Optional knobs for real backend (when enabled)
+        # "seed": 123,
+        # "circuit_version": 1,
+        # "ruleset_id": "TDFOL_v1",
+    },
+)
+
+# Publish: store proof as JSON (e.g., to IPFS)
+proof_dict = proof.to_dict()
+# cid = ipfs_client.add_json(proof_dict)
+
+# Verifier: fetch and verify
+# downloaded = ZKPProof.from_dict(ipfs_client.get_json(cid))
+verifier = ZKPVerifier()
+assert verifier.verify_proof(proof) is True
+```
+
 ## API Reference
 
 ### ZKPProver
