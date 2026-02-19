@@ -186,11 +186,19 @@ class PythonLinter:
                     fix_suggestion="pip install flake8"
                 )]
 
+            # Security: Validate file_path
+            if not file_path.exists():
+                raise FileNotFoundError(f"File does not exist: {file_path}")
+            if not file_path.is_file():
+                raise ValueError(f"Path is not a file: {file_path}")
+            
+            # Security: Use shell=False and pass command as list
             result = subprocess.run(
                 ['flake8', '--format=%(path)s:%(row)d:%(col)d: %(code)s %(text)s', str(file_path)],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                shell=False  # Explicitly set to False for security
             )
 
             issues = []
@@ -265,11 +273,19 @@ class PythonLinter:
                     fix_suggestion="pip install mypy"
                 )]
 
+            # Security: Validate file_path
+            if not file_path.exists():
+                raise FileNotFoundError(f"File does not exist: {file_path}")
+            if not file_path.is_file():
+                raise ValueError(f"Path is not a file: {file_path}")
+            
+            # Security: Use shell=False and pass command as list
             result = subprocess.run(
                 ['mypy', '--show-column-numbers', str(file_path)],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
+                shell=False  # Explicitly set to False for security
             )
 
             issues = []

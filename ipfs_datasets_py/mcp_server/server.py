@@ -597,6 +597,53 @@ class IPFSDatasetsMCPServer:
                 self.tools[tool_name] = tool_func
             logger.info(f"Registered tool: {tool_name}")
     
+    def _sanitize_error_context(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Sanitize error context to remove sensitive data before reporting.
+        
+        Security: This prevents leaking API keys, passwords, tokens, and other
+        sensitive data in error reports to external services.
+        
+        Args:
+            kwargs: Original kwargs dict that may contain sensitive data
+            
+        Returns:
+            Sanitized context dict with only non-sensitive information
+        """
+        # List of sensitive key patterns to filter out values
+        sensitive_patterns = [
+            'key', 'token', 'password', 'secret', 'auth', 'credential',
+            'api_key', 'apikey', 'access_token', 'private', 'passwd'
+        ]
+        
+        sanitized = {}
+        for key, value in kwargs.items():
+            key_lower = str(key).lower()
+            # Check if key matches any sensitive pattern
+            is_sensitive = any(pattern in key_lower for pattern in sensitive_patterns)
+            
+            if is_sensitive:
+                # Replace sensitive values with placeholder
+                sanitized[key] = "<REDACTED>"
+            elif isinstance(value, (str, int, float, bool, type(None))):
+                # Include simple types
+                sanitized[key] = value
+            elif isinstance(value, (list, tuple)):
+                # Include collection length but not contents
+                sanitized[key] = f"<{type(value).__name__} of length {len(value)}>"
+            elif isinstance(value, dict):
+                # Include dict key count but not contents
+                sanitized[key] = f"<dict with {len(value)} keys>"
+            else:
+                # For other types, just show the type
+                sanitized[key] = f"<{type(value).__name__}>"
+        
+        return {
+            "argument_names": list(kwargs.keys()),
+            "sanitized_arguments": sanitized,
+            "argument_count": len(kwargs)
+        }
+    
     def _wrap_tool_with_error_reporting(self, tool_name: str, tool_func: Callable) -> Callable:
         """
         Wrap a tool function with error reporting.
@@ -622,10 +669,12 @@ class IPFSDatasetsMCPServer:
                 # Report error to GitHub
                 try:
                     logs = get_recent_logs()
+                    # Security: Sanitize kwargs to prevent leaking sensitive data
+                    safe_context = self._sanitize_error_context(kwargs)
                     error_reporter.report_error(
                         e,
                         source=f"MCP Tool: {tool_name}",
-                        additional_info=f"Tool arguments: {kwargs}",
+                        additional_info=f"Tool arguments: {safe_context}",
                         logs=logs,
                     )
                 except Exception as report_err:
@@ -641,10 +690,12 @@ class IPFSDatasetsMCPServer:
                 # Report error to GitHub
                 try:
                     logs = get_recent_logs()
+                    # Security: Sanitize kwargs to prevent leaking sensitive data
+                    safe_context = self._sanitize_error_context(kwargs)
                     error_reporter.report_error(
                         e,
                         source=f"MCP Tool: {tool_name}",
-                        additional_info=f"Tool arguments: {kwargs}",
+                        additional_info=f"Tool arguments: {safe_context}",
                         logs=logs,
                     )
                 except Exception as report_err:
