@@ -16,6 +16,7 @@ import logging
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 from ..neo4j_compat.types import Node, Relationship
+from ..exceptions import StorageError
 
 if TYPE_CHECKING:
     from ..storage.ipld_backend import IPLDBackend
@@ -95,7 +96,7 @@ class GraphEngine:
                 # Store CID mapping for retrieval
                 self._node_cache[f"cid:{node_id}"] = cid
                 logger.debug("Node %s persisted with CID: %s", node_id, cid)
-            except Exception as e:
+            except StorageError as e:
                 logger.warning("Failed to persist node %s: %s", node_id, e)
 
         logger.info("Created node: %s (labels=%s)", node_id, labels)
@@ -133,7 +134,7 @@ class GraphEngine:
                     self._node_cache[node_id] = node
                     logger.debug("Node %s loaded from IPLD (CID: %s)", node_id, cid)
                     return node
-            except Exception as e:
+            except (StorageError, KeyError, TypeError, ValueError) as e:
                 logger.debug("Failed to load node %s from storage: %s", node_id, e)
 
         logger.debug("Node not found: %s", node_id)
@@ -174,7 +175,7 @@ class GraphEngine:
                 cid = self.storage.store(node_data, pin=True, codec="dag-json")
                 self._node_cache[f"cid:{node_id}"] = cid
                 logger.debug("Node %s updated in storage (CID: %s)", node_id, cid)
-            except Exception as e:
+            except StorageError as e:
                 logger.warning("Failed to update node %s in storage: %s", node_id, e)
 
         logger.info("Updated node: %s", node_id)
@@ -248,7 +249,7 @@ class GraphEngine:
                 cid = self.storage.store(rel_data, pin=True, codec="dag-json")
                 self._relationship_cache[f"cid:{rel_id}"] = cid
                 logger.debug("Relationship %s persisted with CID: %s", rel_id, cid)
-            except Exception as e:
+            except StorageError as e:
                 logger.warning("Failed to persist relationship %s: %s", rel_id, e)
 
         logger.info("Created relationship: %s -%s-> %s", start_node, rel_type, end_node)
@@ -362,7 +363,7 @@ class GraphEngine:
                 cid, len(nodes), len(relationships)
             )
             return cid
-        except Exception as e:
+        except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
             logger.error("Failed to save graph: %s", e)
             return None
 
@@ -404,7 +405,7 @@ class GraphEngine:
                 root_cid, len(self._node_cache), len(self._relationship_cache)
             )
             return True
-        except Exception as e:
+        except (StorageError, AttributeError, KeyError, TypeError, ValueError) as e:
             logger.error("Failed to load graph from %s: %s", root_cid, e)
             return False
 

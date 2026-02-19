@@ -305,6 +305,8 @@ class UnifiedQueryEngine:
                     f"Cypher query execution timed out: {e}",
                     details={'query': query[:100]}
                 ) from e
+            except QueryError:
+                raise
             except Exception as e:
                 logger.error(f"Cypher query execution failed: {e}")
                 raise QueryExecutionError(
@@ -349,19 +351,31 @@ class UnifiedQueryEngine:
                 logger.error(f"IR query parsing failed: {e}")
                 raise QueryParseError(
                     f"Failed to parse IR query: {e}",
-                    details={'query': query[:100]}
+                    details={
+                        'ir_type': type(ir).__name__,
+                        'ir_preview': str(ir)[:100],
+                    }
                 ) from e
             except (TimeoutError, asyncio.TimeoutError) as e:
                 logger.error(f"IR query timeout: {e}")
                 raise QueryTimeoutError(
                     f"IR query execution timed out: {e}",
-                    details={'query': query[:100]}
+                    details={
+                        'ir_type': type(ir).__name__,
+                        'ir_preview': str(ir)[:100],
+                    }
                 ) from e
+            except QueryError:
+                raise
             except Exception as e:
                 logger.error(f"IR query execution failed: {e}")
                 raise QueryExecutionError(
                     f"Failed to execute IR query: {e}",
-                    details={'query': query[:100], 'counters': tracker.counters}
+                    details={
+                        'ir_type': type(ir).__name__,
+                        'ir_preview': str(ir)[:100],
+                        'counters': tracker.counters,
+                    }
                 ) from e
     
     def execute_hybrid(
@@ -426,6 +440,8 @@ class UnifiedQueryEngine:
                     f"Hybrid search timed out: {e}",
                     details={'query': query}
                 ) from e
+            except QueryError:
+                raise
             except Exception as e:
                 logger.error(f"Hybrid search execution failed: {e}")
                 raise QueryExecutionError(
@@ -524,6 +540,8 @@ class UnifiedQueryEngine:
                 raise
             except QueryTimeoutError:
                 # Re-raise timeout errors
+                raise
+            except QueryError:
                 raise
             except (TimeoutError, asyncio.TimeoutError) as e:
                 logger.error(f"GraphRAG query timeout: {e}")

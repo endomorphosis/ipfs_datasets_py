@@ -108,5 +108,11 @@ class SimulatedBackend:
             secrets.token_bytes(64)
         )
 
+        # Byte layout (fixed 160 bytes):
+        # - [0:32]   SHA256(circuit_hash || witness || normalize_text(theorem))
+        # - [32:96]  64 bytes of random padding (simulated Groth16 element A-ish)
+        # - [96:160] 64 bytes of random padding (simulated Groth16 element B/C-ish)
+        #
+        # This is demo-only and intentionally non-verifiable as a real zkSNARK.
         # Fixed-size simulated proof (matches existing tests expectation ~160 bytes).
         return simulated_proof[:160]
