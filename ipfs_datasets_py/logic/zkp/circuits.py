@@ -9,7 +9,7 @@ from typing import List, Dict, Any, Tuple
 from dataclasses import dataclass
 from typing import Any, Dict
 
-from .canonicalization import canonicalize_axioms, hash_axioms_commitment
+from .canonicalization import canonicalize_axioms, hash_axioms_commitment, tdfol_v1_axioms_commitment_hex_v2
 from .canonicalization import hash_theorem
 from .statement import Statement, Witness
 from .legal_theorem_semantics import parse_tdfol_v1_axiom, parse_tdfol_v1_theorem
@@ -405,7 +405,7 @@ class TDFOLv1DerivationCircuit:
 
     Public statement requirements:
     - statement.theorem_hash == hash_theorem(witness.theorem)
-    - statement.axioms_commitment == hash_axioms_commitment(witness.axioms)
+    - statement.axioms_commitment == tdfol_v1_axioms_commitment_hex_v2(witness.axioms)
     - statement.ruleset_id == 'TDFOL_v1'
     - statement.circuit_version == 2
     """
@@ -445,7 +445,7 @@ class TDFOLv1DerivationCircuit:
             canonical_axioms = canonicalize_axioms(witness.axioms)
             if witness.axioms != canonical_axioms:
                 return False
-            expected_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
+            expected_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
             if statement.axioms_commitment != expected_commitment_hex:
                 return False
             if witness.axioms_commitment_hex != expected_commitment_hex:

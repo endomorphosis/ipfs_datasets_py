@@ -7,6 +7,11 @@ use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use sha2::{Digest, Sha256};
 
+const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
+const TDFOL_V1_V2_MAX_STEPS: usize = 16;
+const TDFOL_V1_V2_ALPHA: u64 = 7;
+const TDFOL_V1_V2_BETA: u64 = 13;
+
 /// MVP Circuit for zero-knowledge proofs
 ///
 /// Constraints:
@@ -28,6 +33,265 @@ pub struct MVPCircuit {
     pub theorem_hash: Option<Vec<u8>>,      // 32 bytes from SHA256 (public input)
     pub circuit_version: Option<u32>,
     pub ruleset_id: Option<Vec<u8>>,
+}
+
+/// Circuit v2: Prove that a theorem holds under TDFOL_v1 Horn semantics.
+///
+/// This circuit enforces a bounded forward-chaining derivation trace and
+/// binds the axiom set to the public `axioms_commitment` using a deterministic
+/// field-only accumulator (no in-circuit SHA gadgets).
+///
+/// Witness encoding (field elements):
+/// - Each axiom is a pair (antecedent, consequent)
+///   - Fact `Q`           -> (0, H(Q))
+///   - Implication `P->Q` -> (H(P), H(Q))
+///   where H(atom) is SHA256(atom) reduced mod the curve scalar field.
+/// - Derivation trace: list of atoms as field elements H(atom), padded with 0.
+///
+/// Public inputs (4 fields): same schema as MVP
+/// - theorem_hash (Fr): H(theorem) (reduced)
+/// - axioms_commitment (Fr): field-only commitment accumulator
+/// - circuit_version (Fr): must equal 2
+/// - ruleset_id_hash (Fr): must equal sha256("TDFOL_v1") reduced
+#[derive(Clone)]
+pub struct TDFOLv1DerivationCircuitV2<F: PrimeField> {
+    pub axiom_antecedents: Option<Vec<F>>, // <= MAX_AXIOMS
+    pub axiom_consequents: Option<Vec<F>>, // <= MAX_AXIOMS
+    pub trace_steps: Option<Vec<F>>,       // <= MAX_STEPS
+
+    pub axioms_commitment: Option<Vec<u8>>, // 32 bytes
+    pub theorem_hash: Option<Vec<u8>>,      // 32 bytes
+    pub circuit_version: Option<u32>,
+    pub ruleset_id: Option<Vec<u8>>,
+}
+
+impl<F: PrimeField> Default for TDFOLv1DerivationCircuitV2<F> {
+    fn default() -> Self {
+        Self {
+            axiom_antecedents: None,
+            axiom_consequents: None,
+            trace_steps: None,
+            axioms_commitment: None,
+            theorem_hash: None,
+            circuit_version: None,
+            ruleset_id: None,
+        }
+    }
+}
+
+impl<F: PrimeField> ConstraintSynthesizer<F> for TDFOLv1DerivationCircuitV2<F> {
+    fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
+        let mut ax_ants = self
+            .axiom_antecedents
+            .ok_or(SynthesisError::AssignmentMissing)?;
+        let mut ax_cons = self
+            .axiom_consequents
+            .ok_or(SynthesisError::AssignmentMissing)?;
+        let mut trace = self.trace_steps.ok_or(SynthesisError::AssignmentMissing)?;
+
+        if ax_ants.len() != ax_cons.len() {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if ax_ants.len() > TDFOL_V1_V2_MAX_AXIOMS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if trace.len() > TDFOL_V1_V2_MAX_STEPS {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+
+        let axioms_commitment_bytes = self
+            .axioms_commitment
+            .ok_or(SynthesisError::AssignmentMissing)?;
+        let theorem_hash_bytes = self.theorem_hash.ok_or(SynthesisError::AssignmentMissing)?;
+        let circuit_version = self.circuit_version.ok_or(SynthesisError::AssignmentMissing)?;
+        let ruleset_id = self.ruleset_id.ok_or(SynthesisError::AssignmentMissing)?;
+
+        if axioms_commitment_bytes.len() != 32 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if theorem_hash_bytes.len() != 32 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if ruleset_id.is_empty() {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+        if circuit_version != 2 {
+            return Err(SynthesisError::AssignmentMissing);
+        }
+
+        // Pad witness vectors to fixed sizes so constraints are stable.
+        while ax_ants.len() < TDFOL_V1_V2_MAX_AXIOMS {
+            ax_ants.push(F::ZERO);
+            ax_cons.push(F::ZERO);
+        }
+        while trace.len() < TDFOL_V1_V2_MAX_STEPS {
+            trace.push(F::ZERO);
+        }
+
+        // Public inputs.
+        let theorem_hash_fr = F::from_be_bytes_mod_order(&theorem_hash_bytes);
+        let axioms_commitment_fr = F::from_be_bytes_mod_order(&axioms_commitment_bytes);
+
+        let mut hasher = Sha256::new();
+        hasher.update(&ruleset_id);
+        let ruleset_digest = hasher.finalize();
+        let ruleset_id_fr = F::from_be_bytes_mod_order(&ruleset_digest);
+
+        let version_fr = F::from(circuit_version as u64);
+
+        let theorem_hash_input = FpVar::<F>::new_input(cs.clone(), || Ok(theorem_hash_fr))?;
+        let axioms_commitment_input =
+            FpVar::<F>::new_input(cs.clone(), || Ok(axioms_commitment_fr))?;
+        let circuit_version_input = FpVar::<F>::new_input(cs.clone(), || Ok(version_fr))?;
+        let ruleset_id_input = FpVar::<F>::new_input(cs.clone(), || Ok(ruleset_id_fr))?;
+
+        // Enforce fixed version/ruleset.
+        circuit_version_input.enforce_equal(&FpVar::<F>::Constant(F::from(2u64)))?;
+
+        let mut expected_hasher = Sha256::new();
+        expected_hasher.update(b"TDFOL_v1");
+        let expected_ruleset_digest = expected_hasher.finalize();
+        let expected_ruleset_fr = F::from_be_bytes_mod_order(&expected_ruleset_digest);
+        ruleset_id_input.enforce_equal(&FpVar::<F>::Constant(expected_ruleset_fr))?;
+
+        // Allocate axiom and trace witness variables.
+        let zero = FpVar::<F>::Constant(F::ZERO);
+        let mut axiom_ants_var: Vec<FpVar<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
+        let mut axiom_cons_var: Vec<FpVar<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
+        for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
+            axiom_ants_var.push(FpVar::<F>::new_witness(cs.clone(), || Ok(ax_ants[i]))?);
+            axiom_cons_var.push(FpVar::<F>::new_witness(cs.clone(), || Ok(ax_cons[i]))?);
+        }
+
+        let mut trace_var: Vec<FpVar<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
+        for i in 0..TDFOL_V1_V2_MAX_STEPS {
+            trace_var.push(FpVar::<F>::new_witness(cs.clone(), || Ok(trace[i]))?);
+        }
+
+        // Axiom well-formedness and in-circuit commitment.
+        // - If consequent is 0 then antecedent must be 0 (unused slot).
+        // - commitment = Σ (cons + alpha*ant) * beta^i
+        let alpha = FpVar::<F>::Constant(F::from(TDFOL_V1_V2_ALPHA));
+        let beta = F::from(TDFOL_V1_V2_BETA);
+
+        let mut commitment = FpVar::<F>::Constant(F::ZERO);
+        let mut beta_pow = F::ONE;
+        for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
+            let ant = &axiom_ants_var[i];
+            let cons = &axiom_cons_var[i];
+
+            let cons_is_zero = cons.is_eq(&zero)?;
+            let ant_is_zero = ant.is_eq(&zero)?;
+            // cons == 0 => ant == 0
+            cons_is_zero
+                .and(&ant_is_zero.not())?
+                .enforce_equal(&Boolean::FALSE)?;
+
+            let term = cons + (ant * &alpha);
+            let weighted = term * FpVar::<F>::Constant(beta_pow);
+            commitment += weighted;
+            beta_pow *= beta;
+        }
+
+        axioms_commitment_input.enforce_equal(&commitment)?;
+
+        // Trace must be non-empty (at least one non-zero step) and must be zero-padded.
+        let mut step_nonzero_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
+        let mut step_zero_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
+        for i in 0..TDFOL_V1_V2_MAX_STEPS {
+            let is_zero = trace_var[i].is_eq(&zero)?;
+            step_zero_bits.push(is_zero.clone());
+            step_nonzero_bits.push(is_zero.not());
+        }
+
+        Boolean::kary_or(&step_nonzero_bits)?.enforce_equal(&Boolean::TRUE)?;
+
+        for i in 0..(TDFOL_V1_V2_MAX_STEPS - 1) {
+            // trace[i] == 0 => trace[i+1] == 0
+            step_zero_bits[i]
+                .and(&step_zero_bits[i + 1].not())?
+                .enforce_equal(&Boolean::FALSE)?;
+        }
+
+        // Enforce trace uniqueness among non-zero steps.
+        for i in 0..TDFOL_V1_V2_MAX_STEPS {
+            for j in (i + 1)..TDFOL_V1_V2_MAX_STEPS {
+                let eq = trace_var[i].is_eq(&trace_var[j])?;
+                let both_nz = step_nonzero_bits[i].and(&step_nonzero_bits[j])?;
+                both_nz.and(&eq)?.enforce_equal(&Boolean::FALSE)?;
+            }
+        }
+
+        // Helper closures for membership in facts / previous steps.
+        let fact_membership = |x: &FpVar<F>| -> Result<Boolean<F>, SynthesisError> {
+            let mut matches: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
+            for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
+                let ant_is_zero = axiom_ants_var[i].is_eq(&zero)?;
+                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
+                let is_fact = ant_is_zero.and(&cons_is_nonzero)?;
+                let eq = axiom_cons_var[i].is_eq(x)?;
+                matches.push(is_fact.and(&eq)?);
+            }
+            Boolean::kary_or(&matches)
+        };
+
+        let prev_membership = |x: &FpVar<F>, k: usize| -> Result<Boolean<F>, SynthesisError> {
+            if k == 0 {
+                return Ok(Boolean::FALSE);
+            }
+            let mut matches: Vec<Boolean<F>> = Vec::with_capacity(k);
+            for j in 0..k {
+                let eq = trace_var[j].is_eq(x)?;
+                matches.push(step_nonzero_bits[j].and(&eq)?);
+            }
+            Boolean::kary_or(&matches)
+        };
+
+        let known_membership = |x: &FpVar<F>, k: usize| -> Result<Boolean<F>, SynthesisError> {
+            let in_facts = fact_membership(x)?;
+            let in_prev = prev_membership(x, k)?;
+            in_facts.or(&in_prev)
+        };
+
+        // Validate each trace step.
+        for k in 0..TDFOL_V1_V2_MAX_STEPS {
+            let step = &trace_var[k];
+            let step_nonzero = step_nonzero_bits[k].clone();
+
+            let step_known = known_membership(step, k)?;
+            let need_just = step_nonzero.and(&step_known.not())?;
+
+            // exists implication (P -> step) with P known
+            let mut just_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_AXIOMS);
+            for i in 0..TDFOL_V1_V2_MAX_AXIOMS {
+                let ant_is_nonzero = axiom_ants_var[i].is_eq(&zero)?.not();
+                let cons_is_nonzero = axiom_cons_var[i].is_eq(&zero)?.not();
+                let is_impl = ant_is_nonzero.and(&cons_is_nonzero)?;
+                let cons_match = axiom_cons_var[i].is_eq(step)?;
+                let ant_known = known_membership(&axiom_ants_var[i], k)?;
+                just_bits.push(is_impl.and(&cons_match)?.and(&ant_known)?);
+            }
+            let exists_just = Boolean::kary_or(&just_bits)?;
+
+            need_just
+                .and(&exists_just.not())?
+                .enforce_equal(&Boolean::FALSE)?;
+        }
+
+        // Enforce theorem is in final known set (facts or any trace step).
+        let theorem_in_facts = fact_membership(&theorem_hash_input)?;
+        let mut theorem_step_bits: Vec<Boolean<F>> = Vec::with_capacity(TDFOL_V1_V2_MAX_STEPS);
+        for k in 0..TDFOL_V1_V2_MAX_STEPS {
+            let eq = trace_var[k].is_eq(&theorem_hash_input)?;
+            theorem_step_bits.push(step_nonzero_bits[k].and(&eq)?);
+        }
+        let theorem_in_trace = Boolean::kary_or(&theorem_step_bits)?;
+        theorem_in_facts
+            .or(&theorem_in_trace)?
+            .enforce_equal(&Boolean::TRUE)?;
+
+        Ok(())
+    }
 }
 
 impl Default for MVPCircuit {

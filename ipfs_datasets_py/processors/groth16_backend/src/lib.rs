@@ -8,12 +8,17 @@ pub mod setup;
 pub mod verifier;
 
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WitnessInput {
     pub private_axioms: Vec<String>,
     pub theorem: String,
+
+    #[serde(default)]
+    pub intermediate_steps: Vec<String>,
+
     pub axioms_commitment_hex: String,
     pub theorem_hash_hex: String,
     pub circuit_version: u32,
@@ -74,7 +79,11 @@ pub fn verify(proof_json: &str) -> anyhow::Result<bool> {
 /// Returns a one-line JSON manifest (stdout-friendly).
 pub fn setup(version: u32, seed: Option<u64>) -> anyhow::Result<String> {
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let out_dir = crate_root.join("artifacts").join(format!("v{version}"));
+    let artifacts_root = env::var("GROTH16_BACKEND_ARTIFACTS_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| crate_root.join("artifacts"));
+
+    let out_dir = artifacts_root.join(format!("v{version}"));
     let manifest = crate::setup::setup_to_dir(version, &out_dir, seed)?;
     Ok(format!("{}\n", serde_json::to_string(&manifest)?))
 }

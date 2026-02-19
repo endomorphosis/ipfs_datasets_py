@@ -10,6 +10,17 @@ import unicodedata
 from typing import List
 
 
+# BN254 scalar field modulus (same value used in Statement.to_field_elements).
+P_BN254 = 21888242871839275222246405745257275088548364400416034343698204186575808495617
+
+# Commitment parameters for circuit_version=2 (TDFOL_v1).
+#
+# This is intentionally NOT a cryptographic hash; it is a deterministic
+# field-based accumulator designed to be implemented inside an R1CS.
+_TDFOL_V1_V2_ALPHA = 7
+_TDFOL_V1_V2_BETA = 13
+
+
 def normalize_text(text: str) -> str:
     """
     Normalize theorem/axiom text to a canonical form.
@@ -120,3 +131,51 @@ def theorem_hash_hex(theorem: str) -> str:
 def axioms_commitment_hex(axioms: List[str]) -> str:
     """Hash axiom set commitment and return as hex string."""
     return hash_axioms_commitment(axioms).hex()
+
+
+def _sha256_field_int(text: str) -> int:
+    """Map a UTF-8 string to a BN254 scalar via SHA-256 then mod p."""
+    digest = hashlib.sha256(text.encode("utf-8")).digest()
+    return int.from_bytes(digest, "big") % P_BN254
+
+
+def tdfol_v1_axioms_commitment_hex_v2(axioms: List[str]) -> str:
+    """Field-only commitment for `TDFOL_v1` axioms (circuit_version=2).
+
+    Commitment is computed over the canonical axiom set (sorted + deduped).
+
+    Encoding:
+    - Fact `Q`           -> (antecedent=0, consequent=H(Q))
+    - Implication `P->Q` -> (antecedent=H(P), consequent=H(Q))
+    where H(atom) is SHA256(atom) reduced mod the BN254 scalar field.
+
+    Accumulator:
+        C = Σ_i (consequent_i + alpha * antecedent_i) * beta^i  (mod p)
+
+    Returns:
+        32-byte big-endian hex string (no 0x prefix).
+    """
+
+    # Import lazily to avoid any import-time overhead in the common path.
+    from .legal_theorem_semantics import parse_tdfol_v1_axiom
+
+    canonical = canonicalize_axioms(axioms)
+
+    alpha = _TDFOL_V1_V2_ALPHA
+    beta = _TDFOL_V1_V2_BETA
+
+    acc = 0
+    beta_pow = 1
+    for axiom_text in canonical:
+        ax = parse_tdfol_v1_axiom(axiom_text)
+        if ax.antecedent is None:
+            antecedent = 0
+        else:
+            antecedent = _sha256_field_int(ax.antecedent)
+        consequent = _sha256_field_int(ax.consequent)
+
+        term = (consequent + (alpha * antecedent) % P_BN254) % P_BN254
+        acc = (acc + (term * beta_pow) % P_BN254) % P_BN254
+        beta_pow = (beta_pow * beta) % P_BN254
+
+    return acc.to_bytes(32, "big").hex()

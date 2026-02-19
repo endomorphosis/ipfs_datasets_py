@@ -1,8 +1,9 @@
 // src/setup.rs
 // Trusted setup (circuit-specific parameters) for Groth16 MVP circuit
 
-use crate::circuit::MVPCircuit;
-use ark_bn254::Bn254;
+use crate::circuit::{MVPCircuit, TDFOLv1DerivationCircuitV2};
+use ark_bn254::{Bn254, Fr};
+use ark_ff::PrimeField;
 use ark_groth16::Groth16;
 use ark_serialize::CanonicalSerialize;
 use ark_snark::SNARK;
@@ -40,6 +41,62 @@ fn build_mvp_setup_circuit(version: u32) -> MVPCircuit {
     }
 }
 
+fn field_to_32bytes(x: Fr) -> [u8; 32] {
+    use ark_ff::BigInteger;
+    let mut bytes: Vec<u8> = x.into_bigint().to_bytes_be();
+    if bytes.len() > 32 {
+        bytes = bytes[bytes.len() - 32..].to_vec();
+    }
+    if bytes.len() < 32 {
+        let mut out = vec![0u8; 32 - bytes.len()];
+        out.extend_from_slice(&bytes);
+        bytes = out;
+    }
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&bytes);
+    out
+}
+
+fn sha256_bytes(msg: &[u8]) -> [u8; 32] {
+    let digest = Sha256::digest(msg);
+    let mut out = [0u8; 32];
+    out.copy_from_slice(&digest);
+    out
+}
+
+fn commit_axioms_v2(axiom_antecedents: &[Fr], axiom_consequents: &[Fr]) -> Fr {
+    // C = Σ (cons + alpha*ant) * beta^i
+    let alpha = Fr::from(7u64);
+    let beta = Fr::from(13u64);
+    let mut acc = Fr::ZERO;
+    let mut beta_pow = Fr::ONE;
+    for (ant, cons) in axiom_antecedents.iter().zip(axiom_consequents.iter()) {
+        let term = *cons + (*ant * alpha);
+        acc += term * beta_pow;
+        beta_pow *= beta;
+    }
+    acc
+}
+
+fn build_tdfol_v1_v2_setup_circuit() -> TDFOLv1DerivationCircuitV2<Fr> {
+    let hp = Fr::from_be_bytes_mod_order(&sha256_bytes(b"P"));
+    let hq = Fr::from_be_bytes_mod_order(&sha256_bytes(b"Q"));
+
+    let ax_ants = vec![Fr::ZERO, hp];
+    let ax_cons = vec![hp, hq];
+    let commitment_fr = commit_axioms_v2(&ax_ants, &ax_cons);
+
+    TDFOLv1DerivationCircuitV2 {
+        axiom_antecedents: Some(ax_ants),
+        axiom_consequents: Some(ax_cons),
+        trace_steps: Some(vec![hq]),
+        axioms_commitment: Some(field_to_32bytes(commitment_fr).to_vec()),
+        theorem_hash: Some(sha256_bytes(b"Q").to_vec()),
+        circuit_version: Some(2),
+        ruleset_id: Some(b"TDFOL_v1".to_vec()),
+    }
+}
+
 pub fn setup_to_dir(version: u32, out_dir: &Path, seed: Option<u64>) -> anyhow::Result<SetupManifestV1> {
     if version > 255 {
         anyhow::bail!("circuit_version must be <= 255 for MVP circuit");
@@ -47,17 +104,34 @@ pub fn setup_to_dir(version: u32, out_dir: &Path, seed: Option<u64>) -> anyhow::
 
     fs::create_dir_all(out_dir)?;
 
-    let circuit = build_mvp_setup_circuit(version);
-
-    let (pk, vk) = match seed {
-        Some(seed) => {
-            let mut rng = StdRng::seed_from_u64(seed);
-            Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+    let (pk, vk) = match version {
+        1 => {
+            let circuit = build_mvp_setup_circuit(version);
+            match seed {
+                Some(seed) => {
+                    let mut rng = StdRng::seed_from_u64(seed);
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+                None => {
+                    let mut rng = OsRng;
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+            }
         }
-        None => {
-            let mut rng = OsRng;
-            Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+        2 => {
+            let circuit = build_tdfol_v1_v2_setup_circuit();
+            match seed {
+                Some(seed) => {
+                    let mut rng = StdRng::seed_from_u64(seed);
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+                None => {
+                    let mut rng = OsRng;
+                    Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+                }
+            }
         }
+        _ => anyhow::bail!("unsupported circuit version: {version} (supported: 1, 2)"),
     };
 
     let pk_path: PathBuf = out_dir.join("proving_key.bin");

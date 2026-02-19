@@ -33,7 +33,13 @@ import os
 from typing import Any, Optional
 
 from .. import ZKPError, ZKPProof
-from ..canonicalization import canonicalize_axioms, hash_axioms_commitment, hash_theorem
+from ..canonicalization import (
+    canonicalize_axioms,
+    hash_axioms_commitment,
+    hash_theorem,
+    tdfol_v1_axioms_commitment_hex_v2,
+)
+from ..legal_theorem_semantics import derive_tdfol_v1_trace
 
 
 @dataclass
@@ -73,16 +79,34 @@ class Groth16Backend:
             raise ZKPError("At least one axiom required")
 
         canonical_axioms = canonicalize_axioms(private_axioms)
+
+        circuit_version = int((metadata or {}).get("circuit_version", 1))
+        ruleset_id = str((metadata or {}).get("ruleset_id", "TDFOL_v1"))
+
+        if circuit_version >= 2 and ruleset_id == "TDFOL_v1":
+            axioms_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
+            trace = derive_tdfol_v1_trace(canonical_axioms, theorem)
+            if trace is None:
+                raise ZKPError(
+                    "Theorem is not derivable under TDFOL_v1 semantics; "
+                    "cannot build a derivation trace for circuit_version=2"
+                )
+            intermediate_steps = trace
+        else:
+            axioms_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
+            intermediate_steps = []
+
         witness = {
             "private_axioms": canonical_axioms,
             # Preserve caller-provided theorem text in public inputs.
             # Hashing is canonicalized by canonicalization.hash_theorem().
             "theorem": theorem,
-            "axioms_commitment_hex": hash_axioms_commitment(canonical_axioms).hex(),
+            "intermediate_steps": intermediate_steps,
+            "axioms_commitment_hex": axioms_commitment_hex,
             "theorem_hash_hex": hash_theorem(theorem).hex(),
             "security_level": int((metadata or {}).get("security_level", 0)),
-            "circuit_version": int((metadata or {}).get("circuit_version", 1)),
-            "ruleset_id": str((metadata or {}).get("ruleset_id", "TDFOL_v1")),
+            "circuit_version": circuit_version,
+            "ruleset_id": ruleset_id,
         }
 
         seed = (metadata or {}).get("seed")

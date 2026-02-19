@@ -12,6 +12,7 @@ from .canonicalization import (
     canonicalize_axioms,
     hash_theorem,
     hash_axioms_commitment,
+    tdfol_v1_axioms_commitment_hex_v2,
 )
 from .circuits import MVPCircuit
 from .legal_theorem_semantics import derive_tdfol_v1_trace
@@ -83,9 +84,12 @@ class WitnessManager:
         
         # Canonicalize axioms for consistency
         canonical_axioms = canonicalize_axioms(axioms)
-        
-        # Generate commitment
-        axioms_commitment = hash_axioms_commitment(canonical_axioms)
+
+        # Generate commitment (scheme may vary by circuit version).
+        if circuit_version >= 2 and ruleset_id == "TDFOL_v1":
+            axioms_commitment_hex = tdfol_v1_axioms_commitment_hex_v2(canonical_axioms)
+        else:
+            axioms_commitment_hex = hash_axioms_commitment(canonical_axioms).hex()
         
         # Optionally derive a constraint-friendly trace for semantics circuits.
         #
@@ -100,13 +104,13 @@ class WitnessManager:
             axioms=canonical_axioms,
             theorem=theorem,
             intermediate_steps=intermediate_steps or [],
-            axioms_commitment_hex=axioms_commitment.hex(),
+            axioms_commitment_hex=axioms_commitment_hex,
             circuit_version=circuit_version,
             ruleset_id=ruleset_id,
         )
         
         # Cache for quick lookup
-        commitment_key = axioms_commitment.hex()
+        commitment_key = axioms_commitment_hex
         self._witness_cache[commitment_key] = witness
         
         return witness
@@ -156,8 +160,11 @@ class WitnessManager:
                     return False
             
             # Verify commitment is consistent
-            commitment = hash_axioms_commitment(witness.axioms)
-            if commitment.hex() != witness.axioms_commitment_hex:
+            if witness.circuit_version >= 2 and witness.ruleset_id == "TDFOL_v1":
+                expected = tdfol_v1_axioms_commitment_hex_v2(witness.axioms)
+            else:
+                expected = hash_axioms_commitment(witness.axioms).hex()
+            if expected != witness.axioms_commitment_hex:
                 return False
             
             return True
