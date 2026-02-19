@@ -170,9 +170,11 @@ class Groth16Backend(ZKPBackend):
         # crate is located outside of the Python package tree).
         for env_var in ("IPFS_DATASETS_GROTH16_BINARY", "GROTH16_BINARY"):
             override = os.environ.get(env_var)
-            if override and Path(override).exists():
-                logger.info(f"Using Groth16 binary from ${env_var}: {override}")
-                return override
+            if override:
+                if Path(override).exists():
+                    logger.info(f"Using Groth16 binary from ${env_var}: {override}")
+                    return override
+                logger.warning(f"${env_var} is set but path does not exist: {override}")
 
         # Project layout notes:
         # - In this monorepo, the Rust crate typically lives *inside* the Python

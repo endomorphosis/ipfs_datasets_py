@@ -14,6 +14,7 @@ Status: Phase 3C.2 Integration Testing
 
 import json
 import subprocess
+import logging
 import pytest
 from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
@@ -95,6 +96,25 @@ class TestGroth16BackendInitialization:
         # This just verifies the method runs without error
         backend = Groth16FFIBackend()
         # Should not raise even if binary not found
+        assert backend is not None
+
+    def test_env_override_binary_path(self, tmp_path, monkeypatch):
+        """Test discovery honors IPFS_DATASETS_GROTH16_BINARY when present."""
+        override_path = tmp_path / "groth16"
+        override_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        monkeypatch.setenv("IPFS_DATASETS_GROTH16_BINARY", str(override_path))
+
+        backend = Groth16FFIBackend(binary_path=None)
+        assert backend.binary_path == str(override_path)
+
+    def test_env_override_missing_warns_and_falls_back(self, tmp_path, monkeypatch, caplog):
+        """Test missing env override warns but doesn't hard-fail."""
+        caplog.set_level(logging.WARNING, logger="ipfs_datasets_py.logic.zkp.backends.groth16_ffi")
+        missing_path = tmp_path / "does-not-exist" / "groth16"
+        monkeypatch.setenv("IPFS_DATASETS_GROTH16_BINARY", str(missing_path))
+
+        backend = Groth16FFIBackend()
+        assert "IPFS_DATASETS_GROTH16_BINARY is set but path does not exist" in caplog.text
         assert backend is not None
 
 
