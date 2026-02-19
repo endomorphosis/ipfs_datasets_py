@@ -222,6 +222,13 @@ setup(
             'pytest-benchmark>=4.0.0',
             'hypothesis>=6.0.0',
         ],
+
+        # ZKP Groth16 (Rust FFI wrapper)
+        # Note: the Rust binary itself is not a Python dependency.
+        'groth16': [
+            'jsonschema>=4.0.0',
+        ],
+
         # PDF processing dependencies
         'pdf': [
             'pdfplumber>=0.11.7',  # Primary PDF tool (works on all platforms)
