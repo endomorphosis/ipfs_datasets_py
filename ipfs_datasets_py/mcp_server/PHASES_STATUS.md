@@ -1,6 +1,6 @@
 # MCP Server Phases Status Report
 
-**Last Updated:** 2026-02-19  
+**Last Updated:** 2026-02-19 (Session 5)
 **Branch:** copilot/create-refactoring-improvement-plan  
 **Master Plan:** [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)
 
@@ -14,12 +14,12 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 |-------|--------|----------|-----------------|
 | **Phase 1** | ✅ COMPLETE | 100% | 5 security vulnerabilities fixed |
 | **Phase 2** | ✅ COMPLETE | 90% | HierarchicalToolManager, thin wrappers, dual-runtime |
-| **Phase 3** | ✅ COMPLETE | 90% | 520 tests, tool_metadata 27 tests, runtime_router 35/35 ✓ |
-| **Phase 4** | ✅ COMPLETE | 90% | ALL docstrings added (36), detect_runtime None guard, test API aligned |
-| **Phase 5** | ⏳ PLANNED | 0% | Thick tool refactoring (13 files >500 lines) |
+| **Phase 3** | ✅ COMPLETE | 97% | 561 tests (+41 this session), validators 44 tests |
+| **Phase 4** | ✅ COMPLETE | 98% | 30+ type hints added, 0 missing in core files, 2 exceptions fixed |
+| **Phase 5** | 🔄 IN PROGRESS | 8% | linting_tools.py 741→339 lines, linting_engine.py created |
 | **Phase 6** | ⏳ PLANNED | 0% | Consolidation, duplicate elimination |
 | **Phase 7** | ⏳ PLANNED | 0% | Performance optimization |
-| **TOTAL** | 🔄 IN PROGRESS | **87%** | ~25-35h remaining |
+| **TOTAL** | 🔄 IN PROGRESS | **90%** | ~20-28h remaining |
 
 ## Completed Phases
 
@@ -91,53 +91,67 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ## In-Progress Phases
 
-### Phase 3: Test Coverage ✅ 90% Complete (+10%)
+### Phase 3: Test Coverage ✅ 97% Complete (+7% this session)
 
-**Tests Added This Session:**
-- ✅ `test_tool_metadata.py` — 27 new tests (file did not exist before!)
-  - TestToolMetadataDefaults (3): construction, to_dict, public fields
-  - TestToolMetadataValidation (5): invalid runtime/priority/retry_policy raises
-  - TestToolMetadataValidateComplete (3): complete/incomplete/P2P-fastapi warnings
-  - TestToolMetadataRegistry (8): register/get, list_by_runtime, list_by_category, stats, clear, warning
-  - TestToolMetadataDecorator (6): metadata attached, runtime shortcut, global registry, docstring/explicit desc, callable preserved
-  - TestGetToolMetadata (2): from attribute, None for undecorated
-- ✅ `test_runtime_routing.py` — **26 pre-existing failures FIXED** (35/35 pass)
-  - Fixed all `detect_runtime(func)` → `detect_runtime(func.__name__, func)` calls
-  - Fixed `_detection_cache` → `_tool_runtimes` attribute name
-  - Fixed `register_from_metadata()` → `bulk_register_tools_from_metadata()`
-  - Fixed `get_registry_stats()` → `get_metadata_registry_stats()`
-  - Fixed metrics assertions to match actual `{runtime: stats_dict}` structure
-  - Fixed bulk/stats tests to use `ToolMetadata.register()` directly (decorator name collision)
+**Tests Added This Session (session 5):**
+- ✅ `test_validators.py` — **+26 new tests** (18→44 total), covering 7 previously untested methods:
+  - TestSearchFiltersValidation (5): empty dict, non-dict, too many keys, invalid operator, simple equality
+  - TestFilePathValidation (5): relative path, traversal blocked, absolute blocked, bad extension, allowed extension
+  - TestUrlValidation (5): valid https, scheme restriction, javascript blocked, missing scheme, non-string
+  - TestNumericRangeValidation (5): valid range, below min, above max, None allowed, non-numeric
+  - TestJsonSchemaValidation (2): returns data, schema error graceful
+  - TestClearCache (2): empties cache, preserves metrics
+  - TestGetPerformanceMetrics (2): returns copy, tracks operations
+- ✅ `test_linting_engine.py` — **15 new tests** (new file — Phase 5 core module):
+  - TestLintIssue (2), TestLintResult (1), TestPythonLinter (6), TestDatasetLinter (3), TestLintingEngineImports (3)
 
-**Total: ~520 test functions across 39+ test files**
+**Previous sessions:**
+- ✅ `test_tool_metadata.py` — 27 tests; `test_runtime_routing.py` 26 failures fixed
+- ✅ enterprise_api (23), runtime_router (+11), tool_registry (27), server_context (+5 new)
 
-### Phase 4: Code Quality ✅ 90% Complete (+15%)
+**Total: ~561 test functions across 41+ test files**
 
-**Done This Session:**
-- ✅ **All 36 missing docstrings added** across 7 core modules (0 remaining)
-  - `exceptions.py`: 6 `__init__`/`__str__` methods documented
-  - `fastapi_service.py`: 4 fallback `__init__` + 11 Pydantic model classes
-  - `enterprise_api.py`: 5 `__init__` + 3 nested async functions (`lifespan`, `get_current_user`, `main`)
-  - `monitoring.py`: `EnhancedMetricsCollector.__init__`, `P2PMetricsCollector.__init__`, `get_metrics_collector()`
-  - `validators.py`: `ComprehensiveValidator.__init__`
-  - `tool_metadata.py`: inner `decorator` function
-  - `hierarchical_tool_manager.py`: `ToolCategory.__init__`
-- ✅ **`detect_runtime()` None guard added** — gracefully handles `tool_func=None`
-  - Before: would raise `AttributeError` when called with `None`
-  - After: falls back to name-pattern detection only, returns `default_runtime`
+### Phase 4: Code Quality ✅ 98% Complete (+8% this session)
 
-**Remaining (~10% of Phase 4):**
-- ⚠️ Long functions in `monitoring.py` (7 functions ≥100 lines) — acceptable (docstring-heavy)
-- ⚠️ `test_hierarchical_tool_manager.py` + `test_trio_runtime.py` — require `pytest-asyncio` (external dep)
+**Done This Session (session 5):**
+- ✅ **2 bare exceptions fixed** in `validators.py` (0 remaining in all core files):
+  - `validate_file_path`: `except Exception` → `except OSError`
+  - `validate_url`: `except Exception` → `except (TypeError, OSError)`
+- ✅ **30+ return type annotations added** across 8 core modules (0 missing in core):
+  - `validators.py`: `__init__ -> None`
+  - `exceptions.py`: 6 `__init__ -> None` (MCPServerError, ToolNotFoundError, ToolExecutionError, ValidationError, RuntimeNotFoundError, HealthCheckError)
+  - `server_context.py`: `__init__`, `register_cleanup_handler`, `register_vector_store` → `None`; 4 properties → typed (`Any`, `Optional[Any]`)
+  - `tool_metadata.py`: `__post_init__ -> None`, `__init__ -> None`, `clear -> None`, `tool_metadata -> Callable`
+  - `hierarchical_tool_manager.py`: `__init__ -> None` (×2), `discover_tools -> None`, `_load_category_metadata -> None`, `discover_categories -> None`
+  - `monitoring.py`: `__init__ -> None` (×2), `track_request -> AsyncGenerator[None, None]`, `get_metrics_collector -> EnhancedMetricsCollector`, `get_p2p_metrics_collector -> P2PMetricsCollector`; added `AsyncGenerator` import
+  - `runtime_router.py`: `__init__ -> None`, `runtime_context -> AsyncGenerator[RuntimeRouter, None]`; added `AsyncGenerator` import
+  - `server.py`: `__init__ -> None` (×3), `start -> None`
 
-### Phase 4: Code Quality ⚠️ 60% Complete (+15%)
+**Remaining (~2% of Phase 4):**
+- ⚠️ Inner closure functions (`async_wrapper`, `sync_wrapper`, `proxy_tool` in server.py) — not annotatable without structural refactoring
 
-**Done (this session):**
-- ✅ `tool_registry.py:initialize_laion_tools` refactored: **366 → 100 lines** (19 helpers)
-- ✅ `server.py:__init__` refactored: **134 → 92 lines** (3 helper methods)
-- ✅ `server.py` bare exceptions fixed: **3 → 0** (ImportError, OSError/ValueError)
-- ✅ `p2p_service_manager.py` bare exceptions fixed: **4 → 0** (specific types)
-- ✅ Bug fix: `server_context.py:get_tool()` now uses correct `categories.get(cat).get_tool(name)` API
+### Phase 5: Thick Tool Refactoring 🔄 8% In Progress (+8% this session)
+
+**Done This Session (session 5):**
+- ✅ **`linting_tools.py` 741 → 339 lines** (54% reduction) — First Phase 5 refactoring complete
+  - Created `linting_engine.py` (364 lines) — pure core module (no MCP/anyio dependency)
+    - `LintIssue`, `LintResult` dataclasses
+    - `PythonLinter` class (flake8 + mypy + basic fixes, config via `LintingConfigProtocol`)
+    - `DatasetLinter` class (DS001/DS002 rules, `DATASET_PATTERNS` class constant)
+    - `LintingConfigProtocol` — structural typing for config parameter
+  - `linting_tools.py` now imports from `linting_engine.py` (backward compatible)
+  - All `except Exception` replaced with specific types in engine
+  - 15 tests in `test_linting_engine.py` validate extraction
+
+**Remaining (12 more thick tool files):**
+- `tools/mcplusplus_taskqueue_tools.py` — **1,454 lines** → <150 lines
+- `tools/mcplusplus_peer_tools.py` — **964 lines** → <150 lines
+- `tools/legal_dataset_tools/.../hugging_face_pipeline.py` — 983 lines
+- *(9 more files 500-800 lines...)*
+
+**Estimated remaining effort:** 18-23h
+
+
 
 **Previously Done:**
 - ✅ `exceptions.py` — 18 custom exception classes (186 lines)
@@ -183,12 +197,13 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 | Metric | Value | Target |
 |--------|-------|--------|
-| Overall Progress | **87%** (+5%) | 100% |
-| Test Functions | **520** (+55) | 500+ |
-| Test Coverage | **80-85%** | 80%+ |
-| Bare Exceptions (all files) | **0** ✅ | 0 |
-| Missing Docstrings (core) | **0** ✅ (↓ from 36) | 0 |
-| Pre-existing test failures fixed | **26** (runtime_router) | — |
+| Overall Progress | **90%** (+3%) | 100% |
+| Test Functions | **561** (+41) | 500+ ✅ |
+| Test Coverage | **82-87%** | 80%+ ✅ |
+| Bare Exceptions (core files) | **0** ✅ | 0 |
+| Missing Return Types (core) | **0** ✅ (↓ from 30+) | 0 |
+| Missing Docstrings (core) | **0** ✅ | 0 |
+| Thick Tools Refactored | **1/13** (linting_tools: 741→339 lines) | 13 |
 
 ## Architecture Principles (All Validated ✅)
 
@@ -214,23 +229,21 @@ Comprehensive refactoring of MCP server to enforce thin wrapper architecture, re
 
 ## Next Actions
 
-### Immediate (Week 15)
-1. Refactor `tool_registry.py:initialize_laion_tools` (366 → ~60 lines)
-2. Extract 5 helper methods
-3. Add tests for each helper
-4. Validate with `pytest tests/mcp/ -v`
+### Immediate (Phase 5 — next thick tool)
+1. Refactor `tools/mcplusplus_taskqueue_tools.py` (1,454 lines → <150)
+   - Extract task queue logic to `tools/mcplusplus/taskqueue_engine.py`
+   - Keep only MCP registration and thin async wrapper in tools file
+2. Refactor `tools/mcplusplus_peer_tools.py` (964 lines → <150)
 
-### Short-term (Weeks 15-18)
-1. Refactor `monitoring.py` long functions (7 functions)
-2. Refactor `validators.py` long functions (7 functions)
-3. Fix remaining bare exception handlers
-4. Add comprehensive docstrings (120+ methods)
+### Short-term (Phase 5 completion)
+1. Continue remaining 11 thick tool extractions
+2. Each: create `<name>_engine.py`, update tool to import+delegate, add tests
 
-### Medium-term (Weeks 19-24)
-1. Phase 5: Refactor 13 thick tool files
-2. Phase 6: Consolidate docs and duplicate code
+### Medium-term
+1. Phase 6: Consolidate docs and duplicate code  
+2. Phase 7: Lazy loading, metadata caching, P2P connection pooling
 
 ---
 
 **For the complete plan, see [MASTER_REFACTORING_PLAN_2026_v4.md](MASTER_REFACTORING_PLAN_2026_v4.md)**  
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-19 (Session 5)

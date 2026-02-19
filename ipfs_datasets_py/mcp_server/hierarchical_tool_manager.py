@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class ToolCategory:
     """Represents a category of tools."""
     
-    def __init__(self, name: str, path: Path, description: str = ""):
+    def __init__(self, name: str, path: Path, description: str = "") -> None:
         """Initialise a tool category backed by a directory on disk.
 
         Args:
@@ -49,7 +49,7 @@ class ToolCategory:
         self._tool_metadata: Dict[str, Dict[str, Any]] = {}
         self._discovered = False
     
-    def discover_tools(self):
+    def discover_tools(self) -> None:
         """Discover all tools in this category."""
         if self._discovered:
             return
@@ -199,7 +199,7 @@ class HierarchicalToolManager:
                                        source="squad")
     """
     
-    def __init__(self, tools_root: Optional[Path] = None):
+    def __init__(self, tools_root: Optional[Path] = None) -> None:
         """Initialize the hierarchical tool manager.
         
         Args:
@@ -216,13 +216,13 @@ class HierarchicalToolManager:
         # Load category metadata
         self._load_category_metadata()
     
-    def _load_category_metadata(self):
+    def _load_category_metadata(self) -> None:
         """Load metadata for all categories."""
         # This could be from JSON files, but for now we'll use defaults
         # Users can customize by creating category.json files
         pass
     
-    def discover_categories(self):
+    def discover_categories(self) -> None:
         """Discover all tool categories."""
         if self._discovered_categories:
             return

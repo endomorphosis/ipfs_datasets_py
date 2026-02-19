@@ -20,7 +20,7 @@ class MCPServerError(Exception):
         details: Optional dictionary with additional error context
     """
     
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None) -> None:
         """Initialise with a human-readable message and optional detail dict.
 
         Args:
@@ -49,7 +49,7 @@ class ToolError(MCPServerError):
 class ToolNotFoundError(ToolError):
     """Raised when a requested tool cannot be found."""
     
-    def __init__(self, tool_name: str, category: Optional[str] = None):
+    def __init__(self, tool_name: str, category: Optional[str] = None) -> None:
         """Initialise with the missing tool name and optional category.
 
         Args:
@@ -67,7 +67,7 @@ class ToolNotFoundError(ToolError):
 class ToolExecutionError(ToolError):
     """Raised when tool execution fails."""
     
-    def __init__(self, tool_name: str, original_error: Exception):
+    def __init__(self, tool_name: str, original_error: Exception) -> None:
         """Initialise with the tool name and the underlying cause.
 
         Args:
@@ -91,7 +91,7 @@ class ToolRegistrationError(ToolError):
 class ValidationError(MCPServerError):
     """Raised when input validation fails."""
     
-    def __init__(self, field: str, message: str):
+    def __init__(self, field: str, message: str) -> None:
         """Initialise with the field name and a description of the violation.
 
         Args:
@@ -112,7 +112,7 @@ class RuntimeRoutingError(MCPServerError):
 class RuntimeNotFoundError(RuntimeRoutingError):
     """Raised when requested runtime is not available."""
     
-    def __init__(self, runtime: str):
+    def __init__(self, runtime: str) -> None:
         """Initialise with the name of the unavailable runtime.
 
         Args:
@@ -168,7 +168,7 @@ class ServerShutdownError(MCPServerError):
 class HealthCheckError(MCPServerError):
     """Raised when health check fails."""
     
-    def __init__(self, check_name: str, message: str):
+    def __init__(self, check_name: str, message: str) -> None:
         """Initialise with the health-check name and a failure description.
 
         Args:

@@ -7,7 +7,7 @@ import logging
 import psutil
 import threading
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable, Union
+from typing import Dict, Any, List, Optional, Callable, Union, AsyncGenerator
 from dataclasses import dataclass, field
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -53,7 +53,7 @@ class EnhancedMetricsCollector:
     Provides comprehensive performance tracking, health monitoring, and alerting.
     """
     
-    def __init__(self, enabled: bool = True, retention_hours: int = 24):
+    def __init__(self, enabled: bool = True, retention_hours: int = 24) -> None:
         """Initialise the metrics collector with optional retention settings.
 
         Args:
@@ -281,7 +281,7 @@ class EnhancedMetricsCollector:
                 self.histograms[labeled_name].append(value)
     
     @asynccontextmanager
-    async def track_request(self, endpoint: str):
+    async def track_request(self, endpoint: str) -> AsyncGenerator[None, None]:
         """Context manager to track request duration and count."""
         try:
             task_id = str(id(anyio.get_current_task()))
@@ -922,7 +922,7 @@ class P2PMetricsCollector:
     Integrates with EnhancedMetricsCollector for comprehensive P2P monitoring.
     """
     
-    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None):
+    def __init__(self, base_collector: Optional[EnhancedMetricsCollector] = None) -> None:
         """Initialise the P2P metrics collector.
 
         Args:
@@ -1740,7 +1740,7 @@ class P2PMetricsCollector:
 # ✅ BETTER APPROACH
 metrics_collector = None
 
-def get_metrics_collector():
+def get_metrics_collector() -> EnhancedMetricsCollector:
     """Get or create the global :class:`EnhancedMetricsCollector` singleton.
 
     Returns:
@@ -1755,7 +1755,7 @@ def get_metrics_collector():
 # P2P metrics collector instance
 p2p_metrics_collector = None
 
-def get_p2p_metrics_collector():
+def get_p2p_metrics_collector() -> P2PMetricsCollector:
     """Get or create the global P2P metrics collector instance."""
     global p2p_metrics_collector
     if p2p_metrics_collector is None:

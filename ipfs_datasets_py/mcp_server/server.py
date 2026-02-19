@@ -84,11 +84,11 @@ except ImportError as e:
         FastMCP = None  # type: ignore[assignment]
 
         class TextContent:  # type: ignore[no-redef]
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 raise ImportError("mcp is required to construct TextContent")
 
         class CallToolResult:  # type: ignore[no-redef]
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs) -> None:
                 raise ImportError("mcp is required to construct CallToolResult")
 
         Tool = Any  # type: ignore[assignment]
@@ -324,7 +324,7 @@ class IPFSDatasetsMCPServer:
         - Tool execution is sandboxed for security and stability
     """
 
-    def __init__(self, server_configs: Optional[Configs] = None):
+    def __init__(self, server_configs: Optional[Configs] = None) -> None:
         """
         Initialize IPFS Datasets MCP Server with Comprehensive Configuration
 
@@ -814,7 +814,7 @@ class IPFSDatasetsMCPServer:
                 except Exception as e:
                     logger.warning(f"Unexpected error stopping P2P service: {e}", exc_info=True)
 
-    async def start(self, host: str = "0.0.0.0", port: int = 8000):
+    async def start(self, host: str = "0.0.0.0", port: int = 8000) -> None:
         """
         Start the MCP server in HTTP mode (legacy).
 
@@ -941,7 +941,7 @@ class Args(pydantic.BaseModel):
     ipfs_kit_mcp_url: Optional[pydantic.AnyUrl] = None
     config: Optional[pydantic.FilePath] = None
 
-    def __init__(self, namespace: argparse.Namespace):
+    def __init__(self, namespace: argparse.Namespace) -> None:
         super().__init__(
             host=namespace.host,
             port=namespace.port,

@@ -101,7 +101,7 @@ class ServerContext:
         ...     result = context.execute_tool("tool_name", **kwargs)
     """
     
-    def __init__(self, config: Optional[ServerConfig] = None):
+    def __init__(self, config: Optional[ServerConfig] = None) -> None:
         """
         Initialize server context.
         
@@ -274,7 +274,7 @@ class ServerContext:
         # Clear cleanup handlers
         self._cleanup_handlers.clear()
     
-    def register_cleanup_handler(self, handler: Callable):
+    def register_cleanup_handler(self, handler: Callable) -> None:
         """Register a cleanup handler to be invoked during context exit and shutdown.
         
         This method registers a callable that will be invoked when the ServerContext
@@ -354,28 +354,28 @@ class ServerContext:
             self._cleanup_handlers.append(handler)
     
     @property
-    def tool_manager(self):
+    def tool_manager(self) -> Any:
         """Get the hierarchical tool manager."""
         if not self._entered:
             raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
         return self._tool_manager
     
     @property
-    def metadata_registry(self):
+    def metadata_registry(self) -> Any:
         """Get the tool metadata registry."""
         if not self._entered:
             raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
         return self._metadata_registry
     
     @property
-    def p2p_services(self):
+    def p2p_services(self) -> Optional[Any]:
         """Get P2P services (if enabled)."""
         if not self._entered:
             raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
         return self._p2p_services
     
     @property
-    def workflow_scheduler(self):
+    def workflow_scheduler(self) -> Optional[Any]:
         """Get workflow scheduler (if initialized)."""
         if not self._entered:
             raise RuntimeError("ServerContext not entered. Use 'with ServerContext() as ctx:'")
@@ -407,7 +407,7 @@ class ServerContext:
         with self._lock:
             return self._vector_stores.get(name)
     
-    def register_vector_store(self, name: str, store: Any):
+    def register_vector_store(self, name: str, store: Any) -> None:
         """
         Register a vector store.
         

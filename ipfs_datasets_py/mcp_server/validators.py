@@ -46,7 +46,7 @@ class EnhancedParameterValidator:
     SUPPORTED_TEXT_EXTENSIONS = {'.txt', '.md', '.json', '.csv', '.xml', '.html', '.yaml', '.yml'}
     SUPPORTED_DATA_EXTENSIONS = {'.parquet', '.arrow', '.feather', '.hdf5', '.h5'}
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialise the validator with an empty cache and zeroed performance counters."""
         self.validation_cache: Dict[str, bool] = {}
         self.performance_metrics = {
@@ -604,7 +604,7 @@ class EnhancedParameterValidator:
         except (TypeError, ValueError) as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("file_path", f"Invalid file path format: {e}")
-        except Exception as e:
+        except OSError as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("file_path", f"Unexpected error parsing file path: {e}")
         
@@ -840,7 +840,7 @@ class EnhancedParameterValidator:
         except (AttributeError, ValueError) as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("url", f"Invalid URL format: {e}")
-        except Exception as e:
+        except (TypeError, OSError) as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("url", f"Unexpected error parsing URL: {e}")
         

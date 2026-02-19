@@ -90,7 +90,7 @@ class ToolMetadata:
     # Internal attributes
     _func: Optional[Callable] = field(default=None, repr=False, compare=False)
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate metadata after initialization."""
         if self.runtime not in (RUNTIME_FASTAPI, RUNTIME_TRIO, RUNTIME_AUTO):
             raise ValueError(f"Invalid runtime: {self.runtime}")
@@ -145,7 +145,7 @@ class ToolMetadataRegistry:
         >>> trio_tools = registry.list_by_runtime("trio")
     """
     
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the registry."""
         self._registry: Dict[str, ToolMetadata] = {}
         self._by_runtime: Dict[str, Set[str]] = {
@@ -253,7 +253,7 @@ class ToolMetadataRegistry:
             "categories": len(self._by_category)
         }
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all registered metadata (for testing)."""
         self._registry.clear()
         self._by_runtime = {
@@ -310,7 +310,7 @@ def tool_metadata(
     io_intensive: bool = False,
     mcp_schema: Optional[dict] = None,
     mcp_description: Optional[str] = None
-):
+) -> Callable:
     """
     Decorator to register tool metadata.
     
