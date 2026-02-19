@@ -136,7 +136,7 @@ fn emit_error_json_to_stdout(code: &str, message: &str) {
         Err(_) => {
             print!(
                 "{}\n",
-                r#"{\"error\":{\"schema_version\":1,\"code\":\"INTERNAL\",\"message\":\"failed to serialize error\"}}"#
+                r#"{"error":{"schema_version":1,"code":"INTERNAL","message":"failed to serialize error"}}"#
             );
         }
     }
@@ -190,7 +190,7 @@ fn main() {
                     // - 0: valid
                     // - 1: invalid
                     if json {
-                        print!(r#"{{\"valid\":{}}}\n"#, if is_valid { "true" } else { "false" });
+                        print!(r#"{{"valid":{}}}\n"#, if is_valid { "true" } else { "false" });
                     }
                     if !quiet {
                         if is_valid {
