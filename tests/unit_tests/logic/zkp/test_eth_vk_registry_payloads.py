@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from ipfs_datasets_py.logic.zkp.eth_vk_registry_payloads import (
+    build_register_vk_calldata,
     build_register_vk_payload,
     normalize_bytes32_hex,
     vk_hash_hex_to_bytes32,
@@ -41,3 +42,21 @@ def test_build_register_vk_payload_validates_uint64_and_hex():
             version=-1,
             vk_hash_hex="2" * 64,
         )
+
+
+def test_build_register_vk_calldata_is_optional_dependency_gated():
+    payload = build_register_vk_payload(
+        circuit_id_bytes32="0x" + "1" * 64,
+        version=1,
+        vk_hash_hex="2" * 64,
+    )
+
+    try:
+        calldata = build_register_vk_calldata(payload=payload, overwrite=False)
+    except ImportError:
+        pytest.skip("web3/eth_abi not installed")
+
+    assert isinstance(calldata, str)
+    assert calldata.startswith("0x")
+    # selector (4) + 4 args * 32 = 132 bytes => 264 hex chars + 0x
+    assert len(calldata) == 2 + (132 * 2)

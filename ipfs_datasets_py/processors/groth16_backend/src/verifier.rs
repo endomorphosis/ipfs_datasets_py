@@ -3,8 +3,8 @@
 
 use crate::ProofOutput;
 
-use ark_ff::PrimeField;
 use ark_bn254::{Bn254, Fq, Fq2, Fr, G1Affine, G2Affine};
+use ark_ff::PrimeField;
 use ark_groth16::{prepare_verifying_key, Groth16, Proof, VerifyingKey};
 use ark_serialize::CanonicalDeserialize;
 use std::env;
@@ -240,42 +240,4 @@ mod tests {
 
         let _ = std::fs::remove_dir_all(&root);
     }
-}
-            public_inputs: vec![
-                "0x4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
-                "0X03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "1".to_string(),
-                "TDFOL_v1".to_string(),
-            ],
-            timestamp: 0,
-            version: 1,
-            extra: Default::default(),
-        };
-
-        let result = verify_proof(&proof).expect("verify");
-        assert!(result);
-    }
-
-    #[test]
-    fn test_verifier_rejects_mismatched_version_field() {
-        let proof = ProofOutput {
-            schema_version: 1,
-            proof_a: "[1,0]".to_string(),
-            proof_b: "[[1,0],[0,1]]".to_string(),
-            proof_c: "[1,0]".to_string(),
-            public_inputs: vec![
-                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
-                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "1".to_string(),
-                "TDFOL_v1".to_string(),
-            ],
-            timestamp: 0,
-            version: 2,
-            extra: Default::default(),
-        };
-
-        let result = verify_proof(&proof).expect("verify");
-        assert!(!result);
-    }
-
 }

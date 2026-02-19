@@ -89,3 +89,50 @@ def build_register_vk_payload(
         version=version,
         vk_hash_bytes32=vk_hash_hex_to_bytes32(vk_hash_hex),
     )
+
+
+def build_register_vk_calldata(
+    *,
+    payload: RegisterVKPayload,
+    overwrite: bool = False,
+) -> str:
+    """Build EVM calldata for VKHashRegistry.registerVK.
+
+    Signature: registerVK(bytes32,uint64,bytes32,bool)
+
+    This helper is optional-dependency gated; it requires `web3` (for keccak)
+    and `eth_abi` (for ABI encoding).
+
+    Raises:
+        ImportError: if web3/eth_abi are not installed.
+    """
+    if not isinstance(overwrite, bool):
+        raise TypeError("overwrite must be bool")
+
+    try:
+        from web3 import Web3  # type: ignore
+    except ModuleNotFoundError as e:  # pragma: no cover
+        raise ImportError(
+            "Optional dependency 'web3' is required to build calldata. "
+            "Install it (e.g. `pip install web3`) or build calldata in your EVM stack."
+        ) from e
+
+    try:
+        from eth_abi import encode  # type: ignore
+    except ModuleNotFoundError as e:  # pragma: no cover
+        raise ImportError(
+            "Optional dependency 'eth_abi' is required to ABI-encode calldata. "
+            "It is typically installed as a transitive dependency of web3."
+        ) from e
+
+    signature = "registerVK(bytes32,uint64,bytes32,bool)"
+    selector = Web3.keccak(text=signature)[:4]
+
+    circuit_id_b = Web3.to_bytes(hexstr=payload.circuit_id_bytes32)
+    vk_hash_b = Web3.to_bytes(hexstr=payload.vk_hash_bytes32)
+
+    encoded_args = encode(
+        ["bytes32", "uint64", "bytes32", "bool"],
+        [circuit_id_b, payload.version, vk_hash_b, overwrite],
+    )
+    return "0x" + (selector + encoded_args).hex()
