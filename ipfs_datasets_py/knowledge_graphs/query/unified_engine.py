@@ -307,6 +307,8 @@ class UnifiedQueryEngine:
                 ) from e
             except QueryError:
                 raise
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 logger.error(f"Cypher query execution failed: {e}")
                 raise QueryExecutionError(
@@ -371,6 +373,8 @@ class UnifiedQueryEngine:
                     }
                 ) from e
             except QueryError:
+                raise
+            except asyncio.CancelledError:
                 raise
             except Exception as e:
                 logger.error(f"IR query execution failed: {e}")
@@ -448,6 +452,8 @@ class UnifiedQueryEngine:
                     details={'query': query}
                 ) from e
             except QueryError:
+                raise
+            except asyncio.CancelledError:
                 raise
             except Exception as e:
                 logger.error(f"Hybrid search execution failed: {e}")
@@ -529,6 +535,8 @@ class UnifiedQueryEngine:
                             'answer': "Reasoning unavailable - using search results only",
                             'error': str(e)
                         }
+                    except asyncio.CancelledError:
+                        raise
                     except Exception as e:
                         logger.error(f"Unexpected LLM reasoning error: {e}")
                         raise QueryExecutionError(
@@ -566,6 +574,8 @@ class UnifiedQueryEngine:
                     f"GraphRAG query timed out: {e}",
                     details={'question': question, 'depth': reasoning_depth}
                 ) from e
+            except asyncio.CancelledError:
+                raise
             except Exception as e:
                 logger.error(f"GraphRAG execution failed: {e}")
                 raise QueryExecutionError(
