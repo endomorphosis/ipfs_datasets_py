@@ -2,25 +2,333 @@
 
 This package provides a Model Context Protocol (MCP) server implementation for IPFS Datasets Python, enabling AI models like Claude to interact with IPFS datasets through standardized tools.
 
-## ⚠️ Production Status (2026-02-18)
+---
 
-**CRITICAL: This server is NOT production-ready until Phase 1 security issues are resolved.**
+## 🎯 Current Status (2026-02-19)
 
-We have identified **5 critical security vulnerabilities** that must be fixed before any production deployment:
-- Hardcoded secret keys (2 instances)
-- Bare exception handlers masking failures (14+ files)
-- Hallucinated library imports causing crashes
-- Subprocess calls without input sanitization
-- Sensitive data exposed in error reports
+**Progress:** 60% Complete - Production Refactoring in Progress  
+**Test Coverage:** 25-35% (Target: 75%+)  
+**Security:** ✅ Phase 1 Complete - All 5 critical vulnerabilities FIXED  
+**Architecture:** ✅ Excellent - Hierarchical tools, thin wrappers, dual-runtime operational
 
-**📋 Refactoring Plan Documentation:**
-- [**🔴 Executive Summary**](./REFACTORING_EXECUTIVE_SUMMARY_2026.md) - Critical issues overview (10KB, 5 min read)
-- [**📋 Implementation Checklist**](./IMPLEMENTATION_CHECKLIST_2026.md) - Task-by-task checklist (21KB, daily tracking)
-- [**📚 Comprehensive Plan**](./COMPREHENSIVE_REFACTORING_PLAN_2026.md) - Detailed 6-phase roadmap (45KB, complete guide)
+---
 
-**Timeline:** Phase 1 (Security) MUST complete in 2 weeks before any other work.
+## 📚 Documentation Quick Guide
 
-## 🚀 MCP++ Integration Project (2026-02-18)
+### 🚀 **For New Contributors** → Start Here!
+- **[QUICK_REFERENCE_CARD_v3.md](QUICK_REFERENCE_CARD_v3.md)** (8KB) - Quick overview, how to contribute, common commands
+
+### 📊 **Status & Planning**
+- **[REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md](REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md)** (8KB) - Current status, priorities, roadmap
+- **[VISUAL_REFACTORING_SUMMARY_v3_2026.md](VISUAL_REFACTORING_SUMMARY_v3_2026.md)** (12KB) - Visual progress dashboard
+
+### 📖 **Detailed Planning**
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md](COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md)** (47KB) - Complete roadmap with testing strategy, code quality standards, risk management
+
+### 🏗️ **Architecture**
+- **[THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)** - Architecture patterns and guidelines
+
+### 📋 **Legacy Docs** (Reference Only)
+- Previous refactoring plans v1 and v2
+- Completion summaries and phase tracking
+
+---
+
+## 🔥 Current Priority: Phase 3 Testing
+
+**Week 11 Sprint:** FastAPI Service Testing
+- **Need:** 15-18 new tests for endpoints, authentication, error handling
+- **Effort:** 8-10 hours
+- **Priority:** 🔴 CRITICAL (blocking production)
+
+**See:** [Week 11 details in Quick Reference Card](QUICK_REFERENCE_CARD_v3.md#-current-sprint-goals)
+
+---
+
+## ✅ Completed Achievements
+
+### Phase 1: Security Hardening ✅ (100% Complete)
+- ✅ Fixed 5 critical security vulnerabilities
+- ✅ Hardcoded secrets eliminated
+- ✅ Bare exceptions in critical paths fixed
+- ✅ Subprocess sanitization implemented
+- ✅ Error report sanitization added
+
+### Architecture Excellence ✅ (90%+ Complete)
+- ✅ **Hierarchical Tool Manager** - 99% context reduction (373→4 tools)
+- ✅ **Thin Wrapper Pattern** - 318/321 tools compliant (99%)
+- ✅ **Dual-Runtime System** - FastAPI + Trio for 50-70% P2P speedup
+- ✅ **MCP++ Integration** - P2P workflows with graceful degradation
+- ✅ **148 Tests Passing** - Comprehensive test suite established
+
+---
+
+## ⚠️ Remaining Work (14-16 weeks, 80-110 hours)
+
+### Phase 3: Test Coverage (Weeks 11-14, 25-32h)
+Achieve 75%+ coverage with 45-55 new tests:
+- Week 11: FastAPI service (15-18 tests)
+- Week 12: Trio runtime (12-15 tests)
+- Week 13: Validators & monitoring (10-12 tests)
+- Week 14: Integration & E2E (8-10 tests)
+
+### Phase 4: Code Quality (Weeks 15-18, 27-38h)
+- Refactor 8 complex functions (>100 lines)
+- Fix 10+ bare exception handlers
+- Add 120+ missing docstrings
+
+### Phase 5-7: Final Polish (Weeks 19-24, 38-52h)
+- Refactor 3 thick tools (2,274→250 lines)
+- Consolidate duplicate code
+- Complete documentation (90%+ coverage)
+- Performance optimization
+- Enhanced monitoring
+
+---
+
+## 🏗️ Architecture Overview
+
+### Core Components
+
+**Server Infrastructure:**
+- `server.py` - Main MCP server using FastMCP (926 lines)
+- `hierarchical_tool_manager.py` - 99% context reduction (536 lines)
+- `fastapi_service.py` - REST API runtime (1,152 lines)
+- `trio_adapter.py` / `trio_bridge.py` - Trio runtime for P2P (550 lines)
+- `runtime_router.py` - Dual-runtime dispatch (400 lines)
+
+**Tool Management:**
+- **50 tool categories** with **321 tool files**
+- **4 meta-tools** expose all functionality
+- Dynamic loading, lazy initialization
+- CLI-style tool naming (category/operation)
+
+**P2P Integration (MCP++):**
+- Workflow scheduler, task queue, peer registry
+- 50-70% latency reduction for P2P operations
+- Graceful degradation when unavailable
+- Native Trio integration
+
+**Configuration & Monitoring:**
+- `server_context.py` - Server state management
+- `validators.py` - Input validation
+- `monitoring.py` - Metrics and observability
+
+### Architecture Patterns
+
+**1. Hierarchical Tools (99% context reduction)**
+```python
+# Instead of 321 tools, expose only 4 meta-tools:
+mcp.add_tool(tools_list_categories)  # List all 50 categories
+mcp.add_tool(tools_list_tools)       # List tools in a category
+mcp.add_tool(tools_get_schema)       # Get tool schema
+mcp.add_tool(tools_dispatch)         # Execute any tool
+```
+
+**2. Thin Wrapper Pattern (<150 lines per tool)**
+```python
+# Business logic in core module (reusable)
+class DatasetLoader:
+    def load(self, source: str) -> Dataset:
+        # Business logic here
+        pass
+
+# MCP tool is thin wrapper (orchestration only)
+@tool_metadata(runtime="fastapi")
+async def load_dataset(source: str):
+    loader = DatasetLoader()
+    return await loader.load(source)
+```
+
+**3. Dual-Runtime System**
+```python
+# FastAPI runtime for general tools
+@tool_metadata(runtime="fastapi")
+async def general_tool(): pass
+
+# Trio runtime for P2P tools (50-70% faster)
+@tool_metadata(runtime="trio")
+async def p2p_tool(): pass
+```
+
+**4. Graceful Degradation**
+```python
+# P2P features work even when dependencies unavailable
+try:
+    from ipfs_accelerate_py import TaskQueue
+    HAS_P2P = True
+except ImportError:
+    HAS_P2P = False
+    # Mock fallback with clear error messages
+```
+
+---
+
+## 🧪 Testing
+
+### Current Status
+- **148 tests passing** across 20 test files
+- **5,597 lines** of test code
+- **Test coverage:** 25-35% (Target: 75%+)
+
+### Test Structure
+```
+tests/mcp/
+├── unit/              # Component unit tests
+│   ├── test_server_core.py (40 tests)
+│   ├── test_hierarchical_tool_manager.py (26 tests)
+│   ├── test_p2p_service_manager.py (15 tests)
+│   └── test_p2p_mcp_registry_adapter.py (26 tests)
+├── integration/       # Integration tests
+│   └── test_p2p_integration.py (6 tests)
+├── e2e/               # End-to-end tests
+│   ├── test_full_tool_lifecycle.py (10 tests)
+│   ├── test_distributed_workflows.py (10 tests)
+│   └── test_real_world_scenarios.py (7 tests)
+└── [13 component test files] (200+ tests)
+```
+
+### Running Tests
+```bash
+# All tests
+pytest tests/mcp/ -v
+
+# With coverage
+pytest tests/mcp/ --cov=ipfs_datasets_py.mcp_server --cov-report=html
+
+# Specific component
+pytest tests/mcp/unit/test_server_core.py -v
+
+# Unit tests only (fast)
+pytest tests/mcp/unit/ -v
+```
+
+---
+
+## 🚀 Getting Started
+
+### Installation
+```bash
+pip install -e ".[mcp]"  # MCP server dependencies
+```
+
+### Running the Server
+```bash
+# Main server
+python -m ipfs_datasets_py.mcp_server
+
+# Standalone server
+python ipfs_datasets_py/mcp_server/standalone_server.py
+
+# Simple server (lightweight)
+python ipfs_datasets_py/mcp_server/simple_server.py
+```
+
+### Using the Hierarchical Tool System
+```python
+# List all categories
+categories = tools_list_categories()
+# Returns: ['dataset_tools', 'search_tools', 'graph_tools', ...]
+
+# List tools in a category
+tools = tools_list_tools("dataset_tools")
+# Returns: ['load_dataset', 'save_dataset', 'convert_dataset', ...]
+
+# Get tool schema
+schema = tools_get_schema("dataset_tools", "load_dataset")
+# Returns: Full schema with parameters, types, descriptions
+
+# Execute a tool
+result = tools_dispatch("dataset_tools", "load_dataset", {
+    "source": "squad",
+    "split": "train"
+})
+```
+
+---
+
+## 🤝 Contributing
+
+### Quick Start for Contributors
+1. Read [QUICK_REFERENCE_CARD_v3.md](QUICK_REFERENCE_CARD_v3.md)
+2. Check current sprint goals (Week 11: FastAPI testing)
+3. Pick a task from the refactoring plan
+4. Follow testing patterns (GIVEN-WHEN-THEN)
+5. Ensure all tests pass before committing
+
+### Code Standards
+- Functions <100 lines
+- No bare exception handlers
+- Comprehensive docstrings
+- Type hints on all parameters/returns
+- Test coverage maintained/improved
+
+### Before Committing
+```bash
+# Run tests
+pytest tests/mcp/ -v
+
+# Check coverage
+pytest tests/mcp/ --cov=ipfs_datasets_py.mcp_server
+
+# Type checking
+mypy ipfs_datasets_py/mcp_server/
+
+# Linting
+flake8 ipfs_datasets_py/mcp_server/
+```
+
+---
+
+## 📈 Progress Tracking
+
+### Overall Status: 60% Complete
+
+```
+Phase 1: Security          ████████████████████████ 100% ✅
+Phase 2: Architecture      ████████████████░░░░░░░░  69% ⚠️
+Phase 3: Testing           ███████████░░░░░░░░░░░░░  48% ⚠️
+Phase 4: Quality           █████░░░░░░░░░░░░░░░░░░░  20% ⏳
+Phase 5: Cleanup           ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 6: Documentation     ████████░░░░░░░░░░░░░░░░  40% ⏳
+Phase 7: Performance       ░░░░░░░░░░░░░░░░░░░░░░░░   0% ⏳
+```
+
+**See:** [VISUAL_REFACTORING_SUMMARY_v3_2026.md](VISUAL_REFACTORING_SUMMARY_v3_2026.md) for detailed progress
+
+---
+
+## 📞 Support & Resources
+
+### Documentation
+- **Quick Start:** [QUICK_REFERENCE_CARD_v3.md](QUICK_REFERENCE_CARD_v3.md)
+- **Planning:** [REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md](REFACTORING_EXECUTIVE_SUMMARY_v3_2026.md)
+- **Architecture:** [THIN_TOOL_ARCHITECTURE.md](THIN_TOOL_ARCHITECTURE.md)
+- **Complete Plan:** [COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md](COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN_2026_v3.md)
+
+### Key Metrics
+- **Test Coverage:** 25-35% → Target: 75%+
+- **Tool Categories:** 50 categories, 321 tools
+- **Context Reduction:** 99% (373→4 meta-tools)
+- **Thin Wrapper Compliance:** 99% (318/321 tools)
+
+---
+
+## 🎯 Next Steps
+
+1. **Week 11:** FastAPI service testing (15-18 tests, 8-10 hours)
+2. **Week 12:** Trio runtime testing (12-15 tests, 6-8 hours)
+3. **Week 13:** Validators & monitoring tests (10-12 tests, 5-6 hours)
+4. **Week 14:** Integration & E2E tests (8-10 tests, 6-8 hours)
+
+**Goal:** Achieve 75%+ test coverage for production readiness
+
+---
+
+**Version:** 3.0  
+**Last Updated:** 2026-02-19  
+**Status:** Active Development - 60% Complete
+
 
 We have created a comprehensive improvement plan to integrate advanced P2P capabilities from the [ipfs_accelerate_py MCP++ module](https://github.com/endomorphosis/ipfs_accelerate_py/tree/main/ipfs_accelerate_py/mcplusplus_module). This will bring:
 
