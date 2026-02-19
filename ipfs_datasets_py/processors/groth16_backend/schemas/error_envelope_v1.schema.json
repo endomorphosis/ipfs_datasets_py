@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ipfs_datasets_py/groth16_backend/error_envelope_v1.schema.json",
+  "title": "Groth16 ErrorEnvelope (V1)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["error"],
+  "properties": {
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "code", "message"],
+      "properties": {
+        "schema_version": { "type": "integer", "enum": [1] },
+        "code": { "type": "string", "minLength": 1 },
+        "message": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

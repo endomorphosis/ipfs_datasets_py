@@ -8,15 +8,21 @@ A comprehensive neurosymbolic framework for Cognitive Event Calculus reasoning, 
 
 **New to CEC? Start here:**
 - **[QUICKSTART.md](./QUICKSTART.md)** ⚡ 5-minute tutorial to get started
-- **[STATUS.md](./STATUS.md)** 📊 Implementation status and roadmap
+- **[STATUS.md](./STATUS.md)** 📊 Implementation status (single source of truth)
 - **[CEC_SYSTEM_GUIDE.md](./CEC_SYSTEM_GUIDE.md)** 📖 Comprehensive user guide
 
 **For developers:**
+- **[IMPLEMENTATION_QUICK_START.md](./IMPLEMENTATION_QUICK_START.md)** 🚀 **START HERE** - Begin working on CEC phases
 - **[API_REFERENCE.md](./API_REFERENCE.md)** 📚 Complete API documentation
 - **[DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md)** 💻 Development setup and contribution guide
 
 **Planning & roadmap:**
-- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Master plan (8 phases, 31 weeks)
+- **[UNIFIED_REFACTORING_ROADMAP_2026.md](./UNIFIED_REFACTORING_ROADMAP_2026.md)** 🎯 **MASTER ROADMAP** - Complete 5-enhancement plan (Phases 3-8)
+- **[COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md](./COMPREHENSIVE_REFACTORING_AND_IMPROVEMENT_PLAN.md)** 🗺️ Detailed plan (8 phases, 26 weeks)
+- **[PERFORMANCE_OPTIMIZATION_PLAN.md](./PERFORMANCE_OPTIMIZATION_PLAN.md)** ⚡ Phase 7 performance strategy
+- **[EXTENDED_NL_SUPPORT_ROADMAP.md](./EXTENDED_NL_SUPPORT_ROADMAP.md)** 🌍 Phase 5 multi-language plan
+- **[ADDITIONAL_THEOREM_PROVERS_STRATEGY.md](./ADDITIONAL_THEOREM_PROVERS_STRATEGY.md)** 🔬 Phase 6 prover integration
+- **[API_INTERFACE_DESIGN.md](./API_INTERFACE_DESIGN.md)** 🌐 Phase 8 REST API design
 - **[REFACTORING_QUICK_REFERENCE.md](./REFACTORING_QUICK_REFERENCE.md)** 📋 Quick reference guide
 
 ---

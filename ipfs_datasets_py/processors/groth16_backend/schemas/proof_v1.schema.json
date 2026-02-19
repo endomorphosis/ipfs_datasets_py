@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/ipfs_datasets_py/groth16_backend/proof_v1.schema.json",
+  "title": "Groth16 ProofOutput (V1)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "proof_a",
+    "proof_b",
+    "proof_c",
+    "public_inputs",
+    "timestamp",
+    "version"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "enum": [1] },
+    "proof_a": { "type": "string" },
+    "proof_b": { "type": "string" },
+    "proof_c": { "type": "string" },
+    "public_inputs": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": { "type": "string" }
+    },
+    "timestamp": { "type": "integer", "minimum": 0 },
+    "version": { "type": "integer", "minimum": 0 }
+  }
+}

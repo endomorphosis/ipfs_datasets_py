@@ -423,7 +423,7 @@ def execute_ir_operations(
                     len(final_results),
                     len(order_items),
                 )
-            except Exception as e:
+            except (TypeError, ValueError, KeyError) as e:
                 logger.warning("OrderBy: failed to sort results: %s", e)
 
         elif op_type == "CreateNode":

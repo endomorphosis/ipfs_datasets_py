@@ -79,8 +79,10 @@ class Groth16Backend:
             "ruleset_id": str((metadata or {}).get("ruleset_id", "TDFOL_v1")),
         }
 
+        seed = (metadata or {}).get("seed")
+
         try:
-            return self._ffi().generate_proof(json.dumps(witness))
+            return self._ffi().generate_proof(json.dumps(witness), seed=seed)
         except Exception as e:
             # Convert backend failures to ZKPError (fail-closed).
             raise ZKPError(f"Groth16 proof generation failed: {e}")

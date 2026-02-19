@@ -165,6 +165,13 @@ class IPLDBackend:
             self._backend = get_ipfs_backend(deps=self.deps)
             logger.debug("IPFS backend initialized: %s", type(self._backend).__name__)
         return self._backend
+
+    @property
+    def backend_name(self) -> str:
+        backend = getattr(self, "_backend", None)
+        if backend is None:
+            return "uninitialized"
+        return type(backend).__name__
     
     def _make_key(self, key: str) -> str:
         """
@@ -228,12 +235,14 @@ class IPLDBackend:
             logger.debug("Stored data with CID: %s (pinned=%s)", cid, pin)
             return cid
             
-        except (json.JSONDecodeError, TypeError, UnicodeEncodeError) as e:
+        except (TypeError, ValueError, UnicodeEncodeError) as e:
             logger.error(f"Failed to serialize data: {e}")
             raise SerializationError(
                 f"Failed to serialize data for IPFS storage: {e}",
                 details={'data_type': type(data).__name__, 'codec': codec}
             ) from e
+        except (SerializationError, IPLDStorageError, StorageError):
+            raise
         except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"IPFS connection error: {e}")
             raise IPLDStorageError(
@@ -242,9 +251,9 @@ class IPLDBackend:
             ) from e
         except Exception as e:
             logger.error(f"Failed to store on IPFS: {e}")
-            raise StorageError(
-                f"Failed to store data on IPFS: {e}",
-                details={'backend': self.backend_name, 'codec': codec}
+            raise IPLDStorageError(
+                "Failed to store data on IPFS",
+                details={'backend': self.backend_name, 'codec': codec, 'operation': 'store'}
             ) from e
     
     def retrieve(self, cid: str) -> bytes:
@@ -285,10 +294,12 @@ class IPLDBackend:
                 ) from e
             except Exception as e:
                 logger.error(f"Failed to retrieve CID {cid}: {e}")
-                raise StorageError(
-                    f"Failed to retrieve data from IPFS: {e}",
-                    details={'backend': self.backend_name, 'cid': cid}
+                raise IPLDStorageError(
+                    "Failed to retrieve data from IPFS",
+                    details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
                 ) from e
+        except (SerializationError, DeserializationError, IPLDStorageError, StorageError):
+            raise
         except (ConnectionError, TimeoutError, OSError) as e:
             logger.error(f"IPFS connection error: {e}")
             raise IPLDStorageError(
@@ -297,9 +308,9 @@ class IPLDBackend:
             ) from e
         except Exception as e:
             logger.error(f"Failed to retrieve from IPFS: {e}")
-            raise StorageError(
-                f"Failed to retrieve data from IPFS: {e}",
-                details={'backend': self.backend_name, 'cid': cid}
+            raise IPLDStorageError(
+                "Failed to retrieve data from IPFS",
+                details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
             ) from e
         
         # Store in cache
@@ -331,7 +342,13 @@ class IPLDBackend:
                 return cached_json
         
         data_bytes = self.retrieve(cid)
-        json_data = json.loads(data_bytes.decode('utf-8'))
+        try:
+            json_data = json.loads(data_bytes.decode('utf-8'))
+        except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError) as e:
+            raise DeserializationError(
+                "Failed to deserialize JSON from IPFS",
+                details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve_json'}
+            ) from e
         
         # Cache the parsed JSON
         if self._cache:

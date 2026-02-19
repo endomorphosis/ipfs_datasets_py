@@ -134,6 +134,26 @@ class TestP2PServiceManagerIntegration:
         assert manager2.listen_port == 4002
         assert manager1 is not manager2
 
+    @patch("ipfs_accelerate_py.p2p_tasks.service.get_local_service_state")
+    @patch("ipfs_accelerate_py.p2p_tasks.service.list_known_peers")
+    def test_state_reports_connected_peers(self, mock_list_peers, mock_state):
+        """state() should report a best-effort connected peer count."""
+        mock_state.return_value = {
+            "running": True,
+            "peer_id": "QmTestPeer",
+            "listen_port": 4001,
+            "started_at": 123.0,
+        }
+        mock_list_peers.return_value = [
+            {"peer_id": "QmPeer1"},
+            {"peer_id": "QmPeer2"},
+            {"peer_id": "QmPeer3"},
+        ]
+
+        manager = P2PServiceManager(enabled=False)
+        st = manager.state()
+        assert st.connected_peers == 3
+
 
 class TestP2PRegistryAdapterIntegration:
     """Integration tests for P2P registry adapter with service manager."""

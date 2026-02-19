@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-19  
 **Phase:** 3 (Real ZKP Backend)  
-**Status:** Planning + Phase A (Interface Gating) In Progress
+**Status:** Rust-FFI Groth16 backend integrated (opt-in); hardening in progress
 
 ---
 
@@ -14,7 +14,7 @@ Phase 3 introduces a real Groth16 zkSNARK backend while maintaining the existing
 2. **Recommends a phased implementation strategy** (Phase A → B → C → D → E)
 3. **Tracks implementation artifacts** and decision rationale
 
-**Decision Point:** Pure Python (py_ecc) vs. Rust/Go wrapper (mature library)
+**Decision:** The repo-supported direction is a Rust Groth16 backend (FFI/subprocess) under `processors/groth16_backend/`, enabled via `IPFS_DATASETS_ENABLE_GROTH16=1`. Pure-Python (`py_ecc`) remains an optional alternative.
 
 ---
 

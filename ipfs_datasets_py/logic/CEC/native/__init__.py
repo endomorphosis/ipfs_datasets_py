@@ -263,5 +263,40 @@ try:
 except ImportError:
     PROBLEM_PARSER_AVAILABLE = False
 
-# Version reflects completion of all Phase 4 components
-__version__ = "1.0.0"
+# Phase 3+: Proof caching and ZKP integration
+try:
+    from .cec_proof_cache import (
+        CECCachedProofResult,
+        CachedTheoremProver,
+        get_global_cached_prover,
+        HAVE_CACHE,
+    )
+    
+    from .cec_zkp_integration import (
+        ProvingMethod,
+        UnifiedCECProofResult,
+        ZKPCECProver,
+        create_hybrid_prover,
+        HAVE_ZKP,
+    )
+    
+    __all__.extend([
+        "CECCachedProofResult",
+        "CachedTheoremProver",
+        "get_global_cached_prover",
+        "HAVE_CACHE",
+        "ProvingMethod",
+        "UnifiedCECProofResult",
+        "ZKPCECProver",
+        "create_hybrid_prover",
+        "HAVE_ZKP",
+    ])
+    
+    CACHING_AVAILABLE = True
+    ZKP_AVAILABLE = HAVE_ZKP
+except ImportError as e:
+    CACHING_AVAILABLE = False
+    ZKP_AVAILABLE = False
+
+# Version reflects completion of all Phase 4 components + caching/ZKP
+__version__ = "1.1.0"

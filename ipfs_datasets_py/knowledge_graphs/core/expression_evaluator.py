@@ -11,6 +11,8 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List
 
+from ..exceptions import KnowledgeGraphError
+
 logger = logging.getLogger(__name__)
 
 
@@ -80,6 +82,11 @@ def call_function(func_name: str, args: List[Any]) -> Any:
             elif len(args) > 1:
                 return func(*args)
             return func()
+        except KnowledgeGraphError:
+            raise
+        except (AttributeError, TypeError, ValueError, KeyError, ZeroDivisionError, OverflowError) as e:
+            logger.warning("Function %s raised exception: %s", func_name, e)
+            return None
         except Exception as e:
             logger.warning("Function %s raised exception: %s", func_name, e)
             return None

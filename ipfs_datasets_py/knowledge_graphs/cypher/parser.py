@@ -116,8 +116,8 @@ class CypherParser:
             return ast
         except CypherParseError:
             raise
-        except Exception as e:
-            raise CypherParseError(f"Unexpected parsing error: {e}", self.current_token)
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError) as e:
+            raise CypherParseError(f"Unexpected parsing error: {e}", self.current_token) from e
     
     def _current(self) -> Token:
         """Get current token."""

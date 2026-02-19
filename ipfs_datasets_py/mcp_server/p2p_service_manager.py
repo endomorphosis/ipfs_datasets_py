@@ -246,13 +246,17 @@ class P2PServiceManager:
         connected_peers = 0
         active_workflows = 0
         
-        # Try to get connected peers count
-        if self._peer_registry is not None:
-            try:
-                # This would be implemented by the peer registry
-                connected_peers = 0  # TODO: Get from peer registry
-            except Exception:
-                pass
+        # Best-effort connected peer count.
+        # Prefer using the p2p_tasks service state if available (works even
+        # when MCP++ peer registry is not present).
+        try:
+            from ipfs_accelerate_py.p2p_tasks.service import list_known_peers
+
+            peers = list_known_peers(alive_only=True, limit=1000)
+            if isinstance(peers, list):
+                connected_peers = len(peers)
+        except Exception:
+            pass
         
         # Try to get active workflows count
         if self._workflow_scheduler is not None:
