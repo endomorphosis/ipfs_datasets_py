@@ -152,30 +152,44 @@ class UnifiedCECProofResult:
         inference_rules = []
         
         if attempt.proof_tree:
-            # Count steps
-            def count_steps(node):
-                if not node:
-                    return 0
-                count = 1
-                if hasattr(node, 'children'):
-                    for child in node.children:
-                        count += count_steps(child)
-                return count
-            proof_steps = count_steps(attempt.proof_tree)
-            
-            # Extract rules
-            def extract_rules(node, rules_set):
-                if not node:
-                    return
-                if hasattr(node, 'rule') and node.rule:
-                    rules_set.add(node.rule)
-                if hasattr(node, 'children'):
-                    for child in node.children:
-                        extract_rules(child, rules_set)
-            
-            rules_set = set()
-            extract_rules(attempt.proof_tree, rules_set)
-            inference_rules = list(rules_set)
+            proof_tree = attempt.proof_tree
+
+            # Prefer native flat ProofTree structure with .steps list
+            if hasattr(proof_tree, "steps") and isinstance(getattr(proof_tree, "steps"), list):
+                steps = proof_tree.steps
+                proof_steps = len(steps)
+
+                rules_set = set()
+                for step in steps:
+                    rule_name = getattr(step, "rule", None)
+                    if rule_name:
+                        rules_set.add(rule_name)
+                inference_rules = list(rules_set)
+            else:
+                # Fallback: treat proof_tree as a recursive node tree
+                def count_steps(node):
+                    if not node:
+                        return 0
+                    count = 1
+                    if hasattr(node, "children"):
+                        for child in node.children:
+                            count += count_steps(child)
+                    return count
+
+                proof_steps = count_steps(proof_tree)
+
+                def extract_rules(node, rules_set):
+                    if not node:
+                        return
+                    if hasattr(node, "rule") and node.rule:
+                        rules_set.add(node.rule)
+                    if hasattr(node, "children"):
+                        for child in node.children:
+                            extract_rules(child, rules_set)
+
+                rules_set = set()
+                extract_rules(proof_tree, rules_set)
+                inference_rules = list(rules_set)
         
         method = ProvingMethod.CEC_CACHED if from_cache else ProvingMethod.CEC_STANDARD
         
@@ -204,11 +218,18 @@ class UnifiedCECProofResult:
         zkp_backend: str,
         is_private: bool = True
     ) -> UnifiedCECProofResult:
-        """Create unified result from ZKP proof."""
+        """Create unified result from ZKP proof.
+        
+        When is_private=True, axioms are replaced with a placeholder to prevent
+        direct access to private witness data.
+        """
+        # For private proofs, replace axioms with a placeholder
+        visible_axioms = [] if is_private else axioms
+        
         return cls(
             is_proved=is_proved,
             formula=formula,
-            axioms=axioms,
+            axioms=visible_axioms,
             method=ProvingMethod.CEC_ZKP,
             proof_time=proof_time,
             base_result=BaseProofResult.PROVED if is_proved else BaseProofResult.UNKNOWN,
@@ -359,20 +380,27 @@ class ZKPCECProver:
         
         # Strategy 1: Try cache first (if enabled)
         if use_cache and self.cached_prover.enable_caching:
+            # Capture cache statistics before the lookup, if available
+            hits_before = getattr(self.cached_prover, "_cache_hits", None)
             cache_start = time.time()
             attempt = self.cached_prover.prove_theorem(goal, axioms, timeout, use_cache=True)
             cache_time = time.time() - cache_start
-            
-            # Check if it was a cache hit
-            if cache_time < 0.001:  # Likely cache hit (< 1ms)
+
+            # Determine if this was a cache hit using prover statistics or attempt metadata
+            cache_hit = False
+            if hits_before is not None:
+                hits_after = getattr(self.cached_prover, "_cache_hits", hits_before)
+                cache_hit = hits_after > hits_before
+            if not cache_hit:
+                cache_hit = bool(getattr(attempt, "from_cache", False))
+
+            if cache_hit:
                 self._cache_hits += 1
-                original_time = attempt.execution_time if attempt.execution_time > cache_time else None
-                cache_savings = original_time - cache_time if original_time else None
-                
+                # Report the actual retrieval time as the cache hit timing metric
                 return UnifiedCECProofResult.from_standard_proof(
                     attempt,
                     from_cache=True,
-                    cache_hit_time=cache_savings
+                    cache_hit_time=cache_time,
                 )
         
         # Strategy 2: Try ZKP (if preferred and enabled)
@@ -411,13 +439,19 @@ class ZKPCECProver:
         Note: This is a simplified implementation. Real ZKP for
         first-order logic is complex and may require circuit encoding.
         """
+        import hashlib
         start_time = time.time()
         
         # Convert formula and axioms to ZKP-compatible format
         # (In real implementation, this would involve circuit encoding)
+        # Use deterministic cryptographic hash (SHA-256) instead of Python's hash()
+        axioms_sorted = sorted(a.to_string() for a in axioms)
+        axioms_str = "\n".join(axioms_sorted)
+        axioms_hash = hashlib.sha256(axioms_str.encode()).hexdigest()
+        
         statement = {
             'goal': goal.to_string(),
-            'axioms_hash': hash(tuple(sorted(a.to_string() for a in axioms)))
+            'axioms_hash': axioms_hash
         }
         
         # Create witness (private inputs)
