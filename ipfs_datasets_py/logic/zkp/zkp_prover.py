@@ -2,7 +2,10 @@
 
 Default behavior is a **simulation** backend for demonstration purposes.
 Production-grade proving requires a real backend (see
-`logic/zkp/GROTH16_IMPLEMENTATION_PLAN.md`).
+`logic/zkp/PRODUCTION_UPGRADE_PATH.md`).
+
+⚠️  WARNING: This module generates SIMULATED proofs only.
+             NOT cryptographically secure. Educational/demo use only.
 """
 
 from dataclasses import replace
@@ -10,6 +13,7 @@ from typing import List, Dict, Any, Optional
 import hashlib
 import json
 import time
+import warnings
 
 from . import ZKPProof, ZKPError
 from .backends import get_backend
@@ -55,11 +59,24 @@ class ZKPProver:
     ):
         """
         Initialize ZKP prover.
-        
+
+        ⚠️  WARNING: This produces SIMULATED proofs only — NOT cryptographically
+        secure. For production use, integrate a real Groth16/PLONK backend.
+        See ``logic/zkp/PRODUCTION_UPGRADE_PATH.md`` for upgrade instructions.
+
         Args:
-            security_level: Security bits (default: 128)
+            security_level: Security bits (default: 128, simulation only)
             enable_caching: Cache generated proofs
+            backend: Proof backend; only "simulated" is currently supported
         """
+        warnings.warn(
+            "ZKPProver generates SIMULATED proofs only. "
+            "NOT cryptographically secure. "
+            "Do not use in production systems requiring real zero-knowledge proofs. "
+            "See logic/zkp/PRODUCTION_UPGRADE_PATH.md for the upgrade path.",
+            UserWarning,
+            stacklevel=2,
+        )
         self.security_level = security_level
         self.enable_caching = enable_caching
         self.backend = backend
