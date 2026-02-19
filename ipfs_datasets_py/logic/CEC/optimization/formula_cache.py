@@ -216,6 +216,15 @@ class LRUCache:
             "evictions": 0
         }
     
+    @property
+    def current_size(self) -> int:
+        """Get current number of entries in cache."""
+        return len(self._cache)
+    
+    def get_all_keys(self) -> List[str]:
+        """Get all keys currently in cache."""
+        return list(self._cache.keys())
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics."""
         total_requests = self._stats["hits"] + self._stats["misses"]
