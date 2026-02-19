@@ -1,253 +1,182 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/**
- * @title GrothVerifier
- * @dev Groth16 zkSNARK verifier for BN254 elliptic curve
- * 
- * This contract implements on-chain verification of Groth16 proofs
- * for the MVP Legal Complaint Circuit (Phase 3C).
- * 
- * Architecture:
- * - Uses BN254 pairing checks (Ethereum precompiles)
- * - Supports single and batch verification
- * - Optimized for ~200K gas per proof
- * - Stores verification results in immutable logs
- */
-
-pragma solidity ^0.8.0;
-
-/**
- * @title Pairing
- * @dev Library for BN254 pairing operations
- * Uses Ethereum precompiles for efficient curve arithmetic
- */
+/// @dev Minimal Groth16 verifier base for BN254 (altbn128) on Ethereum.
+///
+/// This is a *template* contract: the circuit-specific verifying key is
+/// provided by overriding `verifyingKey()` in a derived contract.
+///
+/// ABI shape is intentionally fixed to:
+///   verifyProof(uint256[8], uint256[4]) -> bool
+///
+/// where:
+/// - `proof` words are: [A.x, A.y, B.x_im, B.x_re, B.y_im, B.y_re, C.x, C.y]
+/// - `input` are 4 Fr field elements.
 library Pairing {
-    /**
-     * @dev Representation of an elliptic curve point on BN254
-     * All values are in Montgomery form (p = 21888242871839275222246405745257275088548364400416034343698204186575808495617)
-     */
     struct G1Point {
-        uint X;
-        uint Y;
+        uint256 X;
+        uint256 Y;
     }
-    
-    /**
-     * @dev Representation of a pair of group elements (G1, G2)
-     */
+
     struct G2Point {
-        uint[2] X;
-        uint[2] Y;
+        uint256[2] X;
+        uint256[2] Y;
     }
-    
-    /**
-     * @dev Addition on G1
-     */
+
+    uint256 internal constant PRIME_Q =
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
+    function negate(G1Point memory p) internal pure returns (G1Point memory) {
+        if (p.X == 0 && p.Y == 0) {
+            return G1Point(0, 0);
+        }
+        return G1Point(p.X, PRIME_Q - (p.Y % PRIME_Q));
+    }
+
     function addition(G1Point memory p1, G1Point memory p2) internal view returns (G1Point memory r) {
-        uint[4] memory input;
+        uint256[4] memory input;
         input[0] = p1.X;
         input[1] = p1.Y;
         input[2] = p2.X;
         input[3] = p2.Y;
+
         bool success;
         assembly {
-            success := staticcall(sub(gas(), 2000), 6, input, 0x80, r, 0x60)
-            switch success
-            case 0 {
-                revert(0, 0)
-            }
+            success := staticcall(sub(gas(), 2000), 6, input, 0x80, r, 0x40)
         }
-        require(success, "Pairing addition failed");
+        require(success, "PAIRING_ADD_FAIL");
     }
-    
-    /**
-     * @dev Scalar multiplication on G1
-     */
-    function scalar_mul(G1Point memory p, uint s) internal view returns (G1Point memory r) {
-        uint[3] memory input;
+
+    function scalar_mul(G1Point memory p, uint256 s) internal view returns (G1Point memory r) {
+        uint256[3] memory input;
         input[0] = p.X;
         input[1] = p.Y;
         input[2] = s;
+
         bool success;
         assembly {
-            success := staticcall(sub(gas(), 2000), 7, input, 0x60, r, 0x60)
-            switch success
-            case 0 {
-                revert(0, 0)
-            }
+            success := staticcall(sub(gas(), 2000), 7, input, 0x60, r, 0x40)
         }
-        require(success, "Pairing scalar multiplication failed");
+        require(success, "PAIRING_MUL_FAIL");
     }
-    
-    /**
-     * @dev Check pairing operation: e(p1, p2) * e(p3, p4) == 1
-     * Used for verifying Groth16 proofs
-     */
-    function pairing(
+
+    function pairing(G1Point[] memory p1, G2Point[] memory p2) internal view returns (bool) {
+        require(p1.length == p2.length, "PAIRING_LEN");
+
+        uint256 elements = p1.length;
+        uint256 inputSize = elements * 6;
+        uint256[] memory input = new uint256[](inputSize);
+
+        for (uint256 i = 0; i < elements; i++) {
+            uint256 j = i * 6;
+            input[j + 0] = p1[i].X;
+            input[j + 1] = p1[i].Y;
+            input[j + 2] = p2[i].X[0];
+            input[j + 3] = p2[i].X[1];
+            input[j + 4] = p2[i].Y[0];
+            input[j + 5] = p2[i].Y[1];
+        }
+
+        uint256[1] memory out;
+        bool success;
+        assembly {
+            success := staticcall(sub(gas(), 2000), 8, add(input, 0x20), mul(inputSize, 0x20), out, 0x20)
+        }
+        require(success, "PAIRING_CHECK_FAIL");
+        return out[0] != 0;
+    }
+
+    function pairingProd4(
         G1Point memory a1,
         G2Point memory a2,
         G1Point memory b1,
-        G2Point memory b2
+        G2Point memory b2,
+        G1Point memory c1,
+        G2Point memory c2,
+        G1Point memory d1,
+        G2Point memory d2
     ) internal view returns (bool) {
-        uint[12] memory input;
-        input[0] = a1.X;
-        input[1] = a1.Y;
-        input[2] = a2.X[0];
-        input[3] = a2.X[1];
-        input[4] = a2.Y[0];
-        input[5] = a2.Y[1];
-        input[6] = b1.X;
-        input[7] = b1.Y;
-        input[8] = b2.X[0];
-        input[9] = b2.X[1];
-        input[10] = b2.Y[0];
-        input[11] = b2.Y[1];
-        
-        uint[1] memory out;
-        bool success;
-        assembly {
-            success := staticcall(sub(gas(), 2000), 8, input, 384, out, 32)
-            switch success
-            case 0 {
-                revert(0, 0)
-            }
-        }
-        require(success, "Pairing check failed");
-        return out[0] != 0;
-    }
-    
-    /**
-     * @dev Negation on G1
-     */
-    function negate(G1Point memory p) internal pure returns (G1Point memory) {
-        // Negate point in place (Y coordinate flips sign in Fq)
-        uint q = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-        if (p.Y == 0) {
-            return G1Point(p.X, 0);
-        } else {
-            return G1Point(p.X, q - (p.Y % q));
-        }
+        G1Point[] memory p1 = new G1Point[](4);
+        G2Point[] memory p2 = new G2Point[](4);
+        p1[0] = a1;
+        p1[1] = b1;
+        p1[2] = c1;
+        p1[3] = d1;
+        p2[0] = a2;
+        p2[1] = b2;
+        p2[2] = c2;
+        p2[3] = d2;
+        return pairing(p1, p2);
     }
 }
 
-/**
- * @title GrothVerifier
- * @dev Main Groth16 verifier contract for MVP Legal Complaint Circuit
- * 
- * Verification equation (Groth16):
- *   e(A, B) == e(α, β) * e(L(public_inputs), γ) * e(C, δ)
- * 
- * Where:
- *   A, B, C are proof components (from prover)
- *   α, β, γ, δ are circuit-specific constants (from trusted setup)
- *   L(inputs) is linear combination of public input commitments
- */
 contract GrothVerifier {
     using Pairing for *;
-    
-    // Circuit-specific verification constants (from Phase 2 trusted setup)
-    // These are derived from the BN254 pairing parameters
-    Pairing.G1Point vk_alpha = Pairing.G1Point(
-        0x0e4263261b83c9465c72218dcf1bb9a3ce90b58c5d3d2b15db469d61f913adf1,
-        0x133d2b5c3e56cbe272715966dec00452c635df61ee23493da52c7fff65a8371b
-    );
-    
-    Pairing.G2Point vk_beta = Pairing.G2Point(
-        [0x25f83571a22bd79397b1b6b06e3864118b501f2277ce8784d834924b59d84e3e,
-         0x1e13dac5908bc533fcc403b126d0bb29d6e657e8b2ddc28e393f1a1b8e7e6e1a],
-        [0x246e7412a50381d56e86cefcffb8d8c88e6eac1ebb4f0c7fc5ca5b1a3b63c5cd,
-         0x06d971ff4a7467c3ec0ed99630cf09d2202b1b8e9eae3bcd8c72d1ac8d99e4f5]
-    );
-    
-    Pairing.G2Point vk_gamma_inv = Pairing.G2Point(
-        [0x0d06b15e14e28449925b60caf3051833054d7f7ce2493b612f78637169e53607,
-         0x1c1348b361d6dab57dc5d21b913fb8722117925979230b841ca8575b13cd7aef],
-        [0x2bab3c594fdc8ad60b247b02ac52b1a933acccd1ac2d1b8e86b65b1df5c80e9b,
-         0x1426d54975007aa14915a997ad275637be1d2760671a4837e11e6cb79351e41f]
-    );
-    
-    Pairing.G2Point vk_delta = Pairing.G2Point(
-        [0x19a8cf72df2afcb5dd79db9f5fc0b935c47af1e81eae48bc4ff8c8fbd5e0adb8,
-         0x1c6a8f2f6fd6e35adc54e5df8748deeb6a667078a31b0a8fd8bce3ce54f6d0a7],
-        [0x25d0c3dff3e8865b7e5cbb8c4282e3e3d3e3f4d5d6d7d8d9dadadbdbdcddd0e,
-         0x2c08f6e0b7c9d1d3d5d7d9dadadbdbdcdddedfe0f1f3f5f7f9f0f1f2f3f4f5f]
-    );
-    
-    /**
-     * @dev Commitment to public inputs used in verification
-     * For each public input x_i, we compute [x_i] * gamma_commitment
-     */
-    Pairing.G1Point[] vk_gamma_commitments;
-    
-    /**
-     * @dev Commitment to public inputs times delta for verification
-     * Used in the second pairing check
-     */
-    Pairing.G1Point[] vk_delta_commitments;
-    
-    uint constant SNARK_SCALAR_FIELD = 21888242871839275222246405745257275088548364400416034343698204186575808495617;
-    uint constant PRIME_Q = 21888242871839275222246405745257275088696311157297823756163051367367253464319;
-    
-    /**
-     * @dev Verify a single Groth16 proof
-     * 
-     * @param proof Array of 8 uint256 values:
-     *   [0-1]: A point (x, y)
-     *   [2-5]: B point (x, y on G2)
-     *   [6-7]: C point (x, y)
-     * 
-     * @param input Array of 4 public input scalars:
-     *   [0]: theorem_hash (256-bit)
-     *   [1]: axioms_commitment (256-bit)
-     *   [2]: circuit_version (8-bit in 256)
-     *   [3]: ruleset_authority (160-bit in 256)
-     * 
-     * @return True if proof is valid, false otherwise
-     */
-    function verifyProof(
-        uint[8] calldata proof,
-        uint[4] calldata input
-    ) public view returns (bool) {
-        // Input validation
-        for (uint i = 0; i < input.length; i++) {
+
+    uint256 internal constant SNARK_SCALAR_FIELD =
+        21888242871839275222246405745257275088548364400416034343698204186575808495617;
+
+    struct VerifyingKey {
+        Pairing.G1Point alfa1;
+        Pairing.G2Point beta2;
+        Pairing.G2Point gamma2;
+        Pairing.G2Point delta2;
+        Pairing.G1Point[] IC;
+    }
+
+    struct Proof {
+        Pairing.G1Point A;
+        Pairing.G2Point B;
+        Pairing.G1Point C;
+    }
+
+    function verifyingKey() internal pure virtual returns (VerifyingKey memory vk);
+
+    function verify(uint256[4] memory input, Proof memory proof) internal view returns (uint256) {
+        VerifyingKey memory vk = verifyingKey();
+        if (vk.IC.length != 5) {
+            return 1;
+        }
+
+        for (uint256 i = 0; i < 4; i++) {
             if (input[i] >= SNARK_SCALAR_FIELD) {
-                return false; // Invalid field element
+                return 1;
             }
         }
-        
-        // Parse proof components from calldata
-        Pairing.G1Point memory proofA = Pairing.G1Point(proof[0], proof[1]);
-        Pairing.G2Point memory proofB = Pairing.G2Point(
-            [proof[2], proof[3]], 
-            [proof[4], proof[5]]
-        );
-        Pairing.G1Point memory proofC = Pairing.G1Point(proof[6], proof[7]);
-        
-        // Verify proof is on curve (basic check)
-        if (!isValidG1Point(proofA) || !isValidG1Point(proofC)) {
-            return false;
+
+        Pairing.G1Point memory vk_x = vk.IC[0];
+        for (uint256 i = 0; i < 4; i++) {
+            vk_x = Pairing.addition(vk_x, Pairing.scalar_mul(vk.IC[i + 1], input[i]));
         }
-        
-        // For production: validate proofB is on G2 curve
-        // (omitted for gas optimization in MVP)
-        
-        // Compute linear combination of public inputs
-        // L = sum(input[i] * vk_gamma_commitments[i])
-        Pairing.G1Point memory inputCommitment = Pairing.G1Point(0, 0);
-        for (uint i = 0; i < input.length; i++) {
-            inputCommitment = Pairing.addition(
-                inputCommitment,
-                Pairing.scalar_mul(vk_gamma_commitments[i], input[i])
-            );
+
+        // Standard Groth16 pairing check:
+        // e(A, B) * e(-vk_x, gamma) * e(-C, delta) * e(-alpha, beta) == 1
+        if (
+            !Pairing.pairingProd4(
+                proof.A,
+                proof.B,
+                Pairing.negate(vk_x),
+                vk.gamma2,
+                Pairing.negate(proof.C),
+                vk.delta2,
+                Pairing.negate(vk.alfa1),
+                vk.beta2
+            )
+        ) {
+            return 1;
         }
-        
-        // Verification equation:
-        // e(A, B) == e(α, β) * e(L, γ) * e(C, δ)
-        
-        // Check: e(A, B) * e(-C, δ) == e(α, β) * e(L, γ)
-        // Rearranged: e(A, B) == e(α, β) * e(L, γ) * e(C, δ)
-        
-        return Pairing.pairing(
+
+        return 0;
+    }
+
+    function verifyProof(uint256[8] calldata proof, uint256[4] calldata input) public view returns (bool) {
+        Proof memory p;
+        p.A = Pairing.G1Point(proof[0], proof[1]);
+        p.B = Pairing.G2Point([proof[2], proof[3]], [proof[4], proof[5]]);
+        p.C = Pairing.G1Point(proof[6], proof[7]);
+        return verify(input, p) == 0;
+    }
+}
             proofA,
             proofB,
             Pairing.addition(

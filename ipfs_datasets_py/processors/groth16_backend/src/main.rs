@@ -4,9 +4,15 @@
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
+use std::fmt::Write as _;
 use std::fs;
 use std::io::{self, Read};
 use std::process;
+
+use ark_bn254::Bn254;
+use ark_ff::{BigInteger, PrimeField};
+use ark_groth16::VerifyingKey;
+use ark_serialize::CanonicalDeserialize;
 
 const ERROR_SCHEMA_VERSION: u32 = 1;
 
@@ -68,12 +74,12 @@ enum Commands {
         quiet: bool,
     },
 
-    /// Export a versioned Solidity wrapper embedding vk_hash
+    /// Export a circuit-specific Solidity verifier contract
     ///
     /// This reads a `verifying_key.bin` produced by `groth16 setup`, computes
     /// its SHA-256 digest as `vk_hash_hex`, and emits a Solidity contract that
-    /// imports the in-repo `GrothVerifier.sol` prototype and exposes the hash
-    /// as a `bytes32 public constant`.
+    /// imports the in-repo `GrothVerifier.sol` base verifier and overrides
+    /// `verifyingKey()` with constants matching this verifying key.
     ExportSolidity {
         /// Input verifying key binary (e.g., artifacts/v1/verifying_key.bin)
         #[arg(long)]
@@ -143,7 +149,25 @@ fn sha256_hex(bytes: &[u8]) -> String {
     hex::encode(digest)
 }
 
-fn solidity_wrapper_contract(version: u32, vk_hash_hex: &str, import_path: &str) -> anyhow::Result<String> {
+fn to_0x_u256<F: PrimeField>(x: &F) -> String {
+    let mut bytes: Vec<u8> = x.into_bigint().to_bytes_be();
+    if bytes.len() > 32 {
+        bytes = bytes[bytes.len() - 32..].to_vec();
+    }
+    if bytes.len() < 32 {
+        let mut out = vec![0u8; 32 - bytes.len()];
+        out.extend_from_slice(&bytes);
+        bytes = out;
+    }
+    format!("0x{}", hex::encode(bytes))
+}
+
+fn solidity_verifier_contract(
+    version: u32,
+    vk_hash_hex: &str,
+    vk: &VerifyingKey<Bn254>,
+    import_path: &str,
+) -> anyhow::Result<String> {
     if vk_hash_hex.len() != 64 {
         anyhow::bail!("vk_hash_hex must be 32 bytes (64 hex chars)");
     }
@@ -151,6 +175,42 @@ fn solidity_wrapper_contract(version: u32, vk_hash_hex: &str, import_path: &str)
     let _ = hex::decode(vk_hash_hex)?;
 
     let contract_name = format!("GrothVerifierV{version}");
+
+    // G1 alpha
+    let alfa_x = to_0x_u256(&vk.alpha_g1.x);
+    let alfa_y = to_0x_u256(&vk.alpha_g1.y);
+
+    // G2 points in altbn128 precompile format: (im, re)
+    let beta_x_im = to_0x_u256(&vk.beta_g2.x.c1);
+    let beta_x_re = to_0x_u256(&vk.beta_g2.x.c0);
+    let beta_y_im = to_0x_u256(&vk.beta_g2.y.c1);
+    let beta_y_re = to_0x_u256(&vk.beta_g2.y.c0);
+
+    let gamma_x_im = to_0x_u256(&vk.gamma_g2.x.c1);
+    let gamma_x_re = to_0x_u256(&vk.gamma_g2.x.c0);
+    let gamma_y_im = to_0x_u256(&vk.gamma_g2.y.c1);
+    let gamma_y_re = to_0x_u256(&vk.gamma_g2.y.c0);
+
+    let delta_x_im = to_0x_u256(&vk.delta_g2.x.c1);
+    let delta_x_re = to_0x_u256(&vk.delta_g2.x.c0);
+    let delta_y_im = to_0x_u256(&vk.delta_g2.y.c1);
+    let delta_y_re = to_0x_u256(&vk.delta_g2.y.c0);
+
+    let ic_len = vk.gamma_abc_g1.len();
+    if ic_len != 5 {
+        anyhow::bail!("expected vk.gamma_abc_g1 length 5 (4 public inputs + 1), got {ic_len}");
+    }
+
+    let mut ic_lines = String::new();
+    for (i, p) in vk.gamma_abc_g1.iter().enumerate() {
+        let x = to_0x_u256(&p.x);
+        let y = to_0x_u256(&p.y);
+        writeln!(
+            &mut ic_lines,
+            "        vk.IC[{i}] = Pairing.G1Point({x}, {y});"
+        )?;
+    }
+
     Ok(format!(
         r#"// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
@@ -164,6 +224,28 @@ import "{import_path}";
 contract {contract_name} is GrothVerifier {{
     bytes32 public constant VK_HASH = 0x{vk_hash_hex};
     uint64 public constant CIRCUIT_VERSION = {version};
+
+    function verifyingKey() internal pure override returns (VerifyingKey memory vk) {{
+        vk.alfa1 = Pairing.G1Point({alfa_x}, {alfa_y});
+
+        vk.beta2 = Pairing.G2Point(
+            [{beta_x_im}, {beta_x_re}],
+            [{beta_y_im}, {beta_y_re}]
+        );
+
+        vk.gamma2 = Pairing.G2Point(
+            [{gamma_x_im}, {gamma_x_re}],
+            [{gamma_y_im}, {gamma_y_re}]
+        );
+
+        vk.delta2 = Pairing.G2Point(
+            [{delta_x_im}, {delta_x_re}],
+            [{delta_y_im}, {delta_y_re}]
+        );
+
+        vk.IC = new Pairing.G1Point[]({ic_len});
+{ic_lines}
+    }}
 }}
 "#
     ))
@@ -174,13 +256,30 @@ mod export_tests {
     use super::*;
 
     #[test]
-    fn test_solidity_wrapper_contract_contains_vk_hash_and_version() {
-        let sol = solidity_wrapper_contract(1, &"a".repeat(64), "./GrothVerifier.sol").unwrap();
+    fn test_solidity_verifier_contract_contains_vk_hash_and_version() {
+        // Construct a small dummy VK with correct lengths by deserializing a real one
+        // is too heavy for unit tests here; instead, ensure hash/version strings render.
+        let dummy_vk_bytes = vec![1u8; 32];
+        let vk_hash_hex = sha256_hex(&dummy_vk_bytes);
+        assert_eq!(vk_hash_hex.len(), 64);
+
+        // Minimal smoke test: generate contract name and constants via a fake VK.
+        let g1 = ark_bn254::G1Affine::identity();
+        let g2 = ark_bn254::G2Affine::identity();
+        let vk = VerifyingKey::<Bn254> {
+            alpha_g1: g1,
+            beta_g2: g2,
+            gamma_g2: g2,
+            delta_g2: g2,
+            gamma_abc_g1: vec![g1; 5],
+        };
+
+        let sol = solidity_verifier_contract(1, &vk_hash_hex, &vk, "./GrothVerifier.sol").unwrap();
         assert!(sol.contains("contract GrothVerifierV1"));
         assert!(sol.contains("bytes32 public constant VK_HASH = 0x"));
-        assert!(sol.contains(&format!("0x{}", "a".repeat(64))));
         assert!(sol.contains("uint64 public constant CIRCUIT_VERSION = 1"));
         assert!(sol.contains("import \"./GrothVerifier.sol\""));
+        assert!(sol.contains("function verifyingKey()"));
     }
 }
 
@@ -327,11 +426,13 @@ fn main() {
                 }
 
                 let vk_hash_hex = sha256_hex(&vk_bytes);
-                let solidity = solidity_wrapper_contract(version, &vk_hash_hex, &import_path)?;
+                let mut cursor: &[u8] = &vk_bytes;
+                let vk = VerifyingKey::<Bn254>::deserialize_uncompressed(&mut cursor)?;
+                let solidity = solidity_verifier_contract(version, &vk_hash_hex, &vk, &import_path)?;
                 write_text_arg(&out, &solidity)?;
 
                 if !quiet && !is_stdout_path(&out) {
-                    eprintln!("✅ Solidity wrapper written to {}", out);
+                    eprintln!("✅ Solidity verifier written to {}", out);
                 }
                 Ok(())
             };
