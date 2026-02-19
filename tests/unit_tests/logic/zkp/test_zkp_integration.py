@@ -165,7 +165,7 @@ class TestZKPIntegration:
         verifier_sim = ZKPVerifier(backend="simulated")
         assert verifier_sim.verify_proof(proof)
         
-        # Groth16 backend fails closed (not implemented)
+        # Groth16 backend is fail-closed by default (explicit opt-in required)
         from ipfs_datasets_py.logic.zkp import ZKPError
         with pytest.raises(ZKPError, match="Groth16"):
             prover_groth = ZKPProver(backend="groth16")

@@ -82,7 +82,7 @@ def test_wire_vectors_allow_forward_compatible_witness_fields(mock_run, wire_vec
 
 
 @pytest.mark.skipif(
-    os.environ.get("IPFS_DATASETS_ENABLE_GROTH16") != "1",
+    os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
     reason="Groth16 backend is opt-in",
 )
 def test_groth16_cli_public_inputs_order_matches_vectors(wire_vectors_path: Path, monkeypatch):
@@ -116,7 +116,7 @@ def test_groth16_cli_public_inputs_order_matches_vectors(wire_vectors_path: Path
 
 
 @pytest.mark.skipif(
-    os.environ.get("IPFS_DATASETS_ENABLE_GROTH16") != "1",
+    os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
     reason="Groth16 backend is opt-in",
 )
 def test_groth16_wire_vectors_file_is_valid_json(wire_vectors_path: Path):
