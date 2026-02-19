@@ -118,6 +118,21 @@ class TestGroth16BackendInitialization:
         assert backend is not None
 
 
+
+    def test_env_override_secondary_var_no_spurious_warning(self, tmp_path, monkeypatch, caplog):
+        """Test missing primary override doesn't warn if secondary override is valid."""
+        caplog.set_level(logging.WARNING, logger="ipfs_datasets_py.logic.zkp.backends.groth16_ffi")
+        missing_path = tmp_path / "does-not-exist" / "groth16"
+        valid_path = tmp_path / "groth16"
+        valid_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        monkeypatch.setenv("IPFS_DATASETS_GROTH16_BINARY", str(missing_path))
+        monkeypatch.setenv("GROTH16_BINARY", str(valid_path))
+
+        backend = Groth16FFIBackend(binary_path=None)
+        assert backend.binary_path == str(valid_path)
+        assert "IPFS_DATASETS_GROTH16_BINARY is set but path does not exist" not in caplog.text
+
+
 class TestGroth16BackendWitnessValidation:
     """Test witness validation before proof generation."""
     

@@ -168,14 +168,17 @@ class Groth16Backend(ZKPBackend):
         """Find groth16 binary in standard locations."""
         # Allow explicit override (useful for CI, dev machines, and when the Rust
         # crate is located outside of the Python package tree).
+        missing_overrides = []
         for env_var in ("IPFS_DATASETS_GROTH16_BINARY", "GROTH16_BINARY"):
             override = os.environ.get(env_var)
-            if override:
-                if Path(override).exists():
-                    logger.info(f"Using Groth16 binary from ${env_var}: {override}")
-                    return override
-                logger.warning(f"${env_var} is set but path does not exist: {override}")
-
+            if not override:
+                continue
+            if Path(override).exists():
+                logger.info(f"Using Groth16 binary from ${env_var}: {override}")
+                return override
+            missing_overrides.append((env_var, override))
+        for env_var, override in missing_overrides:
+            logger.warning(f"${env_var} is set but path does not exist: {override}")
         # Project layout notes:
         # - In this monorepo, the Rust crate typically lives *inside* the Python
         #   package tree at: ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/
