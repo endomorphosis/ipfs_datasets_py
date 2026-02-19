@@ -24,7 +24,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 logger = logging.getLogger(__name__)
 
 # Import spaCy from centralized utils
-from .spacy_utils import HAVE_SPACY, spacy, Doc, Span, Matcher
+from .utils import HAVE_SPACY, spacy, Doc, Span, Matcher
 
 
 class PatternType(Enum):

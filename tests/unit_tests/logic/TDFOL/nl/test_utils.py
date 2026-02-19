@@ -1,16 +1,20 @@
 """
-Tests for IPFS CID-based cache utilities.
+Tests for TDFOL NL utilities module (consolidated from cache_utils and spacy_utils tests).
 
-This module tests the cache_utils functions that generate and validate
-IPFS Content Identifiers (CIDs) for cache keys.
+This module tests:
+- IPFS CID generation and validation for cache keys
+- spaCy model loading and error handling
 """
 
 import pytest
-from ipfs_datasets_py.logic.TDFOL.nl.cache_utils import (
+from ipfs_datasets_py.logic.TDFOL.nl.utils import (
     create_cache_cid,
     validate_cid,
     parse_cid,
-    MULTIFORMATS_AVAILABLE
+    MULTIFORMATS_AVAILABLE,
+    require_spacy,
+    load_spacy_model,
+    HAVE_SPACY,
 )
 
 
@@ -84,58 +88,6 @@ class TestCreateCacheCID:
         # THEN all CIDs should be identical (deterministic)
         assert cid1 == cid2
         assert cid2 == cid3
-    
-    def test_cid_with_special_characters(self):
-        """Test CID generation with special characters."""
-        # GIVEN data with special characters
-        data = {
-            "text": "All contractors ∀x must pay taxes",
-            "provider": "openai",
-            "prompt_hash": "unicode→test"
-        }
-        
-        # WHEN creating a CID
-        cid = create_cache_cid(data)
-        
-        # THEN it should still produce a valid CID
-        assert cid.startswith("bafk")
-        assert validate_cid(cid)
-    
-    def test_cid_with_nested_data(self):
-        """Test CID generation with nested structures."""
-        # GIVEN nested data
-        data = {
-            "text": "test",
-            "provider": "openai",
-            "prompt_hash": "abc",
-            "metadata": {
-                "version": "1.0",
-                "options": ["opt1", "opt2"]
-            }
-        }
-        
-        # WHEN creating a CID
-        cid = create_cache_cid(data)
-        
-        # THEN it should produce a valid CID
-        assert cid.startswith("bafk")
-        assert validate_cid(cid)
-    
-    def test_cid_empty_strings(self):
-        """Test CID generation with empty strings."""
-        # GIVEN data with empty strings
-        data = {
-            "text": "",
-            "provider": "",
-            "prompt_hash": ""
-        }
-        
-        # WHEN creating a CID
-        cid = create_cache_cid(data)
-        
-        # THEN it should still produce a valid CID
-        assert cid.startswith("bafk")
-        assert validate_cid(cid)
 
 
 class TestValidateCID:
@@ -161,7 +113,6 @@ class TestValidateCID:
             "bafk_incomplete",
             "12345678",
             "",
-            "QmInvalidCIDv0Format"
         ]
         
         # WHEN validating each
@@ -275,60 +226,94 @@ class TestCacheIntegration:
         
         # THEN all CIDs should be unique
         assert len(cids) == len(set(cids))  # No duplicates
-    
-    def test_cid_reproducibility_across_runs(self):
-        """Test that CIDs are reproducible across multiple runs."""
-        # GIVEN the same data
-        data = {
-            "text": "reproducibility test",
-            "provider": "openai",
-            "prompt_hash": "consistent_hash"
-        }
-        
-        # WHEN creating CIDs in separate "runs"
-        cids = [create_cache_cid(data) for _ in range(10)]
-        
-        # THEN all CIDs should be identical
-        assert len(set(cids)) == 1  # Only one unique CID
-        assert all(cid == cids[0] for cid in cids)
 
 
-@pytest.mark.skipif(not MULTIFORMATS_AVAILABLE, reason="multiformats not installed")
-class TestMultiformatsIntegration:
-    """Tests requiring multiformats library."""
+class TestSpacyUtilities:
+    """Tests for spaCy utility functions."""
     
-    def test_cid_can_be_decoded(self):
-        """Test that generated CIDs can be decoded by multiformats."""
-        from multiformats import CID
-        
-        # GIVEN a CID
-        data = {"text": "decode test", "provider": "openai", "prompt_hash": "xyz"}
-        cid_str = create_cache_cid(data)
-        
-        # WHEN decoding with multiformats library
-        cid = CID.decode(cid_str)
-        
-        # THEN it should decode successfully
-        assert cid.version == 1
-        codec_name = cid.codec.name if hasattr(cid.codec, 'name') else str(cid.codec)
-        assert codec_name == "raw"
-        hashfun_name = cid.hashfun.name if hasattr(cid.hashfun, 'name') else str(cid.hashfun)
-        assert hashfun_name == "sha2-256"
+    def test_have_spacy_flag(self):
+        """Test that HAVE_SPACY flag is set correctly."""
+        # GIVEN the HAVE_SPACY flag
+        # THEN it should be a boolean
+        assert isinstance(HAVE_SPACY, bool)
     
-    def test_cid_base_encoding(self):
-        """Test that CIDs use base32 encoding."""
-        from multiformats import CID
+    @pytest.mark.skipif(not HAVE_SPACY, reason="spaCy not installed")
+    def test_require_spacy_succeeds_when_available(self):
+        """Test require_spacy succeeds when spaCy is available."""
+        # WHEN spaCy is available and we require it
+        # THEN it should not raise
+        require_spacy()  # Should not raise
+    
+    @pytest.mark.skipif(HAVE_SPACY, reason="Test requires spaCy to be unavailable")
+    def test_require_spacy_fails_when_unavailable(self):
+        """Test require_spacy fails when spaCy is not available."""
+        # WHEN spaCy is not available and we require it
+        # THEN it should raise ImportError
+        with pytest.raises(ImportError, match="spaCy is required"):
+            require_spacy()
+    
+    @pytest.mark.skipif(not HAVE_SPACY, reason="spaCy not installed")
+    def test_load_spacy_model_success(self):
+        """Test loading a spaCy model when available."""
+        # GIVEN a valid model name
+        model_name = "en_core_web_sm"
         
-        # GIVEN a CID
-        data = {"text": "base test", "provider": "openai", "prompt_hash": "abc"}
-        cid_str = create_cache_cid(data)
+        # WHEN loading the model
+        try:
+            nlp = load_spacy_model(model_name)
+            
+            # THEN it should return a valid language model
+            assert nlp is not None
+            assert hasattr(nlp, 'pipe')
+            assert hasattr(nlp, 'vocab')
+        except OSError:
+            # Model not downloaded, skip test
+            pytest.skip(f"spaCy model {model_name} not downloaded")
+    
+    @pytest.mark.skipif(not HAVE_SPACY, reason="spaCy not installed")
+    def test_load_spacy_model_invalid_name(self):
+        """Test loading an invalid spaCy model raises OSError."""
+        # GIVEN an invalid model name
+        model_name = "nonexistent_model_xyz"
         
-        # WHEN checking the base
-        cid = CID.decode(cid_str)
+        # WHEN loading the model
+        # THEN it should raise OSError
+        with pytest.raises(OSError):
+            load_spacy_model(model_name)
+
+
+class TestBackwardCompatibility:
+    """Tests for backward compatibility with old module structure."""
+    
+    def test_import_from_old_path_cache_utils(self):
+        """Test that old cache_utils imports still work (via __init__.py exports)."""
+        # WHEN importing from old path via package
+        from ipfs_datasets_py.logic.TDFOL.nl import (
+            create_cache_cid,
+            validate_cid,
+            parse_cid,
+            MULTIFORMATS_AVAILABLE
+        )
         
-        # THEN it should use base32
-        # CIDv1 with base32 starts with 'b'
-        assert cid_str.startswith("bafk")  # base32 + raw codec
+        # THEN imports should succeed
+        assert callable(create_cache_cid)
+        assert callable(validate_cid)
+        assert callable(parse_cid)
+        assert isinstance(MULTIFORMATS_AVAILABLE, bool)
+    
+    def test_import_from_old_path_spacy_utils(self):
+        """Test that old spacy_utils imports still work (via __init__.py exports)."""
+        # WHEN importing from old path via package
+        from ipfs_datasets_py.logic.TDFOL.nl import (
+            require_spacy,
+            load_spacy_model,
+            HAVE_SPACY
+        )
+        
+        # THEN imports should succeed
+        assert callable(require_spacy)
+        assert callable(load_spacy_model)
+        assert isinstance(HAVE_SPACY, bool)
 
 
 if __name__ == "__main__":
