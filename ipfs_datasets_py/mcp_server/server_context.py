@@ -50,7 +50,11 @@ from .exceptions import (
     ToolNotFoundError,
     ToolExecutionError,
     ServerStartupError,
+    ServerShutdownError,
     ConfigurationError,
+    ValidationError as MCPValidationError,
+    P2PServiceError,
+    MonitoringError,
 )
 
 logger = logging.getLogger(__name__)
@@ -149,11 +153,17 @@ class ServerContext:
                 logger.info("ServerContext initialized successfully")
                 return self
                 
+            except ConfigurationError:
+                raise
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.error(f"Required module not available: {e}", exc_info=True)
+                self._cleanup()
+                raise ServerStartupError(f"Module import failed: {e}")
             except Exception as e:
                 logger.error(f"Failed to initialize ServerContext: {e}", exc_info=True)
                 # Clean up any partially initialized resources
                 self._cleanup()
-                raise
+                raise ServerStartupError(f"Server initialization failed: {e}")
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
@@ -174,8 +184,11 @@ class ServerContext:
             try:
                 self._cleanup()
                 logger.info("ServerContext cleanup complete")
+            except ServerShutdownError:
+                raise
             except Exception as e:
                 logger.error(f"Error during ServerContext cleanup: {e}", exc_info=True)
+                raise ServerShutdownError(f"Cleanup failed: {e}")
             finally:
                 self._entered = False
     
@@ -228,23 +241,29 @@ class ServerContext:
             try:
                 self._metadata_registry.clear()
                 logger.debug("Metadata registry cleared")
+            except ConfigurationError:
+                raise
             except Exception as e:
-                logger.error(f"Failed to clear metadata registry: {e}")
+                logger.error(f"Failed to clear metadata registry: {e}", exc_info=True)
         
         # Clear tool manager
         if self._tool_manager:
             try:
                 # Tool manager cleanup (if it has any)
                 logger.debug("Tool manager cleaned up")
+            except ConfigurationError:
+                raise
             except Exception as e:
-                logger.error(f"Failed to clean up tool manager: {e}")
+                logger.error(f"Failed to clean up tool manager: {e}", exc_info=True)
         
         # Cleanup P2P services
         if self._p2p_services:
             try:
                 logger.debug("P2P services cleaned up")
+            except P2PServiceError:
+                raise
             except Exception as e:
-                logger.error(f"Failed to clean up P2P services: {e}")
+                logger.error(f"Failed to clean up P2P services: {e}", exc_info=True)
         
         # Clear vector stores
         self._vector_stores.clear()
@@ -657,6 +676,11 @@ class ServerContext:
         
         try:
             return tool(**kwargs)
+        except ToolExecutionError:
+            raise
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid parameters for tool {tool_name}: {e}", exc_info=True)
+            raise ToolExecutionError(tool_name, e)
         except Exception as e:
             logger.error(f"Tool execution failed: {tool_name}", exc_info=True)
             raise ToolExecutionError(tool_name, e)

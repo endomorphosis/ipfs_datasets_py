@@ -17,6 +17,18 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Import custom exceptions
+try:
+    from ipfs_datasets_py.mcp_server.exceptions import (
+        ServerStartupError,
+        ConfigurationError,
+    )
+    EXCEPTIONS_AVAILABLE = True
+except ImportError:
+    EXCEPTIONS_AVAILABLE = False
+    ServerStartupError = Exception
+    ConfigurationError = Exception
+
 # Import error reporting if available
 try:
     from ipfs_datasets_py.error_reporting import install_error_handlers
@@ -84,6 +96,21 @@ def main():
 
     except KeyboardInterrupt:
         print("\nServer stopped by user")
+    except ServerStartupError as e:
+        print(f"Server startup error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    except ConfigurationError as e:
+        print(f"Configuration error: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    except (ImportError, ModuleNotFoundError) as e:
+        print(f"Required module not available: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
     except Exception as e:
         print(f"Error starting server: {e}")
         import traceback

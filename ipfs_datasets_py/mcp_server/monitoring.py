@@ -149,8 +149,11 @@ class EnhancedMetricsCollector:
             except MetricsCollectionError as e:
                 logger.error(f"Metrics collection error in monitoring loop: {e}")
                 await anyio.sleep(60)
+            except (OSError, IOError) as e:
+                logger.error(f"System metrics unavailable: {e}", exc_info=True)
+                await anyio.sleep(60)
             except Exception as e:
-                logger.error(f"Unexpected error in monitoring loop: {e}")
+                logger.error(f"Unexpected error in monitoring loop: {e}", exc_info=True)
                 await anyio.sleep(60)
     
     async def _cleanup_loop(self):
@@ -162,8 +165,13 @@ class EnhancedMetricsCollector:
                 
             except anyio.get_cancelled_exc_class()():
                 break
+            except MonitoringError:
+                raise
+            except (IOError, OSError) as e:
+                logger.error(f"System error in cleanup loop: {e}", exc_info=True)
+                await anyio.sleep(3600)
             except Exception as e:
-                logger.error(f"Error in cleanup loop: {e}")
+                logger.error(f"Error in cleanup loop: {e}", exc_info=True)
                 await anyio.sleep(3600)
     
     async def _collect_system_metrics(self):
@@ -223,8 +231,11 @@ class EnhancedMetricsCollector:
         except MetricsCollectionError as e:
             logger.error(f"Error collecting system metrics: {e}")
             raise
+        except (OSError, IOError, AttributeError) as e:
+            logger.error(f"System metrics unavailable: {e}", exc_info=True)
+            raise MetricsCollectionError(f"Failed to access system metrics: {e}")
         except Exception as e:
-            logger.error(f"Unexpected error collecting system metrics: {e}")
+            logger.error(f"Unexpected error collecting system metrics: {e}", exc_info=True)
             raise MetricsCollectionError(f"Failed to collect system metrics: {e}")
     
     def increment_counter(self, name: str, value: float = 1.0, labels: Optional[Dict[str, str]] = None):
@@ -268,7 +279,10 @@ class EnhancedMetricsCollector:
         """Context manager to track request duration and count."""
         try:
             task_id = str(id(anyio.get_current_task()))
-        except Exception:
+        except AttributeError:
+            task_id = "sync"
+        except Exception as e:
+            logger.debug(f"Error getting task ID: {e}")
             task_id = "sync"
         request_id = f"{endpoint}_{task_id}"
         start_time = time.time()
@@ -280,6 +294,11 @@ class EnhancedMetricsCollector:
             
             yield
             
+        except MonitoringError:
+            with self._lock:
+                self.error_count += 1
+            self.increment_counter('requests_failed', labels={'endpoint': endpoint})
+            raise
         except Exception as e:
             with self._lock:
                 self.error_count += 1
@@ -495,6 +514,20 @@ class EnhancedMetricsCollector:
                         response_time_ms=response_time_ms
                     )
                     
+            except HealthCheckError as e:
+                self.health_checks[name] = HealthCheckResult(
+                    component=name,
+                    status='critical',
+                    message=f'Health check failed: {e.message}',
+                    details={'error': str(e), 'check_name': e.check_name}
+                )
+            except (ImportError, ModuleNotFoundError) as e:
+                self.health_checks[name] = HealthCheckResult(
+                    component=name,
+                    status='critical',
+                    message=f'Health check module unavailable: {e}',
+                    details={'error': str(e)}
+                )
             except Exception as e:
                 self.health_checks[name] = HealthCheckResult(
                     component=name,

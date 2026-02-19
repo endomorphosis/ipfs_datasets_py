@@ -17,6 +17,8 @@ from typing import Any, Callable, TypeVar
 import anyio
 import sniffio
 
+from ipfs_datasets_py.mcp_server.exceptions import RuntimeExecutionError
+
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
@@ -35,7 +37,10 @@ async def run_in_trio(func: Callable[..., T], /, *args: Any, **kwargs: Any) -> T
             return await result if inspect.isawaitable(result) else result
     except sniffio.AsyncLibraryNotFoundError:
         pass
-    except Exception:
+    except (ImportError, ModuleNotFoundError) as e:
+        logger.error(f"Trio not available: {e}", exc_info=True)
+        raise RuntimeExecutionError(f"Trio runtime unavailable: {e}")
+    except Exception as e:
         # If detection fails for any reason, fall back to thread runner.
         logger.debug("Async library detection failed; falling back to Trio thread runner", exc_info=True)
 
