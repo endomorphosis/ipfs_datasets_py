@@ -10,7 +10,7 @@ use crate::{
 };
 
 use ark_bn254::{Bn254, Fr};
-use ark_ff::{BigInteger, PrimeField};
+use ark_ff::{BigInteger, Field, PrimeField};
 use ark_groth16::{Groth16, Proof, ProvingKey};
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
 use ark_serialize::CanonicalDeserialize;

@@ -3,7 +3,7 @@
 
 use crate::circuit::{MVPCircuit, TDFOLv1DerivationCircuitV2};
 use ark_bn254::{Bn254, Fr};
-use ark_ff::PrimeField;
+use ark_ff::{Field, PrimeField};
 use ark_groth16::Groth16;
 use ark_serialize::CanonicalSerialize;
 use ark_snark::SNARK;
