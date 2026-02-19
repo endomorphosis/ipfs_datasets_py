@@ -11,6 +11,7 @@ from typing import (
 )
 from typing_extensions import NotRequired
 from abc import abstractmethod
+from dataclasses import dataclass, field
 
 
 # ============================================================================
@@ -339,3 +340,141 @@ class Statistics(TypedDict, total=False):
     average_time: float
     cache_hits: NotRequired[int]
     cache_misses: NotRequired[int]
+
+
+# ============================================================================
+# Proof Statistics
+# ============================================================================
+
+@dataclass
+class ProofStatistics:
+    """
+    Unified statistics tracking for theorem proving.
+    
+    This dataclass consolidates proof statistics tracking that was previously
+    duplicated across multiple modules (prover_core, shadow_prover, etc.) into
+    a single, type-safe structure.
+    
+    Attributes:
+        attempts: Total number of proof attempts
+        succeeded: Number of successful proofs
+        failed: Number of failed proofs
+        steps_taken: Total inference steps across all proofs
+        avg_time: Average time per proof in seconds
+        cache_hits: Number of cache hits (if caching enabled)
+        rules_applied: Count of each rule application by rule name
+    
+    Methods:
+        record_success(steps, time): Record a successful proof
+        record_failure(time): Record a failed proof
+        record_rule(rule_name): Record an inference rule application
+        get_success_rate(): Calculate success rate percentage
+        get_stats_dict(): Export as dictionary for compatibility
+    
+    Examples:
+        >>> stats = ProofStatistics()
+        >>> stats.record_success(steps=5, time=0.1)
+        >>> stats.record_rule("Modus Ponens")
+        >>> print(stats.get_success_rate())
+        100.0
+    
+    Notes:
+        - This replaces duplicate dict-based statistics tracking
+        - Type-safe with dataclass validation
+        - Provides consistent API across all provers
+    """
+    attempts: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    steps_taken: int = 0
+    avg_time: float = 0.0
+    cache_hits: int = 0
+    rules_applied: Dict[str, int] = field(default_factory=dict)
+    
+    def record_success(self, steps: int, time: float) -> None:
+        """
+        Record a successful proof.
+        
+        Args:
+            steps: Number of inference steps taken
+            time: Time taken in seconds
+        """
+        self.attempts += 1
+        self.succeeded += 1
+        self.steps_taken += steps
+        self._update_avg_time(time)
+    
+    def record_failure(self, time: float) -> None:
+        """
+        Record a failed proof.
+        
+        Args:
+            time: Time taken in seconds
+        """
+        self.attempts += 1
+        self.failed += 1
+        self._update_avg_time(time)
+    
+    def record_rule(self, rule_name: str) -> None:
+        """
+        Record an inference rule application.
+        
+        Args:
+            rule_name: Name of the inference rule that was applied
+        """
+        self.rules_applied[rule_name] = self.rules_applied.get(rule_name, 0) + 1
+    
+    def record_cache_hit(self) -> None:
+        """Record a cache hit."""
+        self.cache_hits += 1
+    
+    def get_success_rate(self) -> float:
+        """
+        Calculate success rate percentage.
+        
+        Returns:
+            Success rate as percentage (0-100), or 0 if no attempts
+        """
+        if self.attempts == 0:
+            return 0.0
+        return (self.succeeded / self.attempts) * 100.0
+    
+    def get_stats_dict(self) -> Dict[str, Any]:
+        """
+        Export statistics as dictionary for backward compatibility.
+        
+        Returns:
+            Dictionary with all statistics
+        """
+        return {
+            "total_attempts": self.attempts,
+            "succeeded": self.succeeded,
+            "failed": self.failed,
+            "steps_taken": self.steps_taken,
+            "average_time": self.avg_time,
+            "cache_hits": self.cache_hits,
+            "rules_applied": self.rules_applied.copy(),
+            "success_rate": self.get_success_rate(),
+        }
+    
+    def _update_avg_time(self, time: float) -> None:
+        """
+        Update average time using incremental mean formula.
+        
+        Args:
+            time: Time for this proof attempt in seconds
+        """
+        if self.attempts == 1:
+            self.avg_time = time
+        else:
+            self.avg_time = (self.avg_time * (self.attempts - 1) + time) / self.attempts
+    
+    def reset(self) -> None:
+        """Reset all statistics to initial state."""
+        self.attempts = 0
+        self.succeeded = 0
+        self.failed = 0
+        self.steps_taken = 0
+        self.avg_time = 0.0
+        self.cache_hits = 0
+        self.rules_applied.clear()
