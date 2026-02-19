@@ -25,6 +25,23 @@ from .propositional import (
     HypotheticalSyllogism,
     ImplicationElimination,
 )
+from .temporal import (
+    AlwaysDistribution,
+    AlwaysImplication,
+    AlwaysTransitive,
+    AlwaysImpliesNext,
+    AlwaysInduction,
+    EventuallyFromAlways,
+    EventuallyDistribution,
+    EventuallyTransitive,
+    EventuallyImplication,
+    NextDistribution,
+    NextImplication,
+    UntilWeakening,
+    SinceWeakening,
+    TemporalUntilElimination,
+    TemporalNegation,
+)
 
 __all__ = [
     # Base
@@ -41,4 +58,20 @@ __all__ = [
     'Contraposition',
     'HypotheticalSyllogism',
     'ImplicationElimination',
+    # Temporal
+    'AlwaysDistribution',
+    'AlwaysImplication',
+    'AlwaysTransitive',
+    'AlwaysImpliesNext',
+    'AlwaysInduction',
+    'EventuallyFromAlways',
+    'EventuallyDistribution',
+    'EventuallyTransitive',
+    'EventuallyImplication',
+    'NextDistribution',
+    'NextImplication',
+    'UntilWeakening',
+    'SinceWeakening',
+    'TemporalUntilElimination',
+    'TemporalNegation',
 ]
