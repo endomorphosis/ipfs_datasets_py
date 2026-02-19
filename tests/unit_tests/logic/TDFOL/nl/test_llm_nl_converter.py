@@ -19,7 +19,7 @@ from ipfs_datasets_py.logic.TDFOL.nl.llm_nl_prompts import (
 
 
 class TestLLMResponseCache:
-    """Tests for LLM response caching."""
+    """Tests for LLM response caching with IPFS CIDs."""
     
     def test_cache_basic_operations(self):
         """Test basic cache put/get operations."""
@@ -37,6 +37,49 @@ class TestLLMResponseCache:
         assert confidence == 0.9
         assert cache.hits == 1
         assert cache.misses == 0
+    
+    def test_cache_keys_are_ipfs_cids(self):
+        """Test that cache keys are valid IPFS CIDs."""
+        from ipfs_datasets_py.logic.TDFOL.nl.cache_utils import validate_cid
+        
+        # GIVEN a cache
+        cache = LLMResponseCache(max_size=10)
+        
+        # WHEN we create a cache key
+        key = cache._make_key("test text", "openai", "hash123")
+        
+        # THEN it should be a valid IPFS CID
+        assert isinstance(key, str)
+        assert key.startswith("bafk")  # CIDv1 with base32
+        assert validate_cid(key), f"Invalid CID: {key}"
+    
+    def test_cache_key_determinism(self):
+        """Test that cache keys are deterministic."""
+        # GIVEN a cache
+        cache = LLMResponseCache(max_size=10)
+        
+        # WHEN we create the same key multiple times
+        key1 = cache._make_key("test", "openai", "hash1")
+        key2 = cache._make_key("test", "openai", "hash1")
+        key3 = cache._make_key("test", "openai", "hash1")
+        
+        # THEN all keys should be identical
+        assert key1 == key2 == key3
+    
+    def test_cache_key_uniqueness(self):
+        """Test that different inputs produce different cache keys."""
+        # GIVEN a cache
+        cache = LLMResponseCache(max_size=10)
+        
+        # WHEN we create keys with different inputs
+        key1 = cache._make_key("text1", "openai", "hash1")
+        key2 = cache._make_key("text2", "openai", "hash1")
+        key3 = cache._make_key("text1", "anthropic", "hash1")
+        key4 = cache._make_key("text1", "openai", "hash2")
+        
+        # THEN all keys should be different
+        keys = [key1, key2, key3, key4]
+        assert len(keys) == len(set(keys)), "Cache keys should be unique"
     
     def test_cache_miss(self):
         """Test cache miss behavior."""
