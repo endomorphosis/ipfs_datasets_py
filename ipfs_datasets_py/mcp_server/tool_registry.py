@@ -6,6 +6,10 @@ from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 
 from ipfs_datasets_py.mcp_server.tools.tool_wrapper import BaseMCPTool, wrap_function_as_tool
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ToolRegistrationError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -670,7 +674,8 @@ class ToolRegistry:
             True
         """
         if tool_name not in self._tools:
-            raise ValueError(f"Tool '{tool_name}' not found")
+            from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+            raise ToolNotFoundError(tool_name)
         
         tool = self._tools[tool_name]
         self.total_executions += 1
@@ -681,7 +686,7 @@ class ToolRegistry:
             return result
         except Exception as e:
             logger.error(f"Tool '{tool_name}' execution failed: {e}")
-            raise
+            raise ToolExecutionError(tool_name, e)
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """Get comprehensive usage statistics for all tools and registry.
