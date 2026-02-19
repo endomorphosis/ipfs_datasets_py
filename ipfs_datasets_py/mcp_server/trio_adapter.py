@@ -39,6 +39,12 @@ from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
 import time
 
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ServerStartupError,
+    ServerShutdownError,
+    RuntimeExecutionError,
+)
+
 logger = logging.getLogger(__name__)
 
 # Try to import Trio
@@ -192,9 +198,14 @@ class TrioMCPServerAdapter:
                 
         except trio.Cancelled:
             logger.info("Trio server cancelled")
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.error(f"Required module not available: {e}", exc_info=True)
+            self._error_count += 1
+            raise ServerStartupError(f"Trio server module error: {e}")
         except Exception as e:
             logger.error(f"Trio server error: {e}", exc_info=True)
             self._error_count += 1
+            raise RuntimeExecutionError(f"Trio server failed: {e}")
         finally:
             self.is_running = False
     

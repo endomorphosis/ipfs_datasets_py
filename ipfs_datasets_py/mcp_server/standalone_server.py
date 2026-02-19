@@ -20,6 +20,21 @@ except ImportError as e:
     MCP_AVAILABLE = False
     logging.warning(f"Dependencies not available: {e}")
 
+# Import custom exceptions if available
+try:
+    from ipfs_datasets_py.mcp_server.exceptions import (
+        ServerStartupError,
+        ToolExecutionError,
+        ConfigurationError,
+    )
+    EXCEPTIONS_AVAILABLE = True
+except ImportError:
+    EXCEPTIONS_AVAILABLE = False
+    # Fallback to base exceptions
+    ServerStartupError = Exception
+    ToolExecutionError = Exception
+    ConfigurationError = Exception
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -126,7 +141,30 @@ class MinimalMCPServer:
                         "success": False
                     }), 400
                     
+            except ToolExecutionError as e:
+                logger.error(f"Tool execution error: {e}", exc_info=True)
+                if ERROR_REPORTING_AVAILABLE:
+                    reporter = get_global_error_reporter()
+                    if reporter.enabled:
+                        reporter.report_exception(e, source="python", context={
+                            'endpoint': '/execute',
+                            'tool_name': tool_name,
+                            'parameters': parameters
+                        })
+                return jsonify({
+                    "error": "Tool execution failed",
+                    "details": "An error occurred while executing the requested tool.",
+                    "success": False
+                }), 500
+            except (ValueError, TypeError) as e:
+                logger.error(f"Invalid parameters: {e}", exc_info=True)
+                return jsonify({
+                    "error": "Invalid parameters",
+                    "details": "One or more parameters are missing or have an invalid format.",
+                    "success": False
+                }), 400
             except Exception as e:
+                logger.error(f"Unexpected error: {e}", exc_info=True)
                 # Report exception if error reporting is enabled
                 if ERROR_REPORTING_AVAILABLE:
                     reporter = get_global_error_reporter()
@@ -138,7 +176,8 @@ class MinimalMCPServer:
                         })
                 
                 return jsonify({
-                    "error": str(e),
+                    "error": "Internal server error",
+                    "details": "An unexpected error occurred while processing the request.",
                     "success": False
                 }), 500
         
@@ -296,7 +335,16 @@ class MinimalMCPDashboard:
                 
                 return jsonify(response.json())
                 
+            except ConfigurationError:
+                raise
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.error(f"MCP server module unavailable: {e}", exc_info=True)
+                return jsonify({
+                    "error": f"MCP server not available: {str(e)}",
+                    "success": False
+                }), 503
             except Exception as e:
+                logger.error(f"Connection error: {e}", exc_info=True)
                 return jsonify({
                     "error": f"Failed to connect to MCP server: {str(e)}",
                     "success": False

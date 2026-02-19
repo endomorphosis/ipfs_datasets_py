@@ -339,8 +339,10 @@ class RuntimeRouter:
                 self._trio_nursery.cancel_scope.cancel()
             except RuntimeRoutingError as e:
                 logger.warning(f"Runtime error cancelling Trio nursery: {e}")
+            except AttributeError as e:
+                logger.warning(f"Trio nursery not properly initialized: {e}")
             except Exception as e:
-                logger.warning(f"Unexpected error cancelling Trio nursery: {e}")
+                logger.warning(f"Unexpected error cancelling Trio nursery: {e}", exc_info=True)
             finally:
                 self._trio_nursery = None
                 self._trio_scope = None
@@ -481,9 +483,13 @@ class RuntimeRouter:
             error = True
             logger.error(f"Runtime execution error for tool '{tool_name}' on {runtime}: {e}")
             raise
+        except (TypeError, ValueError) as e:
+            error = True
+            logger.error(f"Invalid parameters for tool '{tool_name}': {e}", exc_info=True)
+            raise RuntimeExecutionError(f"Invalid parameters for '{tool_name}': {e}")
         except Exception as e:
             error = True
-            logger.error(f"Unexpected error routing tool '{tool_name}' to {runtime}: {e}")
+            logger.error(f"Unexpected error routing tool '{tool_name}' to {runtime}: {e}", exc_info=True)
             raise RuntimeExecutionError(f"Failed to route tool '{tool_name}' to {runtime}: {e}")
             
         finally:
@@ -531,8 +537,13 @@ class RuntimeRouter:
                 # Run sync function
                 return tool_func(*args, **kwargs)
                 
+        except RuntimeExecutionError:
+            raise
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Trio not available, falling back to FastAPI: {e}")
+            return await self._route_to_fastapi(tool_func, *args, **kwargs)
         except Exception as e:
-            logger.warning(f"Error in Trio execution, falling back to FastAPI: {e}")
+            logger.warning(f"Error in Trio execution, falling back to FastAPI: {e}", exc_info=True)
             return await self._route_to_fastapi(tool_func, *args, **kwargs)
     
     def get_metrics(self) -> Dict[str, Dict[str, Any]]:

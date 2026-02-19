@@ -16,6 +16,10 @@ import inspect
 from typing import List, Dict, Any
 from pathlib import Path
 
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolRegistrationError,
+    ConfigurationError,
+)
 from ipfs_datasets_py.mcp_server.tool_metadata import (
     get_registry,
     ToolMetadata,
@@ -61,8 +65,10 @@ def discover_p2p_tools() -> List[Dict[str, Any]]:
         
         except ImportError as e:
             logger.warning(f"Could not import P2P module {module_name}: {e}")
+        except (AttributeError, TypeError) as e:
+            logger.warning(f"Invalid tool metadata in {module_name}: {e}")
         except Exception as e:
-            logger.error(f"Error discovering tools in {module_name}: {e}")
+            logger.error(f"Error discovering tools in {module_name}: {e}", exc_info=True)
     
     return discovered
 
@@ -97,8 +103,13 @@ def register_p2p_tools() -> Dict[str, Any]:
             registered += 1
             logger.info(f"Registered P2P tool: {func_name} (runtime={metadata.runtime}, category={metadata.category})")
         
+        except ToolRegistrationError:
+            raise
+        except (AttributeError, KeyError) as e:
+            logger.error(f"Invalid tool metadata for {tool_info.get('function', 'unknown')}: {e}")
+            errors += 1
         except Exception as e:
-            logger.error(f"Error registering tool {tool_info.get('function', 'unknown')}: {e}")
+            logger.error(f"Error registering tool {tool_info.get('function', 'unknown')}: {e}", exc_info=True)
             errors += 1
     
     stats = {

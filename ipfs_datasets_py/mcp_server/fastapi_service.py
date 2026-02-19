@@ -23,6 +23,18 @@ from contextlib import asynccontextmanager
 
 import jwt
 import hashlib
+
+# Import custom exceptions
+from .exceptions import (
+    MCPServerError,
+    ToolError,
+    ToolExecutionError,
+    ToolNotFoundError,
+    ValidationError as MCPValidationError,
+    ConfigurationError,
+    ServerStartupError,
+    ServerShutdownError
+)
 try:
     from passlib.context import CryptContext
 except ImportError:  # pragma: no cover - optional dependency
@@ -419,8 +431,31 @@ async def generate_embeddings_api(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Embedding tool not found: {e}")
+        background_tasks.add_task(
+            log_api_request,
+            user_id=current_user["user_id"],
+            endpoint="/embeddings/generate",
+            status="error",
+            error=str(e)
+        )
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Embedding generation execution failed: {e}", exc_info=e.original_error)
+        background_tasks.add_task(
+            log_api_request,
+            user_id=current_user["user_id"],
+            endpoint="/embeddings/generate",
+            status="error",
+            error=str(e)
+        )
+        raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid embedding request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Embedding generation failed: {e}")
+        logger.error(f"Unexpected error in embedding generation: {e}", exc_info=True)
         background_tasks.add_task(
             log_api_request,
             user_id=current_user["user_id"],
@@ -453,8 +488,17 @@ async def batch_generate_embeddings(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Batch embedding tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Batch embedding execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Batch embedding generation failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid batch embedding request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Batch embedding generation failed: {e}")
+        logger.error(f"Unexpected error in batch embedding generation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Batch embedding generation failed: {str(e)}")
 
 # Vector search endpoints
@@ -480,8 +524,17 @@ async def semantic_search(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Semantic search tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Semantic search execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Semantic search failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid search request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Semantic search failed: {e}")
+        logger.error(f"Unexpected error in semantic search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Semantic search failed: {str(e)}")
 
 @app.post("/search/hybrid")
@@ -510,8 +563,17 @@ async def hybrid_search(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Hybrid search tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Hybrid search execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Hybrid search failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid hybrid search request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Hybrid search failed: {e}")
+        logger.error(f"Unexpected error in hybrid search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Hybrid search failed: {str(e)}")
 
 # Analysis endpoints
@@ -532,8 +594,17 @@ async def clustering_analysis(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Clustering tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Clustering analysis execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Clustering analysis failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid clustering request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Clustering analysis failed: {e}")
+        logger.error(f"Unexpected error in clustering analysis: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Clustering analysis failed: {str(e)}")
 
 @app.post("/analysis/quality")
@@ -553,8 +624,17 @@ async def quality_assessment(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Quality assessment tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Quality assessment execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Quality assessment failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid quality assessment request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Quality assessment failed: {e}")
+        logger.error(f"Unexpected error in quality assessment: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Quality assessment failed: {str(e)}")
 
 # Admin endpoints
@@ -572,8 +652,14 @@ async def get_system_stats(
         result = await mcp_stats({})
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"System stats tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"System stats execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
     except Exception as e:
-        logger.error(f"Failed to get system stats: {e}")
+        logger.error(f"Unexpected error getting system stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get system stats: {str(e)}")
 
 @app.get("/admin/health")
@@ -590,8 +676,14 @@ async def detailed_health_check(
         result = await mcp_health({})
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Health check tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Health check execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
+        logger.error(f"Unexpected error in health check: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Health check failed: {str(e)}")
 
 # MCP Tools endpoint
@@ -618,8 +710,11 @@ async def list_available_tools(
             ]
         }
         
+    except ConfigurationError as e:
+        logger.error(f"MCP server configuration error: {e}")
+        raise HTTPException(status_code=500, detail=f"Server configuration error: {str(e)}")
     except Exception as e:
-        logger.error(f"Failed to list tools: {e}")
+        logger.error(f"Unexpected error listing tools: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list tools: {str(e)}")
 
 @app.post("/tools/execute/{tool_name}")
@@ -645,8 +740,14 @@ async def execute_tool(
             "result": result
         }
         
+    except ToolNotFoundError as e:
+        logger.error(f"Tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Tool execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
     except Exception as e:
-        logger.error(f"Tool execution failed: {e}")
+        logger.error(f"Unexpected error executing tool: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Tool execution failed: {str(e)}")
 
 # Background task functions
@@ -677,9 +778,24 @@ async def run_workflow_background(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Workflow tool not found: {e}")
+        await log_api_request(
+            user_id=user_id,
+            endpoint="/workflows/execute",
+            status="error",
+            error=str(e)
+        )
+    except ToolExecutionError as e:
+        logger.error(f"Background workflow execution failed: {e}", exc_info=e.original_error)
+        await log_api_request(
+            user_id=user_id,
+            endpoint="/workflows/execute",
+            status="error",
+            error=str(e)
+        )
     except Exception as e:
-        logger.error(f"Background workflow failed: {e}")
-        # Log error
+        logger.error(f"Unexpected error in background workflow: {e}", exc_info=True)
         await log_api_request(
             user_id=user_id,
             endpoint="/workflows/execute",
@@ -721,10 +837,30 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         }
     )
 
+@app.exception_handler(MCPServerError)
+async def mcp_server_error_handler(request: Request, exc: MCPServerError):
+    """Handle MCP server custom exceptions."""
+    status_code = 500
+    if isinstance(exc, ToolNotFoundError):
+        status_code = 404
+    elif isinstance(exc, (MCPValidationError, ConfigurationError)):
+        status_code = 400
+    
+    logger.error(f"MCP server error: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": str(exc),
+            "error_type": type(exc).__name__,
+            "status_code": status_code,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
     """Handle general exceptions."""
-    logger.error(f"Unhandled exception: {exc}")
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
         content={
@@ -790,8 +926,14 @@ def run_development_server():
             log_level="debug" if settings.debug else "info",
             access_log=True
         )
-    except Exception as e:
+    except ConfigurationError as e:
+        logger.error(f"Server configuration error: {e}")
+        raise
+    except ServerStartupError as e:
         logger.error(f"Failed to start server: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error starting server: {e}", exc_info=True)
         raise
 
 def run_production_server():
@@ -814,8 +956,14 @@ def run_production_server():
             access_log=True,
             loop="uvloop"  # Use uvloop for better performance
         )
-    except Exception as e:
+    except ConfigurationError as e:
+        logger.error(f"Production server configuration error: {e}")
+        raise
+    except ServerStartupError as e:
         logger.error(f"Failed to start production server: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error starting production server: {e}", exc_info=True)
         raise
 
 # Dataset Management Endpoints
@@ -836,8 +984,17 @@ async def load_dataset(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Dataset loading tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Dataset loading execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Dataset loading failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid dataset load request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Dataset loading failed: {e}")
+        logger.error(f"Unexpected error in dataset loading: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset loading failed: {str(e)}")
 
 @app.post("/datasets/process")
@@ -857,8 +1014,17 @@ async def process_dataset(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Dataset processing tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Dataset processing execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Dataset processing failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid dataset process request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Dataset processing failed: {e}")
+        logger.error(f"Unexpected error in dataset processing: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset processing failed: {str(e)}")
 
 @app.post("/datasets/save")
@@ -879,8 +1045,17 @@ async def save_dataset(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Dataset saving tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Dataset saving execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Dataset saving failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid dataset save request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Dataset saving failed: {e}")
+        logger.error(f"Unexpected error in dataset saving: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset saving failed: {str(e)}")
 
 @app.post("/datasets/convert")
@@ -904,8 +1079,17 @@ async def convert_dataset_format(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Dataset conversion tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Dataset conversion execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Dataset conversion failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid dataset conversion request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Dataset conversion failed: {e}")
+        logger.error(f"Unexpected error in dataset conversion: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Dataset conversion failed: {str(e)}")
 
 # IPFS Endpoints
@@ -927,8 +1111,17 @@ async def pin_to_ipfs(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"IPFS pinning tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"IPFS pinning execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"IPFS pinning failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid IPFS pin request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"IPFS pinning failed: {e}")
+        logger.error(f"Unexpected error in IPFS pinning: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"IPFS pinning failed: {str(e)}")
 
 @app.get("/ipfs/get/{cid}")
@@ -950,8 +1143,17 @@ async def get_from_ipfs(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"IPFS retrieval tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"IPFS retrieval execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"IPFS retrieval failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid IPFS get request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"IPFS retrieval failed: {e}")
+        logger.error(f"Unexpected error in IPFS retrieval: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"IPFS retrieval failed: {str(e)}")
 
 # Vector Store Endpoints
@@ -975,8 +1177,17 @@ async def create_vector_index(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Vector index creation tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Vector index creation execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Vector index creation failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid vector index creation request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Vector index creation failed: {e}")
+        logger.error(f"Unexpected error in vector index creation: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Vector index creation failed: {str(e)}")
 
 @app.post("/vectors/search")
@@ -1004,8 +1215,17 @@ async def search_vector_index(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Vector index search tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Vector index search execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Vector index search failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid vector index search request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Vector index search failed: {e}")
+        logger.error(f"Unexpected error in vector index search: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Vector index search failed: {str(e)}")
 
 # Workflow Endpoints
@@ -1038,8 +1258,17 @@ async def execute_workflow(
             "steps_count": len(request.steps)
         }
         
+    except ToolNotFoundError as e:
+        logger.error(f"Workflow execution tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Workflow execution failed: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Workflow execution failed: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid workflow execution request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Workflow execution failed: {e}")
+        logger.error(f"Unexpected error in workflow execution: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Workflow execution failed: {str(e)}")
 
 @app.get("/workflows/status/{task_id}")
@@ -1054,8 +1283,17 @@ async def get_workflow_status(
         result = await mcp_status({"task_id": task_id})
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Workflow status tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Failed to get workflow status: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to get workflow status: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid workflow status request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to get workflow status: {e}")
+        logger.error(f"Unexpected error getting workflow status: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get workflow status: {str(e)}")
 
 # Audit and Monitoring Endpoints
@@ -1085,8 +1323,17 @@ async def record_audit_event(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Audit event tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Failed to record audit event: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to record audit event: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid audit event request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to record audit event: {e}")
+        logger.error(f"Unexpected error recording audit event: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to record audit event: {str(e)}")
 
 @app.get("/audit/report")
@@ -1110,8 +1357,17 @@ async def generate_audit_report(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Audit report tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Failed to generate audit report: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to generate audit report: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid audit report request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to generate audit report: {e}")
+        logger.error(f"Unexpected error generating audit report: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to generate audit report: {str(e)}")
 
 # Cache Management Endpoints
@@ -1126,8 +1382,14 @@ async def get_cache_stats(
         result = await mcp_cache_stats({})
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Cache stats tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Failed to get cache stats: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to get cache stats: {str(e)}")
     except Exception as e:
-        logger.error(f"Failed to get cache stats: {e}")
+        logger.error(f"Unexpected error getting cache stats: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to get cache stats: {str(e)}")
 
 @app.post("/cache/clear")
@@ -1147,6 +1409,15 @@ async def clear_cache(
         
         return result
         
+    except ToolNotFoundError as e:
+        logger.error(f"Clear cache tool not found: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except ToolExecutionError as e:
+        logger.error(f"Failed to clear cache: {e}", exc_info=e.original_error)
+        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
+    except MCPValidationError as e:
+        logger.warning(f"Invalid clear cache request: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Failed to clear cache: {e}")
+        logger.error(f"Unexpected error clearing cache: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")

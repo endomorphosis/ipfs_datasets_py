@@ -22,6 +22,13 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
 
+from .exceptions import (
+    ToolNotFoundError,
+    ToolExecutionError,
+    ConfigurationError,
+    P2PServiceError,
+)
+
 if TYPE_CHECKING:
     from .mcp_interfaces import MCPServerProtocol
 
@@ -112,7 +119,10 @@ class P2PMCPRegistryAdapter:
             # Get tool description
             try:
                 desc = fn.__doc__ or ""
-            except Exception:
+            except AttributeError:
+                desc = ""
+            except Exception as e:
+                logger.debug(f"Error getting docstring for {name}: {e}")
                 desc = ""
             
             # Detect or retrieve runtime
@@ -143,8 +153,13 @@ class P2PMCPRegistryAdapter:
             if manager is None:
                 logger.warning("Hierarchical tool manager not available")
             return manager
+        except ImportError as e:
+            logger.warning(f"Hierarchical tool manager module not available: {e}")
+            return None
+        except ConfigurationError:
+            raise
         except Exception as e:
-            logger.error(f"Error getting tool manager: {e}")
+            logger.error(f"Error getting tool manager: {e}", exc_info=True)
             return None
     
     def _discover_categories(self, manager):
@@ -230,9 +245,17 @@ class P2PMCPRegistryAdapter:
                             "hierarchical": True,
                         },
                     }
+                except ToolExecutionError:
+                    raise
+                except (TypeError, ValueError) as e:
+                    logger.warning(f"Invalid tool configuration for {tool_name}: {e}")
                 except Exception as e:
                     logger.debug(f"Error creating wrapper for {tool_name}: {e}")
                     
+        except ConfigurationError:
+            raise
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"Failed to import tools from category {category}: {e}")
         except Exception as e:
             logger.debug(f"Error processing category {category}: {e}")
     
@@ -264,11 +287,19 @@ class P2PMCPRegistryAdapter:
                 
                 logger.info(f"Discovered {len(out)} tools through hierarchical system")
                 
+            except ConfigurationError:
+                raise
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.warning(f"Module import failed during discovery: {e}")
             except Exception as e:
                 logger.debug(f"Error getting categories: {e}")
             
+        except ConfigurationError:
+            raise
+        except P2PServiceError:
+            raise
         except Exception as e:
-            logger.error(f"Error discovering hierarchical tools: {e}")
+            logger.error(f"Error discovering hierarchical tools: {e}", exc_info=True)
             import traceback
             logger.debug(traceback.format_exc())
         
@@ -324,7 +355,10 @@ class P2PMCPRegistryAdapter:
             module = getattr(fn, "__module__", "")
             if "trio" in module.lower() or "mcplusplus" in module.lower():
                 return RUNTIME_TRIO
-        except Exception:
+        except AttributeError:
+            pass
+        except Exception as e:
+            logger.debug(f"Error detecting runtime from module: {e}")
             pass
         
         # Default to FastAPI
@@ -342,7 +376,10 @@ class P2PMCPRegistryAdapter:
         import inspect
         try:
             return inspect.iscoroutinefunction(fn)
-        except Exception:
+        except (TypeError, AttributeError):
+            return False
+        except Exception as e:
+            logger.debug(f"Error checking if function is async: {e}")
             return False
 
     async def validate_p2p_message(self, msg: dict) -> bool:

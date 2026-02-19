@@ -15,6 +15,11 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 from datetime import datetime
 
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ValidationError as MCPValidationError,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -143,6 +148,13 @@ class InvestigationMCPClient:
             raise InvestigationMCPClientError(
                 f"Invalid JSON response from MCP tool '{tool_name}': {str(e)}",
                 {"tool_name": tool_name, "arguments": arguments}
+            )
+        except ToolExecutionError:
+            raise
+        except (aiohttp.ClientError, TimeoutError) as e:
+            raise InvestigationMCPClientError(
+                f"Network error calling MCP tool '{tool_name}': {str(e)}",
+                {"tool_name": tool_name, "arguments": arguments, "error_type": type(e).__name__}
             )
         except Exception as e:
             raise InvestigationMCPClientError(

@@ -38,6 +38,13 @@ from contextlib import asynccontextmanager
 import time
 from collections import defaultdict, deque
 
+# Import custom exceptions
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ConfigurationError,
+    ValidationError as MCPValidationError,
+)
+
 # Import GraphRAG components
 from ipfs_datasets_py.processors.graphrag.complete_advanced_graphrag import (
     CompleteGraphRAGSystem, CompleteProcessingConfiguration, CompleteProcessingResult
@@ -295,11 +302,27 @@ class ProcessingJobManager:
             if request.notify_webhook:
                 await self._send_webhook_notification(request.notify_webhook, job_id, "completed")
                 
+        except ToolExecutionError as e:
+            job_info["status"] = "failed"
+            job_info["error_message"] = str(e)
+            job_info["completed_at"] = datetime.now()
+            logger.error(f"Job {job_id} tool execution failed: {e}", exc_info=True)
+            
+            if request.notify_webhook:
+                await self._send_webhook_notification(request.notify_webhook, job_id, "failed")
+        except (ValueError, TypeError) as e:
+            job_info["status"] = "failed"
+            job_info["error_message"] = f"Invalid parameters: {e}"
+            job_info["completed_at"] = datetime.now()
+            logger.error(f"Job {job_id} invalid parameters: {e}", exc_info=True)
+            
+            if request.notify_webhook:
+                await self._send_webhook_notification(request.notify_webhook, job_id, "failed")
         except Exception as e:
             job_info["status"] = "failed"
             job_info["error_message"] = str(e)
             job_info["completed_at"] = datetime.now()
-            logger.error(f"Job {job_id} failed: {e}")
+            logger.error(f"Job {job_id} failed: {e}", exc_info=True)
             
             if request.notify_webhook:
                 await self._send_webhook_notification(request.notify_webhook, job_id, "failed")
@@ -332,8 +355,10 @@ class ProcessingJobManager:
                     "timestamp": datetime.now().isoformat()
                 }
                 await session.post(webhook_url, json=payload)
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"aiohttp not available for webhook: {e}")
         except Exception as e:
-            logger.warning(f"Failed to send webhook notification: {e}")
+            logger.warning(f"Failed to send webhook notification: {e}", exc_info=True)
 
 
 class EnterpriseGraphRAGAPI:

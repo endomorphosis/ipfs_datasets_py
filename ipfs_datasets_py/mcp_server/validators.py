@@ -600,9 +600,12 @@ class EnhancedParameterValidator:
         
         try:
             path = Path(file_path)
-        except Exception as e:
+        except (TypeError, ValueError) as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("file_path", f"Invalid file path format: {e}")
+        except Exception as e:
+            self.performance_metrics['validation_errors'] += 1
+            raise ValidationError("file_path", f"Unexpected error parsing file path: {e}")
         
         # Security check: prevent directory traversal
         if '..' in str(path) or str(path).startswith('/'):
@@ -723,6 +726,8 @@ class EnhancedParameterValidator:
         except ImportError:
             logger.warning("jsonschema not available, skipping schema validation")
             return data
+        except ValidationError:
+            raise
         except Exception as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("schema", f"Schema validation failed: {e}")
@@ -831,9 +836,12 @@ class EnhancedParameterValidator:
         
         try:
             parsed = urlparse(url)
-        except Exception as e:
+        except (AttributeError, ValueError) as e:
             self.performance_metrics['validation_errors'] += 1
             raise ValidationError("url", f"Invalid URL format: {e}")
+        except Exception as e:
+            self.performance_metrics['validation_errors'] += 1
+            raise ValidationError("url", f"Unexpected error parsing URL: {e}")
         
         if not parsed.scheme:
             self.performance_metrics['validation_errors'] += 1

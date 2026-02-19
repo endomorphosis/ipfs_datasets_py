@@ -32,6 +32,11 @@ try:
 except ImportError:
     MCP_AVAILABLE = False
 
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ToolNotFoundError,
+    ServerStartupError,
+)
 from ipfs_datasets_py.mcp_server.tools.logic_tools.temporal_deontic_logic_tools import (
     TEMPORAL_DEONTIC_LOGIC_TOOLS,
 )
@@ -273,8 +278,26 @@ Provide a detailed analysis similar to a legal debugger output.
             result = await tool_instance.execute(parameters)
             return result
         
+        except ToolNotFoundError:
+            raise
+        except ToolExecutionError as e:
+            logger.error(f"Direct tool call failed for {tool_name}: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": str(e),
+                "tool": tool_name,
+                "error_code": "TOOL_EXECUTION_ERROR"
+            }
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid parameters for {tool_name}: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Invalid parameters: {e}",
+                "tool": tool_name,
+                "error_code": "INVALID_PARAMETERS"
+            }
         except Exception as e:
-            logger.error(f"Direct tool call failed for {tool_name}: {e}")
+            logger.error(f"Direct tool call failed for {tool_name}: {e}", exc_info=True)
             return {
                 "success": False,
                 "error": str(e),
@@ -298,8 +321,10 @@ async def main():
         await server.start_stdio()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
+    except ServerStartupError as e:
+        logger.error(f"Server startup error: {e}", exc_info=True)
     except Exception as e:
-        logger.error(f"Server error: {e}")
+        logger.error(f"Server error: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,11 @@ from ipfs_datasets_py.utils.anyio_compat import run as run_anyio
 # Local imports
 from ipfs_datasets_py.mcp_server.configs import Configs, configs
 from ipfs_datasets_py.mcp_server.logger import logger
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ToolNotFoundError,
+    ConfigurationError,
+)
 
 class SimpleCallResult:
     """Simple representation of a tool call result."""
@@ -161,9 +166,18 @@ class SimpleIPFSDatasetsMCPServer:
                     result = anyio.run(result)
 
                 return jsonify({"result": result})
+            except ToolNotFoundError as e:
+                logger.error(f"Tool not found: {e}")
+                return jsonify({"error": f"Tool '{tool_name}' not found"}), 404
+            except ToolExecutionError as e:
+                logger.error(f"Tool execution error: {e}", exc_info=True)
+                return jsonify({"error": f"Tool '{tool_name}' execution failed"}), 500
+            except (TypeError, ValueError) as e:
+                logger.error(f"Invalid parameters for tool {tool_name}: {e}", exc_info=True)
+                return jsonify({"error": "Invalid parameters provided"}), 400
             except Exception as e:
-                logger.error(f"Error calling tool {tool_name}: {e}")
-                return jsonify({"error": str(e)}), 500
+                logger.error(f"Error calling tool {tool_name}: {e}", exc_info=True)
+                return jsonify({"error": f"Internal server error while calling tool '{tool_name}'"}), 500
 
     def register_tools(self):
         """Register all tools with the MCP server."""
@@ -176,8 +190,12 @@ class SimpleIPFSDatasetsMCPServer:
         try:
             # Register IPFS tools
             self._register_tools_from_subdir(tools_path / "ipfs_tools")
+        except (ImportError, ModuleNotFoundError) as e:
+            logger.warning(f"IPFS tools module not available: {e}")
+        except ConfigurationError:
+            raise
         except Exception as e:
-            logger.error(f"Failed to register IPFS tools: {e}")
+            logger.error(f"Failed to register IPFS tools: {e}", exc_info=True)
 
         # Register vector tools
         self._register_tools_from_subdir(tools_path / "vector_tools")

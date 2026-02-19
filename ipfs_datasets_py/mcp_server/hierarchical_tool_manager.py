@@ -22,6 +22,12 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 import json
 
+from .exceptions import (
+    ToolNotFoundError,
+    ToolExecutionError,
+    ConfigurationError,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -74,6 +80,10 @@ class ToolCategory:
                         }
                         logger.debug(f"Discovered tool: {self.name}.{name}")
                 
+            except (ImportError, ModuleNotFoundError) as e:
+                logger.warning(f"Failed to import tool from {tool_file}: {e}")
+            except (SyntaxError, AttributeError) as e:
+                logger.warning(f"Tool file has errors {tool_file}: {e}")
             except Exception as e:
                 logger.warning(f"Failed to load tool from {tool_file}: {e}")
         
@@ -230,6 +240,10 @@ class HierarchicalToolManager:
                     with open(metadata_file) as f:
                         metadata = json.load(f)
                         description = metadata.get("description", "")
+                except (IOError, OSError) as e:
+                    logger.warning(f"Failed to read metadata file for {category_name}: {e}")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Invalid JSON in metadata for {category_name}: {e}")
                 except Exception as e:
                     logger.warning(f"Failed to load metadata for {category_name}: {e}")
             
@@ -399,6 +413,18 @@ class HierarchicalToolManager:
             
             return result
             
+        except ToolNotFoundError:
+            raise
+        except ToolExecutionError:
+            raise
+        except (TypeError, ValueError) as e:
+            logger.error(f"Invalid parameters for {category}.{tool}: {e}", exc_info=True)
+            return {
+                "status": "error",
+                "error": f"Invalid parameters: {e}",
+                "category": category,
+                "tool": tool
+            }
         except Exception as e:
             logger.error(f"Error dispatching to {category}.{tool}: {e}", exc_info=True)
             return {
