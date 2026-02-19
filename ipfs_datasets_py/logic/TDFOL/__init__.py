@@ -132,6 +132,14 @@ if TYPE_CHECKING:
         validate_formula,
         audit_proof,
     )
+    from .performance_metrics import (
+        MetricsCollector,
+        TimingResult,
+        MemoryResult,
+        StatisticalSummary,
+        get_global_collector,
+        reset_global_collector,
+    )
 
 __all__ = [
     # Enumerations
@@ -240,6 +248,14 @@ __all__ = [
     "SecurityConfig",
     "SecurityLevel",
     "ThreatType",
+    
+    # Performance Metrics (Phase 1 Task 1.4)
+    "MetricsCollector",
+    "TimingResult",
+    "MemoryResult",
+    "StatisticalSummary",
+    "get_global_collector",
+    "reset_global_collector",
     "ValidationResult",
     "AuditResult",
     "RateLimiter",
