@@ -22,6 +22,24 @@ if TYPE_CHECKING:
         parse_natural_language,
         parse_natural_language_batch,
     )
+    from .llm import (
+        LLMParseResult,
+        LLMResponseCache,
+        LLMNLConverter,
+        build_conversion_prompt,
+        build_validation_prompt,
+        build_error_correction_prompt,
+        get_operator_hints_for_text,
+    )
+    from .utils import (
+        create_cache_cid,
+        validate_cid,
+        parse_cid,
+        require_spacy,
+        load_spacy_model,
+        HAVE_SPACY,
+        MULTIFORMATS_AVAILABLE,
+    )
 
 __all__ = [
     # Preprocessor
@@ -49,6 +67,24 @@ __all__ = [
     "ParseResult",
     "parse_natural_language",
     "parse_natural_language_batch",
+    
+    # LLM Converter (from llm.py)
+    "LLMParseResult",
+    "LLMResponseCache",
+    "LLMNLConverter",
+    "build_conversion_prompt",
+    "build_validation_prompt",
+    "build_error_correction_prompt",
+    "get_operator_hints_for_text",
+    
+    # Utilities (from utils.py)
+    "create_cache_cid",
+    "validate_cid",
+    "parse_cid",
+    "require_spacy",
+    "load_spacy_model",
+    "HAVE_SPACY",
+    "MULTIFORMATS_AVAILABLE",
 ]
 
 __version__ = "0.1.0"
@@ -80,6 +116,24 @@ _LAZY_EXPORTS: dict[str, tuple[str, str]] = {
     "ParseResult": (".tdfol_nl_api", "ParseResult"),
     "parse_natural_language": (".tdfol_nl_api", "parse_natural_language"),
     "parse_natural_language_batch": (".tdfol_nl_api", "parse_natural_language_batch"),
+    
+    # LLM Converter (from llm.py)
+    "LLMParseResult": (".llm", "LLMParseResult"),
+    "LLMResponseCache": (".llm", "LLMResponseCache"),
+    "LLMNLConverter": (".llm", "LLMNLConverter"),
+    "build_conversion_prompt": (".llm", "build_conversion_prompt"),
+    "build_validation_prompt": (".llm", "build_validation_prompt"),
+    "build_error_correction_prompt": (".llm", "build_error_correction_prompt"),
+    "get_operator_hints_for_text": (".llm", "get_operator_hints_for_text"),
+    
+    # Utilities (from utils.py)
+    "create_cache_cid": (".utils", "create_cache_cid"),
+    "validate_cid": (".utils", "validate_cid"),
+    "parse_cid": (".utils", "parse_cid"),
+    "require_spacy": (".utils", "require_spacy"),
+    "load_spacy_model": (".utils", "load_spacy_model"),
+    "HAVE_SPACY": (".utils", "HAVE_SPACY"),
+    "MULTIFORMATS_AVAILABLE": (".utils", "MULTIFORMATS_AVAILABLE"),
 }
 
 
