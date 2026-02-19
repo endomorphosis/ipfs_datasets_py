@@ -248,7 +248,7 @@ class EnhancedIPFSClusterManagementTool(EnhancedBaseMCPTool):
             # Enhanced IPFS hash validation
             try:
                 validator.validate_ipfs_hash(cid)
-            except:
+            except (ValidationError, ValueError, AttributeError):
                 # Fallback validation for different CID formats
                 import re
                 if not re.match(r'^(Qm|ba|z)[1-9A-HJ-NP-Za-km-z]{44,}$', cid):
@@ -460,7 +460,7 @@ class EnhancedIPFSContentTool(EnhancedBaseMCPTool):
         if cid:
             try:
                 validator.validate_ipfs_hash(cid)
-            except:
+            except (ValidationError, ValueError, AttributeError):
                 import re
                 if not re.match(r'^(Qm|ba|z)[1-9A-HJ-NP-Za-km-z]{44,}$', cid):
                     raise ValidationError("cid", "Invalid IPFS CID format")

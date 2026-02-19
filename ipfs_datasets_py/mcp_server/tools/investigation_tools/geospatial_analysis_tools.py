@@ -277,7 +277,8 @@ async def map_spatiotemporal_events(
                     event_time = datetime.fromisoformat(doc_timestamp.replace('Z', '+00:00'))
                 else:
                     event_time = datetime.now()
-            except:
+            except (ValueError, AttributeError, TypeError):
+                # Use current time if timestamp parsing fails
                 event_time = datetime.now()
 
             # Apply time range filter
@@ -726,7 +727,8 @@ async def _get_temporal_context(entity: Dict, corpus: Dict) -> Dict[str, Any]:
                 try:
                     dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
                     timestamps.append(dt)
-                except:
+                except (ValueError, AttributeError, TypeError):
+                    # Skip malformed timestamps
                     continue
     
     if not timestamps:

@@ -501,7 +501,8 @@ async def ffmpeg_concat(
         if method in ["demuxer", "file_list"] and 'concat_file' in locals():
             try:
                 Path(concat_file).unlink()
-            except:
+            except (OSError, FileNotFoundError):
+                # Ignore if file doesn't exist or can't be deleted
                 pass
         
         if result["status"] == "success":

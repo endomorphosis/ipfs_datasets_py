@@ -32,39 +32,74 @@ except ImportError:
 
 def create_workflow_scheduler(
     peer_id: Optional[str] = None,
+    context: Optional["ServerContext"] = None,
     **kwargs: Any
 ) -> Optional[P2PWorkflowScheduler]:
     """Create a P2P workflow scheduler instance.
 
     Args:
         peer_id: Optional peer ID. If not provided, will be generated.
+        context: Optional ServerContext. If provided, scheduler is managed by context.
         **kwargs: Additional configuration options
 
     Returns:
         P2PWorkflowScheduler instance or None if not available
+        
+    Note:
+        If context is provided, the scheduler is stored in context.workflow_scheduler
+        for lifecycle management.
 
     Example:
+        >>> # New code (recommended):
+        >>> with ServerContext() as ctx:
+        ...     scheduler = create_workflow_scheduler(context=ctx)
+        
+        >>> # Legacy code (still works):
         >>> scheduler = create_workflow_scheduler()
-        >>> if scheduler:
-        ...     workflow_id = scheduler.submit_workflow(...)
     """
     if not HAVE_WORKFLOW_SCHEDULER:
         logger.warning("Workflow scheduler not available - MCP++ module not installed")
         return None
 
     try:
-        return _get_scheduler() if _get_scheduler else None
+        scheduler = _get_scheduler() if _get_scheduler else None
+        
+        # If context provided, store scheduler for lifecycle management
+        if context is not None and scheduler is not None:
+            context.workflow_scheduler = scheduler
+            
+        return scheduler
     except Exception as e:
         logger.error(f"Failed to create workflow scheduler: {e}")
         return None
 
 
-def get_scheduler() -> Optional[P2PWorkflowScheduler]:
-    """Get or create the global P2P workflow scheduler instance.
+def get_scheduler(context: Optional["ServerContext"] = None) -> Optional[P2PWorkflowScheduler]:
+    """Get or create the P2P workflow scheduler instance.
+    
+    Args:
+        context: Optional ServerContext. If provided, returns context's scheduler.
+                Otherwise, falls back to global instance for backward compatibility.
 
     Returns:
         P2PWorkflowScheduler instance or None if not available
+        
+    Note:
+        The global instance is deprecated. New code should use ServerContext.
+        
+    Example:
+        >>> # New code (recommended):
+        >>> with ServerContext() as ctx:
+        ...     scheduler = get_scheduler(ctx)
+        
+        >>> # Legacy code (still works):
+        >>> scheduler = get_scheduler()
     """
+    # If context provided, use it (new pattern)
+    if context is not None:
+        return context.workflow_scheduler
+    
+    # Fallback to global for backward compatibility (deprecated)
     if not HAVE_WORKFLOW_SCHEDULER:
         return None
 

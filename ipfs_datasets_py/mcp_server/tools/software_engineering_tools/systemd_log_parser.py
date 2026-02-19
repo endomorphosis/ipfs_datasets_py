@@ -120,7 +120,8 @@ def parse_systemd_logs(
                     hour = timestamp.split(':')[0].split()[-1]
                     result["statistics"]["by_hour"][hour] = \
                         result["statistics"]["by_hour"].get(hour, 0) + 1
-                except:
+                except (IndexError, ValueError, AttributeError):
+                    # Skip malformed timestamps
                     pass
                 
                 # Detect common errors

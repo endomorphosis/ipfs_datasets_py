@@ -90,7 +90,8 @@ async def email_analyze_export(
             if email.get('date'):
                 try:
                     dates.append(email['date'])
-                except:
+                except (KeyError, TypeError, ValueError):
+                    # Skip emails with invalid date format
                     pass
             
             # Length

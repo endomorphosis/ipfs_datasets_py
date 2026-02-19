@@ -57,7 +57,8 @@ def _has_argparse_parser(content: str) -> bool:
                     if (hasattr(node.value.func, 'attr') and 
                         node.value.func.attr == 'ArgumentParser'):
                         return True
-    except:
+    except (SyntaxError, AttributeError, TypeError):
+        # Return False if AST parsing fails
         return False
     return False
 
@@ -86,6 +87,22 @@ def _run_python_command_or_module(
     timeout: int = 30  # Increased for documentation generation
 ) -> tuple[str, str]:
     import subprocess
+    
+    # Security: Validate timeout parameter
+    if not isinstance(timeout, int) or timeout < 1 or timeout > 300:
+        raise ValueError(f"Invalid timeout: {timeout}. Must be integer between 1-300 seconds.")
+    
+    # Security: Validate target_path exists and is a file
+    if not target_path.exists():
+        raise FileNotFoundError(f"Target path does not exist: {target_path}")
+    if not target_path.is_file():
+        raise ValueError(f"Target path is not a file: {target_path}")
+    
+    # Security: Validate python_cmd is safe
+    # Only allow 'python', 'python3', or full paths to python executables
+    allowed_python_cmds = ['python', 'python3', 'python3.8', 'python3.9', 'python3.10', 'python3.11', 'python3.12']
+    if python_cmd not in allowed_python_cmds and not (Path(python_cmd).exists() and 'python' in python_cmd.lower()):
+        raise ValueError(f"Invalid python command: {python_cmd}. Use 'python' or 'python3'.")
 
     if run_as_module:
         # Change to the parent directory of the module
@@ -97,16 +114,22 @@ def _run_python_command_or_module(
         cmd_list = [python_cmd, str(target_path.resolve())]
     
     if cli_arguments:
+        # Security: Validate cli_arguments don't contain shell metacharacters
+        for arg in cli_arguments:
+            if any(char in str(arg) for char in ['|', '&', ';', '`', '$', '(', ')', '<', '>']):
+                raise ValueError(f"Invalid argument contains shell metacharacters: {arg}")
         cmd_list.extend(cli_arguments)
 
     try:
+        # Security: Use shell=False (default) and pass command as list
         results = subprocess.run(
             cmd_list,
             capture_output=True,
             text=True,
             check=True,
             timeout=timeout,
-            cwd=cwd
+            cwd=cwd,
+            shell=False  # Explicitly set to False for security
         )
         logger.debug(f"Command results: {results}")
         
@@ -132,6 +155,8 @@ If you expected console output, please check the program's functionality or its 
         if e.stderr:
             error_string += f"\nError output: {str(e.stderr).strip()}"
         raise Exception(f"CalledProcessError running {target_path.name}: {error_string}") from e
+    except subprocess.TimeoutExpired as e:
+        raise Exception(f"Command timed out after {timeout} seconds: {target_path.name}") from e
     except Exception as e:
         raise Exception(f"A {type(e).__name__} occurred while running {target_path.name}: {e}") from e
 

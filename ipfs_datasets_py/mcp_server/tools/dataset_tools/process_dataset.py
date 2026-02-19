@@ -63,7 +63,8 @@ def _get_record_count(dataset_source: Union[str, dict, Any]) -> int:
     if hasattr(dataset_source, '__len__'):
         try:
             return len(dataset_source)
-        except:
+        except (TypeError, AttributeError):
+            # Object doesn't support len(), use default
             pass
     return 100  # Default mock count
 
