@@ -813,6 +813,45 @@ class Formula(ABC):
     def to_string(self) -> str:
         """Convert formula to string representation."""
         pass
+    
+    def __eq__(self, other: object) -> bool:
+        """
+        Check structural equality of formulas.
+        
+        Two formulas are considered equal if they have the same string representation.
+        This provides a simple but effective equality check that works across all
+        formula types.
+        
+        Args:
+            other: Object to compare with
+            
+        Returns:
+            True if formulas are structurally equal, False otherwise
+            
+        Examples:
+            >>> from ipfs_datasets_py.logic.CEC.native.dcec_core import AtomicFormula, Predicate
+            >>> pred = Predicate("P", [])
+            >>> f1 = AtomicFormula(pred, [])
+            >>> f2 = AtomicFormula(pred, [])
+            >>> f1 == f2  # True - same structure
+            True
+        
+        Notes:
+            - This enables consistent formula comparison across all formula types
+            - String-based comparison is sufficient for most logical reasoning tasks
+            - For performance-critical code, consider caching to_string() results
+        """
+        if not isinstance(other, Formula):
+            return False
+        return self.to_string() == other.to_string()
+    
+    # Note: __hash__ is commented out because dataclasses are mutable by default.
+    # To enable hashing, formulas would need to be made immutable with frozen=True,
+    # which would be a breaking change. The == operator works correctly for comparisons.
+    #
+    # def __hash__(self) -> int:
+    #     """Hash based on string representation for set/dict usage."""
+    #     return hash(self.to_string())
 
 
 @dataclass

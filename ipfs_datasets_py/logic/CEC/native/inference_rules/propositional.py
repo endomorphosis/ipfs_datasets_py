@@ -33,7 +33,7 @@ class ModusPonens(InferenceRule):
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
-                    if len(f2.formulas) == 2 and self._formulas_equal(f1, f2.formulas[0]):
+                    if len(f2.formulas) == 2 and f1 == f2.formulas[0]:
                         return True
         return False
     
@@ -42,14 +42,10 @@ class ModusPonens(InferenceRule):
         for f1 in formulas:
             for f2 in formulas:
                 if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
-                    if len(f2.formulas) == 2 and self._formulas_equal(f1, f2.formulas[0]):
+                    if len(f2.formulas) == 2 and f1 == f2.formulas[0]:
                         # We have P and P→Q, so derive Q
                         results.append(f2.formulas[1])
         return results
-    
-    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
-        """Simple formula equality check (can be improved)."""
-        return f1.to_string() == f2.to_string()
 
 
 class Simplification(InferenceRule):
@@ -217,7 +213,7 @@ class DisjunctiveSyllogism(InferenceRule):
                         if len(f1.formulas) == 1 and len(f2.formulas) >= 2:
                             negated = f1.formulas[0]
                             for disjunct in f2.formulas:
-                                if self._formulas_equal(negated, disjunct):
+                                if negated == disjunct:
                                     return True
         return False
     
@@ -231,7 +227,7 @@ class DisjunctiveSyllogism(InferenceRule):
                             negated = f1.formulas[0]
                             # Find the negated formula in the disjunction
                             for i, disjunct in enumerate(f2.formulas):
-                                if self._formulas_equal(negated, disjunct):
+                                if negated == disjunct:
                                     # Derive the other disjuncts
                                     remaining = [f2.formulas[j] for j in range(len(f2.formulas)) if j != i]
                                     if len(remaining) == 1:
@@ -239,10 +235,6 @@ class DisjunctiveSyllogism(InferenceRule):
                                     elif len(remaining) > 1:
                                         results.append(ConnectiveFormula(LogicalConnective.OR, remaining))
         return results
-    
-    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
-        """Simple formula equality check."""
-        return f1.to_string() == f2.to_string()
 
 
 class Contraposition(InferenceRule):
@@ -283,7 +275,7 @@ class HypotheticalSyllogism(InferenceRule):
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
                     if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
                         if len(f1.formulas) == 2 and len(f2.formulas) == 2:
-                            if self._formulas_equal(f1.formulas[1], f2.formulas[0]):
+                            if f1.formulas[1] == f2.formulas[0]:
                                 return True
         return False
     
@@ -294,14 +286,11 @@ class HypotheticalSyllogism(InferenceRule):
                 if isinstance(f1, ConnectiveFormula) and f1.connective == LogicalConnective.IMPLIES:
                     if isinstance(f2, ConnectiveFormula) and f2.connective == LogicalConnective.IMPLIES:
                         if len(f1.formulas) == 2 and len(f2.formulas) == 2:
-                            if self._formulas_equal(f1.formulas[1], f2.formulas[0]):
+                            if f1.formulas[1] == f2.formulas[0]:
                                 # (P→Q) and (Q→R) gives (P→R)
                                 result = ConnectiveFormula(LogicalConnective.IMPLIES, [f1.formulas[0], f2.formulas[1]])
                                 results.append(result)
         return results
-    
-    def _formulas_equal(self, f1: Formula, f2: Formula) -> bool:
-        return f1.to_string() == f2.to_string()
 
 
 class ImplicationElimination(InferenceRule):
