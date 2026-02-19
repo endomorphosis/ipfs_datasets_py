@@ -33,9 +33,27 @@ from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import (
     LLMReasoningTracer,
     ReasoningNodeType,
 )
-from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
-    UnifiedGraphRAGQueryOptimizer,
-)
+
+_UNIFIED_OPT_IMPORT_ERROR: Optional[BaseException] = None
+
+
+class _MissingUnifiedGraphRAGQueryOptimizer:
+    def __init__(self, import_error: Optional[BaseException] = None):
+        self._import_error = import_error
+
+    def __getattr__(self, name: str) -> Any:
+        raise ImportError(
+            "UnifiedGraphRAGQueryOptimizer is unavailable; install optional GraphRAG dependencies to enable query optimization."
+        ) from self._import_error
+
+
+try:
+    from ipfs_datasets_py.optimizers.graphrag.query_optimizer import (
+        UnifiedGraphRAGQueryOptimizer,
+    )
+except ImportError as e:
+    UnifiedGraphRAGQueryOptimizer = None
+    _UNIFIED_OPT_IMPORT_ERROR = e
 
 try:
     from ipfs_datasets_py.ml.llm.llm_router import LLMRouter
@@ -119,7 +137,7 @@ class CrossDocumentReasoner:
 
     def __init__(
         self,
-        query_optimizer: Optional[UnifiedGraphRAGQueryOptimizer] = None,
+        query_optimizer: Optional[Any] = None,
         reasoning_tracer: Optional[LLMReasoningTracer] = None,
         llm_service: Optional[Any] = None,
         min_connection_strength: float = 0.6,
@@ -139,7 +157,12 @@ class CrossDocumentReasoner:
             enable_contradictions: Whether to look for contradicting information
             entity_match_threshold: Threshold for matching entities across documents
         """
-        self.query_optimizer = query_optimizer or UnifiedGraphRAGQueryOptimizer()
+        if query_optimizer is not None:
+            self.query_optimizer = query_optimizer
+        elif UnifiedGraphRAGQueryOptimizer is not None:
+            self.query_optimizer = UnifiedGraphRAGQueryOptimizer()
+        else:
+            self.query_optimizer = _MissingUnifiedGraphRAGQueryOptimizer(_UNIFIED_OPT_IMPORT_ERROR)
         self.reasoning_tracer = reasoning_tracer or LLMReasoningTracer()
         self.llm_service = llm_service  # Typically an LLMRouter instance
         self._default_llm_router: Optional[Any] = None
