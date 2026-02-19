@@ -35,6 +35,8 @@ import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
 
+from ..exceptions import KnowledgeGraphError, QueryExecutionError
+
 logger = logging.getLogger(__name__)
 
 
@@ -129,6 +131,10 @@ class HybridSearchEngine:
             else:
                 # This would call the vector store's embedding method
                 query_embedding = self._get_query_embedding(query)
+
+            if query_embedding is None:
+                logger.warning("No query embedding available; vector search skipped")
+                return []
             
             # Search vector store
             vector_results = self.vector_store.search(query_embedding, k=k)
@@ -146,9 +152,17 @@ class HybridSearchEngine:
             
             return results
             
+        except KnowledgeGraphError:
+            raise
+        except (AttributeError, TypeError, ValueError, KeyError) as e:
+            logger.error(f"Vector search failed (degrading gracefully): {e}")
+            return []
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
-            return []
+            raise QueryExecutionError(
+                f"Vector search failed: {e}",
+                details={'query': query, 'k': k}
+            ) from e
     
     def expand_graph(
         self,
@@ -190,8 +204,8 @@ class HybridSearchEngine:
                     for neighbor_id in neighbors:
                         if neighbor_id not in visited and len(visited) < max_nodes:
                             next_level.add(neighbor_id)
-                except Exception as e:
-                    logger.warning(f"Failed to get neighbors for {node_id}: {e}")
+                except (KnowledgeGraphError, AttributeError, TypeError, ValueError, KeyError) as e:
+                    logger.warning(f"Failed to get neighbors for {node_id} (continuing): {e}")
             
             current_level = next_level
         
@@ -355,6 +369,11 @@ class HybridSearchEngine:
             else:
                 logger.warning("Vector store does not support embedding generation")
                 return None
+        except KnowledgeGraphError:
+            raise
+        except (AttributeError, TypeError, ValueError) as e:
+            logger.error(f"Failed to generate embedding (degrading gracefully): {e}")
+            return None
         except Exception as e:
             logger.error(f"Failed to generate embedding: {e}")
             return None
@@ -393,6 +412,11 @@ class HybridSearchEngine:
             logger.debug(f"Backend does not support neighbor retrieval for node {node_id}")
             return []
             
+        except KnowledgeGraphError:
+            raise
+        except (AttributeError, TypeError, ValueError, KeyError) as e:
+            logger.warning(f"Failed to get neighbors for {node_id} (degrading gracefully): {e}")
+            return []
         except Exception as e:
             logger.warning(f"Failed to get neighbors for {node_id}: {e}")
             return []

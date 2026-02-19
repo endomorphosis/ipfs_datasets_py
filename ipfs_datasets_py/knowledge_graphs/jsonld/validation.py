@@ -8,6 +8,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from .types import ValidationResult
+from ..exceptions import KnowledgeGraphError
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +70,13 @@ class SchemaValidator:
         
         # Validate using jsonschema
         try:
+            schema_error = getattr(getattr(jsonschema, "exceptions", object), "SchemaError", Exception)
+            ref_resolution_error = getattr(
+                getattr(jsonschema, "exceptions", object),
+                "RefResolutionError",
+                schema_error,
+            )
+
             validator = Draft7Validator(schema)
             errors = list(validator.iter_errors(data))
             
@@ -77,7 +85,12 @@ class SchemaValidator:
                     error_path = ".".join(str(p) for p in error.path)
                     error_msg = f"{error_path}: {error.message}" if error_path else error.message
                     result.add_error(error_msg)
+        except KnowledgeGraphError:
+            raise
+        except (schema_error, ref_resolution_error, TypeError, ValueError, KeyError) as e:
+            result.add_error(f"Validation error: {str(e)}")
         except Exception as e:
+            # Defensive fallback: preserve ValidationResult semantics.
             result.add_error(f"Validation error: {str(e)}")
         
         return result

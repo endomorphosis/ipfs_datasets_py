@@ -638,7 +638,7 @@ class IPFSDatasetsMCPServer:
         else:
             return sync_wrapper
 
-    def register_ipfs_kit_tools(self, ipfs_kit_mcp_url: Optional[str] = None):
+    async def register_ipfs_kit_tools(self, ipfs_kit_mcp_url: Optional[str] = None):
         """
         Register tools from ipfs_kit_py.
 
@@ -651,11 +651,11 @@ class IPFSDatasetsMCPServer:
                               If not provided, ipfs_kit_py functions will be imported directly.
         """
         if ipfs_kit_mcp_url:
-            self._register_ipfs_kit_mcp_client(ipfs_kit_mcp_url)
+            await self._register_ipfs_kit_mcp_client(ipfs_kit_mcp_url)
         else:
             self._register_direct_ipfs_kit_imports()
 
-    def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str):
+    async def _register_ipfs_kit_mcp_client(self, ipfs_kit_mcp_url: str):
         """
         Register proxy tools that connect to an ipfs_kit_py MCP server.
         
@@ -673,6 +673,37 @@ class IPFSDatasetsMCPServer:
         )
         # TODO: Implement proper MCP client integration when library is available
         # See: https://github.com/endomorphosis/ipfs_datasets_py/issues/XXX
+        try:
+            # Reuse the same MCP client import logic as our local client wrapper
+            from .client import MCPClient
+
+            # Create MCP client
+            client = MCPClient(ipfs_kit_mcp_url)
+
+            # Get available tools from the server
+            tools_info = await client.get_tool_list()
+
+            for tool_info in tools_info:
+                tool_name = tool_info["name"]
+
+                # Create proxy function
+                async def proxy_tool(tool_name=tool_name, **kwargs):
+                    try:
+                        result = await client.call_tool(tool_name, kwargs)
+                        return result
+                    except Exception as e:
+                        logger.error(f"Error calling {tool_name}: {e}")
+                        return {"error": str(e)}
+
+                # Register proxy with MCP server
+                self.mcp.add_tool(proxy_tool, name=f"ipfs_kit_{tool_name}")
+                self.tools[f"ipfs_kit_{tool_name}"] = proxy_tool
+                logger.info(f"Registered ipfs_kit proxy tool: ipfs_kit_{tool_name}")
+
+        except ImportError:
+            logger.error("Failed to import MCP client dependency. Cannot register ipfs_kit MCP client.")
+        except Exception as e:
+            logger.error(f"Error registering ipfs_kit MCP client: {e}")
 
     def _register_direct_ipfs_kit_imports(self):
         """Register direct imports of ipfs_kit_py functions."""
@@ -702,9 +733,9 @@ class IPFSDatasetsMCPServer:
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:
-            self.register_ipfs_kit_tools(self.configs.ipfs_kit_mcp_url)
+            await self.register_ipfs_kit_tools(self.configs.ipfs_kit_mcp_url)
         else:
-            self.register_ipfs_kit_tools()
+            await self.register_ipfs_kit_tools()
 
         # Start optional in-process P2P service after tool registration.
         if self.p2p is not None:
@@ -739,9 +770,9 @@ class IPFSDatasetsMCPServer:
 
         # Register ipfs_kit tools based on configuration
         if self.configs.ipfs_kit_mcp_url:
-            self.register_ipfs_kit_tools(self.configs.ipfs_kit_mcp_url)
+            await self.register_ipfs_kit_tools(self.configs.ipfs_kit_mcp_url)
         else:
-            self.register_ipfs_kit_tools()
+            await self.register_ipfs_kit_tools()
 
         # Start optional in-process P2P service after tool registration.
         if self.p2p is not None:
@@ -784,7 +815,7 @@ def start_stdio_server(ipfs_kit_mcp_url: Optional[str] = None):
     # Start server in stdio mode
     try:
         logger.info("Starting MCP server in stdio mode")
-        anyio.run(server.start_stdio())
+        anyio.run(server.start_stdio)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -813,7 +844,7 @@ def start_server(host: str = "0.0.0.0", port: int = 8000, ipfs_kit_mcp_url: Opti
     # Start server
     try:
         logger.info(f"Starting server at {host}:{port}")
-        anyio.run(server.start(host, port))
+        anyio.run(server.start, host, port)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
@@ -844,7 +875,7 @@ class Args(pydantic.BaseModel):
             host=namespace.host,
             port=namespace.port,
             ipfs_kit_mcp_url=namespace.ipfs_kit_mcp_url,
-            configs=namespace.config
+            config=namespace.config
         )
 
 def main():
@@ -874,7 +905,7 @@ def main():
         # Create server with custom configuration
         server = IPFSDatasetsMCPServer(custom_configs)
         try:
-            anyio.run(server.start(host, port))
+            anyio.run(server.start, host, port)
         except KeyboardInterrupt:
             logger.info("Server stopped by user")
         except Exception as e:

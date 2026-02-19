@@ -42,6 +42,8 @@
 
 ## P1 — Determinism & Reproducibility
 
+- Implemented `groth16 prove --seed <u64>`: seed forces deterministic output and `timestamp=0`.
+
 1. Ensure proving is deterministic when given the same witness (or explicitly document randomness requirements).
 2. If randomness is required:
    - accept explicit RNG seed via CLI flag/env for tests

@@ -3,7 +3,7 @@
 **From Simulation to Real Groth16 zkSNARKs**
 
 **Document Status:** Production Guide  
-**Last Updated:** 2026-02-18  
+**Last Updated:** 2026-02-19  
 **Estimated Upgrade Time:** 2-4 weeks for experienced team  
 **Difficulty Level:** Advanced (requires cryptographic knowledge)
 
@@ -79,36 +79,28 @@ Storage: 10GB+ for proving keys
 
 ## Phase 1: Setup and Dependencies
 
-### Step 1.1: Install py_ecc
+### Step 1.1: Build and enable the Rust Groth16 backend (repo-supported)
 
 ```bash
-# Install elliptic curve cryptography library
-pip install py-ecc
+# Build the Groth16 backend binary (Rust toolchain required)
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
+cargo build --release
 
-# Verify installation
-python -c "from py_ecc.bn128 import G1, G2, pairing; print('✓ py_ecc installed')"
+# Enable Groth16 in Python (opt-in; fail-closed by default)
+export IPFS_DATASETS_ENABLE_GROTH16=1
+
+# Optional: override binary discovery
+export IPFS_DATASETS_GROTH16_BINARY="$PWD/target/release/groth16"
 ```
 
-### Step 1.2: Choose Elliptic Curve
+Notes:
+- The default backend remains **simulated**; enabling Groth16 is explicit.
+- If the binary is missing or errors, the Groth16 backend should fail safely.
 
-**Options:**
+### Step 1.2: Choose elliptic curve / parameters (backend-managed)
 
-1. **BN254/BN128** (Recommended for Groth16)
-   - Used in Ethereum, Zcash
-   - 128-bit security level
-   - Fast pairing operations
-   ```python
-   from py_ecc.bn128 import G1, G2, pairing, multiply, add
-   ```
-
-2. **BLS12-381** (Alternative)
-   - Higher security margin
-   - Slightly slower
-   ```python
-   from py_ecc.bls12_381 import G1, G2, pairing, multiply, add
-   ```
-
-**Recommendation:** Use BN254 for compatibility and performance.
+Curve choice is owned by the Rust backend and its circuit configuration.
+For on-chain compatibility, BN254/BN128 is common in Groth16 deployments.
 
 ### Step 1.3: Understand Groth16 Structure
 
@@ -128,6 +120,17 @@ class Groth16Proof:
 ```
 
 ---
+
+## Alternative Path (Pure Python `py_ecc`) — optional
+
+If you explicitly want a pure-Python research/education path, you can build a
+Groth16 implementation on top of `py_ecc`. This is not the repo’s primary
+production direction.
+
+```bash
+pip install py-ecc
+python -c "import py_ecc; print('✓ py_ecc installed')"
+```
 
 ## Phase 2: Circuit Compilation
 

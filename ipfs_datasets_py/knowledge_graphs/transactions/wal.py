@@ -105,11 +105,25 @@ class WriteAheadLog:
             
             return cid
             
-        except (json.JSONDecodeError, ValueError) as e:
+        except (TypeError, ValueError) as e:
             logger.error(f"Failed to serialize WAL entry: {e}")
+            operation_types = []
+            for op in getattr(entry, "operations", []) or []:
+                op_type = getattr(op, "type", None)
+                operation_types.append(getattr(op_type, "value", str(op_type) if op_type is not None else str(op)))
             raise SerializationError(
                 f"Failed to serialize WAL entry: {e}",
-                details={'txn_id': str(entry.txn_id), 'operation': entry.operation.operation_type.value}
+                details={
+                    'txn_id': str(entry.txn_id),
+                    'operation_count': len(getattr(entry, "operations", []) or []),
+                    'operation_types': operation_types,
+                }
+            ) from e
+        except StorageError as e:
+            logger.error(f"Storage failure appending WAL entry: {e}")
+            raise TransactionError(
+                f"Failed to append WAL entry due to storage error: {e}",
+                details={'txn_id': str(entry.txn_id)}
             ) from e
         except Exception as e:
             logger.error(f"Failed to append WAL entry: {e}")
@@ -161,13 +175,21 @@ class WriteAheadLog:
                 # Move to previous entry
                 current_cid = entry.prev_wal_cid
                 
-            except (json.JSONDecodeError, KeyError, ValueError) as e:
+            except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
                 logger.warning(f"Failed to read WAL entry {current_cid} (continuing): {e}")
                 break
+            except DeserializationError:
+                raise
+            except StorageError as e:
+                logger.error(f"Storage failure reading WAL entry {current_cid}: {e}")
+                raise DeserializationError(
+                    f"Failed to deserialize WAL entry due to storage error: {e}",
+                    details={'cid': str(current_cid)}
+                ) from e
             except Exception as e:
                 logger.error(f"Failed to read WAL entry {current_cid}: {e}")
-                raise DeserializationError(
-                    f"Failed to deserialize WAL entry: {e}",
+                raise TransactionError(
+                    f"Failed to read WAL entry: {e}",
                     details={'cid': str(current_cid)}
                 ) from e
     
@@ -217,6 +239,8 @@ class WriteAheadLog:
             
         except SerializationError:
             # Re-raise serialization errors
+            raise
+        except TransactionError:
             raise
         except Exception as e:
             logger.error(f"Failed to compact WAL: {e}")
@@ -278,6 +302,8 @@ class WriteAheadLog:
             
         except DeserializationError:
             # Re-raise deserialization errors
+            raise
+        except TransactionError:
             raise
         except Exception as e:
             logger.error(f"Failed to recover from WAL: {e}")

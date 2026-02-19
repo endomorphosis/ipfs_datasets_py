@@ -1,6 +1,6 @@
 # logic/zkp — Comprehensive Improvement & Refactoring Master TODO
 
-**Last Updated:** 2026-02-18 (Phase 1–2 Complete)  
+**Last Updated:** 2026-02-19 (Phase 1–2 Complete)  
 **Purpose:** Single source of truth for all ZKP module improvements, from immediate safety/correctness fixes through production Groth16 integration.
 
 ---
@@ -117,8 +117,8 @@
   - `test_verifier_rejects_inconsistent_theorem_hash`
   - `test_verifier_rejects_proof_with_bad_metadata`
 
-### P2.3 ⏳ Make simulated proof structure more explicit
-- [ ] Add detailed comments in `backends/simulated.py` explaining byte ranges
+### P2.3 ✅ Make simulated proof structure more explicit
+- [x] Add detailed comments in `backends/simulated.py` explaining byte ranges
 - [ ] Optional: add tagged fields for clarity
 
 ### P2.4 ✅ Standardize public inputs across backends
@@ -191,20 +191,20 @@
   - witness-statement consistency ✅
   - caching behavior ✅
 
-### P4.3 ⏳ Integrate MVP circuit witness verification
+### P4.3 ✅ Integrate MVP circuit witness verification
 - [x] Added: `WitnessManager.verify_witness_consistency(witness, statement)`
 - [x] Checks: commitment match, version match, ruleset match
-- [ ] TODO: Full circuit verification (constraint checking)
-  - Need: evaluate constraints over witness values
-  - Depends on: constraint specification finalization
+- [x] Full circuit verification (constraint checking)
+  - Implemented: `MVPCircuit.verify_constraints(witness, statement)` (strict, fail-closed)
+  - Tests: `TestMVPCircuitConstraintEvaluation` in `tests/unit_tests/logic/zkp/test_witness_manager.py`
 
 ---
 
 ## P5 — Real Groth16 Backend (Phase C–D)
 
-### P5.1 ⏳ Select & evaluate Groth16 prover stack
-- [ ] Research options → select stack
-- [ ] Decision: which (py_ecc vs. external vs. Rust FFI)
+### P5.1 ✅ Select & evaluate Groth16 prover stack
+- [x] Decision: repo-supported path is Rust Groth16 backend (opt-in) under `processors/groth16_backend/`
+- [x] Policy: fail-closed by default; enable via `IPFS_DATASETS_ENABLE_GROTH16=1`
 - [ ] Rationale document in GROTH16_IMPLEMENTATION_PLAN.md section 8
 
 ### P5.2 ⏳ Implement trusted setup ceremony (circuit-specific)
@@ -267,11 +267,13 @@
 - [x] Witness generation & validation ✅
 - [x] Serialization round-trip ✅
 
-### P8.2 ⏳ Property-based tests
-- [ ] Ensure `hypothesis` is installed in dev/test environments.
-- [ ] Random axiom orderings → same commitment
-- [ ] Invalid proofs → verification fails
-- [ ] Proof size stability
+### P8.2 ✅ Property-based tests
+- [x] Ensure `hypothesis` is installed in dev/test environments.
+- [x] Random axiom orderings → same commitment
+- [x] Invalid proofs → verification fails
+- [x] Proof size stability
+
+**Implementation:** `tests/unit_tests/logic/zkp/test_zkp_properties.py`
 
 ### P8.3 ✅ Integration tests (gated, opt-in)
 - [x] Added opt-in Groth16 end-to-end prove→verify test
@@ -279,26 +281,28 @@
   - `IPFS_DATASETS_ENABLE_GROTH16=1` (or true/yes)
   - Skip if Groth16 binary is not discoverable
 
-### P8.4 ⏳ Golden vectors (regression prevention)
-- [ ] Stored in `tests/zkp_golden_vectors.json`
-- [ ] Fixed test cases: theorem, axioms, expected outputs
+### P8.4 ✅ Golden vectors (regression prevention)
+- [x] Stored in `tests/unit_tests/logic/zkp/zkp_golden_vectors.json`
+- [x] Fixed test cases: theorem, axioms, expected outputs
+
+**Implementation:** `tests/unit_tests/logic/zkp/test_zkp_golden_vectors.py`
 
 ---
 
 ## P9 — Documentation & Artifacts
 
-### P9.1 ⏳ Update `logic/zkp/README.md`
-- [ ] Add section: "Production Setup Checklist"
+### P9.1 ✅ Update `logic/zkp/README.md`
+- [x] Add section: "Production Setup Checklist"
 - [ ] Example: ephemeral peer workflow
 
 ### P9.2 ✅ Keep `IMPROVEMENT_TODO.md` in sync
 - [x] Linked to this master todo
 
-### P9.3 ⏳ Create `logic/zkp/THREAT_MODEL.md`
-- [ ] Adversary, assumptions, failure modes
+### P9.3 ✅ Create `logic/zkp/THREAT_MODEL.md`
+- [x] Adversary, assumptions, failure modes
 
-### P9.4 ⏳ Create `logic/zkp/SETUP_GUIDE.md`
-- [ ] Step-by-step: trusted setup, artifact storage, on-chain registration
+### P9.4 ✅ Create `logic/zkp/SETUP_GUIDE.md`
+- [x] Step-by-step: trusted setup, artifact storage, on-chain registration
 
 ---
 
@@ -337,12 +341,12 @@
 - ✅ P2 (Verifier robustness)
 - ✅ P3.1–3.3 (Canonicalization + statement/witness design)
 - ✅ P4.1–4.2 (MVP circuit schema + witness generation)
-- ⏳ P4.3 (Circuit witness verification — constraint evaluation)
+- ✅ P4.3 (Circuit witness verification — constraint evaluation)
 
 **Phase 2 (Immediate next, weeks 2–4):**
-- [ ] P4.3 Finalization: full circuit constraint verification
-- [ ] P8.2 Property-based tests (axiom ordering, proof sizes)
-- [ ] P8.4 Golden vectors (fixed regression test cases)
+- [x] P4.3 Finalization: full circuit constraint verification
+- [x] P8.2 Property-based tests (axiom ordering, proof sizes)
+- [x] P8.4 Golden vectors (fixed regression test cases)
 - [ ] P9.1 README updates (setup guide, examples)
 
 **Phase 3 (Real ZKP, weeks 4–10):**

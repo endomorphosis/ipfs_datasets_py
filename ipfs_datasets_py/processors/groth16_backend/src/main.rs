@@ -7,6 +7,8 @@ use std::fs;
 use std::io::{self, Read};
 use std::process;
 
+const ERROR_SCHEMA_VERSION: u32 = 1;
+
 #[derive(Parser)]
 #[command(about = "Groth16 ZKP Prover/Verifier")]
 struct Args {
@@ -25,6 +27,10 @@ enum Commands {
         /// Output proof JSON file (use '-' for stdout)
         #[arg(short, long)]
         output: String,
+
+            /// Seed for deterministic proving (also forces timestamp=0)
+            #[arg(long)]
+            seed: Option<u64>,
 
         /// Suppress status messages (stderr)
         #[arg(long, default_value_t = false)]
@@ -61,6 +67,7 @@ struct ErrorEnvelope {
 
 #[derive(Debug, Serialize)]
 struct CliError {
+    schema_version: u32,
     code: String,
     message: String,
 }
@@ -69,8 +76,12 @@ fn is_stdout_path(path: &str) -> bool {
     path == "-" || path == "/dev/stdout"
 }
 
+fn is_stdin_path(path: &str) -> bool {
+    path == "-" || path == "/dev/stdin"
+}
+
 fn read_text_arg(path: &str) -> anyhow::Result<String> {
-    if path == "-" {
+    if is_stdin_path(path) {
         let mut buf = String::new();
         io::stdin().read_to_string(&mut buf)?;
         Ok(buf)
@@ -106,6 +117,7 @@ fn error_code(err: &anyhow::Error) -> &'static str {
 fn emit_error_json_to_stdout(code: &str, message: &str) {
     let env = ErrorEnvelope {
         error: CliError {
+            schema_version: ERROR_SCHEMA_VERSION,
             code: code.to_string(),
             message: message.to_string(),
         },
@@ -116,7 +128,7 @@ fn emit_error_json_to_stdout(code: &str, message: &str) {
         Err(_) => {
             print!(
                 "{}\n",
-                r#"{"error":{"code":"INTERNAL","message":"failed to serialize error"}}"#
+                r#"{"error":{"schema_version":1,"code":"INTERNAL","message":"failed to serialize error"}}"#
             );
         }
     }
@@ -129,11 +141,12 @@ fn main() {
         Commands::Prove {
             input,
             output,
+            seed,
             quiet,
         } => {
             let run = || -> anyhow::Result<()> {
                 let witness_json = read_text_arg(&input)?;
-                let proof = groth16_backend::prove(&witness_json)?;
+                let proof = groth16_backend::prove_with_seed(&witness_json, seed)?;
                 write_text_arg(&output, &proof)?;
                 if !quiet && !is_stdout_path(&output) {
                     eprintln!("✅ Proof written to {}", output);
@@ -190,9 +203,7 @@ fn main() {
                 Err(err) => {
                     let code = error_code(&err);
                     let message = format!("{:#}", err);
-                    if json {
-                        emit_error_json_to_stdout(code, &message);
-                    }
+                    emit_error_json_to_stdout(code, &message);
                     if !quiet {
                         eprintln!("ERROR[{code}]: {message}");
                     }

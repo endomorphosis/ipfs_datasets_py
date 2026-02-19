@@ -18,8 +18,8 @@ Usage:
     # Or create and configure your own server instance
     from ipfs_datasets_py.mcp_server import IPFSDatasetsMCPServer
     server = IPFSDatasetsMCPServer()
-    server.register_tools()
-    server.register_ipfs_kit_tools()
+    await server.register_tools()
+    await server.register_ipfs_kit_tools()
     await server.start(host="127.0.0.1", port=5000)
 
     # Client Usage:

@@ -389,7 +389,7 @@ class KnowledgeGraphExtractor:
             try:
                 neural_relationships = self._neural_relationship_extraction(text, entity_map)
                 relationships.extend(neural_relationships)
-            except Exception as e:
+            except RelationshipExtractionError as e:
                 logger.warning(f"Neural relationship extraction failed: {e}. Falling back to rule-based.")
         
         # Use rule-based relationship extraction (always runs as fallback or primary)
@@ -486,13 +486,20 @@ class KnowledgeGraphExtractor:
                                         extraction_method='neural'
                                     )
                                     relationships.append(rel)
-                    except Exception as e:
+                    except (TypeError, ValueError, KeyError, IndexError, AttributeError) as e:
                         logger.debug(f"Failed to process sentence with neural model: {e}")
                         continue
         
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError, ValueError, KeyError, IndexError) as e:
             logger.warning(f"Neural relationship extraction encountered an error: {e}")
             # Return whatever we extracted so far
+            return relationships
+
+        except Exception as e:
+            raise RelationshipExtractionError(
+                f"Neural relationship extraction failed: {e}",
+                details={"text_length": len(text), "entity_count": len(entity_map)}
+            ) from e
         
         return relationships
     
@@ -529,7 +536,7 @@ class KnowledgeGraphExtractor:
                     except (IndexError, ValueError):
                         continue
         
-        except Exception as e:
+        except (AttributeError, ValueError, TypeError) as e:
             logger.debug(f"Failed to parse REBEL output: {e}")
         
         return triplets
@@ -686,8 +693,13 @@ class KnowledgeGraphExtractor:
                             additional_entities.append(entity)
                             existing_names.add(phrase.lower())
         
-        except Exception as e:
+        except (AttributeError, ValueError, TypeError) as e:
             logger.warning(f"Error in aggressive entity extraction: {e}")
+        except Exception as e:
+            raise EntityExtractionError(
+                f"Aggressive entity extraction failed: {e}",
+                details={"text_length": len(text), "existing_entity_count": len(existing_entities)}
+            ) from e
         
         return additional_entities
     
@@ -820,8 +832,17 @@ class KnowledgeGraphExtractor:
                 if len(inferred_relationships) >= 20:
                     break
         
-        except Exception as e:
+        except (AttributeError, ValueError, TypeError, KeyError, IndexError, StopIteration) as e:
             logger.warning(f"Error in complex relationship inference: {e}")
+        except Exception as e:
+            raise RelationshipExtractionError(
+                f"Complex relationship inference failed: {e}",
+                details={
+                    "text_length": len(text),
+                    "entity_count": len(entities),
+                    "relationship_count": len(existing_relationships),
+                }
+            ) from e
         
         return inferred_relationships
 
@@ -894,7 +915,7 @@ class KnowledgeGraphExtractor:
                 try:
                     additional_entities = self._aggressive_entity_extraction(text, entities)
                     entities.extend(additional_entities)
-                except Exception as e:
+                except EntityExtractionError as e:
                     logger.warning(f"Aggressive entity extraction failed: {e}")
 
         # Add entities to the knowledge graph
@@ -920,7 +941,7 @@ class KnowledgeGraphExtractor:
                 try:
                     inferred_relationships = self._infer_complex_relationships(text, relationships, entities)
                     relationships.extend(inferred_relationships)
-                except Exception as e:
+                except RelationshipExtractionError as e:
                     logger.warning(f"Complex relationship inference failed: {e}")
 
         # Add relationships to the knowledge graph
@@ -1255,7 +1276,7 @@ class KnowledgeGraphExtractor:
             # Re-raise as EntityExtractionError
             raise EntityExtractionError(error_msg, details={'wikipedia_title': page_title, 'trace_id': trace_id}) from e
         
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, IndexError) as e:
             error_msg = f"Unexpected error extracting knowledge graph from Wikipedia '{page_title}': {e}"
             logger.error(error_msg)
             # Update trace with error if tracer is enabled
@@ -1469,7 +1490,7 @@ class KnowledgeGraphExtractor:
 
             return error_result
         
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, IndexError, AttributeError) as e:
             error_result = {
                 "error": f"Unexpected error validating against Wikidata: {e}",
                 "coverage": 0.0,
@@ -1526,7 +1547,7 @@ class KnowledgeGraphExtractor:
         except (requests.RequestException, ValueError) as e:
             logger.debug(f"Could not retrieve Wikidata ID for '{entity_name}': {e}")
             return None
-        except Exception as e:
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.warning(f"Unexpected error getting Wikidata ID for '{entity_name}': {e}")
             return None
 
@@ -1597,7 +1618,7 @@ class KnowledgeGraphExtractor:
         except (requests.RequestException, requests.HTTPError, requests.Timeout) as e:
             logger.error(f"Network error querying Wikidata for entity '{entity_id}': {e}")
             return []
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, IndexError, AttributeError) as e:
             logger.error(f"Unexpected error querying Wikidata for entity '{entity_id}': {e}")
             raise ValidationError(
                 f"Failed to query Wikidata statements for entity '{entity_id}': {e}",
@@ -1691,7 +1712,7 @@ class KnowledgeGraphExtractor:
         except ValidationError:
             # Re-raise validation errors
             raise
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, IndexError, AttributeError) as e:
             error_result = {
                 "error": f"Unexpected error extracting and validating graph from '{page_title}': {e}",
                 "knowledge_graph": None,

@@ -107,8 +107,8 @@ class CypherCompiler:
             
         except CypherCompileError:
             raise
-        except Exception as e:
-            raise CypherCompileError(f"Compilation error: {e}")
+        except (AttributeError, IndexError, KeyError, TypeError, ValueError) as e:
+            raise CypherCompileError(f"Compilation error: {e}") from e
     
     def _compile_clause(self, clause):
         """Compile a single clause."""

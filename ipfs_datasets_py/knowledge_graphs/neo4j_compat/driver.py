@@ -26,6 +26,7 @@ from urllib.parse import urlparse
 
 from .session import IPFSSession
 from .connection_pool import ConnectionPool
+from ..exceptions import IPLDStorageError, StorageError
 
 try:
     from ipfs_datasets_py.router_deps import RouterDeps
@@ -259,9 +260,19 @@ class IPFSDriver:
                 "mode": self._mode,
                 "endpoint": self._ipfs_endpoint
             }
-        except Exception as e:
-            logger.error("Connectivity check failed: %s", e)
+        except StorageError:
             raise
+        except (AttributeError, RuntimeError, ImportError, ConnectionError, TimeoutError, OSError) as e:
+            logger.error("Connectivity check failed: %s", e)
+            raise IPLDStorageError(
+                "Connectivity check failed",
+                details={
+                    "mode": self._mode,
+                    "endpoint": self._ipfs_endpoint,
+                    "backend": getattr(self.backend, "backend_name", None),
+                    "operation": "verify_connectivity",
+                },
+            ) from e
     
     def __enter__(self):
         """Context manager entry."""
