@@ -207,15 +207,18 @@
 - [x] Policy: fail-closed by default; enable via `IPFS_DATASETS_ENABLE_GROTH16=1`
 - [x] Rationale document in GROTH16_IMPLEMENTATION_PLAN.md section 8
 
-### P5.2 ⏳ Implement trusted setup ceremony (circuit-specific)
-- [x] For MVP circuit v1: run setup → PK + VK (Rust CLI: `groth16 setup --version <n>`)
+### P5.2 ✅ Implement trusted setup ceremony (circuit-specific)
+- [x] For MVP circuit v1: run setup → PK + VK (Rust CLI:
+  `groth16 setup --version <n>`)
 - [x] Emit JSON manifest including `vk_hash_hex` (SHA256 of canonical VK bytes)
 - [x] Reproducibility test: seeded setup produces stable `vk_hash_hex`
-- [x] Python FFI: expose `setup(version, seed)` and validate manifest (`logic/zkp/backends/groth16_ffi.py`)
-- [x] Python entrypoint: gated `Groth16Backend.setup()` forwards to FFI (`logic/zkp/backends/groth16.py`)
-- [x] Artifact storage: store PK/VK in IPFS and record `proving_key_cid` / `verifying_key_cid` (see `logic/zkp/setup_artifacts.py`, unit test: `tests/unit_tests/logic/zkp/test_setup_artifacts_ipfs.py`)
-- [ ] On-chain registry: register `vk_hash_hex` on-chain (see P6.2; payload helpers: `logic/zkp/eth_vk_registry_payloads.py`; contract: `processors/groth16_backend/contracts/VKHashRegistry.sol`)
-
+- [x] Python FFI: expose `setup(version, seed)` and validate manifest
+  (`logic/zkp/backends/groth16_ffi.py`)
+- [x] Python entrypoint: gated `Groth16Backend.setup()` forwards to FFI
+  (`logic/zkp/backends/groth16.py`)
+- [x] Artifact storage: store PK/VK in IPFS and record `proving_key_cid` /
+  `verifying_key_cid` (see `logic/zkp/setup_artifacts.py`, unit test:
+  `tests/unit_tests/logic/zkp/test_setup_artifacts_ipfs.py`)
 ### P5.3 ✅ Implement proof generation (real Groth16; opt-in)
 - [x] `Groth16Backend.generate_proof()` implemented (gated) in `logic/zkp/backends/groth16.py` delegating to Rust FFI in `logic/zkp/backends/groth16_ffi.py`
 - [x] Prover invocation: load PK, build witness, invoke Rust binary, validate proof output schema
@@ -242,16 +245,24 @@
 - [ ] Note: `processors/groth16_backend/contracts/GrothVerifier.sol` exists as a prototype and is not authoritative until validated end-to-end
 
 ### P6.2 ⏳ Implement contract registry for VK + policy
-- [x] On-chain: mapping(circuitId → mapping(version → Entry)) (contract: `processors/groth16_backend/contracts/VKHashRegistry.sol`)
+- [x] On-chain: mapping(circuitId → mapping(version → Entry)) (contract:
+  `processors/groth16_backend/contracts/VKHashRegistry.sol`)
 - [x] Admin: registerVK(), setDeprecated()
-- [x] Stdlib-only payload validation + tests: `logic/zkp/eth_vk_registry_payloads.py` + `tests/unit_tests/logic/zkp/test_eth_vk_registry_payloads.py`
+- [x] Stdlib-only payload validation + tests:
+  `logic/zkp/eth_vk_registry_payloads.py` +
+  `tests/unit_tests/logic/zkp/test_eth_vk_registry_payloads.py`
+- [ ] Register `vk_hash_hex` on-chain via `VKHashRegistry` (payload helpers:
+  `logic/zkp/eth_vk_registry_payloads.py`; contract:
+  `processors/groth16_backend/contracts/VKHashRegistry.sol`)
 - [ ] Deployment + ABI wiring for `EthereumProofClient`
-
 ### P6.3 ⏳ Integration harness (off-chain → on-chain)
-- [x] Define on-chain encoding for `public_inputs` (see `logic/zkp/evm_public_inputs.py`)
-- [ ] Python: generate → pack ABI args → submit → verify on-chain
+- [x] Define on-chain encoding for `public_inputs`
+  (see `logic/zkp/evm_public_inputs.py`)
+- [x] Python: pack ABI args for `public_inputs`
+  (see `logic/zkp/evm_harness.py`, tests:
+  `tests/unit_tests/logic/zkp/test_evm_harness.py`)
+- [ ] Python: generate → submit → verify on-chain
 - [ ] Keep harness dependency-light (unit tests should not require a live chain)
-
 ---
 
 ## P7 — Legal Theorem Semantics (Phase E: Real Use Case)
