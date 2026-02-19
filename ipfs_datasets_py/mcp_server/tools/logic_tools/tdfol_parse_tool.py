@@ -73,6 +73,21 @@ class TDFOLParseTool(ClaudeMCPTool):
                     "default": 0.5,
                     "minimum": 0.0,
                     "maximum": 1.0
+                },
+                "llm_enabled": {
+                    "type": "boolean",
+                    "description": "Enable LLM-enhanced parsing for natural language (slower, more accurate)",
+                    "default": False
+                },
+                "llm_provider": {
+                    "type": "string",
+                    "description": "LLM provider to use (openai, gemini, claude, etc.). Default: auto",
+                    "default": None
+                },
+                "force_llm": {
+                    "type": "boolean",
+                    "description": "Skip pattern matching and use LLM directly",
+                    "default": False
                 }
             },
             "required": ["formula"]
@@ -116,6 +131,9 @@ class TDFOLParseTool(ClaudeMCPTool):
         validate = parameters.get("validate", True)
         include_ast = parameters.get("include_ast", False)
         min_confidence = parameters.get("min_confidence", 0.5)
+        llm_enabled = parameters.get("llm_enabled", False)
+        llm_provider = parameters.get("llm_provider", None)
+        force_llm = parameters.get("force_llm", False)
         
         # Auto-detect format if needed
         if format_type == "auto":
@@ -126,7 +144,9 @@ class TDFOLParseTool(ClaudeMCPTool):
             if format_type == "symbolic":
                 result = await self._parse_symbolic(formula, validate, include_ast)
             elif format_type == "natural_language":
-                result = await self._parse_natural_language(formula, min_confidence, validate)
+                result = await self._parse_natural_language(
+                    formula, min_confidence, validate, llm_enabled, llm_provider, force_llm
+                )
             elif format_type == "json":
                 result = await self._parse_json(formula, validate)
             else:
@@ -235,9 +255,55 @@ class TDFOLParseTool(ClaudeMCPTool):
         self,
         text: str,
         min_confidence: float,
-        validate: bool
+        validate: bool,
+        llm_enabled: bool = False,
+        llm_provider: Optional[str] = None,
+        force_llm: bool = False
     ) -> Dict[str, Any]:
         """Parse natural language text to TDFOL."""
+        # Try LLM-enhanced parsing if enabled
+        if llm_enabled:
+            try:
+                from ipfs_datasets_py.logic.TDFOL.nl.llm_nl_converter import LLMNLConverter
+                
+                # Create converter with appropriate settings
+                converter = LLMNLConverter(
+                    confidence_threshold=min_confidence,
+                    enable_llm=True,
+                    default_provider=llm_provider
+                )
+                
+                # Convert using hybrid approach
+                llm_result = converter.convert(
+                    text,
+                    provider=llm_provider,
+                    min_confidence=min_confidence,
+                    force_llm=force_llm
+                )
+                
+                if llm_result.success:
+                    return {
+                        "success": True,
+                        "formula": llm_result.formula,
+                        "confidence": llm_result.confidence,
+                        "method": llm_result.method,
+                        "llm_provider": llm_result.llm_provider,
+                        "cache_hit": llm_result.cache_hit,
+                        "text": text,
+                        "metadata": llm_result.metadata
+                    }
+                else:
+                    # LLM parsing failed, fallback to pattern-only
+                    logger.warning(f"LLM parsing failed: {llm_result.errors}")
+            
+            except ImportError as e:
+                logger.warning(f"LLM converter not available: {e}")
+                # Fall through to pattern-only parsing
+            except Exception as e:
+                logger.error(f"LLM parsing error: {e}", exc_info=True)
+                # Fall through to pattern-only parsing
+        
+        # Fallback to pattern-only parsing
         try:
             from ipfs_datasets_py.logic.TDFOL.nl.tdfol_nl_api import parse_natural_language
             
@@ -265,6 +331,7 @@ class TDFOLParseTool(ClaudeMCPTool):
                     for f in parse_result.formulas
                 ],
                 "confidence": parse_result.confidence,
+                "method": "pattern",
                 "text": text
             }
             
