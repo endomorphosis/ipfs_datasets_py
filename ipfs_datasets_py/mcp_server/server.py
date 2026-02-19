@@ -412,10 +412,15 @@ class IPFSDatasetsMCPServer:
             except Exception as e:
                 logger.warning(f"Failed to install error reporter: {e}")
 
-        # Initialize MCP server
-        if FastMCP is None:
-            raise ImportError("MCP dependency is not available (FastMCP import failed). Install the 'mcp' package to use the MCP server.")
-        self.mcp = FastMCP("ipfs_datasets")
+        # Initialize MCP server (optional dependency).
+        # Allow constructing the server without MCP installed so tests/utilities
+        # can exercise non-MCP logic. Operations that require MCP remain
+        # fail-closed.
+        self._fastmcp_available = FastMCP is not None
+        if self._fastmcp_available:
+            self.mcp = FastMCP("ipfs_datasets")
+        else:
+            self.mcp = None
 
         # Dictionary to store registered tools
         self.tools = {}
@@ -469,6 +474,10 @@ class IPFSDatasetsMCPServer:
 
     async def register_tools(self):
         """Register all tools with the MCP server."""
+        if self.mcp is None:
+            raise ImportError(
+                "MCP dependency is not available (FastMCP import failed). Install the 'mcp' package to use the MCP server."
+            )
         # PHASE 4: Register hierarchical tool manager (NEW)
         # Register only 4 meta-tools instead of 347 individual tools
         logger.info("Registering hierarchical tool manager (4 meta-tools)")
