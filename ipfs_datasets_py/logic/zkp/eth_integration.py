@@ -20,12 +20,18 @@ from pathlib import Path
 from decimal import Decimal
 
 from .eth_vk_registry_payloads import build_register_vk_payload
+from .evm_public_inputs import pack_public_inputs_for_evm
 
-import web3
-from web3 import Web3
-from web3.contract import Contract
-from web3.eth import Eth
-from web3.types import Address, TxHash, BlockIdentifier
+try:
+    from web3 import Web3
+    from web3.contract import Contract
+    from web3.exceptions import BlockNotFound
+    from web3.types import Address, TxHash, BlockIdentifier
+except ModuleNotFoundError as e:  # pragma: no cover
+    raise ImportError(
+        "Optional dependency 'web3' is required for ipfs_datasets_py.logic.zkp.eth_integration. "
+        "Install it (e.g. `pip install web3`) to use EthereumProofClient."
+    ) from e
 
 
 logger = logging.getLogger(__name__)
@@ -126,6 +132,8 @@ class EthereumProofClient:
             return GROTH_VERIFIER_ABI
         elif contract_name == "ComplaintRegistry":
             return COMPLAINT_REGISTRY_ABI
+        elif contract_name == "VKHashRegistry":
+            return VK_HASH_REGISTRY_ABI
         else:
             raise ValueError(f"Unknown contract: {contract_name}")
 
@@ -330,7 +338,7 @@ class EthereumProofClient:
                 receipt = self.w3.eth.get_transaction_receipt(tx_hash)
                 if receipt:
                     return receipt
-            except web3.exceptions.BlockNotFound:
+            except BlockNotFound:
                 pass
             
             time.sleep(5)  # Check every 5 seconds
@@ -419,12 +427,12 @@ class ProofSubmissionPipeline:
         
         # Step 3: Verify off-chain (RPC call)
         logger.info("Step 3: Verifying off-chain (RPC call)")
-        public_inputs = [
-            proof_obj['public_inputs']['theorem_hash'],
-            proof_obj['public_inputs']['axioms_commitment'],
-            str(proof_obj['public_inputs']['circuit_version']),
-            proof_obj['public_inputs']['ruleset_id']
-        ]
+        public_inputs = pack_public_inputs_for_evm(
+            theorem_hash_hex=proof_obj["public_inputs"]["theorem_hash"],
+            axioms_commitment_hex=proof_obj["public_inputs"]["axioms_commitment"],
+            circuit_version=int(proof_obj["public_inputs"]["circuit_version"]),
+            ruleset_id=proof_obj["public_inputs"]["ruleset_id"],
+        )
         
         rpc_result = self.eth_client.verify_proof_rpc_call(proof_hex, public_inputs)
         logger.info(f"RPC verification result: {rpc_result}")

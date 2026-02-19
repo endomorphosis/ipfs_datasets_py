@@ -261,8 +261,8 @@
 - [x] Python: pack ABI args for `public_inputs`
   (see `logic/zkp/evm_harness.py`, tests:
   `tests/unit_tests/logic/zkp/test_evm_harness.py`)
-- [ ] Python: generate → submit → verify on-chain
-- [ ] Keep harness dependency-light (unit tests should not require a live chain)
+- [x] Python: generate → submit → verify on-chain via injected client (stdlib-only pipeline): `logic/zkp/onchain_pipeline.py` (+ unit tests)
+- [x] Keep harness dependency-light (unit tests do not require a live chain)
 ---
 
 ## P7 — Legal Theorem Semantics (Phase E: Real Use Case)
