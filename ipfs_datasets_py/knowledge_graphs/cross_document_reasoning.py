@@ -1165,8 +1165,8 @@ class CrossDocumentReasoner:
         }
 
 
-def example_usage():
-    """Example usage of the cross-document reasoner."""
+def _example_usage():
+    """Example usage of the cross-document reasoner (internal demo)."""
     from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import LLMReasoningTracer
     from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
 
@@ -1241,4 +1241,4 @@ def example_usage():
 
 
 if __name__ == "__main__":
-    example_usage()
+    _example_usage()

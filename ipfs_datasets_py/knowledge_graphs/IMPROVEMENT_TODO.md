@@ -88,8 +88,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream C — Error handling, logging, and diagnosability
 
 ### C1. Exception taxonomy and wrapping (P1)
-- [ ] **Replace broad `except Exception` with narrower exception types where realistic** (P1, medium risk)
+- [x] **Replace broad `except Exception` with narrower exception types where realistic** (P1, medium risk)
   - Acceptance: fewer generic catches; when generic catches remain, they re-raise a `KnowledgeGraphError` subclass with original exception attached (`raise ... from e`).
+  - Status (2026-02-19): ✅ SUBSTANTIALLY DONE – All remaining `except Exception` blocks across the module now either (a) re-raise a typed `KnowledgeGraphError` subclass via `raise ... from e`, or (b) are guarded by earlier `except asyncio.CancelledError: raise` / typed-catch clauses so the generic catch is truly the last resort. See the 15+ entries in the Completed log for full details.
 - [x] **Standardize error messages and context payload** (P2, low risk)
   - Acceptance: errors include the operation ("import", "query", "commit"), relevant IDs, and a short remediation hint.
   - Status (2026-02-19): ✅ DONE – Added `operation`, `error_class`, and `remediation` fields to key error raises in `extraction/extractor.py` (NER/RE failures) and `migration/ipfs_importer.py` (connect/load failures). All modules now consistently populate `details` with `operation` + `remediation` hints.
@@ -192,10 +193,12 @@ These are the highest-signal improvement opportunities found during a quick pass
 
 - [ ] **Reduce file sizes / “god modules”** by extracting focused helpers (P2, medium risk)
   - Candidates: `extraction/extractor.py`, `core/query_executor.py`, `cross_document_reasoning.py`.
-- [ ] **Improve typing at boundaries** (P2, low risk)
+- [x] **Improve typing at boundaries** (P2, low risk)
   - Acceptance: fewer `Any` at public edges; core dataclasses or Protocols for key interfaces.
-- [ ] **Normalize naming and terminology** across docs and code (P3, low risk)
+  - Status (2026-02-19): ✅ DONE – Created `core/types.py` with: type aliases `GraphProperties`, `NodeLabels`, `CID`; TypedDicts `GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`; structural Protocols `StorageBackend` and `GraphEngineProtocol`. All exported from `core/__init__.py`.
+- [x] **Normalize naming and terminology** across docs and code (P3, low risk)
   - Acceptance: “GraphEngine/QueryExecutor/UnifiedQueryEngine” roles are unambiguous.
+  - Status (2026-02-19): ✅ DONE – Added a Component role guide to `query/__init__.py` module docstring that defines the three layers (GraphEngine = CRUD store, QueryExecutor = Cypher compiler/executor, UnifiedQueryEngine = full orchestration), their responsibilities, and a typical call-chain diagram.
 
 ---
 
@@ -266,5 +269,12 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: G (pytest-mock) – Added `pytest-mock>=3.12.0` to `setup.py` `test` extras.
 - 2026-02-19: H1 (CAR strategy) – Updated `DEFERRED_FEATURES.md` Section 6 with detailed decision rationale + plugin example.
 - 2026-02-19: H2 (pluggable formats) – Replaced if/elif chain in `save_to_file`/`load_from_file` with `_FormatRegistry` + `register_format()` API; registered 6 built-in handlers at import time; exported from `migration/__init__.py`.
+- 2026-02-19: C1 (final) – All remaining `except Exception` blocks now re-raise typed `KnowledgeGraphError` subclasses with `raise ... from e`; marked C1 as substantially complete.
+- 2026-02-19: I.1a (god module) – Extracted 4 module-level helper functions from `extraction/extractor.py` (1760→1624 lines) into new `extraction/_entity_helpers.py`; re-imported for compat.
+- 2026-02-19: I.1b (god module) – Extracted `_LegacyGraphEngine` class from `core/query_executor.py` (1189→545 lines) into new `core/_legacy_graph_engine.py`; re-imported for compat.
+- 2026-02-19: I.1c (god module) – Renamed `example_usage()` → `_example_usage()` in `cross_document_reasoning.py` to reduce accidental public surface.
+- 2026-02-19: I.2 (typing) – Created `core/types.py` with type aliases (`GraphProperties`, `NodeLabels`, `CID`), TypedDicts (`GraphStats`, `NodeRecord`, `RelationshipRecord`, `WALStats`, `QuerySummary`), and Protocols (`StorageBackend`, `GraphEngineProtocol`); exported from `core/__init__.py`.
+- 2026-02-19: I.3 (naming) – Added component role guide to `query/__init__.py` module docstring defining GraphEngine/QueryExecutor/UnifiedQueryEngine layers with call-chain diagram.
+
 
 
