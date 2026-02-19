@@ -1,5 +1,8 @@
 import pytest
 
+from ipfs_datasets_py.logic.zkp import ZKPProof
+from ipfs_datasets_py.logic.zkp.zkp_verifier import ZKPVerifier
+
 from ipfs_datasets_py.logic.zkp.statement import (
     format_circuit_ref,
     parse_circuit_ref,
@@ -87,3 +90,56 @@ def test_format_circuit_ref_round_trip():
 def test_format_circuit_ref_rejects_invalid(circuit_id, version):
     with pytest.raises((ValueError, TypeError)):
         format_circuit_ref(circuit_id, version)
+
+
+def _make_minimal_valid_proof(public_inputs: dict) -> ZKPProof:
+    # 160 bytes is within the simulated proof-size bounds.
+    return ZKPProof(
+        proof_data=b"x" * 160,
+        public_inputs=public_inputs,
+        metadata={"proof_system": "test", "security_level": 128},
+        timestamp=0.0,
+        size_bytes=160,
+    )
+
+
+def test_verifier_accepts_versioned_circuit_ref_and_version():
+    verifier = ZKPVerifier()
+    proof = _make_minimal_valid_proof(
+        {
+            "theorem": "Q",
+            "theorem_hash": __import__("hashlib").sha256(b"Q").hexdigest(),
+            "circuit_ref": "knowledge_of_axioms@v1",
+            "circuit_version": 1,
+        }
+    )
+
+    assert verifier.verify_proof(proof) is True
+
+
+def test_verifier_accepts_legacy_unversioned_circuit_ref_without_circuit_version():
+    verifier = ZKPVerifier()
+    proof = _make_minimal_valid_proof(
+        {
+            "theorem": "Q",
+            "theorem_hash": __import__("hashlib").sha256(b"Q").hexdigest(),
+            "circuit_ref": "knowledge_of_axioms",
+        }
+    )
+
+    assert verifier.verify_proof(proof) is True
+
+
+def test_verifier_rejects_mismatched_circuit_ref_and_circuit_version():
+    verifier = ZKPVerifier()
+    proof = _make_minimal_valid_proof(
+        {
+            "theorem": "Q",
+            "theorem_hash": __import__("hashlib").sha256(b"Q").hexdigest(),
+            "circuit_ref": "knowledge_of_axioms@v2",
+            "circuit_version": 1,
+        }
+    )
+
+    assert verifier.verify_proof(proof) is False
+

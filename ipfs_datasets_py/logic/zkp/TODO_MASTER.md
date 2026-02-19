@@ -119,7 +119,7 @@
 
 ### P2.3 ✅ Make simulated proof structure more explicit
 - [x] Add detailed comments in `backends/simulated.py` explaining byte ranges
-- [ ] Optional: add tagged fields for clarity
+- [x] Optional: add tagged fields for clarity
 
 ### P2.4 ✅ Standardize public inputs across backends
 - [x] Enforced schema for `public_inputs` across backends:
@@ -308,21 +308,24 @@
 
 ## P10 — Dependency Management & Versioning
 
-### P10.1 ⏳ Optional deps for Groth16 (Python + Rust)
-- [ ] Add a `groth16` extra in `setup.py` for Groth16 FFI glue dependencies (e.g., `jsonschema`).
-- [ ] Document install paths:
+### P10.1 ✅ Optional deps for Groth16 (Python + Rust)
+- [x] `setup.py` includes a `groth16` extra with `jsonschema>=4.0.0` (used by `logic/zkp/backends/groth16_ffi.py`).
+- [x] Install paths:
   - Editable/dev: `pip install -e ".[groth16]"`
-  - Released package: `pip install ipfs_datasets_py[groth16]` (once published)
-- [ ] Keep runtime gating fail-closed by default; require `IPFS_DATASETS_ENABLE_GROTH16=1`.
+  - Wheel/sdist: `pip install ipfs_datasets_py[groth16]`
+- [x] Runtime gating remains fail-closed by default; require `IPFS_DATASETS_ENABLE_GROTH16=1`.
 
-### P10.1b ⏳ Dev/test dependencies
-- [ ] Add/verify a documented install path for property tests (Hypothesis):
-  - Either include `hypothesis` in the `test` extra in `setup.py`,
-  - Or explicitly document `pip install -r requirements.txt` for test/dev environments.
+### P10.1b ✅ Dev/test dependencies
+- [x] `hypothesis` is included in the `test` extra in `setup.py`.
+- [x] Install paths:
+  - Editable/dev: `pip install -e ".[test]"`
+  - Dev from requirements: `pip install -r requirements.txt`
 
-### P10.2 ⏳ Version policy for circuits
-- [x] Versioning: `circuit_id@v<uint64>`
-- [x] Backward compat: old versions stay verifiable
+### P10.2 ✅ Version policy for circuits
+- [x] Versioning: `circuit_id@v<uint64>` (see `parse_circuit_ref` / `format_circuit_ref` in `logic/zkp/statement.py`).
+- [x] Legacy support: accept unversioned circuit IDs via `parse_circuit_ref_lenient` (defaults to v1).
+- [x] Backward compat: verifier accepts legacy + versioned circuit refs (optional) and rejects mismatches against `circuit_version`.
+- [x] Tests: parsing/formatting edge cases + verifier behavior (`tests/unit_tests/logic/zkp/test_circuit_version_policy.py`).
 
 ---
 

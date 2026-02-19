@@ -102,17 +102,15 @@ class SimulatedBackend:
         proof_inputs = circuit_hash + witness + normalize_text(theorem).encode("utf-8")
         proof_hash = hashlib.sha256(proof_inputs).digest()
 
-        simulated_proof = (
-            proof_hash +
-            secrets.token_bytes(64) +
-            secrets.token_bytes(64)
-        )
-
         # Byte layout (fixed 160 bytes):
-        # - [0:32]   SHA256(circuit_hash || witness || normalize_text(theorem))
-        # - [32:96]  64 bytes of random padding (simulated Groth16 element A-ish)
-        # - [96:160] 64 bytes of random padding (simulated Groth16 element B/C-ish)
+        # - [0:8]     Magic header: b"SIMZKP\x00\x01"
+        # - [8:40]    proof_hash: SHA256(circuit_hash || witness || normalize_text(theorem))
+        # - [40:72]   circuit_hash: SHA256(normalized theorem + axiom hashes metadata)
+        # - [72:104]  witness: SHA256(canonicalized axioms JSON)
+        # - [104:160] random padding (demo-only; makes bytes look Groth16-ish)
         #
         # This is demo-only and intentionally non-verifiable as a real zkSNARK.
-        # Fixed-size simulated proof (matches existing tests expectation ~160 bytes).
-        return simulated_proof[:160]
+        magic = b"SIMZKP\x00\x01"
+        padding = secrets.token_bytes(56)
+        simulated_proof = magic + proof_hash + circuit_hash + witness + padding
+        return simulated_proof

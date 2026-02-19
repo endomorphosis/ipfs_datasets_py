@@ -55,6 +55,17 @@ class TestZKPProver:
         assert proof.size_bytes == 160  # Simulated Groth16 size
         assert proof.public_inputs['theorem'] == "Q"
         assert proof.metadata['num_axioms'] == 2
+
+    def test_simulated_proof_has_magic_header_and_fixed_size(self):
+        prover = ZKPProver(backend="simulated")
+        proof = prover.generate_proof(
+            theorem="Q",
+            private_axioms=["P", "P -> Q"],
+        )
+
+        assert isinstance(proof.proof_data, (bytes, bytearray))
+        assert len(proof.proof_data) == 160
+        assert proof.proof_data[:8] == b"SIMZKP\x00\x01"
     
     def test_proof_privacy(self):
         """

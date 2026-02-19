@@ -11,6 +11,7 @@ import time
 
 from . import ZKPProof, ZKPError
 from .backends import get_backend
+from .statement import parse_circuit_ref_lenient
 
 logger = logging.getLogger(__name__)
 
@@ -163,6 +164,7 @@ class ZKPVerifier:
 
         Optional (validated if present):
         - axioms_commitment: 32-byte hex string
+        - circuit_ref: str (preferred: circuit_id@v<uint64>; legacy: circuit_id)
         - circuit_version: non-negative int
         - ruleset_id: non-empty str
         """
@@ -188,6 +190,21 @@ class ZKPVerifier:
             cv = public_inputs.get("circuit_version")
             if not isinstance(cv, int) or cv < 0:
                 return False
+
+        if "circuit_ref" in public_inputs:
+            circuit_ref = public_inputs.get("circuit_ref")
+            if not isinstance(circuit_ref, str) or circuit_ref == "":
+                return False
+
+            try:
+                _, ref_version = parse_circuit_ref_lenient(circuit_ref)
+            except Exception:
+                return False
+
+            if "circuit_version" in public_inputs:
+                cv = public_inputs.get("circuit_version")
+                if isinstance(cv, int) and cv != ref_version:
+                    return False
 
         if "ruleset_id" in public_inputs:
             rid = public_inputs.get("ruleset_id")
