@@ -6,11 +6,10 @@ pluggable proving strategies in the TDFOL theorem prover.
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List
+from typing import Optional
 
-from ..tdfol_core import Formula, TDFOLKnowledgeBase
+from ..tdfol_core import Formula, TDFOLKnowledgeBase, ProofStep
 
 
 class StrategyType(Enum):
@@ -22,20 +21,6 @@ class StrategyType(Enum):
     CEC_DELEGATE = "cec_delegate"
     BIDIRECTIONAL = "bidirectional"
     AUTO = "auto"
-
-
-@dataclass
-class ProofStep:
-    """Single step in a proof."""
-    
-    formula: Formula
-    justification: str
-    rule_name: Optional[str] = None
-    premises: List[Formula] = None
-    
-    def __post_init__(self):
-        if self.premises is None:
-            self.premises = []
 
 
 class ProverStrategy(ABC):

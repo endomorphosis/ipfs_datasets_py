@@ -46,6 +46,16 @@ from .tdfol_core import (
     # Knowledge Base
     TDFOLKnowledgeBase,
     
+    # Proof Results (Phase 1 Task 1.2 - Unified)
+    ProofStatus,
+    ProofStep,
+    ProofResult,
+    
+    # Expansion Rules (Phase 1 Task 1.1)
+    ExpansionContext,
+    ExpansionResult,
+    ExpansionRule,
+    
     # Utility Functions
     create_always,
     create_conjunction,
@@ -75,7 +85,7 @@ if TYPE_CHECKING:
         clear_global_proof_cache,
         TDFOLProofResult,
     )
-    from .tdfol_inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
+    from .inference_rules import TDFOLInferenceRule, get_all_tdfol_rules
     from .nl.tdfol_nl_preprocessor import NLPreprocessor, ProcessedDocument, Entity
     from .proof_tree_visualizer import (
         ProofTreeVisualizer,
@@ -122,6 +132,14 @@ if TYPE_CHECKING:
         validate_formula,
         audit_proof,
     )
+    from .performance_metrics import (
+        MetricsCollector,
+        TimingResult,
+        MemoryResult,
+        StatisticalSummary,
+        get_global_collector,
+        reset_global_collector,
+    )
 
 __all__ = [
     # Enumerations
@@ -149,6 +167,16 @@ __all__ = [
     
     # Knowledge Base
     "TDFOLKnowledgeBase",
+    
+    # Proof Results (Phase 1 Task 1.2 - Unified)
+    "ProofStatus",
+    "ProofStep",
+    "ProofResult",
+    
+    # Expansion Rules (Phase 1 Task 1.1)
+    "ExpansionContext",
+    "ExpansionResult",
+    "ExpansionRule",
     
     # Parser
     "TDFOLLexer",
@@ -220,6 +248,14 @@ __all__ = [
     "SecurityConfig",
     "SecurityLevel",
     "ThreatType",
+    
+    # Performance Metrics (Phase 1 Task 1.4)
+    "MetricsCollector",
+    "TimingResult",
+    "MemoryResult",
+    "StatisticalSummary",
+    "get_global_collector",
+    "reset_global_collector",
     "ValidationResult",
     "AuditResult",
     "RateLimiter",

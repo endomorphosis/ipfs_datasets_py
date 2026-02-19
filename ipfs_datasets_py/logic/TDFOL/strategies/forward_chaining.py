@@ -57,7 +57,7 @@ class ForwardChainingStrategy(ProverStrategy):
         
         # Load TDFOL inference rules
         try:
-            from ..tdfol_inference_rules import get_all_tdfol_rules
+            from ..inference_rules import get_all_tdfol_rules
             self.tdfol_rules = get_all_tdfol_rules()
             logger.debug(f"Loaded {len(self.tdfol_rules)} TDFOL rules for forward chaining")
         except Exception as e:

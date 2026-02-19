@@ -30,6 +30,9 @@ from .tdfol_core import (
     Formula,
     LogicOperator,
     Predicate,
+    ProofResult,
+    ProofStatus,
+    ProofStep,
     QuantifiedFormula,
     Quantifier,
     TemporalFormula,
@@ -118,47 +121,6 @@ def _try_load_modal_tableaux() -> bool:
         logger.debug(f"Modal tableaux unavailable: {e}")
         HAVE_MODAL_TABLEAUX = False
         return False
-
-
-# ============================================================================
-# Proof Status
-# ============================================================================
-
-
-class ProofStatus(Enum):
-    """Status of a proof attempt."""
-    
-    PROVED = "proved"
-    DISPROVED = "disproved"
-    UNKNOWN = "unknown"
-    TIMEOUT = "timeout"
-    ERROR = "error"
-
-
-@dataclass
-class ProofResult:
-    """Result of a proof attempt."""
-    
-    status: ProofStatus
-    formula: Formula
-    proof_steps: List[ProofStep] = field(default_factory=list)
-    time_ms: float = 0.0
-    method: str = "unknown"
-    message: str = ""
-    
-    def is_proved(self) -> bool:
-        """Check if formula was proved."""
-        return self.status == ProofStatus.PROVED
-
-
-@dataclass
-class ProofStep:
-    """Single step in a proof."""
-    
-    formula: Formula
-    justification: str
-    rule_name: Optional[str] = None
-    premises: List[Formula] = field(default_factory=list)
 
 
 # ============================================================================
@@ -386,7 +348,7 @@ class TDFOLProver:
         
         # Import and initialize all TDFOL rules (40 rules) for backward compatibility
         try:
-            from .tdfol_inference_rules import get_all_tdfol_rules
+            from .inference_rules import get_all_tdfol_rules
             self.tdfol_rules = get_all_tdfol_rules()
             logger.info(f"Loaded {len(self.tdfol_rules)} TDFOL inference rules")
         except Exception as e:
