@@ -254,7 +254,7 @@
 - [ ] Register `vk_hash_hex` on-chain via `VKHashRegistry` (payload helpers:
   `logic/zkp/eth_vk_registry_payloads.py`; contract:
   `processors/groth16_backend/contracts/VKHashRegistry.sol`)
-- [ ] Deployment + ABI wiring for `EthereumProofClient`
+- [x] Deployment + ABI wiring for `EthereumProofClient` (artifact ABI/bytecode loader + VKHashRegistry wiring; optional `web3`)
 ### P6.3 ⏳ Integration harness (off-chain → on-chain)
 - [x] Define on-chain encoding for `public_inputs`
   (see `logic/zkp/evm_public_inputs.py`)
