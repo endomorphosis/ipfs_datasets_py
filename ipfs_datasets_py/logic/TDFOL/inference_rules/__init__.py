@@ -78,9 +78,38 @@ from .temporal import (
     EventuallyDistributionRule,
 )
 
-# TODO: Import from other modules as they're created
-# from .deontic import (...)
-# from .temporal_deontic import (...)
+# Deontic rules (16 rules)
+from .deontic import (
+    DeonticKAxiomRule,
+    DeonticDAxiomRule,
+    ProhibitionEquivalenceRule,
+    PermissionNegationRule,
+    ObligationConsistencyRule,
+    PermissionIntroductionRule,
+    DeonticNecessitationRule,
+    ProhibitionFromObligationRule,
+    ObligationWeakeningRule,
+    PermissionStrengtheningRule,
+    ProhibitionContrapositionRule,
+    DeonticDistributionRule,
+    PermissionProhibitionDualityRule,
+    ObligationPermissionImplicationRule,
+    ContraryToDutyRule,
+    DeonticDetachmentRule,
+)
+
+# Temporal-Deontic rules (9 rules)
+from .temporal_deontic import (
+    TemporalObligationPersistenceRule,
+    DeonticTemporalIntroductionRule,
+    UntilObligationRule,
+    AlwaysPermissionRule,
+    EventuallyForbiddenRule,
+    ObligationEventuallyRule,
+    PermissionTemporalWeakeningRule,
+    AlwaysObligationDistributionRule,
+    FutureObligationPersistenceRule,
+)
 
 
 # All propositional rules
@@ -129,5 +158,32 @@ __all__ = [
     'ReleaseCoinductionRule',
     'EventuallyDistributionRule',
     
-    # TODO: Add more as modules are created
+    # Deontic (16)
+    'DeonticKAxiomRule',
+    'DeonticDAxiomRule',
+    'ProhibitionEquivalenceRule',
+    'PermissionNegationRule',
+    'ObligationConsistencyRule',
+    'PermissionIntroductionRule',
+    'DeonticNecessitationRule',
+    'ProhibitionFromObligationRule',
+    'ObligationWeakeningRule',
+    'PermissionStrengtheningRule',
+    'ProhibitionContrapositionRule',
+    'DeonticDistributionRule',
+    'PermissionProhibitionDualityRule',
+    'ObligationPermissionImplicationRule',
+    'ContraryToDutyRule',
+    'DeonticDetachmentRule',
+    
+    # Temporal-Deontic (9)
+    'TemporalObligationPersistenceRule',
+    'DeonticTemporalIntroductionRule',
+    'UntilObligationRule',
+    'AlwaysPermissionRule',
+    'EventuallyForbiddenRule',
+    'ObligationEventuallyRule',
+    'PermissionTemporalWeakeningRule',
+    'AlwaysObligationDistributionRule',
+    'FutureObligationPersistenceRule',
 ]
