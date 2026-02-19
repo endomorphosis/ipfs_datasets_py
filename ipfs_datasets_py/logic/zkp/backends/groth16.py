@@ -15,6 +15,12 @@ Opt-in:
 - Set `IPFS_DATASETS_ENABLE_GROTH16=1` to enable proof generation/verification
     through the Rust binary (if present).
 
+Determinism:
+- Pass `metadata={"seed": <u64>}` to `ZKPProver.generate_proof(...)` (or this backend's
+    `generate_proof(...)`) to request deterministic proof generation.
+- For test vectors, `GROTH16_BACKEND_DETERMINISTIC=1` may also force stable timestamps
+    in the Rust CLI output when supported.
+
 When not enabled (default):
 - Backend selection works, but `generate_proof`/`verify_proof` raise `ZKPError`.
 """

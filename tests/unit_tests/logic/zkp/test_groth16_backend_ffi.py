@@ -198,6 +198,25 @@ class TestGroth16BackendProofGeneration:
             "42",
         ]
     
+
+    @patch('subprocess.run')
+    @pytest.mark.parametrize(
+        "bad_seed, match",
+        [
+            ("42", r"seed must be an int"),
+            (-1, r"seed must fit in u64"),
+            (2**64, r"seed must fit in u64"),
+        ],
+    )
+    def test_generate_proof_rejects_invalid_seed(self, mock_run, sample_witness_json, bad_seed, match):
+        """Invalid seeds should be rejected before spawning the Rust CLI."""
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
+
+        with pytest.raises(ValueError, match=match):
+            backend.generate_proof(sample_witness_json, seed=bad_seed)
+
+        mock_run.assert_not_called()
+
     @patch('subprocess.run')
     def test_generate_proof_subprocess_error(self, mock_run, sample_witness_json):
         """Test error handling for subprocess failure."""
