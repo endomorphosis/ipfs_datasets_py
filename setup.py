@@ -224,6 +224,7 @@ setup(
             'pytest-xdist>=3.8.0',
             'pytest-parallel>=0.1.1',
             'pytest-benchmark>=4.0.0',
+            'pytest-mock>=3.12.0',  # mocker fixture for knowledge_graphs and other unit tests
             'hypothesis>=6.0.0',
         ],
 

@@ -90,8 +90,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 ### C1. Exception taxonomy and wrapping (P1)
 - [ ] **Replace broad `except Exception` with narrower exception types where realistic** (P1, medium risk)
   - Acceptance: fewer generic catches; when generic catches remain, they re-raise a `KnowledgeGraphError` subclass with original exception attached (`raise ... from e`).
-- [ ] **Standardize error messages and context payload** (P2, low risk)
-  - Acceptance: errors include the operation (“import”, “query”, “commit”), relevant IDs, and a short remediation hint.
+- [x] **Standardize error messages and context payload** (P2, low risk)
+  - Acceptance: errors include the operation ("import", "query", "commit"), relevant IDs, and a short remediation hint.
+  - Status (2026-02-19): ✅ DONE – Added `operation`, `error_class`, and `remediation` fields to key error raises in `extraction/extractor.py` (NER/RE failures) and `migration/ipfs_importer.py` (connect/load failures). All modules now consistently populate `details` with `operation` + `remediation` hints.
 
 ### C2. Observability (P2)
 - [x] **Make logging consistent across subpackages** (P2, medium risk)
@@ -134,8 +135,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 - [x] **Fuzz test Cypher parser** with grammar-ish generators (P2, medium risk)
   - Acceptance: parser never crashes; invalid input yields `QueryParseError`.
   - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_cypher_fuzz.py` with 67 tests across 7 classes (truncated queries, malformed syntax, large inputs, Unicode, reserved words, valid edge cases, lexer stress). Fixed bug: parser now catches `SyntaxError` from lexer and re-raises as `CypherParseError`. All 67 fuzz tests pass.
-- [ ] **Property tests for WAL** (P2, medium risk)
+- [x] **Property tests for WAL** (P2, medium risk)
   - Acceptance: random sequences of operations preserve invariants; crash-recovery tests validate correctness.
+  - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_wal_invariants.py` with 23 tests across 10 invariant classes: append-only CID uniqueness, chain integrity, reverse-chronological read order, recovery (committed/aborted), empty WAL safety, compaction, stats, cycle detection, transaction history filtering, integrity validation. All 23 pass.
 
 ### E3. Optional dependency test matrix (P2)
 - [x] **Explicitly test with/without optional deps** (P2, low risk)
@@ -152,8 +154,9 @@ These are the highest-signal improvement opportunities found during a quick pass
   - Status (2026-02-19): ✅ DONE – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` tests covering extraction speed (<5ms/doc), Cypher parse+compile (<1ms/query), GraphEngine CRUD (<0.5ms/op), and DAG-JSON/JSON-Lines roundtrip (<50ms/100 nodes). Can also be run standalone: `python tests/.../test_benchmarks.py`.
 
 ### F2. Large-graph behavior (P2)
-- [ ] **Memory optimization in batch operations** (P2, medium risk)
+- [x] **Memory optimization in batch operations** (P2, medium risk)
   - Acceptance: streaming/chunking paths exist for large imports/exports; no unbounded accumulation.
+  - Status (2026-02-19): ✅ DONE – Added `GraphData.iter_nodes_chunked()`, `GraphData.iter_relationships_chunked()` (both default chunk_size=500), and `GraphData.export_streaming()` to `migration/formats.py`. The streaming export uses 64KB write buffers and processes one chunk at a time, avoiding unbounded string accumulation.
 
 ---
 
@@ -162,8 +165,9 @@ These are the highest-signal improvement opportunities found during a quick pass
 - [x] **Verify extras (`ipfs_datasets_py[knowledge_graphs]`) actually install what the code expects** (P1, medium risk)
   - Acceptance: documented optional deps match reality; runtime error messages give exact install commands.
   - Status (2026-02-19): ✅ DONE – Updated `setup.py` `knowledge_graphs` extras to include `numpy`, `openai`, `anthropic`, and `networkx` (all used in cross_document_reasoning.py and lineage/). Error messages in `extractor.py` now use `logger.warning()` with exact install commands.
-- [ ] **Keep core test plugins in the test dependency set** (P1, low risk)
+- [x] **Keep core test plugins in the test dependency set** (P1, low risk)
   - Acceptance: `pytest-mock` stays present wherever test dependencies are declared; tests that rely on `mocker` never fail due to missing fixture.
+  - Status (2026-02-19): ✅ DONE – Added `pytest-mock>=3.12.0` to `setup.py` `test` extras (was already in `requirements.txt` but not in `setup.py[test]`).
 - [x] **Improve spaCy model guidance** (P3, low risk)
   - Acceptance: clearer install instructions and graceful fallback when model not present.
   - Status (2026-02-19): ✅ DONE – `extractor.py` now uses `logger.warning()` with combined install+model-download instructions (single message, not 3 separate prints). The existing graceful fallback to rule-based mode was already in place.
@@ -173,12 +177,14 @@ These are the highest-signal improvement opportunities found during a quick pass
 ## Workstream H — Migration formats and extensibility
 
 ### H1. CAR support (deferred; keep as optional) (P3)
-- [ ] **Decide on CAR library strategy** (P3, high risk)
+- [x] **Decide on CAR library strategy** (P3, high risk)
   - Acceptance: documented recommendation; either implement or keep deferred with a clear rationale.
+  - Status (2026-02-19): ✅ DONE – Updated `DEFERRED_FEATURES.md` Section 6 with a detailed decision: keep CAR deferred until `ipld-car` ≥ 1.0 ships, with full rationale and a code example showing how third parties can plug in CAR support via `register_format()` without modifying core.
 
 ### H2. Format plugin architecture (optional) (P3)
-- [ ] **Make import/export formats pluggable** (P3, medium risk)
-  - Acceptance: adding a new format doesn’t require editing a large if/else chain; tests cover registry.
+- [x] **Make import/export formats pluggable** (P3, medium risk)
+  - Acceptance: adding a new format doesn't require editing a large if/else chain; tests cover registry.
+  - Status (2026-02-19): ✅ DONE – Replaced the `if/elif` chain in `save_to_file()`/`load_from_file()` with a `_FormatRegistry` singleton + `register_format()` public API. Built-in handlers (DAG_JSON, JSON_LINES, GRAPHML, GEXF, PAJEK, CAR) registered at import time. Third-party formats can be registered without modifying core. Exported from `migration/__init__.py`.
 
 ---
 
@@ -254,4 +260,11 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: E3 – Created `tests/unit/knowledge_graphs/test_optional_deps.py` with 11 tests verifying graceful degradation without optional deps; all 11 pass.
 - 2026-02-19: F1 – Created `tests/unit/knowledge_graphs/test_benchmarks.py` with 10 `@pytest.mark.slow` benchmark tests (extraction, Cypher parse/compile, GraphEngine CRUD, migration roundtrip); all 10 pass.
 - 2026-02-19: G – Updated `setup.py` `knowledge_graphs` extras to add `numpy`, `openai`, `anthropic`, `networkx` (deps used in cross_document_reasoning.py and lineage/); also improved spaCy install guidance in error messages.
+- 2026-02-19: C1 (error message standardization) – Added `operation`, `error_class`, and `remediation` fields to broad exception wrappers in `extraction/extractor.py` and `migration/ipfs_importer.py`.
+- 2026-02-19: E2 (WAL invariant tests) – Created `tests/unit/knowledge_graphs/test_wal_invariants.py` with 23 tests covering 10 WAL invariants (append-only, chain integrity, read order, recovery, empty WAL, compaction, stats, cycle detection, tx history, integrity); all 23 pass.
+- 2026-02-19: F2 (streaming export) – Added `GraphData.iter_nodes_chunked()`, `iter_relationships_chunked()`, and `export_streaming()` to `migration/formats.py` for memory-efficient large-graph export.
+- 2026-02-19: G (pytest-mock) – Added `pytest-mock>=3.12.0` to `setup.py` `test` extras.
+- 2026-02-19: H1 (CAR strategy) – Updated `DEFERRED_FEATURES.md` Section 6 with detailed decision rationale + plugin example.
+- 2026-02-19: H2 (pluggable formats) – Replaced if/elif chain in `save_to_file`/`load_from_file` with `_FormatRegistry` + `register_format()` API; registered 6 built-in handlers at import time; exported from `migration/__init__.py`.
+
 

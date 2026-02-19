@@ -356,7 +356,14 @@ class KnowledgeGraphExtractor:
                 # Unexpected error - wrap in EntityExtractionError
                 raise EntityExtractionError(
                     f"Failed to extract entities using transformers: {e}",
-                    details={'text_length': len(text), 'use_transformers': True}
+                    details={
+                        'operation': 'entity_extraction',
+                        'text_length': len(text),
+                        'use_transformers': True,
+                        'error_class': type(e).__name__,
+                        'remediation': "Check that the transformers pipeline is loaded correctly; "
+                                       "fall back with use_transformers=False.",
+                    }
                 ) from e
         else:
             # Use rule-based entity extraction
@@ -502,7 +509,14 @@ class KnowledgeGraphExtractor:
         except Exception as e:
             raise RelationshipExtractionError(
                 f"Neural relationship extraction failed: {e}",
-                details={"text_length": len(text), "entity_count": len(entity_map)}
+                details={
+                    'operation': 'relationship_extraction',
+                    'text_length': len(text),
+                    'entity_count': len(entity_map),
+                    'error_class': type(e).__name__,
+                    'remediation': "Check that the NER/RE pipeline is loaded; "
+                                   "set use_transformers=False to use rule-based extraction.",
+                }
             ) from e
         
         return relationships
