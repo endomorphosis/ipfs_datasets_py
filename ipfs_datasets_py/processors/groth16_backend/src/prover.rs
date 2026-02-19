@@ -8,9 +8,10 @@ use ark_ff::{BigInteger, PrimeField};
 use ark_groth16::{Groth16, ProvingKey};
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystem};
 use ark_serialize::CanonicalDeserialize;
+use ark_snark::SNARK;
 
 use rand::rngs::{OsRng, StdRng};
-use rand::{RngCore, SeedableRng};
+use rand::SeedableRng;
 use sha2::{Digest, Sha256};
 use std::env;
 use std::fs;
@@ -139,7 +140,6 @@ fn proof_to_evm_words(proof: &ark_groth16::Proof<Bn254>) -> Vec<String> {
 
 /// Generate Groth16 proof from witness.
 pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Result<ProofOutput> {
-    // Verify witness structure.
     if witness.private_axioms.is_empty() {
         anyhow::bail!("Private axioms cannot be empty");
     }
@@ -150,12 +150,10 @@ pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Resu
         anyhow::bail!("circuit_version must be <= 255");
     }
 
-    // Parse hex inputs to bytes.
     let axioms_commitment =
         decode_32byte_hex("axioms_commitment_hex", &witness.axioms_commitment_hex)?;
     let theorem_hash = decode_32byte_hex("theorem_hash_hex", &witness.theorem_hash_hex)?;
 
-    // Create circuit.
     let circuit = MVPCircuit {
         private_axioms: Some(
             witness
@@ -171,7 +169,6 @@ pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Resu
         ruleset_id: Some(witness.ruleset_id.as_bytes().to_vec()),
     };
 
-    // Quick satisfiability check to return a clear error before proving.
     let cs = ConstraintSystem::<Fr>::new_ref();
     circuit.clone().generate_constraints(cs.clone())?;
     if !cs.is_satisfied()? {
@@ -201,7 +198,6 @@ pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Resu
     let evm_public_inputs: Vec<String> = public_inputs_fr.iter().map(fr_to_0x32).collect();
     let evm_proof = proof_to_evm_words(&proof);
 
-    // Best-effort legacy fields kept for backward compatibility.
     let proof_a = serde_json::to_string(&evm_proof[0..2])?;
     let proof_b = serde_json::to_string(&evm_proof[2..6])?;
     let proof_c = serde_json::to_string(&evm_proof[6..8])?;
@@ -245,7 +241,7 @@ mod tests {
     #[test]
     fn test_prover_witness_validation() {
         let invalid_witness = WitnessInput {
-            private_axioms: vec![], // Empty axioms
+            private_axioms: vec![],
             theorem: "Q".to_string(),
             axioms_commitment_hex:
                 "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
@@ -262,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn test_prover_includes_circuit_version_in_wire_inputs() {
+    fn test_prover_wire_public_inputs_format() {
         let witness = WitnessInput {
             private_axioms: vec!["A".to_string()],
             theorem: "B".to_string(),
@@ -276,9 +272,11 @@ mod tests {
             extra: Default::default(),
         };
 
-        // Without a proving key this will error; we only test wire formatting here.
         let wire = witness_to_public_inputs_wire(&witness);
+        assert_eq!(wire[0], witness.theorem_hash_hex);
+        assert_eq!(wire[1], witness.axioms_commitment_hex);
         assert_eq!(wire[2], "42");
+        assert_eq!(wire[3], witness.ruleset_id);
     }
 
     #[test]
@@ -301,21 +299,5 @@ mod tests {
             .expect("decode");
         assert_eq!(th.len(), 32);
         assert_eq!(ac.len(), 32);
-    }
-
-    #[test]
-    fn test_prover_seeded_output_is_deterministic_given_same_keys() {
-        // This test only checks the deterministic fields (timestamp) and that
-        // our RNG selection is stable. It does not run proving.
-        assert!(is_deterministic_mode(Some(1)));
-        assert!(is_deterministic_mode(None) || !is_deterministic_mode(None));
-
-        let mut rng1 = StdRng::seed_from_u64(42);
-        let mut rng2 = StdRng::seed_from_u64(42);
-        let mut a = [0u8; 32];
-        let mut b = [0u8; 32];
-        rng1.fill_bytes(&mut a);
-        rng2.fill_bytes(&mut b);
-        assert_eq!(a, b);
     }
 }

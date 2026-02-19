@@ -17,9 +17,12 @@ use std::path::PathBuf;
 /// This performs real Groth16 verification (pairing check) against the verifying
 /// key stored under `artifacts/v{version}/verifying_key.bin`.
 ///
-/// Expected proof JSON shape:
-/// - `public_inputs`: 4 field elements encoded as 0x-prefixed 32-byte hex strings
-/// - `extra.evm_proof`: 8 field elements (uint256 calldata encoding), also 0x32 hex strings
+/// Proof JSON expectations:
+/// - Canonical wire public inputs (backend-agnostic):
+///   `public_inputs` = [theorem_hash_hex, axioms_commitment_hex, circuit_version_decimal, ruleset_id]
+/// - EVM-friendly extras (optional but required for real verification):
+///   `extra.evm_proof` (8 x 0x32 field words)
+///   `extra.evm_public_inputs` (4 x 0x32 field words)
 pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     if proof.schema_version != 1 {
         return Ok(false);
@@ -33,21 +36,22 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
         return Ok(false);
     }
 
-    // Parse the Groth16 proof points first. If missing/malformed, treat as invalid
-    // without attempting to load verification keys.
+    // Parse proof points first; if missing/malformed treat as invalid without
+    // trying to load VKs.
     let groth_proof = match parse_proof_from_extra(proof) {
         Ok(p) => p,
         Err(_) => return Ok(false),
     };
 
-    // Derive the 4 Fr public inputs (field elements) used by the circuit.
     let inputs = match derive_public_inputs_fr(proof) {
         Ok(v) => v,
         Err(_) => return Ok(false),
     };
 
     // Require internal consistency between explicit version field and public input.
-    // public_inputs[2] is circuit_version_fr.
+    if inputs.len() != 4 {
+        return Ok(false);
+    }
     if inputs[2] != Fr::from(proof.version as u64) {
         return Ok(false);
     }
@@ -145,8 +149,7 @@ fn derive_public_inputs_fr(proof: &ProofOutput) -> anyhow::Result<Vec<Fr>> {
         return parse_public_inputs_fr(&elems);
     }
 
-    // Fallback: canonical wire format used by Python/tests.
-    // public_inputs = [theorem_hash_hex, axioms_commitment_hex, circuit_version_decimal, ruleset_id]
+    // Canonical wire format used by Python/tests.
     if proof.public_inputs.len() != 4 {
         anyhow::bail!("expected 4 public_inputs");
     }
@@ -155,7 +158,6 @@ fn derive_public_inputs_fr(proof: &ProofOutput) -> anyhow::Result<Vec<Fr>> {
     let axioms_commitment_bytes = parse_32byte_hex_to_bytes(&proof.public_inputs[1])?;
     let circuit_version: u32 = proof.public_inputs[2].trim().parse()?;
 
-    // Keep proof.version consistent with the public inputs payload.
     if circuit_version != proof.version {
         anyhow::bail!("public_inputs[2] must match proof.version");
     }
@@ -246,8 +248,8 @@ mod tests {
             public_inputs: vec![
                 "short".to_string(),
                 "0x03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "0x01".to_string(),
-                "0x02".to_string(),
+                "1".to_string(),
+                "TDFOL_v1".to_string(),
             ],
             timestamp: 0,
             version: 1,
@@ -266,13 +268,36 @@ mod tests {
             proof_b: "[]".to_string(),
             proof_c: "[]".to_string(),
             public_inputs: vec![
-                "0x4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
-                "0x03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "0x0000000000000000000000000000000000000000000000000000000000000001".to_string(),
-                "0x0000000000000000000000000000000000000000000000000000000000000002".to_string(),
+                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
+                "1".to_string(),
+                "TDFOL_v1".to_string(),
             ],
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
+        };
+
+        let result = verify_proof(&proof);
+        assert!(result.is_ok());
+        assert!(!result.unwrap());
+    }
+
+    #[test]
+    fn test_verifier_rejects_mismatched_version_field() {
+        let proof = ProofOutput {
+            schema_version: 1,
+            proof_a: "[]".to_string(),
+            proof_b: "[]".to_string(),
+            proof_c: "[]".to_string(),
+            public_inputs: vec![
+                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
+                "1".to_string(),
+                "TDFOL_v1".to_string(),
+            ],
+            timestamp: 0,
+            version: 2,
             extra: Default::default(),
         };
 
@@ -297,8 +322,10 @@ mod tests {
         let witness = WitnessInput {
             private_axioms: vec!["P".to_string(), "P -> Q".to_string()],
             theorem: "Q".to_string(),
-            axioms_commitment_hex: "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-            theorem_hash_hex: "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+            axioms_commitment_hex:
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
+            theorem_hash_hex: "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260"
+                .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
             security_level: None,
@@ -311,42 +338,4 @@ mod tests {
 
         let _ = std::fs::remove_dir_all(&root);
     }
-}
-            public_inputs: vec![
-                "0x4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
-                "0X03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "1".to_string(),
-                "TDFOL_v1".to_string(),
-            ],
-            timestamp: 0,
-            version: 1,
-            extra: Default::default(),
-        };
-
-        let result = verify_proof(&proof).expect("verify");
-        assert!(result);
-    }
-
-    #[test]
-    fn test_verifier_rejects_mismatched_version_field() {
-        let proof = ProofOutput {
-            schema_version: 1,
-            proof_a: "[1,0]".to_string(),
-            proof_b: "[[1,0],[0,1]]".to_string(),
-            proof_c: "[1,0]".to_string(),
-            public_inputs: vec![
-                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
-                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
-                "1".to_string(),
-                "TDFOL_v1".to_string(),
-            ],
-            timestamp: 0,
-            version: 2,
-            extra: Default::default(),
-        };
-
-        let result = verify_proof(&proof).expect("verify");
-        assert!(!result);
-    }
-
 }

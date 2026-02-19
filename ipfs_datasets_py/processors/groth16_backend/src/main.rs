@@ -3,6 +3,7 @@
 
 use clap::{Parser, Subcommand};
 use serde::Serialize;
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io::{self, Read};
 use std::process;
@@ -66,6 +67,34 @@ enum Commands {
         #[arg(long, default_value_t = false)]
         quiet: bool,
     },
+
+    /// Export a versioned Solidity wrapper embedding vk_hash
+    ///
+    /// This reads a `verifying_key.bin` produced by `groth16 setup`, computes
+    /// its SHA-256 digest as `vk_hash_hex`, and emits a Solidity contract that
+    /// imports the in-repo `GrothVerifier.sol` prototype and exposes the hash
+    /// as a `bytes32 public constant`.
+    ExportSolidity {
+        /// Input verifying key binary (e.g., artifacts/v1/verifying_key.bin)
+        #[arg(long)]
+        verifying_key: String,
+
+        /// Circuit version (uint64 in Solidity; use the same version you ran setup with)
+        #[arg(long)]
+        version: u32,
+
+        /// Output Solidity file (use '-' for stdout)
+        #[arg(long)]
+        out: String,
+
+        /// Solidity import path for the verifier prototype
+        #[arg(long, default_value = "./GrothVerifier.sol")]
+        import_path: String,
+
+        /// Suppress status messages (stderr)
+        #[arg(long, default_value_t = false)]
+        quiet: bool,
+    },
 }
 
 #[derive(Debug, Serialize)]
@@ -106,6 +135,52 @@ fn write_text_arg(path: &str, content: &str) -> anyhow::Result<()> {
     } else {
         fs::write(path, content)?;
         Ok(())
+    }
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let digest = Sha256::digest(bytes);
+    hex::encode(digest)
+}
+
+fn solidity_wrapper_contract(version: u32, vk_hash_hex: &str, import_path: &str) -> anyhow::Result<String> {
+    if vk_hash_hex.len() != 64 {
+        anyhow::bail!("vk_hash_hex must be 32 bytes (64 hex chars)");
+    }
+    // Validate hex.
+    let _ = hex::decode(vk_hash_hex)?;
+
+    let contract_name = format!("GrothVerifierV{version}");
+    Ok(format!(
+        r#"// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+// AUTO-GENERATED: groth16 export-solidity
+// - version: {version}
+// - vk_hash_hex (sha256(verifying_key.bin)): {vk_hash_hex}
+
+import "{import_path}";
+
+contract {contract_name} is GrothVerifier {{
+    bytes32 public constant VK_HASH = 0x{vk_hash_hex};
+    uint64 public constant CIRCUIT_VERSION = {version};
+}}
+"#
+    ))
+}
+
+#[cfg(test)]
+mod export_tests {
+    use super::*;
+
+    #[test]
+    fn test_solidity_wrapper_contract_contains_vk_hash_and_version() {
+        let sol = solidity_wrapper_contract(1, &"a".repeat(64), "./GrothVerifier.sol").unwrap();
+        assert!(sol.contains("contract GrothVerifierV1"));
+        assert!(sol.contains("bytes32 public constant VK_HASH = 0x"));
+        assert!(sol.contains(&format!("0x{}", "a".repeat(64))));
+        assert!(sol.contains("uint64 public constant CIRCUIT_VERSION = 1"));
+        assert!(sol.contains("import \"./GrothVerifier.sol\""));
     }
 }
 
@@ -230,6 +305,45 @@ fn main() {
                     let code = error_code(&err);
                     let message = format!("{:#}", err);
                     emit_error_json_to_stdout(code, &message);
+                    if !quiet {
+                        eprintln!("ERROR[{code}]: {message}");
+                    }
+                    2
+                }
+            }
+        }
+
+        Commands::ExportSolidity {
+            verifying_key,
+            version,
+            out,
+            import_path,
+            quiet,
+        } => {
+            let run = || -> anyhow::Result<()> {
+                let vk_bytes = fs::read(&verifying_key)?;
+                if vk_bytes.is_empty() {
+                    anyhow::bail!("verifying_key file is empty");
+                }
+
+                let vk_hash_hex = sha256_hex(&vk_bytes);
+                let solidity = solidity_wrapper_contract(version, &vk_hash_hex, &import_path)?;
+                write_text_arg(&out, &solidity)?;
+
+                if !quiet && !is_stdout_path(&out) {
+                    eprintln!("✅ Solidity wrapper written to {}", out);
+                }
+                Ok(())
+            };
+
+            match run() {
+                Ok(()) => 0,
+                Err(err) => {
+                    let code = error_code(&err);
+                    let message = format!("{:#}", err);
+                    if is_stdout_path(&out) {
+                        emit_error_json_to_stdout(code, &message);
+                    }
                     if !quiet {
                         eprintln!("ERROR[{code}]: {message}");
                     }
