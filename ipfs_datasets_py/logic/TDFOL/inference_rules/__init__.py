@@ -48,8 +48,13 @@ from .propositional import (
     DeMorganOrRule,
 )
 
+# First-order rules (2 rules)
+from .first_order import (
+    UniversalInstantiationRule,
+    ExistentialGeneralizationRule,
+)
+
 # TODO: Import from other modules as they're created
-# from .first_order import (...)
 # from .temporal import (...)
 # from .deontic import (...)
 # from .temporal_deontic import (...)
@@ -74,6 +79,10 @@ __all__ = [
     'ContrapositionRule',
     'DeMorganAndRule',
     'DeMorganOrRule',
+    
+    # First-Order (2)
+    'UniversalInstantiationRule',
+    'ExistentialGeneralizationRule',
     
     # TODO: Add more as modules are created
 ]
