@@ -54,8 +54,31 @@ from .first_order import (
     ExistentialGeneralizationRule,
 )
 
+# Temporal rules (20 rules)
+from .temporal import (
+    TemporalKAxiomRule,
+    TemporalTAxiomRule,
+    TemporalS4AxiomRule,
+    TemporalS5AxiomRule,
+    EventuallyIntroductionRule,
+    AlwaysNecessitationRule,
+    UntilUnfoldingRule,
+    UntilInductionRule,
+    EventuallyExpansionRule,
+    AlwaysDistributionRule,
+    AlwaysEventuallyExpansionRule,
+    EventuallyAlwaysContractionRule,
+    UntilReleaseDualityRule,
+    WeakUntilExpansionRule,
+    NextDistributionRule,
+    EventuallyAggregationRule,
+    TemporalInductionRule,
+    UntilInductionStepRule,
+    ReleaseCoinductionRule,
+    EventuallyDistributionRule,
+)
+
 # TODO: Import from other modules as they're created
-# from .temporal import (...)
 # from .deontic import (...)
 # from .temporal_deontic import (...)
 
@@ -83,6 +106,28 @@ __all__ = [
     # First-Order (2)
     'UniversalInstantiationRule',
     'ExistentialGeneralizationRule',
+    
+    # Temporal (20)
+    'TemporalKAxiomRule',
+    'TemporalTAxiomRule',
+    'TemporalS4AxiomRule',
+    'TemporalS5AxiomRule',
+    'EventuallyIntroductionRule',
+    'AlwaysNecessitationRule',
+    'UntilUnfoldingRule',
+    'UntilInductionRule',
+    'EventuallyExpansionRule',
+    'AlwaysDistributionRule',
+    'AlwaysEventuallyExpansionRule',
+    'EventuallyAlwaysContractionRule',
+    'UntilReleaseDualityRule',
+    'WeakUntilExpansionRule',
+    'NextDistributionRule',
+    'EventuallyAggregationRule',
+    'TemporalInductionRule',
+    'UntilInductionStepRule',
+    'ReleaseCoinductionRule',
+    'EventuallyDistributionRule',
     
     # TODO: Add more as modules are created
 ]
