@@ -207,6 +207,52 @@ class TestGroth16BackendProofGeneration:
         backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
         with pytest.raises(RuntimeError, match=r"\[INVALID_WITNESS\]"):
             backend.generate_proof(sample_witness_json)
+
+    @patch('subprocess.run')
+    def test_generate_proof_rejects_non_strict_error_envelope(self, mock_run, sample_witness_json):
+        """Wrapper must only accept error envelopes that strictly match the schema."""
+        mock_result = MagicMock()
+        mock_result.returncode = 2
+        mock_result.stderr = b""
+        mock_result.stdout = json.dumps(
+            {
+                "error": {
+                    "schema_version": 1,
+                    "code": "INVALID_WITNESS",
+                    "message": "private_axioms cannot be empty",
+                    "extra": "not allowed",
+                }
+            }
+        ).encode()
+        mock_run.return_value = mock_result
+
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
+        with pytest.raises(RuntimeError) as ei:
+            backend.generate_proof(sample_witness_json)
+        # Should not be interpreted as a structured envelope.
+        assert "Groth16 proof generation failed [INVALID_WITNESS]:" not in str(ei.value)
+
+    @patch('subprocess.run')
+    def test_generate_proof_rejects_wrong_schema_version(self, mock_run, sample_witness_json):
+        """Schema gate: only schema_version=1 error envelopes are accepted."""
+        mock_result = MagicMock()
+        mock_result.returncode = 2
+        mock_result.stderr = b""
+        mock_result.stdout = json.dumps(
+            {
+                "error": {
+                    "schema_version": 2,
+                    "code": "INTERNAL",
+                    "message": "boom",
+                }
+            }
+        ).encode()
+        mock_run.return_value = mock_result
+
+        backend = Groth16FFIBackend(binary_path="/usr/bin/groth16")
+        with pytest.raises(RuntimeError) as ei:
+            backend.generate_proof(sample_witness_json)
+        assert "Groth16 proof generation failed [INTERNAL]:" not in str(ei.value)
     
     @patch('subprocess.run')
     def test_generate_proof_timeout(self, mock_run, sample_witness_json):

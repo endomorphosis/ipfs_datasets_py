@@ -15,10 +15,73 @@ from typing import Optional, Protocol, runtime_checkable
 from dataclasses import dataclass
 from datetime import datetime
 import logging
+from functools import lru_cache
+
+import jsonschema
 
 from ipfs_datasets_py.logic.zkp import ZKPProof
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _error_envelope_v1_schema() -> dict:
+    """Load the strict Groth16 error-envelope schema.
+
+    Kept as a small cached helper to avoid repeatedly reading the schema file.
+    """
+    # This module lives at: ipfs_datasets_py/ipfs_datasets_py/logic/zkp/backends/
+    # The Rust crate + schemas live under: ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/
+    python_package_root = Path(__file__).resolve().parents[3]
+    schema_path = (
+        python_package_root
+        / "processors"
+        / "groth16_backend"
+        / "schemas"
+        / "error_envelope_v1.schema.json"
+    )
+    return json.loads(schema_path.read_text(encoding="utf-8"))
+
+
+def _parse_validated_error_envelope(stdout_or_stderr_text: str) -> Optional[tuple[str, str]]:
+    """Parse a *strictly valid* ErrorEnvelopeV1 JSON payload.
+
+    Returns:
+        (code, message) if payload matches schema; otherwise None.
+    """
+    if not stdout_or_stderr_text:
+        return None
+
+    try:
+        payload = json.loads(stdout_or_stderr_text)
+    except json.JSONDecodeError:
+        return None
+
+    if not isinstance(payload, dict) or "error" not in payload:
+        return None
+
+    try:
+        schema = _error_envelope_v1_schema()
+        validator_cls = jsonschema.validators.validator_for(schema)
+        errors = list(validator_cls(schema).iter_errors(payload))
+        if errors:
+            return None
+    except Exception:
+        # If schema loading/validation fails for any reason, fail closed and
+        # treat the payload as unstructured text.
+        return None
+
+    err = payload.get("error") or {}
+    if not isinstance(err, dict):
+        return None
+
+    code = err.get("code")
+    message = err.get("message")
+    if not isinstance(code, str) or not code:
+        return None
+    if not isinstance(message, str) or not message:
+        return None
+    return code, message
 
 
 @runtime_checkable
@@ -185,16 +248,10 @@ class Groth16Backend(ZKPBackend):
                 stderr_text = _coerce_stream_to_text(getattr(result, "stderr", None))
 
                 # Prefer a structured error envelope if present on stdout.
-                if stdout_text:
-                    try:
-                        payload = json.loads(stdout_text)
-                        if isinstance(payload, dict) and "error" in payload:
-                            err = payload.get("error") or {}
-                            code = err.get("code", "UNKNOWN")
-                            message = err.get("message", "Groth16 proof generation failed")
-                            raise RuntimeError(f"Groth16 proof generation failed [{code}]: {message}")
-                    except json.JSONDecodeError:
-                        pass
+                parsed = _parse_validated_error_envelope(stdout_text)
+                if parsed is not None:
+                    code, message = parsed
+                    raise RuntimeError(f"Groth16 proof generation failed [{code}]: {message}")
 
                 raise RuntimeError(
                     f"Groth16 proof generation failed (exit={result.returncode}): {stderr_text or stdout_text}"
@@ -254,6 +311,11 @@ class Groth16Backend(ZKPBackend):
 
             stdout_text = _coerce_stream_to_text(getattr(result, "stdout", None))
             stderr_text = _coerce_stream_to_text(getattr(result, "stderr", None))
+
+            parsed = _parse_validated_error_envelope(stdout_text) or _parse_validated_error_envelope(stderr_text)
+            if parsed is not None:
+                code, message = parsed
+                raise RuntimeError(f"Groth16 verification failed [{code}]: {message}")
             raise RuntimeError(
                 f"Groth16 verification failed (exit={result.returncode}): {stderr_text or stdout_text}"
             )

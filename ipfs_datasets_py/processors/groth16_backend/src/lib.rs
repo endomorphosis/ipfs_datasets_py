@@ -34,11 +34,16 @@ fn default_schema_version() -> u32 {
     1
 }
 
+/// Generate Groth16 proof from witness (optionally deterministic with seed)
+pub fn prove_with_seed(witness_json: &str, seed: Option<u64>) -> anyhow::Result<String> {
+    let witness: WitnessInput = serde_json::from_str(witness_json)?;
+    let proof = prover::generate_proof(&witness, seed)?;
+    Ok(serde_json::to_string(&proof)?)
+}
+
 /// Generate Groth16 proof from witness
 pub fn prove(witness_json: &str) -> anyhow::Result<String> {
-    let witness: WitnessInput = serde_json::from_str(witness_json)?;
-    let proof = prover::generate_proof(&witness)?;
-    Ok(serde_json::to_string(&proof)?)
+    prove_with_seed(witness_json, None)
 }
 
 /// Verify Groth16 proof

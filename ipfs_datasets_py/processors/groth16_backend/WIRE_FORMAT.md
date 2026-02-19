@@ -6,8 +6,10 @@ This crate exposes a CLI binary `groth16` used by Python via subprocess.
 
 - Prove:
   - `groth16 prove --input /dev/stdin --output /dev/stdout`
+  - (equivalently) `groth16 prove --input - --output -`
 - Verify:
   - `groth16 verify --proof /dev/stdin`
+  - (equivalently) `groth16 verify --proof -`
 
 ## Exit codes
 
@@ -18,6 +20,7 @@ This crate exposes a CLI binary `groth16` used by Python via subprocess.
   - `0` valid
   - `1` invalid
   - `2` operational error (including invalid JSON)
+  - Operational errors (exit=2) emit a JSON error envelope on stdout
 
 ## JSON schemas
 
@@ -46,3 +49,9 @@ This ordering is locked by golden vectors in Python tests.
 ## Determinism
 
 For tests/reproducibility, setting `GROTH16_BACKEND_DETERMINISTIC=1` forces `timestamp=0`.
+
+The CLI also supports `--seed <u64>` for deterministic proving (also forces `timestamp=0`), intended for tests/golden vectors.
+
+## Hex encoding
+
+- `theorem_hash_hex` and `axioms_commitment_hex` accept either 64 hex chars or an optional `0x`/`0X` prefix (i.e. `^(0x)?[0-9a-fA-F]{64}$`).

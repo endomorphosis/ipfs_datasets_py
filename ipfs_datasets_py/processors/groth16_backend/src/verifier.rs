@@ -3,11 +3,19 @@
 
 use crate::ProofOutput;
 
+
+fn strip_0x_prefix(s: &str) -> &str {
+    s.strip_prefix("0x")
+        .or_else(|| s.strip_prefix("0X"))
+        .unwrap_or(s)
+}
+
 fn is_valid_32byte_hex(hex_str: &str) -> bool {
-    if hex_str.len() != 64 {
+    let canonical = strip_0x_prefix(hex_str);
+    if canonical.len() != 64 {
         return false;
     }
-    match hex::decode(hex_str) {
+    match hex::decode(canonical) {
         Ok(bytes) => bytes.len() == 32,
         Err(_) => false,
     }
@@ -34,9 +42,14 @@ pub fn verify_proof(proof: &ProofOutput) -> anyhow::Result<bool> {
     }
 
     // Perform basic validation
-    let version = proof.public_inputs[2]
-        .parse::<u32>()
-        .map_err(|_| anyhow::anyhow!("Invalid circuit version"))?;
+    let version = match proof.public_inputs[2].parse::<u32>() {
+        Ok(v) => v,
+        Err(_) => return Ok(false),
+    };
+
+    if proof.version != version {
+        return Ok(false);
+    }
 
     if version > 255 {
         return Ok(false);
@@ -143,4 +156,46 @@ mod tests {
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), false);
     }
+    #[test]
+    fn test_verifier_accepts_0x_prefixed_public_inputs() {
+        let proof = ProofOutput {
+            schema_version: 1,
+            proof_a: "[1,0]".to_string(),
+            proof_b: "[[1,0],[0,1]]".to_string(),
+            proof_c: "[1,0]".to_string(),
+            public_inputs: vec![
+                "0x4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+                "0X03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
+                "1".to_string(),
+                "TDFOL_v1".to_string(),
+            ],
+            timestamp: 0,
+            version: 1,
+        };
+
+        let result = verify_proof(&proof).expect("verify");
+        assert!(result);
+    }
+
+    #[test]
+    fn test_verifier_rejects_mismatched_version_field() {
+        let proof = ProofOutput {
+            schema_version: 1,
+            proof_a: "[1,0]".to_string(),
+            proof_b: "[[1,0],[0,1]]".to_string(),
+            proof_c: "[1,0]".to_string(),
+            public_inputs: vec![
+                "4ae81572f06e1b88fd5ced7a1a000945432e83e1551e6f721ee9c00b8cc33260".to_string(),
+                "03b7344d37c0fbdabde7b6e412b8dbe08417d3267771fac23ab584b63ea50cd5".to_string(),
+                "1".to_string(),
+                "TDFOL_v1".to_string(),
+            ],
+            timestamp: 0,
+            version: 2,
+        };
+
+        let result = verify_proof(&proof).expect("verify");
+        assert!(!result);
+    }
+
 }

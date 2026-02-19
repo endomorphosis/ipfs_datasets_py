@@ -17,6 +17,13 @@ from contextlib import contextmanager
 from .result import Result, Record
 from .types import Node, Relationship, Path
 from .bookmarks import Bookmarks, create_bookmark
+from ..exceptions import (
+    KnowledgeGraphError,
+    IPLDStorageError,
+    QueryTimeoutError,
+    TransactionConflictError,
+    TransactionTimeoutError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -277,10 +284,18 @@ class IPFSSession:
                     result = transaction_function(tx, *args, **kwargs)
                     tx.commit()
                     return result
-            except Exception as e:
-                logger.warning("Read transaction attempt %d failed: %s", attempt + 1, e)
+            except (TransactionConflictError, TransactionTimeoutError, QueryTimeoutError, IPLDStorageError,
+                    TimeoutError, ConnectionError, OSError) as e:
+                logger.warning("Read transaction attempt %d failed (retryable): %s", attempt + 1, e)
                 if attempt == max_retries - 1:
                     raise
+            except KnowledgeGraphError:
+                # Non-retryable domain errors (e.g. query parse/execution failures)
+                raise
+            except (TypeError, ValueError, KeyError, AttributeError) as e:
+                # Programming / misuse errors are not retryable.
+                logger.warning("Read transaction failed (non-retryable): %s", e)
+                raise
         
         return None
     
@@ -322,10 +337,18 @@ class IPFSSession:
                     result = transaction_function(tx, *args, **kwargs)
                     tx.commit()
                     return result
-            except Exception as e:
-                logger.warning("Write transaction attempt %d failed: %s", attempt + 1, e)
+            except (TransactionConflictError, TransactionTimeoutError, QueryTimeoutError, IPLDStorageError,
+                    TimeoutError, ConnectionError, OSError) as e:
+                logger.warning("Write transaction attempt %d failed (retryable): %s", attempt + 1, e)
                 if attempt == max_retries - 1:
                     raise
+            except KnowledgeGraphError:
+                # Non-retryable domain errors (e.g. query parse/execution failures)
+                raise
+            except (TypeError, ValueError, KeyError, AttributeError) as e:
+                # Programming / misuse errors are not retryable.
+                logger.warning("Write transaction failed (non-retryable): %s", e)
+                raise
         
         return None
     
