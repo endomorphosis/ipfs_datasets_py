@@ -5,6 +5,7 @@ use ark_ff::PrimeField;
 use ark_r1cs_std::fields::fp::FpVar;
 use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
+use sha2::{Digest, Sha256};
 
 /// MVP Circuit for zero-knowledge proofs
 ///
@@ -44,71 +45,56 @@ impl Default for MVPCircuit {
 
 impl<F: PrimeField> ConstraintSynthesizer<F> for MVPCircuit {
     fn generate_constraints(self, cs: ConstraintSystemRef<F>) -> Result<(), SynthesisError> {
-        // Allocate private inputs
-        let _private_axioms = self
-            .private_axioms
-            .ok_or(SynthesisError::AssignmentMissing)?;
-
+        // Allocate witness values that define the statement.
+        // For MVP, these witness values are not yet hashed inside-circuit; instead we
+        // expose *field-reduced* commitments as public inputs.
+        let _private_axioms = self.private_axioms.ok_or(SynthesisError::AssignmentMissing)?;
         let _theorem = self.theorem.ok_or(SynthesisError::AssignmentMissing)?;
 
-        let axioms_commitment_bytes = self
-            .axioms_commitment
-            .ok_or(SynthesisError::AssignmentMissing)?;
-
+        let axioms_commitment_bytes = self.axioms_commitment.ok_or(SynthesisError::AssignmentMissing)?;
         let theorem_hash_bytes = self.theorem_hash.ok_or(SynthesisError::AssignmentMissing)?;
+        let circuit_version = self.circuit_version.ok_or(SynthesisError::AssignmentMissing)?;
+        let ruleset_id = self.ruleset_id.ok_or(SynthesisError::AssignmentMissing)?;
 
-        let circuit_version = self
-            .circuit_version
-            .ok_or(SynthesisError::AssignmentMissing)?;
-
-        let _ruleset_id = self.ruleset_id.ok_or(SynthesisError::AssignmentMissing)?;
-
-        // CONSTRAINT 1: Axiom bytes non-empty
-        // Check that axioms_commitment is not all zeros
-        let mut axioms_commitment_is_nonzero = false;
-        for byte in &axioms_commitment_bytes {
-            if *byte != 0 {
-                axioms_commitment_is_nonzero = true;
-                break;
-            }
-        }
-        if !axioms_commitment_is_nonzero {
-            return Err(SynthesisError::AssignmentMissing);
-        }
-
-        // CONSTRAINT 2: Theorem bytes non-empty
-        // Check that theorem_hash is not all zeros
-        let mut theorem_hash_is_nonzero = false;
-        for byte in &theorem_hash_bytes {
-            if *byte != 0 {
-                theorem_hash_is_nonzero = true;
-                break;
-            }
-        }
-        if !theorem_hash_is_nonzero {
-            return Err(SynthesisError::AssignmentMissing);
-        }
-
-        // CONSTRAINT 3: Circuit version in range [0, 255]
         if circuit_version > 255 {
             return Err(SynthesisError::AssignmentMissing);
         }
 
-        // CONSTRAINT 4: Version as field element
-        // Allocate version as private variable to constrain below range
-        let version_var =
-            FpVar::<F>::new_witness(cs.clone(), || Ok(F::from(circuit_version as u32)))?;
+        // Public inputs (4): reduced SHA256 digests + version.
+        // These match the Python `logic/zkp/evm_public_inputs.py` packing rules.
+        let theorem_hash_fr = F::from_be_bytes_mod_order(&theorem_hash_bytes);
+        let axioms_commitment_fr = F::from_be_bytes_mod_order(&axioms_commitment_bytes);
 
-        // Constrain version_var == circuit_version
-        let version_const = FpVar::<F>::Constant(F::from(circuit_version as u32));
-        version_var.enforce_equal(&version_const)?;
+        let mut hasher = Sha256::new();
+        hasher.update(&ruleset_id);
+        let ruleset_digest = hasher.finalize();
+        let ruleset_id_fr = F::from_be_bytes_mod_order(&ruleset_digest);
 
-        // CONSTRAINT 5: Simple linear constraint (to satisfy R1CS requirement)
-        // Constrain that version is non-negative (already guaranteed by range check)
-        let _zero = FpVar::<F>::Constant(F::ZERO);
+        let version_fr = F::from(circuit_version as u64);
+
+        let theorem_hash_input = FpVar::<F>::new_input(cs.clone(), || Ok(theorem_hash_fr))?;
+        let axioms_commitment_input = FpVar::<F>::new_input(cs.clone(), || Ok(axioms_commitment_fr))?;
+        let circuit_version_input = FpVar::<F>::new_input(cs.clone(), || Ok(version_fr))?;
+        let ruleset_id_input = FpVar::<F>::new_input(cs.clone(), || Ok(ruleset_id_fr))?;
+
+        // Tie inputs into constraints so they actually affect the proof.
+        // 1) Require theorem_hash_input != 0 (via multiplicative inverse witness).
+        // 2) Require axioms_commitment_input != 0.
+        // 3) Require ruleset_id_input != 0.
+        // 4) Require circuit_version_input == version witness.
+        let inv_theorem = FpVar::<F>::new_witness(cs.clone(), || Ok(theorem_hash_fr.inverse().unwrap_or(F::ZERO)))?;
+        let inv_axioms = FpVar::<F>::new_witness(cs.clone(), || Ok(axioms_commitment_fr.inverse().unwrap_or(F::ZERO)))?;
+        let inv_ruleset = FpVar::<F>::new_witness(cs.clone(), || Ok(ruleset_id_fr.inverse().unwrap_or(F::ZERO)))?;
+
+        theorem_hash_input.mul_equals(&inv_theorem, &FpVar::<F>::Constant(F::ONE))?;
+        axioms_commitment_input.mul_equals(&inv_axioms, &FpVar::<F>::Constant(F::ONE))?;
+        ruleset_id_input.mul_equals(&inv_ruleset, &FpVar::<F>::Constant(F::ONE))?;
+
+        let version_var = FpVar::<F>::new_witness(cs.clone(), || Ok(version_fr))?;
+        circuit_version_input.enforce_equal(&version_var)?;
+
+        // Trivial constraint to ensure the circuit isn't empty even if optimized.
         let one = FpVar::<F>::Constant(F::ONE);
-
-        // Enforce: version * 1 = version (trivial but prevents empty constraints)
         version_var.enforce_equal(&(version_var.clone() * &one))?;
 
         // For MVP, we accept the hash values as given from outside the circuit
