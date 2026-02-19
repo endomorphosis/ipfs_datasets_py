@@ -6,6 +6,10 @@ from datetime import datetime, timezone
 from abc import ABC, abstractmethod
 
 from ipfs_datasets_py.mcp_server.tools.tool_wrapper import BaseMCPTool, wrap_function_as_tool
+from ipfs_datasets_py.mcp_server.exceptions import (
+    ToolExecutionError,
+    ToolRegistrationError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -405,33 +409,230 @@ class ToolRegistry:
         return self._tools.get(tool_name)
     
     def has_tool(self, tool_name: str) -> bool:
-        """Check if a tool is registered."""
+        """Check if a tool with the given name is registered in the registry.
+        
+        This method performs a quick membership test to determine whether a tool
+        with the specified name exists in the registry. It's useful for validation
+        before attempting tool retrieval or execution operations.
+        
+        Args:
+            tool_name (str): The unique name/identifier of the tool to check.
+                    Case-sensitive and must match exactly with the registered name.
+        
+        Returns:
+            bool: True if the tool is registered, False otherwise.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(my_tool)
+            >>> if registry.has_tool("my_tool"):
+            ...     tool = registry.get_tool("my_tool")
+            ...     result = await tool.execute(params)
+        
+        Note:
+            This is a fast O(1) lookup operation that checks tool name membership
+            in the internal tools dictionary.
+        """
         return tool_name in self._tools
     
     def get_all_tools(self) -> List[ClaudeMCPTool]:
-        """Get all registered tools."""
+        """Retrieve a complete list of all tools currently registered in the registry.
+        
+        This method returns all tool instances that have been registered, regardless
+        of their category, tags, or other metadata. The tools are returned as a list
+        in no guaranteed order.
+        
+        Returns:
+            List[ClaudeMCPTool]: A list containing all registered tool instances.
+                        Returns an empty list if no tools are registered. The list
+                        is a snapshot of current registrations and modifications to
+                        it won't affect the registry.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(tool1)
+            >>> registry.register_tool(tool2)
+            >>> all_tools = registry.get_all_tools()
+            >>> print(f"Total tools: {len(all_tools)}")
+            Total tools: 2
+            >>> for tool in all_tools:
+            ...     print(f"- {tool.name}")
+        
+        Note:
+            - This returns the actual tool instances, not just their names or schemas
+            - For large registries, consider using get_tools_by_category() or
+              get_tools_by_tag() to retrieve specific subsets
+            - The returned list is a new instance; modifying it won't affect the registry
+        """
         return list(self._tools.values())
     
     def list_tools(self) -> List[Dict[str, Any]]:
-        """List all tools with their schemas."""
+        """List all registered tools with their complete MCP schema definitions.
+        
+        This method provides a comprehensive overview of all registered tools by
+        returning their full MCP schema definitions. Each schema includes the tool's
+        name, description, parameters, and any other metadata defined in the tool
+        specification. This is particularly useful for MCP protocol communication
+        and tool discovery interfaces.
+        
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries, where each dictionary
+                        contains the complete MCP schema for a registered tool.
+                        Returns an empty list if no tools are registered. Schemas
+                        follow the MCP protocol specification format.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(my_tool)
+            >>> schemas = registry.list_tools()
+            >>> for schema in schemas:
+            ...     print(f"Tool: {schema['name']}")
+            ...     print(f"Description: {schema['description']}")
+            ...     print(f"Parameters: {schema.get('inputSchema', {})}")
+        
+        Note:
+            - Each tool's get_schema() method is called to generate the schema
+            - Schemas are regenerated on each call (not cached)
+            - Schema format follows MCP protocol specification
+            - Suitable for JSON serialization and transmission over MCP protocol
+        """
         return [tool.get_schema() for tool in self._tools.values()]
     
     def get_tools_by_category(self, category: str) -> List[ClaudeMCPTool]:
-        """Get tools by category."""
+        """Retrieve all tools that belong to a specific category.
+        
+        This method filters the registered tools by category, returning only those
+        tools that were assigned to the specified category during registration.
+        Categories are used to organize tools by their functional domain (e.g.,
+        "dataset_tools", "ipfs_tools", "analysis_tools").
+        
+        Args:
+            category (str): The category name to filter by. Must match exactly
+                    with category names assigned during tool registration
+                    (case-sensitive).
+        
+        Returns:
+            List[ClaudeMCPTool]: A list of tool instances in the specified category.
+                        Returns an empty list if the category doesn't exist or has
+                        no tools registered. Tools are returned in registration order.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(dataset_tool)  # category="dataset_tools"
+            >>> registry.register_tool(ipfs_tool)     # category="ipfs_tools"
+            >>> dataset_tools = registry.get_tools_by_category("dataset_tools")
+            >>> print(f"Found {len(dataset_tools)} dataset tools")
+            >>> for tool in dataset_tools:
+            ...     print(f"- {tool.name}")
+        
+        Note:
+            - Category filtering is case-sensitive
+            - Returns actual tool instances, not copies
+            - Invalid/non-existent categories return empty list (no exception raised)
+            - Tools can only belong to one category at a time
+        """
         tool_names = self._categories.get(category, [])
         return [self._tools[name] for name in tool_names if name in self._tools]
     
     def get_tools_by_tag(self, tag: str) -> List[ClaudeMCPTool]:
-        """Get tools by tag."""
+        """Retrieve all tools that have been assigned a specific tag.
+        
+        This method filters the registered tools by tag, returning all tools that
+        were tagged with the specified label during registration. Tags provide a
+        flexible cross-cutting classification system (e.g., "async", "experimental",
+        "production-ready") that complements the hierarchical category system.
+        
+        Args:
+            tag (str): The tag name to filter by. Must match exactly with tag
+                    names assigned during tool registration (case-sensitive).
+        
+        Returns:
+            List[ClaudeMCPTool]: A list of tool instances with the specified tag.
+                        Returns an empty list if the tag doesn't exist or no tools
+                        have been tagged with it. Tools are returned in the order
+                        they were tagged.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(async_tool)     # tags=["async", "production"]
+            >>> registry.register_tool(sync_tool)      # tags=["sync", "production"]
+            >>> prod_tools = registry.get_tools_by_tag("production")
+            >>> print(f"Found {len(prod_tools)} production tools")
+            >>> async_tools = registry.get_tools_by_tag("async")
+            >>> print(f"Found {len(async_tools)} async tools")
+        
+        Note:
+            - Tag filtering is case-sensitive
+            - Returns actual tool instances, not copies
+            - Invalid/non-existent tags return empty list (no exception raised)
+            - Unlike categories, tools can have multiple tags
+            - Useful for cross-cutting concerns (async/sync, stable/experimental, etc.)
+        """
         tool_names = self._tags.get(tag, [])
         return [self._tools[name] for name in tool_names if name in self._tools]
     
     def get_categories(self) -> List[str]:
-        """Get all available categories."""
+        """Retrieve a list of all unique categories currently in use by registered tools.
+        
+        This method returns the complete set of category names that have been assigned
+        to at least one registered tool. Categories provide a hierarchical organization
+        system for tools, grouping them by functional domain or purpose.
+        
+        Returns:
+            List[str]: A list of all category names that have registered tools.
+                        Returns an empty list if no tools are registered or no
+                        categories have been assigned. The list order is not guaranteed.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(dataset_tool)  # category="dataset_tools"
+            >>> registry.register_tool(ipfs_tool)     # category="ipfs_tools"
+            >>> registry.register_tool(another_ipfs)  # category="ipfs_tools"
+            >>> categories = registry.get_categories()
+            >>> print(categories)
+            ['dataset_tools', 'ipfs_tools']
+            >>> print(f"Total categories: {len(categories)}")
+            Total categories: 2
+        
+        Note:
+            - Only categories with at least one registered tool are returned
+            - Categories with all tools unregistered are automatically removed
+            - The returned list is a snapshot; modifications don't affect the registry
+            - Useful for building category navigation or tool discovery interfaces
+        """
         return list(self._categories.keys())
     
     def get_tags(self) -> List[str]:
-        """Get all available tags."""
+        """Retrieve a list of all unique tags currently assigned to registered tools.
+        
+        This method returns the complete set of tag names that have been assigned
+        to at least one registered tool. Tags provide a flexible, cross-cutting
+        classification system that complements the hierarchical category structure,
+        allowing tools to be labeled with multiple attributes or characteristics.
+        
+        Returns:
+            List[str]: A list of all tag names that have been assigned to registered
+                        tools. Returns an empty list if no tools are registered or no
+                        tags have been assigned. The list order is not guaranteed.
+        
+        Example:
+            >>> registry = ToolRegistry()
+            >>> registry.register_tool(async_tool)  # tags=["async", "experimental"]
+            >>> registry.register_tool(sync_tool)   # tags=["sync", "production"]
+            >>> registry.register_tool(beta_tool)   # tags=["async", "production"]
+            >>> tags = registry.get_tags()
+            >>> print(sorted(tags))
+            ['async', 'experimental', 'production', 'sync']
+            >>> print(f"Total unique tags: {len(tags)}")
+            Total unique tags: 4
+        
+        Note:
+            - Only tags assigned to at least one registered tool are returned
+            - Tags with all associated tools unregistered are automatically removed
+            - The returned list is a snapshot; modifications don't affect the registry
+            - Useful for building tag-based filtering or tool discovery interfaces
+            - Unlike categories, tools can have multiple tags simultaneously
+        """
         return list(self._tags.keys())
     
     async def execute_tool(self, tool_name: str, parameters: Dict[str, Any]) -> Dict[str, Any]:
@@ -473,7 +674,8 @@ class ToolRegistry:
             True
         """
         if tool_name not in self._tools:
-            raise ValueError(f"Tool '{tool_name}' not found")
+            from ipfs_datasets_py.mcp_server.exceptions import ToolNotFoundError
+            raise ToolNotFoundError(tool_name)
         
         tool = self._tools[tool_name]
         self.total_executions += 1
@@ -484,7 +686,7 @@ class ToolRegistry:
             return result
         except Exception as e:
             logger.error(f"Tool '{tool_name}' execution failed: {e}")
-            raise
+            raise ToolExecutionError(tool_name, e)
     
     def get_tool_statistics(self) -> Dict[str, Any]:
         """Get comprehensive usage statistics for all tools and registry.
