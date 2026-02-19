@@ -223,6 +223,8 @@ class KnowledgeGraphExtractorWithValidation:
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating knowledge graph: {e}",
+                "error_details": str(e),
+                "error_class": type(e).__name__,
                 "knowledge_graph": None
             }
 
@@ -405,6 +407,8 @@ class KnowledgeGraphExtractorWithValidation:
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating Wikipedia knowledge graph: {e}",
+                "error_details": str(e),
+                "error_class": type(e).__name__,
                 "knowledge_graph": None
             }
 
@@ -542,6 +546,8 @@ class KnowledgeGraphExtractorWithValidation:
         except Exception as e:
             error_result = {
                 "error": f"Error extracting and validating multi-document knowledge graph: {e}",
+                "error_details": str(e),
+                "error_class": type(e).__name__,
                 "knowledge_graph": None
             }
 

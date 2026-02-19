@@ -161,7 +161,12 @@ class HybridSearchEngine:
             logger.error(f"Vector search failed: {e}")
             raise QueryExecutionError(
                 f"Vector search failed: {e}",
-                details={'query': query, 'k': k}
+                details={
+                    'query': query,
+                    'k': k,
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
     
     def expand_graph(

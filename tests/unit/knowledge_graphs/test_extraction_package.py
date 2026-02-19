@@ -8,6 +8,7 @@ Following GIVEN-WHEN-THEN format as per repository standards.
 """
 
 import pytest
+from unittest.mock import Mock
 from ipfs_datasets_py.knowledge_graphs.extraction import (
     Entity,
     Relationship,
@@ -198,6 +199,20 @@ class TestExtractionFunctionality:
         assert kg is not None
         assert isinstance(kg, KnowledgeGraph)
         assert len(kg.entities) > 0
+
+    def test_validator_extract_from_documents_includes_error_class(self):
+        """Validator returns structured error metadata on unexpected failures."""
+        validator = KnowledgeGraphExtractorWithValidation(
+            use_tracer=False,
+            validate_during_extraction=False,
+        )
+        validator.extractor.extract_from_documents = Mock(side_effect=RuntimeError("boom"))
+
+        result = validator.extract_from_documents([{"text": "hi"}])
+
+        assert result["knowledge_graph"] is None
+        assert result.get("error")
+        assert result.get("error_class") == "RuntimeError"
     
     def test_entity_relationship_integration(self):
         """

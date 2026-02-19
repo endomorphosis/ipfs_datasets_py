@@ -21,6 +21,7 @@ from ipfs_datasets_py.knowledge_graphs.query.unified_engine import (
     GraphRAGResult
 )
 from ipfs_datasets_py.knowledge_graphs.query.hybrid_search import HybridSearchResult
+from ipfs_datasets_py.knowledge_graphs.exceptions import QueryExecutionError
 from ipfs_datasets_py.search.graph_query.budgets import (
     ExecutionBudgets,
     ExecutionCounters,
@@ -139,6 +140,20 @@ class TestHybridSearchEngine:
         
         results = engine.vector_search("test query", k=10)
         assert results == []
+
+    def test_vector_search_wraps_unexpected_vector_store_error(self):
+        """Unexpected vector store failures are wrapped as QueryExecutionError."""
+        backend = Mock()
+        vector_store = Mock()
+        vector_store.embed_query = Mock(return_value=[0.1, 0.2, 0.3])
+        vector_store.search = Mock(side_effect=RuntimeError("boom"))
+
+        engine = HybridSearchEngine(backend, vector_store=vector_store)
+
+        with pytest.raises(QueryExecutionError) as exc_info:
+            engine.vector_search("test query", k=3)
+
+        assert exc_info.value.details.get("error_class") == "RuntimeError"
     
     def test_expand_graph_basic(self):
         """Test basic graph expansion."""
