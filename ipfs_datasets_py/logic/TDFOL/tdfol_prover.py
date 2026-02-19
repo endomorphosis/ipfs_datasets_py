@@ -40,6 +40,21 @@ from .tdfol_core import (
     Variable,
 )
 
+# Import proving strategies
+try:
+    from .strategies import (
+        ProverStrategy,
+        ForwardChainingStrategy,
+        ModalTableauxStrategy,
+        CECDelegateStrategy,
+        StrategySelector,
+    )
+    HAVE_STRATEGIES = True
+except ImportError:
+    HAVE_STRATEGIES = False
+    ProverStrategy = None  # type: ignore
+    StrategySelector = None  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 
@@ -339,13 +354,20 @@ class UntilUnfoldingRule:
 class TDFOLProver:
     """Theorem prover for TDFOL formulas."""
     
-    def __init__(self, kb: Optional[TDFOLKnowledgeBase] = None, enable_cache: bool = True):
+    def __init__(
+        self,
+        kb: Optional[TDFOLKnowledgeBase] = None,
+        enable_cache: bool = True,
+        strategy: Optional['ProverStrategy'] = None
+    ):
         """
         Initialize the prover with a knowledge base.
         
         Args:
             kb: Knowledge base with axioms and theorems
             enable_cache: Whether to enable proof caching for performance
+            strategy: Optional custom proving strategy. If None, uses automatic
+                      strategy selection via StrategySelector.
         """
         self.kb = kb or TDFOLKnowledgeBase()
         self.enable_cache = enable_cache
@@ -362,7 +384,7 @@ class TDFOLProver:
         else:
             self.proof_cache = None
         
-        # Import and initialize all TDFOL rules (40 rules)
+        # Import and initialize all TDFOL rules (40 rules) for backward compatibility
         try:
             from .tdfol_inference_rules import get_all_tdfol_rules
             self.tdfol_rules = get_all_tdfol_rules()
@@ -374,7 +396,46 @@ class TDFOLProver:
         self.temporal_rules = [r for r in self.tdfol_rules if 'Temporal' in r.name]
         self.deontic_rules = [r for r in self.tdfol_rules if 'Deontic' in r.name or 'Permission' in r.name or 'Obligation' in r.name or 'Prohibition' in r.name]
         
-        # Try to use CEC prover if available
+        # Initialize proving strategies
+        if HAVE_STRATEGIES:
+            if strategy is not None:
+                # Use custom strategy
+                self.strategy = strategy
+                self.selector = None
+                logger.info(f"Using custom proving strategy: {strategy.name}")
+            else:
+                # Use automatic strategy selection
+                try:
+                    strategies = [
+                        ForwardChainingStrategy(
+                            rules=self.tdfol_rules,
+                            max_iterations=100
+                        ),
+                        ModalTableauxStrategy(),
+                        CECDelegateStrategy(),
+                    ]
+                    self.selector = StrategySelector(strategies)
+                    self.strategy = None
+                    logger.info("Using automatic strategy selection (StrategySelector)")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize StrategySelector: {e}")
+                    # Fallback to legacy behavior
+                    self.selector = None
+                    self.strategy = None
+        else:
+            logger.warning("Proving strategies not available, using legacy proving methods")
+            self.selector = None
+            self.strategy = None
+        
+        # Try to use CEC prover if available (for legacy path only)
+        self.cec_engine = None
+        if not HAVE_STRATEGIES or self.selector is None:
+            if _try_load_cec_prover():
+                try:
+                    self.cec_engine = InferenceEngine()
+                    logger.debug("CEC inference engine initialized (legacy)")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize CEC engine: {e}")
         self.cec_engine = None
         if _try_load_cec_prover():
             try:
@@ -406,6 +467,11 @@ class TDFOLProver:
     def prove(self, goal: Formula, timeout_ms: int = 5000) -> ProofResult:
         """
         Prove a formula using available methods.
+        
+        This method uses the strategy pattern for proving. If a custom strategy
+        was provided at initialization, it uses that strategy. Otherwise, it uses
+        the StrategySelector to automatically choose the best strategy based on
+        the formula characteristics.
         
         Args:
             goal: Formula to prove
@@ -451,30 +517,69 @@ class TDFOLProver:
                 self.proof_cache.set(goal, result, list(self.kb.axioms))
             return result
         
+        # Use strategy pattern if available
+        if HAVE_STRATEGIES and (self.selector is not None or self.strategy is not None):
+            # Select strategy
+            if self.strategy is not None:
+                # Use custom strategy
+                strategy = self.strategy
+                logger.debug(f"Using custom strategy: {strategy.name}")
+            else:
+                # Auto-select strategy
+                strategy = self.selector.select_strategy(goal, self.kb)
+                logger.debug(f"Auto-selected strategy: {strategy.name} (priority: {strategy.get_priority()})")
+            
+            # Prove using strategy
+            result = strategy.prove(goal, self.kb, timeout_ms)
+            
+            # Cache successful proof
+            if result.is_proved() and self.proof_cache is not None:
+                self.proof_cache.set(goal, result, list(self.kb.axioms))
+            
+            return result
+        
+        # Fallback to legacy proving methods (for backward compatibility)
+        logger.warning("Using legacy proving methods (strategies not available)")
+        result = self._legacy_prove(goal, timeout_ms)
+        
+        # Cache successful proof
+        if result.is_proved() and self.proof_cache is not None:
+            self.proof_cache.set(goal, result, list(self.kb.axioms))
+        
+        return result
+    
+    def _legacy_prove(self, goal: Formula, timeout_ms: int) -> ProofResult:
+        """
+        Legacy proving method for backward compatibility.
+        
+        This method uses the old proving logic when strategies are not available.
+        It will be removed in a future version.
+        
+        Args:
+            goal: Formula to prove
+            timeout_ms: Timeout in milliseconds
+        
+        Returns:
+            ProofResult with status and proof steps
+        """
+        import time
+        start_time = time.time()
+        
         # Try forward chaining with TDFOL rules
         result = self._forward_chaining(goal, timeout_ms)
         if result.is_proved():
-            # Cache successful proof
-            if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
             return result
         
         # Try modal tableaux for modal formulas
         if self._is_modal_formula(goal) and _try_load_modal_tableaux():
             result = self._modal_tableaux_prove(goal, timeout_ms)
             if result.is_proved():
-                # Cache successful proof
-                if self.proof_cache is not None:
-                    self.proof_cache.set(goal, result, list(self.kb.axioms))
                 return result
         
         # Try CEC prover for compatible formulas
         if self.cec_engine:
             result = self._cec_prove(goal, timeout_ms)
             if result.is_proved():
-                # Cache successful proof
-                if self.proof_cache is not None:
-                    self.proof_cache.set(goal, result, list(self.kb.axioms))
                 return result
         
         # Could not prove
