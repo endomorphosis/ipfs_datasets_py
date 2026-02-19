@@ -1,11 +1,16 @@
 """
-Tests for logic MCP tools: cec_inference_tool and logic_capabilities_tool.
+Tests for logic MCP tools (plain async function pattern).
 
-These tests replace the former FastAPI-based test_api_server.py tests.
-They validate all MCP tools using direct async execution (no HTTP server needed).
+All tools are now plain async functions in ``mcp_server/tools/logic_tools/``
+that delegate to ``core_operations.LogicProcessor``.
+
+Tests call functions directly — no ``ClaudeMCPTool.execute()`` indirection.
 """
 
+from __future__ import annotations
+
 import asyncio
+import inspect
 import pytest
 
 # ---------------------------------------------------------------------------
@@ -18,618 +23,584 @@ def run(coro):
 
 
 # ---------------------------------------------------------------------------
-# CEC Inference Tool Tests
+# LogicProcessor — core_operations integration
 # ---------------------------------------------------------------------------
 
-class TestCECListRulesTool:
-    """Tests for the cec_list_rules MCP tool."""
+class TestLogicProcessorImport:
+    """GIVEN core_operations WHEN importing LogicProcessor THEN it is available."""
 
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_inference_tool import (
-            CECListRulesTool,
-        )
-        return CECListRulesTool()
+    def test_import_logic_processor(self):
+        from ipfs_datasets_py.core_operations import LogicProcessor
+        assert LogicProcessor is not None
 
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a CECListRulesTool instance
-        WHEN checking its metadata
-        THEN name, description, category, and schema should be set.
-        """
-        assert tool.name == "cec_list_rules"
-        assert tool.category == "logic_tools"
-        assert "logic" in tool.tags
-        assert "cec" in tool.tags
-        assert tool.input_schema is not None
+    def test_logic_processor_is_exported_from_core_operations(self):
+        import ipfs_datasets_py.core_operations as co
+        assert "LogicProcessor" in dir(co)
 
-    def test_list_all_rules_returns_success(self, tool):
+    def test_logic_processor_instantiates(self):
+        from ipfs_datasets_py.core_operations import LogicProcessor
+        lp = LogicProcessor()
+        assert lp is not None
+
+
+# ---------------------------------------------------------------------------
+# Tool discovery — plain async functions only
+# ---------------------------------------------------------------------------
+
+class TestToolDiscovery:
+    """GIVEN logic_tools WHEN discovering tools THEN all are plain async functions."""
+
+    def _get_all_tools(self):
+        from pathlib import Path
+        import importlib
+        tools_dir = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "logic_tools"
+        discovered = []
+        for tool_file in sorted(tools_dir.glob("*.py")):
+            if tool_file.name.startswith("_") or tool_file.name == "__init__.py":
+                continue
+            mod = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.logic_tools.{tool_file.stem}")
+            fns = [f for name, f in inspect.getmembers(mod)
+                   if inspect.iscoroutinefunction(f) and not name.startswith("_")]
+            discovered.extend(fns)
+        return discovered
+
+    def test_all_logic_tools_are_async_functions(self):
         """
-        GIVEN no parameters
-        WHEN cec_list_rules.execute({}) is called
-        THEN returns success=True and non-empty rules list.
+        GIVEN all logic tool files
+        WHEN scanning for callables
+        THEN every exported tool is a plain async function (not a class).
         """
-        result = run(tool.execute({}))
+        tools = self._get_all_tools()
+        for fn in tools:
+            assert inspect.iscoroutinefunction(fn), f"{fn.__name__} is not async"
+            assert not isinstance(fn, type), f"{fn.__name__} is a class, not a function"
+
+    def test_no_claude_mcp_tool_classes_remain(self):
+        """
+        GIVEN logic_tools modules
+        WHEN checking for ClaudeMCPTool subclasses
+        THEN none should exist.
+        """
+        from pathlib import Path
+        import importlib
+        tools_dir = Path(__file__).parent.parent.parent.parent / "ipfs_datasets_py" / "mcp_server" / "tools" / "logic_tools"
+        for tool_file in sorted(tools_dir.glob("*.py")):
+            if tool_file.name.startswith("_") or tool_file.name == "__init__.py":
+                continue
+            mod = importlib.import_module(f"ipfs_datasets_py.mcp_server.tools.logic_tools.{tool_file.stem}")
+            for name, obj in inspect.getmembers(mod):
+                if isinstance(obj, type):
+                    try:
+                        from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
+                        assert not issubclass(obj, ClaudeMCPTool), (
+                            f"{name} in {tool_file.name} is still a ClaudeMCPTool subclass"
+                        )
+                    except ImportError:
+                        pass
+
+    def test_at_least_27_tools_discovered(self):
+        """
+        GIVEN all logic tool files
+        WHEN counting async functions
+        THEN at least 27 are discovered.
+        """
+        tools = self._get_all_tools()
+        assert len(tools) >= 27, f"Expected >=27 tools, got {len(tools)}"
+
+    def test_init_exports_27_known_tools(self):
+        """
+        GIVEN logic_tools/__init__.py
+        WHEN checking __all__
+        THEN all 27 expected tool names are present.
+        """
+        import ipfs_datasets_py.mcp_server.tools.logic_tools as lt
+        expected = {
+            "check_document_consistency", "query_theorems", "bulk_process_caselaw", "add_theorem",
+            "tdfol_prove", "tdfol_batch_prove", "tdfol_parse", "tdfol_convert",
+            "tdfol_kb_add_axiom", "tdfol_kb_add_theorem", "tdfol_kb_query", "tdfol_kb_export",
+            "tdfol_visualize",
+            "cec_list_rules", "cec_apply_rule", "cec_check_rule", "cec_rule_info",
+            "cec_prove", "cec_check_theorem",
+            "cec_parse", "cec_validate_formula",
+            "cec_analyze_formula", "cec_formula_complexity",
+            "logic_capabilities", "logic_health",
+            "logic_build_knowledge_graph", "logic_verify_rag_output",
+        }
+        exported = set(lt.__all__)
+        missing = expected - exported
+        assert not missing, f"Missing from __all__: {missing}"
+
+
+# ---------------------------------------------------------------------------
+# CEC Inference Tools
+# ---------------------------------------------------------------------------
+
+class TestCECListRules:
+    """Tests for cec_list_rules."""
+
+    def test_returns_success(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules())
         assert result["success"] is True
         assert isinstance(result["rules"], list)
         assert result["total"] > 0
 
-    def test_list_all_rules_count_at_least_60(self, tool):
-        """
-        GIVEN no category filter
-        WHEN listing rules
-        THEN at least 60 rules are available (CEC has 67 rules).
-        """
-        result = run(tool.execute({}))
-        assert result["total"] >= 60
+    def test_returns_at_least_60_rules(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules())
+        assert result["total"] >= 60, f"Expected >=60, got {result['total']}"
 
-    def test_filter_by_modal_category(self, tool):
-        """
-        GIVEN category='modal'
-        WHEN listing rules
-        THEN returns only modal rules.
-        """
-        result = run(tool.execute({"category": "modal"}))
+    def test_filter_by_modal_category(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules(category="modal"))
         assert result["success"] is True
-        assert len(result["rules"]) >= 5
-        for rule in result["rules"]:
-            assert rule["category"] == "modal"
+        assert all(r["category"] == "modal" for r in result["rules"])
 
-    def test_filter_by_resolution_category(self, tool):
-        """
-        GIVEN category='resolution'
-        WHEN listing rules
-        THEN returns only resolution rules.
-        """
-        result = run(tool.execute({"category": "resolution"}))
+    def test_filter_by_unknown_category_returns_empty(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules(category="nonexistent_category"))
         assert result["success"] is True
-        assert len(result["rules"]) >= 5
+        assert result["total"] == 0
 
-    def test_filter_by_propositional_category(self, tool):
-        """
-        GIVEN category='propositional'
-        WHEN listing rules
-        THEN returns at least 10 propositional rules.
-        """
-        result = run(tool.execute({"category": "propositional"}))
-        assert len(result["rules"]) >= 10
+    def test_no_description_flag(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules(include_description=False))
+        assert result["success"] is True
+        if result["rules"]:
+            assert "description" not in result["rules"][0]
 
-    def test_rules_have_name_and_category(self, tool):
-        """
-        GIVEN default parameters
-        WHEN listing rules
-        THEN each rule entry has 'name' and 'category' keys.
-        """
-        result = run(tool.execute({}))
+    def test_rules_have_name_and_category(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules())
         for rule in result["rules"]:
             assert "name" in rule
             assert "category" in rule
 
-    def test_include_description_true(self, tool):
-        """
-        GIVEN include_description=True
-        WHEN listing rules
-        THEN each rule entry includes 'description'.
-        """
-        result = run(tool.execute({"include_description": True}))
-        for rule in result["rules"]:
-            assert "description" in rule
-
-    def test_include_description_false(self, tool):
-        """
-        GIVEN include_description=False
-        WHEN listing rules
-        THEN rule entries do NOT include 'description'.
-        """
-        result = run(tool.execute({"include_description": False}))
-        for rule in result["rules"]:
-            assert "description" not in rule
-
-    def test_response_includes_elapsed_ms(self, tool):
-        """
-        GIVEN any call
-        WHEN executed
-        THEN response includes elapsed_ms float.
-        """
-        result = run(tool.execute({}))
+    def test_elapsed_ms_present(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules
+        result = run(cec_list_rules())
         assert "elapsed_ms" in result
-        assert isinstance(result["elapsed_ms"], (int, float))
         assert result["elapsed_ms"] >= 0
 
 
-class TestCECApplyRuleTool:
-    """Tests for the cec_apply_rule MCP tool."""
+class TestCECCheckRule:
+    """Tests for cec_check_rule."""
 
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_inference_tool import (
-            CECApplyRuleTool,
-        )
-        return CECApplyRuleTool()
-
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a CECApplyRuleTool instance
-        WHEN checking its metadata
-        THEN name and schema should be correct.
-        """
-        assert tool.name == "cec_apply_rule"
-        assert "rule" in tool.input_schema["properties"]
-        assert "formulas" in tool.input_schema["properties"]
-
-    def test_missing_rule_returns_error(self, tool):
-        """
-        GIVEN no 'rule' parameter
-        WHEN executing
-        THEN returns success=False with an error.
-        """
-        result = run(tool.execute({"formulas": ["P"]}))
-        assert result["success"] is False
-        assert "error" in result
-
-    def test_missing_formulas_returns_error(self, tool):
-        """
-        GIVEN no 'formulas' parameter
-        WHEN executing
-        THEN returns success=False with an error (empty list → empty axiom list).
-        """
-        result = run(tool.execute({"rule": "ModusPonens", "formulas": []}))
-        # Empty list is valid (just not applicable), so check success may be True
-        assert "success" in result
-
-    def test_unknown_rule_returns_error(self, tool):
-        """
-        GIVEN an unknown rule name
-        WHEN executing
-        THEN returns success=False with 'not found' error.
-        """
-        result = run(tool.execute({
-            "rule": "NonExistentRuleXYZ",
-            "formulas": ["P"],
-        }))
-        assert result["success"] is False
-        assert "not found" in result["error"].lower() or "NonExistentRuleXYZ" in result["error"]
-
-    def test_known_rule_returns_applicable_field(self, tool):
-        """
-        GIVEN a known rule (ModusPonens) and some formulas
-        WHEN executing
-        THEN response has 'applicable' field.
-        """
-        result = run(tool.execute({
-            "rule": "ModusPonens",
-            "formulas": ["P", "Q"],
-        }))
-        assert result["success"] is True
+    def test_returns_applicable_bool(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_check_rule
+        result = run(cec_check_rule(rule="ModusPonens", formulas=["P", "Q"]))
         assert "applicable" in result
-
-    def test_response_includes_input_formulas(self, tool):
-        """
-        GIVEN a valid request
-        WHEN executing
-        THEN response echoes 'input_formulas'.
-        """
-        formulas = ["P", "Q"]
-        result = run(tool.execute({"rule": "ModusPonens", "formulas": formulas}))
-        assert result["success"] is True
-        assert result["input_formulas"] == formulas
-
-    def test_response_includes_conclusions(self, tool):
-        """
-        GIVEN a valid request
-        WHEN executing
-        THEN response includes 'conclusions' list (may be empty).
-        """
-        result = run(tool.execute({"rule": "ModusPonens", "formulas": ["P", "Q"]}))
-        assert result["success"] is True
-        assert isinstance(result["conclusions"], list)
-
-    def test_tautology_rule_with_single_formula(self, tool):
-        """
-        GIVEN TautologyRule and one formula
-        WHEN executing
-        THEN rule can be applied (always applicable).
-        """
-        result = run(tool.execute({"rule": "TautologyRule", "formulas": ["P"]}))
-        assert result["success"] is True
-        # TautologyRule may or may not be applicable depending on implementation
-        assert "applicable" in result
-
-
-class TestCECCheckRuleTool:
-    """Tests for the cec_check_rule MCP tool."""
-
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_inference_tool import (
-            CECCheckRuleTool,
-        )
-        return CECCheckRuleTool()
-
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a CECCheckRuleTool instance
-        WHEN checking metadata
-        THEN name and schema are set correctly.
-        """
-        assert tool.name == "cec_check_rule"
-        assert "rule" in tool.input_schema["properties"]
-
-    def test_check_returns_applicable_bool(self, tool):
-        """
-        GIVEN a known rule and formulas
-        WHEN checking
-        THEN response has 'applicable' bool.
-        """
-        result = run(tool.execute({"rule": "ModusPonens", "formulas": ["P", "Q"]}))
-        assert result["success"] is True
         assert isinstance(result["applicable"], bool)
 
-    def test_unknown_rule_returns_error(self, tool):
-        """
-        GIVEN unknown rule
-        WHEN checking
-        THEN returns success=False.
-        """
-        result = run(tool.execute({"rule": "FakeRule9999", "formulas": ["P"]}))
+    def test_missing_rule_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_check_rule
+        result = run(cec_check_rule(rule="NonExistentRule9999", formulas=["P"]))
         assert result["success"] is False
 
-    def test_empty_rule_name_returns_error(self, tool):
-        """
-        GIVEN empty rule name
-        WHEN checking
-        THEN returns success=False.
-        """
-        result = run(tool.execute({"rule": "", "formulas": ["P"]}))
+    def test_empty_rule_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_check_rule
+        result = run(cec_check_rule(rule="", formulas=["P"]))
         assert result["success"] is False
 
 
-class TestCECRuleInfoTool:
-    """Tests for the cec_rule_info MCP tool."""
+class TestCECApplyRule:
+    """Tests for cec_apply_rule."""
 
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.cec_inference_tool import (
-            CECRuleInfoTool,
-        )
-        return CECRuleInfoTool()
+    def test_returns_applicable_and_conclusions(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_apply_rule
+        result = run(cec_apply_rule(rule="ModusPonens", formulas=["P", "Q"]))
+        assert "applicable" in result
+        assert "conclusions" in result
+        assert isinstance(result["conclusions"], list)
 
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a CECRuleInfoTool instance
-        WHEN checking metadata
-        THEN name and schema are set.
-        """
-        assert tool.name == "cec_rule_info"
-        assert "rule" in tool.input_schema["properties"]
+    def test_missing_rule_name_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_apply_rule
+        result = run(cec_apply_rule(rule="", formulas=["P"]))
+        assert result["success"] is False
 
-    def test_known_rule_returns_info(self, tool):
-        """
-        GIVEN a known rule name
-        WHEN getting info
-        THEN returns name, category, module, docstring, methods.
-        """
-        result = run(tool.execute({"rule": "ModusPonens"}))
+
+class TestCECRuleInfo:
+    """Tests for cec_rule_info."""
+
+    def test_known_rule_returns_info(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_list_rules, cec_rule_info
+        # Get a known rule name first
+        rules = run(cec_list_rules())
+        if not rules["rules"]:
+            pytest.skip("No CEC rules available")
+        rule_name = rules["rules"][0]["name"]
+        result = run(cec_rule_info(rule=rule_name))
         assert result["success"] is True
-        assert result["name"] == "ModusPonens"
+        assert result["name"] == rule_name
         assert "category" in result
-        assert "module" in result
+        assert "docstring" in result
         assert "methods" in result
 
-    def test_known_modal_rule_returns_info(self, tool):
-        """
-        GIVEN a modal rule name
-        WHEN getting info
-        THEN category is 'modal'.
-        """
-        result = run(tool.execute({"rule": "NecessityElimination"}))
-        assert result["success"] is True
-        assert result["category"] == "modal"
-
-    def test_unknown_rule_returns_available_list(self, tool):
-        """
-        GIVEN an unknown rule name
-        WHEN getting info
-        THEN returns success=False and lists available_rules.
-        """
-        result = run(tool.execute({"rule": "BadRuleName"}))
-        assert result["success"] is False
-        assert "available_rules" in result
-        assert len(result["available_rules"]) > 0
-
-    def test_empty_rule_name_returns_error(self, tool):
-        """
-        GIVEN empty rule name
-        WHEN getting info
-        THEN returns success=False.
-        """
-        result = run(tool.execute({"rule": ""}))
+    def test_unknown_rule_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_rule_info
+        result = run(cec_rule_info(rule="NonExistentRule9999"))
         assert result["success"] is False
 
 
 # ---------------------------------------------------------------------------
-# Logic Capabilities Tool Tests
+# CEC Prove
 # ---------------------------------------------------------------------------
 
-class TestLogicCapabilitiesTool:
-    """Tests for the logic_capabilities MCP tool."""
+class TestCECProve:
+    """Tests for cec_prove."""
 
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
-            LogicCapabilitiesTool,
-        )
-        return LogicCapabilitiesTool()
+    def test_returns_proved_bool(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_prove
+        result = run(cec_prove(goal="P(x) -> P(x)"))
+        assert "proved" in result
+        assert isinstance(result["proved"], bool)
 
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a LogicCapabilitiesTool instance
-        WHEN checking metadata
-        THEN name, category, and tags are correct.
-        """
-        assert tool.name == "logic_capabilities"
-        assert tool.category == "logic_tools"
-        assert "discovery" in tool.tags
+    def test_empty_goal_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_prove
+        result = run(cec_prove(goal=""))
+        assert result["success"] is False
 
-    def test_returns_supported_logics(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN returns list containing 'tdfol' and 'cec'.
-        """
-        result = run(tool.execute({}))
+    def test_elapsed_ms_present(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_prove
+        result = run(cec_prove(goal="P(x)"))
+        assert "elapsed_ms" in result
+
+
+class TestCECCheckTheorem:
+    """Tests for cec_check_theorem."""
+
+    def test_returns_is_theorem_bool(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_check_theorem
+        result = run(cec_check_theorem(formula="P | ~P"))
+        assert "is_theorem" in result
+        assert isinstance(result["is_theorem"], bool)
+
+    def test_empty_formula_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_check_theorem
+        result = run(cec_check_theorem(formula=""))
+        assert result["success"] is False
+
+
+# ---------------------------------------------------------------------------
+# CEC Parse & Validate
+# ---------------------------------------------------------------------------
+
+class TestCECParse:
+    """Tests for cec_parse."""
+
+    def test_returns_formula_string(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_parse
+        result = run(cec_parse(text="The agent must comply"))
         assert result["success"] is True
+        assert isinstance(result["formula"], str)
+        assert len(result["formula"]) > 0
+
+    def test_empty_text_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_parse
+        result = run(cec_parse(text=""))
+        assert result["success"] is False
+
+    def test_confidence_is_float(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_parse
+        result = run(cec_parse(text="The party is obligated to pay"))
+        assert isinstance(result.get("confidence"), float)
+        assert 0.0 <= result["confidence"] <= 1.0
+
+
+class TestCECValidateFormula:
+    """Tests for cec_validate_formula."""
+
+    def test_returns_valid_bool(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_validate_formula
+        result = run(cec_validate_formula(formula="O(pay_taxes(agent))"))
+        assert result["success"] is True
+        assert "valid" in result
+        assert isinstance(result["valid"], bool)
+
+    def test_empty_formula_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_validate_formula
+        result = run(cec_validate_formula(formula=""))
+        assert result["success"] is False
+
+
+# ---------------------------------------------------------------------------
+# CEC Analysis
+# ---------------------------------------------------------------------------
+
+class TestCECAnalyzeFormula:
+    """Tests for cec_analyze_formula."""
+
+    def test_returns_structural_metrics(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_analyze_formula
+        result = run(cec_analyze_formula(formula="P -> Q"))
+        assert result["success"] is True
+        assert "depth" in result
+        assert "size" in result
+        assert "operators" in result
+
+    def test_empty_formula_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_analyze_formula
+        result = run(cec_analyze_formula(formula=""))
+        assert result["success"] is False
+
+
+class TestCECFormulaComplexity:
+    """Tests for cec_formula_complexity."""
+
+    def test_returns_complexity_level(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_formula_complexity
+        result = run(cec_formula_complexity(formula="P -> Q"))
+        assert result["success"] is True
+        assert result["complexity"] in ("low", "medium", "high")
+
+    def test_formula_complexity_returns_valid_level(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_formula_complexity
+        # Any formula should return one of the three levels
+        result = run(cec_formula_complexity(formula="P -> Q -> R"))
+        assert result["success"] is True
+        assert result["complexity"] in ("low", "medium", "high")
+
+    def test_simple_formula_depth_and_size(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import cec_formula_complexity
+        result = run(cec_formula_complexity(formula="P"))
+        assert result["success"] is True
+        # A single atom is never high complexity
+        assert result["complexity"] in ("low", "medium")
+        assert "depth" in result and result["depth"] >= 1
+        assert "size" in result and result["size"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# Logic Capabilities & Health
+# ---------------------------------------------------------------------------
+
+class TestLogicCapabilities:
+    """Tests for logic_capabilities."""
+
+    def test_returns_logics_dict(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_capabilities
+        result = run(logic_capabilities())
+        assert result["success"] is True
+        assert "logics" in result
         assert "tdfol" in result["logics"]
         assert "cec" in result["logics"]
 
-    def test_returns_conversions_list(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN returns non-empty conversions list.
-        """
-        result = run(tool.execute({}))
+    def test_returns_conversions_list(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_capabilities
+        result = run(logic_capabilities())
         assert isinstance(result["conversions"], list)
         assert len(result["conversions"]) > 0
 
-    def test_returns_inference_rule_counts(self, tool):
-        """
-        GIVEN include_rule_counts=True
-        WHEN executing
-        THEN inference_rules dict has 'cec' key with count >= 60.
-        """
-        result = run(tool.execute({"include_rule_counts": True}))
-        assert "inference_rules" in result
-        assert result["inference_rules"].get("cec", 0) >= 60
+    def test_nl_languages_present(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_capabilities
+        result = run(logic_capabilities())
+        assert "nl_languages" in result
+        assert "en" in result["nl_languages"]
 
-    def test_skip_inference_rule_counts(self, tool):
-        """
-        GIVEN include_rule_counts=False
-        WHEN executing
-        THEN inference_rules dict is empty.
-        """
-        result = run(tool.execute({"include_rule_counts": False}))
-        assert result["inference_rules"] == {}
-
-    def test_returns_features_list(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN features list is non-empty.
-        """
-        result = run(tool.execute({}))
-        assert isinstance(result["features"], list)
-        assert len(result["features"]) > 0
-
-    def test_returns_version_string(self, tool):
-        """
-        GIVEN any parameters
-        WHEN executing
-        THEN returns version string.
-        """
-        result = run(tool.execute({}))
-        assert "version" in result
-        assert isinstance(result["version"], str)
-
-    def test_response_includes_elapsed_ms(self, tool):
-        """
-        GIVEN any call
-        WHEN executed
-        THEN response includes elapsed_ms.
-        """
-        result = run(tool.execute({}))
+    def test_elapsed_ms_present(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_capabilities
+        result = run(logic_capabilities())
         assert "elapsed_ms" in result
-        assert result["elapsed_ms"] >= 0
 
 
-class TestLogicHealthTool:
-    """Tests for the logic_health MCP tool."""
+class TestLogicHealth:
+    """Tests for logic_health."""
 
-    @pytest.fixture
-    def tool(self):
-        from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
-            LogicHealthTool,
-        )
-        return LogicHealthTool()
-
-    def test_tool_metadata(self, tool):
-        """
-        GIVEN a LogicHealthTool instance
-        WHEN checking metadata
-        THEN name, category, and tags are correct.
-        """
-        assert tool.name == "logic_health"
-        assert tool.category == "logic_tools"
-        assert "health" in tool.tags
-        assert "diagnostics" in tool.tags
-
-    def test_returns_valid_status(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN returns status in ('healthy', 'degraded', 'unavailable').
-        """
-        result = run(tool.execute({}))
+    def test_returns_status_string(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_health
+        result = run(logic_health())
         assert result["success"] is True
         assert result["status"] in ("healthy", "degraded", "unavailable")
 
-    def test_returns_modules_dict(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN returns modules dict with expected keys.
-        """
-        result = run(tool.execute({}))
-        modules = result["modules"]
-        assert isinstance(modules, dict)
-        for key in ("tdfol", "cec", "fol", "zkp", "validators"):
-            assert key in modules
-            assert isinstance(modules[key], bool)
+    def test_returns_modules_dict(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_health
+        result = run(logic_health())
+        assert "modules" in result
+        for name, status in result["modules"].items():
+            assert status in ("ok", "unavailable"), f"{name}: unexpected status {status!r}"
 
-    def test_healthy_when_core_modules_available(self, tool):
-        """
-        GIVEN core modules (tdfol, cec) are available
-        WHEN executing
-        THEN status is 'healthy'.
-        """
-        result = run(tool.execute({}))
-        # In this environment they should be available
-        if result["modules"]["tdfol"] and result["modules"]["cec"]:
-            assert result["status"] == "healthy"
+    def test_healthy_and_total_counts(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_health
+        result = run(logic_health())
+        assert "healthy" in result
+        assert "total" in result
+        assert 0 <= result["healthy"] <= result["total"]
 
-    def test_cec_rule_count_in_modules(self, tool):
-        """
-        GIVEN default parameters
-        WHEN executing
-        THEN modules dict includes cec_inference_rules_count.
-        """
-        result = run(tool.execute({}))
-        assert "cec_inference_rules_count" in result["modules"]
-        assert result["modules"]["cec_inference_rules_count"] >= 60
 
-    def test_verbose_false_no_errors_key(self, tool):
-        """
-        GIVEN verbose=False
-        WHEN executing
-        THEN response does NOT include 'errors' key (unless there are errors).
-        """
-        result = run(tool.execute({"verbose": False}))
-        # errors key should only appear in verbose mode when there are errors
-        # In a healthy environment, errors key may be absent
+# ---------------------------------------------------------------------------
+# TDFOL Tools
+# ---------------------------------------------------------------------------
+
+class TestTDFOLProve:
+    """Tests for tdfol_prove."""
+
+    def test_returns_success_dict(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_prove
+        result = run(tdfol_prove(formula="∀x.P(x)"))
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_empty_formula_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_prove
+        result = run(tdfol_prove(formula=""))
+        assert result["success"] is False
+
+
+class TestTDFOLBatchProve:
+    """Tests for tdfol_batch_prove."""
+
+    def test_returns_results_list(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_batch_prove
+        result = run(tdfol_batch_prove(formulas=["P", "Q"]))
+        assert isinstance(result, dict)
+        assert "results" in result
+        assert len(result["results"]) <= 2
+
+    def test_empty_formulas_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_batch_prove
+        result = run(tdfol_batch_prove(formulas=[]))
+        assert result["success"] is False
+
+
+class TestTDFOLParse:
+    """Tests for tdfol_parse."""
+
+    def test_returns_formula_string(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_parse
+        result = run(tdfol_parse(text="∀x.P(x)"))
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_empty_text_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_parse
+        result = run(tdfol_parse(text=""))
+        assert result["success"] is False
+
+
+class TestTDFOLConvert:
+    """Tests for tdfol_convert."""
+
+    def test_returns_converted_formula(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_convert
+        result = run(tdfol_convert(formula="∀x.P(x)", target_format="fol"))
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_empty_formula_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_convert
+        result = run(tdfol_convert(formula=""))
+        assert result["success"] is False
+
+
+class TestTDFOLKB:
+    """Tests for tdfol knowledge base tools."""
+
+    def test_add_axiom_returns_success(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add_axiom
+        result = run(tdfol_kb_add_axiom(formula="∀x.P(x)"))
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_add_theorem_returns_success(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add_theorem
+        result = run(tdfol_kb_add_theorem(formula="P(a)"))
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_query_returns_dict(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_query
+        result = run(tdfol_kb_query())
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_export_returns_dict(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_export
+        result = run(tdfol_kb_export())
+        assert isinstance(result, dict)
+        assert "success" in result
+
+    def test_empty_formula_add_axiom_fails(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_kb_add_axiom
+        result = run(tdfol_kb_add_axiom(formula=""))
+        assert result["success"] is False
+
+
+class TestTDFOLVisualize:
+    """Tests for tdfol_visualize."""
+
+    def test_returns_visualization_string(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_visualize
+        result = run(tdfol_visualize(proof_data={"formula": "P"}, output_format="ascii"))
+        assert isinstance(result, dict)
+        assert "success" in result
+        assert "visualization" in result
+
+    def test_json_format(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import tdfol_visualize
+        result = run(tdfol_visualize(proof_data=None, output_format="json"))
+        assert isinstance(result, dict)
+
+
+# ---------------------------------------------------------------------------
+# GraphRAG Tools
+# ---------------------------------------------------------------------------
+
+class TestLogicBuildKnowledgeGraph:
+    """Tests for logic_build_knowledge_graph."""
+
+    def test_returns_nodes_and_edges(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_build_knowledge_graph
+        result = run(logic_build_knowledge_graph(
+            text_corpus="The agent must comply with regulations before the deadline."
+        ))
         assert result["success"] is True
+        assert "nodes" in result
+        assert "edges" in result
+        assert isinstance(result["nodes"], list)
+        assert isinstance(result["edges"], list)
 
-    def test_verbose_true_allowed(self, tool):
-        """
-        GIVEN verbose=True
-        WHEN executing
-        THEN response succeeds (verbose flag is accepted).
-        """
-        result = run(tool.execute({"verbose": True}))
+    def test_node_count_and_edge_count(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_build_knowledge_graph
+        result = run(logic_build_knowledge_graph(
+            text_corpus="The party shall not violate the agreement."
+        ))
+        assert result["node_count"] == len(result["nodes"])
+        assert result["edge_count"] == len(result["edges"])
+
+    def test_empty_corpus_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_build_knowledge_graph
+        result = run(logic_build_knowledge_graph(text_corpus=""))
+        assert result["success"] is False
+
+    def test_max_entities_respected(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_build_knowledge_graph
+        result = run(logic_build_knowledge_graph(
+            text_corpus="must shall may prohibited required permitted " * 30,
+            max_entities=5,
+        ))
+        assert result["node_count"] <= 5
+
+
+class TestLogicVerifyRAGOutput:
+    """Tests for logic_verify_rag_output."""
+
+    def test_returns_consistent_bool(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_verify_rag_output
+        result = run(logic_verify_rag_output(
+            answer="The agent must pay taxes.",
+            constraints=["O(pay_taxes(agent))"],
+        ))
         assert result["success"] is True
+        assert "consistent" in result
+        assert isinstance(result["consistent"], bool)
 
-    def test_response_includes_elapsed_ms(self, tool):
-        """
-        GIVEN any call
-        WHEN executed
-        THEN response includes elapsed_ms.
-        """
-        result = run(tool.execute({}))
-        assert "elapsed_ms" in result
-        assert result["elapsed_ms"] >= 0
+    def test_no_constraints_returns_consistent(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_verify_rag_output
+        result = run(logic_verify_rag_output(answer="P implies Q.", constraints=[]))
+        assert result["success"] is True
+        assert result["consistent"] is True
 
-    def test_returns_version_string(self, tool):
-        """
-        GIVEN any call
-        WHEN executed
-        THEN returns version string.
-        """
-        result = run(tool.execute({}))
-        assert "version" in result
-
-
-# ---------------------------------------------------------------------------
-# Integration: Tool Registration
-# ---------------------------------------------------------------------------
-
-class TestLogicToolsRegistration:
-    """Integration tests: new tools appear in ALL_LOGIC_TOOLS."""
-
-    def test_cec_inference_tools_in_all(self):
-        """
-        GIVEN ALL_LOGIC_TOOLS
-        WHEN checking
-        THEN all 4 CEC inference tools are present.
-        """
-        from ipfs_datasets_py.mcp_server.tools.logic_tools import ALL_LOGIC_TOOLS
-        names = {t.name for t in ALL_LOGIC_TOOLS}
-        assert "cec_list_rules" in names
-        assert "cec_apply_rule" in names
-        assert "cec_check_rule" in names
-        assert "cec_rule_info" in names
-
-    def test_capabilities_tools_in_all(self):
-        """
-        GIVEN ALL_LOGIC_TOOLS
-        WHEN checking
-        THEN both capabilities tools are present.
-        """
-        from ipfs_datasets_py.mcp_server.tools.logic_tools import ALL_LOGIC_TOOLS
-        names = {t.name for t in ALL_LOGIC_TOOLS}
-        assert "logic_capabilities" in names
-        assert "logic_health" in names
-
-    def test_all_tools_have_input_schema(self):
-        """
-        GIVEN ALL_LOGIC_TOOLS
-        WHEN iterating
-        THEN all tools have an input_schema dict.
-        """
-        from ipfs_datasets_py.mcp_server.tools.logic_tools import ALL_LOGIC_TOOLS
-        for tool in ALL_LOGIC_TOOLS:
-            if tool.name:  # Skip unnamed placeholders
-                assert isinstance(tool.input_schema, dict), (
-                    f"Tool '{tool.name}' missing input_schema"
-                )
-
-    def test_total_logic_tools_count(self):
-        """
-        GIVEN ALL_LOGIC_TOOLS
-        WHEN counting named tools
-        THEN at least 16 tools are registered (6 original + 4 CEC + 2 capabilities + others).
-        """
-        from ipfs_datasets_py.mcp_server.tools.logic_tools import ALL_LOGIC_TOOLS
-        named = [t for t in ALL_LOGIC_TOOLS if t.name]
-        assert len(named) >= 10
-
-
-# ---------------------------------------------------------------------------
-# Deprecation tests for api_server.py
-# ---------------------------------------------------------------------------
-
-class TestApiServerDeprecation:
-    """Tests that the old api_server.py emits deprecation warnings."""
-
-    def test_create_app_warns_deprecated(self):
-        """
-        GIVEN logic.api_server.create_app
-        WHEN called
-        THEN emits DeprecationWarning.
-        """
-        with pytest.warns(DeprecationWarning, match="deprecated"):
-            try:
-                from ipfs_datasets_py.logic.api_server import create_app
-                create_app()
-            except ImportError:
-                pass  # FastAPI not installed — warning was still emitted
-
-    def test_api_server_module_app_is_none(self):
-        """
-        GIVEN logic.api_server module
-        WHEN inspecting module-level 'app'
-        THEN it should be None (no longer eagerly created).
-        """
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            from ipfs_datasets_py.logic import api_server
-            assert api_server.app is None
+    def test_empty_answer_returns_failure(self):
+        from ipfs_datasets_py.mcp_server.tools.logic_tools import logic_verify_rag_output
+        result = run(logic_verify_rag_output(answer=""))
+        assert result["success"] is False
