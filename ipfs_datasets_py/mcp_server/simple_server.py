@@ -168,16 +168,16 @@ class SimpleIPFSDatasetsMCPServer:
                 return jsonify({"result": result})
             except ToolNotFoundError as e:
                 logger.error(f"Tool not found: {e}")
-                return jsonify({"error": str(e)}), 404
+                return jsonify({"error": f"Tool '{tool_name}' not found"}), 404
             except ToolExecutionError as e:
                 logger.error(f"Tool execution error: {e}", exc_info=True)
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"error": f"Tool '{tool_name}' execution failed"}), 500
             except (TypeError, ValueError) as e:
                 logger.error(f"Invalid parameters for tool {tool_name}: {e}", exc_info=True)
-                return jsonify({"error": f"Invalid parameters: {e}"}), 400
+                return jsonify({"error": "Invalid parameters provided"}), 400
             except Exception as e:
                 logger.error(f"Error calling tool {tool_name}: {e}", exc_info=True)
-                return jsonify({"error": str(e)}), 500
+                return jsonify({"error": f"Internal server error while calling tool '{tool_name}'"}), 500
 
     def register_tools(self):
         """Register all tools with the MCP server."""
