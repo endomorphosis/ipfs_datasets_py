@@ -89,6 +89,7 @@ mod tests {
             ],
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof);
@@ -106,6 +107,7 @@ mod tests {
             public_inputs: vec!["not".to_string(), "enough".to_string()], // Only 2, need 4
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof);
@@ -128,6 +130,7 @@ mod tests {
             ],
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof);
@@ -150,6 +153,7 @@ mod tests {
             ],
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof);
@@ -171,6 +175,7 @@ mod tests {
             ],
             timestamp: 0,
             version: 1,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof).expect("verify");
@@ -192,6 +197,7 @@ mod tests {
             ],
             timestamp: 0,
             version: 2,
+            extra: Default::default(),
         };
 
         let result = verify_proof(&proof).expect("verify");

@@ -4,9 +4,11 @@
 pub mod circuit;
 pub mod domain;
 pub mod prover;
+pub mod setup;
 pub mod verifier;
 
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct WitnessInput {
@@ -16,18 +18,32 @@ pub struct WitnessInput {
     pub theorem_hash_hex: String,
     pub circuit_version: u32,
     pub ruleset_id: String,
+
+    // Optional fields used by the Python side; intentionally accepted to keep
+    // the wire format forward-compatible.
+    #[serde(default)]
+    pub security_level: Option<u32>,
+
+    // Allow additional future fields without breaking deserialization.
+    #[serde(flatten)]
+    pub extra: std::collections::BTreeMap<String, serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProofOutput {
     #[serde(default = "default_schema_version")]
     pub schema_version: u32,
-    pub proof_a: String,            // Serialized point A
-    pub proof_b: String,            // Serialized point B
-    pub proof_c: String,            // Serialized point C
-    pub public_inputs: Vec<String>, // 4 public input scalars
+    pub proof_a: String,              // Serialized point A
+    pub proof_b: String,              // Serialized point B
+    pub proof_c: String,              // Serialized point C
+    pub public_inputs: Vec<String>,   // 4 public input scalars
     pub timestamp: u64,
     pub version: u32,
+
+    // Allow additional fields without breaking deserialization.
+    #[serde(default)]
+    #[serde(flatten)]
+    pub extra: std::collections::BTreeMap<String, serde_json::Value>,
 }
 
 fn default_schema_version() -> u32 {
@@ -50,4 +66,15 @@ pub fn prove(witness_json: &str) -> anyhow::Result<String> {
 pub fn verify(proof_json: &str) -> anyhow::Result<bool> {
     let proof: ProofOutput = serde_json::from_str(proof_json)?;
     verifier::verify_proof(&proof)
+}
+
+/// Run circuit-specific trusted setup for the MVP circuit.
+///
+/// Artifacts are written under `<crate-root>/artifacts/v{version}/`.
+/// Returns a one-line JSON manifest (stdout-friendly).
+pub fn setup(version: u32, seed: Option<u64>) -> anyhow::Result<String> {
+    let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let out_dir = crate_root.join("artifacts").join(format!("v{version}"));
+    let manifest = crate::setup::setup_to_dir(version, &out_dir, seed)?;
+    Ok(format!("{}\n", serde_json::to_string(&manifest)?))
 }

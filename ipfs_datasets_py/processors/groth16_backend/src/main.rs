@@ -28,9 +28,9 @@ enum Commands {
         #[arg(short, long)]
         output: String,
 
-            /// Seed for deterministic proving (also forces timestamp=0)
-            #[arg(long)]
-            seed: Option<u64>,
+        /// Seed for deterministic proving (also forces timestamp=0)
+        #[arg(long)]
+        seed: Option<u64>,
 
         /// Suppress status messages (stderr)
         #[arg(long, default_value_t = false)]
@@ -128,7 +128,7 @@ fn emit_error_json_to_stdout(code: &str, message: &str) {
         Err(_) => {
             print!(
                 "{}\n",
-                r#"{"error":{"schema_version":1,"code":"INTERNAL","message":"failed to serialize error"}}"#
+                r#"{\"error\":{\"schema_version\":1,\"code\":\"INTERNAL\",\"message\":\"failed to serialize error\"}}"#
             );
         }
     }
@@ -182,10 +182,7 @@ fn main() {
                     // - 0: valid
                     // - 1: invalid
                     if json {
-                        print!(
-                            r#"{{"valid":{}}}\n"#,
-                            if is_valid { "true" } else { "false" }
-                        );
+                        print!(r#"{{\"valid\":{}}}\n"#, if is_valid { "true" } else { "false" });
                     }
                     if !quiet {
                         if is_valid {
@@ -194,11 +191,7 @@ fn main() {
                             eprintln!("❌ Proof is INVALID");
                         }
                     }
-                    if is_valid {
-                        0
-                    } else {
-                        1
-                    }
+                    if is_valid { 0 } else { 1 }
                 }
                 Err(err) => {
                     let code = error_code(&err);
@@ -213,9 +206,24 @@ fn main() {
         }
 
         Commands::Setup { version } => {
-            println!("Setting up trusted parameters for v{}...", version);
-            println!("⚠️  Setup not yet implemented");
-            0
+            let run = || -> anyhow::Result<()> {
+                eprintln!("Setting up trusted parameters for v{}...", version);
+                let manifest_json = groth16_backend::setup(version)?;
+                // Keep stdout JSON-only.
+                print!("{}", manifest_json);
+                Ok(())
+            };
+
+            match run() {
+                Ok(()) => 0,
+                Err(err) => {
+                    let code = error_code(&err);
+                    let message = format!("{:#}", err);
+                    emit_error_json_to_stdout(code, &message);
+                    eprintln!("ERROR[{code}]: {message}");
+                    2
+                }
+            }
         }
     };
 

@@ -1,11 +1,13 @@
 // src/setup.rs
 // Trusted setup (circuit-specific parameters) for Groth16 MVP circuit
 
-use crate::{circuit::MVPCircuit, BackendError};
+use crate::circuit::MVPCircuit;
 use ark_bn254::Bn254;
 use ark_groth16::Groth16;
 use ark_serialize::CanonicalSerialize;
-use rand::rngs::OsRng;
+use ark_snark::SNARK;
+use rand::rngs::{OsRng, StdRng};
+use rand::SeedableRng;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use std::fs;
@@ -38,17 +40,25 @@ fn build_mvp_setup_circuit(version: u32) -> MVPCircuit {
     }
 }
 
-pub fn setup_to_dir(version: u32, out_dir: &Path) -> anyhow::Result<SetupManifestV1> {
+pub fn setup_to_dir(version: u32, out_dir: &Path, seed: Option<u64>) -> anyhow::Result<SetupManifestV1> {
     if version > 255 {
-        return Err(BackendError::Unsupported("circuit_version must be <= 255 for MVP circuit".to_string()).into());
+        anyhow::bail!("circuit_version must be <= 255 for MVP circuit");
     }
 
     fs::create_dir_all(out_dir)?;
 
     let circuit = build_mvp_setup_circuit(version);
 
-    let mut rng = OsRng;
-    let (pk, vk) = Groth16::<Bn254>::circuit_specific_setup(circuit, &mut rng)?;
+    let (pk, vk) = match seed {
+        Some(seed) => {
+            let mut rng = StdRng::seed_from_u64(seed);
+            Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+        }
+        None => {
+            let mut rng = OsRng;
+            Groth16::<Bn254>::circuit_specific_setup(circuit.clone(), &mut rng)?
+        }
+    };
 
     let pk_path: PathBuf = out_dir.join("proving_key.bin");
     let vk_path: PathBuf = out_dir.join("verifying_key.bin");
@@ -87,7 +97,7 @@ mod tests {
     #[test]
     fn test_setup_rejects_version_out_of_range() {
         let tmp = std::env::temp_dir().join("groth16_setup_test");
-        let err = setup_to_dir(256, &tmp).unwrap_err();
+        let err = setup_to_dir(256, &tmp, None).unwrap_err();
         assert!(format!("{err:#}").contains("circuit_version"));
     }
 
@@ -96,7 +106,7 @@ mod tests {
         let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
         let out_dir = std::env::temp_dir().join(format!("groth16_setup_{nonce}"));
 
-        let manifest = setup_to_dir(1, &out_dir).expect("setup should succeed");
+        let manifest = setup_to_dir(1, &out_dir, None).expect("setup should succeed");
 
         assert_eq!(manifest.schema_version, 1);
         assert_eq!(manifest.version, 1);
@@ -111,5 +121,22 @@ mod tests {
 
         // Cleanup best-effort to avoid cluttering /tmp
         let _ = fs::remove_dir_all(&out_dir);
+    }
+
+    #[test]
+    fn test_setup_is_reproducible_with_seed() {
+        let nonce = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos();
+        let out_dir1 = std::env::temp_dir().join(format!("groth16_setup_seed_a_{nonce}"));
+        let out_dir2 = std::env::temp_dir().join(format!("groth16_setup_seed_b_{nonce}"));
+
+        let m1 = setup_to_dir(1, &out_dir1, Some(123456789)).expect("setup should succeed");
+        let m2 = setup_to_dir(1, &out_dir2, Some(123456789)).expect("setup should succeed");
+
+        assert_eq!(m1.proving_key_sha256_hex, m2.proving_key_sha256_hex);
+        assert_eq!(m1.verifying_key_sha256_hex, m2.verifying_key_sha256_hex);
+        assert_eq!(m1.vk_hash_hex, m2.vk_hash_hex);
+
+        let _ = fs::remove_dir_all(&out_dir1);
+        let _ = fs::remove_dir_all(&out_dir2);
     }
 }

@@ -124,6 +124,7 @@ pub fn generate_proof(witness: &WitnessInput, seed: Option<u64>) -> anyhow::Resu
         public_inputs,
         timestamp,
         version: witness.circuit_version,
+        extra: Default::default(),
     };
 
     Ok(proof)
@@ -153,6 +154,8 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            security_level: None,
+            extra: Default::default(),
         };
 
         let result = generate_proof(&invalid_witness, None);
@@ -170,6 +173,8 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            security_level: None,
+            extra: Default::default(),
         };
 
         let result = generate_proof(&witness, None);
@@ -193,6 +198,8 @@ mod tests {
                 .to_string(),
             circuit_version: 42,
             ruleset_id: "CEC_v1".to_string(),
+            security_level: None,
+            extra: Default::default(),
         };
 
         let result = generate_proof(&witness, None);
@@ -213,6 +220,8 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            security_level: None,
+            extra: Default::default(),
         };
 
         let proof = generate_proof(&witness, Some(123)).expect("proof");
@@ -231,6 +240,8 @@ mod tests {
                 .to_string(),
             circuit_version: 1,
             ruleset_id: "TDFOL_v1".to_string(),
+            security_level: None,
+            extra: Default::default(),
         };
 
         let p1 = generate_proof(&witness, Some(42)).expect("p1");
