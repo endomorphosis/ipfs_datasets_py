@@ -20,7 +20,10 @@ It also forwards P2P auth validation to the host server.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .mcp_interfaces import MCPServerProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -39,18 +42,18 @@ class P2PMCPRegistryAdapter:
     
     def __init__(
         self,
-        host_server: Any,
+        host_server: MCPServerProtocol | Any,
         default_runtime: str = RUNTIME_FASTAPI,
         enable_runtime_detection: bool = True,
     ) -> None:
         """Initialize the P2P MCP registry adapter.
         
         Args:
-            host_server: The MCP server instance
+            host_server: The MCP server instance (should implement MCPServerProtocol)
             default_runtime: Default runtime for tools without explicit metadata
             enable_runtime_detection: Whether to auto-detect tool runtime
         """
-        self._host = host_server
+        self._host: MCPServerProtocol | Any = host_server
         self._default_runtime = default_runtime
         self._enable_runtime_detection = enable_runtime_detection
         
