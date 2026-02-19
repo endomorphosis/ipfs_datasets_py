@@ -143,8 +143,8 @@ solc --version
 
 #### Step 2.2: Compile GrothVerifier.sol
 ```bash
-# Navigate to contract directory
-cd /home/barberb/complaint-generator
+# Navigate to contract directory (from repo root)
+cd ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend
 
 # Compile with optimizations
 solc \
@@ -152,11 +152,11 @@ solc \
   --optimize-runs 200 \
   --bin \
   --abi \
-  -o ./groth16_backend/compiled_contracts/ \
-  GrothVerifier.sol
+  -o ./compiled_contracts/ \
+  contracts/GrothVerifier.sol
 
 # Check output
-ls -lah ./groth16_backend/compiled_contracts/
+ls -lah ./compiled_contracts/
 # Should have:
 # - GrothVerifier.bin (bytecode)
 # - GrothVerifier.abi (interface)
@@ -169,7 +169,7 @@ ls -lah ./groth16_backend/compiled_contracts/
 #### Step 2.3: Validate Bytecode Size
 ```bash
 # Check bytecode sizes (must be < 24,576 bytes = 24KB for Ethereum)
-wc -c ./groth16_backend/compiled_contracts/*.bin
+wc -c ./compiled_contracts/*.bin
 
 # Expected output:
 # GrothVerifier.bin:    ~15-18KB (OK)
@@ -273,7 +273,7 @@ class SepoliaDeployer:
     
     def load_contract(self, contract_name: str) -> Tuple[str, str]:
         """Load compiled contract bytecode and ABI."""
-        base_path = Path('./groth16_backend/compiled_contracts')
+        base_path = Path('./compiled_contracts')
         
         bin_path = base_path / f'{contract_name}.bin'
         abi_path = base_path / f'{contract_name}.abi'
@@ -618,9 +618,9 @@ verifier_addr = data['results'][0]['address']
 registry_addr = data['results'][1]['address']
 
 # Verify both
-verify_contract(verifier_addr, 'GrothVerifier', 'GrothVerifier.sol')
+verify_contract(verifier_addr, 'GrothVerifier', 'contracts/GrothVerifier.sol')
 time.sleep(2)
-verify_contract(registry_addr, 'ComplaintRegistry', 'GrothVerifier.sol')
+verify_contract(registry_addr, 'ComplaintRegistry', 'contracts/GrothVerifier.sol')
 
 print("\n✅ Verification requests submitted!")
 print("   Check Etherscan in 1-2 minutes for verification status")

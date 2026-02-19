@@ -48,7 +48,7 @@ Phase 3C.6 successfully completes the on-chain integration layer for Groth16 pro
 
 ### 1. Smart Contracts (GrothVerifier.sol)
 
-**File:** `/home/barberb/complaint-generator/GrothVerifier.sol`
+**File:** `ipfs_datasets_py/ipfs_datasets_py/processors/groth16_backend/contracts/GrothVerifier.sol`
 **Lines:** 500+
 **Language:** Solidity 0.8.19
 **Status:** ✅ Complete, compilable
