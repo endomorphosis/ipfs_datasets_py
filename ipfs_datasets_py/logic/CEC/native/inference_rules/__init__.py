@@ -51,6 +51,21 @@ from .deontic import (
     ObligationConsistency,
     ProhibitionEquivalence,
 )
+from .cognitive import (
+    BeliefDistribution,
+    KnowledgeImpliesBelief,
+    BeliefMonotonicity,
+    IntentionCommitment,
+    BeliefConjunction,
+    KnowledgeDistribution,
+    IntentionMeansEnd,
+    PerceptionImpliesKnowledge,
+    BeliefNegation,
+    KnowledgeConjunction,
+    IntentionPersistence,
+    BeliefRevision,
+    KnowledgeMonotonicity,
+)
 
 __all__ = [
     # Base
@@ -91,4 +106,18 @@ __all__ = [
     'PermissionDistribution',
     'ObligationConsistency',
     'ProhibitionEquivalence',
+    # Cognitive
+    'BeliefDistribution',
+    'KnowledgeImpliesBelief',
+    'BeliefMonotonicity',
+    'IntentionCommitment',
+    'BeliefConjunction',
+    'KnowledgeDistribution',
+    'IntentionMeansEnd',
+    'PerceptionImpliesKnowledge',
+    'BeliefNegation',
+    'KnowledgeConjunction',
+    'IntentionPersistence',
+    'BeliefRevision',
+    'KnowledgeMonotonicity',
 ]
