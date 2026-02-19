@@ -46,7 +46,12 @@ from .tdfol_core import (
     # Knowledge Base
     TDFOLKnowledgeBase,
     
-    # Expansion Rules (Phase 1 refactoring)
+    # Proof Results (Phase 1 Task 1.2 - Unified)
+    ProofStatus,
+    ProofStep,
+    ProofResult,
+    
+    # Expansion Rules (Phase 1 Task 1.1)
     ExpansionContext,
     ExpansionResult,
     ExpansionRule,
@@ -155,7 +160,12 @@ __all__ = [
     # Knowledge Base
     "TDFOLKnowledgeBase",
     
-    # Expansion Rules (Phase 1 refactoring)
+    # Proof Results (Phase 1 Task 1.2 - Unified)
+    "ProofStatus",
+    "ProofStep",
+    "ProofResult",
+    
+    # Expansion Rules (Phase 1 Task 1.1)
     "ExpansionContext",
     "ExpansionResult",
     "ExpansionRule",

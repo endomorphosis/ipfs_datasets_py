@@ -30,8 +30,9 @@ Example:
 from .base import (
     ProverStrategy,
     StrategyType,
-    ProofStep,
 )
+# Import ProofStep from unified location in tdfol_core
+from ..tdfol_core import ProofStep
 
 __all__ = [
     'ProverStrategy',

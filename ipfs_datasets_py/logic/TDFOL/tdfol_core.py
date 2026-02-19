@@ -468,6 +468,98 @@ class TDFOLKnowledgeBase:
 
 
 # ============================================================================
+# Proof Results (Phase 1 Task 1.2 - Unified Definitions)
+# ============================================================================
+
+
+class ProofStatus(Enum):
+    """
+    Status of a proof attempt.
+    
+    This enum is used across all proving strategies to indicate
+    the outcome of a proof attempt.
+    """
+    
+    PROVED = "proved"          # Formula was successfully proved
+    DISPROVED = "disproved"    # Formula was successfully disproved (countermodel found)
+    UNKNOWN = "unknown"        # Could not determine truth value
+    TIMEOUT = "timeout"        # Proof attempt exceeded timeout
+    ERROR = "error"            # Error occurred during proving
+
+
+@dataclass
+class ProofStep:
+    """
+    Single step in a proof derivation.
+    
+    Each step records:
+    - The formula derived at this step
+    - Justification (human-readable explanation)
+    - The inference rule applied
+    - Premises used (formulas this step depends on)
+    
+    Example:
+        >>> step = ProofStep(
+        ...     formula=Predicate("Q", (Constant("a"),)),
+        ...     justification="Applied modus ponens",
+        ...     rule_name="ModusPonens",
+        ...     premises=[Predicate("P", (Constant("a"),)), ...]
+        ... )
+    """
+    
+    formula: Formula
+    justification: str
+    rule_name: Optional[str] = None
+    premises: List[Formula] = field(default_factory=list)
+
+
+@dataclass
+class ProofResult:
+    """
+    Result of a proof attempt.
+    
+    This is the unified proof result type used across all TDFOL proving
+    strategies and external provers. It contains:
+    - Status of the proof attempt
+    - The formula that was proved/disproved
+    - Sequence of proof steps (derivation)
+    - Time taken
+    - Method/strategy used
+    - Optional message (error details, etc.)
+    
+    Usage:
+        >>> result = ProofResult(
+        ...     status=ProofStatus.PROVED,
+        ...     formula=formula,
+        ...     proof_steps=[step1, step2, step3],
+        ...     time_ms=42.5,
+        ...     method="forward_chaining"
+        ... )
+        >>> if result.is_proved():
+        ...     print("Formula is provable!")
+    """
+    
+    status: ProofStatus
+    formula: Formula
+    proof_steps: List[ProofStep] = field(default_factory=list)
+    time_ms: float = 0.0
+    method: str = "unknown"
+    message: str = ""
+    
+    def is_proved(self) -> bool:
+        """Check if formula was successfully proved."""
+        return self.status == ProofStatus.PROVED
+    
+    def is_disproved(self) -> bool:
+        """Check if formula was successfully disproved."""
+        return self.status == ProofStatus.DISPROVED
+    
+    def is_conclusive(self) -> bool:
+        """Check if result is conclusive (proved or disproved)."""
+        return self.status in (ProofStatus.PROVED, ProofStatus.DISPROVED)
+
+
+# ============================================================================
 # Expansion Rules for Tableaux/Proof Search
 # ============================================================================
 
