@@ -19,6 +19,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from decimal import Decimal
 
+from .eth_vk_registry_payloads import build_register_vk_payload
+
 import web3
 from web3 import Web3
 from web3.contract import Contract
@@ -37,6 +39,7 @@ class EthereumConfig:
     network_name: str                      # Human-readable name (mainnet, sepolia, etc.)
     verifier_contract_address: str         # Deployed GrothVerifier contract
     registry_contract_address: str         # Deployed ComplaintRegistry contract
+    vk_hash_registry_contract_address: Optional[str] = None  # VKHashRegistry (bytes32 circuitId → vkHash)
     confirmation_blocks: int = 20          # Blocks to wait for finality
     gas_price_multiplier: float = 1.2     # Multiply base gas price by this factor
     
@@ -99,6 +102,13 @@ class EthereumProofClient:
             config.registry_contract_address,
             "ComplaintRegistry"
         )
+
+        self.vk_hash_registry_contract: Optional[Contract] = None
+        if getattr(config, "vk_hash_registry_contract_address", None):
+            self.vk_hash_registry_contract = self._load_contract(
+                config.vk_hash_registry_contract_address,
+                "VKHashRegistry",
+            )
     
     def _load_contract(self, address: str, contract_name: str) -> Contract:
         """Load contract instance with ABI."""
@@ -118,6 +128,57 @@ class EthereumProofClient:
             return COMPLAINT_REGISTRY_ABI
         else:
             raise ValueError(f"Unknown contract: {contract_name}")
+
+    def register_vk_hash(
+        self,
+        circuit_id: str,
+        version: int,
+        vk_hash_hex: str,
+        *,
+        overwrite: bool = False,
+        from_account: Address,
+        private_key: str,
+        gas_price_wei: Optional[int] = None,
+        gas: int = 250_000,
+    ) -> TxHash:
+        """Register a verifying-key hash in VKHashRegistry.
+
+        `circuit_id` may be a 0x-prefixed bytes32 hex string or a text
+        identifier (hashed via keccak256). `vk_hash_hex` may be a 64-hex
+        digest (with/without 0x) or a bytes32 hex string.
+        """
+        if self.vk_hash_registry_contract is None:
+            raise ValueError("VKHashRegistry contract is not configured")
+
+        if not isinstance(circuit_id, str) or circuit_id.strip() == "":
+            raise TypeError("circuit_id must be a non-empty str")
+
+        circuit_id_s = circuit_id.strip()
+        if circuit_id_s.lower().startswith("0x"):
+            circuit_id_bytes32 = circuit_id_s
+        else:
+            circuit_id_bytes32 = "0x" + Web3.keccak(text=circuit_id_s).hex()
+
+        payload = build_register_vk_payload(
+            circuit_id_bytes32=circuit_id_bytes32,
+            version=int(version),
+            vk_hash_hex=vk_hash_hex,
+        )
+
+        tx = self.vk_hash_registry_contract.functions.registerVK(
+            payload.circuit_id_bytes32,
+            int(payload.version),
+            payload.vk_hash_bytes32,
+            bool(overwrite),
+        ).build_transaction({
+            "from": from_account,
+            "nonce": self.w3.eth.get_transaction_count(from_account),
+            "gasPrice": gas_price_wei or int(self.w3.eth.gas_price * self.config.gas_price_multiplier),
+            "gas": gas,
+        })
+
+        signed_tx = self.w3.eth.account.sign_transaction(tx, private_key)
+        return self.w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     
     def estimate_verification_cost(self, proof_data: bytes) -> GasEstimate:
         """Estimate gas and ETH cost for proof verification."""
@@ -466,4 +527,55 @@ COMPLAINT_REGISTRY_ABI = [
         "outputs": [{"name": "", "type": "uint256"}],
         "stateMutability": "view"
     }
+]
+
+
+VK_HASH_REGISTRY_ABI = [
+    {
+        "name": "registerVK",
+        "type": "function",
+        "inputs": [
+            {"name": "circuitId", "type": "bytes32"},
+            {"name": "version", "type": "uint64"},
+            {"name": "vkHash", "type": "bytes32"},
+            {"name": "overwrite", "type": "bool"},
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable",
+    },
+    {
+        "name": "setDeprecated",
+        "type": "function",
+        "inputs": [
+            {"name": "circuitId", "type": "bytes32"},
+            {"name": "version", "type": "uint64"},
+            {"name": "deprecated", "type": "bool"},
+        ],
+        "outputs": [],
+        "stateMutability": "nonpayable",
+    },
+    {
+        "name": "isRegistered",
+        "type": "function",
+        "inputs": [
+            {"name": "circuitId", "type": "bytes32"},
+            {"name": "version", "type": "uint64"},
+        ],
+        "outputs": [{"name": "", "type": "bool"}],
+        "stateMutability": "view",
+    },
+    {
+        "name": "getVK",
+        "type": "function",
+        "inputs": [
+            {"name": "circuitId", "type": "bytes32"},
+            {"name": "version", "type": "uint64"},
+        ],
+        "outputs": [
+            {"name": "vkHash", "type": "bytes32"},
+            {"name": "deprecated", "type": "bool"},
+            {"name": "registeredAt", "type": "uint64"},
+        ],
+        "stateMutability": "view",
+    },
 ]
