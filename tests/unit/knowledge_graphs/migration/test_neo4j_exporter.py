@@ -1603,5 +1603,159 @@ class TestNeo4jSchemaExport:
         assert 'KNOWS' in graph_data.schema.relationship_types
 
 
+class TestNeo4jExporterExportMethod:
+    """Tests for Neo4jExporter.export() and export_to_graph_data() — covers lines 331-431."""
+
+    def _make_exporter(self, mocker, include_schema: bool = False):
+        """Helper: build a Neo4jExporter with all internal methods mocked."""
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        config = ExportConfig(include_schema=include_schema)
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect")
+        mocker.patch.object(exporter, "_close")
+        mocker.patch.object(exporter, "_export_nodes", return_value=5)
+        mocker.patch.object(exporter, "_export_relationships", return_value=3)
+        mocker.patch.object(exporter, "_export_schema")
+        return exporter
+
+    def test_export_returns_success_result(self, mocker):
+        """
+        GIVEN: A Neo4jExporter whose connection/export methods are mocked
+        WHEN: export() is called
+        THEN: Returns a successful ExportResult with node/relationship counts
+        """
+        exporter = self._make_exporter(mocker)
+        result = exporter.export()
+
+        assert result.success is True
+        assert result.node_count == 5
+        assert result.relationship_count == 3
+        assert result.duration_seconds >= 0
+        assert result.errors == []
+
+    def test_export_calls_close_on_success(self, mocker):
+        """
+        GIVEN: A Neo4jExporter whose connection/export methods are mocked
+        WHEN: export() is called
+        THEN: _close() is called (via finally block)
+        """
+        exporter = self._make_exporter(mocker)
+        exporter.export()
+        exporter._close.assert_called_once()
+
+    def test_export_calls_schema_when_enabled(self, mocker):
+        """
+        GIVEN: A Neo4jExporter with include_schema=True
+        WHEN: export() is called
+        THEN: _export_schema() is called
+        """
+        exporter = self._make_exporter(mocker, include_schema=True)
+        exporter.export()
+        exporter._export_schema.assert_called_once()
+
+    def test_export_does_not_call_schema_when_disabled(self, mocker):
+        """
+        GIVEN: A Neo4jExporter with include_schema=False
+        WHEN: export() is called
+        THEN: _export_schema() is NOT called
+        """
+        exporter = self._make_exporter(mocker, include_schema=False)
+        exporter.export()
+        exporter._export_schema.assert_not_called()
+
+    def test_export_returns_failure_on_migration_error(self, mocker):
+        """
+        GIVEN: _connect() raises a MigrationError
+        WHEN: export() is called
+        THEN: Returns ExportResult with success=False and the error message
+        """
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect", side_effect=MigrationError("conn failed"))
+        mocker.patch.object(exporter, "_close")
+
+        result = exporter.export()
+
+        assert result.success is False
+        assert len(result.errors) >= 1
+
+    def test_export_returns_failure_on_unexpected_error(self, mocker):
+        """
+        GIVEN: _export_nodes() raises an unexpected RuntimeError
+        WHEN: export() is called
+        THEN: Returns ExportResult with success=False and the error message
+        """
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect")
+        mocker.patch.object(exporter, "_close")
+        mocker.patch.object(exporter, "_export_nodes", side_effect=RuntimeError("boom"))
+        mocker.patch.object(exporter, "_export_relationships", return_value=0)
+        mocker.patch.object(exporter, "_export_schema")
+
+        result = exporter.export()
+
+        assert result.success is False
+        assert len(result.errors) >= 1
+
+    def test_export_to_graph_data_returns_graph_data(self, mocker):
+        """
+        GIVEN: A Neo4jExporter whose connection/export methods are mocked
+        WHEN: export_to_graph_data() is called
+        THEN: Returns a non-None GraphData object
+        """
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        from ipfs_datasets_py.knowledge_graphs.migration.formats import GraphData
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect")
+        mocker.patch.object(exporter, "_close")
+        mocker.patch.object(exporter, "_export_nodes", return_value=2)
+        mocker.patch.object(exporter, "_export_relationships", return_value=1)
+        mocker.patch.object(exporter, "_export_schema")
+
+        graph_data = exporter.export_to_graph_data()
+
+        assert graph_data is not None
+        assert isinstance(graph_data, GraphData)
+
+    def test_export_to_graph_data_returns_none_on_migration_error(self, mocker):
+        """
+        GIVEN: _connect() raises a MigrationError
+        WHEN: export_to_graph_data() is called
+        THEN: Returns None
+        """
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        config = ExportConfig()
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect", side_effect=MigrationError("conn failed"))
+        mocker.patch.object(exporter, "_close")
+
+        result = exporter.export_to_graph_data()
+
+        assert result is None
+
+    def test_export_to_graph_data_restores_output_file(self, mocker):
+        """
+        GIVEN: ExportConfig has output_file set
+        WHEN: export_to_graph_data() is called
+        THEN: output_file is restored to original value after call
+        """
+        from ipfs_datasets_py.knowledge_graphs.migration.neo4j_exporter import Neo4jExporter
+        config = ExportConfig(output_file="/tmp/test.json")
+        exporter = Neo4jExporter(config)
+        mocker.patch.object(exporter, "_connect")
+        mocker.patch.object(exporter, "_close")
+        mocker.patch.object(exporter, "_export_nodes", return_value=0)
+        mocker.patch.object(exporter, "_export_relationships", return_value=0)
+        mocker.patch.object(exporter, "_export_schema")
+
+        exporter.export_to_graph_data()
+
+        assert exporter.config.output_file == "/tmp/test.json"
+
+
 if __name__ == "__main__" and HAVE_PYTEST:
     pytest.main([__file__, "-v"])

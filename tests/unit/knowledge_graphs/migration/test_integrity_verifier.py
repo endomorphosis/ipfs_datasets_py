@@ -408,5 +408,102 @@ class TestIntegrityEdgeCases:
         assert report.checks_failed > 0
 
 
+class TestIntegrityVerifierSample:
+    """Tests for IntegrityVerifier.verify_sample() — covers lines 182-214."""
+
+    def _make_graph(self, count: int = 3) -> "GraphData":
+        """Helper: build a GraphData with `count` nodes."""
+        nodes = [
+            NodeData(id=f"n{i}", labels=["Item"], properties={"val": i})
+            for i in range(count)
+        ]
+        return GraphData(nodes=nodes)
+
+    def test_verify_sample_identical_graphs(self):
+        """
+        GIVEN: Two identical graphs
+        WHEN: verify_sample() is called
+        THEN: Report passes with all checks passed
+        """
+        graph = self._make_graph(3)
+        verifier = IntegrityVerifier()
+        report = verifier.verify_sample(graph, graph, sample_size=10)
+
+        assert report.passed is True
+        assert report.checks_performed == 3
+        assert report.checks_passed == 3
+        assert report.checks_failed == 0
+
+    def test_verify_sample_missing_node_in_target(self):
+        """
+        GIVEN: Source has a node absent from target
+        WHEN: verify_sample() is called
+        THEN: Report fails with an error entry for the missing node
+        """
+        source = GraphData(nodes=[
+            NodeData(id="n0", labels=["X"], properties={"a": 1}),
+            NodeData(id="n1", labels=["X"], properties={"b": 2}),
+        ])
+        target = GraphData(nodes=[
+            NodeData(id="n1", labels=["X"], properties={"b": 2}),
+        ])
+
+        verifier = IntegrityVerifier()
+        report = verifier.verify_sample(source, target, sample_size=10)
+
+        assert report.passed is False
+        assert report.checks_failed >= 1
+        assert any(e["check"] == "node_exists" for e in report.errors)
+
+    def test_verify_sample_property_mismatch_recorded_as_warning(self):
+        """
+        GIVEN: Source node has different properties than target node
+        WHEN: verify_sample() is called
+        THEN: Mismatch recorded; checks_failed incremented
+        """
+        source = GraphData(nodes=[
+            NodeData(id="n0", labels=["X"], properties={"val": 1}),
+        ])
+        target = GraphData(nodes=[
+            NodeData(id="n0", labels=["X"], properties={"val": 999}),
+        ])
+
+        verifier = IntegrityVerifier()
+        report = verifier.verify_sample(source, target, sample_size=10)
+
+        assert report.checks_performed == 1
+        assert report.checks_failed == 1
+        assert len(report.warnings) >= 1
+
+    def test_verify_sample_respects_sample_size(self):
+        """
+        GIVEN: Source has 10 nodes; target matches all
+        WHEN: verify_sample() is called with sample_size=5
+        THEN: Only 5 checks are performed
+        """
+        source = self._make_graph(10)
+        target = self._make_graph(10)
+
+        verifier = IntegrityVerifier()
+        report = verifier.verify_sample(source, target, sample_size=5)
+
+        assert report.checks_performed == 5
+
+    def test_verify_sample_empty_source(self):
+        """
+        GIVEN: Source is an empty graph
+        WHEN: verify_sample() is called
+        THEN: Report passes with zero checks performed
+        """
+        source = GraphData(nodes=[])
+        target = GraphData(nodes=[])
+
+        verifier = IntegrityVerifier()
+        report = verifier.verify_sample(source, target, sample_size=10)
+
+        assert report.passed is True
+        assert report.checks_performed == 0
+
+
 if __name__ == "__main__" and HAVE_PYTEST:
     pytest.main([__file__, "-v"])

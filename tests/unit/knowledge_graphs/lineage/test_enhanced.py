@@ -1,6 +1,9 @@
 """Tests for enhanced lineage features."""
 
 import pytest
+
+networkx = pytest.importorskip("networkx", reason="NetworkX required for lineage tests")
+
 from ipfs_datasets_py.knowledge_graphs.lineage import (
     EnhancedLineageTracker,
     SemanticAnalyzer,
