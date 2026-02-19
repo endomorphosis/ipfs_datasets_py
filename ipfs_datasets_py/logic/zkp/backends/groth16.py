@@ -111,5 +111,19 @@ class Groth16Backend:
         except Exception as e:
             raise ZKPError(f"Groth16 proof verification failed: {e}")
     
+
+    def setup(self, version: int = 1, *, seed: Optional[int] = None) -> dict[str, Any]:
+        if not self._enabled():
+            raise ZKPError(
+                "Groth16 backend is disabled by default. "
+                "Set IPFS_DATASETS_ENABLE_GROTH16=1 to enable Rust FFI setup, "
+                "or use the default 'simulated' backend."
+            )
+
+        try:
+            return self._ffi().setup(version, seed=seed)
+        except Exception as e:
+            raise ZKPError(f"Groth16 setup failed: {e}")
+
     # NOTE: Circuit compilation / setup / key management remains out of scope for
     # this adapter entrypoint. See GROTH16_IMPLEMENTATION_PLAN.md.
