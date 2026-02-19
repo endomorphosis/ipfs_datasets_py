@@ -2,12 +2,16 @@
 Zero-Knowledge Proof Verifier for Logic Theorems.
 
 Verifies zero-knowledge proofs without seeing the private axioms.
+
+⚠️  WARNING: This module verifies SIMULATED proofs only.
+             NOT cryptographically secure. Educational/demo use only.
 """
 
 from typing import Dict, Any
 import hashlib
 import logging
 import time
+import warnings
 
 from . import ZKPProof, ZKPError
 from .backends import get_backend
@@ -19,44 +23,59 @@ logger = logging.getLogger(__name__)
 class ZKPVerifier:
     """
     Verify zero-knowledge proofs for logic theorems.
-    
+
     The verifier can confirm that a proof is valid without learning
     anything about the private axioms used to generate it.
-    
+
     Features:
         - Fast verification (<10ms)
         - No access to private data
         - Proof validity checking
         - Statistics tracking
-    
+
     Example:
         >>> from ipfs_datasets_py.logic.zkp import ZKPProver, ZKPVerifier
-        >>> 
+        >>>
         >>> # Generate proof
         >>> prover = ZKPProver()
         >>> proof = prover.generate_proof(
         ...     theorem="Q",
         ...     private_axioms=["P", "P -> Q"]
         ... )
-        >>> 
+        >>>
         >>> # Verify without seeing axioms
         >>> verifier = ZKPVerifier()
         >>> assert verifier.verify_proof(proof)
         >>> print(f"Verification time: {verifier.get_stats()['avg_verification_time']*1000:.2f}ms")
         Verification time: 0.05ms
-    
+
     Note:
-        This is a simulated verifier for demonstration. In production,
-        use py_ecc with Groth16 for real cryptographic verification.
+        This is a SIMULATED verifier for demonstration only. It is NOT
+        cryptographically secure. In production, use py_ecc with Groth16
+        for real cryptographic verification.
+        See ``logic/zkp/PRODUCTION_UPGRADE_PATH.md`` for the upgrade path.
     """
-    
+
     def __init__(self, security_level: int = 128, backend: str = "simulated"):
         """
         Initialize ZKP verifier.
-        
+
+        ⚠️  WARNING: This verifies SIMULATED proofs only — NOT cryptographically
+        secure. For production use, integrate a real Groth16/PLONK backend.
+        See ``logic/zkp/PRODUCTION_UPGRADE_PATH.md`` for upgrade instructions.
+
         Args:
-            security_level: Required security bits (default: 128)
+            security_level: Required security bits (default: 128, simulation only)
+            backend: Verification backend; only "simulated" is currently supported
         """
+        warnings.warn(
+            "ZKPVerifier verifies SIMULATED proofs only. "
+            "NOT cryptographically secure. "
+            "Do not use in production systems requiring real zero-knowledge proofs. "
+            "See logic/zkp/PRODUCTION_UPGRADE_PATH.md for the upgrade path.",
+            UserWarning,
+            stacklevel=2,
+        )
         self.security_level = security_level
         self.backend = backend
         self._backend = get_backend(backend)

@@ -56,6 +56,13 @@ from .feature_detection import (
     require_module,
     import_optional_module,
 )
+from .validators import (
+    validate_formula_string,
+    validate_axiom_list,
+    validate_logic_system,
+    validate_timeout_ms,
+    validate_format,
+)
 
 __all__ = [
     # Error classes
@@ -96,4 +103,10 @@ __all__ = [
     "is_module_available",
     "require_module",
     "import_optional_module",
+    # Input validation
+    "validate_formula_string",
+    "validate_axiom_list",
+    "validate_logic_system",
+    "validate_timeout_ms",
+    "validate_format",
 ]

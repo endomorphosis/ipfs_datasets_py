@@ -17,6 +17,7 @@ from .ipfs_pinner import IPFSPinner
 from .ipfs_getter import IPFSGetter
 from .knowledge_graph_manager import KnowledgeGraphManager
 from .data_processor import DataProcessor
+from .logic_processor import LogicProcessor
 
 __all__ = [
     "DatasetLoader",
@@ -26,4 +27,5 @@ __all__ = [
     "IPFSGetter",
     "KnowledgeGraphManager",
     "DataProcessor",
+    "LogicProcessor",
 ]

@@ -3,13 +3,15 @@ Inference rules package for DCEC theorem proving.
 
 This package contains all inference rules organized by category:
 - base: Base classes and enums
-- propositional: Basic propositional logic rules
-- first_order: Quantifier rules
-- temporal: Temporal reasoning rules
-- deontic: Deontic logic rules
-- modal: Modal logic rules
-- cognitive: Cognitive operator rules
-- specialized: Advanced and specialized rules
+- propositional: Basic propositional logic rules (10 rules)
+- temporal: Temporal reasoning rules (15 rules)
+- deontic: Deontic logic rules (7 rules)
+- cognitive: Cognitive operator rules (13 rules)
+- modal: Modal logic rules (5 rules)
+- resolution: Resolution-based rules (7 rules)
+- specialized: Advanced and specialized rules (10 rules)
+
+Total: 67 inference rules + base classes
 """
 
 from .base import ProofResult, InferenceRule
@@ -66,12 +68,38 @@ from .cognitive import (
     BeliefRevision,
     KnowledgeMonotonicity,
 )
+from .modal import (
+    NecessityElimination,
+    PossibilityIntroduction,
+    NecessityDistribution,
+    PossibilityDuality,
+    NecessityConjunction,
+)
+from .resolution import (
+    ResolutionRule,
+    UnitResolutionRule,
+    FactoringRule,
+    SubsumptionRule,
+    CaseAnalysisRule,
+    ProofByContradictionRule,
+)
+from .specialized import (
+    BiconditionalIntroduction,
+    BiconditionalElimination,
+    ConstructiveDilemma,
+    DestructiveDilemma,
+    ExportationRule,
+    AbsorptionRule,
+    AdditionRule,
+    TautologyRule,
+    CommutativityConjunction,
+)
 
 __all__ = [
     # Base
     'ProofResult',
     'InferenceRule',
-    # Propositional
+    # Propositional (10 rules)
     'ModusPonens',
     'Simplification',
     'ConjunctionIntroduction',
@@ -82,7 +110,7 @@ __all__ = [
     'Contraposition',
     'HypotheticalSyllogism',
     'ImplicationElimination',
-    # Temporal
+    # Temporal (15 rules)
     'AlwaysDistribution',
     'AlwaysImplication',
     'AlwaysTransitive',
@@ -98,7 +126,7 @@ __all__ = [
     'SinceWeakening',
     'TemporalUntilElimination',
     'TemporalNegation',
-    # Deontic
+    # Deontic (7 rules)
     'ObligationDistribution',
     'ObligationImplication',
     'PermissionFromNonObligation',
@@ -106,7 +134,7 @@ __all__ = [
     'PermissionDistribution',
     'ObligationConsistency',
     'ProhibitionEquivalence',
-    # Cognitive
+    # Cognitive (13 rules)
     'BeliefDistribution',
     'KnowledgeImpliesBelief',
     'BeliefMonotonicity',
@@ -120,4 +148,27 @@ __all__ = [
     'IntentionPersistence',
     'BeliefRevision',
     'KnowledgeMonotonicity',
+    # Modal (5 rules)
+    'NecessityElimination',
+    'PossibilityIntroduction',
+    'NecessityDistribution',
+    'PossibilityDuality',
+    'NecessityConjunction',
+    # Resolution (6 rules)
+    'ResolutionRule',
+    'UnitResolutionRule',
+    'FactoringRule',
+    'SubsumptionRule',
+    'CaseAnalysisRule',
+    'ProofByContradictionRule',
+    # Specialized (9 rules)
+    'BiconditionalIntroduction',
+    'BiconditionalElimination',
+    'ConstructiveDilemma',
+    'DestructiveDilemma',
+    'ExportationRule',
+    'AbsorptionRule',
+    'AdditionRule',
+    'TautologyRule',
+    'CommutativityConjunction',
 ]
