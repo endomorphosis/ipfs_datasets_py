@@ -424,7 +424,11 @@ def execute_ir_operations(
                     len(order_items),
                 )
             except (TypeError, ValueError, KeyError) as e:
-                logger.warning("OrderBy: failed to sort results: %s", e)
+                logger.warning(
+                    "OrderBy: failed to sort results (%s): %s",
+                    type(e).__name__,
+                    e,
+                )
 
         elif op_type == "CreateNode":
             variable = op.get("variable")

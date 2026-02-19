@@ -189,7 +189,7 @@ class QueryExecutor:
             if raise_on_error:
                 raise query_error from e
 
-            logger.error("Cypher parse failed: %s", e)
+            logger.error("Cypher parse failed (%s): %s", type(e).__name__, e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
@@ -205,7 +205,7 @@ class QueryExecutor:
             if raise_on_error:
                 raise query_error from e
 
-            logger.error("Cypher compile failed: %s", e)
+            logger.error("Cypher compile failed (%s): %s", type(e).__name__, e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
@@ -220,7 +220,7 @@ class QueryExecutor:
             if raise_on_error:
                 raise
 
-            logger.error("Cypher execution failed: %s", e)
+            logger.error("Cypher execution failed (%s): %s", type(e).__name__, e)
             error_type = "parse" if isinstance(e, QueryParseError) else "execution"
             summary = {
                 "query_type": "Cypher",
@@ -237,7 +237,7 @@ class QueryExecutor:
             if raise_on_error:
                 raise query_error from e
 
-            logger.error("Cypher execution failed: %s", e)
+            logger.error("Cypher execution failed (%s): %s", type(e).__name__, e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
@@ -253,7 +253,7 @@ class QueryExecutor:
                 raise
 
             # Keep the original error type in summary rather than losing taxonomy.
-            logger.error("Cypher execution failed: %s", e)
+            logger.error("Cypher execution failed (%s): %s", type(e).__name__, e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
@@ -269,7 +269,7 @@ class QueryExecutor:
             if raise_on_error:
                 raise query_error from e
 
-            logger.error("Cypher execution failed: %s", e)
+            logger.error("Cypher execution failed (%s): %s", type(e).__name__, e)
             summary = {
                 "query_type": "Cypher",
                 "query": query[:100],
@@ -910,7 +910,7 @@ class _LegacyGraphEngine:
                        cid, len(nodes), len(relationships))
             return cid
         except StorageError as e:
-            logger.error("Failed to save graph: %s", e)
+            logger.error("Failed to save graph (%s): %s", type(e).__name__, e)
             return None
     
     def load_graph(self, root_cid: str) -> bool:
@@ -962,7 +962,12 @@ class _LegacyGraphEngine:
                        root_cid, len(self._node_cache), len(self._relationship_cache))
             return True
         except StorageError as e:
-            logger.error("Failed to load graph from %s: %s", root_cid, e)
+            logger.error(
+                "Failed to load graph from %s (%s): %s",
+                root_cid,
+                type(e).__name__,
+                e,
+            )
             return False
     
     def get_relationships(
