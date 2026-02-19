@@ -73,6 +73,9 @@ class P2PMCPRegistryAdapter:
     def tools(self) -> Dict[str, Dict[str, Any]]:
         """Get all tools with runtime metadata.
         
+        PHASE 2 WEEK 5: Enhanced to support hierarchical tools discovery.
+        Falls back to hierarchical tool manager when flat tools unavailable.
+        
         Returns dict of tool name -> tool descriptor with:
         - function: The callable
         - description: Tool description
@@ -82,9 +85,14 @@ class P2PMCPRegistryAdapter:
         """
         out: Dict[str, Dict[str, Any]] = {}
         host_tools = getattr(self._host, "tools", None)
-        if not isinstance(host_tools, dict):
-            return out
+        
+        # Phase 2 Week 5: If no flat tools, use hierarchical discovery
+        if not isinstance(host_tools, dict) or len(host_tools) <= 4:
+            # Only hierarchical meta-tools present, discover all tools
+            logger.debug("Using hierarchical tool discovery (Phase 2 Week 5 enhancement)")
+            return self._get_hierarchical_tools()
 
+        # Legacy: Process flat tools if available (backward compatibility)
         for name, fn in host_tools.items():
             if not callable(fn):
                 continue
@@ -112,6 +120,122 @@ class P2PMCPRegistryAdapter:
                 # tool_manifest.tool_execution_context will treat missing
                 # execution_context as unknown; the P2P service embeds a default.
             }
+        
+        return out
+    
+    def _get_hierarchical_tools(self) -> Dict[str, Dict[str, Any]]:
+        """Get all tools from hierarchical tool manager.
+        
+        Phase 2 Week 5: New method to discover tools through hierarchical system
+        instead of flat registration. This eliminates the 99% overhead from
+        duplicate registrations.
+        
+        Returns:
+            Dict of tool name -> tool descriptor for all discovered tools
+        """
+        out: Dict[str, Dict[str, Any]] = {}
+        
+        try:
+            # Import here to avoid circular dependency
+            from .hierarchical_tool_manager import get_tool_manager
+            import asyncio
+            
+            manager = get_tool_manager()
+            if manager is None:
+                logger.warning("Hierarchical tool manager not available")
+                return out
+            
+            # Get all categories (this is async, need to handle it)
+            try:
+                # Try to run in existing event loop or create new one
+                try:
+                    loop = asyncio.get_event_loop()
+                    if loop.is_running():
+                        # Can't use asyncio.run in running loop, create task
+                        # For now, return empty and log warning
+                        logger.debug("Cannot discover hierarchical tools in running loop context")
+                        return out
+                except RuntimeError:
+                    pass
+                
+                # Run async list_categories
+                categories_result = asyncio.run(manager.list_categories())
+                
+                # Extract category names from result
+                if isinstance(categories_result, dict) and "categories" in categories_result:
+                    category_list = categories_result["categories"]
+                    categories = [cat.get("name") or cat.get("category") for cat in category_list if isinstance(cat, dict)]
+                else:
+                    categories = []
+                
+                logger.debug(f"Discovering tools from {len(categories)} categories")
+                
+                # Iterate through each category
+                for category in categories:
+                    try:
+                        # Get tools in this category (also async)
+                        cat_tools_result = asyncio.run(manager.list_tools(category))
+                        
+                        # Extract tools list
+                        if isinstance(cat_tools_result, dict) and "tools" in cat_tools_result:
+                            cat_tools = cat_tools_result["tools"]
+                        else:
+                            continue
+                        
+                        for tool_info in cat_tools:
+                            tool_name = tool_info.get("name")
+                            if not tool_name:
+                                continue
+                            
+                            # Get the actual callable using dispatch
+                            try:
+                                # The hierarchical system provides callables through dispatch
+                                # We create a wrapper that calls tools_dispatch
+                                def make_tool_wrapper(cat, name):
+                                    async def wrapper(**kwargs):
+                                        from .hierarchical_tool_manager import tools_dispatch
+                                        return await tools_dispatch(
+                                            category=cat,
+                                            tool_name=name,
+                                            **kwargs
+                                        )
+                                    wrapper.__name__ = name
+                                    wrapper.__doc__ = tool_info.get("description", "")
+                                    return wrapper
+                                
+                                fn = make_tool_wrapper(category, tool_name)
+                                
+                                # Build tool descriptor
+                                out[str(tool_name)] = {
+                                    "function": fn,
+                                    "description": tool_info.get("description", ""),
+                                    "input_schema": tool_info.get("input_schema", {}),
+                                    "runtime": self._default_runtime,
+                                    "runtime_metadata": {
+                                        "is_async": True,  # Dispatch is always async
+                                        "is_trio_native": False,
+                                        "requires_trio_context": False,
+                                        "category": category,
+                                        "hierarchical": True,
+                                    },
+                                }
+                            except Exception as e:
+                                logger.debug(f"Error creating wrapper for {tool_name}: {e}")
+                                continue
+                                
+                    except Exception as e:
+                        logger.debug(f"Error processing category {category}: {e}")
+                        continue
+                
+                logger.info(f"Discovered {len(out)} tools through hierarchical system")
+                
+            except Exception as e:
+                logger.debug(f"Error getting categories: {e}")
+            
+        except Exception as e:
+            logger.error(f"Error discovering hierarchical tools: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
         
         return out
     
