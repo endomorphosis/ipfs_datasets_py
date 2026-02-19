@@ -129,7 +129,11 @@ class WriteAheadLog:
             logger.error(f"Failed to append WAL entry: {e}")
             raise TransactionError(
                 f"Failed to append WAL entry: {e}",
-                details={'txn_id': str(entry.txn_id)}
+                details={
+                    'txn_id': str(entry.txn_id),
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
     
     def read(self, from_cid: Optional[str] = None) -> Iterator[WALEntry]:
@@ -190,7 +194,11 @@ class WriteAheadLog:
                 logger.error(f"Failed to read WAL entry {current_cid}: {e}")
                 raise TransactionError(
                     f"Failed to read WAL entry: {e}",
-                    details={'cid': str(current_cid)}
+                    details={
+                        'cid': str(current_cid),
+                        'error': str(e),
+                        'error_class': type(e).__name__,
+                    }
                 ) from e
     
     def compact(self, checkpoint_cid: str) -> str:
@@ -246,7 +254,12 @@ class WriteAheadLog:
             logger.error(f"Failed to compact WAL: {e}")
             raise TransactionError(
                 f"Failed to compact WAL: {e}",
-                details={'entry_count': self._entry_count, 'threshold': self.compaction_threshold}
+                details={
+                    'entry_count': self._entry_count,
+                    'threshold': self.compaction_threshold,
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
     
     def recover(self, wal_head_cid: Optional[str] = None) -> List[Operation]:
@@ -309,7 +322,11 @@ class WriteAheadLog:
             logger.error(f"Failed to recover from WAL: {e}")
             raise TransactionError(
                 f"Failed to recover from WAL: {e}",
-                details={'wal_head': str(self.wal_head_cid) if self.wal_head_cid else None}
+                details={
+                    'wal_head': str(self.wal_head_cid) if self.wal_head_cid else None,
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
     
     def get_transaction_history(self, txn_id: str) -> List[WALEntry]:

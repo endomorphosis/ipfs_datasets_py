@@ -253,7 +253,13 @@ class IPLDBackend:
             logger.error(f"Failed to store on IPFS: {e}")
             raise IPLDStorageError(
                 "Failed to store data on IPFS",
-                details={'backend': self.backend_name, 'codec': codec, 'operation': 'store'}
+                details={
+                    'backend': self.backend_name,
+                    'codec': codec,
+                    'operation': 'store',
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
     
     def retrieve(self, cid: str) -> bytes:
@@ -296,7 +302,13 @@ class IPLDBackend:
                 logger.error(f"Failed to retrieve CID {cid}: {e}")
                 raise IPLDStorageError(
                     "Failed to retrieve data from IPFS",
-                    details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
+                    details={
+                        'backend': self.backend_name,
+                        'cid': cid,
+                        'operation': 'retrieve',
+                        'error': str(e),
+                        'error_class': type(e).__name__,
+                    }
                 ) from e
         except (SerializationError, DeserializationError, IPLDStorageError, StorageError):
             raise
@@ -310,7 +322,13 @@ class IPLDBackend:
             logger.error(f"Failed to retrieve from IPFS: {e}")
             raise IPLDStorageError(
                 "Failed to retrieve data from IPFS",
-                details={'backend': self.backend_name, 'cid': cid, 'operation': 'retrieve'}
+                details={
+                    'backend': self.backend_name,
+                    'cid': cid,
+                    'operation': 'retrieve',
+                    'error': str(e),
+                    'error_class': type(e).__name__,
+                }
             ) from e
         
         # Store in cache

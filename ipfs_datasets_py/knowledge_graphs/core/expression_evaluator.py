@@ -85,10 +85,20 @@ def call_function(func_name: str, args: List[Any]) -> Any:
         except KnowledgeGraphError:
             raise
         except (AttributeError, TypeError, ValueError, KeyError, ZeroDivisionError, OverflowError) as e:
-            logger.warning("Function %s raised exception: %s", func_name, e)
+            logger.warning(
+                "Function %s raised %s: %s",
+                func_name,
+                type(e).__name__,
+                e,
+            )
             return None
         except Exception as e:
-            logger.warning("Function %s raised exception: %s", func_name, e)
+            logger.warning(
+                "Function %s raised unexpected %s: %s",
+                func_name,
+                type(e).__name__,
+                e,
+            )
             return None
 
     # String functions (existing implementation)
