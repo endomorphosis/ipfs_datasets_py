@@ -66,8 +66,8 @@ fn sha256_bytes(msg: &[u8]) -> [u8; 32] {
 
 fn commit_axioms_v2(axiom_antecedents: &[Fr], axiom_consequents: &[Fr]) -> Fr {
     // C = Σ (cons + alpha*ant) * beta^i
-    let alpha = Fr::from(7u64);
-    let beta = Fr::from(13u64);
+    let alpha = Fr::from(crate::circuit::TDFOL_V1_V2_ALPHA);
+    let beta = Fr::from(crate::circuit::TDFOL_V1_V2_BETA);
     let mut acc = Fr::ZERO;
     let mut beta_pow = Fr::ONE;
     for (ant, cons) in axiom_antecedents.iter().zip(axiom_consequents.iter()) {

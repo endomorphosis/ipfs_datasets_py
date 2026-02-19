@@ -7,10 +7,10 @@ use ark_r1cs_std::prelude::*;
 use ark_relations::r1cs::{ConstraintSynthesizer, ConstraintSystemRef, SynthesisError};
 use sha2::{Digest, Sha256};
 
-const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
-const TDFOL_V1_V2_MAX_STEPS: usize = 16;
-const TDFOL_V1_V2_ALPHA: u64 = 7;
-const TDFOL_V1_V2_BETA: u64 = 13;
+pub(crate) const TDFOL_V1_V2_MAX_AXIOMS: usize = 16;
+pub(crate) const TDFOL_V1_V2_MAX_STEPS: usize = 16;
+pub(crate) const TDFOL_V1_V2_ALPHA: u64 = 7;
+pub(crate) const TDFOL_V1_V2_BETA: u64 = 13;
 
 /// MVP Circuit for zero-knowledge proofs
 ///
