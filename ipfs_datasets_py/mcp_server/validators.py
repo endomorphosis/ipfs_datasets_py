@@ -8,15 +8,9 @@ from typing import Any, Dict, List, Optional, Union, Set
 from urllib.parse import urlparse
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+from .exceptions import ValidationError
 
-class ValidationError(Exception):
-    """Custom validation error for MCP tools."""
-    
-    def __init__(self, parameter: str, message: str):
-        self.parameter = parameter
-        self.message = message
-        super().__init__(f"Validation error for parameter '{parameter}': {message}")
+logger = logging.getLogger(__name__)
 
 class EnhancedParameterValidator:
     """
