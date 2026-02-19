@@ -24,7 +24,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ipfs_datasets_py.mcp_server.mcp_tool import ClaudeMCPTool
+from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
 

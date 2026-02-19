@@ -284,45 +284,43 @@ class TestImportPerformance:
 # REST API Performance
 # ---------------------------------------------------------------------------
 
-class TestRESTAPIPerformance:
-    """Performance baselines for REST API endpoints."""
+class TestMCPToolPerformance:
+    """Performance baselines for MCP logic tool execution."""
 
-    @pytest.fixture(scope="class")
-    def client(self):
-        """Create a TestClient for the logic API server."""
-        try:
-            from fastapi.testclient import TestClient
-            from ipfs_datasets_py.logic.api_server import create_app
-            return TestClient(create_app(), raise_server_exceptions=False)
-        except ImportError:
-            pytest.skip("FastAPI/httpx not available")
-
-    def test_health_endpoint_under_50ms(self, client):
+    def test_logic_health_tool_under_50ms(self):
         """
-        GIVEN the REST API health endpoint
+        GIVEN the logic_health MCP tool
         WHEN calling it 10 times
-        THEN average response time should be < 50ms.
+        THEN average execution time should be < 50ms.
         """
+        import asyncio
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
+            LogicHealthTool,
+        )
+        tool = LogicHealthTool()
         N = 10
         start = time.perf_counter()
         for _ in range(N):
-            response = client.get("/health")
-            assert response.status_code == 200
+            asyncio.run(tool.execute({}))
         elapsed = (time.perf_counter() - start) * 1000
         avg_ms = elapsed / N
-        assert avg_ms < 50, f"Health endpoint took {avg_ms:.1f}ms (target: <50ms)"
+        assert avg_ms < 50, f"logic_health MCP tool took {avg_ms:.1f}ms (target: <50ms)"
 
-    def test_capabilities_endpoint_under_100ms(self, client):
+    def test_logic_capabilities_tool_under_100ms(self):
         """
-        GIVEN the REST API capabilities endpoint
+        GIVEN the logic_capabilities MCP tool
         WHEN calling it 10 times
-        THEN average response time should be < 100ms.
+        THEN average execution time should be < 100ms.
         """
+        import asyncio
+        from ipfs_datasets_py.mcp_server.tools.logic_tools.logic_capabilities_tool import (
+            LogicCapabilitiesTool,
+        )
+        tool = LogicCapabilitiesTool()
         N = 10
         start = time.perf_counter()
         for _ in range(N):
-            response = client.get("/capabilities")
-            assert response.status_code == 200
+            asyncio.run(tool.execute({}))
         elapsed = (time.perf_counter() - start) * 1000
         avg_ms = elapsed / N
-        assert avg_ms < 100, f"Capabilities endpoint took {avg_ms:.1f}ms (target: <100ms)"
+        assert avg_ms < 100, f"logic_capabilities MCP tool took {avg_ms:.1f}ms (target: <100ms)"
