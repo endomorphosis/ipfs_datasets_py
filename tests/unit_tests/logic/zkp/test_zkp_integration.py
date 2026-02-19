@@ -216,6 +216,39 @@ class TestZKPIntegration:
             assert payload.get("timestamp") == 0
         finally:
             os.environ.pop("GROTH16_BACKEND_DETERMINISTIC", None)
+
+
+    @pytest.mark.skipif(
+        os.environ.get("IPFS_DATASETS_ENABLE_GROTH16", "").strip() not in {"1", "true", "TRUE", "yes", "YES"},
+        reason="Groth16 backend is disabled by default",
+    )
+    def test_groth16_seed_is_deterministic_when_enabled(self):
+        """When a `seed` is provided, Groth16 proof output should be reproducible.
+
+        This test avoids prover-side caching by using independent prover instances.
+        It compares proof components and public inputs, ignoring timestamps.
+        """
+        from ipfs_datasets_py.logic.zkp.backends.groth16_ffi import Groth16Backend as Groth16FFIBackend
+
+        backend = Groth16FFIBackend()
+        if not backend.binary_path:
+            pytest.skip("Groth16 binary not available")
+
+        theorem = "Q"
+        axioms = ["P", "P -> Q"]
+        seed = 123
+
+        prover1 = ZKPProver(backend="groth16", enable_caching=False)
+        prover2 = ZKPProver(backend="groth16", enable_caching=False)
+
+        proof1 = prover1.generate_proof(theorem, axioms, metadata={"seed": seed})
+        proof2 = prover2.generate_proof(theorem, axioms, metadata={"seed": seed})
+
+        payload1 = json.loads(proof1.proof_data.decode("utf-8"))
+        payload2 = json.loads(proof2.proof_data.decode("utf-8"))
+
+        for key in ("proof_a", "proof_b", "proof_c", "public_inputs", "version"):
+            assert payload1.get(key) == payload2.get(key)
     
     def test_proof_caching_integration(self):
         """
