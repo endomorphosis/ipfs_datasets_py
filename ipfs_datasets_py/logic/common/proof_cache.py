@@ -1,17 +1,24 @@
 """
-Unified Proof Cache with CID (Content ID) Hashing
+Unified Proof Cache with CID (Content ID) Hashing and IPFS Backend Support
 
 **UNIFIED CACHE (2026-02-14):** This module provides the unified caching layer
 for ALL theorem provers and proof systems across the logic module, consolidating
 the previously separate cache implementations in external_provers/, TDFOL/, and
 integration/caching/.
 
+**IPFS INTEGRATION (2026-02-19 - Phase 1 Task 1.3):** Added distributed caching
+via IPFS router backend, enabling proof result sharing across nodes with automatic
+fallback to local caching.
+
 This module provides a high-performance caching layer for all theorem provers
-using IPFS-native CID (Content Identifier) hashing for O(1) lookups.
+using IPFS-native CID (Content Identifier) hashing for O(1) lookups, with optional
+distributed storage via IPFS.
 
 Features:
 - CID-based content addressing (deterministic hashing)
 - O(1) lookups using hash-based indexing
+- Optional IPFS backend for distributed caching
+- Automatic fallback to local cache if IPFS unavailable
 - Thread-safe operations with RLock
 - TTL-based expiration
 - LRU eviction when cache is full
@@ -32,14 +39,17 @@ This ensures:
 Usage:
     >>> from ipfs_datasets_py.logic.common import ProofCache, get_global_cache
     >>> 
-    >>> # Create a cache instance
+    >>> # Local caching only
     >>> cache = ProofCache(maxsize=1000, ttl=3600)
+    >>> 
+    >>> # With IPFS backend for distributed caching
+    >>> cache = ProofCache(maxsize=1000, ttl=3600, enable_ipfs_backend=True)
     >>> 
     >>> # Cache a proof result
     >>> result = prover.prove(formula)
     >>> cache.set(formula, result, prover_name="z3")
     >>> 
-    >>> # Retrieve cached result (O(1) lookup)
+    >>> # Retrieve cached result (O(1) lookup, checks IPFS if enabled)
     >>> cached = cache.get(formula, prover_name="z3")
     >>> if cached:
     ...     print("Cache hit!")
@@ -83,6 +93,16 @@ except ImportError:
         """Fallback CID computation using SHA256."""
         json_str = json.dumps(obj, sort_keys=True)
         return hashlib.sha256(json_str.encode()).hexdigest()
+
+# Import IPFS backend support (optional - Phase 1 Task 1.3)
+try:
+    from ipfs_datasets_py.caching.router_remote_cache import IPFSBackedRemoteCache
+    from ipfs_datasets_py.ipfs_backend_router import get_ipfs_backend
+    IPFS_BACKEND_AVAILABLE = True
+except ImportError:
+    IPFS_BACKEND_AVAILABLE = False
+    IPFSBackedRemoteCache = None  # type: ignore
+    get_ipfs_backend = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -137,20 +157,31 @@ class ProofCache:
         maxsize: int = 1000,
         ttl: int = 3600,
         enable_persistence: bool = False,
-        persistence_path: Optional[str] = None
+        persistence_path: Optional[str] = None,
+        enable_ipfs_backend: bool = False,
+        ipfs_backend: Optional[Any] = None,
+        ipfs_pin: bool = False,
+        ipfs_ttl: Optional[int] = None
     ):
-        """Initialize proof cache.
+        """Initialize proof cache with optional IPFS backend.
         
         Args:
             maxsize: Maximum number of cached proofs (default: 1000)
-            ttl: Time-to-live in seconds (default: 3600 = 1 hour)
+            ttl: Time-to-live in seconds for local cache (default: 3600 = 1 hour)
             enable_persistence: Whether to persist cache to disk
             persistence_path: Path for cache persistence
+            enable_ipfs_backend: Enable IPFS-backed distributed caching (Phase 1 Task 1.3)
+            ipfs_backend: Optional custom IPFS backend instance
+            ipfs_pin: Whether to pin proof results in IPFS (permanent storage)
+            ipfs_ttl: TTL for IPFS cache entries (None = no expiration)
         """
         self.maxsize = maxsize
         self.ttl = ttl
         self.enable_persistence = enable_persistence
         self.persistence_path = persistence_path
+        self.enable_ipfs_backend = enable_ipfs_backend
+        self.ipfs_pin = ipfs_pin
+        self.ipfs_ttl = ipfs_ttl or ttl
         
         # Initialize cache storage
         if CACHETOOLS_AVAILABLE:
@@ -167,9 +198,46 @@ class ProofCache:
             'sets': 0,
             'evictions': 0,
             'cid_collisions': 0,
+            'ipfs_hits': 0,
+            'ipfs_sets': 0,
+            'ipfs_errors': 0,
         }
         
-        logger.info(f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s")
+        # Initialize IPFS backend if requested (Phase 1 Task 1.3)
+        self.ipfs_backend = None
+        self.ipfs_cache = None
+        if enable_ipfs_backend:
+            if not IPFS_BACKEND_AVAILABLE:
+                logger.warning(
+                    "IPFS backend requested but ipfs_backend_router not available. "
+                    "Falling back to local-only caching."
+                )
+            else:
+                try:
+                    # Get or create IPFS backend
+                    backend = ipfs_backend or get_ipfs_backend()
+                    
+                    # Create local mapping cache for IPFS pointers
+                    mapping_cache = {}  # Simple dict for CID -> IPFS pointer mapping
+                    
+                    # Initialize IPFS-backed cache
+                    self.ipfs_cache = IPFSBackedRemoteCache(
+                        mapping_cache=mapping_cache,
+                        ipfs_backend=backend,
+                        pin=ipfs_pin,
+                        ttl_seconds=ipfs_ttl,
+                        broadcast=True
+                    )
+                    self.ipfs_backend = backend
+                    logger.info(
+                        f"IPFS backend enabled with pin={ipfs_pin}, ttl={ipfs_ttl}s"
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to initialize IPFS backend: {e}. "
+                                 "Falling back to local-only caching.")
+        
+        logger.info(f"Initialized ProofCache with maxsize={maxsize}, ttl={ttl}s, "
+                   f"ipfs_backend={enable_ipfs_backend}")
     
     def _compute_cid(
         self,
@@ -225,6 +293,8 @@ class ProofCache:
     ) -> Optional[Any]:
         """Get cached proof result (O(1) lookup).
         
+        Checks local cache first, then IPFS backend if enabled.
+        
         Args:
             formula: TDFOL formula or string
             axioms: Optional list of axioms
@@ -236,17 +306,45 @@ class ProofCache:
         """
         cid = self._compute_cid(formula, axioms, prover_name, prover_config)
         
+        # Check local cache first
         with self.lock:
             if cid in self.cache:
                 cached = self.cache[cid]
                 cached.hit_count += 1
                 self.stats['hits'] += 1
-                logger.debug(f"Cache HIT for CID {cid[:16]}... (prover: {prover_name})")
+                logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {prover_name})")
                 return cached.result
-            else:
-                self.stats['misses'] += 1
-                logger.debug(f"Cache MISS for CID {cid[:16]}... (prover: {prover_name})")
-                return None
+        
+        # If not in local cache and IPFS backend enabled, try IPFS
+        if self.ipfs_cache is not None:
+            try:
+                ipfs_result = self.ipfs_cache.get(cid)
+                if ipfs_result is not None:
+                    # Found in IPFS, add to local cache for faster future access
+                    with self.lock:
+                        cached_result = CachedProofResult(
+                            result=ipfs_result,
+                            cid=cid,
+                            prover_name=prover_name,
+                            formula_str=str(formula),
+                            timestamp=time.time(),
+                            hit_count=1
+                        )
+                        self.cache[cid] = cached_result
+                        self.stats['ipfs_hits'] += 1
+                        self.stats['hits'] += 1
+                    logger.debug(f"IPFS cache HIT for CID {cid[:16]}... (prover: {prover_name})")
+                    return ipfs_result
+            except Exception as e:
+                logger.debug(f"IPFS cache lookup failed for CID {cid[:16]}...: {e}")
+                with self.lock:
+                    self.stats['ipfs_errors'] += 1
+        
+        # Not found in either cache
+        with self.lock:
+            self.stats['misses'] += 1
+        logger.debug(f"Cache MISS for CID {cid[:16]}... (prover: {prover_name})")
+        return None
     
     def set(
         self,
@@ -257,6 +355,8 @@ class ProofCache:
         prover_config: Optional[Dict] = None
     ) -> str:
         """Cache a proof result (O(1) insertion).
+        
+        Stores in local cache and optionally in IPFS backend if enabled.
         
         Args:
             formula: TDFOL formula or string
@@ -289,9 +389,29 @@ class ProofCache:
             
             self.cache[cid] = cached_result
             self.stats['sets'] += 1
-            logger.debug(f"Cached result with CID {cid[:16]}... (prover: {prover_name})")
-            
-            return cid
+            logger.debug(f"Cached result in local cache with CID {cid[:16]}... (prover: {prover_name})")
+        
+        # Also store in IPFS backend if enabled
+        if self.ipfs_cache is not None:
+            try:
+                # Serialize result for IPFS storage
+                result_data = {
+                    'result': result,
+                    'prover_name': prover_name,
+                    'formula_str': str(formula),
+                    'timestamp': time.time(),
+                    'cid': cid
+                }
+                self.ipfs_cache.set(cid, result_data)
+                with self.lock:
+                    self.stats['ipfs_sets'] += 1
+                logger.debug(f"Cached result in IPFS with CID {cid[:16]}...")
+            except Exception as e:
+                logger.debug(f"IPFS cache storage failed for CID {cid[:16]}...: {e}")
+                with self.lock:
+                    self.stats['ipfs_errors'] += 1
+        
+        return cid
     
     def invalidate(
         self,
