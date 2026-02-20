@@ -11,9 +11,9 @@ import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
-from .document_consistency_checker import DocumentConsistencyChecker
-from ..integration.deontic_logic_core import (
+from ..domain.temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
+from ..domain.document_consistency_checker import DocumentConsistencyChecker
+from ..converters.deontic_logic_core import (
     DeonticFormula,
     DeonticOperator,
     LegalAgent,

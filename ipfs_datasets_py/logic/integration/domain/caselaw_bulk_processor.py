@@ -564,10 +564,6 @@ class CaselawBulkProcessor:
             name="Unified Caselaw Deontic Logic System",
             formulas=all_formulas,
             description=f"Unified system built from {len(all_formulas)} theorems across {len(self.stats.jurisdictions_processed)} jurisdictions",
-            creation_date=datetime.now(),
-            source_documents=list(self.document_cache.keys()),
-            legal_domains=list(self.stats.legal_domains_processed),
-            temporal_coverage=self.stats.temporal_range
         )
         
         # Save unified system
