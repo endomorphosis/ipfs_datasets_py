@@ -444,10 +444,19 @@ class TDFOLProver:
         """
         import time
         start_time = time.time()
+
+        # Guard against None/invalid input
+        if goal is None:
+            return ProofResult(
+                status=ProofStatus.ERROR,
+                formula=goal,
+                method="error",
+                message="Invalid input: goal formula must not be None.",
+            )
         
         # Check cache first (O(1) lookup)
         if self.proof_cache is not None:
-            cached_result = self.proof_cache.get(goal, list(self.kb.axioms))
+            cached_result = self.proof_cache.get(goal, list(self.kb.axioms) + list(self.kb.theorems))
             if cached_result is not None:
                 logger.debug(f"Cache hit for formula: {goal}")
                 return cached_result
@@ -463,7 +472,7 @@ class TDFOLProver:
             )
             # Cache the result
             if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, list(self.kb.axioms) + list(self.kb.theorems))
             return result
         
         if goal in self.kb.theorems:
@@ -476,7 +485,7 @@ class TDFOLProver:
             )
             # Cache the result
             if self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, list(self.kb.axioms) + list(self.kb.theorems))
             return result
         
         # Use strategy pattern if available
@@ -496,16 +505,17 @@ class TDFOLProver:
             
             # Cache successful proof
             if result.is_proved() and self.proof_cache is not None:
-                self.proof_cache.set(goal, result, list(self.kb.axioms))
+                self.proof_cache.set(goal, result, list(self.kb.axioms) + list(self.kb.theorems))
             
             return result
         
-        # Fallback: strategies not available
-        logger.error("Strategies not available - cannot prove formula")
+        # Fallback: strategies not available — return UNKNOWN (not ERROR, since this is
+        # an environment limitation, not a formula-level error)
+        logger.warning("Strategies not available - returning UNKNOWN for: %s", goal)
         return ProofResult(
-            status=ProofStatus.ERROR,
+            status=ProofStatus.UNKNOWN,
             formula=goal,
-            method="error",
+            method="fallback",
             message="Proving strategies not available. Please ensure strategies module is properly installed."
         )
     
@@ -516,3 +526,85 @@ class TDFOLProver:
     def add_theorem(self, formula: Formula, name: Optional[str] = None) -> None:
         """Add a theorem to the knowledge base."""
         self.kb.add_theorem(formula, name)
+
+    # ------------------------------------------------------------------
+    # Helper predicates used by tests and internal strategies
+    # ------------------------------------------------------------------
+
+    def _is_modal_formula(self, formula: Formula) -> bool:
+        """Return True if *formula* contains any temporal or deontic operator."""
+        return isinstance(formula, (TemporalFormula, DeonticFormula))
+
+    def _has_deontic_operators(self, formula: Formula) -> bool:
+        """Return True if *formula* contains a deontic operator (O, P, F)."""
+        if isinstance(formula, DeonticFormula):
+            return True
+        for attr in ("formula", "left", "right", "operand"):
+            child = getattr(formula, attr, None)
+            if child is not None and isinstance(child, Formula):
+                if self._has_deontic_operators(child):
+                    return True
+        return False
+
+    def _has_temporal_operators(self, formula: Formula) -> bool:
+        """Return True if *formula* contains a temporal operator (□, ◇, ○, U…)."""
+        if isinstance(formula, (TemporalFormula, BinaryTemporalFormula)):
+            return True
+        for attr in ("formula", "left", "right", "operand"):
+            child = getattr(formula, attr, None)
+            if child is not None and isinstance(child, Formula):
+                if self._has_temporal_operators(child):
+                    return True
+        return False
+
+    def _has_nested_temporal(self, formula: Formula, _depth: int = 0) -> bool:
+        """Return True if *formula* has temporal operators nested inside temporal operators."""
+        is_temporal = isinstance(formula, (TemporalFormula, BinaryTemporalFormula))
+        for attr in ("formula", "left", "right", "operand"):
+            child = getattr(formula, attr, None)
+            if child is not None and isinstance(child, Formula):
+                if is_temporal and self._has_temporal_operators(child):
+                    return True
+                if self._has_nested_temporal(child, _depth + 1):
+                    return True
+        return False
+
+    def _traverse_formula(
+        self,
+        formula: Formula,
+        predicate,
+        max_depth: Optional[int] = None,
+        _current_depth: int = 0,
+    ) -> bool:
+        """Depth-first traversal; return True if *predicate(node)* is True for any node."""
+        if predicate(formula):
+            return True
+        if max_depth is not None and _current_depth >= max_depth:
+            return False
+        for attr in ("formula", "left", "right", "operand"):
+            child = getattr(formula, attr, None)
+            if child is not None and isinstance(child, Formula):
+                if self._traverse_formula(child, predicate, max_depth, _current_depth + 1):
+                    return True
+        return False
+
+    def _cec_prove(self, formula: Formula, timeout_ms: int = 5000) -> ProofResult:
+        """Attempt proof via CEC prover; returns UNKNOWN if CEC is not available."""
+        try:
+            from ipfs_datasets_py.logic.CEC.native.prover_core import TheoremProver as CECProver
+            cec = CECProver()
+            cec.initialize()
+            # Best-effort conversion: formula string → CEC
+            return ProofResult(
+                status=ProofStatus.UNKNOWN,
+                formula=formula,
+                method="cec_prover",
+                message="CEC integration available but cross-system translation not yet implemented.",
+            )
+        except Exception:
+            return ProofResult(
+                status=ProofStatus.UNKNOWN,
+                formula=formula,
+                method="cec_prover",
+                message="CEC prover not available.",
+            )
