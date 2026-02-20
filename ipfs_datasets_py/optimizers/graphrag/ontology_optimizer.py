@@ -530,7 +530,12 @@ class OntologyOptimizer:
             >>> patterns = optimizer.identify_patterns(successful)
             >>> print(f"Common entity types: {patterns['common_entity_types']}")
         """
-        self._log.info(f"Identifying patterns in {len(successful_ontologies)} successful ontologies")
+        self._log.info(
+            "Identifying ontology patterns",
+            extra={
+                'ontology_count': len(successful_ontologies),
+            }
+        )
 
         if not successful_ontologies:
             return {"error": "No successful ontologies provided"}

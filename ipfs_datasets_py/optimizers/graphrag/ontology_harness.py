@@ -188,8 +188,11 @@ class OntologyHarness:
         self._import_components()
         
         self._log.info(
-            f"Initialized OntologyHarness: parallelism={parallelism}, "
-            f"max_retries={max_retries}"
+            "Initialized OntologyHarness",
+            extra={
+                'parallelism': parallelism,
+                'max_retries': max_retries,
+            }
         )
     
     def _import_components(self):
@@ -215,9 +218,21 @@ class OntologyHarness:
             self.OntologyOptimizer = OntologyOptimizer
             
             self._components_imported = True
-            self._log.info("Components imported successfully")
+            self._log.info(
+                "Components imported successfully",
+                extra={
+                    'components_imported': True,
+                }
+            )
         except ImportError as e:
-            self._log.error(f"Failed to import components: {e}")
+            self._log.error(
+                "Failed to import components",
+                extra={
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                },
+                exc_info=True,
+            )
             raise
     
     def create_session(self) -> Any:  # OntologySession
@@ -266,22 +281,39 @@ class OntologyHarness:
         Returns:
             Tuple of (session_id, result, error)
         """
-        self._log.info(f"Session {session_id}: Starting")
+        self._log.info(
+            "Session starting",
+            extra={
+                'session_id': session_id,
+            }
+        )
         
         try:
             session = self.create_session()
             result = session.run(data, context)
             
             self._log.info(
-                f"Session {session_id}: Complete - "
-                f"score={result.critic_score.overall:.2f}, "
-                f"rounds={result.num_rounds}"
+                "Session complete",
+                extra={
+                    'session_id': session_id,
+                    'score': round(result.critic_score.overall, 3) if result.critic_score else None,
+                    'rounds': result.num_rounds,
+                    'converged': getattr(result, 'converged', None),
+                }
             )
             
             return (session_id, result, None)
             
         except Exception as e:
-            self._log.error(f"Session {session_id}: Failed - {e}")
+            self._log.error(
+                "Session failed",
+                extra={
+                    'session_id': session_id,
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                },
+                exc_info=True,
+            )
             return (session_id, None, e)
     
     def run_sessions(
@@ -319,9 +351,13 @@ class OntologyHarness:
             raise ValueError("data_sources and contexts must have same length")
         
         self._log.info(
-            f"Running batch: {len(data_sources)} sources x "
-            f"{num_sessions_per_source} sessions/source = "
-            f"{len(data_sources) * num_sessions_per_source} total sessions"
+            "Running batch",
+            extra={
+                'source_count': len(data_sources),
+                'sessions_per_source': num_sessions_per_source,
+                'total_sessions': len(data_sources) * num_sessions_per_source,
+                'parallelism': self.parallelism,
+            }
         )
         
         start_time = time.time()
@@ -396,7 +432,13 @@ class OntologyHarness:
                 
                 optimization_report = optimizer.analyze_batch(mediator_states)
             except Exception as e:
-                self._log.warning(f"Optimization analysis failed: {e}")
+                self._log.warning(
+                    "Optimization analysis failed",
+                    extra={
+                        'error_type': type(e).__name__,
+                        'error_message': str(e),
+                    }
+                )
         
         # Build batch result
         elapsed_time = time.time() - start_time
@@ -418,9 +460,15 @@ class OntologyHarness:
         )
         
         self._log.info(
-            f"Batch complete: {len(successful_results)}/{total_sessions} successful "
-            f"({success_rate:.1%}), avg_score={average_score:.2f}, "
-            f"time={elapsed_time:.2f}s"
+            "Batch complete",
+            extra={
+                'successful_sessions': len(successful_results),
+                'total_sessions': total_sessions,
+                'failed_sessions': len(failed_sessions),
+                'success_rate': round(success_rate, 4),
+                'average_score': round(average_score, 3),
+                'elapsed_time_s': round(elapsed_time, 3),
+            }
         )
         
         return batch_result
@@ -461,14 +509,24 @@ class OntologyHarness:
             ...     print(f"Cycle {i+1}: avg={batch.average_score:.2f}")
         """
         self._log.info(
-            f"Starting SGD cycles: {num_cycles} cycles, "
-            f"threshold={convergence_threshold}"
+            "Starting SGD cycles",
+            extra={
+                'num_cycles': num_cycles,
+                'convergence_threshold': convergence_threshold,
+                'source_count': len(data_sources),
+            }
         )
         
         cycle_results = []
         
         for cycle in range(num_cycles):
-            self._log.info(f"=== Cycle {cycle + 1}/{num_cycles} ===")
+            self._log.info(
+                "Cycle start",
+                extra={
+                    'cycle': cycle + 1,
+                    'num_cycles': num_cycles,
+                }
+            )
             
             # Run batch
             batch_result = self.run_sessions(
@@ -482,26 +540,44 @@ class OntologyHarness:
             # Check convergence
             if batch_result.average_score >= convergence_threshold:
                 self._log.info(
-                    f"Converged at cycle {cycle + 1}: "
-                    f"score={batch_result.average_score:.2f} >= {convergence_threshold}"
+                    "Converged early",
+                    extra={
+                        'cycle': cycle + 1,
+                        'score': round(batch_result.average_score, 3),
+                        'convergence_threshold': convergence_threshold,
+                    }
                 )
                 break
             
             # Log progress
             trend = batch_result.optimization_report.trend if batch_result.optimization_report else 'unknown'
             self._log.info(
-                f"Cycle {cycle + 1} complete: avg={batch_result.average_score:.2f}, "
-                f"trend={trend}"
+                "Cycle complete",
+                extra={
+                    'cycle': cycle + 1,
+                    'average_score': round(batch_result.average_score, 3),
+                    'trend': trend,
+                }
             )
             
             # Apply recommendations for next cycle
             if batch_result.optimization_report and batch_result.optimization_report.recommendations:
                 self._log.info(
-                    f"Recommendations: {batch_result.optimization_report.recommendations[:3]}"
+                    "Cycle recommendations",
+                    extra={
+                        'cycle': cycle + 1,
+                        'recommendation_count': len(batch_result.optimization_report.recommendations),
+                        'recommendations_preview': batch_result.optimization_report.recommendations[:3],
+                    }
                 )
                 # In a full implementation, would adapt parameters here
         
-        self._log.info(f"SGD cycles complete: {len(cycle_results)} cycles executed")
+        self._log.info(
+            "SGD cycles complete",
+            extra={
+                'cycles_executed': len(cycle_results),
+            }
+        )
         
         return cycle_results
 
