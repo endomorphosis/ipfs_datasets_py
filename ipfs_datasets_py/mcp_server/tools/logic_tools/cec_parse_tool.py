@@ -119,3 +119,57 @@ TOOLS: Dict[str, Any] = {
     "validate_formula": validate_formula,
     "translate_dcec": translate_dcec,
 }
+
+
+# ---------------------------------------------------------------------------
+# OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
+# ---------------------------------------------------------------------------
+
+import asyncio as _asyncio
+import time as _time
+
+
+class _BaseCECTool:
+    name: str = ""
+    category: str = "logic_tools"
+    tags: List[str] = []
+    input_schema: Dict[str, Any] = {}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+class CECParseTool(_BaseCECTool):
+    name = "cec_parse"
+    category = "logic_tools"
+    tags = ["cec", "nl", "parse", "dcec"]
+    input_schema = {"text": {"type": "string"}, "language": {"type": "string"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        text = params.get("text")
+        if not text:
+            return {"success": False, "error": "'text' is required.", "elapsed_ms": 0}
+        if len(text) > 4096:
+            return {"success": False, "error": "Text too large (max 4096 chars).", "elapsed_ms": 0}
+        result = await cec_parse(text=text, language=params.get("language", "auto"))
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result
+
+
+class CECValidateFormulaTool(_BaseCECTool):
+    name = "cec_validate_formula"
+    category = "logic_tools"
+    tags = ["cec", "validate", "formula"]
+    input_schema = {"formula": {"type": "string"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        formula = params.get("formula")
+        if not formula:
+            return {"success": False, "error": "'formula' is required.", "elapsed_ms": 0}
+        result = await cec_validate_formula(formula=formula)
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result

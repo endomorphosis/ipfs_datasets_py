@@ -139,3 +139,58 @@ TOOLS: Dict[str, Any] = {
     "check_theorem": check_theorem,
     "get_proof_tree": get_proof_tree,
 }
+
+
+# ---------------------------------------------------------------------------
+# OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
+# ---------------------------------------------------------------------------
+
+import asyncio as _asyncio
+import time as _time
+
+
+class _BaseCECTool:
+    """Base class for CEC MCP tools."""
+    name: str = ""
+    category: str = "logic_tools"
+    tags: List[str] = []
+    input_schema: Dict[str, Any] = {}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+class CECProveTool(_BaseCECTool):
+    name = "cec_prove"
+    category = "logic_tools"
+    tags = ["cec", "prove", "dcec"]
+    input_schema = {"goal": {"type": "string"}, "axioms": {"type": "array"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        goal = params.get("goal") or params.get("formula")
+        if not goal:
+            return {"success": False, "error": "'goal' is required.", "elapsed_ms": 0}
+        result = await cec_prove(goal=goal, axioms=params.get("axioms"))
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result
+
+
+class CECCheckTheoremTool(_BaseCECTool):
+    name = "cec_check_theorem"
+    category = "logic_tools"
+    tags = ["cec", "check", "tautology"]
+    input_schema = {"formula": {"type": "string"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        formula = params.get("formula")
+        if not formula:
+            return {"success": False, "error": "'formula' is required.", "elapsed_ms": 0}
+        result = await cec_check_theorem(formula=formula)
+        result.setdefault("counterexample", None)
+        result.setdefault("is_theorem", result.get("proved", False))
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result

@@ -71,23 +71,50 @@ __all__ = ["cec_analyze_formula", "cec_formula_complexity",
 
 
 def analyze_formula(formula: str) -> Dict[str, Any]:
-    """Sync wrapper + augmented analysis around cec_analyze_formula."""
-    import asyncio
-    result = asyncio.get_event_loop().run_until_complete(cec_analyze_formula(formula=formula))
-    # Compute more accurate nesting depth via parentheses
-    if result.get("success"):
-        max_depth, cur_depth = 0, 0
-        for ch in formula:
-            if ch == '(':
-                cur_depth += 1
-                max_depth = max(max_depth, cur_depth)
-            elif ch == ')':
-                cur_depth = max(0, cur_depth - 1)
-        # Override depth if our count is higher (parser may undercount)
-        if max_depth > result.get("depth", 0):
-            result["depth"] = max_depth
-        result.setdefault("complexity", result.get("depth", 1))
-    return result
+    """Sync pure analysis around a formula (no event loop)."""
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    # Security guard
+    DISALLOWED = ["__import__", "eval(", "exec(", "os.system", "subprocess"]
+    if any(d in formula for d in DISALLOWED):
+        return {"success": False, "error": "Disallowed pattern in formula."}
+    # Compute nesting depth via parentheses
+    max_depth, cur_depth = 0, 0
+    for ch in formula:
+        if ch == '(':
+            cur_depth += 1
+            max_depth = max(max_depth, cur_depth)
+        elif ch == ')':
+            cur_depth = max(0, cur_depth - 1)
+    # Extract operators
+    operators = []
+    for op in ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '↔'):
+        if op in formula:
+            operators.append(op)
+    # Count tokens (words/symbols)
+    import re
+    tokens = re.findall(r'[A-Za-z_]\w*|[-><&|∧∨¬~→←↔◻◊□◇KBO@]', formula)
+    size = max(1, len(tokens))
+    # Complexity
+    modal_ops = ('□', '◇', '◻', '◊')
+    modal_depth = sum(formula.count(op) for op in modal_ops)
+    connective_count = len(operators)
+    score = modal_depth * 3 + connective_count * 2 + len(formula) // 20
+    if score < 3:
+        complexity = "low"
+    elif score < 8:
+        complexity = "medium"
+    else:
+        complexity = "high"
+    return {
+        "success": True,
+        "formula": formula,
+        "depth": max_depth,
+        "size": size,
+        "operators": operators,
+        "complexity": complexity,
+        "overall_complexity": complexity,
+    }
 
 
 def visualize_proof(formula: str, format: str = "text") -> Dict[str, Any]:
@@ -105,27 +132,42 @@ def visualize_proof(formula: str, format: str = "text") -> Dict[str, Any]:
 
 def get_formula_complexity(formula: str) -> Dict[str, Any]:
     """Sync wrapper around cec_formula_complexity."""
-    import asyncio
-    result = asyncio.get_event_loop().run_until_complete(cec_formula_complexity(formula=formula))
-    # Add overall_complexity alias for backward compatibility
-    if result.get("success"):
-        result.setdefault("overall_complexity", result.get("complexity", "unknown"))
+    # Duplicate core logic to avoid nested event loop issues
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    modal_ops = ('□', '◇', '◻', '◊')
+    modal_depth = sum(formula.count(op) for op in modal_ops)
+    connective_ops = ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '<->')
+    connective_count = sum(formula.count(op) for op in connective_ops)
+    formula_length = len(formula)
+    score = modal_depth * 3 + connective_count * 2 + formula_length // 20
+    if score < 3:
+        complexity = "low"
+    elif score < 8:
+        complexity = "medium"
+    else:
+        complexity = "high"
+    result = {
+        "success": True,
+        "formula": formula,
+        "modal_depth": modal_depth,
+        "connective_count": connective_count,
+        "formula_length": formula_length,
+        "complexity": complexity,
+        "overall_complexity": complexity,
+    }
     return result
 
 
 def profile_operation(operation: str, formula: str, iterations: int = 10) -> Dict[str, Any]:
     """Profile an operation (parse/prove/analyze) over multiple iterations."""
-    import asyncio
     import time
     if not formula:
         return {"success": False, "error": "'formula' is required."}
     times: list = []
     for _ in range(max(1, iterations)):
         start = time.monotonic()
-        if operation == "analyze":
-            asyncio.get_event_loop().run_until_complete(cec_analyze_formula(formula=formula))
-        else:
-            asyncio.get_event_loop().run_until_complete(cec_analyze_formula(formula=formula))
+        analyze_formula(formula=formula)
         times.append(time.monotonic() - start)
     avg = sum(times) / len(times)
     return {
@@ -148,3 +190,58 @@ TOOLS: Dict[str, Any] = {
     "visualize_proof": visualize_proof,
     "profile_operation": profile_operation,
 }
+
+
+# ---------------------------------------------------------------------------
+# OOP wrapper classes expected by test_mcp_cec_prove_parse_analysis.py
+# ---------------------------------------------------------------------------
+
+import asyncio as _asyncio
+import time as _time
+
+
+class _BaseCECTool:
+    name: str = ""
+    category: str = "logic_tools"
+    tags: List[str] = []
+    input_schema: Dict[str, Any] = {}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        raise NotImplementedError
+
+
+class CECAnalyzeFormulaTool(_BaseCECTool):
+    name = "cec_analyze_formula"
+    category = "logic_tools"
+    tags = ["cec", "analysis", "formula"]
+    input_schema = {"formula": {"type": "string"}, "include_complexity": {"type": "boolean"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        formula = params.get("formula")
+        if not formula:
+            return {"success": False, "error": "'formula' is required.", "elapsed_ms": 0}
+        include_complexity = params.get("include_complexity", True)
+        result = dict(analyze_formula(formula=formula))
+        if not include_complexity:
+            result.pop("complexity", None)
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result
+
+
+class CECFormulaComplexityTool(_BaseCECTool):
+    name = "cec_formula_complexity"
+    category = "logic_tools"
+    tags = ["cec", "complexity", "formula"]
+    input_schema = {"formula": {"type": "string"}}
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        t0 = _time.monotonic()
+        formula = params.get("formula")
+        if not formula:
+            return {"success": False, "error": "'formula' is required.", "elapsed_ms": 0}
+        result = dict(get_formula_complexity(formula=formula))
+        result.setdefault("elapsed_ms", int((_time.monotonic() - t0) * 1000))
+        result.setdefault("tool_version", "1.0.0")
+        return result
