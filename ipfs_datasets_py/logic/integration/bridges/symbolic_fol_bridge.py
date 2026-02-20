@@ -159,6 +159,12 @@ class SymbolicFOLBridge:
         if not text or not text.strip():
             raise ValueError("Text cannot be empty")
         
+        stripped = text.strip()
+        # Require at least some meaningful content (at least 2 alphabetic chars)
+        alpha_count = sum(1 for c in stripped if c.isalpha())
+        if alpha_count < 2:
+            raise ValueError("Text cannot be empty")
+        
         if not SYMBOLIC_AI_AVAILABLE:
             logger.warning("SymbolicAI not available, creating mock symbol")
             return Symbol(text.strip(), semantic=True)
@@ -266,13 +272,22 @@ class SymbolicFOLBridge:
             r'|conducts?|melts?|conserves?|requires?|survive?|teaches?|writes?'
             r'|will\s+\w+|must\s+\w+|should\s+\w+)\b'
         )
-        entity_patterns = r'\b([A-Z][a-z]+)\b'  # Simple noun detection
+        # Entity pattern: capitalized words OR nouns after quantifiers/verbs
+        entity_patterns = r'\b([A-Z][a-z]+)\b'
+        # Also find nouns (words following quantifiers)
+        noun_after_quant = r'\b(?:all|every|each|some|exists?)\s+(\w+)\b'
         connective_patterns = r'\b(and|or|not|if|then|implies?|but|however)\b'
         
-        quantifiers = re.findall(quantifier_patterns, text, re.IGNORECASE)
-        predicates = re.findall(predicate_patterns, text, re.IGNORECASE)
+        quantifiers = [q.lower() for q in re.findall(quantifier_patterns, text, re.IGNORECASE)]
+        predicates = [p.lower() for p in re.findall(predicate_patterns, text, re.IGNORECASE)]
         entities = re.findall(entity_patterns, text)
-        connectives = re.findall(connective_patterns, text, re.IGNORECASE)
+        # Add nouns after quantifiers as entities
+        nouns_after_quant = re.findall(noun_after_quant, text, re.IGNORECASE)
+        entities.extend([n.capitalize() for n in nouns_after_quant if n.capitalize() not in entities])
+        # Also find nouns after "is/are" predicates
+        nouns_after_verb = re.findall(r'\b(?:is|are|be|were)\s+([a-z][a-z]+)\b', text, re.IGNORECASE)
+        entities.extend([n.capitalize() for n in nouns_after_verb if n.capitalize() not in entities])
+        connectives = [c.lower() for c in re.findall(connective_patterns, text, re.IGNORECASE)]
         
         # If no predicates found, extract any word that looks like a verb (fallback)
         if not predicates:

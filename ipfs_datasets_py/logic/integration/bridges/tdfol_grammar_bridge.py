@@ -225,6 +225,28 @@ class TDFOLGrammarBridge(BaseProverBridge):
         except Exception as e:
             logger.debug(f"Fallback parsing failed: {e}")
         
+        # Last resort: try to parse directly as TDFOL formula syntax
+        try:
+            from ...TDFOL.tdfol_parser import parse_tdfol_safe
+            formula = parse_tdfol_safe(text)
+            if formula is not None:
+                logger.debug(f"TDFOL parser fallback succeeded for '{text}'")
+                return formula
+        except Exception as e:
+            logger.debug(f"TDFOL parser fallback failed: {e}")
+        
+        # Final fallback: treat as a simple atom (0-ary predicate)
+        try:
+            from ...TDFOL.tdfol_core import Predicate, AtomicFormula
+            stripped = text.strip()
+            if stripped and stripped.replace("_", "").replace("-", "").isalnum():
+                pred = Predicate(stripped, ())
+                formula = AtomicFormula(pred, ())
+                logger.debug(f"Created atom '{stripped}' as fallback for '{text}'")
+                return formula
+        except Exception as e:
+            logger.debug(f"Atom creation fallback failed: {e}")
+        
         return None
     
     def formula_to_natural_language(
@@ -290,15 +312,18 @@ class TDFOLGrammarBridge(BaseProverBridge):
                     # Use grammar engine to generate natural English
                     natural_text = self.dcec_grammar.formula_to_english(dcec_formula)
                     
-                    # Apply style modifications
-                    if style == "casual":
-                        natural_text = self._apply_casual_style(natural_text)
-                    elif style == "technical":
-                        # Technical style currently uses the default formal output unchanged
-                        pass
-                    
-                    logger.debug(f"Grammar-based generation successful: {natural_text}")
-                    return natural_text
+                    # Reject dict-like fallback strings from grammar (e.g. "{'type': 'unknown', ...}")
+                    if isinstance(natural_text, str) and natural_text.startswith("{"):
+                        logger.debug("Grammar returned dict-like string, using template fallback")
+                    else:
+                        # Apply style modifications
+                        if style == "casual":
+                            natural_text = self._apply_casual_style(natural_text)
+                        elif style == "technical":
+                            pass
+                        
+                        logger.debug(f"Grammar-based generation successful: {natural_text}")
+                        return natural_text
                 else:
                     logger.debug("DCEC parsing returned None, using template fallback")
             
@@ -309,7 +334,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
         templates = {
             "formal": {
                 "O": "It is obligatory that",
-                "P": "It is permissible that",
+                "P": "It is permitted that",
                 "F": "It is forbidden that",
                 "always": "always",
                 "eventually": "eventually",
@@ -318,7 +343,7 @@ class TDFOLGrammarBridge(BaseProverBridge):
             },
             "casual": {
                 "O": "must",
-                "P": "can",
+                "P": "may",
                 "F": "must not",
                 "always": "always",
                 "eventually": "sometime",
@@ -329,8 +354,21 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         template_set = templates.get(style, templates["formal"])
         
-        # Simple template application
+        # Temporal operators (G=always, F=eventually, X=next)
+        # Apply temporal first so outer temporal wrappers are converted before deontic inner ops
+        temporal = {
+            "G": "always",
+            "F": "eventually",
+            "X": "next",
+        }
+        
+        # Heuristic: if formula starts with temporal operator wrapping a sub-formula, prefer temporal interpretation
         result = dcec_str
+        import re as _re
+        # Temporal F/G/X applied to a sub-formula like (F (P x)) — outer operator is temporal
+        for key, value in temporal.items():
+            result = _re.sub(r'\(' + key + r' \(', f'({value} (', result)
+        # Now apply deontic template (for standalone deontic like (O x), (P x), (F x))
         for key, value in template_set.items():
             result = result.replace(f"({key} ", f"{value} ")
         

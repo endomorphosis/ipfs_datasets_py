@@ -30,11 +30,15 @@ from ipfs_datasets_py.logic.integration.symbolic_contracts import (
 # Import Pydantic validation error for testing (optional dependency)
 try:
     from pydantic import ValidationError
+    PYDANTIC_AVAILABLE = True
 except ImportError:
+    PYDANTIC_AVAILABLE = False
     # Create a minimal stub so tests can still be collected
     class ValidationError(Exception):  # type: ignore
         """Stub when pydantic is not installed."""
         pass
+
+requires_pydantic = pytest.mark.skipif(not PYDANTIC_AVAILABLE, reason="pydantic not installed")
 
 
 class TestFOLInput:
@@ -78,6 +82,7 @@ class TestFOLInput:
             if "validate_syntax" not in input_data:
                 assert fol_input.validate_syntax is True
     
+    @requires_pydantic
     def test_fol_input_validation_errors(self):
         """Test FOL input validation with invalid data."""
         invalid_inputs = [
@@ -149,6 +154,7 @@ class TestFOLInput:
                           if p and p.replace('_', '').isalnum()]
         assert len(valid_predicates) >= 1  # At least some valid predicates should remain
     
+    @requires_pydantic
     def test_whitespace_handling(self):
         """Test whitespace handling in input validation."""
         text_with_whitespace = "   All cats are animals   "
@@ -161,6 +167,7 @@ class TestFOLInput:
 class TestFOLOutput:
     """Test suite for FOLOutput validation model."""
     
+    @requires_pydantic
     def test_valid_fol_output_creation(self):
         """Test creation of valid FOL output."""
         valid_outputs = [
@@ -202,6 +209,7 @@ class TestFOLOutput:
             if "metadata" not in output_data:
                 assert fol_output.metadata == {}
     
+    @requires_pydantic
     def test_fol_output_validation_errors(self):
         """Test FOL output validation with invalid data."""
         invalid_outputs = [
@@ -256,6 +264,7 @@ class TestFOLOutput:
             )
             assert output.fol_formula == formula
     
+    @requires_pydantic
     def test_logical_components_validation(self):
         """Test logical components validation."""
         # Test with missing required keys
@@ -427,6 +436,7 @@ class TestContractedFOLConverter:
             assert isinstance(result.warnings, list)
             assert isinstance(result.metadata, dict)
     
+    @requires_pydantic
     def test_conversion_with_domain_predicates(self):
         """Test conversion with domain-specific predicates."""
         input_data = FOLInput(
@@ -529,6 +539,7 @@ class TestHelperFunctions:
         assert input_obj.confidence_threshold == 0.8
         assert input_obj.output_format == "prolog"
     
+    @requires_pydantic
     def test_validate_fol_input_errors(self):
         """Test validate_fol_input with invalid data."""
         with pytest.raises(ValueError):

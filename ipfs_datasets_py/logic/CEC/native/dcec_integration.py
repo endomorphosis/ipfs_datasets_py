@@ -39,7 +39,7 @@ def _make_agent_term(agent_str: str, variables: Dict[str, Variable]) -> Term:
             variables[agent_str] = Variable(agent_str, Sort("Agent"))
         return VariableTerm(variables[agent_str])
     # Constant (e.g. "Agent", "agent")
-    func = Function(str(agent_str), Sort("Agent"), [])
+    func = Function(str(agent_str), [], Sort("Agent"))
     return FunctionTerm(func, [])
 
 
@@ -270,7 +270,6 @@ def token_to_formula(
     # Atomic formula (predicate)
     else:
         # Try to create as atomic formula
-        predicate = Predicate(token.func_name, [])  # 0-ary predicate
         terms = []
         for arg in token.args:
             if isinstance(arg, str):
@@ -282,7 +281,7 @@ def token_to_formula(
                     terms.append(VariableTerm(variables[arg]))
                 else:
                     # Constant (treated as 0-ary function)
-                    func = Function(arg, Sort("Object"), [])
+                    func = Function(arg, [], Sort("Object"))
                     terms.append(FunctionTerm(func, []))
             elif isinstance(arg, ParseToken):
                 # Nested token - recursively convert
@@ -291,6 +290,9 @@ def token_to_formula(
                     # Convert formula to term (simplified)
                     logger.warning(f"Nested formula as term not fully supported: {arg}")
         
+        # Create predicate with arity matching actual terms
+        arg_sorts = [Sort("Object")] * len(terms)
+        predicate = Predicate(token.func_name, arg_sorts)
         return AtomicFormula(predicate, terms)
     
     logger.warning(f"Could not convert token to formula: {token.func_name}")

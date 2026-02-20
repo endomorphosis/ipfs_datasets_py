@@ -455,3 +455,13 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         if self.enable_monitoring and self.monitor:
             return self.monitor.get_stats()
         return {}
+
+    def to_fol(self, text: str, **kwargs) -> Any:
+        """Alias for convert() — convert natural language text to FOL."""
+        return self.convert(text, **kwargs)
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Alias for get_cache_stats() + get_monitoring_stats()."""
+        stats = dict(self.get_cache_stats())
+        stats.update(self.get_monitoring_stats())
+        return stats

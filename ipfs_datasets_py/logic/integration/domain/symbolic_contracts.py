@@ -15,7 +15,9 @@ except Exception:  # pragma: no cover
         return func
 try:
     from pydantic import BaseModel, Field, field_validator, ConfigDict
+    PYDANTIC_AVAILABLE = True
 except ImportError:
+    PYDANTIC_AVAILABLE = False
     # Minimal stubs so the rest of the module loads without pydantic installed
     def ConfigDict(**kwargs):  # type: ignore
         return kwargs
@@ -23,12 +25,29 @@ except ImportError:
     class BaseModel:  # type: ignore
         """Minimal pydantic.BaseModel stub."""
         model_config = None
+        _field_defaults: dict = {}
 
         def __init__(self, **data):
+            # Apply str_strip_whitespace if configured
+            strip = (self.model_config or {}).get("str_strip_whitespace", False) if isinstance(self.model_config, dict) else False
             for k, v in data.items():
+                if strip and isinstance(v, str):
+                    v = v.strip()
                 setattr(self, k, v)
+            # Apply defaults for fields not provided
+            for name in list(getattr(self.__class__, '__annotations__', {}).keys()):
+                if name not in data:
+                    cls_val = getattr(self.__class__, name, None)
+                    # If class attribute is a type/class (used as default_factory), call it
+                    if isinstance(cls_val, type):
+                        setattr(self, name, cls_val())
+                    elif cls_val is not None and not callable(cls_val):
+                        setattr(self, name, cls_val)
+                    # else leave unset (will use class attr, which may be fine)
 
-    def Field(default=None, **kwargs):  # type: ignore
+    def Field(default=None, default_factory=None, **kwargs):  # type: ignore
+        if default_factory is not None:
+            return default_factory
         return default
 
     def field_validator(*args, **kwargs):  # type: ignore

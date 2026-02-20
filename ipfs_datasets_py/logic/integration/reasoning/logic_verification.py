@@ -425,6 +425,10 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         from .logic_verification_utils import are_contradictory
         return are_contradictory(formula1, formula2)
 
+    def verify_consistency(self, formulas):
+        """Alias for check_consistency()."""
+        return self.check_consistency(formulas)
+
 
 # Import convenience functions from utils for backward compatibility
 from .logic_verification_utils import (

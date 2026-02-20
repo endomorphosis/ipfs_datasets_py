@@ -58,6 +58,10 @@ class DeonticOperator(Enum):
     OBLIGATION = "O"     # Obligatory (must)
     PERMISSION = "P"     # Permissible (may)
     PROHIBITION = "F"    # Forbidden (must not)
+    # Aliases for backward compatibility
+    OBLIGATORY = "O"
+    PERMISSIBLE = "P"
+    FORBIDDEN = "F"
 
 
 class TemporalOperator(Enum):
