@@ -487,59 +487,101 @@ Examples:
             traceback.print_exc()
             return 1
     
+
     def cmd_query(self, args: argparse.Namespace) -> int:
         """Optimize query.
-        
+
         Args:
             args: Command arguments
-            
+
         Returns:
             Exit code
         """
-        print(f"🔍 Query optimization")
+        print("🔍 Query optimization")
         print(f"   Ontology: {args.ontology}")
-        print(f"   Query: {args.query}\n")
-        
+        print(f"   Query: {args.query}")
+        print()
+
         try:
-            # TODO: Implement query optimization
+            ontology_path = Path(args.ontology)
+            if not ontology_path.exists():
+                print(f"❌ Ontology file not found: {args.ontology}")
+                return 1
+
+            graph_info: Dict[str, Any] = {}
+            if ontology_path.suffix.lower() == ".json":
+                try:
+                    graph_info = self._load_ontology_json(ontology_path)
+                except Exception:
+                    # Best-effort: not all JSON files are ontology dicts.
+                    graph_info = {}
+
+            from ipfs_datasets_py.optimizers.graphrag.query_optimizer import UnifiedGraphRAGQueryOptimizer
+
+            optimizer = UnifiedGraphRAGQueryOptimizer(graph_info=graph_info, metrics_dir=None)
+
+            # Build a minimal query dict. This command focuses on planning/optimization,
+            # not executing retrieval.
+            query_dict: Dict[str, Any] = {
+                "query_text": args.query,
+                "traversal": {"max_depth": 2},
+                "entity_ids": [],
+            }
+
             if args.optimize:
-                print("⏳ Optimizing query...")
-                print("✅ Query optimized")
-                print("   Expected speedup: 3.5x")
-            
+                print("⏳ Optimizing query plan...")
+
+            plan = optimizer.optimize_query(query=query_dict, priority="normal", graph_processor=None)
+
+            if args.optimize:
+                print("✅ Query plan optimized")
+                print(f"   Graph type: {plan.get('graph_type', 'unknown')}")
+                budget = plan.get("budget")
+                if isinstance(budget, dict):
+                    print(
+                        "   Budget(ms):",
+                        f"vector={budget.get('vector_search_ms','?')}",
+                        f"graph={budget.get('graph_traversal_ms','?')}",
+                        f"rank={budget.get('ranking_ms','?')}"
+                    )
+
+            execution_plan: Optional[Dict[str, Any]] = None
             if args.explain:
-                print("\n📋 Query execution plan:")
-                print("  1. Entity resolution")
-                print("  2. Relationship traversal")
-                print("  3. Result ranking")
-            
-            # Show results
-            print("\n🎯 Results:")
-            print("  • Result 1: Climate change impacts")
-            print("  • Result 2: Global warming trends")
-            print("  • Result 3: Environmental policy")
-            
+                execution_plan = optimizer.get_execution_plan(query_dict, priority="normal", graph_processor=None)
+                steps = execution_plan.get("execution_steps", []) if isinstance(execution_plan, dict) else []
+
+                print()
+                print("📋 Query execution plan:")
+                if steps:
+                    for idx, step in enumerate(steps, start=1):
+                        name = step.get("name", f"step_{idx}")
+                        desc = step.get("description", "")
+                        print(f"  {idx}. {name}: {desc}")
+                else:
+                    print("  (no steps available)")
+
             if args.output:
-                results = {
-                    'query': args.query,
-                    'optimized': args.optimize,
-                    'speedup': 3.5 if args.optimize else 1.0,
-                    'results': [
-                        'Climate change impacts',
-                        'Global warming trends',
-                        'Environmental policy',
-                    ],
+                out = {
+                    "ontology": str(ontology_path),
+                    "query": args.query,
+                    "optimized": bool(args.optimize),
+                    "plan": plan,
+                    "execution_plan": execution_plan,
                 }
-                with open(args.output, 'w') as f:
-                    json.dump(results, f, indent=2)
-                print(f"\n📄 Saved to: {args.output}")
-            
+                with open(args.output, "w") as f:
+                    json.dump(out, f, indent=2)
+
+                print()
+                print(f"📄 Saved to: {args.output}")
+
             return 0
-            
+
         except Exception as e:
             print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
             return 1
-    
+
     def cmd_status(self, args: argparse.Namespace) -> int:
         """Show status.
         
