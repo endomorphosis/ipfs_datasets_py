@@ -75,6 +75,24 @@ from .distributed import (
     PartitionQueryPlan,
 )
 
+from .knowledge_graph import (
+    parse_ir_ops_from_query,
+    compile_ir,
+    query_knowledge_graph,
+)
+
+from .sparql_templates import (
+    build_entity_query,
+    build_entity_properties_query,
+    build_direct_relationship_query,
+    build_inverse_relationship_query,
+    build_entity_type_query,
+    build_path_relationship_query,
+    build_similar_entities_query,
+    build_property_stats_query,
+    build_property_validation_query,
+)
+
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
@@ -88,4 +106,18 @@ __all__ = [
     'PartitionStrategy',
     'QueryPlan',
     'PartitionQueryPlan',
+    # Knowledge graph query API
+    'parse_ir_ops_from_query',
+    'compile_ir',
+    'query_knowledge_graph',
+    # SPARQL templates
+    'build_entity_query',
+    'build_entity_properties_query',
+    'build_direct_relationship_query',
+    'build_inverse_relationship_query',
+    'build_entity_type_query',
+    'build_path_relationship_query',
+    'build_similar_entities_query',
+    'build_property_stats_query',
+    'build_property_validation_query',
 ]

@@ -106,6 +106,19 @@ from .srl import (
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
 
+# Finance GraphRAG (relocated from package root)
+from .finance_graphrag import (
+    ExecutiveProfile,
+    CompanyPerformance,
+    HypothesisTest,
+    GraphRAGNewsAnalyzer,
+    analyze_news_with_graphrag,
+    create_financial_knowledge_graph,
+    analyze_executive_performance,
+    extract_executive_profiles_from_archives,
+    GRAPHRAG_AVAILABLE,
+)
+
 
 __all__ = [
     # Types (available now)
@@ -148,6 +161,16 @@ __all__ = [
     'ROLE_RESULT',
     'ROLE_RECIPIENT',
     'ROLE_SOURCE',
+    # Finance GraphRAG
+    'ExecutiveProfile',
+    'CompanyPerformance',
+    'HypothesisTest',
+    'GraphRAGNewsAnalyzer',
+    'analyze_news_with_graphrag',
+    'create_financial_knowledge_graph',
+    'analyze_executive_performance',
+    'extract_executive_profiles_from_archives',
+    'GRAPHRAG_AVAILABLE',
 ]
 
 
