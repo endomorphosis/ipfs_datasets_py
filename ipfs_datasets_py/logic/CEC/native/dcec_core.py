@@ -239,6 +239,10 @@ class AtomicFormula(Formula):
     arguments: List[Term]
     
     def __post_init__(self) -> None:
+        # Accept string predicates as shorthand: auto-create a Predicate with matching arity
+        if isinstance(self.predicate, str):
+            from ipfs_datasets_py.logic.CEC.native.dcec_types import Predicate as _Predicate
+            self.predicate = _Predicate(self.predicate, [])  # zero-arity by default
         if len(self.arguments) != self.predicate.arity():
             raise ValidationError(
                 f"Predicate arity mismatch for '{self.predicate.name}'",

@@ -390,10 +390,11 @@ class ZKPCECProver:
         axioms = axioms or []
         start_time = time.time()
 
-        # force_standard=True means skip ZKP
+        # force_standard=True means skip ZKP and cache
         if force_standard:
             prefer_zkp = False
             private_axioms = False
+            use_cache = False
         
         # Strategy 1: Try cache first (if enabled)
         if use_cache and self.cached_prover.enable_caching:

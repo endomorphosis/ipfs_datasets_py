@@ -349,6 +349,10 @@ class DCECContainer:
         self.theorems.append(statement)
         return statement
     
+    def add_axiom(self, formula: Formula, label: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> "DCECStatement":
+        """Add a statement as an axiom (convenience alias for add_statement with is_axiom=True)."""
+        return self.add_statement(formula, label=label, is_axiom=True, metadata=metadata)
+
     def get_all_statements(self) -> List[DCECStatement]:
         """Get all statements in the container."""
         return self.statements.copy()
