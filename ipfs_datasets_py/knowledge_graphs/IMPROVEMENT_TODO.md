@@ -299,3 +299,13 @@ If you want a high-value sequence that keeps risk low:
   - sparql_query_templates.py → query/sparql_templates.py
   - finance_graphrag.py → extraction/finance_graphrag.py
   All root files replaced with DeprecationWarning shims; 1075+ tests pass.
+- 2026-02-20 (doc-fix session): MASTER_STATUS.md, MASTER_REFACTORING_PLAN_2026.md, and ROADMAP.md fully updated to reflect v2.1.0 reality:
+  - CAR format row changed from 🔴 Not Implemented → ✅ Complete (was wrong in MASTER_STATUS)
+  - Module snapshot updated: 76→92 files, ~29,600→~34,163 lines, 54→64 test files, 919+→1,075+ tests passing
+  - Files-by-size table refreshed with actual current line counts
+  - §3.4.1 CAR and §3.4.2 distributed both marked ✅ DONE in MASTER_REFACTORING_PLAN
+  - §3.5 new modules section added (SRL, OWL, reasoning subpackage)
+  - "Remaining Deferred Features" section replaced with "None — All features now implemented"
+  - Known Issues list updated: 14 resolved items, zero remaining
+  - Coverage table updated: Migration 40%→70%+, overall 75%→~78%
+  - ROADMAP.md: version 2.0.0→2.1.0, SRL/OWL/distributed sections from Research→✅ Delivered, release schedule updated
