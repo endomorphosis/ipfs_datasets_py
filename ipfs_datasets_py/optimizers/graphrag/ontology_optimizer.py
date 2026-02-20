@@ -43,6 +43,7 @@ References:
 from __future__ import annotations
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -246,7 +247,102 @@ class OntologyOptimizer:
         )
         
         return report
-    
+
+    def analyze_batch_parallel(
+        self,
+        session_results: List[Any],
+        max_workers: int = 4,
+    ) -> "OptimizationReport":
+        """Parallel variant of :meth:`analyze_batch`.
+
+        Runs the three independent sub-analyses — pattern identification,
+        score-distribution computation, and recommendation generation — in
+        separate threads using :class:`concurrent.futures.ThreadPoolExecutor`.
+        For small batches the overhead is negligible; for large batches (>50
+        sessions) this reduces wall-clock time on multi-core machines.
+
+        Args:
+            session_results: Same as :meth:`analyze_batch`.
+            max_workers: Thread-pool size.  Defaults to 4.
+
+        Returns:
+            ``OptimizationReport`` identical to what :meth:`analyze_batch`
+            would return.
+        """
+        logger.info(
+            "Analyzing batch of %d sessions (parallel, max_workers=%d)",
+            len(session_results),
+            max_workers,
+        )
+
+        if not session_results:
+            return OptimizationReport(
+                average_score=0.0,
+                trend="insufficient_data",
+                recommendations=["Need more sessions to analyze"],
+            )
+
+        # Extract scores (fast, sequential — no I/O)
+        scores: List[float] = []
+        for result in session_results:
+            if hasattr(result, "critic_scores") and result.critic_scores:
+                scores.append(result.critic_scores[-1].overall)
+            elif hasattr(result, "critic_score"):
+                scores.append(result.critic_score.overall)
+
+        if not scores:
+            return OptimizationReport(
+                average_score=0.0,
+                trend="no_scores",
+                recommendations=["No valid scores found"],
+            )
+
+        average_score = sum(scores) / len(scores)
+        trend = self._determine_trend(average_score)
+        best_idx = scores.index(max(scores))
+        worst_idx = scores.index(min(scores))
+
+        # Submit three independent analyses in parallel
+        with ThreadPoolExecutor(max_workers=min(3, max_workers)) as executor:
+            f_patterns = executor.submit(self._identify_patterns, session_results)
+            f_dist = executor.submit(self._compute_score_distribution, session_results)
+            # _generate_recommendations depends only on scalars + patterns,
+            # so we wait for patterns first, then submit recommendations.
+            patterns = f_patterns.result()
+            f_recs = executor.submit(
+                self._generate_recommendations, average_score, scores, patterns
+            )
+            score_distribution = f_dist.result()
+            recommendations = f_recs.result()
+
+        report = OptimizationReport(
+            average_score=average_score,
+            trend=trend,
+            recommendations=recommendations,
+            best_ontology=self._extract_ontology(session_results[best_idx]),
+            worst_ontology=self._extract_ontology(session_results[worst_idx]),
+            score_distribution=score_distribution,
+            metadata={
+                "num_sessions": len(session_results),
+                "score_std": self._compute_std(scores),
+                "score_range": (min(scores), max(scores)),
+            },
+        )
+
+        self._history.append(report)
+        if len(self._history) >= 2:
+            report.improvement_rate = (
+                report.average_score - self._history[-2].average_score
+            )
+
+        logger.info(
+            "Parallel batch analysis: avg=%.2f, trend=%s, recs=%d",
+            average_score,
+            trend,
+            len(recommendations),
+        )
+        return report
+
     def analyze_trends(
         self,
         historical_results: Optional[List[OptimizationReport]] = None

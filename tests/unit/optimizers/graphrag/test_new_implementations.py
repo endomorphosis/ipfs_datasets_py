@@ -935,3 +935,81 @@ class TestBaseOptimizerMetrics:
         result = opt.run_session("input", ctx)
         m = result["metrics"]
         assert m["initial_score"] == m["final_score"]  # no improvement loop ran
+
+
+# ===========================================================================
+# analyze_batch_parallel tests (batch 11)
+# ===========================================================================
+
+class TestAnalyzeBatchParallel:
+    """Tests for OntologyOptimizer.analyze_batch_parallel()."""
+
+    def _make_result(self, score: float):
+        """Return a minimal MediatorState-like mock."""
+        critic_score = MagicMock()
+        critic_score.overall = score
+        # Provide real float values for dimension attributes
+        for dim in ("completeness", "consistency", "clarity", "granularity", "domain_alignment"):
+            setattr(critic_score, dim, score * 0.9)
+        result = MagicMock()
+        result.critic_scores = [critic_score]
+        result.current_round = 3
+        # _extract_ontology uses these
+        result.current_ontology = {"entities": [], "relationships": [], "metadata": {}}
+        result.final_ontology = None
+        return result
+
+    def test_empty_returns_report(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        opt = OntologyOptimizer()
+        report = opt.analyze_batch_parallel([])
+        assert report.average_score == 0.0
+        assert report.trend == "insufficient_data"
+
+    def test_single_result(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        opt = OntologyOptimizer()
+        report = opt.analyze_batch_parallel([self._make_result(0.75)])
+        assert abs(report.average_score - 0.75) < 1e-6
+        assert isinstance(report.recommendations, list)
+
+    def test_multiple_results_avg_score(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        opt = OntologyOptimizer()
+        scores = [0.6, 0.8, 0.7]
+        report = opt.analyze_batch_parallel([self._make_result(s) for s in scores])
+        assert abs(report.average_score - sum(scores) / len(scores)) < 1e-6
+
+    def test_returns_optimization_report_type(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer, OptimizationReport
+        opt = OntologyOptimizer()
+        report = opt.analyze_batch_parallel([self._make_result(0.7)])
+        assert isinstance(report, OptimizationReport)
+
+    def test_parallel_equals_sequential(self):
+        """analyze_batch_parallel must return equivalent results to analyze_batch."""
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        scores = [0.55, 0.65, 0.75, 0.80]
+        opt_seq = OntologyOptimizer()
+        opt_par = OntologyOptimizer()
+        results = [self._make_result(s) for s in scores]
+        seq = opt_seq.analyze_batch(results)
+        par = opt_par.analyze_batch_parallel(results)
+        assert abs(seq.average_score - par.average_score) < 1e-6
+        assert seq.trend == par.trend
+
+    def test_high_score_trend(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        opt = OntologyOptimizer()
+        report = opt.analyze_batch_parallel([self._make_result(0.92)])
+        # trend is a non-empty string
+        assert isinstance(report.trend, str)
+        assert len(report.trend) > 0
+
+    def test_history_updated(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyOptimizer
+        opt = OntologyOptimizer()
+        opt.analyze_batch_parallel([self._make_result(0.6)])
+        opt.analyze_batch_parallel([self._make_result(0.7)])
+        assert len(opt._history) == 2
+        assert opt._history[-1].improvement_rate is not None
