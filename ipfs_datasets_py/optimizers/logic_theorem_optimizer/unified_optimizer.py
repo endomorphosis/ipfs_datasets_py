@@ -107,6 +107,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         use_provers: Optional[List[str]] = None,
         enable_caching: bool = True,
         domain: str = "general",
+        metrics_collector: Optional[Any] = None,
     ):
         """Initialize the unified logic theorem optimizer.
         
@@ -116,8 +117,11 @@ class LogicTheoremOptimizer(BaseOptimizer):
             extraction_mode: Logic formalism to extract
             use_provers: Theorem provers to use for validation
             domain: Domain context
+            metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
+                instance.  When provided, each ``run_session()`` call records
+                timing and success/failure via ``start_cycle`` / ``end_cycle``.
         """
-        super().__init__(config=config, llm_backend=llm_backend)
+        super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
         
         # Initialize components
         self.extractor = LogicExtractor(backend=llm_backend)

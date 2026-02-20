@@ -179,7 +179,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: ExtractionConfig dataclass added; OntologyGenerationContext.config auto-normalises dict → ExtractionConfig
 - [x] (P2) [api] Replace bare `Dict[str, Any]` prover_config in `LogicValidator` with `ProverConfig` dataclass
   - Done 2026-02-20: ProverConfig dataclass added with from_dict/to_dict; LogicValidator accepts ProverConfig or dict
-- [ ] (P2) [api] Standardize `backend_config` in `OntologyCritic` to a typed `BackendConfig`
+- [x] (P2) [api] Standardize `backend_config` in `OntologyCritic` to a typed `BackendConfig` — Done 2026-02-20: BackendConfig dataclass + from_dict/to_dict; OntologyCritic auto-normalises dict→BackendConfig
 - [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
 - [ ] (P3) [api] Add `__slots__` to hot-path dataclasses for memory efficiency
 
@@ -378,7 +378,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P3) [perf] Add LRU caching to `OntologyCritic.evaluate_ontology()` for repeated evaluations of same hash
   - Done 2026-02-20: 128-entry SHA-256 keyed cache
 - [ ] (P3) [perf] Parallelize `OntologyOptimizer.analyze_batch()` across sessions using `concurrent.futures`
-- [ ] (P3) [perf] Use `__slots__` on `Entity`, `Relationship`, and `EntityExtractionResult` dataclasses
+- [x] (P3) [perf] Use `__slots__` on `Entity`, `Relationship`, and `EntityExtractionResult` dataclasses — Done 2026-02-20
 - [ ] (P3) [perf] Profile `logic_theorem_optimizer` prover round-trips; add result cache keyed on formula hash
 
 ---
@@ -417,7 +417,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
   - Done 2026-02-20: test_new_implementations.py
 - [x] (P3) [obs] Replace bare `except Exception` in `OntologyMediator.refine_ontology()` with typed `RefinementError` from `common.exceptions`
   - Done 2026-02-20: OntologyPipelineHarness uses RefinementError
-- [ ] (P3) [arch] Add `__slots__` to `Entity`, `Relationship`, `EntityExtractionResult` dataclasses for memory efficiency
+- [x] (P3) [arch] Add `__slots__` to `Entity`, `Relationship`, `EntityExtractionResult` dataclasses for memory efficiency — Done 2026-02-20
 - [ ] (P3) [perf] Profile `OntologyCritic._evaluate_consistency()` DFS cycle detection on large ontologies (>500 entities)
 - [x] (P3) [docs] Add `common/README.md` documenting the BaseCritic / BaseSession / BaseHarness / exceptions layer
   - Done 2026-02-20
@@ -429,10 +429,10 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [api] OntologyPipelineHarness: concrete BaseHarness for single-session graphrag pipeline — Done 2026-02-20
 - [x] (P2) [arch] BaseSession metrics: score_delta, avg_score, regression_count properties + to_dict() — Done 2026-02-20
 - [ ] (P2) [tests] End-to-end test: OntologyGenerator → OntologyCritic → OntologyMediator refinement loop (via OntologyPipelineHarness)
-- [ ] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter
+- [x] (P2) [arch] Add BackendConfig typed dataclass for OntologyCritic backend_config parameter — Done 2026-02-20
 - [ ] (P2) [perf] Parallelize OntologyOptimizer.analyze_batch() across sessions using concurrent.futures
-- [ ] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True)
+- [x] (P2) [arch] Add `__slots__` to hot-path dataclasses (Entity, Relationship, EntityExtractionResult) using @dataclass(slots=True) — Done 2026-02-20
 - [ ] (P2) [tests] Unit test BaseOptimizer.run_session() with a PerformanceMetricsCollector — verify start_cycle/end_cycle called
 - [ ] (P1) [security] Audit eval()/exec() usage in agentic optimizers — document each usage is safe and sandboxed
-- [ ] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions
-- [ ] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text
+- [x] (P2) [obs] Wire PerformanceMetricsCollector into logic_theorem_optimizer harness sessions — Done 2026-02-20: LogicTheoremOptimizer.__init__ accepts metrics_collector param, forwarded to BaseOptimizer
+- [x] (P2) [tests] Integration test: OntologyPipelineHarness.run() with real OntologyGenerator/OntologyCritic/OntologyMediator on fixture text — Done 2026-02-20: tests/unit/optimizers/graphrag/test_pipeline_harness_e2e.py (16 tests)
