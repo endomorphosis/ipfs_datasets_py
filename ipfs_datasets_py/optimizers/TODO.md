@@ -85,7 +85,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### C. Logging, metrics, and observability
 
-- [ ] (P2) [obs] Ensure all optimizers accept an optional logger and use consistent log keys.
+- [x] (P2) [obs] Ensure all optimizers accept an optional logger and use consistent log keys. — Done 2026-02-20: OntologyGenerator, OntologyMediator, OntologyCritic all accept optional logger param; use self._log
 - [x] (P2) [obs] Add minimal metrics hooks for session durations, score deltas, and error counts. — Done 2026-02-20: BaseOptimizer.run_session() + BaseSession.score_delta/avg_score/regression_count
 
 ### D. Testing strategy (incremental, practical)
@@ -205,8 +205,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [obs] All optimizers accept an optional `logger: logging.Logger` parameter — `OntologyGenerator`, `OntologyMediator` done
   - Done 2026-02-20 — use it everywhere instead of module-level logger
-- [ ] (P2) [obs] Emit structured log events (key=value pairs) for session start/end, score deltas, iteration count
-- [ ] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it
+- [x] (P2) [obs] Emit structured log events (key=value pairs) for session start/end, score deltas, iteration count — Done 2026-02-20: BaseOptimizer.run_session() logs session_id, domain, iterations, score, valid, execution_time_ms
+- [x] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it — Done 2026-02-20: BaseOptimizer.run_session() result and metrics dict now include execution_time_ms
 - [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()`
 - [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
