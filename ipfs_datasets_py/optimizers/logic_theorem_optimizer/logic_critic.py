@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
 
+from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult as BaseCriticResult
+
 logger = logging.getLogger(__name__)
 
 
@@ -70,9 +72,15 @@ class CriticScore:
         return None
 
 
-class LogicCritic:
+class LogicCritic(BaseCritic):
     """Critic agent for evaluating logical statement quality.
     
+    Extends :class:`~ipfs_datasets_py.optimizers.common.BaseCritic` so it fits
+    into the common optimizer pipeline.  The :meth:`evaluate` method (required
+    by ``BaseCritic``) wraps the richer :meth:`evaluate` (original domain
+    method); use :meth:`evaluate_extraction` if you need a full
+    :class:`CriticScore` object with per-dimension breakdown.
+
     This agent uses theorem provers and consistency checkers to evaluate
     the quality of extracted logical statements across multiple dimensions.
     
@@ -169,8 +177,62 @@ class LogicCritic:
                     logger.info("Initialized SymbolicAI prover")
             except ImportError as e:
                 logger.warning(f"Could not initialize {prover_name} prover: {e}")
-    
-    def evaluate(self, extraction_result) -> CriticScore:
+
+    # ------------------------------------------------------------------ #
+    # BaseCritic interface                                                  #
+    # ------------------------------------------------------------------ #
+
+    def evaluate(
+        self,
+        artifact: Any,
+        context: Any = None,
+        *,
+        source_data: Any = None,
+    ) -> "CriticScore":
+        """Evaluate an artifact (ExtractionResult) and return a CriticScore.
+
+        This method serves both the original ``LogicCritic`` API (one-arg call)
+        and the :class:`~ipfs_datasets_py.optimizers.common.BaseCritic`
+        interface (two-arg call).  It always returns a ``CriticScore`` so that
+        existing callers (``TheoremSession``, ``LogicTheoremOptimizer``) are
+        not broken.
+
+        Use :meth:`evaluate_as_base` if you need a
+        :class:`~ipfs_datasets_py.optimizers.common.CriticResult`.
+
+        Args:
+            artifact: ``ExtractionResult`` to evaluate.
+            context: Ignored (kept for interface compatibility).
+            source_data: Ignored (kept for interface compatibility).
+
+        Returns:
+            :class:`CriticScore` with per-dimension breakdown.
+        """
+        return self.evaluate_extraction(artifact)
+
+    def evaluate_as_base(
+        self,
+        artifact: Any,
+        context: Any = None,
+        *,
+        source_data: Any = None,
+    ) -> BaseCriticResult:
+        """Return a :class:`~ipfs_datasets_py.optimizers.common.CriticResult`.
+
+        Wraps :meth:`evaluate` for use in the common optimizer pipeline.
+        """
+        critic_score = self.evaluate_extraction(artifact)
+        dims = {d.name.lower(): critic_score.get_dimension_score(d) for d in CriticDimensions}
+        return BaseCriticResult(
+            score=critic_score.overall,
+            feedback=list(critic_score.recommendations),
+            dimensions=dims,
+            strengths=list(critic_score.strengths),
+            weaknesses=list(critic_score.weaknesses),
+            metadata={'evaluator': 'LogicCritic', 'provers': list(self.use_provers)},
+        )
+
+    def evaluate_extraction(self, extraction_result: Any) -> "CriticScore":
         """Evaluate an extraction result.
         
         Args:

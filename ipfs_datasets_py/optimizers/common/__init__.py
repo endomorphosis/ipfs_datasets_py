@@ -32,6 +32,20 @@ from .base_session import (
     RoundRecord,
 )
 
+from .base_harness import (
+    BaseHarness,
+    HarnessConfig,
+)
+
+from .exceptions import (
+    OptimizerError,
+    ExtractionError,
+    ValidationError,
+    ProvingError,
+    RefinementError,
+    ConfigurationError,
+)
+
 from .performance import (
     CacheEntry,
     LLMCache,
@@ -63,6 +77,16 @@ __all__ = [
     # Session
     "BaseSession",
     "RoundRecord",
+    # Harness
+    "BaseHarness",
+    "HarnessConfig",
+    # Exceptions
+    "OptimizerError",
+    "ExtractionError",
+    "ValidationError",
+    "ProvingError",
+    "RefinementError",
+    "ConfigurationError",
     # Performance utilities
     "CacheEntry",
     "LLMCache",
