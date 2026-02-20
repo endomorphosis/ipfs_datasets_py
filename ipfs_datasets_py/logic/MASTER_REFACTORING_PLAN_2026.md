@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 6.0 (supersedes all previous plans)  
+**Version:** 7.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -49,10 +49,10 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 
 ### What Needs Work (Phases 2, 4 — Remaining)
 
-1. **NL Accuracy** — TDFOL 80% → 90%+, CEC 60% → 75%+
+1. **NL Accuracy** — TDFOL 80% → 90%+ (needs spaCy), CEC 60% → 75%+
 2. **CI Integration** — performance baselines not yet wired into GitHub Actions
 3. **Multi-language NL** — Spanish coverage (French/German stubs exist)
-4. **Forward chaining infinite loop** — `ForwardChainingStrategy.__eq__` on unknown formulas
+4. **Integration test coverage** — `integration/reasoning/` modules at ~50%, target 80%
 
 ---
 
@@ -654,16 +654,18 @@ Consider splitting only if test coverage or type checking becomes problematic.
 
 ### 9.1 Fix Pre-existing Test Failures
 
-**Status:** 🔄 Partial (8 fixed this session)
+**Status:** ✅ All known fixable failures resolved
 
-**Fixed (2026-02-20 this session):**
+**Fixed (2026-02-20 session 2):**
 - [x] `test_tdfol_optimization.py`: `test_prove_with_explicit_strategy_forward/backward` — `OptimizedProver.prove()` now overwrites `result.method` with the selected `ProvingStrategy.value` so `result["strategy"]` returns `"forward"` / `"backward"` as expected
 - [x] `test_llm.py`: 3 cache tests (`test_cache_miss`, `test_cache_lru_eviction`, `test_cache_stats`) — `LLMResponseCache._make_key()` now falls back to SHA256 when `multiformats` is unavailable
 - [x] `test_llm.py`: `test_cache_keys_are_ipfs_cids` — added `pytest.importorskip("multiformats")` guard; test skips cleanly when library absent
 - [x] `test_countermodel_visualizer.py`: `test_to_html_string` — assertion updated to accept versioned CDN URL (`d3js.org/d3`)
 
-**Remaining (P1):**
-- [ ] `test_forward_chaining.py::test_prove_unknown_formula` — `ForwardChainingStrategy.__eq__` infinite loop when proving unknown formulas; needs a depth/iteration guard in `_apply_rules`
+**Fixed (2026-02-20 session 3):**
+- [x] `test_forward_chaining.py::test_prove_unknown_formula` — `ForwardChainingStrategy` exponential blowup fixed; now uses frontier-based iteration with `max_derived=500` guard
+
+**Remaining:**
 - [ ] ~69 TDFOL NL test failures — require spaCy; document as deferred until spaCy is added to CI
 
 ### 9.2 TDFOL NL Accuracy Improvement — 🔄 Pending
@@ -691,12 +693,15 @@ Consider splitting only if test coverage or type checking becomes problematic.
 
 ### 9.4 TDFOL Public API Docstrings
 
-**Status:** ~60% of public methods have docstrings (estimated)
+**Status:** ✅ COMPLETE (2026-02-20 session 3)
 
-**Acceptance Criteria:**
-- [ ] 100% of public classes and methods in `TDFOL/` have Google-style docstrings
-- [ ] Usage examples in all major module docstrings (`tdfol_core.py`, `tdfol_prover.py`, `tdfol_parser.py`)
-- [ ] `API_REFERENCE.md` updated with current method signatures
+**Completed:**
+- [x] 100% of public classes and methods in `TDFOL/` have docstrings (486/486)
+- [x] All Formula subclass methods (`to_string`, `get_free_variables`, `get_predicates`, `substitute`) in `tdfol_core.py` (40 methods)
+- [x] All expansion rule methods (`can_expand`, `expand`) in `expansion_rules.py` (10 methods)
+- [x] Decorator inner functions in `performance_profiler.py` and `performance_metrics.py` (6 closures)
+- [x] Demo/example functions in `demonstrate_performance_dashboard.py` and `example_performance_profiler.py` (3 functions)
+- [x] `colorama_init` stub in `countermodel_visualizer.py`
 
 ### 9.5 Multi-Language NL Support Completion
 
@@ -721,23 +726,22 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 3: MCP Server Tools | 2026-02-19 | 27 tools across 12 groups |
 | Phase 3: GraphRAG Integration | 2026-02-19 | 2 tools, 20 tests |
 | Phase 5: God-Module Splits | 2026-02-20 | All 6 oversized files split |
-| Phase 6 (partial): Test bug fixes | 2026-02-20 | 8 failures fixed (strategy/multiformats/d3) |
+| Phase 6 (partial): Test bug fixes | 2026-02-20 | 9 failures fixed (strategy/multiformats/d3/forward-chaining) |
+| Phase 6 (partial): TDFOL docstrings | 2026-02-20 | 100% coverage (486/486 public symbols) |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
 | Fix ~69 TDFOL NL test failures (requires spaCy) | 2.2 | 8h | 🔴 P1 |
-| Fix `ForwardChainingStrategy` infinite loop | 2.5 | 4h | 🔴 P1 |
 | Improve CEC NL coverage (60%→75%) | 2.3 | 12h | 🟠 P1 |
-| Add TDFOL docstrings (100% public API) | 6.2 | 6h | 🟡 P2 |
 | CI performance regression gates | 4.1 | 4h | 🟡 P2 |
 
 ### Medium Term (Weeks 4–8)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
-| Integration tests for reasoning modules (50%→80%) | 2.5 | 8h | 🟠 P1 |
-| E2E tests: legal text → formal proof | 2.5 | 8h | 🟠 P1 |
-| Spanish NL parser | 6.3 | 16h | 🟡 P2 |
+| Integration tests for reasoning modules (50%→80%) | 6.3 | 8h | 🟠 P1 |
+| E2E tests: legal text → formal proof | 6.3 | 8h | 🟠 P1 |
+| Spanish NL parser | 6.5 | 16h | 🟡 P2 |
 | Rate limiting for MCP tool calls | 4.2 | 4h | 🟡 P2 |
 
 ### Ongoing (Per PR / Monthly / Quarterly)
@@ -806,10 +810,10 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] `test_llm.py::test_cache_keys_are_ipfs_cids` — `pytest.importorskip("multiformats")` guard added
 - [x] `test_countermodel_visualizer.py::test_to_html_string` — assertion accepts d3.v7 CDN URL
 - [x] MASTER_REFACTORING_PLAN_2026.md — Phase 5 complete, Phase 6 added, timeline updated, ToC renumbered, Appendix A rules count fixed (70→67)
-- [ ] `ForwardChainingStrategy` infinite loop on unknown formulas
+- [x] `ForwardChainingStrategy._apply_rules()` — frontier-based iteration + `max_derived=500` guard (forward-chaining hang fixed)
+- [x] TDFOL public API docstrings — 100% coverage (486/486, up from ~88%)
 - [ ] TDFOL NL test failures (~69) — requires spaCy
 - [ ] Integration test coverage: 50% → 80%
-- [ ] TDFOL public API docstrings: ~60% → 100%
 - [ ] Spanish NL parser
 
 ---
@@ -924,7 +928,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 6.1 — Fix `ForwardChainingStrategy` infinite loop; Phase 2.2 TDFOL NL (with spaCy)  
+**Next Action:** Phase 2.2 TDFOL NL (needs spaCy); Phase 6.3 Integration test coverage (50%→80%)  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)

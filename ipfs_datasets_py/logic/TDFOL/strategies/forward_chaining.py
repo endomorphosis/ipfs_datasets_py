@@ -231,6 +231,9 @@ class ForwardChainingStrategy(ProverStrategy):
                     
                     # Two-formula rules: pair frontier formula with every known formula.
                     # Using derived (not frontier×frontier) keeps this O(|frontier|×|derived|).
+                    # Identity check (`is`) is safe here because `derived` is a set of
+                    # frozen dataclasses; value-equality uniqueness means each distinct
+                    # logical formula appears exactly once as one Python object in the set.
                     for other_formula in list(derived):
                         if current_formula is other_formula:
                             continue
