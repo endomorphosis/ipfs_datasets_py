@@ -235,8 +235,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] `_extract_rule_based()` — skeleton returns empty list; implement NER-style pattern matching using regex + entity type heuristics
   - Done 2026-02-20: implemented regex-based NER for common entity types (Person, Org, Date, Location, Obligation, Concept)
-- [ ] (P2) [graphrag] Add domain-specific rule sets (legal, medical, technical, general) to `_extract_rule_based()`
-- [ ] (P2) [graphrag] Make rule sets pluggable via `OntologyGenerationContext.config['custom_rules']`
+- [x] (P2) [graphrag] Add domain-specific rule sets (legal, medical, technical, general) to `_extract_rule_based()`
+- [x] (P2) [graphrag] Make rule sets pluggable via `OntologyGenerationContext.config['custom_rules']` — Done: ExtractionConfig.custom_rules field
 - [ ] (P3) [graphrag] Benchmark rule-based extraction vs manual annotations for common domains
 
 ### F2 — GraphRAG: Relationship inference
@@ -251,8 +251,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] `_merge_ontologies()` — naïve list extend; implement dedup by `id`, merge `properties` dicts, track `provenance`
   - Done 2026-02-20: dedup by id, merge properties, add provenance metadata
-- [ ] (P2) [graphrag] Handle entity type conflicts on merge (e.g., same ID but different types) — emit a warning and pick the higher-confidence one
-- [ ] (P2) [graphrag] Handle relationship dedup (same source_id + target_id + type = merge properties)
+- [x] (P2) [graphrag] Handle entity type conflicts on merge (e.g., same ID but different types) — emit a warning and pick the higher-confidence one — Done: warning logged + type override in _merge_ontologies()
+- [x] (P2) [graphrag] Handle relationship dedup (same source_id + target_id + type = merge properties) — Done: _merge_ontologies() deduplicates by (source_id, target_id, type)
 - [ ] (P3) [graphrag] Add merge provenance report (which entities came from which source)
 
 ### F4 — GraphRAG: Ontology critic dimension evaluators
@@ -276,7 +276,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: implemented add-property, normalize-names, prune-orphans, and merge-duplicates actions
 - [x] (P2) [graphrag] `generate_prompt()` — structured prompts with domain vocabulary, schema instructions, and feedback-driven refinement hints
   - Done 2026-02-20
-- [ ] (P2) [graphrag] Add `refine_ontology()` action: `add_missing_relationships` (links orphan entities via co-occurrence)
+- [x] (P2) [graphrag] Add `refine_ontology()` action: `add_missing_relationships` (links orphan entities via co-occurrence) — Done: add_missing_relationships action in ontology_mediator.py
 - [ ] (P3) [graphrag] Add refinement action: `split_entity` (detect entities with multiple unrelated roles)
 
 ### F6 — GraphRAG: Logic validator TDFOL pipeline
@@ -327,11 +327,11 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P1) [tests] Import smoke tests for all optimizer packages — `tests/unit/optimizers/test_optimizers_import_smoke.py`
 - [x] (P1) [tests] GraphRAG component smoke tests — `tests/unit/optimizers/graphrag/test_graphrag_smoke.py`
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — known entity pairs → expected relationship types
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity dicts
-- [ ] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — dedup, property merge, provenance
-- [ ] (P2) [tests] Unit tests for `OntologyCritic` dimension evaluators — minimal/maximal ontologies → boundary scores
-- [ ] (P2) [tests] Unit tests for `OntologyMediator.refine_ontology()` — each action type → expected ontology delta
+- [x] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — known entity pairs → expected relationship types — Done: test_ontology_generator_helpers.py
+- [x] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity dicts — Done: test_ontology_generator_helpers.py
+- [x] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — dedup, property merge, provenance — Done: test_ontology_generator_helpers.py
+- [x] (P2) [tests] Unit tests for `OntologyCritic` dimension evaluators — minimal/maximal ontologies → boundary scores — Done: test_ontology_critic_dimensions.py
+- [x] (P2) [tests] Unit tests for `OntologyMediator.refine_ontology()` — each action type → expected ontology delta — Done: test_ontology_mediator_refinement.py
 - [x] (P2) [tests] Golden-file tests for GraphRAG ontology dict schema (entities/relationships/metadata invariants)
   - Done 2026-02-20: test_ontology_schema_invariants.py
 
