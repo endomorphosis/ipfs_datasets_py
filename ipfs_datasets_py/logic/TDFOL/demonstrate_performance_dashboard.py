@@ -47,6 +47,7 @@ class DemoProofResult:
         self.proof_steps = list(range(num_steps))
     
     def is_proved(self) -> bool:
+        """Return True when the proof status equals PROVED."""
         return self.status == "ProofStatus.PROVED"
 
 

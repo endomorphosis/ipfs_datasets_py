@@ -289,8 +289,10 @@ class MetricsCollector:
             ...     pass
         """
         def decorator(func: F) -> F:
+            """Wrap *func* so every call is timed and recorded under *name*."""
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
+                """Execute *func* inside a timing context manager."""
                 with self.time(name, **metadata):
                     return func(*args, **kwargs)
             return wrapper
