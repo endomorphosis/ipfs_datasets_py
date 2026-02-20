@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 67% overall | Measured 2026-02-20; active modules average higher
+| **Test Coverage** | 70% overall | Measured 2026-02-20; indexing 87-99%, storage/types 100%, lineage shims 100%
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
-| **Known Issues** | None | All collection errors fixed; 0 failures (session 6) |
-| **Next Milestone** | v2.2.0 (Q3 2026) | Lineage + storage coverage improvements
+| **Known Issues** | None | 2 B-tree bugs fixed (session 8); 0 failures (1,385 pass)
+| **Next Milestone** | v2.2.0 (Q3 2026) | lineage/visualization render paths (requires matplotlib)
 
 ---
 
@@ -147,11 +147,11 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~67% (measured)
+### Overall Coverage: ~70% (measured, session 8)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
-> The 67% figure includes shim files (0%) and optional-dep files that are skipped at runtime.
-> Active implementation files average considerably higher.
+> Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
+> Measured with `networkx` available; lineage figures improve substantially vs. earlier sessions.
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
@@ -164,16 +164,16 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 | **Query** | 57–80% | 🔶 Improving | unified_engine 57%, distributed 80% |
 | **Extraction** | 52–86% | 🔶 Improving | validator 52%, relationships 86% |
 | **Reasoning** | 80–98% | ✅ Good | helpers 80%, types 98% |
-| **Indexing** | 51–93% | 🔶 Improving | manager 51%, specialized 93% |
-| **Storage** | 36–49% | ⚠️ Low | ipld_backend 49%, types 36% |
-| **Lineage** | 18–94% | ⚠️ Low | core 23%, types 94% |
+| **Indexing** | 87–99% | ✅ Good | btree 87%, manager 99%, specialized 93% |
+| **Storage** | 50–100% | 🔶 Improving | ipld_backend 50% (IPFS daemon paths), types **100%** |
+| **Lineage** | 34–100% | 🔶 Improving | cross_document shims **100%**, visualization 34%, core 89% |
 
-**Largest coverage opportunities (next milestone):**
-- `lineage/` subpackage (core 23%, metrics 19%, enhanced 18%) — requires `networkx` in CI
-- `storage/ipld_backend.py` (49%) — requires IPFS daemon for integration paths
+**Largest remaining coverage opportunities:**
+- `lineage/visualization.py` (34%) — render_networkx/render_plotly require matplotlib/plotly (optional)
+- `storage/ipld_backend.py` (50%) — IPFS daemon interaction paths require a running IPFS node
 - `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package
 
-### Test Files: 62 total (as of v2.1.0)
+### Test Files: 63 total (as of v2.1.3)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -195,11 +195,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - test_deferred_session4.py (36 tests, session 4 deepening)
 - test_reasoning.py (skipped when numpy absent)
 - test_coverage_improvements.py (90 tests — validator, unified_engine, transaction mgr, advanced extractor)
+- **test_master_status_session8.py** (92 tests — lineage shims, visualization, storage/types, LRUCache, indexing)
 - migration/test_formats.py, migration/test_integrity_verifier.py, migration/test_schema_checker.py, ...
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 1,251 passing, 25 skipped (libipld/numpy/anyio absent)
+**Total Tests:** 1,385 passing, 22 skipped (libipld/anyio absent; networkx now available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -497,6 +498,31 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
+### v2.1.3 (2026-02-20) - Coverage Boost + BTree Bug Fixes ✅
+
+**Summary:** Added 92 new tests covering 7 previously low-coverage modules; fixed 2 B-tree bugs that caused IndexError and incorrect search results after tree splits; updated all coverage metrics in MASTER_STATUS.
+
+**Bug fixes:**
+- `indexing/btree.py` `_split_child()`: Fixed `IndexError` — mid_key was read after `keys` was sliced to `[:mid]`, making `keys[mid]` out of bounds
+- `indexing/btree.py` `_split_child()` (B+ tree semantics): Fixed search returning empty for promoted separator keys — changed leaf split to keep mid key in right (new) child so that the search routing `(key == separator → right child)` correctly finds the entry
+
+**Test additions:**
+- `test_master_status_session8.py` — 92 new GIVEN-WHEN-THEN tests covering:
+  - `lineage/cross_document.py` (0% → **100%**): import shim, all exported names, aliases
+  - `lineage/cross_document_enhanced.py` (0% → **100%**): import shim, enhanced aliases
+  - `lineage/visualization.py` (19% → **34%**): `to_dict()`, error paths (ImportError for missing matplotlib/plotly), unknown renderer
+  - `storage/types.py` (36% → **100%**): Entity/Relationship: init, to_dict, from_dict, CID, __str__, __repr__, __eq__, __hash__, is_entity/is_relationship helpers
+  - `storage/ipld_backend.py` (49% → **50%**): LRUCache: put/get, LRU eviction, capacity enforcement, clear, len; IPLDBackend raises ImportError without router
+  - `indexing/types.py` (79% → **98%**): IndexDefinition.from_dict roundtrip, IndexEntry hash/eq with list key, IndexStats.to_dict
+  - `indexing/btree.py` (66% → **87%**): BTreeNode range_search, BTreeIndex insert+search, overflow causing split, range_search, get_stats, CompositeIndex, LabelIndex
+  - `indexing/manager.py` (51% → **99%**): all 6 create_*_index methods, drop (label/unknown/valid), get_index, list_indexes, get_stats (all/single/missing), insert_entity (all 6 index types, label filter mismatch, missing property)
+
+**Result:** 1,385 passed, 22 skipped (libipld/anyio absent), **0 failed** — up from 1,293 passed
+
+**Backward Compatibility:** 100% (B-tree fix is a correctness fix in previously-crashing code paths)
+
+---
+
 ### v2.1.2 (2026-02-20) - Coverage Improvements + Bug Fix ✅
 
 **Summary:** Added 90 new tests for the 5 lowest-coverage modules, fixed a bug in `validator.py`, and updated MASTER_STATUS.md with measured (not estimated) coverage numbers.
@@ -609,11 +635,11 @@ reasoning = reasoner.reason_across_documents(
 **Confidence Level:** HIGH
 
 **Evidence:**
-- ✅ ~67% test coverage overall (measured); active implementation files average higher
+- ✅ ~70% test coverage overall (measured); indexing 87–99%, storage/types 100%, lineage shims 100%
 - ✅ 300KB+ comprehensive documentation
 - ✅ All P1-P4 features complete (PR #1085, 2026-02-18)
 - ✅ All deferred features complete (sessions 2-5, 2026-02-20)
-- ✅ **Zero test failures** — 1,251 pass, 25 skip (optional deps), 0 fail (session 7, 2026-02-20)
+- ✅ **Zero test failures** — 1,385 pass, 22 skip (optional deps), 0 fail (session 8, 2026-02-20)
 - ✅ All features now in permanent subpackage locations (reasoning/, ontology/, extraction/srl.py, query/distributed.py)
 - ✅ Proper error handling and graceful degradation
 - ✅ Backward compatible with all changes (deprecation shims for all moved modules)
