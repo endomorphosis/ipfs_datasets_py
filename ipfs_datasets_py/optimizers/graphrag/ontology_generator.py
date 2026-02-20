@@ -96,6 +96,8 @@ class ExtractionConfig:
     window_size: int = 5
     include_properties: bool = True
     domain_vocab: Dict[str, List[str]] = field(default_factory=dict)
+    # Pluggable rule sets: list of (regex_pattern, entity_type) tuples
+    custom_rules: List[tuple] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -106,6 +108,7 @@ class ExtractionConfig:
             "window_size": self.window_size,
             "include_properties": self.include_properties,
             "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
+            "custom_rules": list(self.custom_rules),
         }
 
     @classmethod
@@ -118,6 +121,7 @@ class ExtractionConfig:
             window_size=int(d.get("window_size", 5)),
             include_properties=bool(d.get("include_properties", True)),
             domain_vocab=dict(d.get("domain_vocab", {})),
+            custom_rules=list(d.get("custom_rules", [])),
         )
 
 
