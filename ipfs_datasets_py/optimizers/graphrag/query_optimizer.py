@@ -135,9 +135,15 @@ except ImportError:
     Figure = Any
 
 # Import for Wikipedia-specific optimizations
-# Import necessary components
-from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
-from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor # Added import
+# Import necessary components (optional: pulls in heavier ML deps)
+try:
+    from ipfs_datasets_py.ml.llm.llm_reasoning_tracer import WikipediaKnowledgeGraphTracer
+    from ipfs_datasets_py.ml.llm.llm_graphrag import GraphRAGLLMProcessor
+    LLM_GRAPHRAG_AVAILABLE = True
+except ImportError:
+    WikipediaKnowledgeGraphTracer = None  # type: ignore[assignment]
+    GraphRAGLLMProcessor = None  # type: ignore[assignment]
+    LLM_GRAPHRAG_AVAILABLE = False
 
 # Import for Wikipedia-specific optimizations
 try:
@@ -4535,6 +4541,132 @@ class UnifiedGraphRAGQueryOptimizer:
         else:
             return "high"
     
+
+
+    def optimize_query(self, query: Dict[str, Any], priority: str = "normal", graph_processor: Any = None) -> Dict[str, Any]:
+        """Plan a GraphRAG query.
+
+        Returns a stable plan shape consumed by `get_execution_plan()` and the CLI.
+        This implementation is intentionally conservative and must never raise on
+        normal inputs.
+        """
+        if not isinstance(query, dict):
+            raise ValueError("query must be a dict")
+
+        # Defensive copy to avoid mutating caller input.
+        planned_query: Dict[str, Any] = copy.deepcopy(query)
+
+        # Normalize traversal parameters into the nested `traversal` object.
+        traversal = planned_query.setdefault("traversal", {})
+        if isinstance(traversal, dict):
+            if "edge_types" in planned_query and "edge_types" not in traversal:
+                traversal["edge_types"] = planned_query.pop("edge_types")
+            if "max_traversal_depth" in planned_query and "max_depth" not in traversal:
+                traversal["max_depth"] = planned_query.pop("max_traversal_depth")
+
+        # Determine graph type best-effort.
+        try:
+            graph_type = self.detect_graph_type(planned_query)
+        except Exception:
+            graph_type = "general"
+
+        optimizer = self._specific_optimizers.get(graph_type, self.base_optimizer)
+
+        # Default weights.
+        weights: Dict[str, float] = {
+            "vector": float(getattr(optimizer, "vector_weight", 0.7)),
+            "graph": float(getattr(optimizer, "graph_weight", 0.3)),
+        }
+
+        # If vector query, allow base optimizer to tune basic params.
+        if "query_vector" in planned_query:
+            try:
+                vector_params = planned_query.get("vector_params", {})
+                if not isinstance(vector_params, dict):
+                    vector_params = {}
+
+                max_vector_results = planned_query.get("max_vector_results", vector_params.get("top_k", 5))
+                min_similarity = planned_query.get(
+                    "min_similarity",
+                    vector_params.get("min_score", vector_params.get("min_similarity", 0.5)),
+                )
+
+                optimized = optimizer.optimize_query(
+                    query_vector=np.array(planned_query["query_vector"]),
+                    max_vector_results=int(max_vector_results or 5),
+                    max_traversal_depth=int(planned_query.get("traversal", {}).get("max_depth", 2) or 2),
+                    edge_types=planned_query.get("traversal", {}).get("edge_types"),
+                    min_similarity=float(min_similarity or 0.5),
+                )
+
+                if isinstance(optimized, dict):
+                    opt_params = optimized.get("params", {})
+                    if isinstance(opt_params, dict):
+                        if "max_vector_results" in opt_params:
+                            planned_query["max_vector_results"] = opt_params["max_vector_results"]
+                        if "min_similarity" in opt_params:
+                            planned_query["min_similarity"] = opt_params["min_similarity"]
+                        if "max_traversal_depth" in opt_params and isinstance(planned_query.get("traversal"), dict):
+                            planned_query["traversal"]["max_depth"] = opt_params["max_traversal_depth"]
+                        if "edge_types" in opt_params and isinstance(planned_query.get("traversal"), dict):
+                            if opt_params["edge_types"] is not None:
+                                planned_query["traversal"]["edge_types"] = opt_params["edge_types"]
+
+                    opt_weights = optimized.get("weights")
+                    if isinstance(opt_weights, dict):
+                        if "vector" in opt_weights and "graph" in opt_weights:
+                            weights = {
+                                "vector": float(opt_weights.get("vector", weights["vector"])),
+                                "graph": float(opt_weights.get("graph", weights["graph"])),
+                            }
+            except Exception:
+                pass
+
+        # Allocate budget with safe fallback.
+        try:
+            budget = self.budget_manager.allocate_budget(planned_query, priority)
+        except Exception:
+            budget = {}
+
+        if not isinstance(budget, dict):
+            budget = {}
+
+        budget.setdefault("vector_search_ms", 500)
+        budget.setdefault("graph_traversal_ms", 1000)
+        budget.setdefault("ranking_ms", 100)
+        budget.setdefault("max_nodes", 100)
+
+        # Cache metadata.
+        caching: Dict[str, Any] = {"enabled": bool(getattr(optimizer, "cache_enabled", False))}
+        if caching["enabled"]:
+            try:
+                key_query = copy.deepcopy(planned_query)
+                if "query_vector" in key_query:
+                    key_query["query_vector"] = "[vector]"
+                caching["key"] = hashlib.sha256(
+                    json.dumps(key_query, sort_keys=True, default=str).encode("utf-8")
+                ).hexdigest()
+            except Exception:
+                pass
+
+        statistics = {
+            "avg_query_time": getattr(getattr(self, "query_stats", None), "avg_query_time", 0.0),
+            "cache_hit_rate": getattr(getattr(self, "query_stats", None), "cache_hit_rate", 0.0),
+        }
+
+        traversal_strategy = "default"
+        if isinstance(planned_query.get("traversal"), dict):
+            traversal_strategy = planned_query["traversal"].get("strategy", "default")
+
+        return {
+            "query": planned_query,
+            "weights": weights,
+            "budget": budget,
+            "graph_type": graph_type,
+            "statistics": statistics,
+            "caching": caching,
+            "traversal_strategy": traversal_strategy,
+        }
 
     def _apply_learning_hook(self) -> None:
         """Best-effort: learn from recent query stats and adjust defaults."""

@@ -316,12 +316,74 @@ class OntologyGenerator:
             ... )
         """
         logger.info(f"Inferring relationships between {len(entities)} entities")
-        
+
         relationships = []
-        
-        # TODO: Implement relationship inference
-        # This is a placeholder that will be implemented in Phase 1
-        
+        text = str(data) if data is not None else ""
+
+        # Heuristic verb-frame patterns: (pattern, relationship_type)
+        _VERB_PATTERNS = [
+            (r'\b(\w+)\s+(?:must|shall|is required to|is obligated to)\s+\w+\s+(\w+)\b', 'obligates'),
+            (r'\b(\w+)\s+owns?\s+(\w+)\b', 'owns'),
+            (r'\b(\w+)\s+causes?\s+(\w+)\b', 'causes'),
+            (r'\b(\w+)\s+(?:is a|is an)\s+(\w+)\b', 'is_a'),
+            (r'\b(\w+)\s+(?:part of|belongs to)\s+(\w+)\b', 'part_of'),
+            (r'\b(\w+)\s+(?:employs?|hired?)\s+(\w+)\b', 'employs'),
+            (r'\b(\w+)\s+(?:manages?|supervises?)\s+(\w+)\b', 'manages'),
+        ]
+
+        import re as _re
+        entity_texts = {e.text.lower(): e for e in entities}
+        entity_ids_by_text = {e.text.lower(): e.id for e in entities}
+
+        rel_id_counter = [0]
+
+        def _make_rel_id() -> str:
+            rel_id_counter[0] += 1
+            return f"rel_{rel_id_counter[0]:04d}"
+
+        # 1) Verb-frame matching in text
+        for pattern, rel_type in _VERB_PATTERNS:
+            for m in _re.finditer(pattern, text, _re.IGNORECASE):
+                subj_text = m.group(1).lower()
+                obj_text = m.group(2).lower()
+                src_id = entity_ids_by_text.get(subj_text)
+                tgt_id = entity_ids_by_text.get(obj_text)
+                if src_id and tgt_id and src_id != tgt_id:
+                    relationships.append(Relationship(
+                        id=_make_rel_id(),
+                        source_id=src_id,
+                        target_id=tgt_id,
+                        type=rel_type,
+                        confidence=0.65,
+                    ))
+
+        # 2) Sliding-window co-occurrence (window=50 chars) for entities
+        # that weren't already linked by verb patterns
+        linked = {(r.source_id, r.target_id) for r in relationships}
+        entity_list = list(entities)
+        for i, e1 in enumerate(entity_list):
+            pos1 = text.lower().find(e1.text.lower())
+            if pos1 < 0:
+                continue
+            for e2 in entity_list[i + 1:]:
+                if (e1.id, e2.id) in linked or (e2.id, e1.id) in linked:
+                    continue
+                pos2 = text.lower().find(e2.text.lower())
+                if pos2 < 0:
+                    continue
+                distance = abs(pos1 - pos2)
+                if distance <= 200:
+                    confidence = max(0.3, 0.6 - distance / 500.0)
+                    relationships.append(Relationship(
+                        id=_make_rel_id(),
+                        source_id=e1.id,
+                        target_id=e2.id,
+                        type='related_to',
+                        confidence=confidence,
+                    ))
+                    linked.add((e1.id, e2.id))
+
+        logger.info(f"Inferred {len(relationships)} relationships")
         return relationships
     
     def generate_ontology(

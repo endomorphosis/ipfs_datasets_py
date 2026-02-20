@@ -53,7 +53,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - update architecture docs to match reality.
   - **DoD**: no misleading docs; no broken imports.
 
-- [ ] (P1) [tests] Add smoke tests for GraphRAG optimizer components that are currently large but lightly validated (imports + basic API invariants).
+- [x] (P1) [tests] Add smoke tests for GraphRAG optimizer components that are currently large but lightly validated (imports + basic API invariants).
+  - Done 2026-02-20: import + basic invariants under `tests/unit/optimizers/graphrag/`.
 
 - [x] (P1) [perf] Consolidate duplicated resource monitoring in `performance_optimizer.py` (single source of truth via `ResourceMonitor`).
   - Done 2026-02-20: `WebsiteProcessingOptimizer.monitor_resources()` delegates to `ResourceMonitor.get_current_resources()`; schema covered by a unit test.
@@ -101,13 +102,16 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ### 1) `graphrag/query_optimizer.py`
 
 - [x] (P0) [graphrag] Replace abusive TODO comment with a normal TODO.
-- [ ] (P1) [graphrag] Implement/verify the “continue with original optimize_query” merge path (the file appears to contain multiple `optimize_query` definitions; deduplicate).
+- [x] (P1) [graphrag] Implement/verify the “continue with original optimize_query” merge path (the file appears to contain multiple `optimize_query` definitions; deduplicate).
+  - Done 2026-02-20: removed broken override and restored `UnifiedGraphRAGQueryOptimizer.optimize_query`.
 - [ ] (P2) [graphrag] Split the file into smaller modules if it’s extremely large (planner, traversal heuristics, learning adapter, serialization).
-- [ ] (P2) [tests] Add unit tests for `get_execution_plan()` invariants.
+- [x] (P2) [tests] Add unit tests for `get_execution_plan()` invariants.
+  - Done 2026-02-20: vector + direct query plan shape asserted.
 
 ### 2) `graphrag/logic_validator.py`
 
-- [ ] (P2) [graphrag] Implement `ontology_to_tdfol()` conversion (even a minimal subset) — **DoD**: non-empty formulas for a trivial ontology.
+- [x] (P2) [graphrag] Implement `ontology_to_tdfol()` conversion (even a minimal subset) — **DoD**: non-empty formulas for a trivial ontology.
+  - Done 2026-02-20: emits deterministic predicate-style string facts when TDFOL is unavailable.
 - [ ] (P3) [graphrag] Implement “intelligent fix suggestion” once validation errors are structured.
 - [ ] (P3) [graphrag] Implement full TDFOL proving (or clearly scope it to a specific prover/backend).
 
@@ -121,7 +125,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### 4) `graphrag/ontology_optimizer.py`
 
-- [ ] (P3) [graphrag] Implement pattern identification across successful runs.
+- [x] (P3) [graphrag] Implement pattern identification across successful runs.
+  - Done 2026-02-20: deterministic counters/averages in `identify_patterns()`.
 - [ ] (P3) [graphrag] Implement “intelligent recommendation generation”.
 
 ### 5) `graphrag/ontology_critic.py`
@@ -133,7 +138,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] Implement `cli_wrapper.py` “load ontology and optimize” (best-effort via `OntologySession`; JSON ontology inputs supported).
 - [x] (P2) [graphrag] Implement `cli_wrapper.py` “load and validate ontology” (JSON ontology inputs supported).
-- [ ] (P2) [graphrag] Implement `cli_wrapper.py` “query optimization”.
+- [x] (P2) [graphrag] Implement `cli_wrapper.py` “query optimization”.
+  - Done 2026-02-20: `query` now returns a plan via `UnifiedGraphRAGQueryOptimizer` and supports `--explain`/`--output`.
 
 ---
 
@@ -152,49 +158,214 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ---
 
-## TODO inventory (seeded from inline markers)
+---
 
-This section is the “copy of record” of inline TODO markers currently found under `optimizers/`.
+## Comprehensive Refactoring Plan (added 2026-02-20)
 
-| Area | File | TODO summary |
-|---|---|---|
-| GraphRAG | `graphrag/query_optimizer.py` | Deduplicate `optimize_query`; refactor learning-hook section |
-| GraphRAG | `graphrag/logic_validator.py` | Ontology→TDFOL conversion; fix suggestion; full proving |
-| GraphRAG | `graphrag/prompt_generator.py` | Example database integration |
-| GraphRAG | `graphrag/ontology_generator.py` | Relationship inference; rule-based; LLM-based; hybrid; neural; smart merging |
-| GraphRAG | `graphrag/ontology_mediator.py` | Prompt generation; targeted refinement; refinement actions |
-| GraphRAG | `graphrag/ontology_optimizer.py` | Pattern identification; recommendation generation |
-| GraphRAG | `graphrag/ontology_critic.py` | LLM integration + evaluator depth |
-| GraphRAG | `graphrag/cli_wrapper.py` | Load ontology; validate ontology; query optimization |
-| Logic | `logic_theorem_optimizer/cli_wrapper.py` | Implement theorem proving |
+### R1 — Break up the mega-file `graphrag/query_optimizer.py` (5 800 lines)
 
-_Refresh command (run from repo root):_  
-`rg -n "TODO\\b|FIXME\\b|XXX\\b" ipfs_datasets_py/ipfs_datasets_py/optimizers/`
+- [ ] (P2) [arch] Extract `QueryPlanner` class (lines ~1–1000) into `graphrag/query_planner.py`
+- [ ] (P2) [arch] Extract `TraversalHeuristics` into `graphrag/traversal_heuristics.py`
+- [ ] (P2) [arch] Extract `LearningAdapter` (learning-hook section, ~lines 4500+) into `graphrag/learning_adapter.py`
+- [ ] (P2) [arch] Extract serialization helpers into `graphrag/serialization.py`
+- [ ] (P2) [tests] Add unit tests for each extracted module after split
+- [ ] (P3) [docs] Update module-level docstrings to reflect new file layout
+
+### R2 — Typed config objects everywhere (no `Dict[str, Any]` sprawl)
+
+- [ ] (P2) [api] Replace bare `Dict[str, Any]` in `OntologyGenerationContext` with a typed `ExtractionConfig` dataclass
+- [ ] (P2) [api] Replace bare `Dict[str, Any]` prover_config in `LogicValidator` with `ProverConfig` dataclass
+- [ ] (P2) [api] Standardize `backend_config` in `OntologyCritic` to a typed `BackendConfig`
+- [ ] (P2) [api] Audit all `**kwargs`-accepting methods in `agentic/` and replace with typed optional parameters
+- [ ] (P3) [api] Add `__slots__` to hot-path dataclasses for memory efficiency
+
+### R3 — Common primitives layer (`optimizers/common/`)
+
+- [x] (P1) [arch] `common/base_optimizer.py` — `BaseOptimizer` abstract class with `generate/critique/optimize/validate` pipeline exists
+- [ ] (P1) [arch] `common/base_critic.py` — `BaseCritic` abstract class with `evaluate()` returning typed `CriticScore`
+- [ ] (P1) [arch] `common/base_session.py` — `BaseSession` dataclass tracking rounds, scores, convergence
+- [ ] (P2) [arch] `common/base_harness.py` — `BaseHarness` orchestrating generator + critic + optimizer
+- [ ] (P2) [arch] Wire `OntologyCritic` to extend `BaseCritic`
+- [ ] (P2) [arch] Wire `LogicCritic` to extend `BaseCritic`
+- [ ] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
+- [ ] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
+- [ ] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
+- [ ] (P3) [docs] Write architecture diagram for the `generate → critique → optimize → validate` loop
+
+### R4 — Logging & observability consistency
+
+- [ ] (P2) [obs] All optimizers accept an optional `logger: logging.Logger` parameter — use it everywhere instead of module-level logger
+- [ ] (P2) [obs] Emit structured log events (key=value pairs) for session start/end, score deltas, iteration count
+- [ ] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it
+- [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()`
+- [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis
+- [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
+- [ ] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
+
+### R5 — Error handling & resilience
+
+- [ ] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
+- [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
+- [ ] (P2) [arch] All CLI commands exit with non-zero on failure (audit `cmd_*` methods)
+- [ ] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()`
+- [ ] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
+
+### R6 — Deprecation cleanup
+
+- [ ] (P2) [arch] Add `DeprecationWarning` emission to `TheoremSession.__init__()` and document migration path
+- [ ] (P2) [arch] Add `DeprecationWarning` to deprecated imports re-exported from old `__init__.py` locations
+- [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
 
 ---
 
-## Legacy notes (imported)
+## Detailed Feature Work
 
-The prior committed version of this file (circa 2026-02-14) contained an implementation status report and a large TDD checklist. The key context worth preserving:
+### F1 — GraphRAG: Real entity extraction (rule-based)
 
-- Agentic optimizer work was reported as largely complete for:
-  - Phase 2 (methods): adversarial / actor-critic / chaos
-  - Phase 4 (validation framework)
-  - Phase 5 (CLI)
-  - Phase 7 (examples) partially
-- Optimizer monitoring components were reported as implemented:
-  - `optimizer_learning_metrics.py`
-  - `optimizer_alert_system.py`
-  - `optimizer_learning_metrics_integration.py`
-  - `optimizer_visualization_integration.py`
-- Remaining work emphasized **tests** for the monitoring/metrics/alerting pipeline (unit + workflow integration).
+- [x] (P2) [graphrag] `_extract_rule_based()` — skeleton returns empty list; implement NER-style pattern matching using regex + entity type heuristics
+  - Done 2026-02-20: implemented regex-based NER for common entity types (Person, Org, Date, Location, Obligation, Concept)
+- [ ] (P2) [graphrag] Add domain-specific rule sets (legal, medical, technical, general) to `_extract_rule_based()`
+- [ ] (P2) [graphrag] Make rule sets pluggable via `OntologyGenerationContext.config['custom_rules']`
+- [ ] (P3) [graphrag] Benchmark rule-based extraction vs manual annotations for common domains
 
-If you need the full historical text, retrieve it from git history (e.g., `git show HEAD:ipfs_datasets_py/optimizers/TODO.md`).
+### F2 — GraphRAG: Relationship inference
 
-## Definition of Done (DoD) templates
+- [x] (P2) [graphrag] `infer_relationships()` — skeleton returns empty list; implement heuristic co-occurrence + verb-proximity inference
+  - Done 2026-02-20: implemented sliding-window co-occurrence + verb-frame heuristics
+- [ ] (P2) [graphrag] Improve verb extraction to classify relationship types from common verb patterns (obligates, owns, causes, part-of, etc.)
+- [ ] (P2) [graphrag] Add directionality detection (subject→object via dependency parse stubs)
+- [ ] (P3) [graphrag] Add confidence decay for distance-based co-occurrence (entities far apart = lower confidence)
 
-Use these checklists to keep work “finishable”:
+### F3 — GraphRAG: Smart ontology merging
 
-- **Refactor DoD**: no behavior change unless stated; type hints not worse; imports clean; unit tests added/updated; docs updated.
-- **Feature DoD**: minimal happy-path implemented; deterministic fallback; errors are typed/structured; at least one unit test.
-- **Docs DoD**: no references to non-existent files; example commands run successfully.
+- [x] (P2) [graphrag] `_merge_ontologies()` — naïve list extend; implement dedup by `id`, merge `properties` dicts, track `provenance`
+  - Done 2026-02-20: dedup by id, merge properties, add provenance metadata
+- [ ] (P2) [graphrag] Handle entity type conflicts on merge (e.g., same ID but different types) — emit a warning and pick the higher-confidence one
+- [ ] (P2) [graphrag] Handle relationship dedup (same source_id + target_id + type = merge properties)
+- [ ] (P3) [graphrag] Add merge provenance report (which entities came from which source)
+
+### F4 — GraphRAG: Ontology critic dimension evaluators
+
+- [x] (P2) [graphrag] `_evaluate_completeness()` — placeholder heuristic; improve with entity-type diversity, orphan-detection, coverage ratio
+  - Done 2026-02-20: added entity-type diversity, orphan ratio, property coverage sub-scores
+- [x] (P2) [graphrag] `_evaluate_consistency()` — placeholder; improve with dangling-ref check + circular-dependency detection
+  - Done 2026-02-20: added circular dependency detection via DFS + dangling reference check
+- [x] (P2) [graphrag] `_evaluate_clarity()` — placeholder; improve with property-completeness + naming-convention checks
+  - Done 2026-02-20: added naming convention check (camelCase/snake_case consistency) + property completeness
+- [x] (P2) [graphrag] `_evaluate_granularity()` — constant 0.75; implement real scoring based on avg properties-per-entity vs domain target
+  - Done 2026-02-20: implemented entity-depth and relationship-density scoring
+- [x] (P2) [graphrag] `_evaluate_domain_alignment()` — constant 0.80; implement keyword-based domain vocabulary matching
+  - Done 2026-02-20: implemented domain vocabulary matching via configurable keyword sets
+- [ ] (P3) [graphrag] Add LLM-based fallback evaluator that rates quality when rule-based scores are ambiguous
+- [ ] (P3) [graphrag] Add per-entity type completeness breakdown in `CriticScore.metadata`
+
+### F5 — GraphRAG: Ontology mediator refinements
+
+- [x] (P2) [graphrag] `refine_ontology()` — no-op copy; implement specific refinement actions driven by recommendations
+  - Done 2026-02-20: implemented add-property, normalize-names, prune-orphans, and merge-duplicates actions
+- [ ] (P2) [graphrag] `generate_prompt()` — basic string concat; generate structured prompts with few-shot examples
+- [ ] (P2) [graphrag] Add `refine_ontology()` action: `add_missing_relationships` (links orphan entities via co-occurrence)
+- [ ] (P3) [graphrag] Add refinement action: `split_entity` (detect entities with multiple unrelated roles)
+
+### F6 — GraphRAG: Logic validator TDFOL pipeline
+
+- [ ] (P2) [graphrag] Implement minimal `ontology_to_tdfol()` — convert entities/relationships to predicate-logic formulas (subset: `Person(x)`, `hasRelation(x,y)`)
+- [ ] (P2) [graphrag] Implement `_prove_consistency()` — pass generated formulas to `logic_theorem_optimizer.ProverIntegrationAdapter`
+- [ ] (P2) [graphrag] Implement `suggest_fixes()` — map contradiction types to fix templates (dangling ref → "remove or add entity", type conflict → "unify types")
+- [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
+- [ ] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
+
+### F7 — Logic theorem optimizer: CLI prove command
+
+- [x] (P1) [logic] `cmd_prove()` — hardcoded fake output; wire to `LogicTheoremOptimizer` and `ProverIntegrationAdapter`
+  - Done 2026-02-20: wired to `LogicTheoremOptimizer.validate_statements()` with real prover integration
+- [ ] (P2) [logic] Add `--output` flag to `cmd_prove` to write proof result as JSON
+- [ ] (P2) [logic] Add `--timeout` flag to prover invocation
+- [ ] (P2) [logic] Support reading premises/goal from a JSON/YAML file as well as CLI args
+- [ ] (P3) [logic] Add interactive REPL mode to `logic-theorem-optimizer` CLI
+
+### F8 — Agentic: Stub implementations
+
+- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.create_change()` stub; implement GitHub PR draft creation via `github_control.py`
+- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.check_approval()` stub; poll PR review status via GitHub API
+- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.apply_change()` stub; merge approved PR
+- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.rollback_change()` stub; revert commit or close PR
+- [ ] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
+- [ ] (P3) [agentic] Add integration test that exercises the full GitHub change-control flow against a mock
+
+### F9 — `graphrag/ontology_optimizer.py` internal stubs
+
+- [ ] (P2) [graphrag] `_identify_patterns()` (line ~490) returns `{}`; implement counter-based pattern mining over session results
+- [ ] (P2) [graphrag] `generate_recommendations()` — basic threshold checks; add pattern-driven recommendations
+
+### F10 — Prompt generator: example database
+
+- [ ] (P3) [graphrag] `prompt_generator.py:420` — TODO for example database integration; add a JSON-backed example store loadable from `config['examples_path']`
+
+---
+
+## Testing Strategy (incremental)
+
+### T1 — Unit tests for pure helpers
+
+- [x] (P1) [tests] Import smoke tests for all optimizer packages — `tests/unit/optimizers/test_optimizers_import_smoke.py`
+- [x] (P1) [tests] GraphRAG component smoke tests — `tests/unit/optimizers/graphrag/test_graphrag_smoke.py`
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — known entity pairs → expected relationship types
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity dicts
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — dedup, property merge, provenance
+- [ ] (P2) [tests] Unit tests for `OntologyCritic` dimension evaluators — minimal/maximal ontologies → boundary scores
+- [ ] (P2) [tests] Unit tests for `OntologyMediator.refine_ontology()` — each action type → expected ontology delta
+- [ ] (P2) [tests] Golden-file tests for GraphRAG ontology dict schema (entities/relationships/metadata invariants)
+
+### T2 — Integration tests
+
+- [ ] (P2) [tests] End-to-end test: `OntologyGenerator → OntologyCritic → OntologyMediator` refinement loop
+- [ ] (P2) [tests] End-to-end test: `LogicTheoremOptimizer.run_session()` on a trivial theorem
+- [ ] (P2) [tests] CLI test: `graphrag-optimizer generate ...` on a fixture text file
+- [ ] (P2) [tests] CLI test: `logic-theorem-optimizer prove` on a trivial theorem
+- [ ] (P3) [tests] Mutation testing pass on `graphrag/ontology_critic.py` dimension evaluators
+
+### T3 — Performance / regression tests
+
+- [ ] (P3) [perf] Benchmark `OntologyGenerator.extract_entities()` on 10k-token documents
+- [ ] (P3) [perf] Benchmark `LogicValidator.validate_ontology()` on 100-entity ontologies
+- [ ] (P3) [perf] Add pytest-benchmark harness to `tests/performance/optimizers/`
+
+---
+
+## Documentation Debt
+
+- [ ] (P2) [docs] `ARCHITECTURE_UNIFIED.md` — update to match current code (remove references to non-existent modules)
+- [ ] (P2) [docs] `README.md` — add quick-start examples for each optimizer type
+- [ ] (P2) [docs] Add module-level docstrings to `agentic/coordinator.py` and `agentic/production_hardening.py`
+- [ ] (P2) [docs] Document the `BaseCritic` / `BaseSession` / `BaseHarness` extension pattern with examples
+- [ ] (P3) [docs] Add Sphinx/MkDocs configuration and auto-generate API reference
+- [ ] (P3) [docs] Write a "How to add a new optimizer" guide covering all integration points
+- [ ] (P3) [docs] Add architecture ASCII diagram to each sub-package `__init__.py`
+
+---
+
+## Security & Safety
+
+- [ ] (P1) [arch] Audit all `eval()`/`exec()` usage in agentic optimizers — replace or sandbox
+- [ ] (P2) [arch] Validate file paths in CLI wrappers against path-traversal attacks (use `Path.resolve()`)
+- [ ] (P2) [arch] Ensure no secrets are logged (prover API keys, LLM API keys)
+- [ ] (P3) [arch] Add sandboxed subprocess execution for untrusted prover calls (seccomp profile)
+
+---
+
+## Performance & Scalability
+
+- [ ] (P3) [perf] Profile `graphrag/query_optimizer.py` under load — identify hotspots before the file split
+- [ ] (P3) [perf] Add LRU caching to `OntologyCritic.evaluate_ontology()` for repeated evaluations of same hash
+- [ ] (P3) [perf] Parallelize `OntologyOptimizer.analyze_batch()` across sessions using `concurrent.futures`
+- [ ] (P3) [perf] Use `__slots__` on `Entity`, `Relationship`, and `EntityExtractionResult` dataclasses
+- [ ] (P3) [perf] Profile `logic_theorem_optimizer` prover round-trips; add result cache keyed on formula hash
+
+---
+
+## Refresh command (run from repo root)
+
+```bash
+rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers/ --type py
+```
