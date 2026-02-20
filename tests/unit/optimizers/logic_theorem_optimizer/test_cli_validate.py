@@ -87,3 +87,13 @@ class TestCmdValidate:
     def test_check_completeness_flag_accepted(self, cli, logic_json):
         code = cli.run(["validate", "--input", str(logic_json), "--check-completeness"])
         assert code == 0
+
+    @pytest.mark.parametrize("domain", ["legal", "medical", "financial", "technical", "general"])
+    def test_domain_flag_accepted(self, cli, logic_json, domain):
+        code = cli.run(["validate", "--input", str(logic_json), "--domain", domain])
+        assert code == 0
+
+    def test_domain_default_is_general(self, cli, logic_json, capsys):
+        cli.run(["validate", "--input", str(logic_json)])
+        out = capsys.readouterr().out
+        assert "general" in out

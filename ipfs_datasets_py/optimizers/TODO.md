@@ -458,7 +458,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [perf] Benchmark _merge_ontologies() on 1000-entity ontologies
 - [x] (P2) [graphrag] Add confidence decay for co-occurrence distance — Done batch 28 (steeper decay >100 chars, floor 0.2)
 - [x] (P2) [tests] Property-based test: _merge_ontologies is idempotent — Done batch 23 (5 idempotency tests)
-- [ ] (P2) [graphrag] LLM-based extraction fallback when rule-based confidence is too low (< threshold)
+- [x] (P2) [graphrag] LLM-based extraction fallback — Done batch 33: ExtractionConfig.llm_fallback_threshold + OntologyGenerator.llm_backend param
 - [ ] (P2) [agentic] ChangeController.create_change() — implement GitHub PR draft via github_control.py
 - [ ] (P2) [agentic] ChangeController.check_approval() — poll PR review status via GitHub API
 - [ ] (P3) [tests] Mutation testing pass on ontology_critic.py dimension evaluators (identify gaps)
@@ -480,9 +480,9 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 
 ## Newly discovered items (batch 31+)
 
-- [ ] (P2) [graphrag] Add `ExtractionConfig.llm_fallback_threshold: float = 0.5` — trigger LLM extraction when rule-based confidence < threshold
+- [x] (P2) [graphrag] Add `ExtractionConfig.llm_fallback_threshold` — Done batch 33: default 0.0 (disabled); to_dict/from_dict updated
 - [ ] (P2) [graphrag] Implement `_extract_with_llm_fallback()` in OntologyGenerator that wraps `_extract_rule_based()` + fallback
-- [ ] (P2) [tests] Unit tests for LLM fallback: low confidence triggers fallback, high confidence skips fallback, fallback disabled when `llm_backend=None`
+- [x] (P2) [tests] Unit tests for LLM fallback — Done batch 33: 11 tests in test_llm_fallback_extraction.py
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
 - [ ] (P2) [tests] Unit tests for `OntologyLearningAdapter` feedback loop (3+ scenarios)

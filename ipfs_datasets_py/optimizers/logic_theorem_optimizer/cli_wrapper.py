@@ -190,6 +190,12 @@ Examples:
             help='Check completeness'
         )
         validate_parser.add_argument(
+            '--domain', '-d',
+            default='general',
+            choices=['general', 'legal', 'medical', 'financial', 'technical'],
+            help='Domain for domain-specific validation rules (default: general)'
+        )
+        validate_parser.add_argument(
             '--output', '-o',
             help='Output validation report'
         )
@@ -438,14 +444,16 @@ Examples:
                 enable_caching=True
             )
             
+            domain = getattr(args, 'domain', 'general') or 'general'
+
             # Create context
             context = OptimizationContext(
                 session_id=f"validate_{input_path.stem}",
                 input_data=logic_data,
-                domain='general'
+                domain=domain
             )
             
-            print("⏳ Validating with theorem provers...")
+            print(f"⏳ Validating with theorem provers (domain: {domain})...")
             is_valid = optimizer.validate(logic_data, context)
             
             if is_valid:
