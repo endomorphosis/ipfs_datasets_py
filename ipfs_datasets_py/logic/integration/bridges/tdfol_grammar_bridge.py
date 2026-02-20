@@ -12,9 +12,10 @@ Features:
 from __future__ import annotations
 
 import logging
+import re as _re
 from typing import Optional, List, Dict, Any, Tuple
 
-from ...TDFOL.tdfol_core import Formula
+from ...TDFOL.tdfol_core import Formula, TDFOLKnowledgeBase
 from ...TDFOL.tdfol_dcec_parser import parse_dcec
 from ...TDFOL.tdfol_prover import ProofResult, ProofStatus
 from .base_prover_bridge import (
@@ -593,7 +594,6 @@ class NaturalLanguageTDFOLInterface:
             formula = self.understand(premise)
             if formula is None:
                 # Try treating bare atom like "P" as a zero-arity predicate P()
-                import re as _re
                 if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', premise.strip()):
                     formula = self.understand(f"{premise.strip()}()")
             if formula:
@@ -609,7 +609,6 @@ class NaturalLanguageTDFOLInterface:
         # Parse conclusion
         conclusion_formula = self.understand(conclusion)
         if conclusion_formula is None:
-            import re as _re
             if _re.fullmatch(r'[A-Z][A-Za-z0-9_]*', conclusion.strip()):
                 conclusion_formula = self.understand(f"{conclusion.strip()}()")
         if not conclusion_formula:
@@ -621,7 +620,6 @@ class NaturalLanguageTDFOLInterface:
             }
         
         # Add premises to knowledge base
-        from ...TDFOL.tdfol_core import TDFOLKnowledgeBase
         kb = TDFOLKnowledgeBase()
         for formula in premise_formulas:
             kb.add_axiom(formula)

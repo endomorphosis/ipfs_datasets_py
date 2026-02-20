@@ -148,10 +148,11 @@ def consolidate_parens(expression: str) -> str:
     # but only inside a multi-element expression (i.e., when the result has spaces).
     # This avoids stripping the outermost wrapper from a lone atomic like "(a)".
     if ' ' in returner:
+        _inner_atom_re = re.compile(r'(?<![A-Za-z0-9_])\(([A-Za-z_][A-Za-z0-9_]*)\)(?![A-Za-z0-9_])')
         prev = None
         while prev != returner:
             prev = returner
-            returner = re.sub(r'(?<![A-Za-z0-9_])\(([A-Za-z_][A-Za-z0-9_]*)\)(?![A-Za-z0-9_])', r'\1', returner)
+            returner = _inner_atom_re.sub(r'\1', returner)
 
     return returner
 
