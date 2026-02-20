@@ -67,6 +67,9 @@ Advanced Optimization Components:
 This module integrates with the llm_graphrag module to provide optimized graph
 traversal strategies that enhance cross-document reasoning capabilities with LLMs.
 """
+
+from __future__ import annotations
+
 import logging
 import time
 import hashlib
@@ -113,6 +116,14 @@ except ImportError:
         @staticmethod
         def cpu_percent():
             return 25.0
+
+        class Process:
+            def memory_info(self):
+                return type('MemInfo', (), {'rss': 0, 'vms': 0})()
+
+            def cpu_percent(self):
+                return 0.0
+
     psutil = MockPsutil()
 import copy
 import math
@@ -122,12 +133,20 @@ from collections import defaultdict, OrderedDict, deque
 from contextlib import contextmanager
 
 # Optional visualization dependencies
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
+    from matplotlib.axes import Axes
+else:
+    class Figure:  # pragma: no cover
+        pass
+
+    class Axes:  # pragma: no cover
+        pass
+
 try:
     import matplotlib.pyplot as plt
     import matplotlib.colors as mcolors
     import networkx as nx
-    from matplotlib.figure import Figure
-    from matplotlib.axes import Axes
     VISUALIZATION_AVAILABLE = True
 except ImportError:
     VISUALIZATION_AVAILABLE = False
@@ -204,7 +223,7 @@ class QueryMetricsCollector:
         self.current_depth = 0
         
         # Resource tracking
-        self.track_resource_usage = track_resources and psutil is not None
+        self.track_resource_usage = bool(track_resources and HAVE_PSUTIL and hasattr(psutil, "Process"))
         
         # Ensure metrics directory exists if provided
         if metrics_dir and not os.path.exists(metrics_dir):
@@ -2066,7 +2085,7 @@ class GraphRAGQueryOptimizer:
         
     def optimize_query(
         self, 
-        query_vector: np.ndarray,
+        query_vector: Any,
         max_vector_results: int = 5,
         max_traversal_depth: int = 2,
         edge_types: Optional[List[str]] = None,
@@ -2131,7 +2150,7 @@ class GraphRAGQueryOptimizer:
         
     def get_query_key(
         self, 
-        query_vector: np.ndarray,
+        query_vector: Any,
         max_vector_results: int = 5,
         max_traversal_depth: int = 2,
         edge_types: Optional[List[str]] = None,
@@ -2591,7 +2610,7 @@ class GraphRAGQueryOptimizer:
         
     def generate_query_plan(
         self,
-        query_vector: np.ndarray,
+        query_vector: Any,
         max_vector_results: int = 5,
         max_traversal_depth: int = 2,
         edge_types: Optional[List[str]] = None,
@@ -2672,7 +2691,7 @@ class GraphRAGQueryOptimizer:
     def execute_query(
         self,
         graph_rag_processor: Any,
-        query_vector: np.ndarray,
+        query_vector: Any,
         max_vector_results: int = 5,
         max_traversal_depth: int = 2,
         edge_types: Optional[List[str]] = None,
@@ -5406,8 +5425,8 @@ class UnifiedGraphRAGQueryOptimizer:
     
     def execute_query_with_caching(
         self,
-        query_func: Callable[[np.ndarray, Dict[str, Any]], Any],
-        query_vector: np.ndarray,
+        query_func: Callable[[Any, Dict[str, Any]], Any],
+        query_vector: Any,
         params: Dict[str, Any],
         graph_processor: Any = None
     ) -> Any:

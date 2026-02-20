@@ -213,7 +213,8 @@ class OntologyCritic(BaseCritic):
     def __init__(
         self,
         backend_config: Optional[Union[Dict[str, Any], BackendConfig]] = None,
-        use_llm: bool = True
+        use_llm: bool = True,
+        logger: Optional[logging.Logger] = None,
     ):
         """
         Initialize the ontology critic.
@@ -224,10 +225,14 @@ class OntologyCritic(BaseCritic):
                 'model', 'temperature', 'max_tokens', etc.
             use_llm: Whether to use LLM for evaluation. If False, uses
                 rule-based heuristics.
+            logger: Optional :class:`logging.Logger` to use instead of the
+                module-level logger.  Useful for dependency injection in tests.
                 
         Raises:
             ImportError: If LLM backend is required but not available
         """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
         if backend_config is None:
             self.backend_config: BackendConfig = BackendConfig()
         elif isinstance(backend_config, dict):
@@ -243,9 +248,9 @@ class OntologyCritic(BaseCritic):
                 # LLM backend integration is gated on ipfs_accelerate availability.
                 # No action needed here; _llm_available stays False.
                 self._llm_available = False
-                logger.info("LLM backend not configured; using rule-based evaluation")
+                self._log.info("LLM backend not configured; using rule-based evaluation")
             except ImportError as e:
-                logger.warning(
+                self._log.warning(
                     f"LLM backend not available: {e}. "
                     "Falling back to rule-based evaluation."
                 )
@@ -337,14 +342,14 @@ class OntologyCritic(BaseCritic):
                 if not hasattr(self, '_eval_cache'):
                     self._eval_cache: dict = {}
                 if _cache_key in self._eval_cache:
-                    logger.debug("OntologyCritic cache hit")
+                    self._log.debug("OntologyCritic cache hit")
                     return self._eval_cache[_cache_key]
             except Exception:
                 _cache_key = None
         else:
             _cache_key = None
 
-        logger.info("Evaluating ontology quality")
+        self._log.info("Evaluating ontology quality")
         
         # Evaluate each dimension
         completeness = self._evaluate_completeness(ontology, context, source_data)
@@ -384,7 +389,7 @@ class OntologyCritic(BaseCritic):
             }
         )
         
-        logger.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
+        self._log.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
         if _cache_key is not None:
             # Limit cache to 128 entries (simple eviction: clear when full)
             if len(self._eval_cache) >= 128:
@@ -424,7 +429,7 @@ class OntologyCritic(BaseCritic):
             ...     print("New ontology is better!")
             ...     print("Improvements:", comparison['improvements'])
         """
-        logger.info("Comparing two ontologies")
+        self._log.info("Comparing two ontologies")
         
         # Evaluate both ontologies
         score1 = self.evaluate_ontology(ontology1, context) if context else None

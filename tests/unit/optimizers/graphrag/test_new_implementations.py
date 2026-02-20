@@ -1013,3 +1013,44 @@ class TestAnalyzeBatchParallel:
         opt.analyze_batch_parallel([self._make_result(0.7)])
         assert len(opt._history) == 2
         assert opt._history[-1].improvement_rate is not None
+
+
+# ===========================================================================
+# OntologyCritic optional logger tests (batch 15)
+# ===========================================================================
+
+class TestOntologyCriticLogger:
+    """Tests for optional logger dependency injection on OntologyCritic."""
+
+    def test_default_logger_assigned(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
+        import logging
+        critic = OntologyCritic(use_llm=False)
+        assert isinstance(critic._log, logging.Logger)
+
+    def test_custom_logger_used(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic
+        import logging
+        custom = logging.getLogger("test.custom.critic")
+        critic = OntologyCritic(use_llm=False, logger=custom)
+        assert critic._log is custom
+
+    def test_logger_records_messages(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyCritic, OntologyCritic
+        import logging
+        records = []
+
+        class Capturing(logging.Handler):
+            def emit(self, record):
+                records.append(record.getMessage())
+
+        custom = logging.getLogger("test.capturing.critic")
+        custom.addHandler(Capturing())
+        custom.setLevel(logging.DEBUG)
+
+        critic = OntologyCritic(use_llm=False, logger=custom)
+        ctx = _make_context()
+        ontology = _minimal_ontology()
+        critic.evaluate_ontology(ontology, ctx)
+        assert any("Evaluating" in r or "evaluation" in r.lower() for r in records), \
+            f"Expected log message, got: {records}"
