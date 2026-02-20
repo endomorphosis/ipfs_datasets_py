@@ -472,7 +472,7 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] `LearningAdapter.apply_feedback()` — update extraction weights based on mediator actions
 - [x] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag — Done: test_prove_outputs_json_on_success in test_cli_prove.py (already existed batch 27)
 - [x] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path — Done batch 30: 8 tests in test_cli_validate.py
-- [ ] (P3) [graphrag] Add `entity_to_tdfol()` helper that converts a single entity to a Formula object
+- [x] (P3) [graphrag] Add `entity_to_tdfol()` helper — Done batch 35: LogicValidator.entity_to_tdfol() added; 6 tests added to test_logic_validator_tdfol_conversion.py
 - [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
 - [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
 - [x] (P2) [arch] Add `__init__` test for graphrag/__init__ public symbols — Done batch 32: test_public_import_smoke.py (38 tests)
@@ -500,8 +500,8 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P3) [tests] Test that `_safe_resolve()` raises/returns 1 on path traversal `../../etc/passwd`
 - [ ] (P2) [docs] Add `common/README.md` section documenting `CriticResult` fields and usage patterns
 - [x] (P2) [graphrag] Emit a structured log line (JSON) after each `analyze_batch()` call for observability (INFO level, no secrets) — Done batch 33: `OntologyOptimizer._emit_analyze_batch_summary()` emits `ontology_optimizer.analyze_batch.summary` JSON logs for success/empty/no-scores paths; covered by caplog tests in `test_ontology_optimizer_metrics.py`
-- [ ] (P2) [logic] Add `--domain` flag to `validate` command (default: 'general', options: legal/medical/financial/technical)
-- [ ] (P2) [logic] Apply domain-specific validation rules in `cmd_validate()` when `--domain` is specified
-- [ ] (P2) [tests] Unit tests for `validate --domain legal` and `validate --domain medical`
+- [x] (P2) [logic] Add `--domain` flag to `validate` command — Done batch 34: 5 choices, passed to OptimizationContext domain
+- [x] (P2) [logic] Apply domain-specific validation rules in `cmd_validate()` — Done batch 34: domain passed to OptimizationContext; rules applied via LogicTheoremOptimizer
+- [x] (P2) [tests] Unit tests for `validate --domain` — Done batch 34: parametrized test covers all 5 domains
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_rdf()` stub: serialize ontology to Turtle format using rdflib (optional dep)
 - [ ] (P3) [graphrag] Add `OntologyOptimizer.export_to_graphml()` stub: serialize ontology to GraphML for visualization
