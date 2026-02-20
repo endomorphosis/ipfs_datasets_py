@@ -530,7 +530,8 @@ class OntologyGenerator:
         import re as _re
         import uuid as _uuid
 
-        _PATTERNS: list[tuple[str, str]] = [
+        # Base patterns (domain-agnostic)
+        _BASE_PATTERNS: list[tuple[str, str]] = [
             # Person names (Title + Capitalised words)
             (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
             # Organisation suffixes
@@ -539,7 +540,7 @@ class OntologyGenerator:
             (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
             (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
             # Monetary amounts
-            (r'\b(?:USD|EUR|GBP|€|\$|£)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
+            (r'\b(?:USD|EUR|GBP)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
             # Locations — simple proper-noun heuristic for known indicators
             (r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b', 'Location'),
             # Legal obligations (noun phrases around "obligation", "duty", "right")
@@ -547,6 +548,39 @@ class OntologyGenerator:
             # Generic capitalised concepts (fallback — lower confidence)
             (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
         ]
+
+        # Domain-specific supplemental patterns
+        _DOMAIN_PATTERNS: dict[str, list[tuple[str, str]]] = {
+            'legal': [
+                (r'\b(?:plaintiff|defendant|claimant|respondent|petitioner)\b', 'LegalParty'),
+                (r'\b(?:Article|Section|Clause|Schedule|Appendix)\s+\d+[\w.]*', 'LegalReference'),
+                (r'\b(?:indemnif(?:y|ication)|warranty|waiver|covenant|arbitration)\b', 'LegalConcept'),
+            ],
+            'medical': [
+                (r'\b(?:diagnosis|prognosis|symptom|syndrome|disorder|disease|condition)\b', 'MedicalConcept'),
+                (r'\b\d+\s*(?:mg|mcg|ml|IU|units?)\b', 'Dosage'),
+                (r'\b(?:patient|physician|surgeon|nurse|therapist|specialist)\b', 'MedicalRole'),
+            ],
+            'technical': [
+                (r'\b(?:API|REST|HTTP|JSON|XML|SQL|NoSQL|GraphQL)\b', 'Protocol'),
+                (r'\b(?:microservice|endpoint|middleware|container|pipeline|daemon)\b', 'TechnicalComponent'),
+                (r'\bv?\d+\.\d+(?:\.\d+)*(?:-\w+)?\b', 'Version'),
+            ],
+            'financial': [
+                (r'\b(?:asset|liability|equity|debit|credit|balance|principal|interest)\b', 'FinancialConcept'),
+                (r'\b\d{1,3}(?:,\d{3})*(?:\.\d{2})?\s*(?:USD|EUR|GBP|JPY)?\b', 'MonetaryValue'),
+                (r'\b(?:IBAN|SWIFT|BIC|routing\s+number)\b', 'BankIdentifier'),
+            ],
+        }
+
+        domain = getattr(context, 'domain', 'general').lower() if context else 'general'
+        _PATTERNS = _BASE_PATTERNS + _DOMAIN_PATTERNS.get(domain, [])
+
+        # Append pluggable custom rules from context config (before generic Concept fallback)
+        ext_config = getattr(context, 'extraction_config', None) if context else None
+        if ext_config is not None and hasattr(ext_config, 'custom_rules') and ext_config.custom_rules:
+            # Insert custom rules before the last (generic Concept fallback) pattern
+            _PATTERNS = _PATTERNS[:-1] + list(ext_config.custom_rules) + [_PATTERNS[-1]]
 
         text = str(data) if data is not None else ""
         entities: list[Entity] = []
@@ -772,14 +806,23 @@ class OntologyGenerator:
                 merged['entities'].append(new_ent)
                 existing_entity_ids[eid] = new_ent
             else:
-                # Merge properties; prefer higher-confidence version
+                # Emit warning when entity types conflict; prefer higher-confidence version
                 base_ent = existing_entity_ids[eid]
+                base_type = base_ent.get('type')
+                ext_type = ent.get('type')
+                if base_type and ext_type and base_type != ext_type:
+                    self._log.warning(
+                        f"Entity type conflict for id='{eid}': "
+                        f"base={base_type!r}, extension={ext_type!r}. "
+                        f"Keeping higher-confidence type."
+                    )
                 ext_conf = ent.get('confidence', 0.0)
                 base_conf = base_ent.get('confidence', 0.0)
                 merged_props = {**ent.get('properties', {}), **base_ent.get('properties', {})}
                 base_ent['properties'] = merged_props
                 if ext_conf > base_conf:
                     base_ent['confidence'] = ext_conf
+                    base_ent['type'] = ext_type  # adopt extension's type when more confident
                 base_ent.setdefault('provenance', [])
                 base_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
 

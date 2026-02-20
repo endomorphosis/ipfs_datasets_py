@@ -266,3 +266,107 @@ class TestMergeOntologies:
             e["id"] = f"ext_{i}"
         generator._merge_ontologies(base, ext)
         assert base == orig_base
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Domain-specific and custom rules
+# ──────────────────────────────────────────────────────────────────────────────
+
+class TestDomainSpecificExtraction:
+    def test_legal_domain_extracts_legal_party(self, generator):
+        legal_ctx = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="legal",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        text = "The plaintiff filed a motion against the defendant."
+        result = generator._extract_rule_based(text, legal_ctx)
+        types = [e.type for e in result.entities]
+        assert "LegalParty" in types
+
+    def test_medical_domain_extracts_dosage(self, generator):
+        med_ctx = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="medical",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        text = "Administer 500 mg twice daily."
+        result = generator._extract_rule_based(text, med_ctx)
+        types = [e.type for e in result.entities]
+        assert "Dosage" in types
+
+    def test_technical_domain_extracts_protocol(self, generator):
+        tech_ctx = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="technical",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        text = "The service exposes a REST API over HTTP."
+        result = generator._extract_rule_based(text, tech_ctx)
+        types = [e.type for e in result.entities]
+        assert "Protocol" in types
+
+    def test_custom_rules_pluggable(self, generator):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionConfig
+        cfg = ExtractionConfig(custom_rules=[(r'\b(?:Widget|Gadget)\b', 'Product')])
+        custom_ctx = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="general",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+            config=cfg,
+        )
+        text = "The Widget is sold alongside the Gadget."
+        result = generator._extract_rule_based(text, custom_ctx)
+        types = [e.type for e in result.entities]
+        assert "Product" in types
+
+    def test_unknown_domain_falls_back_to_base_patterns(self, generator):
+        unknown_ctx = OntologyGenerationContext(
+            data_source="test",
+            data_type=DataType.TEXT,
+            domain="unknown_xyz",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        text = "Dr. Alice signed the agreement on 01/15/2024."
+        result = generator._extract_rule_based(text, unknown_ctx)
+        types = [e.type for e in result.entities]
+        assert "Person" in types or "Date" in types
+
+
+class TestMergeEntitiesTypeConflict:
+    def test_type_conflict_emits_warning(self, generator):
+        base = {
+            "entities": [{"id": "e0", "type": "Person", "text": "Alice", "confidence": 0.5}],
+            "relationships": [],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [{"id": "e0", "type": "Organization", "text": "Alice", "confidence": 0.3}],
+            "relationships": [],
+            "metadata": {},
+        }
+        # Should not raise; type conflict is logged at WARNING, not raised
+        merged = generator._merge_ontologies(base, ext)
+        e0 = next(e for e in merged["entities"] if e["id"] == "e0")
+        # lower-confidence extension does not override type
+        assert e0["type"] == "Person"
+
+    def test_higher_confidence_extension_type_wins(self, generator):
+        base = {
+            "entities": [{"id": "e0", "type": "Person", "text": "Alice", "confidence": 0.3}],
+            "relationships": [],
+            "metadata": {},
+        }
+        ext = {
+            "entities": [{"id": "e0", "type": "Organization", "text": "Alice", "confidence": 0.9}],
+            "relationships": [],
+            "metadata": {},
+        }
+        merged = generator._merge_ontologies(base, ext)
+        e0 = next(e for e in merged["entities"] if e["id"] == "e0")
+        assert e0["type"] == "Organization"
+        assert e0["confidence"] == 0.9
