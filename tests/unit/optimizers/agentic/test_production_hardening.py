@@ -67,14 +67,14 @@ class TestSecurityConfig:
         # Verify patterns are regex strings that capture dangerous operations
         import re
         test_cases = [
-            ('rm -rf', 'rm\\s+-rf'),  # rm with spaces and dash
-            ('eval(', 'eval'),
-            ('exec(', 'exec'),
-            ('__import__', '__import__'),
-            ('system(', 'system'),
+            ('rm -rf ', 'rm\\s+-rf'),          # rm with spaces and dash
+            ('eval(', 'eval\\s*\\('),
+            ('exec(', 'exec\\s*\\('),
+            ('__import__(', '__import__\\s*\\('),
+            ('system(', 'system\\s*\\('),
         ]
         
-        for code_snippet, pattern_name in test_cases:
+        for code_snippet, pattern_desc in test_cases:
             # Find pattern that matches this snippet
             matched = False
             for pattern in config.forbidden_patterns:
@@ -85,7 +85,7 @@ class TestSecurityConfig:
                 except re.error:
                     pass
             
-            assert matched, f"Expected pattern matching '{pattern_name}' in forbidden patterns"
+            assert matched, f"Expected pattern matching '{pattern_desc}' in forbidden patterns; tested '{code_snippet}'"
 
 
 class TestInputSanitizer:
