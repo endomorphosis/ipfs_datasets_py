@@ -27,6 +27,7 @@ class ASTNodeType(Enum):
     DELETE = auto()
     SET = auto()
     WITH = auto()
+    UNWIND = auto()
     
     # Patterns
     PATTERN = auto()
@@ -245,6 +246,68 @@ class UnionClause(ASTNode):
     def __post_init__(self):
         if not hasattr(self, 'node_type') or self.node_type is None:
             self.node_type = ASTNodeType.SET  # Placeholder, can add UNION to enum later
+
+
+@dataclass
+class UnwindClause(ASTNode):
+    """
+    Represents an UNWIND clause.
+
+    Unwinds a list into individual rows, one row per list element.
+
+    Example::
+
+        UNWIND [1, 2, 3] AS x RETURN x
+        UNWIND n.tags AS tag RETURN tag
+
+    Attributes:
+        expression: The list expression to unwind.
+        variable: The variable name to bind each element to.
+    """
+
+    expression: Any = None
+    variable: str = ""
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.UNWIND
+
+
+@dataclass
+class WithClause(ASTNode):
+    """
+    Represents a WITH clause.
+
+    Projects results to the next query part, optionally with filtering.
+    Semantically similar to RETURN but passes results to the next clause
+    instead of the client.
+
+    Example::
+
+        MATCH (n:Person)
+        WITH n.name AS name, n.age AS age
+        WHERE age > 30
+        RETURN name
+
+    Attributes:
+        items: List of :class:`ReturnItem` projections (same as RETURN).
+        where: Optional WHERE clause applied after projection.
+        distinct: Whether to apply DISTINCT.
+        order_by: Optional ORDER BY clause.
+        skip: Optional SKIP expression.
+        limit: Optional LIMIT expression.
+    """
+
+    items: List[Any] = field(default_factory=list)
+    where: Optional[Any] = None
+    distinct: bool = False
+    order_by: Optional[Any] = None
+    skip: Optional[Any] = None
+    limit: Optional[Any] = None
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.WITH
 
 
 # Pattern nodes

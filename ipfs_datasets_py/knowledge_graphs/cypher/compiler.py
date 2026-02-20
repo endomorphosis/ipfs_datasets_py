@@ -31,6 +31,8 @@ from .ast import (
     DeleteClause,
     SetClause,
     UnionClause,
+    UnwindClause,
+    WithClause,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -127,6 +129,10 @@ class CypherCompiler:
             self._compile_set(clause)
         elif isinstance(clause, UnionClause):
             self._compile_union(clause)
+        elif isinstance(clause, UnwindClause):
+            self._compile_unwind(clause)
+        elif isinstance(clause, WithClause):
+            self._compile_with(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
@@ -672,7 +678,59 @@ class CypherCompiler:
             "all": union_clause.all  # True for UNION ALL, False for UNION
         }
         self.operations.append(op)
-    
+
+    def _compile_unwind(self, unwind: UnwindClause) -> None:
+        """Compile UNWIND clause.
+
+        Generates an ``Unwind`` IR operation that expands a list expression
+        into individual rows, binding each element to ``unwind.variable``.
+
+        IR emitted::
+
+            {"op": "Unwind", "expression": <compiled-expr>, "variable": "<var>"}
+        """
+        op = {
+            "op": "Unwind",
+            "expression": self._compile_expression(unwind.expression),
+            "variable": unwind.variable,
+        }
+        self.operations.append(op)
+
+    def _compile_with(self, with_clause: WithClause) -> None:
+        """Compile WITH clause.
+
+        A WITH clause is semantically a RETURN-then-continue: it projects
+        columns and (optionally) filters them before the next query part.
+
+        IR emitted:
+
+        * ``{"op": "WithProject", ...}`` — like Project but writes rows to
+          *bindings* instead of *final_results*, so subsequent Filter/Project
+          ops can see the projected names (e.g. ``age`` rather than ``n.age``).
+        * Optional ``{"op": "Filter", ...}`` from the WHERE clause.
+        """
+        # Compile WITH items — compile expressions the same way as RETURN
+        items = []
+        for item in with_clause.items:
+            expr = self._compile_expression(item.expression) if item.expression is not None else None
+            alias = item.alias if item.alias else self._expression_to_string(item.expression)
+            items.append({"expression": expr, "alias": alias})
+
+        op: Dict[str, Any] = {
+            "op": "WithProject",
+            "items": items,
+            "distinct": with_clause.distinct,
+        }
+        if with_clause.skip is not None:
+            op["skip"] = with_clause.skip
+        if with_clause.limit is not None:
+            op["limit"] = with_clause.limit
+        self.operations.append(op)
+
+        # Apply WHERE if present (operates on the projected bindings)
+        if with_clause.where is not None:
+            self._compile_where(with_clause.where)
+
     def _compile_expression(self, expr) -> Any:
         """
         Compile expression to a value.

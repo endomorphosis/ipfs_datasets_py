@@ -10,6 +10,7 @@ It is designed to be stateless; all per-execution state is local to the
 from __future__ import annotations
 
 import logging
+import itertools
 from typing import Any, Callable, Dict, List, Optional
 
 from ..neo4j_compat.result import Record
@@ -338,6 +339,54 @@ def execute_ir_operations(
 
             logger.debug("Project: %d results", len(final_results))
 
+        elif op_type == "WithProject":
+            # Like Project but writes projected rows to *bindings* so that
+            # a subsequent WHERE/Filter and final RETURN can reference the
+            # projected column names (e.g. `age` instead of `n.age`).
+            items = op.get("items", [])
+            new_bindings_wp: List[Dict[str, Any]] = []
+
+            if bindings:
+                for binding in bindings:
+                    row: Dict[str, Any] = {}
+                    for item in items:
+                        expr = item.get("expression")
+                        alias = item.get("alias", expr if isinstance(expr, str) else "result")
+                        row[alias] = evaluate_compiled_expression(expr, binding)
+                    new_bindings_wp.append(row)
+            else:
+                keys = list(result_set.keys())
+                for combo in itertools.product(*[result_set[k] for k in keys]):
+                    base = {keys[i]: combo[i] for i in range(len(keys))}
+                    row = {}
+                    for item in items:
+                        expr = item.get("expression")
+                        alias = item.get("alias", expr if isinstance(expr, str) else "result")
+                        row[alias] = evaluate_compiled_expression(expr, base)
+                    new_bindings_wp.append(row)
+
+            # Apply DISTINCT if requested
+            if op.get("distinct"):
+                seen_wp: set = set()
+                deduped: List[Dict[str, Any]] = []
+                for row in new_bindings_wp:
+                    key = tuple(sorted((k, str(v)) for k, v in row.items()))
+                    if key not in seen_wp:
+                        seen_wp.add(key)
+                        deduped.append(row)
+                new_bindings_wp = deduped
+
+            # Apply SKIP / LIMIT if requested
+            if op.get("skip") is not None:
+                new_bindings_wp = new_bindings_wp[op["skip"]:]
+            if op.get("limit") is not None:
+                new_bindings_wp = new_bindings_wp[: op["limit"]]
+
+            bindings = new_bindings_wp
+            result_set = {}  # consumed
+            final_results = []  # reset; will be populated by following Project
+            logger.debug("WithProject: %d bindings", len(bindings))
+
         elif op_type == "Limit":
             count = op.get("count")
             final_results = final_results[:count]
@@ -454,6 +503,55 @@ def execute_ir_operations(
                 for item in result_set[variable]:
                     graph_engine.update_node(item.id, {property_name: value})
                 logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
+
+        elif op_type == "Unwind":
+            # UNWIND <expr> AS <variable>
+            # Expands the list expression into individual bindings.
+            expr = op.get("expression")
+            unwind_var = op.get("variable")
+            # Evaluate the list expression against the current bindings
+            if bindings:
+                new_bindings: List[Dict[str, Any]] = []
+                for binding in bindings:
+                    lst = evaluate_compiled_expression(expr, binding)
+                    if isinstance(lst, (list, tuple)):
+                        for item in lst:
+                            new_binding = dict(binding)
+                            new_binding[unwind_var] = item
+                            new_bindings.append(new_binding)
+                    elif lst is not None:
+                        # Non-list: treat as single-element list
+                        new_binding = dict(binding)
+                        new_binding[unwind_var] = lst
+                        new_bindings.append(new_binding)
+                bindings = new_bindings
+            elif result_set:
+                # Convert result_set rows to bindings and unwind
+                new_bindings = []
+                # Build cross-product bindings from result_set
+                keys = list(result_set.keys())
+                for combo in itertools.product(*[result_set[k] for k in keys]):
+                    base = {keys[i]: combo[i] for i in range(len(keys))}
+                    lst = evaluate_compiled_expression(expr, base)
+                    if isinstance(lst, (list, tuple)):
+                        for item in lst:
+                            b = dict(base)
+                            b[unwind_var] = item
+                            new_bindings.append(b)
+                    elif lst is not None:
+                        b = dict(base)
+                        b[unwind_var] = lst
+                        new_bindings.append(b)
+                bindings = new_bindings
+                result_set = {}  # consumed
+            else:
+                # No bindings yet — evaluate against empty binding
+                lst = evaluate_compiled_expression(expr, {})
+                if isinstance(lst, (list, tuple)):
+                    bindings = [{unwind_var: item} for item in lst]
+                elif lst is not None:
+                    bindings = [{unwind_var: lst}]
+            logger.debug("Unwind: expanded to %d bindings", len(bindings))
 
     if union_parts:
         all_parts: List[Record] = []

@@ -35,6 +35,8 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    UnwindClause,
+    WithClause,
     PatternNode,
     NodePattern,
     RelationshipPattern,
@@ -212,6 +214,10 @@ class CypherParser:
                 clauses.append(self._parse_delete())
             elif self._match(TokenType.SET):
                 clauses.append(self._parse_set())
+            elif self._match(TokenType.UNWIND):
+                clauses.append(self._parse_unwind())
+            elif self._match(TokenType.WITH):
+                clauses.append(self._parse_with())
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
@@ -378,6 +384,69 @@ class CypherParser:
         self._expect(TokenType.WHERE)
         expression = self._parse_expression()
         return WhereClause(expression=expression)
+
+    def _parse_unwind(self) -> UnwindClause:
+        """Parse UNWIND clause.
+
+        Grammar::
+
+            UNWIND expression AS variable
+        """
+        self._expect(TokenType.UNWIND)
+        expression = self._parse_expression()
+        # Consume AS keyword
+        if self._match(TokenType.AS):
+            self._advance()
+        variable_token = self._expect(TokenType.IDENTIFIER)
+        return UnwindClause(expression=expression, variable=variable_token.value)
+
+    def _parse_with(self) -> WithClause:
+        """Parse WITH clause.
+
+        Grammar::
+
+            WITH [DISTINCT] items [ORDER BY ...] [SKIP n] [LIMIT n] [WHERE expr]
+
+        Semantically identical to RETURN but passes results forward rather
+        than returning them to the client.
+        """
+        self._expect(TokenType.WITH)
+
+        distinct = False
+        if self._match(TokenType.DISTINCT):
+            self._advance()
+            distinct = True
+
+        items = self._parse_return_items()
+
+        order_by = None
+        if self._match(TokenType.ORDER):
+            order_by = self._parse_order_by()
+
+        skip = None
+        if self._match(TokenType.SKIP):
+            self._advance()
+            skip_token = self._expect(TokenType.NUMBER)
+            skip = int(skip_token.value)
+
+        limit = None
+        if self._match(TokenType.LIMIT):
+            self._advance()
+            limit_token = self._expect(TokenType.NUMBER)
+            limit = int(limit_token.value)
+
+        where = None
+        if self._match(TokenType.WHERE):
+            where = self._parse_where()
+
+        return WithClause(
+            items=items,
+            where=where,
+            distinct=distinct,
+            order_by=order_by,
+            skip=skip,
+            limit=limit,
+        )
     
     def _parse_return(self) -> ReturnClause:
         """Parse RETURN clause."""

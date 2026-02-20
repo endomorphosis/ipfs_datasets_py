@@ -269,10 +269,15 @@ See `DEFERRED_FEATURES.md` Section 6 for plug-in example showing how to add CAR 
 
 #### 3.4.3 Additional Cypher Features
 
-**Status:** Backlog (low demand)
+**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause implemented  
+**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`), `cypher/parser.py` (`_parse_unwind`, `_parse_with`), `cypher/compiler.py` (`_compile_unwind`, `_compile_with`), `core/ir_executor.py` (`Unwind`, `WithProject` ops)  
+**Tests:** `tests/unit/knowledge_graphs/test_unwind_with_clauses.py` (19 tests)
 
-- `WITH` clause full support (currently partial)
-- `UNWIND` operator
+Implemented:
+- **UNWIND**: expands a list literal or node-property list into individual rows
+- **WITH**: projects columns into the next query part; supports WHERE filtering on projected names
+
+Remaining lower-priority items (not implemented):
 - `FOREACH` for mutations
 - `CALL` subquery support
 
@@ -280,19 +285,20 @@ See `DEFERRED_FEATURES.md` Section 6 for plug-in example showing how to add CAR 
 
 #### 3.4.4 Property-Based Tests for Migration Formats
 
-**Status:** 🔴 Not started  
-**Effort:** 3–4 hours
+**Status:** ✅ DONE (2026-02-20)  
+**File:** `tests/unit/knowledge_graphs/test_property_based_formats.py` (32 tests across 5 formats + CAR)
 
-Extend `test_cypher_fuzz.py` style to migration formats: generate random `GraphData`, export, re-import, and assert graph equivalence.
+Roundtrip tests with randomly generated graphs verify: node count, relationship count, node IDs, empty graph, single node, and 50-node stress cases.
 
 ---
 
 #### 3.4.5 Async Query Execution Path
 
-**Status:** 🔴 Not started  
-**Effort:** 6–8 hours
+**Status:** ✅ DONE (2026-02-20)  
+**File:** `query/unified_engine.py` — `execute_async()` method  
+**Tests:** `tests/unit/knowledge_graphs/test_unwind_with_clauses.py::TestAsyncExecute` (3 tests)
 
-`UnifiedQueryEngine` currently runs synchronously.  Adding `async def execute_async()` would allow integration with async web frameworks without blocking.
+`UnifiedQueryEngine.execute_async()` is a thin async wrapper around `execute_query()` that offloads work to `loop.run_in_executor()`, keeping the event loop unblocked for async web frameworks.
 
 ---
 
