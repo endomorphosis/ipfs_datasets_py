@@ -211,6 +211,10 @@ class Relationship:
         type: Relationship type (e.g., 'owns', 'obligates', 'causes')
         properties: Additional properties of the relationship
         confidence: Confidence score for this relationship (0.0 to 1.0)
+        direction: Directionality of the relationship — ``'subject_to_object'``
+            when the dependency direction is known from verb-frame analysis,
+            ``'undirected'`` for co-occurrence-based relationships, or
+            ``'unknown'`` when directionality could not be determined.
     """
     
     id: str
@@ -219,6 +223,7 @@ class Relationship:
     type: str
     properties: Dict[str, Any] = field(default_factory=dict)
     confidence: float = 1.0
+    direction: str = "unknown"
 
 
 @dataclass(slots=True)
@@ -421,6 +426,7 @@ class OntologyGenerator:
                         target_id=tgt_id,
                         type=rel_type,
                         confidence=0.65,
+                        direction='subject_to_object',
                     ))
 
         # 2) Sliding-window co-occurrence (window=50 chars) for entities
