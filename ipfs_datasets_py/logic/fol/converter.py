@@ -457,8 +457,11 @@ class FOLConverter(LogicConverter[str, FOLFormula]):
         return {}
 
     def to_fol(self, text: str, **kwargs) -> Any:
-        """Alias for convert() — convert natural language text to FOL."""
-        return self.convert(text, **kwargs)
+        """Alias for convert() — convert natural language text to FOL formula string."""
+        result = self.convert(text, **kwargs)
+        if hasattr(result, 'output') and hasattr(result.output, 'formula_string'):
+            return result.output.formula_string
+        return result
 
     def get_stats(self) -> Dict[str, Any]:
         """Alias for get_cache_stats() + get_monitoring_stats()."""

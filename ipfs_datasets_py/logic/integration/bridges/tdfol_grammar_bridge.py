@@ -225,6 +225,18 @@ class TDFOLGrammarBridge(BaseProverBridge):
         except Exception as e:
             logger.debug(f"Fallback parsing failed: {e}")
         
+        # Try CEC DCEC parser for formal logical syntax (handles P -> Q, etc.)
+        # Only use if TDFOL parser didn't work; wrap in try/except to convert if needed
+        try:
+            from ...CEC.native import parse_dcec_string as _cec_parse
+            from ...TDFOL.tdfol_core import Formula as _TDFOLFormula
+            cec_formula = _cec_parse(text)
+            if cec_formula is not None and isinstance(cec_formula, _TDFOLFormula):
+                logger.debug(f"CEC parser (TDFOL-compat) succeeded for '{text}'")
+                return cec_formula
+        except Exception as e:
+            logger.debug(f"CEC parser fallback failed: {e}")
+        
         # Last resort: try to parse directly as TDFOL formula syntax
         try:
             from ...TDFOL.tdfol_parser import parse_tdfol_safe
@@ -237,13 +249,12 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         # Final fallback: treat as a simple atom (0-ary predicate)
         try:
-            from ...TDFOL.tdfol_core import Predicate, AtomicFormula
+            from ...TDFOL.tdfol_core import Predicate
             stripped = text.strip()
             if stripped and stripped.replace("_", "").replace("-", "").isalnum():
                 pred = Predicate(stripped, ())
-                formula = AtomicFormula(pred, ())
                 logger.debug(f"Created atom '{stripped}' as fallback for '{text}'")
-                return formula
+                return pred
         except Exception as e:
             logger.debug(f"Atom creation fallback failed: {e}")
         
@@ -354,23 +365,31 @@ class TDFOLGrammarBridge(BaseProverBridge):
         
         template_set = templates.get(style, templates["formal"])
         
-        # Temporal operators (G=always, F=eventually, X=next)
-        # Apply temporal first so outer temporal wrappers are converted before deontic inner ops
-        temporal = {
-            "G": "always",
-            "F": "eventually",
-            "X": "next",
-        }
-        
-        # Heuristic: if formula starts with temporal operator wrapping a sub-formula, prefer temporal interpretation
+        # Simple template application
+        # Strategy: G→always (always temporal), X→next (always temporal)
+        # F: temporal only when wrapping another modal op (G/F/X/O/P), else deontic (forbidden)
         result = dcec_str
         import re as _re
-        # Temporal F/G/X applied to a sub-formula like (F (P x)) — outer operator is temporal
-        for key, value in temporal.items():
-            result = _re.sub(r'\(' + key + r' \(', f'({value} (', result)
-        # Now apply deontic template (for standalone deontic like (O x), (P x), (F x))
+        
+        # G and X are always temporal
+        result = _re.sub(r'\(G ', '(always ', result)
+        result = _re.sub(r'\(X ', '(next ', result)
+        
+        # F: temporal when wrapping deontic/modal sub-ops, else deontic
+        # Match (F (O ...), (F (P ...), (F (G ...), (F (F ...) — these are temporal F wrapping modal
+        deontic_ops = '|'.join(['O', 'P', 'F', 'G', 'X', 'always', 'next', 'eventually'])
+        result = _re.sub(r'\(F \((' + deontic_ops + r')\b', r'(eventually (\1', result)
+        # (G (P x)) after G replacement: (always (P x)) — now apply deontic for P
+        
+        # Apply deontic templates for O/P/F (if not already converted)
         for key, value in template_set.items():
-            result = result.replace(f"({key} ", f"{value} ")
+            if key in ('O', 'P', 'F'):
+                result = result.replace(f"({key} ", f"{value} ")
+        
+        # Apply remaining template keywords (always, eventually etc.)
+        for key, value in template_set.items():
+            if key not in ('O', 'P', 'F'):
+                result = result.replace(f"({key} ", f"({value} ")
         
         logger.debug(f"Template-based generation: {result}")
         return result

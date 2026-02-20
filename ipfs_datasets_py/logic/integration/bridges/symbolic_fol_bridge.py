@@ -160,9 +160,10 @@ class SymbolicFOLBridge:
             raise ValueError("Text cannot be empty")
         
         stripped = text.strip()
-        # Require at least some meaningful content (at least 2 alphabetic chars)
+        # Require meaningful content: either uppercase propositional variable or multi-char
         alpha_count = sum(1 for c in stripped if c.isalpha())
-        if alpha_count < 2:
+        is_prop_var = len(stripped) == 1 and stripped.isupper()
+        if not is_prop_var and alpha_count < 2:
             raise ValueError("Text cannot be empty")
         
         if not SYMBOLIC_AI_AVAILABLE:
@@ -336,10 +337,11 @@ class SymbolicFOLBridge:
         Returns:
             FOLConversionResult with formula and metadata
         """
-        # Check cache first
-        if self.enable_caching and symbol.value in self._cache:
+        # Check cache first (include format in cache key)
+        cache_key = f"{symbol.value}::{output_format}"
+        if self.enable_caching and cache_key in self._cache:
             logger.debug(f"Using cached result for: {symbol.value[:50]}...")
-            return self._cache[symbol.value]
+            return self._cache[cache_key]
         
         try:
             # Extract logical components
@@ -359,7 +361,7 @@ class SymbolicFOLBridge:
             
             # Cache the result
             if self.enable_caching:
-                self._cache[symbol.value] = result
+                self._cache[cache_key] = result
             
             return result
             
@@ -467,12 +469,12 @@ class SymbolicFOLBridge:
                     reasoning_steps.append(f"Pattern: Ability predicate Can{action}({x_entity})")
                     return formula
         
-        # Fallback: create simple predicate
+        # Fallback: create simple predication
         if components.entities and components.predicates:
             entity = components.entities[0]
             predicate = components.predicates[0]
             formula = f"{predicate.capitalize()}({entity})"
-            reasoning_steps.append(f"Fallback pattern: {predicate}({entity})")
+            reasoning_steps.append(f"Fallback pattern: simple predication {predicate}({entity})")
             return formula
         
         reasoning_steps.append("No recognizable pattern found")

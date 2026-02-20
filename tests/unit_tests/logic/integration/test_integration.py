@@ -991,8 +991,9 @@ class TestLegacyCompatibility:
             legal_statement = "Citizens must pay taxes"
             
             # Test with existing tools
-            fol_result = text_to_fol(fol_statement)
-            legal_result = legal_text_to_deontic(legal_statement)
+            import asyncio
+            fol_result = asyncio.run(text_to_fol(fol_statement)) if asyncio.iscoroutinefunction(text_to_fol) else text_to_fol(fol_statement)
+            legal_result = asyncio.run(legal_text_to_deontic(legal_statement)) if asyncio.iscoroutinefunction(legal_text_to_deontic) else legal_text_to_deontic(legal_statement)
             
             # Test with new integration
             symbol = self.bridge.create_semantic_symbol(fol_statement)

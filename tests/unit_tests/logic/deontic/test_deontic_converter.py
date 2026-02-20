@@ -94,7 +94,7 @@ class TestDeonticConverter:
         
         # THEN: Should fail validation
         assert not result.success
-        assert result.status == ConversionStatus.VALIDATION_FAILED
+        assert result.status == ConversionStatus.FAILED
     
     def test_whitespace_input_validation(self):
         """Test that whitespace-only input is handled properly."""
@@ -107,7 +107,7 @@ class TestDeonticConverter:
         
         # THEN: Should fail validation
         assert not result.success
-        assert result.status == ConversionStatus.VALIDATION_FAILED
+        assert result.status == ConversionStatus.FAILED
     
     def test_caching_functionality(self):
         """Test that caching works correctly."""

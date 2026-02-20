@@ -429,6 +429,21 @@ class LogicVerifier(LogicVerifierBackendsMixin):
         """Alias for check_consistency()."""
         return self.check_consistency(formulas)
 
+    def validate_proof(self, steps):
+        """Validate a sequence of proof steps."""
+        results = []
+        for step in steps:
+            step_num = getattr(step, 'step_number', getattr(step, 'step_num', 0))
+            formula = getattr(step, 'formula', '')
+            validation = self.verify_formula_syntax(formula)
+            results.append({
+                'step': step_num,
+                'formula': formula,
+                'valid': validation.get('status') == 'valid',
+                'justification': getattr(step, 'justification', '')
+            })
+        return results
+
 
 # Import convenience functions from utils for backward compatibility
 from .logic_verification_utils import (

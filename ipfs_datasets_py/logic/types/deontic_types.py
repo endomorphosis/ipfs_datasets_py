@@ -103,6 +103,11 @@ class DeonticFormula:
         content = f"{self.operator.value}:{self.proposition}:{self.agent}:{self.conditions}"
         return hashlib.md5(content.encode()).hexdigest()[:12]
 
+    @property
+    def formula(self) -> str:
+        """Alias for to_fol_string() for backward compatibility."""
+        return self.to_fol_string()
+
     def to_fol_string(self) -> str:
         formula_parts = [self.operator.value]
         if self.agent:
