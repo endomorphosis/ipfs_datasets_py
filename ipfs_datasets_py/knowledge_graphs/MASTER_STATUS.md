@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 76% overall | Measured 2026-02-20; cypher/parser 85%, ir_executor 81%, visualization 63%, constraints 100%; 1,777 pass
+| **Test Coverage** | 77% overall | Measured 2026-02-20; session/cross_document **85%/78%**, query_executor **85%**, wal 69%; 1,926 pass
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
-| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (1,777 pass)
+| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (1,926 pass)
 | **Next Milestone** | v2.2.0 (Q3 2026) | lineage/visualization render paths (requires matplotlib)
 
 ---
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~75% (measured, session 12)
+### Overall Coverage: ~77% (measured, session 14)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,27 +155,27 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser 78%, compiler 84% |
-| **Neo4j Compat** | 65–95% | ✅ Good | result.py **85%**, connection_pool 95%, session 65% |
-| **Migration** | 61–86% | ✅ Good | neo4j_exporter **61%** (+39pp), ipfs_importer **72%** (+48pp), formats 86% |
+| **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser **85%**, compiler 84% |
+| **Neo4j Compat** | 71–95% | ✅ **Excellent** | result.py **85%**, session **85%** (+20pp), connection_pool 95% |
+| **Migration** | 86–95% | ✅ **Excellent** | neo4j_exporter **95%** (+34pp), ipfs_importer **88%** (+16pp), formats 86% |
 | **JSON-LD** | 81–**91%** | ✅ **Excellent** | context.py **91%**, validation 81%, types 98% |
-| **Core** | 68–85% | ✅ Good | legacy_engine 68%, graph_engine **69%**, types 85% |
+| **Core** | 68–**85%** | ✅ **Excellent** | query_executor **85%** (+13pp), ir_executor **81%** (+4pp), legacy_engine 68% |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
-| **Transactions** | 65–96% | ✅ Good | manager **77%** (+13pp), wal 65%, types 96% |
-| **Query** | 57–**83%** | ✅ **Good** | hybrid_search **83%**, unified_engine 57%, distributed 80% |
-| **Extraction** | 52–**69%** | 🔶 Improving | graph.py 71%, validator 52%, finance_graphrag **69%** |
-| **Reasoning** | **66%**–98% | ✅ Good | cross_document **66%**, helpers 80%, types 94% |
+| **Transactions** | 69–96% | ✅ Good | manager **77%**, wal **69%** (+4pp), types 96% |
+| **Query** | 57–**83%** | ✅ **Good** | hybrid_search **83%**, unified_engine 73%, distributed 80% |
+| **Extraction** | 52–**69%** | 🔶 Improving | graph.py 71%, validator 59%, finance_graphrag **69%** |
+| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%** (+12pp), helpers 80%, types 94% |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
-| **Storage** | 50–100% | 🔶 Improving | ipld_backend 50% (IPFS daemon paths), types **100%** |
-| **Lineage** | 34–100% | 🔶 Improving | cross_document shims **100%**, visualization 34%, core 89% |
+| **Storage** | 69–100% | ✅ Good | ipld_backend **69%** (+19pp), types **100%** |
+| **Lineage** | 63–100% | ✅ Good | visualization **63%** (+29pp), cross_document shims **100%**, core 89% |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
-- `lineage/visualization.py` (34%) — render_networkx/render_plotly require matplotlib/plotly (optional)
-- `transactions/wal.py` (65%) — StorageError/SerializationError injection paths require storage mock failures
-- `storage/ipld_backend.py` (50%) — IPFS daemon interaction paths require a running IPFS node
-- `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package
-- `extraction/extractor.py` (54%) — spaCy/transformers-dependent paths
+- `lineage/visualization.py` (63%) — render_networkx/render_plotly fully exercised; remaining: integration with real graph data
+- `transactions/wal.py` (69%) — StorageError deserialization paths require specific mock combinations
+- `extraction/extractor.py` (54%) — spaCy/transformers-dependent NLP paths
+- `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package + network access
+- `extraction/validator.py` (59%) — Wikipedia + SPARQL endpoint validation paths
 
 ### Test Files: 64 total (as of v2.1.4)
 
@@ -204,10 +204,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session10.py** (92 tests — graph_engine, hybrid_search, jsonld/context, cross_document, finance_graphrag, root shims)
 - **test_master_status_session11.py** (81 tests — extractor, advanced, unified_engine, validator, ipld_backend)
 - **test_master_status_session12.py** (98 tests — constraints 100%, ipfs_importer 72%, neo4j_exporter 61%, transaction manager 77%)
+- **test_master_status_session13.py** (66 tests — cypher/parser 85%, ir_executor 81%, visualization 63%, wal 66%)
+- **test_master_status_session14.py** (91 tests — cross_document 78%, session 85%, query_executor 85%, wal 69%, validator)
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 1,705 passing, 22 skipped (libipld/anyio absent; networkx + pytest-mock available)
+**Total Tests:** 1,926 passing, 28 skipped (libipld/anyio/scipy absent; networkx + pytest-mock available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -505,6 +507,27 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
+### v2.1.9 (2026-02-20) - Coverage Boost Session 14 ✅
+
+**Summary:** Added 91 new tests covering 5 high-impact modules; overall coverage from 76% to **77%**.
+
+**Bug fixes:** None (all targeted modules had correct behaviour). Constructor-signature mismatches (`Relationship`, `Operation`) discovered and fixed in test helpers — not production bugs.
+
+**Test additions:**
+- `test_master_status_session14.py` — 91 new GIVEN-WHEN-THEN tests covering:
+  - `reasoning/cross_document.py` (66% → **78%**): `_get_relevant_documents` (from-input/min-relevance-filter/vector-store/max-docs), `find_entity_connections` (no-KG/with-KG/no-common-entities), `_determine_relation` (missing-docs→UNCLEAR/chronological→ELABORATING/no-dates→COMPLEMENTARY), `get_statistics` (zero-queries/after-query/keys), `explain_reasoning` (id-propagated/steps-list), `_synthesize_answer` (no-LLM), `reason_across_documents` (basic/return-trace/increments-count), `_compute_document_similarity` (shared-tokens/no-shared)
+  - `neo4j_compat/session.py` (65% → **85%**): `IPFSTransaction` (run/run-on-closed/commit/double-commit/rollback/close/ctx-mgr-success/ctx-mgr-exception/no-double-commit), `IPFSSession` (run/close/ctx-mgr/closed-property/database-property/begin-transaction/read-transaction/write-transaction/retry-on-conflict/no-retry-value-error/last-bookmark/last-bookmarks)
+  - `core/query_executor.py` (72% → **85%**): `execute` (cypher-auto/IR/simple), `_execute_cypher` (parse-error-raise/parse-error-silent/compile-error-handled), `_compute_aggregation` (COUNT/SUM/AVG/MIN/MAX/COLLECT/STDEV/stdev-single-None/unknown-None/empty-sum/empty-avg)
+  - `extraction/validator.py` (59% → 59% — Wikipedia/SPARQL validator paths not testable without network): init (no-validator/with-validator), `extract_knowledge_graph` (basic/validate-disabled/validate-enabled/auto-correct/error), `extract_from_documents` (basic/error), `validate_against_wikidata` (no-validator/with-validator), `apply_validation_corrections` (empty-kg/entity-with-None-properties)
+  - `transactions/wal.py` (66% → **69%**): `append` (returns-CID/increments-count/links-prev/TypeError→SerializationError/StorageError→TransactionError), `read` (empty/reverse-order), `compact` (resets-count/updates-head), `recover` (empty/committed/aborted/explicit-CID), `get_transaction_history` (matching/unknown), `get_stats` (keys/increments), `verify_integrity` (empty/valid/empty-ops→False)
+
+**Result:** 1,926 passed, 28 skipped (libipld/anyio/scipy absent), **0 failed** — up from 1,835 (session 13 baseline with networkx + pytest installed)
+**Coverage:** 76% → **77%** overall
+
+**Backward Compatibility:** 100% (no production code changes)
+
+---
+
 ### v2.1.8 (2026-02-20) - Coverage Boost Session 13 ✅
 
 **Summary:** Added 66 new tests covering 5 previously low-coverage modules; overall coverage from 75% to **76%**.
@@ -748,11 +771,11 @@ reasoning = reasoner.reason_across_documents(
 **Confidence Level:** HIGH
 
 **Evidence:**
-- ✅ ~73% test coverage overall (measured); advanced 78%, unified_engine 73%, ipld_backend 69%, validator 59%; hybrid_search **83%**, jsonld/context **91%**, cypher/functions **96%**, neo4j result **85%**, indexing 87–99%, storage/types 100%, root shims 100%
+- ✅ **77% test coverage overall** (measured, session 14); cross_document **78%**, query_executor **85%**, session **85%**, hybrid_search **83%**, jsonld/context **91%**, cypher/functions **96%**, neo4j result **85%**, indexing 87–99%, storage/types 100%, root shims 100%, constraints **100%**
 - ✅ 300KB+ comprehensive documentation
 - ✅ All P1-P4 features complete (PR #1085, 2026-02-18)
 - ✅ All deferred features complete (sessions 2-5, 2026-02-20)
-- ✅ **Zero test failures** — 1,591 pass, 22 skip (optional deps), 0 fail (session 11, 2026-02-20)
+- ✅ **Zero test failures** — 1,926 pass, 28 skip (optional deps), 0 fail (session 14, 2026-02-20)
 - ✅ All features now in permanent subpackage locations (reasoning/, ontology/, extraction/srl.py, query/distributed.py)
 - ✅ Proper error handling and graceful degradation
 - ✅ Backward compatible with all changes (deprecation shims for all moved modules)
