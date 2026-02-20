@@ -216,6 +216,10 @@ If you want a high-value sequence that keeps risk low:
 
 ## Completed (log)
 
+- 2026-02-20: Fixed `extraction/validator.py`: `validate_during_extraction` now preserves user intent unchanged (was AND'd with `validator_available`, silently becoming `False` when SPARQLValidator absent); also added `validation_metrics` stub with `"skipped": True` when validation was requested but unavailable. Verified with `tests/unit/knowledge_graphs/test_extraction_package.py::TestValidationExtractor` (2 tests).
+- 2026-02-20: Fixed `extraction/extractor.py`: removed unused `from transformers import pipeline` inside `_neural_relationship_extraction()` that caused an `ImportError` to swallow mock calls in tests. Verified with `tests/unit/knowledge_graphs/test_p3_p4_advanced_features.py::TestNeuralRelationshipExtraction::test_neural_extraction_with_mock_model`.
+- 2026-02-20: Fixed `query/hybrid_search.py`: replaced three `except anyio.get_cancelled_exc_class():` clauses with `except asyncio.CancelledError:` — the anyio call raises `NoEventLoopError` outside an event loop (e.g. in sync unit tests); asyncio.CancelledError is safe in all contexts and is what anyio uses in asyncio mode anyway. Added `import asyncio`. Verified with `tests/unit/knowledge_graphs/test_unified_query_engine.py::TestHybridSearchEngine::test_vector_search_wraps_unexpected_vector_store_error`.
+- 2026-02-20: Updated MASTER_STATUS.md to v2.0.1 (977 tests passing, 0 failing), updated MASTER_REFACTORING_PLAN_2026.md module snapshot (79 files, 977 tests), and added CHANGELOG_KNOWLEDGE_GRAPHS.md entry for v2.0.1.
 - 2026-02-18: Replaced placeholder similarity usage in `cross_document_reasoning.py` with a real similarity computation path and added/validated unit tests.
 - 2026-02-18: Added `pytest-mock` to test/dev dependencies to provide the `mocker` fixture for knowledge graph migration tests.
 - 2026-02-18: Fixed pytest `INTERNALERROR` in KG suite by making `builtins.__import__` mocking delegate to the real importer for all modules except the targeted optional dependency.

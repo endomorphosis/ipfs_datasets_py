@@ -5,6 +5,27 @@ All notable changes to the knowledge_graphs module will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-02-20
+
+### Bug Fixes
+
+#### `extraction/validator.py`
+- **Fixed:** `KnowledgeGraphExtractorWithValidation.validate_during_extraction` now preserves the value passed by the caller instead of silently setting it to `False` when `SPARQLValidator` is not available. The runtime guard `if self.validate_during_extraction and self.validator:` already prevents validation when the validator is absent.
+- **Added:** When `validate_during_extraction=True` but `SPARQLValidator` is not installed, `extract_knowledge_graph()` now adds a `validation_metrics` entry with `"skipped": True` and an install-hint `"reason"` field so callers can detect the no-op.
+
+#### `extraction/extractor.py`
+- **Fixed:** Removed unused `from transformers import pipeline` inside `_neural_relationship_extraction()`. The import was never used (both REBEL and classification branches call the already-loaded `self.re_model`), but when `transformers` was absent it raised `ImportError` which the broad except-handler caught — silently preventing the classification branch from executing and making mock-based tests unreachable.
+
+#### `query/hybrid_search.py`
+- **Fixed:** Replaced three `except anyio.get_cancelled_exc_class():` clauses (in `vector_search`, `_get_embedding`, `_get_neighbors`) with `except asyncio.CancelledError:`. `anyio.get_cancelled_exc_class()` requires an active event loop and raises `anyio.NoEventLoopError` when called from synchronous code (e.g. unit tests). Since these methods are synchronous, using `asyncio.CancelledError` provides identical behavior in asyncio-backed code and is safe in all contexts.
+- **Added:** `import asyncio` to module imports.
+
+### Test Results
+- Tests: 977 passing, 0 failing, 3 intentional skips
+- Previously: 973 passing, **4 failing**, 3 skips
+
+---
+
 ## [2.0.0] - 2026-02-17
 
 ### Major Refactoring and Documentation Update

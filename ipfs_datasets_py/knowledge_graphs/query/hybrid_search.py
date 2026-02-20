@@ -32,6 +32,7 @@ Usage:
 """
 
 import anyio
+import asyncio
 import logging
 from typing import Any, Dict, List, Optional, Set, Tuple
 from dataclasses import dataclass
@@ -155,7 +156,7 @@ class HybridSearchEngine:
             
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except asyncio.CancelledError:
             raise
         except (AttributeError, TypeError, ValueError, KeyError) as e:
             logger.error(f"Vector search failed (degrading gracefully): {e}")
@@ -379,7 +380,7 @@ class HybridSearchEngine:
                 return None
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except asyncio.CancelledError:
             raise
         except (AttributeError, TypeError, ValueError) as e:
             logger.error(f"Failed to generate embedding (degrading gracefully): {e}")
@@ -424,7 +425,7 @@ class HybridSearchEngine:
             
         except KnowledgeGraphError:
             raise
-        except anyio.get_cancelled_exc_class():
+        except asyncio.CancelledError:
             raise
         except (AttributeError, TypeError, ValueError, KeyError) as e:
             logger.warning(f"Failed to get neighbors for {node_id} (degrading gracefully): {e}")

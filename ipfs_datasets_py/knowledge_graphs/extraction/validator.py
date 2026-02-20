@@ -101,7 +101,7 @@ class KnowledgeGraphExtractorWithValidation:
             self.validator_available = False
 
         # Configuration options
-        self.validate_during_extraction = validate_during_extraction and self.validator_available
+        self.validate_during_extraction = validate_during_extraction
         self.auto_correct_suggestions = auto_correct_suggestions
         self.min_confidence = min_confidence
 
@@ -205,6 +205,13 @@ class KnowledgeGraphExtractorWithValidation:
 
                     if corrections:
                         result["corrections"] = corrections
+
+            elif self.validate_during_extraction and not self.validator_available:
+                # Validator was requested but SPARQLValidator is not installed
+                result["validation_metrics"] = {
+                    "skipped": True,
+                    "reason": "SPARQLValidator not available; install ipfs_datasets_py[knowledge_graphs]",
+                }
 
             # Update trace if enabled
             if self.tracer and trace_id:
