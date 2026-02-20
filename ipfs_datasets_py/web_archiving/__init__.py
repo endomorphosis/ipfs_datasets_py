@@ -14,6 +14,9 @@ Search engine functions:
     - search_github_repositories, search_github_code, ...          (github_search_engine.py)
     - create_autoscraper_model, scrape_with_autoscraper, ...       (autoscraper_engine.py)
     - archive_to_archive_is, search_archive_is, ...                (archive_is_engine.py)
+    - search_google, search_google_images, batch_search_google     (google_search_engine.py)
+    - search_wayback_machine, get_wayback_content, archive_to_wayback (wayback_machine_engine.py)
+    - index_warc_to_ipwb, start_ipwb_replay, search_ipwb_archive   (ipwb_engine.py)
 
 MCP tool wrappers live in:
     ipfs_datasets_py/mcp_server/tools/web_archive_tools/
@@ -73,6 +76,35 @@ try:
 except Exception:
     pass
 
+try:
+    from .google_search_engine import (  # noqa: F401
+        search_google,
+        search_google_images,
+        batch_search_google,
+    )
+except Exception:
+    pass
+
+try:
+    from .wayback_machine_engine import (  # noqa: F401
+        search_wayback_machine,
+        get_wayback_content,
+        archive_to_wayback,
+    )
+except Exception:
+    pass
+
+try:
+    from .ipwb_engine import (  # noqa: F401
+        index_warc_to_ipwb,
+        start_ipwb_replay,
+        search_ipwb_archive,
+        get_ipwb_content,
+        verify_ipwb_archive,
+    )
+except Exception:
+    pass
+
 __all__ = [
     "BraveSearchAPI",
     "SerpStackSearchAPI",
@@ -104,4 +136,18 @@ __all__ = [
     "get_archive_is_content",
     "check_archive_status",
     "batch_archive_to_archive_is",
+    # Google Search
+    "search_google",
+    "search_google_images",
+    "batch_search_google",
+    # Wayback Machine
+    "search_wayback_machine",
+    "get_wayback_content",
+    "archive_to_wayback",
+    # IPWB
+    "index_warc_to_ipwb",
+    "start_ipwb_replay",
+    "search_ipwb_archive",
+    "get_ipwb_content",
+    "verify_ipwb_archive",
 ]
