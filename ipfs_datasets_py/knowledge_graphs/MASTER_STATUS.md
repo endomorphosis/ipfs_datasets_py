@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.3.0  
+**Version:** 2.4.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** Session 16 (validation 96%, enhanced 97%, metrics 96%, visualization 94%, driver 86%, helpers 94%)
+**Last Major Release:** Session 17 (srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%)
 
 ---
 
@@ -11,17 +11,17 @@
 
 | Aspect | Status | Details |
 |--------|--------|---------|
-| **Overall Status** | ✅ Production Ready | 75%+ test coverage, comprehensive docs |
+| **Overall Status** | ✅ Production Ready | 80%+ test coverage, comprehensive docs |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
 | **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 79% overall | Measured 2026-02-20; sparql_templates/**100%**, budget_manager/**100%**, expression_evaluator **89%**, visualization **94%**, enhanced **97%**, metrics **96%**, driver **86%**, helpers **94%**, validation **96%**; 2,189 pass
-| **Documentation** | ✅ Up to Date | Reflects v2.3.0 structure |
-| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (2,189 pass)
-| **Next Milestone** | v2.3.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 80% overall | Measured 2026-02-20; compiler **91%**, neo4j_compat/types **96%**, distributed **83%**, srl **79%**, graph.py **75%**; 2,308 pass
+| **Documentation** | ✅ Up to Date | Reflects v2.4.0 structure |
+| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (2,308 pass)
+| **Next Milestone** | v2.4.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~79% (measured, session 16)
+### Overall Coverage: ~80% (measured, session 17)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,19 +155,19 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser **85%**, compiler 84% |
-| **Neo4j Compat** | **86%**–95% | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%** (+15pp), connection_pool 95% |
-| **Migration** | 86–95% | ✅ **Excellent** | neo4j_exporter **95%** (+34pp), ipfs_importer **88%** (+16pp), formats 86% |
-| **JSON-LD** | **91%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%** (+15pp), types 98% |
-| **Core** | 68–**89%** | ✅ **Excellent** | expression_evaluator **89%** (+12pp), query_executor **85%**, ir_executor **81%** |
+| **Cypher** | 78–**91%** | ✅ Excellent | functions.py **96%**, parser **85%**, compiler **91%** (+7pp) |
+| **Neo4j Compat** | **86%**–**96%** | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%**, types **96%** (+15pp) |
+| **Migration** | 86–95% | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats 86% |
+| **JSON-LD** | **91%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, types 98% |
+| **Core** | 68–**89%** | ✅ **Excellent** | expression_evaluator **89%**, query_executor **85%**, ir_executor **81%** |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
-| **Transactions** | **72%**–96% | ✅ Good | manager **77%**, wal **72%** (+3pp), types 96% |
-| **Query** | **100%**–**83%** | ✅ **Excellent** | sparql_templates **100%** (+34pp), budget_manager **100%** (+23pp), hybrid_search **83%** |
-| **Extraction** | 52–**69%** | 🔶 Improving | graph.py 71%, validator 59%, finance_graphrag **69%** |
-| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%** (+12pp), helpers **94%** (+14pp), types 94% |
+| **Transactions** | **72%**–96% | ✅ Good | manager **77%**, wal **72%**, types 96% |
+| **Query** | **83%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, hybrid_search **83%**, distributed **83%** (+3pp) |
+| **Extraction** | 54–**79%** | 🔶 Improving | srl **79%** (+5pp), graph.py **75%** (+4pp), validator 59% |
+| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%**, helpers **94%**, types 94% |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
-| **Storage** | 69–100% | ✅ Good | ipld_backend **69%** (+19pp), types **100%** |
-| **Lineage** | **94%**–100% | ✅ **Excellent** | visualization **94%** (+29pp), enhanced **97%** (+18pp), metrics **96%** (+15pp), core 89% |
+| **Storage** | 69–100% | ✅ Good | ipld_backend **69%**, types **100%** |
+| **Lineage** | **94%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core 89% |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
@@ -206,11 +206,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session13.py** (66 tests — cypher/parser 85%, ir_executor 81%, visualization 63%, wal 66%)
 - **test_master_status_session14.py** (91 tests — cross_document 78%, session 85%, query_executor 85%, wal 69%, validator)
 - **test_master_status_session16.py** (122 tests — jsonld/validation 96%, lineage/enhanced 97%, lineage/metrics 96%, lineage/visualization 94%, neo4j_compat/driver 86%, reasoning/helpers 94%)
+- **test_master_status_session17.py** (119 tests — srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%, extraction/types 72%)
 
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 2,189 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Total Tests:** 2,308 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -507,6 +508,28 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.4.0 (2026-02-20) - Coverage Boost Session 17 ✅
+
+**Summary:** Added 119 new tests covering 6 high-impact modules; overall coverage from 79% to **80%**.
+
+**Bug fixes:** None (all targeted modules had correct behavior). Fixed 3 test assertions from initial run due to `LiteralNode` constructor requiring `value=` keyword argument (not positional).
+
+**Test additions:**
+- `test_master_status_session17.py` — 119 new GIVEN-WHEN-THEN tests covering:
+  - `extraction/srl.py` (74% → **79%**): `SRLFrame.get_roles` (returns-all-matching, empty-for-missing), `get_role` returns-None, frame_id present; heuristic modifier roles Instrument/Cause/Time; `to_knowledge_graph` (basic/extends-existing/creates-rels/entity-reuse/high-confidence-filter-excludes); `build_temporal_graph` (single-sentence, multi-sentence, returns-KnowledgeGraph); `extract_batch` (returns-list-of-lists); `sentence_split=False`
+  - `extraction/graph.py` (71% → **75%**): `add_entity` with string type + name, requires-name error; `get_entity_by_id` (found/missing), `get_relationship_by_id` (found/missing), `get_entities_by_type`, `get_entities_by_name` (found/no-match), `get_relationships_by_type`, `get_relationships_by_entity`, `get_relationships_between`; `find_paths` (direct/2-hop/no-path/type-filter-match/no-match/bidirectional-backward); `query_by_properties` (type/property/no-filter); `merge` (basic/dedup/None-properties); `to_dict`/`from_dict`/`to_json`/`from_json` round-trips; `export_to_rdf` (no-rdflib graceful)
+  - `query/distributed.py` (80% → **83%**): `PartitionStats.to_dict`; HASH/RANGE/ROUND_ROBIN strategies; `get_partition_stats`; `execute_cypher_parallel` (records/errors/num_partitions/max_workers); `execute_cypher_streaming` (yields-(idx,dict) tuples); `dedup=False`; `_normalise_result` (None/list/records-attr/iterable/non-iterable); `_record_fingerprint` (40-char-hex/stable/different-records-different)
+  - `cypher/compiler.py` (84% → **91%**): unknown-clause→CypherCompileError; MERGE (emit-Merge/match+create-ops/on_create+on_match_set); DETACH DELETE; REMOVE; FOREACH; CALL subquery; UNION (not-all); UNION ALL; ORDER BY DESC/ASC; RETURN DISTINCT; OPTIONAL MATCH; WHERE IS NULL/IS NOT NULL/NOT; AGGREGATE; `_compile_expression` ListNode/dict/non-var-PropertyAccessNode; `_expression_to_string` CASE with ELSE / without ELSE; `compile_cypher` convenience
+  - `neo4j_compat/types.py` (81% → **96%**): `Node` `__contains__` existing/missing, `__eq__` same-id/different-id, `__hash__`, `__repr__`, eq-with-non-Node-False; `Relationship` `__contains__`/`__eq__`/`__hash__`/`__repr__`, properties-returns-copy, eq-with-non-Rel-False; `Path` start_node/end_node/len/single-node/`__iter__` yields-rel-then-node/`__repr__`/nodes-and-relationships-lists
+  - `extraction/types.py` (72% → 72% — both optional imports available in this env): `HAVE_TRACER`/`HAVE_ACCELERATE` are-bool, `is_accelerate_available`/`get_accelerate_status` callable, type-aliases usable, constants correct
+
+**Result:** 2,308 passed, 23 skipped (libipld/anyio/plotly absent), **0 failed** — up from 2,189 (session 16 baseline)
+**Coverage:** 79% → **80%** overall
+
+**Backward Compatibility:** 100% (no production code changes)
+
+---
 
 ### v2.3.0 (2026-02-20) - Coverage Boost Session 16 ✅
 
