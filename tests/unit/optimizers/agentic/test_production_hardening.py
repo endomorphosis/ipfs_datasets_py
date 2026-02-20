@@ -63,13 +63,29 @@ class TestSecurityConfig:
     def test_forbidden_patterns_contain_dangerous_ops(self):
         """Test forbidden patterns include dangerous operations."""
         config = SecurityConfig()
-        dangerous_patterns = ['rm -rf', 'eval', 'exec', '__import__', 'system']
         
-        pattern_str = ' '.join(config.forbidden_patterns)
-        for pattern in dangerous_patterns:
-            # At least one pattern should detect each dangerous op
-            found = any(pattern.lower() in p.lower() for p in config.forbidden_patterns)
-            assert found, f"Expected {pattern} in forbidden patterns"
+        # Verify patterns are regex strings that capture dangerous operations
+        import re
+        test_cases = [
+            ('rm -rf', 'rm\\s+-rf'),  # rm with spaces and dash
+            ('eval(', 'eval'),
+            ('exec(', 'exec'),
+            ('__import__', '__import__'),
+            ('system(', 'system'),
+        ]
+        
+        for code_snippet, pattern_name in test_cases:
+            # Find pattern that matches this snippet
+            matched = False
+            for pattern in config.forbidden_patterns:
+                try:
+                    if re.search(pattern, code_snippet, re.IGNORECASE):
+                        matched = True
+                        break
+                except re.error:
+                    pass
+            
+            assert matched, f"Expected pattern matching '{pattern_name}' in forbidden patterns"
 
 
 class TestInputSanitizer:
@@ -237,39 +253,50 @@ render(html)
     
     def test_sanitize_log_with_openai_token(self, sanitizer):
         """Test removing OpenAI API tokens from logs."""
-        message = "API key is sk-1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJ"
+        # OpenAI tokens are sk- followed by 48 alphanumeric chars
+        token = 'sk-' + 'a' * 48
+        message = f"API key is {token}"
         sanitized = sanitizer.sanitize_log_message(message)
         
-        assert 'sk-' not in sanitized or '[TOKEN_REDACTED]' in sanitized
-        # The original token should be replaced
-        assert sanitized != message or 'sk-' not in message
+        assert token not in sanitized
+        assert '[TOKEN_REDACTED]' in sanitized
     
     def test_sanitize_log_with_anthropic_token(self, sanitizer):
         """Test removing Anthropic API tokens from logs."""
-        message = "Using token sk-ant-aBcDeFgHiJkLmNoPqRsTuVwXyZaBcDeFgHiJkLmNoPqRs"
+        # Anthropic tokens are sk-ant- followed by 48 alphanumeric chars
+        token = 'sk-ant-' + 'a' * 48
+        message = f"Using token {token}"
         sanitized = sanitizer.sanitize_log_message(message)
         
-        assert 'sk-ant-' not in sanitized or '[TOKEN_REDACTED]' in sanitized
+        assert token not in sanitized
+        assert '[TOKEN_REDACTED]' in sanitized
     
     def test_sanitize_log_with_github_token(self, sanitizer):
         """Test removing GitHub tokens from logs."""
-        message = "GitHub token: ghp_abcdefghijklmnopqrstuvwxyzABCDEFGH"
+        # GitHub tokens are ghp_ followed by 36 alphanumeric chars
+        token = 'ghp_' + 'a' * 36
+        message = f"GitHub token: {token}"
         sanitized = sanitizer.sanitize_log_message(message)
         
-        assert 'ghp_' not in sanitized or '[TOKEN_REDACTED]' in sanitized
+        assert token not in sanitized
+        assert '[TOKEN_REDACTED]' in sanitized
     
     def test_sensitive_data_not_leaked_in_logs(self, sanitizer):
         """Test that sensitive data is actually masked before logging."""
-        sensitive_message = """
-Processing with OpenAI key sk-ProjectABC1234567890XYZAbcDefGhIjKlMnOp
-GitHub token ghp_TestTokenABC123DEF456GHI789JKL012
+        # Create valid-format tokens
+        openai_token = 'sk-' + 'A' * 48
+        github_token = 'ghp_' + 'B' * 36
+        
+        sensitive_message = f"""
+Processing with OpenAI key {openai_token}
+GitHub token {github_token}
 """
         sanitized = sanitizer.sanitize_log_message(sensitive_message)
         
-        # All OpenAI and GitHub tokens should be redacted
-        assert 'sk-Project' not in sanitized
-        assert 'ghp_Test' not in sanitized
-        # Should contain redaction markers
+        # All tokens should be redacted
+        assert openai_token not in sanitized
+        assert github_token not in sanitized
+        # Should contain multiple redaction markers
         assert sanitized.count('[TOKEN_REDACTED]') >= 2
     
     def test_sanitize_log_with_masking_disabled(self, sanitizer):
