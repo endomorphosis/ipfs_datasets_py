@@ -406,12 +406,15 @@ class OntologyOptimizer:
         def avg(xs: list[int]) -> float:
             return float(sum(xs)) / float(len(xs)) if xs else 0.0
 
+        sample_size = sum(1 for ont in successful_ontologies if isinstance(ont, dict))
+
         patterns = {
             "common_entity_types": [t for t, _ in entity_type_counts.most_common(10)],
             "common_relationship_types": [t for t, _ in relationship_type_counts.most_common(10)],
             "avg_entity_count": avg(entity_counts),
             "avg_relationship_count": avg(relationship_counts),
             "common_properties": [k for k, _ in property_key_counts.most_common(15)],
+            "sample_size": sample_size,
         }
 
         return patterns
@@ -463,9 +466,56 @@ class OntologyOptimizer:
             return 'stable'
     
     def _identify_patterns(self, session_results: List[Any]) -> Dict[str, Any]:
-        """Identify patterns across session results."""
-        # TODO: Implement pattern identification
-        return {}
+        """Identify patterns across session results using counter-based analysis."""
+        from collections import Counter
+
+        entity_types: Counter = Counter()
+        rel_types: Counter = Counter()
+        convergence_rounds: list[int] = []
+        final_scores: list[float] = []
+        weakest_dims: Counter = Counter()
+
+        for result in session_results:
+            # Score data
+            if hasattr(result, 'critic_scores') and result.critic_scores:
+                latest = result.critic_scores[-1]
+                if hasattr(latest, 'overall'):
+                    final_scores.append(latest.overall)
+                # Track weakest dimension per session
+                dim_scores = {
+                    d: getattr(latest, d, None)
+                    for d in ('completeness', 'consistency', 'clarity', 'granularity', 'domain_alignment')
+                    if getattr(latest, d, None) is not None
+                }
+                if dim_scores:
+                    weakest = min(dim_scores, key=lambda k: dim_scores[k])
+                    weakest_dims[weakest] += 1
+
+            # Round count
+            if hasattr(result, 'current_round'):
+                convergence_rounds.append(result.current_round)
+
+            # Entity / rel type distributions
+            ontology = self._extract_ontology(result)
+            for ent in ontology.get('entities', []):
+                if isinstance(ent, dict) and ent.get('type'):
+                    entity_types[ent['type']] += 1
+            for rel in ontology.get('relationships', []):
+                if isinstance(rel, dict) and rel.get('type'):
+                    rel_types[rel['type']] += 1
+
+        def _avg(lst: list) -> float:
+            return sum(lst) / len(lst) if lst else 0.0
+
+        return {
+            'avg_final_score': round(_avg(final_scores), 4),
+            'avg_convergence_rounds': round(_avg(convergence_rounds), 2),
+            'top_entity_types': [t for t, _ in entity_types.most_common(5)],
+            'top_rel_types': [t for t, _ in rel_types.most_common(5)],
+            'most_common_weakness': weakest_dims.most_common(1)[0][0] if weakest_dims else None,
+            'weakness_distribution': dict(weakest_dims.most_common()),
+            'session_count': len(session_results),
+        }
     
     def _generate_recommendations(
         self,

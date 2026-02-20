@@ -51,6 +51,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from ipfs_datasets_py.optimizers.common.base_critic import BaseCritic, CriticResult
+
 logger = logging.getLogger(__name__)
 
 
@@ -145,24 +147,19 @@ class CriticScore:
         }
 
 
-class OntologyCritic:
+class OntologyCritic(BaseCritic):
     """
     LLM-based critic for evaluating ontology quality.
-    
-    This class provides comprehensive ontology evaluation across multiple dimensions,
-    inspired by the critic agent from complaint-generator. It can evaluate single
-    ontologies or compare multiple ontologies.
-    
-    The critic uses an LLM backend to perform semantic evaluation of ontology quality,
-    providing structured scores and actionable recommendations.
-    
-    Attributes:
-        backend_config: Configuration for LLM backend
-        use_llm: Whether to use LLM for evaluation
-        
-    Example:
-        >>> critic = OntologyCritic(backend_config={
-        ...     'provider': 'openai',
+
+    Extends :class:`~ipfs_datasets_py.optimizers.common.BaseCritic` so it can
+    be used interchangeably with other critic types in the common optimizer loop.
+
+    Evaluate an ontology via the standard ``BaseCritic`` interface using
+    :meth:`evaluate`, or use the richer :meth:`evaluate_ontology` for a full
+    :class:`CriticScore` with per-dimension breakdown.
+
+    The critic uses rule-based heuristics (and optionally an LLM backend) to
+    evaluate quality across five dimensions:
         ...     'model': 'gpt-4',
         ...     'temperature': 0.3
         ... })
@@ -209,7 +206,47 @@ class OntologyCritic:
                 self.use_llm = False
         else:
             self._llm_available = False
-    
+
+    # ------------------------------------------------------------------ #
+    # BaseCritic interface                                                  #
+    # ------------------------------------------------------------------ #
+
+    def evaluate(
+        self,
+        artifact: Any,
+        context: Any,
+        *,
+        source_data: Optional[Any] = None,
+    ) -> CriticResult:
+        """Satisfy the :class:`~ipfs_datasets_py.optimizers.common.BaseCritic` interface.
+
+        Delegates to :meth:`evaluate_ontology` and wraps the result in a
+        :class:`~ipfs_datasets_py.optimizers.common.CriticResult`.
+
+        Args:
+            artifact: An ontology dictionary.
+            context: Optimization or generation context.
+            source_data: Optional source data for context-aware evaluation.
+
+        Returns:
+            :class:`~ipfs_datasets_py.optimizers.common.CriticResult`
+        """
+        score_obj = self.evaluate_ontology(artifact, context, source_data=source_data)
+        return CriticResult(
+            score=score_obj.overall,
+            feedback=list(score_obj.recommendations),
+            dimensions={
+                'completeness': score_obj.completeness,
+                'consistency': score_obj.consistency,
+                'clarity': score_obj.clarity,
+                'granularity': score_obj.granularity,
+                'domain_alignment': score_obj.domain_alignment,
+            },
+            strengths=list(score_obj.strengths),
+            weaknesses=list(score_obj.weaknesses),
+            metadata=dict(score_obj.metadata),
+        )
+
     def evaluate_ontology(
         self,
         ontology: Dict[str, Any],
@@ -358,31 +395,41 @@ class OntologyCritic:
         
         Assesses how well the ontology covers key concepts and relationships
         in the domain and source data.
-        
-        Args:
-            ontology: Ontology to evaluate
-            context: Generation context
-            source_data: Optional source data
-            
-        Returns:
-            Completeness score (0.0 to 1.0)
         """
-        # TODO: Implement sophisticated completeness evaluation
-        # This is a placeholder for Phase 1 implementation
-        
-        # Basic heuristic: check if we have entities and relationships
         entities = ontology.get('entities', [])
         relationships = ontology.get('relationships', [])
-        
+
         if not entities:
             return 0.0
-        
-        # Simple heuristic based on entity and relationship counts
-        entity_score = min(len(entities) / 10.0, 1.0)  # Assume 10 entities is "complete"
-        relationship_score = min(len(relationships) / len(entities), 1.0) if entities else 0.0
-        
-        return (entity_score + relationship_score) / 2.0
-    
+
+        # Sub-score 1: entity count (target ≥ 10 for "complete")
+        entity_count_score = min(len(entities) / 10.0, 1.0)
+
+        # Sub-score 2: relationship density (≥ 1 rel per entity)
+        rel_density_score = min(len(relationships) / max(len(entities), 1), 1.0)
+
+        # Sub-score 3: entity-type diversity (at least 3 distinct types)
+        types = {e.get('type') for e in entities if isinstance(e, dict) and e.get('type')}
+        diversity_score = min(len(types) / 3.0, 1.0)
+
+        # Sub-score 4: orphan penalty (entities with no relationships)
+        entity_ids_in_rels: set = set()
+        for rel in relationships:
+            if isinstance(rel, dict):
+                entity_ids_in_rels.add(rel.get('source_id'))
+                entity_ids_in_rels.add(rel.get('target_id'))
+        entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
+        orphan_ratio = len(entity_ids - entity_ids_in_rels) / max(len(entity_ids), 1)
+        orphan_penalty = max(0.0, 1.0 - orphan_ratio)
+
+        score = (
+            entity_count_score * 0.3
+            + rel_density_score * 0.3
+            + diversity_score * 0.2
+            + orphan_penalty * 0.2
+        )
+        return round(min(max(score, 0.0), 1.0), 4)
+
     def _evaluate_consistency(
         self,
         ontology: Dict[str, Any],
@@ -391,71 +438,100 @@ class OntologyCritic:
         """
         Evaluate internal logical consistency.
         
-        Checks for contradictions, circular dependencies, and other
-        consistency issues in the ontology structure.
-        
-        Args:
-            ontology: Ontology to evaluate
-            context: Generation context
-            
-        Returns:
-            Consistency score (0.0 to 1.0)
+        Checks for dangling references, duplicate IDs, and circular
+        is_a / part_of dependency chains.
         """
-        # TODO: Implement consistency checking
-        # This is a placeholder for Phase 1 implementation
-        
-        # For now, check basic structural consistency
         entities = ontology.get('entities', [])
         relationships = ontology.get('relationships', [])
-        
-        # Check that all relationships reference valid entities
-        entity_ids = {e.get('id') for e in entities if isinstance(e, dict)}
-        
+
+        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+
+        # Penalty: dangling references
         invalid_refs = 0
         for rel in relationships:
-            if isinstance(rel, dict):
-                if rel.get('source_id') not in entity_ids:
-                    invalid_refs += 1
-                if rel.get('target_id') not in entity_ids:
-                    invalid_refs += 1
-        
-        if not relationships:
-            return 1.0
-        
-        # Score based on valid references
-        return max(0.0, 1.0 - (invalid_refs / (len(relationships) * 2)))
-    
+            if not isinstance(rel, dict):
+                continue
+            if rel.get('source_id') not in entity_ids:
+                invalid_refs += 1
+            if rel.get('target_id') not in entity_ids:
+                invalid_refs += 1
+
+        total_ref_slots = len(relationships) * 2
+        ref_score = 1.0 if total_ref_slots == 0 else max(0.0, 1.0 - invalid_refs / total_ref_slots)
+
+        # Penalty: duplicate entity IDs
+        all_ids = [e.get('id') for e in entities if isinstance(e, dict) and e.get('id')]
+        dup_ratio = (len(all_ids) - len(set(all_ids))) / max(len(all_ids), 1)
+        dup_score = 1.0 - dup_ratio
+
+        # Penalty: circular is_a / part_of chains (DFS cycle detection)
+        hierarchy_adj: dict[str, list[str]] = {}
+        for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
+            if rel.get('type') in ('is_a', 'part_of'):
+                src = rel.get('source_id')
+                tgt = rel.get('target_id')
+                if src and tgt:
+                    hierarchy_adj.setdefault(src, []).append(tgt)
+
+        def _has_cycle(graph: dict) -> bool:
+            visited: set = set()
+            rec_stack: set = set()
+
+            def _dfs(node: str) -> bool:
+                visited.add(node)
+                rec_stack.add(node)
+                for nb in graph.get(node, []):
+                    if nb not in visited:
+                        if _dfs(nb):
+                            return True
+                    elif nb in rec_stack:
+                        return True
+                rec_stack.discard(node)
+                return False
+
+            return any(_dfs(n) for n in graph if n not in visited)
+
+        cycle_penalty = 0.15 if (hierarchy_adj and _has_cycle(hierarchy_adj)) else 0.0
+
+        score = ref_score * 0.5 + dup_score * 0.3 + (1.0 - cycle_penalty) * 0.2
+        return round(min(max(score, 0.0), 1.0), 4)
+
     def _evaluate_clarity(
         self,
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
         """
-        Evaluate clarity of entity definitions and relationships.
-        
-        Args:
-            ontology: Ontology to evaluate
-            context: Generation context
-            
-        Returns:
-            Clarity score (0.0 to 1.0)
+        Evaluate clarity of entity definitions and naming conventions.
         """
-        # TODO: Implement clarity evaluation
-        # This is a placeholder for Phase 1 implementation
-        
+        import re as _re
+
         entities = ontology.get('entities', [])
-        
+
         if not entities:
             return 0.0
-        
-        # Simple heuristic: entities with properties are clearer
-        with_properties = sum(
-            1 for e in entities
-            if isinstance(e, dict) and e.get('properties')
-        )
-        
-        return with_properties / len(entities) if entities else 0.0
-    
+
+        # Sub-score 1: property completeness (entities with ≥ 1 property)
+        with_props = sum(1 for e in entities if isinstance(e, dict) and e.get('properties'))
+        prop_score = with_props / len(entities)
+
+        # Sub-score 2: naming convention consistency (all camelCase OR all snake_case)
+        names = [e.get('text', '') or e.get('id', '') for e in entities if isinstance(e, dict)]
+        camel = sum(1 for n in names if _re.match(r'^[a-z][a-zA-Z0-9]*$', n))
+        snake = sum(1 for n in names if _re.match(r'^[a-z][a-z0-9_]*$', n))
+        pascal = sum(1 for n in names if _re.match(r'^[A-Z][a-zA-Z0-9]*$', n))
+        dominant = max(camel, snake, pascal)
+        naming_score = dominant / max(len(names), 1)
+
+        # Sub-score 3: non-empty text field
+        with_text = sum(1 for e in entities if isinstance(e, dict) and e.get('text'))
+        text_score = with_text / len(entities)
+
+        score = prop_score * 0.4 + naming_score * 0.3 + text_score * 0.3
+        return round(min(max(score, 0.0), 1.0), 4)
+
     def _evaluate_granularity(
         self,
         ontology: Dict[str, Any],
@@ -464,40 +540,75 @@ class OntologyCritic:
         """
         Evaluate appropriateness of detail level.
         
-        Args:
-            ontology: Ontology to evaluate
-            context: Generation context
-            
-        Returns:
-            Granularity score (0.0 to 1.0)
+        Scores based on average properties-per-entity and relationship-to-entity ratio.
         """
-        # TODO: Implement granularity evaluation
-        # This is a placeholder for Phase 1 implementation
-        
-        # For now, assume reasonable granularity
-        return 0.75
-    
+        entities = ontology.get('entities', [])
+        relationships = ontology.get('relationships', [])
+
+        if not entities:
+            return 0.0
+
+        # Target: ~3 properties per entity is "good granularity"
+        target_props = 3.0
+        prop_counts = [
+            len(e.get('properties', {}))
+            for e in entities if isinstance(e, dict)
+        ]
+        avg_props = sum(prop_counts) / max(len(prop_counts), 1)
+        prop_score = min(avg_props / target_props, 1.0)
+
+        # Target: ~1.5 relationships per entity
+        target_rels = 1.5
+        rel_ratio = len(relationships) / max(len(entities), 1)
+        rel_score = min(rel_ratio / target_rels, 1.0)
+
+        # Penalty for entities with zero properties (too coarse)
+        no_props = sum(1 for c in prop_counts if c == 0)
+        coarseness_penalty = no_props / max(len(entities), 1) * 0.3
+
+        score = prop_score * 0.45 + rel_score * 0.4 - coarseness_penalty
+        return round(min(max(score, 0.0), 1.0), 4)
+
     def _evaluate_domain_alignment(
         self,
         ontology: Dict[str, Any],
         context: Any
     ) -> float:
         """
-        Evaluate adherence to domain conventions.
-        
-        Args:
-            ontology: Ontology to evaluate
-            context: Generation context
-            
-        Returns:
-            Domain alignment score (0.0 to 1.0)
+        Evaluate how well entity types and relationship types align with domain vocabulary.
         """
-        # TODO: Implement domain-specific evaluation
-        # This is a placeholder for Phase 1 implementation
-        
-        # For now, assume reasonable domain alignment
-        return 0.80
-    
+        _DOMAIN_VOCAB: dict[str, set[str]] = {
+            'legal': {'obligation', 'party', 'contract', 'clause', 'breach', 'liability', 'penalty', 'jurisdiction', 'provision', 'agreement'},
+            'medical': {'patient', 'diagnosis', 'treatment', 'symptom', 'medication', 'procedure', 'physician', 'condition', 'dosage', 'outcome'},
+            'technical': {'component', 'service', 'api', 'endpoint', 'module', 'interface', 'dependency', 'version', 'protocol', 'event'},
+            'financial': {'asset', 'liability', 'transaction', 'account', 'balance', 'payment', 'interest', 'principal', 'collateral', 'risk'},
+            'general': {'person', 'organization', 'location', 'date', 'event', 'concept', 'action', 'property', 'relation', 'category'},
+        }
+
+        domain = (getattr(context, 'domain', None) or ontology.get('domain', 'general')).lower()
+        vocab = _DOMAIN_VOCAB.get(domain, _DOMAIN_VOCAB['general'])
+
+        entities = ontology.get('entities', [])
+        relationships = ontology.get('relationships', [])
+
+        if not entities:
+            return 0.5
+
+        # Check what fraction of entity types / rel types are in domain vocab
+        ent_types = [e.get('type', '').lower() for e in entities if isinstance(e, dict)]
+        rel_types = [r.get('type', '').lower() for r in relationships if isinstance(r, dict)]
+        all_terms = ent_types + rel_types
+
+        if not all_terms:
+            return 0.5
+
+        hits = sum(
+            1 for t in all_terms
+            if any(v in t or t in v for v in vocab)
+        )
+        score = hits / len(all_terms)
+        return round(min(max(score, 0.0), 1.0), 4)
+
     def _identify_strengths(
         self,
         completeness: float,

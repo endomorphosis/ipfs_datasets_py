@@ -22,6 +22,16 @@ from .base_optimizer import (
     OptimizationStrategy,
 )
 
+from .base_critic import (
+    BaseCritic,
+    CriticResult,
+)
+
+from .base_session import (
+    BaseSession,
+    RoundRecord,
+)
+
 from .performance import (
     CacheEntry,
     LLMCache,
@@ -47,6 +57,12 @@ __all__ = [
     "OptimizerConfig",
     "OptimizationContext",
     "OptimizationStrategy",
+    # Critic
+    "BaseCritic",
+    "CriticResult",
+    # Session
+    "BaseSession",
+    "RoundRecord",
     # Performance utilities
     "CacheEntry",
     "LLMCache",

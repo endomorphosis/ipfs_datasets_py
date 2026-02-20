@@ -273,14 +273,44 @@ Examples:
         print(f"   Prover: {args.prover}\n")
         
         try:
-            # TODO: Implement theorem proving
-            # This is a placeholder for the actual implementation
+            import time as _time
+            _start = _time.monotonic()
+
+            # Build statements list: premises + goal
+            statements: list[str] = list(args.premises or [])
+            statements.append(args.goal)
+
+            optimizer = LogicTheoremOptimizer(
+                config=OptimizerConfig(max_iterations=1, validation_enabled=True),
+                use_provers=[args.prover] if args.prover else ['z3'],
+            )
+            context = OptimizationContext(
+                session_id=f"prove-{args.theorem[:20].replace(' ', '-')}",
+                input_data=args.theorem,
+                domain='general',
+            )
+
             print("⏳ Proving...")
-            print("✅ Theorem proven successfully!")
-            print("   Prover: Z3")
-            print("   Time: 0.5s")
-            
-            return 0
+            result = optimizer.validate_statements(statements, context)
+            elapsed = _time.monotonic() - _start
+
+            provers_used = getattr(result, 'provers_used', None) or [args.prover or 'z3']
+            is_valid = getattr(result, 'all_valid', None)
+            if is_valid is None:
+                is_valid = getattr(result, 'valid', True)
+
+            if is_valid:
+                print("✅ Theorem proven successfully!")
+            else:
+                print("❌ Theorem could not be proven.")
+                errors = getattr(result, 'errors', [])
+                for err in errors:
+                    print(f"   {err}")
+
+            print(f"   Prover: {', '.join(str(p) for p in provers_used)}")
+            print(f"   Time: {elapsed:.3f}s")
+
+            return 0 if is_valid else 1
             
         except Exception as e:
             print(f"❌ Error: {e}")

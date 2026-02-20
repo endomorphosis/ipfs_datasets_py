@@ -365,19 +365,88 @@ class LogicValidator:
         logger.info(f"Generating fix suggestions for {len(contradictions)} contradictions")
         
         fixes = []
-        
-        # TODO: Implement intelligent fix suggestion
-        # This is a placeholder for Phase 1 implementation
-        
+
+        import re as _re
+
+        entities = ontology.get('entities', [])
+        relationships = ontology.get('relationships', [])
+        entity_ids = {e.get('id') for e in entities if isinstance(e, dict) and e.get('id')}
+        entity_id_to_text: dict[str, str] = {
+            e['id']: e.get('text', e['id'])
+            for e in entities if isinstance(e, dict) and e.get('id')
+        }
+
         for contradiction in contradictions:
-            # Generate generic fix suggestion
-            fixes.append({
-                'description': f"Review and resolve: {contradiction}",
-                'type': 'manual_review',
-                'target': None,
-                'confidence': 0.5
-            })
-        
+            c_lower = contradiction.lower()
+
+            # Pattern: dangling / non-existent source/target entity reference
+            if 'non-existent' in c_lower or 'missing' in c_lower or 'not found' in c_lower:
+                # Try to extract an entity ID from the message
+                id_match = _re.search(r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+                target_id = id_match.group(1) if id_match else None
+                fixes.append({
+                    'description': (
+                        f"Add a placeholder entity with id '{target_id}' to satisfy the dangling reference, "
+                        "or remove the relationship that references it."
+                        if target_id else f"Resolve dangling reference: {contradiction}"
+                    ),
+                    'type': 'add_entity_or_remove_relationship',
+                    'target': target_id,
+                    'confidence': 0.75,
+                })
+
+            # Pattern: duplicate entity ID
+            elif 'duplicate' in c_lower:
+                id_match = _re.search(r"id[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+                target_id = id_match.group(1) if id_match else None
+                fixes.append({
+                    'description': (
+                        f"Assign a unique ID to the duplicate entity '{target_id}' "
+                        "and update all references."
+                        if target_id else f"Resolve duplicate ID: {contradiction}"
+                    ),
+                    'type': 'rename_duplicate_id',
+                    'target': target_id,
+                    'confidence': 0.85,
+                })
+
+            # Pattern: circular dependency (is_a / part_of cycle)
+            elif 'circular' in c_lower or 'cycle' in c_lower:
+                fixes.append({
+                    'description': (
+                        "Break the circular dependency by removing or redirecting one of the "
+                        "'is_a' or 'part_of' relationships in the cycle."
+                    ),
+                    'type': 'remove_circular_relationship',
+                    'target': None,
+                    'confidence': 0.70,
+                })
+
+            # Pattern: type conflict
+            elif 'type' in c_lower and 'conflict' in c_lower:
+                id_match = _re.search(r"entity[:\s]+['\"]?([^\s'\"]+)['\"]?", contradiction, _re.IGNORECASE)
+                target_id = id_match.group(1) if id_match else None
+                fixes.append({
+                    'description': (
+                        f"Resolve the type conflict for entity '{entity_id_to_text.get(target_id, target_id)}' "
+                        "by choosing the type with the highest confidence and updating all references."
+                        if target_id else f"Resolve type conflict: {contradiction}"
+                    ),
+                    'type': 'unify_entity_type',
+                    'target': target_id,
+                    'confidence': 0.65,
+                })
+
+            # Fallback: generic manual review
+            else:
+                fixes.append({
+                    'description': f"Manual review required: {contradiction}",
+                    'type': 'manual_review',
+                    'target': None,
+                    'confidence': 0.40,
+                })
+
+        logger.info(f"Generated {len(fixes)} fix suggestions")
         return fixes
     
     def _basic_consistency_check(

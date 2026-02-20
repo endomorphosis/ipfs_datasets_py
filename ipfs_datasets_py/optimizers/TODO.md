@@ -183,9 +183,11 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P1) [arch] `common/base_optimizer.py` — `BaseOptimizer` abstract class with `generate/critique/optimize/validate` pipeline exists
 - [ ] (P1) [arch] `common/base_critic.py` — `BaseCritic` abstract class with `evaluate()` returning typed `CriticScore`
-- [ ] (P1) [arch] `common/base_session.py` — `BaseSession` dataclass tracking rounds, scores, convergence
+- [x] (P1) [arch] `common/base_session.py` — `BaseSession` dataclass tracking rounds, scores, convergence
+  - Done 2026-02-20: implemented with `start_round()`, `record_round()`, `trend`, `best_score`, `to_dict()`
 - [ ] (P2) [arch] `common/base_harness.py` — `BaseHarness` orchestrating generator + critic + optimizer
-- [ ] (P2) [arch] Wire `OntologyCritic` to extend `BaseCritic`
+- [x] (P2) [arch] Wire `OntologyCritic` to extend `BaseCritic`
+  - Done 2026-02-20: added `evaluate()` → `CriticResult` bridge method
 - [ ] (P2) [arch] Wire `LogicCritic` to extend `BaseCritic`
 - [ ] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
 - [ ] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
@@ -263,7 +265,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P2) [graphrag] `refine_ontology()` — no-op copy; implement specific refinement actions driven by recommendations
   - Done 2026-02-20: implemented add-property, normalize-names, prune-orphans, and merge-duplicates actions
-- [ ] (P2) [graphrag] `generate_prompt()` — basic string concat; generate structured prompts with few-shot examples
+- [x] (P2) [graphrag] `generate_prompt()` — structured prompts with domain vocabulary, schema instructions, and feedback-driven refinement hints
+  - Done 2026-02-20
 - [ ] (P2) [graphrag] Add `refine_ontology()` action: `add_missing_relationships` (links orphan entities via co-occurrence)
 - [ ] (P3) [graphrag] Add refinement action: `split_entity` (detect entities with multiple unrelated roles)
 
@@ -271,7 +274,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [ ] (P2) [graphrag] Implement minimal `ontology_to_tdfol()` — convert entities/relationships to predicate-logic formulas (subset: `Person(x)`, `hasRelation(x,y)`)
 - [ ] (P2) [graphrag] Implement `_prove_consistency()` — pass generated formulas to `logic_theorem_optimizer.ProverIntegrationAdapter`
-- [ ] (P2) [graphrag] Implement `suggest_fixes()` — map contradiction types to fix templates (dangling ref → "remove or add entity", type conflict → "unify types")
+- [x] (P2) [graphrag] Implement `suggest_fixes()` — map contradiction types to fix templates (dangling ref → "remove or add entity", type conflict → "unify types")
+  - Done 2026-02-20: pattern-matched contradictions to typed fix actions with confidence scores
 - [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
 - [ ] (P3) [graphrag] Expose `--tdfol-output` flag in GraphRAG CLI wrapper to dump generated formulas
 
@@ -295,7 +299,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### F9 — `graphrag/ontology_optimizer.py` internal stubs
 
-- [ ] (P2) [graphrag] `_identify_patterns()` (line ~490) returns `{}`; implement counter-based pattern mining over session results
+- [x] (P2) [graphrag] `_identify_patterns()` — implemented counter-based pattern mining: entity/rel type frequencies, weakness distribution, avg scores
+  - Done 2026-02-20
 - [ ] (P2) [graphrag] `generate_recommendations()` — basic threshold checks; add pattern-driven recommendations
 
 ### F10 — Prompt generator: example database

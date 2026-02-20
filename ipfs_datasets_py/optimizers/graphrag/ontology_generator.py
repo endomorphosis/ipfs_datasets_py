@@ -460,17 +460,57 @@ class OntologyGenerator:
         Returns:
             Extraction result with entities and relationships
         """
-        # TODO: Implement rule-based extraction
-        # This is a placeholder for Phase 1 implementation
-        
-        entities = []
-        relationships = []
-        
+        # Rule-based NER using regex patterns organized by entity type.
+        import re as _re
+        import uuid as _uuid
+
+        _PATTERNS: list[tuple[str, str]] = [
+            # Person names (Title + Capitalised words)
+            (r'\b(?:Mr|Mrs|Ms|Dr|Prof)\.?\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*', 'Person'),
+            # Organisation suffixes
+            (r'\b[A-Z][A-Za-z&\s]*(?:LLC|Ltd|Inc|Corp|GmbH|PLC|Co\.)\b', 'Organization'),
+            # Dates
+            (r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', 'Date'),
+            (r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b', 'Date'),
+            # Monetary amounts
+            (r'\b(?:USD|EUR|GBP|€|\$|£)\s*[\d,]+(?:\.\d{2})?\b', 'MonetaryAmount'),
+            # Locations — simple proper-noun heuristic for known indicators
+            (r'\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\s+(?:Street|Avenue|Road|City|County|State|Country|Region|District)\b', 'Location'),
+            # Legal obligations (noun phrases around "obligation", "duty", "right")
+            (r'\b(?:the\s+)?(?:obligation|duty|right|liability|breach|claim|penalty)\s+(?:of\s+)?[A-Z][a-z]+\b', 'Obligation'),
+            # Generic capitalised concepts (fallback — lower confidence)
+            (r'\b[A-Z][A-Za-z]{3,}\b', 'Concept'),
+        ]
+
+        text = str(data) if data is not None else ""
+        entities: list[Entity] = []
+        seen_texts: set[str] = set()
+
+        for pattern, ent_type in _PATTERNS:
+            confidence = 0.5 if ent_type == 'Concept' else 0.75
+            for m in _re.finditer(pattern, text):
+                raw = m.group(0).strip()
+                key = raw.lower()
+                if key in seen_texts or len(raw) < 2:
+                    continue
+                seen_texts.add(key)
+                entities.append(Entity(
+                    id=f"e_{_uuid.uuid4().hex[:8]}",
+                    type=ent_type,
+                    text=raw,
+                    confidence=confidence,
+                    source_span=(m.start(), m.end()),
+                ))
+
+        # Derive relationships from extracted entities
+        relationships = self.infer_relationships(entities, context, data)
+
+        logger.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
         return EntityExtractionResult(
             entities=entities,
             relationships=relationships,
             confidence=0.7,
-            metadata={'method': 'rule_based'}
+            metadata={'method': 'rule_based', 'entity_count': len(entities)},
         )
     
     def _extract_llm_based(
@@ -607,13 +647,65 @@ class OntologyGenerator:
         Returns:
             Merged ontology
         """
-        # TODO: Implement smart ontology merging
-        # This is a placeholder for Phase 1 implementation
-        
-        merged = base.copy()
-        merged['entities'].extend(extension['entities'])
-        merged['relationships'].extend(extension['relationships'])
-        
+        # Smart merge: dedup by id, merge properties, track provenance.
+        import copy as _copy
+
+        merged = _copy.deepcopy(base)
+        merged.setdefault('entities', [])
+        merged.setdefault('relationships', [])
+        merged.setdefault('metadata', {})
+
+        # --- entity merge ---
+        existing_entity_ids: dict[str, dict] = {
+            e['id']: e for e in merged['entities'] if isinstance(e, dict) and 'id' in e
+        }
+        for ent in extension.get('entities', []):
+            if not isinstance(ent, dict) or 'id' not in ent:
+                merged['entities'].append(ent)
+                continue
+            eid = ent['id']
+            if eid not in existing_entity_ids:
+                new_ent = _copy.deepcopy(ent)
+                new_ent.setdefault('provenance', [])
+                new_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
+                merged['entities'].append(new_ent)
+                existing_entity_ids[eid] = new_ent
+            else:
+                # Merge properties; prefer higher-confidence version
+                base_ent = existing_entity_ids[eid]
+                ext_conf = ent.get('confidence', 0.0)
+                base_conf = base_ent.get('confidence', 0.0)
+                merged_props = {**ent.get('properties', {}), **base_ent.get('properties', {})}
+                base_ent['properties'] = merged_props
+                if ext_conf > base_conf:
+                    base_ent['confidence'] = ext_conf
+                base_ent.setdefault('provenance', [])
+                base_ent['provenance'].append(extension.get('metadata', {}).get('source', 'extension'))
+
+        # --- relationship merge (dedup by source+target+type) ---
+        existing_rel_keys: set[tuple] = {
+            (r.get('source_id'), r.get('target_id'), r.get('type'))
+            for r in merged['relationships'] if isinstance(r, dict)
+        }
+        for rel in extension.get('relationships', []):
+            if not isinstance(rel, dict):
+                merged['relationships'].append(rel)
+                continue
+            key = (rel.get('source_id'), rel.get('target_id'), rel.get('type'))
+            if key not in existing_rel_keys:
+                new_rel = _copy.deepcopy(rel)
+                new_rel.setdefault('provenance', [extension.get('metadata', {}).get('source', 'extension')])
+                merged['relationships'].append(new_rel)
+                existing_rel_keys.add(key)
+
+        # Update metadata
+        merged['metadata']['merged_from'] = merged['metadata'].get('merged_from', [])
+        merged['metadata']['merged_from'].append(extension.get('metadata', {}).get('source', 'extension'))
+
+        logger.info(
+            f"Merged ontologies: {len(merged['entities'])} entities, "
+            f"{len(merged['relationships'])} relationships"
+        )
         return merged
 
 

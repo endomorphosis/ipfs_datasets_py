@@ -25,6 +25,7 @@ Example:
 
 from __future__ import annotations
 
+from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -50,6 +51,16 @@ from .logic_optimizer import LogicOptimizer as LegacyLogicOptimizer
 from .prover_integration import ProverIntegrationAdapter
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class StatementValidationResult:
+    """Result of validating one or more logical statements."""
+
+    all_valid: bool
+    provers_used: List[str] = field(default_factory=list)
+    errors: List[str] = field(default_factory=list)
+    details: Dict[str, Any] = field(default_factory=dict)
 
 
 class LogicTheoremOptimizer(BaseOptimizer):
@@ -94,6 +105,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         llm_backend: Optional[Any] = None,
         extraction_mode: ExtractionMode = ExtractionMode.AUTO,
         use_provers: Optional[List[str]] = None,
+        enable_caching: bool = True,
         domain: str = "general",
     ):
         """Initialize the unified logic theorem optimizer.
@@ -111,7 +123,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
         self.extractor = LogicExtractor(backend=llm_backend)
         self.critic = LogicCritic(use_provers=use_provers or ['z3'])
         self.legacy_optimizer = LegacyLogicOptimizer()
-        self.prover_adapter = ProverIntegrationAdapter(use_provers=use_provers or ['z3'])
+        self.prover_adapter = ProverIntegrationAdapter(
+            use_provers=use_provers or ['z3'],
+            enable_cache=enable_caching,
+        )
         
         # Store settings
         self.extraction_mode = extraction_mode
@@ -119,6 +134,51 @@ class LogicTheoremOptimizer(BaseOptimizer):
         
         # Track extraction history for optimization
         self.extraction_history: List[ExtractionResult] = []
+
+    def validate_statements(
+        self,
+        statements: List[Any],
+        context: Optional[OptimizationContext] = None,
+        timeout: Optional[float] = None,
+    ) -> StatementValidationResult:
+        """Validate one or more statements using configured theorem provers.
+
+        This is a lightweight adapter around `ProverIntegrationAdapter.verify_statement`.
+        It is intentionally conservative: if no provers are available or any statement
+        is not verified as valid, the result is `all_valid=False`.
+        """
+        errors: List[str] = []
+        per_statement: List[Dict[str, Any]] = []
+        verified_by: List[str] = []
+
+        for idx, statement in enumerate(statements, start=1):
+            aggregated = self.prover_adapter.verify_statement(
+                statement,
+                timeout=timeout,
+            )
+            per_statement.append(
+                {
+                    'index': idx,
+                    'statement': str(statement),
+                    'overall_valid': aggregated.overall_valid,
+                    'confidence': aggregated.confidence,
+                    'agreement_rate': aggregated.agreement_rate,
+                    'verified_by': aggregated.verified_by,
+                }
+            )
+            verified_by.extend(list(aggregated.verified_by or []))
+            if not aggregated.overall_valid:
+                errors.append(f"Statement {idx} failed verification")
+
+        provers_used = sorted(set(verified_by)) or list(self.prover_adapter.use_provers)
+        all_valid = len(errors) == 0
+
+        return StatementValidationResult(
+            all_valid=all_valid,
+            provers_used=provers_used,
+            errors=errors,
+            details={'statements': per_statement},
+        )
         
     def generate(
         self,
