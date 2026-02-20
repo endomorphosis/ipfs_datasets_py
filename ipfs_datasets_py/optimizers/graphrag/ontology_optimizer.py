@@ -57,6 +57,15 @@ except ImportError:  # pragma: no cover
     trace = None  # type: ignore[assignment]
     HAVE_OPENTELEMETRY = False
 
+try:
+    from ipfs_datasets_py.optimizers.optimizer_learning_metrics import (
+        OptimizerLearningMetricsCollector,
+    )
+    HAVE_LEARNING_METRICS = True
+except ImportError:  # pragma: no cover
+    OptimizerLearningMetricsCollector = None  # type: ignore[assignment,misc]
+    HAVE_LEARNING_METRICS = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -149,6 +158,7 @@ class OntologyOptimizer:
         self,
         logger: Optional[logging.Logger] = None,
         enable_tracing: bool = True,
+        metrics_collector: Optional[Any] = None,
     ):
         """
         Initialize the ontology optimizer.
@@ -156,6 +166,11 @@ class OntologyOptimizer:
         Args:
             logger: Optional :class:`logging.Logger` to use instead of the
                 module-level logger. Useful for dependency injection in tests.
+            enable_tracing: If True, emit OpenTelemetry spans when available.
+            metrics_collector: Optional :class:`OptimizerLearningMetricsCollector`
+                instance for recording learning cycles after each batch analysis.
+                If None and ``HAVE_LEARNING_METRICS`` is True a default in-memory
+                collector is created automatically.
         """
         import logging as _logging
         self._log = logger or _logging.getLogger(__name__)
@@ -163,6 +178,13 @@ class OntologyOptimizer:
         self._tracer = None
         if enable_tracing and HAVE_OPENTELEMETRY and trace is not None:
             self._tracer = trace.get_tracer(__name__)
+        # Wire learning-metrics collector
+        if metrics_collector is not None:
+            self._metrics = metrics_collector
+        elif HAVE_LEARNING_METRICS and OptimizerLearningMetricsCollector is not None:
+            self._metrics: Any = OptimizerLearningMetricsCollector()
+        else:
+            self._metrics = None
         self._log.info("Initialized OntologyOptimizer")
 
     def _emit_trace(self, operation: str, attributes: Dict[str, Any]) -> None:
@@ -346,7 +368,21 @@ class OntologyOptimizer:
                 'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
             }
         )
-        
+
+        # Record learning cycle to metrics collector if available
+        if self._metrics is not None:
+            duration_s = time.time() - operation_start
+            try:
+                self._metrics.record_learning_cycle(
+                    cycle_id=f"ontology_batch_{id(session_results)}",
+                    analyzed_queries=len(session_results),
+                    patterns_identified=len(patterns),
+                    parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
+                    execution_time=round(duration_s, 4),
+                )
+            except Exception:  # metrics must never block optimization
+                pass
+
         return report
 
     def analyze_batch_parallel(
@@ -493,6 +529,21 @@ class OntologyOptimizer:
                 'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
             }
         )
+
+        # Record learning cycle to metrics collector if available
+        if self._metrics is not None:
+            duration_s = time.time() - operation_start
+            try:
+                self._metrics.record_learning_cycle(
+                    cycle_id=f"ontology_parallel_batch_{id(session_results)}",
+                    analyzed_queries=len(session_results),
+                    patterns_identified=len(patterns),
+                    parameters_adjusted={"trend": trend, "average_score": round(average_score, 6)},
+                    execution_time=round(duration_s, 4),
+                )
+            except Exception:  # metrics must never block optimization
+                pass
+
         return report
 
     def analyze_trends(

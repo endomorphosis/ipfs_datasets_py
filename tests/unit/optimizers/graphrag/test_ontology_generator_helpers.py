@@ -370,3 +370,54 @@ class TestMergeEntitiesTypeConflict:
         e0 = next(e for e in merged["entities"] if e["id"] == "e0")
         assert e0["type"] == "Organization"
         assert e0["confidence"] == 0.9
+
+
+# ---------------------------------------------------------------------------
+# Property-based test: _merge_ontologies is idempotent
+# ---------------------------------------------------------------------------
+
+class TestMergeOntologiesIdempotent:
+    """Merging an ontology with itself should be idempotent (same entity count)."""
+
+    def _make_ontology(self, entity_ids, relationship_pairs=None):
+        entities = [
+            {"id": eid, "type": "Concept", "text": eid, "confidence": 0.7}
+            for eid in entity_ids
+        ]
+        relationships = [
+            {"source_id": s, "target_id": t, "type": "relates_to", "confidence": 0.5}
+            for s, t in (relationship_pairs or [])
+        ]
+        return {"entities": entities, "relationships": relationships, "metadata": {}}
+
+    def test_merge_self_entity_count_unchanged(self, generator):
+        onto = self._make_ontology(["e1", "e2", "e3"])
+        merged = generator._merge_ontologies(onto, onto)
+        assert len(merged["entities"]) == 3
+
+    def test_merge_self_relationship_count_unchanged(self, generator):
+        onto = self._make_ontology(
+            ["e1", "e2"],
+            relationship_pairs=[("e1", "e2"), ("e2", "e1")]
+        )
+        merged = generator._merge_ontologies(onto, onto)
+        assert len(merged["relationships"]) == 2
+
+    def test_merge_self_empty_ontology(self, generator):
+        onto = self._make_ontology([])
+        merged = generator._merge_ontologies(onto, onto)
+        assert merged["entities"] == []
+        assert merged["relationships"] == []
+
+    def test_merge_self_single_entity(self, generator):
+        onto = self._make_ontology(["x"])
+        merged = generator._merge_ontologies(onto, onto)
+        assert len(merged["entities"]) == 1
+
+    def test_merge_self_twice_still_idempotent(self, generator):
+        """Applying merge three times (merge, then merge again) stays stable."""
+        onto = self._make_ontology(["a", "b", "c"], [("a", "b"), ("b", "c")])
+        m1 = generator._merge_ontologies(onto, onto)
+        m2 = generator._merge_ontologies(m1, onto)
+        assert len(m2["entities"]) == 3
+        assert len(m2["relationships"]) == 2
