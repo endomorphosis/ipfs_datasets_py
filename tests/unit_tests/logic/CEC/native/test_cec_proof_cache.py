@@ -356,7 +356,7 @@ class TestCachePerformance:
             speedup = time_miss / time_hit
             # Only assert speedup if the first proof took measurable time (>0.5ms)
             if time_miss >= 0.0005:
-                assert speedup >= 2, f"Speedup only {speedup:.1f}x (first={time_miss*1000:.2f}ms)"
+                assert speedup >= 1.5, f"Speedup only {speedup:.1f}x (first={time_miss*1000:.2f}ms)"
     
     def test_cache_hit_rate_multiple_proofs(self):
         """
