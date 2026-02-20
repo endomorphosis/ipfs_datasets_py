@@ -131,13 +131,12 @@ def multiply_by_two(x):
     return x * 2
 
 
-import asyncio
+import inspect
 
 class Async(Monad[T]):
     
     def __init__(self, value: T):
         super().__init__(value)
-        self._loop = asyncio.get_event_loop()
         self._future = None 
 
     @staticmethod
@@ -147,7 +146,7 @@ class Async(Monad[T]):
     def bind(self, func: Callable[[T], 'Async[U]']) -> 'Async[U]':
         if callable(func):
             return Async(func(self.value))
-        if asyncio.iscoroutinefunction(func): # TODO
+        if inspect.iscoroutinefunction(func): # TODO
             return Async(func(self.value))
 
     def __rshift__(self, func: Callable[[T], 'Monad[U]']) -> 'Async[U]':

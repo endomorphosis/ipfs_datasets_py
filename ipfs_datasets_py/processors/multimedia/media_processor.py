@@ -5,7 +5,7 @@ This module provides a unified interface for processing multimedia content
 using various backends like FFmpeg and yt-dlp.
 """
 from __future__ import annotations
-import asyncio
+import anyio
 import ctypes
 import ctypes.util
 import gc
@@ -441,8 +441,9 @@ class MediaProcessor:
             
             return download_result
 
-        except asyncio.CancelledError:
-            raise
+        except BaseException as _exc:
+            if isinstance(_exc, anyio.get_cancelled_exc_class()):
+                raise
         except Exception as e:
             if self.logger is not None:
                 self.logger.error(f"Error in download_and_convert: {e}")

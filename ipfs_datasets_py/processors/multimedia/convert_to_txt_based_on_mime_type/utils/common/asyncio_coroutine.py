@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 from functools import wraps
 from typing import Callable
 
@@ -12,7 +12,7 @@ def asyncio_coroutine(fn: Callable) -> Callable:
     but very helpful for inline conversions of unknown functions, 
     especially lambdas.
     """
-    if asyncio.iscoroutinefunction(fn):
+    if inspect.iscoroutinefunction(fn):
         return fn
 
     @wraps(fn)

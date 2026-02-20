@@ -1,4 +1,5 @@
-import asyncio
+import anyio
+from utils.common.anyio_queues import AnyioQueue
 from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import cached_property
@@ -207,7 +208,7 @@ from typing import Awaitable, Coroutine
 from dataclasses import dataclass
 from typing import Generic, TypeVar, Optional, Callable, Awaitable, Protocol
 from contextlib import AbstractContextManager
-import asyncio
+import anyio
 from abc import ABC, abstractmethod
 
 class Disposable(Protocol):
@@ -636,8 +637,8 @@ class FilePathQueue:
     def __init__(self, configs: Configs):
         self.configs = configs
         self.items = []
-        self.lock = asyncio.Lock()
-        self.queue = asyncio.Queue()
+        self.lock = anyio.Lock()
+        self.queue = AnyioQueue()
 
     def __aiter__(self):
         return self
@@ -829,6 +830,6 @@ if __name__ == "__main__":
     base_name = os.path.basename(__file__) 
     program_name = os.path.split(os.path.split(__file__)[0])[1] if base_name != "main.py" else os.path.splitext(base_name)[0] 
     try:
-        asyncio.run(main())
+        anyio.run(main)
     except KeyboardInterrupt:
         print(f"'{program_name}' program stopped.")

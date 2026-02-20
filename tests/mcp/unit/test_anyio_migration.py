@@ -1,10 +1,12 @@
 """Tests verifying that asyncio has been replaced with anyio across the package.
 
 These tests confirm:
-1. No `import asyncio` remains in the production source files (excluding multimedia).
-2. Key migrated modules import correctly.
+1. No ``import asyncio`` remains in production source files (excluding the
+   ``async_.py`` monad which wraps asyncio.Future callbacks by design).
+2. All migrated files are syntactically valid Python.
 3. Key anyio patterns work at runtime (Semaphore, fail_after, to_thread, task groups).
-4. anyio_compat.run() works as a sync-from-async bridge.
+4. ``AnyioQueue`` and ``AnyioPriorityQueue`` wrappers behave like asyncio.Queue.
+5. anyio_compat.run() works as a sync-from-async bridge.
 """
 from __future__ import annotations
 
@@ -20,14 +22,20 @@ import pytest
 # Root of the source package
 SRC_ROOT = Path(__file__).parents[3] / "ipfs_datasets_py"
 
+# Files that intentionally retain an ``import asyncio`` because they wrap
+# asyncio-specific primitives (e.g. asyncio.Future) for the asyncio backend.
+_ASYNCIO_ALLOWED = {
+    SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
+    / "utils" / "converter_system" / "monads" / "async_.py",
+}
+
 
 def _collect_asyncio_import_files() -> List[Path]:
-    """Return source files that still contain `import asyncio`."""
-    excluded_subtree = SRC_ROOT / "processors" / "multimedia"
+    """Return source files that still contain ``import asyncio``."""
     results: List[Path] = []
     for py_file in SRC_ROOT.rglob("*.py"):
-        if py_file.is_relative_to(excluded_subtree):
-            continue  # multimedia has deep asyncio coupling; excluded by design
+        if py_file in _ASYNCIO_ALLOWED:
+            continue
         content = py_file.read_text(encoding="utf-8", errors="replace")
         if "import asyncio" in content:
             results.append(py_file)
@@ -39,7 +47,7 @@ def _collect_asyncio_import_files() -> List[Path]:
 # ---------------------------------------------------------------------------
 
 def test_no_asyncio_imports_outside_multimedia():
-    """No production source file (outside multimedia/) should import asyncio."""
+    """No production source file (except the async monad shim) should import asyncio."""
     remaining = _collect_asyncio_import_files()
     if remaining:
         paths = "\n  ".join(str(p.relative_to(SRC_ROOT)) for p in remaining)
@@ -51,6 +59,7 @@ def test_no_asyncio_imports_outside_multimedia():
 
 def test_migrated_files_have_valid_syntax():
     """All migrated files must be syntactically valid Python."""
+    multimedia_root = SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
     migrated = [
         SRC_ROOT / "knowledge_graphs" / "transactions" / "wal.py",
         SRC_ROOT / "knowledge_graphs" / "transactions" / "manager.py",
@@ -75,6 +84,24 @@ def test_migrated_files_have_valid_syntax():
         SRC_ROOT / "mcp_server" / "mcplusplus" / "bootstrap_system.py",
         SRC_ROOT / "mcp_server" / "mcplusplus" / "result_cache.py",
         SRC_ROOT / "processors" / "legal_scrapers" / "parallel_web_archiver.py",
+        # multimedia files migrated in this session
+        multimedia_root / "utils" / "common" / "asyncio_coroutine.py",
+        multimedia_root / "utils" / "common" / "stopwatch.py",
+        multimedia_root / "utils" / "common" / "anyio_queues.py",
+        multimedia_root / "utils" / "converter_system" / "monads" / "async_.py",
+        multimedia_root / "utils" / "converter_system" / "run_in_parallel_with_concurrency_limiter.py",
+        multimedia_root / "utils" / "converter_system" / "run_in_thread_pool.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "core.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "optimize.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "pipeline.py",
+        multimedia_root / "converter_system" / "file_path_queue" / "file_path_queue.py",
+        multimedia_root / "external_interface" / "file_paths_manager" / "file_paths_manager.py",
+        multimedia_root / "main.py",
+        multimedia_root / "pools" / "non_system_resources" / "core_functions_pool" / "core_functions_pool.py",
+        multimedia_root / "pools" / "non_system_resources" / "file_path_pool" / "file_path_pool.py",
+        multimedia_root / "pools" / "system_resources" / "system_resources_pool_template.py",
+        SRC_ROOT / "processors" / "multimedia" / "media_processor.py",
+        SRC_ROOT / "processors" / "multimedia" / "omni_converter_mk2" / "core" / "content_extractor" / "processors" / "by_ability" / "_llm_processor.py",
     ]
     errors = []
     for p in migrated:
@@ -244,3 +271,174 @@ def test_anyio_in_install_requires():
         pytest.skip("setup.py not found")
     content = setup_py.read_text()
     assert "anyio" in content, "anyio must be listed as a dependency in setup.py"
+
+
+# ---------------------------------------------------------------------------
+# AnyioQueue / AnyioPriorityQueue runtime tests (multimedia helpers)
+# ---------------------------------------------------------------------------
+
+_ANYIO_QUEUES_PATH = (
+    SRC_ROOT
+    / "processors" / "multimedia"
+    / "convert_to_txt_based_on_mime_type"
+    / "utils" / "common" / "anyio_queues.py"
+)
+
+
+def _import_anyio_queues():
+    """Import AnyioQueue and AnyioPriorityQueue from the multimedia package."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("anyio_queues", _ANYIO_QUEUES_PATH)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.AnyioQueue, mod.AnyioPriorityQueue
+
+
+@pytest.mark.anyio
+async def test_anyio_queue_put_and_get():
+    """AnyioQueue.put() and .get() round-trip single items."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    AnyioQueue, _ = _import_anyio_queues()
+    q: object = AnyioQueue()
+    await q.put(42)
+    result = await q.get()
+    assert result == 42
+
+
+@pytest.mark.anyio
+async def test_anyio_queue_put_nowait_get_nowait():
+    """AnyioQueue.put_nowait() and .get_nowait() work for buffered items."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    AnyioQueue, _ = _import_anyio_queues()
+    q = AnyioQueue(maxsize=10)
+    q.put_nowait("hello")
+    q.put_nowait("world")
+    assert q.get_nowait() == "hello"
+    assert q.get_nowait() == "world"
+
+
+@pytest.mark.anyio
+async def test_anyio_queue_empty():
+    """AnyioQueue.empty() returns True when no items buffered."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    AnyioQueue, _ = _import_anyio_queues()
+    q = AnyioQueue()
+    assert q.empty() is True
+    q.put_nowait("x")
+    assert q.empty() is False
+
+
+@pytest.mark.anyio
+async def test_anyio_queue_task_done_noop():
+    """AnyioQueue.task_done() is a no-op (no exception raised)."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    AnyioQueue, _ = _import_anyio_queues()
+    q = AnyioQueue()
+    q.task_done()  # must not raise
+
+
+@pytest.mark.anyio
+async def test_anyio_queue_producer_consumer():
+    """Multiple items sent by a producer are received in order."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    AnyioQueue, _ = _import_anyio_queues()
+    q = AnyioQueue(maxsize=100)
+    items = list(range(10))
+    results: list[int] = []
+
+    async def producer() -> None:
+        for i in items:
+            await q.put(i)
+        await q.put(None)  # sentinel
+
+    async def consumer() -> None:
+        while True:
+            val = await q.get()
+            if val is None:
+                break
+            results.append(val)
+
+    async with anyio.create_task_group() as tg:
+        tg.start_soon(producer)
+        tg.start_soon(consumer)
+
+    assert results == items
+
+
+@pytest.mark.anyio
+async def test_anyio_priority_queue_ordering():
+    """AnyioPriorityQueue returns items in ascending priority order."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    _, AnyioPriorityQueue = _import_anyio_queues()
+    pq = AnyioPriorityQueue()
+    await pq.put((3, "low"))
+    await pq.put((1, "high"))
+    await pq.put((2, "medium"))
+
+    first = await pq.get()
+    second = await pq.get()
+    third = await pq.get()
+
+    assert first == (1, "high")
+    assert second == (2, "medium")
+    assert third == (3, "low")
+
+
+@pytest.mark.anyio
+async def test_anyio_priority_queue_empty_and_qsize():
+    """AnyioPriorityQueue.empty() and .qsize() reflect current state."""
+    if not _ANYIO_QUEUES_PATH.exists():
+        pytest.skip("anyio_queues.py not found")
+    _, AnyioPriorityQueue = _import_anyio_queues()
+    pq = AnyioPriorityQueue()
+    assert pq.empty() is True
+    assert pq.qsize() == 0
+    await pq.put((1, "a"))
+    await pq.put((2, "b"))
+    assert pq.qsize() == 2
+    assert pq.empty() is False
+
+
+# ---------------------------------------------------------------------------
+# No asyncio in multimedia source (except the allowed monad shim)
+# ---------------------------------------------------------------------------
+
+def test_multimedia_source_files_use_anyio():
+    """Key multimedia source files must not import asyncio (except monad shim)."""
+    multimedia_root = (
+        SRC_ROOT / "processors" / "multimedia" / "convert_to_txt_based_on_mime_type"
+    )
+    # Files that were migrated and must NOT have bare `import asyncio`
+    to_check = [
+        multimedia_root / "utils" / "common" / "asyncio_coroutine.py",
+        multimedia_root / "utils" / "common" / "stopwatch.py",
+        multimedia_root / "utils" / "converter_system" / "run_in_parallel_with_concurrency_limiter.py",
+        multimedia_root / "utils" / "converter_system" / "run_in_thread_pool.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "core.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "optimize.py",
+        multimedia_root / "converter_system" / "conversion_pipeline" / "functions" / "pipeline.py",
+        multimedia_root / "converter_system" / "file_path_queue" / "file_path_queue.py",
+        multimedia_root / "external_interface" / "file_paths_manager" / "file_paths_manager.py",
+        multimedia_root / "main.py",
+        multimedia_root / "pools" / "non_system_resources" / "file_path_pool" / "file_path_pool.py",
+        multimedia_root / "pools" / "system_resources" / "system_resources_pool_template.py",
+        SRC_ROOT / "processors" / "multimedia" / "media_processor.py",
+    ]
+    violations = []
+    for p in to_check:
+        if not p.exists():
+            continue
+        content = p.read_text(encoding="utf-8", errors="replace")
+        if "import asyncio" in content:
+            violations.append(str(p.relative_to(SRC_ROOT)))
+    if violations:
+        pytest.fail(
+            "These multimedia files still contain `import asyncio`:\n"
+            + "\n  ".join(violations)
+        )
