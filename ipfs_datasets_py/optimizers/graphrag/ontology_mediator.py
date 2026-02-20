@@ -399,6 +399,33 @@ class OntologyMediator:
                         rel['target_id'] = id_remap.get(rel['target_id'], rel['target_id'])
                 actions_applied.append('merge_duplicates')
 
+            # Action: link orphan entities via co-occurrence when coverage is flagged
+            elif any(k in rec_lower for k in ('missing relationship', 'orphan link', 'add_missing_relationships', 'unlinked')):
+                import uuid as _uuid
+                linked_ids: set = set()
+                for rel in refined['relationships']:
+                    if isinstance(rel, dict):
+                        linked_ids.add(rel.get('source_id'))
+                        linked_ids.add(rel.get('target_id'))
+                orphans = [
+                    e for e in refined['entities']
+                    if isinstance(e, dict) and e.get('id') not in linked_ids
+                ]
+                # Link consecutive orphan pairs via co_occurrence
+                for i in range(0, len(orphans) - 1, 2):
+                    src = orphans[i].get('id')
+                    tgt = orphans[i + 1].get('id')
+                    if src and tgt:
+                        refined['relationships'].append({
+                            'id': f"auto_{_uuid.uuid4().hex[:8]}",
+                            'source_id': src,
+                            'target_id': tgt,
+                            'type': 'co_occurrence',
+                            'confidence': 0.3,
+                            'provenance': ['add_missing_relationships'],
+                        })
+                actions_applied.append('add_missing_relationships')
+
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
         self._log.info(f"Refinement complete. Actions applied: {actions_applied}")

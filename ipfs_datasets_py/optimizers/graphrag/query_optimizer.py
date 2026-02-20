@@ -276,13 +276,19 @@ class QueryMetricsCollector:
             
         return query_id
     
-    def end_query_tracking(self, results_count: int = 0, quality_score: float = 0.0) -> Dict[str, Any]:
+    def end_query_tracking(
+        self,
+        results_count: int = 0,
+        quality_score: float = 0.0,
+        error_message: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         End tracking for the current query and record results.
         
         Args:
             results_count (int): Number of results returned
             quality_score (float): Score indicating quality of results (0.0-1.0)
+            error_message (str, optional): Error text if execution failed
             
         Returns:
             Dict: The completed metrics record
@@ -298,6 +304,10 @@ class QueryMetricsCollector:
         self.current_query["results"]["count"] = results_count
         self.current_query["results"]["quality_score"] = quality_score
         
+        # Record execution status
+        self.current_query["success"] = error_message is None
+        self.current_query["error_message"] = error_message
+
         # Stop resource sampling
         if self.track_resource_usage:
             self._stop_resource_sampling()
@@ -317,6 +327,58 @@ class QueryMetricsCollector:
         self.current_depth = 0
         
         return completed_metrics
+
+    def get_health_check(self, window_size: int = 100) -> Dict[str, Any]:
+        """Return a lightweight health snapshot for optimizer monitoring.
+
+        The snapshot is intentionally endpoint-friendly and includes:
+        - current process memory usage (bytes)
+        - last session duration (seconds)
+        - error rate across the most recent ``window_size`` sessions
+
+        Args:
+            window_size (int): Number of most recent sessions to evaluate.
+
+        Returns:
+            Dict[str, Any]: Health status payload.
+        """
+        window = max(1, int(window_size))
+        recent_metrics = list(self.query_metrics)[-window:]
+
+        # Last session duration
+        last_session_duration = None
+        if recent_metrics:
+            last_session_duration = recent_metrics[-1].get("duration")
+
+        # Failure/error rate over the recent window
+        failures = sum(
+            1
+            for metric in recent_metrics
+            if (not metric.get("success", True)) or bool(metric.get("error_message"))
+        )
+        error_rate = (failures / len(recent_metrics)) if recent_metrics else 0.0
+
+        # Current process memory usage (best effort)
+        memory_usage_bytes = 0
+        if HAVE_PSUTIL and hasattr(psutil, "Process"):
+            try:
+                memory_usage_bytes = int(psutil.Process().memory_info().rss)
+            except Exception:
+                memory_usage_bytes = 0
+
+        status = "ok"
+        if error_rate >= 0.20:
+            status = "degraded"
+
+        return {
+            "status": status,
+            "memory_usage_bytes": memory_usage_bytes,
+            "last_session_duration_seconds": last_session_duration,
+            "error_rate_last_100": error_rate,
+            "evaluated_sessions": len(recent_metrics),
+            "window_size": window,
+            "timestamp": datetime.datetime.now().isoformat(),
+        }
     
     @contextmanager
     def time_phase(self, phase_name: str, metadata: Optional[Dict[str, Any]] = None) -> Iterator[None]:

@@ -43,9 +43,19 @@ References:
 from __future__ import annotations
 
 import logging
+import time
+import csv
+from io import StringIO
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+try:
+    from opentelemetry import trace
+    HAVE_OPENTELEMETRY = True
+except ImportError:  # pragma: no cover
+    trace = None  # type: ignore[assignment]
+    HAVE_OPENTELEMETRY = False
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +145,11 @@ class OntologyOptimizer:
         ...         break
     """
     
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        enable_tracing: bool = True,
+    ):
         """
         Initialize the ontology optimizer.
         
@@ -146,7 +160,28 @@ class OntologyOptimizer:
         import logging as _logging
         self._log = logger or _logging.getLogger(__name__)
         self._history: List[OptimizationReport] = []
+        self._tracer = None
+        if enable_tracing and HAVE_OPENTELEMETRY and trace is not None:
+            self._tracer = trace.get_tracer(__name__)
         self._log.info("Initialized OntologyOptimizer")
+
+    def _emit_trace(self, operation: str, attributes: Dict[str, Any]) -> None:
+        """Emit a best-effort OpenTelemetry span with scalar attributes."""
+        if self._tracer is None:
+            return
+
+        try:
+            with self._tracer.start_as_current_span(operation) as span:
+                for key, value in attributes.items():
+                    if value is None:
+                        continue
+                    if isinstance(value, (str, bool, int, float)):
+                        span.set_attribute(key, value)
+                    else:
+                        span.set_attribute(key, str(value))
+        except Exception:
+            # Tracing must never affect optimizer execution.
+            return
     
     def analyze_batch(
         self,
@@ -178,6 +213,8 @@ class OntologyOptimizer:
             >>> for rec in report.recommendations:
             ...     print(f"- {rec}")
         """
+        operation_start = time.time()
+
         self._log.info(
             "Analyzing batch of sessions",
             extra={
@@ -194,11 +231,20 @@ class OntologyOptimizer:
                     'error_type': 'empty_batch',
                 }
             )
-            return OptimizationReport(
+            report = OptimizationReport(
                 average_score=0.0,
                 trend='insufficient_data',
                 recommendations=["Need more sessions to analyze"]
             )
+            self._emit_trace(
+                "ontology_optimizer.analyze_batch",
+                {
+                    'session_count': 0,
+                    'status': 'insufficient_data',
+                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            return report
         
         # Extract scores
         scores = []
@@ -211,11 +257,20 @@ class OntologyOptimizer:
                 scores.append(result.critic_score.overall)
         
         if not scores:
-            return OptimizationReport(
+            report = OptimizationReport(
                 average_score=0.0,
                 trend='no_scores',
                 recommendations=["No valid scores found"]
             )
+            self._emit_trace(
+                "ontology_optimizer.analyze_batch",
+                {
+                    'session_count': len(session_results),
+                    'status': 'no_scores',
+                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            return report
         
         # Compute statistics
         average_score = sum(scores) / len(scores)
@@ -275,6 +330,22 @@ class OntologyOptimizer:
                 'score_max': round(max(scores), 3),
             }
         )
+
+        self._emit_trace(
+            "ontology_optimizer.analyze_batch",
+            {
+                'session_count': len(session_results),
+                'average_score': round(average_score, 6),
+                'trend': trend,
+                'recommendation_count': len(recommendations),
+                'score_distribution_completeness': report.score_distribution.get('completeness', 0.0),
+                'score_distribution_consistency': report.score_distribution.get('consistency', 0.0),
+                'score_distribution_clarity': report.score_distribution.get('clarity', 0.0),
+                'score_distribution_granularity': report.score_distribution.get('granularity', 0.0),
+                'score_distribution_domain_alignment': report.score_distribution.get('domain_alignment', 0.0),
+                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+            }
+        )
         
         return report
 
@@ -299,6 +370,8 @@ class OntologyOptimizer:
             ``OptimizationReport`` identical to what :meth:`analyze_batch`
             would return.
         """
+        operation_start = time.time()
+
         self._log.info(
             "Analyzing batch of sessions (parallel)",
             extra={
@@ -316,11 +389,21 @@ class OntologyOptimizer:
                     'error_type': 'empty_batch',
                 }
             )
-            return OptimizationReport(
+            report = OptimizationReport(
                 average_score=0.0,
                 trend="insufficient_data",
                 recommendations=["Need more sessions to analyze"],
             )
+            self._emit_trace(
+                "ontology_optimizer.analyze_batch_parallel",
+                {
+                    'session_count': 0,
+                    'status': 'insufficient_data',
+                    'max_workers': max_workers,
+                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            return report
 
         # Extract scores (fast, sequential — no I/O)
         scores: List[float] = []
@@ -331,11 +414,21 @@ class OntologyOptimizer:
                 scores.append(result.critic_score.overall)
 
         if not scores:
-            return OptimizationReport(
+            report = OptimizationReport(
                 average_score=0.0,
                 trend="no_scores",
                 recommendations=["No valid scores found"],
             )
+            self._emit_trace(
+                "ontology_optimizer.analyze_batch_parallel",
+                {
+                    'session_count': len(session_results),
+                    'status': 'no_scores',
+                    'max_workers': max_workers,
+                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            return report
 
         average_score = sum(scores) / len(scores)
         trend = self._determine_trend(average_score)
@@ -389,6 +482,17 @@ class OntologyOptimizer:
                 'max_workers': max_workers,
             }
         )
+        self._emit_trace(
+            "ontology_optimizer.analyze_batch_parallel",
+            {
+                'session_count': len(session_results),
+                'average_score': round(average_score, 6),
+                'trend': trend,
+                'recommendation_count': len(recommendations),
+                'max_workers': max_workers,
+                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+            }
+        )
         return report
 
     def analyze_trends(
@@ -419,6 +523,7 @@ class OntologyOptimizer:
             >>> print(f"Improving at {trends['improvement_rate']:.2%} per cycle")
             >>> print(f"Estimated convergence in {trends['convergence_estimate']} cycles")
         """
+        operation_start = time.time()
         results = historical_results or self._history
         
         if len(results) < 2:
@@ -430,13 +535,22 @@ class OntologyOptimizer:
                     'required': 2,
                 }
             )
-            return {
+            trend_result = {
                 'improvement_rate': 0.0,
                 'trend': 'insufficient_data',
                 'convergence_estimate': None,
                 'best_batch': None,
                 'recommendations': ["Need more batches to analyze trends"]
             }
+            self._emit_trace(
+                "ontology_optimizer.analyze_trends",
+                {
+                    'batch_count': len(results),
+                    'trend': 'insufficient_data',
+                    'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+                }
+            )
+            return trend_result
         
         self._log.info(
             "Analyzing trends across batches",
@@ -496,7 +610,7 @@ class OntologyOptimizer:
             }
         )
         
-        return {
+        trend_result = {
             'improvement_rate': avg_improvement_per_batch,
             'trend': trend,
             'convergence_estimate': convergence_estimate,
@@ -508,6 +622,18 @@ class OntologyOptimizer:
                 'overall_improvement': overall_improvement,
             }
         }
+        self._emit_trace(
+            "ontology_optimizer.analyze_trends",
+            {
+                'batch_count': len(results),
+                'trend': trend,
+                'improvement_rate': round(avg_improvement_per_batch, 6),
+                'overall_improvement': round(overall_improvement, 6),
+                'current_score': round(scores[-1], 6),
+                'duration_ms': round((time.time() - operation_start) * 1000.0, 3),
+            }
+        )
+        return trend_result
     
 
     def identify_patterns(
@@ -795,6 +921,48 @@ class OntologyOptimizer:
         mean = sum(scores) / len(scores)
         variance = sum((s - mean) ** 2 for s in scores) / len(scores)
         return variance ** 0.5
+
+    def export_learning_curve_csv(self, filepath: Optional[str] = None) -> Optional[str]:
+        """Export score progression history as CSV.
+
+        Args:
+            filepath: Optional file path to save CSV output.
+
+        Returns:
+            CSV string when ``filepath`` is None, else None.
+        """
+        output = StringIO()
+        writer = csv.DictWriter(
+            output,
+            fieldnames=[
+                'batch_index',
+                'average_score',
+                'trend',
+                'improvement_rate',
+                'recommendation_count',
+                'num_sessions',
+            ],
+        )
+        writer.writeheader()
+
+        for idx, report in enumerate(self._history, start=1):
+            writer.writerow(
+                {
+                    'batch_index': idx,
+                    'average_score': report.average_score,
+                    'trend': report.trend,
+                    'improvement_rate': report.improvement_rate,
+                    'recommendation_count': len(report.recommendations),
+                    'num_sessions': report.metadata.get('num_sessions', 0),
+                }
+            )
+
+        if filepath:
+            with open(filepath, 'w', newline='') as file_obj:
+                file_obj.write(output.getvalue())
+            return None
+
+        return output.getvalue()
 
 
 # Export public API
