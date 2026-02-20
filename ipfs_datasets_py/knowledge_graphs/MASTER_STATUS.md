@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.4.0  
+**Version:** 2.5.0  
 **Status:** ✅ Production Ready  
 **Last Updated:** 2026-02-20  
-**Last Major Release:** Session 17 (srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%)
+**Last Major Release:** Session 18 (ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%; 2 GEXF bugs fixed)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 80% overall | Measured 2026-02-20; compiler **91%**, neo4j_compat/types **96%**, distributed **83%**, srl **79%**, graph.py **75%**; 2,308 pass
-| **Documentation** | ✅ Up to Date | Reflects v2.4.0 structure |
-| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (2,308 pass)
-| **Next Milestone** | v2.4.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 81% overall | Measured 2026-02-20; cypher/ast **99%**, ontology/reasoning **98%**, wal **89%**, manager **91%**, unified_engine **82%**; 2,384 pass
+| **Documentation** | ✅ Up to Date | Reflects v2.5.0 structure |
+| **Known Issues** | None | 9 bugs fixed (sessions 7-11, 18); 0 failures (2,384 pass)
+| **Next Milestone** | v2.5.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~80% (measured, session 17)
+### Overall Coverage: ~81% (measured, session 18)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,28 +155,28 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 78–**91%** | ✅ Excellent | functions.py **96%**, parser **85%**, compiler **91%** (+7pp) |
-| **Neo4j Compat** | **86%**–**96%** | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%**, types **96%** (+15pp) |
-| **Migration** | 86–95% | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats 86% |
+| **Cypher** | 85–**99%** | ✅ **Excellent** | functions.py **96%**, parser **85%**, compiler **91%**, ast.py **99%** (+10pp) |
+| **Neo4j Compat** | **86%**–**96%** | ✅ **Excellent** | result.py **85%**, session **85%**, driver **86%**, types **96%** |
+| **Migration** | **90%**–95% | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **88%**, formats **90%** (+4pp, 2 GEXF bugs fixed) |
 | **JSON-LD** | **91%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, types 98% |
 | **Core** | 68–**89%** | ✅ **Excellent** | expression_evaluator **89%**, query_executor **85%**, ir_executor **81%** |
 | **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
-| **Transactions** | **72%**–96% | ✅ Good | manager **77%**, wal **72%**, types 96% |
-| **Query** | **83%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, hybrid_search **83%**, distributed **83%** (+3pp) |
-| **Extraction** | 54–**79%** | 🔶 Improving | srl **79%** (+5pp), graph.py **75%** (+4pp), validator 59% |
-| **Reasoning** | **78%**–98% | ✅ **Good** | cross_document **78%**, helpers **94%**, types 94% |
+| **Transactions** | **89%**–96% | ✅ **Excellent** | manager **91%** (+14pp), wal **89%** (+17pp), types 96% |
+| **Query** | **82%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **82%** (+9pp) |
+| **Extraction** | 54–**79%** | 🔶 Improving | srl **79%**, graph.py **75%**, validator 59% |
+| **Reasoning** | **78%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%** (+8pp), cross_document **78%**, helpers **94%** |
 | **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
 | **Storage** | 69–100% | ✅ Good | ipld_backend **69%**, types **100%** |
 | **Lineage** | **94%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core 89% |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
-- `transactions/wal.py` (72%) — some StorageError/SerializationError error paths require specific mock combos
 - `extraction/extractor.py` (54%) — spaCy/transformers-dependent NLP paths
 - `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package + network access
 - `extraction/validator.py` (59%) — Wikipedia + SPARQL endpoint validation paths
+- `storage/ipld_backend.py` (69%) — IPFS daemon required for most paths
 
-### Test Files: 64 total (as of v2.1.4)
+### Test Files: 65 total (as of v2.5.0)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py, test_advanced_extractor.py
@@ -206,12 +206,13 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session13.py** (66 tests — cypher/parser 85%, ir_executor 81%, visualization 63%, wal 66%)
 - **test_master_status_session14.py** (91 tests — cross_document 78%, session 85%, query_executor 85%, wal 69%, validator)
 - **test_master_status_session16.py** (122 tests — jsonld/validation 96%, lineage/enhanced 97%, lineage/metrics 96%, lineage/visualization 94%, neo4j_compat/driver 86%, reasoning/helpers 94%)
-- **test_master_status_session17.py** (119 tests — srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%, extraction/types 72%)
+- **test_master_status_session17.py** (119 tests — srl 79%, graph.py 75%, distributed 83%, compiler 91%, neo4j_compat/types 96%)
+- **test_master_status_session18.py** (70 tests — ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%)
 
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 2,308 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Total Tests:** 2,384 passing, 17 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -508,6 +509,30 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.5.0 (2026-02-20) - Coverage Boost Session 18 ✅
+
+**Summary:** Added 70 new tests covering 6 high-impact modules; overall coverage from 80% to **81%**. Fixed 2 pre-existing GEXF format bugs (`for_=` → `.set('for', …)` and `class_=` → `.set('class', …)` in `_save_to_gexf`), enabling correct GEXF round-trip for node labels and edge types.
+
+**Bug fixes:**
+- `migration/formats.py` `_save_to_gexf`: Python keyword workaround `for_='0'` created `for_` attribute in XML (not `for`), so edge type was never read back on load → fixed to `.set('for', '0')` 
+- `migration/formats.py` `_save_to_gexf`: Same issue with `class_='node'`/`class_='edge'` → `.set('class', 'node/edge')` — attribute definitions not read on load, so node labels and edge types were silently ignored during GEXF round-trip
+
+**Test additions:**
+- `test_master_status_session18.py` — 70 new GIVEN-WHEN-THEN tests covering:
+  - `ontology/reasoning.py` (90% → **98%**, +8pp): `ConsistencyViolation.to_dict`, `OntologySchema.merge` (subclasses/transitive/symmetric/equivalent/property-chains/subproperty/disjoint), `get_all_superproperties` (transitive/unknown), `add_subproperty` returns-self, subproperty inference (adds super-rel/not-duplicated), domain/range inference (adds-inferred-type/already-correct-no-dup), `explain_inferences` (returns-traces/empty-KG), `check_consistency` (disjoint-violation/negative-assertion-violation/clean-KG), `materialize` (subclass/transitive-chain-2-hops/empty-KG)
+  - `transactions/manager.py` (77% → **91%**, +14pp): SERIALIZABLE ConflictError, READ_COMMITTED no conflict, TimeoutError→TransactionTimeoutError, generic-Exception→TransactionError, DELETE_NODE removes-from-nodes, SET_PROPERTY updates-property, unknown-node-noop for both
+  - `transactions/wal.py` (72% → **89%**, +17pp): StorageError→TransactionError in append, generic-Exception in append, cycle-detection in read (yields 1 entry), StorageError→DeserializationError in read, generic-Exception→TransactionError in read, malformed-dict-breaks-silently, compact generic error→TransactionError, recover generic error→TransactionError, verify_integrity DeserializationError→False, verify_integrity generic→False
+  - `query/unified_engine.py` (73% → **82%**, +9pp): cypher/ir/graphrag TimeoutError→QueryTimeoutError, GraphRAG LLM-RuntimeError→QueryExecutionError, QueryExecutionError re-raise, generic-error fallthrough
+  - `cypher/ast.py` (89% → **99%**, +10pp): `accept()` calls generic_visit, `accept()` ValueError-if-node_type-None, `accept()` uses custom visit method, `DeleteClause`/`SetClause`/`CaseExpressionNode`/`MapNode` `__post_init__`, `CaseExpressionNode.__repr__` with/without test, `WhenClause.__repr__`, `ASTPrettyPrinter.print()` (simple/multiple patterns/indent levels)
+  - `migration/formats.py` (86% → **90%**, +4pp): `GraphData.to_json`/`from_json` round-trip, GraphML load with key_map (labels/edge-type/unknown-key), GEXF load with attvalues (nodes+rels/edge-type/unknown-attvalue), GEXF round-trip save/load (now correct after bug fix)
+
+**Result:** 2,384 passed, 17 skipped (libipld/anyio/plotly absent), **0 failed** — up from 2,308 (session 17 baseline)
+**Coverage:** 80% → **81%** overall
+
+**Backward Compatibility:** 100% (GEXF bug fix is a behavioural correction; old save output is invalid GEXF so no data loss)
+
+---
 
 ### v2.4.0 (2026-02-20) - Coverage Boost Session 17 ✅
 

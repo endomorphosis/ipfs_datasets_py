@@ -592,7 +592,8 @@ class GraphData:
         
         # Define attributes for nodes
         if node_props or True:  # Always add labels attribute
-            attrs_elem = ET.SubElement(graph_elem, 'attributes', class_='node')
+            attrs_elem = ET.SubElement(graph_elem, 'attributes')
+            attrs_elem.set('class', 'node')
             ET.SubElement(attrs_elem, 'attribute',
                          id='0',
                          title='labels',
@@ -602,10 +603,11 @@ class GraphData:
                              id=str(i),
                              title=prop,
                              type='string')
-        
+
         # Define attributes for edges
         if edge_props or True:  # Always add type attribute
-            attrs_elem = ET.SubElement(graph_elem, 'attributes', class_='edge')
+            attrs_elem = ET.SubElement(graph_elem, 'attributes')
+            attrs_elem.set('class', 'edge')
             ET.SubElement(attrs_elem, 'attribute',
                          id='0',
                          title='type',
@@ -622,18 +624,18 @@ class GraphData:
             node_elem = ET.SubElement(nodes_elem, 'node', id=str(node.id))
             
             attvalues = ET.SubElement(node_elem, 'attvalues')
-            
-            # Add labels
-            ET.SubElement(attvalues, 'attvalue',
-                         for_='0',
-                         value=','.join(node.labels))
-            
+
+            # Add labels ('for' is a Python keyword; use .set() to write the attribute)
+            av = ET.SubElement(attvalues, 'attvalue')
+            av.set('for', '0')
+            av.set('value', ','.join(node.labels))
+
             # Add properties
             for i, prop in enumerate(sorted(node_props), start=1):
                 if prop in node.properties:
-                    ET.SubElement(attvalues, 'attvalue',
-                                 for_=str(i),
-                                 value=str(node.properties[prop]))
+                    av = ET.SubElement(attvalues, 'attvalue')
+                    av.set('for', str(i))
+                    av.set('value', str(node.properties[prop]))
         
         # Add edges
         edges_elem = ET.SubElement(graph_elem, 'edges')
@@ -644,18 +646,18 @@ class GraphData:
                                      target=str(rel.end_node))
             
             attvalues = ET.SubElement(edge_elem, 'attvalues')
-            
-            # Add type
-            ET.SubElement(attvalues, 'attvalue',
-                         for_='0',
-                         value=rel.type)
-            
+
+            # Add type ('for' is a Python keyword; use .set() to write the attribute)
+            av = ET.SubElement(attvalues, 'attvalue')
+            av.set('for', '0')
+            av.set('value', rel.type)
+
             # Add properties
             for i, prop in enumerate(sorted(edge_props), start=1):
                 if prop in rel.properties:
-                    ET.SubElement(attvalues, 'attvalue',
-                                 for_=str(i),
-                                 value=str(rel.properties[prop]))
+                    av = ET.SubElement(attvalues, 'attvalue')
+                    av.set('for', str(i))
+                    av.set('value', str(rel.properties[prop]))
         
         # Write to file
         tree = ET.ElementTree(gexf)
