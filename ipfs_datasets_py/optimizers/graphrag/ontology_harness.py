@@ -573,8 +573,11 @@ class OntologyPipelineHarness:
                     )
 
             def _optimize(self_h, artifact: Any, critique: CriticResult, context: Any) -> Any:
+                from ..common.exceptions import RefinementError
                 try:
                     refined = mediator.refine_ontology(artifact, critique.feedback)
+                except RefinementError:
+                    raise
                 except Exception as exc:
                     logger.warning("refine_ontology failed: %s", exc)
                     refined = artifact

@@ -58,6 +58,7 @@ References:
 from .ontology_generator import (
     OntologyGenerator,
     OntologyGenerationContext,
+    ExtractionConfig,
     Entity,
     Relationship,
     EntityExtractionResult,
@@ -126,6 +127,7 @@ __all__ = [
     # Generator
     'OntologyGenerator',
     'OntologyGenerationContext',
+    'ExtractionConfig',
     'Entity',
     'Relationship',
     'EntityExtractionResult',

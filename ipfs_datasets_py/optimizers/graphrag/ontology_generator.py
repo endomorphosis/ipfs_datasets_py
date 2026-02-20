@@ -74,6 +74,54 @@ class DataType(Enum):
 
 
 @dataclass
+class ExtractionConfig:
+    """Typed configuration for the extraction pipeline.
+
+    Replaces the ``Dict[str, Any]`` ``config`` field on
+    :class:`OntologyGenerationContext` for callers that want stronger typing.
+    All fields are optional so that ``ExtractionConfig()`` is always safe.
+
+    Attributes:
+        confidence_threshold: Minimum entity confidence to keep (0–1).
+        max_entities: Upper bound on extracted entities per run.  0 = unlimited.
+        max_relationships: Upper bound on inferred relationships.  0 = unlimited.
+        window_size: Co-occurrence window size for relationship inference.
+        include_properties: Emit property predicates in the formula set.
+        domain_vocab: Optional domain-specific vocabulary for entity typing.
+    """
+
+    confidence_threshold: float = 0.5
+    max_entities: int = 0
+    max_relationships: int = 0
+    window_size: int = 5
+    include_properties: bool = True
+    domain_vocab: Dict[str, List[str]] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a plain-dict representation (legacy compatibility)."""
+        return {
+            "confidence_threshold": self.confidence_threshold,
+            "max_entities": self.max_entities,
+            "max_relationships": self.max_relationships,
+            "window_size": self.window_size,
+            "include_properties": self.include_properties,
+            "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "ExtractionConfig":
+        """Construct from a plain dict (backwards-compat with old callers)."""
+        return cls(
+            confidence_threshold=float(d.get("confidence_threshold", 0.5)),
+            max_entities=int(d.get("max_entities", 0)),
+            max_relationships=int(d.get("max_relationships", 0)),
+            window_size=int(d.get("window_size", 5)),
+            include_properties=bool(d.get("include_properties", True)),
+            domain_vocab=dict(d.get("domain_vocab", {})),
+        )
+
+
+@dataclass
 class OntologyGenerationContext:
     """
     Context information for ontology generation.
@@ -88,7 +136,8 @@ class OntologyGenerationContext:
         domain: Domain for domain-specific processing (e.g., 'legal', 'medical')
         base_ontology: Optional base ontology to extend
         extraction_strategy: Strategy for entity extraction
-        config: Additional configuration parameters
+        config: Additional configuration parameters.  Accepts either an
+            :class:`ExtractionConfig` instance or a plain ``dict``.
         
     Example:
         >>> context = OntologyGenerationContext(
@@ -96,7 +145,7 @@ class OntologyGenerationContext:
         ...     data_type=DataType.PDF,
         ...     domain='legal',
         ...     extraction_strategy=ExtractionStrategy.LLM_BASED,
-        ...     config={'temperature': 0.7}
+        ...     config=ExtractionConfig(confidence_threshold=0.6),
         ... )
     """
     
@@ -105,14 +154,23 @@ class OntologyGenerationContext:
     domain: str
     base_ontology: Optional[Dict[str, Any]] = None
     extraction_strategy: Union[str, ExtractionStrategy] = ExtractionStrategy.HYBRID
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: Union[ExtractionConfig, Dict[str, Any]] = field(default_factory=dict)
     
     def __post_init__(self):
-        """Convert string enums to proper enum types."""
+        """Convert string enums to proper enum types and normalise config."""
         if isinstance(self.data_type, str):
             self.data_type = DataType(self.data_type)
         if isinstance(self.extraction_strategy, str):
             self.extraction_strategy = ExtractionStrategy(self.extraction_strategy)
+        if isinstance(self.config, dict):
+            self.config = ExtractionConfig.from_dict(self.config)
+
+    @property
+    def extraction_config(self) -> ExtractionConfig:
+        """Typed alias for :attr:`config`."""
+        if isinstance(self.config, ExtractionConfig):
+            return self.config
+        return ExtractionConfig()  # pragma: no cover — normalised in __post_init__
 
 
 @dataclass

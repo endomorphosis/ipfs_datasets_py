@@ -651,3 +651,101 @@ class TestOntologyPipelineHarness:
         session = h.run(None, None)
         assert session.best_score >= 0.80
         assert session.converged
+
+
+# ---------------------------------------------------------------------------
+# ExtractionConfig
+# ---------------------------------------------------------------------------
+
+class TestExtractionConfig:
+    def test_defaults(self):
+        from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+        cfg = ExtractionConfig()
+        assert cfg.confidence_threshold == 0.5
+        assert cfg.max_entities == 0
+        assert cfg.window_size == 5
+        assert cfg.include_properties is True
+
+    def test_from_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+        cfg = ExtractionConfig.from_dict({"confidence_threshold": 0.7, "window_size": 3})
+        assert cfg.confidence_threshold == 0.7
+        assert cfg.window_size == 3
+
+    def test_to_dict_roundtrip(self):
+        from ipfs_datasets_py.optimizers.graphrag import ExtractionConfig
+        orig = ExtractionConfig(max_entities=50, max_relationships=100)
+        cfg2 = ExtractionConfig.from_dict(orig.to_dict())
+        assert cfg2.max_entities == 50
+        assert cfg2.max_relationships == 100
+
+    def test_context_normalises_dict_config(self):
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyGenerationContext, ExtractionConfig,
+        )
+        ctx = OntologyGenerationContext(
+            data_source="test", data_type="text", domain="legal",
+            config={"confidence_threshold": 0.8},
+        )
+        assert isinstance(ctx.config, ExtractionConfig)
+        assert ctx.config.confidence_threshold == 0.8
+
+    def test_context_accepts_extraction_config(self):
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyGenerationContext, ExtractionConfig,
+        )
+        cfg = ExtractionConfig(max_entities=200)
+        ctx = OntologyGenerationContext(
+            data_source="test", data_type="text", domain="legal", config=cfg,
+        )
+        assert ctx.extraction_config.max_entities == 200
+
+    def test_context_default_config_is_extraction_config(self):
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyGenerationContext, ExtractionConfig,
+        )
+        ctx = OntologyGenerationContext(
+            data_source="test", data_type="text", domain="legal",
+        )
+        assert isinstance(ctx.config, ExtractionConfig)
+
+
+# ---------------------------------------------------------------------------
+# BaseSession metrics extensions
+# ---------------------------------------------------------------------------
+
+class TestBaseSessionMetrics:
+    def _make_session(self):
+        from ipfs_datasets_py.optimizers.common import BaseSession
+        s = BaseSession(session_id="m-test", target_score=0.99)
+        s.start_round(); s.record_round(score=0.5)
+        s.start_round(); s.record_round(score=0.7)
+        s.start_round(); s.record_round(score=0.6)  # regression
+        return s
+
+    def test_score_delta(self):
+        s = self._make_session()
+        assert abs(s.score_delta - 0.1) < 1e-6  # 0.6 - 0.5
+
+    def test_avg_score(self):
+        s = self._make_session()
+        expected = (0.5 + 0.7 + 0.6) / 3
+        assert abs(s.avg_score - expected) < 1e-6
+
+    def test_regression_count(self):
+        s = self._make_session()
+        assert s.regression_count == 1  # 0.7 -> 0.6
+
+    def test_to_dict_has_new_fields(self):
+        s = self._make_session()
+        d = s.to_dict()
+        assert "score_delta" in d
+        assert "avg_score" in d
+        assert "regression_count" in d
+
+    def test_no_rounds_safe(self):
+        from ipfs_datasets_py.optimizers.common import BaseSession
+        s = BaseSession(session_id="empty")
+        assert s.score_delta == 0.0
+        assert s.avg_score == 0.0
+        assert s.regression_count == 0

@@ -186,6 +186,29 @@ class BaseSession:
         """Total wall-clock time across all recorded rounds."""
         return sum(r.duration_ms for r in self.rounds)
 
+    @property
+    def score_delta(self) -> float:
+        """Score improvement from first to last round (negative = regression)."""
+        if len(self.rounds) < 2:
+            return 0.0
+        return self.rounds[-1].score - self.rounds[0].score
+
+    @property
+    def avg_score(self) -> float:
+        """Mean score across all rounds (0.0 if no rounds)."""
+        if not self.rounds:
+            return 0.0
+        return sum(r.score for r in self.rounds) / len(self.rounds)
+
+    @property
+    def regression_count(self) -> int:
+        """Number of rounds where the score decreased relative to the previous round."""
+        count = 0
+        for i in range(1, len(self.rounds)):
+            if self.rounds[i].score < self.rounds[i - 1].score:
+                count += 1
+        return count
+
     def to_dict(self) -> Dict[str, Any]:
         """Serialize session state to a plain dictionary."""
         return {
@@ -196,6 +219,9 @@ class BaseSession:
             "current_round": self.current_round,
             "best_score": self.best_score,
             "latest_score": self.latest_score,
+            "avg_score": round(self.avg_score, 4),
+            "score_delta": round(self.score_delta, 4),
+            "regression_count": self.regression_count,
             "trend": self.trend,
             "converged": self.converged,
             "total_duration_ms": self.total_duration_ms,
