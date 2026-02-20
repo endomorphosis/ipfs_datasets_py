@@ -238,9 +238,9 @@ class OntologyGenerator:
                     ipfs_accelerate_converter
                 )
                 self._accelerate_available = True
-                logger.info("ipfs_accelerate_py integration available")
+                self._log.info("ipfs_accelerate_py integration available")
             except ImportError as e:
-                logger.warning(
+                self._log.warning(
                     f"ipfs_accelerate_py not available: {e}. "
                     "Falling back to rule-based extraction."
                 )
@@ -275,7 +275,7 @@ class OntologyGenerator:
             ... )
             >>> print(f"Found {len(result.entities)} entities")
         """
-        logger.info(
+        self._log.info(
             f"Extracting entities using {context.extraction_strategy.value} strategy"
         )
         
@@ -319,7 +319,7 @@ class OntologyGenerator:
             ...     data="Alice must pay Bob"
             ... )
         """
-        logger.info(f"Inferring relationships between {len(entities)} entities")
+        self._log.info(f"Inferring relationships between {len(entities)} entities")
 
         relationships = []
         text = str(data) if data is not None else ""
@@ -387,7 +387,7 @@ class OntologyGenerator:
                     ))
                     linked.add((e1.id, e2.id))
 
-        logger.info(f"Inferred {len(relationships)} relationships")
+        self._log.info(f"Inferred {len(relationships)} relationships")
         return relationships
     
     def generate_ontology(
@@ -420,7 +420,7 @@ class OntologyGenerator:
             ... )
             >>> print(f"Generated ontology with {len(ontology['entities'])} entities")
         """
-        logger.info(f"Generating ontology for {context.data_source}")
+        self._log.info(f"Generating ontology for {context.data_source}")
         
         # Extract entities and relationships
         extraction_result = self.extract_entities(data, context)
@@ -509,7 +509,7 @@ class OntologyGenerator:
         # Derive relationships from extracted entities
         relationships = self.infer_relationships(entities, context, data)
 
-        logger.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
+        self._log.info(f"Rule-based extraction found {len(entities)} entities, {len(relationships)} relationships")
         return EntityExtractionResult(
             entities=entities,
             relationships=relationships,
@@ -536,7 +536,7 @@ class OntologyGenerator:
         # This is a placeholder for Phase 1 implementation
         
         if not self.use_ipfs_accelerate or not self._accelerate_available:
-            logger.warning("LLM extraction not available, falling back to rule-based")
+            self._log.warning("LLM extraction not available, falling back to rule-based")
             return self._extract_rule_based(data, context)
         
         entities = []
@@ -706,7 +706,7 @@ class OntologyGenerator:
         merged['metadata']['merged_from'] = merged['metadata'].get('merged_from', [])
         merged['metadata']['merged_from'].append(extension.get('metadata', {}).get('source', 'extension'))
 
-        logger.info(
+        self._log.info(
             f"Merged ontologies: {len(merged['entities'])} entities, "
             f"{len(merged['relationships'])} relationships"
         )

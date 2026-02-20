@@ -330,7 +330,7 @@ class OntologyMediator:
         import copy as _copy
         import re as _re
 
-        logger.info(f"Refining ontology based on {len(feedback.recommendations)} recommendations")
+        self._log.info(f"Refining ontology based on {len(feedback.recommendations)} recommendations")
 
         refined = _copy.deepcopy(ontology)
         refined.setdefault('entities', [])
@@ -340,7 +340,7 @@ class OntologyMediator:
 
         for recommendation in feedback.recommendations:
             rec_lower = recommendation.lower()
-            logger.debug(f"Applying recommendation: {recommendation}")
+            self._log.debug(f"Applying recommendation: {recommendation}")
 
             # Action: add missing entity properties when clarity is low
             if any(k in rec_lower for k in ('property', 'detail', 'clarity', 'definition')):
@@ -375,7 +375,7 @@ class OntologyMediator:
                 ]
                 pruned = before - len(refined['entities'])
                 if pruned:
-                    logger.info(f"Pruned {pruned} orphan entities")
+                    self._log.info(f"Pruned {pruned} orphan entities")
                 actions_applied.append('prune_orphans')
 
             # Action: deduplicate entities by (type, text) when consistency is flagged
@@ -401,7 +401,7 @@ class OntologyMediator:
 
         refined.setdefault('metadata', {})
         refined['metadata']['refinement_actions'] = actions_applied
-        logger.info(f"Refinement complete. Actions applied: {actions_applied}")
+        self._log.info(f"Refinement complete. Actions applied: {actions_applied}")
         return refined
     
     def run_refinement_cycle(
@@ -440,7 +440,7 @@ class OntologyMediator:
         import time
         start_time = time.time()
         
-        logger.info(f"Starting refinement cycle (max {self.max_rounds} rounds)")
+        self._log.info(f"Starting refinement cycle (max {self.max_rounds} rounds)")
         
         # Generate initial ontology
         initial_ontology = self.generator.generate_ontology(data, context)
@@ -453,13 +453,13 @@ class OntologyMediator:
         )
         state.add_round(initial_ontology, initial_score, "initial_generation")
         
-        logger.info(f"Initial score: {initial_score.overall:.2f}")
+        self._log.info(f"Initial score: {initial_score.overall:.2f}")
         
         # Refinement loop
         for round_num in range(1, self.max_rounds):
             # Check convergence
             if initial_score.overall >= self.convergence_threshold:
-                logger.info(f"Converged at round {round_num} (score: {initial_score.overall:.2f})")
+                self._log.info(f"Converged at round {round_num} (score: {initial_score.overall:.2f})")
                 state.converged = True
                 break
             
@@ -487,14 +487,14 @@ class OntologyMediator:
                 f"refinement_round_{round_num}"
             )
             
-            logger.info(
+            self._log.info(
                 f"Round {round_num}: score={refined_score.overall:.2f} "
                 f"(Δ={refined_score.overall - initial_score.overall:+.2f})"
             )
             
             # Check for degradation
             if refined_score.overall < initial_score.overall - 0.1:
-                logger.warning("Score degraded significantly, stopping refinement")
+                self._log.warning("Score degraded significantly, stopping refinement")
                 break
             
             # Update for next iteration
@@ -508,7 +508,7 @@ class OntologyMediator:
             state.critic_scores[-1].overall - state.critic_scores[0].overall
         )
         
-        logger.info(
+        self._log.info(
             f"Refinement cycle complete: {state.current_round} rounds, "
             f"final score={state.metadata['final_score']:.2f}, "
             f"improvement={state.metadata['improvement']:+.2f}"
@@ -548,7 +548,7 @@ class OntologyMediator:
             recent_scores = [s.overall for s in state.critic_scores[-3:]]
             improvement = recent_scores[-1] - recent_scores[0]
             if abs(improvement) < 0.01:  # Less than 1% improvement
-                logger.info("Score stabilized, considering as converged")
+                self._log.info("Score stabilized, considering as converged")
                 return True
         
         return False

@@ -198,7 +198,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### R4 — Logging & observability consistency
 
-- [ ] (P2) [obs] All optimizers accept an optional `logger: logging.Logger` parameter — use it everywhere instead of module-level logger
+- [x] (P2) [obs] All optimizers accept an optional `logger: logging.Logger` parameter — `OntologyGenerator`, `OntologyMediator` done
+  - Done 2026-02-20 — use it everywhere instead of module-level logger
 - [ ] (P2) [obs] Emit structured log events (key=value pairs) for session start/end, score deltas, iteration count
 - [ ] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it
 - [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()`
@@ -286,7 +287,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [x] (P1) [logic] `cmd_prove()` — hardcoded fake output; wire to `LogicTheoremOptimizer` and `ProverIntegrationAdapter`
   - Done 2026-02-20: wired to `LogicTheoremOptimizer.validate_statements()` with real prover integration
-- [ ] (P2) [logic] Add `--output` flag to `cmd_prove` to write proof result as JSON
+- [x] (P2) [logic] Add `--output` flag to `cmd_prove` to write proof result as JSON
+  - Done 2026-02-20
 - [ ] (P2) [logic] Add `--timeout` flag to prover invocation
 - [ ] (P2) [logic] Support reading premises/goal from a JSON/YAML file as well as CLI args
 - [ ] (P3) [logic] Add interactive REPL mode to `logic-theorem-optimizer` CLI
@@ -357,7 +359,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ## Security & Safety
 
 - [ ] (P1) [arch] Audit all `eval()`/`exec()` usage in agentic optimizers — replace or sandbox
-- [ ] (P2) [arch] Validate file paths in CLI wrappers against path-traversal attacks (use `Path.resolve()`)
+- [x] (P2) [arch] Validate file paths in CLI wrappers against path-traversal attacks (use `Path.resolve()`)
+  - Done 2026-02-20: _safe_resolve() helper added to graphrag + logic CLI wrappers
 - [ ] (P2) [arch] Ensure no secrets are logged (prover API keys, LLM API keys)
 - [ ] (P3) [arch] Add sandboxed subprocess execution for untrusted prover calls (seccomp profile)
 
@@ -366,7 +369,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ## Performance & Scalability
 
 - [ ] (P3) [perf] Profile `graphrag/query_optimizer.py` under load — identify hotspots before the file split
-- [ ] (P3) [perf] Add LRU caching to `OntologyCritic.evaluate_ontology()` for repeated evaluations of same hash
+- [x] (P3) [perf] Add LRU caching to `OntologyCritic.evaluate_ontology()` for repeated evaluations of same hash
+  - Done 2026-02-20: 128-entry SHA-256 keyed cache
 - [ ] (P3) [perf] Parallelize `OntologyOptimizer.analyze_batch()` across sessions using `concurrent.futures`
 - [ ] (P3) [perf] Use `__slots__` on `Entity`, `Relationship`, and `EntityExtractionResult` dataclasses
 - [ ] (P3) [perf] Profile `logic_theorem_optimizer` prover round-trips; add result cache keyed on formula hash
@@ -378,3 +382,22 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ```bash
 rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers/ --type py
 ```
+
+## Newly discovered items (2026-02-20)
+
+- [ ] (P2) [obs] Replace `self._log` references in `OntologyMediator` — all methods still call module-level `logger` directly; update them to use `self._log`
+- [ ] (P2) [obs] Same for `OntologyGenerator` — propagate `self._log` to all helper methods
+- [ ] (P2) [arch] Add `ProverConfig` typed dataclass to replace `Dict[str,Any]` prover_config in `LogicValidator`
+- [ ] (P2) [arch] Add `ExtractionConfig` typed dataclass to replace `Dict[str,Any]` config in `OntologyGenerationContext`
+- [ ] (P2) [tests] Unit tests for `OntologyCritic.evaluate_ontology()` cache (same ontology → cache hit; different → miss)
+- [ ] (P2) [tests] Unit tests for `PromptGenerator.select_examples()` — domain filtering, quality threshold, add_examples() round-trip
+- [ ] (P2) [tests] Unit tests for `LogicValidator.suggest_fixes()` — each contradiction pattern → expected fix type
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator._extract_rule_based()` — fixture texts → expected entity list
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator.infer_relationships()` — verb-frame patterns → expected relationship types
+- [ ] (P2) [tests] Unit tests for `OntologyGenerator._merge_ontologies()` — duplicate IDs → dedup; provenance tracking
+- [ ] (P2) [tests] Unit tests for `BaseHarness.run()` — convergence, max_rounds, trend
+- [ ] (P2) [tests] Unit tests for `BaseSession.trend` and `best_score` properties
+- [ ] (P3) [obs] Replace bare `except Exception` in `OntologyMediator.refine_ontology()` with typed `RefinementError` from `common.exceptions`
+- [ ] (P3) [arch] Add `__slots__` to `Entity`, `Relationship`, `EntityExtractionResult` dataclasses for memory efficiency
+- [ ] (P3) [perf] Profile `OntologyCritic._evaluate_consistency()` DFS cycle detection on large ontologies (>500 entities)
+- [ ] (P3) [docs] Add `common/README.md` documenting the BaseCritic / BaseSession / BaseHarness / exceptions layer
