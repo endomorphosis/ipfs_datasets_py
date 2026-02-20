@@ -33,6 +33,16 @@ from .json_to_python_engine import (
     _JsonToAst,
     _UnKnownNodeException,
 )
+from .test_generator_engine import (
+    TestGeneratorCore,
+    TestGeneratorConfig,
+    TestGeneratorError,
+    TestGeneratorValidationError,
+    TestGeneratorExecutionError,
+    generate_test_file,
+    UNITTEST_TEMPLATE,
+    PYTEST_TEMPLATE,
+)
 
 __all__ = [
     "SearchMatch",
@@ -51,4 +61,12 @@ __all__ = [
     "json_to_python_file",
     "_JsonToAst",
     "_UnKnownNodeException",
+    "TestGeneratorCore",
+    "TestGeneratorConfig",
+    "TestGeneratorError",
+    "TestGeneratorValidationError",
+    "TestGeneratorExecutionError",
+    "generate_test_file",
+    "UNITTEST_TEMPLATE",
+    "PYTEST_TEMPLATE",
 ]
