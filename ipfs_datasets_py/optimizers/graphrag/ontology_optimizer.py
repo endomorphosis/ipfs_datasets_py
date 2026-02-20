@@ -336,51 +336,86 @@ class OntologyOptimizer:
             }
         }
     
+
     def identify_patterns(
         self,
         successful_ontologies: List[Dict[str, Any]]
     ) -> Dict[str, Any]:
         """
         Identify common patterns in successful ontologies.
-        
+
         Analyzes high-performing ontologies to extract common patterns that
         can be applied to improve future generations.
-        
+
         Args:
             successful_ontologies: List of ontologies with high scores
-            
+
         Returns:
             Dictionary with identified patterns
-            
+
         Example:
-            >>> # Get successful ontologies (score > 0.85)
-            >>> successful = [
-            ...     result.current_ontology
-            ...     for result in results
-            ...     if result.critic_scores[-1].overall > 0.85
-            ... ]
-            >>> 
             >>> patterns = optimizer.identify_patterns(successful)
             >>> print(f"Common entity types: {patterns['common_entity_types']}")
         """
         logger.info(f"Identifying patterns in {len(successful_ontologies)} successful ontologies")
-        
+
         if not successful_ontologies:
-            return {'error': 'No successful ontologies provided'}
-        
-        # TODO: Implement sophisticated pattern identification
-        # This is a placeholder for Phase 2 implementation
-        
+            return {"error": "No successful ontologies provided"}
+
+        from collections import Counter
+
+        entity_type_counts: Counter[str] = Counter()
+        relationship_type_counts: Counter[str] = Counter()
+        property_key_counts: Counter[str] = Counter()
+
+        entity_counts = []
+        relationship_counts = []
+
+        for ont in successful_ontologies:
+            if not isinstance(ont, dict):
+                continue
+
+            entities = ont.get("entities", [])
+            relationships = ont.get("relationships", [])
+
+            if isinstance(entities, list):
+                entity_counts.append(len(entities))
+                for ent in entities:
+                    if not isinstance(ent, dict):
+                        continue
+                    ent_type = ent.get("type")
+                    if isinstance(ent_type, str) and ent_type:
+                        entity_type_counts[ent_type] += 1
+
+                    props = ent.get("properties")
+                    if isinstance(props, dict):
+                        for k in props.keys():
+                            if k is None:
+                                continue
+                            property_key_counts[str(k)] += 1
+
+            if isinstance(relationships, list):
+                relationship_counts.append(len(relationships))
+                for rel in relationships:
+                    if not isinstance(rel, dict):
+                        continue
+                    rel_type = rel.get("type")
+                    if isinstance(rel_type, str) and rel_type:
+                        relationship_type_counts[rel_type] += 1
+
+        def avg(xs: list[int]) -> float:
+            return float(sum(xs)) / float(len(xs)) if xs else 0.0
+
         patterns = {
-            'common_entity_types': [],
-            'common_relationship_types': [],
-            'avg_entity_count': 0,
-            'avg_relationship_count': 0,
-            'common_properties': [],
+            "common_entity_types": [t for t, _ in entity_type_counts.most_common(10)],
+            "common_relationship_types": [t for t, _ in relationship_type_counts.most_common(10)],
+            "avg_entity_count": avg(entity_counts),
+            "avg_relationship_count": avg(relationship_counts),
+            "common_properties": [k for k, _ in property_key_counts.most_common(15)],
         }
-        
+
         return patterns
-    
+
     def generate_recommendations(
         self,
         current_state: Any,  # MediatorState

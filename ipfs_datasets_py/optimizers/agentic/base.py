@@ -112,6 +112,15 @@ class OptimizationResult:
     error_message: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+    # --- Compatibility fields (used by unit tests in this repo) ---
+    optimized_code: Optional[str] = None
+    original_code: Optional[str] = None
+
+    @property
+    def description(self) -> str:
+        """Compatibility alias for the human-readable change description."""
+        return self.changes
+
 
 class AgenticOptimizer(ABC):
     """Base class for all agentic optimizers.

@@ -146,57 +146,105 @@ class LogicValidator:
             self._tdfol_available = False
             self._reasoner = None
     
+
     def ontology_to_tdfol(
         self,
         ontology: Dict[str, Any]
     ) -> List[Any]:  # List[Formula]
         """
         Convert ontology to TDFOL formulas.
-        
+
         Transforms the knowledge graph ontology structure into formal logic
         representations that can be validated by theorem provers.
-        
+
         Args:
             ontology: Ontology to convert (dictionary format)
-            
+
         Returns:
-            List of TDFOL Formula objects representing the ontology
-            
+            List of formulas representing the ontology.
+
+            - If the optional TDFOL module is available, this may contain Formula objects.
+            - Otherwise, this returns a list of string facts in a simple predicate form,
+              suitable for best-effort downstream checking.
+
         Raises:
-            RuntimeError: If TDFOL is not available
             ValueError: If ontology structure is invalid
-            
+
         Example:
             >>> formulas = validator.ontology_to_tdfol(ontology)
             >>> print(f"Generated {len(formulas)} formulas")
         """
-        if not self._tdfol_available:
-            raise RuntimeError("TDFOL module not available")
-        
         logger.info("Converting ontology to TDFOL formulas")
-        
-        formulas = []
-        
-        # TODO: Implement ontology to TDFOL conversion
-        # This is a placeholder for Phase 1 implementation
-        # 
-        # Conversion strategy:
-        # 1. Each entity becomes a predicate or constant
-        # 2. Relationships become predicates or implications
-        # 3. Properties become additional predicates
-        # 4. Constraints become axioms
-        
-        entities = ontology.get('entities', [])
-        relationships = ontology.get('relationships', [])
-        
+
+        if not isinstance(ontology, dict):
+            raise ValueError("ontology must be a dict")
+
+        entities = ontology.get("entities", [])
+        relationships = ontology.get("relationships", [])
+
+        if not isinstance(entities, list):
+            raise ValueError("ontology['entities'] must be a list")
+        if not isinstance(relationships, list):
+            raise ValueError("ontology['relationships'] must be a list")
+
         logger.info(
             f"Converting {len(entities)} entities and "
             f"{len(relationships)} relationships"
         )
-        
-        # Placeholder: return empty list for now
+
+        # Minimal conversion that does not depend on the TDFOL Formula classes.
+        # We emit simple predicate-style string facts that downstream checkers
+        # can consume as a best-effort representation.
+        import json
+
+        def q(value: object) -> str:
+            return json.dumps(value)
+
+        formulas: List[Any] = []
+
+        for ent in entities:
+            if not isinstance(ent, dict):
+                continue
+            ent_id = ent.get("id")
+            if not ent_id:
+                continue
+
+            formulas.append(f"entity({q(ent_id)}).")
+
+            ent_type = ent.get("type")
+            if ent_type:
+                formulas.append(f"type({q(ent_id)}, {q(ent_type)}).")
+
+            ent_text = ent.get("text")
+            if ent_text:
+                formulas.append(f"text({q(ent_id)}, {q(ent_text)}).")
+
+            props = ent.get("properties")
+            if isinstance(props, dict):
+                for key, val in props.items():
+                    if key is None:
+                        continue
+                    formulas.append(f"prop({q(ent_id)}, {q(str(key))}, {q(val)}).")
+
+        for rel in relationships:
+            if not isinstance(rel, dict):
+                continue
+
+            rel_type = rel.get("type")
+            source_id = rel.get("source_id")
+            target_id = rel.get("target_id")
+            if rel_type and source_id and target_id:
+                formulas.append(f"rel({q(rel_type)}, {q(source_id)}, {q(target_id)}).")
+
+            rel_id = rel.get("id")
+            if rel_id:
+                formulas.append(f"relationship({q(rel_id)}).")
+
+        if not self._tdfol_available:
+            logger.info("TDFOL module unavailable; returning string facts")
+
         return formulas
-    
+
     def check_consistency(
         self,
         ontology: Dict[str, Any]

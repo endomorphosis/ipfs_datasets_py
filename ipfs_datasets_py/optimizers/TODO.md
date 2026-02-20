@@ -55,6 +55,10 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 - [ ] (P1) [tests] Add smoke tests for GraphRAG optimizer components that are currently large but lightly validated (imports + basic API invariants).
 
+- [x] (P1) [perf] Consolidate duplicated resource monitoring in `performance_optimizer.py` (single source of truth via `ResourceMonitor`).
+  - Done 2026-02-20: `WebsiteProcessingOptimizer.monitor_resources()` delegates to `ResourceMonitor.get_current_resources()`; schema covered by a unit test.
+
+
 - [x] (P1) [obs] Make `OptimizerLearningMetricsCollector` persistence consistent across all `record_*` methods and enforce `max_history_size` for `learning_cycles`.
   - Done: 2026-02-20 (tests updated + timestamp handling fixed).
 
@@ -85,7 +89,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### D. Testing strategy (incremental, practical)
 
-- [ ] (P1) [tests] Add import/smoke tests for each optimizer package (`agentic`, `logic_theorem_optimizer`, `graphrag`).
+- [x] (P1) [tests] Add import/smoke tests for each optimizer package (`agentic`, `logic_theorem_optimizer`, `graphrag`).
+  - Done 2026-02-20: added unit smoke import test coverage.
 - [ ] (P2) [tests] Add deterministic unit tests for “pure” helpers (parsers, score aggregators, query plan generation).
 - [ ] (P2) [tests] Add golden-file tests for GraphRAG “ontology dict schema” (entities/relationships/metadata invariants).
 

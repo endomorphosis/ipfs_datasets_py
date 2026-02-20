@@ -83,12 +83,29 @@ class ResourceMonitor:
     
     async def get_current_resources(self) -> Dict[str, Any]:
         """Get current system resource utilization"""
+        memory = psutil.virtual_memory()
+        disk = psutil.disk_usage('/')
+
+        try:
+            load_avg = os.getloadavg()
+        except (AttributeError, OSError):
+            load_avg = (0.0, 0.0, 0.0)
+
+        available_memory_gb = memory.available / (1024**3)
+        disk_free_gb = disk.free / (1024**3)
+
+        # Return a superset of keys used across this module.
+        # Keep backwards-compatible aliases to avoid breaking callers.
         return {
             'cpu_percent': psutil.cpu_percent(interval=1),
-            'memory_percent': psutil.virtual_memory().percent,
-            'available_memory_gb': psutil.virtual_memory().available / (1024**3),
-            'disk_usage_percent': psutil.disk_usage('/').percent,
-            'load_average': psutil.getloadavg()[0] if hasattr(psutil, 'getloadavg') else 0
+            'memory_percent': memory.percent,
+            'available_memory_gb': available_memory_gb,
+            'memory_available_gb': available_memory_gb,
+            'disk_usage_percent': disk.percent,
+            'disk_percent': disk.percent,
+            'disk_free_gb': disk_free_gb,
+            'load_average': load_avg,
+            'timestamp': datetime.now().isoformat(),
         }
     
     async def predict_resource_usage(self, planned_operations: Dict[str, int]) -> Dict[str, float]:
@@ -330,7 +347,9 @@ class WebsiteProcessingOptimizer:
         
         # Consider current system load
         current_load = available_resources.get('load_average', 0)
-        load_factor = max(0.5, 1.0 - (current_load / cpu_cores))
+        if isinstance(current_load, (list, tuple)):
+            current_load = current_load[0] if current_load else 0
+        load_factor = max(0.5, 1.0 - (float(current_load) / cpu_cores))
         
         # Take the most restrictive constraint
         optimal_workers = min(max_cpu_workers, max_memory_workers)
@@ -447,36 +466,7 @@ class WebsiteProcessingOptimizer:
             Dict containing current resource usage metrics
         """
         try:
-            import psutil
-            
-            # Get CPU usage
-            cpu_percent = psutil.cpu_percent(interval=1)
-            
-            # Get memory usage
-            memory = psutil.virtual_memory()
-            memory_percent = memory.percent
-            memory_available_gb = memory.available / (1024**3)
-            
-            # Get disk usage
-            disk = psutil.disk_usage('/')
-            disk_percent = (disk.used / disk.total) * 100
-            disk_free_gb = disk.free / (1024**3)
-            
-            # Get load average (Unix systems)
-            try:
-                load_avg = os.getloadavg()
-            except (AttributeError, OSError):
-                load_avg = [0.0, 0.0, 0.0]
-            
-            return {
-                'cpu_percent': cpu_percent,
-                'memory_percent': memory_percent,
-                'memory_available_gb': memory_available_gb,
-                'disk_percent': disk_percent,
-                'disk_free_gb': disk_free_gb,
-                'load_average': load_avg,
-                'timestamp': datetime.now().isoformat()
-            }
+            return await self.resource_monitor.get_current_resources()
             
         except Exception as e:
             logger.error(f"Resource monitoring failed: {e}")
