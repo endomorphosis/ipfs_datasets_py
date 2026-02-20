@@ -1,32 +1,47 @@
 # Logic Module - Overall Project Status
 
-**Last Updated:** 2026-02-19  
+**Last Updated:** 2026-02-20  
 **Overall Progress:** Production-Ready Core, Active Development  
 **Active Plan:** [MASTER_REFACTORING_PLAN_2026.md](./MASTER_REFACTORING_PLAN_2026.md)
 
 ## Executive Summary
 
-The logic module is **production-ready** for its core components (FOL converter, Deontic converter, TDFOL reasoning, CEC inference, proof caching). Active development continues on NL improvements, CEC inference rule expansion, and planned REST API.
+The logic module is **production-ready** for its core components (FOL converter, Deontic converter, TDFOL reasoning, CEC inference with 67 rules, proof caching, MCP server tools). Active development continues on NL accuracy improvements, code reduction (god-module splits), and CI performance gates.
 
-## Component Status (2026-02-19)
+## Component Status (2026-02-20)
 
 | Component | Status | Tests | Notes |
 |-----------|--------|-------|-------|
 | **TDFOL** (Phases 1–12) | ✅ Complete | 765+ | Production-ready |
-| **CEC Native** (Phases 1–3) | ✅ Complete | 418+ | Expanding inference rules |
+| **CEC Native** (Phases 1–3) | ✅ Complete | 418+ | 67 inference rules |
+| **CEC Inference Rules** | ✅ Complete | 120+ | 8 modules, 67 rules |
 | **Integration Layer** | ✅ Complete | 110+ | All bridges operational |
-| **ZKP Module** | ⚠️ Simulation | 35+ | Not cryptographically secure |
+| **MCP Server Tools** | ✅ Complete | 167+ | 27 tools across 12 groups |
+| **Common Infrastructure** | ✅ Complete | 86+ | Validators, converters |
+| **ZKP Module** | ⚠️ Simulation | 35+ | Simulation warnings added |
 | **FOL Converter** | ✅ Production | ~40 | 14x cache speedup |
 | **Deontic Converter** | ✅ Production | ~40 | Legal logic ready |
-| **Documentation** | ✅ Reorganized | — | 102 files (from 196) |
+| **Documentation** | ✅ Consolidated | — | 69 active files (from 196) |
 
-## Documentation Health
+## Documentation Health (2026-02-20)
 
-- **2026-02-17:** Documentation refactoring reduced root from 61 → 30 files
+- **2026-02-17:** Root reduced from 61 → 30 files
 - **2026-02-18/19:** Parallel sessions added phase reports (196 files total)
-- **2026-02-19:** Reorganization reduced to ~102 files across all directories
+- **2026-02-19:** Systematic consolidation → 69 active files, 126 archived
+- **2026-02-20:** Master plan updated (v5.0) with Phase 5 (god-module splits)
 
 For active improvement work, see [MASTER_REFACTORING_PLAN_2026.md](./MASTER_REFACTORING_PLAN_2026.md).
+
+## Active Work Items
+
+| Item | Phase | Priority | Status |
+|------|-------|---------|--------|
+| TDFOL NL accuracy (80%→90%) | 2.2 | P1 | 🔄 Pending |
+| CEC NL coverage (60%→75%) | 2.3 | P1 | 🔄 Pending |
+| Split `prover_core.py` (2,927 LOC) | 5.1 | P1 | 📋 Planned |
+| Split `dcec_core.py` (1,399 LOC) | 5.2 | P1 | 📋 Planned |
+| CI performance regression gates | 4.1 | P2 | 📋 Planned |
+| TDFOL docstring completeness | 3.2 | P2 | 🔄 Pending |
 
 ## Historical Phase Completion Status
 
