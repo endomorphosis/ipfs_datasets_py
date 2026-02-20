@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 12.0 (supersedes all previous plans)  
+**Version:** 15.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -39,20 +39,20 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 | **TDFOL** (Temporal Deontic FOL) | ✅ Phases 1–12 Complete | 19,311 | 765+ |
 | **CEC Native** (Cognitive Event Calculus) | ✅ Phases 1–3 Complete | 8,547 | 418+ |
 | **CEC Inference Rules** | ✅ All 67 rules, 7 modules | ~3,200 | 120+ |
-| **Integration Layer** | ✅ Complete | ~10,000 | 110+ |
+| **Integration Layer** | ✅ Complete (86% coverage) | ~10,000 | 2,075+ |
 | **ZKP Module** | ⚠️ Simulation Only (warnings added) | ~633 | 35+ |
 | **Common Infrastructure** | ✅ Complete + validators | ~2,200 | 86+ |
 | **External Provers** | ✅ Integration Ready | ~800 | 40+ |
 | **MCP Server Tools** | ✅ 27 tools across 12 groups | ~4,500 | 167+ |
 | **Documentation** | ✅ Consolidated (69 active, 126 archived) | — | — |
-| **TOTAL** | 🟢 Production-Ready Core | ~93,431 | 1,739+ |
+| **TOTAL** | 🟢 Production-Ready Core | ~93,431 | 3,731+ |
 
 ### What Needs Work (Phases 2, 4 — Remaining)
 
 1. **NL Accuracy** — TDFOL 80% → 90%+ (needs spaCy), CEC 60% → 75%+
 2. **CI Integration** — performance baselines not yet wired into GitHub Actions
 3. **Multi-language NL** — Spanish coverage (French/German stubs exist)
-4. **Integration test coverage** — `integration/reasoning/` modules at ~50%, target 80%
+4. **Integration test coverage** — `integration/` at 86% (target 90%+); SymbolicAI-only branches unreachable without symai installed (accounts for ~8% gap)
 
 ---
 
@@ -88,19 +88,23 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 | `TDFOL/performance_profiler.py` | 1,407 | — | 🟡 Optional (see §8.7) |
 | `TDFOL/performance_dashboard.py` | 1,314 | — | 🟡 Optional (see §8.7) |
 
-### 2.2 Test Files (Updated 2026-02-20)
+### 2.2 Test Files (Updated 2026-02-20, session 14)
 
 | Test Directory | Files | Tests | Pass Rate |
 |---------------|-------|-------|-----------|
 | `tests/logic/TDFOL/` | ~20 | 765+ | ~91.5% |
 | `tests/logic/CEC/native/` | ~13 | 418+ | ~80-85% |
-| `tests/logic/integration/` | ~5 | 110+ | ~90% |
+| `tests/unit_tests/logic/integration/` | 17 | 2,075+ | ~99% (106 skipped) |
 | `tests/logic/common/` | ~4 | 86+ | ~95% |
 | `tests/logic/deontic/` | ~3 | ~40 | ~90% |
 | `tests/logic/fol/` | ~2 | ~30 | ~90% |
 | `tests/logic/zkp/` | ~20 | 35+ | ~80% |
-| Other (MCP, integration) | ~170+ | ~260+ | ~85% |
-| **TOTAL** | **~168** | **~1,744+** | **~87%** |
+| Other (MCP, integration) | ~170+ | ~282+ | ~85% |
+| **TOTAL** | **~252** | **~3,731+** | **~96%** |
+
+**Integration Coverage Milestone (Session 14, 2026-02-20):**  
+`ipfs_datasets_py/logic/integration/` — **86%** (7,892 lines, 1,144 uncovered)  
+Remaining uncovered lines are primarily SymbolicAI-gated code paths (~8%) that require `symai` to be installed.
 
 ### 2.3 Markdown Files (✅ RESOLVED)
 
@@ -405,7 +409,7 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 2. ✅ `warnings.warn()` added to `ZKPVerifier.__init__`
 3. ✅ Docstrings state simulation-only status prominently
 
-### 5.5 Test Coverage Gaps — 🔄 Partial
+### 5.5 Test Coverage Gaps — ✅ MAJOR PROGRESS (Sessions 1–14)
 
 **Completed:**
 - [x] 60 new tests for CEC modal/resolution/specialized rules (all passing)
@@ -413,9 +417,17 @@ mkdir -p ipfs_datasets_py/logic/zkp/ARCHIVE/
 - [x] `test_tdfol_optimization.py` strategy method mismatch fixed (method now reflects enum value)
 - [x] `test_llm.py` multiformats tests: SHA256 fallback in `_make_key`; CID-specific test skipped
 - [x] `test_countermodel_visualizer.py` d3.v7 URL assertion updated
+- [x] **Sessions 9–14 (2026-02-20):** Integration layer 50% → **86%** (2,075 tests, 106 skipped)
+  - Sessions 9–13: reasoning/, fol/, converters/, bridges/, cec_bridge, external_provers,  
+    logic_translation_core, symbolic_contracts, ipfs_proof_cache, deontic_logic_core  
+  - Session 14 (14+14b+14c): demos, document_consistency_checker, temporal_deontic_api,  
+    symbolic_contracts (non-symai), deontic_logic_converter, symbolic_logic_primitives,  
+    caselaw_bulk_processor, tdfol_grammar_bridge, tdfol_cec_bridge, ipld_logic_storage,  
+    legal_symbolic_analyzer, embedding_prover, reasoning_coordinator
+  - **4 source bugs fixed:** demo_temporal_deontic_rag imports, caselaw_bulk_processor DeonticRuleSet kwargs, cec_bridge proof_cache method names
 
 **Remaining:**
-- [ ] Integration tests for `integration/reasoning/` modules (currently ~50% coverage)
+- [ ] Integration tests for SymbolicAI-gated code paths (require `pip install symbolicai`)
 - [ ] E2E tests: legal text → formal proof pipeline
 - [ ] Stress tests for proof search under timeout conditions
 - [ ] Fix 69 NL test failures (see 5.2)
