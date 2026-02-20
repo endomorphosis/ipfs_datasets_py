@@ -225,7 +225,7 @@ kg = extractor.extract_knowledge_graph(text)
 
 ### 9. Semantic Role Labeling (SRL)
 
-**Status:** ✅ Implemented (v2.5.0 — 2026-02-20); deepened (2026-02-20 session 3)
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-20); deepened (2026-02-20 session 3); deepened again (2026-02-20 session 4)
 **Location:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`;
              `extraction/extractor.py` — `KnowledgeGraphExtractor`
 **Implementation:**
@@ -240,6 +240,13 @@ kg = extractor.extract_knowledge_graph(text)
   every `extract_knowledge_graph()` call via `_merge_srl_into_kg()`
 - **Standalone** (session 3): `extractor.extract_srl_knowledge_graph(text)` returns a
   pure event-centric KG without entity/relationship extraction
+- **`SRLFrame.from_dict(data)`** (session 4): classmethod to deserialize a frame dict;
+  completes the `to_dict` round-trip
+- **`SRLExtractor.extract_batch(texts)`** (session 4): convenience method for batch extraction
+  across a list of strings; returns one frame list per input, in order
+- **`SRLExtractor.build_temporal_graph(text)`** (session 4): extracts events and links them
+  with `PRECEDES` / `OVERLAPS` temporal relationships based on connector words (then, meanwhile,
+  subsequently, etc.) and sentence ordering
 
 **Example (now works):**
 ```python
@@ -257,8 +264,16 @@ kg2 = ext.extract_knowledge_graph("Alice sent Bob a report.")  # SRL triples mer
 kg3 = ext.extract_srl_knowledge_graph("Alice taught Bob.")     # event-centric only
 ```
 
+# Batch extraction (session 4)
+ext_srl.extract_batch(["Alice sent a report.", "Bob replied."])
+
+# Temporal graph (session 4)
+tg = ext_srl.build_temporal_graph("Alice opened the door. Then Bob walked in.")
+```
+
 **Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (12 tests),
-           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests)
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (13 SRL tests)
 
 ---
 
@@ -302,14 +317,18 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
 
 ### 12. Inference Rules and Ontology Reasoning
 
-**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (2026-02-20 session 3)
-**Location:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `ConsistencyViolation`
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (session 3); deepened again (session 4)
+**Location:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `ConsistencyViolation`, `InferenceTrace`
 **Implementation:**
 - `OntologySchema` builder: `add_subclass`, `add_subproperty`, `add_transitive`, `add_symmetric`, `add_inverse`, `add_domain`, `add_range`, `add_disjoint`
 - **OWL 2 property chains** (session 3): `add_property_chain(chain, result_property)` — declares
   `owl:propertyChainAxiom`; materialized during the fixpoint loop
 - **Turtle serialization** (session 3): `to_turtle()` and `from_turtle(text)` — round-trip OWL/RDFS
   declarations in Turtle format without needing `rdflib`
+- **`add_equivalent_class(a, b)`** (session 4): declares `owl:equivalentClass`; populates mutual
+  `subClassOf` entries so materialisation treats both as the same class; serialised in Turtle
+- **`merge(other)`** (session 4): returns a new `OntologySchema` that is the union of both schemas;
+  self takes precedence for single-value maps; neither input is modified
 - `OntologyReasoner.materialize(kg)` — runs a fixpoint loop applying all declared rules
   - **subClassOf** — nodes gain inferred super-class types (stored in `entity.properties["inferred_types"]`)
   - **subPropertyOf** — new relationships generated for each declared super-property
@@ -320,40 +339,42 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
   - **range** — target nodes of a property gain the declared range class
   - **propertyChainAxiom** (session 3) — multi-step chain inference
 - `OntologyReasoner.check_consistency(kg)` — detects disjoint class violations and negative assertion conflicts
+- **`OntologyReasoner.explain_inferences(kg)`** (session 4): dry-run materialize on a copy; returns
+  a list of `InferenceTrace` objects recording `rule`, `subject_id`, `predicate`, `object_id`,
+  `source_ids`, and a human-readable `description`; does **not** modify `kg`
 
 **Example (now works):**
 ```python
-from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
+from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner, InferenceTrace
 
 schema = OntologySchema()
 schema.add_subclass("Employee", "Person")
 schema.add_transitive("isAncestorOf")
-schema.add_symmetric("isSiblingOf")
-schema.add_inverse("isManagerOf", "isManagedBy")
-schema.add_domain("worksAt", "Person")
-schema.add_range("worksAt", "Organization")
-# OWL 2 property chain axiom
-schema.add_property_chain(["hasMother", "hasMother"], "hasMaternalGrandmother")
+schema.add_equivalent_class("Person", "Human")       # session 4
 
-reasoner = OntologyReasoner(schema)
-kg2 = reasoner.materialize(kg)          # returns augmented copy
+schema2 = OntologySchema()
+schema2.add_symmetric("isSiblingOf")
+combined = schema.merge(schema2)                       # session 4
+
+reasoner = OntologyReasoner(combined)
+kg2 = reasoner.materialize(kg)
 violations = reasoner.check_consistency(kg2)
 
-# Serialize / deserialize
-turtle_str = schema.to_turtle()
-schema2 = OntologySchema.from_turtle(turtle_str)  # round-trip
+# Inference provenance (session 4)
+traces = reasoner.explain_inferences(kg)  # dry-run, kg unchanged
+for t in traces:
+    print(f"[{t.rule}] {t.description}")
 ```
 
 **Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (11 tests),
-           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (12 tests)
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (12 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (14 OWL tests)
 
 ---
 
 ### 13. Distributed Query Execution
 
-### 13. Distributed Query Execution
-
-**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (2026-02-20 session 3)
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20); deepened (session 3); deepened again (session 4)
 **Location:** `query/distributed.py` — `GraphPartitioner`, `DistributedGraph`, `FederatedQueryExecutor`
 **Implementation:**
 - `GraphPartitioner(num_partitions, strategy)` — partitions a `KnowledgeGraph` into N shards
@@ -363,14 +384,22 @@ schema2 = OntologySchema.from_turtle(turtle_str)  # round-trip
   - `get_partition_for_entity(entity_id)` — locate which partition holds an entity
   - `to_merged_graph()` — re-merge all partitions into a single graph
   - `get_partition_stats()` — per-partition node/edge counts
+  - **`rebalance(strategy)`** (session 4): returns a new `DistributedGraph` with nodes
+    redistributed using *strategy* (default `ROUND_ROBIN` for perfect balance); does not
+    mutate the original
 - `FederatedQueryExecutor(dist_graph)` — fan-out Cypher query execution
   - `execute_cypher(query)` — serial fan-out, merge + deduplicate
   - `execute_cypher_parallel(query, max_workers)` — thread-pool fan-out
   - **`execute_cypher_async(query)`** (session 3) — asyncio-native wrapper
   - **`lookup_entity(entity_id)`** (session 3) — cross-partition O(partitions) entity lookup
   - **`lookup_entity_partition(entity_id)`** (session 3) — returns partition index or None
+  - **`explain_query(query)`** (session 4): returns a `QueryPlan` with per-partition node/edge
+    counts and estimated result rows; no actual execution
+  - **`execute_cypher_streaming(query)`** (session 4): generator yielding
+    `(partition_idx, record_dict)` tuples lazily; deduplication still applied across the stream
   - Each partition gets its own in-memory `GraphEngine` populated from partition nodes/rels
   - Deduplication uses SHA1 fingerprint of serialised record dicts
+- New dataclasses: `QueryPlan`, `PartitionQueryPlan` (exported from `query/__init__.py`)
 
 **Example (now works):**
 ```python
@@ -383,20 +412,29 @@ executor = FederatedQueryExecutor(dist)
 
 # Synchronous fan-out
 result = executor.execute_cypher("MATCH (n:Person) WHERE n.age > 30 RETURN n.name, n.age")
-for row in result.records:
-    print(row)
 
 # Async fan-out
 import asyncio
 result = asyncio.run(executor.execute_cypher_async("MATCH (n:Person) RETURN n"))
 
 # Cross-partition entity lookup
-entity = executor.lookup_entity(some_entity_id)  # returns entity or None
-part_idx = executor.lookup_entity_partition(some_entity_id)  # returns int or None
+entity = executor.lookup_entity(some_entity_id)
+
+# Rebalance partitions (session 4)
+balanced = dist.rebalance(PartitionStrategy.ROUND_ROBIN)
+
+# Query plan without execution (session 4)
+plan = executor.explain_query("MATCH (n:Person) RETURN n.name")
+print(plan.to_dict())
+
+# Streaming (session 4)
+for partition_idx, record in executor.execute_cypher_streaming("MATCH (n) RETURN n.name"):
+    print(partition_idx, record)
 ```
 
 **Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests),
-           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests)
+           `tests/unit/knowledge_graphs/test_srl_ontology_distributed_cont.py` (7 tests),
+           `tests/unit/knowledge_graphs/test_deferred_session4.py` (13 distributed tests)
 
 ---
 
@@ -438,7 +476,7 @@ part_idx = executor.lookup_entity_partition(some_entity_id)  # returns int or No
 
 ---
 
-**Last Updated:** 2026-02-20  
+**Last Updated:** 2026-02-20 (session 4)  
 **Next Review:** Q3 2026 (before v2.5.0 release)  
 **Maintainer:** Knowledge Graphs Team
 

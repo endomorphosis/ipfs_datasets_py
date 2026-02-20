@@ -71,6 +71,8 @@ from .distributed import (
     FederatedQueryResult,
     PartitionStats,
     PartitionStrategy,
+    QueryPlan,
+    PartitionQueryPlan,
 )
 
 __all__ = [
@@ -84,4 +86,6 @@ __all__ = [
     'FederatedQueryResult',
     'PartitionStats',
     'PartitionStrategy',
+    'QueryPlan',
+    'PartitionQueryPlan',
 ]

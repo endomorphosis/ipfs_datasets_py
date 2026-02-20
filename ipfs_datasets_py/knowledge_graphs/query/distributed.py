@@ -60,7 +60,7 @@ import enum
 import hashlib
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -191,6 +191,30 @@ class DistributedGraph:
         for partition in self.partitions:
             merged.merge(partition)
         return merged
+
+    def rebalance(
+        self, strategy: PartitionStrategy = PartitionStrategy.ROUND_ROBIN
+    ) -> "DistributedGraph":
+        """Return a new :class:`DistributedGraph` with nodes redistributed.
+
+        Useful when partitions have become unbalanced due to dynamic graph
+        updates (e.g. new nodes all hash to the same partition).  The merged
+        graph is re-partitioned using *strategy*.
+
+        Args:
+            strategy: Partitioning strategy for the new distribution.
+                      Default is ``ROUND_ROBIN`` which produces perfectly
+                      balanced partition sizes.
+
+        Returns:
+            New :class:`DistributedGraph` with balanced partitions.
+        """
+        merged = self.to_merged_graph()
+        partitioner = GraphPartitioner(
+            num_partitions=self.num_partitions,
+            strategy=strategy,
+        )
+        return partitioner.partition(merged)
 
 
 # ---------------------------------------------------------------------------
@@ -331,6 +355,65 @@ class GraphPartitioner:
 # ---------------------------------------------------------------------------
 # FederatedQueryExecutor
 # ---------------------------------------------------------------------------
+
+
+@dataclass
+class PartitionQueryPlan:
+    """Estimated execution plan for a single partition.
+
+    Attributes:
+        partition_id:   Zero-based partition index.
+        node_count:     Number of nodes in the partition.
+        edge_count:     Number of edges in the partition.
+        estimated_rows: Estimated number of result rows (heuristic).
+    """
+
+    partition_id: int
+    node_count: int
+    edge_count: int
+    estimated_rows: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "partition_id": self.partition_id,
+            "node_count": self.node_count,
+            "edge_count": self.edge_count,
+            "estimated_rows": self.estimated_rows,
+        }
+
+
+@dataclass
+class QueryPlan:
+    """High-level query plan for a federated Cypher query.
+
+    Attributes:
+        query:              The original Cypher query string.
+        num_partitions:     Total number of partitions to be queried.
+        partition_plans:    Per-partition sub-plans with estimates.
+        strategy:           Partitioning strategy of the underlying graph.
+        dedup:              Whether deduplication is enabled.
+        total_nodes:        Total unique nodes across all partitions.
+        total_edges:        Total edge count (with possible cross-partition copies).
+    """
+
+    query: str
+    num_partitions: int
+    partition_plans: List[PartitionQueryPlan]
+    strategy: str
+    dedup: bool
+    total_nodes: int
+    total_edges: int
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "query": self.query,
+            "num_partitions": self.num_partitions,
+            "partition_plans": [p.to_dict() for p in self.partition_plans],
+            "strategy": self.strategy,
+            "dedup": self.dedup,
+            "total_nodes": self.total_nodes,
+            "total_edges": self.total_edges,
+        }
 
 
 @dataclass
@@ -546,6 +629,82 @@ class FederatedQueryExecutor:
                 return i
         return None
 
+    def explain_query(
+        self, query: str, params: Optional[Dict[str, Any]] = None
+    ) -> QueryPlan:
+        """Return an estimated query plan without executing the query.
+
+        Provides a high-level breakdown of how the query will fan out across
+        partitions: node/edge counts per partition and estimated result rows
+        (heuristic: ``min(node_count, 100)``).
+
+        Args:
+            query:  Cypher query string.
+            params: Optional query parameters (not used for planning).
+
+        Returns:
+            :class:`QueryPlan` with per-partition estimates.
+        """
+        total_edges = sum(
+            len(p.relationships) for p in self.distributed_graph.partitions
+        )
+        partition_plans = [
+            PartitionQueryPlan(
+                partition_id=i,
+                node_count=len(p.entities),
+                edge_count=len(p.relationships),
+                estimated_rows=min(len(p.entities), 100),
+            )
+            for i, p in enumerate(self.distributed_graph.partitions)
+        ]
+        return QueryPlan(
+            query=query,
+            num_partitions=self.distributed_graph.num_partitions,
+            partition_plans=partition_plans,
+            strategy=self.distributed_graph.strategy.value,
+            dedup=self.dedup,
+            total_nodes=self.distributed_graph.total_nodes,
+            total_edges=total_edges,
+        )
+
+    def execute_cypher_streaming(
+        self,
+        query: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Generator[Tuple[int, Dict[str, Any]], None, None]:
+        """Execute a query and yield ``(partition_idx, record)`` tuples lazily.
+
+        Unlike :meth:`execute_cypher`, this is a **generator** that yields
+        records one by one as each partition completes.  Deduplication is
+        still applied across the stream (records seen from earlier partitions
+        will not be re-emitted).
+
+        Args:
+            query:  Cypher query string.
+            params: Optional query parameters.
+
+        Yields:
+            ``(partition_idx, record_dict)`` tuples.
+        """
+        seen: Set[str] = set()
+
+        for i, partition_kg in enumerate(self.distributed_graph.partitions):
+            try:
+                records = self._execute_on_partition(partition_kg, query, params or {})
+            except Exception as exc:
+                logger.warning(
+                    "Streaming query error on partition %d: %s", i, exc
+                )
+                continue
+
+            for record in records:
+                if self.dedup:
+                    fp = _record_fingerprint(record)
+                    if fp in seen:
+                        continue
+                    seen.add(fp)
+                yield i, record
+
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
@@ -752,4 +911,6 @@ __all__ = [
     "FederatedQueryResult",
     "PartitionStats",
     "PartitionStrategy",
+    "QueryPlan",
+    "PartitionQueryPlan",
 ]

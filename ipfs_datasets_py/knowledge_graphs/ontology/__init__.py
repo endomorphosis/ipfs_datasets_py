@@ -21,10 +21,11 @@ Usage::
     augmented_kg = reasoner.materialize(my_kg)
 """
 
-from .reasoning import OntologySchema, OntologyReasoner, ConsistencyViolation
+from .reasoning import OntologySchema, OntologyReasoner, ConsistencyViolation, InferenceTrace
 
 __all__ = [
     "OntologySchema",
     "OntologyReasoner",
     "ConsistencyViolation",
+    "InferenceTrace",
 ]

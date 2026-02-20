@@ -160,6 +160,36 @@ class SRLFrame:
             "source": self.source,
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "SRLFrame":
+        """Deserialise from a dictionary produced by :meth:`to_dict`.
+
+        Args:
+            data: Dictionary with the same keys as :meth:`to_dict`.
+
+        Returns:
+            New :class:`SRLFrame` populated from *data*.
+        """
+        args = [
+            RoleArgument(
+                role=a["role"],
+                text=a["text"],
+                span=tuple(a["span"]) if a.get("span") else None,  # type: ignore[arg-type]
+                confidence=a.get("confidence", 0.8),
+            )
+            for a in data.get("arguments", [])
+        ]
+        ps = data.get("predicate_span")
+        return cls(
+            frame_id=data.get("frame_id", str(uuid.uuid4())),
+            predicate=data.get("predicate", ""),
+            predicate_span=tuple(ps) if ps else None,  # type: ignore[arg-type]
+            sentence=data.get("sentence", ""),
+            arguments=args,
+            confidence=data.get("confidence", 0.7),
+            source=data.get("source", "heuristic"),
+        )
+
 
 # ---------------------------------------------------------------------------
 # Heuristic helpers (no external dependencies)
@@ -532,6 +562,112 @@ class SRLExtractor:
                 result_kg.add_relationship(rel)
 
         return result_kg
+
+    def extract_batch(self, texts: List[str]) -> List[List[SRLFrame]]:
+        """Extract SRL frames from a list of texts in one call.
+
+        This is equivalent to calling :meth:`extract_srl` on each text
+        individually, but is more ergonomic when processing collections.
+
+        Args:
+            texts: List of input strings.
+
+        Returns:
+            List of frame lists — one per input text, in the same order.
+        """
+        return [self.extract_srl(t) for t in texts]
+
+    def build_temporal_graph(self, text: str) -> Any:
+        """Extract events from *text* and link them with temporal relations.
+
+        Temporal markers (``before``, ``after``, ``then``, ``subsequently``,
+        ``first``, ``next``, etc.) between sentences are detected and
+        represented as ``PRECEDES`` / ``FOLLOWS`` / ``OVERLAPS`` relationships
+        in the returned event-centric KG.
+
+        Args:
+            text: Input text (multiple sentences recommended).
+
+        Returns:
+            :class:`KnowledgeGraph` with ``Event`` nodes and
+            ``PRECEDES`` / ``FOLLOWS`` / ``OVERLAPS`` relationships.
+        """
+        frames = self.extract_srl(text)
+        kg = self.to_knowledge_graph(frames)
+
+        # ------------------------------------------------------------------
+        # Temporal edge inference over sequential sentences
+        # ------------------------------------------------------------------
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+        # Build per-sentence frame map (frames in sentence order)
+        sent_frames: List[List[SRLFrame]] = []
+        for sent in sentences:
+            sent = sent.strip()
+            if not sent:
+                continue
+            if self.nlp is not None:
+                doc = self.nlp(sent)
+                sf = []
+                for sp in doc.sents:
+                    sf.extend(_extract_spacy_frames(sp))
+            else:
+                sf = _extract_heuristic_frames(sent)
+            sent_frames.append(sf)
+
+        # Temporal connector patterns between consecutive sentences
+        _PRECEDES_RE = re.compile(
+            r"\b(?:then|next|after(ward)?s?|subsequently|later|"
+            r"following|thereafter|once)\b", re.I
+        )
+        _OVERLAPS_RE = re.compile(
+            r"\b(?:meanwhile|simultaneously|at the same time|"
+            r"during this|concurrently|while)\b", re.I
+        )
+
+        # Look at sentence pairs to create temporal links
+        for i in range(len(sentences) - 1):
+            sent_b = sentences[i + 1].strip() if i + 1 < len(sentences) else ""
+            frames_a = sent_frames[i] if i < len(sent_frames) else []
+            frames_b = sent_frames[i + 1] if i + 1 < len(sent_frames) else []
+
+            if not frames_a or not frames_b:
+                continue
+
+            event_a_id = frames_a[0].frame_id
+            event_b_id = frames_b[0].frame_id
+
+            # Determine relationship type based on connector words
+            if _OVERLAPS_RE.search(sent_b):
+                rel_type = "OVERLAPS"
+            elif _PRECEDES_RE.search(sent_b):
+                rel_type = "PRECEDES"
+            else:
+                # Default: sequential sentences → first precedes second
+                rel_type = "PRECEDES"
+
+            # Look up the event entities in the KG
+            from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+            from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
+            ea = next(
+                (e for e in kg.entities.values() if e.properties and e.properties.get("srl_frame_id") == event_a_id),
+                None,
+            )
+            eb = next(
+                (e for e in kg.entities.values() if e.properties and e.properties.get("srl_frame_id") == event_b_id),
+                None,
+            )
+            if ea and eb:
+                temporal_rel = Relationship(
+                    relationship_type=rel_type,
+                    source_entity=ea,
+                    target_entity=eb,
+                    confidence=0.65,
+                    properties={"inferred_by": "temporal_srl"},
+                )
+                kg.add_relationship(temporal_rel)
+
+        return kg
 
     def extract_to_triples(
         self, text: str

@@ -97,6 +97,42 @@ class ConsistencyViolation:
         }
 
 
+@dataclass
+class InferenceTrace:
+    """Records a single inference made by :class:`OntologyReasoner`.
+
+    Attributes:
+        rule:           Name of the inference rule that fired
+                        (e.g. ``"subclass"``, ``"transitive"``,
+                        ``"symmetric"``, ``"inverse"``, ``"domain"``,
+                        ``"range"``, ``"subproperty"``, ``"property_chain"``).
+        subject_id:     Entity or relationship ID of the *derived* fact's
+                        subject.
+        predicate:      Property or type name of the derived fact.
+        object_id:      Entity or relationship ID of the derived fact's object
+                        (empty string for type inferences).
+        source_ids:     IDs of the source facts that triggered this inference.
+        description:    Human-readable explanation.
+    """
+
+    rule: str
+    subject_id: str
+    predicate: str
+    object_id: str
+    source_ids: List[str] = field(default_factory=list)
+    description: str = ""
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rule": self.rule,
+            "subject_id": self.subject_id,
+            "predicate": self.predicate,
+            "object_id": self.object_id,
+            "source_ids": self.source_ids,
+            "description": self.description,
+        }
+
+
 # ---------------------------------------------------------------------------
 # OntologySchema
 # ---------------------------------------------------------------------------
@@ -130,6 +166,8 @@ class OntologySchema:
         self.disjoint_map: Dict[str, Set[str]] = {}
         # OWL 2 property chain axioms: list of (chain_props, result_property)
         self.property_chains: List[Tuple[List[str], str]] = []
+        # OWL equivalent class pairs (canonical order: smaller name first)
+        self._equivalent_classes: List[Tuple[str, str]] = []
 
     # ------------------------------------------------------------------
     # Builder API
@@ -282,6 +320,94 @@ class OntologySchema:
         self.property_chains.append((list(chain), result_property))
         return self
 
+    def add_equivalent_class(self, class_a: str, class_b: str) -> "OntologySchema":
+        """Declare *class_a* and *class_b* as OWL equivalent classes.
+
+        Equivalent classes are mutually sub-classes of each other:
+        ``class_a subClassOf class_b`` and ``class_b subClassOf class_a``.
+        This means every instance of one class is also an instance of the
+        other after materialisation.
+
+        Args:
+            class_a: First class.
+            class_b: Second class.
+
+        Returns:
+            ``self`` for chaining.
+
+        Example::
+
+            schema.add_equivalent_class("Person", "Human")
+            # After materialize(): every Person is also a Human and vice versa.
+        """
+        self.subclass_map.setdefault(class_a, set()).add(class_b)
+        self.subclass_map.setdefault(class_b, set()).add(class_a)
+        # Record the pair separately so to_turtle() can emit owl:equivalentClass
+        pair: Tuple[str, str] = (class_a, class_b) if class_a < class_b else (class_b, class_a)
+        if pair not in self._equivalent_classes:
+            self._equivalent_classes.append(pair)
+        return self
+
+    def merge(self, other: "OntologySchema") -> "OntologySchema":
+        """Return a *new* schema that is the union of *self* and *other*.
+
+        All declarations from both schemas are combined.  Where a key maps to
+        a set (e.g. ``subclass_map``, ``disjoint_map``), the sets are unioned.
+        Where a key maps to a single value (``domain_map``, ``range_map``,
+        ``inverse_map``), *self*'s value takes precedence on conflict.
+
+        Neither *self* nor *other* is modified.
+
+        Args:
+            other: Another :class:`OntologySchema` to merge with.
+
+        Returns:
+            New :class:`OntologySchema` containing all declarations.
+        """
+        merged = OntologySchema()
+
+        # Merge set-valued maps
+        for child, parents in self.subclass_map.items():
+            merged.subclass_map.setdefault(child, set()).update(parents)
+        for child, parents in other.subclass_map.items():
+            merged.subclass_map.setdefault(child, set()).update(parents)
+
+        for child, parents in self.subproperty_map.items():
+            merged.subproperty_map.setdefault(child, set()).update(parents)
+        for child, parents in other.subproperty_map.items():
+            merged.subproperty_map.setdefault(child, set()).update(parents)
+
+        for cls_a, classes in self.disjoint_map.items():
+            merged.disjoint_map.setdefault(cls_a, set()).update(classes)
+        for cls_a, classes in other.disjoint_map.items():
+            merged.disjoint_map.setdefault(cls_a, set()).update(classes)
+
+        # Merge single-value maps (self takes precedence)
+        merged.inverse_map = {**other.inverse_map, **self.inverse_map}
+        merged.domain_map = {**other.domain_map, **self.domain_map}
+        merged.range_map = {**other.range_map, **self.range_map}
+
+        # Merge sets
+        merged.transitive = self.transitive | other.transitive
+        merged.symmetric = self.symmetric | other.symmetric
+
+        # Merge property chains (deduplicate by value)
+        seen_chains: List[Tuple[List[str], str]] = []
+        for chain, result in self.property_chains + other.property_chains:
+            entry = (chain, result)
+            if entry not in seen_chains:
+                seen_chains.append(entry)
+        merged.property_chains = seen_chains
+
+        # Merge equivalent class pairs
+        all_eq = list(self._equivalent_classes)
+        for pair in other._equivalent_classes:
+            if pair not in all_eq:
+                all_eq.append(pair)
+        merged._equivalent_classes = all_eq
+
+        return merged
+
     # ------------------------------------------------------------------
     # Serialization
     # ------------------------------------------------------------------
@@ -332,6 +458,9 @@ class OntologySchema:
         for chain_props, result_prop in self.property_chains:
             chain_str = " ".join(f":{p}" for p in chain_props)
             lines.append(f":{result_prop} owl:propertyChainAxiom ( {chain_str} ) .")
+        # owl:equivalentClass pairs (only emit once per pair, canonical order)
+        for cls_a, cls_b in self._equivalent_classes:
+            lines.append(f":{cls_a} owl:equivalentClass :{cls_b} .")
         return "\n".join(lines) + "\n"
 
     @classmethod
@@ -389,6 +518,8 @@ class OntologySchema:
                 chain = re.findall(r":(\w+)", obj)
                 if len(chain) >= 2:
                     schema.add_property_chain(chain, subject)
+            elif predicate == "owl:equivalentClass":
+                schema.add_equivalent_class(subject, obj_name)
         return schema
 
     # ------------------------------------------------------------------
@@ -515,6 +646,93 @@ class OntologyReasoner:
         violations.extend(self._check_disjoint_classes(kg))
         violations.extend(self._check_negative_assertions(kg))
         return violations
+
+    def explain_inferences(self, kg: Any) -> List[InferenceTrace]:
+        """Return a provenance trace of all inferences that *materialize* would make.
+
+        This method runs a *dry-run* materialize on a **copy** of *kg* and
+        records each inference as an :class:`InferenceTrace` — capturing which
+        rule fired, which source facts triggered it, and what was derived.
+        It does **not** modify *kg*.
+
+        Args:
+            kg: :class:`KnowledgeGraph` to explain inferences for.
+
+        Returns:
+            List of :class:`InferenceTrace` objects in derivation order.
+        """
+        from ipfs_datasets_py.knowledge_graphs.extraction.entities import Entity
+        from ipfs_datasets_py.knowledge_graphs.extraction.relationships import Relationship
+
+        work_kg = copy.deepcopy(kg)
+        traces: List[InferenceTrace] = []
+
+        # Snapshot before/after each rule application to identify new facts
+        for _iteration in range(self.max_iterations):
+            before_rels = dict(work_kg.relationships)
+            # Snapshot current inferred_types per entity (before rules run)
+            before_inferred: Dict[str, List[str]] = {
+                eid: list((e.properties or {}).get("inferred_types", []))
+                for eid, e in work_kg.entities.items()
+            }
+
+            # Run all rules once
+            self._apply_subclass(work_kg, Entity)
+            self._apply_subproperty(work_kg, Relationship)
+            self._apply_transitive(work_kg, Relationship)
+            self._apply_symmetric(work_kg, Relationship)
+            self._apply_inverse(work_kg, Relationship)
+            self._apply_domain(work_kg, Entity)
+            self._apply_range(work_kg, Entity)
+            self._apply_property_chains(work_kg, Relationship)
+
+            after_rels = dict(work_kg.relationships)
+
+            new_facts = 0
+
+            # Detect new inferred types on entities
+            for eid, entity in work_kg.entities.items():
+                old_inferred: List[str] = before_inferred.get(eid, [])
+                new_inferred: List[str] = list((entity.properties or {}).get("inferred_types", []))
+                for t in new_inferred:
+                    if t not in old_inferred:
+                        traces.append(InferenceTrace(
+                            rule="subclass",
+                            subject_id=eid,
+                            predicate="rdf:type",
+                            object_id=t,
+                            source_ids=[eid],
+                            description=(
+                                f"Entity '{entity.name}' ({eid}) gains inferred "
+                                f"type '{t}' via subClassOf."
+                            ),
+                        ))
+                        new_facts += 1
+
+            # Detect new relationships
+            for rid, rel in after_rels.items():
+                if rid not in before_rels:
+                    source_ids: List[str] = [rel.source_id, rel.target_id]
+                    props = rel.properties or {}
+                    rule = props.get("rule", "unknown")
+                    traces.append(InferenceTrace(
+                        rule=rule,
+                        subject_id=rel.source_id,
+                        predicate=rel.relationship_type,
+                        object_id=rel.target_id,
+                        source_ids=source_ids,
+                        description=(
+                            f"Relationship '{rel.relationship_type}' "
+                            f"({rel.source_id} → {rel.target_id}) "
+                            f"inferred via rule '{rule}'."
+                        ),
+                    ))
+                    new_facts += 1
+
+            if new_facts == 0:
+                break
+
+        return traces
 
     def get_inferred_types(self, entity_type: str) -> Set[str]:
         """Return all types that should be inferred for an entity with *entity_type*.
@@ -898,4 +1116,5 @@ __all__ = [
     "OntologySchema",
     "OntologyReasoner",
     "ConsistencyViolation",
+    "InferenceTrace",
 ]
