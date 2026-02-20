@@ -1,5 +1,6 @@
 """Base classes and interfaces for agentic optimization framework."""
 
+import logging as _logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -152,6 +153,7 @@ class AgenticOptimizer(ABC):
         llm_router: Any,
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize the optimizer.
         
@@ -160,12 +162,14 @@ class AgenticOptimizer(ABC):
             llm_router: LLM router for text generation
             change_control: Change control method to use
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
         self.agent_id = agent_id
         self.method = self._get_method()
         self.llm_router = llm_router
         self.change_control = change_control
         self.config = config or {}
+        self._log = logger or _logging.getLogger(__name__)
         
     @abstractmethod
     def _get_method(self) -> OptimizationMethod:

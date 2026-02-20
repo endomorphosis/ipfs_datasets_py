@@ -5,6 +5,7 @@ while improving performance and code quality.
 """
 
 import ast
+import logging as _logging
 import subprocess
 import tempfile
 import time
@@ -55,6 +56,7 @@ class TestDrivenOptimizer(AgenticOptimizer):
         llm_router: Any,
         change_control: ChangeControlMethod = ChangeControlMethod.PATCH,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize test-driven optimizer.
         
@@ -63,8 +65,9 @@ class TestDrivenOptimizer(AgenticOptimizer):
             llm_router: LLM router for text generation
             change_control: Change control method to use
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
-        super().__init__(agent_id, llm_router, change_control, config)
+        super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         
     def _get_method(self) -> OptimizationMethod:
