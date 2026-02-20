@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.logic_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.temporal_deontic_logic_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.logic_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Temporal Deontic Logic RAG Tools for MCP (Model Context Protocol).
@@ -29,7 +41,6 @@ from typing import Any, Dict, List, Optional, Union
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
-
 
 class CheckDocumentConsistencyTool(ClaudeMCPTool):
     """
@@ -179,7 +190,6 @@ class CheckDocumentConsistencyTool(ClaudeMCPTool):
                 "error": str(e),
                 "error_code": "PROCESSING_ERROR"
             }
-
 
 class QueryTheoremsTool(ClaudeMCPTool):
     """
@@ -341,7 +351,6 @@ class QueryTheoremsTool(ClaudeMCPTool):
                 "error": str(e),
                 "error_code": "QUERY_ERROR"
             }
-
 
 class BulkProcessCaselawTool(ClaudeMCPTool):
     """
@@ -548,7 +557,6 @@ class BulkProcessCaselawTool(ClaudeMCPTool):
                 "error_code": "PROCESSING_ERROR"
             }
 
-
 class AddTheoremTool(ClaudeMCPTool):
     """
     MCP Tool for adding individual temporal deontic logic theorems (primarily for testing).
@@ -707,7 +715,6 @@ class AddTheoremTool(ClaudeMCPTool):
                 "error": str(e),
                 "error_code": "ADD_THEOREM_ERROR"
             }
-
 
 # Tool registry for MCP server
 TEMPORAL_DEONTIC_LOGIC_TOOLS = [

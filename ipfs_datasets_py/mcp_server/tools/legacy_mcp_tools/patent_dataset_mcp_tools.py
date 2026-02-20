@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.patent_dataset_mcp_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Patent Dataset MCP Tools for Model Context Protocol.
@@ -24,7 +36,6 @@ from typing import Any, Dict, List, Optional
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
-
 
 class ScrapeUSPTOPatentsTool(ClaudeMCPTool):
     """
@@ -170,7 +181,6 @@ class ScrapeUSPTOPatentsTool(ClaudeMCPTool):
                 "metadata": {}
             }
 
-
 class SearchPatentsByKeywordTool(ClaudeMCPTool):
     """
     MCP Tool for searching patents by keywords.
@@ -252,7 +262,6 @@ class SearchPatentsByKeywordTool(ClaudeMCPTool):
                 "count": 0
             }
 
-
 class SearchPatentsByInventorTool(ClaudeMCPTool):
     """
     MCP Tool for searching patents by inventor name.
@@ -331,7 +340,6 @@ class SearchPatentsByInventorTool(ClaudeMCPTool):
                 "count": 0
             }
 
-
 class SearchPatentsByAssigneeTool(ClaudeMCPTool):
     """
     MCP Tool for searching patents by assignee/organization.
@@ -409,7 +417,6 @@ class SearchPatentsByAssigneeTool(ClaudeMCPTool):
                 "patents": [],
                 "count": 0
             }
-
 
 class BuildPatentDatasetTool(ClaudeMCPTool):
     """
@@ -528,7 +535,6 @@ class BuildPatentDatasetTool(ClaudeMCPTool):
                 "error": str(e),
                 "metadata": {}
             }
-
 
 # List of all patent dataset MCP tools
 PATENT_DATASET_MCP_TOOLS = [

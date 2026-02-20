@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.development_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.github_cli_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.development_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 GitHub CLI MCP Tools
@@ -20,7 +32,6 @@ from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 from ipfs_datasets_py.utils.github_cli import GitHubCLI
 
 logger = logging.getLogger(__name__)
-
 
 class GitHubCLIStatusTool(ClaudeMCPTool):
     """
@@ -73,7 +84,6 @@ class GitHubCLIStatusTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class GitHubCLIInstallTool(ClaudeMCPTool):
     """
@@ -146,7 +156,6 @@ class GitHubCLIInstallTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class GitHubCLIExecuteTool(ClaudeMCPTool):
     """
@@ -230,7 +239,6 @@ class GitHubCLIExecuteTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class GitHubCLIAuthTool(ClaudeMCPTool):
     """
@@ -327,7 +335,6 @@ class GitHubCLIAuthTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class GitHubCLIRepoTool(ClaudeMCPTool):
     """

@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.legal_dataset_mcp_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Legal Dataset MCP Tools for Model Context Protocol.
@@ -26,7 +38,6 @@ from typing import Any, Dict, List, Optional
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
-
 
 class ScrapeRECAPArchiveTool(ClaudeMCPTool):
     """
@@ -147,7 +158,6 @@ class ScrapeRECAPArchiveTool(ClaudeMCPTool):
                 "metadata": {}
             }
 
-
 class SearchRECAPDocumentsTool(ClaudeMCPTool):
     """
     MCP Tool for searching RECAP Archive documents.
@@ -238,7 +248,6 @@ class SearchRECAPDocumentsTool(ClaudeMCPTool):
                 "documents": [],
                 "count": 0
             }
-
 
 class ScrapeStateLawsTool(ClaudeMCPTool):
     """
@@ -344,7 +353,6 @@ class ScrapeStateLawsTool(ClaudeMCPTool):
                 "metadata": {}
             }
 
-
 class ListScrapingJobsTool(ClaudeMCPTool):
     """
     MCP Tool for listing all scraping jobs.
@@ -425,7 +433,6 @@ class ListScrapingJobsTool(ClaudeMCPTool):
                 "jobs": []
             }
 
-
 class ScrapeUSCodeTool(ClaudeMCPTool):
     """
     MCP Tool for scraping United States Code.
@@ -499,7 +506,6 @@ class ScrapeUSCodeTool(ClaudeMCPTool):
                 "data": [],
                 "metadata": {}
             }
-
 
 class ScrapeMunicipalCodesTool(ClaudeMCPTool):
     """
@@ -677,7 +683,6 @@ class ScrapeMunicipalCodesTool(ClaudeMCPTool):
                 "data": [],
                 "metadata": {}
             }
-
 
 # Import patent tools
 try:

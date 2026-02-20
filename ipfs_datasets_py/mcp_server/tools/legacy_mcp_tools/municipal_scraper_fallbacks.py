@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.municipal_scraper_fallbacks is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Municipal Code Scraper Fallback Methods.
@@ -23,9 +35,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-
 logger = logging.getLogger(__name__)
-
 
 class MunicipalScraperFallbacks:
     """
@@ -403,10 +413,8 @@ class MunicipalScraperFallbacks:
         """
         return [self.get_method_info(method) for method in self.supported_methods]
 
-
 # Create a global instance for easy access
 fallback_scraper = MunicipalScraperFallbacks()
-
 
 async def scrape_with_fallbacks(
     url: str,

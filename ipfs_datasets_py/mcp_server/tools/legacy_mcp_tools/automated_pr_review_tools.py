@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.development_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.automated_pr_review_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.development_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Automated PR Review MCP Tools
@@ -25,7 +37,6 @@ sys.path.insert(0, str(scripts_dir))
 from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 
 logger = logging.getLogger(__name__)
-
 
 class AutomatedPRReviewTool(ClaudeMCPTool):
     """
@@ -113,7 +124,6 @@ class AutomatedPRReviewTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class AnalyzePRTool(ClaudeMCPTool):
     """
@@ -216,7 +226,6 @@ class AnalyzePRTool(ClaudeMCPTool):
                 "error": str(e)
             }
 
-
 class InvokeCopilotOnPRTool(ClaudeMCPTool):
     """
     Tool for invoking GitHub Copilot on a specific PR.
@@ -303,7 +312,6 @@ class InvokeCopilotOnPRTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 # Export all tools
 __all__ = [

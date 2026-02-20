@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.development_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.copilot_cli_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.development_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 GitHub Copilot CLI MCP Tools
@@ -20,7 +32,6 @@ from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 from ipfs_datasets_py.utils.copilot_cli import CopilotCLI
 
 logger = logging.getLogger(__name__)
-
 
 class CopilotCLIStatusTool(ClaudeMCPTool):
     """
@@ -73,7 +84,6 @@ class CopilotCLIStatusTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class CopilotCLIInstallTool(ClaudeMCPTool):
     """
@@ -129,7 +139,6 @@ class CopilotCLIInstallTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class CopilotCLIExplainTool(ClaudeMCPTool):
     """
@@ -197,7 +206,6 @@ class CopilotCLIExplainTool(ClaudeMCPTool):
                 "error": str(e)
             }
 
-
 class CopilotCLISuggestCommandTool(ClaudeMCPTool):
     """
     Tool for getting shell command suggestions from natural language.
@@ -264,7 +272,6 @@ class CopilotCLISuggestCommandTool(ClaudeMCPTool):
                 "error": str(e)
             }
 
-
 class CopilotCLISuggestGitTool(ClaudeMCPTool):
     """
     Tool for getting Git command suggestions from natural language.
@@ -324,7 +331,6 @@ class CopilotCLISuggestGitTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 # Export all tools
 __all__ = [

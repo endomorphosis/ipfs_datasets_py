@@ -1,4 +1,16 @@
 #!/usr/bin/env python
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.legal_dataset_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.patent_scraper is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.legal_dataset_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Patent Scraper for USPTO PatentsView API.
@@ -23,7 +35,6 @@ from urllib3.util.retry import Retry
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class PatentSearchCriteria:
     """Criteria for searching patents."""
@@ -38,7 +49,6 @@ class PatentSearchCriteria:
     ipc_classification: Optional[List[str]] = None  # International Patent Classification
     limit: int = 100
     offset: int = 0
-
 
 @dataclass
 class Patent:
@@ -57,7 +67,6 @@ class Patent:
     description: Optional[str] = None
     citations: Optional[List[str]] = None
     raw_data: Optional[Dict[str, Any]] = None
-
 
 class USPTOPatentScraper:
     """
@@ -326,7 +335,6 @@ class USPTOPatentScraper:
             fields
         )
 
-
 class PatentDatasetBuilder:
     """
     Build patent datasets for ETL into GraphRAG.
@@ -428,7 +436,6 @@ class PatentDatasetBuilder:
             output_path
         )
 
-
 # Convenience functions
 def search_patents_by_keyword(
     keywords: List[str],
@@ -450,7 +457,6 @@ def search_patents_by_keyword(
     criteria = PatentSearchCriteria(keywords=keywords, limit=limit)
     return scraper.search_patents(criteria)
 
-
 def search_patents_by_inventor(
     inventor_name: str,
     limit: int = 100,
@@ -470,7 +476,6 @@ def search_patents_by_inventor(
     scraper = USPTOPatentScraper(rate_limit_delay=rate_limit_delay)
     criteria = PatentSearchCriteria(inventor_name=inventor_name, limit=limit)
     return scraper.search_patents(criteria)
-
 
 def search_patents_by_assignee(
     assignee_name: str,

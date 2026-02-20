@@ -1,4 +1,16 @@
 #!/usr/bin/env python3
+
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.development_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.claude_cli_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.development_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 # -*- coding: utf-8 -*-
 """
 Anthropic Claude CLI MCP Tools
@@ -19,7 +31,6 @@ from ipfs_datasets_py.mcp_server.tool_registry import ClaudeMCPTool
 from ipfs_datasets_py.utils.claude_cli import ClaudeCLI
 
 logger = logging.getLogger(__name__)
-
 
 class ClaudeCLIStatusTool(ClaudeMCPTool):
     """
@@ -72,7 +83,6 @@ class ClaudeCLIStatusTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class ClaudeCLIInstallTool(ClaudeMCPTool):
     """
@@ -139,7 +149,6 @@ class ClaudeCLIInstallTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class ClaudeCLIExecuteTool(ClaudeMCPTool):
     """
@@ -229,7 +238,6 @@ class ClaudeCLIExecuteTool(ClaudeMCPTool):
                 "success": False,
                 "error": str(e)
             }
-
 
 class ClaudeCLIConfigTool(ClaudeMCPTool):
     """
