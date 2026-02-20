@@ -86,7 +86,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ### C. Logging, metrics, and observability
 
 - [ ] (P2) [obs] Ensure all optimizers accept an optional logger and use consistent log keys.
-- [ ] (P2) [obs] Add minimal metrics hooks for session durations, score deltas, and error counts.
+- [x] (P2) [obs] Add minimal metrics hooks for session durations, score deltas, and error counts. — Done 2026-02-20: BaseOptimizer.run_session() + BaseSession.score_delta/avg_score/regression_count
 
 ### D. Testing strategy (incremental, practical)
 
@@ -118,9 +118,9 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### 3) `graphrag/ontology_generator.py`
 
-- [ ] (P2) [graphrag] Implement relationship inference (start with heuristics; keep deterministic options).
-- [ ] (P2) [graphrag] Implement rule-based extraction for at least one domain.
-- [ ] (P2) [graphrag] Implement smart ontology merging (dedupe by ID, merge properties, track provenance).
+- [x] (P2) [graphrag] Implement relationship inference (start with heuristics; keep deterministic options). — Done: infer_relationships() in ontology_generator.py
+- [x] (P2) [graphrag] Implement rule-based extraction for at least one domain. — Done: _extract_rule_based() in ontology_generator.py (legal/medical/general)
+- [x] (P2) [graphrag] Implement smart ontology merging (dedupe by ID, merge properties, track provenance). — Done: _merge_ontologies() in ontology_generator.py
 - [ ] (P3) [graphrag] Implement LLM-based extraction via `ipfs_accelerate_py` behind a feature flag.
 - [ ] (P3) [graphrag] Implement hybrid/neural extraction strategies.
 
@@ -147,7 +147,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ## Logic theorem optimizer backlog
 
-- [ ] (P2) [logic] Implement `logic_theorem_optimizer/cli_wrapper.py` theorem proving entrypoint (even a minimal stub wired to an existing prover integration).
+- [x] (P2) [logic] Implement `logic_theorem_optimizer/cli_wrapper.py` theorem proving entrypoint (even a minimal stub wired to an existing prover integration). — Done: full 567-line CLI with extract/prove/validate/optimize commands
 - [ ] (P2) [tests] Add a minimal end-to-end “theorem session” smoke test.
 
 ---
@@ -336,8 +336,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### T2 — Integration tests
 
-- [ ] (P2) [tests] End-to-end test: `OntologyGenerator → OntologyCritic → OntologyMediator` refinement loop
-- [ ] (P2) [tests] End-to-end test: `LogicTheoremOptimizer.run_session()` on a trivial theorem
+- [x] (P2) [tests] End-to-end test: `OntologyGenerator → OntologyCritic → OntologyMediator` refinement loop — Done 2026-02-20: test_pipeline_harness_e2e.py (16 tests)
+- [x] (P2) [tests] End-to-end test: `LogicTheoremOptimizer.run_session()` on a trivial theorem — Done 2026-02-20: test_metrics_wiring.py
 - [ ] (P2) [tests] CLI test: `graphrag-optimizer generate ...` on a fixture text file
 - [ ] (P2) [tests] CLI test: `logic-theorem-optimizer prove` on a trivial theorem
 - [ ] (P3) [tests] Mutation testing pass on `graphrag/ontology_critic.py` dimension evaluators
