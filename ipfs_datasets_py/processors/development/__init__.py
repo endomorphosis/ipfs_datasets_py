@@ -1,8 +1,8 @@
 """
 Development tooling package for ipfs_datasets_py.
 
-Provides codebase search, linting, and software engineering theorems
-for temporal deontic logic reasoning.
+Provides codebase search, linting, software engineering theorems, and JSON-to-Python
+AST conversion for temporal deontic logic reasoning.
 
 Reusable by:
 - MCP server tools (mcp_server/tools/development_tools/, mcp_server/tools/software_engineering_tools/)
@@ -28,6 +28,11 @@ from .software_theorems_engine import (
     validate_against_theorem,
     apply_theorem_actions,
 )
+from .json_to_python_engine import (
+    json_to_python_file,
+    _JsonToAst,
+    _UnKnownNodeException,
+)
 
 __all__ = [
     "SearchMatch",
@@ -43,4 +48,7 @@ __all__ = [
     "list_software_theorems",
     "validate_against_theorem",
     "apply_theorem_actions",
+    "json_to_python_file",
+    "_JsonToAst",
+    "_UnKnownNodeException",
 ]

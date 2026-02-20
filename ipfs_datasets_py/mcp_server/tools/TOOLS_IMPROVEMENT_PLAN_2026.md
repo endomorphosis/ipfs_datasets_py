@@ -606,8 +606,14 @@ category purpose, listing core functions, and noting key dependencies.
 | D | Add module docstrings to 7 category `__init__.py` | 30min | Low-Medium | 🟢 Later | ✅ Done |
 | D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | ✅ Done |
 | D | Activate remaining ~4 `_test_*.py` files | 1-2h | Low | 🟢 Later | 🟡 Deferred |
+| E+F | Session 1: move 21 engine files to package modules | 4h | High | 🔴 High | ✅ Done |
+| E+F | Session 2: thin 5 thick tools (monitoring/analysis/bg_task/sparse_emb/rate_limit) | 3h | High | 🔴 High | ✅ Done |
+| E+F | Session 3: thin 5 thick tools (serpstack/openverse/finance_theorems/sw_theorems/ai_dataset_builder) | 3h | High | 🔴 High | ✅ Done |
+| E+F | Session 4: thin 5 thick tools (clinical_trials/pubmed/github_repo/patent/session) | 3h | High | 🔴 High | ✅ Done |
+| E+F | Session 5: thin 7 thick tools (auth/geospatial/municipal/state_laws/incremental/hf_pipeline) | 3h | High | 🔴 High | ✅ Done |
+| E+F | Session 6: thin 9 thick tools (hf_search/gh_search/autoscraper/archive_is/discord/verify_fr/verify_usc/json2py) | 3h | High | 🔴 High | ✅ Done |
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase D session 4: D2 ✅ 4 engine modules extracted, 12 boilerplate blocks deduplicated)  
+**Last Updated:** 2026-02-20 (Phase E+F session 6: 9 more tool files thinned to ≤31 lines each; 9 new engine modules in web_archiving/, processors/discord/, processors/legal_scrapers/, processors/development/)
 **Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)

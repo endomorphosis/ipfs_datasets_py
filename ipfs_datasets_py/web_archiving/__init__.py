@@ -9,6 +9,12 @@ Engine classes:
     - scrape_github_repository  (github_repository_engine.py)
     - analyze_repository_health (github_repository_engine.py)
 
+Search engine functions:
+    - search_huggingface_models, search_huggingface_datasets, ...  (huggingface_search_engine.py)
+    - search_github_repositories, search_github_code, ...          (github_search_engine.py)
+    - create_autoscraper_model, scrape_with_autoscraper, ...       (autoscraper_engine.py)
+    - archive_to_archive_is, search_archive_is, ...                (archive_is_engine.py)
+
 MCP tool wrappers live in:
     ipfs_datasets_py/mcp_server/tools/web_archive_tools/
     ipfs_datasets_py/mcp_server/tools/software_engineering_tools/
@@ -23,6 +29,50 @@ from .github_repository_engine import (  # noqa: F401
     scrape_github_repository,
 )
 
+try:
+    from .huggingface_search_engine import (  # noqa: F401
+        batch_search_huggingface,
+        get_huggingface_model_info,
+        search_huggingface_datasets,
+        search_huggingface_models,
+        search_huggingface_spaces,
+    )
+except Exception:
+    pass
+
+try:
+    from .github_search_engine import (  # noqa: F401
+        batch_search_github,
+        search_github_code,
+        search_github_issues,
+        search_github_repositories,
+        search_github_users,
+    )
+except Exception:
+    pass
+
+try:
+    from .autoscraper_engine import (  # noqa: F401
+        batch_scrape_with_autoscraper,
+        create_autoscraper_model,
+        list_autoscraper_models,
+        optimize_autoscraper_model,
+        scrape_with_autoscraper,
+    )
+except Exception:
+    pass
+
+try:
+    from .archive_is_engine import (  # noqa: F401
+        archive_to_archive_is,
+        batch_archive_to_archive_is,
+        check_archive_status,
+        get_archive_is_content,
+        search_archive_is,
+    )
+except Exception:
+    pass
+
 __all__ = [
     "BraveSearchAPI",
     "SerpStackSearchAPI",
@@ -30,4 +80,28 @@ __all__ = [
     "GitHubRepositoryScraper",
     "scrape_github_repository",
     "analyze_repository_health",
+    # HuggingFace
+    "search_huggingface_models",
+    "search_huggingface_datasets",
+    "search_huggingface_spaces",
+    "get_huggingface_model_info",
+    "batch_search_huggingface",
+    # GitHub Search
+    "search_github_repositories",
+    "search_github_code",
+    "search_github_users",
+    "search_github_issues",
+    "batch_search_github",
+    # AutoScraper
+    "create_autoscraper_model",
+    "scrape_with_autoscraper",
+    "optimize_autoscraper_model",
+    "batch_scrape_with_autoscraper",
+    "list_autoscraper_models",
+    # Archive.is
+    "archive_to_archive_is",
+    "search_archive_is",
+    "get_archive_is_content",
+    "check_archive_status",
+    "batch_archive_to_archive_is",
 ]

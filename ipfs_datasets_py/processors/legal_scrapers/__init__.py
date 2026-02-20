@@ -308,6 +308,21 @@ except ImportError:
     HuggingFaceAPISearch = None
     HAVE_HF_API_SEARCH = False
 
+# Verifier engines (new — extracted from MCP tool verification scripts)
+try:
+    from .federal_register_verifier import FederalRegisterVerifier
+    HAVE_FEDERAL_REGISTER_VERIFIER = True
+except Exception:
+    FederalRegisterVerifier = None  # type: ignore[assignment]
+    HAVE_FEDERAL_REGISTER_VERIFIER = False
+
+try:
+    from .us_code_verifier import USCodeVerifier
+    HAVE_US_CODE_VERIFIER = True
+except Exception:
+    USCodeVerifier = None  # type: ignore[assignment]
+    HAVE_US_CODE_VERIFIER = False
+
 # Parallel web archiver (Enhancement 11 Part 2)
 try:
     from .parallel_web_archiver import (
@@ -497,6 +512,11 @@ __all__ = [
     # HuggingFace API search (Enhancement 11 Part 1)
     "HuggingFaceAPISearch",
     "HAVE_HF_API_SEARCH",
+    # Verifier engines
+    "FederalRegisterVerifier",
+    "HAVE_FEDERAL_REGISTER_VERIFIER",
+    "USCodeVerifier",
+    "HAVE_US_CODE_VERIFIER",
     
     # Parallel web archiver (Enhancement 11 Part 2)
     "ParallelWebArchiver",
