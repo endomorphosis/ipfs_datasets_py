@@ -82,26 +82,25 @@ class TDFOLCECBridge(BaseProverBridge):
         """Load CEC inference rules."""
         if not self.cec_available:
             return []
-        
-        # Get all inference rule classes from prover_core
+
         import inspect
-        rules = []
-        
+        rules: List[Any] = []
+
         try:
-            # Get all classes that inherit from InferenceRule
-            members = inspect.getmembers(prover_core, inspect.isclass)
-            
-            for name, cls in members:
-                if 'Rule' in name and name != 'InferenceRule':
-                    try:
-                        # Instantiate the rule
-                        rule_instance = cls()
-                        rules.append(rule_instance)
-                    except Exception as e:
-                        logger.debug(f"Could not instantiate {name}: {e}")
+            # Import InferenceRule base and search for subclasses in prover_core
+            from ...CEC.native.prover_core import InferenceRule  # noqa: F401
+
+            for attr_name in dir(prover_core):
+                try:
+                    cls = getattr(prover_core, attr_name)
+                    if (inspect.isclass(cls) and issubclass(cls, InferenceRule)
+                            and cls is not InferenceRule):
+                        rules.append(cls())
+                except Exception as ex:
+                    logger.debug(f"Could not instantiate {attr_name}: {ex}")
         except Exception as e:
             logger.warning(f"Failed to load CEC rules: {e}")
-        
+
         return rules
     
     def to_target_format(self, formula: Formula) -> str:

@@ -242,9 +242,13 @@ class DCECNamespace:
         return predicate
     
     @beartype  # type: ignore[untyped-decorator]
-    def get_predicate(self, name: str) -> Optional[Predicate]:
-        """Get a predicate by name."""
-        return self.predicates.get(name)
+    def get_predicate(self, name: str, arity: int = None) -> Optional[Predicate]:
+        """Get a predicate by name. If not found and arity is given, auto-creates it."""
+        pred = self.predicates.get(name)
+        if pred is None and arity is not None:
+            # Auto-create predicate with empty sorts (arity ignored for backward compat)
+            pred = self.add_predicate(name, [])
+        return pred
     
     def get_statistics(self) -> Dict[str, int]:
         """Get statistics about the namespace."""
@@ -345,6 +349,10 @@ class DCECContainer:
         self.theorems.append(statement)
         return statement
     
+    def add_axiom(self, formula: Formula, label: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> "DCECStatement":
+        """Add a statement as an axiom (convenience alias for add_statement with is_axiom=True)."""
+        return self.add_statement(formula, label=label, is_axiom=True, metadata=metadata)
+
     def get_all_statements(self) -> List[DCECStatement]:
         """Get all statements in the container."""
         return self.statements.copy()

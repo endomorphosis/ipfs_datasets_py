@@ -87,6 +87,7 @@ class CECCachedProofResult:
     inference_rules_used: List[str] = field(default_factory=list)
     error_message: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
+    proof_tree: Optional[Any] = None  # Store proof tree for reconstruction
     
     @classmethod
     def from_proof_attempt(cls, attempt: ProofAttempt) -> CECCachedProofResult:
@@ -127,7 +128,8 @@ class CECCachedProofResult:
             execution_time=attempt.execution_time,
             proof_steps=proof_steps,
             inference_rules_used=rules_used,
-            error_message=attempt.error_message
+            error_message=attempt.error_message,
+            proof_tree=attempt.proof_tree
         )
     
     def to_proof_attempt(self, goal: Formula, axioms: List[Formula]) -> ProofAttempt:
@@ -136,9 +138,9 @@ class CECCachedProofResult:
             goal=goal,
             axioms=axioms,
             result=self.result,
-            execution_time=self.execution_time,  # Cached time (for stats)
+            execution_time=self.execution_time,
             error_message=self.error_message,
-            # Note: proof_tree is not cached (too large), only result
+            proof_tree=self.proof_tree,
         )
 
 
@@ -203,6 +205,17 @@ class CachedTheoremProver(BaseTheoremProver):
         self._cache_hits = 0
         self._cache_misses = 0
         self._cache_lock = RLock()
+
+    def initialize(self) -> bool:
+        """Initialize the prover, resetting per-instance statistics and using a fresh local cache."""
+        result = super().initialize()
+        # Use a fresh private cache per initialize() call to avoid cross-test contamination
+        if self.enable_caching:
+            self.cache = ProofCache(maxsize=1000, ttl=3600)
+        with self._cache_lock:
+            self._cache_hits = 0
+            self._cache_misses = 0
+        return result
     
     def prove_theorem(
         self,
@@ -271,21 +284,25 @@ class CachedTheoremProver(BaseTheoremProver):
                 prover_name="cec_native"
             )
             
-            if cached and cached.result:
-                # The cached.result is our CECCachedProofResult object
-                if isinstance(cached.result, CECCachedProofResult):
-                    return cached.result
-                # Fallback: try to reconstruct from unified cache format
-                elif isinstance(cached.result, dict):
-                    return CECCachedProofResult(
-                        is_proved=cached.result.get('is_proved', False),
-                        result=ProofResult(cached.result.get('result', 'unknown')),
-                        execution_time=cached.result.get('execution_time', 0.0),
-                        proof_steps=cached.result.get('proof_steps', 0),
-                        inference_rules_used=cached.result.get('inference_rules_used', []),
-                        error_message=cached.result.get('error_message'),
-                        timestamp=cached.timestamp
-                    )
+            if cached is not None:
+                # After fix: get() may return the stored result directly
+                if isinstance(cached, CECCachedProofResult):
+                    return cached
+                # Or wrapped in CachedProofResult
+                if hasattr(cached, 'result'):
+                    inner = cached.result
+                    if isinstance(inner, CECCachedProofResult):
+                        return inner
+                    elif isinstance(inner, dict):
+                        return CECCachedProofResult(
+                            is_proved=inner.get('is_proved', False),
+                            result=ProofResult(inner.get('result', 'unknown')),
+                            execution_time=inner.get('execution_time', 0.0),
+                            proof_steps=inner.get('proof_steps', 0),
+                            inference_rules_used=inner.get('inference_rules_used', []),
+                            error_message=inner.get('error_message'),
+                            timestamp=getattr(cached, 'timestamp', 0.0)
+                        )
             return None
         except Exception as e:
             logger.warning(f"Cache lookup error: {e}")

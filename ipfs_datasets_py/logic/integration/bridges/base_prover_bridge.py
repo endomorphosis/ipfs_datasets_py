@@ -55,6 +55,16 @@ class BaseProverBridge(ABC):
         """Initialize the bridge."""
         self._metadata = self._init_metadata()
         self._available = self._check_availability()
+
+    @property
+    def available(self) -> bool:
+        """Whether this bridge's target system is available."""
+        return self._available
+
+    @available.setter
+    def available(self, value: bool) -> None:
+        """Allow subclasses to override availability (e.g., on init failure)."""
+        self._available = value
     
     @abstractmethod
     def _init_metadata(self) -> BridgeMetadata:

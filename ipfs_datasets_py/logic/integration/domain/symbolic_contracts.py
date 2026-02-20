@@ -13,7 +13,47 @@ try:
 except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+try:
+    from pydantic import BaseModel, Field, field_validator, ConfigDict
+    PYDANTIC_AVAILABLE = True
+except ImportError:
+    PYDANTIC_AVAILABLE = False
+    # Minimal stubs so the rest of the module loads without pydantic installed
+    def ConfigDict(**kwargs):  # type: ignore
+        return kwargs
+
+    class BaseModel:  # type: ignore
+        """Minimal pydantic.BaseModel stub."""
+        model_config = None
+        _field_defaults: dict = {}
+
+        def __init__(self, **data):
+            # Apply str_strip_whitespace if configured
+            strip = (self.model_config or {}).get("str_strip_whitespace", False) if isinstance(self.model_config, dict) else False
+            for k, v in data.items():
+                if strip and isinstance(v, str):
+                    v = v.strip()
+                setattr(self, k, v)
+            # Apply defaults for fields not provided
+            for name in list(getattr(self.__class__, '__annotations__', {}).keys()):
+                if name not in data:
+                    cls_val = getattr(self.__class__, name, None)
+                    # If class attribute is a type/class (used as default_factory), call it
+                    if isinstance(cls_val, type):
+                        setattr(self, name, cls_val())
+                    elif cls_val is not None and not callable(cls_val):
+                        setattr(self, name, cls_val)
+                    # else leave unset (will use class attr, which may be fine)
+
+    def Field(default=None, default_factory=None, **kwargs):  # type: ignore
+        if default_factory is not None:
+            return default_factory
+        return default
+
+    def field_validator(*args, **kwargs):  # type: ignore
+        def decorator(func):
+            return func
+        return decorator
 import re
 import json
 
@@ -667,18 +707,32 @@ else:
             try:
                 # Basic pattern-based conversion
                 text = input_data.text.lower()
+                output_format = getattr(input_data, 'output_format', 'symbolic')
                 
                 if "all " in text or "every " in text:
-                    formula = f"∀x Statement(x)"
+                    formula_symbolic = f"∀x Statement(x)"
                 elif "some " in text:
-                    formula = f"∃x Statement(x)"
+                    formula_symbolic = f"∃x Statement(x)"
                 else:
-                    formula = f"Statement({text.replace(' ', '_')})"
+                    formula_symbolic = f"Statement({text.replace(' ', '_')})"
+                
+                # Convert to requested format
+                if output_format == "prolog":
+                    formula = formula_symbolic.replace('∀', 'forall').replace('∃', 'exists').replace('→', ':-')
+                elif output_format == "tptp":
+                    formula = formula_symbolic.replace('∀', '!').replace('∃', '?').replace('→', '=>').replace('∧', '&')
+                    formula = f"fof(statement, axiom, {formula})."
+                else:
+                    formula = formula_symbolic
                 
                 return FOLOutput(
                     fol_formula=formula,
                     confidence=0.6,
-                    logical_components={"quantifiers": [], "predicates": [], "entities": []},
+                    logical_components={
+                        "quantifiers": ["∀"] if "∀" in formula else (["∃"] if "∃" in formula else []),
+                        "predicates": ["Statement"],
+                        "entities": [],
+                    },
                     reasoning_steps=["Used fallback conversion"],
                     warnings=["SymbolicAI not available - using basic conversion"],
                     metadata={"fallback": True}

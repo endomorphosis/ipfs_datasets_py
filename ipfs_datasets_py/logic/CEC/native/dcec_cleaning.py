@@ -15,6 +15,7 @@ Functions:
 
 from typing import Optional
 import logging
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -143,6 +144,16 @@ def consolidate_parens(expression: str) -> str:
             continue
         returner += temp[x]
     
+    # Additional pass: remove redundant single-atom parens like (a) → a
+    # but only inside a multi-element expression (i.e., when the result has spaces).
+    # This avoids stripping the outermost wrapper from a lone atomic like "(a)".
+    if ' ' in returner:
+        _inner_atom_re = re.compile(r'(?<![A-Za-z0-9_])\(([A-Za-z_][A-Za-z0-9_]*)\)(?![A-Za-z0-9_])')
+        prev = None
+        while prev != returner:
+            prev = returner
+            returner = _inner_atom_re.sub(r'\1', returner)
+
     return returner
 
 

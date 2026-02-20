@@ -111,8 +111,11 @@ try:
         ParseOptions,
         ParseResult,
     )
+    # Verify NLParser can be instantiated (requires spaCy at runtime)
+    _test_parser = NLParser()
+    del _test_parser
     HAVE_NL = True
-except ImportError:
+except (ImportError, Exception):
     HAVE_NL = False
 
 

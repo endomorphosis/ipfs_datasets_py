@@ -25,6 +25,7 @@ class ConversionStatus(Enum):
     PARTIAL = "partial"  # Conversion succeeded with warnings
     FAILED = "failed"
     CACHED = "cached"  # Result from cache
+    VALIDATION_FAILED = "validation_failed"  # Input validation failed
 
 
 @dataclass

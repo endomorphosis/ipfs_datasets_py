@@ -58,4 +58,24 @@ async def logic_health() -> Dict[str, Any]:
     return await _PROCESSOR.check_health()
 
 
-__all__ = ["logic_capabilities", "logic_health"]
+__all__ = ["logic_capabilities", "logic_health", "LogicHealthTool", "LogicCapabilitiesTool"]
+
+
+class LogicHealthTool:
+    """OOP wrapper for the logic_health MCP tool."""
+    name = "logic_health"
+    category = "logic_tools"
+    tags = ["logic", "health", "monitoring"]
+
+    async def execute(self, params=None, **kwargs) -> Dict[str, Any]:
+        return await logic_health()
+
+
+class LogicCapabilitiesTool:
+    """OOP wrapper for the logic_capabilities MCP tool."""
+    name = "logic_capabilities"
+    category = "logic_tools"
+    tags = ["logic", "capabilities", "info"]
+
+    async def execute(self, params=None, **kwargs) -> Dict[str, Any]:
+        return await logic_capabilities()

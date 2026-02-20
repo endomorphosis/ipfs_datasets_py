@@ -178,7 +178,7 @@ class TestNeuralProverIntegration:
         """
         from ipfs_datasets_py.logic.TDFOL import parse_tdfol
         
-        formula = parse_tdfol("O(P)")  # Obligation
+        formula = parse_tdfol("O(action)")  # Obligation (O(P) fails as P is deontic op)
         assert formula is not None
         
         # Neural prover should handle modal operators

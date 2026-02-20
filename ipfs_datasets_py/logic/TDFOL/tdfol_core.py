@@ -58,6 +58,10 @@ class DeonticOperator(Enum):
     OBLIGATION = "O"     # Obligatory (must)
     PERMISSION = "P"     # Permissible (may)
     PROHIBITION = "F"    # Forbidden (must not)
+    # Aliases for backward compatibility
+    OBLIGATORY = "O"
+    PERMISSIBLE = "P"
+    FORBIDDEN = "F"
 
 
 class TemporalOperator(Enum):
@@ -220,6 +224,11 @@ class Predicate(Formula):
     
     name: str
     arguments: Tuple[Term, ...]
+    
+    def __post_init__(self) -> None:
+        # Accept lists and convert to tuples for hashability
+        if isinstance(self.arguments, list):
+            object.__setattr__(self, 'arguments', tuple(self.arguments))
     
     def to_string(self, pretty: bool = False) -> str:
         if not self.arguments:
@@ -557,6 +566,21 @@ class ProofResult:
     def is_conclusive(self) -> bool:
         """Check if result is conclusive (proved or disproved)."""
         return self.status in (ProofStatus.PROVED, ProofStatus.DISPROVED)
+
+    def __getitem__(self, key: str):
+        """Dict-like access for backward compatibility (e.g. result['strategy'])."""
+        mapping = {
+            'status': self.status.value if hasattr(self.status, 'value') else str(self.status),
+            'proved': self.is_proved(),
+            'method': self.method,
+            'strategy': self.method,
+            'time_ms': self.time_ms,
+            'message': self.message,
+            'proof_steps': self.proof_steps,
+        }
+        if key in mapping:
+            return mapping[key]
+        raise KeyError(key)
 
 
 # ============================================================================

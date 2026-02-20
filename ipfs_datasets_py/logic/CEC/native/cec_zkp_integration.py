@@ -346,7 +346,18 @@ class ZKPCECProver:
         self._zkp_successes = 0
         self._standard_proofs = 0
         self._cache_hits = 0
-    
+
+    def initialize(self) -> None:
+        """No-op initializer for API compatibility (all init done in __init__)."""
+        # Ensure kb is set for backward compat
+        if not hasattr(self, 'kb'):
+            try:
+                from .prover_core import ProofSearchEngine
+                self.kb = ProofSearchEngine()
+            except Exception:
+                from types import SimpleNamespace
+                self.kb = SimpleNamespace(axioms=[], rules=[])
+
     def prove_theorem(
         self,
         goal: Formula,
@@ -354,7 +365,8 @@ class ZKPCECProver:
         timeout: Optional[float] = None,
         prefer_zkp: bool = False,
         private_axioms: bool = False,
-        use_cache: bool = True
+        use_cache: bool = True,
+        force_standard: bool = False,  # compat: same as not prefer_zkp
     ) -> UnifiedCECProofResult:
         """
         Prove a theorem using hybrid strategy.
@@ -377,6 +389,12 @@ class ZKPCECProver:
         """
         axioms = axioms or []
         start_time = time.time()
+
+        # force_standard=True means skip ZKP and cache
+        if force_standard:
+            prefer_zkp = False
+            private_axioms = False
+            use_cache = False
         
         # Strategy 1: Try cache first (if enabled)
         if use_cache and self.cached_prover.enable_caching:
@@ -415,7 +433,7 @@ class ZKPCECProver:
                     logger.debug("ZKP proof failed, falling back to standard")
             except Exception as e:
                 logger.warning(f"ZKP proof error: {e}")
-                if self.zkp_fallback != "standard":
+                if self.zkp_fallback not in ("standard", "simulated"):
                     raise
         
         # Strategy 3: Standard proving (fallback or primary)
@@ -461,7 +479,10 @@ class ZKPCECProver:
         
         try:
             # Generate ZKP proof
-            zkp_proof = self.zkp_prover.prove(statement, witness)
+            # Convert statement dict to string for ZKPProver.prove() which expects str
+            statement_str = (statement if isinstance(statement, str)
+                             else f"{statement.get('goal', '')}#{statement.get('axioms_hash', '')}")
+            zkp_proof = self.zkp_prover.prove(statement_str, witness)
             
             # Verify proof
             is_valid = self.zkp_verifier.verify(statement, zkp_proof)

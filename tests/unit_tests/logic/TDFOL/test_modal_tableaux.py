@@ -411,12 +411,8 @@ class TestKLogic:
         result = tableaux.prove(formula)
         
         # THEN
-        # This should be satisfiable in K (countermodel exists)
-        assert result.is_valid is True  # ¬(□P → P) is unsatisfiable means □P → P is not K-valid
-        # Actually in K, □P → P is not valid, so ¬(□P → P) is satisfiable
-        # Let me correct: we're proving ¬(□P → P), if all branches close, it's valid
-        # But ¬(□P → P) ≡ □P ∧ ¬P which should be satisfiable in K
-        # when there's a world w0 where □P holds but P doesn't
+        # ¬(□P → P) ≡ □P ∧ ¬P is satisfiable in K (countermodel: world with no accessible worlds)
+        assert result.is_valid is False  # □P → P is not K-valid; ¬(□P→P) has an open branch
 
 
 class TestTLogic:

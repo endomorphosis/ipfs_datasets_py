@@ -191,6 +191,7 @@ class TDFOLShadowProverBridge(BaseProverBridge):
         self,
         formula: Formula,
         logic_type: Optional[ModalLogicType] = None,
+        modal_type: Optional[ModalLogicType] = None,  # compat alias for logic_type
         timeout_ms: int = 5000
     ) -> ProofResult:
         """
@@ -212,7 +213,11 @@ class TDFOLShadowProverBridge(BaseProverBridge):
                 method="shadowprover",
                 message="ShadowProver not available"
             )
-        
+
+        # Resolve modal_type alias
+        if modal_type is not None and logic_type is None:
+            logic_type = modal_type
+
         import time
         start_time = time.time()
         

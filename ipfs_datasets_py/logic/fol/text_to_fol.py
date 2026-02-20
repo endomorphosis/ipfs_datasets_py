@@ -56,6 +56,10 @@ async def convert_text_to_fol(
         stacklevel=2
     )
     
+    # Validate confidence threshold before entering try/except
+    if not 0.0 <= confidence_threshold <= 1.0:
+        raise ValueError(f"Confidence threshold must be between 0.0 and 1.0, got {confidence_threshold}")
+
     try:
         # Handle None input
         if text_input is None:
@@ -192,6 +196,7 @@ def _convert_result_to_legacy_format(conversion_result, original_text: str, outp
     result = {
         "original_text": original_text,
         "fol_formula": fol_formula.formula_string,
+        "fol": fol_formula.formula_string,  # alias for backward compatibility
         "confidence": fol_formula.confidence,
         "predicates_used": fol_formula.get_predicate_names(),
         "quantifiers": [q.value if hasattr(q, 'value') else str(q) for q in fol_formula.quantifiers],

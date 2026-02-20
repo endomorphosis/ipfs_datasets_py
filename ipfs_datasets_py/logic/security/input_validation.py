@@ -12,7 +12,7 @@ from typing import Any, List
 from ipfs_datasets_py.logic.config import get_config
 
 
-class ValidationError(Exception):
+class ValidationError(ValueError):
     """Raised when input validation fails."""
     pass
 

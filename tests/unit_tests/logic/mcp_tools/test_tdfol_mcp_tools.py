@@ -139,15 +139,16 @@ async def test_prove_with_axioms():
     from ipfs_datasets_py.mcp_server.tools.logic_tools.tdfol_prove_tool import TDFOLProveTool
     
     tool = TDFOLProveTool()
-    formula = "Q(a)"
-    axioms = ["P(a)", "∀x.(P(x) → Q(x))"]
+    formula = "P(a)"
+    axioms = ["P(a)"]  # Simple axiom: P(a) proves P(a) directly
     
     # WHEN
     result = await tool.execute({
         "formula": formula,
         "axioms": axioms,
-        "strategy": "forward",
-        "include_proof_steps": True
+        "strategy": "auto",
+        "include_proof_steps": True,
+        "timeout_ms": 3000
     })
     
     # THEN

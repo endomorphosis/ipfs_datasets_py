@@ -300,3 +300,22 @@ except ImportError as e:
 
 # Version reflects completion of all Phase 4 components + caching/ZKP
 __version__ = "1.1.0"
+
+
+def tokenize_dcec(expression: str):
+    """Tokenize a DCEC expression string into a list of tokens."""
+    import re
+    # Simple tokenizer: split on whitespace and parentheses
+    tokens = re.findall(r'[()]|[^\s()]+', expression)
+    return tokens
+
+
+# Export tokenize_dcec
+__all__.append("tokenize_dcec")
+
+# Export InferenceRule from inference_rules for Phase 4B
+try:
+    from .inference_rules.base import InferenceRule
+    __all__.append("InferenceRule")
+except ImportError:
+    pass

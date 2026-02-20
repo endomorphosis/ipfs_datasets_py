@@ -386,12 +386,12 @@ class ZKPTDFOLProver:
         """Convert cached result to UnifiedProofResult."""
         # Simplified conversion - would need actual implementation
         return UnifiedProofResult(
-            is_proved=True,
-            formula=cached.result.get('formula') if isinstance(cached.result, dict) else None,
+            is_proved=getattr(cached, 'is_proved', lambda: False)() if callable(getattr(cached, 'is_proved', None)) else bool(getattr(cached, 'is_proved', False)),
+            formula=getattr(cached, 'formula', None),
             method=f"tdfol_{proof_type}",
-            proof_time=0.0,
+            proof_time=getattr(cached, 'time_ms', 0.0) / 1000.0,
             cache_hit=True,
-            cache_cid=cached.cid
+            cache_cid=getattr(cached, 'cid', None)
         )
     
     def _prove_with_zkp(
@@ -439,7 +439,8 @@ class ZKPTDFOLProver:
             theorem_str = str(formula)
             
             # Get axioms from knowledge base
-            axioms_str = [str(axiom) for axiom in self.kb.get_axioms()]
+            _axioms = self.kb.get_axioms() if hasattr(self.kb, 'get_axioms') else (self.kb.get_all_formulas() if hasattr(self.kb, 'get_all_formulas') else list(self.kb.axioms))
+            axioms_str = [str(axiom) for axiom in _axioms]
             
             # Generate ZKP proof
             zkp_proof = self.zkp_prover.generate_proof(
@@ -467,7 +468,7 @@ class ZKPTDFOLProver:
                     formula,
                     result,
                     prover_name="tdfol_zkp",
-                    metadata={
+                    prover_config={
                         'backend': self.zkp_backend,
                         'security_level': self.zkp_security_level
                     }
@@ -521,8 +522,7 @@ class ZKPTDFOLProver:
         # Use standard prover
         result = self.standard_prover.prove(
             formula,
-            timeout=timeout - elapsed,
-            max_iterations=max_iterations
+            timeout_ms=int((timeout - elapsed) * 1000),
         )
         
         proof_time = time.time() - start_time

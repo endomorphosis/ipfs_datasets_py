@@ -166,3 +166,16 @@ __all__ = [
     "FOLConversionResult",
     "PredicateExtraction",
 ]
+
+# Make canonical types point to the authoritative class objects so that
+# `types.DeonticOperator is integration.deontic_logic_core.DeonticOperator`
+# and similar identity checks pass.
+try:
+    from ..integration.converters.deontic_logic_core import DeonticOperator  # noqa: F811
+except ImportError:
+    pass
+
+try:
+    from ..integration.converters.logic_translation_core import TranslationResult  # noqa: F811
+except ImportError:
+    pass

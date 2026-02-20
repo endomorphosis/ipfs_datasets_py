@@ -6,6 +6,7 @@ providing statistical confidence in correctness beyond fixed test cases.
 """
 
 import pytest
+hypothesis = pytest.importorskip("hypothesis", reason="hypothesis not installed")
 from hypothesis import given, strategies as st, settings, HealthCheck
 from ipfs_datasets_py.logic.zkp.canonicalization import (
     canonicalize_axioms,

@@ -1,6 +1,3 @@
-"""Backward-compatible neurosymbolic GraphRAG exports.
-
-New code should import from `ipfs_datasets_py.logic.integration.symbolic.neurosymbolic_graphrag`.
-"""
-
-from .symbolic.neurosymbolic_graphrag import *  # noqa: F403
+"""Backward-compatible re-export of neurosymbolic_graphrag module."""
+from .symbolic.neurosymbolic_graphrag import *  # noqa: F401, F403
+from .symbolic.neurosymbolic_graphrag import NeurosymbolicGraphRAG  # noqa: F401

@@ -433,7 +433,11 @@ class ProverManager:
             Dict with prover usage stats
         """
         return self.stats.copy()
-    
+
+    def get_statistics(self) -> Dict[str, Any]:
+        """Alias for get_stats() for API consistency."""
+        return self.get_stats()
+
     def reset_stats(self) -> None:
         """Reset usage statistics."""
         for key in self.stats:

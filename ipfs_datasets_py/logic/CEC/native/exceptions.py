@@ -86,7 +86,7 @@ class ParsingError(CECError):
         super().__init__(message, context=context, suggestion=suggestion)
 
 
-class ProvingError(CECError):
+class ProvingError(CECError, ValueError):
     """Raised when theorem proving operations fail."""
     
     def __init__(
@@ -206,7 +206,7 @@ class ValidationError(CECError, ValueError):
         super().__init__(message, context=context, suggestion=suggestion)
 
 
-class NamespaceError(CECError):
+class NamespaceError(CECError, ValueError):
     """Raised when namespace operations fail (symbol not found, duplicate definition, etc.)."""
     
     def __init__(

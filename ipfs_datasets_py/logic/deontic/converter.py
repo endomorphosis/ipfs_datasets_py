@@ -431,3 +431,12 @@ class DeonticConverter(LogicConverter[str, DeonticFormula]):
         if self.monitoring:
             return self.monitoring.get_stats()
         return {}
+
+    def to_deontic(self, text: str, **kwargs):
+        """Alias for convert() — convert text to deontic FOL formula string."""
+        result = self.convert(text, **kwargs)
+        if hasattr(result, 'output') and hasattr(result.output, 'to_fol_string'):
+            return result.output.to_fol_string()
+        if hasattr(result, 'output'):
+            return str(result.output)
+        return result

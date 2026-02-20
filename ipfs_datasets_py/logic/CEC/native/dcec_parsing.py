@@ -283,6 +283,16 @@ def prefix_logical_functions(
     """
     logic_keywords = ["not", "and", "or", "xor", "implies", "iff"]
     
+    # Handle unary prefix: ["not", operand] → [ParseToken("not", [operand])]
+    if len(args) == 2 and isinstance(args[0], str) and args[0] == "not":
+        operand = args[1]
+        if isinstance(operand, str) and operand not in logic_keywords:
+            if operand in add_atomics:
+                add_atomics[operand].append("Boolean")
+            else:
+                add_atomics[operand] = ["Boolean"]
+            return [ParseToken("not", [operand])]
+
     # Check for infix notation
     if len(args) < 3:
         return args
@@ -375,6 +385,16 @@ def prefix_emdas(
     """
     arithmetic_keywords = ["negate", "exponent", "multiply", "divide", "add", "sub"]
     
+    # Handle unary prefix: ["negate", operand] → [ParseToken("negate", [operand])]
+    if len(args) == 2 and isinstance(args[0], str) and args[0] == "negate":
+        operand = args[1]
+        if isinstance(operand, str) and operand not in arithmetic_keywords:
+            if operand in add_atomics:
+                add_atomics[operand].append("Numeric")
+            else:
+                add_atomics[operand] = ["Numeric"]
+            return [ParseToken("negate", [operand])]
+
     # Check for infix notation
     if len(args) < 3:
         return args
