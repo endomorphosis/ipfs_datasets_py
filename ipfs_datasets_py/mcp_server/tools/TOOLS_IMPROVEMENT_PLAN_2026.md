@@ -409,7 +409,7 @@ files exist but are not actually run. These should be reviewed and either activa
 **Goal:** Address code quality issues that affect maintainability.  
 **Estimated effort:** 10-14h  
 **Priority:** 🟡 Medium  
-**Status:** D1 ✅ complete, D3 ✅ partial (3 tests activated), D4 ✅ complete, D2 deferred
+**Status:** D1 ✅ complete, D3 ✅ substantially complete (9 test files activated, 101 tests), D4 ✅ complete, D2 deferred
 
 ### D1: Audit `legacy_mcp_tools/` — ✅ Complete
 
@@ -476,25 +476,38 @@ scheduled as a dedicated refactoring sprint with full test coverage:
 | `development_tools/claude_cli_server_tools.py` | 631 | CLI wrapper — less extractable |
 | `finance_data_tools/stock_scrapers.py` | 590 | Target: `stock_scraper_engine.py` |
 
-### D3: Activate Disabled Tests — ✅ Partial (3 of ~15 activated)
+### D3: Activate Disabled Tests — ✅ Substantially Complete (9 of ~15 activated)
 
-**Action taken:** The 15 `_test_*.py` files in `tests/` root were evaluated for activation.
-Three had clean imports and no dependency issues. New test files were created in
-`tests/mcp/unit/` for these three categories:
+**Action taken:** The 15 `_test_*.py` files in `tests/` root and `tests/original_tests/` were
+evaluated for activation. Nine files were activated by creating new `test_*.py` files in
+`tests/mcp/unit/` — either by copying clean passing tests or by writing new tests to match
+the actual tool API.
 
 | New Test File | Tools Tested | Tests |
 |---------------|-------------|-------|
 | `tests/mcp/unit/test_admin_tools.py` | manage_endpoints, system_maintenance, configure_system, system_health, system_status | 7 |
 | `tests/mcp/unit/test_auth_tools.py` | authenticate_user, validate_token, get_user_info | 5 |
 | `tests/mcp/unit/test_vector_tools.py` | create_vector_index, search_vector_index, list_vector_indexes, delete_vector_index | 6 |
+| `tests/mcp/unit/test_background_task_tools.py` | check_task_status, manage_background_tasks, manage_task_queue | 13 |
+| `tests/mcp/unit/test_workflow_tools.py` | execute_workflow, batch_process_datasets, schedule_workflow, create_workflow, run_workflow, list_workflows | 16 |
+| `tests/mcp/unit/test_cache_tools.py` | manage_cache, cache_stats, optimize_cache, cache_embeddings | 13 |
+| `tests/mcp/unit/test_monitoring_tools.py` | health_check, get_performance_metrics, monitor_services, generate_monitoring_report | 13 |
+| `tests/mcp/unit/test_analysis_tools.py` | perform_clustering_analysis, assess_embedding_quality, reduce_dimensionality, detect_outliers, analyze_diversity, detect_drift | 14 |
+| `tests/mcp/unit/test_embedding_tools.py` | generate_embedding, generate_batch_embeddings, generate_embeddings_from_file | 14 |
+
+**Total: 101 new active tests across 9 tool categories.**
+
+Note: `test_cache_tools.py`, `test_monitoring_tools.py`, `test_analysis_tools.py`, and
+`test_embedding_tools.py` were written from scratch to match the actual API because the
+corresponding `_test_*.py` originals used incorrect function names or response key expectations.
 
 **Remaining disabled files and reasons:**
-- `_test_background_task_tools.py` — imports wrong function names (fixed in D1)
-- `_test_cache_tools.py` — `EnhancedMetricsCollector` import chain broken
-- `_test_embedding_tools.py` — all core imports commented out
-- `_test_workflow_tools.py` — imports `batch_process` (correct name: `batch_process_datasets`)
-- `_test_vector_store_tools.py` — `ipfs_datasets_py.embeddings` module missing
-- `_test_comprehensive_integration.py`, `_test_test_e2e.py` — complex integration tests
+- `tests/original_tests/_test_cache_tools.py` — superseded by new `test_cache_tools.py` (API fixed)
+- `tests/original_tests/_test_analysis_tools.py` — superseded by new `test_analysis_tools.py` (API fixed)
+- `tests/original_tests/_test_monitoring_tools.py` — superseded by new `test_monitoring_tools.py` (API fixed)
+- `tests/original_tests/_test_embedding_tools.py` — superseded by new `test_embedding_tools.py` (API fixed)
+- `tests/original_tests/_test_vector_store_tools.py` — `ipfs_datasets_py.embeddings` module missing
+- `tests/original_tests/_test_comprehensive_integration.py`, `_test_test_e2e.py` — complex integration tests
 - `tests/migration_tests/_test_*.py` (65 files) — historical migration debugging tests
 
 ### D4: Fix `tools/__init__.py` Module Coverage — ✅ Complete
@@ -513,12 +526,12 @@ The lazy-loading pattern is preserved — no eager imports were added.
 | Categories with README | 3 | 4 ✅ | **15** ✅ | **51** ✅ |
 | Historical docs in root dirs | 14 (legal) | 0 ✅ | 0 ✅ | 0 ✅ |
 | Thick tools (>500 lines) | 10+ | 10+ | 10+ | 10 (D2 deferred) |
-| Disabled test files in `tests/` | ~15 | ~15 | ~15 | ~12 (3 activated) |
+| Disabled test files in `tests/` | ~15 | ~15 | ~15 | ~6 (9 activated) |
 | `_TOOL_SUBMODULES` coverage | 17/51 | 17/51 | 17/51 | **51/51** ✅ |
 | Top-level `tools/README.md` | ❌ | ✅ | ✅ | ✅ |
 | `legacy_mcp_tools/` migration guide | ❌ | ❌ | ✅ | ✅ |
 | Deprecation warnings in legacy files | 0 | 0 | 0 | **32/32** ✅ |
-| New active tests for tool categories | 0 | 0 | 0 | **18** ✅ |
+| New active tests for tool categories | 0 | 0 | 0 | **101** ✅ |
 
 ---
 
@@ -544,10 +557,11 @@ The lazy-loading pattern is preserved — no eager imports were added.
 | D | `tools/__init__.py` coverage 17→51 | 1h | Low-Medium | 🟢 Later | ✅ Done |
 | D | Deprecation warnings — all 32 legacy files | 2h | Medium | 🟡 Medium | ✅ Done |
 | D | Activate 3 clean test files (admin/auth/vector) | 1h | Medium | 🟡 Medium | ✅ Done |
+| D | Activate 6 more test files (bg_task/workflow/cache/monitoring/analysis/embedding) | 2h | Medium | 🟡 Medium | ✅ Done |
 | D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | 🟡 Deferred |
 | D | Activate remaining ~12 `_test_*.py` files | 2-3h | Medium | 🟡 Medium | 🟡 Deferred |
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase D substantially complete: D1 ✅ D3-partial ✅ D4 ✅)  
+**Last Updated:** 2026-02-20 (Phase D session 2: D3 substantially complete — 101 tests across 9 categories)  
 **Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)
