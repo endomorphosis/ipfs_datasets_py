@@ -53,6 +53,82 @@ RETURN r
 
 ---
 
+### 2b. Cypher MERGE Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/ast.py` (`MergeClause`), `cypher/parser.py` (`_parse_merge`), `cypher/compiler.py` (`_compile_merge`), `core/ir_executor.py` (Merge handler)  
+**Implementation:**
+- Match-or-create: tries to MATCH the pattern first; if found, uses existing node(s); otherwise CREATEs them
+- ON CREATE SET: property assignments applied only when the node is newly created
+- ON MATCH SET: property assignments applied only when an existing node was matched
+- Idempotent: repeated MERGE with the same key never creates duplicates
+
+**Example (now works):**
+```cypher
+MERGE (n:Person {name: 'Alice'})
+MERGE (n:Person {name: 'Alice'})   -- no duplicate created
+MERGE (n:Person {name: 'Bob'})     -- creates Bob
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2c. Cypher REMOVE Clause
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/ast.py` (`RemoveClause`), `cypher/parser.py` (`_parse_remove`), `cypher/compiler.py` (`_compile_remove`), `core/ir_executor.py` (RemoveProperty / RemoveLabel handlers)  
+**Implementation:**
+- `REMOVE n.property` → emits `RemoveProperty` IR op; deletes the key from the node's `_properties`
+- `REMOVE n:Label` → emits `RemoveLabel` IR op; removes the label from the node's `_labels` frozenset
+
+**Example (now works):**
+```cypher
+MATCH (n:Person) WHERE n.name = 'Alice' REMOVE n.email
+MATCH (n:Employee) REMOVE n:Employee
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2d. IS NULL / IS NOT NULL Operators
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/parser.py` (`_parse_comparison`), `cypher/compiler.py` (`_compile_where_expression`), `core/expression_evaluator.py` (`evaluate_compiled_expression`)  
+**Implementation:**
+- Parser: `IS NULL` / `IS NOT NULL` produce `UnaryOpNode(operator="IS NULL"/"IS NOT NULL", operand=property_expr)`
+- Compiler: emits `Filter` with `{"op": "IS NULL", "operand": ...}`
+- Evaluator: `IS NULL` returns `operand is None`; `IS NOT NULL` returns `operand is not None`
+
+**Example (now works):**
+```cypher
+MATCH (p:Person) WHERE p.email IS NULL RETURN p.name     -- Bob (no email)
+MATCH (p:Person) WHERE p.email IS NOT NULL RETURN p.name -- Alice (has email)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
+### 2e. XOR Boolean Operator
+
+**Status:** ✅ Implemented (v2.1.0 — 2026-02-20)  
+**Location:** `cypher/parser.py` (`_parse_or` extended for `TokenType.XOR`), `cypher/compiler.py` (`_compile_where_expression` XOR branch), `core/expression_evaluator.py`  
+**Implementation:**
+- Parser: `_parse_or` now accepts OR **and** XOR tokens, producing `BinaryOpNode(operator="XOR",...)`
+- Compiler: XOR gets its own branch in `_compile_where_expression` (cannot use simple property-filter path; both operands need evaluation)
+- Evaluator: `apply_operator` and `evaluate_compiled_expression` both handle `XOR` as `bool(left) ^ bool(right)`
+
+**Example (now works):**
+```cypher
+MATCH (n:Item) WHERE n.a XOR n.b RETURN n  -- True XOR False = True
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py`
+
+---
+
 ## P2: Medium Priority (v2.2.0)
 
 ### 3. GraphML Format Support

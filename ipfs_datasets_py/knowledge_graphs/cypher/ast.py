@@ -25,6 +25,7 @@ class ASTNodeType(Enum):
     CREATE = auto()
     MERGE = auto()
     DELETE = auto()
+    REMOVE = auto()
     SET = auto()
     WITH = auto()
     UNWIND = auto()
@@ -308,6 +309,65 @@ class WithClause(ASTNode):
     def __post_init__(self):
         if not hasattr(self, "node_type") or self.node_type is None:
             self.node_type = ASTNodeType.WITH
+
+
+@dataclass
+class MergeClause(ASTNode):
+    """
+    Represents a MERGE clause.
+
+    MERGE attempts to match an existing pattern; if no match is found it
+    creates the pattern (match-or-create / upsert semantics).  Optionally
+    the caller can specify ``ON CREATE SET`` and/or ``ON MATCH SET`` actions
+    to be executed depending on whether the node/relationship was newly
+    created or already existed.
+
+    Example::
+
+        MERGE (n:Person {name: 'Alice'})
+        ON CREATE SET n.created = timestamp()
+        ON MATCH SET n.updated = timestamp()
+
+    Attributes:
+        patterns: Graph patterns to match or create.
+        on_create_set: List of ``(property_expr, value_expr)`` pairs applied
+            only when the node/relationship is newly created.
+        on_match_set: List of ``(property_expr, value_expr)`` pairs applied
+            only when an existing match is found.
+    """
+
+    patterns: List[Any] = field(default_factory=list)
+    on_create_set: List[Any] = field(default_factory=list)
+    on_match_set: List[Any] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.MERGE
+
+
+@dataclass
+class RemoveClause(ASTNode):
+    """
+    Represents a REMOVE clause.
+
+    Removes properties or labels from nodes/relationships.
+
+    Supported forms::
+
+        REMOVE n.property          -- remove a single property
+        REMOVE n:Label             -- remove a label from a node
+
+    Attributes:
+        items: List of remove items.  Each item is a dict with:
+            - ``{"type": "property", "variable": "n", "property": "age"}``
+            - ``{"type": "label",    "variable": "n", "label": "Employee"}``
+    """
+
+    items: List[Any] = field(default_factory=list)
+
+    def __post_init__(self):
+        if not hasattr(self, "node_type") or self.node_type is None:
+            self.node_type = ASTNodeType.REMOVE
 
 
 # Pattern nodes

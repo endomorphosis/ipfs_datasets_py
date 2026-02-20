@@ -269,13 +269,19 @@ See `DEFERRED_FEATURES.md` Section 6 for plug-in example showing how to add CAR 
 
 #### 3.4.3 Additional Cypher Features
 
-**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause implemented  
-**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`), `cypher/parser.py` (`_parse_unwind`, `_parse_with`), `cypher/compiler.py` (`_compile_unwind`, `_compile_with`), `core/ir_executor.py` (`Unwind`, `WithProject` ops)  
-**Tests:** `tests/unit/knowledge_graphs/test_unwind_with_clauses.py` (19 tests)
+**Status:** ✅ DONE (2026-02-20) — UNWIND clause + WITH clause + MERGE + REMOVE + IS NULL/IS NOT NULL + XOR  
+**Files:** `cypher/ast.py` (`UnwindClause`, `WithClause`, `MergeClause`, `RemoveClause`), `cypher/parser.py` (4 new `_parse_*` methods), `cypher/compiler.py` (4 new `_compile_*` methods), `core/ir_executor.py` (Unwind, WithProject, Merge, RemoveProperty, RemoveLabel ops), `core/expression_evaluator.py` (IS NULL, IS NOT NULL, XOR)  
+**Tests:**
+- `tests/unit/knowledge_graphs/test_unwind_with_clauses.py` (19 tests — UNWIND + WITH + async)
+- `tests/unit/knowledge_graphs/test_merge_remove_isnull_xor.py` (27 tests)
 
 Implemented:
 - **UNWIND**: expands a list literal or node-property list into individual rows
 - **WITH**: projects columns into the next query part; supports WHERE filtering on projected names
+- **MERGE**: match-or-create / upsert; supports ON CREATE SET and ON MATCH SET
+- **REMOVE**: removes a property (`REMOVE n.prop`) or a label (`REMOVE n:Label`)
+- **IS NULL / IS NOT NULL**: null-check operators in WHERE
+- **XOR**: exclusive-or boolean operator in WHERE
 
 Remaining lower-priority items (not implemented):
 - `FOREACH` for mutations

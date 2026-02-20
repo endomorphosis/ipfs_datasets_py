@@ -35,6 +35,8 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    MergeClause,
+    RemoveClause,
     UnwindClause,
     WithClause,
     PatternNode,
@@ -218,6 +220,10 @@ class CypherParser:
                 clauses.append(self._parse_unwind())
             elif self._match(TokenType.WITH):
                 clauses.append(self._parse_with())
+            elif self._match(TokenType.MERGE):
+                clauses.append(self._parse_merge())
+            elif self._match(TokenType.REMOVE):
+                clauses.append(self._parse_remove())
             elif self._match(TokenType.SEMICOLON):
                 self._advance()  # Skip semicolons
             else:
@@ -447,6 +453,115 @@ class CypherParser:
             skip=skip,
             limit=limit,
         )
+
+    def _parse_merge(self) -> MergeClause:
+        """Parse MERGE clause.
+
+        Grammar::
+
+            MERGE pattern
+            [ON CREATE SET property_expr = value, ...]
+            [ON MATCH SET property_expr = value, ...]
+
+        Semantics: if the pattern already exists in the graph, use it (and
+        optionally apply ON MATCH SET); otherwise create it (and optionally
+        apply ON CREATE SET).
+        """
+        self._expect(TokenType.MERGE)
+
+        # Parse the pattern(s) to match or create
+        patterns = self._parse_patterns()
+
+        on_create_set: list = []
+        on_match_set: list = []
+
+        # Parse optional ON CREATE SET / ON MATCH SET
+        # "ON" is not a reserved keyword so it arrives as IDENTIFIER
+        while (
+            self._match(TokenType.IDENTIFIER)
+            and self.current_token is not None
+            and self.current_token.value.upper() == "ON"
+        ):
+            self._advance()  # consume ON (IDENTIFIER)
+            if self._match(TokenType.CREATE):
+                self._advance()  # consume CREATE
+                self._expect(TokenType.SET)
+                on_create_set.extend(self._parse_set_items())
+            elif self._match(TokenType.MATCH):
+                self._advance()  # consume MATCH
+                self._expect(TokenType.SET)
+                on_match_set.extend(self._parse_set_items())
+            else:
+                break
+
+        return MergeClause(
+            patterns=patterns,
+            on_create_set=on_create_set,
+            on_match_set=on_match_set,
+        )
+
+    def _parse_set_items(self) -> list:
+        """Parse a list of ``property = value`` SET items.
+
+        Returns a list of ``(property_expr, value_expr)`` tuples, the same
+        format used by :class:`SetClause`.
+        """
+        items = []
+        prop_expr = self._parse_expression()
+        self._expect(TokenType.EQ)
+        value_expr = self._parse_expression()
+        items.append((prop_expr, value_expr))
+        while self._match(TokenType.COMMA):
+            self._advance()
+            prop_expr = self._parse_expression()
+            self._expect(TokenType.EQ)
+            value_expr = self._parse_expression()
+            items.append((prop_expr, value_expr))
+        return items
+
+    def _parse_remove(self) -> RemoveClause:
+        """Parse REMOVE clause.
+
+        Grammar::
+
+            REMOVE item [, item]*
+
+        where ``item`` is one of::
+
+            variable.property   -- remove a property
+            variable:Label      -- remove a label
+
+        Returns a :class:`RemoveClause` with a list of remove-item dicts.
+        """
+        self._expect(TokenType.REMOVE)
+
+        items = []
+
+        def _parse_one_item() -> dict:
+            var_token = self._expect(TokenType.IDENTIFIER)
+            var_name = var_token.value
+            if self._match(TokenType.DOT):
+                # REMOVE n.property
+                self._advance()  # consume '.'
+                prop_token = self._expect(TokenType.IDENTIFIER)
+                return {"type": "property", "variable": var_name, "property": prop_token.value}
+            elif self._match(TokenType.COLON):
+                # REMOVE n:Label
+                self._advance()  # consume ':'
+                label_token = self._expect(TokenType.IDENTIFIER)
+                return {"type": "label", "variable": var_name, "label": label_token.value}
+            else:
+                raise CypherParseError(
+                    f"Expected '.' or ':' after variable '{var_name}' in REMOVE",
+                    self._current(),
+                )
+
+        items.append(_parse_one_item())
+        while self._match(TokenType.COMMA):
+            self._advance()
+            items.append(_parse_one_item())
+
+        return RemoveClause(items=items)
     
     def _parse_return(self) -> ReturnClause:
         """Parse RETURN clause."""
@@ -596,11 +711,11 @@ class CypherParser:
         return self._parse_or()
     
     def _parse_or(self) -> ExpressionNode:
-        """Parse OR expressions."""
+        """Parse OR and XOR expressions."""
         left = self._parse_and()
         
-        while self._match(TokenType.OR):
-            op = self._advance().value
+        while self._match(TokenType.OR, TokenType.XOR):
+            op = self._advance().value.upper()
             right = self._parse_and()
             left = BinaryOpNode(operator=op, left=left, right=right)
         
@@ -667,6 +782,17 @@ class CypherParser:
                 self._advance()  # Consume WITH
                 right = self._parse_additive()
                 left = BinaryOpNode(operator="ENDS WITH", left=left, right=right)
+
+            # IS NULL / IS NOT NULL operators
+            elif self._match(TokenType.IS):
+                self._advance()  # Consume IS
+                if self._match(TokenType.NOT):
+                    self._advance()  # Consume NOT
+                    self._expect(TokenType.NULL)
+                    left = UnaryOpNode(operator="IS NOT NULL", operand=left)
+                else:
+                    self._expect(TokenType.NULL)
+                    left = UnaryOpNode(operator="IS NULL", operand=left)
             
             else:
                 break

@@ -504,6 +504,141 @@ def execute_ir_operations(
                     graph_engine.update_node(item.id, {property_name: value})
                 logger.debug("SetProperty: updated %d nodes", len(result_set[variable]))
 
+        elif op_type == "RemoveProperty":
+            # REMOVE n.property — delete a single property from each matched node
+            variable = op.get("variable")
+            property_name = op.get("property")
+            if variable in result_set:
+                for item in result_set[variable]:
+                    node = graph_engine.get_node(item.id)
+                    if node and property_name in node._properties:
+                        del node._properties[property_name]
+                        logger.debug("RemoveProperty: removed %s from node %s", property_name, item.id)
+
+        elif op_type == "RemoveLabel":
+            # REMOVE n:Label — remove a label from each matched node
+            variable = op.get("variable")
+            label = op.get("label")
+            if variable in result_set:
+                for item in result_set[variable]:
+                    node = graph_engine.get_node(item.id)
+                    if node and label in node._labels:
+                        node._labels = frozenset(node._labels - {label})
+                        logger.debug("RemoveLabel: removed label %s from node %s", label, item.id)
+
+        elif op_type == "Merge":
+            # MERGE: match-or-create semantics
+            # Try to MATCH the pattern; if any nodes are found, use them
+            # (apply on_match_set); otherwise CREATE the pattern (apply
+            # on_create_set).
+            match_ops = op.get("match_ops", [])
+            create_ops = op.get("create_ops", [])
+            on_create_set = op.get("on_create_set", [])
+            on_match_set = op.get("on_match_set", [])
+
+            # ------------------------------------------------------------------
+            # Run the match sub-program on a fresh temporary result_set.
+            # Because match_ops typically end with ScanLabel+Filter (no Project),
+            # execute_ir_operations would return [] for final_results even when
+            # matches exist.  We detect matches by appending a sentinel Project
+            # that keeps all variables.
+            # ------------------------------------------------------------------
+            match_found = False
+            merged_result_set: Dict[str, Any] = {}
+
+            if match_ops:
+                # Find all variables produced by the match ops
+                match_vars: List[str] = []
+                for m_op in match_ops:
+                    for key in ("variable", "to_variable", "from_variable"):
+                        v = m_op.get(key)
+                        if v and v not in match_vars:
+                            match_vars.append(v)
+
+                probe_ops = list(match_ops) + [
+                    {
+                        "op": "Project",
+                        "items": [{"expression": {"var": v}, "alias": v} for v in match_vars],
+                        "distinct": False,
+                    }
+                ]
+                probe_results: List[Record] = execute_ir_operations(
+                    graph_engine=graph_engine,
+                    operations=probe_ops,
+                    parameters=parameters,
+                    resolve_value=resolve_value,
+                    apply_operator=apply_operator,
+                    evaluate_compiled_expression=evaluate_compiled_expression,
+                    evaluate_expression=evaluate_expression,
+                    compute_aggregation=compute_aggregation,
+                )
+                match_found = bool(probe_results)
+                if match_found:
+                    # Rebuild result_set from matched records
+                    for rec in probe_results:
+                        for v in match_vars:
+                            val = rec.get(v)
+                            if val is not None:
+                                merged_result_set.setdefault(v, []).append(val)
+
+            if match_found:
+                logger.debug("Merge: pattern matched, applying ON MATCH SET")
+                for key, vals in merged_result_set.items():
+                    result_set.setdefault(key, []).extend(vals)
+                # Apply ON MATCH SET
+                for set_item in on_match_set:
+                    parts = set_item["property"].split(".", 1)
+                    if len(parts) == 2:
+                        var_name, prop_name = parts
+                        val = resolve_value(set_item["value"], parameters)
+                        for node in result_set.get(var_name, []):
+                            if hasattr(node, "_properties"):
+                                node._properties[prop_name] = val
+            else:
+                # No match — execute CREATE ops
+                logger.debug("Merge: pattern not found, creating")
+                for create_op in create_ops:
+                    if create_op.get("op") == "CreateNode":
+                        c_var = create_op.get("variable")
+                        c_labels = create_op.get("labels", [])
+                        c_props = {
+                            k: resolve_value(v, parameters)
+                            for k, v in create_op.get("properties", {}).items()
+                        }
+                        node = graph_engine.create_node(labels=c_labels, properties=c_props)
+                        result_set[c_var] = [node]
+                        logger.debug("Merge(create): created node %s", node.id)
+                    elif create_op.get("op") == "CreateRelationship":
+                        c_var = create_op.get("variable")
+                        c_type = create_op.get("rel_type", "RELATED_TO")
+                        start_var = create_op.get("start_variable")
+                        end_var = create_op.get("end_variable")
+                        c_props = {
+                            k: resolve_value(v, parameters)
+                            for k, v in create_op.get("properties", {}).items()
+                        }
+                        start_nodes = result_set.get(start_var, [])
+                        end_nodes = result_set.get(end_var, [])
+                        if start_nodes and end_nodes:
+                            rel = graph_engine.create_relationship(
+                                start_id=start_nodes[0].id,
+                                end_id=end_nodes[0].id,
+                                rel_type=c_type,
+                                properties=c_props,
+                            )
+                            if rel:
+                                result_set[c_var] = [rel]
+                                logger.debug("Merge(create): created rel %s", rel.id)
+                # Apply ON CREATE SET
+                for set_item in on_create_set:
+                    parts = set_item["property"].split(".", 1)
+                    if len(parts) == 2:
+                        var_name, prop_name = parts
+                        val = resolve_value(set_item["value"], parameters)
+                        for node in result_set.get(var_name, []):
+                            if hasattr(node, "_properties"):
+                                node._properties[prop_name] = val
+
         elif op_type == "Unwind":
             # UNWIND <expr> AS <variable>
             # Expands the list expression into individual bindings.

@@ -30,6 +30,8 @@ from .ast import (
     CreateClause,
     DeleteClause,
     SetClause,
+    MergeClause,
+    RemoveClause,
     UnionClause,
     UnwindClause,
     WithClause,
@@ -133,6 +135,10 @@ class CypherCompiler:
             self._compile_unwind(clause)
         elif isinstance(clause, WithClause):
             self._compile_with(clause)
+        elif isinstance(clause, MergeClause):
+            self._compile_merge(clause)
+        elif isinstance(clause, RemoveClause):
+            self._compile_remove(clause)
         else:
             raise CypherCompileError(f"Unknown clause type: {type(clause)}")
     
@@ -352,12 +358,24 @@ class CypherCompiler:
     def _compile_where_expression(self, expr: Any) -> None:
         """Compile WHERE expression into filter operations."""
         if isinstance(expr, BinaryOpNode):
-            if expr.operator.upper() in ('AND', 'OR'):
+            op_upper = expr.operator.upper()
+            if op_upper in ('AND', 'OR'):
                 # Logical operators - compile both sides
                 self._compile_where_expression(expr.left)
-                if expr.operator.upper() == 'AND':
+                if op_upper == 'AND':
                     self._compile_where_expression(expr.right)
                 # OR would need more complex handling
+            elif op_upper == 'XOR':
+                # XOR: compile as a full expression filter (both sides need evaluation)
+                op = {
+                    "op": "Filter",
+                    "expression": {
+                        "op": "XOR",
+                        "left": self._compile_expression(expr.left),
+                        "right": self._compile_expression(expr.right),
+                    }
+                }
+                self.operations.append(op)
             else:
                 # Comparison operator - can be complex expression
                 left_info = self._analyze_expression(expr.left)
@@ -387,7 +405,8 @@ class CypherCompiler:
                     self.operations.append(op)
         
         elif isinstance(expr, UnaryOpNode):
-            if expr.operator.upper() == 'NOT':
+            op_upper = expr.operator.upper()
+            if op_upper == 'NOT':
                 # NOT operation - compile as negated filter
                 operand = expr.operand
                 
@@ -440,6 +459,17 @@ class CypherCompiler:
                         }
                     }
                     self.operations.append(op)
+            elif op_upper in ("IS NULL", "IS NOT NULL"):
+                # IS NULL / IS NOT NULL — compile as a Filter with the
+                # unary op wrapped around the operand expression.
+                op = {
+                    "op": "Filter",
+                    "expression": {
+                        "op": op_upper,
+                        "operand": self._compile_expression(expr.operand),
+                    }
+                }
+                self.operations.append(op)
     
     def _compile_return(self, ret: ReturnClause) -> None:
         """
@@ -730,6 +760,91 @@ class CypherCompiler:
         # Apply WHERE if present (operates on the projected bindings)
         if with_clause.where is not None:
             self._compile_where(with_clause.where)
+
+    def _compile_merge(self, merge: MergeClause) -> None:
+        """Compile MERGE clause.
+
+        Emits a ``Merge`` IR operation.  The executor handles
+        match-or-create semantics: it first tries to MATCH the patterns and,
+        if no existing nodes are found, CREATEs them.
+
+        Optionally, ON CREATE SET / ON MATCH SET actions are applied after
+        the match-or-create decision.
+
+        IR emitted::
+
+            {
+              "op": "Merge",
+              "match_ops":     [...],  # ScanLabel / Filter ops (as if MATCH)
+              "create_ops":    [...],  # CreateNode / CreateRelationship ops
+              "on_create_set": [{"property": "n.age", "value": 30}, ...],
+              "on_match_set":  [{"property": "n.updated", "value": ...}]
+            }
+        """
+        # Build MATCH part: same ops as _compile_match would produce
+        saved_ops = self.operations
+        self.operations = []
+        match_clause = MatchClause(patterns=merge.patterns, optional=False, where=None)
+        self._compile_match(match_clause)
+        match_ops = self.operations
+
+        # Build CREATE part: same ops as _compile_create would produce
+        self.operations = []
+        create_clause = CreateClause(patterns=merge.patterns)
+        self._compile_create(create_clause)
+        create_ops = self.operations
+
+        self.operations = saved_ops
+
+        op = {
+            "op": "Merge",
+            "match_ops": match_ops,
+            "create_ops": create_ops,
+            "on_create_set": self._compile_merge_set_items(merge.on_create_set),
+            "on_match_set": self._compile_merge_set_items(merge.on_match_set),
+        }
+        self.operations.append(op)
+
+    def _compile_merge_set_items(self, items: list) -> list:
+        """Compile ON CREATE SET / ON MATCH SET item lists for MERGE.
+
+        Args:
+            items: List of ``(property_expr, value_expr)`` tuples.
+
+        Returns:
+            List of ``{"property": str, "value": compiled_value}`` dicts.
+        """
+        result = []
+        for prop_expr, val_expr in items:
+            prop_str = self._expression_to_string(prop_expr) if prop_expr is not None else ""
+            val = self._compile_expression(val_expr) if val_expr is not None else None
+            result.append({"property": prop_str, "value": val})
+        return result
+
+    def _compile_remove(self, remove: RemoveClause) -> None:
+        """Compile REMOVE clause.
+
+        Emits individual ``RemoveProperty`` or ``RemoveLabel`` IR operations
+        for each item in the REMOVE clause.
+
+        IR emitted (per item)::
+
+            {"op": "RemoveProperty", "variable": "n", "property": "age"}
+            {"op": "RemoveLabel",    "variable": "n", "label": "Employee"}
+        """
+        for item in remove.items:
+            if item.get("type") == "property":
+                self.operations.append({
+                    "op": "RemoveProperty",
+                    "variable": item["variable"],
+                    "property": item["property"],
+                })
+            elif item.get("type") == "label":
+                self.operations.append({
+                    "op": "RemoveLabel",
+                    "variable": item["variable"],
+                    "label": item["label"],
+                })
 
     def _compile_expression(self, expr) -> Any:
         """
