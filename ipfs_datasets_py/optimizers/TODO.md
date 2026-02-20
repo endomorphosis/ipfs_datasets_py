@@ -94,6 +94,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: added unit smoke import test coverage.
 - [ ] (P2) [tests] Add deterministic unit tests for “pure” helpers (parsers, score aggregators, query plan generation).
 - [x] (P2) [tests] Add golden-file tests for GraphRAG “ontology dict schema” (entities/relationships/metadata invariants).
+  - Done 2026-02-20: Created golden fixture (ontology_golden_schema.json) and comprehensive 22-test suite (test_ontology_golden_schema.py) covering structure, entity/relationship invariants, global constraints, and JSON roundtrips.
   - Done 2026-02-20: tests/unit/optimizers/graphrag/test_ontology_schema_invariants.py (11 tests)
 
 ---
