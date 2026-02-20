@@ -161,7 +161,10 @@ class ProofCache:
         enable_ipfs_backend: bool = False,
         ipfs_backend: Optional[Any] = None,
         ipfs_pin: bool = False,
-        ipfs_ttl: Optional[int] = None
+        ipfs_ttl: Optional[int] = None,
+        # Backward-compat aliases
+        max_size: Optional[int] = None,
+        default_ttl: Optional[int] = None,
     ):
         """Initialize proof cache with optional IPFS backend.
         
@@ -175,8 +178,16 @@ class ProofCache:
             ipfs_pin: Whether to pin proof results in IPFS (permanent storage)
             ipfs_ttl: TTL for IPFS cache entries (None = no expiration)
         """
+        # Apply compat aliases
+        if max_size is not None:
+            maxsize = max_size
+        if default_ttl is not None:
+            ttl = default_ttl
         self.maxsize = maxsize
         self.ttl = ttl
+        # Backward-compat property aliases
+        self.max_size = maxsize
+        self.default_ttl = ttl
         self.enable_persistence = enable_persistence
         self.persistence_path = persistence_path
         self.enable_ipfs_backend = enable_ipfs_backend
@@ -192,6 +203,14 @@ class ProofCache:
             logger.warning("cachetools not available, using simple dict cache")
         
         self.lock = RLock()
+        # Backward-compat attributes (ordered dict for LRU)
+        from collections import OrderedDict
+        self._cache: dict = OrderedDict()
+        self._compat_hits: int = 0
+        self._compat_misses: int = 0
+        self._compat_evictions: int = 0
+        self._compat_expirations: int = 0
+        self._compat_puts: int = 0
         self.stats = {
             'hits': 0,
             'misses': 0,
@@ -441,10 +460,13 @@ class ProofCache:
             return False
     
     def clear(self):
-        """Clear all cached entries."""
+        """Clear all cached entries. Returns the number of entries cleared."""
         with self.lock:
+            count = len(self._cache) + len(self.cache)
             self.cache.clear()
+            self._cache.clear()
             logger.info("Cache cleared")
+            return count
     
     def get_stats(self) -> Dict:
         """Get cache statistics.
@@ -465,6 +487,125 @@ class ProofCache:
                 'ttl': self.ttl
             }
     
+
+    # ------------------------------------------------------------------
+    # Compat API (simple formula+prover_name key-value interface)
+    # ------------------------------------------------------------------
+
+    def _make_key(self, formula: str, prover_name: str) -> str:
+        """Create compat cache key."""
+        return f"{formula}::{prover_name}"
+
+    def put(self, formula: str, prover_name: str, result: Any, ttl: int = None) -> None:
+        """Simple compat put: store (formula, prover_name) → result."""
+        import time as _time
+        key = self._make_key(formula, prover_name)
+        # LRU eviction if at capacity
+        if self.max_size and len(self._cache) >= self.max_size and key not in self._cache:
+            oldest_key = next(iter(self._cache))
+            del self._cache[oldest_key]
+            self._compat_evictions += 1
+        effective_ttl = ttl if ttl is not None else self.default_ttl
+        class _Entry:
+            __slots__ = ('result', 'ttl', '_expires_at', 'hit_count', 'prover', 'formula', 'timestamp')
+            def __init__(self, result, ttl, expires_at, prover, formula, timestamp):
+                self.result = result
+                self.ttl = ttl
+                self._expires_at = expires_at
+                self.hit_count = 0
+                self.prover = prover
+                self.formula = formula
+                self.timestamp = timestamp
+        self._cache[key] = _Entry(
+            result=result,
+            ttl=effective_ttl,
+            expires_at=_time.monotonic() + effective_ttl if effective_ttl else None,
+            prover=prover_name,
+            formula=formula,
+            timestamp=_time.monotonic(),
+        )
+        self._compat_puts += 1
+
+    def get(self, formula: str, prover_name: str = "unknown",
+            axioms=None, prover_config=None) -> Any:
+        """Simple compat get: retrieve (formula, prover_name) → result."""
+        import time as _time
+        key = self._make_key(formula, prover_name)
+        if key in self._cache:
+            entry = self._cache[key]
+            # Check TTL expiration
+            if entry._expires_at is not None and _time.monotonic() > entry._expires_at:
+                del self._cache[key]
+                self._compat_expirations += 1
+                self._compat_misses += 1
+                return None
+            entry.hit_count += 1
+            self._compat_hits += 1
+            # Move to end for LRU (most recently used)
+            self._cache.move_to_end(key)
+            return entry.result
+        self._compat_misses += 1
+        return None
+
+    def invalidate(self, formula: str, prover_name: str = "unknown") -> bool:
+        """Remove a cached entry."""
+        key = self._make_key(formula, prover_name)
+        if key in self._cache:
+            del self._cache[key]
+            return True
+        return False
+
+    def cleanup_expired(self) -> int:
+        """Remove all expired entries. Returns count removed."""
+        import time as _time
+        now = _time.monotonic()
+        expired_keys = [
+            k for k, v in list(self._cache.items())
+            if v._expires_at is not None and now > v._expires_at
+        ]
+        for k in expired_keys:
+            del self._cache[k]
+        self._compat_expirations += len(expired_keys)
+        return len(expired_keys)
+
+    def get_cached_entries(self):
+        """Return list of cached entry metadata."""
+        return [
+            {
+                "formula": v.formula,
+                "prover": v.prover,
+                "hit_count": v.hit_count,
+                "timestamp": v.timestamp,
+                "ttl": v.ttl,
+            }
+            for v in self._cache.values()
+        ]
+
+    def resize(self, new_size: int) -> None:
+        """Resize the cache, evicting oldest entries if needed."""
+        self.max_size = new_size
+        self.maxsize = new_size
+        while len(self._cache) > new_size:
+            oldest_key = next(iter(self._cache))
+            del self._cache[oldest_key]
+            self._compat_evictions += 1
+
+    def get_statistics(self) -> Dict:
+        """Return unified statistics dict (compat API)."""
+        total = self._compat_hits + self._compat_misses
+        return {
+            "size": len(self._cache),
+            "max_size": self.max_size,
+            "hits": self._compat_hits,
+            "misses": self._compat_misses,
+            "hit_rate": (self._compat_hits / total) if total > 0 else 0.0,
+            "evictions": self._compat_evictions,
+            "expirations": self._compat_expirations,
+            "total_puts": self._compat_puts,
+            # Also include CID-based stats
+            "cache_size": len(self.cache),
+        }
+
     def get_info(self, cid: str) -> Optional[Dict]:
         """Get information about a cached entry.
         
