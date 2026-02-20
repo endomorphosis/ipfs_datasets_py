@@ -220,9 +220,13 @@ See `examples/agentic/` for practical examples:
 
 - **ARCHITECTURE_UNIFIED.md** - Unified optimizer architecture
 - **ARCHITECTURE_AGENTIC_OPTIMIZERS.md** - Agentic optimizer design
+- **ARCHITECTURE_DIAGRAMS.md** - Visual diagrams (Mermaid) for all optimizer types
 - **IMPLEMENTATION_PLAN.md** - Implementation roadmap
 - **USAGE_GUIDE.md** - Detailed usage guide
 - **GITHUB_INTEGRATION.md** - GitHub integration guide
+- **QUICK_START.md** - Fast setup for all optimizer types
+- **CODE_EXAMPLES.md** - Comprehensive code examples for public methods
+- **COMMON_PITFALLS.md** - Troubleshooting guide with solutions
 
 ## Backlog
 

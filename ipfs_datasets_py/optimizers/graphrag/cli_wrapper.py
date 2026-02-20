@@ -96,6 +96,9 @@ Examples:
   
   # Show status
   %(prog)s status
+
+    # Show query optimizer health snapshot
+    %(prog)s health --window 100
 """)
         
         subparsers = parser.add_subparsers(dest='command', help='Commands', required=True)
@@ -229,6 +232,22 @@ Examples:
         status_parser = subparsers.add_parser(
             'status',
             help='Show optimizer status and capabilities'
+        )
+
+        # health command
+        health_parser = subparsers.add_parser(
+            'health',
+            help='Show query optimizer health snapshot'
+        )
+        health_parser.add_argument(
+            '--window',
+            type=int,
+            default=100,
+            help='Number of recent sessions to use for error-rate calculation'
+        )
+        health_parser.add_argument(
+            '--output', '-o',
+            help='Optional output JSON file path'
         )
         
         return parser
@@ -644,6 +663,38 @@ Examples:
         print("  • Hybrid (best of both)\n")
         
         return 0
+
+    def cmd_health(self, args: argparse.Namespace) -> int:
+        """Show health snapshot for query optimization metrics.
+
+        Args:
+            args: Command arguments
+
+        Returns:
+            Exit code
+        """
+        print("🩺 GraphRAG Query Optimizer Health")
+
+        try:
+            from ipfs_datasets_py.optimizers.graphrag.query_optimizer import QueryMetricsCollector
+
+            collector = QueryMetricsCollector(track_resources=True)
+            report = collector.get_health_check(window_size=args.window)
+
+            print(json.dumps(report, indent=2))
+
+            if args.output:
+                output_path = _safe_resolve(args.output)
+                with open(output_path, "w") as file_obj:
+                    json.dump(report, file_obj, indent=2)
+                print(f"\n📄 Saved to: {output_path}")
+
+            return 0
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return 1
     
     def run(self, args: Optional[List[str]] = None) -> int:
         """Run CLI.
@@ -669,6 +720,8 @@ Examples:
                 return self.cmd_query(parsed_args)
             elif parsed_args.command == 'status':
                 return self.cmd_status(parsed_args)
+            elif parsed_args.command == 'health':
+                return self.cmd_health(parsed_args)
             else:
                 parser.print_help()
                 return 1

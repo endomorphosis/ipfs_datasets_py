@@ -344,7 +344,7 @@ class OntologyCritic(BaseCritic):
                 if _cache_key in self._eval_cache:
                     self._log.debug("OntologyCritic cache hit")
                     return self._eval_cache[_cache_key]
-            except Exception:
+            except (TypeError, ValueError, OverflowError):
                 _cache_key = None
         else:
             _cache_key = None

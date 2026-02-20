@@ -1199,7 +1199,25 @@ class OptimizationValidator:
             warnings=warnings,
         )
 
-    async def validate_async(self, code: str, **kwargs: Any) -> DetailedValidationResult:
+    async def validate_async(
+        self,
+        code: str,
+        level: "ValidationLevel" = None,
+        baseline_metrics: Optional[Dict[str, float]] = None,
+        optimized_metrics: Optional[Dict[str, float]] = None,
+        parallel: bool = False,
+        timeout: Optional[int] = None,
+    ) -> "DetailedValidationResult":
+        kwargs = {}
+        if level is not None:
+            kwargs["level"] = level
+        if baseline_metrics is not None:
+            kwargs["baseline_metrics"] = baseline_metrics
+        if optimized_metrics is not None:
+            kwargs["optimized_metrics"] = optimized_metrics
+        kwargs["parallel"] = parallel
+        if timeout is not None:
+            kwargs["timeout"] = timeout
         return self.validate(code, **kwargs)
 
     # CLI helper: validate a file at a given level name.
@@ -1207,7 +1225,7 @@ class OptimizationValidator:
         p = Path(file_path)
         try:
             code = p.read_text() if p.exists() else str(file_path)
-        except Exception:
+        except (OSError, IOError, UnicodeDecodeError):
             code = str(file_path)
 
         lvl = ValidationLevel(str(level).lower()) if str(level).lower() in {l.value for l in ValidationLevel} else ValidationLevel.STANDARD

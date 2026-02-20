@@ -703,7 +703,7 @@ class OptimizerCLI:
                 with open(config_path, "r") as f:
                     self.config = json.load(f)
                     return
-            except Exception:
+            except (OSError, IOError, ValueError):
                 pass
 
         # Defaults
