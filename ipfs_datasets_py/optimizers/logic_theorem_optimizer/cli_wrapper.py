@@ -13,6 +13,26 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
+    """Resolve a user-supplied path, guarding against path-traversal.
+
+    Raises:
+        ValueError: If path escapes a restricted system directory.
+        FileNotFoundError: If *must_exist* and path does not exist.
+    """
+    resolved = Path(path_str).resolve()
+    for forbidden in (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc')):
+        try:
+            resolved.relative_to(forbidden)
+            raise ValueError(f"Path '{path_str}' resolves into restricted area: {forbidden}")
+        except ValueError as exc:
+            if 'restricted area' in str(exc):
+                raise
+    if must_exist and not resolved.exists():
+        raise FileNotFoundError(f"Path not found: {resolved}")
+    return resolved
+
 try:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         LogicExtractor,
@@ -135,6 +155,10 @@ Examples:
             default=30,
             help='Timeout in seconds'
         )
+        prove_parser.add_argument(
+            '--output', '-o',
+            help='Write proof result as JSON to this file path'
+        )
         
         # validate command
         validate_parser = subparsers.add_parser(
@@ -208,7 +232,7 @@ Examples:
         print(f"   Domain: {args.domain}")
         print(f"   Format: {args.format}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
@@ -310,6 +334,21 @@ Examples:
             print(f"   Prover: {', '.join(str(p) for p in provers_used)}")
             print(f"   Time: {elapsed:.3f}s")
 
+            if getattr(args, 'output', None):
+                import json as _json
+                proof_data = {
+                    'theorem': args.theorem,
+                    'premises': list(args.premises or []),
+                    'goal': args.goal,
+                    'proven': bool(is_valid),
+                    'provers': [str(p) for p in provers_used],
+                    'elapsed_seconds': round(elapsed, 3),
+                    'errors': getattr(result, 'errors', []),
+                }
+                output_path = _safe_resolve(args.output)
+                output_path.write_text(_json.dumps(proof_data, indent=2))
+                print(f"   Saved to: {args.output}")
+
             return 0 if is_valid else 1
             
         except Exception as e:
@@ -327,7 +366,7 @@ Examples:
         """
         print(f"✓ Validating: {args.input}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
@@ -385,7 +424,7 @@ Examples:
         
         try:
             # Load input data
-            input_path = Path(args.input)
+            input_path = _safe_resolve(args.input, must_exist=True)
             if not input_path.exists():
                 print(f"❌ Input file not found: {args.input}")
                 return 1
@@ -423,7 +462,7 @@ Examples:
             
             # Save results if output specified
             if args.output:
-                output_path = Path(args.output)
+                output_path = _safe_resolve(args.output)
                 with open(output_path, 'w') as f:
                     json.dump(result, f, indent=2)
                 print(f"   Saved to: {args.output}")

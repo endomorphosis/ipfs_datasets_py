@@ -13,6 +13,34 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
+    """Resolve a user-supplied path, guarding against path-traversal attacks.
+
+    Args:
+        path_str: Raw path string from CLI args.
+        must_exist: If True, raise ``FileNotFoundError`` when the path does not exist.
+
+    Returns:
+        Resolved absolute :class:`~pathlib.Path`.
+
+    Raises:
+        ValueError: If the resolved path escapes a safe root (e.g. ``/etc``, ``/proc``).
+        FileNotFoundError: If *must_exist* is True and the path does not exist.
+    """
+    resolved = Path(path_str).resolve()
+    _FORBIDDEN_PREFIXES = (Path('/proc'), Path('/sys'), Path('/dev'), Path('/etc'))
+    for forbidden in _FORBIDDEN_PREFIXES:
+        try:
+            resolved.relative_to(forbidden)
+            raise ValueError(f"Path '{path_str}' resolves into restricted area: {forbidden}")
+        except ValueError as exc:
+            if 'restricted area' in str(exc):
+                raise
+    if must_exist and not resolved.exists():
+        raise FileNotFoundError(f"Path not found: {resolved}")
+    return resolved
+
 try:
     from ipfs_datasets_py.optimizers.graphrag import (
         OntologyGenerator,
@@ -239,7 +267,7 @@ Examples:
         print(f"   Strategy: {args.strategy}")
         print(f"   Format: {args.format}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
@@ -317,7 +345,7 @@ Examples:
         print(f"   Target: {args.target}")
         print(f"   Parallel: {args.parallel}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1
@@ -412,7 +440,7 @@ Examples:
         """
         print(f"✓ Validating ontology: {args.input}\n")
         
-        input_path = Path(args.input)
+        input_path = _safe_resolve(args.input, must_exist=True)
         if not input_path.exists():
             print(f"❌ Input file not found: {args.input}")
             return 1

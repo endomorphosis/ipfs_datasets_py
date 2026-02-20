@@ -65,11 +65,16 @@ optimizers/
 │   ├── base_critic.py            # Abstract base for critics
 │   ├── base_session.py           # Session management framework
 │   ├── base_harness.py           # Batch processing framework
-│   ├── llm_integration.py        # Unified LLM backend
-│   ├── prompt_templates.py       # Shared prompt system
-│   ├── metrics_framework.py      # Metrics collection base
-│   ├── visualization_base.py     # Visualization framework
-│   └── distributed_base.py       # Distributed processing base
+│   ├── exceptions.py             # Common exception types
+│   ├── performance.py            # Lightweight performance helpers
+│   └── performance_monitor.py    # Resource/metrics monitoring helpers
+│
+│   # Planned / not yet implemented in common/:
+│   # llm_integration.py
+│   # prompt_templates.py
+│   # metrics_framework.py
+│   # visualization_base.py
+│   # distributed_base.py
 ```
 
 ### Layer 2: Specialized Optimizers
@@ -309,9 +314,9 @@ class BaseSession(ABC):
 ### High-Priority Shared Components
 
 1. **LLM Backend Integration** (40% duplication)
-   - Currently duplicated across all three optimizers
-   - Unify into single adapter with provider abstraction
-   - Share prompt template system
+    - Currently lives in `agentic/llm_integration.py` and is not yet shared
+    - Unify into a single adapter with provider abstraction
+    - Share prompt template system
 
 2. **Critic Evaluation** (35% duplication)
    - Similar scoring dimensions across optimizers
@@ -363,10 +368,10 @@ class BaseSession(ABC):
 ## Migration Path
 
 ### Step 1: Create Common Base (Week 1)
-- [ ] Create `optimizers/common/` structure
-- [ ] Implement base classes
+- [x] Create `optimizers/common/` structure
+- [x] Implement base classes (base_optimizer/base_critic/base_session/base_harness)
 - [ ] Add comprehensive tests
-- [ ] Document interfaces
+- [x] Document interfaces (see `optimizers/common/README.md`)
 
 ### Step 2: Refactor Logic Theorem (Week 2)
 - [ ] Update to use common base
@@ -445,17 +450,22 @@ optimizers:
 
 ```
 optimizers/
-├── common/                          # Shared components (NEW)
+├── common/                          # Shared components (current)
 │   ├── __init__.py
 │   ├── base_optimizer.py
 │   ├── base_critic.py
 │   ├── base_session.py
 │   ├── base_harness.py
-│   ├── llm_integration.py
-│   ├── prompt_templates.py
-│   ├── metrics_framework.py
-│   ├── visualization_base.py
-│   └── distributed_base.py
+│   ├── exceptions.py
+│   ├── performance.py
+│   └── performance_monitor.py
+│
+│   # Planned (not yet in common/)
+│   # llm_integration.py
+│   # prompt_templates.py
+│   # metrics_framework.py
+│   # visualization_base.py
+│   # distributed_base.py
 │
 ├── agentic/                         # LLM-driven code optimization
 │   ├── base.py                      # (UPDATE: extend common.BaseOptimizer)

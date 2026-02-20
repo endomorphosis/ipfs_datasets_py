@@ -185,10 +185,12 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [ ] (P1) [arch] `common/base_critic.py` — `BaseCritic` abstract class with `evaluate()` returning typed `CriticScore`
 - [x] (P1) [arch] `common/base_session.py` — `BaseSession` dataclass tracking rounds, scores, convergence
   - Done 2026-02-20: implemented with `start_round()`, `record_round()`, `trend`, `best_score`, `to_dict()`
-- [ ] (P2) [arch] `common/base_harness.py` — `BaseHarness` orchestrating generator + critic + optimizer
+- [x] (P2) [arch] `common/base_harness.py` — `BaseHarness` orchestrating generator + critic + optimizer
+  - Done 2026-02-20: implemented with HarnessConfig, run(), _generate/_critique/_optimize/_validate hooks
 - [x] (P2) [arch] Wire `OntologyCritic` to extend `BaseCritic`
   - Done 2026-02-20: added `evaluate()` → `CriticResult` bridge method
-- [ ] (P2) [arch] Wire `LogicCritic` to extend `BaseCritic`
+- [x] (P2) [arch] Wire `LogicCritic` to extend `BaseCritic`
+  - Done 2026-02-20: evaluate_as_base() → BaseCriticResult; backward-compat evaluate() preserved
 - [ ] (P2) [arch] Wire `OntologySession` / `MediatorState` to extend `BaseSession`
 - [ ] (P2) [arch] Wire `OntologyHarness` to extend `BaseHarness`
 - [ ] (P2) [arch] Wire `LogicHarness` to extend `BaseHarness`
@@ -206,7 +208,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### R5 — Error handling & resilience
 
-- [ ] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
+- [x] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
+  - Done 2026-02-20: common/exceptions.py with full hierarchy
 - [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
 - [ ] (P2) [arch] All CLI commands exit with non-zero on failure (audit `cmd_*` methods)
 - [ ] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()`
@@ -305,7 +308,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### F10 — Prompt generator: example database
 
-- [ ] (P3) [graphrag] `prompt_generator.py:420` — TODO for example database integration; add a JSON-backed example store loadable from `config['examples_path']`
+- [x] (P3) [graphrag] `prompt_generator.py` — built-in JSON example store for legal/medical; pluggable via `_example_store`
+  - Done 2026-02-20
 
 ---
 

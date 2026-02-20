@@ -493,6 +493,31 @@ class PromptGenerator:
         self.template_library[domain] = template
         logger.info(f"Added template for domain: {domain}")
 
+    def add_examples(
+        self,
+        domain: str,
+        examples: List[Dict[str, Any]],
+    ) -> None:
+        """Add few-shot examples for a domain to the instance-level example store.
+
+        These examples are merged with the built-in store when :meth:`select_examples`
+        is called.
+
+        Args:
+            domain: Domain name (e.g. ``'legal'``, ``'medical'``).
+            examples: List of example dicts, each with at minimum::
+
+                {
+                    'input': str,
+                    'ontology': dict,
+                    'quality_score': float,   # 0.0–1.0
+                }
+        """
+        if not hasattr(self, '_example_store'):
+            self._example_store: Dict[str, List[Dict[str, Any]]] = {}
+        self._example_store.setdefault(domain, []).extend(examples)
+        logger.info(f"Added {len(examples)} examples for domain '{domain}'")
+
 
 # Export public API
 __all__ = [

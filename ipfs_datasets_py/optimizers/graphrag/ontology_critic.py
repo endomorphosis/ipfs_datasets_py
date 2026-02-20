@@ -278,6 +278,25 @@ class OntologyCritic(BaseCritic):
             >>> for rec in score.recommendations:
             ...     print(f"- {rec}")
         """
+        import hashlib as _hashlib
+        import json as _json
+
+        # LRU-style cache keyed on ontology content hash (skipped when source_data provided)
+        if source_data is None:
+            try:
+                _cache_key = _hashlib.sha256(
+                    _json.dumps(ontology, sort_keys=True, default=str).encode()
+                ).hexdigest()
+                if not hasattr(self, '_eval_cache'):
+                    self._eval_cache: dict = {}
+                if _cache_key in self._eval_cache:
+                    logger.debug("OntologyCritic cache hit")
+                    return self._eval_cache[_cache_key]
+            except Exception:
+                _cache_key = None
+        else:
+            _cache_key = None
+
         logger.info("Evaluating ontology quality")
         
         # Evaluate each dimension
@@ -319,6 +338,11 @@ class OntologyCritic(BaseCritic):
         )
         
         logger.info(f"Evaluation complete. Overall score: {score.overall:.2f}")
+        if _cache_key is not None:
+            # Limit cache to 128 entries (simple eviction: clear when full)
+            if len(self._eval_cache) >= 128:
+                self._eval_cache.clear()
+            self._eval_cache[_cache_key] = score
         return score
     
     def compare_ontologies(
