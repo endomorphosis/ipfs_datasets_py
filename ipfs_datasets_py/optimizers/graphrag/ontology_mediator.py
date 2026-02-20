@@ -167,7 +167,8 @@ class OntologyMediator:
         generator: Any,  # OntologyGenerator
         critic: Any,  # OntologyCritic
         max_rounds: int = 10,
-        convergence_threshold: float = 0.85
+        convergence_threshold: float = 0.85,
+        logger: Optional[Any] = None,
     ):
         """
         Initialize the ontology mediator.
@@ -177,10 +178,13 @@ class OntologyMediator:
             critic: OntologyCritic for evaluating quality
             max_rounds: Maximum refinement rounds before stopping
             convergence_threshold: Score threshold for convergence (0.0 to 1.0)
+            logger: Optional :class:`logging.Logger` instance.  If ``None``,
+                uses the module-level logger.
             
         Raises:
             ValueError: If convergence_threshold is not in valid range
         """
+        import logging as _logging
         if not 0.0 <= convergence_threshold <= 1.0:
             raise ValueError("convergence_threshold must be between 0.0 and 1.0")
         
@@ -188,8 +192,9 @@ class OntologyMediator:
         self.critic = critic
         self.max_rounds = max_rounds
         self.convergence_threshold = convergence_threshold
+        self._log = logger or _logging.getLogger(__name__)
         
-        logger.info(
+        self._log.info(
             f"Initialized mediator: max_rounds={max_rounds}, "
             f"threshold={convergence_threshold}"
         )

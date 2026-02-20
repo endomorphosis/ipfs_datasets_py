@@ -209,7 +209,8 @@ class OntologyGenerator:
     def __init__(
         self,
         ipfs_accelerate_config: Optional[Dict[str, Any]] = None,
-        use_ipfs_accelerate: bool = True
+        use_ipfs_accelerate: bool = True,
+        logger: Optional[Any] = None,
     ):
         """
         Initialize the ontology generator.
@@ -219,10 +220,13 @@ class OntologyGenerator:
                 Should include 'model', 'task', and optionally 'device'.
             use_ipfs_accelerate: Whether to use ipfs_accelerate for inference.
                 If False, falls back to rule-based extraction.
+            logger: Optional :class:`logging.Logger`.  Defaults to the module logger.
                 
         Raises:
             ImportError: If ipfs_accelerate is required but not available
         """
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
         self.ipfs_accelerate_config = ipfs_accelerate_config or {}
         self.use_ipfs_accelerate = use_ipfs_accelerate
         self._accelerate_client = None
