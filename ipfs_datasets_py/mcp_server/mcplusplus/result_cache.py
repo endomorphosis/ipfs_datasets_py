@@ -213,11 +213,18 @@ class DiskCacheBackend(CacheBackend):
         asyncio.create_task(self._load_index())
     
     async def _load_index(self) -> None:
-        """Load cache index from disk."""
+        """Load cache index from disk, keyed by the original entry key."""
         with self._lock:
             for cache_file in self.cache_dir.glob("*.cache"):
-                key = cache_file.stem
-                self._index[key] = cache_file
+                try:
+                    with open(cache_file, 'rb') as f:
+                        entry = pickle.load(f)
+                    self._index[entry.key] = cache_file
+                except Exception as e:
+                    logger.warning(
+                        f"Skipping unreadable cache file {cache_file}: {e}. "
+                        "The entry will not be available in this session."
+                    )
     
     def _get_cache_path(self, key: str) -> Path:
         """Get file path for cache key."""

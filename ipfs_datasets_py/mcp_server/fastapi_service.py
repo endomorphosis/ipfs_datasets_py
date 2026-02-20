@@ -120,13 +120,20 @@ except ImportError:
                 self.algorithm = "HS256"
                 self.access_token_expire_minutes = 30
 
-# Load configuration
-settings = FastAPISettings()
-
-# Security configuration
-SECRET_KEY = settings.secret_key
-ALGORITHM = settings.algorithm
-ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+# Load configuration (SECRET_KEY may be absent in test environments)
+try:
+    settings = FastAPISettings()
+    SECRET_KEY = settings.secret_key
+    ALGORITHM = settings.algorithm
+    ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
+except ValueError as _cfg_err:
+    import os as _os
+    logger.warning(f"FastAPISettings could not be fully initialised: {_cfg_err}. "
+                   "Using fallback values — set SECRET_KEY env var for production.")
+    settings = None
+    SECRET_KEY = _os.environ.get("SECRET_KEY", "dev-fallback-key-NOT-for-production")
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 if CryptContext:
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

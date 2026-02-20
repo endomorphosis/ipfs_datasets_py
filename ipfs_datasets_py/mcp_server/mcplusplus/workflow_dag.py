@@ -336,10 +336,10 @@ class WorkflowDAGExecutor:
                     if self.on_step_complete:
                         self.on_step_complete(step_id, result)
             
-            # If any step in this level failed, we might want to skip dependent steps
-            # For now, we continue execution but mark dependent steps as skipped if their deps failed
+            # If any step in this level failed, skip remaining levels
             if steps_failed > 0:
                 self._mark_skipped_steps()
+                break
         
         return {
             'success': steps_failed == 0,
