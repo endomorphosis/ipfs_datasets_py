@@ -26,7 +26,7 @@ Example:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-import logging
+import logging as _logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..common.base_optimizer import (
@@ -106,7 +106,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         enable_caching: bool = True,
         domain: str = "general",
         metrics_collector: Optional[Any] = None,
-        logger: Optional[_logging.Logger] = None,
+        logger: Optional[logging.Logger] = None,
     ):
         """Initialize the unified logic theorem optimizer.
         
