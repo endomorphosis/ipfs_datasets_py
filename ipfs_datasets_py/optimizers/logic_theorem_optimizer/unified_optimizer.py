@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import logging as _logging
+import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..common.base_optimizer import (
@@ -49,6 +50,15 @@ from .logic_critic import (
 )
 from .logic_optimizer import LogicOptimizer as LegacyLogicOptimizer
 from .prover_integration import ProverIntegrationAdapter
+
+try:
+    from ipfs_datasets_py.optimizers.optimizer_learning_metrics import (
+        OptimizerLearningMetricsCollector,
+    )
+    _HAVE_LEARNING_METRICS = True
+except ImportError:  # pragma: no cover
+    OptimizerLearningMetricsCollector = None  # type: ignore[assignment,misc]
+    _HAVE_LEARNING_METRICS = False
 
 
 @dataclass
@@ -106,6 +116,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         enable_caching: bool = True,
         domain: str = "general",
         metrics_collector: Optional[Any] = None,
+        learning_metrics_collector: Optional[Any] = None,
         logger: Optional[logging.Logger] = None,
     ):
         """Initialize the unified logic theorem optimizer.
@@ -119,6 +130,12 @@ class LogicTheoremOptimizer(BaseOptimizer):
             metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
                 instance.  When provided, each ``run_session()`` call records
                 timing and success/failure via ``start_cycle`` / ``end_cycle``.
+            learning_metrics_collector: Optional
+                :class:`~ipfs_datasets_py.optimizers.optimizer_learning_metrics.OptimizerLearningMetricsCollector`
+                instance.  When provided, each ``run_session()`` call records
+                a learning cycle via ``record_learning_cycle()``.  If ``None``
+                and ``_HAVE_LEARNING_METRICS`` is True a default in-memory
+                instance is created automatically.
             logger: Optional logger instance for dependency injection
         """
         super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
@@ -139,6 +156,56 @@ class LogicTheoremOptimizer(BaseOptimizer):
         
         # Track extraction history for optimization
         self.extraction_history: List[ExtractionResult] = []
+
+        # Wire learning-metrics collector
+        if learning_metrics_collector is not None:
+            self._learning_metrics = learning_metrics_collector
+        elif _HAVE_LEARNING_METRICS and OptimizerLearningMetricsCollector is not None:
+            self._learning_metrics: Any = OptimizerLearningMetricsCollector()
+        else:
+            self._learning_metrics = None
+
+    def run_session(
+        self,
+        input_data: Any,
+        context: OptimizationContext,
+    ) -> Dict[str, Any]:
+        """Run complete logic theorem optimization session.
+
+        Delegates to :meth:`BaseOptimizer.run_session` and then records the
+        learning cycle in the :class:`OptimizerLearningMetricsCollector` when
+        available.
+
+        Args:
+            input_data: Input text or data to extract logic from.
+            context: Optimization context (session_id, domain, …).
+
+        Returns:
+            Result dict from :meth:`BaseOptimizer.run_session`.
+        """
+        import time as _time
+        t0 = _time.monotonic()
+        result = super().run_session(input_data, context)
+        duration_s = _time.monotonic() - t0
+
+        if self._learning_metrics is not None:
+            feedback = result.get("metrics", {}).get("feedback", [])
+            try:
+                self._learning_metrics.record_learning_cycle(
+                    cycle_id=f"logic_{context.session_id}",
+                    analyzed_queries=1,
+                    patterns_identified=len(feedback) if isinstance(feedback, list) else 0,
+                    parameters_adjusted={
+                        "score": round(result.get("score", 0.0), 6),
+                        "valid": result.get("valid", False),
+                        "iterations": result.get("iterations", 0),
+                    },
+                    execution_time=round(duration_s, 4),
+                )
+            except Exception:  # metrics must never block optimization
+                pass
+
+        return result
 
     def validate_statements(
         self,

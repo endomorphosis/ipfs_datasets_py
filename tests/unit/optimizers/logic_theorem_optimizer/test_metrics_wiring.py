@@ -89,3 +89,101 @@ class TestLogicTheoremOptimizerMetrics:
         m = result["metrics"]
         assert "score_delta" in m
         assert "initial_score" in m
+
+
+# ---------------------------------------------------------------------------
+# Tests for learning_metrics_collector wiring (OptimizerLearningMetricsCollector)
+# ---------------------------------------------------------------------------
+
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizerConfig, OptimizationContext
+
+class TestLogicTheoremOptimizerLearningMetrics:
+    """LogicTheoremOptimizer wires learning_metrics_collector into run_session."""
+
+    def _make_optimizer(self, lm_collector=None):
+        config = OptimizerConfig(
+            max_iterations=1,
+            target_score=0.9,
+            early_stopping=False,
+            validation_enabled=False,
+            metrics_enabled=False,
+        )
+        return LogicTheoremOptimizer(
+            config=config,
+            llm_backend=object(),
+            learning_metrics_collector=lm_collector,
+        )
+
+    def _patch_and_run(self, optimizer, monkeypatch):
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer import logic_extractor as _le
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_extractor import (
+            ExtractionResult,
+            LogicExtractionContext,
+            DataType,
+            ExtractionMode,
+            LogicalStatement,
+        )
+        from ipfs_datasets_py.optimizers.logic_theorem_optimizer.logic_critic import (
+            CriticScore, CriticDimensions, DimensionScore,
+        )
+        from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+
+        extraction_ctx = LogicExtractionContext(
+            data="Test theorem.", data_type=DataType.TEXT,
+            extraction_mode=ExtractionMode.FOL, domain="general",
+        )
+        fake_result = ExtractionResult(
+            statements=[LogicalStatement(
+                formula="P(x)", natural_language="P holds.", confidence=0.7, formalism="fol",
+            )],
+            context=extraction_ctx, success=True,
+        )
+        fake_score = CriticScore(
+            overall=0.65,
+            dimension_scores=[DimensionScore(
+                dimension=CriticDimensions.SOUNDNESS, score=0.65, feedback="OK",
+            )],
+            strengths=[], weaknesses=[], recommendations=[],
+        )
+        monkeypatch.setattr(optimizer.extractor, "extract", lambda ctx: fake_result)
+        monkeypatch.setattr(optimizer.critic, "evaluate", lambda a: fake_score)
+        ctx = OptimizationContext(session_id="lm-test-1", input_data="x", domain="general")
+        return optimizer.run_session("x", ctx)
+
+    def test_learning_metrics_not_created_when_module_missing(self, monkeypatch):
+        import ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer as mod
+        monkeypatch.setattr(mod, "_HAVE_LEARNING_METRICS", False)
+        monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", None)
+        opt = self._make_optimizer()
+        assert opt._learning_metrics is None
+
+    def test_learning_metrics_injected_collector_used(self, monkeypatch):
+        collector = MagicMock()
+        opt = self._make_optimizer(lm_collector=collector)
+        self._patch_and_run(opt, monkeypatch)
+        collector.record_learning_cycle.assert_called_once()
+
+    def test_learning_metrics_cycle_id_contains_session_id(self, monkeypatch):
+        collector = MagicMock()
+        opt = self._make_optimizer(lm_collector=collector)
+        self._patch_and_run(opt, monkeypatch)
+        call_args = collector.record_learning_cycle.call_args
+        cycle_id = call_args.args[0] if call_args.args else call_args.kwargs.get("cycle_id", "")
+        assert "lm-test-1" in cycle_id
+
+    def test_learning_metrics_exception_doesnt_propagate(self, monkeypatch):
+        collector = MagicMock()
+        collector.record_learning_cycle.side_effect = RuntimeError("oops")
+        opt = self._make_optimizer(lm_collector=collector)
+        result = self._patch_and_run(opt, monkeypatch)
+        assert "score" in result
+
+    def test_learning_metrics_auto_created_when_available(self, monkeypatch):
+        import ipfs_datasets_py.optimizers.logic_theorem_optimizer.unified_optimizer as mod
+        fake_cls = MagicMock(return_value=MagicMock())
+        monkeypatch.setattr(mod, "_HAVE_LEARNING_METRICS", True)
+        monkeypatch.setattr(mod, "OptimizerLearningMetricsCollector", fake_cls)
+        opt = self._make_optimizer()
+        assert opt._learning_metrics is not None
+        fake_cls.assert_called_once_with()
