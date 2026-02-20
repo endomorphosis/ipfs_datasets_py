@@ -212,6 +212,9 @@ class HierarchicalToolManager:
         self.categories: Dict[str, ToolCategory] = {}
         self._category_metadata: Dict[str, Dict[str, Any]] = {}
         self._discovered_categories = False
+        # Phase 7: lazy-loading registry — maps category name → callable that
+        # returns a ready-to-use ToolCategory when first accessed.
+        self._lazy_loaders: Dict[str, Callable[[], ToolCategory]] = {}
         
         # Load category metadata
         self._load_category_metadata()
@@ -266,6 +269,57 @@ class HierarchicalToolManager:
         self._discovered_categories = True
         logger.info(f"Discovered {len(self.categories)} tool categories")
     
+    def lazy_register_category(
+        self, name: str, loader: Callable[[], ToolCategory]
+    ) -> None:
+        """Register a category whose ``ToolCategory`` object is created on demand.
+
+        The *loader* callable is invoked the first time the category is accessed
+        (e.g. via :meth:`get_category`, :meth:`list_tools`, or :meth:`dispatch`).
+        This avoids importing heavy third-party dependencies at server startup.
+
+        Args:
+            name: Category name used for routing (e.g. ``"dataset_tools"``).
+            loader: Zero-argument callable that returns a populated
+                    :class:`ToolCategory` instance.
+
+        Example::
+
+            manager.lazy_register_category(
+                "my_tools",
+                lambda: ToolCategory("my_tools", Path("tools/my_tools")),
+            )
+        """
+        self._lazy_loaders[name] = loader
+        # Register minimal metadata so the category appears in listings.
+        # Only set metadata if no richer entry (from _load_category_metadata) exists.
+        if name not in self._category_metadata or not self._category_metadata[name].get("description"):
+            self._category_metadata[name] = {"name": name, "description": "", "path": ""}
+
+    def get_category(self, name: str) -> Optional[ToolCategory]:
+        """Return a :class:`ToolCategory` by name, triggering lazy loading if needed.
+
+        Args:
+            name: Category name.
+
+        Returns:
+            The ``ToolCategory`` instance, or ``None`` if the category does not
+            exist.
+        """
+        if name in self.categories:
+            return self.categories[name]
+        if name in self._lazy_loaders:
+            logger.debug("Lazy-loading category '%s'", name)
+            category = self._lazy_loaders.pop(name)()
+            self.categories[name] = category
+            self._category_metadata[name] = {
+                "name": name,
+                "description": category.description,
+                "path": str(category.path),
+            }
+            return category
+        return None
+
     async def list_categories(self, include_count: bool = False) -> List[Dict[str, Any]]:
         """List all available tool categories.
         
@@ -279,17 +333,22 @@ class HierarchicalToolManager:
             self.discover_categories()
         
         result = []
-        for name, metadata in self._category_metadata.items():
+        # Merge discovered categories AND lazily registered ones
+        all_names = set(self._category_metadata.keys()) | set(self._lazy_loaders.keys())
+        for name in all_names:
+            metadata = self._category_metadata.get(name, {"name": name, "description": ""})
             cat_info = {
                 "name": name,
-                "description": metadata["description"]
+                "description": metadata["description"],
+                "lazy": name in self._lazy_loaders,
             }
             
             if include_count:
-                category = self.categories[name]
-                if not category._discovered:
-                    category.discover_tools()
-                cat_info["tool_count"] = len(category._tools)
+                category = self.get_category(name)
+                if category is not None:
+                    if not category._discovered:
+                        category.discover_tools()
+                    cat_info["tool_count"] = len(category._tools)
             
             result.append(cat_info)
         
@@ -307,14 +366,14 @@ class HierarchicalToolManager:
         if not self._discovered_categories:
             self.discover_categories()
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
                 "available_categories": list(self.categories.keys())
             }
         
-        cat = self.categories[category]
         tools = cat.list_tools()
         
         return {
@@ -338,13 +397,13 @@ class HierarchicalToolManager:
         if not self._discovered_categories:
             self.discover_categories()
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found"
             }
         
-        cat = self.categories[category]
         schema = cat.get_tool_schema(tool)
         
         if schema is None:
@@ -380,14 +439,14 @@ class HierarchicalToolManager:
         if params is None:
             params = {}
         
-        if category not in self.categories:
+        cat = self.get_category(category)
+        if cat is None:
             return {
                 "status": "error",
                 "error": f"Category '{category}' not found",
                 "available_categories": list(self.categories.keys())
             }
         
-        cat = self.categories[category]
         tool_func = cat.get_tool(tool)
         
         if tool_func is None:
