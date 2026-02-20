@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 73% overall | Measured 2026-02-20; advanced 78%, unified_engine 73%, ipld_backend 69%, validator 59%
+| **Test Coverage** | 75% overall | Measured 2026-02-20; constraints 100%, migration importer 72%, migration exporter 61%, manager 77%
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
-| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (1,591 pass)
+| **Known Issues** | None | 7 bugs fixed (sessions 7-11); 0 failures (1,705 pass)
 | **Next Milestone** | v2.2.0 (Q3 2026) | lineage/visualization render paths (requires matplotlib)
 
 ---
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~74% (measured, session 10)
+### Overall Coverage: ~75% (measured, session 12)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -157,10 +157,11 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 |--------|----------|--------|-------|
 | **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser 78%, compiler 84% |
 | **Neo4j Compat** | 65–95% | ✅ Good | result.py **85%**, connection_pool 95%, session 65% |
-| **Migration** | 82–100% | ✅ Excellent | neo4j_exporter 94%, formats 86% |
+| **Migration** | 61–86% | ✅ Good | neo4j_exporter **61%** (+39pp), ipfs_importer **72%** (+48pp), formats 86% |
 | **JSON-LD** | 81–**91%** | ✅ **Excellent** | context.py **91%**, validation 81%, types 98% |
 | **Core** | 68–85% | ✅ Good | legacy_engine 68%, graph_engine **69%**, types 85% |
-| **Transactions** | 64–95% | ✅ Good | manager 64%, wal 65%, types 95% |
+| **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
+| **Transactions** | 65–96% | ✅ Good | manager **77%** (+13pp), wal 65%, types 96% |
 | **Query** | 57–**83%** | ✅ **Good** | hybrid_search **83%**, unified_engine 57%, distributed 80% |
 | **Extraction** | 52–**69%** | 🔶 Improving | graph.py 71%, validator 52%, finance_graphrag **69%** |
 | **Reasoning** | **66%**–98% | ✅ Good | cross_document **66%**, helpers 80%, types 94% |
@@ -171,9 +172,10 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 **Largest remaining coverage opportunities:**
 - `lineage/visualization.py` (34%) — render_networkx/render_plotly require matplotlib/plotly (optional)
+- `transactions/wal.py` (65%) — StorageError/SerializationError injection paths require storage mock failures
 - `storage/ipld_backend.py` (50%) — IPFS daemon interaction paths require a running IPFS node
 - `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package
-- `extraction/extractor.py` (53%) — spaCy/transformers-dependent paths
+- `extraction/extractor.py` (54%) — spaCy/transformers-dependent paths
 
 ### Test Files: 64 total (as of v2.1.4)
 
@@ -200,11 +202,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session8.py** (92 tests — lineage shims, visualization, storage/types, LRUCache, indexing)
 - **test_master_status_session9.py** (118 tests — legacy_engine, cypher/functions, graph.py, Result, WAL, Transaction)
 - **test_master_status_session10.py** (92 tests — graph_engine, hybrid_search, jsonld/context, cross_document, finance_graphrag, root shims)
-- migration/test_formats.py, migration/test_integrity_verifier.py, migration/test_schema_checker.py, ...
+- **test_master_status_session11.py** (81 tests — extractor, advanced, unified_engine, validator, ipld_backend)
+- **test_master_status_session12.py** (98 tests — constraints 100%, ipfs_importer 72%, neo4j_exporter 61%, transaction manager 77%)
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 1,595 passing, 22 skipped (libipld/anyio absent; networkx + pytest-mock now available)
+**Total Tests:** 1,705 passing, 22 skipped (libipld/anyio absent; networkx + pytest-mock available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -488,7 +491,7 @@ reasoning = reasoner.reason_across_documents(
 
 **Improving Tests:**
 1. See [tests/knowledge_graphs/TEST_GUIDE.md](../../tests/knowledge_graphs/TEST_GUIDE.md)
-2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths) and `transactions/wal.py` (65%) — next highest-value targets
+2. Focus on `extraction/extractor.py` (54% — spaCy/transformers paths), `transactions/wal.py` (65% — StorageError paths), and `migration/neo4j_exporter.py` (61% — Neo4j session paths) — next highest-value targets
 3. Add error handling and edge case tests
 4. Ensure tests work with and without optional dependencies (use `pytest.importorskip`)
 
@@ -501,6 +504,28 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.1.7 (2026-02-20) - Coverage Boost Session 12 ✅
+
+**Summary:** Added 98 new tests covering 5 previously low-coverage modules; overall coverage from 73% to 75%.
+
+**Bug fixes:** None (all targeted modules had correct behavior).
+
+**Test additions:**
+- `test_master_status_session12.py` — 98 new GIVEN-WHEN-THEN tests covering:
+  - `constraints/__init__.py` (75% → **100%**): `ConstraintType` enum, `ConstraintDefinition`, `ConstraintViolation`, `UniqueConstraint` (validate/register/label-filter/duplicate/same-entity/no-property), `ExistenceConstraint` (present/missing/None/empty/wrong-label/register-noop), `TypeConstraint` (correct-type/wrong-type/missing/label-filter/register-noop), `CustomConstraint` (pass/fail/label-filter/register-noop), `ConstraintManager` (add unique/existence/type/custom, remove/unknown, validate/violations/multiple, register delegates, list, clear)
+  - `migration/ipfs_importer.py` (24% → **72%**): `ImportConfig` defaults/custom, `ImportResult.to_dict`, `IPFSImporter` init/missing-IPFS-graceful, `_load_graph_data` (direct-gd/no-input-raises), `_validate_graph_data` (valid/duplicate-nodes/missing-endpoint), `import_data` (IPFS-unavailable/excessive-errors/mocked-session/MigrationError/schema-with-indexes+constraints)
+  - `migration/neo4j_exporter.py` (22% → **61%**): `ExportConfig` defaults/custom, `ExportResult.to_dict`, `Neo4jExporter` init/missing-neo4j, `export` (neo4j-unavailable/MigrationError/mocked-driver/with-output-file/unexpected-error/_close-always-called), `export_to_graph_data` (returns-None-on-error/restores-output-file), `_export_nodes` (label-filter query), `_export_relationships` (type-filter query)
+  - `transactions/manager.py` (64% → **77%**): `begin` (active/isolation-level/increments-count), `add_operation` (tracking/write-set/aborted-raises), `add_read`, `rollback` (ABORTED/removes-active/clears-ops), `_detect_conflicts` (READ_COMMITTED-no-check/REPEATABLE_READ-conflict/SERIALIZABLE-conflict/no-overlap), `_apply_operations` (WRITE_NODE/DELETE_NODE/SET_PROPERTY), `get_stats` (keys/active-count)
+  - `transactions/wal.py` (65% → 65% — error injection paths are unreachable without StorageError from storage mock): `compact` (returns-new-CID/resets-count/updates-head), `recover` (empty/committed/skips-aborted), `get_transaction_history` (matching/unknown), `get_stats` (keys/increments), `verify_integrity` (empty/single-entry)
+  - `constraints/__init__.py` is now the highest-covered module at **100%**
+
+**Result:** 1,705 passed, 22 skipped (libipld/anyio absent), **0 failed** — up from 1,607 passed (session 11 baseline with networkx)
+**Coverage:** 73% → **75%** overall
+
+**Backward Compatibility:** 100% (no production code changes)
+
+---
 
 ### v2.1.6 (2026-02-20) - Coverage Boost Session 11 + 2 Bug Fixes ✅
 
