@@ -5,12 +5,15 @@ from __future__ import annotations
 import logging
 from typing import Optional
 
+from ..constants import MUNICIPAL_CLASS_CODES, COUNTY_CLASS_CODES, CONSOLIDATED_CLASS_CODES
+
 logger = logging.getLogger(__name__)
 
 # Bug #22 fix: use class_code values (C1-C7, H1/H4-H6, C8), NOT feature_class strings.
-_MUNICIPAL_CLASS_CODES: frozenset[str] = frozenset({"C1", "C2", "C3", "C4", "C5", "C6", "C7"})
-_COUNTY_CLASS_CODES: frozenset[str] = frozenset({"H1", "H4", "H5", "H6"})
-_CONSOLIDATED_CLASS_CODES: frozenset[str] = frozenset({"C8"})
+# Frozensets are defined in constants.py for shared use across the package.
+_MUNICIPAL_CLASS_CODES = MUNICIPAL_CLASS_CODES
+_COUNTY_CLASS_CODES = COUNTY_CLASS_CODES
+_CONSOLIDATED_CLASS_CODES = CONSOLIDATED_CLASS_CODES
 
 
 def check_code_type(citation: dict, reference_db) -> Optional[str]:

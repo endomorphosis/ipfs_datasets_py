@@ -94,7 +94,9 @@ class TestCheckFormat:
 
     def test_invalid_year_too_old(self):
         citation = {"bluebook_citation": "Garland, Ark., County Code, §14-75 (1200)"}
-        assert check_format(citation) is not None
+        result = check_format(citation)
+        assert result is not None
+        assert "1200" in result and ("range" in result or "1776" in result)
 
     def test_invalid_year_future(self):
         citation = {"bluebook_citation": "Garland, Ark., County Code, §14-75 (2099)"}

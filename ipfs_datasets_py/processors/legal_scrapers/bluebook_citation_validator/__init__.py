@@ -10,6 +10,7 @@ Migrate from::
 """
 
 from .config import ValidatorConfig
+from .constants import BLUEBOOK_STATE_ABBREVS, MIN_CITATION_YEAR, MAX_CITATION_YEAR, MUNICIPAL_CLASS_CODES, COUNTY_CLASS_CODES, CONSOLIDATED_CLASS_CODES
 from .validator import CitationValidator
 from .sampling import StratifiedSampler
 from .analysis import ResultsAnalyzer, ConfusionMatrixStats
@@ -45,4 +46,11 @@ __all__ = [
     "check_section",
     "check_date",
     "check_format",
+    # Constants
+    "BLUEBOOK_STATE_ABBREVS",
+    "MIN_CITATION_YEAR",
+    "MAX_CITATION_YEAR",
+    "MUNICIPAL_CLASS_CODES",
+    "COUNTY_CLASS_CODES",
+    "CONSOLIDATED_CLASS_CODES",
 ]

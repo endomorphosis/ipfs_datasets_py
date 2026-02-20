@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from typing import Optional
 
+from ..constants import BLUEBOOK_STATE_ABBREVS, MIN_CITATION_YEAR, MAX_CITATION_YEAR
+
 # ---------------------------------------------------------------------------
 # Bluebook Rule 12.9 pattern
 # Format: "Place, State Abbrev., Code Type, §Section (Year)"
@@ -25,19 +27,6 @@ _BLUEBOOK_PATTERN = re.compile(
     r"§(?P<section>[\d]+(?:[-.][\d]+)*)\s+"
     r"\((?P<year>\d{4})\)$"
 )
-
-# Official Bluebook state abbreviations (Rule 10.2.2 / Table T10).
-_BLUEBOOK_STATE_ABBREVS: frozenset[str] = frozenset([
-    "Ala.", "Alaska", "Ariz.", "Ark.", "Cal.", "Colo.", "Conn.", "Del.",
-    "Fla.", "Ga.", "Haw.", "Idaho", "Ill.", "Ind.", "Iowa", "Kan.", "Ky.",
-    "La.", "Me.", "Md.", "Mass.", "Mich.", "Minn.", "Miss.", "Mo.", "Mont.",
-    "Neb.", "Nev.", "N.H.", "N.J.", "N.M.", "N.Y.", "N.C.", "N.D.", "Ohio",
-    "Okla.", "Or.", "Pa.", "R.I.", "S.C.", "S.D.", "Tenn.", "Tex.", "Utah",
-    "Vt.", "Va.", "Wash.", "W. Va.", "Wis.", "Wyo.", "D.C.",
-])
-
-_MIN_YEAR = 1776
-_MAX_YEAR = 2025
 
 
 def check_format(citation: dict) -> Optional[str]:
@@ -62,17 +51,17 @@ def check_format(citation: dict) -> Optional[str]:
         )
 
     state_abbrev = m.group("state")
-    if state_abbrev not in _BLUEBOOK_STATE_ABBREVS:
+    if state_abbrev not in BLUEBOOK_STATE_ABBREVS:
         return (
             f"Unrecognised Bluebook state abbreviation '{state_abbrev}' "
             f"in bluebook_citation: {text!r}"
         )
 
     year = int(m.group("year"))
-    if not (_MIN_YEAR <= year <= _MAX_YEAR):
+    if not (MIN_CITATION_YEAR <= year <= MAX_CITATION_YEAR):
         return (
             f"Year {year} in bluebook_citation is outside the valid range "
-            f"({_MIN_YEAR}–{_MAX_YEAR}): {text!r}"
+            f"({MIN_CITATION_YEAR}–{MAX_CITATION_YEAR}): {text!r}"
         )
 
     return None  # valid
