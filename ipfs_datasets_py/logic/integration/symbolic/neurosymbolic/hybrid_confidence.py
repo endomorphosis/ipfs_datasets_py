@@ -25,8 +25,8 @@ from dataclasses import dataclass
 from enum import Enum
 
 # TDFOL imports
-from ...TDFOL.tdfol_core import Formula
-from ...TDFOL.tdfol_prover import ProofResult
+from ....TDFOL.tdfol_core import Formula
+from ....TDFOL.tdfol_prover import ProofResult
 
 logger = logging.getLogger(__name__)
 

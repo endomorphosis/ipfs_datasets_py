@@ -247,10 +247,22 @@ class TDFOLGrammarBridge(BaseProverBridge):
         except Exception as e:
             logger.debug(f"TDFOL parser fallback failed: {e}")
         
-        # Final fallback: treat as a simple atom (0-ary predicate)
+        # Final fallback: build simple TDFOL formula from text structure
         try:
-            from ...TDFOL.tdfol_core import Predicate
+            from ...TDFOL.tdfol_core import Predicate, Implication, Conjunction, Negation
             stripped = text.strip()
+            
+            # Handle implication "A -> B" or "A => B"
+            for sep in [' -> ', ' => ', ' --> ']:
+                if sep in stripped:
+                    parts = stripped.split(sep, 1)
+                    left = self._fallback_parse(parts[0].strip())
+                    right = self._fallback_parse(parts[1].strip())
+                    if left is not None and right is not None:
+                        return Implication(left, right)
+                    break
+            
+            # Handle simple atom
             if stripped and stripped.replace("_", "").replace("-", "").isalnum():
                 pred = Predicate(stripped, ())
                 logger.debug(f"Created atom '{stripped}' as fallback for '{text}'")

@@ -562,6 +562,21 @@ class ProofResult:
         """Check if result is conclusive (proved or disproved)."""
         return self.status in (ProofStatus.PROVED, ProofStatus.DISPROVED)
 
+    def __getitem__(self, key: str):
+        """Dict-like access for backward compatibility (e.g. result['strategy'])."""
+        mapping = {
+            'status': self.status.value if hasattr(self.status, 'value') else str(self.status),
+            'proved': self.is_proved(),
+            'method': self.method,
+            'strategy': self.method,
+            'time_ms': self.time_ms,
+            'message': self.message,
+            'proof_steps': self.proof_steps,
+        }
+        if key in mapping:
+            return mapping[key]
+        raise KeyError(key)
+
 
 # ============================================================================
 # Expansion Rules for Tableaux/Proof Search

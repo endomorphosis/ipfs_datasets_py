@@ -29,9 +29,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 
 # TDFOL imports
-from ...TDFOL.tdfol_core import Formula
-from ...TDFOL.tdfol_parser import parse_tdfol
-from ...TDFOL.tdfol_prover import TDFOLProver, ProofResult
+from ....TDFOL.tdfol_core import Formula
+from ....TDFOL.tdfol_parser import parse_tdfol
+from ....TDFOL.tdfol_prover import TDFOLProver, ProofResult
 
 # Integration imports
 from ..neurosymbolic_api import NeurosymbolicReasoner

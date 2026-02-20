@@ -386,7 +386,7 @@ class TDFOLProver:
         else:
             logger.warning("Proving strategies not available, using legacy proving methods")
             self.selector = None
-            self.strategy = None
+            self.strategy = strategy  # Preserve custom strategy even when module unavailable
         
         # Try to use CEC prover if available (for legacy path only)
         self.cec_engine = None
