@@ -19,11 +19,9 @@ import pytest
 _ENGINE_FILE = (
     Path(__file__).parent.parent.parent.parent
     / "ipfs_datasets_py"
-    / "mcp_server"
-    / "tools"
-    / "legal_dataset_tools"
-    / "municipal_law_database_scrapers"
-    / "hugging_face_pipeline_engine.py"
+    / "processors"
+    / "legal_scrapers"
+    / "huggingface_pipeline_engine.py"
 )
 
 _spec = importlib.util.spec_from_file_location("hf_pipeline_engine", _ENGINE_FILE)

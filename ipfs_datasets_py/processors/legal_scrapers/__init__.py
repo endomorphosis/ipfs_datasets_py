@@ -111,6 +111,36 @@ from .patent_engine import (
     search_patents_by_keyword,
 )
 
+# Municipal Scraper Engine — fallback scraping strategies
+from .municipal_scraper_engine import (
+    MunicipalScraperFallbacks,
+    scrape_with_fallbacks as scrape_municipal_with_fallbacks,
+)
+
+# State Laws Scheduler Engine — periodic update scheduling
+from .state_laws_scheduler_engine import (
+    StateLawsUpdateScheduler,
+    create_schedule,
+    remove_schedule,
+    list_schedules,
+    run_schedule_now,
+    enable_disable_schedule,
+)
+
+# Incremental Updates Engine — delta scraping helpers
+from .incremental_updates_engine import (
+    IncrementalUpdateTracker,
+    calculate_update_parameters,
+    scrape_recap_incremental,
+    scrape_with_incremental_update,
+)
+
+# HuggingFace Pipeline Engine — rate limiting + parallel upload
+from .huggingface_pipeline_engine import (
+    RateLimiter,
+    UploadToHuggingFaceInParallel,
+)
+
 # Brave Legal Search - Natural language search for legal rules and regulations
 from .brave_legal_search import (
     BraveLegalSearch,
@@ -363,6 +393,28 @@ __all__ = [
     "search_patents_by_keyword",
     "search_patents_by_inventor",
     "search_patents_by_assignee",
+
+    # Municipal Scraper Engine
+    "MunicipalScraperFallbacks",
+    "scrape_municipal_with_fallbacks",
+
+    # State Laws Scheduler Engine
+    "StateLawsUpdateScheduler",
+    "create_schedule",
+    "remove_schedule",
+    "list_schedules",
+    "run_schedule_now",
+    "enable_disable_schedule",
+
+    # Incremental Updates Engine
+    "IncrementalUpdateTracker",
+    "calculate_update_parameters",
+    "scrape_recap_incremental",
+    "scrape_with_incremental_update",
+
+    # HuggingFace Pipeline Engine
+    "RateLimiter",
+    "UploadToHuggingFaceInParallel",
     
     # Brave Legal Search
     "BraveLegalSearch",

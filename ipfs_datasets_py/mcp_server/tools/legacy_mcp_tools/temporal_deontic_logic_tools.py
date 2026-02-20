@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import annotations
 
 # DEPRECATED: This legacy module is superseded by
 #   ipfs_datasets_py.mcp_server.tools.logic_tools
@@ -11,23 +12,6 @@ warnings.warn(
     stacklevel=2,
 )
 
-# -*- coding: utf-8 -*-
-"""
-Temporal Deontic Logic RAG Tools for MCP (Model Context Protocol).
-
-This module implements MCP tools for the temporal deontic logic RAG system that
-functions like a legal debugger for document consistency checking. It converts
-the REST API endpoints into proper MCP tools that can be called via JSON-RPC.
-
-Tools included:
-- check_document_consistency: Check documents against deontic logic theorems
-- query_theorems: RAG-based retrieval of relevant legal precedents  
-- bulk_process_caselaw: Process entire caselaw databases
-- add_theorem: Add individual theorems (for testing)
-
-These tools enable legal document debugging capabilities through the MCP framework.
-"""
-from __future__ import annotations
 
 import anyio
 import json
