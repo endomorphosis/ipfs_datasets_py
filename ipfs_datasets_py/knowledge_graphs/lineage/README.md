@@ -1,7 +1,8 @@
 # Cross-Document Lineage Tracking
 
-**Version:** 2.0.0  
-**Package:** `ipfs_datasets_py.knowledge_graphs.lineage`
+**Version:** 2.1.0  
+**Package:** `ipfs_datasets_py.knowledge_graphs.lineage`  
+**Last Updated:** 2026-02-20
 
 ---
 
@@ -16,6 +17,23 @@ The Lineage module provides cross-document entity tracking and relationship line
 - Lineage visualization
 - Provenance tracking
 - Temporal entity analysis
+- Cross-document lineage (moved from root in v2.1.0)
+
+## Module Contents
+
+| File | Description |
+|------|-------------|
+| `core.py` | `LineageTracker` — main cross-document lineage tracker |
+| `enhanced.py` | Enhanced lineage with provenance |
+| `metrics.py` | Lineage quality metrics |
+| `types.py` | Lineage data types |
+| `visualization.py` | Lineage visualization helpers |
+| `cross_document.py` | `CrossDocumentLineage` — moved from root (v2.1.0) |
+| `cross_document_enhanced.py` | `CrossDocumentLineageEnhanced` — moved from root (v2.1.0) |
+
+> **Migration note:** Old imports like `from ipfs_datasets_py.knowledge_graphs.cross_document_lineage import ...`
+> still work but emit a `DeprecationWarning`. Prefer:
+> `from ipfs_datasets_py.knowledge_graphs.lineage.cross_document import ...`
 
 ---
 

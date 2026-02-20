@@ -287,3 +287,15 @@ If you want a high-value sequence that keeps risk low:
 - 2026-02-19: Sprint 3 (3.2.2) – Clarified `ipld.py` module docstring with explicit relationship to `storage/ipld_backend.py` (legacy primitive layer vs. recommended backend).
 - 2026-02-19: Sprint 3 (3.3.5) – Extracted 5 methods from `cross_document_reasoning.py` into `_reasoning_helpers.py` as `ReasoningHelpersMixin`; 1196→876 lines; `CrossDocumentReasoner(ReasoningHelpersMixin)`.
 - 2026-02-19: Sprint 4 (3.3.3) – Added `-> None` / `-> Any` return type annotations to 9 untyped methods in `cypher/compiler.py`; imported `UnionClause` at top-level (removed inline import); all 42 Cypher tests pass.
+- 2026-02-20 (session 5): FOREACH + CALL subquery Cypher clauses implemented (lexer, AST, parser, compiler, IR executor); 32 new tests; all Cypher clause features now complete.
+- 2026-02-20 (session 5): SRL extraction, OWL/RDFS ontology materialize, and distributed Cypher execution exposed as 3 new MCP tools (graph_srl_extract, graph_ontology_materialize, graph_distributed_execute) + KnowledgeGraphManager extended with corresponding methods.
+- 2026-02-20 (session 5): Folder refactoring COMPLETE. All root-level modules moved to permanent subpackage locations:
+  - cross_document_reasoning.py → reasoning/cross_document.py
+  - _reasoning_helpers.py → reasoning/helpers.py
+  - cross_document_types.py → reasoning/types.py
+  - cross_document_lineage.py → lineage/cross_document.py
+  - cross_document_lineage_enhanced.py → lineage/cross_document_enhanced.py
+  - query_knowledge_graph.py → query/knowledge_graph.py
+  - sparql_query_templates.py → query/sparql_templates.py
+  - finance_graphrag.py → extraction/finance_graphrag.py
+  All root files replaced with DeprecationWarning shims; 1075+ tests pass.

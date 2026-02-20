@@ -141,18 +141,19 @@ Tracking status and planning:
 |------|------|---------|--------|
 | `extraction/README.md` | 11.5KB | Entity/relationship extraction | ✅ Complete |
 | `cypher/README.md` | 8.5KB | Cypher query language | ✅ Complete |
-| `query/README.md` | 11KB | Query execution engines | ✅ Complete |
+| `query/README.md` | ~11KB | Query execution engines (+ SPARQL, KG tools) | ✅ Complete |
 | `core/README.md` | 11.5KB | Core graph engine | ✅ Complete |
 | `storage/README.md` | 10KB | IPLD storage backend | ✅ Complete |
 | `neo4j_compat/README.md` | 12KB | Neo4j API compatibility | ✅ Complete |
 | `transactions/README.md` | 11KB | ACID transaction support | ✅ Complete |
 | `migration/README.md` | 10.8KB | Data migration tools | ✅ Complete |
-| `lineage/README.md` | 11.9KB | Cross-document tracking | ✅ Complete |
+| `lineage/README.md` | ~12KB | Cross-document tracking + lineage | ✅ Complete |
 | `indexing/README.md` | 12.8KB | Index management | ✅ Complete |
 | `jsonld/README.md` | 13.8KB | JSON-LD support | ✅ Complete |
 | `constraints/README.md` | 9KB | Graph constraints | ✅ Complete |
+| `reasoning/README.md` | ~2KB | Cross-document reasoning (new v2.1.0) | ✅ Complete |
 
-**Total Module Documentation:** 208KB across 17 files
+**Total Module Documentation:** 210KB+ across 18 files
 
 ### Archive (In archive/)
 
@@ -185,8 +186,12 @@ See [archive/README.md](./archive/README.md) for details.
 
 ### "I want to query knowledge graphs"
 → [query/README.md](./query/README.md) - Query engines  
-→ [cypher/README.md](./cypher/README.md) - Cypher language  
+→ [cypher/README.md](./cypher/README.md) - Cypher language (all clauses)  
 → [../../docs/knowledge_graphs/USER_GUIDE.md](../../docs/knowledge_graphs/USER_GUIDE.md) - Query examples
+
+### "I want to do cross-document reasoning"
+→ [reasoning/README.md](./reasoning/README.md) - Cross-document reasoning subpackage  
+→ `ipfs_datasets_py.knowledge_graphs.reasoning.cross_document` — canonical import path
 
 ### "I want to migrate from Neo4j"
 → [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md) - Migration guide  

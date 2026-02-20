@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 2.0.0  
+**Version:** 2.1.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-18  
-**Last Major Release:** PR #1085 (P1-P4 features complete)
+**Last Updated:** 2026-02-20  
+**Last Major Release:** Session 5 (FOREACH, CALL subquery, reasoning/ subpackage, folder refactoring)
 
 ---
 
@@ -14,10 +14,14 @@
 | **Overall Status** | ✅ Production Ready | 75%+ test coverage, comprehensive docs |
 | **Core Features** | ✅ Complete | All extraction, query, storage features working |
 | **P1-P4 Features** | ✅ Complete | Implemented in PR #1085 (2026-02-18) |
+| **Cypher Features** | ✅ Complete | FOREACH + CALL subquery added (2026-02-20) |
+| **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
+| **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
+| **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
 | **Test Coverage** | 75% overall | Critical modules at 80-85% |
-| **Documentation** | ✅ Comprehensive | 260KB+ total documentation |
-| **Known Issues** | None critical | Only optional format support missing |
-| **Next Milestone** | v2.0.1 (May 2026) | Test coverage improvements |
+| **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
+| **Known Issues** | None critical | Optional deps (numpy, libipld) |
+| **Next Milestone** | v2.2.0 (Q3 2026) | Test coverage improvements |
 
 ---
 
@@ -44,6 +48,12 @@
 | **Cypher NOT Operator** | ✅ **Complete** | 80% | **v2.0.0 (P1)** |
 | **Cypher CREATE (nodes)** | ✅ Complete | 75% | v1.0.0 |
 | **Cypher CREATE (relationships)** | ✅ **Complete** | 75% | **v2.0.0 (P1)** |
+| **Cypher MERGE** | ✅ **Complete** | 75% | **v2.0.0 (session 4)** |
+| **Cypher REMOVE** | ✅ **Complete** | 75% | **v2.0.0 (session 4)** |
+| **Cypher UNWIND** | ✅ **Complete** | 75% | **v2.0.0 (session 4)** |
+| **Cypher WITH** | ✅ **Complete** | 75% | **v2.0.0 (session 4)** |
+| **Cypher FOREACH** | ✅ **Complete** | 75% | **v2.1.0 (session 5)** |
+| **Cypher CALL subquery** | ✅ **Complete** | 75% | **v2.1.0 (session 5)** |
 | SPARQL Queries | ✅ Complete | 70% | v1.0.0 |
 | Hybrid Search (vector + graph) | ✅ Complete | 80% | v1.0.0 |
 
@@ -61,6 +71,10 @@
 | **P3: Complex Inference** | ✅ **Complete** | 75% | **v2.0.0 (PR #1085)** |
 | **P4: Multi-hop Traversal** | ✅ **Complete** | 80% | **v2.0.0 (PR #1085)** |
 | **P4: LLM Integration** | ✅ **Complete** | 80% | **v2.0.0 (PR #1085)** |
+| **SRL Extraction** | ✅ **Complete** | 80% | **v2.1.0 (session 3)** |
+| **OWL/RDFS Ontology Reasoning** | ✅ **Complete** | 75% | **v2.1.0 (session 3)** |
+| **Distributed Query Execution** | ✅ **Complete** | 75% | **v2.1.0 (session 3)** |
+| **Reasoning Subpackage** | ✅ **Complete** | 75% | **v2.1.0 (session 5)** |
 
 ### Migration & Compatibility
 
@@ -164,7 +178,7 @@
 
 **Target:** 70%+ coverage in v2.0.1 (May 2026)
 
-### Test Files: 41 total
+### Test Files: 54 total (as of v2.1.0)
 
 **Unit Tests:** tests/unit/knowledge_graphs/
 - test_extraction.py, test_extraction_package.py
@@ -176,10 +190,16 @@
 - test_p1_deferred_features.py (9 tests, P1 features)
 - test_p2_format_support.py (11 tests, P2 features)
 - test_p3_p4_advanced_features.py (16 tests, P3/P4 features)
-- ...and 28 more test files
+- test_merge_remove_isnull_xor.py (27 tests)
+- test_unwind_with_clauses.py (19 tests)
+- test_foreach_call_mcp.py (32 tests, FOREACH+CALL+MCP)
+- test_srl_ontology_distributed.py (38 tests)
+- test_srl_ontology_distributed_cont.py (64 tests)
+- test_deferred_session4.py (100 tests)
+- ...and 36 more test files
 
-**Total Tests:** 116+ tests  
-**Pass Rate:** 94%+ (excluding 13 intentional skips for optional dependencies)
+**Total Tests:** 1075+ passing  
+**Pass Rate:** ~98% (excluding pre-existing optional dependency skips)
 
 ---
 
@@ -229,7 +249,7 @@ Superseded planning documents (no longer current):
 - KNOWLEDGE_GRAPHS_USAGE_EXAMPLES.md (27KB)
 - KNOWLEDGE_GRAPHS_PERFORMANCE_OPTIMIZATION.md (32KB)
 
-### Module READMEs (13 files, 5,009 lines)
+### Module READMEs (14 files)
 
 Each subdirectory has comprehensive README:
 - extraction/README.md
@@ -238,6 +258,7 @@ Each subdirectory has comprehensive README:
 - core/README.md
 - storage/README.md
 - neo4j_compat/README.md
+- reasoning/README.md  ← new (2026-02-20)
 - transactions/README.md
 - migration/README.md
 - lineage/README.md
@@ -284,7 +305,6 @@ Each subdirectory has comprehensive README:
 **Only if user demand:**
 - CAR format support (10-12 hours)
 - Advanced inference rules
-- Distributed query execution (only for 100M+ node graphs)
 - Additional performance optimizations
 
 **Note:** Module is production-ready without these enhancements.
@@ -303,6 +323,9 @@ Each subdirectory has comprehensive README:
 4. ~~Neural extraction~~ → ✅ Completed in v2.0.0 (P3)
 5. ~~Multi-hop traversal~~ → ✅ Completed in v2.0.0 (P4)
 6. ~~LLM integration~~ → ✅ Completed in v2.0.0 (P4)
+7. ~~FOREACH clause~~ → ✅ Completed in v2.1.0 (session 5)
+8. ~~CALL subquery~~ → ✅ Completed in v2.1.0 (session 5)
+9. ~~Root-level files in wrong location~~ → ✅ Completed in v2.1.0 (session 5)
 
 ### Remaining Optional Features
 
@@ -315,7 +338,7 @@ Each subdirectory has comprehensive README:
 **Migration Module Test Coverage:**
 - Status: 40% (target: 70%+)
 - Impact: None (code works, just needs more tests)
-- Plan: v2.0.1 (May 2026)
+- Plan: v2.2.0 (Q3 2026)
 
 ---
 
@@ -480,6 +503,33 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.1.0 (2026-02-20) - Refactoring + Cypher Completion ✅
+
+**Summary:** Completed all remaining Cypher features, restructured the module folder layout to canonical subpackages, and added 3 new MCP tools.
+
+**Features:**
+- Cypher FOREACH clause (lexer + AST + parser + compiler + IR executor)
+- Cypher CALL { } subquery (AST + parser + compiler + IR executor)
+- New `reasoning/` subpackage (`cross_document.py`, `helpers.py`, `types.py`)
+- Moved root-level modules to permanent subpackage locations:
+  - `cross_document_reasoning.py` → `reasoning/cross_document.py`
+  - `_reasoning_helpers.py` → `reasoning/helpers.py`
+  - `cross_document_types.py` → `reasoning/types.py`
+  - `cross_document_lineage.py` → `lineage/cross_document.py`
+  - `cross_document_lineage_enhanced.py` → `lineage/cross_document_enhanced.py`
+  - `query_knowledge_graph.py` → `query/knowledge_graph.py`
+  - `sparql_query_templates.py` → `query/sparql_templates.py`
+  - `finance_graphrag.py` → `extraction/finance_graphrag.py`
+- All root-level files replaced with backward-compatible deprecation shims
+- 3 new MCP tools: `graph_srl_extract`, `graph_ontology_materialize`, `graph_distributed_execute`
+- `KnowledgeGraphManager` extended with `extract_srl()`, `ontology_materialize()`, `distributed_execute()`
+
+**Tests:** 32 new tests (26 pass, 6 skip on anyio-absent envs)  
+**Total passing:** 1075+  
+**Backward Compatibility:** 100% (shims preserve all old import paths)
+
+---
 
 ### v2.0.0 (2026-02-18) - Major Feature Release ✅
 

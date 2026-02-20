@@ -2,13 +2,28 @@
 
 Unified query engine for executing queries against knowledge graphs using multiple query languages and execution strategies.
 
+**Version:** 2.1.0 — Updated 2026-02-20
+
 ## Overview
 
 The query module provides a flexible, multi-backend query execution engine that supports:
-- **Cypher queries** - Neo4j-compatible graph pattern matching
-- **IR (Intermediate Representation) queries** - Graph traversal operations
-- **Hybrid search** - Combines graph queries with vector similarity search
-- **GraphRAG** - Retrieval-Augmented Generation with knowledge graphs
+- **Cypher queries** — Neo4j-compatible graph pattern matching (all clauses: MATCH, CREATE, MERGE, REMOVE, SET, UNWIND, WITH, FOREACH, CALL subquery)
+- **IR (Intermediate Representation) queries** — Graph traversal operations
+- **Hybrid search** — Combines graph queries with vector similarity search
+- **GraphRAG** — Retrieval-Augmented Generation with knowledge graphs
+- **Distributed query execution** — Fan-out queries across graph partitions
+- **SPARQL templates** — Wikidata and general SPARQL query helpers
+
+## Module Contents
+
+| File | Description |
+|------|-------------|
+| `unified_engine.py` | `UnifiedQueryEngine` — main query coordinator |
+| `hybrid_search.py` | Hybrid graph + vector similarity search |
+| `budget_manager.py` | Query cost and timeout management |
+| `distributed.py` | `GraphPartitioner` + `FederatedQueryExecutor` |
+| `knowledge_graph.py` | High-level `KnowledgeGraphQuerier` tool (moved from root) |
+| `sparql_templates.py` | Reusable Wikidata / SPARQL query templates (moved from root) |
 
 ## Key Features
 

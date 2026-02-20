@@ -1,8 +1,8 @@
 # Knowledge Graphs Module
 
-**Version:** 2.0.0  
-**Status:** ✅ Production Ready (Comprehensive Review Complete)  
-**Last Updated:** 2026-02-18
+**Version:** 2.1.0  
+**Status:** ✅ Production Ready  
+**Last Updated:** 2026-02-20
 
 ---
 
@@ -40,12 +40,38 @@ for person in persons:
 Prefer importing from these subpackages (stable):
 
 - `ipfs_datasets_py.knowledge_graphs.extraction` (extractors + core graph types)
-- `ipfs_datasets_py.knowledge_graphs.query` (query engines)
-- `ipfs_datasets_py.knowledge_graphs.cypher` (Cypher parsing/compilation)
+- `ipfs_datasets_py.knowledge_graphs.query` (query engines, SPARQL templates, Cypher)
+- `ipfs_datasets_py.knowledge_graphs.cypher` (Cypher parsing/compilation — all clauses)
+- `ipfs_datasets_py.knowledge_graphs.reasoning` (cross-document reasoning + helpers)
 - `ipfs_datasets_py.knowledge_graphs.neo4j_compat` (Neo4j-compatible driver/session)
-- `ipfs_datasets_py.knowledge_graphs.storage` / `transactions` / `migration` (backends and utilities)
+- `ipfs_datasets_py.knowledge_graphs.ontology` (OWL/RDFS reasoning)
+- `ipfs_datasets_py.knowledge_graphs.storage` / `transactions` / `migration` (backends)
+- `ipfs_datasets_py.knowledge_graphs.lineage` (data lineage tracking)
 
-Legacy modules are still present for backward compatibility but are deprecated (see [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md)).
+Root-level legacy modules are still present as **deprecation shims** for backward compatibility.
+Migrate to the subpackage imports — see [../../docs/knowledge_graphs/MIGRATION_GUIDE.md](../../docs/knowledge_graphs/MIGRATION_GUIDE.md).
+
+## 📁 Package Structure (v2.1.0)
+
+```
+knowledge_graphs/
+├── core/           # GraphEngine, QueryExecutor, IR executor
+├── cypher/         # Lexer, parser, compiler, AST (all Cypher clauses)
+├── constraints/    # Graph constraints
+├── extraction/     # KnowledgeGraphExtractor, SRL, finance_graphrag
+├── indexing/       # B-tree and specialized indexing
+├── jsonld/         # JSON-LD translation and validation
+├── lineage/        # Data lineage tracking + cross-document lineage
+├── migration/      # Format import/export (CSV, JSON, RDF, GraphML, CAR)
+├── neo4j_compat/   # Neo4j-compatible driver/session/result API
+├── ontology/       # OWL/RDFS ontology reasoning
+├── query/          # UnifiedQueryEngine, hybrid search, distributed query,
+│                   #   SPARQL templates, knowledge_graph query tool
+├── reasoning/      # Cross-document reasoning, helpers, types  ← NEW v2.1.0
+├── storage/        # IPLD storage backend
+├── transactions/   # WAL-based transaction manager
+└── *.py            # Root: exceptions, ipld, deprecation shims
+```
 
 ## 📋 Current Status & Plans
 
