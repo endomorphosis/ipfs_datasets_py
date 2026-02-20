@@ -27,8 +27,14 @@ from ipfs_datasets_py.logic.integration.symbolic_contracts import (
     SYMBOLIC_AI_AVAILABLE
 )
 
-# Import Pydantic validation error for testing
-from pydantic import ValidationError
+# Import Pydantic validation error for testing (optional dependency)
+try:
+    from pydantic import ValidationError
+except ImportError:
+    # Create a minimal stub so tests can still be collected
+    class ValidationError(Exception):  # type: ignore
+        """Stub when pydantic is not installed."""
+        pass
 
 
 class TestFOLInput:

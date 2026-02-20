@@ -13,7 +13,28 @@ try:
 except Exception:  # pragma: no cover
     def beartype(func):  # type: ignore
         return func
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+try:
+    from pydantic import BaseModel, Field, field_validator, ConfigDict
+except ImportError:
+    # Minimal stubs so the rest of the module loads without pydantic installed
+    def ConfigDict(**kwargs):  # type: ignore
+        return kwargs
+
+    class BaseModel:  # type: ignore
+        """Minimal pydantic.BaseModel stub."""
+        model_config = None
+
+        def __init__(self, **data):
+            for k, v in data.items():
+                setattr(self, k, v)
+
+    def Field(default=None, **kwargs):  # type: ignore
+        return default
+
+    def field_validator(*args, **kwargs):  # type: ignore
+        def decorator(func):
+            return func
+        return decorator
 import re
 import json
 
