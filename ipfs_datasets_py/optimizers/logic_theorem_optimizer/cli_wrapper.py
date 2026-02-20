@@ -169,10 +169,15 @@ Examples:
             'validate',
             help='Validate logical consistency'
         )
-        validate_parser.add_argument(
+        _validate_input_group = validate_parser.add_mutually_exclusive_group(required=True)
+        _validate_input_group.add_argument(
             '--input', '-i',
-            required=True,
-            help='Input file (ontology, logic statements)'
+            help='Input file (JSON with logic statements)'
+        )
+        _validate_input_group.add_argument(
+            '--from-file',
+            dest='from_file',
+            help='Input file (JSON or YAML); alias for --input with YAML support'
         )
         validate_parser.add_argument(
             '--check-consistency',
@@ -395,6 +400,9 @@ Examples:
     
     def cmd_validate(self, args: argparse.Namespace) -> int:
         """Validate logical consistency.
+
+        Accepts a JSON or YAML file via ``--input``/``-i`` or ``--from-file``.
+        YAML support requires the *PyYAML* package (``pip install pyyaml``).
         
         Args:
             args: Command arguments
@@ -402,17 +410,27 @@ Examples:
         Returns:
             Exit code
         """
-        print(f"✓ Validating: {args.input}\n")
-        
-        input_path = _safe_resolve(args.input, must_exist=True)
+        # Resolve input path: either --input or --from-file
+        raw_path = getattr(args, 'from_file', None) or getattr(args, 'input', None)
+        print(f"✓ Validating: {raw_path}\n")
+
+        input_path = _safe_resolve(raw_path, must_exist=True)
         if not input_path.exists():
-            print(f"❌ Input file not found: {args.input}")
+            print(f"❌ Input file not found: {raw_path}")
             return 1
         
         try:
-            # Load logic data
+            # Load logic data — JSON or YAML
             with open(input_path, 'r') as f:
-                logic_data = json.load(f)
+                if str(input_path).endswith(('.yaml', '.yml')):
+                    try:
+                        import yaml  # type: ignore[import]
+                        logic_data = yaml.safe_load(f)
+                    except ImportError:
+                        print("❌ PyYAML is required for YAML input: pip install pyyaml")
+                        return 1
+                else:
+                    logic_data = json.load(f)
             
             # Create optimizer with validation focus
             optimizer = LogicTheoremOptimizer(

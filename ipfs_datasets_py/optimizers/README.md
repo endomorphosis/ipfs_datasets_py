@@ -97,6 +97,95 @@ optimizer = TestDrivenOptimizer(
 result = optimizer.optimize(task)
 ```
 
+### GraphRAG Ontology Optimizer (Python API)
+
+```python
+from ipfs_datasets_py.optimizers.graphrag import (
+    OntologyGenerator,
+    OntologyCritic,
+    OntologyMediator,
+    OntologyGenerationContext,
+    DataType,
+    ExtractionStrategy,
+)
+
+# Create context
+context = OntologyGenerationContext(
+    data_source="my_document.txt",
+    data_type=DataType.TEXT,
+    domain="legal",
+    extraction_strategy=ExtractionStrategy.RULE_BASED,
+)
+
+# Option 1: Direct generation + evaluation
+generator = OntologyGenerator()
+critic = OntologyCritic()
+ontology = generator.generate_ontology(contract_text, context)
+score = critic.evaluate_ontology(ontology, context, contract_text)
+print(f"Quality: {score.overall:.2f} | Entities: {len(ontology['entities'])}")
+
+# Option 2: Full refinement cycle (generator + critic + mediator)
+mediator = OntologyMediator(
+    generator=generator,
+    critic=critic,
+    max_rounds=5,
+    convergence_threshold=0.85,
+)
+state = mediator.run_refinement_cycle(contract_text, context)
+print(f"Final score: {state.critic_scores[-1].overall:.2f} | Rounds: {state.current_round}")
+```
+
+### GraphRAG CLI
+
+```bash
+# Generate ontology from a text file
+python -m ipfs_datasets_py.optimizers.graphrag.cli_wrapper generate \
+  --input document.txt \
+  --domain legal \
+  --strategy rule_based \
+  --output ontology.json
+
+# Health check
+python -m ipfs_datasets_py.optimizers.graphrag.cli_wrapper health
+```
+
+### Logic Theorem Optimizer (Python API)
+
+```python
+from ipfs_datasets_py.optimizers.logic_theorem_optimizer import LogicTheoremOptimizer
+from ipfs_datasets_py.optimizers.common import OptimizerConfig, OptimizationContext
+
+optimizer = LogicTheoremOptimizer(
+    config=OptimizerConfig(max_iterations=3, target_score=0.85),
+    domain="legal",
+)
+context = OptimizationContext(
+    session_id="session-001",
+    input_data=contract_text,
+    domain="legal",
+)
+result = optimizer.run_session(contract_text, context)
+print(f"Score: {result['score']:.2f} | Valid: {result['valid']}")
+```
+
+### Logic Theorem Optimizer CLI
+
+```bash
+# Prove a theorem
+python -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper prove \
+  --theorem "All employees must complete training" \
+  --premises "Alice is an employee" \
+  --goal "Alice must complete training"
+
+# Prove from a JSON file
+python -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper prove \
+  --from-file theorem.json
+
+# Validate logical consistency
+python -m ipfs_datasets_py.optimizers.logic_theorem_optimizer.cli_wrapper validate \
+  --input statements.json
+```
+
 ## Agentic Optimization Methods
 
 ### 1. Test-Driven (`test_driven`)

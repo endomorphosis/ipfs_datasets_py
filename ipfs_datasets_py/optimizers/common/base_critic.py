@@ -5,6 +5,41 @@ Provides the common evaluation interface that all critics follow:
 
 All critic implementations (OntologyCritic, LogicCritic, …) should extend
 BaseCritic and implement at minimum ``evaluate()``.
+
+Extension Pattern
+-----------------
+To create a new critic for a custom artifact type:
+
+.. code-block:: python
+
+    from ipfs_datasets_py.optimizers.common.base_critic import (
+        BaseCritic,
+        CriticResult,
+    )
+
+    class MyDomainCritic(BaseCritic):
+        def evaluate(self, artifact, context, *, source_data=None):
+            score = self._score_artifact(artifact)
+            return CriticResult(
+                score=score,
+                feedback=["Improve X"] if score < 0.7 else [],
+                dimensions={"clarity": score},
+                strengths=["Well-structured"] if score > 0.8 else [],
+                weaknesses=["Missing Y"] if score < 0.5 else [],
+            )
+
+    critic = MyDomainCritic()
+    result = critic.evaluate(my_artifact, context)
+    # Use convenience wrappers
+    score = critic.score_only(my_artifact, context)
+    feedback = critic.feedback_only(my_artifact, context)
+
+Existing Implementations
+------------------------
+- ``graphrag.OntologyCritic`` — evaluates ontology quality across 5 dimensions
+  (completeness, consistency, clarity, granularity, domain_alignment)
+- ``logic_theorem_optimizer.LogicCritic`` — evaluates logical statement quality
+  (soundness, completeness, consistency, axiom_economy, prover_validation)
 """
 
 from __future__ import annotations
