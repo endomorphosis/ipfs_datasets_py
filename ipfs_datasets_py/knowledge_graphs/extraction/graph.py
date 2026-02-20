@@ -470,15 +470,15 @@ class KnowledgeGraph:
                 entity_id_map[entity_id] = existing_entity.entity_id
 
                 # Merge properties
-                for key, value in entity.properties.items():
-                    if key not in existing_entity.properties:
+                for key, value in (entity.properties or {}).items():
+                    if key not in (existing_entity.properties or {}):
                         existing_entity.properties[key] = value
             else:
                 # Add new entity
                 new_entity = self.add_entity(
                     entity_type=entity.entity_type,
                     name=entity.name,
-                    properties=entity.properties.copy(),
+                    properties=(entity.properties.copy() if entity.properties else {}),
                     entity_id=entity.entity_id,
                     confidence=entity.confidence,
                     source_text=entity.source_text

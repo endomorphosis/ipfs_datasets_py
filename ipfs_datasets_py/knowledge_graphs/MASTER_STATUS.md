@@ -18,9 +18,9 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 70% overall | Measured 2026-02-20; indexing 87-99%, storage/types 100%, lineage shims 100%
+| **Test Coverage** | 73% overall | Measured 2026-02-20; cypher/functions 96%, neo4j result 85%, legacy_engine 68%, graph.py 71%
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
-| **Known Issues** | None | 2 B-tree bugs fixed (session 8); 0 failures (1,385 pass)
+| **Known Issues** | None | 4 bugs fixed (sessions 7-9); 0 failures (1,526 pass)
 | **Next Milestone** | v2.2.0 (Q3 2026) | lineage/visualization render paths (requires matplotlib)
 
 ---
@@ -147,24 +147,24 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~70% (measured, session 8)
+### Overall Coverage: ~73% (measured, session 9)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
-> Measured with `networkx` available; lineage figures improve substantially vs. earlier sessions.
+> Measured with `networkx` + `pytest-mock` available.
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | 78–84% | ✅ Good | parser 78%, compiler 84% |
-| **Neo4j Compat** | 71–95% | ✅ Good | connection_pool 95%, driver 71% |
+| **Cypher** | 78–96% | ✅ Excellent | functions.py **96%**, parser 78%, compiler 84% |
+| **Neo4j Compat** | 65–95% | ✅ Good | result.py **85%**, connection_pool 95%, session 65% |
 | **Migration** | 82–100% | ✅ Excellent | neo4j_exporter 94%, formats 86% |
 | **JSON-LD** | 81–98% | ✅ Good | validation 81%, types 98% |
-| **Core** | 72–85% | ✅ Good | types 85%, query_executor 72% |
-| **Transactions** | 61–93% | ✅ Good | manager 64%, types 93% |
+| **Core** | 68–85% | ✅ Good | legacy_engine **68%**, types 85%, query_executor 72% |
+| **Transactions** | 64–95% | ✅ Good | manager 64%, wal 65%, types 95% |
 | **Query** | 57–80% | 🔶 Improving | unified_engine 57%, distributed 80% |
-| **Extraction** | 52–86% | 🔶 Improving | validator 52%, relationships 86% |
-| **Reasoning** | 80–98% | ✅ Good | helpers 80%, types 98% |
-| **Indexing** | 87–99% | ✅ Good | btree 87%, manager 99%, specialized 93% |
+| **Extraction** | 52–86% | 🔶 Improving | graph.py **71%**, validator 52%, relationships 86% |
+| **Reasoning** | 65–98% | ✅ Good | cross_document 65%, helpers 80%, types 94% |
+| **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
 | **Storage** | 50–100% | 🔶 Improving | ipld_backend 50% (IPFS daemon paths), types **100%** |
 | **Lineage** | 34–100% | 🔶 Improving | cross_document shims **100%**, visualization 34%, core 89% |
 
@@ -196,11 +196,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - test_reasoning.py (skipped when numpy absent)
 - test_coverage_improvements.py (90 tests — validator, unified_engine, transaction mgr, advanced extractor)
 - **test_master_status_session8.py** (92 tests — lineage shims, visualization, storage/types, LRUCache, indexing)
+- **test_master_status_session9.py** (118 tests — legacy_engine, cypher/functions, graph.py, Result, WAL, Transaction)
 - migration/test_formats.py, migration/test_integrity_verifier.py, migration/test_schema_checker.py, ...
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 1,385 passing, 22 skipped (libipld/anyio absent; networkx now available)
+**Total Tests:** 1,526 passing, 21 skipped (libipld/anyio absent; networkx + pytest-mock now available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -498,6 +499,30 @@ reasoning = reasoner.reason_across_documents(
 
 ## Version History
 
+### v2.1.4 (2026-02-20) - Coverage Boost Session 9 + 2 Bug Fixes ✅
+
+**Summary:** Added 118 new tests covering 6 previously low-coverage modules; fixed 2 bugs in `extraction/graph.py`; overall coverage improved from 70% to 73%.
+
+**Bug fixes:**
+- `extraction/graph.py` `merge()` line ~481: Fixed `AttributeError: 'NoneType' object has no attribute 'copy'` when merging entities with no properties (`entity.properties.copy()` → `entity.properties.copy() if entity.properties else {}`)
+- `extraction/graph.py` `merge()` line ~473: Fixed `AttributeError: 'NoneType' object has no attribute 'items'` when deduplicating entities with no properties (`entity.properties.items()` → `(entity.properties or {}).items()`)
+
+**Test additions:**
+- `test_master_status_session9.py` — 118 new GIVEN-WHEN-THEN tests covering:
+  - `core/_legacy_graph_engine.py` (21% → **68%**): create/get/update/delete node and relationship; find_nodes (label/property/limit filters); get_relationships (out/in/both/type filter); find_paths (direct, 2-hop, no path, type filter); traverse_pattern; save_graph/load_graph without persistence
+  - `cypher/functions.py` (58% → **96%**): all None-propagation branches, `Point.__repr__`/`__eq__`, `fn_sqrt` negative, `fn_sign` all branches, `fn_rand`, spatial functions, temporal functions (date/datetime from string/object/None), `fn_timestamp`, `fn_duration` parsing, `fn_properties`/`fn_keys` (`.properties` attr + `__dict__`), `evaluate_function` unknown-name error
+  - `extraction/graph.py` (51% → **71%**): `find_paths` (direct/2-hop/no-path/type-filter), `query_by_properties` (type/property/no-filter), `merge` (new entities/deduplication/relationships), `to_dict`/`from_dict`, `to_json`/`from_json`, `export_to_rdf` ImportError path
+  - `neo4j_compat/result.py` (54% → **85%**): `Record` (keys-mismatch, items, int/str index, contains, iter, repr), `Result` (single strict/empty, data, value with/without key, values, peek, consume, graph, len)
+  - `transactions/wal.py` (61% → **65%**): WAL init, append entry, SerializationError on TypeError, read empty WAL, read from CID
+  - `neo4j_compat/session.py` (60% → **65%**): `IPFSTransaction` begin, commit, rollback, context manager (success+exception), closed-tx-run error; `IPFSSession` run, close
+
+**Result:** 1,526 passed, 21 skipped (libipld/anyio absent), **0 failed** — up from 1,385 passed
+**Coverage:** 70% → **73%** overall
+
+**Backward Compatibility:** 100% (bug fixes were in uncovered code paths; behaviour change is error → correct result)
+
+---
+
 ### v2.1.3 (2026-02-20) - Coverage Boost + BTree Bug Fixes ✅
 
 **Summary:** Added 92 new tests covering 7 previously low-coverage modules; fixed 2 B-tree bugs that caused IndexError and incorrect search results after tree splits; updated all coverage metrics in MASTER_STATUS.
@@ -635,11 +660,11 @@ reasoning = reasoner.reason_across_documents(
 **Confidence Level:** HIGH
 
 **Evidence:**
-- ✅ ~70% test coverage overall (measured); indexing 87–99%, storage/types 100%, lineage shims 100%
+- ✅ ~73% test coverage overall (measured); cypher/functions **96%**, neo4j result **85%**, indexing 87–99%, storage/types 100%, lineage shims 100%
 - ✅ 300KB+ comprehensive documentation
 - ✅ All P1-P4 features complete (PR #1085, 2026-02-18)
 - ✅ All deferred features complete (sessions 2-5, 2026-02-20)
-- ✅ **Zero test failures** — 1,385 pass, 22 skip (optional deps), 0 fail (session 8, 2026-02-20)
+- ✅ **Zero test failures** — 1,526 pass, 21 skip (optional deps), 0 fail (session 9, 2026-02-20)
 - ✅ All features now in permanent subpackage locations (reasoning/, ontology/, extraction/srl.py, query/distributed.py)
 - ✅ Proper error handling and graceful degradation
 - ✅ Backward compatible with all changes (deprecation shims for all moved modules)
