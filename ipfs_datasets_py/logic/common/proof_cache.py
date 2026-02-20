@@ -300,7 +300,7 @@ class ProofCache:
             logger.warning(f"CID computation failed, using fallback: {e}")
             # Fallback to simple hash
             import hashlib
-            json_str = json.dumps(query_obj, sort_keys=True)
+            json_str = json.dumps(query_obj, sort_keys=True, default=str)
             return hashlib.sha256(json_str.encode()).hexdigest()
     
     def get(

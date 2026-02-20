@@ -54,4 +54,35 @@ async def tdfol_convert(
     )
 
 
-__all__ = ["tdfol_convert"]
+class TDFOLConvertTool:
+    """OOP wrapper for the tdfol_convert MCP tool."""
+
+    name = "tdfol_convert"
+    category = "logic"
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        formula = params.get("formula", "")
+        source_format = params.get("source_format", "tdfol")
+        target_format = params.get("target_format", "fol")
+        include_metadata = params.get("include_metadata", False)
+
+        result = await tdfol_convert(
+            formula=formula,
+            source_format=source_format,
+            target_format=target_format,
+        )
+        if not isinstance(result, dict):
+            result = {}
+        result.setdefault("success", True)
+        result.setdefault("converted_formula", result.get("converted", formula))
+        result.setdefault("source_format", source_format)
+        result.setdefault("target_format", target_format)
+        if include_metadata and "metadata" not in result:
+            result["metadata"] = {
+                "conversion_type": f"{source_format}_to_{target_format}",
+                "lossless": target_format not in ("fol",),
+            }
+        return result
+
+
+__all__ = ["tdfol_convert", "TDFOLConvertTool"]

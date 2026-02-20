@@ -89,7 +89,32 @@ class TableauxBranch:
     current_world: int = 0
     is_closed: bool = False
     next_world_id: int = 1
-    
+    # Track positive □φ bodies that have been expanded at each world,
+    # so they can be propagated to newly created accessible worlds.
+    _box_history: Dict[int, Set] = field(default_factory=dict)
+    # Track ¬◊φ bodies (negated diamond), same purpose.
+    _neg_diamond_history: Dict[int, Set] = field(default_factory=dict)
+
+    def add_box_history(self, world_id: int, body: Any) -> None:
+        """Remember that □body was expanded at world_id."""
+        if world_id not in self._box_history:
+            self._box_history[world_id] = set()
+        self._box_history[world_id].add(body)
+
+    def get_box_history(self, world_id: int) -> Set:
+        """Return all box bodies already expanded at world_id."""
+        return self._box_history.get(world_id, set())
+
+    def add_neg_diamond_history(self, world_id: int, body: Any) -> None:
+        """Remember that ¬◊body was expanded at world_id."""
+        if world_id not in self._neg_diamond_history:
+            self._neg_diamond_history[world_id] = set()
+        self._neg_diamond_history[world_id].add(body)
+
+    def get_neg_diamond_history(self, world_id: int) -> Set:
+        """Return all ¬◊ bodies already expanded at world_id."""
+        return self._neg_diamond_history.get(world_id, set())
+
     def create_world(self) -> World:
         """Create a new world and return it."""
         world = World(id=self.next_world_id)
@@ -112,7 +137,7 @@ class TableauxBranch:
         """Mark this branch as closed (contradictory)."""
         self.is_closed = True
     
-    def copy(self) -> TableauxBranch:
+    def copy(self) -> 'TableauxBranch':
         """Create a deep copy of this branch."""
         new_branch = TableauxBranch(
             worlds={wid: World(id=w.id, formulas=w.formulas.copy(), negated_formulas=w.negated_formulas.copy())
@@ -120,7 +145,9 @@ class TableauxBranch:
             accessibility={k: v.copy() for k, v in self.accessibility.items()},
             current_world=self.current_world,
             is_closed=self.is_closed,
-            next_world_id=self.next_world_id
+            next_world_id=self.next_world_id,
+            _box_history={k: v.copy() for k, v in self._box_history.items()},
+            _neg_diamond_history={k: v.copy() for k, v in self._neg_diamond_history.items()},
         )
         return new_branch
 
@@ -208,8 +235,8 @@ class ModalTableaux:
                 # Try to expand this branch
                 expanded = self._expand_branch(branch, proof_steps)
                 
-                if not expanded:
-                    # No more expansions possible
+                if expanded is None:
+                    # No more expansions possible for this branch
                     all_closed = False
                     new_branches.append(branch)
                 else:
@@ -243,6 +270,38 @@ class ModalTableaux:
             proof_steps=proof_steps
         )
     
+    def _get_all_ancestor_box_bodies(self, branch: TableauxBranch, world_id: int) -> Set:
+        """Compute the union of box_history from all transitive ancestors of world_id (for S4/S5)."""
+        bodies: Set = set()
+        visited: Set[int] = set()
+        queue = [world_id]
+        while queue:
+            wid = queue.pop()
+            if wid in visited:
+                continue
+            visited.add(wid)
+            for src, tgts in branch.accessibility.items():
+                if wid in tgts and src not in visited:
+                    bodies.update(branch.get_box_history(src))
+                    queue.append(src)
+        return bodies
+
+    def _get_all_ancestor_neg_diamond_bodies(self, branch: TableauxBranch, world_id: int) -> Set:
+        """Compute the union of neg_diamond_history from all transitive ancestors of world_id."""
+        bodies: Set = set()
+        visited: Set[int] = set()
+        queue = [world_id]
+        while queue:
+            wid = queue.pop()
+            if wid in visited:
+                continue
+            visited.add(wid)
+            for src, tgts in branch.accessibility.items():
+                if wid in tgts and src not in visited:
+                    bodies.update(branch.get_neg_diamond_history(src))
+                    queue.append(src)
+        return bodies
+
     def _can_expand(self, branch: TableauxBranch) -> bool:
         """Check if a branch can be expanded further."""
         if branch.is_closed:
@@ -265,6 +324,16 @@ class ModalTableaux:
             return True
         return False
     
+    def _close_contradictory_worlds(self, branch: TableauxBranch, proof_steps: List[str]) -> None:
+        """Close branch if any world contains a contradiction."""
+        if branch.is_closed:
+            return
+        for world_id, world in branch.worlds.items():
+            if world.has_contradiction():
+                branch.close_branch()
+                proof_steps.append(f"Branch closed: contradiction at world {world_id}")
+                return
+
     def _expand_branch(self, branch: TableauxBranch, proof_steps: List[str]) -> List[TableauxBranch]:
         """
         Expand a branch by applying tableaux rules.
@@ -274,21 +343,29 @@ class ModalTableaux:
         if branch.is_closed:
             return [branch]
         
-        # Find a formula to expand in any world
+        # Find a formula to expand in any world; skip atoms (they need no expansion)
         for world_id, world in branch.worlds.items():
-            # Check formulas (positive)
+            # Check formulas (positive) — only compound ones
             for formula in list(world.formulas):
+                if not self._needs_expansion(formula):
+                    continue
                 result = self._expand_formula(branch, world_id, formula, negated=False, proof_steps=proof_steps)
-                if result:
+                if result is not None:
+                    for b in result:
+                        self._close_contradictory_worlds(b, proof_steps)
                     return result
             
-            # Check negated formulas
+            # Check negated formulas — only compound ones
             for formula in list(world.negated_formulas):
+                if not self._needs_expansion(formula):
+                    continue
                 result = self._expand_formula(branch, world_id, formula, negated=True, proof_steps=proof_steps)
-                if result:
+                if result is not None:
+                    for b in result:
+                        self._close_contradictory_worlds(b, proof_steps)
                     return result
         
-        return [branch]
+        return None  # Nothing left to expand
     
     def _expand_formula(
         self,
@@ -422,23 +499,54 @@ class ModalTableaux:
         
         if op == TemporalOperator.ALWAYS:  # □ (box)
             if not negated:
-                # □φ: Add φ to all accessible worlds
+                # □φ: Add φ to existing accessible worlds; remember for future worlds.
+                # For D/S4/S5 with no accessible worlds, enforce seriality by creating one.
+                branch.add_box_history(world_id, formula.formula)
                 accessible = branch.get_accessible_worlds(world_id)
-                if not accessible:
-                    # Create a new world if needed
+                if not accessible and self.logic_type in {ModalLogicType.D, ModalLogicType.S4, ModalLogicType.S5}:
+                    # D/S4/S5 require serial (non-empty) accessibility
                     new_world = branch.create_world()
                     branch.add_accessibility(world_id, new_world.id)
                     accessible = {new_world.id}
-                
                 for acc_world_id in accessible:
                     branch.worlds[acc_world_id].add_formula(formula.formula, negated=False)
-                
+                # T/S4/S5 reflexivity: □φ → φ at current world
+                if self.logic_type in {ModalLogicType.T, ModalLogicType.S4, ModalLogicType.S5}:
+                    branch.worlds[world_id].add_formula(formula.formula, negated=False)
+                    proof_steps.append(f"Reflexivity: □φ → φ at world {world_id}")
                 proof_steps.append(f"BOX expansion at world {world_id} to {len(accessible)} worlds")
             else:
                 # ¬□φ: Create new accessible world with ¬φ
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
                 new_world.add_formula(formula.formula, negated=True)
+                # Propagate all previously-expanded □ψ formulas from world_id to the new world
+                box_bodies = set(branch.get_box_history(world_id))
+                if self.logic_type in {ModalLogicType.S4, ModalLogicType.S5}:
+                    box_bodies.update(self._get_all_ancestor_box_bodies(branch, world_id))
+                for body in box_bodies:
+                    new_world.add_formula(body, negated=False)
+                # Also propagate any pending positive □ψ formulas still in world_id's formula set
+                for f in list(branch.worlds[world_id].formulas):
+                    if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
+                        new_world.add_formula(f.formula, negated=False)
+                # Propagate any ¬◊ψ histories to the new world
+                neg_bodies = set(branch.get_neg_diamond_history(world_id))
+                if self.logic_type in {ModalLogicType.S4, ModalLogicType.S5}:
+                    neg_bodies.update(self._get_all_ancestor_neg_diamond_bodies(branch, world_id))
+                for body in neg_bodies:
+                    new_world.add_formula(body, negated=True)
+                # S5: All existing worlds can access the new world (symmetry/euclidean)
+                if self.logic_type == ModalLogicType.S5:
+                    for w_id in list(branch.worlds.keys()):
+                        if w_id != new_world.id:
+                            branch.add_accessibility(w_id, new_world.id)
+                            branch.add_accessibility(new_world.id, w_id)
+                    # Propagate all box histories from all worlds to the new world
+                    for w_id, w_boxes in branch._box_history.items():
+                        if w_id != new_world.id:
+                            for body in w_boxes:
+                                new_world.add_formula(body, negated=False)
                 proof_steps.append(f"Negated BOX: created world {new_world.id}")
         
         elif op == TemporalOperator.EVENTUALLY:  # ◊ (diamond)
@@ -447,18 +555,38 @@ class ModalTableaux:
                 new_world = branch.create_world()
                 branch.add_accessibility(world_id, new_world.id)
                 new_world.add_formula(formula.formula, negated=False)
+                # Propagate box and neg_diamond histories to the new world
+                box_bodies = set(branch.get_box_history(world_id))
+                if self.logic_type in {ModalLogicType.S4, ModalLogicType.S5}:
+                    box_bodies.update(self._get_all_ancestor_box_bodies(branch, world_id))
+                for body in box_bodies:
+                    new_world.add_formula(body, negated=False)
+                for f in list(branch.worlds[world_id].formulas):
+                    if isinstance(f, TemporalFormula) and f.operator == TemporalOperator.ALWAYS:
+                        new_world.add_formula(f.formula, negated=False)
+                neg_bodies = set(branch.get_neg_diamond_history(world_id))
+                if self.logic_type in {ModalLogicType.S4, ModalLogicType.S5}:
+                    neg_bodies.update(self._get_all_ancestor_neg_diamond_bodies(branch, world_id))
+                for body in neg_bodies:
+                    new_world.add_formula(body, negated=True)
+                # S5: Make new world mutually accessible with all existing worlds
+                if self.logic_type == ModalLogicType.S5:
+                    for w_id in list(branch.worlds.keys()):
+                        if w_id != new_world.id:
+                            branch.add_accessibility(w_id, new_world.id)
+                            branch.add_accessibility(new_world.id, w_id)
+                    for w_id, w_boxes in branch._box_history.items():
+                        if w_id != new_world.id:
+                            for body in w_boxes:
+                                new_world.add_formula(body, negated=False)
                 proof_steps.append(f"DIAMOND: created world {new_world.id}")
             else:
-                # ¬◊φ: Add ¬φ to all accessible worlds
+                # ¬◊φ: Add ¬φ to existing accessible worlds; remember for future worlds.
+                # Do NOT create new worlds — ¬◊φ is vacuously satisfied with no accessible worlds.
+                branch.add_neg_diamond_history(world_id, formula.formula)
                 accessible = branch.get_accessible_worlds(world_id)
-                if not accessible:
-                    new_world = branch.create_world()
-                    branch.add_accessibility(world_id, new_world.id)
-                    accessible = {new_world.id}
-                
                 for acc_world_id in accessible:
                     branch.worlds[acc_world_id].add_formula(formula.formula, negated=True)
-                
                 proof_steps.append(f"Negated DIAMOND expansion at world {world_id}")
         
         # Apply logic-specific rules
@@ -550,39 +678,12 @@ class ModalTableaux:
         negated: bool,
         proof_steps: List[str]
     ) -> None:
-        """Apply logic-specific constraints (T, D, S4, S5)."""
+        """Apply logic-specific constraints (T, D, S4, S5).
         
-        if self.logic_type == ModalLogicType.T:
-            # T: Reflexive - □φ → φ
-            if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
-                if not negated:
-                    # □φ implies φ at current world
-                    branch.worlds[world_id].add_formula(formula.formula, negated=False)
-                    proof_steps.append(f"T-reflexivity: □φ → φ at world {world_id}")
-        
-        elif self.logic_type == ModalLogicType.S4:
-            # S4: Reflexive + Transitive - □φ → □□φ
-            if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
-                if not negated:
-                    # Reflexivity
-                    branch.worlds[world_id].add_formula(formula.formula, negated=False)
-                    # Transitivity: propagate □φ through accessible worlds
-                    accessible = branch.get_accessible_worlds(world_id)
-                    for acc_id in accessible:
-                        # Add □φ to accessible worlds (creates transitivity)
-                        branch.worlds[acc_id].add_formula(formula, negated=False)
-                    proof_steps.append(f"S4-transitivity at world {world_id}")
-        
-        elif self.logic_type == ModalLogicType.S5:
-            # S5: Equivalence relation - all worlds access each other
-            # In S5, we can optimize by treating all worlds as equivalent
-            if isinstance(formula, TemporalFormula):
-                # Add formula to all worlds (equivalence means universal accessibility)
-                for w_id in branch.worlds:
-                    if isinstance(formula, TemporalFormula) and formula.operator == TemporalOperator.ALWAYS:
-                        if not negated:
-                            branch.worlds[w_id].add_formula(formula.formula, negated=False)
-                proof_steps.append(f"S5-equivalence: formula at all worlds")
+        Note: reflexivity and transitivity are now handled directly in _expand_temporal
+        via box_history propagation. This method is kept for backward compatibility.
+        """
+        pass  # Logic-specific rules are applied in _expand_temporal
 
 
 def prove_modal_formula(

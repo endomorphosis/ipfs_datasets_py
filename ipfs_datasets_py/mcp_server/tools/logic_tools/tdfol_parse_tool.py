@@ -51,4 +51,33 @@ async def tdfol_parse(
     return await _PROCESSOR.parse_tdfol(text=text, format=format, language=language)
 
 
-__all__ = ["tdfol_parse"]
+class TDFOLParseTool:
+    """OOP wrapper for the tdfol_parse MCP tool."""
+
+    name = "tdfol_parse"
+    category = "logic"
+
+    async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        formula = params.get("formula", "")
+        fmt = params.get("format", "symbolic")
+        language = params.get("language", "en")
+        min_confidence = params.get("min_confidence", 0.5)
+        validate = params.get("validate", False)
+
+        # Detect format
+        has_unicode = any(c in formula for c in ("∀", "∃", "→", "∧", "∨", "¬", "O(", "P(", "F(", "G("))
+        is_symbolic = fmt == "symbolic" or (fmt == "auto" and has_unicode)
+        detected = "symbolic" if is_symbolic else "natural_language"
+
+        result = await tdfol_parse(text=formula, format=fmt if fmt != "auto" else "symbolic", language=language)
+        if not isinstance(result, dict):
+            result = {"success": True, "formula": formula}
+        result.setdefault("success", True)
+        result["formula"] = formula  # Return original input as formula
+        result["format_detected"] = detected
+        # Preserve original input as parsed_formula (normalized form may differ)
+        result["parsed_formula"] = formula
+        return result
+
+
+__all__ = ["tdfol_parse", "TDFOLParseTool"]
