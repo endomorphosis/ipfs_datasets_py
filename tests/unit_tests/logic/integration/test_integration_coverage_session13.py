@@ -418,12 +418,6 @@ class TestDeontologicalReasoningUncoveredPaths:
 
         # Should not raise — errors are handled internally
         try:
-            result = anyio.from_thread.run_sync(lambda: None)
-        except Exception:
-            pass  # Anyio context might not be available
-
-        # Just call synchronously via anyio.run
-        try:
             result = anyio.run(_run)
             assert "analysis_id" in result or "error" in result or "timestamp" in result
         except Exception:

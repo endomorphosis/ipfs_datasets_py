@@ -900,8 +900,16 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 2 bugs fixed session 7: `_prover_backend_mixin.py` `_check_z3_consistency`/`_check_cvc5_consistency` — `"sat" in output` matched "unsat" substring; reordered to check "unsat" before "sat"
 - [x] Integration tests: 139 new tests session 7 (`_prover_backend_mixin` 12%→97%, `neurosymbolic_api` 46%→88%, `symbolic_contracts` 55%→56%, `ipld_logic_storage` 30%→improved)
 - [x] **Integration coverage: 60% → 64%** (progress toward 70% ✅)
+- [x] 3 bugs fixed session 8: `deontological_reasoning_types.py` missing `id` field on `DeonticConflict`, `ProofExecutionEngine` missing `prove`/`prove_with_all_available_provers`/`check_consistency` aliases
+- [x] Integration tests: 202 new tests session 8 (`proof_execution_engine` 17%→58%, `deontological_reasoning` 45%→85%+, `deontic_query_engine` 84%→improved)
+- [x] **Integration coverage: 64% → 70%** ✅ TARGET REACHED (session 8)
+- [x] Integration tests sessions 9-12: 427 new tests pushing 70%→80%+ (see §9.3 above for per-session breakdown)
+- [x] **Integration coverage: 70% → 80%** ✅ TARGET REACHED (sessions 9-12)
+- [x] 3 bugs fixed session 13: `FOLConverter._convert_impl` called `ml_scorer.predict()` (non-existent → fix to `predict_confidence()`); `TDFOLShadowProverBridge.prove_modal` used `ProofStep(step_number=...)` kwarg (invalid → removed); `TDFOLGrammarBridge._fallback_parse` imported `Implication, Conjunction, Negation` from `tdfol_core` (don't exist as classes → fix to `create_implication, create_conjunction, create_negation`)
+- [x] Integration tests: 76 new tests session 13 (`deontological_reasoning_types` string modality 108-118, `tdfol_shadowprover_bridge` PROVED/DISPROVED/TIMEOUT/UNKNOWN/ERROR branches, `tdfol_cec_bridge` prove paths, `deontological_reasoning` async query/conflicts entity filters, `deontic_query_engine` rate-limiter/validator/context-filter, `document_consistency_checker` check/batch/debug_report, `temporal_deontic_rag_store` embedding+vector_store, `ipld_logic_storage` store+provenance, `prover_installer` ensure_coq/lean, `tdfol_grammar_bridge` fallback_parse+NL interface)
+- [x] **Integration coverage: 80% → 85%+** ✅ TARGET REACHED (session 13)
 - [ ] TDFOL NL test failures (~69) — requires spaCy
-- [ ] Integration test coverage: 64% → 70%+
+- [ ] Integration test coverage: 85% → 90%+
 
 ---
 
@@ -1015,7 +1023,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (70%→80%); `symbolic/symbolic_logic_primitives.py` 63%→70%+ (requires mocking SymbolicAI); `symbolic/neurosymbolic/reasoning_coordinator.py` 75%→85%; E2E tests  
+**Next Action:** Phase 6.3 integration coverage (85%→90%); `symbolic/symbolic_logic_primitives.py` 63%→70%+ (requires mocking SymbolicAI); `symbolic/neurosymbolic/reasoning_coordinator.py` 75%→85%; `domain/caselaw_bulk_processor.py` 48% (async methods); TDFOL NL (spaCy); E2E tests  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
