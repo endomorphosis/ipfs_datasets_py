@@ -25,6 +25,7 @@ class FormulaType(Enum):
     TEMPORAL = "temporal"  # Contains temporal operators
     DEONTIC = "deontic"  # Contains deontic operators
     MIXED_MODAL = "mixed_modal"  # Multiple modal types
+    MIXED = "mixed_modal"  # alias for MIXED_MODAL
     ARITHMETIC = "arithmetic"  # Contains arithmetic
     QUANTIFIED = "quantified"  # Contains quantifiers
     PROPOSITIONAL = "propositional"  # No quantifiers or modal
@@ -70,6 +71,31 @@ class FormulaAnalysis:
     complexity_score: float
     analysis_details: Dict[str, Any]
 
+    @property
+    def has_quantifiers(self) -> bool:
+        """Backward-compat alias: True if quantifier_depth > 0."""
+        return self.quantifier_depth > 0
+
+    @property
+    def has_modal_operators(self) -> bool:
+        """Backward-compat alias for has_modal."""
+        return self.has_modal
+
+    @property
+    def has_temporal_operators(self) -> bool:
+        """Backward-compat alias for has_temporal."""
+        return self.has_temporal
+
+    @property
+    def has_deontic_operators(self) -> bool:
+        """Backward-compat alias for has_deontic."""
+        return self.has_deontic
+
+    @property
+    def complexity_level(self) -> 'FormulaComplexity':
+        """Backward-compat alias for complexity."""
+        return self.complexity
+
 
 class FormulaAnalyzer:
     """Analyzes TDFOL formulas to recommend optimal provers.
@@ -83,6 +109,20 @@ class FormulaAnalyzer:
     def __init__(self):
         """Initialize the formula analyzer."""
         self.prover_capabilities = self._init_prover_capabilities()
+        # Add compat 'capabilities' and 'performance' keys if not present
+        for name, profile in self.prover_capabilities.items():
+            profile.setdefault('capabilities', {
+                'modal': profile.get('supports_modal', False),
+                'temporal': profile.get('supports_temporal', False),
+                'deontic': profile.get('supports_deontic', False),
+                'arithmetic': profile.get('supports_arithmetic', False),
+                'quantifiers': profile.get('quantifier_handling', 'unknown'),
+            })
+            profile.setdefault('performance', {
+                'speed': profile.get('speed', 'unknown'),
+                'max_complexity': str(profile.get('max_complexity', 'unknown')),
+            })
+        self.prover_profiles = self.prover_capabilities  # compat alias
     
     def _init_prover_capabilities(self) -> Dict[str, Dict[str, Any]]:
         """Initialize prover capability profiles.
@@ -247,7 +287,7 @@ class FormulaAnalyzer:
             )
             
             if isinstance(formula, Predicate):
-                return current_level
+                return current_level + 1
             elif isinstance(formula, (BinaryFormula, BinaryTemporalFormula)):
                 left_level = self._measure_nesting_level(formula.left, current_level + 1)
                 right_level = self._measure_nesting_level(formula.right, current_level + 1)
@@ -292,39 +332,54 @@ class FormulaAnalyzer:
         return any(op in formula_str for op in arithmetic_ops)
     
     def _has_modal_operators(self, formula) -> bool:
-        """Check if formula has modal operators (□, ◊)."""
+        """Check if formula has modal operators (□, ◊) or modal predicate names."""
         try:
-            from ..TDFOL.tdfol_core import TemporalFormula, TemporalOperator
-            
+            from ..TDFOL.tdfol_core import TemporalFormula, TemporalOperator, Predicate as TDFOLPredicate
+
+            modal_pred_names = {'always', 'necessarily', 'possibly', 'box', 'diamond'}
+
             def check(f):
                 if isinstance(f, TemporalFormula):
                     if f.operator in [TemporalOperator.ALWAYS, TemporalOperator.EVENTUALLY]:
                         return True
                     return check(f.formula)
+                if isinstance(f, TDFOLPredicate):
+                    if f.name.lower() in modal_pred_names:
+                        return True
+                    for arg in (f.arguments or []):
+                        if check(arg):
+                            return True
                 elif hasattr(f, 'left') and hasattr(f, 'right'):
                     return check(f.left) or check(f.right)
                 elif hasattr(f, 'formula'):
                     return check(f.formula)
                 return False
-            
+
             return check(formula)
-        except:
+        except Exception:
             return False
     
     def _has_temporal_operators(self, formula) -> bool:
-        """Check if formula has temporal operators (X, U, S)."""
+        """Check if formula has temporal operators (X, U, S) or temporal predicate names."""
         try:
-            from ..TDFOL.tdfol_core import TemporalFormula, BinaryTemporalFormula
+            from ..TDFOL.tdfol_core import TemporalFormula, BinaryTemporalFormula, Predicate as TDFOLPredicate
+            temporal_pred_names = {'eventually', 'next', 'until', 'since', 'release', 'before', 'after'}
+            if isinstance(formula, TDFOLPredicate) and formula.name.lower() in temporal_pred_names:
+                return True
             return self._contains_type(formula, (TemporalFormula, BinaryTemporalFormula))
-        except:
+        except Exception:
             return False
     
     def _has_deontic_operators(self, formula) -> bool:
-        """Check if formula has deontic operators (O, P, F)."""
+        """Check if formula has deontic operators (O, P, F) or deontic predicate names."""
         try:
-            from ..TDFOL.tdfol_core import DeonticFormula
+            from ..TDFOL.tdfol_core import DeonticFormula, Predicate as TDFOLPredicate
+            deontic_pred_names = {'obligatory', 'obligated', 'permitted', 'forbidden', 'prohibited',
+                                  'obligation', 'permission', 'prohibition', 'required', 'allowed'}
+            if isinstance(formula, TDFOLPredicate) and formula.name.lower() in deontic_pred_names:
+                return True
             return self._contains_type(formula, DeonticFormula)
-        except:
+        except Exception:
             return False
     
     def _contains_type(self, formula, target_type) -> bool:
@@ -499,7 +554,7 @@ class FormulaAnalyzer:
         score += quantifier_depth * 15
         
         # Nesting level
-        score += nesting_level * 10
+        score += nesting_level * 5
         
         # Operator count
         score += operator_count * 2
@@ -574,7 +629,16 @@ class FormulaAnalyzer:
             if prover not in seen:
                 seen.add(prover)
                 result.append(prover)
-        
+
+        # Ensure at least 3 recommendations by adding fallbacks
+        fallbacks = ['native', 'z3', 'cvc5', 'lean']
+        for fb in fallbacks:
+            if len(result) >= 3:
+                break
+            if fb not in seen:
+                seen.add(fb)
+                result.append(fb)
+
         return result
 
 
