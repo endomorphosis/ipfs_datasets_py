@@ -85,6 +85,23 @@ from .advanced import (
     RelationshipCandidate,
 )
 
+# SRL extractor — Item 9 (v2.5.0)
+from .srl import (
+    SRLExtractor,
+    SRLFrame,
+    RoleArgument,
+    ROLE_AGENT,
+    ROLE_PATIENT,
+    ROLE_THEME,
+    ROLE_INSTRUMENT,
+    ROLE_LOCATION,
+    ROLE_TIME,
+    ROLE_CAUSE,
+    ROLE_RESULT,
+    ROLE_RECIPIENT,
+    ROLE_SOURCE,
+)
+
 # Future imports (will be uncommented as modules are created):
 # from .validator import validate_with_sparql
 # from .wikipedia import extract_from_wikipedia
@@ -117,6 +134,20 @@ __all__ = [
     'ExtractionContext',
     'EntityCandidate',
     'RelationshipCandidate',
+    # SRL extractor — Item 9 (v2.5.0)
+    'SRLExtractor',
+    'SRLFrame',
+    'RoleArgument',
+    'ROLE_AGENT',
+    'ROLE_PATIENT',
+    'ROLE_THEME',
+    'ROLE_INSTRUMENT',
+    'ROLE_LOCATION',
+    'ROLE_TIME',
+    'ROLE_CAUSE',
+    'ROLE_RESULT',
+    'ROLE_RECIPIENT',
+    'ROLE_SOURCE',
 ]
 
 

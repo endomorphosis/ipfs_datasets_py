@@ -208,16 +208,19 @@ class KnowledgeGraph:
             if source is None or target is None:
                 raise ValueError("source and target parameters are required when first argument is relationship_type string")
             
-            relationship = Relationship(
-                relationship_id=relationship_id,
-                relationship_type=relationship_type_or_relationship,
-                source_entity=source,
-                target_entity=target,
-                properties=properties,
-                confidence=confidence,
-                source_text=source_text,
-                bidirectional=bidirectional
-            )
+            relationship_kwargs: Dict[str, Any] = {
+                "relationship_type": relationship_type_or_relationship,
+                "source_entity": source,
+                "target_entity": target,
+                "properties": properties,
+                "confidence": confidence,
+                "source_text": source_text,
+                "bidirectional": bidirectional,
+            }
+            if relationship_id is not None:
+                relationship_kwargs["relationship_id"] = relationship_id
+
+            relationship = Relationship(**relationship_kwargs)
 
         # Add to graph
         self.relationships[relationship.relationship_id] = relationship
@@ -495,10 +498,10 @@ class KnowledgeGraph:
                 if not rel_exists:
                     # Add new relationship
                     self.add_relationship(
-                        relationship_type=rel.relationship_type,
+                        rel.relationship_type,
                         source=source_entity,
                         target=target_entity,
-                        properties=rel.properties.copy(),
+                        properties=(rel.properties.copy() if rel.properties else {}),
                         confidence=rel.confidence,
                         source_text=rel.source_text,
                         bidirectional=rel.bidirectional

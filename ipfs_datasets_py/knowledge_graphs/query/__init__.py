@@ -64,9 +64,24 @@ Usage:
 from .unified_engine import UnifiedQueryEngine
 from .hybrid_search import HybridSearchEngine  
 from .budget_manager import BudgetManager
+from .distributed import (
+    GraphPartitioner,
+    DistributedGraph,
+    FederatedQueryExecutor,
+    FederatedQueryResult,
+    PartitionStats,
+    PartitionStrategy,
+)
 
 __all__ = [
     'UnifiedQueryEngine',
     'HybridSearchEngine',
     'BudgetManager',
+    # Distributed query — Item 13 (v3.0.0)
+    'GraphPartitioner',
+    'DistributedGraph',
+    'FederatedQueryExecutor',
+    'FederatedQueryResult',
+    'PartitionStats',
+    'PartitionStrategy',
 ]

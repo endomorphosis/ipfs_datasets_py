@@ -225,19 +225,28 @@ kg = extractor.extract_knowledge_graph(text)
 
 ### 9. Semantic Role Labeling (SRL)
 
-**Status:** 📋 Research (v2.5.0 — Experimental)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Advanced feature; needs research into AllenNLP integration
+**Status:** ✅ Implemented (v2.5.0 — 2026-02-20)
+**Location:** `extraction/srl.py` — `SRLExtractor`, `SRLFrame`, `RoleArgument`
+**Implementation:**
+- `SRLExtractor.extract_srl(text)` → list of `SRLFrame` objects (one per predicate)
+- Heuristic backend: pure-Python SVO + modifier extraction (no external deps)
+- spaCy backend: dependency-parse–based extraction when `nlp=` model is provided
+- Semantic roles: Agent, Patient, Theme, Instrument, Location, Time, Cause, Result, Recipient, Source
+- `SRLExtractor.to_knowledge_graph(frames)` → event-centric `KnowledgeGraph` (Event nodes + typed role relationships)
+- `SRLExtractor.extract_to_triples(text)` → `(subject, predicate, object)` tuples
+- Graceful fallback: always works even without spaCy or any ML model
 
-**Details:**
-- Would use AllenNLP for frame-semantic parsing
-- Enables event-centric knowledge graphs
-- Improves temporal relationship detection
-- Requires significant research and evaluation
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.extraction.srl import SRLExtractor
 
-**Timeline:** v2.5.0 (November 2026) - Experimental  
-**Effort:** 30-40 hours (research + implementation + evaluation)
+ext = SRLExtractor()                     # heuristic mode
+frames = ext.extract_srl("Alice sent the report to Bob yesterday.")
+kg = ext.to_knowledge_graph(frames)      # Event + Agent + Patient + Time entities
+triples = ext.extract_to_triples(text)   # (subject, predicate, object) list
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (12 tests)
 
 ---
 
@@ -281,36 +290,74 @@ result = reasoner.reason_across_documents(documents, query="Who collaborated wit
 
 ### 12. Inference Rules and Ontology Reasoning
 
-**Status:** 📋 Research (v3.0.0+)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Advanced feature requiring research
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20)
+**Location:** `ontology/reasoning.py` — `OntologySchema`, `OntologyReasoner`, `ConsistencyViolation`
+**Implementation:**
+- `OntologySchema` builder: `add_subclass`, `add_subproperty`, `add_transitive`, `add_symmetric`, `add_inverse`, `add_domain`, `add_range`, `add_disjoint`
+- `OntologyReasoner.materialize(kg)` — runs a fixpoint loop applying all declared rules
+  - **subClassOf** — nodes gain inferred super-class types (stored in `entity.properties["inferred_types"]`)
+  - **subPropertyOf** — new relationships generated for each declared super-property
+  - **transitive** — BFS-based transitive closure
+  - **symmetric** — reverse relationships for symmetric properties
+  - **inverseOf** — inverse-direction relationships generated
+  - **domain** — source nodes of a property gain the declared domain class
+  - **range** — target nodes of a property gain the declared range class
+- `OntologyReasoner.check_consistency(kg)` — detects disjoint class violations and negative assertion conflicts
 
-**Details:**
-- OWL/RDFS reasoning
-- Custom inference rules
-- Consistency checking
-- Automated fact derivation
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.ontology import OntologySchema, OntologyReasoner
 
-**Timeline:** v3.0.0+ (Q1 2027 or later)  
-**Effort:** 80-100 hours (significant research + implementation)
+schema = OntologySchema()
+schema.add_subclass("Employee", "Person")
+schema.add_transitive("isAncestorOf")
+schema.add_symmetric("isSiblingOf")
+schema.add_inverse("isManagerOf", "isManagedBy")
+schema.add_domain("worksAt", "Person")
+schema.add_range("worksAt", "Organization")
+
+reasoner = OntologyReasoner(schema)
+kg2 = reasoner.materialize(kg)          # returns augmented copy
+violations = reasoner.check_consistency(kg2)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (11 tests)
 
 ---
 
 ### 13. Distributed Query Execution
 
-**Status:** 📋 Research (v3.0.0+)  
-**Location:** Not yet implemented  
-**Current State:** Not started  
-**Reason for Deferral:** Not needed for current scale targets
+**Status:** ✅ Implemented (v3.0.0 — 2026-02-20)
+**Location:** `query/distributed.py` — `GraphPartitioner`, `DistributedGraph`, `FederatedQueryExecutor`
+**Implementation:**
+- `GraphPartitioner(num_partitions, strategy)` — partitions a `KnowledgeGraph` into N shards
+  - Strategies: `HASH` (SHA1 of node ID mod N), `RANGE` (sorted ID buckets), `ROUND_ROBIN`
+  - Cross-partition edges are copied to both source and target partitions by default
+- `DistributedGraph` — holds `N` partition `KnowledgeGraph` objects
+  - `get_partition_for_entity(entity_id)` — locate which partition holds an entity
+  - `to_merged_graph()` — re-merge all partitions into a single graph
+  - `get_partition_stats()` — per-partition node/edge counts
+- `FederatedQueryExecutor(dist_graph)` — fan-out Cypher query execution
+  - `execute_cypher(query)` — serial fan-out, merge + deduplicate
+  - `execute_cypher_parallel(query, max_workers)` — thread-pool fan-out
+  - Each partition gets its own in-memory `GraphEngine` populated from partition nodes/rels
+  - Deduplication uses SHA1 fingerprint of serialised record dicts
 
-**Details:**
-- Requires graph partitioning strategy
-- Federated query execution across nodes
-- Not needed for graphs < 100M nodes
+**Example (now works):**
+```python
+from ipfs_datasets_py.knowledge_graphs.query.distributed import (
+    GraphPartitioner, FederatedQueryExecutor, PartitionStrategy,
+)
 
-**Timeline:** v3.0.0+ (Q1 2027 or later)  
-**Effort:** 100-120 hours (partitioning + federation + tests)
+dist = GraphPartitioner(num_partitions=4, strategy=PartitionStrategy.HASH).partition(kg)
+result = FederatedQueryExecutor(dist).execute_cypher(
+    "MATCH (n:Person) WHERE n.age > 30 RETURN n.name, n.age"
+)
+for row in result.records:
+    print(row)
+```
+
+**Tests:** `tests/unit/knowledge_graphs/test_srl_ontology_distributed.py` (15 tests)
 
 ---
 
