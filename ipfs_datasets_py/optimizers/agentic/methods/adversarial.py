@@ -142,13 +142,32 @@ class AdversarialOptimizer(AgenticOptimizer):
         start_time = time.time()
         
         try:
+            self._log.info("Starting adversarial optimization", extra={
+                'task_id': task.task_id,
+                'agent_id': self.agent_id,
+                'num_solutions': self.num_solutions,
+                'priority': task.priority,
+            })
+            
             # Step 1: Analyze target files
             target_analysis = self._analyze_targets(task.target_files)
+            self._log.debug("Analyzed target files", extra={
+                'task_id': task.task_id,
+                'files_analyzed': len(target_analysis.get('files', [])),
+                'functions_found': len(target_analysis.get('functions', [])),
+            })
             
             # Step 2: Generate N alternative solutions
             solutions = self._generate_solutions(task, target_analysis)
+            self._log.info("Generated solutions", extra={
+                'task_id': task.task_id,
+                'solutions_generated': len(solutions),
+            })
             
             if not solutions:
+                self._log.error("No solutions generated", extra={
+                    'task_id': task.task_id,
+                })
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=False,
@@ -163,9 +182,16 @@ class AdversarialOptimizer(AgenticOptimizer):
             
             # Step 3: Benchmark each solution
             benchmarks = self._benchmark_solutions(solutions, task.target_files)
+            self._log.info("Benchmarked solutions", extra={
+                'task_id': task.task_id,
+                'solutions_benchmarked': len(solutions),
+            })
             
             # Step 4: Apply adversarial testing
             adversarial_results = self._adversarial_testing(solutions, task)
+            self._log.debug("Adversarial testing completed", extra={
+                'task_id': task.task_id,
+            })
             
             # Step 5: Score all solutions
             scores = self._score_solutions(
@@ -173,16 +199,35 @@ class AdversarialOptimizer(AgenticOptimizer):
                 benchmarks,
                 adversarial_results,
             )
+            self._log.debug("Scored solutions", extra={
+                'task_id': task.task_id,
+                'solutions_scored': len(scores),
+            })
             
             # Step 6: Select winner
             winner_idx = max(range(len(scores)), key=lambda i: scores[i]["total"])
             winner = solutions[winner_idx]
             winner_score = scores[winner_idx]
             
+            self._log.info("Selected winner solution", extra={
+                'task_id': task.task_id,
+                'winner_idx': winner_idx,
+                'winner_approach': winner.get('approach', 'unknown'),
+                'winner_score': winner_score.get('total', 0),
+            })
+            
             # Step 7: Validate winner
             validation = self._validate_solution(winner, task.target_files)
+            self._log.info("Validated winner", extra={
+                'task_id': task.task_id,
+                'validation_passed': validation.passed,
+            })
             
             if not validation.passed:
+                self._log.error("Winner validation failed", extra={
+                    'task_id': task.task_id,
+                    'error_count': len(validation.errors),
+                })
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=False,
@@ -198,6 +243,15 @@ class AdversarialOptimizer(AgenticOptimizer):
             # Step 8: Create patch
             patch_path, patch_cid = self._create_patch(winner, task)
             
+            execution_time = time.time() - start_time
+            self._log.info("Optimization completed successfully", extra={
+                'task_id': task.task_id,
+                'total_time': execution_time,
+                'patch_path': str(patch_path) if patch_path else None,
+                'patch_cid': patch_cid,
+                'solutions_evaluated': len(solutions),
+            })
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=True,
@@ -211,11 +265,19 @@ class AdversarialOptimizer(AgenticOptimizer):
                     "num_solutions_evaluated": len(solutions),
                     "winner_rank": 1,
                 },
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
             )
             
         except Exception as e:
+            execution_time = time.time() - start_time
+            self._log.error("Optimization failed", extra={
+                'task_id': task.task_id,
+                'error_type': type(e).__name__,
+                'error_message': str(e),
+                'total_time': execution_time,
+            }, exc_info=True)
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -223,7 +285,7 @@ class AdversarialOptimizer(AgenticOptimizer):
                 changes="",
                 validation=ValidationResult(passed=False),
                 metrics={},
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
                 error_message=str(e),
             )
@@ -334,7 +396,12 @@ class AdversarialOptimizer(AgenticOptimizer):
                 
             except Exception as e:
                 # Log error but continue with other solutions
-                print(f"Error generating solution {i}: {e}")
+                self._log.error("Error generating solution", extra={
+                    'solution_index': i,
+                    'approach': approach,
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                })
                 continue
         
         return solutions

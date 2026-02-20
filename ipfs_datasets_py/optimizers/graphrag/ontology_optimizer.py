@@ -178,9 +178,22 @@ class OntologyOptimizer:
             >>> for rec in report.recommendations:
             ...     print(f"- {rec}")
         """
-        self._log.info(f"Analyzing batch of {len(session_results)} sessions")
+        self._log.info(
+            "Analyzing batch of sessions",
+            extra={
+                'session_count': len(session_results),
+                'batch_id': id(session_results),
+            }
+        )
         
         if not session_results:
+            self._log.warning(
+                "No session results provided for batch analysis",
+                extra={
+                    'batch_id': id(session_results),
+                    'error_type': 'empty_batch',
+                }
+            )
             return OptimizationReport(
                 average_score=0.0,
                 trend='insufficient_data',
@@ -250,8 +263,17 @@ class OntologyOptimizer:
             )
         
         self._log.info(
-            f"Batch analysis: avg={average_score:.2f}, trend={trend}, "
-            f"recs={len(recommendations)}"
+            "Batch analysis complete",
+            extra={
+                'batch_id': id(session_results),
+                'session_count': len(session_results),
+                'average_score': round(average_score, 3),
+                'trend': trend,
+                'recommendation_count': len(recommendations),
+                'score_std': round(self._compute_std(scores), 3),
+                'score_min': round(min(scores), 3),
+                'score_max': round(max(scores), 3),
+            }
         )
         
         return report
@@ -278,12 +300,22 @@ class OntologyOptimizer:
             would return.
         """
         self._log.info(
-            "Analyzing batch of %d sessions (parallel, max_workers=%d)",
-            len(session_results),
-            max_workers,
+            "Analyzing batch of sessions (parallel)",
+            extra={
+                'session_count': len(session_results),
+                'batch_id': id(session_results),
+                'max_workers': max_workers,
+            }
         )
 
         if not session_results:
+            self._log.warning(
+                "No session results provided for parallel batch analysis",
+                extra={
+                    'batch_id': id(session_results),
+                    'error_type': 'empty_batch',
+                }
+            )
             return OptimizationReport(
                 average_score=0.0,
                 trend="insufficient_data",
@@ -344,10 +376,18 @@ class OntologyOptimizer:
             )
 
         self._log.info(
-            "Parallel batch analysis: avg=%.2f, trend=%s, recs=%d",
-            average_score,
-            trend,
-            len(recommendations),
+            "Parallel batch analysis complete",
+            extra={
+                'batch_id': id(session_results),
+                'session_count': len(session_results),
+                'average_score': round(average_score, 3),
+                'trend': trend,
+                'recommendation_count': len(recommendations),
+                'score_std': round(self._compute_std(scores), 3),
+                'score_min': round(min(scores), 3),
+                'score_max': round(max(scores), 3),
+                'max_workers': max_workers,
+            }
         )
         return report
 
@@ -382,6 +422,14 @@ class OntologyOptimizer:
         results = historical_results or self._history
         
         if len(results) < 2:
+            self._log.warning(
+                "Insufficient batch history for trend analysis",
+                extra={
+                    'batch_count': len(results),
+                    'error_type': 'insufficient_history',
+                    'required': 2,
+                }
+            )
             return {
                 'improvement_rate': 0.0,
                 'trend': 'insufficient_data',
@@ -390,7 +438,13 @@ class OntologyOptimizer:
                 'recommendations': ["Need more batches to analyze trends"]
             }
         
-        self._log.info(f"Analyzing trends across {len(results)} batches")
+        self._log.info(
+            "Analyzing trends across batches",
+            extra={
+                'batch_count': len(results),
+                'analysis_id': id(results),
+            }
+        )
         
         # Compute improvement rates
         scores = [r.average_score for r in results]
@@ -426,6 +480,21 @@ class OntologyOptimizer:
             recommendations.append("Increase model diversity")
         elif trend == 'improving':
             recommendations.append("Continue current optimization approach")
+        
+        self._log.info(
+            "Trend analysis complete",
+            extra={
+                'analysis_id': id(results),
+                'batch_count': len(results),
+                'trend': trend,
+                'improvement_rate': round(avg_improvement_per_batch, 4),
+                'overall_improvement': round(overall_improvement, 3),
+                'current_score': round(scores[-1], 3),
+                'baseline_score': round(scores[0], 3),
+                'convergence_estimate': convergence_estimate,
+                'recommendation_count': len(recommendations),
+            }
+        )
         
         return {
             'improvement_rate': avg_improvement_per_batch,

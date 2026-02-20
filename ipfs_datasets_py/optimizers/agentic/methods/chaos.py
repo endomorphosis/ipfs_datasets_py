@@ -4,6 +4,7 @@ This optimizer identifies and fixes resilience issues through
 controlled fault injection and monitoring.
 """
 
+import logging as _logging
 import random
 import subprocess
 import time
@@ -146,6 +147,7 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
         fault_types: Optional[List[FaultType]] = None,
         max_faults_per_run: int = 10,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize chaos engineering optimizer.
         
@@ -156,8 +158,9 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
             fault_types: Types of faults to inject (None = all)
             max_faults_per_run: Maximum faults to inject per run
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
-        super().__init__(agent_id, llm_router, change_control, config)
+        super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         self.fault_types = fault_types or list(FaultType)
         self.max_faults_per_run = max_faults_per_run
@@ -178,23 +181,51 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
         start_time = time.time()
         
         try:
+            self._log.info("Starting chaos engineering optimization", extra={
+                'task_id': task.task_id,
+                'agent_id': self.agent_id,
+                'fault_types': len(self.fault_types),
+                'max_faults': self.max_faults_per_run,
+            })
+            
             # Step 1: Analyze target files for vulnerabilities
             vulnerabilities = self._analyze_vulnerabilities(task.target_files)
+            self._log.debug("Analyzed vulnerabilities", extra={
+                'task_id': task.task_id,
+                'vulnerability_types': len(vulnerabilities),
+            })
             
             # Step 2: Generate fault injection tests
             fault_tests = self._generate_fault_tests(
                 task,
                 vulnerabilities,
             )
+            self._log.info("Generated fault injection tests", extra={
+                'task_id': task.task_id,
+                'test_count': len(fault_tests),
+            })
             
             # Step 3: Run chaos tests
             test_results = self._run_chaos_tests(fault_tests, task.target_files)
+            self._log.info("Chaos tests completed", extra={
+                'task_id': task.task_id,
+                'tests_run': len(test_results),
+            })
             
             # Step 4: Identify failures
             failures = [r for r in test_results if not r.passed]
+            self._log.info("Identified failures", extra={
+                'task_id': task.task_id,
+                'failure_count': len(failures),
+                'success_count': len(test_results) - len(failures),
+            })
             
             if not failures:
                 # System is already resilient
+                self._log.info("System already resilient", extra={
+                    'task_id': task.task_id,
+                    'tests_run': len(test_results),
+                })
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=True,
@@ -212,11 +243,23 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
             
             # Step 5: Generate fixes for failures
             fixes = self._generate_fixes(failures, task)
+            self._log.debug("Generated fixes", extra={
+                'task_id': task.task_id,
+                'fix_count': len(fixes),
+            })
             
             # Step 6: Validate fixes
             validation = self._validate_fixes(fixes, task.target_files)
+            self._log.info("Validated fixes", extra={
+                'task_id': task.task_id,
+                'validation_passed': validation.passed,
+            })
             
             if not validation.passed:
+                self._log.error("Fixes failed validation", extra={
+                    'task_id': task.task_id,
+                    'error_count': len(validation.errors),
+                })
                 return OptimizationResult(
                     task_id=task.task_id,
                     success=False,
@@ -236,6 +279,16 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
             # Step 7: Create patch
             patch_path, patch_cid = self._create_patch(fixes, task)
             
+            execution_time = time.time() - start_time
+            self._log.info("Optimization completed successfully", extra={
+                'task_id': task.task_id,
+                'total_time': execution_time,
+                'tests_run': len(test_results),
+                'failures': len(failures),
+                'fixes_applied': len(fixes),
+                'patch_path': str(patch_path) if patch_path else None,
+            })
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=True,
@@ -250,11 +303,19 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
                     "fixes_applied": len(fixes),
                     "initial_resilience_score": 1.0 - (len(failures) / len(test_results)),
                 },
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
             )
             
         except Exception as e:
+            execution_time = time.time() - start_time
+            self._log.error("Optimization failed", extra={
+                'task_id': task.task_id,
+                'error_type': type(e).__name__,
+                'error_message': str(e),
+                'total_time': execution_time,
+            }, exc_info=True)
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -262,7 +323,7 @@ class ChaosEngineeringOptimizer(AgenticOptimizer):
                 changes="",
                 validation=ValidationResult(passed=False),
                 metrics={},
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
                 error_message=str(e),
             )

@@ -5,6 +5,7 @@ This optimizer uses reinforcement learning principles with an actor
 """
 
 import json
+import logging as _logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -139,6 +140,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
         exploration_rate: float = 0.2,
         policy_path: Optional[Path] = None,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize actor-critic optimizer.
         
@@ -150,8 +152,9 @@ class ActorCriticOptimizer(AgenticOptimizer):
             exploration_rate: Probability of exploring new patterns
             policy_path: Path to save/load learned policy
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
-        super().__init__(agent_id, llm_router, change_control, config)
+        super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         self.learning_rate = learning_rate
         self.exploration_rate = exploration_rate
@@ -180,22 +183,57 @@ class ActorCriticOptimizer(AgenticOptimizer):
         start_time = time.time()
         
         try:
+            self._log.info("Starting actor-critic optimization", extra={
+                'task_id': task.task_id,
+                'agent_id': self.agent_id,
+                'learning_rate': self.learning_rate,
+                'exploration_rate': self.exploration_rate,
+            })
+            
             # Step 1: Actor proposes change
             proposal = self._actor_propose(task)
+            self._log.debug("Actor proposed change", extra={
+                'task_id': task.task_id,
+                'proposal_id': proposal.get('id'),
+                'strategy': proposal.get('strategy'),
+                'pattern_id': proposal.get('pattern_id'),
+            })
             
             # Step 2: Critic evaluates proposal
             evaluation = self._critic_evaluate(proposal, task)
+            self._log.debug("Critic evaluated proposal", extra={
+                'task_id': task.task_id,
+                'reward': evaluation.get('reward', 0),
+                'correctness': evaluation.get('correctness', 0),
+                'performance': evaluation.get('performance', 0),
+            })
             
             # Step 3: Update policy based on feedback
             self._update_policy(proposal, evaluation)
+            self._log.debug("Updated policy", extra={
+                'task_id': task.task_id,
+                'policy_size': len(self.policy.patterns),
+            })
             
             # Step 4: Validate if evaluation was positive
             if evaluation["reward"] > 0:
                 validation = self._validate_proposal(proposal, task.target_files)
+                self._log.info("Validated proposal", extra={
+                    'task_id': task.task_id,
+                    'validation_passed': validation.passed,
+                })
                 
                 if validation.passed:
                     # Create patch
                     patch_path, patch_cid = self._create_patch(proposal, task)
+                    
+                    execution_time = time.time() - start_time
+                    self._log.info("Optimization completed successfully", extra={
+                        'task_id': task.task_id,
+                        'total_time': execution_time,
+                        'reward': evaluation['reward'],
+                        'patch_path': str(patch_path) if patch_path else None,
+                    })
                     
                     return OptimizationResult(
                         task_id=task.task_id,
@@ -211,11 +249,18 @@ class ActorCriticOptimizer(AgenticOptimizer):
                             "performance": evaluation["performance"],
                             "style": evaluation["style"],
                         },
-                        execution_time=time.time() - start_time,
+                        execution_time=execution_time,
                         agent_id=self.agent_id,
                     )
             
             # Proposal not good enough
+            execution_time = time.time() - start_time
+            self._log.warning("Proposal rejected", extra={
+                'task_id': task.task_id,
+                'reward': evaluation['reward'],
+                'total_time': execution_time,
+            })
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -226,12 +271,20 @@ class ActorCriticOptimizer(AgenticOptimizer):
                     "reward": evaluation["reward"],
                     "correctness": evaluation.get("correctness", 0.0),
                 },
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
                 error_message="Proposal did not meet quality threshold",
             )
             
         except Exception as e:
+            execution_time = time.time() - start_time
+            self._log.error("Optimization failed", extra={
+                'task_id': task.task_id,
+                'error_type': type(e).__name__,
+                'error_message': str(e),
+                'total_time': execution_time,
+            }, exc_info=True)
+            
             return OptimizationResult(
                 task_id=task.task_id,
                 success=False,
@@ -239,7 +292,7 @@ class ActorCriticOptimizer(AgenticOptimizer):
                 changes="",
                 validation=ValidationResult(passed=False),
                 metrics={},
-                execution_time=time.time() - start_time,
+                execution_time=execution_time,
                 agent_id=self.agent_id,
                 error_message=str(e),
             )
