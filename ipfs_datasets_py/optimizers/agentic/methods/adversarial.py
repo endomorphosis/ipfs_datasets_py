@@ -5,6 +5,7 @@ and selects the best based on multi-criteria scoring.
 """
 
 import ast
+import logging as _logging
 import subprocess
 import tempfile
 import time
@@ -94,6 +95,7 @@ class AdversarialOptimizer(AgenticOptimizer):
         num_solutions: int = 5,
         scoring_weights: Optional[Dict[str, float]] = None,
         config: Optional[Dict[str, Any]] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize adversarial optimizer.
         
@@ -104,8 +106,9 @@ class AdversarialOptimizer(AgenticOptimizer):
             num_solutions: Number of competing solutions to generate
             scoring_weights: Weights for multi-criteria scoring
             config: Optional configuration dictionary
+            logger: Optional logger instance (defaults to module logger)
         """
-        super().__init__(agent_id, llm_router, change_control, config)
+        super().__init__(agent_id, llm_router, change_control, config, logger)
         self.patch_manager = PatchManager()
         self.num_solutions = num_solutions
         
