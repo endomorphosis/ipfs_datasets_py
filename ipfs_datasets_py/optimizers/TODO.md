@@ -470,12 +470,12 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [x] (P2) [logic] Add --from-file flag to `validate` command (load ontology from JSON/YAML) — Done batch 30: mutually exclusive --input/--from-file with YAML support + 8 tests
 - [ ] (P2) [graphrag] `OntologyLearningAdapter` — track successful extraction patterns and tune confidence thresholds
 - [ ] (P2) [graphrag] `LearningAdapter.apply_feedback()` — update extraction weights based on mediator actions
-- [ ] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag (writes JSON report)
+- [x] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag — Done: test_prove_outputs_json_on_success in test_cli_prove.py (already existed batch 27)
 - [x] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path — Done batch 30: 8 tests in test_cli_validate.py
 - [ ] (P3) [graphrag] Add `entity_to_tdfol()` helper that converts a single entity to a Formula object
 - [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
 - [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
-- [ ] (P2) [arch] Add `__init__` test: confirm all public symbols in `optimizers/graphrag/__init__` are importable
+- [x] (P2) [arch] Add `__init__` test for graphrag/__init__ public symbols — Done batch 32: test_public_import_smoke.py (38 tests)
 - [ ] (P2) [docs] Update common/README.md to include ExtractionConfig.custom_rules usage example
 
 ## Newly discovered items (batch 31+)
@@ -486,10 +486,10 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.apply_feedback()` — accept list of mediator `Action` objects and update confidence weights
 - [ ] (P2) [graphrag] `OntologyLearningAdapter.get_extraction_hint()` — return adjusted threshold based on historical accuracy
 - [ ] (P2) [tests] Unit tests for `OntologyLearningAdapter` feedback loop (3+ scenarios)
-- [ ] (P2) [arch] Add `__init__` test for `optimizers/logic_theorem_optimizer/__init__` public symbols
+- [x] (P2) [arch] Add `__init__` test for logic_theorem_optimizer public symbols — Done batch 32: test_public_import_smoke.py
 - [ ] (P2) [tests] Parametrize domain-specific rule tests with all 4 domains (legal, medical, financial, technical) — use `pytest.mark.parametrize`
-- [ ] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` method: evaluate a list of ontologies and return aggregated stats
-- [ ] (P2) [tests] Unit tests for `OntologyCritic.evaluate_batch()` (empty list, single, multiple ontologies)
+- [x] (P2) [graphrag] Add `OntologyCritic.evaluate_batch()` — Done batch 32: returns scores/mean_overall/min_overall/max_overall/count
+- [x] (P2) [tests] Unit tests for `OntologyCritic.evaluate_batch()` — Done batch 32: 14 tests in test_ontology_critic_evaluate_batch.py
 - [ ] (P2) [graphrag] Add `relationship_count`, `entity_type_diversity` fields to `OntologyGenerationResult` for richer reporting
 - [ ] (P2) [docs] Update `ARCHITECTURE_UNIFIED.md` to document Relationship.direction field and co-occurrence confidence decay formula
 - [ ] (P3) [graphrag] Add `ExtractionConfig.max_entities: int = 500` cap to prevent runaway extraction on large documents
