@@ -24,7 +24,7 @@ from ..converters.deontic_logic_core import (
 )
 from .temporal_deontic_rag_store import TemporalDeonticRAGStore, TheoremMetadata
 from .document_consistency_checker import DocumentConsistencyChecker
-from .deontic_logic_converter import DeonticLogicConverter, ConversionContext
+from ..converters.deontic_logic_converter import DeonticLogicConverter, ConversionContext
 
 logger = logging.getLogger(__name__)
 

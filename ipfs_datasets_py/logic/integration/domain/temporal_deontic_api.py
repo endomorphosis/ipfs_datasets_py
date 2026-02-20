@@ -20,6 +20,9 @@ import anyio
 
 logger = logging.getLogger(__name__)
 
+# Default fallback temporal scope start date when no explicit date is provided
+_DEFAULT_TEMPORAL_START = datetime(2000, 1, 1)
+
 
 def _parse_temporal_context(value: Optional[str]) -> datetime:
     temporal_context = datetime.now()
@@ -132,7 +135,7 @@ async def query_theorems_from_parameters(
 
     def _run() -> Dict[str, Any]:
         from .temporal_deontic_rag_store import TemporalDeonticRAGStore
-        from ..converters.deontic_logic_core import DeonticOperator
+        from ..converters.deontic_logic_core import DeonticOperator, DeonticFormula, LegalAgent
 
         query = parameters.get("query", "")
         operator_filter = parameters.get("operator_filter", "all")
@@ -146,24 +149,33 @@ async def query_theorems_from_parameters(
 
         rag_store = TemporalDeonticRAGStore()
 
-        operator_enum = None
+        operator_enum = DeonticOperator.OBLIGATION
         if operator_filter != "all":
             try:
                 operator_enum = DeonticOperator[operator_filter]
             except KeyError:
-                operator_enum = None
+                operator_enum = DeonticOperator.OBLIGATION
 
-        results = rag_store.query_similar_theorems(
-            query_text=query,
+        # Build a query formula from the text + operator filter
+        query_agent = LegalAgent("query_agent", "Query Agent", "person")
+        query_formula = DeonticFormula(
+            operator=operator_enum,
+            proposition=query,
+            agent=query_agent,
+            confidence=1.0,
+            source_text=query,
+        )
+
+        results = rag_store.retrieve_relevant_theorems(
+            query_formula=query_formula,
             top_k=limit,
-            min_similarity=min_relevance,
-            operator_filter=operator_enum,
-            jurisdiction_filter=jurisdiction if jurisdiction != "all" else None,
-            legal_domain_filter=legal_domain if legal_domain != "all" else None,
+            jurisdiction=jurisdiction if jurisdiction != "all" else None,
+            legal_domain=legal_domain if legal_domain != "all" else None,
         )
 
         theorems = []
         for result in results:
+            temporal_scope = result.temporal_scope or (_DEFAULT_TEMPORAL_START, None)
             theorems.append(
                 {
                     "theorem_id": result.theorem_id,
@@ -174,19 +186,16 @@ async def query_theorems_from_parameters(
                         "confidence": result.formula.confidence,
                     },
                     "metadata": {
-                        "jurisdiction": result.metadata.jurisdiction,
-                        "legal_domain": result.metadata.legal_domain,
-                        "source_case": result.metadata.source_case,
-                        "precedent_strength": result.metadata.precedent_strength,
+                        "jurisdiction": result.jurisdiction,
+                        "legal_domain": result.legal_domain,
+                        "source_case": result.source_case,
+                        "precedent_strength": result.precedent_strength,
                         "temporal_scope": {
-                            "start": result.metadata.temporal_scope[0].isoformat(),
-                            "end": result.metadata.temporal_scope[1].isoformat()
-                            if result.metadata.temporal_scope[1]
-                            else None,
+                            "start": temporal_scope[0].isoformat() if temporal_scope[0] else None,
+                            "end": temporal_scope[1].isoformat() if temporal_scope[1] else None,
                         },
                     },
-                    "relevance_score": result.similarity_score,
-                    "embedding_match": result.embedding_similarity,
+                    "relevance_score": result.precedent_strength,
                 }
             )
 

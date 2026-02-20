@@ -75,8 +75,8 @@ class ProofExecutionEngine(ProverBackendMixin):
         self.enable_caching = enable_caching
         if enable_caching:
             self.proof_cache = get_global_cache(
-                max_size=cache_size,
-                default_ttl=cache_ttl
+                maxsize=cache_size,
+                ttl=cache_ttl
             )
             logger.info(f"Proof caching enabled: max_size={cache_size}, ttl={cache_ttl}s")
         else:

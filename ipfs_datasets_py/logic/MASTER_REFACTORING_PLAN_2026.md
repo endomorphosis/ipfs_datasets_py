@@ -1,7 +1,7 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 9.0 (supersedes all previous plans)  
+**Version:** 10.0 (supersedes all previous plans)  
 **Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE · Phase 6 🔄 In Progress  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
@@ -705,14 +705,35 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] 109 new tests in `test_integration_coverage_session5.py`
 - [x] **TOTAL integration/ coverage: 45% → 51%** (≥ 50% first milestone ✅)
 
-**Remaining (target 60%+):**
+**Completed (2026-02-20 session 6):**
+- [x] Bug fixed: `proof_execution_engine.py` L77-80 — `get_global_cache(max_size=..., default_ttl=...)` → `get_global_cache(maxsize=..., ttl=...)` (wrong kwargs caused `TypeError` on engine init)
+- [x] Bug fixed: `caselaw_bulk_processor.py` L27 — `from .deontic_logic_converter import ...` → `from ..converters.deontic_logic_converter import ...` (module was in `converters/`, not `domain/`)
+- [x] Bug fixed: `temporal_deontic_api.py::query_theorems_from_parameters()` — called non-existent `query_similar_theorems()` → rewrote to use `retrieve_relevant_theorems()` (actual API), now builds a `DeonticFormula` from query params
+- [x] Bug fixed: `reasoning_coordinator.py` L239,242 — `result.valid` → `result.is_proved()` (TDFOL `ProofResult` uses `is_proved()` method, not `.valid` attr)
+- [x] Bug fixed: `hybrid_confidence.py` L136 — `symbolic_result.valid` → `symbolic_result.is_proved()` (same TDFOL API fix)
+- [x] `reasoning/proof_execution_engine.py` 17% → 58%: `__init__` (all branches), `_find_executable`, `_prover_cmd`, `_test_command`, `_env_truthy`, `_detect_available_provers`, `_get_translator`, `prove_deontic_formula` (UNSUPPORTED/ERROR early exits, caching enabled/disabled), `prove_rule_set` (empty+formulas), `prove_consistency` (unsupported prover), `prove_multiple_provers` (no available), `get_prover_status`
+- [x] `domain/temporal_deontic_api.py` 6% → 82%: `_parse_temporal_context` (None/current_time/valid-ISO/invalid/empty), `check_document_consistency_from_parameters` (missing text, valid text, jurisdiction, temporal_context), `query_theorems_from_parameters` (missing query, valid query, operator/jurisdiction filters), `bulk_process_caselaw_from_parameters` (empty dirs, invalid dirs, valid dir+async), `add_theorem_from_parameters` (missing prop, valid obligation)
+- [x] `domain/legal_symbolic_analyzer.py` 29% → 64%: All dataclass types (`LegalAnalysisResult`, `DeonticProposition`, `LegalEntity`, `TemporalCondition`), `LegalSymbolicAnalyzer` (init, `analyze_legal_document`, `extract_deontic_propositions` obligation/permission/prohibition, `identify_legal_entities` contractor/client/government, `extract_temporal_conditions` deadline/before/empty, all `_fallback_*` methods), `LegalReasoningEngine` (init, `infer_implicit_obligations` contract/empty, `check_legal_consistency` contradiction/no-contradiction, `analyze_legal_precedents`, `_parse_consistency_result`), convenience factories
+- [x] `symbolic/neurosymbolic/embedding_prover.py` 17% → 83%: `EmbeddingEnhancedProver` (init, cache disabled, empty cache), `compute_similarity` (empty, same, different, multiple axioms), `find_similar_formulas` (empty, top_k, sorted), `_get_embedding` (cached, not cached), `_cosine_similarity` (same, orthogonal, zero, mismatched), `_fallback_similarity` (exact, substring, partial, empty), `clear_cache`, `get_cache_stats`
+- [x] `symbolic/neurosymbolic/hybrid_confidence.py` 26% → 91%: `ConfidenceBreakdown` (defaults, values), `HybridConfidenceScorer` (init, custom weights, no structural), `compute_confidence` (no inputs, neural only, symbolic success/failure, both, with formula, calibration, history), `_compute_structural_confidence` (simple/complex), `get_statistics` (empty, populated)
+- [x] `symbolic/neurosymbolic/reasoning_coordinator.py` 33% → 68%: `CoordinatedResult` (valid/invalid confidence, default strategy, empty steps), `NeuralSymbolicCoordinator` (no embeddings, threshold, capabilities), `_choose_strategy` (simple formula, complex no embeddings), `_prove_symbolic` (returns result), `prove` (AUTO, NEURAL fallback)
+- [x] `interactive/interactive_fol_utils.py` 10% → 100%: `create_interactive_session` (domain, default, custom threshold), `demo_interactive_session` (output, return type)
+- [x] `reasoning/proof_execution_engine_utils.py` 38% → 57%+: `create_proof_engine` (with/without timeout), `get_lean_template`, `get_coq_template`
+- [x] `reasoning/proof_execution_engine_types.py` 95% → 100%: `ProofResult` (creation, to_dict), `ProofStatus` (values)
+- [x] 144 new tests in `test_integration_coverage_session6.py`
+- [x] **TOTAL `integration/` coverage: 51% → 60%** (≥ 60% second milestone ✅)
+
+**Remaining (target 70%+):**
 - [ ] `bridges/external_provers.py` — 0%; requires E-prover/Vampire binaries
 - [ ] `bridges/prover_installer.py` — 0%; requires system binary installation
-- [ ] `domain/caselaw_bulk_processor.py` — 0%; requires database
+- [ ] `domain/caselaw_bulk_processor.py` — 27%; requires database
 - [ ] `caching/ipld_logic_storage.py` — 30%; requires libipld
-- [ ] `reasoning/_prover_backend_mixin.py` — 12%; heavy external backend calls
-- [ ] `domain/temporal_deontic_rag_store.py` — 23%; requires numpy vector store
-- [ ] `demos/demo_temporal_deontic_rag.py` — 0%; demo script
+- [ ] `reasoning/_prover_backend_mixin.py` — 12%; requires z3/cvc5/lean/coq binaries
+- [ ] `domain/medical_theorem_framework.py` — 0%; demo/optional module
+- [ ] `symbolic/neurosymbolic_api.py` — 46%; some paths need NL available
+- [ ] `domain/symbolic_contracts.py` — 55%; upper half needs complex setup
+- [ ] E2E test: legal text → TDFOL formula → proof → MCP response chain
+- [ ] `integration/` coverage: 60% → 70%+
 
 **Acceptance Criteria:**
 - [x] 15+ integration tests for TDFOL↔CEC cross-module interactions ✅ (via earlier sessions)
@@ -759,7 +780,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 | Phase 5: God-Module Splits | 2026-02-20 | All 6 oversized files split |
 | Phase 6 (partial): Test bug fixes | 2026-02-20 | 9 failures fixed (strategy/multiformats/d3/forward-chaining) |
 | Phase 6 (partial): TDFOL docstrings | 2026-02-20 | 100% coverage (486/486 public symbols) |
-| Phase 6 (partial): Integration coverage | 2026-02-20 | 38% → 51%; 210 new tests; 4 bugs fixed |
+| Phase 6 (partial): Integration coverage | 2026-02-20 | 38% → 60%; 354 new tests; 9 bugs fixed |
 
 ### Near Term (Next 2–4 weeks)
 | Task | Phase | Effort | Priority |
@@ -771,7 +792,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ### Medium Term (Weeks 4–8)
 | Task | Phase | Effort | Priority |
 |------|-------|--------|---------|
-| Integration tests for reasoning modules (51%→60%) | 6.3 | 8h | 🟠 P1 |
+| Integration tests for reasoning modules (60%→70%) | 6.3 | 8h | 🟠 P1 |
 | E2E tests: legal text → formal proof | 6.3 | 8h | 🟠 P1 |
 | Rate limiting for MCP tool calls | 4.2 | 4h | 🟡 P2 |
 
@@ -849,9 +870,12 @@ Consider splitting only if test coverage or type checking becomes problematic.
 - [x] Spanish NL parser — already complete (578 LOC), plan updated to mark §9.5 COMPLETE
 - [x] `document_consistency_checker.py` — 2 broken relative imports fixed (`deontic_logic_converter` and `proof_execution_engine`)
 - [x] Integration tests: 109 new tests session 5 (converter 27%→58%, doc_checker 21%→70%, legal_domain 39%→86%, fol_constructor 43%→72%, deontic_utils 30%→96%)
-- [x] **Integration coverage: 45% → 51%** (50%+ milestone ✅)
+- [x] **Integration coverage: 45% → 51%** (≥ 50% first milestone ✅)
+- [x] 5 bugs fixed session 6: `proof_execution_engine.py` wrong kwargs to `get_global_cache`, `caselaw_bulk_processor.py` wrong relative import, `temporal_deontic_api.py` non-existent `query_similar_theorems()` method, `reasoning_coordinator.py` + `hybrid_confidence.py` `.valid` → `.is_proved()` (TDFOL API)
+- [x] Integration tests: 144 new tests session 6 (proof_engine 17%→58%, temporal_api 6%→82%, legal_analyzer 29%→64%, embedding_prover 17%→83%, hybrid_confidence 26%→91%, coordinator 33%→68%, fol_utils 10%→100%, engine_types/utils)
+- [x] **Integration coverage: 51% → 60%** (≥60% second milestone ✅)
 - [ ] TDFOL NL test failures (~69) — requires spaCy
-- [ ] Integration test coverage: 51% → 60%+
+- [ ] Integration test coverage: 60% → 70%+
 
 ---
 
@@ -965,7 +989,7 @@ Consider splitting only if test coverage or type checking becomes problematic.
 ---
 
 **Document Status:** Active Plan — Being Implemented  
-**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (51%→60%); `_prover_backend_mixin.py` 12%→50%  
+**Next Action:** Phase 2.2 TDFOL NL (spaCy); Phase 6.3 integration coverage (60%→70%); `_prover_backend_mixin.py` 12%→50%; `symbolic/neurosymbolic_api.py` 46%→70%  
 **Review Schedule:** After each phase completion, update this document  
 **Created:** 2026-02-19 | **Last Updated:** 2026-02-20  
 **Supersedes:** All previous refactoring plans (see docs/archive/planning/)
