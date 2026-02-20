@@ -555,9 +555,13 @@ class OntologyPipelineHarness:
         critic: Any,
         mediator: Any,
         config: Optional[Any] = None,  # HarnessConfig
+        logger: Optional[logging.Logger] = None,
     ) -> None:
         from ..common.base_harness import BaseHarness, HarnessConfig
         from ..common.base_critic import CriticResult
+
+        import logging as _logging
+        self._log = logger or _logging.getLogger(__name__)
 
         _config = config if config is not None else HarnessConfig()
 
