@@ -411,6 +411,20 @@ class LogicVerifier(LogicVerifierBackendsMixin):
             "symbolic_ai_available": self.use_symbolic_ai
         }
 
+    # ------------------------------------------------------------------
+    # Backward-compatibility aliases (private method names used by tests)
+    # ------------------------------------------------------------------
+
+    def _validate_formula_syntax(self, formula: str) -> bool:
+        """Alias for verify_formula_syntax(); returns True if valid."""
+        result = self.verify_formula_syntax(formula)
+        return result.get("status") == "valid"
+
+    def _are_contradictory(self, formula1: str, formula2: str) -> bool:
+        """Delegate to the module-level are_contradictory() utility."""
+        from .logic_verification_utils import are_contradictory
+        return are_contradictory(formula1, formula2)
+
 
 # Import convenience functions from utils for backward compatibility
 from .logic_verification_utils import (

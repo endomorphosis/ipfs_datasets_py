@@ -1,8 +1,8 @@
 # Master Refactoring and Improvement Plan — Logic Module
 
 **Date:** 2026-02-20 (last updated)  
-**Version:** 5.0 (supersedes all previous plans)  
-**Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 📋 Planned  
+**Version:** 5.1 (supersedes all previous plans)  
+**Status:** Phase 1 ✅ COMPLETE · Phase 2 🔄 In Progress · Phase 3 ✅ COMPLETE · Phase 4 🔄 Ongoing · Phase 5 ✅ COMPLETE  
 **Scope:** `ipfs_datasets_py/logic/` and `tests/unit_tests/logic/`  
 **MCP Integration:** `ipfs_datasets_py/mcp_server/tools/logic_tools/`
 
@@ -79,11 +79,11 @@ The `ipfs_datasets_py/logic/` folder contains a **production-ready neurosymbolic
 
 | File | Current LOC | Target LOC | Priority |
 |------|------------|-----------|---------|
-| `CEC/native/prover_core.py` | 2,927 | <600 | 🔴 Critical |
-| `CEC/native/dcec_core.py` | 1,399 | <600 | 🟠 High |
-| `integration/reasoning/proof_execution_engine.py` | 968 | <600 | 🟠 High |
-| `integration/interactive/interactive_fol_constructor.py` | 787 | <600 | 🟡 Medium |
-| `integration/reasoning/deontological_reasoning.py` | 776 | <600 | 🟡 Medium |
+| `CEC/native/prover_core.py` | 2,927 | <600 | ✅ Done (649 + extended_rules 1,116) |
+| `CEC/native/dcec_core.py` | 1,399 | <600 | ✅ Done (777 + dcec_types 379) |
+| `integration/reasoning/proof_execution_engine.py` | 968 | <600 | ✅ Done (460 + _prover_backend_mixin 527) |
+| `integration/interactive/interactive_fol_constructor.py` | 787 | <600 | ✅ Done (495 + _fol_constructor_io 299) |
+| `integration/reasoning/deontological_reasoning.py` | 776 | <600 | ✅ Done (482 + _deontic_conflict_mixin 304) |
 | `integration/reasoning/logic_verification.py` | 692 | <600 | ✅ Done (435 + 290 mixin) |
 | `TDFOL/performance_profiler.py` | 1,407 | <800 | 🟡 Medium |
 | `TDFOL/performance_dashboard.py` | 1,314 | <800 | 🟡 Medium |
