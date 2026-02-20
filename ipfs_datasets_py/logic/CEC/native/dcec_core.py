@@ -775,3 +775,51 @@ class DCECStatement:
         if self.label:
             return f"{self.label}: {self.formula.to_string()}"
         return self.formula.to_string()
+
+
+# ---------------------------------------------------------------------------
+# Convenience factory functions / aliases for concise test and example code
+# ---------------------------------------------------------------------------
+
+def Atom(name: str) -> 'AtomicFormula':
+    """Create a zero-arity atomic formula by predicate name.
+
+    Convenience wrapper so tests can write ``Atom("P")`` instead of
+    ``AtomicFormula(Predicate(name, []), [])``.
+    """
+    pred = Predicate(name, [])
+    return AtomicFormula(pred, [])
+
+
+def Conjunction(*formulas: 'Formula') -> 'ConnectiveFormula':
+    """Create a conjunction (AND) of two or more formulas."""
+    if len(formulas) < 2:
+        raise ValueError("Conjunction requires at least 2 formulas")
+    return ConnectiveFormula(LogicalConnective.AND, list(formulas))
+
+
+def Disjunction(*formulas: 'Formula') -> 'ConnectiveFormula':
+    """Create a disjunction (OR) of two or more formulas."""
+    if len(formulas) < 2:
+        raise ValueError("Disjunction requires at least 2 formulas")
+    return ConnectiveFormula(LogicalConnective.OR, list(formulas))
+
+
+def Negation(formula: 'Formula') -> 'ConnectiveFormula':
+    """Create a negation (NOT) of a formula."""
+    return ConnectiveFormula(LogicalConnective.NOT, [formula])
+
+
+def Implication(antecedent: 'Formula', consequent: 'Formula') -> 'ConnectiveFormula':
+    """Create an implication (antecedent → consequent)."""
+    return ConnectiveFormula(LogicalConnective.IMPLIES, [antecedent, consequent])
+
+
+# Export convenience aliases
+__all__ += [
+    "Atom",
+    "Conjunction",
+    "Disjunction",
+    "Negation",
+    "Implication",
+]

@@ -57,7 +57,7 @@ class TestRuleChaining:
         
         # Step 2: From Q and Q→R, derive R
         mp2 = ModusPonens()
-        formulas2 = [result1, q_implies_r]
+        formulas2 = result1 + [q_implies_r]
         
         assert mp2.can_apply(formulas2)
         result2 = mp2.apply(formulas2)
@@ -84,7 +84,7 @@ class TestRuleChaining:
         
         # Step 2: Simplify P∧Q to get P
         simp = Simplification()
-        formulas2 = [conj]
+        formulas2 = conj
         
         assert simp.can_apply(formulas2)
         result = simp.apply(formulas2)
@@ -123,14 +123,14 @@ class TestRuleCombinations:
         """
         p = Atom("P")
         q = Atom("Q")
-        conj = Conjunction(p, q, LogicalConnective.AND)
+        conj = Conjunction(p, q)
         
         # Create □(P∧Q) - conceptually
         # In practice, we'd need proper temporal formula support
         always_dist = AlwaysDistribution()
         
         # Test that the rule exists and has proper structure
-        assert always_dist.name() == "AlwaysDistribution"
+        assert always_dist.name() == "Always Distribution"
     
     def test_deontic_and_propositional(self):
         """
@@ -144,7 +144,7 @@ class TestRuleCombinations:
         obl_dist = ObligationDistribution()
         
         # Test that the rule exists
-        assert obl_dist.name() == "ObligationDistribution"
+        assert obl_dist.name() == "Obligation Distribution"
     
     def test_cognitive_and_propositional(self):
         """
@@ -288,14 +288,14 @@ class TestProofStrategies:
         THEN: Can conclude P
         """
         p = Atom("P")
-        not_p = Negation(p, LogicalConnective.NOT)
+        not_p = Negation(p)
         
         # This tests the setup for proof by contradiction
         # Actual proof would involve deriving a contradiction
         
         # Test double negation elimination
         dn = DoubleNegation()
-        not_not_p = Negation(not_p, LogicalConnective.NOT)
+        not_not_p = Negation(not_p)
         
         # ¬¬P should simplify to P
         formulas = [not_not_p]
