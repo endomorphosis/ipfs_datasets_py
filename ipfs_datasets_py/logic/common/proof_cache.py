@@ -528,7 +528,7 @@ class ProofCache:
 
     def get(self, formula: str, prover_name: str = "unknown",
             axioms=None, prover_config=None) -> Any:
-        """Simple compat get: retrieve (formula, prover_name) → result."""
+        """Retrieve a cached proof (checks compat cache, CID cache, then IPFS)."""
         import time as _time
         key = self._make_key(formula, prover_name)
         if key in self._cache:
@@ -538,13 +538,49 @@ class ProofCache:
                 del self._cache[key]
                 self._compat_expirations += 1
                 self._compat_misses += 1
-                return None
-            entry.hit_count += 1
-            self._compat_hits += 1
-            # Move to end for LRU (most recently used)
-            self._cache.move_to_end(key)
-            return entry.result
+            else:
+                entry.hit_count += 1
+                self._compat_hits += 1
+                self._cache.move_to_end(key)
+                return entry.result
+
+        # Check CID-based local cache
+        cid = self._compute_cid(formula, axioms, prover_name, prover_config)
+        with self.lock:
+            if cid in self.cache:
+                cached = self.cache[cid]
+                if hasattr(cached, 'hit_count'):
+                    cached.hit_count += 1
+                self.stats['hits'] += 1
+                return cached.result if hasattr(cached, 'result') else cached
+
+        # Check IPFS backend if enabled
+        if self.ipfs_cache is not None:
+            try:
+                ipfs_result = self.ipfs_cache.get(cid)
+                if ipfs_result is not None:
+                    with self.lock:
+                        cached_result = CachedProofResult(
+                            result=ipfs_result,
+                            cid=cid,
+                            prover_name=prover_name,
+                            formula_str=str(formula),
+                            timestamp=time.time(),
+                            hit_count=1
+                        )
+                        self.cache[cid] = cached_result
+                        self.stats['ipfs_hits'] += 1
+                        self.stats['hits'] += 1
+                    return ipfs_result
+            except Exception as e:
+                logger.debug(f"IPFS cache lookup failed: {e}")
+                with self.lock:
+                    self.stats['ipfs_errors'] += 1
+
+        # Not found in any cache
         self._compat_misses += 1
+        with self.lock:
+            self.stats['misses'] += 1
         return None
 
     def invalidate(self, formula: str, prover_name: str = "unknown") -> bool:
