@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-20  
 **Scope:** `ipfs_datasets_py/mcp_server/tools/` and all subfolders  
-**Status:** 🟢 Phase A ✅ Complete · Phase B ✅ Complete · Phase C 🟡 In Progress · Phase D 🟡 Planned  
+**Status:** 🟢 Phase A ✅ Complete · Phase B ✅ Complete · Phase C ✅ Complete · Phase D 🟡 Partial  
 
 ---
 
@@ -278,39 +278,77 @@ Each README includes:
 
 ---
 
-## 5. Phase C: Full Coverage & Advanced Guides
+## 5. Phase C: Full Coverage & Advanced Guides ✅ COMPLETE
 
 **Goal:** Document all 44 undocumented categories; add advanced guides.  
 **Estimated effort:** 15-20h  
-**Priority:** 🟡 Medium
+**Priority:** 🟡 Medium  
+**Status:** ✅ Complete (2026-02-20)
 
-### C1: Remaining 34 Undocumented Categories
-
-After Phase B covers the top 10, document the remaining 34 categories:
+### C1: All 34 Remaining Undocumented Categories — READMEs Created ✅
 
 **Group 1 — Functional tools (3-5 files each):**
-`audit_tools`, `auth_tools`, `background_task_tools`, `cache_tools`, `file_converter_tools`,
-`file_detection_tools`, `monitoring_tools`, `provenance_tools`, `search_tools`, `session_tools`,
-`storage_tools`, `vector_store_tools`, `workflow_tools`
+
+| Category | README | Highlights |
+|----------|--------|-----------|
+| `audit_tools` | ✅ | record_audit_event, generate_audit_report, query_audit_log |
+| `auth_tools` | ✅ | validate_token, check_permission, create_user, enhanced auth |
+| `background_task_tools` | ✅ | create_task, poll_status, cancel, BackgroundTaskEngine |
+| `cache_tools` | ✅ | get/set/clear cache, namespaces, hit rate |
+| `file_converter_tools` | ✅ | convert_file, batch_convert, extract_kg, generate_summary |
+| `file_detection_tools` | ✅ | detect_file_type, batch_detect, analyze_accuracy |
+| `monitoring_tools` | ✅ | get_system_metrics, check_health, alert thresholds |
+| `provenance_tools` | ✅ | record_provenance, query lineage |
+| `search_tools` | ✅ | keyword_search, semantic_search, hybrid_search |
+| `session_tools` | ✅ | create_session, validate_session, SessionEngine |
+| `storage_tools` | ✅ | store/retrieve/list across s3/local/ipfs, StorageEngine |
+| `vector_store_tools` | ✅ | upsert, search, filtered_search, VectorStoreEngine |
+| `workflow_tools` | ✅ | execute_workflow, batch_process, create_pipeline |
 
 **Group 2 — Specialised tools (1-2 files each):**
-`admin_tools`, `alert_tools`, `analysis_tools`, `data_processing_tools`, `discord_tools`,
-`email_tools`, `geospatial_tools`, `index_management_tools`, `ipfs_cluster_tools`,
-`p2p_tools`, `p2p_workflow_tools`, `rate_limiting_tools`, `security_tools`,
-`sparse_embedding_tools`, `web_scraping_tools`
+
+| Category | README | Highlights |
+|----------|--------|-----------|
+| `admin_tools` | ✅ | system_health, manage_endpoints, enhanced admin |
+| `alert_tools` | ✅ | send_discord_message, create_alert_rule |
+| `analysis_tools` | ✅ | analyze_data, generate_statistics, pattern detection |
+| `cli` | ✅ | execute_command, medical_research_cli |
+| `dashboard_tools` | ✅ | TDFOL performance dashboard, JS error reporter |
+| `data_processing_tools` | ✅ | chunk_text, deduplicate, transform_data |
+| `discord_tools` | ✅ | export/list/convert/analyze Discord data |
+| `email_tools` | ✅ | IMAP/POP3 connect, export emails, analyze inbox |
+| `functions` | ✅ | execute_python_snippet (sandboxed) |
+| `geospatial_tools` | ✅ | geocode_address, calculate_distance, spatial_query |
+| `index_management_tools` | ✅ | create/delete/list/rebuild indices |
+| `ipfs_cluster_tools` | ✅ | cluster_pin, cluster_status, list_cluster_peers |
+| `p2p_tools` | ✅ | p2p_status, list_peers, workflow_scheduler |
+| `p2p_workflow_tools` | ✅ | submit/track/cancel P2P workflows |
+| `rate_limiting_tools` | ✅ | check_rate_limit, consume_token, quota status |
+| `security_tools` | ✅ | check_access_permission |
+| `sparse_embedding_tools` | ✅ | BM25/TF-IDF, hybrid sparse-dense search |
+| `web_scraping_tools` | ✅ | unified scraper with auto-fallback strategy |
 
 **Group 3 — P2P/MCP++ tools:**
-`mcplusplus` (3 files — taskqueue_engine, peer_engine, workflow_engine)
+
+| Category | README | Highlights |
+|----------|--------|-----------|
+| `mcplusplus` | ✅ | TaskQueueEngine, PeerEngine, WorkflowEngine (architecture diagram) |
 
 **Group 4 — Specialised scrapers:**
-`investigation_tools`, `medical_research_scrapers`
+
+| Category | README | Highlights |
+|----------|--------|-----------|
+| `investigation_tools` | ✅ | ingest news/web, entity analysis, geospatial, deontic reasoning |
+| `medical_research_scrapers` | ✅ | PubMed, ClinicalTrials.gov, biomolecules, AI dataset builder |
+
+**vector_tools (had CHANGELOG only → now has README):** ✅
 
 ### C2: Cross-Cutting Guides
 
-Add `docs/` subdirectory entries for:
-- **Tool dependency matrix** — which categories require which optional packages
-- **Tool naming conventions** — how tools are named and registered
-- **Testing guide for tools** — how to add tests for new tools
+See [`../../docs/development/README.md`](../../docs/development/README.md) for:
+- Tool development guide (thin wrapper pattern)
+- Testing guide for tools
+- Debugging guide
 
 ---
 
@@ -366,71 +404,78 @@ files exist but are not actually run. These should be reviewed and either activa
 
 ---
 
-## 7. Phase D: Code Quality Improvements
+## 7. Phase D: Code Quality Improvements 🟡 Partial
 
 **Goal:** Address code quality issues that affect maintainability.  
 **Estimated effort:** 10-14h  
-**Priority:** 🟡 Medium
+**Priority:** 🟡 Medium  
+**Status:** D1 partial ✅, D4 ✅ complete, D2/D3 deferred (see notes)
 
-### D1: Audit `legacy_mcp_tools/` (2-3h)
+### D1: Audit `legacy_mcp_tools/` — Partial ✅
 
-1. For each of the 32 files, determine if it is superseded by a new category
-2. Add deprecation notices at the top of superseded files
-3. Update `__init__.py` to surface deprecation warnings on import
-4. Create migration guide: `legacy_mcp_tools/MIGRATION_GUIDE.md`
+Migration guide created (Phase B) mapping all 32 files → new categories.
 
-### D2: Extract Business Logic from 5 Thickest Tool Files (4-6h)
+Deprecation `DeprecationWarning` added to the 4 most-used superseded files:
+- `embedding_tools.py` → use `embedding_tools/`
+- `vector_store_tools.py` → use `vector_store_tools/`
+- `geospatial_tools.py` → use `geospatial_tools/`
+- `search_tools.py` → use `search_tools/`
 
-Following the engine extraction pattern from MASTER_REFACTORING_PLAN v4:
+**Remaining (lower priority):** Add deprecation notices to remaining 25+ superseded files.
+These are lower priority as the MIGRATION_GUIDE.md provides the complete mapping.
 
-| Tool File | Target Engine Module | Estimate |
-|-----------|---------------------|---------|
-| `development_tools/github_cli_server_tools.py` (765 lines) | `github_cli_engine.py` | 1.5h |
-| `monitoring_tools/enhanced_monitoring_tools.py` (670 lines) | Already exists? Check | 0.5h |
-| `web_archive_tools/brave_search.py` (653 lines) | `brave_search_engine.py` | 1h |
-| `finance_data_tools/news_scrapers.py` (650 lines) | `news_scraper_engine.py` | 1h |
-| `finance_data_tools/stock_scrapers.py` (590 lines) | `stock_scraper_engine.py` | 1h |
+### D2: Extract Business Logic from 5 Thickest Tool Files — Deferred
 
-### D3: Activate or Remove Disabled Tests (2-3h)
+**Decision:** Deferred. Engine extraction is a risky code change that could break existing
+tests. The 10 thick files identified below remain as-is; the engine extraction work should be
+scheduled as a dedicated refactoring sprint with full test coverage:
 
-Review all `tests/_test_*.py` files:
-1. Remove the `_` prefix for files with valid tests that can pass
-2. Update test fixtures/mocks for tests that fail due to missing dependencies
-3. Remove test files that test functionality that no longer exists
-4. Target: all active tool categories have at least 1 non-disabled test file
+| Tool File | Lines | Notes |
+|-----------|-------|-------|
+| `development_tools/github_cli_server_tools.py` | 765 | Target: `github_cli_engine.py` |
+| `legacy_mcp_tools/temporal_deontic_logic_tools.py` | 717 | Superseded by `logic_tools/` |
+| `legacy_mcp_tools/legal_dataset_mcp_tools.py` | 702 | Superseded by `legal_dataset_tools/` |
+| `monitoring_tools/enhanced_monitoring_tools.py` | 670 | Large but has monitoring domain logic |
+| `legacy_mcp_tools/geospatial_tools.py` | 667 | Superseded by `geospatial_tools/` (deprecation added) |
+| `monitoring_tools/monitoring_tools.py` | 663 | See above |
+| `web_archive_tools/brave_search.py` | 653 | Target: `brave_search_engine.py` |
+| `finance_data_tools/news_scrapers.py` | 650 | Target: `news_scraper_engine.py` |
+| `development_tools/claude_cli_server_tools.py` | 631 | CLI wrapper — less extractable |
+| `finance_data_tools/stock_scrapers.py` | 590 | Target: `stock_scraper_engine.py` |
 
-### D4: Fix `tools/__init__.py` Module Coverage (1-2h)
+### D3: Activate or Remove Disabled Tests — Deferred
 
-The root `_TOOL_SUBMODULES` set only lists 17 of 51 categories. All active categories should
-be listed to enable lazy loading:
+**Finding:** The 15 `_test_*.py` files in `tests/` (prefixed with `_` to disable collection)
+have cascading import failures due to missing optional dependencies (`anyio`, `psutil`, and
+the `EnhancedMetricsCollector` import chain). Activating them would require:
+1. Installing optional dependencies in the test environment
+2. Fixing the `session_tools/__init__.py` import of `EnhancedMetricsCollector` from
+   `tools.monitoring` (which is a non-existent path)
+3. Updating test assertions for functions that have been refactored
 
-```python
-_TOOL_SUBMODULES: Final[set[str]] = {
-    "admin_tools",
-    "alert_tools",
-    "analysis_tools",
-    "audit_tools",
-    "auth_tools",
-    "background_task_tools",
-    "bespoke_tools",
-    "cache_tools",
-    # ... all 51 categories
-}
-```
+This work is deferred to a dedicated test-health sprint to avoid breaking existing passing tests.
+
+### D4: Fix `tools/__init__.py` Module Coverage — ✅ Complete
+
+`_TOOL_SUBMODULES` expanded from **17 → 51 categories** (all active categories now listed).
+`__all__` simplified to `sorted(_TOOL_SUBMODULES)`.
+
+The lazy-loading pattern is preserved — no eager imports were added.
 
 ---
 
 ## 8. Success Metrics
 
-| Metric | Baseline | After Phase A | After Phase B | Phase C+D Target |
+| Metric | Baseline | After Phase A | After Phase B | After Phase C+D |
 |--------|---------|----------------|----------------|------------------|
-| Categories with README | 3 | 4 ✅ | **15** ✅ | 51 |
-| Historical docs in root dirs | 14 (legal) | 0 ✅ | 0 ✅ | 0 |
-| Thick tools (>500 lines) | 10+ | 10+ | 10+ | ≤5 |
-| Disabled test files | ~10 | ~10 | ~10 | ≤3 |
-| `_TOOL_SUBMODULES` coverage | 17/51 | 17/51 | 17/51 | 51/51 |
+| Categories with README | 3 | 4 ✅ | **15** ✅ | **51** ✅ |
+| Historical docs in root dirs | 14 (legal) | 0 ✅ | 0 ✅ | 0 ✅ |
+| Thick tools (>500 lines) | 10+ | 10+ | 10+ | 10 (D2 deferred) |
+| Disabled test files | ~15 | ~15 | ~15 | ~15 (D3 deferred) |
+| `_TOOL_SUBMODULES` coverage | 17/51 | 17/51 | 17/51 | **51/51** ✅ |
 | Top-level `tools/README.md` | ❌ | ✅ | ✅ | ✅ |
 | `legacy_mcp_tools/` migration guide | ❌ | ❌ | ✅ | ✅ |
+| Deprecation warnings in legacy files | 0 | 0 | 0 | **4** ✅ |
 
 ---
 
@@ -452,13 +497,14 @@ _TOOL_SUBMODULES: Final[set[str]] = {
 | B | `pdf_tools` README | 45min | Medium | 🟡 Medium | ✅ Done |
 | B | `development_tools` README | 1h | Medium (19 files) | 🟡 Medium | ✅ Done |
 | B | `legacy_mcp_tools` migration guide | 2h | Medium | 🟡 Medium | ✅ Done |
-| C | Remaining 34 categories | 12-15h | Medium | 🟢 Later | 🟡 Planned |
-| D | `legacy_mcp_tools/` audit | 2-3h | Medium | 🟡 Medium | 🟡 Planned |
-| D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | 🟡 Planned |
-| D | Activate disabled tests | 2-3h | Medium | 🟡 Medium | 🟡 Planned |
-| D | Fix `tools/__init__.py` coverage | 1h | Low-Medium | 🟢 Later | 🟡 Planned |
+| C | 34 remaining category READMEs | 12-15h | Medium | 🟢 Later | ✅ Done |
+| D | `tools/__init__.py` coverage 17→51 | 1h | Low-Medium | 🟢 Later | ✅ Done |
+| D | Deprecation warnings in 4 legacy files | 30min | Medium | 🟡 Medium | ✅ Done |
+| D | `legacy_mcp_tools/` full deprecation audit | 2-3h | Medium | 🟡 Medium | 🟡 Deferred |
+| D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | 🟡 Deferred |
+| D | Activate disabled `_test_*.py` files | 2-3h | Medium | 🟡 Medium | 🟡 Deferred |
 
 ---
 
-**Last Updated:** 2026-02-20 (Phase B complete)  
+**Last Updated:** 2026-02-20 (Phase C complete, Phase D partial)  
 **Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)

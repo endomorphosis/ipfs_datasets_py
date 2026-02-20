@@ -1,4 +1,14 @@
 # src/mcp_server/tools/vector_store_tools.py
+# DEPRECATED: This legacy module is superseded by
+#   ipfs_datasets_py.mcp_server.tools.vector_store_tools
+# See legacy_mcp_tools/MIGRATION_GUIDE.md for migration instructions.
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.vector_store_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.vector_store_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import logging
 from typing import Dict, Any, List, Optional, Union

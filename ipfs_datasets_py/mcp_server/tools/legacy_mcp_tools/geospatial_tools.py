@@ -1,7 +1,19 @@
 """
 Geographic and geospatial analysis tools for the MCP server.
 Implements the three MCP tools required for the Maps tab functionality.
+
+.. deprecated::
+    This legacy module is superseded by
+    ``ipfs_datasets_py.mcp_server.tools.geospatial_tools``.
+    See ``legacy_mcp_tools/MIGRATION_GUIDE.md`` for migration instructions.
 """
+import warnings
+warnings.warn(
+    "legacy_mcp_tools.geospatial_tools is deprecated. "
+    "Use ipfs_datasets_py.mcp_server.tools.geospatial_tools instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 import json
 import logging

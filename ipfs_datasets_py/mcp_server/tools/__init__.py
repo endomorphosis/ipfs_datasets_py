@@ -16,42 +16,64 @@ from typing import Final
 # Eager imports cause unrelated tests to fail at import time.
 
 _TOOL_SUBMODULES: Final[set[str]] = {
-    "audit_tools",
+    # Core
     "dataset_tools",
-    "development_tools",
-    "graph_tools",
     "ipfs_tools",
-    "monitoring_tools",
+    "graph_tools",
+    "embedding_tools",
+    "logic_tools",
+    "media_tools",
     "pdf_tools",
-    "provenance_tools",
-    "security_tools",
-    "vector_tools",
     "web_archive_tools",
+    "development_tools",
+    # Infrastructure
+    "audit_tools",
+    "auth_tools",
+    "background_task_tools",
+    "cache_tools",
+    "monitoring_tools",
+    "provenance_tools",
+    "rate_limiting_tools",
+    "search_tools",
+    "security_tools",
+    "session_tools",
+    "storage_tools",
+    "vector_store_tools",
+    "vector_tools",
+    "workflow_tools",
+    # Specialised
+    "admin_tools",
+    "alert_tools",
+    "analysis_tools",
     "cli",
+    "dashboard_tools",
+    "data_processing_tools",
+    "discord_tools",
+    "email_tools",
+    "file_converter_tools",
+    "file_detection_tools",
     "functions",
+    "geospatial_tools",
+    "index_management_tools",
+    "investigation_tools",
+    "ipfs_cluster_tools",
+    "mcplusplus",
+    "medical_research_scrapers",
+    "p2p_tools",
+    "p2p_workflow_tools",
+    "sparse_embedding_tools",
+    "web_scraping_tools",
+    # Legacy / special
+    "bespoke_tools",
+    "finance_data_tools",
+    "legacy_mcp_tools",
+    "legal_dataset_tools",
     "lizardperson_argparse_programs",
     "lizardpersons_function_tools",
-    "media_tools",
+    "software_engineering_tools",
 }
 
-__all__ = [
-    "audit_tools",
-    "dataset_tools", 
-    "development_tools",
-    "graph_tools",
-    "ipfs_tools",
-    "monitoring_tools",  # Added missing monitoring tools
-    "pdf_tools",  # New PDF processing tools
-    "provenance_tools",
-    "security_tools",
-    "vector_tools",
-    "web_archive_tools",
-    "cli",
-    "functions",
-    "lizardperson_argparse_programs",
-    "lizardpersons_function_tools",
-    "media_tools"
-]
+__all__ = sorted(_TOOL_SUBMODULES)
 
 
 def __getattr__(name: str) -> ModuleType:
