@@ -33,7 +33,7 @@ Usage:
 from __future__ import annotations
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set, Union
 import logging
 import inspect
 
@@ -45,25 +45,27 @@ RUNTIME_TRIO = "trio"
 RUNTIME_AUTO = "auto"
 
 
-@dataclass
+@dataclass(frozen=True)
 class ToolMetadata:
     """
     Complete metadata for an MCP tool.
-    
+
+    Instances are immutable after creation (``frozen=True``).
+
     Attributes:
         name: Tool name (e.g., "p2p_workflow_submit")
         runtime: Preferred runtime ("fastapi" or "trio")
         requires_p2p: Whether tool requires P2P capabilities
         category: Tool category (e.g., "p2p_workflow", "dataset")
-        priority: Execution priority (0-10, higher = more critical)
+        priority: Execution priority (higher = more critical)
         timeout_seconds: Maximum execution time
-        retry_policy: Retry strategy ("none", "exponential", "linear")
+        retry_policy: Retry strategy ("none", "fixed", "exponential", "linear", "custom")
         memory_intensive: Whether tool uses significant memory
         cpu_intensive: Whether tool is CPU-bound
         io_intensive: Whether tool is I/O-bound
         mcp_schema: MCP schema definition
         mcp_description: Tool description for MCP
-    
+
     Example:
         >>> metadata = ToolMetadata(
         ...     name="p2p_workflow_submit",
@@ -73,7 +75,7 @@ class ToolMetadata:
         ...     priority=8
         ... )
     """
-    
+
     name: str
     runtime: str = RUNTIME_AUTO
     requires_p2p: bool = False
@@ -86,20 +88,14 @@ class ToolMetadata:
     io_intensive: bool = False
     mcp_schema: Optional[dict] = None
     mcp_description: Optional[str] = None
-    
-    # Internal attributes
+
+    # Internal attributes (excluded from repr and equality)
     _func: Optional[Callable] = field(default=None, repr=False, compare=False)
-    
+
     def __post_init__(self) -> None:
         """Validate metadata after initialization."""
         if self.runtime not in (RUNTIME_FASTAPI, RUNTIME_TRIO, RUNTIME_AUTO):
             raise ValueError(f"Invalid runtime: {self.runtime}")
-        
-        if self.priority < 0 or self.priority > 10:
-            raise ValueError(f"Priority must be 0-10, got {self.priority}")
-        
-        if self.retry_policy not in ("none", "exponential", "linear"):
-            raise ValueError(f"Invalid retry_policy: {self.retry_policy}")
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert metadata to dictionary (excluding internal fields)."""
@@ -229,15 +225,41 @@ class ToolMetadataRegistry:
         """List all registered tool metadata."""
         return list(self._registry.values())
     
+    def get_by_runtime(self, runtime: str) -> List[ToolMetadata]:
+        """
+        Get all tools registered for a given runtime.
+
+        Args:
+            runtime: Runtime identifier (e.g., RUNTIME_FASTAPI, RUNTIME_TRIO)
+
+        Returns:
+            List of ToolMetadata instances whose ``runtime`` matches.
+        """
+        return self.list_by_runtime(runtime)
+
+    def get_by_category(self, category: str) -> List[ToolMetadata]:
+        """
+        Get all tools registered in a given category.
+
+        Args:
+            category: Category name (e.g., "p2p_workflow")
+
+        Returns:
+            List of ToolMetadata instances whose ``category`` matches.
+        """
+        return self.list_by_category(category)
+
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get registry statistics.
-        
+
         Returns:
-            Dictionary with statistics
+            Dictionary with statistics, including ``'total'`` and
+            ``'total_tools'`` (both equal the number of registered tools).
         """
         total = len(self._registry)
         return {
+            "total": total,
             "total_tools": total,
             "by_runtime": {
                 runtime: len(tools)
@@ -250,7 +272,7 @@ class ToolMetadataRegistry:
             "p2p_tools": sum(
                 1 for m in self._registry.values() if m.requires_p2p
             ),
-            "categories": len(self._by_category)
+            "categories": len(self._by_category),
         }
     
     def clear(self) -> None:
@@ -392,19 +414,25 @@ def tool_metadata(
     return decorator
 
 
-def get_tool_metadata(func: Callable) -> Optional[ToolMetadata]:
+def get_tool_metadata(func_or_name: "Union[Callable, str]") -> Optional[ToolMetadata]:
     """
-    Get metadata for a function.
-    
+    Get metadata for a function or a tool name string.
+
     Args:
-        func: Function to get metadata for
-        
+        func_or_name: Either a callable (function) or a string tool name.
+
     Returns:
-        ToolMetadata instance or None if not registered
+        ToolMetadata instance or None if not registered.
+
+    Example:
+        >>> meta = get_tool_metadata("p2p_workflow_submit")
+        >>> meta = get_tool_metadata(p2p_workflow_submit)
     """
+    if isinstance(func_or_name, str):
+        return get_registry().get(func_or_name)
+    func = func_or_name
     if hasattr(func, '_mcp_metadata'):
         return func._mcp_metadata
-    
     # Try registry lookup by name
     return get_registry().get(func.__name__)
 

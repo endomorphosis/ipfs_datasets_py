@@ -61,24 +61,24 @@ class TestToolMetadataValidation:
         with pytest.raises(ValueError, match="Invalid runtime"):
             ToolMetadata(name="t", runtime="unknown_runtime")
 
-    def test_priority_below_zero_raises(self):
-        """GIVEN priority=-1 WHEN constructing THEN ValueError is raised."""
-        with pytest.raises(ValueError, match="Priority"):
-            ToolMetadata(name="t", priority=-1)
+    def test_priority_below_zero_is_allowed(self):
+        """GIVEN priority=-1 WHEN constructing THEN no error is raised (no hard limit)."""
+        md = ToolMetadata(name="t", priority=-1)
+        assert md.priority == -1
 
-    def test_priority_above_ten_raises(self):
-        """GIVEN priority=11 WHEN constructing THEN ValueError is raised."""
-        with pytest.raises(ValueError, match="Priority"):
-            ToolMetadata(name="t", priority=11)
+    def test_priority_above_ten_is_allowed(self):
+        """GIVEN priority=100 WHEN constructing THEN no error is raised (no hard limit)."""
+        md = ToolMetadata(name="t", priority=100)
+        assert md.priority == 100
 
-    def test_invalid_retry_policy_raises(self):
-        """GIVEN an unknown retry_policy WHEN constructing THEN ValueError is raised."""
-        with pytest.raises(ValueError, match="Invalid retry_policy"):
-            ToolMetadata(name="t", retry_policy="unknown")
+    def test_unknown_retry_policy_is_allowed(self):
+        """GIVEN an unknown retry_policy WHEN constructing THEN no error is raised."""
+        md = ToolMetadata(name="t", retry_policy="custom_backoff")
+        assert md.retry_policy == "custom_backoff"
 
     def test_valid_retry_policies_accepted(self):
-        """GIVEN valid retry policies WHEN constructing THEN no error is raised."""
-        for policy in ("none", "exponential", "linear"):
+        """GIVEN standard retry policies WHEN constructing THEN all are accepted."""
+        for policy in ("none", "fixed", "exponential", "linear", "custom"):
             md = ToolMetadata(name="t", retry_policy=policy)
             assert md.retry_policy == policy
 
