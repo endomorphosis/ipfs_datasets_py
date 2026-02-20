@@ -412,8 +412,6 @@ class IPFSProofCache(ProofCache):
                 # IPFS client cleanup failed - ignore
                 logger.debug(f"IPFS client cleanup failed: {e}")
             self.ipfs_client = None
-        
-        super().close()
 
 
 # Global IPFS cache instance
