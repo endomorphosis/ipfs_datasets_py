@@ -50,8 +50,6 @@ from .logic_critic import (
 from .logic_optimizer import LogicOptimizer as LegacyLogicOptimizer
 from .prover_integration import ProverIntegrationAdapter
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass
 class StatementValidationResult:
@@ -108,6 +106,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
         enable_caching: bool = True,
         domain: str = "general",
         metrics_collector: Optional[Any] = None,
+        logger: Optional[_logging.Logger] = None,
     ):
         """Initialize the unified logic theorem optimizer.
         
@@ -120,8 +119,10 @@ class LogicTheoremOptimizer(BaseOptimizer):
             metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
                 instance.  When provided, each ``run_session()`` call records
                 timing and success/failure via ``start_cycle`` / ``end_cycle``.
+            logger: Optional logger instance for dependency injection
         """
         super().__init__(config=config, llm_backend=llm_backend, metrics_collector=metrics_collector)
+        self._log = logger or _logging.getLogger(__name__)
         
         # Initialize components
         self.extractor = LogicExtractor(backend=llm_backend)
@@ -229,7 +230,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Store in history
             self.extraction_history.append(result)
             
-            logger.info(
+            self._log.info(
                 f"Generated {len(result.statements)} logical statements "
                 f"using {self.extraction_mode.value} formalism"
             )
@@ -237,7 +238,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return result
             
         except Exception as e:
-            logger.error(f"Generation failed: {e}")
+            self._log.error(f"Generation failed: {e}")
             raise RuntimeError(f"Failed to generate logical statements: {e}")
     
     def critique(
@@ -287,7 +288,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
                         f"Improve {dim_score.dimension.value}: {dim_score.feedback}"
                     )
             
-            logger.info(
+            self._log.info(
                 f"Critique complete: score={critic_score.overall:.2f}, "
                 f"feedback_count={len(feedback)}"
             )
@@ -295,7 +296,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return critic_score.overall, feedback
             
         except Exception as e:
-            logger.error(f"Critique failed: {e}")
+            self._log.error(f"Critique failed: {e}")
             raise ValueError(f"Failed to critique artifact: {e}")
     
     def optimize(
@@ -347,7 +348,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             improved_result = self.extractor.extract(improved_context)
             
             if not improved_result.success:
-                logger.warning(
+                self._log.warning(
                     f"Optimization extraction failed, returning original: "
                     f"{improved_result.errors}"
                 )
@@ -356,7 +357,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             # Store improved result
             self.extraction_history.append(improved_result)
             
-            logger.info(
+            self._log.info(
                 f"Optimization complete: {len(improved_result.statements)} statements, "
                 f"previous_score={score:.2f}"
             )
@@ -364,9 +365,9 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return improved_result
             
         except Exception as e:
-            logger.error(f"Optimization failed: {e}")
+            self._log.error(f"Optimization failed: {e}")
             # Return original artifact rather than failing completely
-            logger.warning("Returning original artifact due to optimization failure")
+            self._log.warning("Returning original artifact due to optimization failure")
             return artifact
     
     def validate(
@@ -406,7 +407,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             valid_count = sum(validation_results)
             total_count = len(validation_results)
             
-            logger.info(
+            self._log.info(
                 f"Validation complete: {valid_count}/{total_count} statements valid"
             )
             
@@ -414,7 +415,7 @@ class LogicTheoremOptimizer(BaseOptimizer):
             return valid_count >= (total_count * 0.8) if total_count > 0 else True
             
         except Exception as e:
-            logger.error(f"Validation failed: {e}")
+            self._log.error(f"Validation failed: {e}")
             # On validation error, be conservative and return False
             return False
     
