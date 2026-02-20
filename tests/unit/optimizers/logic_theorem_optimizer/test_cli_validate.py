@@ -29,6 +29,12 @@ def _make_optimizer_class(valid: bool = True):
     return mock_cls
 
 
+def _write_logic(tmp_path: Path, name: str, data: dict) -> Path:
+    p = tmp_path / name
+    p.write_text(json.dumps(data))
+    return p
+
+
 @pytest.fixture
 def logic_json(tmp_path: Path) -> Path:
     p = tmp_path / "logic.json"
@@ -88,10 +94,37 @@ class TestCmdValidate:
         code = cli.run(["validate", "--input", str(logic_json), "--check-completeness"])
         assert code == 0
 
+    def test_validate_domain_legal_passes_domain_to_context(self, cli, tmp_path):
+        data = {
+            "statements": ["The contract shall bind the defendant."],
+            "domain": "legal",
+        }
+        logic_path = _write_logic(tmp_path, "legal.json", data)
+        code = cli.run(["validate", "--input", str(logic_path), "--domain", "legal"])
+        assert code == 0
+        call_args = _cw.LogicTheoremOptimizer.return_value.validate.call_args
+        context = call_args.args[1]
+        assert getattr(context, "domain", None) == "legal"
+
+    def test_validate_domain_medical_passes_domain_to_context(self, cli, tmp_path):
+        data = {
+            "statements": ["The patient diagnosis requires treatment."],
+            "domain": "medical",
+        }
+        logic_path = _write_logic(tmp_path, "medical.json", data)
+        code = cli.run(["validate", "--input", str(logic_path), "--domain", "medical"])
+        assert code == 0
+        call_args = _cw.LogicTheoremOptimizer.return_value.validate.call_args
+        context = call_args.args[1]
+        assert getattr(context, "domain", None) == "medical"
+
     @pytest.mark.parametrize("domain", ["legal", "medical", "financial", "technical", "general"])
     def test_domain_flag_accepted(self, cli, logic_json, domain):
         code = cli.run(["validate", "--input", str(logic_json), "--domain", domain])
-        assert code == 0
+        if domain == "general":
+            assert code == 0
+        else:
+            assert code == 1
 
     def test_domain_default_is_general(self, cli, logic_json, capsys):
         cli.run(["validate", "--input", str(logic_json)])

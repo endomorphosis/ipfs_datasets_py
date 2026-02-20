@@ -287,6 +287,60 @@ class LogicValidator:
 
         return formulas
 
+    def entity_to_tdfol(self, entity: Dict[str, Any]) -> List[str]:
+        """Convert a single entity dict to TDFOL predicate strings.
+
+        This is a convenience wrapper around :meth:`ontology_to_tdfol` for
+        callers that want to convert one entity at a time, e.g. for streaming
+        or incremental validation.
+
+        Args:
+            entity: A single entity dict with at least an ``"id"`` key.
+
+        Returns:
+            List of predicate strings for the entity (``entity/1``, ``type/2``,
+            ``text/2``, ``prop/3``).  Returns an empty list if ``entity`` has
+            no ``"id"`` field.
+
+        Example::
+
+            validator = LogicValidator()
+            facts = validator.entity_to_tdfol({
+                "id": "e1", "type": "Person", "text": "Alice",
+                "properties": {"age": 30},
+            })
+            # ['entity("e1").', 'type("e1", "Person").', 'text("e1", "Alice").', ...]
+        """
+        import json
+
+        if not isinstance(entity, dict):
+            return []
+        ent_id = entity.get("id")
+        if not ent_id:
+            return []
+
+        def q(value: object) -> str:
+            return json.dumps(value)
+
+        facts: List[str] = [f"entity({q(ent_id)})."]
+
+        ent_type = entity.get("type")
+        if ent_type:
+            facts.append(f"type({q(ent_id)}, {q(ent_type)}).")
+
+        ent_text = entity.get("text")
+        if ent_text:
+            facts.append(f"text({q(ent_id)}, {q(ent_text)}).")
+
+        props = entity.get("properties")
+        if isinstance(props, dict):
+            for key, val in props.items():
+                if key is None:
+                    continue
+                facts.append(f"prop({q(ent_id)}, {q(str(key))}, {q(val)}).")
+
+        return facts
+
     def check_consistency(
         self,
         ontology: Dict[str, Any]

@@ -33,6 +33,61 @@ def _safe_resolve(path_str: str, *, must_exist: bool = False) -> Path:
         raise FileNotFoundError(f"Path not found: {resolved}")
     return resolved
 
+
+_DOMAIN_KEYWORDS: Dict[str, List[str]] = {
+    "legal": ["contract", "agreement", "plaintiff", "defendant", "shall", "obligation"],
+    "medical": ["patient", "diagnosis", "treatment", "dose", "symptom", "clinic"],
+    "financial": ["asset", "liability", "interest", "equity", "balance", "credit"],
+    "technical": ["api", "protocol", "database", "service", "latency", "endpoint"],
+}
+
+
+def _extract_statements(logic_data: Any) -> List[str]:
+    if not isinstance(logic_data, dict):
+        return []
+    for key in ("statements", "formulas", "theorems"):
+        raw = logic_data.get(key)
+        if isinstance(raw, list):
+            statements: List[str] = []
+            for item in raw:
+                if isinstance(item, str):
+                    statements.append(item)
+                elif isinstance(item, dict):
+                    for field in ("statement", "formula", "text"):
+                        value = item.get(field)
+                        if isinstance(value, str):
+                            statements.append(value)
+                            break
+            return statements
+    return []
+
+
+def _domain_validation_errors(logic_data: Any, domain: str) -> List[str]:
+    if domain == "general":
+        return []
+    errors: List[str] = []
+    data_domain = None
+    if isinstance(logic_data, dict):
+        data_domain = logic_data.get("domain")
+        if data_domain is None and isinstance(logic_data.get("metadata"), dict):
+            data_domain = logic_data.get("metadata", {}).get("domain")
+    if isinstance(data_domain, str) and data_domain and data_domain != domain:
+        errors.append(
+            f"Domain mismatch: input declares '{data_domain}' but CLI requested '{domain}'."
+        )
+    statements = _extract_statements(logic_data)
+    if not statements:
+        errors.append("No statements found for domain validation.")
+        return errors
+    keywords = _DOMAIN_KEYWORDS.get(domain, [])
+    if keywords:
+        joined = " ".join(statements).lower()
+        if not any(keyword in joined for keyword in keywords):
+            errors.append(
+                f"No {domain} keywords detected in statements; check --domain or input data."
+            )
+    return errors
+
 try:
     from ipfs_datasets_py.optimizers.logic_theorem_optimizer import (
         LogicExtractor,
@@ -445,6 +500,13 @@ Examples:
             )
             
             domain = getattr(args, 'domain', 'general') or 'general'
+
+            domain_errors = _domain_validation_errors(logic_data, domain)
+            if domain_errors:
+                print("❌ Domain validation failed:")
+                for err in domain_errors:
+                    print(f"   - {err}")
+                return 1
 
             # Create context
             context = OptimizationContext(
