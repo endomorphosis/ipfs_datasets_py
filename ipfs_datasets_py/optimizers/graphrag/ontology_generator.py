@@ -98,6 +98,10 @@ class ExtractionConfig:
     domain_vocab: Dict[str, List[str]] = field(default_factory=dict)
     # Pluggable rule sets: list of (regex_pattern, entity_type) tuples
     custom_rules: List[tuple] = field(default_factory=list)
+    # When rule-based confidence falls below this value and a llm_backend is
+    # configured on the generator, LLM extraction is attempted as a fallback.
+    # Set to 0.0 (default) to disable fallback.
+    llm_fallback_threshold: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a plain-dict representation (legacy compatibility)."""
@@ -109,6 +113,7 @@ class ExtractionConfig:
             "include_properties": self.include_properties,
             "domain_vocab": {k: list(v) for k, v in self.domain_vocab.items()},
             "custom_rules": list(self.custom_rules),
+            "llm_fallback_threshold": self.llm_fallback_threshold,
         }
 
     @classmethod
@@ -122,6 +127,7 @@ class ExtractionConfig:
             include_properties=bool(d.get("include_properties", True)),
             domain_vocab=dict(d.get("domain_vocab", {})),
             custom_rules=list(d.get("custom_rules", [])),
+            llm_fallback_threshold=float(d.get("llm_fallback_threshold", 0.0)),
         )
 
 
@@ -278,6 +284,7 @@ class OntologyGenerator:
         ipfs_accelerate_config: Optional[Dict[str, Any]] = None,
         use_ipfs_accelerate: bool = True,
         logger: Optional[Any] = None,
+        llm_backend: Optional[Any] = None,
     ):
         """
         Initialize the ontology generator.
@@ -288,6 +295,10 @@ class OntologyGenerator:
             use_ipfs_accelerate: Whether to use ipfs_accelerate for inference.
                 If False, falls back to rule-based extraction.
             logger: Optional :class:`logging.Logger`.  Defaults to the module logger.
+            llm_backend: Optional callable/client used for LLM-based extraction
+                fallback.  If provided and ``ExtractionConfig.llm_fallback_threshold``
+                is > 0, rule-based results with confidence below the threshold will be
+                retried via :meth:`_extract_llm_based`.
                 
         Raises:
             ImportError: If ipfs_accelerate is required but not available
@@ -297,6 +308,7 @@ class OntologyGenerator:
         self.ipfs_accelerate_config = ipfs_accelerate_config or {}
         self.use_ipfs_accelerate = use_ipfs_accelerate
         self._accelerate_client = None
+        self.llm_backend = llm_backend
         
         if use_ipfs_accelerate:
             try:
@@ -347,7 +359,32 @@ class OntologyGenerator:
         )
         
         if context.extraction_strategy == ExtractionStrategy.RULE_BASED:
-            return self._extract_rule_based(data, context)
+            result = self._extract_rule_based(data, context)
+            # LLM fallback: if rule-based confidence is below threshold and a
+            # llm_backend is configured, retry with LLM-based extraction.
+            try:
+                cfg = context.extraction_config
+                llm_threshold = float(getattr(cfg, "llm_fallback_threshold", 0.0))
+            except (TypeError, ValueError, AttributeError):
+                llm_threshold = 0.0
+            if (
+                llm_threshold > 0.0
+                and self.llm_backend is not None
+                and result.confidence < llm_threshold
+            ):
+                self._log.info(
+                    "Rule-based confidence %.3f below fallback threshold %.3f; "
+                    "attempting LLM extraction.",
+                    result.confidence,
+                    llm_threshold,
+                )
+                try:
+                    llm_result = self._extract_llm_based(data, context)
+                    if llm_result.confidence >= result.confidence:
+                        return llm_result
+                except Exception as exc:
+                    self._log.warning("LLM fallback extraction failed: %s", exc)
+            return result
         elif context.extraction_strategy == ExtractionStrategy.LLM_BASED:
             return self._extract_llm_based(data, context)
         elif context.extraction_strategy == ExtractionStrategy.HYBRID:
