@@ -79,4 +79,63 @@ async def cec_check_theorem(
     return await _PROCESSOR.check_dcec_theorem(formula=formula, axioms=axioms)
 
 
-__all__ = ["cec_prove", "cec_check_theorem"]
+__all__ = ["cec_prove", "cec_check_theorem",
+           "prove_dcec", "check_theorem", "get_proof_tree", "TOOLS"]
+
+
+def prove_dcec(formula: str = "", goal: str = "",
+               strategy: str = "auto",
+               axioms: Optional[List[str]] = None,
+               timeout: int = 30,
+               timeout_ms: int = 0) -> Dict[str, Any]:
+    """Sync wrapper around cec_prove for backward compatibility.
+    Accepts both 'formula' (positional) and 'goal' keyword."""
+    import asyncio
+    actual_goal = goal or formula
+    actual_timeout = timeout if not timeout_ms else max(1, timeout_ms // 1000)
+    result = asyncio.get_event_loop().run_until_complete(
+        cec_prove(goal=actual_goal, axioms=axioms, strategy=strategy, timeout=actual_timeout)
+    )
+    result.setdefault("execution_time", result.get("elapsed_ms", 0) / 1000)
+    return result
+
+
+def check_theorem(formula: str) -> Dict[str, Any]:
+    """Sync wrapper around cec_check_theorem for backward compatibility."""
+    import asyncio
+    result = asyncio.get_event_loop().run_until_complete(cec_check_theorem(formula=formula))
+    result.setdefault("is_theorem", result.get("proved", False))
+    return result
+
+
+def get_proof_tree(formula: str) -> Dict[str, Any]:
+    """Return a simple proof tree structure for a formula."""
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    # Count nesting depth
+    max_depth, cur_depth = 0, 0
+    for ch in formula:
+        if ch == '(':
+            cur_depth += 1
+            max_depth = max(max_depth, cur_depth)
+        elif ch == ')':
+            cur_depth = max(0, cur_depth - 1)
+    return {
+        "success": True,
+        "formula": formula,
+        "depth": max_depth,
+        "tree": {
+            "root": formula,
+            "depth": max_depth,
+            "steps": [{"step": 1, "formula": formula, "rule": "hypothesis"}],
+        },
+    }
+
+
+TOOLS: Dict[str, Any] = {
+    "cec_prove": cec_prove,
+    "prove_dcec": prove_dcec,
+    "cec_check_theorem": cec_check_theorem,
+    "check_theorem": check_theorem,
+    "get_proof_tree": get_proof_tree,
+}

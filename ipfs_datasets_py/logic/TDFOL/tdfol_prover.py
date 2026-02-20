@@ -370,7 +370,6 @@ class TDFOLProver:
                 try:
                     strategies = [
                         ForwardChainingStrategy(
-                            rules=self.tdfol_rules,
                             max_iterations=100
                         ),
                         ModalTableauxStrategy(),

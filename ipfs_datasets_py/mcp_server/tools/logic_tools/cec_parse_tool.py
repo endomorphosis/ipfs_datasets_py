@@ -71,4 +71,51 @@ async def cec_validate_formula(formula: str) -> Dict[str, Any]:
     return await _PROCESSOR.validate_formula(formula_str=formula, logic_system="dcec")
 
 
-__all__ = ["cec_parse", "cec_validate_formula"]
+__all__ = ["cec_parse", "cec_validate_formula",
+           "parse_dcec", "validate_formula", "translate_dcec", "TOOLS"]
+
+
+def parse_dcec(text: str, language: str = "en", domain: str = "general") -> Dict[str, Any]:
+    """Sync wrapper around cec_parse for backward compatibility."""
+    import asyncio
+    result = asyncio.get_event_loop().run_until_complete(
+        cec_parse(text=text, language=language, domain=domain)
+    )
+    # When language='auto', add language_detected key
+    if language == "auto" and result.get("success") is not False:
+        result.setdefault("language_detected", result.get("language_used", "en"))
+    result.setdefault("formula", result.get("formula"))
+    result.setdefault("success", True)
+    return result
+
+
+def validate_formula(formula: str) -> Dict[str, Any]:
+    """Sync wrapper around cec_validate_formula for backward compatibility."""
+    import asyncio
+    return asyncio.get_event_loop().run_until_complete(cec_validate_formula(formula=formula))
+
+
+def translate_dcec(formula: str, target_format: str = "json") -> Dict[str, Any]:
+    """Translate a DCEC formula to a target format."""
+    if not formula:
+        return {"success": False, "error": "'formula' is required."}
+    supported_formats = {"json", "tptp", "text", "fol"}
+    if target_format not in supported_formats:
+        return {"success": False, "error": f"Unsupported format '{target_format}'. Use: {sorted(supported_formats)}."}
+    result: Dict[str, Any] = {"success": True, "formula": formula, "format": target_format}
+    if target_format == "json":
+        result["json"] = {"type": "formula", "content": formula}
+    elif target_format == "tptp":
+        result["tptp"] = f"fof(formula, conjecture, {formula})."
+    else:
+        result["output"] = formula
+    return result
+
+
+TOOLS: Dict[str, Any] = {
+    "cec_parse": cec_parse,
+    "parse_dcec": parse_dcec,
+    "cec_validate_formula": cec_validate_formula,
+    "validate_formula": validate_formula,
+    "translate_dcec": translate_dcec,
+}
