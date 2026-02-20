@@ -312,15 +312,19 @@ GitHub token {github_token}
     
     def test_sanitize_multiple_tokens_same_message(self, sanitizer):
         """Test sanitizing multiple tokens in one message."""
-        message = """
-Config: openai_key=sk-111111111111111111111111111111111111111111111111
-         github_token=ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+        # Create valid-format tokens
+        openai_token = 'sk-' + 'x' * 48
+        github_token = 'ghp_' + 'y' * 36
+        
+        message = f"""
+Config: openai_key={openai_token}
+         github_token={github_token}
 """
         sanitized = sanitizer.sanitize_log_message(message)
         
         # Both tokens should be redacted
-        assert 'sk-111' not in sanitized
-        assert 'ghp_aaa' not in sanitized
+        assert openai_token not in sanitized
+        assert github_token not in sanitized
         # Should have multiple redaction markers
         redaction_count = sanitized.count('[TOKEN_REDACTED]')
         assert redaction_count >= 2
