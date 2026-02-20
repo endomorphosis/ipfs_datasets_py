@@ -396,6 +396,50 @@ class OntologyCritic(BaseCritic):
                 self._eval_cache.clear()
             self._eval_cache[_cache_key] = score
         return score
+
+    def evaluate_batch(
+        self,
+        ontologies: List[Dict[str, Any]],
+        context: Any,
+        source_data: Optional[Any] = None,
+    ) -> Dict[str, Any]:
+        """Evaluate a list of ontologies and return aggregated statistics.
+
+        Args:
+            ontologies: List of ontology dictionaries to evaluate.
+            context: Shared evaluation context for all ontologies.
+            source_data: Optional source text passed to each evaluation.
+
+        Returns:
+            Dictionary with keys:
+                - ``scores``: list of :class:`CriticScore` objects (one per ontology)
+                - ``mean_overall``: mean of the per-ontology overall scores
+                - ``min_overall``: minimum overall score across the batch
+                - ``max_overall``: maximum overall score across the batch
+                - ``count``: number of ontologies evaluated
+        """
+        scores: List[CriticScore] = []
+        for ontology in ontologies:
+            score = self.evaluate_ontology(ontology, context, source_data=source_data)
+            scores.append(score)
+
+        if not scores:
+            return {
+                "scores": [],
+                "mean_overall": 0.0,
+                "min_overall": 0.0,
+                "max_overall": 0.0,
+                "count": 0,
+            }
+
+        overalls = [s.overall for s in scores]
+        return {
+            "scores": scores,
+            "mean_overall": sum(overalls) / len(overalls),
+            "min_overall": min(overalls),
+            "max_overall": max(overalls),
+            "count": len(scores),
+        }
     
     def compare_ontologies(
         self,
