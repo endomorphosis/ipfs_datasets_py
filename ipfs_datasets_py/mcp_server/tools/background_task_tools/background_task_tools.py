@@ -1,148 +1,25 @@
 """
 Background task management tools for MCP server.
 
-This module provides tools for managing background tasks such as
-embedding creation, indexing, and other long-running operations.
+Business logic (TaskStatus, TaskType, MockTaskManager) lives in
+ipfs_datasets_py.tasks.background_task_engine.  This module is a thin
+MCP wrapper that validates inputs, delegates to the engine, and formats
+responses.
 """
 
-import anyio
 import logging
-import uuid
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Union
-from enum import Enum
+from typing import Dict, List, Any, Optional
+
+from ipfs_datasets_py.tasks.background_task_engine import (  # noqa: F401
+    TaskStatus,
+    TaskType,
+    MockBackgroundTask,
+    MockTaskManager,
+)
 
 logger = logging.getLogger(__name__)
 
-class TaskStatus(Enum):
-    """Task status enumeration."""
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-    TIMEOUT = "timeout"
-
-class TaskType(Enum):
-    """Task type enumeration."""
-    CREATE_EMBEDDINGS = "create_embeddings"
-    SHARD_EMBEDDINGS = "shard_embeddings"
-    INDEX_SPARSE = "index_sparse"
-    INDEX_CLUSTER = "index_cluster"
-    STORACHA_CLUSTERS = "storacha_clusters"
-    VECTOR_SEARCH = "vector_search"
-    DATA_PROCESSING = "data_processing"
-
-# Mock task manager for testing
-class MockTaskManager:
-    """Mock task manager for testing purposes."""
-    
-    def __init__(self):
-        self.tasks = {}
-        self.task_queues = {
-            "high": [],
-            "normal": [],
-            "low": []
-        }
-        self.running_tasks = {}
-        self.task_counters = {
-            "created": 0,
-            "completed": 0,
-            "failed": 0,
-            "cancelled": 0
-        }
-    
-    async def create_task(self, task_type: str, parameters: Dict[str, Any], 
-                         priority: str = "normal", timeout_seconds: int = 3600) -> Dict[str, Any]:
-        """Create a new background task."""
-        task_id = str(uuid.uuid4())
-        
-        task_data = {
-            "task_id": task_id,
-            "task_type": task_type,
-            "status": TaskStatus.PENDING.value,
-            "parameters": parameters,
-            "priority": priority,
-            "created_at": datetime.now(),
-            "started_at": None,
-            "completed_at": None,
-            "timeout_at": datetime.now() + timedelta(seconds=timeout_seconds),
-            "progress": 0,
-            "result": None,
-            "error": None,
-            "resource_usage": {
-                "cpu_percent": 0,
-                "memory_mb": 0,
-                "gpu_utilization": 0
-            }
-        }
-        
-        self.tasks[task_id] = task_data
-        self.task_queues[priority].append(task_id)
-        self.task_counters["created"] += 1
-        
-        return task_data
-    
-    async def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
-        """Get task status by ID."""
-        return self.tasks.get(task_id)
-    
-    async def update_task(self, task_id: str, **kwargs) -> bool:
-        """Update task data."""
-        if task_id in self.tasks:
-            self.tasks[task_id].update(kwargs)
-            return True
-        return False
-    
-    async def cancel_task(self, task_id: str) -> bool:
-        """Cancel a task."""
-        if task_id in self.tasks:
-            task = self.tasks[task_id]
-            if task["status"] in [TaskStatus.PENDING.value, TaskStatus.RUNNING.value]:
-                task["status"] = TaskStatus.CANCELLED.value
-                task["completed_at"] = datetime.now()
-                self.task_counters["cancelled"] += 1
-                
-                # Remove from queue if pending
-                for queue in self.task_queues.values():
-                    if task_id in queue:
-                        queue.remove(task_id)
-                
-                # Remove from running tasks
-                if task_id in self.running_tasks:
-                    del self.running_tasks[task_id]
-                
-                return True
-        return False
-    
-    async def list_tasks(self, task_type: Optional[str] = None, 
-                        status: Optional[str] = None, limit: int = 20) -> List[Dict[str, Any]]:
-        """List tasks with optional filters."""
-        tasks = list(self.tasks.values())
-        
-        if task_type and task_type != "all":
-            tasks = [t for t in tasks if t.get("task_type") == task_type]
-        
-        if status and status != "all":
-            tasks = [t for t in tasks if t.get("status") == status]
-        
-        # Sort by created_at descending
-        tasks.sort(key=lambda x: x["created_at"], reverse=True)
-        
-        return tasks[:limit]
-    
-    async def get_queue_stats(self) -> Dict[str, Any]:
-        """Get task queue statistics."""
-        return {
-            "queues": {
-                priority: len(queue) for priority, queue in self.task_queues.items()
-            },
-            "running_tasks": len(self.running_tasks),
-            "total_tasks": len(self.tasks),
-            "counters": self.task_counters.copy()
-        }
-
-# Global mock task manager instance
+# Module-level singleton — shared across calls within one server process.
 _mock_task_manager = MockTaskManager()
 
 async def check_task_status(task_id: Optional[str] = None, task_type: str = "all",
@@ -192,7 +69,7 @@ async def check_task_status(task_id: Optional[str] = None, task_type: str = "all
         manager = task_manager or _mock_task_manager
         
         if task_id:
-            # Get specific task
+            # Get specific task — engine returns Optional[Dict] via get_task_status()
             task = await manager.get_task_status(task_id)
             if not task:
                 return {
@@ -207,27 +84,30 @@ async def check_task_status(task_id: Optional[str] = None, task_type: str = "all
                     "task_type": task["task_type"],
                     "status": task["status"],
                     "progress": task["progress"],
-                    "created_at": task["created_at"].isoformat(),
-                    "started_at": task["started_at"].isoformat() if task["started_at"] else None,
-                    "completed_at": task["completed_at"].isoformat() if task["completed_at"] else None,
-                    "resource_usage": task["resource_usage"],
+                    "created_at": task.get("created_at", ""),
+                    "started_at": task.get("started_at"),
+                    "completed_at": task.get("completed_at"),
+                    "resource_usage": task.get("resource_usage", {}),
                     "error": task.get("error")
                 },
                 "message": "Task status retrieved successfully"
             }
         else:
             # List tasks with filters
-            tasks = await manager.list_tasks(task_type, status_filter, limit)
+            task_objs = await manager.list_tasks(
+                task_type=task_type, status=status_filter, limit=limit
+            )
+            tasks = [t.to_dict() if hasattr(t, "to_dict") else t for t in task_objs]
             
             formatted_tasks = []
             for task in tasks:
                 formatted_tasks.append({
-                    "task_id": task["task_id"],
-                    "task_type": task["task_type"],
-                    "status": task["status"],
-                    "progress": task["progress"],
-                    "created_at": task["created_at"].isoformat(),
-                    "priority": task["priority"]
+                    "task_id": task.get("task_id", ""),
+                    "task_type": task.get("task_type", ""),
+                    "status": task.get("status", ""),
+                    "progress": task.get("progress", 0),
+                    "created_at": task.get("created_at", ""),
+                    "priority": task.get("metadata", {}).get("priority", "normal"),
                 })
             
             return {
@@ -304,26 +184,29 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
         if action == "create":
             # Create new task
             task_params = parameters or {}
-            task = await manager.create_task(task_type, task_params, priority)
+            task_id_new = await manager.create_task(task_type, parameters=task_params, priority=priority)
+            task_obj = await manager.get_task(task_id_new)
+            task_d = task_obj.to_dict() if task_obj else {"task_id": task_id_new, "task_type": task_type}
             
             return {
                 "status": "success",
-                "task_id": task["task_id"],
-                "task_type": task["task_type"],
-                "priority": task["priority"],
-                "created_at": task["created_at"].isoformat(),
-                "timeout_at": task["timeout_at"].isoformat(),
-                "message": f"Background task created successfully"
+                "task_id": task_d["task_id"],
+                "task_type": task_d["task_type"],
+                "priority": priority,
+                "created_at": task_d.get("created_at", ""),
+                "message": "Background task created successfully"
             }
 
         elif action == "schedule":
             task_params = parameters or {}
-            task = await manager.create_task(task_type, task_params, priority)
+            task_id_new = await manager.create_task(task_type, parameters=task_params, priority=priority)
+            task_obj = await manager.get_task(task_id_new)
+            task_d = task_obj.to_dict() if task_obj else {"task_id": task_id_new, "task_type": task_type}
             return {
                 "status": "scheduled",
-                "task_id": task["task_id"],
-                "task_type": task["task_type"],
-                "priority": task["priority"],
+                "task_id": task_d["task_id"],
+                "task_type": task_d["task_type"],
+                "priority": priority,
                 "schedule": task_config.get("schedule") if task_config else None,
                 "message": "Recurring task scheduled successfully"
             }
@@ -345,7 +228,8 @@ async def manage_background_tasks(action: str, task_id: Optional[str] = None,
             }
 
         elif action == "list":
-            tasks = await manager.list_tasks()
+            task_objs = await manager.list_tasks()
+            tasks = [t.to_dict() if hasattr(t, "to_dict") else t for t in task_objs]
             return {
                 "status": "success",
                 "tasks": tasks,

@@ -22,7 +22,11 @@ from ipfs_datasets_py.analytics import (
     ClusterResult,
     QualityAssessment,
     DimensionalityResult,
-    get_analysis_engine
+    get_analysis_engine,
+    detect_outliers,       # noqa: F401 — re-exported for backward compat
+    analyze_diversity,     # noqa: F401
+    detect_drift,          # noqa: F401
+    analyze_similarity_patterns,  # noqa: F401
 )
 
 # Import accelerate integration with fallback
@@ -435,78 +439,3 @@ async def reduce_dimensionality(*args, **kwargs):
     """Legacy wrapper for dimensionality_reduction."""
     return await dimensionality_reduction(*args, **kwargs)
 
-
-# Export additional functions for compatibility
-def detect_outliers(data: Union[List[List[float]], np.ndarray], threshold: float = 3.0) -> List[int]:
-    """Detect outliers in data using z-score method."""
-    if isinstance(data, list):
-        data = np.array(data)
-    
-    norms = np.linalg.norm(data, axis=1)
-    z_scores = np.abs((norms - np.mean(norms)) / np.std(norms))
-    outlier_indices = np.where(z_scores > threshold)[0].tolist()
-    
-    return outlier_indices
-
-
-def analyze_diversity(data: Union[List[List[float]], np.ndarray]) -> Dict[str, float]:
-    """Analyze diversity/spread of data."""
-    if isinstance(data, list):
-        data = np.array(data)
-    
-    return {
-        "variance": float(np.var(data)),
-        "std": float(np.std(data)),
-        "range": float(np.max(data) - np.min(data)),
-        "coefficient_of_variation": float(np.std(data) / (np.mean(data) + 1e-10))
-    }
-
-
-def detect_drift(
-    old_data: Union[List[List[float]], np.ndarray],
-    new_data: Union[List[List[float]], np.ndarray]
-) -> Dict[str, Any]:
-    """Detect data drift between two datasets."""
-    if isinstance(old_data, list):
-        old_data = np.array(old_data)
-    if isinstance(new_data, list):
-        new_data = np.array(new_data)
-    
-    old_mean = np.mean(old_data, axis=0)
-    new_mean = np.mean(new_data, axis=0)
-    
-    drift_magnitude = float(np.linalg.norm(new_mean - old_mean))
-    
-    return {
-        "drift_detected": drift_magnitude > 0.1,
-        "drift_magnitude": drift_magnitude,
-        "old_mean_norm": float(np.linalg.norm(old_mean)),
-        "new_mean_norm": float(np.linalg.norm(new_mean))
-    }
-
-
-def analyze_similarity_patterns(data: Union[List[List[float]], np.ndarray]) -> Dict[str, Any]:
-    """Analyze similarity patterns in data."""
-    if isinstance(data, list):
-        data = np.array(data)
-    
-    # Sample for efficiency
-    sample_size = min(100, len(data))
-    sample_indices = np.random.choice(len(data), sample_size, replace=False)
-    sample_data = data[sample_indices]
-    
-    try:
-        from sklearn.metrics.pairwise import cosine_similarity
-        similarities = cosine_similarity(sample_data)
-        
-        return {
-            "mean_similarity": float(np.mean(similarities)),
-            "std_similarity": float(np.std(similarities)),
-            "min_similarity": float(np.min(similarities)),
-            "max_similarity": float(np.max(similarities))
-        }
-    except ImportError:
-        # Fallback without sklearn
-        return {
-            "note": "sklearn not available for similarity calculation"
-        }

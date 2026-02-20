@@ -329,6 +329,240 @@ class MockMonitoringService:
         }
 
 
+# ---------------------------------------------------------------------------
+# Psutil-based health-check helpers — shared with monitoring_tools.py
+# ---------------------------------------------------------------------------
+
+async def _check_system_health() -> Dict[str, Any]:
+    """Return overall system health (uptime, process count)."""
+    try:
+        uptime_hours = (time.time() - psutil.boot_time()) / 3600
+        status = "warning" if uptime_hours < 0.1 else "healthy"
+        return {
+            "status": status,
+            "uptime_hours": round(uptime_hours, 2),
+            "boot_time": datetime.fromtimestamp(psutil.boot_time()).isoformat(),
+            "process_count": len(psutil.pids()),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_memory_health() -> Dict[str, Any]:
+    """Return memory health (usage %, available GB, total GB)."""
+    try:
+        mem = psutil.virtual_memory()
+        if mem.percent > 90:
+            status = "critical"
+        elif mem.percent > 80:
+            status = "warning"
+        else:
+            status = "healthy"
+        return {
+            "status": status,
+            "usage_percent": mem.percent,
+            "available_gb": round(mem.available / (1024 ** 3), 2),
+            "total_gb": round(mem.total / (1024 ** 3), 2),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_cpu_health() -> Dict[str, Any]:
+    """Return CPU health (usage %, count, load average)."""
+    try:
+        cpu_pct = psutil.cpu_percent(interval=1)
+        if cpu_pct > 95:
+            status = "critical"
+        elif cpu_pct > 85:
+            status = "warning"
+        else:
+            status = "healthy"
+        return {
+            "status": status,
+            "usage_percent": cpu_pct,
+            "count": psutil.cpu_count(),
+            "load_average": psutil.getloadavg() if hasattr(psutil, "getloadavg") else None,
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_disk_health() -> Dict[str, Any]:
+    """Return disk health (usage %, free GB, total GB)."""
+    try:
+        disk = psutil.disk_usage("/")
+        pct = (disk.used / disk.total) * 100
+        if pct > 95:
+            status = "critical"
+        elif pct > 85:
+            status = "warning"
+        else:
+            status = "healthy"
+        return {
+            "status": status,
+            "usage_percent": round(pct, 2),
+            "free_gb": round(disk.free / (1024 ** 3), 2),
+            "total_gb": round(disk.total / (1024 ** 3), 2),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_network_health() -> Dict[str, Any]:
+    """Return basic network I/O counters."""
+    try:
+        net = psutil.net_io_counters()
+        return {
+            "status": "healthy",
+            "bytes_sent": net.bytes_sent,
+            "bytes_recv": net.bytes_recv,
+            "packets_sent": net.packets_sent,
+            "packets_recv": net.packets_recv,
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_services_health() -> Dict[str, Any]:
+    """Return mock health status for key services."""
+    try:
+        services = {
+            "mcp_server": "healthy",
+            "embedding_service": "healthy",
+            "vector_store": "warning",
+            "cache_service": "healthy",
+        }
+        healthy = sum(1 for s in services.values() if s == "healthy")
+        total = len(services)
+        if healthy < total * 0.5:
+            overall = "critical"
+        elif healthy < total:
+            overall = "warning"
+        else:
+            overall = "healthy"
+        return {
+            "status": overall,
+            "services": services,
+            "healthy_services": healthy,
+            "total_services": total,
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_embeddings_health() -> Dict[str, Any]:
+    """Return mock embeddings service health."""
+    try:
+        return {
+            "status": "healthy",
+            "active_models": 3,
+            "endpoints_available": 5,
+            "last_embedding_time": datetime.now().isoformat(),
+            "cache_hit_rate": 85.5,
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_vector_stores_health() -> Dict[str, Any]:
+    """Return mock vector-store health."""
+    try:
+        stores = {
+            "faiss": {"status": "healthy", "indices": 8, "size_mb": 245},
+            "qdrant": {"status": "healthy", "collections": 5, "vectors": 10000},
+            "elasticsearch": {"status": "warning", "indices": 3, "health": "yellow"},
+        }
+        return {
+            "status": "healthy",
+            "stores": stores,
+            "total_stores": len(stores),
+            "healthy_stores": sum(1 for s in stores.values() if s["status"] == "healthy"),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _check_service_status(service_name: str) -> Dict[str, Any]:
+    """Return mock status for a named service."""
+    try:
+        import anyio
+        import time as _time
+        start = _time.time()
+        await anyio.sleep(0.01)  # Simulate network delay
+        response_ms = (_time.time() - start) * 1000
+        if service_name == "vector_store":
+            status, message = "warning", "High response times detected"
+        elif service_name == "cache_service":
+            status, message = "healthy", "Operating normally"
+        else:
+            status, message = "healthy", "Service operational"
+        return {
+            "status": status,
+            "response_time": round(response_ms, 2),
+            "message": message,
+            "last_check": datetime.now().isoformat(),
+        }
+    except Exception as exc:
+        return {"status": "error", "error": str(exc)}
+
+
+async def _get_performance_metrics() -> Dict[str, Any]:
+    """Return current performance metrics snapshot."""
+    try:
+        return {
+            "cpu_usage": psutil.cpu_percent(interval=0.1),
+            "memory_usage": psutil.virtual_memory().percent,
+            "disk_usage": (psutil.disk_usage("/").used / psutil.disk_usage("/").total) * 100,
+            "process_count": len(psutil.pids()),
+            "network_connections": len(psutil.net_connections()),
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+async def _generate_health_recommendations(health_results: Dict[str, Any]) -> List[str]:
+    """Generate actionable recommendations from *health_results*."""
+    recommendations: List[str] = []
+    try:
+        for component, data in health_results.get("components", {}).items():
+            status = data.get("status", "unknown")
+            if status == "critical":
+                pct = data.get("usage_percent", 0)
+                if component == "memory" and pct > 90:
+                    recommendations.append(
+                        "Critical: Memory usage above 90%. Consider restarting services or adding more RAM."
+                    )
+                elif component == "cpu" and pct > 95:
+                    recommendations.append(
+                        "Critical: CPU usage above 95%. Check for runaway processes."
+                    )
+                elif component == "disk" and pct > 95:
+                    recommendations.append(
+                        "Critical: Disk usage above 95%. Clean up disk space immediately."
+                    )
+            elif status == "warning":
+                pct = data.get("usage_percent", 0)
+                if component == "memory" and pct > 80:
+                    recommendations.append("Warning: Memory usage above 80%. Monitor closely.")
+                elif component == "cpu" and pct > 85:
+                    recommendations.append(
+                        "Warning: CPU usage above 85%. Consider load balancing."
+                    )
+
+        if health_results.get("health_score", 100) < 80:
+            recommendations.append(
+                "Overall system health below 80%. Review all component statuses."
+            )
+
+        if not recommendations:
+            recommendations.append("System appears healthy. Continue regular monitoring.")
+    except Exception as exc:
+        recommendations.append(f"Error generating recommendations: {exc}")
+
+    return recommendations
+
+
 __all__ = [
     "HealthStatus",
     "AlertSeverity",
@@ -336,4 +570,15 @@ __all__ = [
     "ServiceMetrics",
     "Alert",
     "MockMonitoringService",
+    "_check_system_health",
+    "_check_memory_health",
+    "_check_cpu_health",
+    "_check_disk_health",
+    "_check_network_health",
+    "_check_services_health",
+    "_check_embeddings_health",
+    "_check_vector_stores_health",
+    "_check_service_status",
+    "_get_performance_metrics",
+    "_generate_health_recommendations",
 ]

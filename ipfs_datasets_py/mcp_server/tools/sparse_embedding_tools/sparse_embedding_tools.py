@@ -1,214 +1,28 @@
-# sparse_embedding_tools.py
+# sparse_embedding_tools.py — thin MCP wrapper
+"""
+Sparse embedding tools for MCP server.
 
-import anyio
+Business logic (SparseModel, SparseEmbedding, MockSparseEmbeddingService) lives in
+ipfs_datasets_py.ml.embeddings.sparse_embedding_engine.  This module is a thin
+MCP wrapper that validates inputs, delegates to the engine, and formats responses.
+"""
+
 import logging
 import numpy as np
-from typing import Dict, Any, List, Optional, Union, Tuple
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-from dataclasses import dataclass
-from enum import Enum
+
+from ipfs_datasets_py.embeddings.sparse_embedding_engine import (  # noqa: F401
+    SparseModel,
+    SparseEmbedding,
+    MockSparseEmbeddingService,
+    get_default_sparse_service,
+)
 
 logger = logging.getLogger(__name__)
 
-class SparseModel(Enum):
-    SPLADE = "splade"
-    BM25 = "bm25"
-    TFIDF = "tfidf"
-    BOW = "bow"
-    COLBERT = "colbert"
-
-@dataclass
-class SparseEmbedding:
-    """Represents a sparse embedding vector."""
-    indices: List[int]
-    values: List[float]
-    dimension: int
-    sparsity: float
-    model: str
-    metadata: Dict[str, Any]
-
-class MockSparseEmbeddingService:
-    """Mock sparse embedding service for testing and development."""
-    
-    def __init__(self):
-        self.indexed_collections = {}
-        self.models = {
-            SparseModel.SPLADE.value: {"dimension": 30522, "vocab_size": 30522},
-            SparseModel.BM25.value: {"dimension": 10000, "vocab_size": 10000},
-            SparseModel.TFIDF.value: {"dimension": 5000, "vocab_size": 5000},
-            SparseModel.BOW.value: {"dimension": 2000, "vocab_size": 2000}
-        }
-        self.stats = {
-            "embeddings_generated": 0,
-            "searches_performed": 0,
-            "collections_indexed": 0,
-            "total_documents": 0
-        }
-    
-    def generate_sparse_embedding(
-        self,
-        text: str,
-        model: str = "splade",
-        top_k: int = 100,
-        normalize: bool = True
-    ) -> SparseEmbedding:
-        """Generate sparse embedding for text."""
-        model_info = self.models.get(model, self.models[SparseModel.SPLADE.value])
-        
-        # Mock sparse embedding generation
-        # Simulate realistic sparsity patterns
-        num_terms = min(top_k, len(text.split()) * 3)  # Approximate term expansion
-        dimension = model_info["dimension"]
-        
-        # Generate random sparse indices and values
-        np.random.seed(hash(text) % 2147483647)  # Deterministic for same text
-        indices = sorted(np.random.choice(dimension, num_terms, replace=False))
-        values = np.random.exponential(0.5, num_terms)
-        
-        if normalize:
-            norm = np.sqrt(np.sum(values ** 2))
-            if norm > 0:
-                values = values / norm
-        
-        sparsity = 1.0 - (len(indices) / dimension)
-        
-        self.stats["embeddings_generated"] += 1
-        
-        indices_list = indices.tolist() if hasattr(indices, "tolist") else list(indices)
-
-        return SparseEmbedding(
-            indices=indices_list,
-            values=values.tolist(),
-            dimension=dimension,
-            sparsity=sparsity,
-            model=model,
-            metadata={
-                "text_length": len(text),
-                "num_terms": num_terms,
-                "generated_at": datetime.now().isoformat()
-            }
-        )
-    
-    def index_sparse_embeddings(
-        self,
-        collection_name: str,
-        documents: List[Dict[str, Any]],
-        model: str = "splade",
-        index_config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """Index sparse embeddings for a collection."""
-        config = index_config or {}
-        
-        # Process documents and create index
-        indexed_docs = []
-        total_terms = set()
-        
-        for i, doc in enumerate(documents):
-            text = doc.get("text", "")
-            embedding = self.generate_sparse_embedding(text, model)
-            
-            indexed_docs.append({
-                "id": doc.get("id", f"doc_{i}"),
-                "text": text,
-                "embedding": embedding,
-                "metadata": doc.get("metadata", {})
-            })
-            
-            total_terms.update(embedding.indices)
-        
-        # Store collection
-        self.indexed_collections[collection_name] = {
-            "documents": indexed_docs,
-            "model": model,
-            "config": config,
-            "stats": {
-                "document_count": len(indexed_docs),
-                "unique_terms": len(total_terms),
-                "average_sparsity": np.mean([doc["embedding"].sparsity for doc in indexed_docs]),
-                "index_size_mb": len(indexed_docs) * 0.5,  # Mock size estimation
-                "created_at": datetime.now().isoformat()
-            }
-        }
-        
-        self.stats["collections_indexed"] += 1
-        self.stats["total_documents"] += len(indexed_docs)
-        
-        return self.indexed_collections[collection_name]["stats"]
-    
-    def sparse_search(
-        self,
-        query: str,
-        collection_name: str,
-        model: str = "splade",
-        top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-        search_config: Optional[Dict[str, Any]] = None
-    ) -> List[Dict[str, Any]]:
-        """Perform sparse vector search."""
-        if collection_name not in self.indexed_collections:
-            return []
-        
-        collection = self.indexed_collections[collection_name]
-        documents = collection["documents"]
-        config = search_config or {}
-        
-        # Generate query embedding
-        query_embedding = self.generate_sparse_embedding(query, model)
-        
-        # Mock similarity scoring
-        results = []
-        for doc in documents:
-            # Simplified sparse dot product
-            doc_embedding = doc["embedding"]
-            
-            # Calculate intersection-based similarity
-            query_indices = set(query_embedding.indices)
-            doc_indices = set(doc_embedding.indices)
-            intersection = query_indices.intersection(doc_indices)
-            
-            if intersection:
-                # Mock similarity calculation
-                similarity = len(intersection) / max(len(query_indices), len(doc_indices))
-                similarity += np.random.normal(0, 0.1)  # Add some noise
-                similarity = max(0, min(1, similarity))
-                
-                # Apply filters if specified
-                if filters:
-                    doc_metadata = doc.get("metadata", {})
-                    skip = False
-                    for key, value in filters.items():
-                        if key in doc_metadata and doc_metadata[key] != value:
-                            skip = True
-                            break
-                    if skip:
-                        continue
-                
-                results.append({
-                    "id": doc["id"],
-                    "text": doc["text"],
-                    "score": similarity,
-                    "sparse_score_breakdown": {
-                        "term_overlap": len(intersection),
-                        "query_terms": len(query_indices),
-                        "doc_terms": len(doc_indices),
-                        "jaccard_similarity": len(intersection) / len(query_indices.union(doc_indices))
-                    },
-                    "metadata": doc.get("metadata", {}),
-                    "embedding_stats": {
-                        "sparsity": doc_embedding.sparsity,
-                        "dimension": doc_embedding.dimension,
-                        "model": doc_embedding.model
-                    }
-                })
-        
-        # Sort by score and return top_k
-        results.sort(key=lambda x: x["score"], reverse=True)
-        self.stats["searches_performed"] += 1
-        
-        return results[:top_k]
-
-# Global sparse embedding service
-_sparse_service = MockSparseEmbeddingService()
+# Module-level singleton — shared across calls within one server process.
+_sparse_service = get_default_sparse_service()
 
 async def generate_sparse_embedding(
     text: str,

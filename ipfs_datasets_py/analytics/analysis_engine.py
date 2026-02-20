@@ -412,3 +412,101 @@ def get_analysis_engine() -> AnalysisEngine:
     if _default_engine is None:
         _default_engine = AnalysisEngine()
     return _default_engine
+
+
+# ---------------------------------------------------------------------------
+# Standalone utility functions — also usable without the full AnalysisEngine
+# ---------------------------------------------------------------------------
+
+def detect_outliers(
+    data: Union[List[List[float]], "np.ndarray"],
+    threshold: float = 3.0,
+) -> List[int]:
+    """Detect outliers in *data* using the z-score method.
+
+    Args:
+        data: 2-D array-like of numeric vectors.
+        threshold: Z-score threshold above which a sample is an outlier.
+
+    Returns:
+        List of row indices whose z-score exceeds *threshold*.
+    """
+    if isinstance(data, list):
+        data = np.array(data)
+    norms = np.linalg.norm(data, axis=1)
+    z_scores = np.abs((norms - np.mean(norms)) / (np.std(norms) + 1e-10))
+    return np.where(z_scores > threshold)[0].tolist()
+
+
+def analyze_diversity(
+    data: Union[List[List[float]], "np.ndarray"],
+) -> Dict[str, float]:
+    """Measure the diversity / spread of *data*.
+
+    Returns:
+        Dict with ``variance``, ``std``, ``range``, and ``coefficient_of_variation``.
+    """
+    if isinstance(data, list):
+        data = np.array(data)
+    return {
+        "variance": float(np.var(data)),
+        "std": float(np.std(data)),
+        "range": float(np.max(data) - np.min(data)),
+        "coefficient_of_variation": float(np.std(data) / (np.mean(data) + 1e-10)),
+    }
+
+
+def detect_drift(
+    old_data: Union[List[List[float]], "np.ndarray"],
+    new_data: Union[List[List[float]], "np.ndarray"],
+) -> Dict[str, Any]:
+    """Detect distributional drift between *old_data* and *new_data*.
+
+    Returns:
+        Dict with ``drift_detected``, ``drift_magnitude``,
+        ``old_mean_norm``, and ``new_mean_norm``.
+    """
+    if isinstance(old_data, list):
+        old_data = np.array(old_data)
+    if isinstance(new_data, list):
+        new_data = np.array(new_data)
+    old_mean = np.mean(old_data, axis=0)
+    new_mean = np.mean(new_data, axis=0)
+    magnitude = float(np.linalg.norm(new_mean - old_mean))
+    return {
+        "drift_detected": magnitude > 0.1,
+        "drift_magnitude": magnitude,
+        "old_mean_norm": float(np.linalg.norm(old_mean)),
+        "new_mean_norm": float(np.linalg.norm(new_mean)),
+    }
+
+
+def analyze_similarity_patterns(
+    data: Union[List[List[float]], "np.ndarray"],
+) -> Dict[str, Any]:
+    """Analyse pairwise cosine-similarity patterns in *data*.
+
+    Samples up to 100 rows for efficiency.  Falls back to a note dict when
+    ``sklearn`` is not available.
+
+    Returns:
+        Dict with ``mean_similarity``, ``std_similarity``, ``min_similarity``,
+        ``max_similarity``, or a note if ``sklearn`` is unavailable.
+    """
+    if isinstance(data, list):
+        data = np.array(data)
+    sample_size = min(100, len(data))
+    idx = np.random.choice(len(data), sample_size, replace=False)
+    sample = data[idx]
+    try:
+        from sklearn.metrics.pairwise import cosine_similarity  # type: ignore[import]
+        sims = cosine_similarity(sample)
+        return {
+            "mean_similarity": float(np.mean(sims)),
+            "std_similarity": float(np.std(sims)),
+            "min_similarity": float(np.min(sims)),
+            "max_similarity": float(np.max(sims)),
+        }
+    except ImportError:
+        return {"note": "sklearn not available for similarity calculation"}
+

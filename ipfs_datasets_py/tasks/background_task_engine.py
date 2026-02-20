@@ -205,7 +205,49 @@ class MockTaskManager:
             "task_history_size": len(self.task_history),
         }
 
-    # ── private helpers ────────────────────────────────────────────────────
+    async def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
+        """Return serialisable status dict for *task_id* (compat alias for get_task)."""
+        task = await self.get_task(task_id)
+        return task.to_dict() if task else None
+
+    async def update_task(self, task_id: str, **kwargs: Any) -> bool:
+        """Update arbitrary attributes on a task by keyword argument. Returns True if found."""
+        task = self.tasks.get(task_id)
+        if task is None:
+            return False
+        for key, value in kwargs.items():
+            if key == "status":
+                # Accept either a string value or a TaskStatus member
+                if isinstance(value, str):
+                    try:
+                        task.status = TaskStatus(value)
+                    except ValueError:
+                        task.status = TaskStatus.RUNNING  # safe fallback
+                else:
+                    task.status = value
+            elif hasattr(task, key):
+                setattr(task, key, value)
+        return True
+
+    async def get_queue_stats(self) -> Dict[str, Any]:
+        """Return queue-level counters compatible with the legacy API."""
+        tasks = list(self.tasks.values())
+        counters = {s.value: 0 for s in TaskStatus}
+        for task in tasks:
+            counters[task.status.value] = counters.get(task.status.value, 0) + 1
+        return {
+            "queues": {
+                ttype: len(queue) for ttype, queue in self.task_queues.items()
+            },
+            "running_tasks": len(self.running_tasks),
+            "total_tasks": len(tasks),
+            "counters": {
+                "created": len(tasks),
+                "completed": counters.get("completed", 0),
+                "failed": counters.get("failed", 0),
+                "cancelled": counters.get("cancelled", 0),
+            },
+        }
 
     async def _process_queue(self) -> None:
         """Promote pending tasks to running when capacity allows."""
