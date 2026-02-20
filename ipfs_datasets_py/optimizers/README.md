@@ -224,6 +224,10 @@ See `examples/agentic/` for practical examples:
 - **USAGE_GUIDE.md** - Detailed usage guide
 - **GITHUB_INTEGRATION.md** - GitHub integration guide
 
+## Backlog
+
+- See `TODO.md` for the living refactor/feature backlog and inline TODO inventory.
+
 ## Implementation Status
 
 ### Completed ✅

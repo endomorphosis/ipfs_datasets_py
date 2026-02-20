@@ -17,6 +17,7 @@ try:
     from ipfs_datasets_py.optimizers.graphrag import (
         OntologyGenerator,
         OntologyCritic,
+        OntologyMediator,
         OntologyOptimizer,
         OntologySession,
         OntologyHarness,
@@ -203,6 +204,26 @@ Examples:
         )
         
         return parser
+
+    def _read_text(self, path: Path) -> str:
+        return path.read_text(encoding="utf-8", errors="replace")
+
+    def _load_json(self, path: Path) -> Any:
+        return json.loads(self._read_text(path))
+
+    def _load_ontology_json(self, path: Path) -> Dict[str, Any]:
+        """Load a JSON ontology dict.
+
+        Expected keys: 'entities' and 'relationships'.
+        """
+        obj = self._load_json(path)
+        if not isinstance(obj, dict):
+            raise ValueError("Ontology JSON must be a JSON object")
+        if "entities" not in obj or "relationships" not in obj:
+            raise ValueError("Ontology JSON must include 'entities' and 'relationships'")
+        if not isinstance(obj.get("entities"), list) or not isinstance(obj.get("relationships"), list):
+            raise ValueError("Ontology JSON 'entities' and 'relationships' must be lists")
+        return obj
     
     def cmd_generate(self, args: argparse.Namespace) -> int:
         """Generate ontology from data.
@@ -224,9 +245,7 @@ Examples:
             return 1
         
         try:
-            # Read input
-            with open(input_path, 'r') as f:
-                data = f.read()
+            data = self._read_text(input_path)
             
             # Create generator
             generator = OntologyGenerator()
@@ -251,9 +270,11 @@ Examples:
             ontology = generator.generate_ontology(data, context)
             
             print(f"✅ Generated ontology")
-            print(f"   Entities: {len(ontology.entities)}")
-            print(f"   Relationships: {len(ontology.relationships)}")
-            print(f"   Confidence: {ontology.confidence:.2f}")
+            print(f"   Entities: {len(ontology.get('entities', []))}")
+            print(f"   Relationships: {len(ontology.get('relationships', []))}")
+            confidence = ontology.get('metadata', {}).get('confidence', None)
+            if isinstance(confidence, (int, float)):
+                print(f"   Confidence: {confidence:.2f}")
             
             # Evaluate quality
             critic = OntologyCritic()
@@ -263,15 +284,9 @@ Examples:
             # Output results
             if args.output:
                 output_data = {
-                    'entities': [
-                        {'id': e.id, 'label': e.label, 'type': e.type}
-                        for e in ontology.entities
-                    ],
-                    'relationships': [
-                        {'source': r.source, 'target': r.target, 'type': r.type}
-                        for r in ontology.relationships
-                    ],
-                    'confidence': ontology.confidence,
+                    'entities': ontology.get('entities', []),
+                    'relationships': ontology.get('relationships', []),
+                    'metadata': ontology.get('metadata', {}),
                     'quality_score': score.overall,
                 }
                 
@@ -308,24 +323,82 @@ Examples:
             return 1
         
         try:
-            # TODO: Load ontology and optimize
-            print("⏳ Running optimization cycles...")
-            
-            for cycle in range(1, args.cycles + 1):
-                print(f"  Cycle {cycle}/{args.cycles}...")
-            
-            print(f"\n✅ Optimization complete")
-            print("   Quality improvement: +25%")
-            print("   Consistency: ✓ Validated")
-            print("   Coverage: ✓ Improved")
-            
+            data = self._read_text(input_path)
+
+            base_ontology: Optional[Dict[str, Any]] = None
+            data_type = DataType.TEXT
+            if input_path.suffix.lower() == ".json":
+                try:
+                    base_ontology = self._load_ontology_json(input_path)
+                    data_type = DataType.STRUCTURED
+                    # Use empty source data; the base ontology is the optimization target.
+                    data = ""
+                except Exception:
+                    # Not an ontology JSON; treat as structured data input.
+                    data_type = DataType.JSON
+
+            generator = OntologyGenerator()
+            mediator = OntologyMediator()
+            critic = OntologyCritic()
+            validator = LogicValidator()
+
+            # Use session runner for best-effort optimization cycles.
+            session = OntologySession(
+                generator=generator,
+                mediator=mediator,
+                critic=critic,
+                validator=validator,
+                max_rounds=max(1, int(args.cycles)),
+            )
+
+            context = OntologyGenerationContext(
+                data_source=str(input_path),
+                data_type=data_type,
+                domain="general",
+                base_ontology=base_ontology,
+                extraction_strategy=ExtractionStrategy.HYBRID,
+                config={"target": args.target, "parallel": bool(args.parallel)},
+            )
+
+            print("⏳ Running optimization session...")
+            result = session.run(data, context)
+
+            if result.critic_score is None:
+                raise RuntimeError(result.metadata.get("error", "optimization session failed"))
+
+            print("\n✅ Optimization complete")
+            print(f"   Quality score: {result.critic_score.overall:.2f}")
+            if result.validation_result is not None:
+                print(f"   Consistent: {'✓' if result.validation_result.is_consistent else '✗'}")
+            print(f"   Rounds: {result.num_rounds}")
+
             if args.output:
+                with open(args.output, "w") as f:
+                    json.dump(
+                        {
+                            "ontology": result.ontology,
+                            "critic_score": result.critic_score.to_dict(),
+                            "validation": (
+                                result.validation_result.to_dict()
+                                if result.validation_result is not None
+                                else None
+                            ),
+                            "num_rounds": result.num_rounds,
+                            "converged": result.converged,
+                            "time_elapsed": result.time_elapsed,
+                            "metadata": result.metadata,
+                        },
+                        f,
+                        indent=2,
+                    )
                 print(f"📄 Saved to: {args.output}")
-            
+
             return 0
-            
+
         except Exception as e:
             print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
             return 1
     
     def cmd_validate(self, args: argparse.Namespace) -> int:
@@ -345,39 +418,73 @@ Examples:
             return 1
         
         try:
-            # Create validator
+            if input_path.suffix.lower() != ".json":
+                raise ValueError("validate currently supports JSON ontology files only")
+
+            ontology = self._load_ontology_json(input_path)
             validator = LogicValidator()
-            
-            # TODO: Load and validate ontology
+            critic = OntologyCritic()
+
             print("⏳ Validating...")
-            
+
+            report: Dict[str, Any] = {
+                "input": str(input_path),
+                "checks": {},
+            }
+
             if args.check_consistency:
-                print("✅ Consistency check: PASSED")
-                print("   No logical contradictions found")
-            
-            if args.check_coverage:
-                print("✅ Coverage check: PASSED")
-                print("   Domain coverage: 85%")
-            
-            if args.check_clarity:
-                print("✅ Clarity check: PASSED")
-                print("   Relationship clarity: 90%")
-            
+                consistency = validator.check_consistency(ontology)
+                report["checks"]["consistency"] = consistency.to_dict()
+                if consistency.is_consistent:
+                    print("✅ Consistency check: PASSED")
+                else:
+                    print("❌ Consistency check: FAILED")
+                    for c in consistency.contradictions[:10]:
+                        print(f"   - {c}")
+
+            if args.check_coverage or args.check_clarity:
+                context = OntologyGenerationContext(
+                    data_source=str(input_path),
+                    data_type=DataType.STRUCTURED,
+                    domain="general",
+                )
+                score = critic.evaluate_ontology(ontology, context, source_data=None)
+                report["checks"]["quality"] = score.to_dict()
+                if args.check_coverage:
+                    print("✅ Coverage (completeness) score:", f"{score.completeness:.2f}")
+                if args.check_clarity:
+                    print("✅ Clarity score:", f"{score.clarity:.2f}")
+
+            if not (args.check_consistency or args.check_coverage or args.check_clarity):
+                # Default to running all checks if none explicitly requested.
+                consistency = validator.check_consistency(ontology)
+                context = OntologyGenerationContext(
+                    data_source=str(input_path),
+                    data_type=DataType.STRUCTURED,
+                    domain="general",
+                )
+                score = critic.evaluate_ontology(ontology, context, source_data=None)
+                report["checks"]["consistency"] = consistency.to_dict()
+                report["checks"]["quality"] = score.to_dict()
+
+                print("✅ Consistency:", "PASSED" if consistency.is_consistent else "FAILED")
+                print("✅ Completeness:", f"{score.completeness:.2f}")
+                print("✅ Clarity:", f"{score.clarity:.2f}")
+
             if args.output:
-                report = {
-                    'consistency': True,
-                    'coverage': 0.85,
-                    'clarity': 0.90,
-                    'overall': 'PASSED',
-                }
-                with open(args.output, 'w') as f:
+                with open(args.output, "w") as f:
                     json.dump(report, f, indent=2)
                 print(f"\n📄 Report saved to: {args.output}")
-            
+
+            # Exit code: 0 only if consistency check passed when run.
+            if "consistency" in report["checks"]:
+                return 0 if report["checks"]["consistency"]["is_consistent"] else 2
             return 0
-            
+
         except Exception as e:
             print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
             return 1
     
     def cmd_query(self, args: argparse.Namespace) -> int:

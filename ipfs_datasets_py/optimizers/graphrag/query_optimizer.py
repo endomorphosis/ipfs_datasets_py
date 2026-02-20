@@ -8476,7 +8476,9 @@ class UnifiedGraphRAGQueryOptimizer:
                 self._traversal_stats["learning_results"] = []
             self._traversal_stats["learning_results"].append(learning_results)
     
-        # TODO YOU MOTHERFUCKING LAZY PIECE OF FUCKING SHIT!!!!!!!!!!!!
+        # TODO: Refactor/clean up this learning-hook section.
+        # - Extract the parameter update logic into a helper method
+        # - Add unit tests that assert adjustments are applied correctly
         # Continue with original optimize_query implementation...
     
         # Original method remains unchanged below

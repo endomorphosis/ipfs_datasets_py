@@ -96,6 +96,23 @@ class OptimizerLearningMetricsCollector:
         self.total_optimized_queries = 0
         self.optimization_improvements = []
 
+    def _maybe_save_learning_metrics(self) -> None:
+        """Persist metrics to disk when metrics_dir is configured."""
+        if self.metrics_dir:
+            self._save_learning_metrics()
+
+    def _trim_learning_cycles_if_needed(self) -> None:
+        """Enforce max_history_size for learning_cycles (dict has no maxlen)."""
+        if len(self.learning_cycles) <= self.max_history_size:
+            return
+
+        # Keep the most recent cycles by timestamp.
+        sorted_items = sorted(
+            self.learning_cycles.items(),
+            key=lambda item: item[1].get("timestamp", 0),
+        )
+        self.learning_cycles = dict(sorted_items[-self.max_history_size:])
+
     def record_learning_cycle(self, cycle_id, analyzed_queries, patterns_identified,
                              parameters_adjusted, execution_time, timestamp=None):
         """
@@ -110,7 +127,7 @@ class OptimizerLearningMetricsCollector:
             timestamp (float, optional): Timestamp of the cycle completion
         """
         with self._lock:
-            timestamp = timestamp or time.time()
+            timestamp = time.time() if timestamp is None else timestamp
 
             self.learning_cycles[cycle_id] = {
                 "timestamp": timestamp,
@@ -122,9 +139,11 @@ class OptimizerLearningMetricsCollector:
 
             self.total_analyzed_queries += analyzed_queries
 
+            # Trim if necessary
+            self._trim_learning_cycles_if_needed()
+
             # Save metrics if directory is specified
-            if self.metrics_dir:
-                self._save_learning_metrics()
+            self._maybe_save_learning_metrics()
 
             logger.info(f"Recorded learning cycle {cycle_id} with {analyzed_queries} queries analyzed")
 
@@ -142,7 +161,7 @@ class OptimizerLearningMetricsCollector:
             timestamp (float, optional): When the adaptation occurred
         """
         with self._lock:
-            timestamp = timestamp or time.time()
+            timestamp = time.time() if timestamp is None else timestamp
 
             # Handle numpy/pandas data types for JSON serialization
             if hasattr(old_value, 'tolist'):
@@ -165,6 +184,8 @@ class OptimizerLearningMetricsCollector:
             if len(self.parameter_adaptations) > self.max_history_size:
                 self.parameter_adaptations = self.parameter_adaptations[-self.max_history_size:]
 
+            self._maybe_save_learning_metrics()
+
             logger.info(f"Recorded parameter adaptation: {parameter_name} changed from {old_value} to {new_value}")
 
     def record_strategy_effectiveness(self, strategy_name, query_type,
@@ -182,7 +203,7 @@ class OptimizerLearningMetricsCollector:
             timestamp (float, optional): When the strategy was evaluated
         """
         with self._lock:
-            timestamp = timestamp or time.time()
+            timestamp = time.time() if timestamp is None else timestamp
 
             effectiveness = {
                 "timestamp": timestamp,
@@ -198,6 +219,8 @@ class OptimizerLearningMetricsCollector:
             # Trim if necessary
             if len(self.strategy_effectiveness) > self.max_history_size:
                 self.strategy_effectiveness = self.strategy_effectiveness[-self.max_history_size:]
+
+            self._maybe_save_learning_metrics()
 
             logger.info(f"Recorded strategy effectiveness: {strategy_name} for {query_type} with score {effectiveness_score:.2f}")
 
@@ -215,7 +238,7 @@ class OptimizerLearningMetricsCollector:
             timestamp (float, optional): When the pattern was identified
         """
         with self._lock:
-            timestamp = timestamp or time.time()
+            timestamp = time.time() if timestamp is None else timestamp
 
             pattern = {
                 "timestamp": timestamp,
@@ -231,6 +254,8 @@ class OptimizerLearningMetricsCollector:
             # Trim if necessary
             if len(self.query_patterns) > self.max_history_size:
                 self.query_patterns = self.query_patterns[-self.max_history_size:]
+
+            self._maybe_save_learning_metrics()
 
             logger.info(f"Recorded query pattern: {pattern_id} of type {pattern_type} matching {matching_queries} queries")
 
@@ -251,8 +276,24 @@ class OptimizerLearningMetricsCollector:
             total_patterns_identified = sum(cycle["patterns_identified"] for cycle in self.learning_cycles.values())
 
             # Count total parameter adjustments
-            total_parameters_adjusted = sum(len(cycle["parameters_adjusted"])
-                                         for cycle in self.learning_cycles.values())
+            def _count_adjusted(value: Any) -> int:
+                if value is None:
+                    return 0
+                if isinstance(value, dict):
+                    return len(value)
+                if isinstance(value, (list, tuple, set)):
+                    return len(value)
+                if isinstance(value, (int, float)):
+                    return int(value)
+                try:
+                    return len(value)  # type: ignore[arg-type]
+                except TypeError:
+                    return 0
+
+            total_parameters_adjusted = sum(
+                _count_adjusted(cycle.get("parameters_adjusted"))
+                for cycle in self.learning_cycles.values()
+            )
 
             # Calculate average cycle time
             total_cycle_time = sum(cycle["execution_time"] for cycle in self.learning_cycles.values())

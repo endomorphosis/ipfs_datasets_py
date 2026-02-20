@@ -198,6 +198,15 @@ class TestOptimizerLearningMetricsCollector:
         # parameters_adjusted is computed from the length of cycle["parameters_adjusted"]
         assert metrics.total_parameters_adjusted == 2  # From the dict {"p1": 1.0, "p2": 2.0}
 
+    def test_get_learning_metrics_handles_int_parameters_adjusted(self):
+        """Test get_learning_metrics() tolerates non-dict parameters_adjusted."""
+        collector = OptimizerLearningMetricsCollector()
+        collector.record_learning_cycle("c1", 1, 0, 3, 0.01)
+
+        metrics = collector.get_learning_metrics()
+        assert metrics.total_learning_cycles == 1
+        assert metrics.total_parameters_adjusted == 3
+
     def test_get_effectiveness_by_strategy(self, collector):
         """Test getting effectiveness metrics grouped by strategy."""
         collector.record_strategy_effectiveness("strategy1", "type1", 0.8, 1.0, 10)
@@ -279,6 +288,26 @@ class TestOptimizerLearningMetricsCollector:
         
         # Should only keep the most recent max_history_size items
         assert len(collector.parameter_adaptations) <= 5
+
+    def test_learning_cycles_history_size_enforcement(self):
+        """Test that max_history_size limits are enforced for learning_cycles."""
+        collector = OptimizerLearningMetricsCollector(max_history_size=5)
+
+        for i in range(10):
+            collector.record_learning_cycle(
+                cycle_id=f"cycle-{i}",
+                analyzed_queries=1,
+                patterns_identified=0,
+                parameters_adjusted={},
+                execution_time=0.01,
+                timestamp=float(i),
+            )
+
+        assert len(collector.learning_cycles) <= 5
+
+        # Most recent timestamps should remain.
+        timestamps = sorted(c["timestamp"] for c in collector.learning_cycles.values())
+        assert timestamps == [5.0, 6.0, 7.0, 8.0, 9.0]
 
     def test_thread_safety(self, collector):
         """Test that metrics collection is thread-safe."""
