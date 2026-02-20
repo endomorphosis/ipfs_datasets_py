@@ -688,18 +688,32 @@ else:
             try:
                 # Basic pattern-based conversion
                 text = input_data.text.lower()
+                output_format = getattr(input_data, 'output_format', 'symbolic')
                 
                 if "all " in text or "every " in text:
-                    formula = f"∀x Statement(x)"
+                    formula_symbolic = f"∀x Statement(x)"
                 elif "some " in text:
-                    formula = f"∃x Statement(x)"
+                    formula_symbolic = f"∃x Statement(x)"
                 else:
-                    formula = f"Statement({text.replace(' ', '_')})"
+                    formula_symbolic = f"Statement({text.replace(' ', '_')})"
+                
+                # Convert to requested format
+                if output_format == "prolog":
+                    formula = formula_symbolic.replace('∀', 'forall').replace('∃', 'exists').replace('→', ':-')
+                elif output_format == "tptp":
+                    formula = formula_symbolic.replace('∀', '!').replace('∃', '?').replace('→', '=>').replace('∧', '&')
+                    formula = f"fof(statement, axiom, {formula})."
+                else:
+                    formula = formula_symbolic
                 
                 return FOLOutput(
                     fol_formula=formula,
                     confidence=0.6,
-                    logical_components={"quantifiers": [], "predicates": [], "entities": []},
+                    logical_components={
+                        "quantifiers": ["∀"] if "∀" in formula else (["∃"] if "∃" in formula else []),
+                        "predicates": ["Statement"],
+                        "entities": [],
+                    },
                     reasoning_steps=["Used fallback conversion"],
                     warnings=["SymbolicAI not available - using basic conversion"],
                     metadata={"fallback": True}
