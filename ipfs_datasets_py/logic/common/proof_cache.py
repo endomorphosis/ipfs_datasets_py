@@ -306,45 +306,87 @@ class ProofCache:
     def get(
         self,
         formula,
+        axioms_or_prover=None,
+        prover_name: str = None,
+        prover_config: Optional[Dict] = None,
+        *,
         axioms: Optional[List] = None,
-        prover_name: str = "unknown",
-        prover_config: Optional[Dict] = None
     ) -> Optional[Any]:
         """Get cached proof result (O(1) lookup).
-        
-        Checks local cache first, then IPFS backend if enabled.
-        
+
+        Supports two call styles:
+          - New API: get(formula, axioms=[], prover_name="z3")
+          - Compat API: get(formula, "prover_name")
+          - Keyword: get(formula, prover_name="z3")
+
+        The second positional argument is interpreted as *axioms* when it is
+        a list (or None) and as *prover_name* when it is a string.
+
         Args:
             formula: TDFOL formula or string
-            axioms: Optional list of axioms
-            prover_name: Name of prover
+            axioms_or_prover: axioms list (new API) or prover_name string (compat API)
+            prover_name: prover name (keyword arg takes priority over positional)
             prover_config: Optional prover configuration
-            
+            axioms: explicit axioms keyword arg (takes priority over positional)
+
         Returns:
             Cached proof result if found, None otherwise
         """
-        cid = self._compute_cid(formula, axioms, prover_name, prover_config)
-        
-        # Check local cache first
+        # axioms= keyword arg takes priority over positional
+        if axioms is not None:
+            _axioms = axioms
+            _prover_name = prover_name or (axioms_or_prover if isinstance(axioms_or_prover, str) else "unknown")
+        elif prover_name is not None:
+            # Explicit prover_name keyword
+            _prover_name = prover_name
+            _axioms = axioms_or_prover if isinstance(axioms_or_prover, list) else None
+        elif isinstance(axioms_or_prover, str):
+            # Compat API: get(formula, "prover_name")
+            _prover_name = axioms_or_prover
+            _axioms = None
+        else:
+            # New API: get(formula, axioms_list)
+            _axioms = axioms_or_prover  # list or None
+            _prover_name = "unknown"
+
+        # Check compat cache first (formula::prover_name key)
+        import time as _time
+        key = self._make_key(str(formula), _prover_name)
+        if key in self._cache:
+            entry = self._cache[key]
+            if entry._expires_at is not None and _time.monotonic() > entry._expires_at:
+                del self._cache[key]
+                self._compat_expirations += 1
+                self._compat_misses += 1
+            else:
+                entry.hit_count += 1
+                self._compat_hits += 1
+                self._cache.move_to_end(key)
+                self.stats['hits'] += 1
+                return entry.result
+
+        cid = self._compute_cid(formula, _axioms, _prover_name, prover_config)
+
+        # Check CID-based local cache
         with self.lock:
             if cid in self.cache:
                 cached = self.cache[cid]
-                cached.hit_count += 1
+                if hasattr(cached, 'hit_count'):
+                    cached.hit_count += 1
                 self.stats['hits'] += 1
-                logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {prover_name})")
-                return cached.result
-        
+                logger.debug(f"Local cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
+                return cached.result if hasattr(cached, 'result') else cached
+
         # If not in local cache and IPFS backend enabled, try IPFS
         if self.ipfs_cache is not None:
             try:
                 ipfs_result = self.ipfs_cache.get(cid)
                 if ipfs_result is not None:
-                    # Found in IPFS, add to local cache for faster future access
                     with self.lock:
                         cached_result = CachedProofResult(
                             result=ipfs_result,
                             cid=cid,
-                            prover_name=prover_name,
+                            prover_name=_prover_name,
                             formula_str=str(formula),
                             timestamp=time.time(),
                             hit_count=1
@@ -352,19 +394,20 @@ class ProofCache:
                         self.cache[cid] = cached_result
                         self.stats['ipfs_hits'] += 1
                         self.stats['hits'] += 1
-                    logger.debug(f"IPFS cache HIT for CID {cid[:16]}... (prover: {prover_name})")
+                    logger.debug(f"IPFS cache HIT for CID {cid[:16]}... (prover: {_prover_name})")
                     return ipfs_result
             except Exception as e:
                 logger.debug(f"IPFS cache lookup failed for CID {cid[:16]}...: {e}")
                 with self.lock:
                     self.stats['ipfs_errors'] += 1
-        
+
         # Not found in either cache
+        self._compat_misses += 1
         with self.lock:
             self.stats['misses'] += 1
-        logger.debug(f"Cache MISS for CID {cid[:16]}... (prover: {prover_name})")
+        logger.debug(f"Cache MISS for CID {cid[:16]}... (prover: {_prover_name})")
         return None
-    
+
     def set(
         self,
         formula,
@@ -526,9 +569,9 @@ class ProofCache:
         )
         self._compat_puts += 1
 
-    def get(self, formula: str, prover_name: str = "unknown",
+    def compat_get(self, formula: str, prover_name: str = "unknown",
             axioms=None, prover_config=None) -> Any:
-        """Retrieve a cached proof (checks compat cache, CID cache, then IPFS)."""
+        """Retrieve a cached proof (compat API — checks compat cache, CID cache, then IPFS)."""
         import time as _time
         key = self._make_key(formula, prover_name)
         if key in self._cache:
