@@ -1054,3 +1054,47 @@ class TestOntologyCriticLogger:
         critic.evaluate_ontology(ontology, ctx)
         assert any("Evaluating" in r or "evaluation" in r.lower() for r in records), \
             f"Expected log message, got: {records}"
+
+
+# ===========================================================================
+# execution_time_ms in run_session results (batch 16)
+# ===========================================================================
+
+class TestRunSessionExecutionTimeMs:
+    """Verify execution_time_ms is present in run_session() results."""
+
+    def _make_optimizer(self):
+        from ipfs_datasets_py.optimizers.common.base_optimizer import (
+            BaseOptimizer, OptimizerConfig, OptimizationContext
+        )
+        class _Opt(BaseOptimizer):
+            def generate(self, data, ctx): return {"v": data}
+            def critique(self, art, ctx): return 0.95, []
+            def optimize(self, art, score, fb, ctx): return art
+            def validate(self, art, ctx): return True
+
+        return _Opt(config=OptimizerConfig(max_iterations=1, validation_enabled=False))
+
+    def _make_context(self):
+        from ipfs_datasets_py.optimizers.common.base_optimizer import OptimizationContext
+        return OptimizationContext(session_id="s_ms_test", input_data="x", domain="test")
+
+    def test_execution_time_ms_in_result(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("x", ctx)
+        assert "execution_time_ms" in result
+        assert isinstance(result["execution_time_ms"], float)
+        assert result["execution_time_ms"] >= 0.0
+
+    def test_execution_time_ms_consistent_with_execution_time(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("x", ctx)
+        assert abs(result["execution_time_ms"] - result["execution_time"] * 1000.0) < 0.01
+
+    def test_execution_time_ms_in_metrics_dict(self):
+        opt = self._make_optimizer()
+        ctx = self._make_context()
+        result = opt.run_session("x", ctx)
+        assert "execution_time_ms" in result["metrics"]
