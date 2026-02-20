@@ -88,7 +88,7 @@ def analyze_formula(formula: str) -> Dict[str, Any]:
             cur_depth = max(0, cur_depth - 1)
     # Extract operators
     operators = []
-    for op in ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '↔'):
+    for op in ('->', '→', '&', '∧', '|', '∨', '¬', '~', '↔', '<->'):
         if op in formula:
             operators.append(op)
     # Count tokens (words/symbols)
