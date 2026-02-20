@@ -187,7 +187,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 ### R3 — Common primitives layer (`optimizers/common/`)
 
 - [x] (P1) [arch] `common/base_optimizer.py` — `BaseOptimizer` abstract class with `generate/critique/optimize/validate` pipeline exists
-- [ ] (P1) [arch] `common/base_critic.py` — `BaseCritic` abstract class with `evaluate()` returning typed `CriticScore`
+- [x] (P1) [arch] `common/base_critic.py` — `BaseCritic` abstract class with `evaluate()` returning typed `CriticScore` — Done: fully implemented with compare() and convenience helpers
 - [x] (P1) [arch] `common/base_session.py` — `BaseSession` dataclass tracking rounds, scores, convergence
   - Done 2026-02-20: implemented with `start_round()`, `record_round()`, `trend`, `best_score`, `to_dict()`
 - [x] (P2) [arch] `common/base_harness.py` — `BaseHarness` orchestrating generator + critic + optimizer
@@ -218,12 +218,12 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: common/exceptions.py with full hierarchy
 - [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
 - [ ] (P2) [arch] All CLI commands exit with non-zero on failure (audit `cmd_*` methods)
-- [ ] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()`
+- [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
 - [ ] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
 
 ### R6 — Deprecation cleanup
 
-- [ ] (P2) [arch] Add `DeprecationWarning` emission to `TheoremSession.__init__()` and document migration path
+- [x] (P2) [arch] Add `DeprecationWarning` emission to `TheoremSession.__init__()` — Done: theorem_session.py emits DeprecationWarning and document migration path
 - [ ] (P2) [arch] Add `DeprecationWarning` to deprecated imports re-exported from old `__init__.py` locations
 - [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
 
@@ -281,8 +281,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### F6 — GraphRAG: Logic validator TDFOL pipeline
 
-- [ ] (P2) [graphrag] Implement minimal `ontology_to_tdfol()` — convert entities/relationships to predicate-logic formulas (subset: `Person(x)`, `hasRelation(x,y)`)
-- [ ] (P2) [graphrag] Implement `_prove_consistency()` — pass generated formulas to `logic_theorem_optimizer.ProverIntegrationAdapter`
+- [x] (P2) [graphrag] Implement minimal `ontology_to_tdfol()` — Done: logic_validator.py ontology_to_tdfol() returns predicate-string formulas — convert entities/relationships to predicate-logic formulas (subset: `Person(x)`, `hasRelation(x,y)`)
+- [x] (P2) [graphrag] Implement `_prove_consistency()` — Done: logic_validator.py _prove_consistency() passes formulas to ProverIntegrationAdapter — pass generated formulas to `logic_theorem_optimizer.ProverIntegrationAdapter`
 - [x] (P2) [graphrag] Implement `suggest_fixes()` — map contradiction types to fix templates (dangling ref → "remove or add entity", type conflict → "unify types")
   - Done 2026-02-20: pattern-matched contradictions to typed fix actions with confidence scores
 - [ ] (P3) [graphrag] Add TDFOL formula cache keyed on ontology hash to avoid re-proving unchanged ontologies
@@ -294,8 +294,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20: wired to `LogicTheoremOptimizer.validate_statements()` with real prover integration
 - [x] (P2) [logic] Add `--output` flag to `cmd_prove` to write proof result as JSON
   - Done 2026-02-20
-- [ ] (P2) [logic] Add `--timeout` flag to prover invocation
-- [ ] (P2) [logic] Support reading premises/goal from a JSON/YAML file as well as CLI args
+- [x] (P2) [logic] Add `--timeout` flag to prover invocation — Done: --timeout already in cli_wrapper.py prove command
+- [x] (P2) [logic] Support reading premises/goal from a JSON/YAML file as well as CLI args — Done: --from-file flag in cli_wrapper.py cmd_prove
 - [ ] (P3) [logic] Add interactive REPL mode to `logic-theorem-optimizer` CLI
 
 ### F8 — Agentic: Stub implementations
@@ -460,3 +460,17 @@ rg -n "TODO\b|FIXME\b|XXX\b|HACK\b" ipfs_datasets_py/ipfs_datasets_py/optimizers
 - [ ] (P2) [agentic] ChangeController.check_approval() — poll PR review status via GitHub API
 - [ ] (P3) [tests] Mutation testing pass on ontology_critic.py dimension evaluators (identify gaps)
 - [ ] (P2) [docs] Add type annotations to all remaining untyped methods in agentic/ (audit with mypy)
+
+## Newly discovered items (2026-02-20 batch 22)
+
+- [x] (P2) [logic] Add --from-file flag to prove command for JSON/YAML premise/goal loading — Done batch 22
+- [ ] (P2) [logic] Add --from-file flag to `validate` command (load ontology from JSON/YAML)
+- [ ] (P2) [graphrag] `OntologyLearningAdapter` — track successful extraction patterns and tune confidence thresholds
+- [ ] (P2) [graphrag] `LearningAdapter.apply_feedback()` — update extraction weights based on mediator actions
+- [ ] (P2) [tests] Unit test for `cli_wrapper.py` prove command with --output flag (writes JSON report)
+- [ ] (P2) [tests] Unit test for `cli_wrapper.py` validate command happy path
+- [ ] (P3) [graphrag] Add `entity_to_tdfol()` helper that converts a single entity to a Formula object
+- [ ] (P3) [graphrag] Cache ontology TDFOL output keyed on ontology hash (avoid re-conversion)
+- [ ] (P2) [agentic] Wire `ChangeController.create_change()` to actually create GitHub PR draft
+- [ ] (P2) [arch] Add `__init__` test: confirm all public symbols in `optimizers/graphrag/__init__` are importable
+- [ ] (P2) [docs] Update common/README.md to include ExtractionConfig.custom_rules usage example
