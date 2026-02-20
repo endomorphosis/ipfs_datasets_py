@@ -102,15 +102,19 @@ class BaseOptimizer(ABC):
         self,
         config: Optional[OptimizerConfig] = None,
         llm_backend: Optional[Any] = None,
+        metrics_collector: Optional[Any] = None,  # PerformanceMetricsCollector
     ):
         """Initialize base optimizer.
         
         Args:
             config: Optimizer configuration
             llm_backend: Optional LLM backend for generation
+            metrics_collector: Optional :class:`~ipfs_datasets_py.optimizers.common.PerformanceMetricsCollector`
+                for recording per-cycle performance metrics.
         """
         self.config = config or OptimizerConfig()
         self.llm_backend = llm_backend
+        self.metrics_collector = metrics_collector
         self.metrics: List[Dict[str, Any]] = []
         
     @abstractmethod
@@ -238,13 +242,30 @@ class BaseOptimizer(ABC):
             - metrics: Performance metrics (if enabled)
         """
         start_time = datetime.now()
-        
+        cycle_id = context.session_id
+
+        # Start metrics cycle if collector is available
+        if self.metrics_collector is not None:
+            try:
+                self.metrics_collector.start_cycle(
+                    cycle_id,
+                    metadata={
+                        "domain": context.domain,
+                        "strategy": self.config.strategy.value,
+                        "max_iterations": self.config.max_iterations,
+                        "target_score": self.config.target_score,
+                    },
+                )
+            except Exception:
+                pass  # Never let metrics break the optimization
+
         # Generate initial artifact
         artifact = self.generate(input_data, context)
         score, feedback = self.critique(artifact, context)
         
         iterations = 0
         prev_score = score
+        initial_score = score
         
         # Optimization loop
         for iteration in range(self.config.max_iterations):
@@ -270,6 +291,13 @@ class BaseOptimizer(ABC):
             valid = self.validate(artifact, context)
         
         execution_time = (datetime.now() - start_time).total_seconds()
+
+        # End metrics cycle
+        if self.metrics_collector is not None:
+            try:
+                self.metrics_collector.end_cycle(cycle_id, success=valid)
+            except Exception:
+                pass
         
         result = {
             'artifact': artifact,
@@ -281,9 +309,10 @@ class BaseOptimizer(ABC):
         
         if self.config.metrics_enabled:
             result['metrics'] = {
-                'initial_score': prev_score if iterations > 0 else score,
+                'initial_score': initial_score,
                 'final_score': score,
-                'improvement': score - (prev_score if iterations > 0 else score),
+                'improvement': score - initial_score,
+                'score_delta': score - initial_score,
                 'iterations': iterations,
                 'execution_time': execution_time,
             }

@@ -590,9 +590,9 @@ class OntologyGenerator:
         Returns:
             Extraction result with entities and relationships
         """
-        # TODO: Implement LLM-based extraction using ipfs_accelerate_py
-        # This is a placeholder for Phase 1 implementation
-        
+        # LLM-based extraction is gated behind ipfs_accelerate availability.
+        # When the backend is unavailable, fall back to rule-based extraction.
+
         if not self.use_ipfs_accelerate or not self._accelerate_available:
             self._log.warning("LLM extraction not available, falling back to rule-based")
             return self._extract_rule_based(data, context)

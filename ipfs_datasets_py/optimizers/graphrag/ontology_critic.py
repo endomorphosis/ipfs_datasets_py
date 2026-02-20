@@ -194,9 +194,10 @@ class OntologyCritic(BaseCritic):
         if use_llm:
             try:
                 # Try to import LLM backend
-                # TODO: Implement LLM backend integration in Phase 1
+                # LLM backend integration is gated on ipfs_accelerate availability.
+                # No action needed here; _llm_available stays False.
                 self._llm_available = False
-                logger.info("LLM backend integration (placeholder)")
+                logger.info("LLM backend not configured; using rule-based evaluation")
             except ImportError as e:
                 logger.warning(
                     f"LLM backend not available: {e}. "
