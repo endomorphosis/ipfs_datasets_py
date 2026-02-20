@@ -1019,7 +1019,11 @@ class PerformanceValidator:
         times: List[float] = []
         for _ in range(max(1, int(iterations))):
             start = time.perf_counter()
-            exec(compiled, {})
+            # SECURITY: exec with an empty globals dict {} — builtins are
+            # intentionally excluded so the benchmarked snippet cannot import
+            # modules or access the host environment.  Only pure-computation
+            # snippets (arithmetic, data-structure ops) are expected here.
+            exec(compiled, {})  # noqa: S102 – intentionally sandboxed
             times.append(time.perf_counter() - start)
 
         avg = sum(times) / len(times)
