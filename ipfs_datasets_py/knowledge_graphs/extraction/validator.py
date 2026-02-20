@@ -669,7 +669,7 @@ class KnowledgeGraphExtractorWithValidation:
 
                 # Create the corrected relationship
                 corrected_kg.add_relationship(
-                    relationship_type=rel_type,
+                    rel_type,
                     source=source_entity,
                     target=target_entity,
                     properties=rel.properties.copy() if hasattr(rel, "properties") else {},

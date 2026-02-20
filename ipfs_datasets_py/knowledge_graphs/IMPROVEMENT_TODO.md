@@ -309,3 +309,4 @@ If you want a high-value sequence that keeps risk low:
   - Known Issues list updated: 14 resolved items, zero remaining
   - Coverage table updated: Migration 40%→70%+, overall 75%→~78%
   - ROADMAP.md: version 2.0.0→2.1.0, SRL/OWL/distributed sections from Research→✅ Delivered, release schedule updated
+- 2026-02-20 (session 7): Coverage improvements + bug fix. Added `test_coverage_improvements.py` (90 tests). Fixed bug in `extraction/validator.py` (`apply_validation_corrections` used wrong keyword for `add_relationship`). Pushed 5 low-coverage modules significantly higher: validator 24→52%, unified_engine 43→57%, transaction mgr 40→64%, query/knowledge_graph 6→65%, advanced extractor 27→64%. Updated MASTER_STATUS.md with measured coverage numbers (67% overall), fixed numpy listed as Required, fixed CrossDocumentReasoner import path, updated Contributing guidance. Total: 1,251 passed, 25 skipped, 0 failed.

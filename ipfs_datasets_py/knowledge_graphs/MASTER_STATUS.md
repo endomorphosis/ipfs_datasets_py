@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 75% overall | Critical modules at 80-85% |
+| **Test Coverage** | 67% overall | Measured 2026-02-20; active modules average higher
 | **Documentation** | ✅ Up to Date | Reflects v2.1.0 structure |
 | **Known Issues** | None | All collection errors fixed; 0 failures (session 6) |
-| **Next Milestone** | v2.2.0 (Q3 2026) | Test coverage improvements |
+| **Next Milestone** | v2.2.0 (Q3 2026) | Lineage + storage coverage improvements
 
 ---
 
@@ -147,21 +147,31 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~78%
+### Overall Coverage: ~67% (measured)
 
-| Module | Coverage | Status | Target |
-|--------|----------|--------|--------|
-| **Extraction** | 85% | ✅ Excellent | Maintain |
-| **Cypher** | 80% | ✅ Good | Maintain |
-| **Query** | 80% | ✅ Good | Maintain |
-| **Core** | 75% | ✅ Good | Maintain |
-| **Neo4j Compat** | 85% | ✅ Excellent | Maintain |
-| **Transactions** | 75% | ✅ Good | Maintain |
-| **Migration** | 70% | ✅ Good | Maintain |
-| **Storage** | 70% | ✅ Good | Maintain |
-| **Indexing** | 75% | ✅ Good | Maintain |
-| **Ontology** | 75% | ✅ Good | Maintain |
-| **Reasoning** | 75% | ✅ Good | Maintain |
+> Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
+> The 67% figure includes shim files (0%) and optional-dep files that are skipped at runtime.
+> Active implementation files average considerably higher.
+
+| Module | Coverage | Status | Notes |
+|--------|----------|--------|-------|
+| **Cypher** | 78–84% | ✅ Good | parser 78%, compiler 84% |
+| **Neo4j Compat** | 71–95% | ✅ Good | connection_pool 95%, driver 71% |
+| **Migration** | 82–100% | ✅ Excellent | neo4j_exporter 94%, formats 86% |
+| **JSON-LD** | 81–98% | ✅ Good | validation 81%, types 98% |
+| **Core** | 72–85% | ✅ Good | types 85%, query_executor 72% |
+| **Transactions** | 61–93% | ✅ Good | manager 64%, types 93% |
+| **Query** | 57–80% | 🔶 Improving | unified_engine 57%, distributed 80% |
+| **Extraction** | 52–86% | 🔶 Improving | validator 52%, relationships 86% |
+| **Reasoning** | 80–98% | ✅ Good | helpers 80%, types 98% |
+| **Indexing** | 51–93% | 🔶 Improving | manager 51%, specialized 93% |
+| **Storage** | 36–49% | ⚠️ Low | ipld_backend 49%, types 36% |
+| **Lineage** | 18–94% | ⚠️ Low | core 23%, types 94% |
+
+**Largest coverage opportunities (next milestone):**
+- `lineage/` subpackage (core 23%, metrics 19%, enhanced 18%) — requires `networkx` in CI
+- `storage/ipld_backend.py` (49%) — requires IPFS daemon for integration paths
+- `extraction/_wikipedia_helpers.py` (9%) — requires `wikipedia` package
 
 ### Test Files: 62 total (as of v2.1.0)
 
@@ -184,11 +194,12 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - test_srl_ontology_distributed_cont.py (26 tests, session 3 deepening)
 - test_deferred_session4.py (36 tests, session 4 deepening)
 - test_reasoning.py (skipped when numpy absent)
+- test_coverage_improvements.py (90 tests — validator, unified_engine, transaction mgr, advanced extractor)
 - migration/test_formats.py, migration/test_integrity_verifier.py, migration/test_schema_checker.py, ...
 - lineage/test_core.py, lineage/test_enhanced.py, lineage/test_metrics.py, lineage/test_types.py
 - ...and 10 more test files
 
-**Total Tests:** 1,161 passing, 25 skipped (libipld/numpy/anyio absent)
+**Total Tests:** 1,251 passing, 25 skipped (libipld/numpy/anyio absent)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -377,7 +388,7 @@ kg = extractor.extract_knowledge_graph(
 )
 
 # Multi-hop traversal (P4)
-from ipfs_datasets_py.knowledge_graphs.cross_document_reasoning import CrossDocumentReasoner
+from ipfs_datasets_py.knowledge_graphs.reasoning.cross_document import CrossDocumentReasoner
 
 reasoner = CrossDocumentReasoner()
 reasoning = reasoner.reason_across_documents(
@@ -425,14 +436,16 @@ reasoning = reasoner.reason_across_documents(
 
 ### Required (Core)
 - Python 3.12+
-- numpy
-- spacy>=3.0.0 (for basic extraction)
+- spacy>=3.0.0 (for basic extraction; graceful fallback to rule-based mode when absent)
 
 ### Optional (Advanced Features)
+- numpy (cross-document reasoning / similarity; module degrades gracefully when absent)
 - transformers>=4.30.0 (P3: neural extraction)
 - openai>=1.0.0 (P4: OpenAI GPT integration)
 - anthropic (P4: Claude integration)
 - Full spaCy model: `python -m spacy download en_core_web_sm`
+- libipld + ipld-car (CAR format; tests skipped when absent)
+- networkx (lineage subpackage; tests skipped when absent)
 
 ### Testing
 - pytest>=7.0.0
@@ -470,9 +483,9 @@ reasoning = reasoner.reason_across_documents(
 
 **Improving Tests:**
 1. See [tests/knowledge_graphs/TEST_GUIDE.md](../../tests/knowledge_graphs/TEST_GUIDE.md)
-2. Focus on migration module (40% → 70%+ coverage needed)
+2. Focus on `lineage/` (core 23%, metrics 19%) and `storage/` (49%) — next highest-value targets
 3. Add error handling and edge case tests
-4. Ensure tests work with and without optional dependencies
+4. Ensure tests work with and without optional dependencies (use `pytest.importorskip`)
 
 **Improving Documentation:**
 1. Read [DOCUMENTATION_GUIDE.md](./DOCUMENTATION_GUIDE.md)
@@ -483,6 +496,34 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v2.1.2 (2026-02-20) - Coverage Improvements + Bug Fix ✅
+
+**Summary:** Added 90 new tests for the 5 lowest-coverage modules, fixed a bug in `validator.py`, and updated MASTER_STATUS.md with measured (not estimated) coverage numbers.
+
+**Test additions:**
+- `test_coverage_improvements.py` — 90 new GIVEN-WHEN-THEN tests covering:
+  - `extraction/validator.py` (24% → 52%): constructor, extract_knowledge_graph, validate_against_wikidata, extract_from_documents, apply_validation_corrections, validation stubs
+  - `query/unified_engine.py` (43% → 57%): init, get_stats, _detect_query_type, QueryResult.to_dict, execute_cypher mocked, execute_query, execute_async
+  - `transactions/manager.py` (40% → 64%): begin, add_operation, rollback, add_read, commit, get_stats, recover
+  - `query/knowledge_graph.py` (6% → 65%): parse_ir_ops_from_query, compile_ir (ScanType/Expand/Limit/Project), query_knowledge_graph input validation
+  - `extraction/advanced.py` (27% → 64%): extract_knowledge, large text, empty text
+
+**Bug fix:**
+- `extraction/validator.py` line 671: Fixed `add_relationship(relationship_type=...)` → `add_relationship(rel_type, ...)` (keyword argument mismatch caused `TypeError` when calling `apply_validation_corrections` with relationships)
+
+**Documentation:**
+- MASTER_STATUS.md coverage table replaced with measured per-module numbers (67% overall)
+- Fixed stale "Contributing" guidance ("migration 40% → 70%+" → actual next targets)
+- Fixed `numpy` listed as "Required (Core)" → moved to "Optional"
+- Fixed Quick Start `CrossDocumentReasoner` import path → canonical `reasoning.cross_document`
+- Updated Quick Status Summary coverage cell and Next Milestone note
+
+**Result:** 1,251 passed, 25 skipped (optional deps), **0 failed** — up from 1,161 passed
+
+**Backward Compatibility:** 100% (bug fix was in uncovered code path)
+
+---
 
 ### v2.1.1 (2026-02-20) - Test Quality Fixes ✅
 
@@ -568,11 +609,11 @@ reasoning = reasoner.reason_across_documents(
 **Confidence Level:** HIGH
 
 **Evidence:**
-- ✅ ~78% test coverage (critical modules at 80-85%)
+- ✅ ~67% test coverage overall (measured); active implementation files average higher
 - ✅ 300KB+ comprehensive documentation
 - ✅ All P1-P4 features complete (PR #1085, 2026-02-18)
 - ✅ All deferred features complete (sessions 2-5, 2026-02-20)
-- ✅ **Zero test failures** — 1,161 pass, 25 skip (optional deps), 0 fail (session 6, 2026-02-20)
+- ✅ **Zero test failures** — 1,251 pass, 25 skip (optional deps), 0 fail (session 7, 2026-02-20)
 - ✅ All features now in permanent subpackage locations (reasoning/, ontology/, extraction/srl.py, query/distributed.py)
 - ✅ Proper error handling and graceful degradation
 - ✅ Backward compatible with all changes (deprecation shims for all moved modules)
