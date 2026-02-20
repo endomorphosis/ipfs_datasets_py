@@ -41,6 +41,45 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class ProverConfig:
+    """Typed configuration for theorem provers.
+
+    Attributes:
+        strategy: Proving strategy. One of ``'AUTO'``, ``'SYMBOLIC'``,
+            ``'NEURAL'``, or ``'HYBRID'``.  Defaults to ``'AUTO'``.
+        provers: Ordered list of prover backends to attempt, e.g.
+            ``['z3', 'cvc5', 'symbolic_ai']``.  When empty the validator
+            selects provers automatically.
+        timeout: Per-prover timeout in seconds.  0 means no limit.
+        parallel: Run multiple provers in parallel when ``True``.
+    """
+
+    strategy: str = "AUTO"
+    provers: List[str] = field(default_factory=list)
+    timeout: float = 10.0
+    parallel: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a plain-dict representation (legacy compatibility)."""
+        return {
+            "strategy": self.strategy,
+            "provers": list(self.provers),
+            "timeout": self.timeout,
+            "parallel": self.parallel,
+        }
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "ProverConfig":
+        """Construct from a plain dict (backwards-compat with old callers)."""
+        return cls(
+            strategy=d.get("strategy", "AUTO"),
+            provers=list(d.get("provers", [])),
+            timeout=float(d.get("timeout", 10.0)),
+            parallel=bool(d.get("parallel", False)),
+        )
+
+
+@dataclass
 class ValidationResult:
     """
     Result of logical validation of an ontology.
@@ -109,24 +148,27 @@ class LogicValidator:
     
     def __init__(
         self,
-        prover_config: Optional[Dict[str, Any]] = None,
+        prover_config: Optional[Any] = None,  # ProverConfig | Dict[str, Any]
         use_cache: bool = True
     ):
         """
         Initialize the logic validator.
         
         Args:
-            prover_config: Configuration for theorem provers. Should include:
-                - 'strategy': Proving strategy ('AUTO', 'SYMBOLIC', 'NEURAL', 'HYBRID')
-                - 'provers': List of provers to use (e.g., ['z3', 'cvc5'])
-                - 'timeout': Timeout in seconds
-                - 'parallel': Whether to run provers in parallel
+            prover_config: Configuration for theorem provers. Accepts either a
+                :class:`ProverConfig` instance or a plain ``dict`` with keys:
+                ``strategy``, ``provers``, ``timeout``, ``parallel``.
             use_cache: Whether to cache validation results for performance
             
         Raises:
             ImportError: If TDFOL module is not available
         """
-        self.prover_config = prover_config or {'strategy': 'AUTO'}
+        if isinstance(prover_config, ProverConfig):
+            self.prover_config: ProverConfig = prover_config
+        elif isinstance(prover_config, dict):
+            self.prover_config = ProverConfig.from_dict(prover_config)
+        else:
+            self.prover_config = ProverConfig()
         self.use_cache = use_cache
         self._cache = {} if use_cache else None
         
@@ -506,23 +548,76 @@ class LogicValidator:
         Prove consistency using TDFOL reasoner.
         
         Args:
-            formulas: List of TDFOL formulas
+            formulas: List of TDFOL formulas (string predicates or Formula objects)
             ontology: Original ontology
             
         Returns:
             Validation result from theorem proving
         """
         logger.info(f"Proving consistency of {len(formulas)} formulas")
-        
-        # TODO: Implement full TDFOL proving
-        # This is a placeholder for Phase 1 implementation
-        
-        # For now, return basic result
+
+        # --- best-effort string-formula checker ----------------------------
+        # Parse the predicate strings emitted by ontology_to_tdfol().
+        # Detects: duplicate entity IDs, dangling relationship references,
+        # and trivial is_a cycles (A is_a B, B is_a A).
+        import re
+
+        entity_ids: set = set()
+        rel_triples: list = []  # (rel_type, source_id, target_id)
+        duplicate_ids: list = []
+
+        for formula in formulas:
+            if not isinstance(formula, str):
+                continue
+
+            m_entity = re.match(r'^entity\("([^"]+)"\)\.$', formula)
+            if m_entity:
+                eid = m_entity.group(1)
+                if eid in entity_ids:
+                    duplicate_ids.append(eid)
+                entity_ids.add(eid)
+                continue
+
+            m_rel = re.match(r'^rel\("([^"]+)",\s*"([^"]+)",\s*"([^"]+)"\)\.$', formula)
+            if m_rel:
+                rel_triples.append((m_rel.group(1), m_rel.group(2), m_rel.group(3)))
+
+        contradictions: list = []
+
+        # Duplicate entity IDs
+        for eid in duplicate_ids:
+            contradictions.append(f"Duplicate entity ID: {eid}")
+
+        # Dangling references
+        for rel_type, src, tgt in rel_triples:
+            if src not in entity_ids:
+                contradictions.append(
+                    f"Relationship '{rel_type}' has dangling source: {src}"
+                )
+            if tgt not in entity_ids:
+                contradictions.append(
+                    f"Relationship '{rel_type}' has dangling target: {tgt}"
+                )
+
+        # Trivial is_a cycles: A is_a B and B is_a A
+        isa_pairs = {
+            (src, tgt) for (rt, src, tgt) in rel_triples
+            if rt in ("is_a", "subclass_of", "instance_of")
+        }
+        for src, tgt in isa_pairs:
+            if (tgt, src) in isa_pairs:
+                contradictions.append(
+                    f"Circular is_a relationship: {src} ↔ {tgt}"
+                )
+
+        is_consistent = len(contradictions) == 0
+        confidence = 0.85 if is_consistent else 0.75
+
         return ValidationResult(
-            is_consistent=True,
-            contradictions=[],
-            confidence=0.9,
-            prover_used=self.prover_config.get('strategy', 'AUTO')
+            is_consistent=is_consistent,
+            contradictions=contradictions,
+            confidence=confidence,
+            prover_used=f"structural:{self.prover_config.strategy}",
         )
     
     def _get_cache_key(self, ontology: Dict[str, Any]) -> str:
@@ -539,4 +634,5 @@ class LogicValidator:
 __all__ = [
     'LogicValidator',
     'ValidationResult',
+    'ProverConfig',
 ]

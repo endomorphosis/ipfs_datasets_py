@@ -503,5 +503,98 @@ class OntologyHarness:
 # Export public API
 __all__ = [
     'OntologyHarness',
+    'OntologyPipelineHarness',
     'BatchResult',
 ]
+
+
+class OntologyPipelineHarness:
+    """Single-session harness wiring Generator → Critic → Mediator via BaseHarness.
+
+    This is a lightweight alternative to :class:`OntologyHarness` for running a
+    single iterative refinement session rather than a parallel batch.  It extends
+    :class:`~ipfs_datasets_py.optimizers.common.BaseHarness` so the session
+    lifecycle (``BaseSession``, convergence, round tracking) is handled centrally.
+
+    Example::
+
+        from ipfs_datasets_py.optimizers.graphrag import (
+            OntologyGenerator, OntologyCritic, OntologyMediator,
+            OntologyGenerationContext, ExtractionStrategy,
+        )
+        from ipfs_datasets_py.optimizers.graphrag.ontology_harness import (
+            OntologyPipelineHarness,
+        )
+        from ipfs_datasets_py.optimizers.common import HarnessConfig
+
+        harness = OntologyPipelineHarness(
+            generator=OntologyGenerator(),
+            critic=OntologyCritic(),
+            mediator=OntologyMediator(),
+            config=HarnessConfig(max_rounds=5, target_score=0.8),
+        )
+        context = OntologyGenerationContext(
+            data_source="contract.txt",
+            data_type="text",
+            domain="legal",
+            extraction_strategy=ExtractionStrategy.RULE_BASED,
+        )
+        session = harness.run(source_text, context)
+        print(f"Best score: {session.best_score:.3f}")
+    """
+
+    def __init__(
+        self,
+        generator: Any,
+        critic: Any,
+        mediator: Any,
+        config: Optional[Any] = None,  # HarnessConfig
+    ) -> None:
+        from ..common.base_harness import BaseHarness, HarnessConfig
+        from ..common.base_critic import CriticResult
+
+        _config = config if config is not None else HarnessConfig()
+
+        class _Harness(BaseHarness):
+            def _generate(self_h, data: Any, context: Any) -> Any:
+                ontology = generator.generate_ontology(data, context)
+                self._last_ontology = ontology
+                return ontology
+
+            def _critique(self_h, artifact: Any, context: Any) -> CriticResult:
+                try:
+                    return critic.evaluate(artifact, context)
+                except Exception:
+                    raw = critic.evaluate_ontology(artifact, context)
+                    return CriticResult(
+                        score=raw.overall,
+                        feedback=raw.feedback,
+                        dimensions={k: v for k, v in raw.dimensions.items()},
+                    )
+
+            def _optimize(self_h, artifact: Any, critique: CriticResult, context: Any) -> Any:
+                try:
+                    refined = mediator.refine_ontology(artifact, critique.feedback)
+                except Exception as exc:
+                    logger.warning("refine_ontology failed: %s", exc)
+                    refined = artifact
+                self._last_ontology = refined
+                return refined
+
+        self._harness = _Harness(config=_config)
+        self._last_ontology: Optional[Dict[str, Any]] = None
+
+    def run(self, data: Any, context: Any) -> Any:
+        """Run the pipeline and return a :class:`~ipfs_datasets_py.optimizers.common.BaseSession`."""
+        return self._harness.run(data, context)
+
+    def run_and_report(self, data: Any, context: Any) -> Dict[str, Any]:
+        """Run and return a rich summary dict."""
+        session = self.run(data, context)
+        return {
+            "best_score": session.best_score,
+            "rounds": len(session.rounds),
+            "converged": session.converged,
+            "best_ontology": self._last_ontology,
+            "session": session,
+        }

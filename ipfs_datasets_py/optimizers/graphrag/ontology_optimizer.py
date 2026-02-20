@@ -435,20 +435,43 @@ class OntologyOptimizer:
             List of actionable recommendations
         """
         recommendations = []
-        
-        # TODO: Implement intelligent recommendation generation
-        # This is a placeholder for Phase 2 implementation
-        
+
         if hasattr(current_state, 'critic_scores') and current_state.critic_scores:
             latest_score = current_state.critic_scores[-1]
-            
-            if latest_score.completeness < 0.7:
-                recommendations.append("Increase entity extraction coverage")
-            if latest_score.consistency < 0.7:
-                recommendations.append("Improve logical consistency validation")
-            if latest_score.clarity < 0.7:
-                recommendations.append("Add more detailed entity properties")
-        
+
+            # Dimension-specific recommendations
+            dim_recs: Dict[str, str] = {
+                "completeness": "Increase entity extraction coverage — add more entity types or lower confidence threshold",
+                "consistency": "Improve logical consistency — run logic validation and prune dangling references",
+                "clarity": "Add more detailed entity properties and normalise naming conventions",
+                "granularity": "Increase relationship diversity — expand verb-frame patterns or enable hybrid extraction",
+                "domain_alignment": "Align vocabulary to domain — add domain-specific term templates",
+            }
+            threshold = 0.7
+            for dim, rec in dim_recs.items():
+                val = getattr(latest_score, dim, None)
+                if val is not None and val < threshold:
+                    recommendations.append(rec)
+
+        # Pattern-aware recommendations
+        entity_dist = patterns.get("entity_type_distribution", {})
+        rel_dist = patterns.get("relationship_type_distribution", {})
+        weakness_dist = patterns.get("weakness_distribution", {})
+
+        if entity_dist and len(entity_dist) < 3:
+            recommendations.append(
+                f"Low entity type diversity ({len(entity_dist)} types) — broaden NER patterns"
+            )
+        if rel_dist and len(rel_dist) < 2:
+            recommendations.append(
+                f"Low relationship type diversity ({len(rel_dist)} types) — enable relationship inference"
+            )
+        if weakness_dist:
+            top_weakness = max(weakness_dist, key=weakness_dist.get)
+            recommendations.append(
+                f"Most common weakness: '{top_weakness}' — prioritise fixing this dimension"
+            )
+
         return recommendations
     
     def _determine_trend(self, current_score: float) -> str:

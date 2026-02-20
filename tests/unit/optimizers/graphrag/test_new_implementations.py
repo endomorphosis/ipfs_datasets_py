@@ -459,3 +459,195 @@ class TestBaseHarness:
         h = self._make_harness(target_score=0.999, max_rounds=3)
         session = h.run(None, None)
         assert session.current_round <= 3
+
+
+# ---------------------------------------------------------------------------
+# ProverConfig
+# ---------------------------------------------------------------------------
+
+class TestProverConfig:
+    def test_defaults(self):
+        from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+        cfg = ProverConfig()
+        assert cfg.strategy == "AUTO"
+        assert cfg.provers == []
+        assert cfg.timeout == 10.0
+        assert cfg.parallel is False
+
+    def test_from_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+        cfg = ProverConfig.from_dict({"strategy": "SYMBOLIC", "timeout": 5.0, "parallel": True})
+        assert cfg.strategy == "SYMBOLIC"
+        assert cfg.timeout == 5.0
+        assert cfg.parallel is True
+
+    def test_to_dict_roundtrip(self):
+        from ipfs_datasets_py.optimizers.graphrag import ProverConfig
+        orig = ProverConfig(strategy="HYBRID", provers=["z3"], timeout=3.0, parallel=True)
+        d = orig.to_dict()
+        cfg2 = ProverConfig.from_dict(d)
+        assert cfg2.strategy == orig.strategy
+        assert cfg2.provers == orig.provers
+        assert cfg2.parallel == orig.parallel
+
+    def test_logic_validator_accepts_prover_config(self):
+        from ipfs_datasets_py.optimizers.graphrag import ProverConfig, LogicValidator
+        cfg = ProverConfig(strategy="SYMBOLIC")
+        v = LogicValidator(prover_config=cfg)
+        assert v.prover_config.strategy == "SYMBOLIC"
+
+    def test_logic_validator_accepts_dict(self):
+        from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+        v = LogicValidator(prover_config={"strategy": "AUTO", "timeout": 2.0})
+        assert v.prover_config.timeout == 2.0
+
+    def test_logic_validator_default_config(self):
+        from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+        v = LogicValidator()
+        assert v.prover_config.strategy == "AUTO"
+
+
+# ---------------------------------------------------------------------------
+# _prove_consistency — structural checking on string formulas
+# ---------------------------------------------------------------------------
+
+class TestProveConsistency:
+    def _validator(self):
+        from ipfs_datasets_py.optimizers.graphrag import LogicValidator
+        return LogicValidator(use_cache=False)
+
+    def test_consistent_ontology(self):
+        v = self._validator()
+        ontology = {
+            "entities": [{"id": "e1", "type": "Person", "text": "Alice"},
+                         {"id": "e2", "type": "Organization", "text": "Corp"}],
+            "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "e2"}],
+        }
+        result = v.check_consistency(ontology)
+        assert result.is_consistent
+        assert result.contradictions == []
+
+    def test_dangling_ref_detected(self):
+        v = self._validator()
+        ontology = {
+            "entities": [{"id": "e1", "type": "Person", "text": "Alice"}],
+            "relationships": [{"id": "r1", "type": "works_for", "source_id": "e1", "target_id": "MISSING"}],
+        }
+        result = v.check_consistency(ontology)
+        assert not result.is_consistent
+        assert any("MISSING" in c for c in result.contradictions)
+
+    def test_circular_isa_detected(self):
+        v = self._validator()
+        ontology = {
+            "entities": [{"id": "A", "type": "Concept", "text": "A"},
+                         {"id": "B", "type": "Concept", "text": "B"}],
+            "relationships": [
+                {"id": "r1", "type": "is_a", "source_id": "A", "target_id": "B"},
+                {"id": "r2", "type": "is_a", "source_id": "B", "target_id": "A"},
+            ],
+        }
+        result = v.check_consistency(ontology)
+        assert not result.is_consistent
+        assert any("A" in c and "B" in c for c in result.contradictions)
+
+    def test_prover_used_includes_strategy(self):
+        v = self._validator()
+        result = v.check_consistency({"entities": [], "relationships": []})
+        assert "AUTO" in result.prover_used
+
+
+# ---------------------------------------------------------------------------
+# _extract_hybrid / _extract_neural
+# ---------------------------------------------------------------------------
+
+class TestHybridNeuralExtraction:
+    def _make_context(self, domain: str = "legal"):
+        ctx = MagicMock()
+        ctx.domain = domain
+        ctx.data_source = "test"
+        ctx.data_type = MagicMock()
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
+        ctx.data_type.__eq__ = lambda s, o: False
+        ctx.extraction_strategy = ExtractionStrategy.HYBRID
+        return ctx
+
+    def test_hybrid_returns_result(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import ExtractionStrategy
+        gen = OntologyGenerator()
+        ctx = self._make_context()
+        result = gen._extract_hybrid("Alice works for Acme Corp in New York.", ctx)
+        assert hasattr(result, "entities")
+        assert hasattr(result, "relationships")
+        assert result.metadata.get("method") in ("hybrid", "rule_based_with_inference")
+
+    def test_neural_returns_result(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+        gen = OntologyGenerator()
+        ctx = self._make_context()
+        result = gen._extract_neural("Alice governs Acme Corp.", ctx)
+        assert hasattr(result, "entities")
+        assert result.metadata.get("method") == "neural_fallback"
+
+    def test_hybrid_deduplicates_entities(self):
+        from ipfs_datasets_py.optimizers.graphrag import OntologyGenerator
+        gen = OntologyGenerator()
+        ctx = self._make_context()
+        text = "Alice Alice Alice."
+        result = gen._extract_hybrid(text, ctx)
+        ids = [e.id for e in result.entities]
+        assert len(ids) == len(set(ids)), "Hybrid result should not have duplicate entity IDs"
+
+
+# ---------------------------------------------------------------------------
+# OntologyPipelineHarness
+# ---------------------------------------------------------------------------
+
+class TestOntologyPipelineHarness:
+    def _build_harness(self, target_score=0.8, max_rounds=3):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_harness import OntologyPipelineHarness
+        from ipfs_datasets_py.optimizers.common import HarnessConfig, CriticResult
+
+        gen_calls = [0]
+        ont = {"entities": [{"id": "e1"}], "relationships": []}
+
+        class FakeGen:
+            def generate_ontology(self, data, ctx):
+                gen_calls[0] += 1
+                return ont
+
+        class FakeCritic:
+            def evaluate(self, art, ctx=None):
+                return CriticResult(score=0.85, feedback=["ok"])
+
+        class FakeMediator:
+            def refine_ontology(self, art, feedback):
+                return art
+
+        h = OntologyPipelineHarness(
+            generator=FakeGen(),
+            critic=FakeCritic(),
+            mediator=FakeMediator(),
+            config=HarnessConfig(max_rounds=max_rounds, target_score=target_score),
+        )
+        return h, gen_calls
+
+    def test_run_returns_session(self):
+        from ipfs_datasets_py.optimizers.common import BaseSession
+        h, _ = self._build_harness()
+        session = h.run(None, None)
+        assert isinstance(session, BaseSession)
+
+    def test_run_and_report_has_keys(self):
+        h, _ = self._build_harness()
+        report = h.run_and_report(None, None)
+        assert "best_score" in report
+        assert "rounds" in report
+        assert "converged" in report
+
+    def test_converges_at_target(self):
+        h, _ = self._build_harness(target_score=0.80)
+        session = h.run(None, None)
+        assert session.best_score >= 0.80
+        assert session.converged

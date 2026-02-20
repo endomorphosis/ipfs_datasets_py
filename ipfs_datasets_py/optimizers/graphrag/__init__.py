@@ -74,6 +74,7 @@ from .ontology_critic import (
 from .logic_validator import (
     LogicValidator,
     ValidationResult,
+    ProverConfig,
 )
 
 # Phase 2 components (complete)
@@ -94,6 +95,7 @@ from .ontology_session import (
 
 from .ontology_harness import (
     OntologyHarness,
+    OntologyPipelineHarness,
     BatchResult,
 )
 
@@ -136,6 +138,7 @@ __all__ = [
     # Validator
     'LogicValidator',
     'ValidationResult',
+    'ProverConfig',
     # Mediator (Phase 2)
     'OntologyMediator',
     'MediatorState',
@@ -147,6 +150,7 @@ __all__ = [
     'SessionResult',
     # Harness (Phase 2)
     'OntologyHarness',
+    'OntologyPipelineHarness',
     'BatchResult',
     # Prompt Generator (Phase 2)
     'PromptGenerator',

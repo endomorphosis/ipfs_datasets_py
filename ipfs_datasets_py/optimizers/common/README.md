@@ -36,33 +36,113 @@ from ipfs_datasets_py.optimizers.common import (
 
 class MyOptimizer(BaseOptimizer):
     def generate(self, input_data, context):
-        # Create initial artifact
         return artifact
     
     def critique(self, artifact, context):
-        # Evaluate quality (0-1) and provide feedback
         return (score, feedback_list)
     
     def optimize(self, artifact, score, feedback, context):
-        # Improve artifact based on feedback
         return improved_artifact
-    
-    def validate(self, artifact, context):
-        # Optional: verify artifact is valid
-        return True
 
-# Use it
 optimizer = MyOptimizer(config=OptimizerConfig())
 result = optimizer.run_session(input_data, context)
 ```
 
-### Key Features
+### BaseCritic
 
-- **Automatic Optimization Loop**: `run_session()` handles the iteration logic
-- **Early Stopping**: Stops when score plateaus or target reached
-- **Metrics Collection**: Tracks performance automatically
-- **Validation**: Optional verification step
-- **Configurable**: All parameters tunable via `OptimizerConfig`
+Abstract base for all domain critics.  Returns a typed `CriticResult` with score,
+multi-dimensional breakdown, strengths, and weaknesses.
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseCritic, CriticResult
+
+class MyCritic(BaseCritic):
+    def evaluate(self, artifact, context=None) -> CriticResult:
+        return CriticResult(
+            score=0.85,
+            feedback=["Good coverage", "Needs more relationships"],
+            dimensions={"completeness": 0.9, "consistency": 0.8},
+        )
+
+critic = MyCritic()
+result = critic.evaluate(my_artifact)
+print(result.score, result.feedback)
+```
+
+`CriticResult` fields: `score`, `feedback`, `dimensions`, `strengths`, `weaknesses`, `metadata`.
+
+### BaseSession
+
+Tracks the full state of one optimization session (all rounds, best score,
+convergence, timings).
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseSession
+
+session = BaseSession(target_score=0.85, convergence_threshold=0.005)
+session.start_round()
+session.record_round(score=0.72, feedback=["add more props"])
+session.start_round()
+session.record_round(score=0.81, feedback=["nearly there"])
+print(session.best_score)   # 0.81
+print(session.trend)        # "improving"
+print(session.converged)    # False
+report = session.to_dict()
+```
+
+`RoundRecord` fields: `round_number`, `score`, `feedback`, `duration_s`, `timestamp`.
+
+### BaseHarness
+
+Orchestrates the full generate → critique → optimize loop using a `BaseSession`.
+Concrete harnesses implement `_generate()`, `_critique()`, `_optimize()`.
+
+```python
+from ipfs_datasets_py.optimizers.common import BaseHarness, HarnessConfig
+
+class MyHarness(BaseHarness):
+    def _generate(self, data, context):
+        return self.generator.extract(data, context)
+
+    def _critique(self, artifact, context):
+        return self.critic.evaluate(artifact, context)
+
+    def _optimize(self, artifact, critique, context):
+        return self.optimizer.refine(artifact, critique.feedback)
+
+harness = MyHarness(
+    generator=gen, critic=critic, optimizer=opt,
+    config=HarnessConfig(max_rounds=5, target_score=0.8),
+)
+session = harness.run(data, context)
+print(session.best_score)
+```
+
+`HarnessConfig` fields: `max_rounds`, `target_score`, `convergence_threshold`.
+
+### Exceptions
+
+Typed exception hierarchy rooted at `OptimizerError`:
+
+```
+OptimizerError
+├── ExtractionError    – entity / relationship extraction failures
+├── ValidationError    – ontology / logic validation failures
+├── ProvingError       – theorem-prover failures
+├── RefinementError    – refinement / mediator failures
+└── ConfigurationError – invalid optimizer configuration
+```
+
+```python
+from ipfs_datasets_py.optimizers.common import (
+    ExtractionError, ValidationError, ProvingError,
+)
+
+try:
+    result = extractor.extract(data)
+except ExtractionError as exc:
+    logger.error("Extraction failed: %s", exc)
+```
 
 ## Usage
 
