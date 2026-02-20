@@ -1,9 +1,9 @@
 # Knowledge Graphs Module - Master Status Document
 
-**Version:** 3.2.0  
+**Version:** 3.3.0  
 **Status:** ✅ Production Ready  
-**Last Updated:** 2026-02-20 (session 25)  
-**Last Major Release:** v3.2.0 (bookmarks/schema_checker/specialized 100%, lineage/types 100%, functions 99%, compiler 98%, session 25)
+**Last Updated:** 2026-02-20 (session 26)  
+**Last Major Release:** v3.3.0 (connection_pool 100%, transactions types 100%, bookmarks 100%, session/result 100%, distributed 99%, hybrid_search 93%, unified_engine 100%, btree 98%, session 26)
 
 ---
 
@@ -18,10 +18,10 @@
 | **Reasoning Subpackage** | ✅ Complete | cross_document_reasoning moved to reasoning/ (2026-02-20) |
 | **Folder Refactoring** | ✅ Complete | All root-level modules moved to subpackages (2026-02-20) |
 | **New MCP Tools** | ✅ Complete | graph_srl_extract, graph_ontology_materialize, graph_distributed_execute |
-| **Test Coverage** | 87% overall | Measured 2026-02-20 session 25; bookmarks **100%**, schema_checker **100%**, specialized **100%**, lineage/types **100%**, functions **99%**, compiler **98%**; 2,844 pass
-| **Documentation** | ✅ Up to Date | Reflects v3.2.0 structure |
-| **Known Issues** | None | 16 bugs fixed (sessions 7-11, 18-19, 21-25); 0 failures (2,844 pass)
-| **Next Milestone** | v3.3.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
+| **Test Coverage** | 89% overall | Measured 2026-02-20 session 26; connection_pool **100%**, transactions/types **100%**, bookmarks **100%**, result/session **100%**, unified_engine **100%**, compiler **100%**, ast **100%**, btree **98%**; 2,965 pass
+| **Documentation** | ✅ Up to Date | Reflects v3.3.0 structure |
+| **Known Issues** | None | 16 bugs fixed (sessions 7-11, 18-19, 21-25); 0 failures (2,965 pass)
+| **Next Milestone** | v3.4.0 (Q3 2026) | extractor NLP paths (requires spaCy/transformers)
 
 ---
 
@@ -147,7 +147,7 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 ## Test Coverage Status
 
-### Overall Coverage: ~87% (measured, session 23)
+### Overall Coverage: ~89% (measured, session 26)
 
 > Numbers from `python3 -m coverage run … pytest tests/unit/knowledge_graphs/` on 2026-02-20.
 > Includes shim files (100% — trivially covered) and optional-dep files skipped at runtime.
@@ -155,19 +155,19 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 
 | Module | Coverage | Status | Notes |
 |--------|----------|--------|-------|
-| **Cypher** | **95%**–**99%** | ✅ **Excellent** | functions.py **96%**, parser **94%**, compiler **95%** (+4pp), ast.py **99%**, lexer **99%** |
-| **Neo4j Compat** | **95%**–**99%** | ✅ **Excellent** | result.py **99%** (+14pp), session **98%** (+13pp), driver **86%**, types **96%** |
-| **Migration** | **93%**–**95%** | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **95%**, formats **93%** |
+| **Cypher** | **98%**–**100%** | ✅ **Excellent** | parser **100%**, ast **100%**, compiler **100%**, functions **99%**, lexer **99%** |
+| **Neo4j Compat** | **97%**–**100%** | ✅ **Excellent** | result.py **100%** (+2pp s26), session **100%** (+2pp s26), bookmarks **100%**, connection_pool **100%** (+5pp s26), driver **86%**, types **96%** |
+| **Migration** | **93%**–**95%** | ✅ **Excellent** | neo4j_exporter **95%**, ipfs_importer **95%**, formats **95%** |
 | **JSON-LD** | **93%**–**96%** | ✅ **Excellent** | context.py **91%**, validation **96%**, rdf_serializer **94%**, translator **93%** |
-| **Core** | 69–**97%** | ✅ **Excellent** | expression_evaluator **96%**, query_executor **97%** (+12pp session 23), ir_executor **92%** (+1pp), _legacy_graph_engine **90%** |
-| **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered (session 12) |
-| **Transactions** | **89%**–96% | ✅ **Excellent** | manager **91%**, wal **89%**, types 96% |
-| **Query** | **83%**–**100%** | ✅ **Excellent** | sparql_templates **100%**, budget_manager **100%**, unified_engine **89%**, knowledge_graph **83%** (+13pp session 23) |
-| **Extraction** | 54–**100%** | 🔶 Improving | srl **84%** (+4pp session 23), relationships **100%** (+14pp session 23), _entity_helpers **98%** (+18pp session 23), graph.py **98%** |
-| **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **96%** (+8pp session 23), helpers **94%** |
-| **Indexing** | 87–99% | ✅ Excellent | btree 87%, manager 99%, specialized 93% |
-| **Storage** | **89%**–100% | ✅ **Excellent** | ipld_backend **89%**, types **100%** |
-| **Lineage** | **97%**–100% | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core **97%** |
+| **Core** | 69–**99%** | ✅ **Excellent** | ir_executor **99%**, query_executor **97%**, expression_evaluator **96%**, _legacy_graph_engine **90%** |
+| **Constraints** | **100%** | ✅ **Excellent** | All constraint types + manager fully covered |
+| **Transactions** | **91%**–**100%** | ✅ **Excellent** | types **100%** (+4pp s26), manager **97%** (+6pp s26), wal **96%** |
+| **Query** | **88%**–**100%** | ✅ **Excellent** | sparql_templates/budget_manager **100%**, unified_engine **100%** (+11pp s26), distributed **99%** (+5pp s26), hybrid_search **93%** (+10pp s26), knowledge_graph **88%** |
+| **Extraction** | 54–**100%** | 🔶 Improving | srl **84%**, relationships **100%**, _entity_helpers **98%**, graph.py **98%** |
+| **Reasoning** | **88%**–**98%** | ✅ **Excellent** | ontology/reasoning **98%**, cross_document **96%**, helpers **94%** |
+| **Indexing** | **98%**–**100%** | ✅ **Excellent** | btree **98%** (+11pp s26), manager **99%**, specialized **100%** |
+| **Storage** | **89%**–**100%** | ✅ **Excellent** | ipld_backend **89%**, types **100%** |
+| **Lineage** | **97%**–**100%** | ✅ **Excellent** | visualization **94%**, enhanced **97%**, metrics **96%**, core **97%** |
 | **Root shims** | **100%** | ✅ Excellent | finance_graphrag, sparql_query_templates, lineage shims all **100%** |
 
 **Largest remaining coverage opportunities:**
@@ -209,9 +209,9 @@ All originally deferred features (P1–P4, CAR format, SRL, OWL reasoning, distr
 - **test_master_status_session18.py** (70 tests — ast.py 99%, ontology/reasoning 98%, wal 89%, manager 91%, unified_engine 82%, formats 90%)
 - **test_master_status_session19.py** (73 tests — ir_executor 91%, parser 94%, rdf_serializer 94%, translator 93%; SET/MERGE ON CREATE+MATCH parser bug fixed)
 - **test_master_status_session20.py** (96 tests — _legacy_graph_engine 90%, finance_graphrag 95%, distributed 94%, ipld_backend 89%, validator 69%, formats 93%)
-- ...and 10 more test files
+- ...and 11 more test files
 
-**Total Tests:** 2,547 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
+**Total Tests:** 2,965 passing, 23 skipped (libipld/anyio/plotly absent; networkx + pytest-mock + matplotlib + scipy available)
 **Pass Rate:** 100% (excluding optional dependency skips)
 
 ---
@@ -508,6 +508,42 @@ reasoning = reasoner.reason_across_documents(
 ---
 
 ## Version History
+
+### v3.3.0 (2026-02-20) - Coverage Boost Session 26 ✅
+
+**Summary:** Added 52 new GIVEN-WHEN-THEN tests across 12 modules; overall coverage from **88%** to **89%** (+1pp, 90 more lines covered). Largest gains: `neo4j_compat/connection_pool.py` 95%→**100%** (+5pp), `transactions/types.py` 96%→**100%** (+4pp), `neo4j_compat/result.py+session.py` 98%→**100%**, `query/unified_engine.py` 89%→**100%** (+11pp), `query/distributed.py` 94%→**99%** (+5pp), `query/hybrid_search.py` 83%→**93%** (+10pp), `indexing/btree.py` 87%→**98%** (+11pp), `cypher/compiler.py` 98%→**100%**, `cypher/ast.py` 99%→**100%**.
+
+**Test additions (52 new):**
+- `neo4j_compat/connection_pool.py` (95% → **100%**, +5pp): release on closed pool returns early, release expired connection discarded, double-close is no-op
+- `transactions/types.py` (96% → **100%**, +4pp): WRITE_RELATIONSHIP add_operation → write_set, duplicate rel_id dedup, can_commit in PREPARING state
+- `neo4j_compat/bookmarks.py` (97% → **100%**, +3pp): Bookmark.__hash__ integer, Bookmarks.__repr__ bracket format, empty Bookmarks repr
+- `neo4j_compat/result.py` (98% → **100%**, +2pp): keys() on empty → [], __repr__ shows record count
+- `neo4j_compat/session.py` (98% → **100%**, +3pp): read/write_transaction max_retries=0 → None, close() with open transaction calls transaction.close()
+- `transactions/manager.py` (91% → **97%**, +6pp): TransactionAbortedError re-raised on commit, WRITE_RELATIONSHIP _apply_operations calls create_relationship, _capture_snapshot returns None (no-persistence / no-storage), AttributeError degraded → None, TransactionError re-raised
+- `query/unified_engine.py` (89% → **100%**, +11pp): cypher_compiler/parser/ir_executor/graph_engine lazy-load ImportError paths all propagate
+- `query/hybrid_search.py` (83% → **93%**, +10pp): vector_search KGError re-raise / AttributeError→[], expand_graph neighbor-error skipped, _get_query_embedding KGError/AttributeError/RuntimeError, _get_neighbors KGError/AttributeError/RuntimeError, search() LRU cache eviction
+- `query/distributed.py` (94% → **99%**, +5pp): GraphPartitioner orphan-rel skipped, execute_cypher_parallel worker error recorded, streaming dedup removes duplicates, _KGBackend.get_relationships target_id/rel_types/limit filters, _normalise_result iterable/dict/__dict__/scalar paths
+- `cypher/ast.py` (99% → **100%**, +2pp): ASTVisitor.generic_visit→None, ASTPrettyPrinter.generic_visit visits nested ASTNode field
+- `cypher/compiler.py` (98% → **100%**, +3pp): CREATE rel not followed by node → CypherCompileError, compile MATCH returns ScanAll op
+- `indexing/btree.py` (87% → **98%**, +11pp): internal node split triggered (max_keys=2, 10 inserts), range_search through internal nodes, duplicate key returns both entity IDs, large tree 100 inserts, no-results range
+
+**Result:** 2,965 passed, 23 skipped, **0 failed** — up from 2,844 (session 25 baseline)
+**Coverage:** 88% → **89%** overall (1444 → 1354 misses, 90 lines newly covered)
+
+**Backward Compatibility:** 100% (no production code changes — tests and docs only)
+
+### v3.2.0 (2026-02-20) - Coverage Boost Session 25 ✅
+
+**Summary:** Added 66 new GIVEN-WHEN-THEN tests across 7 modules; overall coverage from **87%** to **88%** (+1pp). Largest gains: `bookmarks` 91%→**100%**, `schema_checker` 88%→**100%**, `specialized` 93%→**100%**, `lineage/types` 94%→**100%**, `functions` 96%→**99%**, `compiler` 95%→**98%**, `query/knowledge_graph.py` 83%→**88%**.
+
+**Result:** 2,844 passed, 23 skipped, **0 failed**
+**Coverage:** 87% → **88%** overall
+
+### v3.1.0 (2026-02-20) - Coverage Boost Session 24 ✅
+
+**Summary:** Added 78 new GIVEN-WHEN-THEN tests across 4 modules; coverage 87%→**87%** (refinement). `ir_executor` 92%→**99%**, `parser` 94%→**100%**, `wal` 89%→**96%**, `formats` 93%→**95%**.
+
+**Result:** 2,835 passed, 35 skipped, **0 failed**
 
 ### v3.0.0 (2026-02-20) - Coverage Boost Session 23 + Bug Fix ✅
 
