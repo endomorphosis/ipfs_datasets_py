@@ -97,3 +97,4 @@ unified_deontic_logic_system/
 
 # Local git-worktree artifacts
 ipfs_datasets_py/web_archiving/common_crawl_search_engine.worktrees/
+ipfs_datasets_py/web_archiving/common_crawl_search_engine
