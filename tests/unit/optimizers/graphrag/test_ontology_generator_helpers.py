@@ -421,3 +421,59 @@ class TestMergeOntologiesIdempotent:
         m2 = generator._merge_ontologies(m1, onto)
         assert len(m2["entities"]) == 3
         assert len(m2["relationships"]) == 2
+
+
+# ---------------------------------------------------------------------------
+# Tests for Relationship.direction field (directionality detection)
+# ---------------------------------------------------------------------------
+
+class TestRelationshipDirectionality:
+    """Verb-frame relationships are subject_to_object; co-occurrence is undirected."""
+
+    def _make_entities(self, pairs):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+        return [
+            Entity(id=f"e{i}", text=name, type="Concept", confidence=0.9)
+            for i, (name, _) in enumerate(pairs)
+        ]
+
+    def test_verb_frame_rel_is_subject_to_object(self, generator, ctx):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+        e1 = Entity(id="e1", text="Alice", type="Person", confidence=0.9)
+        e2 = Entity(id="e2", text="report", type="Concept", confidence=0.9)
+        rels = generator.infer_relationships([e1, e2], ctx, data="Alice causes report")
+        verb_rels = [r for r in rels if r.type == "causes"]
+        assert len(verb_rels) >= 1
+        assert verb_rels[0].direction == "subject_to_object"
+
+    def test_cooccurrence_rel_is_undirected(self, generator, ctx):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Entity, DataType
+        e1 = Entity(id="e1", text="widget", type="Concept", confidence=0.9)
+        e2 = Entity(id="e2", text="gadget", type="Concept", confidence=0.9)
+        # No verb pattern, only co-occurrence
+        rels = generator.infer_relationships([e1, e2], ctx, data="widget and gadget are close")
+        co_rels = [r for r in rels if r.type == "related_to"]
+        assert len(co_rels) >= 1
+        assert co_rels[0].direction == "undirected"
+
+    def test_default_relationship_direction_is_unknown(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        r = Relationship(id="r0", source_id="s", target_id="t", type="foo")
+        assert r.direction == "unknown"
+
+    def test_direction_subject_to_object_explicit(self):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        r = Relationship(
+            id="r1", source_id="s", target_id="t", type="owns",
+            direction="subject_to_object",
+        )
+        assert r.direction == "subject_to_object"
+
+    def test_relationship_to_dict_includes_direction(self, generator):
+        from ipfs_datasets_py.optimizers.graphrag.ontology_generator import Relationship
+        r = Relationship(
+            id="r2", source_id="s", target_id="t", type="causes",
+            confidence=0.7, direction="subject_to_object",
+        )
+        d = generator._relationship_to_dict(r)
+        assert d["direction"] == "subject_to_object"

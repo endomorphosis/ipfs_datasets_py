@@ -452,6 +452,7 @@ class OntologyGenerator:
                         target_id=e2.id,
                         type='related_to',
                         confidence=confidence,
+                        direction='undirected',
                     ))
                     linked.add((e1.id, e2.id))
 
@@ -770,7 +771,8 @@ class OntologyGenerator:
             'target_id': relationship.target_id,
             'type': relationship.type,
             'properties': relationship.properties,
-            'confidence': relationship.confidence
+            'confidence': relationship.confidence,
+            'direction': relationship.direction,
         }
     
     def _merge_ontologies(

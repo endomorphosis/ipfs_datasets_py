@@ -223,7 +223,8 @@ class TestBatchReportProperties:
         report = optimizer.analyze_batch(batch)
 
         if len(scores) > 0:
-            assert min(scores) <= report.average_score <= max(scores)
+            eps = 1e-10 * max(abs(s) for s in scores) if any(scores) else 0
+            assert min(scores) - eps <= report.average_score <= max(scores) + eps
 
     @given(st.lists(st.floats(min_value=0.0, max_value=100.0), min_size=1, max_size=100))
     @settings(max_examples=50, deadline=None)
