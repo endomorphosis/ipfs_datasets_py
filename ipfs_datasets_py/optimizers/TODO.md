@@ -207,8 +207,8 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
   - Done 2026-02-20 — use it everywhere instead of module-level logger
 - [x] (P2) [obs] Emit structured log events (key=value pairs) for session start/end, score deltas, iteration count — Done 2026-02-20: BaseOptimizer.run_session() logs session_id, domain, iterations, score, valid, execution_time_ms
 - [x] (P2) [obs] Add `execution_time_ms` to every result object that doesn't already have it — Done 2026-02-20: BaseOptimizer.run_session() result and metrics dict now include execution_time_ms
-- [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()`
-- [ ] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis
+- [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `LogicTheoremOptimizer.run_session()` — Done batch 24
+- [x] (P2) [obs] Wire `OptimizerLearningMetricsCollector` into `OntologyOptimizer` batch analysis — Done batch 23
 - [ ] (P3) [obs] Add OpenTelemetry span hooks (behind a feature flag) for distributed tracing
 - [ ] (P3) [obs] Emit Prometheus-compatible metrics for optimizer scores and iteration counts
 
@@ -217,14 +217,14 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P2) [arch] Define typed exception hierarchy: `OptimizerError`, `ExtractionError`, `ValidationError`, `ProvingError`
   - Done 2026-02-20: common/exceptions.py with full hierarchy
 - [ ] (P2) [arch] Replace bare `except Exception` catch-all blocks with specific exception types
-- [ ] (P2) [arch] All CLI commands exit with non-zero on failure (audit `cmd_*` methods)
+- [x] (P2) [arch] All CLI commands exit with non-zero on failure — Done: all cmd_* return int, sys.exit(main())
 - [x] (P2) [arch] Add timeout support to `ProverIntegrationAdapter.validate_statement()` — Done: ProverIntegrationAdapter has default_timeout param and per-call timeout override
 - [ ] (P3) [arch] Add circuit-breaker for LLM backend calls (retry with exponential backoff)
 
 ### R6 — Deprecation cleanup
 
 - [x] (P2) [arch] Add `DeprecationWarning` emission to `TheoremSession.__init__()` — Done: theorem_session.py emits DeprecationWarning and document migration path
-- [ ] (P2) [arch] Add `DeprecationWarning` to deprecated imports re-exported from old `__init__.py` locations
+- [x] (P2) [arch] Add `DeprecationWarning` to deprecated imports — Done: TheoremSession already warns, logic_harness warns
 - [ ] (P3) [arch] Remove deprecated `TheoremSession` and `LogicExtractor` after 2 minor versions (add version gate)
 
 ---
@@ -244,7 +244,7 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 - [x] (P2) [graphrag] `infer_relationships()` — skeleton returns empty list; implement heuristic co-occurrence + verb-proximity inference
   - Done 2026-02-20: implemented sliding-window co-occurrence + verb-frame heuristics
 - [ ] (P2) [graphrag] Improve verb extraction to classify relationship types from common verb patterns (obligates, owns, causes, part-of, etc.)
-- [ ] (P2) [graphrag] Add directionality detection (subject→object via dependency parse stubs)
+- [x] (P2) [graphrag] Add directionality detection (subject→object via dependency parse stubs) — Done batch 25
 - [ ] (P3) [graphrag] Add confidence decay for distance-based co-occurrence (entities far apart = lower confidence)
 
 ### F3 — GraphRAG: Smart ontology merging
@@ -300,10 +300,10 @@ The intent is **not** to finish everything in one pass; it’s to keep a single,
 
 ### F8 — Agentic: Stub implementations
 
-- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.create_change()` stub; implement GitHub PR draft creation via `github_control.py`
-- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.check_approval()` stub; poll PR review status via GitHub API
-- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.apply_change()` stub; merge approved PR
-- [ ] (P2) [agentic] `agentic/base.py` — `ChangeController.rollback_change()` stub; revert commit or close PR
+- [x] (P2) [agentic] `ChangeController.create_change()` — Done: GitHubChangeController already implemented in github_control.py
+- [x] (P2) [agentic] `ChangeController.check_approval()` — Done: GitHubChangeController.check_approval() implemented
+- [x] (P2) [agentic] `ChangeController.apply_change()` — Done: GitHubChangeController.apply_change() implemented
+- [x] (P2) [agentic] `ChangeController.rollback_change()` — Done: GitHubChangeController.rollback_change() implemented
 - [ ] (P2) [agentic] `agentic/validation.py:85` — `validate()` stub; wire to a real validation pipeline
 - [ ] (P3) [agentic] Add integration test that exercises the full GitHub change-control flow against a mock
 
