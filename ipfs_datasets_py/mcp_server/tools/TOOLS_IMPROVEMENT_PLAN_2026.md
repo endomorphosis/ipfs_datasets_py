@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-20  
 **Scope:** `ipfs_datasets_py/mcp_server/tools/` and all subfolders  
-**Status:** 🟡 Planning  
+**Status:** 🟢 Phase A ✅ Complete · Phase B ✅ Complete · Phase C 🟡 In Progress · Phase D 🟡 Planned  
 
 ---
 
@@ -48,57 +48,57 @@ user-facing references. This plan defines three improvement phases to close that
 
 | Category | Python Files | Markdown Files | Notes |
 |----------|-------------|----------------|-------|
-| `admin_tools` | 2 | 0 | Enhanced admin tools — no docs |
-| `alert_tools` | 1 | 0 | Discord alert tools — no docs |
-| `analysis_tools` | 1 | 0 | No docs |
-| `audit_tools` | 3 | 0 | No docs |
-| `auth_tools` | 2 | 0 | Enhanced auth — no docs |
-| `background_task_tools` | 3 | 0 | No docs |
-| `bespoke_tools` | 7 | 2 | Stub-only auto-generated .md files |
-| `cache_tools` | 2 | 0 | No docs |
-| `cli` | 2 | 0 | No docs |
-| `dashboard_tools` | 3 | 0 | No docs |
-| `data_processing_tools` | 1 | 0 | No docs |
-| `dataset_tools` | 7 | 0 | Core category — no docs! |
-| `development_tools` | 19 | 0 | Large category — no docs |
-| `discord_tools` | 4 | 0 | No docs |
-| `email_tools` | 3 | 0 | No docs |
-| `embedding_tools` | 9 | 0 | No docs |
-| `file_converter_tools` | 8 | 0 | No docs |
-| `file_detection_tools` | 3 | 0 | No docs |
-| `finance_data_tools` | 6 | 3 | README + 2 analysis docs (good) |
-| `functions` | 1 | 0 | No docs |
-| `geospatial_tools` | 1 | 0 | No docs |
-| `graph_tools` | 11 | 0 | No docs |
-| `index_management_tools` | 1 | 0 | No docs |
-| `investigation_tools` | 7 | 0 | No docs |
-| `ipfs_cluster_tools` | 1 | 0 | No docs |
-| `ipfs_tools` | 3 | 0 | Core category — no docs! |
-| `legacy_mcp_tools` | 32 | 0 | Largest category — no docs |
-| `legal_dataset_tools` | 38 | 15 | Over-documented with historical notes |
-| `lizardperson_argparse_programs` | 0 | 11 | Legacy program — MCP shim only |
+| `admin_tools` | 2 | 0 | Enhanced admin tools — no docs (Phase C) |
+| `alert_tools` | 1 | 0 | Discord alert tools — no docs (Phase C) |
+| `analysis_tools` | 1 | 0 | No docs (Phase C) |
+| `audit_tools` | 3 | 0 | No docs (Phase C) |
+| `auth_tools` | 2 | 0 | Enhanced auth — no docs (Phase C) |
+| `background_task_tools` | 3 | 0 | No docs (Phase C) |
+| `bespoke_tools` | 7 | 1 | ✅ README.md created (Phase A) |
+| `cache_tools` | 2 | 0 | No docs (Phase C) |
+| `cli` | 2 | 0 | No docs (Phase C) |
+| `dashboard_tools` | 3 | 0 | No docs (Phase C) |
+| `data_processing_tools` | 1 | 0 | No docs (Phase C) |
+| `dataset_tools` | 7 | 1 | ✅ README.md created (Phase B) |
+| `development_tools` | 19 | 1 | ✅ README.md created (Phase B) |
+| `discord_tools` | 4 | 0 | No docs (Phase C) |
+| `email_tools` | 3 | 0 | No docs (Phase C) |
+| `embedding_tools` | 9 | 1 | ✅ README.md created (Phase B) |
+| `file_converter_tools` | 8 | 0 | No docs (Phase C) |
+| `file_detection_tools` | 3 | 0 | No docs (Phase C) |
+| `finance_data_tools` | 6 | 3 | ✅ README updated + 2 analysis docs |
+| `functions` | 1 | 0 | No docs (Phase C) |
+| `geospatial_tools` | 1 | 0 | No docs (Phase C) |
+| `graph_tools` | 11 | 1 | ✅ README.md created (Phase B) |
+| `index_management_tools` | 1 | 0 | No docs (Phase C) |
+| `investigation_tools` | 7 | 0 | No docs (Phase C) |
+| `ipfs_cluster_tools` | 1 | 0 | No docs (Phase C) |
+| `ipfs_tools` | 3 | 1 | ✅ README.md created (Phase B) |
+| `legacy_mcp_tools` | 32 | 1 | ✅ MIGRATION_GUIDE.md created (Phase B) |
+| `legal_dataset_tools` | 38 | 8 | ✅ Phase A cleanup: 7 historical docs archived, statuses fixed |
+| `lizardperson_argparse_programs` | 0 | 11 | Legacy program — legacy notice added (Phase A) |
 | `lizardpersons_function_tools` | 0 | 0 | Empty category |
-| `logic_tools` | 12 | 0 | No docs |
-| `mcplusplus` | 3 | 0 | No docs |
-| `media_tools` | 9 | 0 | No docs |
-| `medical_research_scrapers` | 6 | 0 | No docs |
-| `monitoring_tools` | 2 | 0 | No docs |
-| `p2p_tools` | 2 | 0 | No docs |
-| `p2p_workflow_tools` | 1 | 0 | No docs |
-| `pdf_tools` | 8 | 0 | No docs |
-| `provenance_tools` | 2 | 0 | No docs |
-| `rate_limiting_tools` | 1 | 0 | No docs |
-| `search_tools` | 1 | 0 | No docs |
-| `security_tools` | 1 | 0 | No docs |
-| `session_tools` | 3 | 0 | No docs |
-| `software_engineering_tools` | 11 | 1 | Has README (good) |
-| `sparse_embedding_tools` | 1 | 0 | No docs |
-| `storage_tools` | 2 | 0 | No docs |
-| `vector_store_tools` | 3 | 0 | No docs |
-| `vector_tools` | 6 | 1 | Has CHANGELOG only |
-| `web_archive_tools` | 18 | 0 | Large category — no docs |
-| `web_scraping_tools` | 1 | 0 | No docs |
-| `workflow_tools` | 2 | 0 | No docs |
+| `logic_tools` | 12 | 1 | ✅ README.md created (Phase B) |
+| `mcplusplus` | 3 | 0 | No docs (Phase C) |
+| `media_tools` | 9 | 1 | ✅ README.md created (Phase B) |
+| `medical_research_scrapers` | 6 | 0 | No docs (Phase C) |
+| `monitoring_tools` | 2 | 0 | No docs (Phase C) |
+| `p2p_tools` | 2 | 0 | No docs (Phase C) |
+| `p2p_workflow_tools` | 1 | 0 | No docs (Phase C) |
+| `pdf_tools` | 8 | 1 | ✅ README.md created (Phase B) |
+| `provenance_tools` | 2 | 0 | No docs (Phase C) |
+| `rate_limiting_tools` | 1 | 0 | No docs (Phase C) |
+| `search_tools` | 1 | 0 | No docs (Phase C) |
+| `security_tools` | 1 | 0 | No docs (Phase C) |
+| `session_tools` | 3 | 0 | No docs (Phase C) |
+| `software_engineering_tools` | 11 | 1 | ✅ Has README (good) |
+| `sparse_embedding_tools` | 1 | 0 | No docs (Phase C) |
+| `storage_tools` | 2 | 0 | No docs (Phase C) |
+| `vector_store_tools` | 3 | 0 | No docs (Phase C) |
+| `vector_tools` | 6 | 1 | Has CHANGELOG only (needs README in Phase C) |
+| `web_archive_tools` | 18 | 1 | ✅ README.md created (Phase B) |
+| `web_scraping_tools` | 1 | 0 | No docs (Phase C) |
+| `workflow_tools` | 2 | 0 | No docs (Phase C) |
 
 ### 1.2 Documentation Quality Assessment
 
@@ -177,87 +177,78 @@ There is no `tools/README.md` to help contributors navigate 51 categories.
 
 ---
 
-## 3. Phase A: Documentation Triage & Cleanup
+## 3. Phase A: Documentation Triage & Cleanup ✅ COMPLETE
 
 **Goal:** Clean up the existing documentation before adding new material.  
 **Estimated effort:** 2-3h  
-**Priority:** 🔴 High
+**Priority:** 🔴 High  
+**Status:** ✅ Complete (2026-02-20)
 
-### A1: Archive Historical `legal_dataset_tools/` Docs
+### A1: Archive Historical `legal_dataset_tools/` Docs ✅
 
-Create `legal_dataset_tools/ARCHIVE/` and move historical implementation notes there.
-
-**Create `legal_dataset_tools/ARCHIVE/README.md`** explaining what's archived.
-
-**Move to ARCHIVE:**
-- `COMPLETION_REPORT.md`
-- `IMPLEMENTATION_SUMMARY.md`
-- `SCRAPER_FIXES_SUMMARY.md`
-- `TESTING_IMPLEMENTATION_SUMMARY.md`
-- `TEST_RESULTS_REPORT.md`
-- `VALIDATION_REPORT.md`
-- `VERIFICATION_README.md`
-
-**Keep in root:**
-- `README.md`
-- `COURTLISTENER_API_GUIDE.md`
-- `CRON_SETUP_GUIDE.md`
-- `CRON_SETUP_SIMPLE.md`
-- `PLAYWRIGHT_SETUP.md`
-- `PRIORITY2_CUSTOM_SCRAPERS.md`
-- `MUNICODE_SCRAPER_MVP.md`
-- `TESTING_GUIDE.md`
+Created `legal_dataset_tools/ARCHIVE/` and moved 7 historical implementation notes:
+`COMPLETION_REPORT.md`, `IMPLEMENTATION_SUMMARY.md`, `SCRAPER_FIXES_SUMMARY.md`,
+`TESTING_IMPLEMENTATION_SUMMARY.md`, `TEST_RESULTS_REPORT.md`, `VALIDATION_REPORT.md`,
+`VERIFICATION_README.md`.
 
 **Result:** 15 → 8 root markdown files (47% reduction)
 
-### A2: Update `legal_dataset_tools/README.md` Status
+### A2: Update `legal_dataset_tools/README.md` Status ✅
 
-The current README has several `⚠️ Placeholder data` statuses that may be outdated.
+Fixed stale status fields: Federal Register and State Laws now correctly marked ✅ Production Ready.
+Added `ARCHIVE/` pointer notice at the top. Consistent status format across all scrapers.
 
-**Update the Production Status table to reflect actual current state.**
+### A3: Replace `bespoke_tools/` Stub Docs ✅
 
-### A3: Replace `bespoke_tools/` Stub Docs
+Removed auto-generated `__init__.md` and `cache_stats.md`. Created proper `README.md` for the
+category with tool table, usage examples, and dependency notes.
 
-The auto-generated `__init__.md` and `cache_stats.md` are not useful docs.  
-Replace them with a proper `README.md` that describes the category.
+### A4: Add `lizardperson_argparse_programs/` Pointer ✅
 
-### A4: Add `lizardperson_argparse_programs/` Pointer
+Added legacy location notice at the top of `SAD_mk1.md` pointing to current core package
+(`processors/legal_scrapers/bluebook_citation_validator/`) and MCP wrapper location.
 
-Add a notice at the top of the key docs that the core package has moved to
-`ipfs_datasets_py/processors/legal_scrapers/bluebook_citation_validator/` and that the MCP
-wrapper is at `legal_dataset_tools/bluebook_citation_validator_tool.py`.
+### A5: Create `tools/README.md` Navigation Index ✅
 
-### A5: Create `tools/README.md` Navigation Index
-
-Add a top-level navigation index listing all 51 categories with one-line descriptions and links.
+Created top-level `tools/README.md` with all 51 categories organised by functional grouping.
 
 ---
 
-## 4. Phase B: Core Category Documentation
+## 4. Phase B: Core Category Documentation ✅ COMPLETE
+
+## 4. Phase B: Core Category Documentation ✅ COMPLETE
 
 **Goal:** Add README files for the 10 highest-priority undocumented categories.  
 **Estimated effort:** 6-8h  
-**Priority:** 🔴 High
+**Priority:** 🔴 High  
+**Status:** ✅ Complete (2026-02-20)
 
 Priority is determined by:
 1. Number of Python tool files (larger = more important to document)
 2. Likelihood of being used by external consumers
 3. Core vs. peripheral functionality
 
-### Priority Order for Phase B
+### Results — All 10 Phase B Items Delivered
 
-| # | Category | Files | Why Priority |
-|---|----------|-------|--------------|
-| 1 | `dataset_tools` | 7 | Core — fundamental dataset operations |
-| 2 | `ipfs_tools` | 3 | Core — fundamental IPFS operations |
-| 3 | `graph_tools` | 11 | Core — knowledge graph operations |
-| 4 | `embedding_tools` | 9 | Core — embeddings and similarity |
-| 5 | `logic_tools` | 12 | Core — FOL/deontic logic |
-| 6 | `web_archive_tools` | 18 | Large — 18 files, high utility |
-| 7 | `media_tools` | 9 | Functional — FFmpeg/yt-dlp |
-| 8 | `pdf_tools` | 8 | Functional — PDF processing |
-| 9 | `development_tools` | 19 | Large — 19 files including GitHub, Claude, Gemini |
-| 10 | `legacy_mcp_tools` | 32 | Largest — migration target for future work |
+| # | Category | Files | README Created | Migration Guide |
+|---|----------|-------|----------------|-----------------|
+| 1 | `dataset_tools` | 7 | ✅ `dataset_tools/README.md` | — |
+| 2 | `ipfs_tools` | 3 | ✅ `ipfs_tools/README.md` | — |
+| 3 | `graph_tools` | 11 | ✅ `graph_tools/README.md` | — |
+| 4 | `embedding_tools` | 9 | ✅ `embedding_tools/README.md` | — |
+| 5 | `logic_tools` | 12 | ✅ `logic_tools/README.md` | — |
+| 6 | `web_archive_tools` | 18 | ✅ `web_archive_tools/README.md` | — |
+| 7 | `media_tools` | 9 | ✅ `media_tools/README.md` | — |
+| 8 | `pdf_tools` | 8 | ✅ `pdf_tools/README.md` | — |
+| 9 | `development_tools` | 19 | ✅ `development_tools/README.md` | — |
+| 10 | `legacy_mcp_tools` | 32 | — | ✅ `legacy_mcp_tools/MIGRATION_GUIDE.md` |
+
+Each README includes:
+- Full tool inventory table (file → function(s) → description)
+- Code examples for the 3-5 most common use cases
+- Core module references (which `ipfs_datasets_py.*` module each tool wraps)
+- Dependency table (required vs optional with graceful-degradation notes)
+- Per-tool production status table
 
 ### README Template for Each Category
 
@@ -431,42 +422,43 @@ _TOOL_SUBMODULES: Final[set[str]] = {
 
 ## 8. Success Metrics
 
-| Metric | Current | Phase A Target | Phase B Target | Phase C+D Target |
+| Metric | Baseline | After Phase A | After Phase B | Phase C+D Target |
 |--------|---------|----------------|----------------|------------------|
-| Categories with README | 3 | 4 | 14 | 51 |
-| Historical docs in root dirs | 14 (legal) | 0 | 0 | 0 |
+| Categories with README | 3 | 4 ✅ | **15** ✅ | 51 |
+| Historical docs in root dirs | 14 (legal) | 0 ✅ | 0 ✅ | 0 |
 | Thick tools (>500 lines) | 10+ | 10+ | 10+ | ≤5 |
 | Disabled test files | ~10 | ~10 | ~10 | ≤3 |
 | `_TOOL_SUBMODULES` coverage | 17/51 | 17/51 | 17/51 | 51/51 |
 | Top-level `tools/README.md` | ❌ | ✅ | ✅ | ✅ |
+| `legacy_mcp_tools/` migration guide | ❌ | ❌ | ✅ | ✅ |
 
 ---
 
 ## 9. Priority Matrix
 
-| Phase | Item | Effort | Impact | Priority |
-|-------|------|--------|--------|----------|
-| A | Archive historical legal docs | 30min | High (clutter reduction) | 🔴 Do first |
-| A | Create `tools/README.md` index | 1h | High (navigation) | 🔴 Do first |
-| A | Update `legal_dataset_tools/README.md` status | 30min | Medium | 🔴 Do first |
-| A | Fix `bespoke_tools/` stub docs | 30min | Low | 🟡 Soon |
-| B | `dataset_tools` README | 1h | Very High (core) | 🔴 High |
-| B | `ipfs_tools` README | 45min | Very High (core) | 🔴 High |
-| B | `graph_tools` README | 1h | High | 🔴 High |
-| B | `embedding_tools` README | 1h | High | 🔴 High |
-| B | `logic_tools` README | 1h | High | 🔴 High |
-| B | `web_archive_tools` README | 1h | High (18 files) | 🔴 High |
-| B | `media_tools` README | 45min | Medium | 🟡 Medium |
-| B | `pdf_tools` README | 45min | Medium | 🟡 Medium |
-| B | `development_tools` README | 1h | Medium (19 files) | 🟡 Medium |
-| B | `legacy_mcp_tools` migration guide | 2h | Medium | 🟡 Medium |
-| C | Remaining 34 categories | 12-15h | Medium | 🟢 Later |
-| D | `legacy_mcp_tools/` audit | 2-3h | Medium | 🟡 Medium |
-| D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium |
-| D | Activate disabled tests | 2-3h | Medium | 🟡 Medium |
-| D | Fix `tools/__init__.py` coverage | 1h | Low-Medium | 🟢 Later |
+| Phase | Item | Effort | Impact | Priority | Status |
+|-------|------|--------|--------|----------|--------|
+| A | Archive historical legal docs | 30min | High (clutter reduction) | 🔴 Do first | ✅ Done |
+| A | Create `tools/README.md` index | 1h | High (navigation) | 🔴 Do first | ✅ Done |
+| A | Update `legal_dataset_tools/README.md` status | 30min | Medium | 🔴 Do first | ✅ Done |
+| A | Fix `bespoke_tools/` stub docs | 30min | Low | 🟡 Soon | ✅ Done |
+| B | `dataset_tools` README | 1h | Very High (core) | 🔴 High | ✅ Done |
+| B | `ipfs_tools` README | 45min | Very High (core) | 🔴 High | ✅ Done |
+| B | `graph_tools` README | 1h | High | 🔴 High | ✅ Done |
+| B | `embedding_tools` README | 1h | High | 🔴 High | ✅ Done |
+| B | `logic_tools` README | 1h | High | 🔴 High | ✅ Done |
+| B | `web_archive_tools` README | 1h | High (18 files) | 🔴 High | ✅ Done |
+| B | `media_tools` README | 45min | Medium | 🟡 Medium | ✅ Done |
+| B | `pdf_tools` README | 45min | Medium | 🟡 Medium | ✅ Done |
+| B | `development_tools` README | 1h | Medium (19 files) | 🟡 Medium | ✅ Done |
+| B | `legacy_mcp_tools` migration guide | 2h | Medium | 🟡 Medium | ✅ Done |
+| C | Remaining 34 categories | 12-15h | Medium | 🟢 Later | 🟡 Planned |
+| D | `legacy_mcp_tools/` audit | 2-3h | Medium | 🟡 Medium | 🟡 Planned |
+| D | Extract 5 thick tool engines | 4-6h | Medium | 🟡 Medium | 🟡 Planned |
+| D | Activate disabled tests | 2-3h | Medium | 🟡 Medium | 🟡 Planned |
+| D | Fix `tools/__init__.py` coverage | 1h | Low-Medium | 🟢 Later | 🟡 Planned |
 
 ---
 
-**Last Updated:** 2026-02-20  
+**Last Updated:** 2026-02-20 (Phase B complete)  
 **Related:** [../MASTER_REFACTORING_PLAN_2026_v4.md](../MASTER_REFACTORING_PLAN_2026_v4.md) · [../MASTER_IMPROVEMENT_PLAN_2026_v5.md](../MASTER_IMPROVEMENT_PLAN_2026_v5.md)
